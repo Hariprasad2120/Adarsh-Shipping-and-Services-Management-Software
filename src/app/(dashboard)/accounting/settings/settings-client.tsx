@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -93,8 +94,8 @@ export function SettingsClient({ initialSettings, accounts }: SettingsClientProp
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">Default Bank Account</label>
-              <select
+              <label className="monolith-label block text-slate-400">Default Bank Account</label>
+              <NativeSelect
                 value={formData.defaultBankAccountId}
                 onChange={(e) => handleSelectChange("defaultBankAccountId", e.target.value)}
                 className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5"
@@ -103,11 +104,11 @@ export function SettingsClient({ initialSettings, accounts }: SettingsClientProp
                 {cashAccounts.map((a) => (
                   <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">Default Cash Account</label>
-              <select
+              <label className="monolith-label block text-slate-400">Default Cash Account</label>
+              <NativeSelect
                 value={formData.defaultCashAccountId}
                 onChange={(e) => handleSelectChange("defaultCashAccountId", e.target.value)}
                 className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5"
@@ -116,7 +117,7 @@ export function SettingsClient({ initialSettings, accounts }: SettingsClientProp
                 {cashAccounts.map((a) => (
                   <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
           </div>
         </div>
@@ -128,8 +129,8 @@ export function SettingsClient({ initialSettings, accounts }: SettingsClientProp
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">Accounts Receivable (Customers)</label>
-              <select
+              <label className="monolith-label block text-slate-400">Accounts Receivable (Customers)</label>
+              <NativeSelect
                 value={formData.defaultReceivableAccountId}
                 onChange={(e) => handleSelectChange("defaultReceivableAccountId", e.target.value)}
                 className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5"
@@ -138,11 +139,11 @@ export function SettingsClient({ initialSettings, accounts }: SettingsClientProp
                 {receivableAccounts.map((a) => (
                   <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">Accounts Payable (Suppliers)</label>
-              <select
+              <label className="monolith-label block text-slate-400">Accounts Payable (Suppliers)</label>
+              <NativeSelect
                 value={formData.defaultPayableAccountId}
                 onChange={(e) => handleSelectChange("defaultPayableAccountId", e.target.value)}
                 className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5"
@@ -151,11 +152,11 @@ export function SettingsClient({ initialSettings, accounts }: SettingsClientProp
                 {payableAccounts.map((a) => (
                   <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">Default Sales Account (Revenue)</label>
-              <select
+              <label className="monolith-label block text-slate-400">Default Sales Account (Revenue)</label>
+              <NativeSelect
                 value={formData.defaultSalesAccountId}
                 onChange={(e) => handleSelectChange("defaultSalesAccountId", e.target.value)}
                 className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5"
@@ -164,11 +165,11 @@ export function SettingsClient({ initialSettings, accounts }: SettingsClientProp
                 {salesAccounts.map((a) => (
                   <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">Default Purchase Account (Expense)</label>
-              <select
+              <label className="monolith-label block text-slate-400">Default Purchase Account (Expense)</label>
+              <NativeSelect
                 value={formData.defaultPurchaseAccountId}
                 onChange={(e) => handleSelectChange("defaultPurchaseAccountId", e.target.value)}
                 className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5"
@@ -177,11 +178,11 @@ export function SettingsClient({ initialSettings, accounts }: SettingsClientProp
                 {purchaseAccounts.map((a) => (
                   <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">Default Tax Account (GST)</label>
-              <select
+              <label className="monolith-label block text-slate-400">Default Tax Account (GST)</label>
+              <NativeSelect
                 value={formData.defaultTaxAccountId}
                 onChange={(e) => handleSelectChange("defaultTaxAccountId", e.target.value)}
                 className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5"
@@ -190,7 +191,7 @@ export function SettingsClient({ initialSettings, accounts }: SettingsClientProp
                 {taxAccounts.map((a) => (
                   <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
           </div>
         </div>
@@ -202,8 +203,8 @@ export function SettingsClient({ initialSettings, accounts }: SettingsClientProp
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">Salary Expense Account</label>
-              <select
+              <label className="monolith-label block text-slate-400">Salary Expense Account</label>
+              <NativeSelect
                 value={formData.defaultSalaryExpenseAccountId}
                 onChange={(e) => handleSelectChange("defaultSalaryExpenseAccountId", e.target.value)}
                 className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5"
@@ -212,11 +213,11 @@ export function SettingsClient({ initialSettings, accounts }: SettingsClientProp
                 {expenseAccounts.map((a) => (
                   <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">Salary Payable Account</label>
-              <select
+              <label className="monolith-label block text-slate-400">Salary Payable Account</label>
+              <NativeSelect
                 value={formData.defaultSalaryPayableAccountId}
                 onChange={(e) => handleSelectChange("defaultSalaryPayableAccountId", e.target.value)}
                 className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5"
@@ -225,7 +226,7 @@ export function SettingsClient({ initialSettings, accounts }: SettingsClientProp
                 {payableAccounts.map((a) => (
                   <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
           </div>
         </div>
@@ -237,8 +238,8 @@ export function SettingsClient({ initialSettings, accounts }: SettingsClientProp
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">Depreciation Expense Account</label>
-              <select
+              <label className="monolith-label block text-slate-400">Depreciation Expense Account</label>
+              <NativeSelect
                 value={formData.defaultDepreciationExpenseAccountId}
                 onChange={(e) => handleSelectChange("defaultDepreciationExpenseAccountId", e.target.value)}
                 className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5"
@@ -247,11 +248,11 @@ export function SettingsClient({ initialSettings, accounts }: SettingsClientProp
                 {expenseAccounts.map((a) => (
                   <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">Accumulated Depreciation Account</label>
-              <select
+              <label className="monolith-label block text-slate-400">Accumulated Depreciation Account</label>
+              <NativeSelect
                 value={formData.defaultAccumulatedDepreciationAccountId}
                 onChange={(e) => handleSelectChange("defaultAccumulatedDepreciationAccountId", e.target.value)}
                 className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5"
@@ -260,7 +261,7 @@ export function SettingsClient({ initialSettings, accounts }: SettingsClientProp
                 {deprAccounts.map((a) => (
                   <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
           </div>
         </div>
@@ -270,7 +271,7 @@ export function SettingsClient({ initialSettings, accounts }: SettingsClientProp
           <button
             type="submit"
             disabled={isSaving}
-            className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-6 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+            className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-6 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
           >
             {isSaving ? (
               <>

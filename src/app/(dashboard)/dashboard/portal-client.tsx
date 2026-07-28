@@ -1,13 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
 import { Building2, Sparkles, Users2 } from "lucide-react";
-import { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
-import { ProfileSummary } from "@/components/hrms/profile-summary";
-import { ActionList } from "@/components/hrms/action-list";
-import { OrgServices } from "@/components/hrms/org-services";
-import { ReporteesList } from "@/components/hrms/reportees-list";
-import { toast } from "sonner";
+import { useState } from "react";
+import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
+import { AttendanceCommand } from "./_components/attendance-command";
+import { DashboardOrganization } from "./_components/dashboard-organization";
+import { DashboardOverview } from "./_components/dashboard-overview";
+import { DashboardTeam } from "./_components/dashboard-team";
+import type {
+  DashboardTab,
+  PunchAction,
+  ReporteeSummary,
+} from "./_components/dashboard-types";
 
 interface HrmsPortalClientProps {
   sessionUser: { id: string; name: string; email: string };
@@ -19,29 +23,42 @@ interface HrmsPortalClientProps {
   initialReportees: ReporteeSummary[];
 }
 
-interface ReporteeSummary {
-  id: string;
-  name: string;
-  email: string;
-  employeeNo: string;
-  designation: string;
-  location: string;
-  photo: string | null;
-  punchStatus: "YET_TO_CHECK_IN" | "CHECKED_IN" | "ON_BREAK" | "CHECKED_OUT";
-  shift: {
-    name: string;
-    startTime: string;
-    endTime: string;
-  } | null;
-}
-
 type ProfilePayload = {
-  user: Pick<UserProfile, "id" | "employeeNo" | "name" | "email" | "designation" | "department" | "branch" | "manager" | "photo">;
+  user: Pick<
+    UserProfile,
+    "id" | "employeeNo" | "name" | "email" | "designation" | "department" | "branch" | "manager" | "photo"
+  >;
   widgets: UserProfile["widgets"];
   attendanceStatus: UserProfile["attendanceStatus"];
   totalInTime: UserProfile["totalInTime"];
   pendingCounts?: UserProfile["pendingCounts"];
 };
+
+const tabs: {
+  id: DashboardTab;
+  label: string;
+  detail: string;
+  icon: typeof Sparkles;
+}[] = [
+  {
+    id: "myspace",
+    label: "My space",
+    detail: "Your day, tasks, and next signals",
+    icon: Sparkles,
+  },
+  {
+    id: "team",
+    label: "Team",
+    detail: "Reportees and live attendance",
+    icon: Users2,
+  },
+  {
+    id: "organization",
+    label: "Organization",
+    detail: "People, policies, and company news",
+    icon: Building2,
+  },
+];
 
 function toUserProfile(raw: ProfilePayload): UserProfile {
   return {
@@ -61,6 +78,14 @@ function toUserProfile(raw: ProfilePayload): UserProfile {
   };
 }
 
+async function readApiResponse<T>(response: Response) {
+  const payload = await response.json();
+  if (!response.ok || !payload.ok) {
+    throw new Error(payload.error?.message || "The dashboard could not be updated.");
+  }
+  return payload.data as T;
+}
+
 export function HrmsPortalClient({
   sessionUser,
   departments,
@@ -70,163 +95,89 @@ export function HrmsPortalClient({
   initialWidgetsData,
   initialReportees,
 }: HrmsPortalClientProps) {
-  const [activeTab, setActiveTab] = useState<string>("myspace");
-  const [profile, setProfile] = useState<UserProfile>(initialProfile);
-  const [loading, setLoading] = useState(false);
-  const [reportees, setReportees] = useState<ReporteeSummary[]>(initialReportees);
-  const [widgetsData, setWidgetsData] = useState<DashboardWidgetsData>(initialWidgetsData);
+  const [activeTab, setActiveTab] = useState<DashboardTab>("myspace");
+  const [profile, setProfile] = useState(initialProfile);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [reportees, setReportees] = useState(initialReportees);
+  const [widgets, setWidgets] = useState(initialWidgetsData);
 
-  const loadProfile = async () => {
-    try {
-      const res = await fetch("/api/hrms/me");
-      const json = await res.json();
-      if (json.ok) {
-        const raw = json.data as ProfilePayload;
-        setProfile(toUserProfile(raw));
-      } else {
-        toast.error("Failed to load profile context");
-      }
-    } catch {
-      toast.error("Network error while loading profile context");
-    }
-  };
+  async function refreshDashboard() {
+    const [profileResponse, widgetsResponse, reporteesResponse] = await Promise.all([
+      fetch("/api/hrms/me"),
+      fetch("/api/hrms/dashboard"),
+      fetch("/api/hrms/team/reportees"),
+    ]);
 
-  const refreshDashboardData = async () => {
-    try {
-      const res = await fetch("/api/hrms/dashboard");
-      const json = await res.json();
-      if (json.ok) {
-        setWidgetsData(json.data as DashboardWidgetsData);
-      }
-    } catch {
-      console.error("Failed to sync dashboard widgets");
-    }
-  };
+    const [profilePayload, widgetsPayload, reporteesPayload] = await Promise.all([
+      readApiResponse<ProfilePayload>(profileResponse),
+      readApiResponse<DashboardWidgetsData>(widgetsResponse),
+      readApiResponse<ReporteeSummary[]>(reporteesResponse),
+    ]);
 
-  const refreshReportees = async () => {
-    try {
-      const res = await fetch("/api/hrms/team/reportees");
-      const json = await res.json();
-      if (json.ok) {
-        setReportees(json.data as ReporteeSummary[]);
-      }
-    } catch {
-      console.error("Failed to sync reportees");
-    }
-  };
+    setProfile(toUserProfile(profilePayload));
+    setWidgets(widgetsPayload);
+    setReportees(reporteesPayload);
+  }
 
-  const handlePunchAction = async (action: "CHECK_IN" | "CHECK_OUT" | "START_BREAK" | "RESUME_WORK") => {
-    setLoading(true);
+  async function handlePunchAction(action: PunchAction) {
+    setAttendanceLoading(true);
+
     try {
-      const res = await fetch("/api/hrms/attendance/punch", {
+      const response = await fetch("/api/hrms/attendance/punch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
       });
-      const json = await res.json();
-      if (json.ok) {
-        await Promise.all([
-          loadProfile(),
-          refreshDashboardData(),
-          refreshReportees(),
-        ]);
-      } else {
-        throw new Error(json.error?.message || "Failed to log attendance punch");
-      }
+      await readApiResponse(response);
+      await refreshDashboard();
+    } catch (error) {
+      throw error;
     } finally {
-      setLoading(false);
+      setAttendanceLoading(false);
     }
-  };
+  }
 
   return (
-    <>
-      <ProfileSummary
+    <div className="mnx-dashboard-page">
+      <AttendanceCommand
         profile={profile}
+        loading={attendanceLoading}
         onPunchAction={handlePunchAction}
-        loading={loading}
       />
 
-      <div className="flex flex-col gap-8">
+      <nav className="mnx-dashboard-tabs" aria-label="Dashboard workspaces">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              type="button"
+              key={tab.id}
+              className={isActive ? "is-active" : ""}
+              onClick={() => setActiveTab(tab.id)}
+              aria-current={isActive ? "page" : undefined}
+            >
+              <span><Icon size={18} /></span>
+              <span><b>{tab.label}</b><small>{tab.detail}</small></span>
+            </button>
+          );
+        })}
+      </nav>
 
-      <div className="border border-outline-variant bg-surface-container-low">
-        <div className="grid md:grid-cols-3 divide-x divide-outline-variant">
-          {[
-            {
-              key: "myspace",
-              label: "My Space",
-              detail: "Personal rhythm, tasks, and check-in context.",
-              icon: Sparkles,
-            },
-            {
-              key: "team",
-              label: "Team",
-              detail: "Reportee visibility and attendance at a glance.",
-              icon: Users2,
-            },
-            {
-              key: "organization",
-              label: "Organization",
-              detail: "Announcements, directory, and company services.",
-              icon: Building2,
-            },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.key;
-
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key)}
-                className={`group flex items-start gap-3 px-5 py-4 text-left transition-all cursor-pointer w-full ${
-                  isActive
-                    ? "bg-[#0f1c22] text-white border-b-2 border-b-[#00cec4]"
-                    : "bg-transparent text-on-surface-variant hover:bg-surface-container"
-                }`}
-              >
-                <span
-                  className={`mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border ${
-                    isActive
-                      ? "border-white/15 bg-white/10 text-[#00cec4]"
-                      : "border-outline-variant bg-surface text-[#00cec4]"
-                  }`}
-                >
-                  <Icon className="size-4" />
-                </span>
-                <span className="block">
-                  <span className={`block text-xs font-semibold uppercase tracking-[0.12em] ${isActive ? "text-[#00cec4]" : "text-on-surface-variant"}`}>
-                    {tab.label}
-                  </span>
-                  <span className={`mt-1 block text-sm leading-relaxed ${isActive ? "text-white/70" : "text-on-surface-variant"}`}>
-                    {tab.detail}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        {activeTab === "myspace" && (
-          <ActionList
-            profile={profile}
-            sessionUser={sessionUser}
-            data={widgetsData}
-          />
-        )}
-        {activeTab === "team" && <ReporteesList reportees={reportees} />}
-        {activeTab === "organization" && (
-          <OrgServices
-            data={widgetsData}
+      <div className="mnx-dashboard-tab-content">
+        {activeTab === "myspace" ? (
+          <DashboardOverview profile={profile} sessionUser={sessionUser} data={widgets} />
+        ) : null}
+        {activeTab === "team" ? <DashboardTeam reportees={reportees} /> : null}
+        {activeTab === "organization" ? (
+          <DashboardOrganization
+            data={widgets}
             employees={initialUsers}
             departments={departments}
             branches={branches}
           />
-        )}
+        ) : null}
       </div>
-
-      </div>
-    </>
+    </div>
   );
 }

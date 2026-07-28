@@ -7,9 +7,9 @@ import {
   MessagesSquare,
   PackageCheck,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/monolith/badge";
+import { Button } from "@/components/monolith/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
 import {
   DataTable,
   DataTableBody,
@@ -44,7 +44,7 @@ export default async function CustomerPortalShipmentDetailPage({
 
   return (
     <div className="space-y-6">
-      <section className="card-top-accent rounded-xl border border-outline-variant/50 bg-surface px-5 py-5 shadow-sm">
+      <section className="monolith-card monolith-accent rounded-xl border border-mono-border/50 bg-mono-card px-5 py-5 shadow-sm">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -59,10 +59,10 @@ export default async function CustomerPortalShipmentDetailPage({
               <Badge variant={getChaPriorityBadgeVariant(data.shipment.priority.replaceAll(" ", "_"))}>{data.shipment.priority}</Badge>
             </div>
             <div>
-              <p className="ds-label">Shipment Workspace</p>
-              <h2 className="ds-h1 text-on-surface">{data.shipment.jobNumber}</h2>
-              <p className="mt-2 text-sm text-on-surface-variant">{data.shipment.title}</p>
-              <p className="mt-2 text-sm text-on-surface-variant">
+              <p className="monolith-label">Shipment Workspace</p>
+              <h2 className="monolith-h1 text-mono-text">{data.shipment.jobNumber}</h2>
+              <p className="mt-2 text-sm text-mono-muted">{data.shipment.title}</p>
+              <p className="mt-2 text-sm text-mono-muted">
                 Customer Ref: {data.shipment.customerRef || "—"} • Last Updated {formatDateTime(data.shipment.updatedAt)}
               </p>
             </div>
@@ -109,15 +109,15 @@ function ShipmentOverviewCard({
   const shipment = data.shipment;
 
   return (
-    <Card className="rounded-xl border border-outline-variant/45">
+    <Card className="rounded-xl border border-mono-border/45">
       <CardHeader>
         <div className="flex items-center gap-3">
-          <span className="ds-icon-badge">
+          <span className="monolith-icon-badge">
             <FolderKanban size={16} />
           </span>
           <div>
             <CardTitle>Shipment Overview</CardTitle>
-            <p className="text-xs text-on-surface-variant">Customer-safe dates, workflow references, and readiness indicators.</p>
+            <p className="text-xs text-mono-muted">Customer-safe dates, workflow references, and readiness indicators.</p>
           </div>
         </div>
       </CardHeader>
@@ -148,15 +148,15 @@ function QueriesTable({
   const error = data.sectionErrors.queries;
 
   return (
-    <DataTable className="border border-outline-variant/45">
-      <DataTableToolbar className="bg-surface">
+    <DataTable className="border border-mono-border/45">
+      <DataTableToolbar className="bg-mono-card">
         <div className="flex items-center gap-3">
-          <span className="ds-icon-badge">
+          <span className="monolith-icon-badge">
             <MessagesSquare size={16} />
           </span>
           <div>
-            <h2 className="ds-h2 text-on-surface">Outstanding Queries</h2>
-            <p className="text-xs text-on-surface-variant">Open customer-visible threads and the latest visible message activity.</p>
+            <h2 className="monolith-h2 text-mono-text">Outstanding Queries</h2>
+            <p className="text-xs text-mono-muted">Open customer-visible threads and the latest visible message activity.</p>
           </div>
         </div>
       </DataTableToolbar>
@@ -180,8 +180,8 @@ function QueriesTable({
               data.queries.map((query) => (
                 <tr key={query.id}>
                   <DataTableCell>
-                    <div className="font-medium text-on-surface">{query.title}</div>
-                    <div className="mt-1 text-xs text-on-surface-variant">{query.detail}</div>
+                    <div className="font-medium text-mono-text">{query.title}</div>
+                    <div className="mt-1 text-xs text-mono-muted">{query.detail}</div>
                   </DataTableCell>
                   <DataTableCell>
                     <Badge variant={query.priority === "URGENT" || query.priority === "HIGH" ? "destructive" : "warning"}>
@@ -192,20 +192,20 @@ function QueriesTable({
                     <div className="space-y-2">
                       <Badge variant={query.requiresCustomerAction ? "warning" : "secondary"}>{query.status}</Badge>
                       {query.requiresCustomerAction ? (
-                        <div className="text-xs text-[#fb923c]">Customer response required</div>
+                        <div className="text-xs text-[#D88700]">Customer response required</div>
                       ) : null}
                     </div>
                   </DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">
+                  <DataTableCell className="text-mono-muted">
                     {query.requiredResponseBy ? formatDate(query.requiredResponseBy) : "—"}
                   </DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">
+                  <DataTableCell className="text-mono-muted">
                     {query.recentMessages.length === 0 ? (
                       "No customer-visible messages yet"
                     ) : (
                       <div className="space-y-2">
                         {query.recentMessages.map((message, index) => (
-                          <div key={`${query.id}-${index}`} className="rounded-lg border border-outline-variant/40 bg-surface-container-low/30 px-3 py-2">
+                          <div key={`${query.id}-${index}`} className="rounded-lg border border-mono-border/40 bg-mono-soft/30 px-3 py-2">
                             <div className="text-xs">{truncate(message.body, 120)}</div>
                             <div className="mt-1 text-[11px] uppercase tracking-[0.16em]">{formatDateTime(message.createdAt)}</div>
                           </div>
@@ -231,15 +231,15 @@ function RecentUpdatesCard({
   const error = data.sectionErrors.recentUpdates;
 
   return (
-    <Card className="rounded-xl border border-outline-variant/45">
+    <Card className="rounded-xl border border-mono-border/45">
       <CardHeader>
         <div className="flex items-center gap-3">
-          <span className="ds-icon-badge">
+          <span className="monolith-icon-badge">
             <PackageCheck size={16} />
           </span>
           <div>
             <CardTitle>Recent Shipment Updates</CardTitle>
-            <p className="text-xs text-on-surface-variant">Customer-safe timeline events only.</p>
+            <p className="text-xs text-mono-muted">Customer-safe timeline events only.</p>
           </div>
         </div>
       </CardHeader>
@@ -257,16 +257,16 @@ function RecentUpdatesCard({
                 <div key={update.id} className="relative flex gap-4 pb-6 last:pb-0">
                   <div className="relative flex w-12 shrink-0 justify-center">
                     {!isLast ? (
-                      <span className="absolute bottom-[-1.5rem] left-1/2 top-11 w-px -translate-x-1/2 bg-[#00cec4]/20" />
+                      <span className="absolute bottom-[-1.5rem] left-1/2 top-11 w-px -translate-x-1/2 bg-[#F9D972]/20" />
                     ) : null}
                     <div
                       className={`relative mt-1 flex h-11 w-11 items-center justify-center rounded-full border ${
                         isActive
-                          ? "border-[#00cec4]/40 bg-[#00cec4]/10"
-                          : "border-[#00cec4]/30 bg-[#00cec4]/[0.06]"
+                          ? "border-[#F9D972]/40 bg-[#F9D972]/10"
+                          : "border-[#F9D972]/30 bg-[#F9D972]/[0.06]"
                       }`}
                     >
-                      <div className="flex h-6.5 w-6.5 items-center justify-center rounded-full border border-[#00cec4]/45 bg-surface">
+                      <div className="flex h-6.5 w-6.5 items-center justify-center rounded-full border border-[#F9D972]/45 bg-mono-card">
                         <Check className="size-3.5 text-[#0e8795]" />
                       </div>
                     </div>
@@ -274,10 +274,10 @@ function RecentUpdatesCard({
                   <div className="min-w-0 flex-1 pt-1">
                     <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_132px] sm:items-start sm:gap-4">
                       <div className="min-w-0 space-y-1">
-                        <p className="text-base font-medium text-on-surface">{update.title}</p>
-                        <p className="text-sm text-on-surface-variant">{update.detail}</p>
+                        <p className="text-base font-medium text-mono-text">{update.title}</p>
+                        <p className="text-sm text-mono-muted">{update.detail}</p>
                       </div>
-                      <span className="shrink-0 text-[11px] uppercase tracking-[0.16em] text-on-surface-variant sm:pt-1 sm:text-right">
+                      <span className="shrink-0 text-[11px] uppercase tracking-[0.16em] text-mono-muted sm:pt-1 sm:text-right">
                         {formatDateTime(update.occurredAt)}
                       </span>
                     </div>
@@ -302,25 +302,25 @@ function MetricCard({
   tone?: "primary" | "warning";
 }) {
   return (
-    <div className={`rounded-xl border px-4 py-4 ${tone === "warning" ? "border-[#fb923c]/35 bg-[#fb923c]/[0.06]" : "border-outline-variant/45 bg-surface-container-low/30"}`}>
-      <p className="ds-label">{label}</p>
-      <p className={`mt-2 text-2xl ds-numeric ${tone === "warning" ? "text-[#fb923c]" : "text-on-surface"}`}>{value}</p>
+    <div className={`rounded-xl border px-4 py-4 ${tone === "warning" ? "border-[#D88700]/35 bg-[#D88700]/[0.06]" : "border-mono-border/45 bg-mono-soft/30"}`}>
+      <p className="monolith-label">{label}</p>
+      <p className={`mt-2 text-2xl monolith-numeric ${tone === "warning" ? "text-[#D88700]" : "text-mono-text"}`}>{value}</p>
     </div>
   );
 }
 
 function OverviewRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-outline-variant/35 pb-3 last:border-b-0 last:pb-0">
-      <p className="ds-label mt-1">{label}</p>
-      <p className="text-right text-sm text-on-surface">{value}</p>
+    <div className="flex items-start justify-between gap-4 border-b border-mono-border/35 pb-3 last:border-b-0 last:pb-0">
+      <p className="monolith-label mt-1">{label}</p>
+      <p className="text-right text-sm text-mono-text">{value}</p>
     </div>
   );
 }
 
 function SectionFallback({ message }: { message: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-outline-variant/60 bg-surface-container-low/20 px-4 py-6 text-sm text-on-surface-variant">
+    <div className="rounded-xl border border-dashed border-mono-border/60 bg-mono-soft/20 px-4 py-6 text-sm text-mono-muted">
       {message}
     </div>
   );

@@ -19,9 +19,9 @@ export default async function ChartOfAccountsPage() {
 
   return (
     <div className="p-8 space-y-6 max-w-[1400px] mx-auto animate-in fade-in duration-200">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/20 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-mono-border/20 pb-5">
         <div>
-          <h2 className="ds-h1 text-white">Chart of Accounts</h2>
+          <h2 className="monolith-h1 text-white">Chart of Accounts</h2>
           <p className="text-slate-400 text-xs mt-1">
             Browse, group, and register corporate ledger accounts across Asset, Liability, Equity, Income, and Expense classifications.
           </p>

@@ -6,12 +6,12 @@ import { useRouter } from "next/navigation";
 import { Info, Users } from "lucide-react";
 import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
 import { FormPreviewModal } from "@/components/ams/form-preview-modal";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/monolith/button";
 import type {AppraisalSelfFormTemplate,SelfAssessmentAnswers,ReviewerRatingAnswers,ManagementReviewAnswers,} from "@/modules/ams/criteria-config";
 import type { CriterionPoint } from "@/modules/ams/types";
 import { useNotifications } from "@/components/notifications/notification-provider";
-import { DropdownSelect } from "@/components/ui/dropdown-select";
-import { Input } from "@/components/ui/input";
+import { DropdownSelect } from "@/components/monolith/dropdown-select";
+import { Input } from "@/components/monolith/input";
 
 type Reviewer = {
   id: string;
@@ -94,11 +94,11 @@ const STAGE_COLOR: Record<string, string> = {
   MEETING_PENDING: "bg-cyan-50 text-cyan-700 border-cyan-200",
   MEETING_LIVE: "bg-green-50 text-green-700 border-green-200",
   HIKE_FINALISATION: "bg-pink-50 text-pink-700 border-pink-200",
-  CLOSED: "bg-surface-container-high text-on-surface-variant border-outline-variant",
+  CLOSED: "bg-mono-soft text-mono-muted border-mono-border",
 };
 
 const STATUS_BADGE: Record<string, string> = {
-  PENDING: "bg-surface-container-high text-on-surface-variant",
+  PENDING: "bg-mono-soft text-mono-muted",
   AVAILABLE: "bg-green-100 text-green-700",
   UNAVAILABLE: "bg-red-100 text-red-600",
   FORCED: "bg-orange-100 text-orange-600",
@@ -192,7 +192,7 @@ export function AppraisalDetail({
               <Button
                 variant="outline"
                 size="sm"
-                className="border-[#00cec4]/35 bg-surface text-[#008b85] hover:bg-[#00cec4]/8"
+                className="border-[#F9D972]/35 bg-mono-card text-[#008b85] hover:bg-[#F9D972]/8"
                 onClick={() => setFormPreviewOpen(true)}
               >
                 View Forms
@@ -281,8 +281,8 @@ export function AppraisalDetail({
         <Card title="Audit Log">
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {appraisal.auditLog.map((log) => (
-              <div key={log.id} className="text-xs text-on-surface-variant border-l-2 border-outline-variant pl-3">
-                <p className="font-medium text-on-surface">→ {log.toStage.replace(/_/g, " ")}</p>
+              <div key={log.id} className="text-xs text-mono-muted border-l-2 border-mono-border pl-3">
+                <p className="font-medium text-mono-text">→ {log.toStage.replace(/_/g, " ")}</p>
                 {log.note && <p>{log.note}</p>}
                 <p>{new Date(log.createdAt).toLocaleString("en-IN")}</p>
               </div>
@@ -372,14 +372,14 @@ function UpdateReviewersCard({
   }
 
   return (
-    <div className="card-top-accent ds-shell-lg border border-outline-variant/40 bg-surface p-5 shadow-sm sm:p-6">
+    <div className="monolith-card monolith-accent monolith-shell-lg border border-mono-border/40 bg-mono-card p-5 shadow-sm sm:p-6">
       <div className="space-y-5">
         <div className="flex items-center gap-3">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[#F9D972]/10 text-[#F9D972]">
             <Users className="size-4.5" />
           </span>
           <div>
-            <h2 className="ds-h2 text-on-surface">Assign Reviewers</h2>
+            <h2 className="monolith-h2 text-mono-text">Assign Reviewers</h2>
           </div>
         </div>
 
@@ -421,7 +421,7 @@ function UpdateReviewersCard({
 
         <div className="space-y-5">
           <div className="space-y-2">
-            <span className="flex items-center gap-2 text-sm font-medium text-on-surface">
+            <span className="flex items-center gap-2 text-sm font-medium text-mono-text">
               <span className="inline-flex h-3.5 w-3.5 rounded-full bg-emerald-400" />
               HR Reviewer
             </span>
@@ -439,7 +439,7 @@ function UpdateReviewersCard({
 
           {includeTL ? (
             <div className="space-y-2">
-              <span className="flex items-center gap-2 text-sm font-medium text-on-surface">
+              <span className="flex items-center gap-2 text-sm font-medium text-mono-text">
                 <span className="inline-flex h-3.5 w-3.5 rounded-full bg-emerald-400" />
                 TL Reviewer
               </span>
@@ -458,7 +458,7 @@ function UpdateReviewersCard({
 
           {includeManager ? (
             <div className="space-y-2">
-              <span className="flex items-center gap-2 text-sm font-medium text-on-surface">
+              <span className="flex items-center gap-2 text-sm font-medium text-mono-text">
                 <span className="inline-flex h-3.5 w-3.5 rounded-full bg-emerald-400" />
                 Manager Reviewer
               </span>
@@ -477,10 +477,10 @@ function UpdateReviewersCard({
         </div>
 
         {canForceReviewer ? (
-          <div className="space-y-3 rounded-2xl border border-outline-variant/35 bg-surface-container-low px-4 py-4">
+          <div className="space-y-3 rounded-2xl border border-mono-border/35 bg-mono-soft px-4 py-4">
             <div>
-              <p className="text-sm font-medium text-on-surface">Reviewer Availability Controls</p>
-              <p className="mt-1 text-xs text-on-surface-variant">Force a reviewer to available if you need to unblock the appraisal.</p>
+              <p className="text-sm font-medium text-mono-text">Reviewer Availability Controls</p>
+              <p className="mt-1 text-xs text-mono-muted">Force a reviewer to available if you need to unblock the appraisal.</p>
             </div>
             <div className="space-y-3">
               {appraisal.reviewers
@@ -488,10 +488,10 @@ function UpdateReviewersCard({
                 .map((reviewer) => {
                   const isForceEnabled = reviewer.availabilityStatus === "FORCED" || reviewer.availabilityStatus === "AVAILABLE";
                   return (
-                    <div key={reviewer.id} className="flex flex-col gap-3 rounded-2xl border border-outline-variant/35 bg-surface px-4 py-3 md:flex-row md:items-center md:justify-between">
+                    <div key={reviewer.id} className="flex flex-col gap-3 rounded-2xl border border-mono-border/35 bg-mono-card px-4 py-3 md:flex-row md:items-center md:justify-between">
                       <div>
-                        <p className="text-sm font-medium text-on-surface">{reviewer.user.name}</p>
-                        <p className="mt-1 text-xs text-on-surface-variant">
+                        <p className="text-sm font-medium text-mono-text">{reviewer.user.name}</p>
+                        <p className="mt-1 text-xs text-mono-muted">
                           {(KIND_LABEL[reviewer.kind] ?? reviewer.kind)} - current status {reviewer.availabilityStatus}
                         </p>
                       </div>
@@ -521,8 +521,8 @@ function UpdateReviewersCard({
             disabled={saving || !selectedHR}
             size="sm"
             className={selectedHR
-              ? "rounded-2xl border-0 bg-[#00cec4] px-5 py-3 text-sm font-medium text-white hover:bg-[#00b8af]"
-              : "rounded-2xl bg-outline-variant px-5 py-3 text-sm font-medium text-on-surface-variant transition disabled:cursor-not-allowed"}
+              ? "rounded-2xl border-0 bg-[#F9D972] px-5 py-3 text-sm font-medium text-white hover:bg-[#E8C85D]"
+              : "rounded-2xl bg-outline-variant px-5 py-3 text-sm font-medium text-mono-muted transition disabled:cursor-not-allowed"}
           >
             Update Reviewers
           </Button>
@@ -587,13 +587,13 @@ function StageActions({
 
       {/* Update reviewers */}
       {false && stage === "REVIEWERS_ASSIGNED" && caps["ams.appraisal.assign_reviewers"] && (
-        <div className="rounded-2xl border border-outline-variant bg-surface p-6 shadow-sm">
+        <div className="rounded-2xl border border-mono-border bg-mono-card p-6 shadow-sm">
           <div className="space-y-6">
             <div className="space-y-1">
-              <h2 className="ds-h2 text-slate-900">
+              <h2 className="monolith-h2 text-slate-900">
                 Update Reviewers
               </h2>
-              <p className="text-sm text-on-surface-variant">Adjust the reviewer chain after assignment if a reviewer needs to change.</p>
+              <p className="text-sm text-mono-muted">Adjust the reviewer chain after assignment if a reviewer needs to change.</p>
             </div>
 
             <div className="flex flex-col gap-3 md:flex-row md:items-center">
@@ -627,7 +627,7 @@ function StageActions({
               />
               {includeTL && (
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:pl-6">
-                  <span className="text-xs font-semibold text-on-surface-variant md:w-22">TL</span>
+                  <span className="text-xs font-semibold text-mono-muted md:w-22">TL</span>
                   <DropdownSelect
                     ariaLabel="Select team lead"
                     className="w-full md:flex-1"
@@ -659,7 +659,7 @@ function StageActions({
               />
               {includeManager && (
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:pl-6">
-                  <span className="text-xs font-semibold text-on-surface-variant md:w-22">Manager</span>
+                  <span className="text-xs font-semibold text-mono-muted md:w-22">Manager</span>
                   <DropdownSelect
                     ariaLabel="Select manager"
                     className="w-full md:flex-1"
@@ -683,7 +683,7 @@ function StageActions({
               </p>
             )}
 
-            <div className="border-t border-outline-variant pt-6">
+            <div className="border-t border-mono-border pt-6">
               <div className="flex items-center justify-end gap-3">
                 <Button
                   variant="outline"
@@ -716,7 +716,7 @@ function StageActions({
         <Card title="Confirm Your Availability">
           {myReviewer.availabilityStatus === "PENDING" ? (
             <div className="space-y-3">
-              <p className="text-sm text-on-surface-variant">
+              <p className="text-sm text-mono-muted">
                 Can you attend the appraisal review for <strong>{appraisal.employee.name}</strong>?
               </p>
               <div className="flex gap-3">
@@ -735,7 +735,7 @@ function StageActions({
               <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[myReviewer.availabilityStatus] ?? ""}`}>
                 {myReviewer.availabilityStatus}
               </span>
-              <span className="text-sm text-on-surface-variant">Response recorded.</span>
+              <span className="text-sm text-mono-muted">Response recorded.</span>
             </div>
           )}
         </Card>
@@ -748,7 +748,7 @@ function StageActions({
           <div className="space-y-2">
             {appraisal.reviewers.filter((r) => r.availabilityStatus === "UNAVAILABLE").map((r) => (
               <div key={r.id} className="flex items-center justify-between text-sm">
-                <span>{r.user.name} <span className="text-on-surface-variant/60">({r.kind})</span></span>
+                <span>{r.user.name} <span className="text-mono-muted/60">({r.kind})</span></span>
                 <button onClick={() => onAction("availability", { available: true, force: true, userId: r.userId })}
                   className="text-xs px-2 py-1 bg-orange-500 text-white rounded hover:bg-orange-600">
                   Force available
@@ -798,7 +798,7 @@ function StageActions({
             <div className="space-y-1">
               <p className="text-sm font-medium text-green-700">Self-assessment submitted</p>
               {appraisal.selfAssessment.submittedAt && (
-                <p className="text-xs text-on-surface-variant">
+                <p className="text-xs text-mono-muted">
                   Submitted {new Date(appraisal.selfAssessment.submittedAt).toLocaleString("en-IN")}
                   {appraisal.selfAssessment.editCount != null && appraisal.selfAssessment.editCount > 0
                     ? ` · ${appraisal.selfAssessment.editCount} edit${appraisal.selfAssessment.editCount !== 1 ? "s" : ""}`
@@ -807,14 +807,14 @@ function StageActions({
               )}
             </div>
           ) : (
-            <p className="text-sm text-on-surface-variant/60 italic">Employee has not yet submitted their self-assessment.</p>
+            <p className="text-sm text-mono-muted/60 italic">Employee has not yet submitted their self-assessment.</p>
           )}
         </Card>
       )}
 
       {(stage === "MANAGEMENT_REVIEW" || stage === "MEETING_PENDING" || stage === "MEETING_LIVE" || stage === "HIKE_FINALISATION" || stage === "CLOSED") && (
         <Card title="Forms Access">
-          <p className="text-sm text-on-surface-variant">
+          <p className="text-sm text-mono-muted">
             The self-assessment and reviewer forms are available in the popup window.
             Use <strong>View Forms</strong> to open them.
           </p>
@@ -826,7 +826,7 @@ function StageActions({
         <>
           {canClaimManagement && (
             <Card title="Management Review">
-              <p className="text-sm text-on-surface-variant mb-3">
+              <p className="text-sm text-mono-muted mb-3">
                 No management reviewer has claimed this appraisal yet.
               </p>
               <button onClick={() => onAction("claim-management", {})} disabled={saving}
@@ -844,7 +844,7 @@ function StageActions({
 
           {isClaimant && (
             <Card title="Management Review">
-              <p className="text-sm text-on-surface-variant mb-3">
+              <p className="text-sm text-mono-muted mb-3">
                 Your management review is handled on a dedicated page so self-assessment, reviewer ratings, and management scoring stay separate.
               </p>
               <Link
@@ -863,7 +863,7 @@ function StageActions({
         <Card title="Confirm Meeting Date">
           <div className="space-y-4">
             <div>
-              <label className="text-xs text-on-surface-variant">Final Meeting Date & Time</label>
+              <label className="text-xs text-mono-muted">Final Meeting Date & Time</label>
               {proposedMeetingDates.length > 0 ? (
                 <div className="mt-2 grid gap-2">
                   {proposedMeetingDates.map((value, index) => {
@@ -876,8 +876,8 @@ function StageActions({
                         onClick={() => setMeetingDate(isoValue)}
                         className={`rounded-xl border px-4 py-3 text-left text-sm transition ${
                           active
-                            ? "border-[#00cec4]/40 bg-[#00cec4]/8 text-on-surface"
-                            : "border-outline-variant/35 bg-surface text-on-surface-variant hover:border-[#00cec4]/25"
+                            ? "border-[#F9D972]/40 bg-[#F9D972]/8 text-mono-text"
+                            : "border-mono-border/35 bg-mono-card text-mono-muted hover:border-[#F9D972]/25"
                         }`}
                       >
                         {new Date(value).toLocaleString("en-IN")}
@@ -892,15 +892,15 @@ function StageActions({
             </div>
             <Button onClick={() => onAction("meeting", { action: "confirm", scheduledAt: meetingDate })}
               disabled={saving || !meetingDate}
-              className="bg-[#00cec4] text-white hover:bg-[#00b8af]">
+              className="bg-[#F9D972] text-white hover:bg-[#E8C85D]">
               Finalize Meeting Date
             </Button>
           </div>
           {proposedMeetingDates.length > 0 && (
             <div className="mt-3">
-              <p className="text-xs text-on-surface-variant">Proposed dates from management:</p>
+              <p className="text-xs text-mono-muted">Proposed dates from management:</p>
               {proposedMeetingDates.map((d, i) => (
-                <p key={i} className="text-sm text-on-surface">{new Date(d).toLocaleString("en-IN")}</p>
+                <p key={i} className="text-sm text-mono-text">{new Date(d).toLocaleString("en-IN")}</p>
               ))}
             </div>
           )}
@@ -909,9 +909,9 @@ function StageActions({
 
       {stage === "MEETING_PENDING" && caps["ams.meeting.confirm"] && appraisal.meeting?.status === "SCHEDULED" && (
         <Card title="Meeting Scheduled">
-          <p className="text-sm text-on-surface-variant">{new Date(appraisal.meeting.scheduledAt).toLocaleString("en-IN")}</p>
+          <p className="text-sm text-mono-muted">{new Date(appraisal.meeting.scheduledAt).toLocaleString("en-IN")}</p>
           <Button onClick={() => onAction("meeting", { action: "start" })} disabled={saving}
-            className="mt-3 bg-[#00cec4] text-white hover:bg-[#00b8af]">
+            className="mt-3 bg-[#F9D972] text-white hover:bg-[#E8C85D]">
             Open MOM Window
           </Button>
         </Card>
@@ -946,22 +946,22 @@ function StageActions({
           )}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-on-surface-variant">Final Hike %</label>
+              <label className="text-xs text-mono-muted">Final Hike %</label>
               <Input type="number" value={hikePercent} onChange={(e) => setHikePercent(e.target.value)}
                 className="mt-1 w-full" />
             </div>
             <div className="col-span-2">
-              <label className="text-xs text-on-surface-variant">Effective From</label>
+              <label className="text-xs text-mono-muted">Effective From</label>
               <Input type="date" value={hikeEffective} onChange={(e) => setHikeEffective(e.target.value)}
                 className="mt-1 w-full" />
             </div>
             <div className="col-span-2">
-              <label className="text-xs text-on-surface-variant">Negotiation Remarks</label>
+              <label className="text-xs text-mono-muted">Negotiation Remarks</label>
               <textarea
                 value={negotiationRemarks}
                 onChange={(e) => setNegotiationRemarks(e.target.value)}
                 rows={3}
-                className="mt-1 w-full rounded-xl border border-outline-variant/35 bg-surface px-3 py-2 text-sm text-on-surface"
+                className="mt-1 w-full rounded-xl border border-mono-border/35 bg-mono-card px-3 py-2 text-sm text-mono-text"
                 placeholder="Explain whether you accepted the suggested hike or negotiated a different final number."
               />
             </div>
@@ -969,7 +969,7 @@ function StageActions({
           <Button
             onClick={() => onAction("hike", { percent: Number(hikePercent), effectiveFrom: hikeEffective, notes: negotiationRemarks })}
             disabled={saving || !hikePercent || !hikeEffective || scoreData?.hikePercent === null}
-            className="mt-3 bg-[#00cec4] text-white hover:bg-[#00b8af]">
+            className="mt-3 bg-[#F9D972] text-white hover:bg-[#E8C85D]">
             Finalize Salary
           </Button>
         </Card>
@@ -1010,16 +1010,16 @@ function ReviewersPanel({
   return (
     <Card title="Reviewers">
       {reviewers.length === 0 ? (
-        <p className="text-sm text-on-surface-variant/60">Not assigned yet.</p>
+        <p className="text-sm text-mono-muted/60">Not assigned yet.</p>
       ) : (
         <div className="space-y-2">
           {reviewers.map((r) => (
             <div key={r.id} className="flex items-center justify-between text-sm">
               <div>
-                <span className="font-medium text-on-surface">{r.user.name}</span>
-                <span className="ml-2 text-xs text-on-surface-variant/60 uppercase">{r.kind}</span>
+                <span className="font-medium text-mono-text">{r.user.name}</span>
+                <span className="ml-2 text-xs text-mono-muted/60 uppercase">{r.kind}</span>
               </div>
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[r.availabilityStatus] ?? "bg-surface-container-high text-on-surface-variant"}`}>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[r.availabilityStatus] ?? "bg-mono-soft text-mono-muted"}`}>
                 {r.availabilityStatus}
               </span>
             </div>
@@ -1028,7 +1028,7 @@ function ReviewersPanel({
       )}
 
       {stage === "REVIEWERS_ASSIGNED" && availabilityDeadline && (
-        <div className={`mt-3 pt-3 border-t border-outline-variant/40 text-xs ${deadlinePassed ? "text-green-700" : "text-on-surface-variant"}`}>
+        <div className={`mt-3 pt-3 border-t border-mono-border/40 text-xs ${deadlinePassed ? "text-green-700" : "text-mono-muted"}`}>
           {deadlinePassed ? <span>Availability deadline passed.</span> : (
             <span>Availability deadline: <strong>{new Date(availabilityDeadline).toLocaleDateString("en-IN")}</strong></span>
           )}
@@ -1037,13 +1037,13 @@ function ReviewersPanel({
       )}
 
       {stage === "SELF_ASSESSMENT_OPEN" && selfAssessmentDeadline && (
-        <div className="mt-3 pt-3 border-t border-outline-variant/40 text-xs text-purple-700">
+        <div className="mt-3 pt-3 border-t border-mono-border/40 text-xs text-purple-700">
           Self-assessment deadline: <strong>{new Date(selfAssessmentDeadline).toLocaleDateString("en-IN")}</strong>
         </div>
       )}
 
       {stage === "REVIEWER_RATING" && reviewerRatingDeadline && (
-        <div className="mt-3 pt-3 border-t border-outline-variant/40 text-xs text-indigo-700">
+        <div className="mt-3 pt-3 border-t border-mono-border/40 text-xs text-indigo-700">
           Reviewer rating deadline: <strong>{new Date(reviewerRatingDeadline).toLocaleDateString("en-IN")}</strong>
         </div>
       )}
@@ -1067,29 +1067,29 @@ function MeetingSection({ meeting, onAddMinute, caps, saving }: {
     <Card title="Meeting Minutes">
       <div className="space-y-2 max-h-48 overflow-y-auto mb-3">
         {meeting.minutes.length === 0 ? (
-          <p className="text-sm text-on-surface-variant/60">No minutes yet.</p>
+          <p className="text-sm text-mono-muted/60">No minutes yet.</p>
         ) : (
           meeting.minutes.map((m) => (
             <div key={m.id} className="border-l-2 border-indigo-200 pl-3">
               <p className="text-xs font-semibold text-indigo-600">{m.role} — {m.author.name}</p>
-              <p className="text-sm text-on-surface">{m.content}</p>
+              <p className="text-sm text-mono-text">{m.content}</p>
             </div>
           ))
         )}
       </div>
       {caps["ams.meeting.minutes"] && meeting.status !== "DONE" && (
-        <div className="space-y-2 pt-3 border-t border-outline-variant/40">
+        <div className="space-y-2 pt-3 border-t border-mono-border/40">
           <div className="flex gap-2">
             {availableRoles.map((r) => (
               <button key={r} type="button" onClick={() => setMinuteRole(r)}
-                className={`text-xs px-2 py-1 rounded ${minuteRole === r ? "bg-indigo-600 text-white" : "bg-surface-container-high text-on-surface"}`}>
+                className={`text-xs px-2 py-1 rounded ${minuteRole === r ? "bg-indigo-600 text-white" : "bg-mono-soft text-mono-text"}`}>
                 {r}
               </button>
             ))}
           </div>
           <textarea value={minuteContent} onChange={(e) => setMinuteContent(e.target.value)}
             placeholder="Add minute…" rows={2}
-            className="w-full border border-outline rounded-lg px-3 py-2 text-sm resize-none" />
+            className="w-full border border-mono-border rounded-lg px-3 py-2 text-sm resize-none" />
           <button
             onClick={() => { onAddMinute(minuteRole, minuteContent); setMinuteContent(""); }}
             disabled={saving || !minuteContent}
@@ -1119,14 +1119,14 @@ function ToggleCard({
     <button
       type="button"
       onClick={onToggle}
-      className="flex w-full items-center justify-between rounded-2xl border border-outline-variant/35 bg-surface px-4 py-3 text-left transition hover:border-[#00cec4]/45"
+      className="flex w-full items-center justify-between rounded-2xl border border-mono-border/35 bg-mono-card px-4 py-3 text-left transition hover:border-[#F9D972]/45"
     >
       <div>
-        <p className="font-medium text-on-surface">{label}</p>
-        <p className="mt-1 text-xs text-on-surface-variant">{description}</p>
+        <p className="font-medium text-mono-text">{label}</p>
+        <p className="mt-1 text-xs text-mono-muted">{description}</p>
       </div>
       <span className={`relative inline-flex h-7 w-12 rounded-full transition ${active ? "bg-[#55627f]" : "bg-outline-variant dark:bg-slate-600"}`}>
-        <span className={`absolute top-1 h-5 w-5 rounded-full bg-surface transition ${active ? "left-6" : "left-1"}`} />
+        <span className={`absolute top-1 h-5 w-5 rounded-full bg-mono-card transition ${active ? "left-6" : "left-1"}`} />
       </span>
     </button>
   );
@@ -1134,8 +1134,8 @@ function ToggleCard({
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="card-top-accent bg-surface rounded-xl border border-outline-variant p-5 space-y-3">
-      {title && <h2 className="ds-h2 text-on-surface">{title}</h2>}
+    <div className="monolith-card monolith-accent bg-mono-card rounded-xl border border-mono-border p-5 space-y-3">
+      {title && <h2 className="monolith-h2 text-mono-text">{title}</h2>}
       {children}
     </div>
   );
@@ -1159,9 +1159,9 @@ function ReviewerToggleRow({
       onClick={onToggle}
       className={`flex ${compact ? "w-auto min-w-[190px]" : "w-full"} items-center justify-between rounded-2xl ${compact ? "px-3 py-2.5" : "px-4 py-4"} text-left transition ${
         active
-          ? "bg-surface text-on-surface"
-          : "bg-surface text-on-surface-variant hover:border-[#00cec4]/35"
-      } ${compact ? "border border-outline-variant/35" : "border border-outline-variant/35"}`}
+          ? "bg-mono-card text-mono-text"
+          : "bg-mono-card text-mono-muted hover:border-[#F9D972]/35"
+      } ${compact ? "border border-mono-border/35" : "border border-mono-border/35"}`}
     >
       <span className={`${compact ? "text-xs uppercase tracking-[0.14em]" : "text-sm"} font-medium`}>{label}</span>
       <span
@@ -1170,7 +1170,7 @@ function ReviewerToggleRow({
         }`}
       >
         <span
-          className={`inline-block h-6 w-6 rounded-full bg-surface shadow-sm transition ${
+          className={`inline-block h-6 w-6 rounded-full bg-mono-card shadow-sm transition ${
             active ? "translate-x-5" : "translate-x-1"
           }`}
         />
@@ -1182,8 +1182,8 @@ function ReviewerToggleRow({
 function Dt({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-2">
-      <dt className="text-on-surface-variant/60 min-w-20">{label}</dt>
-      <dd className="text-on-surface">{children}</dd>
+      <dt className="text-mono-muted/60 min-w-20">{label}</dt>
+      <dd className="text-mono-text">{children}</dd>
     </div>
   );
 }

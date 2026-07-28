@@ -70,7 +70,7 @@ export function ContactDetailWrapper({
               </button>
             </div>
             <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
-              <Info className="size-4.5 text-[#00c4b6]" />
+              <Info className="size-4.5 text-[#F9D972]" />
               <h3 className="font-bold text-sm text-white uppercase tracking-wider">Contact Profile Details</h3>
             </div>
             
@@ -83,7 +83,7 @@ export function ContactDetailWrapper({
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Linked Company</span>
                 <span className="text-white font-medium">
                   {contact.account ? (
-                    <Link href={`/crm/customers/${contact.account.id}`} className="hover:underline text-[#00c4b6] font-bold">
+                    <Link href={`/crm/customers/${contact.account.id}`} className="hover:underline text-[#F9D972] font-bold">
                       {contact.account.name}
                     </Link>
                   ) : (
@@ -127,12 +127,12 @@ export function ContactDetailWrapper({
             <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
               <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3 mb-2">
                 <div className="flex items-center gap-3">
-                  <Building className="size-4.5 text-[#00c4b6]" />
+                  <Building className="size-4.5 text-[#F9D972]" />
                   <h3 className="font-bold text-sm text-white uppercase tracking-wider">Customer Account Details</h3>
                 </div>
                 <Link
                   href={`/crm/customers/${contact.account.id}`}
-                  className="text-xs text-[#00c4b6] hover:underline font-bold"
+                  className="text-xs text-[#F9D972] hover:underline font-bold"
                 >
                   View Full Profile
                 </Link>
@@ -160,7 +160,7 @@ export function ContactDetailWrapper({
                 {contact.account.website && (
                   <div className="space-y-1 md:col-span-2">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Website</span>
-                    <a href={contact.account.website} target="_blank" rel="noopener noreferrer" className="text-[#00c4b6] hover:underline font-medium">
+                    <a href={contact.account.website} target="_blank" rel="noopener noreferrer" className="text-[#F9D972] hover:underline font-medium">
                       {contact.account.website}
                     </a>
                   </div>
@@ -202,7 +202,7 @@ export function ContactDetailWrapper({
               <button
                 onClick={() => setActiveTab("OVERVIEW")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "OVERVIEW" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "OVERVIEW" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Overview
@@ -210,7 +210,7 @@ export function ContactDetailWrapper({
               <button
                 onClick={() => setActiveTab("NOTES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "NOTES" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "NOTES" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Notes ({notes.length})
@@ -218,7 +218,7 @@ export function ContactDetailWrapper({
               <button
                 onClick={() => setActiveTab("ACTIVITIES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ACTIVITIES" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "ACTIVITIES" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Activities ({activities.length})
@@ -226,7 +226,7 @@ export function ContactDetailWrapper({
               <button
                 onClick={() => setActiveTab("ATTACHMENTS")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ATTACHMENTS" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "ATTACHMENTS" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Files ({attachments.length})
@@ -234,7 +234,7 @@ export function ContactDetailWrapper({
               <button
                 onClick={() => setActiveTab("TIMELINE")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "TIMELINE" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "TIMELINE" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Audit

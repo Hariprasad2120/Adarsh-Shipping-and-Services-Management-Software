@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DemoFillButton } from "@/components/demo-fill-button";
 import {Badge,DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableHead,DataTableHeader,DataTableRow,DataTableToolbar,} from "@/components/data-table";
-import { DropdownSelect } from "@/components/ui/dropdown-select";
-import { Input } from "@/components/ui/input";
+import { DropdownSelect } from "@/components/monolith/dropdown-select";
+import { Input } from "@/components/monolith/input";
 import { getLeaveDemoValues } from "@/lib/demo-fill";
 
 type LeaveType = { id: string; name: string; paid: boolean };
@@ -26,7 +26,7 @@ const STATUS_COLOR: Record<string, string> = {
   pending: "bg-yellow-50 text-yellow-700",
   approved: "bg-green-50 text-green-700",
   rejected: "bg-red-50 text-red-600",
-  cancelled: "bg-surface-container-high text-on-surface-variant",
+  cancelled: "bg-mono-soft text-mono-muted",
 };
 
 export function LeavesClient({
@@ -111,7 +111,7 @@ export function LeavesClient({
 
       <div className="space-y-0 rounded-xl border border-gray-200 bg-white">
         <DataTableToolbar>
-          <h2 className="ds-h2 text-gray-900">My Requests</h2>
+          <h2 className="monolith-h2 text-gray-900">My Requests</h2>
           <div className="flex gap-2">
             <DemoFillButton disabled={loading || leaveTypes.length === 0} onClick={fillDemoData} />
             <button
@@ -208,7 +208,7 @@ export function LeavesClient({
       {canApprove && pendingApprovals.length > 0 && (
         <div className="space-y-0 rounded-xl border border-gray-200 bg-white">
           <DataTableToolbar className="justify-start">
-            <h2 className="ds-h2 text-gray-900">Pending Approvals</h2>
+            <h2 className="monolith-h2 text-gray-900">Pending Approvals</h2>
           </DataTableToolbar>
           <DataTable className="rounded-none border-0">
             <DataTableHeader>

@@ -71,30 +71,30 @@ export default async function JobSpacesDashboard() {
   return (
     <main className="space-y-6">
       {/* Header Panel */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between p-6 rounded-2xl border border-outline-variant bg-surface shadow-sm text-left">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between p-6 rounded-2xl border border-mono-border bg-mono-card shadow-sm text-left">
         <div>
-          <span className="text-[10px] uppercase font-bold tracking-widest text-[#00cec4]">Workspace Provisioner</span>
-          <h1 className="text-xl font-bold text-on-surface mt-1">Job Workspaces</h1>
-          <p className="text-xs text-on-surface-variant mt-0.5">
+          <span className="text-[10px] uppercase font-bold tracking-widest text-[#F9D972]">Workspace Provisioner</span>
+          <h1 className="text-xl font-bold text-mono-text mt-1">Job Workspaces</h1>
+          <p className="text-xs text-mono-muted mt-0.5">
             Monitor and manage automatically provisioned Google Chat spaces and Drive folder structures for shipping operations.
           </p>
         </div>
         <div className="mt-4 flex gap-3 md:mt-0">
-          <div className="card-top-accent rounded-xl border border-outline-variant/60 bg-surface-container-low px-4 py-3 text-left">
-            <div className="ds-label">Active Jobs</div>
-            <div className="mt-1 text-lg text-on-surface ds-numeric">{activeJobs.length}</div>
+          <div className="monolith-card monolith-accent rounded-xl border border-mono-border/60 bg-mono-soft px-4 py-3 text-left">
+            <div className="monolith-label">Active Jobs</div>
+            <div className="mt-1 text-lg text-mono-text monolith-numeric">{activeJobs.length}</div>
           </div>
-          <div className="card-top-accent-orange rounded-xl border border-outline-variant/60 bg-surface-container-low px-4 py-3 text-left">
-            <div className="ds-label">Deleted Cleanup</div>
-            <div className="mt-1 text-lg text-on-surface ds-numeric">{deletedCleanupJobs.length}</div>
+          <div className="monolith-card monolith-accent-warning rounded-xl border border-mono-border/60 bg-mono-soft px-4 py-3 text-left">
+            <div className="monolith-label">Deleted Cleanup</div>
+            <div className="mt-1 text-lg text-mono-text monolith-numeric">{deletedCleanupJobs.length}</div>
           </div>
         </div>
       </div>
 
       {/* Active Jobs Table */}
-      <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
         <div className="overflow-x-auto text-left">
-          <table className="ds-table">
+          <table className="monolith-table">
             <thead>
               <tr>
                 <th className="px-6 py-3">Job Number</th>
@@ -109,7 +109,7 @@ export default async function JobSpacesDashboard() {
             <tbody>
               {activeJobs.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-10 text-xs text-on-surface-variant">
+                  <td colSpan={7} className="text-center py-10 text-xs text-mono-muted">
                     No active jobs currently need workspace monitoring.
                   </td>
                 </tr>
@@ -120,14 +120,14 @@ export default async function JobSpacesDashboard() {
                   const isFailed = wp?.provisioningStatus === "failed";
 
                   return (
-                    <tr key={job.id} className="hover:bg-surface-container-low transition-colors">
-                      <td className="px-6 py-4 text-xs font-bold text-on-surface font-mono ds-numeric">
+                    <tr key={job.id} className="hover:bg-mono-soft transition-colors">
+                      <td className="px-6 py-4 text-xs font-bold text-mono-text font-mono monolith-numeric">
                         {job.jobNumber}
                       </td>
-                      <td className="px-6 py-4 text-xs text-on-surface truncate max-w-[200px]">
+                      <td className="px-6 py-4 text-xs text-mono-text truncate max-w-[200px]">
                         {job.customer.name}
                       </td>
-                      <td className="px-6 py-4 text-xs text-on-surface-variant font-medium">
+                      <td className="px-6 py-4 text-xs text-mono-muted font-medium">
                         {job.jobType.name}
                       </td>
                       <td className="px-6 py-4 text-xs">
@@ -135,7 +135,7 @@ export default async function JobSpacesDashboard() {
                           wp.googleSpaceId?.includes("mock") ? (
                             <Link
                               href={`/communication/chat?spaceId=${wp.googleSpaceId}`}
-                              className="inline-flex items-center space-x-1 text-[#00cec4] hover:underline font-semibold"
+                              className="inline-flex items-center space-x-1 text-[#F9D972] hover:underline font-semibold"
                             >
                               <MessageSquare className="size-3.5" />
                               <span>Open Chat (Sim)</span>
@@ -145,7 +145,7 @@ export default async function JobSpacesDashboard() {
                               href={wp.googleSpaceUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center space-x-1 text-[#00cec4] hover:underline font-semibold"
+                              className="inline-flex items-center space-x-1 text-[#F9D972] hover:underline font-semibold"
                             >
                               <MessageSquare className="size-3.5" />
                               <span>Open Chat</span>
@@ -153,7 +153,7 @@ export default async function JobSpacesDashboard() {
                             </a>
                           )
                         ) : (
-                          <span className="text-[10px] text-on-surface-variant italic">Unprovisioned</span>
+                          <span className="text-[10px] text-mono-muted italic">Unprovisioned</span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-xs">
@@ -161,7 +161,7 @@ export default async function JobSpacesDashboard() {
                           wp.rootFolderId.startsWith("mock-") ? (
                             <Link
                               href={`/communication/drive?jobId=${job.id}`}
-                              className="inline-flex items-center space-x-1 text-[#fb923c] hover:underline font-semibold"
+                              className="inline-flex items-center space-x-1 text-[#D88700] hover:underline font-semibold"
                             >
                               <Folder className="size-3.5" />
                               <span>Open Drive (Sim)</span>
@@ -171,7 +171,7 @@ export default async function JobSpacesDashboard() {
                               href={`https://drive.google.com/drive/folders/${wp.rootFolderId}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center space-x-1 text-[#fb923c] hover:underline font-semibold"
+                              className="inline-flex items-center space-x-1 text-[#D88700] hover:underline font-semibold"
                             >
                               <Folder className="size-3.5" />
                               <span>Open Drive</span>
@@ -179,15 +179,15 @@ export default async function JobSpacesDashboard() {
                             </a>
                           )
                         ) : (
-                          <span className="text-[10px] text-on-surface-variant italic">Unprovisioned</span>
+                          <span className="text-[10px] text-mono-muted italic">Unprovisioned</span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-xs">
                         <div className="flex items-center space-x-1.5">
                           {isSuccess ? (
                             <>
-                              <CheckCircle2 className="size-4 text-[#00cec4]" />
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-[#00cec4]">Success</span>
+                              <CheckCircle2 className="size-4 text-[#F9D972]" />
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-[#F9D972]">Success</span>
                             </>
                           ) : isFailed ? (
                             <>
@@ -196,8 +196,8 @@ export default async function JobSpacesDashboard() {
                             </>
                           ) : (
                             <>
-                              <RefreshCw className="size-4 text-on-surface-variant animate-spin" />
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Pending</span>
+                              <RefreshCw className="size-4 text-mono-muted animate-spin" />
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-mono-muted">Pending</span>
                             </>
                           )}
                         </div>
@@ -209,7 +209,7 @@ export default async function JobSpacesDashboard() {
                               <input type="hidden" name="jobId" value={job.id} />
                               <button
                                 type="submit"
-                                className="inline-flex items-center space-x-1 text-xs text-[#00cec4] hover:underline font-bold uppercase"
+                                className="inline-flex items-center space-x-1 text-xs text-[#F9D972] hover:underline font-bold uppercase"
                               >
                                 <RefreshCw className="size-3" />
                                 <span>{isSuccess && !wp?.googleSpaceId ? "Provision Chat" : "Retry"}</span>
@@ -227,15 +227,15 @@ export default async function JobSpacesDashboard() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
-        <div className="border-b border-outline-variant/60 bg-surface-container-low px-6 py-4">
-          <h2 className="ds-h3 text-on-surface">Deleted Jobs Pending External Cleanup</h2>
-          <p className="mt-1 text-xs text-on-surface-variant">
+      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
+        <div className="border-b border-mono-border/60 bg-mono-soft px-6 py-4">
+          <h2 className="monolith-h3 text-mono-text">Deleted Jobs Pending External Cleanup</h2>
+          <p className="mt-1 text-xs text-mono-muted">
             Deleted jobs are hidden from the active workspace list. Only rows with lingering Chat or Drive resources stay here for cleanup.
           </p>
         </div>
         <div className="overflow-x-auto text-left">
-          <table className="ds-table">
+          <table className="monolith-table">
             <thead>
               <tr>
                 <th className="px-6 py-3">Job Number</th>
@@ -249,7 +249,7 @@ export default async function JobSpacesDashboard() {
             <tbody>
               {deletedCleanupJobs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-10 text-center text-xs text-on-surface-variant">
+                  <td colSpan={6} className="py-10 text-center text-xs text-mono-muted">
                     No deleted jobs are holding onto Chat spaces or Drive folders.
                   </td>
                 </tr>
@@ -266,14 +266,14 @@ export default async function JobSpacesDashboard() {
                     (!hasChatCleanupColumns || chatCleanupFailed || wp?.chatSpaceDeleteStatus !== "SUCCESS");
 
                   return (
-                    <tr key={job.id} className="hover:bg-surface-container-low transition-colors">
-                      <td className="px-6 py-4 text-xs font-bold text-on-surface font-mono ds-numeric">
+                    <tr key={job.id} className="hover:bg-mono-soft transition-colors">
+                      <td className="px-6 py-4 text-xs font-bold text-mono-text font-mono monolith-numeric">
                         <div className="space-y-1">
                           <div>{job.jobNumber}</div>
-                          <span className="ds-label text-[#fb923c]">Deleted Job</span>
+                          <span className="monolith-label text-[#D88700]">Deleted Job</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-xs text-on-surface truncate max-w-[200px]">
+                      <td className="px-6 py-4 text-xs text-mono-text truncate max-w-[200px]">
                         {job.customer.name}
                       </td>
                       <td className="px-6 py-4 text-xs">
@@ -282,14 +282,14 @@ export default async function JobSpacesDashboard() {
                             href={wp.googleSpaceUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center space-x-1 text-[#00cec4] hover:underline font-semibold"
+                            className="inline-flex items-center space-x-1 text-[#F9D972] hover:underline font-semibold"
                           >
                             <MessageSquare className="size-3.5" />
                             <span>Open Chat</span>
                             <ExternalLink className="size-3" />
                           </a>
                         ) : (
-                          <span className="text-[10px] italic text-on-surface-variant">Already removed</span>
+                          <span className="text-[10px] italic text-mono-muted">Already removed</span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-xs">
@@ -298,21 +298,21 @@ export default async function JobSpacesDashboard() {
                             href={`https://drive.google.com/drive/folders/${wp.rootFolderId}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center space-x-1 text-[#fb923c] hover:underline font-semibold"
+                            className="inline-flex items-center space-x-1 text-[#D88700] hover:underline font-semibold"
                           >
                             <Folder className="size-3.5" />
                             <span>Open Drive</span>
                             <ExternalLink className="size-3" />
                           </a>
                         ) : (
-                          <span className="text-[10px] italic text-on-surface-variant">Already removed</span>
+                          <span className="text-[10px] italic text-mono-muted">Already removed</span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-xs">
                         {hasStoredChatSpace || hasStoredDriveFolder ? (
-                          <div className="rounded-xl border border-[#fb923c]/35 bg-surface-container-low px-3 py-2">
-                            <div className="ds-label text-[#fb923c]">Cleanup Pending</div>
-                            <p className="mt-1 text-[11px] text-on-surface-variant">
+                          <div className="rounded-xl border border-[#D88700]/35 bg-mono-soft px-3 py-2">
+                            <div className="monolith-label text-[#D88700]">Cleanup Pending</div>
+                            <p className="mt-1 text-[11px] text-mono-muted">
                               {chatCleanupFailed
                                 ? (wp?.chatSpaceDeleteError || "Chat cleanup failed and needs retry.")
                                 : hasStoredChatSpace
@@ -321,7 +321,7 @@ export default async function JobSpacesDashboard() {
                             </p>
                           </div>
                         ) : (
-                          <span className="text-[10px] italic text-on-surface-variant">No remaining external data</span>
+                          <span className="text-[10px] italic text-mono-muted">No remaining external data</span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-right text-xs">
@@ -331,7 +331,7 @@ export default async function JobSpacesDashboard() {
                               <input type="hidden" name="jobId" value={job.id} />
                               <button
                                 type="submit"
-                                className="inline-flex items-center space-x-1 text-xs text-[#fb923c] hover:underline font-bold uppercase"
+                                className="inline-flex items-center space-x-1 text-xs text-[#D88700] hover:underline font-bold uppercase"
                               >
                                 <RefreshCw className="size-3" />
                                 <span>{hasChatCleanupColumns ? "Retry Chat Cleanup" : "Delete Chat Space"}</span>

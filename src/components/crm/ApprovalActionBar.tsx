@@ -70,13 +70,13 @@ function NoteDialog({
   const [note, setNote] = useState("");
   const btnBg =
     confirmVariant === "cyan"
-      ? "#00cec4"
+      ? "#F9D972"
       : confirmVariant === "red"
       ? "#ef4444"
       : "#f97316";
   const btnHover =
     confirmVariant === "cyan"
-      ? "#00b8af"
+      ? "#E8C85D"
       : confirmVariant === "red"
       ? "#dc2626"
       : "#ea580c";
@@ -90,7 +90,7 @@ function NoteDialog({
         className="rounded-2xl p-6 w-full max-w-md shadow-2xl"
         style={{ background: "var(--color-surface)" }}
       >
-        <h3 className="ds-h3 mb-4">{title}</h3>
+        <h3 className="monolith-h3 mb-4">{title}</h3>
         <textarea
           autoFocus
           rows={4}
@@ -326,7 +326,7 @@ export function ApprovalActionBar({
     "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl transition-all disabled:opacity-50";
 
   const variantStyles = {
-    cyan: "bg-[#00cec4] text-white hover:bg-[#00b8af]",
+    cyan: "bg-[#F9D972] text-white hover:bg-[#E8C85D]",
     gray: "bg-[var(--color-surface-container)] text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-low)]",
     red: "bg-[#ef4444] text-white hover:bg-[#dc2626]",
     orange: "bg-[#f97316] text-white hover:bg-[#ea580c]",
@@ -355,7 +355,7 @@ export function ApprovalActionBar({
       )}
 
       <div className="flex items-center flex-wrap gap-2">
-        {isPending && <Loader2 size={14} className="animate-spin text-[#00cec4]" />}
+        {isPending && <Loader2 size={14} className="animate-spin text-[#F9D972]" />}
         {actions.map((action) => (
           <button
             key={action.label}
@@ -461,7 +461,7 @@ export function ApprovalLogList({ logs }: { logs: ApprovalLogEntry[] }) {
         <li key={log.id} className="mb-4 ml-5">
           <span
             className="absolute flex items-center justify-center w-3 h-3 rounded-full -left-1.5 mt-1"
-            style={{ background: "#00cec4" }}
+            style={{ background: "#F9D972" }}
           />
           <div className="flex items-center gap-2 flex-wrap">
             <ApprovalStatusBadge status={log.toStatus} />

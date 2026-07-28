@@ -1,7 +1,7 @@
 "use client";
 
 import { LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/monolith/button";
 import { performLogout } from "@/lib/logout";
 
 export function RootSignOutButton() {
@@ -12,7 +12,7 @@ export function RootSignOutButton() {
       onClick={() => void performLogout()}
       className="uppercase tracking-[0.12em]"
     >
-      <LogOut className="mr-2 size-4 text-[#00cec4]" />
+      <LogOut className="mr-2 size-4 text-[#F9D972]" />
       Sign Out
     </Button>
   );

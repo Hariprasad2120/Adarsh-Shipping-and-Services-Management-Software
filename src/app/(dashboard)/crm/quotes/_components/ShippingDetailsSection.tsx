@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import type { UseFormReturn } from "react-hook-form";
 import type { QuoteFormValues } from "../_lib/types";
 
@@ -32,8 +33,8 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
   const errors = form.formState.errors;
 
   return (
-    <section className="ds-form-section border-b border-[#d9dee7] px-5 py-5">
-      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-on-surface-variant">Logistics / Shipping Details</h2>
+    <section className="monolith-form-section border-b border-[#d9dee7] px-5 py-5">
+      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-mono-muted">Logistics / Shipping Details</h2>
       <div className="grid gap-4 md:grid-cols-2">
         {fields.slice(0, 4).map((field) => (
           <div key={field.name}>
@@ -49,7 +50,7 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
 
         <div>
           <label className="mb-1 block text-[12px] font-medium text-[#374151]">INCOTERM</label>
-          <select
+          <NativeSelect
             className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
             {...form.register("incoterm")}
           >
@@ -59,12 +60,12 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
                 {term}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
 
         <div>
           <label className="mb-1 block text-[12px] font-medium text-[#374151]">Container type</label>
-          <select
+          <NativeSelect
             className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
             {...form.register("containerType")}
           >
@@ -74,7 +75,7 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
                 {containerType}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
 
         {fields.slice(4).map((field) => (

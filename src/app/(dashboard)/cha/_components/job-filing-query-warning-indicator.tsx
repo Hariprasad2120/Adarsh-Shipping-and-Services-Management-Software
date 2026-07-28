@@ -2,8 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { WarningIndicatorPopover } from "@/components/ui/warning-indicator-popover";
+import { Button } from "@/components/monolith/button";
+import { WarningIndicatorPopover } from "@/components/monolith/warning-indicator-popover";
 
 type FilingQueryWarning = {
   queryTitle: string;
@@ -37,7 +37,7 @@ export function JobFilingQueryWarningIndicator({
       <Button
         type="button"
         size="sm"
-        className="w-full justify-start border border-[#fb923c]/25 bg-[#fb923c]/12 text-[#fb923c] hover:bg-[#fb923c]/18 hover:text-[#f97316]"
+        className="w-full justify-start border border-[#D88700]/25 bg-[#D88700]/12 text-[#D88700] hover:bg-[#D88700]/18 hover:text-[#f97316]"
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();

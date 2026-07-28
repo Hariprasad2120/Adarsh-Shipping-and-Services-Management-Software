@@ -38,10 +38,10 @@ export function DataTable({
   );
 
   return (
-    <div className={cn("card-top-accent w-full overflow-hidden rounded-xl border border-outline-variant/60 bg-surface text-on-surface shadow-sm", className)}>
+    <div className={cn("monolith-card monolith-accent w-full overflow-hidden rounded-xl border border-mono-border/60 bg-mono-card text-mono-text shadow-sm", className)}>
       {toolbar}
       <div className="overflow-x-auto">
-        <table className={cn("ds-table ds-table-contained min-w-full w-full text-sm", tableClassName)} {...props}>
+        <table className={cn("monolith-table monolith-table-contained min-w-full w-full text-sm", tableClassName)} {...props}>
           {otherChildren}
         </table>
       </div>
@@ -57,7 +57,7 @@ export function DataTableHeader({
   return (
     <thead
       className={cn(
-        "bg-surface-container-low text-on-surface",
+        "bg-mono-soft text-mono-text",
         className,
       )}
       {...props}
@@ -76,7 +76,7 @@ export function DataTableRow({
   className,
   ...props
 }: HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("group transition-colors hover:bg-surface-container-low/45", className)} {...props} />;
+  return <tr className={cn("group transition-colors hover:bg-mono-soft/45", className)} {...props} />;
 }
 
 export function DataTableHead({
@@ -86,7 +86,7 @@ export function DataTableHead({
   return (
     <th
       className={cn(
-        "px-5 py-4 text-left text-xs font-medium uppercase tracking-[0.14em] text-on-surface-variant",
+        "px-5 py-4 text-left text-xs font-medium uppercase tracking-[0.14em] text-mono-muted",
         className
       )}
       {...props}
@@ -98,7 +98,7 @@ export function DataTableCell({
   className,
   ...props
 }: TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-5 py-4 align-middle text-sm font-normal text-on-surface", className)} {...props} />;
+  return <td className={cn("px-5 py-4 align-middle text-sm font-normal text-mono-text", className)} {...props} />;
 }
 
 export function DataTablePrimaryLinkCell({
@@ -117,7 +117,7 @@ export function DataTablePrimaryLinkCell({
       <Link
         href={href}
         className={cn(
-          "flex w-full items-center px-5 py-4 text-inherit transition-colors hover:text-[#00b5ad] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#00cec4]/30",
+          "flex w-full items-center px-5 py-4 text-inherit transition-colors hover:text-[#00b5ad] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F9D972]/30",
           linkClassName,
         )}
       >
@@ -138,7 +138,7 @@ export function DataTableEmpty({
 }) {
   return (
     <DataTableRow className="hover:bg-transparent">
-      <DataTableCell colSpan={colSpan} className={cn("px-5 py-8 text-center text-on-surface-variant", className)}>
+      <DataTableCell colSpan={colSpan} className={cn("px-5 py-8 text-center text-mono-muted", className)}>
         {message}
       </DataTableCell>
     </DataTableRow>
@@ -201,8 +201,8 @@ export function MetaText({
 }) {
   return (
     <div className="min-w-0" title={title}>
-      <p className="truncate font-normal text-on-surface">{primary}</p>
-      {secondary ? <p className="truncate text-xs text-on-surface-variant">{secondary}</p> : null}
+      <p className="truncate font-normal text-mono-text">{primary}</p>
+      {secondary ? <p className="truncate text-xs text-mono-muted">{secondary}</p> : null}
     </div>
   );
 }
@@ -221,7 +221,7 @@ export function AvatarCell({
 
   return (
     <div className="flex min-w-0 items-center gap-3" title={title ?? name}>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-mono-accent/10 text-xs font-medium text-mono-accent">
         {initials}
       </div>
       <MetaText primary={name} secondary={secondary} />

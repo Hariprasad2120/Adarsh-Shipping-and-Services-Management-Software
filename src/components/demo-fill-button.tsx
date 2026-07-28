@@ -1,8 +1,8 @@
 "use client";
 
 import { WandSparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Button } from "@/components/monolith/button";
+import { DropdownSelect } from "@/components/monolith/dropdown-select";
 import { demoFillEnabled, type DemoPerformanceProfile } from "@/lib/demo-fill";
 
 export function DemoFillButton({

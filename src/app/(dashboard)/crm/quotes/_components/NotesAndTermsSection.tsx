@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import { useEffect, useRef, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { BookmarkPlus, ChevronDown, CreditCard, Save, Trash2, X } from "lucide-react";
@@ -188,7 +189,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
                   type="button"
                   onClick={handleSaveTemplate}
                   disabled={!newTemplateName.trim()}
-                  className="px-3 py-1 rounded bg-[#00cec4] text-white text-[11px] font-medium hover:bg-[#00b8af] disabled:opacity-40 transition-colors"
+                  className="px-3 py-1 rounded bg-[#F9D972] text-white text-[11px] font-medium hover:bg-[#E8C85D] disabled:opacity-40 transition-colors"
                 >
                   Save
                 </button>
@@ -213,7 +214,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
       {/* Bank Details for Quote */}
       <section className="border-b border-[#d9dee7] px-5 py-5">
         <div className="flex items-center gap-2 mb-3">
-          <CreditCard size={14} className="text-[#00cec4]" />
+          <CreditCard size={14} className="text-[#F9D972]" />
           <h3 className="text-[12px] font-semibold text-[#374151] uppercase tracking-wide">
             Bank Details to Display
           </h3>
@@ -224,7 +225,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
             <label htmlFor="bankDetailsId" className="mb-1 block text-[11px] font-medium text-[#6b7280]">
               Select bank account for this document
             </label>
-            <select
+            <NativeSelect
               id="bankDetailsId"
               className="w-full rounded-xl border bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none"
               {...form.register("bankDetailsId")}
@@ -235,7 +236,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
                   {b.bankName} · {b.accountNumber}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           {selectedBank && (

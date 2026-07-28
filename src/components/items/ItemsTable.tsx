@@ -29,7 +29,7 @@ export function ItemsTable({
 
   return (
     <div className="flex-1 overflow-auto">
-      <table className="ds-table">
+      <table className="monolith-table">
         <thead>
           <tr>
             <th className="w-8 px-3 py-2">
@@ -40,7 +40,7 @@ export function ItemsTable({
                   if (el) el.indeterminate = someSelected && !allSelected;
                 }}
                 onChange={onToggleAll}
-                className="rounded accent-[#00cec4]"
+                className="rounded accent-[#F9D972]"
                 aria-label="Select all items"
               />
             </th>
@@ -70,7 +70,7 @@ export function ItemsTable({
             </th>
             <th className="w-10 px-3 py-2 text-center">
               <button
-                className="text-on-surface-variant hover:text-on-surface"
+                className="text-mono-muted hover:text-mono-text"
                 aria-label="Advanced search"
                 title="Advanced search"
               >
@@ -82,7 +82,7 @@ export function ItemsTable({
         <tbody>
           {items.length === 0 ? (
             <tr>
-              <td colSpan={10} className="text-center py-16 text-on-surface-variant">
+              <td colSpan={10} className="text-center py-16 text-mono-muted">
                 <Package size={32} className="mx-auto mb-3 opacity-30" />
                 <p className="text-sm">No items found.</p>
               </td>
@@ -91,7 +91,7 @@ export function ItemsTable({
             items.map((item) => (
               <tr
                 key={item.id}
-                className={`ds-row-link transition-colors ${
+                className={`monolith-row-link transition-colors ${
                   selectedIds.has(item.id) ? "bg-[rgba(0,206,196,0.06)]" : ""
                 }`}
               >
@@ -100,38 +100,38 @@ export function ItemsTable({
                     type="checkbox"
                     checked={selectedIds.has(item.id)}
                     onChange={() => onToggleSelect(item.id)}
-                    className="rounded accent-[#00cec4]"
+                    className="rounded accent-[#F9D972]"
                     aria-label={`Select ${item.name}`}
                   />
                 </td>
                 <td className="px-3 py-1.5 whitespace-nowrap">
                   <div className="flex items-center gap-1.5">
-                    <span className="flex-shrink-0 w-5 h-5 rounded border border-[var(--color-outline-variant)] bg-surface-container-low flex items-center justify-center text-on-surface-variant">
+                    <span className="flex-shrink-0 w-5 h-5 rounded border border-[var(--color-outline-variant)] bg-mono-soft flex items-center justify-center text-mono-muted">
                       <Package size={10} />
                     </span>
                     <button
                       onClick={() => router.push(`${basePath}/${item.id}`)}
-                      className="text-[#00cec4] hover:underline font-medium text-left"
+                      className="text-[#F9D972] hover:underline font-medium text-left"
                     >
                       {item.name}
                     </button>
                   </div>
                 </td>
-                <td className="px-3 py-1.5 text-on-surface whitespace-nowrap">{item.sku || "—"}</td>
-                <td className="px-3 py-1.5 text-on-surface-variant max-w-[160px] truncate">
+                <td className="px-3 py-1.5 text-mono-text whitespace-nowrap">{item.sku || "—"}</td>
+                <td className="px-3 py-1.5 text-mono-muted max-w-[160px] truncate">
                   {item.purchaseDescription || "—"}
                 </td>
-                <td className="px-3 py-1.5 text-right ds-numeric text-on-surface whitespace-nowrap">
+                <td className="px-3 py-1.5 text-right monolith-numeric text-mono-text whitespace-nowrap">
                   {formatINRCompact(item.purchaseRate)}
                 </td>
-                <td className="px-3 py-1.5 text-on-surface-variant max-w-[160px] truncate">
+                <td className="px-3 py-1.5 text-mono-muted max-w-[160px] truncate">
                   {item.description || "—"}
                 </td>
-                <td className="px-3 py-1.5 text-right ds-numeric text-on-surface whitespace-nowrap">
+                <td className="px-3 py-1.5 text-right monolith-numeric text-mono-text whitespace-nowrap">
                   {formatINRCompact(item.rate)}
                 </td>
-                <td className="px-3 py-1.5 text-on-surface whitespace-nowrap">{item.hsnSac || "—"}</td>
-                <td className="px-3 py-1.5 text-on-surface whitespace-nowrap">{item.usageUnit || "—"}</td>
+                <td className="px-3 py-1.5 text-mono-text whitespace-nowrap">{item.hsnSac || "—"}</td>
+                <td className="px-3 py-1.5 text-mono-text whitespace-nowrap">{item.usageUnit || "—"}</td>
                 <td className="px-3 py-1.5 text-center whitespace-nowrap">
                   {onEditItem && (
                     <button
@@ -140,7 +140,7 @@ export function ItemsTable({
                         e.stopPropagation();
                         onEditItem(item);
                       }}
-                      className="text-[#00cec4] hover:text-[#00b8af] font-medium transition-colors cursor-pointer"
+                      className="text-[#F9D972] hover:text-[#E8C85D] font-medium transition-colors cursor-pointer"
                       title="Edit item"
                     >
                       Edit

@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
 import { SlabForm } from "./slab-form";
 import { deleteSlabAction, seedSlabsAction } from "./actions";
 import { GRADE_BANDS } from "@/modules/ams/criteria-config";
@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/monolith/button";
 import { Layers, Plus, Trash2 } from "lucide-react";
 
 const gradeColors: Record<string, string> = {
@@ -41,13 +41,13 @@ export default async function SlabsPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <p className="text-sm text-on-surface-variant dark:text-slate-400 font-medium">
+          <p className="text-sm text-mono-muted dark:text-slate-400 font-medium">
             Configure recommended appraisal hike percentages based on employee performance grades and rating bands.
           </p>
         </div>
 
         <form action={seedSlabsAction}>
-          <Button type="submit" variant="outline" className="h-10 text-xs font-semibold rounded-xl border-outline-variant/60 hover:bg-surface-container-low text-on-surface">
+          <Button type="submit" variant="outline" className="h-10 text-xs font-semibold rounded-xl border-mono-border/60 hover:bg-mono-soft text-mono-text">
             Seed Defaults
           </Button>
         </form>
@@ -56,12 +56,12 @@ export default async function SlabsPage() {
       {/* Grade reference bar */}
       <div className="flex flex-wrap gap-2 text-[11px] font-semibold">
         {GRADE_BANDS.map((b) => (
-          <div key={b.grade} className="flex items-center gap-1.5 bg-surface-container-high dark:bg-slate-800/40 border border-outline-variant/30 rounded-xl px-3 py-1.5 shadow-sm">
-            <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${gradeColors[b.grade] ?? "bg-surface-container-high text-on-surface-variant"}`}>
+          <div key={b.grade} className="flex items-center gap-1.5 bg-mono-soft dark:bg-slate-800/40 border border-mono-border/30 rounded-xl px-3 py-1.5 shadow-sm">
+            <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${gradeColors[b.grade] ?? "bg-mono-soft text-mono-muted"}`}>
               {b.grade}
             </span>
-            <span className="text-on-surface-variant dark:text-slate-400">{b.label}</span>
-            <span className="text-slate-400 dark:text-on-surface-variant">{b.minNormalized}–{b.maxNormalized}</span>
+            <span className="text-mono-muted dark:text-slate-400">{b.label}</span>
+            <span className="text-slate-400 dark:text-mono-muted">{b.minNormalized}–{b.maxNormalized}</span>
           </div>
         ))}
       </div>
@@ -83,7 +83,7 @@ export default async function SlabsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                   <thead>
-                    <tr className="border-b border-outline-variant bg-surface-container-high dark:bg-slate-800/30 text-xs font-bold text-on-surface-variant dark:text-slate-400">
+                    <tr className="border-b border-mono-border bg-mono-soft dark:bg-slate-800/30 text-xs font-bold text-mono-muted dark:text-slate-400">
                       <th className="py-3 px-5 font-semibold">Grade</th>
                       <th className="px-5 py-3 font-semibold">Label</th>
                       <th className="px-5 py-3 font-semibold">Rating Band</th>
@@ -93,16 +93,16 @@ export default async function SlabsPage() {
                   </thead>
                   <tbody className="divide-y divide-outline-variant/60 font-medium text-slate-700 dark:text-slate-300">
                     {slabs.map((slab) => (
-                      <tr key={slab.id} className="hover:bg-surface-container-high/30 dark:hover:bg-slate-800/5 transition duration-150">
+                      <tr key={slab.id} className="hover:bg-mono-soft/30 dark:hover:bg-slate-800/5 transition duration-150">
                         <td className="py-3 px-5">
-                          <span className={`font-bold px-2.5 py-0.5 rounded text-[10px] ${gradeColors[slab.grade] ?? "bg-surface-container-high text-on-surface-variant"}`}>
+                          <span className={`font-bold px-2.5 py-0.5 rounded text-[10px] ${gradeColors[slab.grade] ?? "bg-mono-soft text-mono-muted"}`}>
                             {slab.grade}
                           </span>
                         </td>
-                        <td className="px-5 py-3 text-on-surface-variant dark:text-slate-400">
+                        <td className="px-5 py-3 text-mono-muted dark:text-slate-400">
                           {slab.label}
                         </td>
-                        <td className="px-5 py-3 text-on-surface-variant font-semibold">
+                        <td className="px-5 py-3 text-mono-muted font-semibold">
                           {slab.minRating}–{slab.maxRating}
                         </td>
                         <td className="px-5 py-3">
@@ -132,7 +132,7 @@ export default async function SlabsPage() {
           <Card className="border-0 shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-200">
-                <Plus className="size-4 text-[#00cec4]" /> Add Custom Slab
+                <Plus className="size-4 text-[#F9D972]" /> Add Custom Slab
               </CardTitle>
             </CardHeader>
             <CardContent>

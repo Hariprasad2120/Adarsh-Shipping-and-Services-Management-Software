@@ -76,24 +76,24 @@ export default function CareerAssistantPage() {
   return (
     <div className="flex h-[calc(100vh-12rem)] gap-4 overflow-hidden">
       {/* Sidebar */}
-      <aside className="flex w-56 flex-shrink-0 flex-col gap-2 overflow-y-auto rounded-xl border border-outline-variant bg-surface p-3">
+      <aside className="flex w-56 flex-shrink-0 flex-col gap-2 overflow-y-auto rounded-xl border border-mono-border bg-mono-card p-3">
         <button
           onClick={newConversation}
-          className="flex items-center gap-2 rounded-xl bg-[#00cec4]/10 px-3 py-2 text-sm font-medium text-[#00cec4] transition hover:bg-[#00cec4]/20"
+          className="flex items-center gap-2 rounded-xl bg-[#F9D972]/10 px-3 py-2 text-sm font-medium text-[#F9D972] transition hover:bg-[#F9D972]/20"
         >
           <Add size={16} />
           New Chat
         </button>
-        <p className="ds-label mt-2 px-1">Previous</p>
-        {loading && <p className="text-xs text-on-surface-variant px-1">Loading...</p>}
+        <p className="monolith-label mt-2 px-1">Previous</p>
+        {loading && <p className="text-xs text-mono-muted px-1">Loading...</p>}
         {conversations.map((c) => (
           <button
             key={c.id}
             onClick={() => setActiveId(c.id)}
             className={`rounded-xl px-3 py-2 text-left text-sm transition ${
               activeId === c.id
-                ? "bg-[#00cec4]/10 text-[#00cec4]"
-                : "text-on-surface-variant hover:bg-surface-container"
+                ? "bg-[#F9D972]/10 text-[#F9D972]"
+                : "text-mono-muted hover:bg-mono-soft"
             }`}
           >
             <span className="line-clamp-2">{c.title}</span>
@@ -102,19 +102,19 @@ export default function CareerAssistantPage() {
       </aside>
 
       {/* Chat Area */}
-      <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-outline-variant bg-surface">
+      <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-mono-border bg-mono-card">
         {!activeId ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#818cf8]/10">
               <Send size={24} className="text-[#818cf8]" />
             </div>
-            <p className="font-medium text-on-surface">Career Assistant</p>
-            <p className="max-w-xs text-sm text-on-surface-variant">
+            <p className="font-medium text-mono-text">Career Assistant</p>
+            <p className="max-w-xs text-sm text-mono-muted">
               AI-powered career advice — completely private. Start a new chat or select a previous conversation.
             </p>
             <button
               onClick={newConversation}
-              className="rounded-xl bg-[#00cec4] px-5 py-2 text-sm font-medium text-white hover:bg-[#00b8af]"
+              className="rounded-xl bg-[#F9D972] px-5 py-2 text-sm font-medium text-white hover:bg-[#E8C85D]"
             >
               Start Chat
             </button>
@@ -123,7 +123,7 @@ export default function CareerAssistantPage() {
           <>
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.length === 0 && (
-                <p className="text-center text-sm text-on-surface-variant pt-8">
+                <p className="text-center text-sm text-mono-muted pt-8">
                   Ask anything about your career, interview prep, or job search strategy.
                 </p>
               )}
@@ -135,8 +135,8 @@ export default function CareerAssistantPage() {
                   <div
                     className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                       msg.role === "USER"
-                        ? "bg-[#00cec4] text-white"
-                        : "bg-surface-container text-on-surface"
+                        ? "bg-[#F9D972] text-white"
+                        : "bg-mono-soft text-mono-text"
                     }`}
                   >
                     {msg.content}
@@ -145,14 +145,14 @@ export default function CareerAssistantPage() {
               ))}
               {sending && (
                 <div className="flex justify-start">
-                  <div className="rounded-2xl bg-surface-container px-4 py-2.5 text-sm text-on-surface-variant">
+                  <div className="rounded-2xl bg-mono-soft px-4 py-2.5 text-sm text-mono-muted">
                     Thinking…
                   </div>
                 </div>
               )}
               <div ref={bottomRef} />
             </div>
-            <form onSubmit={sendMessage} className="border-t border-outline-variant p-3 flex gap-2">
+            <form onSubmit={sendMessage} className="border-t border-mono-border p-3 flex gap-2">
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -163,7 +163,7 @@ export default function CareerAssistantPage() {
               <button
                 type="submit"
                 disabled={!input.trim() || sending}
-                className="flex items-center gap-1 rounded-xl bg-[#00cec4] px-4 py-2 text-sm font-medium text-white hover:bg-[#00b8af] disabled:opacity-50"
+                className="flex items-center gap-1 rounded-xl bg-[#F9D972] px-4 py-2 text-sm font-medium text-white hover:bg-[#E8C85D] disabled:opacity-50"
               >
                 <Send size={16} />
               </button>

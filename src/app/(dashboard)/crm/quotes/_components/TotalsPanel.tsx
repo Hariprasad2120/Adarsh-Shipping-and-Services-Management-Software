@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import type { UseFormReturn } from "react-hook-form";
 import { formatMoney } from "../_lib/quote-calculations";
 import type { QuoteFormValues } from "../_lib/types";
@@ -22,27 +23,27 @@ export function TotalsPanel({ form, discountAmount, cgst, sgst, igst }: TotalsPa
       <div className="space-y-4 text-[13px] text-[#374151]">
         <div className="grid grid-cols-[112px_minmax(0,1fr)] items-center gap-x-4">
           <span>Sub Total</span>
-          <span className="ds-numeric text-right">₹ {formatMoney(subtotal)}</span>
+          <span className="monolith-numeric text-right">₹ {formatMoney(subtotal)}</span>
         </div>
 
         {cgst > 0 && (
           <div className="grid grid-cols-[112px_minmax(0,1fr)] items-center gap-x-4 text-gray-500 text-xs">
             <span>CGST</span>
-            <span className="ds-numeric text-right">₹ {formatMoney(cgst)}</span>
+            <span className="monolith-numeric text-right">₹ {formatMoney(cgst)}</span>
           </div>
         )}
 
         {sgst > 0 && (
           <div className="grid grid-cols-[112px_minmax(0,1fr)] items-center gap-x-4 text-gray-500 text-xs">
             <span>SGST</span>
-            <span className="ds-numeric text-right">₹ {formatMoney(sgst)}</span>
+            <span className="monolith-numeric text-right">₹ {formatMoney(sgst)}</span>
           </div>
         )}
 
         {igst > 0 && (
           <div className="grid grid-cols-[112px_minmax(0,1fr)] items-center gap-x-4 text-gray-500 text-xs">
             <span>IGST</span>
-            <span className="ds-numeric text-right">₹ {formatMoney(igst)}</span>
+            <span className="monolith-numeric text-right">₹ {formatMoney(igst)}</span>
           </div>
         )}
 
@@ -50,13 +51,13 @@ export function TotalsPanel({ form, discountAmount, cgst, sgst, igst }: TotalsPa
           <span>Discount</span>
           <div className="min-w-0">
             <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-3">
-              <select
+              <NativeSelect
                 className="h-11 rounded-xl border bg-white px-2 text-[12px] outline-none"
                 {...form.register("discountType")}
               >
                 <option value="percentage">%</option>
                 <option value="amount">₹</option>
-              </select>
+              </NativeSelect>
               <input
                 type="number"
                 min="0"
@@ -91,7 +92,7 @@ export function TotalsPanel({ form, discountAmount, cgst, sgst, igst }: TotalsPa
 
         <div className="grid grid-cols-[112px_minmax(0,1fr)] items-center gap-x-4 border-t border-[#d9dee7] pt-4 text-[15px] font-semibold text-[#1f2937]">
           <span>Total ( ₹ )</span>
-          <span className="ds-numeric text-right">₹ {formatMoney(total)}</span>
+          <span className="monolith-numeric text-right">₹ {formatMoney(total)}</span>
         </div>
       </div>
     </div>

@@ -75,7 +75,7 @@ export default function CompanyOverview({
           </span>
         </div>
 
-        <h1 className="ds-h1 heading-icon-none text-black leading-[1.1] md:text-[2rem]">
+        <h1 className="monolith-h1 heading-icon-none text-black leading-[1.1] md:text-[2rem]">
           The Decentralized Operating System for <span className="underline decoration-black decoration-wavy underline-offset-4 font-extrabold">Enterprise Core</span>.
         </h1>
 
@@ -125,7 +125,7 @@ export default function CompanyOverview({
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="ds-h3 text-black group-hover:underline decoration-black decoration-2">
+                  <h3 className="monolith-h3 text-black group-hover:underline decoration-black decoration-2">
                     {m.title}
                   </h3>
                   <p className="text-xs text-neutral-500 leading-relaxed font-sans">{m.subtitle}</p>

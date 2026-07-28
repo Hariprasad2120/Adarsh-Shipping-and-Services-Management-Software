@@ -1,13 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect */
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect */
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import DOMPurify from "isomorphic-dompurify";
 import {AlertTriangle,CheckCircle2,Eye,FileCheck,FilePenLine,ImagePlus,Loader2,Mail,Plus,RefreshCw,Save,Send,Shield,Trash,Upload,WandSparkles,} from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Modal } from "@/components/ui/modal";
+import { Button } from "@/components/monolith/button";
+import { Card } from "@/components/monolith/card";
+import { Modal } from "@/components/monolith/modal";
+import { NativeSelect } from "@/components/monolith/native-select";
 
 type TemplateField = {
   key: string;
@@ -92,7 +93,7 @@ function RichTemplateEditor({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-low p-3">
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-mono-border bg-mono-soft p-3">
         <Button type="button" variant="outline" size="sm" onClick={() => runCommand("bold")}>Bold</Button>
         <Button type="button" variant="outline" size="sm" onClick={() => runCommand("italic")}>Italic</Button>
         <Button type="button" variant="outline" size="sm" onClick={() => runCommand("formatBlock", "<h2>")}>Heading</Button>
@@ -110,7 +111,7 @@ function RichTemplateEditor({
         contentEditable
         suppressContentEditableWarning
         onInput={syncValue}
-        className="min-h-[28rem] rounded-2xl border border-outline-variant bg-surface p-4 text-sm text-on-surface outline-none focus:border-primary"
+        className="min-h-[28rem] rounded-2xl border border-mono-border bg-mono-card p-4 text-sm text-mono-text outline-none focus:border-primary"
       />
     </div>
   );
@@ -419,24 +420,24 @@ export function LettersView() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[24rem] flex-col items-center justify-center gap-3 text-on-surface-variant">
-        <Loader2 className="size-8 animate-spin text-primary" />
-        <p className="ds-label">Loading HR Letters</p>
+      <div className="flex min-h-[24rem] flex-col items-center justify-center gap-3 text-mono-muted">
+        <Loader2 className="size-8 animate-spin text-mono-accent" />
+        <p className="monolith-label">Loading HR Letters</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-[24px] border border-outline-variant bg-surface p-6 shadow-sm">
+      <Card className="rounded-[24px] border border-mono-border bg-mono-card p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <span className="ds-icon-badge">
+            <span className="monolith-icon-badge">
               <Mail className="size-5" />
             </span>
             <div>
-              <h1 className="ds-h1 font-semibold text-on-surface">HR Letters & Contracts</h1>
-              <p className="mt-2 text-sm text-on-surface-variant">
+              <h1 className="monolith-h1 font-semibold text-mono-text">HR Letters & Contracts</h1>
+              <p className="mt-2 text-sm text-mono-muted">
                 DOCX-based templates, guided drafting, approvals, and issuance in one workspace.
               </p>
             </div>
@@ -456,7 +457,7 @@ export function LettersView() {
         </div>
       </Card>
 
-      <div className="flex flex-wrap gap-5 border-b border-outline-variant">
+      <div className="flex flex-wrap gap-5 border-b border-mono-border">
         {TABS.filter((tab) => (tab.key === "templates" || tab.key === "settings" ? isHR : true)).map((tab) => (
           <button
             key={tab.key}
@@ -464,8 +465,8 @@ export function LettersView() {
             onClick={() => setActiveTab(tab.key)}
             className={`border-b-2 pb-3 text-xs font-semibold uppercase tracking-[0.12em] transition ${
               activeTab === tab.key
-                ? "border-primary text-primary"
-                : "border-transparent text-on-surface-variant hover:text-on-surface"
+                ? "border-primary text-mono-accent"
+                : "border-transparent text-mono-muted hover:text-mono-text"
             }`}
           >
             {tab.label}
@@ -474,9 +475,9 @@ export function LettersView() {
       </div>
 
       {activeTab === "register" ? (
-        <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
           <div className="overflow-x-auto">
-            <table className="ds-table">
+            <table className="monolith-table">
               <thead>
                 <tr>
                   <th className="px-6 py-3">Employee</th>
@@ -490,18 +491,18 @@ export function LettersView() {
               <tbody>
                 {requests.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-10 text-center text-sm text-on-surface-variant">No letters generated yet.</td>
+                    <td colSpan={6} className="py-10 text-center text-sm text-mono-muted">No letters generated yet.</td>
                   </tr>
                 ) : requests.map((request) => {
                   const template = templates.find((item) => item.id === request.templateId);
                   return (
                     <tr key={request.id}>
-                      <td className="px-6 py-4 font-medium text-on-surface">{request.user.name}</td>
-                      <td className="px-6 py-4 text-on-surface">{template?.name || "Letter"}</td>
-                      <td className="px-6 py-4 ds-numeric">{request.letterNumber}</td>
-                      <td className="px-6 py-4 text-on-surface-variant">{new Date(request.createdAt).toLocaleString()}</td>
+                      <td className="px-6 py-4 font-medium text-mono-text">{request.user.name}</td>
+                      <td className="px-6 py-4 text-mono-text">{template?.name || "Letter"}</td>
+                      <td className="px-6 py-4 monolith-numeric">{request.letterNumber}</td>
+                      <td className="px-6 py-4 text-mono-muted">{new Date(request.createdAt).toLocaleString()}</td>
                       <td className="px-6 py-4">
-                        <span className="rounded-full border border-outline-variant bg-surface-container-low px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-on-surface">
+                        <span className="rounded-full border border-mono-border bg-mono-soft px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-mono-text">
                           {request.status.replace(/_/g, " ")}
                         </span>
                       </td>
@@ -536,18 +537,18 @@ export function LettersView() {
       {activeTab === "inbox" ? (
         <div className="space-y-4">
           {inboxRequests.length === 0 ? (
-            <Card className="rounded-2xl border border-dashed border-outline-variant bg-surface p-10 text-center text-on-surface-variant">
-              <CheckCircle2 className="mx-auto mb-3 size-10 text-primary" />
+            <Card className="rounded-2xl border border-dashed border-mono-border bg-mono-card p-10 text-center text-mono-muted">
+              <CheckCircle2 className="mx-auto mb-3 size-10 text-mono-accent" />
               <p className="text-sm">No letters are waiting for your approval.</p>
             </Card>
           ) : inboxRequests.map((request) => {
             const template = templates.find((item) => item.id === request.templateId);
             return (
-              <Card key={request.id} className="card-left-accent rounded-2xl border border-outline-variant bg-surface p-5 shadow-sm">
+              <Card key={request.id} className="monolith-card monolith-accent rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="space-y-2">
-                    <p className="text-base font-semibold uppercase tracking-[0.05em] text-on-surface">{template?.name} for {request.user.name}</p>
-                    <p className="text-sm text-on-surface-variant">Stage: {request.status.replace(/_/g, " ")} | Created: {new Date(request.createdAt).toLocaleString()}</p>
+                    <p className="text-base font-semibold uppercase tracking-[0.05em] text-mono-text">{template?.name} for {request.user.name}</p>
+                    <p className="text-sm text-mono-muted">Stage: {request.status.replace(/_/g, " ")} | Created: {new Date(request.createdAt).toLocaleString()}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button type="button" variant="outline" onClick={() => { setSelectedRequest(request); setShowViewModal(true); }}>Review</Button>
@@ -571,7 +572,7 @@ export function LettersView() {
       {activeTab === "templates" && isHR ? (
         <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
           <div className="space-y-4">
-            <Card className="rounded-2xl border border-outline-variant bg-surface p-4 shadow-sm">
+            <Card className="rounded-2xl border border-mono-border bg-mono-card p-4 shadow-sm">
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
                   <Button type="button" onClick={handleImportBundledTemplates} disabled={submitting}>
@@ -584,7 +585,7 @@ export function LettersView() {
                   </Button>
                   <input ref={templateUploadInputRef} type="file" accept=".docx" className="hidden" onChange={handleUploadTemplateDocx} />
                 </div>
-                <p className="text-sm text-on-surface-variant">
+                <p className="text-sm text-mono-muted">
                   Manage authoritative DOCX templates, rich-editor revisions, and legal activation.
                 </p>
               </div>
@@ -601,17 +602,17 @@ export function LettersView() {
                   }}
                   className={`w-full rounded-2xl border p-4 text-left shadow-sm transition ${
                     selectedTemplate?.id === template.id
-                      ? "border-primary bg-surface-container-low"
-                      : "border-outline-variant bg-surface hover:border-primary"
+                      ? "border-primary bg-mono-soft"
+                      : "border-mono-border bg-mono-card hover:border-primary"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold uppercase tracking-[0.08em] text-on-surface">{template.name}</p>
-                      <p className="mt-2 text-xs text-on-surface-variant">Type: {template.type} | Ver: {template.version}</p>
+                      <p className="text-sm font-semibold uppercase tracking-[0.08em] text-mono-text">{template.name}</p>
+                      <p className="mt-2 text-xs text-mono-muted">Type: {template.type} | Ver: {template.version}</p>
                     </div>
                     <span className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${
-                      template.isLegalReviewed ? "bg-primary/10 text-primary" : "bg-orange-500/10 text-orange-600"
+                      template.isLegalReviewed ? "bg-mono-accent/10 text-mono-accent" : "bg-orange-500/10 text-orange-600"
                     }`}>
                       {template.isLegalReviewed ? "Legal OK" : "Review Needed"}
                     </span>
@@ -624,11 +625,11 @@ export function LettersView() {
           <div className="space-y-6">
             {selectedTemplate ? (
               <>
-                <Card className="rounded-2xl border border-outline-variant bg-surface p-5 shadow-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant pb-4">
+                <Card className="rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-mono-border pb-4">
                     <div>
-                      <h2 className="ds-h2 font-semibold text-on-surface">{selectedTemplate.name}</h2>
-                      <p className="mt-2 text-sm text-on-surface-variant">
+                      <h2 className="monolith-h2 font-semibold text-mono-text">{selectedTemplate.name}</h2>
+                      <p className="mt-2 text-sm text-mono-muted">
                         Source: {selectedTemplate.sourceFileName || "DOCX"} | Stored DOCX: {selectedTemplate.sourceDocxPath || "N/A"}
                       </p>
                     </div>
@@ -648,8 +649,8 @@ export function LettersView() {
 
                   <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_22rem]">
                     <div className="space-y-4">
-                      <div className="ds-form-section space-y-3">
-                        <h3 className="ds-h3 font-semibold text-on-surface">Rich Template Editor</h3>
+                      <div className="monolith-form-section space-y-3">
+                        <h3 className="monolith-h3 font-semibold text-mono-text">Rich Template Editor</h3>
                         <RichTemplateEditor
                           value={editorHtml}
                           variables={selectedTemplate.variables}
@@ -658,24 +659,24 @@ export function LettersView() {
                         />
                       </div>
 
-                      <div className="ds-form-section space-y-3">
-                        <h3 className="ds-h3 font-semibold text-on-surface">Preview</h3>
-                        <div className="rounded-2xl border border-outline-variant bg-surface-container-low p-5">
-                          <div className="prose max-w-none text-on-surface" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(editorHtml) }} />
+                      <div className="monolith-form-section space-y-3">
+                        <h3 className="monolith-h3 font-semibold text-mono-text">Preview</h3>
+                        <div className="rounded-2xl border border-mono-border bg-mono-soft p-5">
+                          <div className="prose max-w-none text-mono-text" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(editorHtml) }} />
                         </div>
                       </div>
                     </div>
 
                     <div className="space-y-4">
-                      <div className="ds-form-section space-y-3">
-                        <h3 className="ds-h3 font-semibold text-on-surface">Template Fields</h3>
-                        <div className="rounded-2xl border border-outline-variant bg-surface-container-low p-4">
+                      <div className="monolith-form-section space-y-3">
+                        <h3 className="monolith-h3 font-semibold text-mono-text">Template Fields</h3>
+                        <div className="rounded-2xl border border-mono-border bg-mono-soft p-4">
                           <div className="space-y-3">
                             {selectedTemplate.fieldSchema.map((field) => (
-                              <div key={field.key} className="rounded-xl border border-outline-variant bg-surface p-3">
-                                <p className="text-sm font-medium text-on-surface">{field.label}</p>
-                                <p className="mt-1 text-xs text-on-surface-variant">{field.key}</p>
-                                <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                              <div key={field.key} className="rounded-xl border border-mono-border bg-mono-card p-3">
+                                <p className="text-sm font-medium text-mono-text">{field.label}</p>
+                                <p className="mt-1 text-xs text-mono-muted">{field.key}</p>
+                                <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-mono-muted">
                                   {field.inputType} | {field.defaultSource} | {field.required ? "required" : "optional"}
                                 </p>
                               </div>
@@ -688,8 +689,8 @@ export function LettersView() {
                 </Card>
               </>
             ) : (
-              <Card className="rounded-2xl border border-dashed border-outline-variant bg-surface p-12 text-center text-on-surface-variant">
-                <FilePenLine className="mx-auto mb-3 size-12 text-primary" />
+              <Card className="rounded-2xl border border-dashed border-mono-border bg-mono-card p-12 text-center text-mono-muted">
+                <FilePenLine className="mx-auto mb-3 size-12 text-mono-accent" />
                 <p className="text-sm">Select a template to preview and edit it.</p>
               </Card>
             )}
@@ -698,9 +699,9 @@ export function LettersView() {
       ) : null}
 
       {activeTab === "settings" && isHR ? (
-        <form onSubmit={handleUpdateSettings} className="max-w-4xl rounded-2xl border border-outline-variant bg-surface p-6 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant pb-4">
-            <h2 className="ds-h2 font-semibold text-on-surface">Letter Settings</h2>
+        <form onSubmit={handleUpdateSettings} className="max-w-4xl rounded-2xl border border-mono-border bg-mono-card p-6 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-mono-border pb-4">
+            <h2 className="monolith-h2 font-semibold text-mono-text">Letter Settings</h2>
             <Button type="submit" disabled={submitting}>
               <Save className="size-4" />
               <span>Save Settings</span>
@@ -721,7 +722,7 @@ export function LettersView() {
               { key: "companySealUrl", label: "Company Seal Path", type: "text" },
             ].map((field) => (
               <div key={field.key} className={`space-y-2 ${field.key === "companySealUrl" || field.key === "signatorySignatureUrl" ? "sm:col-span-2" : ""}`}>
-                <label className="ds-label">{field.label}</label>
+                <label className="monolith-label">{field.label}</label>
                 <input
                   type={field.type}
                   value={(settingsForm as any)[field.key]}
@@ -735,7 +736,7 @@ export function LettersView() {
             ))}
 
             <div className="space-y-2 sm:col-span-2">
-              <label className="ds-label">Email Template</label>
+              <label className="monolith-label">Email Template</label>
               <textarea
                 rows={4}
                 value={settingsForm.emailTemplate}
@@ -757,8 +758,8 @@ export function LettersView() {
         <form onSubmit={handleCreateRequest} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="ds-label">Recipient Employee</label>
-              <select
+              <label className="monolith-label">Recipient Employee</label>
+              <NativeSelect
                 value={wizardUserId}
                 onChange={(event) => {
                   const value = event.target.value;
@@ -773,12 +774,12 @@ export function LettersView() {
                 {employees.map((employee) => (
                   <option key={employee.id} value={employee.id}>{employee.name} ({employee.email})</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
 
             <div className="space-y-2">
-              <label className="ds-label">Letter Format</label>
-              <select
+              <label className="monolith-label">Letter Format</label>
+              <NativeSelect
                 value={wizardTemplateId}
                 onChange={(event) => {
                   const value = event.target.value;
@@ -793,21 +794,21 @@ export function LettersView() {
                 {templates.filter((template) => template.isActive).map((template) => (
                   <option key={template.id} value={template.id}>{template.name} (v{template.version})</option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
           </div>
 
           {wizardLoading ? (
-            <div className="flex min-h-[10rem] items-center justify-center rounded-2xl border border-outline-variant bg-surface-container-low">
-              <Loader2 className="size-6 animate-spin text-primary" />
+            <div className="flex min-h-[10rem] items-center justify-center rounded-2xl border border-mono-border bg-mono-soft">
+              <Loader2 className="size-6 animate-spin text-mono-accent" />
             </div>
           ) : activeTemplate ? (
-            <div className="ds-form-section space-y-4">
-              <h3 className="ds-h3 font-semibold text-on-surface">Template Details</h3>
+            <div className="monolith-form-section space-y-4">
+              <h3 className="monolith-h3 font-semibold text-mono-text">Template Details</h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 {activeTemplate.fieldSchema.map((field) => (
                   <div key={field.key} className={`space-y-2 ${field.inputType === "textarea" ? "sm:col-span-2" : ""}`}>
-                    <label className="ds-label">{field.label}</label>
+                    <label className="monolith-label">{field.label}</label>
                     {field.inputType === "textarea" ? (
                       <textarea
                         rows={4}
@@ -826,17 +827,17 @@ export function LettersView() {
                         value={wizardDetails[field.key] || ""}
                         onChange={(event) => setWizardDetails((current) => ({ ...current, [field.key]: event.target.value }))}
                         placeholder={field.placeholder}
-                        className={`w-full text-sm ${field.inputType === "currency" ? "ds-numeric" : ""}`}
+                        className={`w-full text-sm ${field.inputType === "currency" ? "monolith-numeric" : ""}`}
                       />
                     )}
-                    {field.helpText ? <p className="text-xs text-on-surface-variant">{field.helpText}</p> : null}
+                    {field.helpText ? <p className="text-xs text-mono-muted">{field.helpText}</p> : null}
                   </div>
                 ))}
               </div>
             </div>
           ) : null}
 
-          <div className="flex justify-end gap-3 border-t border-outline-variant pt-4">
+          <div className="flex justify-end gap-3 border-t border-mono-border pt-4">
             <Button type="button" variant="outline" onClick={() => setShowPrepareModal(false)}>Cancel</Button>
             <Button type="submit" disabled={submitting || !wizardUserId || !wizardTemplateId}>
               {submitting ? "Creating..." : "Create Draft"}
@@ -855,13 +856,13 @@ export function LettersView() {
         {selectedRequest ? (
           <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
             <div className="space-y-4">
-              <Card className="rounded-2xl border border-outline-variant bg-surface-container-low p-4">
-                <h3 className="ds-h3 font-semibold text-on-surface">Field Values</h3>
+              <Card className="rounded-2xl border border-mono-border bg-mono-soft p-4">
+                <h3 className="monolith-h3 font-semibold text-mono-text">Field Values</h3>
                 <div className="mt-4 space-y-3">
                   {Object.entries(selectedRequest.details || {}).map(([key, value]) => (
-                    <div key={key} className="rounded-xl border border-outline-variant bg-surface p-3">
-                      <p className="ds-label">{key.replace(/_/g, " ")}</p>
-                      <p className="mt-2 text-sm text-on-surface break-words">{String(value || "N/A")}</p>
+                    <div key={key} className="rounded-xl border border-mono-border bg-mono-card p-3">
+                      <p className="monolith-label">{key.replace(/_/g, " ")}</p>
+                      <p className="mt-2 text-sm text-mono-text break-words">{String(value || "N/A")}</p>
                     </div>
                   ))}
                 </div>
@@ -870,9 +871,9 @@ export function LettersView() {
 
             <div className="space-y-4">
               {selectedRequest.pdfPath ? (
-                <iframe src={`/${selectedRequest.pdfPath}`} className="h-[34rem] w-full rounded-2xl border border-outline-variant bg-surface" title="Letter preview" />
+                <iframe src={`/${selectedRequest.pdfPath}`} className="h-[34rem] w-full rounded-2xl border border-mono-border bg-mono-card" title="Letter preview" />
               ) : (
-                <Card className="rounded-2xl border border-dashed border-outline-variant bg-surface p-12 text-center text-on-surface-variant">
+                <Card className="rounded-2xl border border-dashed border-mono-border bg-mono-card p-12 text-center text-mono-muted">
                   <AlertTriangle className="mx-auto mb-3 size-10 text-orange-600" />
                   <p className="text-sm">This draft has not been issued yet, so the final PDF is not available.</p>
                 </Card>

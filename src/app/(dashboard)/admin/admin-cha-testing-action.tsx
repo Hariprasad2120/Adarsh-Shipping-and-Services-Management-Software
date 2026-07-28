@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/monolith/button";
 import { deleteAllChaJobsForTestingAction } from "@/modules/cha/actions";
 
 export function AdminChaTestingAction() {

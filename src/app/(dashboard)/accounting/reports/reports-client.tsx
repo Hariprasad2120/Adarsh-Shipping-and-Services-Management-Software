@@ -1,6 +1,6 @@
 "use client";
 
-import { DateInput } from "@/components/ui/date-input";
+import { DateInput } from "@/components/monolith/date-input";
 import React, { useState } from "react";
 import {FileSpreadsheet,Download,Calendar,Layers,ChevronRight,TrendingUp,Scale,Percent,RefreshCw,} from "lucide-react";
 import {getARAgeingAction,getAPAgeingAction,getSalesRegisterAction,getPurchaseRegisterAction,getGSTR1SummaryAction,getGSTR2BSummaryAction,getConsolidatedGSTLedgerAction,getDayBookAction,getJournalRegisterAction,getJobProfitabilityAction,getCashAndBankLedgerAction,getProfitAndLossAction,getBalanceSheetAction,getTrialBalanceAction,} from "@/modules/accounting/actions";
@@ -148,11 +148,11 @@ export function ReportsClient({ partners }: ReportsClientProps) {
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       {/* ─── Left Sidebar Menu ────────────────────────────────────────────────── */}
       <div className="lg:col-span-3 space-y-4">
-        <h3 className="ds-h2 text-white">Report Index</h3>
+        <h3 className="monolith-h2 text-white">Report Index</h3>
         <div className="space-y-4">
           {categories.map((cat) => (
             <div key={cat} className="space-y-1">
-              <span className="ds-label text-[9px] block text-slate-500 uppercase tracking-widest px-2 py-1">
+              <span className="monolith-label text-[9px] block text-slate-500 uppercase tracking-widest px-2 py-1">
                 {cat}
               </span>
               <div className="space-y-0.5">
@@ -166,12 +166,12 @@ export function ReportsClient({ partners }: ReportsClientProps) {
                     }}
                     className={`w-full text-left px-3 py-2 text-xs rounded-lg uppercase tracking-wide transition-all flex justify-between items-center ${
                       selectedReportId === r.id
-                        ? "bg-[#00cec4]/10 text-[#00cec4] font-semibold border-l-4 border-[#00cec4]"
+                        ? "bg-[#F9D972]/10 text-[#F9D972] font-semibold border-l-4 border-[#F9D972]"
                         : "text-slate-400 hover:text-white hover:bg-slate-800/10"
                     }`}
                   >
                     <span>{r.name}</span>
-                    <ChevronRight size={12} className={selectedReportId === r.id ? "text-[#00cec4]" : "text-slate-600"} />
+                    <ChevronRight size={12} className={selectedReportId === r.id ? "text-[#F9D972]" : "text-slate-600"} />
                   </button>
                 ))}
               </div>
@@ -183,9 +183,9 @@ export function ReportsClient({ partners }: ReportsClientProps) {
       {/* ─── Right Configuration & Display Panel ─────────────────────────────── */}
       <div className="lg:col-span-9 space-y-6">
         {/* Configurations Header */}
-        <div className="card-top-accent bg-[var(--color-surface)] p-6 rounded-xl border border-outline-variant/10 shadow-sm space-y-4">
-          <div className="flex justify-between items-center border-b border-outline-variant/10 pb-4">
-            <h3 className="ds-h2 text-white uppercase tracking-wider">{selectedReport.name}</h3>
+        <div className="monolith-card monolith-accent bg-[var(--color-surface)] p-6 rounded-xl border border-mono-border/10 shadow-sm space-y-4">
+          <div className="flex justify-between items-center border-b border-mono-border/10 pb-4">
+            <h3 className="monolith-h2 text-white uppercase tracking-wider">{selectedReport.name}</h3>
             {reportData && (
               <button
                 onClick={handleExportCSV}
@@ -200,19 +200,19 @@ export function ReportsClient({ partners }: ReportsClientProps) {
             {selectedReport.dateType === "range" && (
               <>
                 <div className="space-y-1.5">
-                  <span className="ds-label block">From Date</span>
+                  <span className="monolith-label block">From Date</span>
                   <DateInput
                     value={fromDate}
                     onChange={(e) => setFromDate(e.target.value)}
-                    className="bg-[var(--color-background)] text-white p-2.5 rounded-xl text-xs ds-numeric border border-outline-variant/10"
+                    className="bg-[var(--color-background)] text-white p-2.5 rounded-xl text-xs monolith-numeric border border-mono-border/10"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <span className="ds-label block">To Date</span>
+                  <span className="monolith-label block">To Date</span>
                   <DateInput
                     value={toDate}
                     onChange={(e) => setToDate(e.target.value)}
-                    className="bg-[var(--color-background)] text-white p-2.5 rounded-xl text-xs ds-numeric border border-outline-variant/10"
+                    className="bg-[var(--color-background)] text-white p-2.5 rounded-xl text-xs monolith-numeric border border-mono-border/10"
                   />
                 </div>
               </>
@@ -220,22 +220,22 @@ export function ReportsClient({ partners }: ReportsClientProps) {
 
             {selectedReport.dateType === "asOf" && (
               <div className="space-y-1.5">
-                <span className="ds-label block">As Of Date</span>
+                <span className="monolith-label block">As Of Date</span>
                 <DateInput
                   value={asOfDate}
                   onChange={(e) => setAsOfDate(e.target.value)}
-                  className="bg-[var(--color-background)] text-white p-2.5 rounded-xl text-xs ds-numeric border border-outline-variant/10"
+                  className="bg-[var(--color-background)] text-white p-2.5 rounded-xl text-xs monolith-numeric border border-mono-border/10"
                 />
               </div>
             )}
 
             {selectedReport.dateType === "single" && (
               <div className="space-y-1.5">
-                <span className="ds-label block">Statement Date</span>
+                <span className="monolith-label block">Statement Date</span>
                 <DateInput
                   value={singleDate}
                   onChange={(e) => setSingleDate(e.target.value)}
-                  className="bg-[var(--color-background)] text-white p-2.5 rounded-xl text-xs ds-numeric border border-outline-variant/10"
+                  className="bg-[var(--color-background)] text-white p-2.5 rounded-xl text-xs monolith-numeric border border-mono-border/10"
                 />
               </div>
             )}
@@ -243,7 +243,7 @@ export function ReportsClient({ partners }: ReportsClientProps) {
             <button
               onClick={handleRunReport}
               disabled={loading}
-              className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide transition-all font-semibold flex items-center gap-1.5 disabled:opacity-50"
+              className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide transition-all font-semibold flex items-center gap-1.5 disabled:opacity-50"
             >
               <FileSpreadsheet size={14} /> {loading ? "Generating..." : "Run Report"}
             </button>
@@ -258,39 +258,39 @@ export function ReportsClient({ partners }: ReportsClientProps) {
         )}
 
         {!reportData && !loading && !error && (
-          <div className="bg-[var(--color-surface)] p-12 rounded-xl border border-outline-variant/10 text-center text-slate-500 text-xs uppercase tracking-widest">
+          <div className="bg-[var(--color-surface)] p-12 rounded-xl border border-mono-border/10 text-center text-slate-500 text-xs uppercase tracking-widest">
             Configure dates and click "Run Report" to populate statements
           </div>
         )}
 
         {loading && (
-          <div className="bg-[var(--color-surface)] p-12 rounded-xl border border-outline-variant/10 text-center text-slate-400 text-xs uppercase tracking-widest flex justify-center items-center gap-2">
-            <RefreshCw className="animate-spin text-[#00cec4]" size={16} /> Generating report calculations...
+          <div className="bg-[var(--color-surface)] p-12 rounded-xl border border-mono-border/10 text-center text-slate-400 text-xs uppercase tracking-widest flex justify-center items-center gap-2">
+            <RefreshCw className="animate-spin text-[#F9D972]" size={16} /> Generating report calculations...
           </div>
         )}
 
         {reportData && (
-          <div className="bg-[var(--color-surface)] rounded-xl border border-outline-variant/10 shadow-sm overflow-hidden p-6 space-y-6">
+          <div className="bg-[var(--color-surface)] rounded-xl border border-mono-border/10 shadow-sm overflow-hidden p-6 space-y-6">
             {/* ─── DYNAMIC REPORT CALCULATIONS RENDERING ─────────────────────── */}
 
             {/* A. Profit and Loss Statement */}
             {selectedReportId === "pnl" && (
               <div className="space-y-6">
                 <div>
-                  <h4 className="ds-h3 text-white border-b border-outline-variant/10 pb-2">Operating Revenues</h4>
-                  <table className="ds-table mt-2">
+                  <h4 className="monolith-h3 text-white border-b border-mono-border/10 pb-2">Operating Revenues</h4>
+                  <table className="monolith-table mt-2">
                     <tbody>
                       {reportData.income.accounts.map((acc: any) => (
                         <tr key={acc.code}>
                           <td>{acc.name} ({acc.code})</td>
-                          <td className="text-right ds-numeric font-medium text-white">
+                          <td className="text-right monolith-numeric font-medium text-white">
                             ₹{acc.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                           </td>
                         </tr>
                       ))}
-                      <tr className="font-bold border-t border-outline-variant/20 bg-slate-900/10">
+                      <tr className="font-bold border-t border-mono-border/20 bg-slate-900/10">
                         <td>TOTAL INCOME</td>
-                        <td className="text-right ds-numeric text-emerald-400">
+                        <td className="text-right monolith-numeric text-emerald-400">
                           ₹{reportData.income.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                         </td>
                       </tr>
@@ -299,20 +299,20 @@ export function ReportsClient({ partners }: ReportsClientProps) {
                 </div>
 
                 <div>
-                  <h4 className="ds-h3 text-white border-b border-outline-variant/10 pb-2">Operating Expenses</h4>
-                  <table className="ds-table mt-2">
+                  <h4 className="monolith-h3 text-white border-b border-mono-border/10 pb-2">Operating Expenses</h4>
+                  <table className="monolith-table mt-2">
                     <tbody>
                       {reportData.expense.accounts.map((acc: any) => (
                         <tr key={acc.code}>
                           <td>{acc.name} ({acc.code})</td>
-                          <td className="text-right ds-numeric font-medium text-white">
+                          <td className="text-right monolith-numeric font-medium text-white">
                             ₹{acc.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                           </td>
                         </tr>
                       ))}
-                      <tr className="font-bold border-t border-outline-variant/20 bg-slate-900/10">
+                      <tr className="font-bold border-t border-mono-border/20 bg-slate-900/10">
                         <td>TOTAL EXPENSES</td>
-                        <td className="text-right ds-numeric text-rose-400">
+                        <td className="text-right monolith-numeric text-rose-400">
                           ₹{reportData.expense.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                         </td>
                       </tr>
@@ -320,9 +320,9 @@ export function ReportsClient({ partners }: ReportsClientProps) {
                   </table>
                 </div>
 
-                <div className="p-4 bg-[var(--color-surface-container)] rounded-xl border border-outline-variant/10 flex justify-between items-center">
-                  <span className="ds-h3 text-white">NET PROFIT / LOSS</span>
-                  <span className="text-xl font-bold ds-numeric text-[#00cec4]">
+                <div className="p-4 bg-[var(--color-surface-container)] rounded-xl border border-mono-border/10 flex justify-between items-center">
+                  <span className="monolith-h3 text-white">NET PROFIT / LOSS</span>
+                  <span className="text-xl font-bold monolith-numeric text-[#F9D972]">
                     ₹{reportData.netProfit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </span>
                 </div>
@@ -335,20 +335,20 @@ export function ReportsClient({ partners }: ReportsClientProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Assets */}
                   <div className="space-y-3">
-                    <h4 className="ds-h3 text-white border-b border-[#00cec4]/20 pb-2">Assets</h4>
-                    <table className="ds-table">
+                    <h4 className="monolith-h3 text-white border-b border-[#F9D972]/20 pb-2">Assets</h4>
+                    <table className="monolith-table">
                       <tbody>
                         {reportData.assets.accounts.map((acc: any) => (
                           <tr key={acc.code}>
                             <td>{acc.name}</td>
-                            <td className="text-right ds-numeric text-white">
+                            <td className="text-right monolith-numeric text-white">
                               ₹{acc.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                             </td>
                           </tr>
                         ))}
-                        <tr className="font-bold border-t border-outline-variant/10 bg-slate-900/10">
+                        <tr className="font-bold border-t border-mono-border/10 bg-slate-900/10">
                           <td>TOTAL ASSETS</td>
-                          <td className="text-right ds-numeric text-[#00cec4]">
+                          <td className="text-right monolith-numeric text-[#F9D972]">
                             ₹{reportData.assets.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                           </td>
                         </tr>
@@ -358,8 +358,8 @@ export function ReportsClient({ partners }: ReportsClientProps) {
 
                   {/* Liabilities & Equity */}
                   <div className="space-y-3">
-                    <h4 className="ds-h3 text-white border-b border-orange-500/20 pb-2">Liabilities &amp; Equity</h4>
-                    <table className="ds-table">
+                    <h4 className="monolith-h3 text-white border-b border-orange-500/20 pb-2">Liabilities &amp; Equity</h4>
+                    <table className="monolith-table">
                       <tbody>
                         <tr className="font-semibold text-slate-400">
                           <td colSpan={2}>Liabilities</td>
@@ -367,7 +367,7 @@ export function ReportsClient({ partners }: ReportsClientProps) {
                         {reportData.liabilities.accounts.map((acc: any) => (
                           <tr key={acc.code}>
                             <td className="pl-4">{acc.name}</td>
-                            <td className="text-right ds-numeric text-white">
+                            <td className="text-right monolith-numeric text-white">
                               ₹{acc.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                             </td>
                           </tr>
@@ -378,20 +378,20 @@ export function ReportsClient({ partners }: ReportsClientProps) {
                         {reportData.equity.accounts.map((acc: any) => (
                           <tr key={acc.code}>
                             <td className="pl-4">{acc.name}</td>
-                            <td className="text-right ds-numeric text-white">
+                            <td className="text-right monolith-numeric text-white">
                               ₹{acc.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                             </td>
                           </tr>
                         ))}
                         <tr>
                           <td className="pl-4 italic">Current Net Profit (YTD)</td>
-                          <td className="text-right ds-numeric text-emerald-400">
+                          <td className="text-right monolith-numeric text-emerald-400">
                             ₹{reportData.currentYearProfit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                           </td>
                         </tr>
-                        <tr className="font-bold border-t border-outline-variant/10 bg-slate-900/10">
+                        <tr className="font-bold border-t border-mono-border/10 bg-slate-900/10">
                           <td>TOTAL LIABILITIES &amp; RESERVES</td>
-                          <td className="text-right ds-numeric text-[#00cec4]">
+                          <td className="text-right monolith-numeric text-[#F9D972]">
                             ₹{reportData.totalLiabilitiesAndEquity.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                           </td>
                         </tr>
@@ -408,7 +408,7 @@ export function ReportsClient({ partners }: ReportsClientProps) {
                   <span className="text-xs uppercase tracking-wider font-semibold">
                     {reportData.isBalanced ? "Balance Sheet Balanced Successfully" : "Balance Sheet Out of Balance"}
                   </span>
-                  <span className="ds-numeric font-bold">
+                  <span className="monolith-numeric font-bold">
                     Diff: ₹{Math.abs(reportData.totalAssets - reportData.totalLiabilitiesAndEquity).toFixed(2)}
                   </span>
                 </div>
@@ -418,7 +418,7 @@ export function ReportsClient({ partners }: ReportsClientProps) {
             {/* C. Trial Balance */}
             {selectedReportId === "trial-balance" && (
               <div className="overflow-x-auto">
-                <table className="ds-table">
+                <table className="monolith-table">
                   <thead>
                     <tr>
                       <th>Account Code</th>
@@ -434,24 +434,24 @@ export function ReportsClient({ partners }: ReportsClientProps) {
                   <tbody>
                     {reportData.map((row: any) => (
                       <tr key={row.accountId} className="hover:bg-slate-800/10">
-                        <td className="ds-numeric text-xs">{row.accountCode}</td>
+                        <td className="monolith-numeric text-xs">{row.accountCode}</td>
                         <td className="text-xs text-white uppercase">{row.accountName}</td>
-                        <td className="text-right ds-numeric text-xs text-slate-400">
+                        <td className="text-right monolith-numeric text-xs text-slate-400">
                           {row.openingDebit > 0 ? `₹${row.openingDebit.toLocaleString("en-IN")}` : "—"}
                         </td>
-                        <td className="text-right ds-numeric text-xs text-slate-400">
+                        <td className="text-right monolith-numeric text-xs text-slate-400">
                           {row.openingCredit > 0 ? `₹${row.openingCredit.toLocaleString("en-IN")}` : "—"}
                         </td>
-                        <td className="text-right ds-numeric text-xs text-emerald-400">
+                        <td className="text-right monolith-numeric text-xs text-emerald-400">
                           {row.debit > 0 ? `₹${row.debit.toLocaleString("en-IN")}` : "—"}
                         </td>
-                        <td className="text-right ds-numeric text-xs text-rose-400">
+                        <td className="text-right monolith-numeric text-xs text-rose-400">
                           {row.credit > 0 ? `₹${row.credit.toLocaleString("en-IN")}` : "—"}
                         </td>
-                        <td className="text-right ds-numeric text-xs font-semibold text-white">
+                        <td className="text-right monolith-numeric text-xs font-semibold text-white">
                           {row.closingDebit > 0 ? `₹${row.closingDebit.toLocaleString("en-IN")}` : "—"}
                         </td>
-                        <td className="text-right ds-numeric text-xs font-semibold text-white">
+                        <td className="text-right monolith-numeric text-xs font-semibold text-white">
                           {row.closingCredit > 0 ? `₹${row.closingCredit.toLocaleString("en-IN")}` : "—"}
                         </td>
                       </tr>
@@ -464,7 +464,7 @@ export function ReportsClient({ partners }: ReportsClientProps) {
             {/* D. AR / AP Ageing Summaries */}
             {(selectedReportId === "ar-ageing" || selectedReportId === "ap-ageing") && (
               <div className="overflow-x-auto">
-                <table className="ds-table">
+                <table className="monolith-table">
                   <thead>
                     <tr>
                       <th>Party Name</th>
@@ -481,19 +481,19 @@ export function ReportsClient({ partners }: ReportsClientProps) {
                         <td className="text-xs uppercase text-white font-medium">
                           {row.customerName || row.supplierName}
                         </td>
-                        <td className="text-right ds-numeric text-xs font-semibold text-white">
+                        <td className="text-right monolith-numeric text-xs font-semibold text-white">
                           ₹{row.totalOutstanding.toLocaleString("en-IN")}
                         </td>
-                        <td className="text-right ds-numeric text-xs text-emerald-400">
+                        <td className="text-right monolith-numeric text-xs text-emerald-400">
                           ₹{row.bucket0To30.toLocaleString("en-IN")}
                         </td>
-                        <td className="text-right ds-numeric text-xs text-slate-300">
+                        <td className="text-right monolith-numeric text-xs text-slate-300">
                           ₹{row.bucket31To60.toLocaleString("en-IN")}
                         </td>
-                        <td className="text-right ds-numeric text-xs text-slate-400">
+                        <td className="text-right monolith-numeric text-xs text-slate-400">
                           ₹{row.bucket61To90.toLocaleString("en-IN")}
                         </td>
-                        <td className="text-right ds-numeric text-xs text-rose-400">
+                        <td className="text-right monolith-numeric text-xs text-rose-400">
                           ₹{row.bucket90Plus.toLocaleString("en-IN")}
                         </td>
                       </tr>
@@ -510,7 +510,7 @@ export function ReportsClient({ partners }: ReportsClientProps) {
               selectedReportId === "day-book" ||
               selectedReportId === "cash-bank") && (
               <div className="overflow-x-auto">
-                <table className="ds-table">
+                <table className="monolith-table">
                   <thead>
                     <tr>
                       <th>Date</th>
@@ -525,10 +525,10 @@ export function ReportsClient({ partners }: ReportsClientProps) {
                   <tbody>
                     {reportData.map((row: any, idx: number) => (
                       <tr key={row.id || idx} className="hover:bg-slate-800/10">
-                        <td className="ds-numeric text-xs">
+                        <td className="monolith-numeric text-xs">
                           {new Date(row.postingDate).toLocaleDateString("en-IN")}
                         </td>
-                        <td className="text-xs ds-label font-bold">
+                        <td className="text-xs monolith-label font-bold">
                           {row.invoiceNumber || row.billNumber || row.voucherType || "—"}
                         </td>
                         <td>
@@ -541,17 +541,17 @@ export function ReportsClient({ partners }: ReportsClientProps) {
                             </span>
                           )}
                         </td>
-                        <td className="text-right ds-numeric text-xs text-slate-400">
+                        <td className="text-right monolith-numeric text-xs text-slate-400">
                           {row.taxableValue !== undefined ? `₹${row.taxableValue.toLocaleString("en-IN")}` : "—"}
                         </td>
-                        <td className="text-right ds-numeric text-xs text-emerald-400">
+                        <td className="text-right monolith-numeric text-xs text-emerald-400">
                           {row.taxAmount !== undefined
                             ? `₹${row.taxAmount.toLocaleString("en-IN")}`
                             : row.debit !== undefined
                             ? `₹${row.debit.toLocaleString("en-IN")}`
                             : "—"}
                         </td>
-                        <td className="text-right ds-numeric text-xs text-white">
+                        <td className="text-right monolith-numeric text-xs text-white">
                           {row.grandTotal !== undefined
                             ? `₹${row.grandTotal.toLocaleString("en-IN")}`
                             : row.credit !== undefined
@@ -570,14 +570,14 @@ export function ReportsClient({ partners }: ReportsClientProps) {
             {selectedReportId === "journal-reg" && (
               <div className="space-y-6">
                 {reportData.map((jv: any) => (
-                  <div key={jv.id} className="p-4 bg-[var(--color-surface-container)] rounded-xl border border-outline-variant/10 space-y-3">
-                    <div className="flex justify-between items-center border-b border-outline-variant/5 pb-2">
-                      <span className="text-xs font-bold text-[#00cec4] uppercase">Voucher: {jv.voucherNo}</span>
-                      <span className="ds-numeric text-[11px] text-slate-400">
+                  <div key={jv.id} className="p-4 bg-[var(--color-surface-container)] rounded-xl border border-mono-border/10 space-y-3">
+                    <div className="flex justify-between items-center border-b border-mono-border/5 pb-2">
+                      <span className="text-xs font-bold text-[#F9D972] uppercase">Voucher: {jv.voucherNo}</span>
+                      <span className="monolith-numeric text-[11px] text-slate-400">
                         Date: {new Date(jv.postingDate).toLocaleDateString("en-IN")}
                       </span>
                     </div>
-                    <table className="ds-table">
+                    <table className="monolith-table">
                       <thead>
                         <tr>
                           <th>Account</th>
@@ -593,10 +593,10 @@ export function ReportsClient({ partners }: ReportsClientProps) {
                               <div className="text-xs text-white uppercase">{ln.accountName}</div>
                               <span className="text-[9px] text-slate-500 tracking-wider">{ln.accountCode}</span>
                             </td>
-                            <td className="text-right ds-numeric text-xs text-emerald-400">
+                            <td className="text-right monolith-numeric text-xs text-emerald-400">
                               {ln.debit > 0 ? `₹${ln.debit.toLocaleString("en-IN")}` : "—"}
                             </td>
-                            <td className="text-right ds-numeric text-xs text-rose-400">
+                            <td className="text-right monolith-numeric text-xs text-rose-400">
                               {ln.credit > 0 ? `₹${ln.credit.toLocaleString("en-IN")}` : "—"}
                             </td>
                             <td className="text-slate-400 text-xs">{ln.remarks || "—"}</td>
@@ -614,27 +614,27 @@ export function ReportsClient({ partners }: ReportsClientProps) {
               <div className="space-y-6">
                 {/* Summary cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="p-4 bg-[var(--color-background)] rounded-xl border border-outline-variant/10">
-                    <p className="ds-label text-slate-400">B2B (Registered Sales)</p>
-                    <h4 className="text-xl font-bold text-white ds-numeric mt-1">₹{reportData.b2b.taxableValue.toLocaleString("en-IN")}</h4>
+                  <div className="p-4 bg-[var(--color-background)] rounded-xl border border-mono-border/10">
+                    <p className="monolith-label text-slate-400">B2B (Registered Sales)</p>
+                    <h4 className="text-xl font-bold text-white monolith-numeric mt-1">₹{reportData.b2b.taxableValue.toLocaleString("en-IN")}</h4>
                     <p className="text-[10px] text-slate-500 mt-2">GST Payable: ₹{reportData.b2b.taxAmount.toLocaleString("en-IN")} ({reportData.b2b.count} invoices)</p>
                   </div>
-                  <div className="p-4 bg-[var(--color-background)] rounded-xl border border-outline-variant/10">
-                    <p className="ds-label text-slate-400">B2C (Consumer Sales)</p>
-                    <h4 className="text-xl font-bold text-white ds-numeric mt-1">₹{reportData.b2c.taxableValue.toLocaleString("en-IN")}</h4>
+                  <div className="p-4 bg-[var(--color-background)] rounded-xl border border-mono-border/10">
+                    <p className="monolith-label text-slate-400">B2C (Consumer Sales)</p>
+                    <h4 className="text-xl font-bold text-white monolith-numeric mt-1">₹{reportData.b2c.taxableValue.toLocaleString("en-IN")}</h4>
                     <p className="text-[10px] text-slate-500 mt-2">GST Payable: ₹{reportData.b2c.taxAmount.toLocaleString("en-IN")} ({reportData.b2c.count} invoices)</p>
                   </div>
-                  <div className="p-4 bg-[var(--color-background)] rounded-xl border border-[#00cec4]/20">
-                    <p className="ds-label text-[#00cec4]">Total Sales GST Liability</p>
-                    <h4 className="text-xl font-bold text-[#00cec4] ds-numeric mt-1">₹{reportData.total.taxAmount.toLocaleString("en-IN")}</h4>
+                  <div className="p-4 bg-[var(--color-background)] rounded-xl border border-[#F9D972]/20">
+                    <p className="monolith-label text-[#F9D972]">Total Sales GST Liability</p>
+                    <h4 className="text-xl font-bold text-[#F9D972] monolith-numeric mt-1">₹{reportData.total.taxAmount.toLocaleString("en-IN")}</h4>
                     <p className="text-[10px] text-slate-400 mt-2">Taxable Base: ₹{reportData.total.taxableValue.toLocaleString("en-IN")}</p>
                   </div>
                 </div>
 
                 {/* GSTR B2B Invoices */}
                 <div>
-                  <h4 className="ds-h3 text-white mb-2">B2B Invoices Details</h4>
-                  <table className="ds-table">
+                  <h4 className="monolith-h3 text-white mb-2">B2B Invoices Details</h4>
+                  <table className="monolith-table">
                     <thead>
                       <tr>
                         <th>Inv Number</th>
@@ -649,13 +649,13 @@ export function ReportsClient({ partners }: ReportsClientProps) {
                     <tbody>
                       {reportData.b2b.invoices.map((inv: any, idx: number) => (
                         <tr key={idx}>
-                          <td className="ds-numeric text-xs font-semibold text-white">{inv.invoiceNumber}</td>
+                          <td className="monolith-numeric text-xs font-semibold text-white">{inv.invoiceNumber}</td>
                           <td className="text-xs uppercase">{inv.customerName}</td>
-                          <td className="ds-numeric text-xs text-[#00cec4]">{inv.customerGstin}</td>
-                          <td className="text-right ds-numeric text-xs">₹{inv.taxableValue.toLocaleString("en-IN")}</td>
-                          <td className="text-right ds-numeric text-xs text-emerald-400">₹{inv.cgst.toLocaleString("en-IN")}</td>
-                          <td className="text-right ds-numeric text-xs text-emerald-400">₹{inv.sgst.toLocaleString("en-IN")}</td>
-                          <td className="text-right ds-numeric text-xs text-emerald-400">₹{inv.igst.toLocaleString("en-IN")}</td>
+                          <td className="monolith-numeric text-xs text-[#F9D972]">{inv.customerGstin}</td>
+                          <td className="text-right monolith-numeric text-xs">₹{inv.taxableValue.toLocaleString("en-IN")}</td>
+                          <td className="text-right monolith-numeric text-xs text-emerald-400">₹{inv.cgst.toLocaleString("en-IN")}</td>
+                          <td className="text-right monolith-numeric text-xs text-emerald-400">₹{inv.sgst.toLocaleString("en-IN")}</td>
+                          <td className="text-right monolith-numeric text-xs text-emerald-400">₹{inv.igst.toLocaleString("en-IN")}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -667,20 +667,20 @@ export function ReportsClient({ partners }: ReportsClientProps) {
             {/* H. GSTR-2B Summary */}
             {selectedReportId === "gstr2b" && (
               <div className="space-y-6">
-                <div className="p-4 bg-[var(--color-surface-container)] rounded-xl border border-[#00cec4]/20 flex justify-between items-center">
+                <div className="p-4 bg-[var(--color-surface-container)] rounded-xl border border-[#F9D972]/20 flex justify-between items-center">
                   <div>
-                    <h5 className="ds-label text-[#00cec4]">Consolidated Input Tax Credit (ITC)</h5>
+                    <h5 className="monolith-label text-[#F9D972]">Consolidated Input Tax Credit (ITC)</h5>
                     <p className="text-xs text-slate-400 mt-1">Available for GSTR-3B reconciliation</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-2xl font-bold ds-numeric text-white">
+                    <span className="text-2xl font-bold monolith-numeric text-white">
                       ₹{reportData.taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </span>
                     <span className="text-[10px] text-slate-500 block uppercase mt-1">From {reportData.count} bills</span>
                   </div>
                 </div>
 
-                <table className="ds-table">
+                <table className="monolith-table">
                   <thead>
                     <tr>
                       <th>Bill Number</th>
@@ -695,13 +695,13 @@ export function ReportsClient({ partners }: ReportsClientProps) {
                   <tbody>
                     {reportData.bills.map((bill: any, idx: number) => (
                       <tr key={idx}>
-                        <td className="ds-numeric text-xs font-semibold text-white">{bill.billNumber}</td>
+                        <td className="monolith-numeric text-xs font-semibold text-white">{bill.billNumber}</td>
                         <td className="text-xs uppercase">{bill.supplierName}</td>
-                        <td className="ds-numeric text-xs text-[#00cec4]">{bill.supplierGstin}</td>
-                        <td className="text-right ds-numeric text-xs">₹{bill.taxableValue.toLocaleString("en-IN")}</td>
-                        <td className="text-right ds-numeric text-xs text-emerald-400">₹{bill.cgst.toLocaleString("en-IN")}</td>
-                        <td className="text-right ds-numeric text-xs text-emerald-400">₹{bill.sgst.toLocaleString("en-IN")}</td>
-                        <td className="text-right ds-numeric text-xs text-emerald-400">₹{bill.igst.toLocaleString("en-IN")}</td>
+                        <td className="monolith-numeric text-xs text-[#F9D972]">{bill.supplierGstin}</td>
+                        <td className="text-right monolith-numeric text-xs">₹{bill.taxableValue.toLocaleString("en-IN")}</td>
+                        <td className="text-right monolith-numeric text-xs text-emerald-400">₹{bill.cgst.toLocaleString("en-IN")}</td>
+                        <td className="text-right monolith-numeric text-xs text-emerald-400">₹{bill.sgst.toLocaleString("en-IN")}</td>
+                        <td className="text-right monolith-numeric text-xs text-emerald-400">₹{bill.igst.toLocaleString("en-IN")}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -712,7 +712,7 @@ export function ReportsClient({ partners }: ReportsClientProps) {
             {/* I. Job Profitability Report */}
             {selectedReportId === "job-profit" && (
               <div className="overflow-x-auto">
-                <table className="ds-table">
+                <table className="monolith-table">
                   <thead>
                     <tr>
                       <th>Job Code</th>
@@ -730,23 +730,23 @@ export function ReportsClient({ partners }: ReportsClientProps) {
                       const profitable = job.netProfit >= 0;
                       return (
                         <tr key={job.id} className="hover:bg-slate-800/10">
-                          <td className="ds-numeric text-xs font-bold text-white">{job.jobNo}</td>
+                          <td className="monolith-numeric text-xs font-bold text-white">{job.jobNo}</td>
                           <td className="text-xs uppercase">{job.title}</td>
-                          <td className="text-right ds-numeric text-xs">
+                          <td className="text-right monolith-numeric text-xs">
                             ₹{job.contractValue.toLocaleString("en-IN")}
                           </td>
-                          <td className="text-right ds-numeric text-xs text-emerald-400">
+                          <td className="text-right monolith-numeric text-xs text-emerald-400">
                             ₹{job.actualRevenue.toLocaleString("en-IN")}
                           </td>
-                          <td className="text-right ds-numeric text-xs text-rose-400">
+                          <td className="text-right monolith-numeric text-xs text-rose-400">
                             ₹{job.actualExpense.toLocaleString("en-IN")}
                           </td>
-                          <td className={`text-right ds-numeric text-xs font-semibold ${
+                          <td className={`text-right monolith-numeric text-xs font-semibold ${
                             profitable ? "text-emerald-400" : "text-orange-400"
                           }`}>
                             ₹{job.netProfit.toLocaleString("en-IN")}
                           </td>
-                          <td className={`text-right ds-numeric text-xs font-bold ${
+                          <td className={`text-right monolith-numeric text-xs font-bold ${
                             profitable ? "text-emerald-400" : "text-orange-400"
                           }`}>
                             {job.marginPercent.toFixed(1)}%

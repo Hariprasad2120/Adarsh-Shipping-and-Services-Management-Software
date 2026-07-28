@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import type { UseFormReturn } from "react-hook-form";
 import type { ItemFormSchema } from "@/lib/items/validation";
@@ -27,7 +28,7 @@ const APPLICABLE_FOR = [
 const CONTAINER_TYPES = ["20FT", "40FT", "40HQ", "LCL", "Air Cargo", "Not Applicable"];
 
 const selectCls =
-  "w-full px-3 py-1.5 text-sm border border-[#d9dee7] rounded focus:outline-none focus:border-[#00cec4] text-[#212529] bg-white h-[34px]";
+  "w-full px-3 py-1.5 text-sm border border-[#d9dee7] rounded focus:outline-none focus:border-[#F9D972] text-[#212529] bg-white h-[34px]";
 
 function FieldRow({
   label,
@@ -62,36 +63,36 @@ export function ItemLogisticsFieldsSection({ form }: ItemLogisticsFieldsSectionP
       </h3>
 
       <FieldRow label="Charge Category" id="item-charge-category">
-        <select id="item-charge-category" className={selectCls} {...register("chargeCategory")}>
+        <NativeSelect id="item-charge-category" className={selectCls} {...register("chargeCategory")}>
           <option value="">— Select category —</option>
           {CHARGE_CATEGORIES.map((c) => (
             <option key={c} value={c}>
               {c}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </FieldRow>
 
       <FieldRow label="Applicable For" id="item-applicable-for">
-        <select id="item-applicable-for" className={selectCls} {...register("applicableFor")}>
+        <NativeSelect id="item-applicable-for" className={selectCls} {...register("applicableFor")}>
           <option value="">— Select —</option>
           {APPLICABLE_FOR.map((a) => (
             <option key={a} value={a}>
               {a}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </FieldRow>
 
       <FieldRow label="Container Type" id="item-container-type">
-        <select id="item-container-type" className={selectCls} {...register("defaultContainerType")}>
+        <NativeSelect id="item-container-type" className={selectCls} {...register("defaultContainerType")}>
           <option value="">— Select —</option>
           {CONTAINER_TYPES.map((t) => (
             <option key={t} value={t}>
               {t}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </FieldRow>
     </div>
   );

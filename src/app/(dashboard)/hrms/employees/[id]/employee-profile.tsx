@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { BriefcaseBusiness, CircleUserRound, Landmark, IndianRupee } from "lucide-react";
 import { useCan } from "@/lib/caps-context";
 import { toDisplayTitleCase } from "@/lib/text-case";
-import { DropdownSelect } from "@/components/ui/dropdown-select";
-import { Input } from "@/components/ui/input";
+import { DropdownSelect } from "@/components/monolith/dropdown-select";
+import { Input } from "@/components/monolith/input";
 
 type PayrollMeta = {
   employeeNumber?: string;
@@ -331,7 +331,7 @@ export function EmployeeProfile({
         <div className="flex justify-end">
           <button
             onClick={() => setEditDetails(true)}
-            className="rounded-lg border border-[#00cec4]/30 bg-[#00cec4] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#00b5ad]"
+            className="rounded-lg border border-[#F9D972]/30 bg-[#F9D972] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#00b5ad]"
           >
             Edit Details
           </button>
@@ -431,7 +431,7 @@ export function EmployeeProfile({
                       className={`rounded-full border px-3 py-1 text-xs transition ${
                         selectedRoles.includes(role.id)
                           ? "border-indigo-600 bg-indigo-600 text-white"
-                          : "border-outline-variant/50 bg-surface text-on-surface"
+                          : "border-mono-border/50 bg-mono-card text-mono-text"
                       }`}
                     >
                       {role.name}
@@ -455,7 +455,7 @@ export function EmployeeProfile({
                       {role.role.name}
                     </span>
                   ))}
-                  {user.roles.length === 0 && <span className="text-sm text-on-surface-variant">No roles</span>}
+                  {user.roles.length === 0 && <span className="text-sm text-mono-muted">No roles</span>}
                 </div>
                 {canEditRoles && (
                   <button onClick={() => setEditRoles(true)} className="text-xs text-indigo-600 hover:underline">Edit roles</button>
@@ -507,7 +507,7 @@ export function EmployeeProfile({
                   ) : (
                     <button
                       onClick={() => setShowPwReset(true)}
-                      className="w-full rounded-lg border border-outline-variant/50 bg-surface py-2 text-sm text-on-surface transition hover:bg-surface-container-low"
+                      className="w-full rounded-lg border border-mono-border/50 bg-mono-card py-2 text-sm text-mono-text transition hover:bg-mono-soft"
                     >
                       Reset Password
                     </button>
@@ -624,11 +624,11 @@ function InfoCard({
   children: ReactNode;
 }) {
   return (
-    <div className="card-top-accent ds-shell-lg border border-outline-variant/40 bg-surface p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
+    <div className="monolith-card monolith-accent monolith-shell-lg border border-mono-border/40 bg-mono-card p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
       <div className="mb-6 flex items-center gap-3">
         <div className="flex items-center gap-3">
-          <div className="text-on-surface">{icon}</div>
-          <h2 className="ds-h2 text-on-surface">{title}</h2>
+          <div className="text-mono-text">{icon}</div>
+          <h2 className="monolith-h2 text-mono-text">{title}</h2>
         </div>
       </div>
       {children}
@@ -638,8 +638,8 @@ function InfoCard({
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="card-top-accent ds-shell-lg border border-outline-variant/40 bg-surface p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
-      <h2 className="ds-h2 mb-4 text-on-surface">{title}</h2>
+    <div className="monolith-card monolith-accent monolith-shell-lg border border-mono-border/40 bg-mono-card p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
+      <h2 className="monolith-h2 mb-4 text-mono-text">{title}</h2>
       {children}
     </div>
   );
@@ -654,8 +654,8 @@ function KeyValueGrid({
     <div className="grid grid-cols-1 gap-x-10 gap-y-4 md:grid-cols-2">
       {items.map((item) => (
         <div key={item.label} className={item.span === 2 ? "md:col-span-2" : undefined}>
-          <div className="text-[13px] font-medium text-on-surface-variant">{item.label}</div>
-          <div className={`mt-1 text-[15px] ${item.accent ? "font-semibold text-on-surface" : "text-on-surface-variant"}`}>
+          <div className="text-[13px] font-medium text-mono-muted">{item.label}</div>
+          <div className={`mt-1 text-[15px] ${item.accent ? "font-semibold text-mono-text" : "text-mono-muted"}`}>
             {item.value}
           </div>
         </div>
@@ -667,7 +667,7 @@ function KeyValueGrid({
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs text-on-surface-variant">{label}</label>
+      <label className="text-xs text-mono-muted">{label}</label>
       {children}
     </div>
   );

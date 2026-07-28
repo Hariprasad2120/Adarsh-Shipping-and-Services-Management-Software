@@ -964,10 +964,15 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
 
   it("7. should verify multi-line operational expenses lifecycle", async () => {
     const job = await db.chaJob.findFirstOrThrow({ where: { orgId: org.id, jobNumber: "CHA-JOB-999" } });
+    await db.chaJobAssignment.create({
+      data: { jobId: job.id, userId: managerUser.id, responsibility: "ACCOUNTS" },
+    });
 
     // A. Create expense request
     const request = await chaService.createExpenseRequest(ownerUser.id, org.id, job.id, {
       isUrgent: false,
+      upiNumber: "9876543210",
+      upiId: "vendor@upi",
       lines: [
         { category: "Customs Duty", purpose: "Electronics customs clearing", amount: 15000, requiredDate: new Date() },
         { category: "Port Handling Charges", purpose: "Container handling", amount: 4500, requiredDate: new Date() },
@@ -975,7 +980,9 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     });
 
     expect(request).toBeDefined();
-    expect(request.status).toBe("SUBMITTED");
+    expect(request.status).toBe("UNDER_REVIEW");
+    expect(request.upiNumber).toBe("9876543210");
+    expect(request.upiId).toBe("vendor@upi");
 
     // Check lines
     const lines = await db.chaExpenseLine.findMany({ where: { requestId: request.id } });
@@ -987,26 +994,19 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     await chaService.triggerUrgentExpenseEscalation(ownerUser.id, org.id, request.id, "Immediate duty payment required to avoid demurrage");
     const urgentReq = await db.chaExpenseRequest.findUniqueOrThrow({ where: { id: request.id } });
     expect(urgentReq.isUrgent).toBe(true);
-    expect(urgentReq.status).toBe("URGENT_PAYMENT_REQUIRED");
+    expect(urgentReq.status).toBe("UNDER_REVIEW");
 
-    // C. Update status (Under Review -> Approved)
-    await chaService.setExpenseStatus(managerUser.id, org.id, request.id, "APPROVED", "Verified lines are correct");
+    // C. Owner/manager review approves the request
+    await chaService.reviewExpenseRequest(managerUser.id, org.id, request.id, "APPROVED", "Verified lines are correct");
     const approvedReq = await db.chaExpenseRequest.findUniqueOrThrow({ where: { id: request.id } });
     expect(approvedReq.status).toBe("APPROVED");
 
-    // D. Raise Query & Resolution
-    await chaService.raisePaymentQuery(ownerUser.id, org.id, request.id, "Verify if customs duty includes GST surcharge");
-    const queriedReq = await db.chaExpenseRequest.findUniqueOrThrow({ where: { id: request.id } });
-    expect(queriedReq.status).toBe("QUERY_RAISED");
+    // D. Accounts marks the approved request ready for payment
+    await chaService.markExpenseReadyForDisbursement(managerUser.id, org.id, request.id);
+    const readyReq = await db.chaExpenseRequest.findUniqueOrThrow({ where: { id: request.id } });
+    expect(readyReq.status).toBe("READY_FOR_DISBURSEMENT");
 
-    const query = await db.chaExpenseQuery.findFirstOrThrow({ where: { requestId: request.id } });
-    await chaService.resolvePaymentQuery(managerUser.id, org.id, query.id, "Yes, GST surcharge is included under heading 3");
-    const resolvedReq = await db.chaExpenseRequest.findUniqueOrThrow({ where: { id: request.id } });
-    expect(resolvedReq.status).toBe("PAID"); // Resolving query sets status back to PAID, wait, check service impl
-
-    // E. Post disbursement details (Normally from APPROVED or READY_FOR_DISBURSEMENT, but we test postExpensePayment)
-    // First, let's reset status to APPROVED so it's a clean flow
-    await chaService.setExpenseStatus(managerUser.id, org.id, request.id, "READY_FOR_DISBURSEMENT");
+    // E. Accounts posts disbursement with mandatory proof
     const payment = await chaService.postExpensePayment(managerUser.id, org.id, request.id, {
       amountPaid: 19500,
       paymentDate: new Date(),
@@ -1869,6 +1869,132 @@ describe("Customs House Agent (CHA) Module Integration Tests", () => {
     expect(audit?.prevState).toBe("false");
     expect(audit?.newState).toBe("true");
     expect(audit?.remarks).toContain("Urgent port clearance bond filed");
+  }, 30000);
+
+  it("12b. should keep prerequisite stages blocked until mandatory checklist items are checked", async () => {
+    await db.filingWorkflowInstance.deleteMany({ where: { job: { orgId: org.id } } });
+    await db.filingWorkflowTemplate.deleteMany({ where: { orgId: org.id } });
+    await chaService.ensureSettingsAndDefaults(org.id);
+    const importJobType = await db.chaJobType.findFirstOrThrow({
+      where: { orgId: org.id, name: "Import Clearance" },
+    });
+
+    const workflowDraft = await chaService.saveFilingWorkflowDraft(ownerUser.id, org.id, null, {
+      name: `Prerequisite Checklist Gate ${Date.now()}`,
+      description: "Validates that completed prerequisite stages still need checked mandatory items.",
+      nodes: [
+        {
+          key: "duty",
+          name: "Duty",
+          description: "Pay and verify duty.",
+          category: "Operations",
+          positionX: 100,
+          positionY: 100,
+          isStart: true,
+          slaDuration: 1,
+          slaUnit: "BUSINESS_DAYS",
+          commentsRequired: false,
+          canBeSkipped: true,
+          canBeRevisited: true,
+          requireAllMandatoryChecklistItems: false,
+          requireMandatoryPhotos: false,
+          allowedRoles: ["Employee", "Manager"],
+          checklistItems: [{ label: "Duty paid", isMandatory: false }],
+          photoRequirements: [],
+        },
+        {
+          key: "delivery",
+          name: "Delivery",
+          description: "Delivery can proceed only after duty is really done.",
+          category: "Operations",
+          nodeType: "END",
+          positionX: 320,
+          positionY: 100,
+          isStart: false,
+          slaDuration: 1,
+          slaUnit: "BUSINESS_DAYS",
+          commentsRequired: false,
+          canBeSkipped: false,
+          canBeRevisited: true,
+          requireAllMandatoryChecklistItems: false,
+          requireMandatoryPhotos: false,
+          allowedRoles: ["Employee", "Manager"],
+          checklistItems: [],
+          photoRequirements: [],
+          actionConfig: {
+            prerequisiteGate: {
+              enabled: true,
+              mode: "ALL",
+              requiredNodeKeys: ["duty"],
+            },
+          },
+        },
+      ],
+      edges: [{ sourceKey: "duty", targetKey: "delivery", label: "Next" }],
+    });
+
+    await chaService.publishFilingWorkflow(ownerUser.id, org.id, workflowDraft.versions?.[0]?.id!);
+
+    const job = await chaService.createJob(ownerUser.id, org.id, {
+      jobNumber: `CHA-PREREQ-${Date.now()}`,
+      title: "Prerequisite checklist gate test",
+      customerId: customer.id,
+      jobTypeId: importJobType.id,
+      branchId: branch.id,
+      priority: "MEDIUM",
+      primaryOwnerId: ownerUser.id,
+      assignedManagerId: managerUser.id,
+      assignments: [{ userId: ownerUser.id, responsibility: "OPERATIONS" }],
+    });
+
+    await db.chaJob.update({
+      where: { id: job.id },
+      data: { stage: "FILING" },
+    });
+
+    const startedInstance = await chaService.startFilingWorkflow(ownerUser.id, org.id, job.id);
+    const dutyRun = startedInstance.nodeRuns.find((run: any) => run.status === "ACTIVE");
+    const dutyChecklistItemId = dutyRun.node.checklistItems[0].id;
+
+    await chaService.completeFilingNode(ownerUser.id, org.id, job.id, dutyRun.id, {
+      remarks: "Duty stage was advanced without ticking duty paid.",
+      checklistItemResponses: [{ checklistItemId: dutyChecklistItemId, isChecked: false }],
+      nextNodeKey: "delivery",
+    });
+
+    const deliveryInstance = await chaService.getFilingWorkflowInstance(org.id, job.id);
+    const skippedDutyRun = deliveryInstance.nodeRuns.find((run: any) => run.id === dutyRun.id);
+    expect(skippedDutyRun?.status).toBe("SKIPPED");
+    expect(deliveryInstance.currentNodeKey).toBe("delivery");
+    expect(deliveryInstance.activeNodePrerequisiteStatus?.isBlocked).toBe(true);
+    expect(deliveryInstance.activeNodePrerequisiteStatus?.missingNodeKeys).toContain("duty");
+
+    const deliveryRun = deliveryInstance.nodeRuns.find((run: any) => run.status === "ACTIVE");
+    await expect(
+      chaService.completeFilingNode(ownerUser.id, org.id, job.id, deliveryRun.id, {
+        remarks: "Trying to complete delivery before duty is checked.",
+        checklistItemResponses: [],
+        nextNodeKey: null,
+      }),
+    ).rejects.toThrow(/blocked until prerequisite stages are completed: Duty/);
+
+    await chaService.redirectBlockedFilingWorkflowStage(ownerUser.id, org.id, job.id, deliveryRun.id, "duty");
+
+    const redirectedInstance = await chaService.getFilingWorkflowInstance(org.id, job.id);
+    const reopenedDutyRun = redirectedInstance.nodeRuns.find((run: any) => run.status === "ACTIVE");
+    expect(reopenedDutyRun.nodeKey).toBe("duty");
+
+    await chaService.completeFilingNode(ownerUser.id, org.id, job.id, reopenedDutyRun.id, {
+      remarks: "Duty is now completed for delivery.",
+      checklistItemResponses: [{ checklistItemId: reopenedDutyRun.node.checklistItems[0].id, isChecked: true }],
+      nextNodeKey: "delivery",
+    });
+
+    const resumedInstance = await chaService.getFilingWorkflowInstance(org.id, job.id);
+    expect(resumedInstance.currentNodeKey).toBe("delivery");
+    expect(resumedInstance.activeNodeRun?.nodeKey).toBe("delivery");
+    expect(resumedInstance.pendingBlockedStage).toBeNull();
+    expect(resumedInstance.activeNodePrerequisiteStatus?.isBlocked).toBe(false);
   }, 30000);
 
   it("12.1. should sync filing uploads into the job documents registry with validity metadata", async () => {

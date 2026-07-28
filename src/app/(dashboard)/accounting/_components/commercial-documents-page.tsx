@@ -1,3 +1,4 @@
+import { NativeSelect } from "@/components/monolith/native-select";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -81,13 +82,13 @@ export async function CommercialDocumentsPage({
     <div className="space-y-6">
       <div className="flex flex-col gap-4 border-b border-[#1c212a]/30 pb-5 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="ds-h1 text-white">{title}</h2>
+          <h2 className="monolith-h1 text-white">{title}</h2>
           <p className="mt-1 text-sm text-slate-400">{description}</p>
         </div>
         <div className="flex items-center gap-2">
           <Link
             href={createHref}
-            className="flex cursor-pointer items-center gap-2 rounded-lg bg-[#00c4b6] px-4 py-2 text-sm font-bold text-white shadow-md shadow-[#00c4b6]/10 transition-all hover:bg-[#00b0a3]"
+            className="flex cursor-pointer items-center gap-2 rounded-lg bg-[#F9D972] px-4 py-2 text-sm font-bold text-white shadow-md shadow-[#F9D972]/10 transition-all hover:bg-[#00b0a3]"
           >
             <Plus className="size-4" />
             <span>Generate Document</span>
@@ -104,23 +105,23 @@ export async function CommercialDocumentsPage({
               name="search"
               defaultValue={searchFilter}
               placeholder="Search by document number or account..."
-              className="w-full rounded-lg border border-[#1c212a] bg-[#0a0d12] py-1.5 pl-9 pr-3 text-sm text-white placeholder-slate-500 focus:border-[#00c4b6] focus:outline-none"
+              className="w-full rounded-lg border border-[#1c212a] bg-[#0a0d12] py-1.5 pl-9 pr-3 text-sm text-white placeholder-slate-500 focus:border-[#F9D972] focus:outline-none"
             />
           </div>
 
           {showTypeFilter && !typeFilter ? (
             <div className="relative min-w-[200px]">
-              <select
+              <NativeSelect
                 name="type"
                 defaultValue={selectedType}
-                className="w-full rounded-lg border border-[#1c212a] bg-[#0a0d12] py-1.5 pl-3 pr-8 text-sm text-slate-300 focus:border-[#00c4b6] focus:outline-none"
+                className="w-full rounded-lg border border-[#1c212a] bg-[#0a0d12] py-1.5 pl-3 pr-8 text-sm text-slate-300 focus:border-[#F9D972] focus:outline-none"
               >
                 <option value="">All Document Types</option>
                 <option value="QUOTE">Quotes</option>
                 <option value="INVOICE">Invoices</option>
                 <option value="SALES_ORDER">Sales Orders</option>
                 <option value="PURCHASE_ORDER">Purchase Orders</option>
-              </select>
+              </NativeSelect>
             </div>
           ) : null}
 
@@ -154,7 +155,7 @@ export async function CommercialDocumentsPage({
             <p className="mx-auto max-w-sm text-xs text-slate-500">
               Create commercial documents to start tracking orders and customer billing records.
             </p>
-            <Link href={createHref} className="inline-flex items-center gap-1.5 text-xs font-bold text-[#00c4b6] hover:underline">
+            <Link href={createHref} className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F9D972] hover:underline">
               <span>Create a new document</span>
               <ArrowRight className="size-3.5" />
             </Link>
@@ -187,7 +188,7 @@ export async function CommercialDocumentsPage({
                       {inv.account ? (
                         <div className="flex items-center gap-1.5 text-xs">
                           <Building className="size-3.5 text-slate-500" />
-                          <Link href={`/crm/customers/${inv.account.id}`} className="hover:text-[#00c4b6] hover:underline">
+                          <Link href={`/crm/customers/${inv.account.id}`} className="hover:text-[#F9D972] hover:underline">
                             {inv.account.name}
                           </Link>
                         </div>
@@ -198,7 +199,7 @@ export async function CommercialDocumentsPage({
                     <td className="px-6 py-4 text-xs text-slate-400">
                       {new Date(inv.date).toLocaleDateString("en-IN")}
                     </td>
-                    <td className="px-6 py-4 font-bold text-[#00c4b6]">
+                    <td className="px-6 py-4 font-bold text-[#F9D972]">
                       ₹{inv.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4">

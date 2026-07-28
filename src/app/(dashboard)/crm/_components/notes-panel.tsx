@@ -56,7 +56,7 @@ export function NotesPanel({ relatedToType, relatedToId, initialNotes }: NotesPa
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2 border-b border-[#1c212a]/30 pb-3">
-        <MessageSquare className="size-4.5 text-[#00c4b6]" />
+        <MessageSquare className="size-4.5 text-[#F9D972]" />
         <h3 className="font-bold text-sm text-white uppercase tracking-wider">Notes & Annotations</h3>
       </div>
 
@@ -67,13 +67,13 @@ export function NotesPanel({ relatedToType, relatedToId, initialNotes }: NotesPa
           value={newNoteBody}
           onChange={(e) => setNewNoteBody(e.target.value)}
           rows={3}
-          className="w-full p-3 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#00c4b6] text-white"
+          className="w-full p-3 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#F9D972] text-white"
         />
         <div className="flex justify-end">
           <button
             type="submit"
             disabled={isSubmitting || !newNoteBody.trim()}
-            className="px-4 py-1.5 bg-[#00c4b6] hover:bg-[#00b0a3] disabled:opacity-50 text-white rounded text-xs font-bold transition-all cursor-pointer"
+            className="px-4 py-1.5 bg-[#F9D972] hover:bg-[#00b0a3] disabled:opacity-50 text-white rounded text-xs font-bold transition-all cursor-pointer"
           >
             {isSubmitting ? "Adding..." : "Add Note"}
           </button>

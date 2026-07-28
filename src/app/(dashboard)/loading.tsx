@@ -1,11 +1,11 @@
 function LoadingLine({ width }: { width: string }) {
-  return <div className={`h-3 rounded-full bg-surface-container-high ${width}`} />;
+  return <div className={`h-3 rounded-full bg-mono-soft ${width}`} />;
 }
 
 function LoadingCard() {
   return (
-    <div className="rounded-2xl border border-outline-variant/40 bg-surface p-6 shadow-ambient">
-      <div className="mb-4 h-5 w-32 rounded-full bg-surface-container-high" />
+    <div className="rounded-2xl border border-mono-border/40 bg-mono-card p-6 shadow-ambient">
+      <div className="mb-4 h-5 w-32 rounded-full bg-mono-soft" />
       <div className="space-y-3">
         <LoadingLine width="w-full" />
         <LoadingLine width="w-5/6" />
@@ -19,8 +19,8 @@ export default function DashboardLoading() {
   return (
     <div className="flex w-full flex-1 flex-col gap-6 animate-pulse">
       <div className="space-y-3">
-        <div className="h-8 w-56 rounded-full bg-surface-container-high" />
-        <div className="h-4 w-80 max-w-full rounded-full bg-surface-container" />
+        <div className="h-8 w-56 rounded-full bg-mono-soft" />
+        <div className="h-4 w-80 max-w-full rounded-full bg-mono-soft" />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -29,8 +29,8 @@ export default function DashboardLoading() {
         <LoadingCard />
       </div>
 
-      <div className="rounded-2xl border border-outline-variant/40 bg-surface p-6 shadow-ambient">
-        <div className="mb-6 h-5 w-40 rounded-full bg-surface-container-high" />
+      <div className="rounded-2xl border border-mono-border/40 bg-mono-card p-6 shadow-ambient">
+        <div className="mb-6 h-5 w-40 rounded-full bg-mono-soft" />
         <div className="space-y-4">
           <LoadingLine width="w-full" />
           <LoadingLine width="w-11/12" />

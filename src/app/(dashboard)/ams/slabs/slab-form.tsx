@@ -1,10 +1,11 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import { useActionState, useState } from "react";
 import { createSlabAction } from "./actions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/monolith/button";
+import { Input } from "@/components/monolith/input";
+import { Label } from "@/components/monolith/label";
 
 export function SlabForm() {
   const [grade, setGrade] = useState<string>("A+");
@@ -17,7 +18,7 @@ export function SlabForm() {
     null,
   );
 
-  const selectClass = "flex h-11 w-full rounded-xl border border-[#00cec4]/55 bg-surface px-4 py-2.5 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/15 hover:border-[#00cec4]/85 transition";
+  const selectClass = "flex h-11 w-full rounded-xl border border-[#F9D972]/55 bg-mono-card px-4 py-2.5 text-mono-text focus:outline-none focus:ring-2 focus:ring-primary/15 hover:border-[#F9D972]/85 transition";
 
   return (
     <form action={action} className="space-y-4">
@@ -28,11 +29,11 @@ export function SlabForm() {
       <div>
         <Label>Grade</Label>
         <div className="mt-1.5">
-          <select value={grade} onChange={(e) => setGrade(e.target.value)} className={selectClass}>
+          <NativeSelect value={grade} onChange={(e) => setGrade(e.target.value)} className={selectClass}>
             {["A+", "A", "B+", "B", "C+", "C", "D"].map((g) => (
-              <option key={g} value={g} className="bg-surface">{g}</option>
+              <option key={g} value={g} className="bg-mono-card">{g}</option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -51,7 +52,7 @@ export function SlabForm() {
       </div>
       {state && !state.ok && <p className="text-sm font-semibold text-rose-600">{state.error}</p>}
       {state && state.ok && <p className="text-sm font-semibold text-emerald-600">Slab created successfully.</p>}
-      <Button type="submit" disabled={pending} className="w-full h-11 text-xs font-semibold rounded-xl bg-[#00cec4] hover:bg-[#00b8af] text-white">
+      <Button type="submit" disabled={pending} className="w-full h-11 text-xs font-semibold rounded-xl bg-[#F9D972] hover:bg-[#E8C85D] text-white">
         {pending ? "Saving..." : "Add Slab"}
       </Button>
     </form>

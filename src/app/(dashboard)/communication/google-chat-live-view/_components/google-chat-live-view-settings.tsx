@@ -39,24 +39,24 @@ export function GoogleChatLiveViewSettings({ enabled }: GoogleChatLiveViewSettin
   };
 
   return (
-    <div className="rounded-xl border border-outline-variant bg-surface p-6 shadow-sm space-y-5">
+    <div className="rounded-xl border border-mono-border bg-mono-card p-6 shadow-sm space-y-5">
       {/* Section header */}
       <div className="flex items-center gap-2.5">
-        <span className="ds-icon-badge" style={{ background: "rgba(251,146,60,0.10)", color: "#fb923c" }}>
+        <span className="monolith-icon-badge" style={{ background: "rgba(251,146,60,0.10)", color: "#D88700" }}>
           <FlaskConical size={16} />
         </span>
         <div>
-          <h2 className="ds-h2 text-on-surface">Experimental</h2>
-          <p className="text-xs text-on-surface-variant mt-0.5">
+          <h2 className="monolith-h2 text-mono-text">Experimental</h2>
+          <p className="text-xs text-mono-muted mt-0.5">
             Features under active development. May change or be removed.
           </p>
         </div>
       </div>
 
       {/* Disclaimer banner */}
-      <div className="flex items-start gap-3 p-3 rounded-xl bg-surface-container-low border border-outline-variant">
-        <AlertTriangle size={14} className="text-[#fb923c] shrink-0 mt-0.5" />
-        <p className="text-xs text-on-surface-variant leading-relaxed">
+      <div className="flex items-start gap-3 p-3 rounded-xl bg-mono-soft border border-mono-border">
+        <AlertTriangle size={14} className="text-[#D88700] shrink-0 mt-0.5" />
+        <p className="text-xs text-mono-muted leading-relaxed">
           Experimental features are isolated and removable. Enabling them does not affect the
           existing Chat tab, sync jobs, OAuth connections, or job-space provisioning.
         </p>
@@ -66,19 +66,19 @@ export function GoogleChatLiveViewSettings({ enabled }: GoogleChatLiveViewSettin
       <div className="flex items-start justify-between gap-6">
         <div className="space-y-1 flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-on-surface uppercase tracking-wide">
+            <span className="text-sm font-semibold text-mono-text uppercase tracking-wide">
               Google Chat Live View
             </span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest border border-[#fb923c]/40 text-[#fb923c] bg-[#fb923c]/10">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest border border-[#D88700]/40 text-[#D88700] bg-[#D88700]/10">
               Experimental
             </span>
           </div>
-          <p className="text-xs text-on-surface-variant leading-relaxed max-w-lg">
+          <p className="text-xs text-mono-muted leading-relaxed max-w-lg">
             Adds a &quot;Google Chat Live View&quot; tab to the Communication navigation bar (between Chat and
             Job Spaces). Attempts to embed the real Google Chat web UI in an iframe. If Google blocks
             embedding (which is expected), clean fallback actions are shown instead.
           </p>
-          <p className="text-[10px] text-on-surface-variant">
+          <p className="text-[10px] text-mono-muted">
             Default: <strong>OFF</strong>. When OFF, no code loads, no APIs are called, and no existing
             tabs are affected.
           </p>
@@ -93,8 +93,8 @@ export function GoogleChatLiveViewSettings({ enabled }: GoogleChatLiveViewSettin
           aria-pressed={isEnabled}
           className={`shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-semibold uppercase tracking-wider transition-all disabled:opacity-60 disabled:pointer-events-none ${
             isEnabled
-              ? "bg-[#00cec4]/10 border-[#00cec4]/40 text-[#00cec4] hover:bg-[#00cec4]/20"
-              : "bg-surface border-outline-variant text-on-surface-variant hover:bg-surface-container-low"
+              ? "bg-[#F9D972]/10 border-[#F9D972]/40 text-[#F9D972] hover:bg-[#F9D972]/20"
+              : "bg-mono-card border-mono-border text-mono-muted hover:bg-mono-soft"
           }`}
         >
           {isEnabled ? (
@@ -116,8 +116,8 @@ export function GoogleChatLiveViewSettings({ enabled }: GoogleChatLiveViewSettin
         <p
           className={`text-xs px-3 py-2 rounded-xl border ${
             message.type === "success"
-              ? "text-[#00cec4] bg-[#00cec4]/10 border-[#00cec4]/30"
-              : "text-[#fb923c] bg-[#fb923c]/10 border-[#fb923c]/30"
+              ? "text-[#F9D972] bg-[#F9D972]/10 border-[#F9D972]/30"
+              : "text-[#D88700] bg-[#D88700]/10 border-[#D88700]/30"
           }`}
         >
           {message.text}

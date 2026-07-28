@@ -1,5 +1,5 @@
 import { DataTable, DataTableBody, DataTableCell, DataTableEmpty, DataTableHead, DataTableHeader, DataTableRow } from "@/components/data-table";
-import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { DropdownSelect } from "@/components/monolith/dropdown-select";
 import { auth } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { requirePermission } from "@/lib/rbac";

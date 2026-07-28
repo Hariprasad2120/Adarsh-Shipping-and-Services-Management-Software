@@ -17,6 +17,9 @@ interface WorkspaceData {
   canInternalApproveChecklist: boolean;
   canCustomerApproveChecklist: boolean;
   canUpdateJob: boolean;
+  canRequestExpenses: boolean;
+  canManageExpenses: boolean;
+  canPayExpenses: boolean;
   users: { id: string; name: string; email: string }[];
   managers: { id: string; name: string; email: string; branchId: string | null }[];
   parsedExpenseCategories: string[];
@@ -55,6 +58,9 @@ export default async function ChaJobWorkspacePage({
       canInternalApproveChecklist,
       canCustomerApproveChecklist,
       canUpdateJob,
+      canRequestExpenses,
+      canManageExpenses,
+      canPayExpenses,
       dbUsers,
       settings,
       eligibleManagers,
@@ -67,6 +73,9 @@ export default async function ChaJobWorkspacePage({
       can(session.user.id, "cha.checklist.internal_approve"),
       can(session.user.id, "cha.checklist.customer_approve"),
       can(session.user.id, "cha.job.update"),
+      can(session.user.id, "cha.expense.request"),
+      can(session.user.id, "cha.expense.manage"),
+      can(session.user.id, "cha.expense.pay"),
       db.user.findMany({ where: { orgId, active: true }, select: { id: true, name: true, email: true } }),
       db.chaSettings.findUnique({ where: { orgId } }),
       getEligibleManagers(orgId),
@@ -96,6 +105,9 @@ export default async function ChaJobWorkspacePage({
       canInternalApproveChecklist,
       canCustomerApproveChecklist,
       canUpdateJob,
+      canRequestExpenses,
+      canManageExpenses,
+      canPayExpenses,
       users,
       managers: eligibleManagers,
       parsedExpenseCategories,
@@ -143,6 +155,9 @@ export default async function ChaJobWorkspacePage({
         canInternalApproveChecklist={data.canInternalApproveChecklist}
         canCustomerApproveChecklist={data.canCustomerApproveChecklist}
         canUpdateJob={data.canUpdateJob}
+        canRequestExpenses={data.canRequestExpenses}
+        canManageExpenses={data.canManageExpenses}
+        canPayExpenses={data.canPayExpenses}
         internalApproversCount={data.internalApproversCount}
         initialTab={tab}
         focusField={focus}

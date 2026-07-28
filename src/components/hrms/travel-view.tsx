@@ -1,6 +1,7 @@
 "use client";
 
-import { DateInput } from "@/components/ui/date-input";
+import { NativeSelect } from "@/components/monolith/native-select";
+import { DateInput } from "@/components/monolith/date-input";
 import React, { useState, useEffect } from "react";
 import { Plane, DollarSign, Plus, Save, Loader2, AlertCircle, Calendar, MapPin, Receipt, CheckCircle, Clock } from "lucide-react";
 import { toast }from "sonner";
@@ -108,7 +109,7 @@ export function TravelView() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
-        <Loader2 className="size-8 animate-spin text-[#00c4b6]" />
+        <Loader2 className="size-8 animate-spin text-[#F9D972]" />
         <p className="text-xs font-semibold tracking-wider">Syncing travel logs...</p>
       </div>
     );
@@ -118,10 +119,10 @@ export function TravelView() {
     <div className="space-y-6">
       {/* Header Banner */}
       <div className="relative rounded-3xl border border-slate-800 bg-[#0f121b]/85 p-6 overflow-hidden shadow-2xl backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c4b6]/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#F9D972]/5 rounded-full blur-3xl" />
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="size-12 rounded-2xl bg-[#00c4b6]/10 border border-[#00c4b6]/35 flex items-center justify-center text-[#00c4b6] shadow-sm">
+            <div className="size-12 rounded-2xl bg-[#F9D972]/10 border border-[#F9D972]/35 flex items-center justify-center text-[#F9D972] shadow-sm">
               <Plane className="size-6 animate-pulse" />
             </div>
             <div>
@@ -133,7 +134,7 @@ export function TravelView() {
           <button
             type="button"
             onClick={() => setShowRequestForm(!showRequestForm)}
-            className="inline-flex items-center justify-center gap-2 bg-[#00c4b6]/15 hover:bg-[#00c4b6]/25 border border-[#00c4b6]/35 rounded-2xl px-4 py-2 text-xs font-black text-[#00c4b6] cursor-pointer transition-all uppercase tracking-wider"
+            className="inline-flex items-center justify-center gap-2 bg-[#F9D972]/15 hover:bg-[#F9D972]/25 border border-[#F9D972]/35 rounded-2xl px-4 py-2 text-xs font-black text-[#F9D972] cursor-pointer transition-all uppercase tracking-wider"
           >
             <Plus className="size-4" />
             <span>Request Trip</span>
@@ -154,7 +155,7 @@ export function TravelView() {
                 onChange={(e) => setDestination(e.target.value)}
                 required
                 placeholder="e.g. Mumbai branch office"
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
               />
             </div>
             <div className="space-y-1">
@@ -165,7 +166,7 @@ export function TravelView() {
                 onChange={(e) => setPurpose(e.target.value)}
                 required
                 placeholder="e.g. Annual Audit review"
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
               />
             </div>
           </div>
@@ -176,7 +177,7 @@ export function TravelView() {
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
                 required
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
               />
             </div>
             <div className="space-y-1">
@@ -185,7 +186,7 @@ export function TravelView() {
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
                 required
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
               />
             </div>
           </div>
@@ -200,7 +201,7 @@ export function TravelView() {
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-[#00c4b6] border-0 rounded-xl text-xs font-black text-slate-950 cursor-pointer transition-all disabled:opacity-50"
+              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-[#F9D972] border-0 rounded-xl text-xs font-black text-slate-950 cursor-pointer transition-all disabled:opacity-50"
             >
               {submitting ? "Submitting..." : "Send Request"}
             </button>
@@ -211,7 +212,7 @@ export function TravelView() {
       {/* Expense submission Form */}
       {showExpenseForm && (
         <form onSubmit={handleCreateExpense} className="rounded-3xl border border-slate-900 bg-[#0e121b]/80 p-5 space-y-4 shadow-xl max-w-xl">
-          <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest text-[#00c4b6]">File Travel Expense Receipt</h3>
+          <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest text-[#F9D972]">File Travel Expense Receipt</h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Amount (INR)</label>
@@ -221,22 +222,22 @@ export function TravelView() {
                 onChange={(e) => setAmount(e.target.value)}
                 required
                 placeholder="e.g. 1500"
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Category</label>
-              <select
+              <NativeSelect
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#F9D972]"
               >
                 <option value="HOTEL">Hotel / Stay</option>
                 <option value="FOOD">Meals / Food</option>
                 <option value="CAB">Cab / Taxi</option>
                 <option value="FLIGHT">Flight / Transport</option>
                 <option value="OTHER">Other Receipts</option>
-              </select>
+              </NativeSelect>
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
@@ -253,7 +254,7 @@ export function TravelView() {
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-[#00c4b6] border-0 rounded-xl text-xs font-black text-slate-950 cursor-pointer transition-all disabled:opacity-50"
+              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-[#F9D972] border-0 rounded-xl text-xs font-black text-slate-950 cursor-pointer transition-all disabled:opacity-50"
             >
               {submitting ? "Uploading..." : "Claim Refund"}
             </button>
@@ -285,7 +286,7 @@ export function TravelView() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-2 text-slate-200">
-                        <MapPin className="size-4 text-[#00c4b6]" />
+                        <MapPin className="size-4 text-[#F9D972]" />
                         <span className="text-xs font-black uppercase tracking-wider">{req.destination}</span>
                       </div>
                       <span className={`px-2.5 py-0.5 rounded-xl text-[8px] font-black uppercase tracking-wider ${statusColors}`}>
@@ -316,7 +317,7 @@ export function TravelView() {
                             setActiveRequestId(req.id);
                             setShowExpenseForm(true);
                           }}
-                          className="text-[#00c4b6] hover:underline inline-flex items-center gap-1 cursor-pointer bg-transparent border-0"
+                          className="text-[#F9D972] hover:underline inline-flex items-center gap-1 cursor-pointer bg-transparent border-0"
                         >
                           <Plus className="size-3" />
                           <span>Add Bill</span>

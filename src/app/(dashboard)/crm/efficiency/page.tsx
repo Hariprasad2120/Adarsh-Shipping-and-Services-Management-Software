@@ -211,7 +211,7 @@ export default async function CrmEfficiencyPage() {
             </div>
             <p className="text-[10px] text-slate-400">Lead capture to initial salesperson activity</p>
           </div>
-          <div className="p-3 bg-[#00c4b6]/10 text-[#00c4b6] rounded-lg">
+          <div className="p-3 bg-[#F9D972]/10 text-[#F9D972] rounded-lg">
             <Clock className="size-5" />
           </div>
         </div>
@@ -234,7 +234,7 @@ export default async function CrmEfficiencyPage() {
         <div className="p-5 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 flex items-start justify-between">
           <div className="space-y-2">
             <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">Team Logged Hours</span>
-            <div className="text-3xl font-black text-[#00c4b6]">{totalLoggedHours.toFixed(1)} hrs</div>
+            <div className="text-3xl font-black text-[#F9D972]">{totalLoggedHours.toFixed(1)} hrs</div>
             <p className="text-[10px] text-slate-400">Total work hours spent on client interactions</p>
           </div>
           <div className="p-3 bg-amber-500/10 text-amber-400 rounded-lg">
@@ -264,7 +264,7 @@ export default async function CrmEfficiencyPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="ds-table w-full">
+          <table className="monolith-table w-full">
             <thead>
               <tr>
                 <th className="text-left py-3 px-4">Salesperson</th>
@@ -296,7 +296,7 @@ export default async function CrmEfficiencyPage() {
                       <td className="py-3.5 px-4 text-center text-slate-300">
                         {avgConv === 0 ? "N/A" : `${avgConv.toFixed(1)} days`}
                       </td>
-                      <td className="py-3.5 px-4 text-center text-[#00c4b6] font-black">{data.totalHoursLogged.toFixed(1)} hrs</td>
+                      <td className="py-3.5 px-4 text-center text-[#F9D972] font-black">{data.totalHoursLogged.toFixed(1)} hrs</td>
                       <td className="py-3.5 px-4 text-right font-black text-white">
                         {data.wonDealsValue === 0 ? "-" : `₹${data.wonDealsValue.toLocaleString("en-IN")}`}
                       </td>
@@ -314,7 +314,7 @@ export default async function CrmEfficiencyPage() {
         <div className="lg:col-span-2 p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
           <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3">
             <h3 className="font-bold text-sm text-white uppercase tracking-wider">Recent Work Log Entries</h3>
-            <span className="text-xs text-[#00c4b6] font-semibold">{workTimeLogs.length} total entries</span>
+            <span className="text-xs text-[#F9D972] font-semibold">{workTimeLogs.length} total entries</span>
           </div>
 
           {workTimeLogs.length === 0 ? (
@@ -329,7 +329,7 @@ export default async function CrmEfficiencyPage() {
                         {log.user.name}
                       </span>
                       <span className="text-slate-500 font-semibold">•</span>
-                      <span className="text-[10px] font-bold text-[#00c4b6] uppercase bg-[#00c4b6]/5 px-2 py-0.5 rounded border border-[#00c4b6]/15">
+                      <span className="text-[10px] font-bold text-[#F9D972] uppercase bg-[#F9D972]/5 px-2 py-0.5 rounded border border-[#F9D972]/15">
                         {activityLabels[log.activityType] || log.activityType}
                       </span>
                       <span className="text-slate-500 font-semibold">•</span>
@@ -341,7 +341,7 @@ export default async function CrmEfficiencyPage() {
                     {log.lead && (
                       <div className="text-[10px] text-slate-500 font-medium">
                         Linked Client:{" "}
-                        <Link href={`/crm/leads/${log.lead.id}`} className="text-[#00c4b6] hover:underline font-bold">
+                        <Link href={`/crm/leads/${log.lead.id}`} className="text-[#F9D972] hover:underline font-bold">
                           {`${log.lead.firstName || ""} ${log.lead.lastName}`.trim()} ({log.lead.company})
                         </Link>
                       </div>
@@ -379,7 +379,7 @@ export default async function CrmEfficiencyPage() {
                   <div className="h-2.5 bg-[#0a0d12] rounded-full overflow-hidden border border-[#1c212a]/40">
                     <div
                       style={{ width: `${pct}%` }}
-                      className="h-full rounded-full bg-[#00c4b6] transition-all duration-300"
+                      className="h-full rounded-full bg-[#F9D972] transition-all duration-300"
                     />
                   </div>
                 </div>

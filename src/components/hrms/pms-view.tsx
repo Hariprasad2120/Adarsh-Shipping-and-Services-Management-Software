@@ -1,6 +1,7 @@
 "use client";
 
-import { DateInput } from "@/components/ui/date-input";
+import { NativeSelect } from "@/components/monolith/native-select";
+import { DateInput } from "@/components/monolith/date-input";
 import React, { useState, useEffect } from "react";
 import { Target, Award, Heart, MessageSquare, Plus, Save, Loader2, Calendar } from "lucide-react";
 import { toast }from "sonner";
@@ -146,7 +147,7 @@ export function PmsView() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
-        <Loader2 className="size-8 animate-spin text-[#00c4b6]" />
+        <Loader2 className="size-8 animate-spin text-[#F9D972]" />
         <p className="text-xs font-semibold tracking-wider">Syncing appraisal records...</p>
       </div>
     );
@@ -156,10 +157,10 @@ export function PmsView() {
     <div className="space-y-6">
       {/* Header Panel */}
       <div className="relative rounded-3xl border border-slate-800 bg-[#0f121b]/85 p-6 overflow-hidden shadow-2xl backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c4b6]/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#F9D972]/5 rounded-full blur-3xl" />
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="size-12 rounded-2xl bg-[#00c4b6]/10 border border-[#00c4b6]/35 flex items-center justify-center text-[#00c4b6] shadow-sm">
+            <div className="size-12 rounded-2xl bg-[#F9D972]/10 border border-[#F9D972]/35 flex items-center justify-center text-[#F9D972] shadow-sm">
               <Award className="size-6 animate-pulse" />
             </div>
             <div>
@@ -174,7 +175,7 @@ export function PmsView() {
               <button
                 type="button"
                 onClick={() => setShowGoalForm(!showGoalForm)}
-                className="inline-flex items-center justify-center gap-2 bg-[#00c4b6]/15 hover:bg-[#00c4b6]/25 border border-[#00c4b6]/35 rounded-2xl px-4 py-2 text-xs font-black text-[#00c4b6] cursor-pointer transition-all uppercase tracking-wider"
+                className="inline-flex items-center justify-center gap-2 bg-[#F9D972]/15 hover:bg-[#F9D972]/25 border border-[#F9D972]/35 rounded-2xl px-4 py-2 text-xs font-black text-[#F9D972] cursor-pointer transition-all uppercase tracking-wider"
               >
                 <Plus className="size-4" />
                 <span>Add Goal</span>
@@ -184,7 +185,7 @@ export function PmsView() {
               <button
                 type="button"
                 onClick={() => setShowFeedbackForm(!showFeedbackForm)}
-                className="inline-flex items-center justify-center gap-2 bg-[#00c4b6]/15 hover:bg-[#00c4b6]/25 border border-[#00c4b6]/35 rounded-2xl px-4 py-2 text-xs font-black text-[#00c4b6] cursor-pointer transition-all uppercase tracking-wider"
+                className="inline-flex items-center justify-center gap-2 bg-[#F9D972]/15 hover:bg-[#F9D972]/25 border border-[#F9D972]/35 rounded-2xl px-4 py-2 text-xs font-black text-[#F9D972] cursor-pointer transition-all uppercase tracking-wider"
               >
                 <Plus className="size-4" />
                 <span>Give Feedback</span>
@@ -199,7 +200,7 @@ export function PmsView() {
             onClick={() => setActiveTab("goals")}
             className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "goals"
-                ? "bg-[#161f28]/80 text-[#00c4b6] border border-[#00c4b6]/25"
+                ? "bg-[#161f28]/80 text-[#F9D972] border border-[#F9D972]/25"
                 : "text-slate-500 hover:text-slate-350"
             }`}
           >
@@ -209,7 +210,7 @@ export function PmsView() {
             onClick={() => setActiveTab("skills")}
             className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "skills"
-                ? "bg-[#161f28]/80 text-[#00c4b6] border border-[#00c4b6]/25"
+                ? "bg-[#161f28]/80 text-[#F9D972] border border-[#F9D972]/25"
                 : "text-slate-500 hover:text-slate-350"
             }`}
           >
@@ -219,7 +220,7 @@ export function PmsView() {
             onClick={() => setActiveTab("feedback")}
             className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "feedback"
-                ? "bg-[#161f28]/80 text-[#00c4b6] border border-[#00c4b6]/25"
+                ? "bg-[#161f28]/80 text-[#F9D972] border border-[#F9D972]/25"
                 : "text-slate-500 hover:text-slate-350"
             }`}
           >
@@ -240,7 +241,7 @@ export function PmsView() {
               onChange={(e) => setNewGoalTitle(e.target.value)}
               required
               placeholder="e.g. Reduce booking delays by 15%"
-              className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+              className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -252,7 +253,7 @@ export function PmsView() {
                 onChange={(e) => setNewGoalTarget(e.target.value)}
                 required
                 placeholder="e.g. 15% Reduction"
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
               />
             </div>
             <div className="space-y-1">
@@ -261,7 +262,7 @@ export function PmsView() {
                 value={newGoalDueDate}
                 onChange={(e) => setNewGoalDueDate(e.target.value)}
                 required
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
               />
             </div>
           </div>
@@ -276,7 +277,7 @@ export function PmsView() {
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-[#00c4b6] border-0 rounded-xl text-xs font-black text-slate-950 cursor-pointer transition-all disabled:opacity-50"
+              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-[#F9D972] border-0 rounded-xl text-xs font-black text-slate-950 cursor-pointer transition-all disabled:opacity-50"
             >
               {submitting ? "Saving..." : "Create"}
             </button>
@@ -291,29 +292,29 @@ export function PmsView() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Feedback Recipient</label>
-              <select
+              <NativeSelect
                 value={feedbackTo}
                 onChange={(e) => setFeedbackTo(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#F9D972]"
               >
                 {colleagues.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name} ({c.employeeNo})
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Feedback Type</label>
-              <select
+              <NativeSelect
                 value={feedbackType}
                 onChange={(e) => setFeedbackType(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#F9D972]"
               >
                 <option value="PEER_TO_PEER">Peer to Peer</option>
                 <option value="MANAGER_REVIEW">Manager Review</option>
                 <option value="SELF_REVIEW">Self Review</option>
-              </select>
+              </NativeSelect>
             </div>
           </div>
           <div className="space-y-1">
@@ -324,7 +325,7 @@ export function PmsView() {
               onChange={(e) => setFeedbackContent(e.target.value)}
               required
               placeholder="Provide constructive feedback regarding goals, timeline deadlines, and task ownership."
-              className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6] resize-none"
+              className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972] resize-none"
             />
           </div>
           <div className="flex justify-end gap-3 pt-2">
@@ -338,7 +339,7 @@ export function PmsView() {
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-[#00c4b6] border-0 rounded-xl text-xs font-black text-slate-950 cursor-pointer transition-all disabled:opacity-50"
+              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-[#F9D972] border-0 rounded-xl text-xs font-black text-slate-950 cursor-pointer transition-all disabled:opacity-50"
             >
               {submitting ? "Submitting..." : "Submit"}
             </button>
@@ -386,7 +387,7 @@ export function PmsView() {
                       <div className="space-y-2">
                         <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                           <span className="flex items-center gap-1">
-                            <Calendar className="size-3 text-[#00c4b6]" />
+                            <Calendar className="size-3 text-[#F9D972]" />
                             <span>Due: {new Date(goal.dueDate).toLocaleDateString()}</span>
                           </span>
                           <span className="font-mono text-slate-300">{Math.round(goal.progress)}%</span>
@@ -398,7 +399,7 @@ export function PmsView() {
                           step="5"
                           value={goal.progress}
                           onChange={(e) => handleGoalProgress(goal.id, Number(e.target.value))}
-                          className="w-full accent-[#00c4b6] bg-slate-950 rounded-full h-1 cursor-pointer"
+                          className="w-full accent-[#F9D972] bg-slate-950 rounded-full h-1 cursor-pointer"
                         />
                       </div>
                     </div>
@@ -421,7 +422,7 @@ export function PmsView() {
                     const prof = item.proficiency;
                     const badgeColor =
                       prof === "EXPERT"
-                        ? "bg-[#00c4b6]/10 text-[#00c4b6] border-[#00c4b6]/20"
+                        ? "bg-[#F9D972]/10 text-[#F9D972] border-[#F9D972]/20"
                         : prof === "ADVANCED"
                           ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                           : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
@@ -457,7 +458,7 @@ export function PmsView() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-full bg-[#00c4b6]/10 border border-[#00c4b6]/20 flex items-center justify-center font-bold text-xs text-[#00c4b6]">
+                        <div className="size-8 rounded-full bg-[#F9D972]/10 border border-[#F9D972]/20 flex items-center justify-center font-bold text-xs text-[#F9D972]">
                           {f.fromUser.name[0]}
                         </div>
                         <div>

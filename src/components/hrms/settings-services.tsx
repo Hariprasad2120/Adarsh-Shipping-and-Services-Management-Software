@@ -55,14 +55,14 @@ export function SettingsServices({
       {/* Title */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
         <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-          <Settings className="size-5 text-[#00c4b6]" />
+          <Settings className="size-5 text-[#F9D972]" />
           Custom Services Manager
         </h3>
         <button
           type="button"
           disabled={updating || loading}
           onClick={handleSave}
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#00c4b6] hover:bg-[#00b0a3] rounded-xl cursor-pointer transition-colors shadow-sm disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#F9D972] hover:bg-[#00b0a3] rounded-xl cursor-pointer transition-colors shadow-sm disabled:opacity-50"
         >
           <Save className="size-3.5" />
           Save Configurations
@@ -104,7 +104,7 @@ export function SettingsServices({
                     type="button"
                     onClick={() => handleToggle(item.key)}
                     className={`w-9 h-5 rounded-full p-0.5 transition-colors focus:outline-none cursor-pointer ${
-                      item.enabled ? "bg-[#00c4b6]" : "bg-slate-200"
+                      item.enabled ? "bg-[#F9D972]" : "bg-slate-200"
                     }`}
                   >
                     <div className={`size-4 rounded-full bg-white transition-transform ${

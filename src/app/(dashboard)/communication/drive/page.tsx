@@ -70,33 +70,33 @@ export default async function JobDrivePortal(props: {
   return (
     <main className="space-y-6 text-left">
       {/* Header Panel */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between p-6 rounded-2xl border border-outline-variant bg-surface shadow-sm gap-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between p-6 rounded-2xl border border-mono-border bg-mono-card shadow-sm gap-4">
         <div>
-          <span className="text-[10px] uppercase font-bold tracking-widest text-[#00cec4]">Document Management</span>
-          <h1 className="text-xl font-bold text-on-surface mt-1">Shared Job Drive</h1>
-          <p className="text-xs text-on-surface-variant mt-0.5">
+          <span className="text-[10px] uppercase font-bold tracking-widest text-[#F9D972]">Document Management</span>
+          <h1 className="text-xl font-bold text-mono-text mt-1">Shared Job Drive</h1>
+          <p className="text-xs text-mono-muted mt-0.5">
             Browse and inspect active shipping documents stored securely on Google Shared Drive.
           </p>
         </div>
 
         {/* Job selector dropdown */}
         <div className="w-full md:max-w-xs">
-          <label className="ds-label block mb-1">Select Job Workspace</label>
+          <label className="monolith-label block mb-1">Select Job Workspace</label>
           <JobSelector jobs={serializableJobs} selectedJobId={selectedJobId} />
         </div>
       </div>
 
       {currentJob ? (
         isRealFolderCreated ? (
-          <div className="rounded-xl border border-outline-variant bg-surface shadow-sm overflow-hidden animate-page-enter">
+          <div className="rounded-xl border border-mono-border bg-mono-card shadow-sm overflow-hidden animate-page-enter">
             {/* File path navigation bar */}
-            <div className="p-4 border-b border-outline-variant bg-surface-container-low flex items-center justify-between">
+            <div className="p-4 border-b border-mono-border bg-mono-soft flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <span className="text-xs font-bold text-on-surface uppercase tracking-wide">
+                <span className="text-xs font-bold text-mono-text uppercase tracking-wide">
                   Job Workspace: {currentJob.jobNumber}
                 </span>
-                <span className="text-on-surface-variant/40">/</span>
-                <span className="text-xs font-semibold text-on-surface-variant uppercase">
+                <span className="text-mono-muted/40">/</span>
+                <span className="text-xs font-semibold text-mono-muted uppercase">
                   {currentFolderName}
                 </span>
               </div>
@@ -104,7 +104,7 @@ export default async function JobDrivePortal(props: {
               {!isAtRoot && (
                 <Link
                   href={`/communication/drive?jobId=${selectedJobId}`}
-                  className="inline-flex items-center space-x-1 text-xs text-[#00cec4] hover:underline font-bold uppercase"
+                  className="inline-flex items-center space-x-1 text-xs text-[#F9D972] hover:underline font-bold uppercase"
                 >
                   <ArrowLeft size={14} />
                   <span>Back to Folders</span>
@@ -122,14 +122,14 @@ export default async function JobDrivePortal(props: {
                         <Link
                           key={catName}
                           href={`/communication/drive?jobId=${selectedJobId}&folderId=${folderId}`}
-                          className="flex items-center space-x-3 p-4 rounded-xl border border-outline-variant bg-surface-container-low hover:bg-surface-container transition-colors"
+                          className="flex items-center space-x-3 p-4 rounded-xl border border-mono-border bg-mono-soft hover:bg-mono-soft transition-colors"
                         >
-                          <span className="text-[#fb923c] shrink-0 font-bold text-lg">📁</span>
+                          <span className="text-[#D88700] shrink-0 font-bold text-lg">📁</span>
                           <div className="truncate">
-                            <span className="text-xs font-bold text-on-surface block truncate">
+                            <span className="text-xs font-bold text-mono-text block truncate">
                               {catName.substring(3)}
                             </span>
-                            <span className="text-[9px] text-on-surface-variant block">
+                            <span className="text-[9px] text-mono-muted block">
                               Code: {catName.substring(0, 2)}
                             </span>
                           </div>
@@ -139,8 +139,8 @@ export default async function JobDrivePortal(props: {
                 </div>
               ) : (
                 /* Subfolder contents: List files */
-                <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface">
-                  <table className="ds-table">
+                <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card">
+                  <table className="monolith-table">
                     <thead>
                       <tr>
                         <th className="px-6 py-2.5">Name</th>
@@ -152,21 +152,21 @@ export default async function JobDrivePortal(props: {
                     <tbody>
                       {filesList.length === 0 ? (
                         <tr>
-                          <td colSpan={4} className="text-center py-8 text-xs text-on-surface-variant">
+                          <td colSpan={4} className="text-center py-8 text-xs text-mono-muted">
                             No files found in this folder.
                           </td>
                         </tr>
                       ) : (
                         filesList.map((file) => (
-                          <tr key={file.id} className="hover:bg-surface-container-low transition-colors">
-                            <td className="px-6 py-3 text-xs font-semibold text-on-surface flex items-center space-x-2">
-                              <span className="text-on-surface-variant">📄</span>
+                          <tr key={file.id} className="hover:bg-mono-soft transition-colors">
+                            <td className="px-6 py-3 text-xs font-semibold text-mono-text flex items-center space-x-2">
+                              <span className="text-mono-muted">📄</span>
                               <span className="truncate max-w-[250px]">{file.name}</span>
                             </td>
-                            <td className="px-6 py-3 text-xs text-on-surface-variant font-medium">
+                            <td className="px-6 py-3 text-xs text-mono-muted font-medium">
                               {file.mimeType.split(".").pop() || "File"}
                             </td>
-                            <td className="px-6 py-3 text-xs text-on-surface ds-numeric">
+                            <td className="px-6 py-3 text-xs text-mono-text monolith-numeric">
                               {file.size ? `${Math.round(file.size / 1024)} KB` : "-"}
                             </td>
                             <td className="px-6 py-3 text-xs text-right">
@@ -175,7 +175,7 @@ export default async function JobDrivePortal(props: {
                                   href={file.webViewLink}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center space-x-1 text-[#00cec4] hover:underline font-bold uppercase"
+                                  className="inline-flex items-center space-x-1 text-[#F9D972] hover:underline font-bold uppercase"
                                 >
                                   <span>View File</span>
                                   <ExternalLink size={12} />
@@ -193,17 +193,17 @@ export default async function JobDrivePortal(props: {
           </div>
         ) : (
           /* Drive folder is not synced */
-          <div className="flex flex-col md:flex-row items-center justify-between p-6 border border-outline-variant bg-surface rounded-2xl shadow-sm gap-6 text-left animate-page-enter">
+          <div className="flex flex-col md:flex-row items-center justify-between p-6 border border-mono-border bg-mono-card rounded-2xl shadow-sm gap-6 text-left animate-page-enter">
             <div className="flex items-start space-x-4">
-              <span className="ds-icon-badge shrink-0" style={{ background: "rgba(251,146,60,0.10)", color: "#fb923c" }}>
+              <span className="monolith-icon-badge shrink-0" style={{ background: "rgba(251,146,60,0.10)", color: "#D88700" }}>
                 <HardDrive size={22} />
               </span>
               <div className="space-y-1 max-w-xl">
-                <h3 className="text-xs font-bold text-on-surface uppercase tracking-wide">
+                <h3 className="text-xs font-bold text-mono-text uppercase tracking-wide">
                   Drive Folder Not Synchronized
                 </h3>
-                <p className="text-[11px] text-on-surface-variant leading-relaxed">
-                  The Google Shared Drive folder structure for job <strong className="text-on-surface">{currentJob.jobNumber}</strong> has not been created on the Google Shared Drive, or is running on a mock profile. Synchronize now to establish the real folder hierarchy and migrate existing database uploads to the Shared Drive.
+                <p className="text-[11px] text-mono-muted leading-relaxed">
+                  The Google Shared Drive folder structure for job <strong className="text-mono-text">{currentJob.jobNumber}</strong> has not been created on the Google Shared Drive, or is running on a mock profile. Synchronize now to establish the real folder hierarchy and migrate existing database uploads to the Shared Drive.
                 </p>
               </div>
             </div>
@@ -215,9 +215,9 @@ export default async function JobDrivePortal(props: {
         )
       ) : (
         /* Empty/prompt state */
-        <div className="flex flex-col items-center justify-center p-12 border border-outline-variant bg-surface rounded-2xl">
+        <div className="flex flex-col items-center justify-center p-12 border border-mono-border bg-mono-card rounded-2xl">
           <span className="text-3xl mb-2">📂</span>
-          <span className="text-xs text-on-surface-variant font-semibold">
+          <span className="text-xs text-mono-muted font-semibold">
             Choose a job workspace from the dropdown list above to explore files.
           </span>
         </div>

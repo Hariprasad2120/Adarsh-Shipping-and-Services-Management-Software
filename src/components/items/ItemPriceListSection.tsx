@@ -194,14 +194,14 @@ export function ItemPriceListSection({ form }: ItemPriceListSectionProps) {
   };
 
   return (
-    <div className="ds-form-section space-y-4">
+    <div className="monolith-form-section space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="ds-h3 font-sans">Price List & Multi-Currency</h3>
+        <h3 className="monolith-h3 font-sans">Price List & Multi-Currency</h3>
         <button
           type="button"
           onClick={handleToggleAutoFeed}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors outline-none focus:ring-2 focus:ring-[#00cec4]/20 ${
-            autoFeed ? "bg-[#00cec4]" : "bg-gray-200"
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors outline-none focus:ring-2 focus:ring-[#F9D972]/20 ${
+            autoFeed ? "bg-[#F9D972]" : "bg-gray-200"
           }`}
         >
           <span
@@ -214,11 +214,11 @@ export function ItemPriceListSection({ form }: ItemPriceListSectionProps) {
 
       <div className="flex items-center gap-2 text-xs text-[#6b7280]">
         <span>Automatic exchange rate suggestion from online API is</span>
-        <span className={`font-semibold ${autoFeed ? "text-[#00cec4]" : "text-gray-500"}`}>
+        <span className={`font-semibold ${autoFeed ? "text-[#F9D972]" : "text-gray-500"}`}>
           {autoFeed ? "ON" : "OFF"}
         </span>
         {loadingRates && (
-          <RefreshCw className="size-3 animate-spin text-[#00cec4] ml-1" />
+          <RefreshCw className="size-3 animate-spin text-[#F9D972] ml-1" />
         )}
       </div>
 
@@ -316,7 +316,7 @@ export function ItemPriceListSection({ form }: ItemPriceListSectionProps) {
           </div>
           <button
             type="submit"
-            className="inline-flex h-8 items-center gap-1 rounded-xl bg-[#00cec4] px-3 text-xs font-semibold text-white transition-all hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)]"
+            className="inline-flex h-8 items-center gap-1 rounded-xl bg-[#F9D972] px-3 text-xs font-semibold text-white transition-all hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)]"
           >
             <Plus className="size-3.5" /> Add
           </button>

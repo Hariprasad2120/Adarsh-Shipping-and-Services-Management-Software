@@ -54,7 +54,7 @@ export function HrmsSidebar({
     <aside className="w-[84px] bg-[#0f1319] border-r border-[#1c212a]/50 shrink-0 flex flex-col justify-between items-center py-4 select-none">
       <div className="flex flex-col items-center gap-1.5 w-full">
         {/* Module Brand Icon */}
-        <div className="size-11 rounded-2xl bg-[#00c4b6]/10 flex items-center justify-center text-[#00c4b6] mb-4 shadow-sm font-bold text-sm tracking-wider">
+        <div className="size-11 rounded-2xl bg-[#F9D972]/10 flex items-center justify-center text-[#F9D972] mb-4 shadow-sm font-bold text-sm tracking-wider">
           P+
         </div>
 
@@ -69,7 +69,7 @@ export function HrmsSidebar({
                 onClick={() => onChangeModule(item.key)}
                 className={`flex flex-col items-center justify-center w-full aspect-square rounded-xl transition-all cursor-pointer ${
                   isActive
-                    ? "bg-[#161f28] text-[#00c4b6] font-medium"
+                    ? "bg-[#161f28] text-[#F9D972] font-medium"
                     : "text-slate-400 hover:bg-[#161f28]/40 hover:text-slate-200"
                 }`}
                 title={item.label}
@@ -107,7 +107,7 @@ export function HrmsSidebar({
                   onClick={() => onChangeModule(item.key)}
                   className={`flex items-center gap-3 w-full px-4 py-2.5 text-xs text-left transition-colors cursor-pointer ${
                     activeModule === item.key
-                      ? "bg-[#161f28] text-[#00c4b6] font-medium"
+                      ? "bg-[#161f28] text-[#F9D972] font-medium"
                       : "text-slate-400 hover:bg-[#161f28]/50 hover:text-slate-200"
                   }`}
                 >
@@ -126,7 +126,7 @@ export function HrmsSidebar({
             onClick={() => onChangeModule("generalservice")}
             className={`flex flex-col items-center justify-center w-full aspect-square rounded-xl transition-all cursor-pointer ${
               activeModule === "generalservice"
-                ? "bg-[#161f28] text-[#00c4b6]"
+                ? "bg-[#161f28] text-[#F9D972]"
                 : "text-slate-400 hover:bg-[#161f28]/40 hover:text-slate-200"
             }`}
             title="Users & Directory"
@@ -143,7 +143,7 @@ export function HrmsSidebar({
             onClick={() => onChangeModule("okr")}
             className={`flex flex-col items-center justify-center w-full aspect-square rounded-xl transition-all cursor-pointer ${
               activeModule === "okr"
-                ? "bg-[#161f28] text-[#00c4b6]"
+                ? "bg-[#161f28] text-[#F9D972]"
                 : "text-slate-400 hover:bg-[#161f28]/40 hover:text-slate-200"
             }`}
             title="HRMS Settings"

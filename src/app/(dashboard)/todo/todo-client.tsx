@@ -4,12 +4,12 @@ import { Fragment, startTransition, useEffect, useMemo, useState } from "react";
 import {CalendarClock,CheckCircle2,ChevronRight,ListChecks,Pencil,Plus,Trash2,X,} from "lucide-react";
 import {Badge,DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableHead,DataTableHeader,DataTableRow,} from "@/components/data-table";
 import { useNotifications } from "@/components/notifications/notification-provider";
-import { Button } from "@/components/ui/button-1";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DropdownSelect } from "@/components/ui/dropdown-select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { NeonCheckbox } from "@/components/ui/neon-checkbox";
+import { Button } from "@/components/monolith/button-1";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
+import { DropdownSelect } from "@/components/monolith/dropdown-select";
+import { Input } from "@/components/monolith/input";
+import { Label } from "@/components/monolith/label";
+import { NeonCheckbox } from "@/components/monolith/neon-checkbox";
 
 type TodoStatus = "PENDING" | "COMPLETED";
 type TodoFilter = "ALL" | "PENDING" | "COMPLETED" | "UPCOMING_ALERTS";
@@ -78,7 +78,7 @@ const FILTER_OPTIONS = [
 ] as const;
 
 const todoFieldClassName =
-  "border-[#00cec4]/55 hover:border-[#00cec4]/85 hover:shadow-[0_4px_12px_rgba(0,206,196,0.08)] focus:border-[#00cec4] focus:ring-[#00cec4]/15";
+  "border-[#F9D972]/55 hover:border-[#F9D972]/85 hover:shadow-[0_4px_12px_rgba(0,206,196,0.08)] focus:border-[#F9D972] focus:ring-[#F9D972]/15";
 
 function createDraftSubtask(
   partial?: Partial<TodoDraftSubtask>,
@@ -197,23 +197,23 @@ function StatsCard({
 }) {
   return (
     <article
-      className="group rounded-[24px] border border-outline-variant/35 bg-surface p-5 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_18px_36px_-22px_rgba(15,23,42,0.28)]"
+      className="group rounded-[24px] border border-mono-border/35 bg-mono-card p-5 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_18px_36px_-22px_rgba(15,23,42,0.28)]"
     >
       <div className="flex items-start justify-between">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#00cec4]/10 transition duration-300 group-hover:scale-105 group-hover:bg-[#00cec4]/16">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F9D972]/10 transition duration-300 group-hover:scale-105 group-hover:bg-[#F9D972]/16">
           {icon}
         </div>
 
-        <span className="text-[11px] uppercase tracking-[0.18em] text-on-surface-variant transition duration-300 group-hover:text-on-surface">
+        <span className="text-[11px] uppercase tracking-[0.18em] text-mono-muted transition duration-300 group-hover:text-mono-text">
           Live
         </span>
       </div>
 
-      <p className="mt-6 text-[2.2rem] font-extralight leading-none tracking-[-0.04em] text-on-surface transition duration-300 group-hover:text-[#008f88]">
+      <p className="mt-6 text-[2.2rem] font-extralight leading-none tracking-[-0.04em] text-mono-text transition duration-300 group-hover:text-[#008f88]">
         {value}
       </p>
 
-      <p className="mt-1.5 text-sm text-on-surface-variant transition duration-300 group-hover:text-on-surface">
+      <p className="mt-1.5 text-sm text-mono-muted transition duration-300 group-hover:text-mono-text">
         {label}
       </p>
     </article>
@@ -501,7 +501,7 @@ export function TodoClient({
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatsCard
           icon={
-            <CheckCircle2 className="size-5 text-[#00cec4]" strokeWidth={1.9} />
+            <CheckCircle2 className="size-5 text-[#F9D972]" strokeWidth={1.9} />
           }
           label="Total tasks"
           value={stats.total}
@@ -530,12 +530,12 @@ export function TodoClient({
         />
       </div>
 
-      <div className="ds-shell-lg overflow-hidden border border-outline-variant/40 bg-surface shadow-sm">
-        <div className="space-y-4 border-b border-outline-variant/30 px-5 py-4">
+      <div className="monolith-shell-lg overflow-hidden border border-mono-border/40 bg-mono-card shadow-sm">
+        <div className="space-y-4 border-b border-mono-border/30 px-5 py-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0">
-              <p className="text-sm font-medium text-on-surface">Your tasks</p>
-              <p className="text-xs text-on-surface-variant">
+              <p className="text-sm font-medium text-mono-text">Your tasks</p>
+              <p className="text-xs text-mono-muted">
                 Build normal tasks, nested checklists, and quick checkbox-style
                 follow-ups.
               </p>
@@ -582,12 +582,12 @@ export function TodoClient({
                       onClick={() =>
                         setExpandedTaskId(isExpanded ? null : task.id)
                       }
-                      className={`cursor-pointer transition-colors hover:bg-surface-container-low ${
-                        isHighlighted ? "bg-[#00cec4]/6" : ""
+                      className={`cursor-pointer transition-colors hover:bg-mono-soft ${
+                        isHighlighted ? "bg-[#F9D972]/6" : ""
                       }`}
                     >
                       <DataTableCell className="min-w-[260px] align-middle">
-                        <p className="truncate font-medium text-on-surface">
+                        <p className="truncate font-medium text-mono-text">
                           {task.title}
                         </p>
                       </DataTableCell>
@@ -596,23 +596,23 @@ export function TodoClient({
                         {task.progress.total > 0 ? (
                           <div className="min-w-[130px] space-y-1.5">
                             <div className="flex items-center justify-between text-xs">
-                              <span className="font-medium text-on-surface">
+                              <span className="font-medium text-mono-text">
                                 {task.progress.completed}/{task.progress.total}
                               </span>
-                              <span className="text-on-surface-variant">
+                              <span className="text-mono-muted">
                                 {task.progress.percent}%
                               </span>
                             </div>
 
-                            <div className="h-2 overflow-hidden rounded-full bg-surface-container-high">
+                            <div className="h-2 overflow-hidden rounded-full bg-mono-soft">
                               <div
-                                className="h-full rounded-full bg-[#00cec4] transition-[width]"
+                                className="h-full rounded-full bg-[#F9D972] transition-[width]"
                                 style={{ width: `${task.progress.percent}%` }}
                               />
                             </div>
                           </div>
                         ) : (
-                          <span className="text-sm text-on-surface-variant">
+                          <span className="text-sm text-mono-muted">
                             No checklist
                           </span>
                         )}
@@ -623,8 +623,8 @@ export function TodoClient({
                       </DataTableCell>
 
                       <DataTableCell className="whitespace-nowrap align-middle">
-                        <div className="inline-flex items-center gap-2 text-sm text-on-surface">
-                          <CalendarClock className="size-4 text-on-surface-variant" />
+                        <div className="inline-flex items-center gap-2 text-sm text-mono-text">
+                          <CalendarClock className="size-4 text-mono-muted" />
                           {formatDateTime(task.alertAt)}
                         </div>
                       </DataTableCell>
@@ -664,19 +664,19 @@ export function TodoClient({
 
                     {isExpanded ? (
                       <DataTableRow
-                        className={isHighlighted ? "bg-[#00cec4]/6" : undefined}
+                        className={isHighlighted ? "bg-[#F9D972]/6" : undefined}
                       >
                         <DataTableCell
                           colSpan={7}
-                          className="bg-surface-container-low/30 px-6 py-5"
+                          className="bg-mono-soft/30 px-6 py-5"
                         >
                           <div className="space-y-4">
                             {task.description ? (
-                              <p className="max-w-3xl text-sm text-on-surface-variant">
+                              <p className="max-w-3xl text-sm text-mono-muted">
                                 {task.description}
                               </p>
                             ) : (
-                              <p className="text-sm text-on-surface-variant">
+                              <p className="text-sm text-mono-muted">
                                 No description added.
                               </p>
                             )}
@@ -695,7 +695,7 @@ export function TodoClient({
                               ) : null}
 
                               {task.subtasks.length > 0 ? (
-                                <Badge className="border border-[#00cec4]/25 bg-[#00cec4]/10 text-[#008f88]">
+                                <Badge className="border border-[#F9D972]/25 bg-[#F9D972]/10 text-[#008f88]">
                                   {task.subtasks.length} items
                                 </Badge>
                               ) : null}
@@ -707,7 +707,7 @@ export function TodoClient({
                                   <div
                                     key={subtask.id}
                                     onClick={(event) => event.stopPropagation()}
-                                    className="flex items-center gap-3 rounded-xl border border-outline-variant/25 bg-surface px-3 py-2 text-sm text-on-surface"
+                                    className="flex items-center gap-3 rounded-xl border border-mono-border/25 bg-mono-card px-3 py-2 text-sm text-mono-text"
                                   >
                                     <NeonCheckbox
                                       checked={subtask.completed}
@@ -721,7 +721,7 @@ export function TodoClient({
                                         <span
                                           className={
                                             subtask.completed
-                                              ? "text-on-surface-variant line-through"
+                                              ? "text-mono-muted line-through"
                                               : ""
                                           }
                                         >
@@ -733,7 +733,7 @@ export function TodoClient({
                                 ))}
                               </div>
                             ) : (
-                              <p className="text-sm text-on-surface-variant">
+                              <p className="text-sm text-mono-muted">
                                 No checklist added.
                               </p>
                             )}
@@ -791,13 +791,13 @@ export function TodoClient({
 
       {isTaskFormOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6">
-          <Card className="ds-shell-lg max-h-[90vh] w-full max-w-3xl overflow-hidden border-outline-variant/40 bg-surface shadow-2xl">
-            <CardHeader className="flex flex-row items-start justify-between gap-4 border-b border-outline-variant/30">
+          <Card className="monolith-shell-lg max-h-[90vh] w-full max-w-3xl overflow-hidden border-mono-border/40 bg-mono-card shadow-2xl">
+            <CardHeader className="flex flex-row items-start justify-between gap-4 border-b border-mono-border/30">
               <div>
                 <CardTitle>
                   {editingTaskId ? "Edit Task" : "Create Task"}
                 </CardTitle>
-                <p className="mt-1 text-sm text-on-surface-variant">
+                <p className="mt-1 text-sm text-mono-muted">
                   Build standard tasks or checklist-style to-dos with subtasks
                   and reminders.
                 </p>
@@ -806,7 +806,7 @@ export function TodoClient({
               <button
                 type="button"
                 onClick={closeTaskForm}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-mono-muted transition hover:bg-mono-soft hover:text-mono-text"
                 aria-label="Close task form"
               >
                 <X className="size-5" />
@@ -843,7 +843,7 @@ export function TodoClient({
                   }
                   placeholder="Add details, context, or links"
                   rows={4}
-                  className="w-full resize-none overflow-y-auto rounded-xl border border-[#00cec4]/55 bg-surface px-4 py-3 text-sm text-on-surface shadow-sm outline-none transition hover:border-[#00cec4]/85 hover:shadow-[0_4px_12px_rgba(0,206,196,0.08)] focus:border-[#00cec4] focus:ring-2 focus:ring-[#00cec4]/15"
+                  className="w-full resize-none overflow-y-auto rounded-xl border border-[#F9D972]/55 bg-mono-card px-4 py-3 text-sm text-mono-text shadow-sm outline-none transition hover:border-[#F9D972]/85 hover:shadow-[0_4px_12px_rgba(0,206,196,0.08)] focus:border-[#F9D972] focus:ring-2 focus:ring-[#F9D972]/15"
                 />
               </div>
 
@@ -881,13 +881,13 @@ export function TodoClient({
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-[22px] border border-outline-variant/35 bg-surface-container-low/50 p-4">
+              <div className="space-y-3 rounded-[22px] border border-mono-border/35 bg-mono-soft/50 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-medium text-on-surface">
+                    <p className="text-sm font-medium text-mono-text">
                       Checklist
                     </p>
-                    <p className="text-xs text-on-surface-variant">
+                    <p className="text-xs text-mono-muted">
                       Add subtasks and track them with checkboxes.
                     </p>
                   </div>
@@ -902,7 +902,7 @@ export function TodoClient({
                   {draft.subtasks.map((subtask, index) => (
                     <div
                       key={subtask.localId}
-                      className="flex items-center gap-3 rounded-2xl border border-outline-variant/30 bg-surface px-3 py-2.5"
+                      className="flex items-center gap-3 rounded-2xl border border-mono-border/30 bg-mono-card px-3 py-2.5"
                     >
                       <NeonCheckbox
                         checked={subtask.completed}
@@ -927,7 +927,7 @@ export function TodoClient({
                       <button
                         type="button"
                         onClick={() => removeDraftSubtask(subtask.localId)}
-                        className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition hover:bg-rose-50 hover:text-rose-600"
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-mono-muted transition hover:bg-rose-50 hover:text-rose-600"
                         aria-label={`Remove checklist item ${index + 1}`}
                       >
                         <X className="size-4" />
@@ -937,7 +937,7 @@ export function TodoClient({
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 rounded-2xl border border-outline-variant/35 bg-surface-container-low/70 px-4 py-3 text-sm text-on-surface">
+              <div className="flex items-center gap-3 rounded-2xl border border-mono-border/35 bg-mono-soft/70 px-4 py-3 text-sm text-mono-text">
                 <NeonCheckbox
                   checked={draft.reminderEnabled}
                   onChange={(event) =>
@@ -966,13 +966,13 @@ export function TodoClient({
                   disabled={!draft.reminderEnabled}
                   className={todoFieldClassName}
                 />
-                <p className="text-xs text-on-surface-variant">
+                <p className="text-xs text-mono-muted">
                   Reminders are stored in the database and shown once when
                   triggered.
                 </p>
               </div>
 
-              <div className="flex flex-wrap justify-end gap-2 border-t border-outline-variant/30 pt-4">
+              <div className="flex flex-wrap justify-end gap-2 border-t border-mono-border/30 pt-4">
                 <Button
                   variant="outline"
                   onClick={closeTaskForm}
@@ -984,7 +984,7 @@ export function TodoClient({
                 <Button
                   onClick={() => void saveTask()}
                   disabled={isSaving}
-                  className="border-0 bg-[#00cec4] text-white shadow-[0_14px_28px_-18px_rgba(0,174,198,0.45)] hover:bg-[#00b8af]"
+                  className="border-0 bg-[#F9D972] text-white shadow-[0_14px_28px_-18px_rgba(0,174,198,0.45)] hover:bg-[#E8C85D]"
                 >
                   {editingTaskId ? "Save changes" : "Create task"}
                 </Button>

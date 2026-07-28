@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import { useState, useEffect, useCallback } from "react";
 import { Search } from "@carbon/icons-react";
 import {DataTable,DataTableBody,DataTableCell,DataTableHead,DataTableHeader,DataTableRow,DataTableEmpty,} from "@/components/data-table";
@@ -55,13 +56,13 @@ export default function RecruitAuditPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="ds-h1 text-on-surface">Recruit Audit Log</h1>
-        <p className="text-sm text-on-surface-variant">Immutable log of all Recruit module mutations</p>
+        <h1 className="monolith-h1 text-mono-text">Recruit Audit Log</h1>
+        <p className="text-sm text-mono-muted">Immutable log of all Recruit module mutations</p>
       </div>
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-48">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
           <input
             type="search"
             placeholder="Filter by action, type, or actor..."
@@ -70,7 +71,7 @@ export default function RecruitAuditPage() {
             className="w-full rounded-xl py-2 pl-9 pr-3 text-sm"
           />
         </div>
-        <select
+        <NativeSelect
           value={action}
           onChange={(e) => setAction(e.target.value)}
           className="rounded-xl px-3 py-2 text-sm"
@@ -83,10 +84,10 @@ export default function RecruitAuditPage() {
           <option value="recruit.screening">Screening events</option>
           <option value="recruit.interview">Interview events</option>
           <option value="recruit.settings">Settings changes</option>
-        </select>
+        </NativeSelect>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
         <DataTable>
           <DataTableHeader>
             <tr>
@@ -107,29 +108,29 @@ export default function RecruitAuditPage() {
               filtered.map((e) => (
                 <DataTableRow key={e.id}>
                   <DataTableCell>
-                    <span className="rounded-lg bg-surface-container px-2 py-0.5 text-xs font-mono text-on-surface-variant">
+                    <span className="rounded-lg bg-mono-soft px-2 py-0.5 text-xs font-mono text-mono-muted">
                       {e.action}
                     </span>
                   </DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">
-                    <span className="ds-label">{e.entityType}</span>
+                  <DataTableCell className="text-mono-muted">
+                    <span className="monolith-label">{e.entityType}</span>
                     {e.entityId && (
                       <p className="text-xs text-outline mt-0.5 font-mono">{e.entityId.slice(0, 8)}…</p>
                     )}
                   </DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">
+                  <DataTableCell className="text-mono-muted">
                     {e.actor ? (
                       <>
-                        <span className="font-medium text-on-surface">{e.actor.name}</span>
-                        {e.actor.email && <p className="ds-label mt-0.5">{e.actor.email}</p>}
+                        <span className="font-medium text-mono-text">{e.actor.name}</span>
+                        {e.actor.email && <p className="monolith-label mt-0.5">{e.actor.email}</p>}
                       </>
                     ) : (
                       e.actorId ? <span className="font-mono text-xs">{e.actorId.slice(0, 8)}…</span> : "—"
                     )}
                   </DataTableCell>
-                  <DataTableCell className="ds-label">{e.source ?? "—"}</DataTableCell>
-                  <DataTableCell className="ds-label font-mono">{e.ipAddress ?? "—"}</DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">
+                  <DataTableCell className="monolith-label">{e.source ?? "—"}</DataTableCell>
+                  <DataTableCell className="monolith-label font-mono">{e.ipAddress ?? "—"}</DataTableCell>
+                  <DataTableCell className="text-mono-muted">
                     {new Date(e.createdAt).toLocaleString()}
                   </DataTableCell>
                 </DataTableRow>
@@ -144,7 +145,7 @@ export default function RecruitAuditPage() {
           <button
             onClick={() => load(page + 1)}
             disabled={loading}
-            className="rounded-xl border border-outline-variant px-5 py-2 text-sm text-on-surface-variant hover:text-on-surface disabled:opacity-50"
+            className="rounded-xl border border-mono-border px-5 py-2 text-sm text-mono-muted hover:text-mono-text disabled:opacity-50"
           >
             {loading ? "Loading..." : "Load more"}
           </button>

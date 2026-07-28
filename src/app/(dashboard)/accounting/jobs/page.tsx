@@ -70,7 +70,7 @@ export default async function JobsPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       <div>
-        <h2 className="ds-h1 text-white">Cargo Job Costing &amp; Register</h2>
+        <h2 className="monolith-h1 text-white">Cargo Job Costing &amp; Register</h2>
         <p className="text-slate-400 text-xs mt-1">
           Monitor profitability of freight forwardings and shipping contracts. Track contract value against actual direct expenses.
         </p>

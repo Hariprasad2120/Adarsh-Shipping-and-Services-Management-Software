@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DemoFillButton } from "@/components/demo-fill-button";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/monolith/input";
 import { getSetupDemoValues } from "@/lib/demo-fill";
 
 export default function SetupPage() {
@@ -57,7 +57,7 @@ export default function SetupPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8 space-y-6">
         <div>
-          <h1 className="ds-h1 text-gray-900">Initial Setup</h1>
+          <h1 className="monolith-h1 text-gray-900">Initial Setup</h1>
           <p className="text-sm text-gray-500 mt-1">
             Create your organisation and first administrator account.
           </p>

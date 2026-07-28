@@ -2,12 +2,12 @@
 
 import { ChevronDown } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState, useTransition } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/monolith/badge";
+import { Button } from "@/components/monolith/button";
+import { Card, CardContent } from "@/components/monolith/card";
 import { DemoFillButton } from "@/components/demo-fill-button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/components/monolith/input";
+import { Label } from "@/components/monolith/label";
 import {buildReviewerDemoAnswers,buildSelfAssessmentDemoAnswers,demoPerformanceProfiles,type DemoPerformanceProfile,} from "@/lib/demo-fill";
 import { cn } from "@/lib/utils";
 import {buildQuestionKey,buildDefaultSelfFormTemplate,clampRating,type AppraisalSelfFormTemplate,type QuestionResponse,type AppraisalQuestionDefinition,type AppraisalSectionDefinition,type ManagementReviewAnswers,type ReviewerRatingAnswers,type SelfAssessmentAnswers,} from "@/modules/ams/criteria-config";
@@ -131,7 +131,7 @@ function buildSliderStyle(value: number, minValue = 1, maxValue = 5) {
   const range = maxValue - minValue;
   const progress = range === 0 ? 0 : ((safeValue - minValue) / range) * 100;
   return {
-    background: `linear-gradient(90deg, #00cec4 0%, #00cec4 ${progress}%, #d7f7f4 ${progress}%, #d7f7f4 100%)`,
+    background: `linear-gradient(90deg, #F9D972 0%, #F9D972 ${progress}%, #d7f7f4 ${progress}%, #d7f7f4 100%)`,
   };
 }
 
@@ -221,7 +221,7 @@ export function TextAnswerInput({
             "min-h-28 w-full rounded-2xl border px-4 py-3 text-sm text-slate-900 outline-none transition focus:ring-2 disabled:bg-slate-50",
             invalid
               ? "border-red-400 bg-red-50/60 focus:border-red-500 focus:ring-red-100"
-              : "border-cyan-100 focus:border-[#00cec4] focus:ring-[#00cec4]/20",
+              : "border-cyan-100 focus:border-[#F9D972] focus:ring-[#F9D972]/20",
           )}
         />
       ) : (
@@ -233,7 +233,7 @@ export function TextAnswerInput({
           className={cn(
             invalid
               ? "border-red-400 bg-red-50/60 focus-visible:ring-red-100"
-              : "border-cyan-100 focus-visible:border-[#00cec4] focus-visible:ring-[#00cec4]/20",
+              : "border-cyan-100 focus-visible:border-[#F9D972] focus-visible:ring-[#F9D972]/20",
           )}
         />
       )}
@@ -275,7 +275,7 @@ export function OptionQuestionInput({
               disabled={disabled}
               checked={value.option === option.value}
               onChange={() => onChange({ ...value, option: option.value, value: option.label })}
-              className="mt-0.5 accent-[#00cec4]"
+              className="mt-0.5 accent-[#F9D972]"
             />
             <span>{option.label}</span>
           </label>
@@ -317,11 +317,11 @@ function ReviewerNumberQuestionInput({
       <div className="flex items-start justify-between gap-3">
         <div>
           <Label className="text-sm font-medium text-slate-700">{question.prompt}</Label>
-          <p className="text-xs text-on-surface-variant">
+          <p className="text-xs text-mono-muted">
             {question.startLabel || "Low"} to {question.endLabel || "High"}
           </p>
         </div>
-        <div className={cn("rounded-full px-3 py-1 text-xs font-semibold text-white", invalid ? "bg-red-400" : "bg-[#00cec4]")}>
+        <div className={cn("rounded-full px-3 py-1 text-xs font-semibold text-white", invalid ? "bg-red-400" : "bg-[#F9D972]")}>
           {numericValue}
         </div>
       </div>
@@ -340,7 +340,7 @@ function ReviewerNumberQuestionInput({
         }}
         className="cyan-range-slider h-2.5 w-full cursor-pointer appearance-none rounded-full disabled:cursor-not-allowed"
       />
-      <div className="flex justify-between text-xs font-medium text-on-surface-variant/60">
+      <div className="flex justify-between text-xs font-medium text-mono-muted/60">
         <span>{question.startLabel || minValue}</span>
         <span>{question.endLabel || maxValue}</span>
       </div>
@@ -372,12 +372,12 @@ function SelfNumberQuestionInput({
         <div>
           <Label className="text-sm font-medium text-slate-700">{question.prompt}</Label>
           {(question.startLabel || question.endLabel) ? (
-            <p className="text-xs text-on-surface-variant">
+            <p className="text-xs text-mono-muted">
               {question.startLabel || "Low"} to {question.endLabel || "High"}
             </p>
           ) : null}
         </div>
-        <div className={cn("rounded-full px-3 py-1 text-xs font-semibold text-white", invalid ? "bg-red-400" : "bg-[#00cec4]")}>
+        <div className={cn("rounded-full px-3 py-1 text-xs font-semibold text-white", invalid ? "bg-red-400" : "bg-[#F9D972]")}>
           {numericValue}
         </div>
       </div>
@@ -396,7 +396,7 @@ function SelfNumberQuestionInput({
         }}
         className="cyan-range-slider h-2.5 w-full cursor-pointer appearance-none rounded-full disabled:cursor-not-allowed"
       />
-      <div className="flex justify-between text-xs font-medium text-on-surface-variant/60">
+      <div className="flex justify-between text-xs font-medium text-mono-muted/60">
         <span>{question.startLabel || minValue}</span>
         <span>{question.endLabel || maxValue}</span>
       </div>
@@ -420,7 +420,7 @@ export function ReviewerCommentBox({
       onChange={(event) => onChange(event.target.value)}
       rows={3}
       placeholder="Add evaluator comments"
-      className="min-h-24 w-full rounded-xl border border-cyan-100 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#00cec4] focus:ring-2 focus:ring-[#00cec4]/20 disabled:bg-slate-50"
+      className="min-h-24 w-full rounded-xl border border-cyan-100 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#F9D972] focus:ring-2 focus:ring-[#F9D972]/20 disabled:bg-slate-50"
     />
   );
 }
@@ -437,26 +437,26 @@ export function CriteriaRatingTable({
   disabled?: boolean;
 }) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-outline-variant/40 bg-surface">
+    <div className="overflow-x-auto rounded-2xl border border-mono-border/40 bg-mono-card">
       <table className="min-w-full divide-y divide-outline-variant/30 text-sm">
-        <thead className="bg-surface-container-low text-on-surface">
+        <thead className="bg-mono-soft text-mono-text">
           <tr>
-            <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-on-surface-variant">
+            <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-mono-muted">
               Competency
             </th>
-            <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-on-surface-variant">
+            <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-mono-muted">
               Weightage
             </th>
-            <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-on-surface-variant">
+            <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-[0.14em] text-mono-muted">
               Self Rating (1-5)
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-outline-variant/30 bg-surface">
+        <tbody className="divide-y divide-outline-variant/30 bg-mono-card">
           {criteria.map((criterion) => (
-            <tr key={criterion.id} className="hover:bg-surface-container-low/80 transition-colors">
-              <td className="px-5 py-4 text-sm text-on-surface">{criterion.label}</td>
-              <td className="px-5 py-4 text-sm text-on-surface-variant">{criterion.weightage}</td>
+            <tr key={criterion.id} className="hover:bg-mono-soft/80 transition-colors">
+              <td className="px-5 py-4 text-sm text-mono-text">{criterion.label}</td>
+              <td className="px-5 py-4 text-sm text-mono-muted">{criterion.weightage}</td>
               <td className="px-5 py-4">
                 {onChange ? (
                   <RatingInput
@@ -466,7 +466,7 @@ export function CriteriaRatingTable({
                     onChange={(value) => onChange(criterion.id, value)}
                   />
                 ) : (
-                  <span className="ds-numeric font-semibold text-on-surface">
+                  <span className="monolith-numeric font-semibold text-mono-text">
                     {ratings[criterion.id] ?? "-"}
                   </span>
                 )}
@@ -502,31 +502,31 @@ export function SelfAssessmentSection({
   const allDone = total > 0 && answeredCount === total;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-outline-variant/40 bg-surface shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-mono-border/40 bg-mono-card shadow-sm">
       <div
         className={cn(
           "flex items-center gap-4 border-b px-6 py-4 transition",
           allDone
-            ? "border-[#00cec4]/25 bg-surface"
-            : "border-outline-variant/30 bg-surface",
+            ? "border-[#F9D972]/25 bg-mono-card"
+            : "border-mono-border/30 bg-mono-card",
         )}
       >
-        <div className={cn("h-11 w-1.5 shrink-0 rounded-full", allDone ? "bg-[#00cec4]" : "bg-[#00cec4]/55")} />
+        <div className={cn("h-11 w-1.5 shrink-0 rounded-full", allDone ? "bg-[#F9D972]" : "bg-[#F9D972]/55")} />
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#008b85]">
             Criterion {sectionIndex + 1}
           </p>
-          <h3 className="mt-1 text-base font-semibold uppercase tracking-[0.12em] leading-tight text-on-surface">
+          <h3 className="mt-1 text-base font-semibold uppercase tracking-[0.12em] leading-tight text-mono-text">
             {section.title}
           </h3>
           {section.description ? (
-            <p className="mt-0.5 text-xs text-on-surface-variant">{section.description}</p>
+            <p className="mt-0.5 text-xs text-mono-muted">{section.description}</p>
           ) : null}
         </div>
         <div
           className={cn(
             "shrink-0 rounded-full px-3 py-1 text-xs font-medium",
-            allDone ? "bg-[#00cec4]/10 text-[#008b85]" : "bg-surface-container text-on-surface-variant",
+            allDone ? "bg-[#F9D972]/10 text-[#008b85]" : "bg-mono-soft text-mono-muted",
           )}
         >
           {answeredCount}/{total}
@@ -546,7 +546,7 @@ export function SelfAssessmentSection({
               className={cn("px-6 py-5 transition", invalid ? "bg-red-50/50" : "bg-white")}
             >
               <div className="mb-3 min-w-0">
-                <p className={cn("text-[11px] font-semibold uppercase tracking-[0.18em]", invalid ? "text-red-600" : "text-on-surface-variant")}>
+                <p className={cn("text-[11px] font-semibold uppercase tracking-[0.18em]", invalid ? "text-red-600" : "text-mono-muted")}>
                   Question {qi + 1}
                 </p>
               </div>
@@ -622,13 +622,13 @@ export function ReviewerCriteriaSection({
           onClick={() => setCollapsed((c) => !c)}
           className={cn(
             "flex w-full flex-wrap items-start justify-between gap-3 pb-3 text-left",
-            collapsed ? "" : "border-b border-outline-variant/20",
+            collapsed ? "" : "border-b border-mono-border/20",
             hasInvalid && collapsed ? "rounded-lg border border-red-200 bg-red-50/40 px-3 py-2" : "",
           )}
         >
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="ds-h3 text-on-surface">{criterion.label}</h3>
+              <h3 className="monolith-h3 text-mono-text">{criterion.label}</h3>
               <Badge variant="secondary">{criterion.weightage}%</Badge>
               {hasInvalid && (
                 <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-600">
@@ -637,15 +637,15 @@ export function ReviewerCriteriaSection({
               )}
             </div>
             {criterion.description ? (
-              <p className="text-sm text-on-surface-variant">{criterion.description}</p>
+              <p className="text-sm text-mono-muted">{criterion.description}</p>
             ) : null}
             {hasChanged ? (
               <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span className="rounded-full border border-red-200 bg-red-50 px-3 py-1 font-semibold text-red-600 line-through">
                   {baselineValue?.categoryScore ?? "-"}
                 </span>
-                <span className="text-on-surface-variant/60">to</span>
-                <span className="rounded-full border border-[#00cec4]/30 bg-[#00cec4]/10 px-3 py-1 font-semibold text-[#008b85]">
+                <span className="text-mono-muted/60">to</span>
+                <span className="rounded-full border border-[#F9D972]/30 bg-[#F9D972]/10 px-3 py-1 font-semibold text-[#008b85]">
                   {value.categoryScore || "-"}
                 </span>
               </div>
@@ -653,12 +653,12 @@ export function ReviewerCriteriaSection({
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <p className="text-xs uppercase tracking-[0.14em] text-on-surface-variant">Overall Rating</p>
-              <p className="ds-numeric text-lg font-semibold text-[#008b85]">{value.categoryScore || "-"}</p>
+              <p className="text-xs uppercase tracking-[0.14em] text-mono-muted">Overall Rating</p>
+              <p className="monolith-numeric text-lg font-semibold text-[#008b85]">{value.categoryScore || "-"}</p>
             </div>
             <ChevronDown
               className={cn(
-                "size-4 shrink-0 text-on-surface-variant/60 transition-transform duration-200",
+                "size-4 shrink-0 text-mono-muted/60 transition-transform duration-200",
                 collapsed ? "rotate-0" : "rotate-180",
               )}
             />
@@ -678,7 +678,7 @@ export function ReviewerCriteriaSection({
                     data-field-id={`criterion:${criterion.id}:${question.id}`}
                     className={cn(
                       "space-y-3 border-b py-3 last:border-b-0",
-                      invalid ? "border-red-200" : "border-outline-variant/20",
+                      invalid ? "border-red-200" : "border-mono-border/20",
                     )}
                   >
                     {question.type === "radio" ? (
@@ -735,7 +735,7 @@ export function ReviewerCriteriaSection({
               )}
               data-field-id={`comment:${criterion.id}`}
             >
-              <Label className="text-sm font-medium text-on-surface-variant">Comments</Label>
+              <Label className="text-sm font-medium text-mono-muted">Comments</Label>
               <ReviewerCommentBox
                 value={value.comment}
                 onChange={(comment) => onChange({ ...value, comment })}
@@ -751,13 +751,13 @@ export function ReviewerCriteriaSection({
                   changeReasonInvalid && "rounded-xl border border-red-400 bg-red-50/70 p-3",
                 )}
               >
-                <Label className="text-sm font-medium text-on-surface-variant">Reason for rating change</Label>
+                <Label className="text-sm font-medium text-mono-muted">Reason for rating change</Label>
                 <ReviewerCommentBox
                   value={value.changeReason}
                   onChange={(changeReason) => onChange({ ...value, changeReason })}
                   disabled={disabled}
                 />
-                <p className="text-xs text-on-surface-variant/70">
+                <p className="text-xs text-mono-muted/70">
                   Explain why this criterion was changed from the last submitted rating.
                 </p>
               </div>
@@ -778,20 +778,20 @@ export function FormProgress({
 }) {
   const pct = total === 0 ? 0 : Math.round((completed / total) * 100);
   return (
-    <div className="sticky top-4 z-10 space-y-3 rounded-2xl border border-outline-variant/40 bg-surface p-4 shadow-sm">
+    <div className="sticky top-4 z-10 space-y-3 rounded-2xl border border-mono-border/40 bg-mono-card p-4 shadow-sm">
       <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-on-surface-variant">Progress</span>
-        <span className="rounded-full bg-[#00cec4]/10 px-3 py-1 text-[#008b85]">
+        <span className="font-medium text-mono-muted">Progress</span>
+        <span className="rounded-full bg-[#F9D972]/10 px-3 py-1 text-[#008b85]">
           {completed}/{total}
         </span>
       </div>
-      <div className="overflow-hidden rounded-full border border-[#00cec4]/20 bg-surface-container p-1">
+      <div className="overflow-hidden rounded-full border border-[#F9D972]/20 bg-mono-soft p-1">
         <div
-          className="h-2.5 rounded-full bg-linear-to-r from-[#00cec4] via-[#00b8af] to-sky-400 transition-all"
+          className="h-2.5 rounded-full bg-linear-to-r from-[#F9D972] via-[#E8C85D] to-sky-400 transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>
-      <p className="text-xs text-on-surface-variant/70">{pct}% complete</p>
+      <p className="text-xs text-mono-muted/70">{pct}% complete</p>
     </div>
   );
 }
@@ -834,7 +834,7 @@ export function SubmitButton({
       type="button"
       disabled={disabled || pending}
       onClick={onClick}
-      className="border-0 bg-[#00cec4] text-white hover:bg-[#00b8af]"
+      className="border-0 bg-[#F9D972] text-white hover:bg-[#E8C85D]"
     >
       {pending ? "Submitting..." : label}
     </Button>
@@ -1213,7 +1213,7 @@ export function DynamicAppraisalForm({
         </>
       )}
 
-      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-outline-variant/40 pt-4">
+      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-mono-border/40 pt-4">
         {!readOnly ? (
           <>
             <SaveDraftButton onClick={() => runAction("draft")} pending={isPending} />
@@ -1244,7 +1244,7 @@ export function DynamicAppraisalForm({
             />
           </>
         ) : (
-          <p className="text-sm text-on-surface-variant">This submission is read-only.</p>
+          <p className="text-sm text-mono-muted">This submission is read-only.</p>
         )}
       </div>
     </div>
@@ -1261,9 +1261,9 @@ function renderQuestionResponse(section: AppraisalSectionDefinition, answers: Se
     if (!display) return null;
 
     return (
-      <div key={key} className="border-b border-outline-variant/20 py-3 last:border-b-0">
-        <p className="mb-1 text-xs text-on-surface-variant/50">{question.prompt}</p>
-        <p className="text-sm text-on-surface">{display}</p>
+      <div key={key} className="border-b border-mono-border/20 py-3 last:border-b-0">
+        <p className="mb-1 text-xs text-mono-muted/50">{question.prompt}</p>
+        <p className="text-sm text-mono-text">{display}</p>
       </div>
     );
   });
@@ -1296,7 +1296,7 @@ export function CriteriaPointsView({
     return (
       <div className="space-y-5">
         {editCount !== undefined ? (
-          <p className="text-xs text-on-surface-variant/70">Edited {editCount} time{editCount === 1 ? "" : "s"}</p>
+          <p className="text-xs text-mono-muted/70">Edited {editCount} time{editCount === 1 ? "" : "s"}</p>
         ) : null}
 
         {allSelfSections.map((section) => {
@@ -1306,8 +1306,8 @@ export function CriteriaPointsView({
 
           return (
             <div key={section.id} className="space-y-0">
-              <div className="mb-1 flex flex-wrap items-start justify-between gap-3 border-l-4 border-[#00cec4] pl-3">
-                <h3 className="ds-h3 text-slate-900">{section.title}</h3>
+              <div className="mb-1 flex flex-wrap items-start justify-between gap-3 border-l-4 border-[#F9D972] pl-3">
+                <h3 className="monolith-h3 text-slate-900">{section.title}</h3>
               </div>
               {content}
             </div>
@@ -1332,7 +1332,7 @@ export function CriteriaPointsView({
 
         return (
           <div key={criterion.id} className="space-y-0">
-            <div className="mb-2 flex flex-wrap items-start justify-between gap-3 border-l-4 border-[#00cec4] pl-3">
+            <div className="mb-2 flex flex-wrap items-start justify-between gap-3 border-l-4 border-[#F9D972] pl-3">
               <div>
                 {onReviewerFieldNavigate ? (
                   <button
@@ -1340,21 +1340,21 @@ export function CriteriaPointsView({
                     onClick={() => onReviewerFieldNavigate(`reviewer-criterion:${criterion.id}`)}
                     className="text-left transition hover:text-[#008b85] hover:underline"
                   >
-                    <h3 className="ds-h3 text-current">{criterion.label}</h3>
+                    <h3 className="monolith-h3 text-current">{criterion.label}</h3>
                   </button>
                 ) : (
-                  <h3 className="ds-h3 text-on-surface">{criterion.label}</h3>
+                  <h3 className="monolith-h3 text-mono-text">{criterion.label}</h3>
                 )}
                 {criterion.description ? (
-                  <p className="text-xs text-on-surface-variant">{criterion.description}</p>
+                  <p className="text-xs text-mono-muted">{criterion.description}</p>
                 ) : null}
                 {typeof previousCategoryScore === "number" && previousCategoryScore !== categoryScore ? (
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
                     <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 font-semibold text-red-600 line-through">
                       {previousCategoryScore}
                     </span>
-                    <span className="text-on-surface-variant/60">→</span>
-                    <span className="rounded-full border border-[#00cec4]/30 bg-[#00cec4]/10 px-2 py-0.5 font-semibold text-[#008b85]">
+                    <span className="text-mono-muted/60">→</span>
+                    <span className="rounded-full border border-[#F9D972]/30 bg-[#F9D972]/10 px-2 py-0.5 font-semibold text-[#008b85]">
                       {categoryScore ?? "-"}
                     </span>
                   </div>
@@ -1370,34 +1370,34 @@ export function CriteriaPointsView({
                 : renderResponseDisplay(response);
               if (!display) return null;
               return (
-                <div key={question.id} className="border-b border-outline-variant/20 py-3 last:border-b-0">
+                <div key={question.id} className="border-b border-mono-border/20 py-3 last:border-b-0">
                   {onReviewerFieldNavigate ? (
                     <button
                       type="button"
                       onClick={() => onReviewerFieldNavigate(`criterion:${criterion.id}:${question.id}`)}
-                      className="mb-1 block text-left text-xs text-on-surface-variant/50 transition hover:text-[#008b85] hover:underline"
+                      className="mb-1 block text-left text-xs text-mono-muted/50 transition hover:text-[#008b85] hover:underline"
                     >
                       {question.prompt}
                     </button>
                   ) : (
-                    <p className="mb-1 text-xs text-on-surface-variant/50">{question.prompt}</p>
+                    <p className="mb-1 text-xs text-mono-muted/50">{question.prompt}</p>
                   )}
-                  <p className={cn("text-sm font-semibold text-on-surface", question.type === "number" && "ds-numeric")}>{display}</p>
+                  <p className={cn("text-sm font-semibold text-mono-text", question.type === "number" && "monolith-numeric")}>{display}</p>
                 </div>
               );
             })}
 
             {comment ? (
-              <div className="border-b border-outline-variant/20 py-3 last:border-b-0">
-                <p className="mb-1 text-xs text-on-surface-variant/50">Comments</p>
-                <p className="text-sm text-on-surface-variant">{comment}</p>
+              <div className="border-b border-mono-border/20 py-3 last:border-b-0">
+                <p className="mb-1 text-xs text-mono-muted/50">Comments</p>
+                <p className="text-sm text-mono-muted">{comment}</p>
               </div>
             ) : null}
 
             {changeReason ? (
               <div className="py-3">
-                <p className="mb-1 text-xs text-on-surface-variant/50">Reason for change</p>
-                <p className="text-sm text-on-surface">{changeReason}</p>
+                <p className="mb-1 text-xs text-mono-muted/50">Reason for change</p>
+                <p className="text-sm text-mono-text">{changeReason}</p>
               </div>
             ) : null}
           </div>

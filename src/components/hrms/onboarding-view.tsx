@@ -1,6 +1,7 @@
 "use client";
 
-import { DateInput } from "@/components/ui/date-input";
+import { NativeSelect } from "@/components/monolith/native-select";
+import { DateInput } from "@/components/monolith/date-input";
 import React, { useState, useEffect } from "react";
 import { UserCheck, CheckCircle2, ChevronRight, Lock, Save, Loader2, AlertCircle } from "lucide-react";
 import { toast }from "sonner";
@@ -92,7 +93,7 @@ export function OnboardingView() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
-        <Loader2 className="size-8 animate-spin text-[#00c4b6]" />
+        <Loader2 className="size-8 animate-spin text-[#F9D972]" />
         <p className="text-xs font-semibold tracking-wider">Syncing onboarding status...</p>
       </div>
     );
@@ -102,9 +103,9 @@ export function OnboardingView() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header Banner */}
       <div className="relative rounded-3xl border border-slate-800 bg-[#0f121b]/80 p-6 overflow-hidden shadow-2xl backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c4b6]/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#F9D972]/5 rounded-full blur-3xl" />
         <div className="flex items-center gap-4">
-          <div className="size-12 rounded-2xl bg-[#00c4b6]/10 border border-[#00c4b6]/35 flex items-center justify-center text-[#00c4b6] shadow-sm">
+          <div className="size-12 rounded-2xl bg-[#F9D972]/10 border border-[#F9D972]/35 flex items-center justify-center text-[#F9D972] shadow-sm">
             <UserCheck className="size-6 animate-pulse" />
           </div>
           <div className="flex-1">
@@ -113,7 +114,7 @@ export function OnboardingView() {
           </div>
           {data && (
             <div className="text-right">
-              <span className="text-2xl font-extrabold text-[#00c4b6] font-mono">{data.progressPercent}%</span>
+              <span className="text-2xl font-extrabold text-[#F9D972] font-mono">{data.progressPercent}%</span>
               <p className="text-[9px] font-black text-slate-500 uppercase tracking-wider mt-0.5">COMPLETED</p>
             </div>
           )}
@@ -122,7 +123,7 @@ export function OnboardingView() {
         {/* Progress bar */}
         {data && (
           <div className="mt-6 w-full h-1.5 bg-slate-900 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-emerald-500 to-[#00c4b6] rounded-full transition-all duration-500" style={{ width: `${data.progressPercent}%` }} />
+            <div className="h-full bg-gradient-to-r from-emerald-500 to-[#F9D972] rounded-full transition-all duration-500" style={{ width: `${data.progressPercent}%` }} />
           </div>
         )}
       </div>
@@ -139,7 +140,7 @@ export function OnboardingView() {
                 onClick={() => setActiveStep(item.key)}
                 className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between cursor-pointer ${
                   isCurrent
-                    ? "bg-[#161f28]/80 border-[#00c4b6]/40 text-slate-100 shadow-md"
+                    ? "bg-[#161f28]/80 border-[#F9D972]/40 text-slate-100 shadow-md"
                     : "bg-[#0e121b]/40 border-slate-900 text-slate-400 hover:bg-[#161f28]/20 hover:text-slate-200"
                 }`}
               >
@@ -172,7 +173,7 @@ export function OnboardingView() {
                       value={personal.firstName}
                       onChange={(e) => setPersonal({ ...personal, firstName: e.target.value })}
                       required
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                     />
                   </div>
                   <div className="space-y-1">
@@ -182,7 +183,7 @@ export function OnboardingView() {
                       value={personal.lastName}
                       onChange={(e) => setPersonal({ ...personal, lastName: e.target.value })}
                       required
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                     />
                   </div>
                 </div>
@@ -193,20 +194,20 @@ export function OnboardingView() {
                       value={personal.dob}
                       onChange={(e) => setPersonal({ ...personal, dob: e.target.value })}
                       required
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                     />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Gender</label>
-                    <select
+                    <NativeSelect
                       value={personal.gender}
                       onChange={(e) => setPersonal({ ...personal, gender: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                     >
                       <option value="MALE">Male</option>
                       <option value="FEMALE">Female</option>
                       <option value="OTHER">Other</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
               </div>
@@ -222,7 +223,7 @@ export function OnboardingView() {
                       type="text"
                       value={contact.personalPhone}
                       onChange={(e) => setContact({ ...contact, personalPhone: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                     />
                   </div>
                   <div className="space-y-1">
@@ -231,7 +232,7 @@ export function OnboardingView() {
                       type="email"
                       value={contact.personalEmail}
                       onChange={(e) => setContact({ ...contact, personalEmail: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                     />
                   </div>
                 </div>
@@ -242,7 +243,7 @@ export function OnboardingView() {
                       type="text"
                       value={contact.emergencyName}
                       onChange={(e) => setContact({ ...contact, emergencyName: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                     />
                   </div>
                   <div className="space-y-1">
@@ -251,7 +252,7 @@ export function OnboardingView() {
                       type="text"
                       value={contact.emergencyPhone}
                       onChange={(e) => setContact({ ...contact, emergencyPhone: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                     />
                   </div>
                 </div>
@@ -261,7 +262,7 @@ export function OnboardingView() {
                     type="text"
                     value={contact.addressLine1}
                     onChange={(e) => setContact({ ...contact, addressLine1: e.target.value })}
-                    className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                    className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-3">
@@ -271,7 +272,7 @@ export function OnboardingView() {
                       type="text"
                       value={contact.city}
                       onChange={(e) => setContact({ ...contact, city: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                     />
                   </div>
                   <div className="space-y-1">
@@ -280,7 +281,7 @@ export function OnboardingView() {
                       type="text"
                       value={contact.state}
                       onChange={(e) => setContact({ ...contact, state: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                     />
                   </div>
                   <div className="space-y-1">
@@ -289,7 +290,7 @@ export function OnboardingView() {
                       type="text"
                       value={contact.zipCode}
                       onChange={(e) => setContact({ ...contact, zipCode: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                     />
                   </div>
                 </div>
@@ -305,7 +306,7 @@ export function OnboardingView() {
                     type="text"
                     value={financial.bankName}
                     onChange={(e) => setFinancial({ ...financial, bankName: e.target.value })}
-                    className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                    className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -315,7 +316,7 @@ export function OnboardingView() {
                       type="text"
                       value={financial.bankAccount}
                       onChange={(e) => setFinancial({ ...financial, bankAccount: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                     />
                   </div>
                   <div className="space-y-1">
@@ -324,7 +325,7 @@ export function OnboardingView() {
                       type="text"
                       value={financial.ifsc}
                       onChange={(e) => setFinancial({ ...financial, ifsc: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                     />
                   </div>
                 </div>
@@ -340,7 +341,7 @@ export function OnboardingView() {
                     type="text"
                     value={statutory.pan}
                     onChange={(e) => setStatutory({ ...statutory, pan: e.target.value })}
-                    className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                    className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -350,7 +351,7 @@ export function OnboardingView() {
                       type="text"
                       value={statutory.aadhaar}
                       onChange={(e) => setStatutory({ ...statutory, aadhaar: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                     />
                   </div>
                   <div className="space-y-1">
@@ -359,7 +360,7 @@ export function OnboardingView() {
                       type="text"
                       value={statutory.uan}
                       onChange={(e) => setStatutory({ ...statutory, uan: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                     />
                   </div>
                 </div>
@@ -369,13 +370,13 @@ export function OnboardingView() {
             {/* Action buttons */}
             <div className="flex items-center justify-between pt-4 border-t border-slate-900">
               <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold">
-                <AlertCircle className="size-3 text-[#00c4b6]" />
+                <AlertCircle className="size-3 text-[#F9D972]" />
                 <span>Values are encrypted securely in Postgres</span>
               </div>
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-[#00c4b6] hover:brightness-105 border-0 rounded-2xl px-5 py-2.5 text-xs font-black text-slate-950 shadow-md cursor-pointer transition-all disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-[#F9D972] hover:brightness-105 border-0 rounded-2xl px-5 py-2.5 text-xs font-black text-slate-950 shadow-md cursor-pointer transition-all disabled:opacity-50"
               >
                 {saving ? (
                   <Loader2 className="size-4 animate-spin" />

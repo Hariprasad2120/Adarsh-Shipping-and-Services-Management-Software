@@ -160,33 +160,33 @@ function StatCard({
 }) {
   const accentClass =
     accent === "cyan"
-      ? "card-top-accent"
-      : "card-top-accent-orange";
+      ? "monolith-card monolith-accent"
+      : "monolith-card monolith-accent-warning";
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4, ease: "easeOut" }}
-      className={`${accentClass} bg-surface rounded-xl p-5 border border-outline-variant`}
+      className={`${accentClass} bg-mono-card rounded-xl p-5 border border-mono-border`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="ds-label mb-2">{label}</p>
+          <p className="monolith-label mb-2">{label}</p>
           <motion.p
             initial={{ scale: 0.5 }}
             animate={{ scale: 1 }}
             transition={{ delay: delay + 0.1, type: "spring", stiffness: 200 }}
-            className="text-3xl font-bold ds-numeric text-on-surface"
+            className="text-3xl font-bold monolith-numeric text-mono-text"
           >
             {value}
           </motion.p>
         </div>
         <span
-          className="ds-icon-badge"
+          className="monolith-icon-badge"
           style={
             accent === "orange"
-              ? { background: "rgba(251,146,60,0.10)", color: "#fb923c" }
+              ? { background: "rgba(251,146,60,0.10)", color: "#D88700" }
               : undefined
           }
         >
@@ -205,11 +205,11 @@ function StatusBadge({ status }: { status: string }) {
     processing: { color: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-500/10", label: "Processing" },
     failed_retryable: { color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-500/10", label: "Retrying" },
     failed_permanent: { color: "text-red-600 dark:text-red-400", bg: "bg-red-500/10", label: "Failed" },
-    suppressed: { color: "text-on-surface-variant", bg: "bg-surface-container", label: "Suppressed" },
-    cancelled: { color: "text-on-surface-variant", bg: "bg-surface-container", label: "Cancelled" },
+    suppressed: { color: "text-mono-muted", bg: "bg-mono-soft", label: "Suppressed" },
+    cancelled: { color: "text-mono-muted", bg: "bg-mono-soft", label: "Cancelled" },
   };
 
-  const c = config[status] ?? { color: "text-on-surface-variant", bg: "bg-surface-container", label: status };
+  const c = config[status] ?? { color: "text-mono-muted", bg: "bg-mono-soft", label: status };
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${c.color} ${c.bg}`}>
       {c.label}
@@ -253,8 +253,8 @@ export default function GoogleChatAdminPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="ds-h1">Google Chat Integration</h1>
-          <p className="text-on-surface-variant mt-1 text-sm">
+          <h1 className="monolith-h1">Google Chat Integration</h1>
+          <p className="text-mono-muted mt-1 text-sm">
             Manage the Monolith AI Assistant Google Chat app
           </p>
         </div>
@@ -264,8 +264,8 @@ export default function GoogleChatAdminPage() {
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium border ${
               isConnected
-                ? "border-[#00cec4]/40 bg-[#00cec4]/10 text-[#00cec4]"
-                : "border-outline-variant bg-surface-container text-on-surface-variant"
+                ? "border-[#F9D972]/40 bg-[#F9D972]/10 text-[#F9D972]"
+                : "border-mono-border bg-mono-soft text-mono-muted"
             }`}
           >
             {isConnected ? <Wifi size={14} /> : <WifiOff size={14} />}
@@ -273,7 +273,7 @@ export default function GoogleChatAdminPage() {
           </motion.div>
           <button
             onClick={load}
-            className="p-2 rounded-xl hover-cyan border border-outline-variant text-on-surface-variant hover:text-[#00cec4] transition-all"
+            className="p-2 rounded-xl monolith-hover border border-mono-border text-mono-muted hover:text-[#F9D972] transition-all"
           >
             <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
           </button>
@@ -287,13 +287,13 @@ export default function GoogleChatAdminPage() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="lg:col-span-2 overflow-hidden rounded-xl border border-outline-variant bg-surface h-64 lg:h-auto relative"
+          className="lg:col-span-2 overflow-hidden rounded-xl border border-mono-border bg-mono-card h-64 lg:h-auto relative"
         >
           <div className="absolute inset-0">
             <ConnectionGlobe active={isConnected} />
           </div>
           <div className="absolute bottom-4 left-4 right-4">
-            <p className="text-xs text-on-surface-variant">
+            <p className="text-xs text-mono-muted">
               {isConnected
                 ? `${data?.totalLinkedUsers} user${(data?.totalLinkedUsers ?? 0) !== 1 ? "s" : ""} connected to Monolith AI`
                 : "No users connected yet"}
@@ -339,20 +339,20 @@ export default function GoogleChatAdminPage() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-xl border border-[#00cec4]/30 bg-[#00cec4]/5 p-6"
+          className="rounded-xl border border-[#F9D972]/30 bg-[#F9D972]/5 p-6"
         >
           <div className="flex items-start gap-3">
-            <AlertCircle size={20} className="text-[#00cec4] mt-0.5 shrink-0" />
+            <AlertCircle size={20} className="text-[#F9D972] mt-0.5 shrink-0" />
             <div className="space-y-2">
-              <p className="font-medium text-on-surface">Getting Started</p>
-              <ol className="text-sm text-on-surface-variant space-y-1 list-decimal list-inside">
+              <p className="font-medium text-mono-text">Getting Started</p>
+              <ol className="text-sm text-mono-muted space-y-1 list-decimal list-inside">
                 <li>Open Google Chat and find <strong>Monolith AI Assistant</strong></li>
                 <li>Send it a direct message — it will prompt you to connect your account</li>
                 <li>Click <strong>Connect Monolith Account</strong> and log in with your Monolith credentials</li>
                 <li>Return to Google Chat — you're now connected!</li>
               </ol>
-              <p className="text-xs text-on-surface-variant mt-3">
-                Webhook URL: <code className="bg-surface-container px-1.5 py-0.5 rounded text-[#00cec4]">{process.env.NEXT_PUBLIC_WEBHOOK_URL ?? "/api/google-chat/webhook"}</code>
+              <p className="text-xs text-mono-muted mt-3">
+                Webhook URL: <code className="bg-mono-soft px-1.5 py-0.5 rounded text-[#F9D972]">{process.env.NEXT_PUBLIC_WEBHOOK_URL ?? "/api/google-chat/webhook"}</code>
               </p>
             </div>
           </div>
@@ -361,20 +361,20 @@ export default function GoogleChatAdminPage() {
 
       {/* Tabs */}
       <div>
-        <div className="flex gap-1 border-b border-outline-variant mb-6">
+        <div className="flex gap-1 border-b border-mono-border mb-6">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all border-b-2 -mb-px ${
                 activeTab === tab.key
-                  ? "border-[#00cec4] text-[#00cec4]"
-                  : "border-transparent text-on-surface-variant hover:text-on-surface"
+                  ? "border-[#F9D972] text-[#F9D972]"
+                  : "border-transparent text-mono-muted hover:text-mono-text"
               }`}
             >
               {tab.label}
               {tab.count !== undefined && tab.count > 0 && (
-                <span className="ml-2 bg-[#00cec4]/20 text-[#00cec4] text-xs px-1.5 py-0.5 rounded-full">
+                <span className="ml-2 bg-[#F9D972]/20 text-[#F9D972] text-xs px-1.5 py-0.5 rounded-full">
                   {tab.count}
                 </span>
               )}
@@ -417,7 +417,7 @@ function UsersTab({ users, loading }: { users: LinkedUser[]; loading: boolean })
   if (loading) return <TableSkeleton rows={5} cols={5} />;
   if (!users.length) {
     return (
-      <div className="text-center py-12 text-on-surface-variant">
+      <div className="text-center py-12 text-mono-muted">
         <MessageSquare size={40} className="mx-auto mb-3 opacity-30" />
         <p>No users linked yet</p>
       </div>
@@ -425,8 +425,8 @@ function UsersTab({ users, loading }: { users: LinkedUser[]; loading: boolean })
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
-      <table className="ds-table">
+    <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
+      <table className="monolith-table">
         <thead>
           <tr>
             <th>Employee</th>
@@ -446,18 +446,18 @@ function UsersTab({ users, loading }: { users: LinkedUser[]; loading: boolean })
             >
               <td>
                 <div>
-                  <p className="font-medium text-on-surface">{u.userName}</p>
-                  <p className="ds-label">{u.designation ?? u.userEmail}</p>
+                  <p className="font-medium text-mono-text">{u.userName}</p>
+                  <p className="monolith-label">{u.designation ?? u.userEmail}</p>
                 </div>
               </td>
               <td>
-                <p className="text-sm text-on-surface">{u.googleDisplayName ?? "—"}</p>
-                <p className="ds-label">{u.googleEmail ?? "—"}</p>
+                <p className="text-sm text-mono-text">{u.googleDisplayName ?? "—"}</p>
+                <p className="monolith-label">{u.googleEmail ?? "—"}</p>
               </td>
-              <td className="text-sm text-on-surface-variant">
+              <td className="text-sm text-mono-muted">
                 {new Date(u.linkedAt).toLocaleDateString("en-IN")}
               </td>
-              <td className="text-sm text-on-surface-variant">
+              <td className="text-sm text-mono-muted">
                 {u.lastUsedAt ? new Date(u.lastUsedAt).toLocaleDateString("en-IN") : "Never"}
               </td>
               <td>
@@ -476,7 +476,7 @@ function SpacesTab({ spaces, loading }: { spaces: SpaceRecord[]; loading: boolea
   if (loading) return <TableSkeleton rows={4} cols={4} />;
   if (!spaces.length) {
     return (
-      <div className="text-center py-12 text-on-surface-variant">
+      <div className="text-center py-12 text-mono-muted">
         <Space size={40} className="mx-auto mb-3 opacity-30" />
         <p>No spaces linked yet. Add the bot to a Google Chat space to get started.</p>
       </div>
@@ -484,8 +484,8 @@ function SpacesTab({ spaces, loading }: { spaces: SpaceRecord[]; loading: boolea
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
-      <table className="ds-table">
+    <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
+      <table className="monolith-table">
         <thead>
           <tr>
             <th>Space</th>
@@ -504,18 +504,18 @@ function SpacesTab({ spaces, loading }: { spaces: SpaceRecord[]; loading: boolea
               transition={{ delay: i * 0.05 }}
             >
               <td>
-                <p className="font-medium text-on-surface">{s.displayName ?? "Unnamed Space"}</p>
-                <p className="ds-label truncate max-w-[200px]">{s.spaceResourceName}</p>
+                <p className="font-medium text-mono-text">{s.displayName ?? "Unnamed Space"}</p>
+                <p className="monolith-label truncate max-w-[200px]">{s.spaceResourceName}</p>
               </td>
-              <td className="ds-label">{s.spaceType}</td>
+              <td className="monolith-label">{s.spaceType}</td>
               <td>
                 {s.linkedRecordLabel ? (
-                  <span className="flex items-center gap-1.5 text-sm text-[#00cec4]">
+                  <span className="flex items-center gap-1.5 text-sm text-[#F9D972]">
                     <Link2 size={12} />
                     {s.linkedRecordLabel}
                   </span>
                 ) : (
-                  <span className="text-on-surface-variant text-sm">—</span>
+                  <span className="text-mono-muted text-sm">—</span>
                 )}
               </td>
               <td>
@@ -555,18 +555,18 @@ function DeliveriesTab({
         {stats.map((s) => (
           <div
             key={s.status}
-            className="bg-surface-container rounded-xl p-3 border border-outline-variant"
+            className="bg-mono-soft rounded-xl p-3 border border-mono-border"
           >
-            <p className="ds-label mb-1">{s.status.replace(/_/g, " ")}</p>
-            <p className="text-xl font-bold ds-numeric text-on-surface">{s.count}</p>
+            <p className="monolith-label mb-1">{s.status.replace(/_/g, " ")}</p>
+            <p className="text-xl font-bold monolith-numeric text-mono-text">{s.count}</p>
           </div>
         ))}
       </div>
 
       {/* Recent list */}
       {deliveries.length > 0 ? (
-        <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
-          <table className="ds-table">
+        <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
+          <table className="monolith-table">
             <thead>
               <tr>
                 <th>Event Kind</th>
@@ -582,9 +582,9 @@ function DeliveriesTab({
                   animate={{ opacity: 1 }}
                   transition={{ delay: i * 0.03 }}
                 >
-                  <td className="text-sm text-on-surface">{d.eventKind ?? "—"}</td>
+                  <td className="text-sm text-mono-text">{d.eventKind ?? "—"}</td>
                   <td><StatusBadge status={d.status} /></td>
-                  <td className="text-sm text-on-surface-variant">
+                  <td className="text-sm text-mono-muted">
                     {new Date(d.createdAt).toLocaleString("en-IN")}
                   </td>
                 </motion.tr>
@@ -593,7 +593,7 @@ function DeliveriesTab({
           </table>
         </div>
       ) : (
-        <div className="text-center py-12 text-on-surface-variant">
+        <div className="text-center py-12 text-mono-muted">
           <Send size={40} className="mx-auto mb-3 opacity-30" />
           <p>No deliveries yet</p>
         </div>
@@ -605,14 +605,14 @@ function DeliveriesTab({
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 function TableSkeleton({ rows, cols }: { rows: number; cols: number }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
       <div className="p-4 space-y-3">
         {Array.from({ length: rows }).map((_, i) => (
           <div key={i} className="flex gap-4">
             {Array.from({ length: cols }).map((_, j) => (
               <div
                 key={j}
-                className="h-4 bg-surface-container rounded animate-pulse flex-1"
+                className="h-4 bg-mono-soft rounded animate-pulse flex-1"
                 style={{ animationDelay: `${(i + j) * 0.05}s` }}
               />
             ))}

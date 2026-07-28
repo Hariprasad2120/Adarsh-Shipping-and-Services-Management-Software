@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -17,7 +18,7 @@ import {
   Building2,
   FileText,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/monolith/button";
 
 interface UserOption {
   id: string;
@@ -248,7 +249,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
       <section className="relative overflow-hidden rounded-2xl border border-cha-border bg-cha-surface p-6 shadow-sm dark:border-cha-border-strong">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-cha-text-primary uppercase font-display">New Customer</h1>
+            <h1 className="text-xl font-bold text-cha-text-mono-accent uppercase font-display">New Customer</h1>
             <p className="text-xs text-cha-text-secondary mt-1">Create a new customer account for customs operations.</p>
           </div>
           <div className="flex items-center gap-2">
@@ -312,7 +313,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
         {currentStep === 1 && (
           <div className="space-y-6">
             <div className="border-b border-cha-border pb-3 dark:border-cha-border-strong">
-              <h2 className="text-base font-bold text-cha-text-primary uppercase font-display flex items-center gap-2">
+              <h2 className="text-base font-bold text-cha-text-mono-accent uppercase font-display flex items-center gap-2">
                 <User className="text-cha-primary size-5" /> Customer Profile
               </h2>
             </div>
@@ -321,7 +322,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
               <div>
                 <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-2">Customer Type</label>
                 <div className="flex gap-4">
-                  <label className="flex items-center gap-2 text-sm text-cha-text-primary cursor-pointer font-medium">
+                  <label className="flex items-center gap-2 text-sm text-cha-text-mono-accent cursor-pointer font-medium">
                     <input
                       type="radio"
                       name="customerSubType"
@@ -332,7 +333,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     />
                     Business
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-cha-text-primary cursor-pointer font-medium">
+                  <label className="flex items-center gap-2 text-sm text-cha-text-mono-accent cursor-pointer font-medium">
                     <input
                       type="radio"
                       name="customerSubType"
@@ -356,7 +357,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
                       onBlur={handleNameFieldBlur}
-                      className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none focus:ring-2 focus:ring-cha-primary/30"
+                      className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none focus:ring-2 focus:ring-cha-primary/30"
                     />
                   </div>
                   <div>
@@ -366,7 +367,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                       placeholder="Customer display name"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm font-semibold text-cha-text-primary focus:outline-none focus:ring-2 focus:ring-cha-primary/30"
+                      className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm font-semibold text-cha-text-mono-accent focus:outline-none focus:ring-2 focus:ring-cha-primary/30"
                       required
                     />
                   </div>
@@ -376,17 +377,17 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   <div className="grid grid-cols-12 gap-2">
                     <div className="col-span-3">
                       <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Salutation</label>
-                      <select
+                      <NativeSelect
                         value={salutation}
                         onChange={(e) => setSalutation(e.target.value)}
-                        className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                        className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                       >
                         <option value="">Select</option>
                         <option value="Mr.">Mr.</option>
                         <option value="Mrs.">Mrs.</option>
                         <option value="Ms.">Ms.</option>
                         <option value="Dr.">Dr.</option>
-                      </select>
+                      </NativeSelect>
                     </div>
                     <div className="col-span-4">
                       <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">First Name *</label>
@@ -396,7 +397,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         onBlur={handleNameFieldBlur}
-                        className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                        className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                       />
                     </div>
                     <div className="col-span-5">
@@ -407,7 +408,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         onBlur={handleNameFieldBlur}
-                        className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                        className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                       />
                     </div>
                   </div>
@@ -418,7 +419,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                       placeholder="Display Name"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm font-semibold text-cha-text-primary focus:outline-none"
+                      className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm font-semibold text-cha-text-mono-accent focus:outline-none"
                       required
                     />
                   </div>
@@ -428,40 +429,40 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Industry Segment</label>
-                  <select
+                  <NativeSelect
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                    className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                   >
                     <option value="Logistics & Freight Forwarding">Logistics & Freight Forwarding</option>
                     <option value="Manufacturing">Manufacturing</option>
                     <option value="Trading & Retail">Trading & Retail</option>
                     <option value="Imports / Exports">Imports / Exports</option>
                     <option value="Chemicals">Chemicals</option>
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Customer Language</label>
-                  <select
+                  <NativeSelect
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                    className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                   >
                     <option value="English">English</option>
                     <option value="Hindi">Hindi</option>
                     <option value="Tamil">Tamil</option>
                     <option value="Telugu">Telugu</option>
-                  </select>
+                  </NativeSelect>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">GST Treatment</label>
-                  <select
+                  <NativeSelect
                     value={gstTreatment}
                     onChange={(e) => setGstTreatment(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                    className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                   >
                     <option value="Registered Business - Regular">Registered Business - Regular</option>
                     <option value="Registered Business - Composition">Registered Business - Composition</option>
@@ -469,7 +470,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     <option value="Consumer">Consumer</option>
                     <option value="Overseas">Overseas</option>
                     <option value="SEZ">SEZ</option>
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">GSTIN</label>
@@ -478,7 +479,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     placeholder="e.g. 33AABCA1234F1Z1"
                     value={gstin}
                     onChange={(e) => setGstin(e.target.value)}
-                    className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                    className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                   />
                 </div>
                 <div>
@@ -488,7 +489,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     placeholder="e.g. ABCDE1234F"
                     value={pan}
                     onChange={(e) => setPan(e.target.value)}
-                    className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                    className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                   />
                 </div>
               </div>
@@ -500,7 +501,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
         {currentStep === 2 && (
           <div className="space-y-6">
             <div className="border-b border-cha-border pb-3 dark:border-cha-border-strong">
-              <h2 className="text-base font-bold text-cha-text-primary uppercase font-display flex items-center gap-2">
+              <h2 className="text-base font-bold text-cha-text-mono-accent uppercase font-display flex items-center gap-2">
                 <Mail className="text-cha-primary size-5" /> Contact Details
               </h2>
             </div>
@@ -513,7 +514,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   placeholder="e.g. contact@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                  className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                 />
               </div>
               <div>
@@ -523,7 +524,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   placeholder="e.g. +91 44 1234 5678"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                  className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                 />
               </div>
               <div>
@@ -533,7 +534,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   placeholder="e.g. https://domain.com"
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                  className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                 />
               </div>
             </div>
@@ -541,7 +542,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
             <div>
               <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-2">Notification Channels</label>
               <div className="flex gap-6">
-                <label className="flex items-center gap-2 text-sm text-cha-text-primary cursor-pointer font-medium">
+                <label className="flex items-center gap-2 text-sm text-cha-text-mono-accent cursor-pointer font-medium">
                   <input
                     type="checkbox"
                     checked={channelEmail}
@@ -550,7 +551,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   />
                   Email Notifications
                 </label>
-                <label className="flex items-center gap-2 text-sm text-cha-text-primary cursor-pointer font-medium">
+                <label className="flex items-center gap-2 text-sm text-cha-text-mono-accent cursor-pointer font-medium">
                   <input
                     type="checkbox"
                     checked={channelSms}
@@ -568,7 +569,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
         {currentStep === 3 && (
           <div className="space-y-6">
             <div className="border-b border-cha-border pb-3 dark:border-cha-border-strong flex items-center justify-between">
-              <h2 className="text-base font-bold text-cha-text-primary uppercase font-display flex items-center gap-2">
+              <h2 className="text-base font-bold text-cha-text-mono-accent uppercase font-display flex items-center gap-2">
                 <MapPin className="text-cha-primary size-5" /> Addresses
               </h2>
               <button
@@ -583,7 +584,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Billing */}
               <div className="space-y-4 border-r border-cha-border pr-6 dark:border-cha-border-strong">
-                <h3 className="text-sm font-bold text-cha-text-primary uppercase">Billing Address</h3>
+                <h3 className="text-sm font-bold text-cha-text-mono-accent uppercase">Billing Address</h3>
                 <div className="space-y-3">
                   <div>
                     <label className="text-[10px] font-semibold text-cha-text-muted uppercase block mb-1">Attention</label>
@@ -591,7 +592,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                       type="text"
                       value={billingAttention}
                       onChange={(e) => setBillingAttention(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                     />
                   </div>
                   <div>
@@ -600,7 +601,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                       type="text"
                       value={billingStreet1}
                       onChange={(e) => setBillingStreet1(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                     />
                   </div>
                   <div>
@@ -609,7 +610,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                       type="text"
                       value={billingStreet2}
                       onChange={(e) => setBillingStreet2(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -619,7 +620,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                         type="text"
                         value={billingCity}
                         onChange={(e) => setBillingCity(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                       />
                     </div>
                     <div>
@@ -628,7 +629,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                         type="text"
                         value={billingState}
                         onChange={(e) => setBillingState(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                       />
                     </div>
                   </div>
@@ -639,7 +640,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                         type="text"
                         value={billingPincode}
                         onChange={(e) => setBillingPincode(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                       />
                     </div>
                     <div>
@@ -648,7 +649,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                         type="text"
                         value={billingCountry}
                         onChange={(e) => setBillingCountry(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                       />
                     </div>
                   </div>
@@ -657,7 +658,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
 
               {/* Shipping */}
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-cha-text-primary uppercase">Shipping Address</h3>
+                <h3 className="text-sm font-bold text-cha-text-mono-accent uppercase">Shipping Address</h3>
                 <div className="space-y-3">
                   <div>
                     <label className="text-[10px] font-semibold text-cha-text-muted uppercase block mb-1">Attention</label>
@@ -665,7 +666,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                       type="text"
                       value={shippingAttention}
                       onChange={(e) => setShippingAttention(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                     />
                   </div>
                   <div>
@@ -674,7 +675,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                       type="text"
                       value={shippingStreet1}
                       onChange={(e) => setShippingStreet1(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                     />
                   </div>
                   <div>
@@ -683,7 +684,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                       type="text"
                       value={shippingStreet2}
                       onChange={(e) => setShippingStreet2(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -693,7 +694,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                         type="text"
                         value={shippingCity}
                         onChange={(e) => setShippingCity(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                       />
                     </div>
                     <div>
@@ -702,7 +703,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                         type="text"
                         value={shippingState}
                         onChange={(e) => setShippingState(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                       />
                     </div>
                   </div>
@@ -713,7 +714,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                         type="text"
                         value={shippingPincode}
                         onChange={(e) => setShippingPincode(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                       />
                     </div>
                     <div>
@@ -722,7 +723,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                         type="text"
                         value={shippingCountry}
                         onChange={(e) => setShippingCountry(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                       />
                     </div>
                   </div>
@@ -736,7 +737,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
         {currentStep === 4 && (
           <div className="space-y-6">
             <div className="border-b border-cha-border pb-3 dark:border-cha-border-strong">
-              <h2 className="text-base font-bold text-cha-text-primary uppercase font-display flex items-center gap-2">
+              <h2 className="text-base font-bold text-cha-text-mono-accent uppercase font-display flex items-center gap-2">
                 <DollarSign className="text-cha-primary size-5" /> Financial Parameters
               </h2>
             </div>
@@ -748,35 +749,35 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   type="number"
                   value={creditLimit}
                   onChange={(e) => setCreditLimit(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                  className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                 />
               </div>
               <div>
                 <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Currency Preference</label>
-                <select
+                <NativeSelect
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                  className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                 >
                   <option value="INR">INR- Indian Rupee</option>
                   <option value="USD">USD- US Dollar</option>
                   <option value="EUR">EUR- Euro</option>
-                </select>
+                </NativeSelect>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Opening Balance Branch</label>
-                <select
+                <NativeSelect
                   value={openingBalanceBranch}
                   onChange={(e) => setOpeningBalanceBranch(e.target.value)}
-                  className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                  className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                 >
                   <option value="Chennai">Chennai</option>
                   <option value="Mumbai">Mumbai</option>
                   <option value="Delhi">Delhi</option>
-                </select>
+                </NativeSelect>
               </div>
               <div>
                 <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Opening Balance Amount</label>
@@ -784,37 +785,37 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   type="number"
                   value={openingBalanceAmount}
                   onChange={(e) => setOpeningBalanceAmount(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                  className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                 />
               </div>
               <div>
                 <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Payment Terms</label>
-                <select
+                <NativeSelect
                   value={paymentTerms}
                   onChange={(e) => setPaymentTerms(e.target.value)}
-                  className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                  className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
                 >
                   <option value="Net 15">Net 15</option>
                   <option value="Net 30">Net 30</option>
                   <option value="Net 45">Net 45</option>
                   <option value="Due on Receipt">Due on Receipt</option>
-                </select>
+                </NativeSelect>
               </div>
             </div>
 
             <div>
               <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Account Owner / Account Manager</label>
-              <select
+              <NativeSelect
                 value={ownerId}
                 onChange={(e) => setOwnerId(e.target.value)}
-                className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-primary focus:outline-none"
+                className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
               >
                 {employees.map((emp) => (
                   <option key={emp.id} value={emp.id}>
                     {emp.name}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
           </div>
         )}
@@ -823,7 +824,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
         {currentStep === 5 && (
           <div className="space-y-6">
             <div className="border-b border-cha-border pb-3 dark:border-cha-border-strong">
-              <h2 className="text-base font-bold text-cha-text-primary uppercase font-display flex items-center gap-2">
+              <h2 className="text-base font-bold text-cha-text-mono-accent uppercase font-display flex items-center gap-2">
                 <FileText className="text-cha-primary size-5" /> KYC Documents Upload
               </h2>
             </div>
@@ -926,7 +927,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
         {currentStep === 6 && (
           <div className="space-y-6">
             <div className="border-b border-cha-border pb-3 dark:border-cha-border-strong">
-              <h2 className="text-base font-bold text-cha-text-primary uppercase font-display flex items-center gap-2">
+              <h2 className="text-base font-bold text-cha-text-mono-accent uppercase font-display flex items-center gap-2">
                 <Globe className="text-cha-primary size-5" /> Customer Portal Access
               </h2>
             </div>
@@ -934,7 +935,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
             <div className="rounded-xl border border-cha-border p-5 bg-cha-surface-subtle dark:border-cha-border-strong space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-cha-text-primary">Enable Customer Portal</h3>
+                  <h3 className="text-sm font-bold text-cha-text-mono-accent">Enable Customer Portal</h3>
                   <p className="text-xs text-cha-text-secondary mt-1">Allows the customer to log in directly to track shipments, approve expenses, and upload documents.</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer select-none">
@@ -955,7 +956,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
         {currentStep === 7 && (
           <div className="space-y-6">
             <div className="border-b border-cha-border pb-3 dark:border-cha-border-strong">
-              <h2 className="text-base font-bold text-cha-text-primary uppercase font-display flex items-center gap-2">
+              <h2 className="text-base font-bold text-cha-text-mono-accent uppercase font-display flex items-center gap-2">
                 <Check className="text-cha-primary size-5" /> Review and Confirm
               </h2>
             </div>

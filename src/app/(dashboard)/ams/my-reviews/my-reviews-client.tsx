@@ -28,11 +28,11 @@ const STAGE_COLOR: Record<string, string> = {
   MEETING_PENDING: "bg-cyan-50 text-cyan-700",
   MEETING_LIVE: "bg-green-50 text-green-700",
   HIKE_FINALISATION: "bg-pink-50 text-pink-700",
-  CLOSED: "bg-surface-container-high text-on-surface-variant",
+  CLOSED: "bg-mono-soft text-mono-muted",
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  PENDING: "bg-surface-container-high text-on-surface-variant",
+  PENDING: "bg-mono-soft text-mono-muted",
   AVAILABLE: "bg-green-100 text-green-700",
   UNAVAILABLE: "bg-red-100 text-red-600",
   FORCED: "bg-orange-100 text-orange-600",
@@ -114,23 +114,23 @@ export function MyReviewsClient({ appraisals }: { appraisals: ReviewEntry[] }) {
                 <DataTableCell>
                   <MetaText primary={a.employee.name} secondary={a.employee.designation ?? undefined} />
                 </DataTableCell>
-                <DataTableCell className="text-on-surface-variant">
+                <DataTableCell className="text-mono-muted">
                   {a.cycle.name} {a.cycle.year}
                 </DataTableCell>
                 <DataTableCell>
-                  <Badge className={STAGE_COLOR[a.stage] ?? "bg-surface-container-high text-on-surface-variant"}>
+                  <Badge className={STAGE_COLOR[a.stage] ?? "bg-mono-soft text-mono-muted"}>
                     {a.stage.replace(/_/g, " ")}
                   </Badge>
                 </DataTableCell>
-                <DataTableCell className="text-on-surface-variant">
+                <DataTableCell className="text-mono-muted">
                   {KIND_LABEL[a.myRole] ?? a.myRole}
                 </DataTableCell>
                 <DataTableCell>
-                  <Badge className={STATUS_COLOR[a.myStatus] ?? "bg-surface-container-high text-on-surface-variant"}>
+                  <Badge className={STATUS_COLOR[a.myStatus] ?? "bg-mono-soft text-mono-muted"}>
                     {a.myStatus}
                   </Badge>
                 </DataTableCell>
-                <DataTableCell className="text-xs text-on-surface-variant">
+                <DataTableCell className="text-xs text-mono-muted">
                   {getDeadlineLabel(a)}
                 </DataTableCell>
                 <DataTableCell>

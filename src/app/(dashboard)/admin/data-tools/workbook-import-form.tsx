@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Upload, FileSpreadsheet, CheckCircle, AlertTriangle } from "lucide-react";
 import { importWorkbookAction } from "./actions";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/monolith/button";
 
 export function WorkbookImportForm() {
   const [message, setMessage] = useState<string | null>(null);
@@ -41,10 +41,10 @@ export function WorkbookImportForm() {
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
-      <label className="flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-outline-variant/60 bg-surface-container-low/20 hover:bg-[#00cec4]/5 hover:border-[#00cec4]/60 px-4 py-6 text-center transition">
+      <label className="flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-mono-border/60 bg-mono-soft/20 hover:bg-[#F9D972]/5 hover:border-[#F9D972]/60 px-4 py-6 text-center transition">
         {fileName ? (
           <>
-            <FileSpreadsheet className="size-8 text-[#00cec4]" />
+            <FileSpreadsheet className="size-8 text-[#F9D972]" />
             <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
               {fileName}
             </span>

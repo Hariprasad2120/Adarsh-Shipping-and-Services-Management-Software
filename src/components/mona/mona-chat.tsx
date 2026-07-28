@@ -13,10 +13,10 @@ import { MonaInput } from "./mona-input";
  * The main Mona chat widget — FAB + expandable panel.
  *
  * Design-system compliance:
- * - bg-surface, bg-surface-container-low for panels
- * - border-outline-variant for borders
- * - text-on-surface, text-on-surface-variant for text
- * - #00cec4 accent for interactive elements
+ * - bg-mono-card, bg-mono-soft for panels
+ * - border-mono-border for borders
+ * - text-mono-text, text-mono-muted for text
+ * - #F9D972 accent for interactive elements
  * - Kiona font for header title
  * - var(--radius-2xl) = 16px for panel radius
  * - var(--shadow-ambient) for shadows
@@ -114,7 +114,7 @@ export function MonaChat() {
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 10 }}
-                  className="absolute bottom-full right-0 mb-3 whitespace-nowrap rounded-xl bg-surface text-on-surface border border-outline-variant px-4 py-2 text-[12px] font-medium"
+                  className="absolute bottom-full right-0 mb-3 whitespace-nowrap rounded-xl bg-mono-card text-mono-text border border-mono-border px-4 py-2 text-[12px] font-medium"
                   style={{
                     boxShadow:
                       "0 4px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 206, 196, 0.15)",
@@ -122,7 +122,7 @@ export function MonaChat() {
                 >
                   👋 Hi! I&apos;m <strong>Mona</strong>, your AI companion
                   <div
-                    className="absolute -bottom-1.5 right-6 h-3 w-3 rotate-45 bg-surface border-r border-b border-outline-variant"
+                    className="absolute -bottom-1.5 right-6 h-3 w-3 rotate-45 bg-mono-card border-r border-b border-mono-border"
                   />
                 </motion.div>
               )}
@@ -131,7 +131,7 @@ export function MonaChat() {
             <button
               type="button"
               onClick={toggleChat}
-              className="group relative flex items-center justify-center rounded-full bg-surface-container shadow-2xl transition-shadow hover:shadow-[0_0_0_4px_rgba(0,206,196,0.2)]"
+              className="group relative flex items-center justify-center rounded-full bg-mono-soft shadow-2xl transition-shadow hover:shadow-[0_0_0_4px_rgba(0,206,196,0.2)]"
               style={{
                 width: 56,
                 height: 56,
@@ -158,7 +158,7 @@ export function MonaChat() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed z-[9999] flex flex-col overflow-hidden rounded-2xl bg-surface border border-outline-variant"
+            className="fixed z-[9999] flex flex-col overflow-hidden rounded-2xl bg-mono-card border border-mono-border"
             style={{
               bottom: 24,
               right: 24,
@@ -174,7 +174,7 @@ export function MonaChat() {
           >
             {/* ─── Header ───────────────────────────────────────────────── */}
             <div
-              className="relative flex shrink-0 items-center gap-3 border-b border-outline-variant px-4 py-3"
+              className="relative flex shrink-0 items-center gap-3 border-b border-mono-border px-4 py-3"
               style={{
                 background:
                   "linear-gradient(135deg, rgba(0, 206, 196, 0.04), rgba(56, 189, 248, 0.02))",
@@ -183,8 +183,8 @@ export function MonaChat() {
               <MonaAvatar size={36} isActive={isLoading} showRing={false} />
               <div className="flex flex-1 flex-col">
                 <span
-                  className="text-[14px] font-bold tracking-wide text-on-surface"
-                  style={{ fontFamily: "var(--font-kiona-sans), sans-serif" }}
+                  className="text-[14px] font-bold tracking-wide text-mono-text"
+                  style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
                 >
                   MONA
                 </span>
@@ -193,7 +193,7 @@ export function MonaChat() {
                   type="button"
                   onClick={() => setShowModelPicker((v) => !v)}
                   className="flex items-center gap-1 text-[10px] tracking-wider transition-colors hover:opacity-80"
-                  style={{ color: "#00cec4" }}
+                  style={{ color: "#F9D972" }}
                   title="Switch AI model"
                 >
                   {isLoading ? (
@@ -216,13 +216,13 @@ export function MonaChat() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute left-3 right-3 top-[64px] z-10 overflow-hidden rounded-xl bg-surface border border-outline-variant"
+                    className="absolute left-3 right-3 top-[64px] z-10 overflow-hidden rounded-xl bg-mono-card border border-mono-border"
                     style={{
                       boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 206, 196, 0.1)",
                     }}
                   >
-                    <div className="px-3 py-2 border-b border-outline-variant">
-                      <span className="text-[9px] font-medium tracking-[0.12em] text-on-surface-variant uppercase">
+                    <div className="px-3 py-2 border-b border-mono-border">
+                      <span className="text-[9px] font-medium tracking-[0.12em] text-mono-muted uppercase">
                         SELECT MODEL
                       </span>
                     </div>
@@ -237,30 +237,30 @@ export function MonaChat() {
                         className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors ${
                           m.id === currentModel
                             ? "bg-[rgba(0,206,196,0.08)]"
-                            : "hover:bg-surface-container-low"
+                            : "hover:bg-mono-soft"
                         }`}
                       >
                         <Cpu
                           size={14}
                           style={{
-                            color: m.id === currentModel ? "#00cec4" : "var(--color-on-surface-variant)",
+                            color: m.id === currentModel ? "#F9D972" : "var(--color-on-surface-variant)",
                           }}
                         />
                         <div className="flex flex-col">
                           <span
                             className="text-[12px] font-medium"
                             style={{
-                              color: m.id === currentModel ? "#00cec4" : "var(--color-on-surface)",
+                              color: m.id === currentModel ? "#F9D972" : "var(--color-on-surface)",
                             }}
                           >
                             {m.name}
                           </span>
-                          <span className="text-[10px] text-on-surface-variant">
+                          <span className="text-[10px] text-mono-muted">
                             {m.description}
                           </span>
                         </div>
                         {m.id === currentModel && (
-                          <span className="ml-auto text-[9px] font-medium tracking-wider" style={{ color: "#00cec4" }}>
+                          <span className="ml-auto text-[9px] font-medium tracking-wider" style={{ color: "#F9D972" }}>
                             ACTIVE
                           </span>
                         )}
@@ -274,8 +274,8 @@ export function MonaChat() {
               <button
                 type="button"
                 onClick={() => setTtsEnabled((v) => !v)}
-                className="rounded-lg p-1.5 text-on-surface-variant transition-colors hover:bg-[rgba(0,206,196,0.08)]"
-                style={ttsEnabled ? { color: "#00cec4" } : undefined}
+                className="rounded-lg p-1.5 text-mono-muted transition-colors hover:bg-[rgba(0,206,196,0.08)]"
+                style={ttsEnabled ? { color: "#F9D972" } : undefined}
                 title={ttsEnabled ? "Disable voice" : "Enable voice"}
               >
                 {ttsEnabled ? <Volume2 size={16} /> : <VolumeOff size={16} />}
@@ -285,7 +285,7 @@ export function MonaChat() {
               <button
                 type="button"
                 onClick={clearChat}
-                className="rounded-lg p-1.5 text-on-surface-variant transition-colors hover:bg-[rgba(0,206,196,0.08)]"
+                className="rounded-lg p-1.5 text-mono-muted transition-colors hover:bg-[rgba(0,206,196,0.08)]"
                 title="Clear conversation"
               >
                 <Trash2 size={16} />
@@ -295,7 +295,7 @@ export function MonaChat() {
               <button
                 type="button"
                 onClick={closeChat}
-                className="rounded-lg p-1.5 text-on-surface-variant transition-colors hover:bg-[rgba(0,206,196,0.08)]"
+                className="rounded-lg p-1.5 text-mono-muted transition-colors hover:bg-[rgba(0,206,196,0.08)]"
                 title="Close (Ctrl+M)"
               >
                 <X size={16} />
@@ -303,7 +303,7 @@ export function MonaChat() {
             </div>
 
             {/* ─── Messages Area ────────────────────────────────────────── */}
-            <div className="flex-1 overflow-y-auto bg-background py-3 scrollbar-none [&::-webkit-scrollbar]:hidden">
+            <div className="flex-1 overflow-y-auto bg-mono-page py-3 scrollbar-none [&::-webkit-scrollbar]:hidden">
               {messages.map((msg) => (
                 <MonaMessage key={msg.id} message={msg} />
               ))}
@@ -331,8 +331,8 @@ export function MonaChat() {
             <MonaInput onSend={handleSend} isLoading={isLoading} />
 
             {/* ─── Footer ───────────────────────────────────────────────── */}
-            <div className="flex items-center justify-center border-t border-outline-variant bg-surface px-3 py-1.5">
-              <span className="text-[9px] tracking-wider text-on-surface-variant opacity-50">
+            <div className="flex items-center justify-center border-t border-mono-border bg-mono-card px-3 py-1.5">
+              <span className="text-[9px] tracking-wider text-mono-muted opacity-50">
                 POWERED BY GEMINI • CTRL+M TO TOGGLE
               </span>
             </div>

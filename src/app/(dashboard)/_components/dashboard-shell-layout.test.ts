@@ -39,6 +39,10 @@ describe("CHA dashboard shell layout safeguards", () => {
       join(repoRoot, "src/app/(dashboard)/layout.tsx"),
       "utf8",
     );
+    const dashboardShellSwitcherSource = readFileSync(
+      join(repoRoot, "src/app/(dashboard)/_components/dashboard-shell-switcher.tsx"),
+      "utf8",
+    );
     const mainShellSource = readFileSync(
       join(repoRoot, "src/components/main-shell.tsx"),
       "utf8",
@@ -52,7 +56,10 @@ describe("CHA dashboard shell layout safeguards", () => {
       "utf8",
     );
 
-    expect(dashboardLayoutSource).toContain("DashboardChromeProvider");
+    expect(dashboardLayoutSource).toContain("DashboardShellSwitcher");
+    expect(dashboardShellSwitcherSource).toContain("usePathname");
+    expect(dashboardShellSwitcherSource).toContain("DashboardChromeProvider");
+    expect(dashboardShellSwitcherSource).toContain("MonolithDashboardShell");
     expect(mainShellSource).toContain('pl-0');
     expect(mainShellSource).toContain('lg:pl-[var(--sidebar-width)]');
     expect(sidebarSource).toContain('role="dialog"');

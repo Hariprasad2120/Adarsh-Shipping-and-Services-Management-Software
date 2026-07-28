@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-07-27T08:30:03.146Z",
+  "generatedAt": "2026-07-28T05:03:10.393Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
     "version": "0.1.0"
   },
   "stats": {
-    "totalAppRoutes": 203,
-    "totalApiRoutes": 195,
+    "totalAppRoutes": 205,
+    "totalApiRoutes": 196,
     "totalPrismaModels": 277,
-    "totalModuleServices": 86,
-    "totalComponents": 94
+    "totalModuleServices": 87,
+    "totalComponents": 92
   },
   "appRoutes": [
     {
@@ -214,6 +214,12 @@
     {
       "route": "/admin/data-tools",
       "filePath": "src/app/(dashboard)/admin/data-tools/page.tsx",
+      "module": "admin",
+      "type": "page"
+    },
+    {
+      "route": "/admin/design-system",
+      "filePath": "src/app/(dashboard)/admin/design-system/page.tsx",
       "module": "admin",
       "type": "page"
     },
@@ -485,12 +491,6 @@
       "route": "/cha/settings",
       "filePath": "src/app/(dashboard)/cha/settings/page.tsx",
       "module": "cha",
-      "type": "page"
-    },
-    {
-      "route": "/cha-ui-showcase",
-      "filePath": "src/app/(dashboard)/cha-ui-showcase/page.tsx",
-      "module": "cha-ui-showcase",
       "type": "page"
     },
     {
@@ -912,6 +912,18 @@
       "filePath": "src/app/(dashboard)/crm/[...slug]/page.tsx",
       "module": "crm",
       "type": "page"
+    },
+    {
+      "route": "/dashboard",
+      "filePath": "src/app/(dashboard)/dashboard/error.tsx",
+      "module": "dashboard",
+      "type": "error"
+    },
+    {
+      "route": "/dashboard",
+      "filePath": "src/app/(dashboard)/dashboard/loading.tsx",
+      "module": "dashboard",
+      "type": "loading"
     },
     {
       "route": "/dashboard",
@@ -1553,12 +1565,19 @@
       ]
     },
     {
-      "path": "/api/cha-ui-showcase",
-      "filePath": "src/app/api/cha-ui-showcase/route.ts",
-      "module": "cha-ui-showcase",
+      "path": "/api/cha/expense-artifacts/[...path]",
+      "filePath": "src/app/api/cha/expense-artifacts/[...path]/route.ts",
+      "module": "cha",
       "methods": [
-        "GET",
-        "POST"
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/cha/reports/jobs/[jobId]",
+      "filePath": "src/app/api/cha/reports/jobs/[jobId]/route.ts",
+      "module": "cha",
+      "methods": [
+        "GET"
       ]
     },
     {
@@ -7807,6 +7826,13 @@
         "orgId",
         "status",
         "requestedById",
+        "expenseScope",
+        "directPurpose",
+        "approvalRoute",
+        "routedManagerId",
+        "upiNumber",
+        "upiId",
+        "clarificationResponse",
         "createdAt",
         "updatedAt",
         "isUrgent",
@@ -9416,6 +9442,7 @@
         "slaDuration",
         "slaUnit",
         "commentsRequired",
+        "delayRemarksRequired",
         "canBeSkipped",
         "canBeRevisited",
         "approvalRequired",
@@ -9578,6 +9605,8 @@
         "slaDueDate",
         "completedById",
         "remarks",
+        "delayRemarks",
+        "delayRemarkedAt",
         "resolutionJson",
         "instance",
         "node",
@@ -10397,7 +10426,15 @@
         "recordCustomerAdvanceReceiptAction",
         "declareAdvanceNotRequiredAction",
         "createExpenseRequestAction",
+        "createExpenseRequestWithAttachmentAction",
+        "createDirectExpenseRequestAction",
+        "createDirectExpenseRequestWithAttachmentAction",
         "triggerUrgentExpenseEscalationAction",
+        "reviewExpenseRequestAction",
+        "approveAccountsExpenseRequestAction",
+        "routeExpenseRequestToManagerAction",
+        "submitExpenseClarificationAction",
+        "markExpenseReadyForDisbursementAction",
         "setExpenseStatusAction",
         "postExpensePaymentAction",
         "acknowledgeExpenseReceiptAction",
@@ -10455,6 +10492,15 @@
     },
     {
       "module": "cha",
+      "fileName": "job-report.ts",
+      "filePath": "src/modules/cha/job-report.ts",
+      "exportedFunctions": [
+        "listCompletedChaJobsForReports",
+        "generateCompletedChaJobReport"
+      ]
+    },
+    {
+      "module": "cha",
       "fileName": "service.ts",
       "filePath": "src/modules/cha/service.ts",
       "exportedFunctions": [
@@ -10499,6 +10545,7 @@
         "submitChecklistInternalDecision",
         "sendChecklistCustomerMail",
         "submitChecklistCustomerDecision",
+        "submitPortalCustomerChecklistDecision",
         "importChecklistExcel",
         "submitChecklistForApproval",
         "checklistManagerAction",
@@ -10510,6 +10557,13 @@
         "declareAdvanceNotRequired",
         "createExpenseRequest",
         "triggerUrgentExpenseEscalation",
+        "reviewExpenseRequest",
+        "listExpenseJobOptions",
+        "createDirectExpenseRequest",
+        "approveAccountsExpenseRequest",
+        "routeExpenseRequestToManager",
+        "submitExpenseClarification",
+        "markExpenseReadyForDisbursement",
         "setExpenseStatus",
         "postExpensePayment",
         "acknowledgeExpenseReceipt",
@@ -10956,7 +11010,8 @@
       "exportedFunctions": [
         "parseCustomerPortalShipmentFilters",
         "getCustomerPortalShipmentsData",
-        "getCustomerPortalShipmentDetailData"
+        "getCustomerPortalShipmentDetailData",
+        "getCustomerPortalApprovalQueue"
       ]
     },
     {
@@ -11543,11 +11598,6 @@
     },
     {
       "module": "hrms",
-      "fileName": "action-list.tsx",
-      "filePath": "src/components/hrms/action-list.tsx"
-    },
-    {
-      "module": "hrms",
       "fileName": "app-settings-page.tsx",
       "filePath": "src/components/hrms/app-settings-page.tsx"
     },
@@ -11598,28 +11648,13 @@
     },
     {
       "module": "hrms",
-      "fileName": "org-services.tsx",
-      "filePath": "src/components/hrms/org-services.tsx"
-    },
-    {
-      "module": "hrms",
       "fileName": "pms-view.tsx",
       "filePath": "src/components/hrms/pms-view.tsx"
     },
     {
       "module": "hrms",
-      "fileName": "profile-summary.tsx",
-      "filePath": "src/components/hrms/profile-summary.tsx"
-    },
-    {
-      "module": "hrms",
       "fileName": "reimbursement-admin-view.tsx",
       "filePath": "src/components/hrms/reimbursement-admin-view.tsx"
-    },
-    {
-      "module": "hrms",
-      "fileName": "reportees-list.tsx",
-      "filePath": "src/components/hrms/reportees-list.tsx"
     },
     {
       "module": "hrms",
@@ -11812,6 +11847,96 @@
       "filePath": "src/components/mona/mona-provider.tsx"
     },
     {
+      "module": "monolith",
+      "fileName": "alert.tsx",
+      "filePath": "src/components/monolith/alert.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "badge.tsx",
+      "filePath": "src/components/monolith/badge.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "button-1.tsx",
+      "filePath": "src/components/monolith/button-1.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "button.tsx",
+      "filePath": "src/components/monolith/button.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "card.tsx",
+      "filePath": "src/components/monolith/card.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "date-input.tsx",
+      "filePath": "src/components/monolith/date-input.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "dropdown-menu.tsx",
+      "filePath": "src/components/monolith/dropdown-menu.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "dropdown-select.tsx",
+      "filePath": "src/components/monolith/dropdown-select.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "file-upload-field.tsx",
+      "filePath": "src/components/monolith/file-upload-field.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "filter-menu.tsx",
+      "filePath": "src/components/monolith/filter-menu.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "folder-icon.tsx",
+      "filePath": "src/components/monolith/folder-icon.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "input.tsx",
+      "filePath": "src/components/monolith/input.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "label.tsx",
+      "filePath": "src/components/monolith/label.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "modal.tsx",
+      "filePath": "src/components/monolith/modal.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "monolith-dashboard-shell.tsx",
+      "filePath": "src/components/monolith/monolith-dashboard-shell.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "native-select.tsx",
+      "filePath": "src/components/monolith/native-select.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "neon-checkbox.tsx",
+      "filePath": "src/components/monolith/neon-checkbox.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "warning-indicator-popover.tsx",
+      "filePath": "src/components/monolith/warning-indicator-popover.tsx"
+    },
+    {
       "module": "notifications",
       "fileName": "notification-provider.tsx",
       "filePath": "src/components/notifications/notification-provider.tsx"
@@ -11852,86 +11977,6 @@
       "filePath": "src/components/todo/todo-reminder-agent.tsx"
     },
     {
-      "module": "ui",
-      "fileName": "alert.tsx",
-      "filePath": "src/components/ui/alert.tsx"
-    },
-    {
-      "module": "ui",
-      "fileName": "badge.tsx",
-      "filePath": "src/components/ui/badge.tsx"
-    },
-    {
-      "module": "ui",
-      "fileName": "button-1.tsx",
-      "filePath": "src/components/ui/button-1.tsx"
-    },
-    {
-      "module": "ui",
-      "fileName": "button.tsx",
-      "filePath": "src/components/ui/button.tsx"
-    },
-    {
-      "module": "ui",
-      "fileName": "card.tsx",
-      "filePath": "src/components/ui/card.tsx"
-    },
-    {
-      "module": "ui",
-      "fileName": "date-input.tsx",
-      "filePath": "src/components/ui/date-input.tsx"
-    },
-    {
-      "module": "ui",
-      "fileName": "dropdown-menu.tsx",
-      "filePath": "src/components/ui/dropdown-menu.tsx"
-    },
-    {
-      "module": "ui",
-      "fileName": "dropdown-select.tsx",
-      "filePath": "src/components/ui/dropdown-select.tsx"
-    },
-    {
-      "module": "ui",
-      "fileName": "file-upload-field.tsx",
-      "filePath": "src/components/ui/file-upload-field.tsx"
-    },
-    {
-      "module": "ui",
-      "fileName": "filter-menu.tsx",
-      "filePath": "src/components/ui/filter-menu.tsx"
-    },
-    {
-      "module": "ui",
-      "fileName": "folder-icon.tsx",
-      "filePath": "src/components/ui/folder-icon.tsx"
-    },
-    {
-      "module": "ui",
-      "fileName": "input.tsx",
-      "filePath": "src/components/ui/input.tsx"
-    },
-    {
-      "module": "ui",
-      "fileName": "label.tsx",
-      "filePath": "src/components/ui/label.tsx"
-    },
-    {
-      "module": "ui",
-      "fileName": "modal.tsx",
-      "filePath": "src/components/ui/modal.tsx"
-    },
-    {
-      "module": "ui",
-      "fileName": "neon-checkbox.tsx",
-      "filePath": "src/components/ui/neon-checkbox.tsx"
-    },
-    {
-      "module": "ui",
-      "fileName": "warning-indicator-popover.tsx",
-      "filePath": "src/components/ui/warning-indicator-popover.tsx"
-    },
-    {
       "module": "shared",
       "fileName": "welcome-bar.tsx",
       "filePath": "src/components/welcome-bar.tsx"
@@ -11953,7 +11998,7 @@
       "components": 0
     },
     "admin": {
-      "appRoutes": 9,
+      "appRoutes": 10,
       "apiRoutes": 6,
       "prismaModels": 0,
       "serviceFiles": 0,
@@ -11982,17 +12027,10 @@
     },
     "cha": {
       "appRoutes": 12,
-      "apiRoutes": 4,
+      "apiRoutes": 6,
       "prismaModels": 35,
-      "serviceFiles": 6,
+      "serviceFiles": 7,
       "components": 3
-    },
-    "cha-ui-showcase": {
-      "appRoutes": 1,
-      "apiRoutes": 1,
-      "prismaModels": 0,
-      "serviceFiles": 0,
-      "components": 0
     },
     "communication": {
       "appRoutes": 11,
@@ -12030,7 +12068,7 @@
       "components": 0
     },
     "dashboard": {
-      "appRoutes": 1,
+      "appRoutes": 3,
       "apiRoutes": 0,
       "prismaModels": 0,
       "serviceFiles": 0,
@@ -12069,7 +12107,7 @@
       "apiRoutes": 34,
       "prismaModels": 38,
       "serviceFiles": 14,
-      "components": 25
+      "components": 21
     },
     "items": {
       "appRoutes": 0,
@@ -12112,6 +12150,13 @@
       "prismaModels": 0,
       "serviceFiles": 7,
       "components": 5
+    },
+    "monolith": {
+      "appRoutes": 0,
+      "apiRoutes": 0,
+      "prismaModels": 0,
+      "serviceFiles": 0,
+      "components": 18
     },
     "notifications": {
       "appRoutes": 1,
@@ -12175,13 +12220,6 @@
       "prismaModels": 0,
       "serviceFiles": 0,
       "components": 0
-    },
-    "ui": {
-      "appRoutes": 0,
-      "apiRoutes": 0,
-      "prismaModels": 0,
-      "serviceFiles": 0,
-      "components": 16
     },
     "users": {
       "appRoutes": 0,

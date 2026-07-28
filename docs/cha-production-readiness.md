@@ -145,7 +145,7 @@ Remaining, CHA-specific:
 
 - Load: 50 concurrent users listing jobs + uploading docs.
 - Backup/restore drill on Neon branch; verify CHA data integrity after restore.
-- Mobile layout pass on jobs list, job detail, approvals (per design.md Section 15).
+- Mobile layout pass on jobs list, job detail, approvals (per the active Monolith design-system instructions Section 15).
 - Light/dark theme audit on all CHA pages.
 
 ## 5. Suggested platform additions (observed from codebase)

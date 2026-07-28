@@ -178,6 +178,7 @@ export type CustomerPortalShipmentDetailData = {
     versionLabel: string | null;
     fileVersionId: string | null;
     fileName: string | null;
+    mimeType: string | null;
     downloadHref: string | null;
     isDownloadable: boolean;
     approvalStatus: string;
@@ -207,6 +208,22 @@ export type CustomerPortalShipmentDetailData = {
     occurredAt: string;
   }>;
   sectionErrors: Partial<Record<"documents" | "checklists" | "queries" | "recentUpdates" | "actionRequired", string>>;
+};
+
+export type CustomerPortalApprovalQueueItem = {
+  id: string;
+  jobId: string;
+  jobNumber: string;
+  jobTitle: string;
+  customerRef: string | null;
+  stageLabel: string;
+  checklistLabel: string;
+  versionLabel: string | null;
+  fileName: string | null;
+  visibleAt: string;
+  updatedAt: string;
+  status: string;
+  href: string;
 };
 
 type ShipmentComputationContext = {
@@ -349,7 +366,7 @@ export async function getCustomerPortalShipmentDetailData(
   };
 
   const listItem = buildShipmentListItems(listContext)[0];
-  const actionRequired = buildShipmentActionRequiredItems(job, submissions, checklists, checklistResponses, queries, stageMappings, now);
+  const actionRequired = buildShipmentActionRequiredItems(job, submissions, checklists, checklistResponses, queries, stageMappings);
   if (
     submissionsResult.status === "rejected" ||
     checklistsResult.status === "rejected" ||
@@ -393,11 +410,58 @@ export async function getCustomerPortalShipmentDetailData(
     },
     actionRequired,
     documents: visibleDocuments,
-    checklists: buildShipmentChecklistItems(checklists, checklistResponses, now),
+    checklists: buildShipmentChecklistItems(checklists, checklistResponses),
     queries: buildShipmentQueries(queries),
     recentUpdates: buildShipmentRecentUpdates(audits, stageMappings),
     sectionErrors,
   };
+}
+
+export async function getCustomerPortalApprovalQueue(
+  session: Pick<PortalSession, "orgId" | "portalUser">,
+): Promise<CustomerPortalApprovalQueueItem[]> {
+  const [checklists, checklistResponses, stageMappings] = await Promise.all([
+    getVisibleChecklistsForCustomer(session.orgId, session.portalUser.customerId),
+    getChecklistResponsesForCustomer(session.orgId, session.portalUser.customerId),
+    getCustomerVisibleStageMappings(session.orgId),
+  ]);
+  const stageMap = buildStageMap(stageMappings);
+  const accountResponses = new Set(checklistResponses.map((response) => response.checklistId));
+
+  return checklists
+    .filter(isCustomerApprovalActionable)
+    .filter((checklist) => !accountResponses.has(checklist.id))
+    .map((checklist) => ({
+      id: checklist.id,
+      jobId: checklist.jobId,
+      jobNumber: checklist.job.jobNumber,
+      jobTitle: checklist.job.title,
+      customerRef: checklist.job.customerRef,
+      stageLabel: formatStageLabel(checklist.job.stage, stageMap),
+      checklistLabel: checklist.currentFileVersion
+        ? `Checklist v${checklist.currentFileVersion.versionNumber}`
+        : "Checklist Approval",
+      versionLabel: checklist.currentFileVersion ? `v${checklist.currentFileVersion.versionNumber}` : null,
+      fileName: checklist.currentFileVersion?.originalFileName ?? null,
+      visibleAt: getCustomerApprovalOpenedAt(checklist).toISOString(),
+      updatedAt: checklist.updatedAt.toISOString(),
+      status: formatChaBadgeLabel(checklist.currentApprovalStage),
+      href: `${shipmentHref(checklist.jobId)}?tab=approvals`,
+    }))
+    .sort((a, b) => new Date(a.visibleAt).getTime() - new Date(b.visibleAt).getTime());
+}
+
+function isCustomerApprovalActionable(checklist: Pick<ChecklistRecord, "currentApprovalStage" | "status">) {
+  if (checklist.currentApprovalStage === "CUSTOMER") return true;
+  return checklist.status === "CUSTOMER_APPROVAL_PENDING" || checklist.status === "CUSTOMER_APPROVAL_WAITING_WINDOW";
+}
+
+function isCustomerPortalChecklistVisible(checklist: Pick<ChecklistRecord, "currentApprovalStage" | "status" | "customerApprovalVisibleAt">) {
+  return isCustomerApprovalActionable(checklist) || Boolean(checklist.customerApprovalVisibleAt);
+}
+
+function getCustomerApprovalOpenedAt(checklist: Pick<ChecklistRecord, "customerApprovalVisibleAt" | "updatedAt">) {
+  return checklist.customerApprovalVisibleAt ?? checklist.updatedAt;
 }
 
 function readParam(value: string | string[] | undefined) {
@@ -445,7 +509,7 @@ function buildShipmentFilterOptions(jobs: JobRecord[], stageMappings: StageMappi
 }
 
 function buildShipmentListItems(context: ShipmentComputationContext) {
-  const { jobs, checklists, checklistResponses, queries, audits, stageMappings, now } = context;
+  const { jobs, checklists, checklistResponses, queries, audits, stageMappings } = context;
   const stageMap = buildStageMap(stageMappings);
   const accountResponses = new Set(checklistResponses.map((response) => response.checklistId));
   const openQueriesByJobId = new Map<string, QueryRecord[]>();
@@ -461,7 +525,7 @@ function buildShipmentListItems(context: ShipmentComputationContext) {
   }
 
   for (const checklist of checklists) {
-    if (!checklist.customerApprovalVisibleAt || checklist.customerApprovalVisibleAt > now) continue;
+    if (!isCustomerPortalChecklistVisible(checklist)) continue;
     const existing = visibleChecklistsByJobId.get(checklist.jobId) ?? [];
     existing.push(checklist);
     visibleChecklistsByJobId.set(checklist.jobId, existing);
@@ -558,9 +622,8 @@ function buildShipmentActionRequiredItems(
   checklistResponses: ChecklistResponseRecord[],
   queries: QueryRecord[],
   stageMappings: StageMappingRecord[],
-  now: Date,
 ) {
-  const items = buildActionItemsForJobs([job], submissions, checklists, checklistResponses, queries, stageMappings, now);
+  const items = buildActionItemsForJobs([job], submissions, checklists, checklistResponses, queries, stageMappings);
   return items.map((item) => ({
     id: item.id,
     type: item.type,
@@ -603,7 +666,6 @@ function buildShipmentDocumentItems(job: JobDetailRecord, submissions: Submissio
 function buildShipmentChecklistItems(
   checklists: ChecklistRecord[],
   checklistResponses: ChecklistResponseRecord[],
-  now: Date,
 ) {
   const latestResponseByChecklistId = new Map<string, ChecklistResponseRecord>();
   for (const response of checklistResponses) {
@@ -614,10 +676,10 @@ function buildShipmentChecklistItems(
   }
 
   return checklists
-    .filter((checklist) => checklist.customerApprovalVisibleAt && checklist.customerApprovalVisibleAt <= now)
+    .filter(isCustomerPortalChecklistVisible)
     .map((checklist) => {
       const latestResponse = latestResponseByChecklistId.get(checklist.id);
-      const canRespond = !latestResponse;
+      const canRespond = isCustomerApprovalActionable(checklist) && !latestResponse;
 
       return {
         id: checklist.id,
@@ -625,10 +687,11 @@ function buildShipmentChecklistItems(
         versionLabel: checklist.currentFileVersion ? `v${checklist.currentFileVersion.versionNumber}` : null,
         fileVersionId: checklist.currentFileVersion?.id ?? null,
         fileName: checklist.currentFileVersion?.originalFileName ?? null,
+        mimeType: checklist.currentFileVersion?.mimeType ?? null,
         downloadHref: checklist.currentFileVersion ? customerChecklistDownloadHref(checklist.currentFileVersion.id) : null,
         isDownloadable: Boolean(checklist.currentFileVersion?.id),
         approvalStatus: formatChaBadgeLabel(checklist.currentApprovalStage),
-        visibleAt: checklist.customerApprovalVisibleAt?.toISOString() ?? null,
+        visibleAt: getCustomerApprovalOpenedAt(checklist).toISOString(),
         responseState: latestResponse ? "Responded" : "Pending Response",
         responseDecision: latestResponse ? formatChaBadgeLabel(latestResponse.decision) : null,
         canRespond,
@@ -675,7 +738,6 @@ function buildActionItemsForJobs(
   checklistResponses: ChecklistResponseRecord[],
   queries: QueryRecord[],
   stageMappings: StageMappingRecord[],
-  now: Date,
 ) {
   const stageMap = buildStageMap(stageMappings);
   const accountResponses = new Set(checklistResponses.map((response) => response.checklistId));
@@ -689,8 +751,9 @@ function buildActionItemsForJobs(
   > = [];
 
   for (const checklist of checklists) {
-    if (!checklist.customerApprovalVisibleAt || checklist.customerApprovalVisibleAt > now) continue;
+    if (!isCustomerApprovalActionable(checklist)) continue;
     if (accountResponses.has(checklist.id)) continue;
+    const openedAt = getCustomerApprovalOpenedAt(checklist);
     items.push({
       id: `checklist-${checklist.id}`,
       type: "CHECKLIST",
@@ -699,13 +762,13 @@ function buildActionItemsForJobs(
         : "Checklist Approval",
       status: formatChaBadgeLabel(checklist.currentApprovalStage),
       detail: "Customer approval is pending for the latest checklist version.",
-      dueAt: checklist.customerApprovalVisibleAt.toISOString(),
+      dueAt: openedAt.toISOString(),
       updatedAt: checklist.updatedAt.toISOString(),
       href: shipmentHref(checklist.jobId),
       tone: "warning",
       jobId: checklist.jobId,
       urgencyRank: 4,
-      dueSort: checklist.customerApprovalVisibleAt.getTime(),
+      dueSort: openedAt.getTime(),
       updatedSort: checklist.updatedAt.getTime(),
     });
   }
@@ -1044,7 +1107,11 @@ async function getVisibleChecklistsForCustomer(orgId: string, customerId: string
         customerId,
         deletedAt: null,
       },
-      customerApprovalVisibleAt: { not: null },
+      OR: [
+        { customerApprovalVisibleAt: { not: null } },
+        { currentApprovalStage: "CUSTOMER" },
+        { status: { in: ["CUSTOMER_APPROVAL_PENDING", "CUSTOMER_APPROVAL_WAITING_WINDOW"] } },
+      ],
     },
     orderBy: { updatedAt: "desc" },
     select: {
@@ -1059,6 +1126,7 @@ async function getVisibleChecklistsForCustomer(orgId: string, customerId: string
           id: true,
           versionNumber: true,
           originalFileName: true,
+          mimeType: true,
         },
       },
       job: {
@@ -1083,7 +1151,11 @@ async function getVisibleChecklistsForJob(orgId: string, customerId: string, shi
         customerId,
         deletedAt: null,
       },
-      customerApprovalVisibleAt: { not: null },
+      OR: [
+        { customerApprovalVisibleAt: { not: null } },
+        { currentApprovalStage: "CUSTOMER" },
+        { status: { in: ["CUSTOMER_APPROVAL_PENDING", "CUSTOMER_APPROVAL_WAITING_WINDOW"] } },
+      ],
     },
     orderBy: { updatedAt: "desc" },
     select: {
@@ -1098,6 +1170,7 @@ async function getVisibleChecklistsForJob(orgId: string, customerId: string, shi
           id: true,
           versionNumber: true,
           originalFileName: true,
+          mimeType: true,
         },
       },
       job: {

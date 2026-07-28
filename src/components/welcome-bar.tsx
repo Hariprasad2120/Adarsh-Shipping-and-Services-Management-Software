@@ -54,11 +54,11 @@ const ClockDisplay = memo(function ClockDisplay() {
 
   return (
     <>
-      <span className="hidden items-center gap-2 rounded-xl border border-[#bfc8c6] dark:border-[#21262d] bg-surface px-3 py-1.5 text-xs text-on-surface-variant shadow-sm lg:inline-flex">
+      <span className="hidden items-center gap-2 rounded-xl border border-[#bfc8c6] dark:border-[#21262d] bg-mono-card px-3 py-1.5 text-xs text-mono-muted shadow-sm lg:inline-flex">
         <CalendarDays className="size-3.5 text-[#00a99f]" />
         {dateLabel}
       </span>
-      <span className="hidden items-center gap-2 rounded-xl border border-[#bfc8c6] dark:border-[#21262d] bg-surface px-3 py-1.5 text-xs tabular-nums text-on-surface shadow-sm md:inline-flex">
+      <span className="hidden items-center gap-2 rounded-xl border border-[#bfc8c6] dark:border-[#21262d] bg-mono-card px-3 py-1.5 text-xs tabular-nums text-mono-text shadow-sm md:inline-flex">
         <Clock3 className="size-3.5 text-[#00a99f]" />
         {timeLabel}
       </span>
@@ -219,27 +219,27 @@ export function AppHeader({
 
   return (
     <>
-      <header className="z-20 flex h-14 shrink-0 items-center justify-between border-b border-outline-variant/60 bg-surface/90 px-4 backdrop-blur-sm sm:px-6 lg:px-8 xl:px-10">
+      <header className="z-20 flex h-14 shrink-0 items-center justify-between border-b border-mono-border/60 bg-mono-card/90 px-4 backdrop-blur-sm sm:px-6 lg:px-8 xl:px-10">
         <div className="flex min-w-0 items-center gap-3">
           <button
             ref={setMenuTrigger}
             type="button"
             onClick={toggleMobileNav}
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-outline-variant/60 bg-surface text-on-surface transition-colors hover:bg-surface-container-low lg:hidden"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-mono-border/60 bg-mono-card text-mono-text transition-colors hover:bg-mono-soft lg:hidden"
             aria-controls={mobileNavId}
             aria-expanded={mobileNavOpen}
             aria-label={mobileNavOpen ? "Close navigation menu" : "Open navigation menu"}
           >
-            <Menu className="size-5 text-[#00cec4]" />
+            <Menu className="size-5 text-[#F9D972]" />
           </button>
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#00cec4]/10">
-            <SectionIcon size={16} className="text-[#00cec4]" />
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#F9D972]/10">
+            <SectionIcon size={16} className="text-[#F9D972]" />
           </div>
-          <h1 className="ds-h3 heading-icon-none truncate text-on-surface">{workspaceLabel}</h1>
+          <h1 className="monolith-h3 heading-icon-none truncate text-mono-text">{workspaceLabel}</h1>
         </div>
 
         <div className="hidden flex-1 max-w-md mx-4 xl:block">
-          <div className="flex items-center gap-3 rounded-xl border border-outline-variant/60 bg-surface px-4 py-1.5 text-on-surface-variant shadow-sm">
+          <div className="flex items-center gap-3 rounded-xl border border-mono-border/60 bg-mono-card px-4 py-1.5 text-mono-muted shadow-sm">
             <Search className="size-4 shrink-0 text-[#00a99f]" />
             <span className="truncate text-[13px]">{firstName}&apos;s workspace — {workspaceLabel}</span>
           </div>
@@ -263,7 +263,7 @@ export function AppHeader({
           <button
             type="button"
             onClick={() => router.push("/notifications")}
-            className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-all cursor-pointer"
+            className="p-2 text-mono-muted hover:text-mono-text hover:bg-mono-soft rounded-full transition-all cursor-pointer"
             title="Notifications"
           >
             <Bell className="size-4.5" />
@@ -272,7 +272,7 @@ export function AppHeader({
             <button
               type="button"
               onClick={() => router.push("/admin/settings")}
-              className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-all cursor-pointer"
+              className="p-2 text-mono-muted hover:text-mono-text hover:bg-mono-soft rounded-full transition-all cursor-pointer"
               title="Settings"
             >
               <Settings className="size-4.5" />
@@ -333,7 +333,7 @@ export function AppHeader({
                   damping: 15,
                   delay: 0.1 
                 }}
-                className="size-16 rounded-2xl bg-[#00cec4]/10 border border-[#00cec4]/20 flex items-center justify-center text-[#00cec4] mb-6 shadow-[0_0_40px_rgba(0,206,196,0.2)]"
+                className="size-16 rounded-2xl bg-[#F9D972]/10 border border-[#F9D972]/20 flex items-center justify-center text-[#F9D972] mb-6 shadow-[0_0_40px_rgba(0,206,196,0.2)]"
               >
                 <motion.div
                   animate={{ scale: [0.95, 1.05, 0.95] }}
@@ -348,7 +348,7 @@ export function AppHeader({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-                className="text-xs uppercase font-bold tracking-[0.3em] text-[#00cec4] font-mono"
+                className="text-xs uppercase font-bold tracking-[0.3em] text-[#F9D972] font-mono"
               >
                 Welcome Back
               </motion.p>
@@ -358,7 +358,7 @@ export function AppHeader({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
                 className="text-3xl md:text-5xl font-black uppercase tracking-wider text-white mt-4 mb-4 select-none"
-                style={{ fontFamily: "var(--font-kiona-sans), sans-serif" }}
+                style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
               >
                 {userName}
               </motion.h2>
@@ -368,7 +368,7 @@ export function AppHeader({
                 initial={{ width: 0, opacity: 0 }}
                 animate={{ width: "80px", opacity: 0.3 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
-                className="h-[1px] bg-[#00cec4] my-2"
+                className="h-[1px] bg-[#F9D972] my-2"
               />
 
               <motion.p
@@ -386,7 +386,7 @@ export function AppHeader({
                   initial={{ left: "-100%" }}
                   animate={{ left: "100%" }}
                   transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute inset-y-0 w-1/2 bg-[#00cec4] rounded-full"
+                  className="absolute inset-y-0 w-1/2 bg-[#F9D972] rounded-full"
                 />
               </div>
 

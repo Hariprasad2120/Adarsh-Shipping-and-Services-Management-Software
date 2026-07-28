@@ -3,8 +3,8 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowUpRight, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { WarningIndicatorPopover } from "@/components/ui/warning-indicator-popover";
+import { Button } from "@/components/monolith/button";
+import { WarningIndicatorPopover } from "@/components/monolith/warning-indicator-popover";
 
 export type DueDateWarningViewModel = {
   jobId: string;
@@ -60,7 +60,7 @@ export function ChaDueDateWarningIndicator({
         size="sm"
         variant="outline"
         disabled={isPending}
-        className="justify-center gap-1.5 border-outline-variant/50 bg-surface px-3 text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
+        className="justify-center gap-1.5 border-mono-border/50 bg-mono-card px-3 text-mono-muted hover:bg-mono-soft hover:text-mono-text"
         onClick={() => {
           startTransition(async () => {
             const response = await fetch(`/api/notifications/${warning.notificationId}/ack`, { method: "POST" });
@@ -83,7 +83,7 @@ export function ChaDueDateWarningIndicator({
       <Button
         type="button"
         size="sm"
-        className="justify-center gap-1.5 border border-[#fb923c]/25 bg-[#fb923c]/12 px-3 text-[#fb923c] hover:bg-[#fb923c]/18 hover:text-[#f97316]"
+        className="justify-center gap-1.5 border border-[#D88700]/25 bg-[#D88700]/12 px-3 text-[#D88700] hover:bg-[#D88700]/18 hover:text-[#f97316]"
         onClick={() => {
           router.push(warning.link);
         }}

@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, useTransition } from "react";
@@ -14,6 +15,7 @@ import {
   LogOut,
   Mail,
   Moon,
+  Palette,
   Phone,
   Search,
   Settings,
@@ -23,9 +25,9 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/monolith/badge";
+import { Button } from "@/components/monolith/button";
+import { Input } from "@/components/monolith/input";
 import type {
   PortalAuditLogSummary,
   PortalCoordinator,
@@ -36,7 +38,20 @@ import type {
   PortalStageMapping,
 } from "@/modules/customer-portal/types";
 
-type PortalTheme = "light" | "dark";
+type PortalTheme = "light" | "night" | "violet";
+
+type PortalShipmentAdditionalData = {
+  assessedValue?: number | null;
+  billOfLadingNo?: string | null;
+  containerNumbers?: string | null;
+  deliveryOrderValidity?: string | Date | null;
+  dutyPaid?: boolean | null;
+  exportGeneralManifest?: string | null;
+  importGeneralManifest?: string | null;
+  portOfLoading?: string | null;
+  vesselInwardDate?: string | Date | null;
+  vesselName?: string | null;
+};
 
 function subscribeToPortalTheme(callback: () => void) {
   if (typeof window === "undefined") {
@@ -58,7 +73,10 @@ function getPortalThemeSnapshot(): PortalTheme {
     return "light";
   }
 
-  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+  const root = document.documentElement;
+  if (root.classList.contains("violet")) return "violet";
+  if (root.classList.contains("night")) return "night";
+  return "light";
 }
 
 function getPortalThemeServerSnapshot(): PortalTheme {
@@ -86,8 +104,8 @@ export function PortalHeaderNav({
               href={item.href}
               className={
                 active
-                  ? "ds-label inline-flex items-center justify-center whitespace-nowrap border-b border-[#00cec4] px-1 pb-1 text-[#00cec4]"
-                  : "ds-label inline-flex items-center justify-center whitespace-nowrap border-b border-transparent px-1 pb-1 text-on-surface-variant transition-colors hover:text-[#00b8af] hover:border-[#00cec4]/60"
+                  ? "monolith-label inline-flex items-center justify-center whitespace-nowrap border-b border-[#F9D972] px-1 pb-1 text-[#F9D972]"
+                  : "monolith-label inline-flex items-center justify-center whitespace-nowrap border-b border-transparent px-1 pb-1 text-mono-muted transition-colors hover:text-[#E8C85D] hover:border-[#F9D972]/60"
               }
             >
               <span>{item.label}</span>
@@ -127,11 +145,11 @@ export function PortalLoginForm() {
       }}
     >
       <div className="space-y-2">
-        <label className="ds-label block">Email</label>
+        <label className="monolith-label block">Email</label>
         <Input value={email} onChange={(event) => setEmail(event.target.value)} type="email" required />
       </div>
       <div className="space-y-2">
-        <label className="ds-label block">Password</label>
+        <label className="monolith-label block">Password</label>
         <Input value={password} onChange={(event) => setPassword(event.target.value)} type="password" required />
       </div>
       <Button type="submit" className="w-full" disabled={pending}>
@@ -168,7 +186,7 @@ export function PortalActivationForm({ token, reset = false }: { token: string; 
       }}
     >
       <div className="space-y-2">
-        <label className="ds-label block">{reset ? "New Password" : "Create Password"}</label>
+        <label className="monolith-label block">{reset ? "New Password" : "Create Password"}</label>
         <Input
           value={password}
           onChange={(event) => setPassword(event.target.value)}
@@ -204,7 +222,7 @@ export function PortalForgotPasswordRequestForm() {
       }}
     >
       <div className="space-y-2">
-        <label className="ds-label block">Email</label>
+        <label className="monolith-label block">Email</label>
         <Input value={email} onChange={(event) => setEmail(event.target.value)} type="email" required />
       </div>
       <Button type="submit" className="w-full" disabled={pending}>
@@ -274,7 +292,7 @@ export function PortalDocumentUploadForm({ jobId, requirementId }: { jobId: stri
         });
       }}
     >
-      <input name="file" type="file" required className="block w-full text-sm text-on-surface-variant" />
+      <input name="file" type="file" required className="block w-full text-sm text-mono-muted" />
       <Input
         value={comment}
         onChange={(event) => setComment(event.target.value)}
@@ -388,19 +406,19 @@ export function PortalRatingForm({ jobId, categories }: { jobId: string; categor
       }}
     >
       <div className="space-y-2">
-        <label className="ds-label block">Overall Rating</label>
-        <select value={overallRating} onChange={(event) => setOverallRating(Number(event.target.value))}>
+        <label className="monolith-label block">Overall Rating</label>
+        <NativeSelect value={overallRating} onChange={(event) => setOverallRating(Number(event.target.value))}>
           {[1, 2, 3, 4, 5].map((value) => (
             <option key={value} value={value}>
               {value}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </div>
       {categories.map((category) => (
         <div key={category.key} className="space-y-2">
-          <label className="ds-label block">{category.label}</label>
-          <select
+          <label className="monolith-label block">{category.label}</label>
+          <NativeSelect
             value={ratings[category.key]}
             onChange={(event) =>
               setRatings((current) => ({ ...current, [category.key]: Number(event.target.value) }))
@@ -411,7 +429,7 @@ export function PortalRatingForm({ jobId, categories }: { jobId: string; categor
                 {value}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       ))}
       <Input value={remarks} onChange={(event) => setRemarks(event.target.value)} placeholder="Remarks" />
@@ -460,7 +478,7 @@ export function PortalPreferenceForm({
       }}
     >
       {Object.entries(state).map(([key, value]) => (
-        <label key={key} className="flex items-center gap-3 text-sm text-on-surface">
+        <label key={key} className="flex items-center gap-3 text-sm text-mono-text">
           <input
             type="checkbox"
             checked={value}
@@ -507,11 +525,11 @@ export function PortalSecurityForm() {
         }}
       >
         <div className="space-y-2">
-          <label className="ds-label block">Current Password</label>
+          <label className="monolith-label block">Current Password</label>
           <Input value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} type="password" required />
         </div>
         <div className="space-y-2">
-          <label className="ds-label block">New Password</label>
+          <label className="monolith-label block">New Password</label>
           <Input value={newPassword} onChange={(event) => setNewPassword(event.target.value)} type="password" required />
         </div>
         <Button type="submit" disabled={pending}>
@@ -571,13 +589,13 @@ export function PortalShellClient({
 
   const toggleTheme = () => {
     const root = document.documentElement;
-    const newTheme = theme === "dark" ? "light" : "dark";
-    root.classList.remove("dark", "light");
-    root.classList.add(newTheme);
-    root.style.colorScheme = newTheme;
+    const newTheme: PortalTheme = theme === "light" ? "night" : theme === "night" ? "violet" : "light";
+    root.classList.remove("dark", "light", "night", "violet", "theme-light", "theme-night", "theme-violet");
+    root.classList.add(newTheme, `theme-${newTheme}`);
+    root.style.colorScheme = newTheme === "light" ? "light" : "dark";
     localStorage.setItem("theme", newTheme);
     window.dispatchEvent(new Event("themechange"));
-    toast.success(`${newTheme === "dark" ? "Dark" : "Light"} mode enabled`);
+    toast.success(`${newTheme[0].toUpperCase()}${newTheme.slice(1)} theme enabled`);
   };
 
   const menuItems = [
@@ -628,21 +646,21 @@ export function PortalShellClient({
   };
 
   return (
-    <div className="ds-app-body">
-      <div className="ds-portal-shell">
+    <div className="monolith-app-body">
+      <div className="monolith-portal-shell">
         {/* Sidebar Desktop */}
-        <aside className="ds-sidebar">
-          <div className="ds-brand">
-            <div className="ds-brand-mark" aria-hidden="true" />
+        <aside className="monolith-sidebar">
+          <div className="monolith-brand">
+            <div className="monolith-brand-mark" aria-hidden="true" />
             <div>
-              <strong className="block text-sm uppercase tracking-[0.12em] text-on-surface">Monolith</strong>
-              <small className="ds-label block">Customer Portal</small>
+              <strong className="block text-sm uppercase tracking-[0.12em] text-mono-text">Monolith</strong>
+              <small className="monolith-label block">Customer Portal</small>
             </div>
           </div>
 
           <div>
-            <div className="ds-nav-group-title font-sans">Workspace</div>
-            <nav className="ds-nav-list font-sans">
+            <div className="monolith-nav-group-title font-sans">Workspace</div>
+            <nav className="monolith-nav-list font-sans">
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
@@ -650,12 +668,12 @@ export function PortalShellClient({
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`ds-nav-item ${active ? "is-active" : ""}`}
+                    className={`monolith-nav-item ${active ? "is-active" : ""}`}
                   >
                     <Icon />
                     <span>{item.label}</span>
                     {item.badge !== undefined && (
-                      <span className="ds-nav-badge">{item.badge}</span>
+                      <span className="monolith-nav-badge">{item.badge}</span>
                     )}
                   </Link>
                 );
@@ -664,11 +682,11 @@ export function PortalShellClient({
           </div>
 
           <div>
-            <div className="ds-nav-group-title font-sans">Account</div>
-            <nav className="ds-nav-list font-sans">
+            <div className="monolith-nav-group-title font-sans">Account</div>
+            <nav className="monolith-nav-list font-sans">
               <Link
                 href="/customer-portal/profile"
-                className={`ds-nav-item ${
+                className={`monolith-nav-item ${
                   pathname === "/customer-portal/profile" || pathname === "/customer-portal/security" ? "is-active" : ""
                 }`}
               >
@@ -681,7 +699,7 @@ export function PortalShellClient({
                   router.push("/customer-portal/login");
                   router.refresh();
                 }}
-                className="ds-nav-item w-full"
+                className="monolith-nav-item w-full"
               >
                 <LogOut />
                 <span>Logout</span>
@@ -692,9 +710,9 @@ export function PortalShellClient({
           <div className="flex-1"></div>
 
           {coordinator && (
-            <div className="ds-support-card font-sans space-y-3">
-              <strong className="block text-sm text-on-surface">Need assistance?</strong>
-              <p className="text-xs leading-5 text-on-surface-variant">Your assigned CHA coordinator is available for shipment or document queries.</p>
+            <div className="monolith-support-card font-sans space-y-3">
+              <strong className="block text-sm text-mono-text">Need assistance?</strong>
+              <p className="text-xs leading-5 text-mono-muted">Your assigned CHA coordinator is available for shipment or document queries.</p>
               <Button variant="outline" size="sm" className="w-full" onClick={() => setContactModalOpen(true)}>Contact coordinator</Button>
             </div>
           )}
@@ -703,48 +721,48 @@ export function PortalShellClient({
         {/* Main Workspace */}
         <main className="flex min-w-0 flex-col">
           {/* Topbar */}
-          <header className="ds-topbar">
+          <header className="monolith-topbar">
             <div className="font-sans">
-              <small className="ds-label block">Customer Portal / {pathname.split("/").pop()}</small>
-              <strong className="block text-base text-on-surface">{portalUser.customer.name}</strong>
+              <small className="monolith-label block">Customer Portal / {pathname.split("/").pop()}</small>
+              <strong className="block text-base text-mono-text">{portalUser.customer.name}</strong>
             </div>
 
             <div className="flex items-center gap-3 font-sans">
               <button
-                className="ds-icon-button"
+                className="monolith-icon-button"
                 onClick={toggleTheme}
                 aria-label="Toggle theme"
               >
-                {theme === "dark" ? <Sun /> : <Moon />}
+                {theme === "light" ? <Moon /> : theme === "night" ? <Palette /> : <Sun />}
               </button>
               <Link
                 href="/customer-portal/notifications"
-                className="ds-icon-button"
+                className="monolith-icon-button"
                 aria-label="Notifications"
               >
-                {unreadNotificationsCount > 0 && <span className="ds-alert-dot"></span>}
+                {unreadNotificationsCount > 0 && <span className="monolith-alert-dot"></span>}
                 <Bell />
               </Link>
               <div
-                className="flex cursor-pointer items-center gap-2 rounded-xl border border-outline-variant bg-surface px-2 py-1 transition hover:border-[#00cec4]/35"
+                className="flex cursor-pointer items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-2 py-1 transition hover:border-[#F9D972]/35"
                 onClick={() => router.push("/customer-portal/profile")}
               >
-                <div className="ds-avatar">{getInitials(portalUser.name)}</div>
+                <div className="monolith-avatar">{getInitials(portalUser.name)}</div>
                 <div data-portal-designation>
-                  <strong className="block text-xs text-on-surface">{portalUser.name}</strong>
-                  <span className="block text-[10px] text-on-surface-variant">{portalUser.designation ?? "Portal contact"}</span>
+                  <strong className="block text-xs text-mono-text">{portalUser.name}</strong>
+                  <span className="block text-[10px] text-mono-muted">{portalUser.designation ?? "Portal contact"}</span>
                 </div>
               </div>
             </div>
           </header>
 
           {/* Children View */}
-          <div className="ds-portal-content">{children}</div>
+          <div className="monolith-portal-content">{children}</div>
         </main>
       </div>
 
       {/* Mobile bottom navigation bar */}
-      <nav className="ds-mobile-nav font-sans">
+      <nav className="monolith-mobile-nav font-sans">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
@@ -764,41 +782,41 @@ export function PortalShellClient({
           onClick={() => setContactModalOpen(false)}
         >
           <div
-            className="card-top-accent w-full max-w-md rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-2xl relative overflow-hidden font-sans space-y-4"
+            className="monolith-card monolith-accent w-full max-w-md rounded-xl border border-mono-border/60 bg-mono-card p-6 shadow-2xl relative overflow-hidden font-sans space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="ds-h3 text-on-surface">
+                <h3 className="monolith-h3 text-mono-text">
                   CHA Support Coordinator
                 </h3>
-                <p className="text-xs text-on-surface-variant mt-1">
+                <p className="text-xs text-mono-muted mt-1">
                   Get directly in touch with your assigned operational manager.
                 </p>
               </div>
               <button
-                className="p-1.5 rounded-lg border border-outline-variant/30 bg-surface hover:bg-surface-container-low transition-colors"
+                className="p-1.5 rounded-lg border border-mono-border/30 bg-mono-card hover:bg-mono-soft transition-colors"
                 onClick={() => setContactModalOpen(false)}
               >
                 <X size={16} />
               </button>
             </div>
 
-            <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-4 space-y-3">
+            <div className="rounded-xl border border-mono-border/40 bg-mono-soft p-4 space-y-3">
               <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-xl bg-[#00cec4]/10 text-[#00cec4]">
+                <div className="flex size-10 items-center justify-center rounded-xl bg-[#F9D972]/10 text-[#F9D972]">
                   <Settings size={18} />
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-on-surface">{coordinator.name}</h4>
-                  <p className="text-xs text-on-surface-variant">{coordinator.designation ?? "Operations Executive"}</p>
+                  <h4 className="text-sm font-semibold text-mono-text">{coordinator.name}</h4>
+                  <p className="text-xs text-mono-muted">{coordinator.designation ?? "Operations Executive"}</p>
                 </div>
               </div>
 
-              <div className="border-t border-outline-variant/30 my-2 pt-2 space-y-2">
+              <div className="border-t border-mono-border/30 my-2 pt-2 space-y-2">
                 <a
                   href={`mailto:${coordinator.email}`}
-                  className="flex items-center gap-2.5 text-xs text-[#00cec4] hover:underline"
+                  className="flex items-center gap-2.5 text-xs text-[#F9D972] hover:underline"
                 >
                   <Mail size={14} />
                   <span>{coordinator.email}</span>
@@ -806,14 +824,14 @@ export function PortalShellClient({
                 {coordinator.phone && (
                   <a
                     href={`tel:${coordinator.phone}`}
-                    className="flex items-center gap-2.5 text-xs text-[#00cec4] hover:underline"
+                    className="flex items-center gap-2.5 text-xs text-[#F9D972] hover:underline"
                   >
                     <Phone size={14} />
                     <span>{coordinator.phone}</span>
                   </a>
                 )}
                 {coordinator.officeHours && (
-                  <div className="flex items-center gap-2.5 text-xs text-on-surface-variant">
+                  <div className="flex items-center gap-2.5 text-xs text-mono-muted">
                     <Clock size={14} />
                     <span>Office Hours: {coordinator.officeHours}</span>
                   </div>
@@ -827,10 +845,10 @@ export function PortalShellClient({
                   <ShieldAlert size={14} />
                   <span>Escalation Contact</span>
                 </h5>
-                <p className="text-xs text-on-surface-variant">
+                <p className="text-xs text-mono-muted">
                   If your issue is unresolved, escalate to:
                 </p>
-                <p className="text-xs font-semibold text-on-surface">
+                <p className="text-xs font-semibold text-mono-text">
                   {coordinator.escalationName}
                 </p>
                 {coordinator.escalationEmail && (
@@ -855,13 +873,13 @@ export function PortalShipHeroCard({ shipment }: { shipment: PortalShipmentSumma
 
   if (!shipment) {
     return (
-      <article className="card-top-accent flex min-h-[260px] flex-col items-center justify-center rounded-xl border border-outline-variant/60 bg-surface p-6 text-center shadow-sm">
-        <div className="ds-icon-badge mb-4">
+      <article className="monolith-card monolith-accent flex min-h-[260px] flex-col items-center justify-center rounded-xl border border-mono-border/60 bg-mono-card p-6 text-center shadow-sm">
+        <div className="monolith-icon-badge mb-4">
           <Ship size={18} />
         </div>
-        <p className="ds-label">Priority Shipment</p>
-        <p className="mt-3 text-sm text-on-surface">No active shipments in progress.</p>
-        <p className="mt-1 text-xs text-on-surface-variant">When shipments are logged, they will appear here live.</p>
+        <p className="monolith-label">Priority Shipment</p>
+        <p className="mt-3 text-sm text-mono-text">No active shipments in progress.</p>
+        <p className="mt-1 text-xs text-mono-muted">When shipments are logged, they will appear here live.</p>
       </article>
     );
   }
@@ -872,15 +890,15 @@ export function PortalShipHeroCard({ shipment }: { shipment: PortalShipmentSumma
 
   return (
     <article
-      className="card-top-accent flex min-h-[260px] flex-col justify-between rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm transition hover:-translate-y-0.5 hover-cyan"
+      className="monolith-card monolith-accent flex min-h-[260px] flex-col justify-between rounded-xl border border-mono-border/60 bg-mono-card p-6 shadow-sm transition hover:-translate-y-0.5 monolith-hover"
       onClick={() => router.push(`/customer-portal/shipments/${shipment.id}`)}
       style={{ cursor: "pointer" }}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="ds-label text-[#00cec4]">Priority shipment</div>
-          <div className="ds-h1 mt-2 text-on-surface">{shipment.jobNumber}</div>
-          <div className="mt-2 text-xs text-on-surface-variant">
+          <div className="monolith-label text-[#F9D972]">Priority shipment</div>
+          <div className="monolith-h1 mt-2 text-mono-text">{shipment.jobNumber}</div>
+          <div className="mt-2 text-xs text-mono-muted">
             {shipment.clearanceType} · {shipment.shipmentType} · Ref: {manifest}
           </div>
         </div>
@@ -888,26 +906,26 @@ export function PortalShipHeroCard({ shipment }: { shipment: PortalShipmentSumma
       </div>
 
       <div className="my-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="card-left-accent rounded-xl border border-outline-variant/40 bg-surface-container-low p-4">
-          <p className="ds-label">Origin</p>
-          <p className="mt-2 text-sm text-on-surface">Export Hub</p>
+        <div className="monolith-card monolith-accent rounded-xl border border-mono-border/40 bg-mono-soft p-4">
+          <p className="monolith-label">Origin</p>
+          <p className="mt-2 text-sm text-mono-text">Export Hub</p>
         </div>
-        <div className="card-left-accent rounded-xl border border-outline-variant/40 bg-surface-container-low p-4">
-          <p className="ds-label">Destination</p>
-          <p className="mt-2 text-sm text-on-surface">Customs Clearance</p>
+        <div className="monolith-card monolith-accent rounded-xl border border-mono-border/40 bg-mono-soft p-4">
+          <p className="monolith-label">Destination</p>
+          <p className="mt-2 text-sm text-mono-text">Customs Clearance</p>
         </div>
-        <div className="card-left-accent rounded-xl border border-outline-variant/40 bg-surface-container-low p-4">
-          <p className="ds-label">Progress</p>
-          <p className="ds-numeric mt-2 text-sm text-on-surface">{progress}%</p>
+        <div className="monolith-card monolith-accent rounded-xl border border-mono-border/40 bg-mono-soft p-4">
+          <p className="monolith-label">Progress</p>
+          <p className="monolith-numeric mt-2 text-sm text-mono-text">{progress}%</p>
         </div>
       </div>
 
       <div className="font-sans">
         <div className="mb-2 flex items-center justify-between text-xs">
-          <strong className="text-on-surface">{progress}% clearance completed</strong>
-          <span className="text-on-surface-variant">Live Tracking</span>
+          <strong className="text-mono-text">{progress}% clearance completed</strong>
+          <span className="text-mono-muted">Live Tracking</span>
         </div>
-        <div className="ds-progress-bar">
+        <div className="monolith-progress-bar">
           <span style={{ width: `${progress}%` }}></span>
         </div>
       </div>
@@ -959,22 +977,22 @@ export function PortalShipmentsFilterPanel({
     <div className="space-y-5 font-sans">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-1">
-          <p className="ds-label text-[#00cec4]">Filter live shipments</p>
-          <p className="text-sm text-on-surface-variant">
+          <p className="monolith-label text-[#F9D972]">Filter live shipments</p>
+          <p className="text-sm text-mono-muted">
             Narrow the logbook by status, transit mode, and trade type without losing your current context.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-[#00cec4]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#008f89]">
+          <span className="rounded-full bg-[#F9D972]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#008f89]">
             Smart filters
           </span>
-          <span className="rounded-full bg-surface-container-low px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface-variant">
+          <span className="rounded-full bg-mono-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-mono-muted">
             Portal logbook
           </span>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 border-b border-outline-variant/30 pb-3">
+      <div className="flex flex-wrap items-center gap-2 border-b border-mono-border/30 pb-3">
         {[
           { key: "all", label: "All Shipments" },
           { key: "active", label: "Active" },
@@ -985,7 +1003,7 @@ export function PortalShipmentsFilterPanel({
             key={tab.key}
             type="button"
             onClick={() => handleScopeChange(tab.key)}
-            className={scope === tab.key ? "ds-button" : "ds-button-outline"}
+            className={scope === tab.key ? "monolith-button" : "monolith-button-outline"}
           >
             {tab.label}
           </button>
@@ -1001,16 +1019,16 @@ export function PortalShipmentsFilterPanel({
             className="w-full rounded-xl pl-10 text-xs"
             placeholder="Search by job number, reference, or shipment"
           />
-          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
           <button
             type="submit"
-            className="absolute right-3 top-2.5 text-on-surface-variant hover:text-on-surface"
+            className="absolute right-3 top-2.5 text-mono-muted hover:text-mono-text"
           >
             <Search size={14} />
           </button>
         </div>
 
-        <select
+        <NativeSelect
           value={mode}
           onChange={(e) => {
             setMode(e.target.value);
@@ -1021,9 +1039,9 @@ export function PortalShipmentsFilterPanel({
           <option value="all">All Transit Modes</option>
           <option value="sea">Ocean Freight</option>
           <option value="air">Air Freight</option>
-        </select>
+        </NativeSelect>
 
-        <select
+        <NativeSelect
           value={trade}
           onChange={(e) => {
             setTrade(e.target.value);
@@ -1034,7 +1052,7 @@ export function PortalShipmentsFilterPanel({
           <option value="all">All Trade Types</option>
           <option value="import">Import Clearance</option>
           <option value="export">Export Clearance</option>
-        </select>
+        </NativeSelect>
 
         <button
           type="button"
@@ -1045,7 +1063,7 @@ export function PortalShipmentsFilterPanel({
             setTrade("all");
             router.push("/customer-portal/shipments");
           }}
-          className="ds-button-outline w-full"
+          className="monolith-button-outline w-full"
         >
           Reset Filters
         </button>
@@ -1090,10 +1108,10 @@ export function PortalShipmentWorkspace({
   };
 
   const { job, stageMappings, currentStage } = detail;
-  const additionalData = job.additionalData as any;
+  const additionalData = job.additionalData as PortalShipmentAdditionalData | null;
 
   // 1. Delivery Order Validity calculation
-  const getDoValidityWarning = (additionalData: PortalShipmentDetailView["job"]["additionalData"]) => {
+  const getDoValidityWarning = (additionalData: PortalShipmentAdditionalData | null) => {
     if (!additionalData || !additionalData.deliveryOrderValidity) return null;
     const validity = new Date(additionalData.deliveryOrderValidity);
     const now = new Date();
@@ -1108,7 +1126,7 @@ export function PortalShipmentWorkspace({
     return null;
   };
 
-  const doWarning = getDoValidityWarning(job.additionalData);
+  const doWarning = getDoValidityWarning(additionalData);
 
   function formatDate(value: string | Date | null | undefined) {
     if (!value) return "—";
@@ -1134,24 +1152,24 @@ export function PortalShipmentWorkspace({
   const currentStageIdx = DEFAULT_STAGES.findIndex(s => s.key === internalStage || (currentStage?.label || "").toLowerCase().includes(s.label.toLowerCase()));
   const activeStageIndex = currentStageIdx !== -1 ? currentStageIdx : 3;
   const timelineProgress = `${Math.round((activeStageIndex / (DEFAULT_STAGES.length - 1)) * 100)}%`;
-  const timelineStyle = { "--ds-timeline-progress": timelineProgress } as CSSProperties;
+  const timelineStyle = { "--monolith-timeline-progress": timelineProgress } as CSSProperties;
   const ratingAvailable = job.status === "COMPLETED" || job.stage === "FILED";
 
   return (
     <div className="space-y-6 font-sans">
       {/* ─── Detail Header Panel ─── */}
-      <div className="rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm space-y-6 relative overflow-hidden">
-        <div className="card-top-accent absolute inset-x-0 top-0 h-1 bg-[#00cec4]"></div>
+      <div className="rounded-xl border border-mono-border/60 bg-mono-card p-6 shadow-sm space-y-6 relative overflow-hidden">
+        <div className="monolith-card monolith-accent absolute inset-x-0 top-0 h-1 bg-[#F9D972]"></div>
         
         <div className="flex flex-col md:flex-row justify-between items-start gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="ds-label text-xs tracking-wider">{job.jobNumber}</span>
+              <span className="monolith-label text-xs tracking-wider">{job.jobNumber}</span>
               <Badge
                 variant={job.status === "ACTIVE" ? "default" : "success"}
                 style={{
                   backgroundColor: job.status === "ACTIVE" ? "rgba(0,206,196,0.1)" : "rgba(34,197,94,0.1)",
-                  color: job.status === "ACTIVE" ? "#00cec4" : "#22c55e",
+                  color: job.status === "ACTIVE" ? "#F9D972" : "#22c55e",
                   border: "none",
                   fontSize: "10px",
                   padding: "2px 8px"
@@ -1160,10 +1178,10 @@ export function PortalShipmentWorkspace({
                 {job.status}
               </Badge>
             </div>
-            <h2 className="ds-h1 mt-1.5 text-on-surface">
+            <h2 className="monolith-h1 mt-1.5 text-mono-text">
               {job.customerRef || job.title || "CHA Shipment"}
             </h2>
-            <p className="text-xs text-on-surface-variant font-semibold mt-1">
+            <p className="text-xs text-mono-muted font-semibold mt-1">
               Mode: {job.jobType?.name} · Trade: {job.shipmentType?.name} · Destination Port: {additionalData?.portOfLoading || "Customs Port"}
             </p>
           </div>
@@ -1171,7 +1189,7 @@ export function PortalShipmentWorkspace({
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push("/customer-portal/shipments")}
-              className="ds-button-outline"
+              className="monolith-button-outline"
             >
               Back to logbook
             </button>
@@ -1193,8 +1211,8 @@ export function PortalShipmentWorkspace({
         )}
 
         {/* Horizontal Timeline Clearance steps */}
-        <div className="border-t border-outline-variant/20 pt-6">
-          <div className="ds-timeline" style={timelineStyle}>
+        <div className="border-t border-mono-border/20 pt-6">
+          <div className="monolith-timeline" style={timelineStyle}>
             {DEFAULT_STAGES.map((stage, idx) => {
               let statusClass = "";
               if (idx < activeStageIndex) statusClass = "done";
@@ -1209,10 +1227,10 @@ export function PortalShipmentWorkspace({
               return (
                 <div
                   key={stage.key}
-                  className={`ds-stage ${statusClass} cursor-pointer`}
+                  className={`monolith-stage ${statusClass} cursor-pointer`}
                   onClick={() => setSelectedDrawerStage({ ...mapping, statusClass, index: idx + 1 })}
                 >
-                  <div className="ds-stage-dot">
+                  <div className="monolith-stage-dot">
                     {idx < activeStageIndex ? "✓" : idx + 1}
                   </div>
                   <strong>{stage.label}</strong>
@@ -1225,7 +1243,7 @@ export function PortalShipmentWorkspace({
       </div>
 
       {/* ─── Tabs Navigation Row ─── */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-outline-variant/30 pb-1">
+      <div className="flex flex-wrap items-center gap-2 border-b border-mono-border/30 pb-1">
         {[
           { key: "overview", label: "Overview" },
           { key: "documents", label: "Documents" },
@@ -1239,8 +1257,8 @@ export function PortalShipmentWorkspace({
             onClick={() => setTab(tab.key)}
             className={`px-4 py-2.5 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all ${
               activeTab === tab.key
-                ? "border-[#00cec4] text-[#00cec4]"
-                : "border-transparent text-on-surface-variant hover:text-on-surface"
+                ? "border-[#F9D972] text-[#F9D972]"
+                : "border-transparent text-mono-muted hover:text-mono-text"
             }`}
           >
             {tab.label}
@@ -1253,94 +1271,94 @@ export function PortalShipmentWorkspace({
         {activeTab === "overview" && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Meta Parameters */}
-            <div className="md:col-span-2 rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm space-y-6">
-              <div className="ds-form-section">
-                <h3 className="ds-h3">Clearance parameters</h3>
+            <div className="md:col-span-2 rounded-xl border border-mono-border/60 bg-mono-card p-6 shadow-sm space-y-6">
+              <div className="monolith-form-section">
+                <h3 className="monolith-h3">Clearance parameters</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4 text-xs font-sans">
                   <div>
-                    <span className="text-on-surface-variant font-medium block">Vessel Inward Date</span>
-                    <strong className="text-on-surface text-sm block mt-1">
+                    <span className="text-mono-muted font-medium block">Vessel Inward Date</span>
+                    <strong className="text-mono-text text-sm block mt-1">
                       {formatDate(additionalData?.vesselInwardDate)}
                     </strong>
                   </div>
                   <div>
-                    <span className="text-on-surface-variant font-medium block">Import General Manifest (IGM)</span>
-                    <strong className="text-on-surface text-sm block mt-1">
+                    <span className="text-mono-muted font-medium block">Import General Manifest (IGM)</span>
+                    <strong className="text-mono-text text-sm block mt-1">
                       {additionalData?.importGeneralManifest || "—"}
                     </strong>
                   </div>
                   <div>
-                    <span className="text-on-surface-variant font-medium block">Export General Manifest (EGM)</span>
-                    <strong className="text-on-surface text-sm block mt-1">
+                    <span className="text-mono-muted font-medium block">Export General Manifest (EGM)</span>
+                    <strong className="text-mono-text text-sm block mt-1">
                       {additionalData?.exportGeneralManifest || "—"}
                     </strong>
                   </div>
                   <div className="pt-2">
-                    <span className="text-on-surface-variant font-medium block">Delivery Order Validity</span>
-                    <strong className="text-on-surface text-sm block mt-1">
+                    <span className="text-mono-muted font-medium block">Delivery Order Validity</span>
+                    <strong className="text-mono-text text-sm block mt-1">
                       {formatDate(additionalData?.deliveryOrderValidity)}
                     </strong>
                   </div>
                   <div className="pt-2">
-                    <span className="text-on-surface-variant font-medium block">Customs Assessed Value</span>
-                    <strong className="text-on-surface text-sm block mt-1 ds-numeric">
+                    <span className="text-mono-muted font-medium block">Customs Assessed Value</span>
+                    <strong className="text-mono-text text-sm block mt-1 monolith-numeric">
                       {additionalData?.assessedValue ? `₹${additionalData.assessedValue.toLocaleString()}` : "Pending"}
                     </strong>
                   </div>
                   <div className="pt-2">
-                    <span className="text-on-surface-variant font-medium block">Duty Payment Status</span>
-                    <strong className="text-on-surface text-sm block mt-1">
+                    <span className="text-mono-muted font-medium block">Duty Payment Status</span>
+                    <strong className="text-mono-text text-sm block mt-1">
                       {additionalData?.dutyPaid ? "Paid" : "Awaiting assessment"}
                     </strong>
                   </div>
                 </div>
               </div>
 
-              <div className="ds-form-section border-t border-outline-variant/20 pt-6">
-              <h3 className="ds-h3">Shipment specifications</h3>
+              <div className="monolith-form-section border-t border-mono-border/20 pt-6">
+              <h3 className="monolith-h3">Shipment specifications</h3>
                 <div className="grid grid-cols-2 gap-4 pt-4 text-xs font-sans">
                   <div>
-                    <span className="text-on-surface-variant font-medium block">Vessel / Voyage</span>
-                    <strong className="text-on-surface mt-1 block">{additionalData?.vesselName || "—"}</strong>
+                    <span className="text-mono-muted font-medium block">Vessel / Voyage</span>
+                    <strong className="text-mono-text mt-1 block">{additionalData?.vesselName || "—"}</strong>
                   </div>
                   <div>
-                    <span className="text-on-surface-variant font-medium block">Port of Loading</span>
-                    <strong className="text-on-surface mt-1 block">{additionalData?.portOfLoading || "—"}</strong>
+                    <span className="text-mono-muted font-medium block">Port of Loading</span>
+                    <strong className="text-mono-text mt-1 block">{additionalData?.portOfLoading || "—"}</strong>
                   </div>
                   <div>
-                    <span className="text-on-surface-variant font-medium block">Bill of Lading / Airway Bill</span>
-                    <strong className="text-on-surface mt-1 block">{additionalData?.billOfLadingNo || "—"}</strong>
+                    <span className="text-mono-muted font-medium block">Bill of Lading / Airway Bill</span>
+                    <strong className="text-mono-text mt-1 block">{additionalData?.billOfLadingNo || "—"}</strong>
                   </div>
                   <div>
-                    <span className="text-on-surface-variant font-medium block">Container Numbers</span>
-                    <strong className="text-on-surface mt-1 block">{additionalData?.containerNumbers || "—"}</strong>
+                    <span className="text-mono-muted font-medium block">Container Numbers</span>
+                    <strong className="text-mono-text mt-1 block">{additionalData?.containerNumbers || "—"}</strong>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Coordinator assigned contact details card */}
-            <div className="rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm space-y-4 h-fit">
-              <h3 className="ds-h3 text-on-surface">
+            <div className="rounded-xl border border-mono-border/60 bg-mono-card p-6 shadow-sm space-y-4 h-fit">
+              <h3 className="monolith-h3 text-mono-text">
                 Clearance Coordinator
               </h3>
               
               {coordinator ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex size-10 items-center justify-center rounded-xl bg-[#00cec4]/10 text-[#00cec4]">
+                    <div className="flex size-10 items-center justify-center rounded-xl bg-[#F9D972]/10 text-[#F9D972]">
                       <Settings size={18} />
                     </div>
                     <div>
-                      <h4 className="text-xs font-semibold text-on-surface">{coordinator.name}</h4>
-                      <p className="text-[10px] text-on-surface-variant">{coordinator.designation || "Operations Manager"}</p>
+                      <h4 className="text-xs font-semibold text-mono-text">{coordinator.name}</h4>
+                      <p className="text-[10px] text-mono-muted">{coordinator.designation || "Operations Manager"}</p>
                     </div>
                   </div>
 
-                  <div className="border-t border-outline-variant/20 pt-4 space-y-2">
+                  <div className="border-t border-mono-border/20 pt-4 space-y-2">
                     <a
                       href={`mailto:${coordinator.email}`}
-                      className="flex items-center gap-2 text-xs text-[#00cec4] hover:underline"
+                      className="flex items-center gap-2 text-xs text-[#F9D972] hover:underline"
                     >
                       <Mail size={12} />
                       <span>{coordinator.email}</span>
@@ -1348,30 +1366,30 @@ export function PortalShipmentWorkspace({
                     {coordinator.phone && (
                       <a
                         href={`tel:${coordinator.phone}`}
-                        className="flex items-center gap-2 text-xs text-[#00cec4] hover:underline"
+                        className="flex items-center gap-2 text-xs text-[#F9D972] hover:underline"
                       >
                         <Phone size={12} />
                         <span>{coordinator.phone}</span>
                       </a>
                     )}
-                    <div className="flex items-center gap-2 text-[10px] text-on-surface-variant">
+                    <div className="flex items-center gap-2 text-[10px] text-mono-muted">
                       <Clock size={12} />
                       <span>Hours: {coordinator.officeHours || "9 AM - 6 PM"}</span>
                     </div>
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-on-surface-variant italic">No coordinator assigned yet.</p>
+                <p className="text-xs text-mono-muted italic">No coordinator assigned yet.</p>
               )}
             </div>
           </div>
         )}
 
         {activeTab === "documents" && (
-          <div className="rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm space-y-6">
+          <div className="rounded-xl border border-mono-border/60 bg-mono-card p-6 shadow-sm space-y-6">
             <div>
-              <h3 className="ds-h3">Clearance documents checklist</h3>
-              <p className="text-xs text-on-surface-variant mt-1">
+              <h3 className="monolith-h3">Clearance documents checklist</h3>
+              <p className="text-xs text-mono-muted mt-1">
                 Upload required KYC, manifest, or regulatory certificates. Pending uploads will block checklist approvals.
               </p>
             </div>
@@ -1386,10 +1404,10 @@ export function PortalShipmentWorkspace({
                 const isRejected = status === "REJECTED";
 
                 return (
-                  <div key={requirement.id} className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-4 space-y-4">
+                  <div key={requirement.id} className="rounded-xl border border-mono-border/40 bg-mono-soft p-4 space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                       <div>
-                        <h4 className="text-xs font-bold text-on-surface uppercase tracking-wide">{requirement.name}</h4>
+                        <h4 className="text-xs font-bold text-mono-text uppercase tracking-wide">{requirement.name}</h4>
                         {submission?.reviewerComment && (
                           <p className="text-[11px] text-orange-400 mt-0.5">Comment: {submission.reviewerComment}</p>
                         )}
@@ -1400,7 +1418,7 @@ export function PortalShipmentWorkspace({
                           variant={isApproved ? "success" : isRejected ? "destructive" : "default"}
                           style={{
                             backgroundColor: isApproved ? "rgba(34,197,94,0.1)" : isRejected ? "rgba(239,68,68,0.1)" : "rgba(251,146,60,0.1)",
-                            color: isApproved ? "#22c55e" : isRejected ? "#ef4444" : "#fb923c",
+                            color: isApproved ? "#22c55e" : isRejected ? "#ef4444" : "#D88700",
                             border: "none",
                             fontSize: "10px",
                           }}
@@ -1411,7 +1429,7 @@ export function PortalShipmentWorkspace({
                         {latestVersion && (
                           <a
                             href={`/api/customer-portal/document-versions/${latestVersion.id}`}
-                            className="ds-button-outline"
+                            className="monolith-button-outline"
                             target="_blank"
                             rel="noreferrer"
                           >
@@ -1424,7 +1442,7 @@ export function PortalShipmentWorkspace({
 
                     {/* Show upload form if allowed and document is not approved yet */}
                     {!isApproved && kycUploadsAllowed && (
-                      <div className="border-t border-outline-variant/20 pt-4">
+                      <div className="border-t border-mono-border/20 pt-4">
                         <PortalDocumentUploadForm jobId={job.id} requirementId={requirement.id} />
                       </div>
                     )}
@@ -1436,30 +1454,30 @@ export function PortalShipmentWorkspace({
         )}
 
         {activeTab === "approvals" && (
-          <div className="rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm space-y-6">
+          <div className="rounded-xl border border-mono-border/60 bg-mono-card p-6 shadow-sm space-y-6">
             <div>
-              <h3 className="ds-h3">Draft checklist approval</h3>
-              <p className="text-xs text-on-surface-variant mt-1">
+              <h3 className="monolith-h3">Draft checklist approval</h3>
+              <p className="text-xs text-mono-muted mt-1">
                 Confirm and approve the operational checklist draft. This is required before filing can be submitted to customs.
               </p>
             </div>
 
             {job.checklistWorkflow ? (
               <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 rounded-xl border border-outline-variant/40 bg-surface-container-low p-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 rounded-xl border border-mono-border/40 bg-mono-soft p-4">
                   <div>
-                    <h4 className="text-xs font-bold text-on-surface uppercase tracking-wide">
+                    <h4 className="text-xs font-bold text-mono-text uppercase tracking-wide">
                       Checklist Reference
                     </h4>
-                    <p className="text-xs text-on-surface-variant mt-1">
-                      Status: <strong className="text-[#00cec4]">{job.checklistWorkflow.status}</strong>
+                    <p className="text-xs text-mono-muted mt-1">
+                      Status: <strong className="text-[#F9D972]">{job.checklistWorkflow.status}</strong>
                     </p>
                   </div>
 
                   {job.checklistWorkflow.currentFileVersion && (
                     <a
                       href={`/api/customer-portal/checklist-files/${job.checklistWorkflow.currentFileVersion.id}`}
-                      className="ds-button-outline"
+                      className="monolith-button-outline"
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -1470,17 +1488,17 @@ export function PortalShipmentWorkspace({
                 </div>
 
                 {detail.actions.checklistPending ? (
-                  <div className="rounded-xl border border-[#00cec4]/20 bg-[#00cec4]/5 p-6">
+                  <div className="rounded-xl border border-[#F9D972]/20 bg-[#F9D972]/5 p-6">
                     <PortalChecklistActionForm jobId={job.id} checklistId={job.checklistWorkflow.id} />
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-6 text-center text-xs text-on-surface-variant">
+                  <div className="rounded-xl border border-mono-border/30 bg-mono-soft p-6 text-center text-xs text-mono-muted">
                     Checklist action is not active or has already been approved.
                   </div>
                 )}
               </div>
             ) : (
-              <div className="text-center py-12 text-xs text-on-surface-variant italic border border-outline-variant/30 rounded-xl bg-surface-container-low">
+              <div className="text-center py-12 text-xs text-mono-muted italic border border-mono-border/30 rounded-xl bg-mono-soft">
                 No draft checklist has been generated for approval yet.
               </div>
             )}
@@ -1488,33 +1506,33 @@ export function PortalShipmentWorkspace({
         )}
 
         {activeTab === "queries" && (
-          <div className="rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm space-y-6">
+          <div className="rounded-xl border border-mono-border/60 bg-mono-card p-6 shadow-sm space-y-6">
             <div>
-              <h3 className="ds-h3">Secure communication threads</h3>
-              <p className="text-xs text-on-surface-variant mt-1">
+              <h3 className="monolith-h3">Secure communication threads</h3>
+              <p className="text-xs text-mono-muted mt-1">
                 Direct operational communication channel with the customs clearing team handling your file.
               </p>
             </div>
 
             <div className="space-y-6">
               {job.customerQueryThreads.length === 0 ? (
-                <div className="text-center py-12 text-xs text-on-surface-variant italic border border-outline-variant/30 rounded-xl bg-surface-container-low">
+                <div className="text-center py-12 text-xs text-mono-muted italic border border-mono-border/30 rounded-xl bg-mono-soft">
                   No active queries raised on this shipment.
                 </div>
               ) : (
                 job.customerQueryThreads.map((thread) => (
-                  <div key={thread.id} className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-6 space-y-4">
-                    <div className="flex justify-between items-start border-b border-outline-variant/20 pb-3">
+                  <div key={thread.id} className="rounded-xl border border-mono-border/40 bg-mono-soft p-6 space-y-4">
+                    <div className="flex justify-between items-start border-b border-mono-border/20 pb-3">
                       <div>
-                        <h4 className="text-sm font-bold text-on-surface">{thread.title}</h4>
-                        <p className="text-xs text-on-surface-variant mt-0.5">{thread.description}</p>
+                        <h4 className="text-sm font-bold text-mono-text">{thread.title}</h4>
+                        <p className="text-xs text-mono-muted mt-0.5">{thread.description}</p>
                       </div>
                       {thread.requiresCustomerAction && (
                         <Badge
                           variant="warning"
                           style={{
                             backgroundColor: "rgba(251,146,60,0.1)",
-                            color: "#fb923c",
+                            color: "#D88700",
                             border: "none",
                             fontSize: "10px",
                           }}
@@ -1532,11 +1550,11 @@ export function PortalShipmentWorkspace({
                             key={message.id}
                             className={`rounded-xl p-3 text-xs max-w-[85%] ${
                               isSystem
-                                ? "bg-surface border border-outline-variant/30 mr-auto"
-                                : "bg-[#00cec4]/10 text-on-surface ml-auto text-right"
+                                ? "bg-mono-card border border-mono-border/30 mr-auto"
+                                : "bg-[#F9D972]/10 text-mono-text ml-auto text-right"
                             }`}
                           >
-                            <p className="font-semibold text-[10px] text-on-surface-variant mb-1">
+                            <p className="font-semibold text-[10px] text-mono-muted mb-1">
                               {isSystem ? "CHA Agent" : "You (Portal)"} · {formatDate(message.createdAt)}
                             </p>
                             <p className="whitespace-pre-line">{message.body}</p>
@@ -1546,7 +1564,7 @@ export function PortalShipmentWorkspace({
                     </div>
 
                     {thread.requiresCustomerAction && (
-                      <div className="border-t border-outline-variant/20 pt-4">
+                      <div className="border-t border-mono-border/20 pt-4">
                         <PortalQueryReplyForm threadId={thread.id} />
                       </div>
                     )}
@@ -1558,22 +1576,22 @@ export function PortalShipmentWorkspace({
         )}
 
         {activeTab === "rating" && (
-          <div className="rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm space-y-6">
+          <div className="rounded-xl border border-mono-border/60 bg-mono-card p-6 shadow-sm space-y-6">
             <div>
-              <h3 className="ds-h3">Service rating</h3>
-              <p className="text-xs text-on-surface-variant mt-1">
+              <h3 className="monolith-h3">Service rating</h3>
+              <p className="text-xs text-mono-muted mt-1">
                 Share your experience after the shipment is completed so the CHA team can improve service quality.
               </p>
             </div>
 
             {!ratingAvailable ? (
-              <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-6 text-center text-xs text-on-surface-variant">
+              <div className="rounded-xl border border-mono-border/30 bg-mono-soft p-6 text-center text-xs text-mono-muted">
                 Ratings become available once the shipment reaches completion.
               </div>
             ) : ratingSubmitted ? (
               <div className="rounded-xl border border-[#22c55e]/20 bg-[#22c55e]/5 p-6 text-center">
-                <p className="text-sm font-semibold text-on-surface">Your rating has already been submitted.</p>
-                <p className="mt-2 text-xs text-on-surface-variant">
+                <p className="text-sm font-semibold text-mono-text">Your rating has already been submitted.</p>
+                <p className="mt-2 text-xs text-mono-muted">
                   Thank you for sharing feedback on this clearance experience.
                 </p>
               </div>
@@ -1584,16 +1602,16 @@ export function PortalShipmentWorkspace({
         )}
 
         {activeTab === "activity" && (
-          <div className="rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm space-y-6">
+          <div className="rounded-xl border border-mono-border/60 bg-mono-card p-6 shadow-sm space-y-6">
             <div>
-              <h3 className="ds-h3">Portal activity audit trail</h3>
-              <p className="text-xs text-on-surface-variant mt-1">
+              <h3 className="monolith-h3">Portal activity audit trail</h3>
+              <p className="text-xs text-mono-muted mt-1">
                 Cryptographic transaction and upload ledger logging portal user events.
               </p>
             </div>
 
-            <div className="overflow-hidden rounded-xl border border-outline-variant/30 bg-surface">
-              <table className="ds-table">
+            <div className="overflow-hidden rounded-xl border border-mono-border/30 bg-mono-card">
+              <table className="monolith-table">
                 <thead>
                   <tr>
                     <th>Timestamp</th>
@@ -1605,17 +1623,17 @@ export function PortalShipmentWorkspace({
                 <tbody>
                   {detail.auditLogs.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="text-center py-6 text-xs text-on-surface-variant italic">
+                      <td colSpan={4} className="text-center py-6 text-xs text-mono-muted italic">
                         No activity logged yet.
                       </td>
                     </tr>
                   ) : (
                     detail.auditLogs.map((log: PortalAuditLogSummary) => (
                       <tr key={log.id}>
-                        <td className="ds-numeric text-on-surface-variant">{formatDate(log.createdAt)} {new Date(log.createdAt).toLocaleTimeString()}</td>
-                        <td className="font-semibold text-on-surface">{log.event}</td>
-                        <td className="text-on-surface-variant font-medium">{log.portalUserId ? "Customer Portal" : "Monolith Operator"}</td>
-                        <td className="text-on-surface-variant">{log.remarks || "—"}</td>
+                        <td className="monolith-numeric text-mono-muted">{formatDate(log.createdAt)} {new Date(log.createdAt).toLocaleTimeString()}</td>
+                        <td className="font-semibold text-mono-text">{log.event}</td>
+                        <td className="text-mono-muted font-medium">{log.portalUserId ? "Customer Portal" : "Monolith Operator"}</td>
+                        <td className="text-mono-muted">{log.remarks || "—"}</td>
                       </tr>
                     ))
                   )}
@@ -1633,21 +1651,21 @@ export function PortalShipmentWorkspace({
           onClick={() => setSelectedDrawerStage(null)}
         >
           <div
-            className="w-full max-w-md h-full bg-surface border-l border-outline-variant/60 p-6 shadow-2xl relative flex flex-col justify-between animate-in slide-in-from-right duration-300"
+            className="w-full max-w-md h-full bg-mono-card border-l border-mono-border/60 p-6 shadow-2xl relative flex flex-col justify-between animate-in slide-in-from-right duration-300"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="card-left-accent absolute inset-y-0 left-0 w-1 bg-[#00cec4]"></div>
+            <div className="monolith-card monolith-accent absolute inset-y-0 left-0 w-1 bg-[#F9D972]"></div>
 
             <div className="space-y-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="ds-label text-xs tracking-wider">CHA Milestone {selectedDrawerStage.index}</span>
-                  <h3 className="ds-h3 mt-1 text-on-surface">
+                  <span className="monolith-label text-xs tracking-wider">CHA Milestone {selectedDrawerStage.index}</span>
+                  <h3 className="monolith-h3 mt-1 text-mono-text">
                     {selectedDrawerStage.label}
                   </h3>
                 </div>
                 <button
-                  className="p-1.5 rounded-lg border border-outline-variant/30 bg-surface hover:bg-surface-container-low transition-colors"
+                  className="p-1.5 rounded-lg border border-mono-border/30 bg-mono-card hover:bg-mono-soft transition-colors"
                   onClick={() => setSelectedDrawerStage(null)}
                 >
                   <X size={16} />
@@ -1655,8 +1673,8 @@ export function PortalShipmentWorkspace({
               </div>
 
               <div className="space-y-4">
-                <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-4">
-                  <span className="text-[10px] text-on-surface-variant font-semibold uppercase tracking-wider block">
+                <div className="rounded-xl border border-mono-border/30 bg-mono-soft p-4">
+                  <span className="text-[10px] text-mono-muted font-semibold uppercase tracking-wider block">
                     Current stage status
                   </span>
                   <div className="flex items-center gap-2 mt-1.5">
@@ -1665,11 +1683,11 @@ export function PortalShipmentWorkspace({
                         selectedDrawerStage.statusClass === "done"
                           ? "bg-green-500"
                           : selectedDrawerStage.statusClass === "active"
-                            ? "bg-[#00cec4] animate-pulse"
+                            ? "bg-[#F9D972] animate-pulse"
                             : "bg-outline-variant"
                       }`}
                     ></div>
-                    <strong className="text-xs uppercase text-on-surface">
+                    <strong className="text-xs uppercase text-mono-text">
                       {selectedDrawerStage.statusClass === "done"
                         ? "Completed"
                         : selectedDrawerStage.statusClass === "active"
@@ -1680,30 +1698,30 @@ export function PortalShipmentWorkspace({
                 </div>
 
                 <div className="space-y-2">
-                  <strong className="text-xs uppercase text-on-surface-variant font-bold tracking-wider block">
+                  <strong className="text-xs uppercase text-mono-muted font-bold tracking-wider block">
                     Operational Description
                   </strong>
-                  <p className="text-xs text-on-surface leading-relaxed">
+                  <p className="text-xs text-mono-text leading-relaxed">
                     {selectedDrawerStage.description || "Milestone description is currently unavailable."}
                   </p>
                 </div>
 
-                <div className="border-t border-outline-variant/20 pt-4 space-y-3">
-                  <strong className="text-xs uppercase text-on-surface-variant font-bold tracking-wider block">
+                <div className="border-t border-mono-border/20 pt-4 space-y-3">
+                  <strong className="text-xs uppercase text-mono-muted font-bold tracking-wider block">
                     Operations Lead Assigned
                   </strong>
                   {coordinator ? (
-                    <div className="rounded-xl border border-outline-variant/40 bg-surface-container-low p-3 space-y-2">
-                      <p className="text-xs font-semibold text-on-surface">{coordinator.name}</p>
-                      <p className="text-[10px] text-on-surface-variant">{coordinator.designation}</p>
+                    <div className="rounded-xl border border-mono-border/40 bg-mono-soft p-3 space-y-2">
+                      <p className="text-xs font-semibold text-mono-text">{coordinator.name}</p>
+                      <p className="text-[10px] text-mono-muted">{coordinator.designation}</p>
                       <div className="flex gap-4 pt-1">
-                        <a href={`mailto:${coordinator.email}`} className="text-xs text-[#00cec4] hover:underline">
+                        <a href={`mailto:${coordinator.email}`} className="text-xs text-[#F9D972] hover:underline">
                           Email Coordinator
                         </a>
                       </div>
                     </div>
                   ) : (
-                    <p className="text-xs text-on-surface-variant italic">No lead assigned.</p>
+                    <p className="text-xs text-mono-muted italic">No lead assigned.</p>
                   )}
                 </div>
               </div>
@@ -1716,15 +1734,15 @@ export function PortalShipmentWorkspace({
                   <ShieldAlert size={14} />
                   <span>Escalation Protocol</span>
                 </h5>
-                <p className="text-[10px] text-on-surface-variant">
+                <p className="text-[10px] text-mono-muted">
                   If this milestone is delayed beyond standard SLA expectations, escalate to:
                 </p>
                 <div className="text-xs">
-                  <strong className="text-on-surface">{coordinator.escalationName || "Operations Director"}</strong>
+                  <strong className="text-mono-text">{coordinator.escalationName || "Operations Director"}</strong>
                   {coordinator.escalationEmail && (
                     <a
                       href={`mailto:${coordinator.escalationEmail}?subject=Escalation request: Job ${job.jobNumber}`}
-                      className="ds-button-warning mt-3"
+                      className="monolith-button-warning mt-3"
                     >
                       Raise SLA Escalation
                     </a>

@@ -1,12 +1,13 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {ChevronRight,Edit,Plus,Save,Search,ShieldCheck,Trash2,Truck,Users,Workflow,X,} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/monolith/badge";
+import { Button } from "@/components/monolith/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
 import {updateSettingsAction,createJobTypeAction,updateJobTypeManifestConfigAction,deleteJobTypeAction,createShipmentTypeAction,deleteShipmentTypeAction,createTeamGroupAction,deleteTeamGroupAction,upsertDocumentCategoryAction,deleteDocumentCategoryAction,upsertDocumentItemAction,deleteDocumentItemAction} from "@/modules/cha/actions";
 import { setPortalFeatureFlagAction } from "@/modules/customer-portal/actions";
 import { ChaPageHeader } from "../_components/cha-operations-shared";
@@ -650,8 +651,8 @@ export function SettingsForm({
   const getTabButtonClass = (tabKey: SettingsTab) =>
     `group relative flex min-h-[50px] min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-all duration-300 ease-out motion-reduce:transition-none ${
       activeTab === tabKey
-        ? "border-[#00cec4] bg-[#00cec4] text-white shadow-[0_16px_32px_-22px_rgba(0,206,196,0.95)]"
-        : "border-[#00cec4]/25 bg-surface text-on-surface-variant shadow-sm hover:-translate-y-0.5 hover:border-[#00cec4]/70 hover:text-on-surface hover:shadow-[0_0_0_3px_rgba(0,206,196,0.12),0_14px_30px_-24px_rgba(0,206,196,0.9)] active:scale-[0.99]"
+        ? "border-[#F9D972] bg-[#F9D972] text-white shadow-[0_16px_32px_-22px_rgba(0,206,196,0.95)]"
+        : "border-[#F9D972]/25 bg-mono-card text-mono-muted shadow-sm hover:-translate-y-0.5 hover:border-[#F9D972]/70 hover:text-mono-text hover:shadow-[0_0_0_3px_rgba(0,206,196,0.12),0_14px_30px_-24px_rgba(0,206,196,0.9)] active:scale-[0.99]"
     }`;
 
   return (
@@ -674,11 +675,11 @@ export function SettingsForm({
               title={`${tab.label} — ${tab.description}`}
             >
               <span
-                className={`h-2 w-2 shrink-0 rounded-full transition-all duration-200 ${activeTab === tab.key ? "bg-white shadow-[0_0_0_4px_rgba(255,255,255,0.18)]" : "bg-[#00cec4]/55 group-hover:bg-[#00cec4]"}`}
+                className={`h-2 w-2 shrink-0 rounded-full transition-all duration-200 ${activeTab === tab.key ? "bg-white shadow-[0_0_0_4px_rgba(255,255,255,0.18)]" : "bg-[#F9D972]/55 group-hover:bg-[#F9D972]"}`}
               />
               <span className="min-w-0 flex-1 overflow-hidden">
                 <span className="block truncate text-[11px] font-semibold uppercase tracking-[0.1em] xl:text-xs xl:tracking-[0.12em]">{tab.label}</span>
-                <span className={`hidden truncate text-[10px] transition-colors 2xl:block ${activeTab === tab.key ? "text-white/80" : "text-on-surface-variant group-hover:text-on-surface"}`}>{tab.description}</span>
+                <span className={`hidden truncate text-[10px] transition-colors 2xl:block ${activeTab === tab.key ? "text-white/80" : "text-mono-muted group-hover:text-mono-text"}`}>{tab.description}</span>
               </span>
             </button>
           ))}
@@ -693,34 +694,34 @@ export function SettingsForm({
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
-                  <p className="ds-label text-on-surface-variant">Job Creation</p>
-                  <p className="mt-1 text-sm text-on-surface">
+                <div className="rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm">
+                  <p className="monolith-label text-mono-muted">Job Creation</p>
+                  <p className="mt-1 text-sm text-mono-text">
                     {jobCreatorRoles.length} role(s) and {jobCreatorUsers.length} user(s) can create CHA jobs.
                   </p>
                 </div>
-                <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
-                  <p className="ds-label text-on-surface-variant">Checklist Approval</p>
-                  <p className="mt-1 text-sm text-on-surface">
+                <div className="rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm">
+                  <p className="monolith-label text-mono-muted">Checklist Approval</p>
+                  <p className="mt-1 text-sm text-mono-text">
                     {managerApprovalPolicy === "ANY" ? "Any assigned manager can approve." : "All assigned managers must approve."}
                   </p>
                 </div>
-                <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
-                  <p className="ds-label text-on-surface-variant">Expense Categories</p>
-                  <p className="mt-1 text-sm text-on-surface">{expenseCategories.length} category option(s) available.</p>
+                <div className="rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm">
+                  <p className="monolith-label text-mono-muted">Expense Categories</p>
+                  <p className="mt-1 text-sm text-mono-text">{expenseCategories.length} category option(s) available.</p>
                 </div>
-                <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
-                  <p className="ds-label text-on-surface-variant">Shipment Types</p>
-                  <p className="mt-1 text-sm text-on-surface">{activeShipmentTypesCount} active shipment type(s).</p>
+                <div className="rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm">
+                  <p className="monolith-label text-mono-muted">Shipment Types</p>
+                  <p className="mt-1 text-sm text-mono-text">{activeShipmentTypesCount} active shipment type(s).</p>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
+              <div className="rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm">
                 <div className="flex items-start gap-3">
-                  <ShieldCheck size={18} className="mt-0.5 text-primary" />
+                  <ShieldCheck size={18} className="mt-0.5 text-mono-accent" />
                   <div>
-                    <p className="text-sm font-medium text-on-surface">Recommended setup order</p>
-                    <p className="mt-1 text-xs text-on-surface-variant">
+                    <p className="text-sm font-medium text-mono-text">Recommended setup order</p>
+                    <p className="mt-1 text-xs text-mono-muted">
                       Finish numbering, then clearance data, then document requirements. Access and team groups can be updated anytime.
                     </p>
                   </div>
@@ -739,13 +740,13 @@ export function SettingsForm({
                   key={tab.key}
                   type="button"
                   onClick={() => setActiveTab(tab.key)}
-                  className="ds-plain card-left-accent hover-cyan flex w-full items-center justify-between rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-left shadow-sm transition-all"
+                  className="monolith-plain monolith-card monolith-accent monolith-hover flex w-full items-center justify-between rounded-xl border border-mono-border/60 bg-mono-card px-4 py-3 text-left shadow-sm transition-all"
                 >
                   <span>
-                    <span className="block text-sm font-medium text-on-surface">{tab.label}</span>
-                    <span className="block text-xs text-on-surface-variant">{tab.description}</span>
+                    <span className="block text-sm font-medium text-mono-text">{tab.label}</span>
+                    <span className="block text-xs text-mono-muted">{tab.description}</span>
                   </span>
-                  <ChevronRight size={16} className="text-on-surface-variant" />
+                  <ChevronRight size={16} className="text-mono-muted" />
                 </button>
               ))}
 
@@ -753,14 +754,14 @@ export function SettingsForm({
                 href="/customer-portal"
                 target="_blank"
                 rel="noreferrer"
-                className="ds-plain card-left-accent-orange hover-cyan flex w-full items-center justify-between rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-left shadow-sm transition-all"
-                style={{ borderLeftColor: "#fb923c" }}
+                className="monolith-plain monolith-card monolith-accent-warning monolith-hover flex w-full items-center justify-between rounded-xl border border-mono-border/60 bg-mono-card px-4 py-3 text-left shadow-sm transition-all"
+                style={{ borderLeftColor: "#D88700" }}
               >
                 <span>
-                  <span className="block text-sm font-medium text-[#fb923c] uppercase">Customer Portal Access ➔</span>
-                  <span className="block text-xs text-on-surface-variant">Navigate to customer portal login & tracking dashboard</span>
+                  <span className="block text-sm font-medium text-[#D88700] uppercase">Customer Portal Access ➔</span>
+                  <span className="block text-xs text-mono-muted">Navigate to customer portal login & tracking dashboard</span>
                 </span>
-                <ChevronRight size={16} className="text-[#fb923c]" />
+                <ChevronRight size={16} className="text-[#D88700]" />
               </a>
             </CardContent>
           </Card>
@@ -775,7 +776,7 @@ export function SettingsForm({
             </CardHeader>
             <CardContent className="space-y-4">
               <label className="space-y-1.5">
-                <span className="ds-label">Default Prefix</span>
+                <span className="monolith-label">Default Prefix</span>
                 <input
                   type="text"
                   value={jobNumberPrefix}
@@ -785,16 +786,16 @@ export function SettingsForm({
                 />
               </label>
               <label className="space-y-1.5">
-                <span className="ds-label">Default Next Number</span>
+                <span className="monolith-label">Default Next Number</span>
                 <input
                   type="number"
                   min={1}
                   value={jobNumberNextNum}
                   onChange={(event) => setJobNumberNextNum(parseInt(event.target.value, 10) || 1)}
-                  className="w-full text-sm ds-numeric"
+                  className="w-full text-sm monolith-numeric"
                 />
               </label>
-              <div className="rounded-xl border border-outline-variant bg-surface p-3 text-xs text-on-surface-variant">
+              <div className="rounded-xl border border-mono-border bg-mono-card p-3 text-xs text-mono-muted">
                 Branch rules below are the primary numbering source. Legacy defaults are kept only for compatibility.
               </div>
             </CardContent>
@@ -807,13 +808,13 @@ export function SettingsForm({
             <CardContent>
               <div className="grid grid-cols-1 gap-3 2xl:grid-cols-2">
                 {branchRules.map((rule) => (
-                  <div key={rule.branchId} className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
+                  <div key={rule.branchId} className="rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm">
                     <div className="mb-3 flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-on-surface">{rule.branchName}</p>
-                        <p className="text-xs text-on-surface-variant">Code: {rule.branchCode}</p>
+                        <p className="text-sm font-semibold text-mono-text">{rule.branchName}</p>
+                        <p className="text-xs text-mono-muted">Code: {rule.branchCode}</p>
                       </div>
-                      <label className="flex items-center gap-2 text-xs text-on-surface">
+                      <label className="flex items-center gap-2 text-xs text-mono-text">
                         <input
                           type="checkbox"
                           checked={rule.isActive}
@@ -824,32 +825,32 @@ export function SettingsForm({
                     </div>
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                       <label className="space-y-1.5">
-                        <span className="ds-label">Prefix</span>
+                        <span className="monolith-label">Prefix</span>
                         <input type="text" value={rule.prefix} onChange={(event) => updateBranchRule(rule.branchId, { prefix: event.target.value })} className="w-full text-sm" />
                       </label>
                       <label className="space-y-1.5">
-                        <span className="ds-label">Suffix</span>
+                        <span className="monolith-label">Suffix</span>
                         <input type="text" value={rule.suffix} onChange={(event) => updateBranchRule(rule.branchId, { suffix: event.target.value })} className="w-full text-sm" placeholder="Optional" />
                       </label>
                       <label className="space-y-1.5">
-                        <span className="ds-label">Padding</span>
-                        <input type="number" min={1} value={rule.numberPadding} onChange={(event) => updateBranchRule(rule.branchId, { numberPadding: parseInt(event.target.value, 10) || 1 })} className="w-full text-sm ds-numeric" />
+                        <span className="monolith-label">Padding</span>
+                        <input type="number" min={1} value={rule.numberPadding} onChange={(event) => updateBranchRule(rule.branchId, { numberPadding: parseInt(event.target.value, 10) || 1 })} className="w-full text-sm monolith-numeric" />
                       </label>
                       <label className="space-y-1.5">
-                        <span className="ds-label">Start</span>
-                        <input type="number" min={1} value={rule.startingSequence} onChange={(event) => updateBranchRule(rule.branchId, { startingSequence: parseInt(event.target.value, 10) || 1 })} className="w-full text-sm ds-numeric" />
+                        <span className="monolith-label">Start</span>
+                        <input type="number" min={1} value={rule.startingSequence} onChange={(event) => updateBranchRule(rule.branchId, { startingSequence: parseInt(event.target.value, 10) || 1 })} className="w-full text-sm monolith-numeric" />
                       </label>
                       <label className="space-y-1.5">
-                        <span className="ds-label">Current</span>
-                        <input type="number" min={0} value={rule.currentSequence} onChange={(event) => updateBranchRule(rule.branchId, { currentSequence: parseInt(event.target.value, 10) || 0 })} className="w-full text-sm ds-numeric" />
+                        <span className="monolith-label">Current</span>
+                        <input type="number" min={0} value={rule.currentSequence} onChange={(event) => updateBranchRule(rule.branchId, { currentSequence: parseInt(event.target.value, 10) || 0 })} className="w-full text-sm monolith-numeric" />
                       </label>
-                      <div className="rounded-xl border border-outline-variant bg-surface p-3">
-                        <span className="ds-label">Next Preview</span>
-                        <p className="mt-1 break-all text-sm text-on-surface ds-numeric">{getBranchRulePreview(rule)}</p>
+                      <div className="rounded-xl border border-mono-border bg-mono-card p-3">
+                        <span className="monolith-label">Next Preview</span>
+                        <p className="mt-1 break-all text-sm text-mono-text monolith-numeric">{getBranchRulePreview(rule)}</p>
                       </div>
                     </div>
                     <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-                      <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2 text-xs text-on-surface">
+                      <label className="flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-3 py-2 text-xs text-mono-text">
                         <input
                           type="checkbox"
                           checked={rule.useFinancialYear}
@@ -858,8 +859,8 @@ export function SettingsForm({
                         Include Financial Year
                       </label>
                       <label className="space-y-1.5">
-                        <span className="ds-label">Financial Year Format</span>
-                        <select
+                        <span className="monolith-label">Financial Year Format</span>
+                        <NativeSelect
                           value={rule.financialYearFormat}
                           onChange={(event) => updateBranchRule(rule.branchId, { financialYearFormat: event.target.value })}
                           className="w-full text-sm"
@@ -869,7 +870,7 @@ export function SettingsForm({
                           <option value="YYYY-YYYY">YYYY-YYYY</option>
                           <option value="YY-YY">YY-YY</option>
                           <option value="YYYYYY">YYYYYY</option>
-                        </select>
+                        </NativeSelect>
                       </label>
                     </div>
                   </div>
@@ -887,13 +888,13 @@ export function SettingsForm({
               <CardTitle>Job Creator Access</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="ds-form-section space-y-3">
+              <div className="monolith-form-section space-y-3">
                 <h3>Authorized Roles</h3>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {availableRoles.map((role) => {
                     const checked = jobCreatorRoles.includes(role);
                     return (
-                      <label key={role} className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition ${checked ? "border-[#00cec4] bg-surface text-on-surface shadow-[0_0_0_2px_rgba(0,206,196,0.10)]" : "border-outline-variant/60 bg-surface text-on-surface-variant hover:border-[#00cec4]/55 hover:shadow-[0_0_0_2px_rgba(0,206,196,0.08)]"}`}>
+                      <label key={role} className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition ${checked ? "border-[#F9D972] bg-mono-card text-mono-text shadow-[0_0_0_2px_rgba(0,206,196,0.10)]" : "border-mono-border/60 bg-mono-card text-mono-muted hover:border-[#F9D972]/55 hover:shadow-[0_0_0_2px_rgba(0,206,196,0.08)]"}`}>
                         <input type="checkbox" checked={checked} onChange={() => handleRoleToggle(role)} />
                         <span className="text-sm font-medium">{role}</span>
                       </label>
@@ -902,10 +903,10 @@ export function SettingsForm({
                 </div>
               </div>
 
-              <div className="ds-form-section space-y-3">
+              <div className="monolith-form-section space-y-3">
                 <h3>Specific Employees</h3>
                 <div className="relative">
-                  <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+                  <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
                   <input
                     type="text"
                     placeholder="Search employees by name..."
@@ -915,22 +916,22 @@ export function SettingsForm({
                   />
                 </div>
                 {selectedEmployeeNames.length > 0 ? (
-                  <div className="flex flex-wrap gap-2 rounded-xl border border-outline-variant bg-surface p-2">
+                  <div className="flex flex-wrap gap-2 rounded-xl border border-mono-border bg-mono-card p-2">
                     {selectedEmployeeNames.map((name) => (
-                      <span key={name} className="inline-flex items-center gap-1 rounded-full border border-outline-variant bg-surface px-2.5 py-1 text-xs text-on-surface">
+                      <span key={name} className="inline-flex items-center gap-1 rounded-full border border-mono-border bg-mono-card px-2.5 py-1 text-xs text-mono-text">
                         {name}
                       </span>
                     ))}
                   </div>
                 ) : null}
-                <div className="grid max-h-72 grid-cols-1 gap-2 overflow-y-auto rounded-xl border border-outline-variant bg-surface p-2 md:grid-cols-2">
+                <div className="grid max-h-72 grid-cols-1 gap-2 overflow-y-auto rounded-xl border border-mono-border bg-mono-card p-2 md:grid-cols-2">
                   {filteredEmployees.length === 0 ? (
-                    <p className="p-3 text-xs text-on-surface-variant">No matching employees found.</p>
+                    <p className="p-3 text-xs text-mono-muted">No matching employees found.</p>
                   ) : (
                     filteredEmployees.map((employee) => {
                       const checked = jobCreatorUsers.includes(employee.id);
                       return (
-                        <label key={employee.id} className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 transition ${checked ? "border-[#00cec4] bg-surface text-on-surface shadow-[0_0_0_2px_rgba(0,206,196,0.10)]" : "border-outline-variant/60 bg-surface text-on-surface-variant hover:border-[#00cec4]/55 hover:shadow-[0_0_0_2px_rgba(0,206,196,0.08)]"}`}>
+                        <label key={employee.id} className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 transition ${checked ? "border-[#F9D972] bg-mono-card text-mono-text shadow-[0_0_0_2px_rgba(0,206,196,0.10)]" : "border-mono-border/60 bg-mono-card text-mono-muted hover:border-[#F9D972]/55 hover:shadow-[0_0_0_2px_rgba(0,206,196,0.08)]"}`}>
                           <input type="checkbox" checked={checked} onChange={() => handleUserToggle(employee.id)} />
                           <span className="text-sm">{employee.name}</span>
                         </label>
@@ -947,7 +948,7 @@ export function SettingsForm({
               <CardTitle>Checklist Approval</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm">
                 <input
                   type="checkbox"
                   checked={selfApprovalAllowed}
@@ -955,12 +956,12 @@ export function SettingsForm({
                   className="mt-1"
                 />
                 <span>
-                  <span className="block text-sm font-semibold text-on-surface">Allow Self-Approval</span>
-                  <span className="mt-1 block text-xs text-on-surface-variant">Job owners with permission can approve without routing.</span>
+                  <span className="block text-sm font-semibold text-mono-text">Allow Self-Approval</span>
+                  <span className="mt-1 block text-xs text-mono-muted">Job owners with permission can approve without routing.</span>
                 </span>
               </label>
 
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm">
                 <input
                   type="checkbox"
                   checked={portalUploadsEnabled}
@@ -968,18 +969,18 @@ export function SettingsForm({
                   className="mt-1"
                 />
                 <span>
-                  <span className="block text-sm font-semibold text-[#00cec4]">Enable Customer Portal Document Uploads</span>
-                  <span className="mt-1 block text-xs text-on-surface-variant">Allow authorized customer portal contacts to upload KYC and shipment documents.</span>
+                  <span className="block text-sm font-semibold text-[#F9D972]">Enable Customer Portal Document Uploads</span>
+                  <span className="mt-1 block text-xs text-mono-muted">Allow authorized customer portal contacts to upload KYC and shipment documents.</span>
                 </span>
               </label>
-              <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
-                <p className="text-sm font-semibold text-on-surface">Manager Approval Policy</p>
+              <div className="rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm">
+                <p className="text-sm font-semibold text-mono-text">Manager Approval Policy</p>
                 <div className="mt-3 space-y-2">
-                  <label className="flex cursor-pointer items-center gap-2 text-sm text-on-surface">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm text-mono-text">
                     <input type="radio" name="approvalPolicy" value="ANY" checked={managerApprovalPolicy === "ANY"} onChange={() => setManagerApprovalPolicy("ANY")} />
                     ANY manager can approve
                   </label>
-                  <label className="flex cursor-pointer items-center gap-2 text-sm text-on-surface">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm text-mono-text">
                     <input type="radio" name="approvalPolicy" value="ALL" checked={managerApprovalPolicy === "ALL"} onChange={() => setManagerApprovalPolicy("ALL")} />
                     ALL managers must approve
                   </label>
@@ -1029,14 +1030,14 @@ export function SettingsForm({
                   Add
                 </Button>
               </div>
-              <div className="flex min-h-24 flex-wrap content-start gap-2 rounded-xl border border-outline-variant bg-surface p-3">
+              <div className="flex min-h-24 flex-wrap content-start gap-2 rounded-xl border border-mono-border bg-mono-card p-3">
                 {expenseCategories.length === 0 ? (
-                  <p className="self-center text-xs text-on-surface-variant">No categories added yet.</p>
+                  <p className="self-center text-xs text-mono-muted">No categories added yet.</p>
                 ) : (
                   expenseCategories.map((category) => (
-                    <span key={category} className="inline-flex items-center gap-2 rounded-full border border-outline-variant bg-surface px-3 py-1.5 text-xs font-medium text-on-surface">
+                    <span key={category} className="inline-flex items-center gap-2 rounded-full border border-mono-border bg-mono-card px-3 py-1.5 text-xs font-medium text-mono-text">
                       {category}
-                      <button type="button" onClick={() => setExpenseCategories((prev) => prev.filter((entry) => entry !== category))} className="text-on-surface-variant hover:text-destructive" aria-label={`Remove ${category}`}>
+                      <button type="button" onClick={() => setExpenseCategories((prev) => prev.filter((entry) => entry !== category))} className="text-mono-muted hover:text-destructive" aria-label={`Remove ${category}`}>
                         <X size={12} />
                       </button>
                     </span>
@@ -1052,12 +1053,12 @@ export function SettingsForm({
                 <CardTitle>Filing Workflows</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
+                <div className="rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm">
                   <div className="flex items-start gap-3">
-                    <Workflow size={20} className="mt-0.5 text-primary" />
+                    <Workflow size={20} className="mt-0.5 text-mono-accent" />
                     <div>
-                      <p className="text-sm font-semibold text-on-surface">Node-based filing blueprint</p>
-                      <p className="mt-1 text-xs text-on-surface-variant">Manage Import BE, Export SB, RMS, Open Bill, and custom routes in the workflow builder.</p>
+                      <p className="text-sm font-semibold text-mono-text">Node-based filing blueprint</p>
+                      <p className="mt-1 text-xs text-mono-muted">Manage Import BE, Export SB, RMS, Open Bill, and custom routes in the workflow builder.</p>
                     </div>
                   </div>
                 </div>
@@ -1073,20 +1074,20 @@ export function SettingsForm({
                 <CardTitle>Shipment Intelligence</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="rounded-xl border border-dashed border-outline-variant/70 bg-surface p-4 shadow-sm">
+                <div className="rounded-xl border border-dashed border-mono-border/70 bg-mono-card p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-semibold text-on-surface">Live shipment tracking</p>
-                        <Badge variant="warning" className="border-[#fb923c]/50 bg-[#fb923c]/10 text-[#fb923c] dark:text-[#fdba74]">
+                        <p className="text-sm font-semibold text-mono-text">Live shipment tracking</p>
+                        <Badge variant="warning" className="border-[#D88700]/50 bg-[#D88700]/10 text-[#D88700] dark:text-[#fdba74]">
                           Future Work
                         </Badge>
                       </div>
-                      <p className="text-xs text-on-surface-variant">
+                      <p className="text-xs text-mono-muted">
                         This overview widget is currently disabled. Enablement, external tracking integration, and map intelligence are planned for a later release.
                       </p>
                     </div>
-                    <label className="flex items-center gap-2 rounded-full border border-outline-variant/70 bg-surface-container-low px-3 py-1.5 text-xs text-on-surface-variant">
+                    <label className="flex items-center gap-2 rounded-full border border-mono-border/70 bg-mono-soft px-3 py-1.5 text-xs text-mono-muted">
                       <input
                         type="checkbox"
                         checked={false}
@@ -1097,7 +1098,7 @@ export function SettingsForm({
                     </label>
                   </div>
                 </div>
-                <div className="rounded-xl border border-outline-variant/60 bg-surface-container-low p-3 text-xs text-on-surface-variant">
+                <div className="rounded-xl border border-mono-border/60 bg-mono-soft p-3 text-xs text-mono-muted">
                   Keep this off for now. The setting is shown only as a placeholder so future rollout can be controlled from CHA settings once the backend configuration is ready.
                 </div>
               </CardContent>
@@ -1113,30 +1114,30 @@ export function SettingsForm({
               <CardTitle>Clearance Job Types</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
+              <div className="rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm">
                 <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
                   <label className="space-y-1.5 lg:col-span-2">
-                    <span className="ds-label">Type Name</span>
+                    <span className="monolith-label">Type Name</span>
                     <input type="text" placeholder="Import Clearance" value={newJobTypeName} onChange={(event) => setNewJobTypeName(event.target.value)} className="w-full text-sm" />
                   </label>
                   <label className="space-y-1.5">
-                    <span className="ds-label">Direction</span>
-                    <select value={newJobTypeMovementDirection} onChange={(event) => setNewJobTypeMovementDirection(event.target.value as "IMPORT" | "EXPORT" | "BOTH" | "OTHER")} className="w-full text-sm">
+                    <span className="monolith-label">Direction</span>
+                    <NativeSelect value={newJobTypeMovementDirection} onChange={(event) => setNewJobTypeMovementDirection(event.target.value as "IMPORT" | "EXPORT" | "BOTH" | "OTHER")} className="w-full text-sm">
                       <option value="IMPORT">Import</option>
                       <option value="EXPORT">Export</option>
                       <option value="BOTH">Both</option>
                       <option value="OTHER">Other</option>
-                    </select>
+                    </NativeSelect>
                   </label>
                   <label className="space-y-1.5">
-                    <span className="ds-label">Manifest</span>
-                    <select value={newJobTypeManifestRequirement} onChange={(event) => setNewJobTypeManifestRequirement(event.target.value as "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM")} className="w-full text-sm">
+                    <span className="monolith-label">Manifest</span>
+                    <NativeSelect value={newJobTypeManifestRequirement} onChange={(event) => setNewJobTypeManifestRequirement(event.target.value as "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM")} className="w-full text-sm">
                       <option value="IGM">IGM</option>
                       <option value="EGM">EGM</option>
                       <option value="BOTH">Both</option>
                       <option value="NONE">None</option>
                       <option value="CUSTOM">Custom</option>
-                    </select>
+                    </NativeSelect>
                   </label>
                   <div className="flex items-end">
                     <Button type="button" disabled={addingJobType || !newJobTypeName.trim()} onClick={handleAddJobType} className="w-full">
@@ -1146,15 +1147,15 @@ export function SettingsForm({
                   </div>
                   {newJobTypeManifestRequirement === "CUSTOM" ? (
                     <label className="space-y-1.5 lg:col-span-2">
-                      <span className="ds-label">Custom Manifest Label</span>
+                      <span className="monolith-label">Custom Manifest Label</span>
                       <input type="text" value={newJobTypeCustomManifestLabel} onChange={(event) => setNewJobTypeCustomManifestLabel(event.target.value)} className="w-full text-sm" />
                     </label>
                   ) : null}
                   <label className="space-y-1.5 lg:col-span-2">
-                    <span className="ds-label">Help Text</span>
+                    <span className="monolith-label">Help Text</span>
                     <input type="text" value={newJobTypeManifestHelpText} onChange={(event) => setNewJobTypeManifestHelpText(event.target.value)} className="w-full text-sm" />
                   </label>
-                  <label className="flex items-center gap-2 self-end rounded-xl border border-outline-variant bg-surface px-3 py-2 text-xs text-on-surface">
+                  <label className="flex items-center gap-2 self-end rounded-xl border border-mono-border bg-mono-card px-3 py-2 text-xs text-mono-text">
                     <input type="checkbox" checked={newJobTypeManifestMandatory} onChange={(event) => setNewJobTypeManifestMandatory(event.target.checked)} />
                     Mandatory
                   </label>
@@ -1163,72 +1164,72 @@ export function SettingsForm({
 
               <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
                 {jobTypesList.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-outline-variant bg-surface p-6 text-center text-sm text-on-surface-variant">No clearance job types added yet.</div>
+                  <div className="rounded-xl border border-dashed border-mono-border bg-mono-card p-6 text-center text-sm text-mono-muted">No clearance job types added yet.</div>
                 ) : (
                   jobTypesList.map((jobType) => (
-                    <div key={jobType.id} className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm shadow-sm">
+                    <div key={jobType.id} className="rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm shadow-sm">
                       <div className="mb-3 flex items-start justify-between gap-3">
                         <div>
-                          <p className="ds-label text-on-surface-variant">Clearance Type</p>
+                          <p className="monolith-label text-mono-muted">Clearance Type</p>
                           <input type="text" value={jobType.name} onChange={(event) => handleJobTypeFieldChange(jobType.id, "name", event.target.value)} className="mt-1 w-full text-sm" />
                         </div>
-                        <button type="button" onClick={() => handleDeleteJobType(jobType.id, jobType.name)} className="rounded-lg p-2 text-on-surface-variant hover:bg-surface hover:text-destructive" aria-label="Delete job type">
+                        <button type="button" onClick={() => handleDeleteJobType(jobType.id, jobType.name)} className="rounded-lg p-2 text-mono-muted hover:bg-mono-card hover:text-destructive" aria-label="Delete job type">
                           <Trash2 size={15} />
                         </button>
                       </div>
                       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                         <label className="space-y-1.5">
-                          <span className="ds-label">Direction</span>
-                          <select value={jobType.movementDirection || "OTHER"} onChange={(event) => handleJobTypeFieldChange(jobType.id, "movementDirection", event.target.value)} className="w-full text-sm">
+                          <span className="monolith-label">Direction</span>
+                          <NativeSelect value={jobType.movementDirection || "OTHER"} onChange={(event) => handleJobTypeFieldChange(jobType.id, "movementDirection", event.target.value)} className="w-full text-sm">
                             <option value="IMPORT">Import</option>
                             <option value="EXPORT">Export</option>
                             <option value="BOTH">Both</option>
                             <option value="OTHER">Other</option>
-                          </select>
+                          </NativeSelect>
                         </label>
                         <label className="space-y-1.5">
-                          <span className="ds-label">Manifest</span>
-                          <select value={jobType.manifestRequirement || "NONE"} onChange={(event) => handleJobTypeFieldChange(jobType.id, "manifestRequirement", event.target.value)} className="w-full text-sm">
+                          <span className="monolith-label">Manifest</span>
+                          <NativeSelect value={jobType.manifestRequirement || "NONE"} onChange={(event) => handleJobTypeFieldChange(jobType.id, "manifestRequirement", event.target.value)} className="w-full text-sm">
                             <option value="IGM">IGM</option>
                             <option value="EGM">EGM</option>
                             <option value="BOTH">Both</option>
                             <option value="NONE">None</option>
                             <option value="CUSTOM">Custom</option>
-                          </select>
+                          </NativeSelect>
                         </label>
                         {jobType.manifestRequirement === "CUSTOM" ? (
                           <label className="space-y-1.5 md:col-span-2">
-                            <span className="ds-label">Custom Manifest Label</span>
+                            <span className="monolith-label">Custom Manifest Label</span>
                             <input type="text" value={jobType.customManifestLabel || ""} onChange={(event) => handleJobTypeFieldChange(jobType.id, "customManifestLabel", event.target.value)} className="w-full text-sm" />
                           </label>
                         ) : null}
                         <label className="space-y-1.5 md:col-span-2">
-                          <span className="ds-label">Help Text</span>
+                          <span className="monolith-label">Help Text</span>
                           <input type="text" value={jobType.manifestHelpText || ""} onChange={(event) => handleJobTypeFieldChange(jobType.id, "manifestHelpText", event.target.value)} className="w-full text-sm" />
                         </label>
                         <label className="space-y-1.5">
-                          <span className="ds-label">Filing Flow</span>
-                          <select value={jobType.filingFlowCategory || ""} onChange={(event) => handleJobTypeFieldChange(jobType.id, "filingFlowCategory", event.target.value || null)} className="w-full text-sm">
+                          <span className="monolith-label">Filing Flow</span>
+                          <NativeSelect value={jobType.filingFlowCategory || ""} onChange={(event) => handleJobTypeFieldChange(jobType.id, "filingFlowCategory", event.target.value || null)} className="w-full text-sm">
                             <option value="">Catch-all Template</option>
                             <option value="IMPORT_BE">Import / Bill of Entry</option>
                             <option value="EXPORT_SB">Export / Shipping Bill</option>
                             <option value="CUSTOM">Custom Flow</option>
-                          </select>
+                          </NativeSelect>
                         </label>
                         <div className="grid grid-cols-2 gap-2 self-end">
-                          <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2 text-xs text-on-surface">
+                          <label className="flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-3 py-2 text-xs text-mono-text">
                             <input type="checkbox" checked={jobType.isManifestMandatory} onChange={(event) => handleJobTypeFieldChange(jobType.id, "isManifestMandatory", event.target.checked)} />
                             Mandatory
                           </label>
-                          <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2 text-xs text-on-surface">
+                          <label className="flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-3 py-2 text-xs text-mono-text">
                             <input type="checkbox" checked={jobType.isActive} onChange={(event) => handleJobTypeFieldChange(jobType.id, "isActive", event.target.checked)} />
                             Active
                           </label>
                         </div>
                       </div>
-                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2">
-                        <span className="text-xs text-on-surface-variant">
-                          Required manifest: <span className="font-medium text-on-surface">{jobType.manifestRequirement === "CUSTOM" ? jobType.customManifestLabel || "Custom" : jobType.manifestRequirement || "None"}</span>
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-mono-border bg-mono-card px-3 py-2">
+                        <span className="text-xs text-mono-muted">
+                          Required manifest: <span className="font-medium text-mono-text">{jobType.manifestRequirement === "CUSTOM" ? jobType.customManifestLabel || "Custom" : jobType.manifestRequirement || "None"}</span>
                         </span>
                         <Button type="button" size="sm" onClick={() => handleSaveJobType(jobType)} disabled={savingJobTypeId === jobType.id}>
                           {savingJobTypeId === jobType.id ? "Saving..." : "Save"}
@@ -1267,15 +1268,15 @@ export function SettingsForm({
               </div>
               <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
                 {shipmentTypesList.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-outline-variant bg-surface p-5 text-center text-sm text-on-surface-variant md:col-span-2 xl:col-span-3">No shipment types added yet.</div>
+                  <div className="rounded-xl border border-dashed border-mono-border bg-mono-card p-5 text-center text-sm text-mono-muted md:col-span-2 xl:col-span-3">No shipment types added yet.</div>
                 ) : (
                   shipmentTypesList.map((shipmentType) => (
-                    <div key={shipmentType.id} className="flex items-center justify-between rounded-xl border border-outline-variant bg-surface px-3 py-2.5">
+                    <div key={shipmentType.id} className="flex items-center justify-between rounded-xl border border-mono-border bg-mono-card px-3 py-2.5">
                       <div className="flex items-center gap-2">
-                        <Truck size={15} className="text-on-surface-variant" />
-                        <span className="text-sm font-medium text-on-surface">{shipmentType.name}</span>
+                        <Truck size={15} className="text-mono-muted" />
+                        <span className="text-sm font-medium text-mono-text">{shipmentType.name}</span>
                       </div>
-                      <button type="button" onClick={() => handleDeleteShipmentType(shipmentType.id, shipmentType.name)} className="rounded-lg p-1.5 text-on-surface-variant hover:bg-surface hover:text-destructive" aria-label="Delete shipment type">
+                      <button type="button" onClick={() => handleDeleteShipmentType(shipmentType.id, shipmentType.name)} className="rounded-lg p-1.5 text-mono-muted hover:bg-mono-card hover:text-destructive" aria-label="Delete shipment type">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -1295,22 +1296,22 @@ export function SettingsForm({
             </CardHeader>
             <CardContent className="space-y-4">
               <label className="space-y-1.5">
-                <span className="ds-label">Group Name</span>
+                <span className="monolith-label">Group Name</span>
                 <input type="text" placeholder="Documentation Team" value={newGroupName} onChange={(event) => setNewGroupName(event.target.value)} className="w-full text-sm" />
               </label>
               <label className="space-y-1.5">
-                <span className="ds-label">Search Members</span>
+                <span className="monolith-label">Search Members</span>
                 <input type="text" placeholder="Search employees..." value={groupMemberSearch} onChange={(event) => setGroupMemberSearch(event.target.value)} className="w-full text-sm" />
               </label>
-              <div className="grid max-h-64 grid-cols-1 gap-2 overflow-y-auto rounded-xl border border-outline-variant bg-surface p-2">
+              <div className="grid max-h-64 grid-cols-1 gap-2 overflow-y-auto rounded-xl border border-mono-border bg-mono-card p-2">
                 {availableEmployees
                   .filter((employee) => employee.name.toLowerCase().includes(groupMemberSearch.toLowerCase()))
                   .map((employee) => {
                     const checked = groupMembers.includes(employee.id);
                     return (
-                      <label key={employee.id} className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 ${checked ? "border-primary bg-surface" : "border-outline-variant bg-surface hover:bg-surface"}`}>
+                      <label key={employee.id} className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 ${checked ? "border-primary bg-mono-card" : "border-mono-border bg-mono-card hover:bg-mono-card"}`}>
                         <input type="checkbox" checked={checked} onChange={() => handleGroupMemberToggle(employee.id)} />
-                        <span className="text-sm text-on-surface">{employee.name}</span>
+                        <span className="text-sm text-mono-text">{employee.name}</span>
                       </label>
                     );
                   })}
@@ -1329,25 +1330,25 @@ export function SettingsForm({
             <CardContent>
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                 {teamGroupsList.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-outline-variant bg-surface p-8 text-center text-sm text-on-surface-variant lg:col-span-2">No team groups configured yet.</div>
+                  <div className="rounded-xl border border-dashed border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted lg:col-span-2">No team groups configured yet.</div>
                 ) : (
                   teamGroupsList.map((group) => {
                     const memberIds = parseJsonArray(group.memberIds);
                     const memberNames = memberIds.map((id) => availableEmployees.find((employee) => employee.id === id)?.name).filter(Boolean);
                     return (
-                      <div key={group.id} className="card-left-accent rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm shadow-sm">
+                      <div key={group.id} className="monolith-card monolith-accent rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm shadow-sm">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="text-sm font-semibold text-on-surface">{group.name}</p>
-                            <p className="mt-1 text-xs text-on-surface-variant">{memberNames.length} member(s)</p>
+                            <p className="text-sm font-semibold text-mono-text">{group.name}</p>
+                            <p className="mt-1 text-xs text-mono-muted">{memberNames.length} member(s)</p>
                           </div>
-                          <button type="button" onClick={() => handleDeleteTeamGroup(group.id, group.name)} className="rounded-lg p-1.5 text-on-surface-variant hover:bg-surface hover:text-destructive" aria-label="Delete team group">
+                          <button type="button" onClick={() => handleDeleteTeamGroup(group.id, group.name)} className="rounded-lg p-1.5 text-mono-muted hover:bg-mono-card hover:text-destructive" aria-label="Delete team group">
                             <Trash2 size={14} />
                           </button>
                         </div>
                         <div className="mt-3 flex flex-wrap gap-1.5">
                           {memberNames.map((name) => (
-                            <span key={name} className="rounded-full border border-outline-variant bg-surface px-2 py-0.5 text-[11px] text-on-surface-variant">{name}</span>
+                            <span key={name} className="rounded-full border border-mono-border bg-mono-card px-2 py-0.5 text-[11px] text-mono-muted">{name}</span>
                           ))}
                         </div>
                       </div>
@@ -1367,7 +1368,7 @@ export function SettingsForm({
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <CardTitle>Document Requirements</CardTitle>
-                  <p className="mt-1 text-xs text-on-surface-variant">Manage category headings and required document items without making the page endlessly long.</p>
+                  <p className="mt-1 text-xs text-mono-muted">Manage category headings and required document items without making the page endlessly long.</p>
                 </div>
                 {!isAddingCategory ? (
                   <Button
@@ -1389,29 +1390,29 @@ export function SettingsForm({
             </CardHeader>
             <CardContent className="space-y-4">
               {isAddingCategory ? (
-                <div className="rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-sm">
+                <div className="rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm">
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-on-surface">New Document Category</p>
-                    <button type="button" onClick={() => setIsAddingCategory(false)} className="rounded-lg p-1.5 text-on-surface-variant hover:bg-surface hover:text-destructive" aria-label="Cancel category">
+                    <p className="text-sm font-semibold text-mono-text">New Document Category</p>
+                    <button type="button" onClick={() => setIsAddingCategory(false)} className="rounded-lg p-1.5 text-mono-muted hover:bg-mono-card hover:text-destructive" aria-label="Cancel category">
                       <X size={14} />
                     </button>
                   </div>
                   <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
                     <label className="space-y-1.5 lg:col-span-2">
-                      <span className="ds-label">Category Name</span>
+                      <span className="monolith-label">Category Name</span>
                       <input type="text" value={newCategoryName} onChange={(event) => setNewCategoryName(event.target.value)} className="w-full text-sm" />
                     </label>
                     <label className="space-y-1.5 lg:col-span-2">
-                      <span className="ds-label">Description</span>
+                      <span className="monolith-label">Description</span>
                       <input type="text" value={newCategoryDesc} onChange={(event) => setNewCategoryDesc(event.target.value)} className="w-full text-sm" />
                     </label>
                     <label className="space-y-1.5">
-                      <span className="ds-label">Sort</span>
-                      <input type="number" value={newCategorySort} onChange={(event) => setNewCategorySort(parseInt(event.target.value, 10) || 1)} className="w-full text-sm ds-numeric" />
+                      <span className="monolith-label">Sort</span>
+                      <input type="number" value={newCategorySort} onChange={(event) => setNewCategorySort(parseInt(event.target.value, 10) || 1)} className="w-full text-sm monolith-numeric" />
                     </label>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                    <label className="flex items-center gap-2 text-xs text-on-surface">
+                    <label className="flex items-center gap-2 text-xs text-mono-text">
                       <input type="checkbox" checked={newCategoryActive} onChange={(event) => setNewCategoryActive(event.target.checked)} />
                       Active
                     </label>
@@ -1425,30 +1426,30 @@ export function SettingsForm({
 
               <div className="space-y-3">
                 {docCategories.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-outline-variant bg-surface p-8 text-center text-sm text-on-surface-variant">No document requirement categories configured yet.</div>
+                  <div className="rounded-xl border border-dashed border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">No document requirement categories configured yet.</div>
                 ) : (
                   [...docCategories]
                     .sort((left, right) => left.sortOrder - right.sortOrder)
                     .map((category) => (
-                      <div key={category.id} className="rounded-xl border border-outline-variant bg-surface shadow-sm">
+                      <div key={category.id} className="rounded-xl border border-mono-border bg-mono-card shadow-sm">
                         {editingCategoryId === category.id ? (
-                          <div className="border-b border-outline-variant bg-surface p-4">
+                          <div className="border-b border-mono-border bg-mono-card p-4">
                             <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
                               <label className="space-y-1.5 lg:col-span-2">
-                                <span className="ds-label">Category Name</span>
+                                <span className="monolith-label">Category Name</span>
                                 <input type="text" value={editingCategoryName} onChange={(event) => setEditingCategoryName(event.target.value)} className="w-full text-sm" />
                               </label>
                               <label className="space-y-1.5 lg:col-span-2">
-                                <span className="ds-label">Description</span>
+                                <span className="monolith-label">Description</span>
                                 <input type="text" value={editingCategoryDesc} onChange={(event) => setEditingCategoryDesc(event.target.value)} className="w-full text-sm" />
                               </label>
                               <label className="space-y-1.5">
-                                <span className="ds-label">Sort</span>
-                                <input type="number" value={editingCategorySort} onChange={(event) => setEditingCategorySort(parseInt(event.target.value, 10) || 1)} className="w-full text-sm ds-numeric" />
+                                <span className="monolith-label">Sort</span>
+                                <input type="number" value={editingCategorySort} onChange={(event) => setEditingCategorySort(parseInt(event.target.value, 10) || 1)} className="w-full text-sm monolith-numeric" />
                               </label>
                             </div>
                             <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                              <label className="flex items-center gap-2 text-xs text-on-surface">
+                              <label className="flex items-center gap-2 text-xs text-mono-text">
                                 <input type="checkbox" checked={editingCategoryActive} onChange={(event) => setEditingCategoryActive(event.target.checked)} />
                                 Active
                               </label>
@@ -1459,15 +1460,15 @@ export function SettingsForm({
                             </div>
                           </div>
                         ) : (
-                          <div className="flex flex-col gap-3 border-b border-outline-variant p-4 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex flex-col gap-3 border-b border-mono-border p-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
-                                <p className="text-sm font-semibold text-on-surface">{category.name}</p>
+                                <p className="text-sm font-semibold text-mono-text">{category.name}</p>
                                 <Badge variant={category.isActive ? "success" : "warning"}>{category.isActive ? "Active" : "Inactive"}</Badge>
                                 <Badge variant="secondary">Order {category.sortOrder}</Badge>
                                 <Badge variant="secondary">{category.items.length} items</Badge>
                               </div>
-                              {category.description ? <p className="mt-1 text-xs text-on-surface-variant">{category.description}</p> : null}
+                              {category.description ? <p className="mt-1 text-xs text-mono-muted">{category.description}</p> : null}
                             </div>
                             <div className="flex items-center gap-2">
                               <Button
@@ -1511,29 +1512,29 @@ export function SettingsForm({
                         )}
 
                         {addingItemCategoryId === category.id ? (
-                          <div className="border-b border-outline-variant bg-surface p-4">
+                          <div className="border-b border-mono-border bg-mono-card p-4">
                             <div className="mb-3 flex items-center justify-between">
-                              <p className="text-sm font-semibold text-on-surface">Add Requirement Item</p>
-                              <button type="button" onClick={() => setAddingItemCategoryId(null)} className="rounded-lg p-1.5 text-on-surface-variant hover:bg-surface hover:text-destructive" aria-label="Cancel item">
+                              <p className="text-sm font-semibold text-mono-text">Add Requirement Item</p>
+                              <button type="button" onClick={() => setAddingItemCategoryId(null)} className="rounded-lg p-1.5 text-mono-muted hover:bg-mono-card hover:text-destructive" aria-label="Cancel item">
                                 <X size={14} />
                               </button>
                             </div>
                             <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
                               <label className="space-y-1.5 lg:col-span-2">
-                                <span className="ds-label">Item Name</span>
+                                <span className="monolith-label">Item Name</span>
                                 <input type="text" value={newItemName} onChange={(event) => setNewItemName(event.target.value)} className="w-full text-sm" />
                               </label>
                               <label className="space-y-1.5 lg:col-span-2">
-                                <span className="ds-label">Description</span>
+                                <span className="monolith-label">Description</span>
                                 <input type="text" value={newItemDesc} onChange={(event) => setNewItemDesc(event.target.value)} className="w-full text-sm" />
                               </label>
                               <label className="space-y-1.5">
-                                <span className="ds-label">Sort</span>
-                                <input type="number" value={newItemSort} onChange={(event) => setNewItemSort(parseInt(event.target.value, 10) || 1)} className="w-full text-sm ds-numeric" />
+                                <span className="monolith-label">Sort</span>
+                                <input type="number" value={newItemSort} onChange={(event) => setNewItemSort(parseInt(event.target.value, 10) || 1)} className="w-full text-sm monolith-numeric" />
                               </label>
                             </div>
                             <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                              <div className="flex flex-wrap gap-3 text-xs text-on-surface">
+                              <div className="flex flex-wrap gap-3 text-xs text-mono-text">
                                 <label className="flex items-center gap-2"><input type="checkbox" checked={newItemRequired} onChange={(event) => setNewItemRequired(event.target.checked)} /> Required by default</label>
                                 <label className="flex items-center gap-2"><input type="checkbox" checked={newItemActive} onChange={(event) => setNewItemActive(event.target.checked)} /> Active</label>
                               </div>
@@ -1546,7 +1547,7 @@ export function SettingsForm({
                         ) : null}
 
                         <div className="overflow-x-auto">
-                          <table className="ds-table">
+                          <table className="monolith-table">
                             <thead>
                               <tr>
                                 <th>Name</th>
@@ -1560,7 +1561,7 @@ export function SettingsForm({
                             <tbody>
                               {category.items.length === 0 ? (
                                 <tr>
-                                  <td colSpan={6} className="text-center text-sm text-on-surface-variant">No requirement items added for this category yet.</td>
+                                  <td colSpan={6} className="text-center text-sm text-mono-muted">No requirement items added for this category yet.</td>
                                 </tr>
                               ) : (
                                 [...category.items]
@@ -1573,19 +1574,19 @@ export function SettingsForm({
                                           {isEditingItem ? (
                                             <input type="text" value={editingItemName} onChange={(event) => setEditingItemName(event.target.value)} className="w-full text-xs" />
                                           ) : (
-                                            <span className="text-sm font-medium text-on-surface">{item.name}</span>
+                                            <span className="text-sm font-medium text-mono-text">{item.name}</span>
                                           )}
                                         </td>
                                         <td>
                                           {isEditingItem ? (
                                             <input type="text" value={editingItemDesc} onChange={(event) => setEditingItemDesc(event.target.value)} className="w-full text-xs" />
                                           ) : (
-                                            <span className="text-xs text-on-surface-variant">{item.description || "—"}</span>
+                                            <span className="text-xs text-mono-muted">{item.description || "—"}</span>
                                           )}
                                         </td>
-                                        <td className="ds-numeric">
+                                        <td className="monolith-numeric">
                                           {isEditingItem ? (
-                                            <input type="number" value={editingItemSort} onChange={(event) => setEditingItemSort(parseInt(event.target.value, 10) || 1)} className="w-20 text-xs ds-numeric" />
+                                            <input type="number" value={editingItemSort} onChange={(event) => setEditingItemSort(parseInt(event.target.value, 10) || 1)} className="w-20 text-xs monolith-numeric" />
                                           ) : (
                                             item.sortOrder
                                           )}

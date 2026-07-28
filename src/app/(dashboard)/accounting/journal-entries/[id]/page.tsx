@@ -45,7 +45,7 @@ export default async function JvDetailPage({ params }: JvDetailPageProps) {
     <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* HEADER */}
-      <div className="flex items-center gap-3 border-b border-outline-variant/20 pb-5">
+      <div className="flex items-center gap-3 border-b border-mono-border/20 pb-5">
         <NextLink
           href="/accounting/journal-entries"
           className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800/40 rounded-xl transition-all cursor-pointer border border-[#1c212a]/30"

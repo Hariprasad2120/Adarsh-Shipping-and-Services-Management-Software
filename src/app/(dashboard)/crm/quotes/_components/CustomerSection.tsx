@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import type { UseFormReturn } from "react-hook-form";
 import { Controller } from "react-hook-form";
 import { Search } from "lucide-react";
@@ -20,8 +21,8 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
   const errors = form.formState.errors;
 
   return (
-    <section className="ds-form-section border-b border-[#d9dee7] px-5 py-5">
-      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-on-surface-variant">Customer and Location</h2>
+    <section className="monolith-form-section border-b border-[#d9dee7] px-5 py-5">
+      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-mono-muted">Customer and Location</h2>
       <div className="space-y-0">
         <FormRow label="Customer Name" required error={errors.customerId?.message}>
           <div className="flex gap-2">
@@ -45,7 +46,7 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
             </div>
             <button
               type="button"
-              className="inline-flex h-9 items-center gap-1 rounded-md border border-[rgba(0,206,196,0.4)] bg-[#00cec4]/10 px-3 text-[12px] font-medium text-[#00cec4]"
+              className="inline-flex h-9 items-center gap-1 rounded-md border border-[rgba(0,206,196,0.4)] bg-[#F9D972]/10 px-3 text-[12px] font-medium text-[#F9D972]"
               aria-label="Advanced customer search"
             >
               <Search className="size-3.5" />
@@ -64,7 +65,7 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
         </FormRow>
 
         <FormRow label="Place of Supply" error={errors.placeOfSupply?.message}>
-          <select
+          <NativeSelect
             aria-label="Place of Supply"
             className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
             {...form.register("placeOfSupply")}
@@ -75,11 +76,11 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
                 {code} - {name}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </FormRow>
 
         <FormRow label="Location" helperText={`Source of Supply: ${sourceOfSupply}`}>
-          <select
+          <NativeSelect
             aria-label="Location"
             className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
             {...form.register("location")}
@@ -89,7 +90,7 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
                 {location}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </FormRow>
       </div>
     </section>

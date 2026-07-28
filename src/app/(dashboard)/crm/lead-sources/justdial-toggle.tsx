@@ -43,8 +43,8 @@ export function JustdialToggle({ initialActive }: JustdialToggleProps) {
       <button
         onClick={handleToggle}
         disabled={isPending}
-        className={`relative inline-flex h-5.5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#00cec4]/20 ${
-          isActive ? "bg-[#00cec4]" : "bg-slate-300 dark:bg-slate-700"
+        className={`relative inline-flex h-5.5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#F9D972]/20 ${
+          isActive ? "bg-[#F9D972]" : "bg-slate-300 dark:bg-slate-700"
         } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
         aria-label="Toggle Justdial Importer Scheduler"
       >
@@ -53,7 +53,7 @@ export function JustdialToggle({ initialActive }: JustdialToggleProps) {
             isActive ? "translate-x-4.5" : "translate-x-0"
           }`}
         >
-          {isPending && <Loader2 className="size-2.5 animate-spin text-[#00cec4]" />}
+          {isPending && <Loader2 className="size-2.5 animate-spin text-[#F9D972]" />}
         </span>
       </button>
     </div>

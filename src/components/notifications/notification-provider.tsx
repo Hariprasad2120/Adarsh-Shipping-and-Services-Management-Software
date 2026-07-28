@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button-1";
+import { Button } from "@/components/monolith/button-1";
 import { cn } from "@/lib/utils";
 
 type ToastVariant = "secondary" | "primary" | "destructive" | "success" | "info" | "mono" | "warning";
@@ -80,10 +80,10 @@ function markRemoteToastsShown(notificationIds: string[]) {
 function getNotificationCardTone(variant: ToastVariant | undefined) {
   if (variant === "warning") {
     return {
-      border: "border-[#fb923c]/40 hover:border-[#fb923c]/70",
+      border: "border-[#D88700]/40 hover:border-[#D88700]/70",
       glow: "hover:shadow-[0_18px_36px_-28px_rgba(251,146,60,0.34)]",
-      closeBorder: "border-[#fb923c]/30 hover:border-[#fb923c]/65",
-      closeText: "text-[#fb923c] hover:text-[#ea580c]",
+      closeBorder: "border-[#D88700]/30 hover:border-[#D88700]/65",
+      closeText: "text-[#D88700] hover:text-[#ea580c]",
     };
   }
   if (variant === "destructive") {
@@ -104,9 +104,9 @@ function getNotificationCardTone(variant: ToastVariant | undefined) {
   }
 
   return {
-    border: "border-[#00cec4]/35 hover:border-[#00cec4]/65",
+    border: "border-[#F9D972]/35 hover:border-[#F9D972]/65",
     glow: "hover:shadow-[0_18px_36px_-28px_rgba(0,206,196,0.28)]",
-    closeBorder: "border-[#00cec4]/30 hover:border-[#00cec4]/60",
+    closeBorder: "border-[#F9D972]/30 hover:border-[#F9D972]/60",
     closeText: "text-[#00a99f] hover:text-[#00857e]",
   };
 }
@@ -131,7 +131,7 @@ function NotificationToastCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-xl border bg-surface/95 p-5 backdrop-blur-xl transition-all duration-200",
+        "group relative overflow-hidden rounded-xl border bg-mono-card/95 p-5 backdrop-blur-xl transition-all duration-200",
         "shadow-[var(--shadow-ambient)] hover:-translate-y-px hover:shadow-[var(--shadow-ambient-hover)]",
         tone.border,
         tone.glow,
@@ -141,10 +141,10 @@ function NotificationToastCard({
         <div className="min-w-0 flex-1 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1">
-              <h3 className="text-sm font-medium uppercase leading-5 tracking-[0.08em] text-on-surface">
+              <h3 className="text-sm font-medium uppercase leading-5 tracking-[0.08em] text-mono-text">
                 {title}
               </h3>
-              {body ? <p className="text-sm leading-6 text-on-surface-variant">{body}</p> : null}
+              {body ? <p className="text-sm leading-6 text-mono-muted">{body}</p> : null}
             </div>
 
             {dismissible ? (
@@ -153,7 +153,7 @@ function NotificationToastCard({
                 onClick={onClose}
                 aria-label="Dismiss notification"
                 className={cn(
-                  "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-surface-container-low/70",
+                  "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-mono-soft/70",
                   "transition-all duration-200 hover:-translate-y-0.5 hover:rotate-90 hover:scale-105 active:translate-y-0 active:rotate-0 active:scale-95",
                   tone.closeBorder,
                   tone.closeText,

@@ -14,11 +14,11 @@ const STAGE_COLOR: Record<string, string> = {
   MEETING_PENDING: "bg-cyan-50 text-cyan-700",
   MEETING_LIVE: "bg-green-50 text-green-700",
   HIKE_FINALISATION: "bg-pink-50 text-pink-700",
-  CLOSED: "bg-surface-container-high text-on-surface-variant",
+  CLOSED: "bg-mono-soft text-mono-muted",
 };
 
 const STATUS_BADGE: Record<string, string> = {
-  PENDING: "bg-surface-container-high text-on-surface-variant",
+  PENDING: "bg-mono-soft text-mono-muted",
   AVAILABLE: "bg-green-100 text-green-700",
   UNAVAILABLE: "bg-red-100 text-red-600",
   FORCED: "bg-orange-100 text-orange-600",
@@ -55,20 +55,20 @@ export default async function MyAppraisalPage({
   return (
     <div className="space-y-6">
       {justSubmitted && (
-        <div className="rounded-2xl border border-[#00cec4]/30 bg-[#00cec4]/8 px-5 py-4">
+        <div className="rounded-2xl border border-[#F9D972]/30 bg-[#F9D972]/8 px-5 py-4">
           <div className="flex items-start gap-3">
-            <svg className="mt-0.5 size-5 shrink-0 text-[#00cec4]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="mt-0.5 size-5 shrink-0 text-[#F9D972]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
             <div>
               <p className="text-sm font-semibold text-[#008b85]">Self-assessment submitted successfully</p>
-              <p className="mt-0.5 text-xs text-on-surface-variant">Your responses have been saved. You can edit your self-assessment until the deadline.</p>
+              <p className="mt-0.5 text-xs text-mono-muted">Your responses have been saved. You can edit your self-assessment until the deadline.</p>
             </div>
           </div>
         </div>
       )}
       {appraisals.length === 0 ? (
-        <div className="rounded-xl border border-outline-variant bg-surface px-6 py-12 text-center text-sm text-on-surface-variant/60">
+        <div className="rounded-xl border border-mono-border bg-mono-card px-6 py-12 text-center text-sm text-mono-muted/60">
           No appraisals found for your account.
         </div>
       ) : (
@@ -83,15 +83,15 @@ export default async function MyAppraisalPage({
             const nonMgmtReviewers = appraisal.reviewers.filter((reviewer) => reviewer.kind !== "MANAGEMENT");
 
             return (
-              <div key={appraisal.id} className="space-y-5 rounded-xl border border-outline-variant bg-surface p-6">
+              <div key={appraisal.id} className="space-y-5 rounded-xl border border-mono-border bg-mono-card p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-base font-semibold text-on-surface">{appraisal.cycle.name}</p>
-                    <p className="mt-0.5 text-sm text-on-surface-variant">
+                    <p className="text-base font-semibold text-mono-text">{appraisal.cycle.name}</p>
+                    <p className="mt-0.5 text-sm text-mono-muted">
                       Due: {new Date(appraisal.dueDate).toLocaleDateString("en-IN")}
                     </p>
                   </div>
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STAGE_COLOR[appraisal.stage] ?? "bg-surface-container-high text-on-surface-variant"}`}>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STAGE_COLOR[appraisal.stage] ?? "bg-mono-soft text-mono-muted"}`}>
                     {STAGE_LABEL[appraisal.stage] ?? appraisal.stage.replace(/_/g, " ")}
                   </span>
                 </div>
@@ -117,16 +117,16 @@ export default async function MyAppraisalPage({
 
                 {nonMgmtReviewers.length > 0 ? (
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Your Reviewers</p>
-                    <div className="overflow-hidden rounded-lg border border-outline-variant/40">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-mono-muted">Your Reviewers</p>
+                    <div className="overflow-hidden rounded-lg border border-mono-border/40">
                       <div className="divide-y divide-gray-100">
                         {nonMgmtReviewers.map((reviewer) => (
                           <div key={reviewer.id} className="flex items-center justify-between px-4 py-3 text-sm">
                             <div>
-                              <span className="font-medium text-on-surface">{reviewer.user.name}</span>
-                              <span className="ml-2 text-xs uppercase text-on-surface-variant/60">{reviewer.kind}</span>
+                              <span className="font-medium text-mono-text">{reviewer.user.name}</span>
+                              <span className="ml-2 text-xs uppercase text-mono-muted/60">{reviewer.kind}</span>
                             </div>
-                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE[reviewer.availabilityStatus] ?? "bg-surface-container-high text-on-surface-variant"}`}>
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE[reviewer.availabilityStatus] ?? "bg-mono-soft text-mono-muted"}`}>
                               {reviewer.availabilityStatus}
                             </span>
                           </div>
@@ -135,7 +135,7 @@ export default async function MyAppraisalPage({
                     </div>
 
                     {appraisal.availabilityDeadline && appraisal.stage === "REVIEWERS_ASSIGNED" && (
-                      <p className="text-xs text-on-surface-variant/60">
+                      <p className="text-xs text-mono-muted/60">
                         {availabilityDeadlinePassed
                           ? "Availability deadline has passed."
                           : `Reviewers have until ${new Date(appraisal.availabilityDeadline).toLocaleDateString("en-IN")} to confirm availability.`}
@@ -143,7 +143,7 @@ export default async function MyAppraisalPage({
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-on-surface-variant/60">Reviewers not yet assigned.</p>
+                  <p className="text-sm text-mono-muted/60">Reviewers not yet assigned.</p>
                 )}
 
                 {appraisal.stage === "REVIEWERS_ASSIGNED" && appraisal.availabilityDeadline && (

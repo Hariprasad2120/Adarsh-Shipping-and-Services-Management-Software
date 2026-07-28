@@ -10,11 +10,11 @@ import {
   type WorkflowDocumentRequirement,
   type WorkflowDocumentVersion,
 } from "@/app/(dashboard)/cha/jobs/[jobId]/workflow-documents-section";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { FileUploadField } from "@/components/ui/file-upload-field";
-import { Input } from "@/components/ui/input";
-import { Modal } from "@/components/ui/modal";
+import { Badge } from "@/components/monolith/badge";
+import { Button } from "@/components/monolith/button";
+import { FileUploadField } from "@/components/monolith/file-upload-field";
+import { Input } from "@/components/monolith/input";
+import { Modal } from "@/components/monolith/modal";
 import type { PortalDocumentRequirementSummary, PortalShipmentSummary } from "@/modules/customer-portal/types";
 
 type PortalKycWorkspaceProps = {
@@ -327,47 +327,47 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
 
   return (
     <div className="space-y-6 font-sans">
-      <section className="card-top-accent rounded-xl border border-outline-variant/60 bg-surface p-6 shadow-sm">
+      <section className="monolith-card monolith-accent rounded-xl border border-mono-border/60 bg-mono-card p-6 shadow-sm">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <span className="ds-icon-badge">
+              <span className="monolith-icon-badge">
                 <FolderKanban size={18} />
               </span>
-              <p className="ds-label text-[#00cec4]">Shipment-wise document workspace</p>
+              <p className="monolith-label text-[#F9D972]">Shipment-wise document workspace</p>
             </div>
             <div>
-              <h2 className="ds-h2">KYC & Compliance Vault</h2>
-              <p className="mt-2 max-w-3xl text-sm text-on-surface-variant">
+              <h2 className="monolith-h2">KYC & Compliance Vault</h2>
+              <p className="mt-2 max-w-3xl text-sm text-mono-muted">
                 Review shipments in a compact list, track document completion at a glance, and open only the file set you want to work on.
               </p>
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="card-top-accent rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
-              <p className="ds-label">Pending</p>
-              <p className="mt-2 ds-numeric text-2xl text-on-surface">{totalPending}</p>
-              <p className="mt-1 text-xs text-on-surface-variant">Customer action required</p>
+            <div className="monolith-card monolith-accent rounded-xl border border-mono-border/45 bg-mono-soft p-4">
+              <p className="monolith-label">Pending</p>
+              <p className="mt-2 monolith-numeric text-2xl text-mono-text">{totalPending}</p>
+              <p className="mt-1 text-xs text-mono-muted">Customer action required</p>
             </div>
-            <div className="card-top-accent rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
-              <p className="ds-label">Uploaded</p>
-              <p className="mt-2 ds-numeric text-2xl text-on-surface">{totalUploaded}</p>
-              <p className="mt-1 text-xs text-on-surface-variant">Files already on record</p>
+            <div className="monolith-card monolith-accent rounded-xl border border-mono-border/45 bg-mono-soft p-4">
+              <p className="monolith-label">Uploaded</p>
+              <p className="mt-2 monolith-numeric text-2xl text-mono-text">{totalUploaded}</p>
+              <p className="mt-1 text-xs text-mono-muted">Files already on record</p>
             </div>
-            <div className="card-top-accent-orange rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
-              <p className="ds-label">N/A / Exempt</p>
-              <p className="mt-2 ds-numeric text-2xl text-on-surface">{totalExceptions}</p>
-              <p className="mt-1 text-xs text-on-surface-variant">Visible internal handling</p>
+            <div className="monolith-card monolith-accent-warning rounded-xl border border-mono-border/45 bg-mono-soft p-4">
+              <p className="monolith-label">N/A / Exempt</p>
+              <p className="mt-2 monolith-numeric text-2xl text-mono-text">{totalExceptions}</p>
+              <p className="mt-1 text-xs text-mono-muted">Visible internal handling</p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="rounded-xl border border-outline-variant/55 bg-surface p-5 shadow-sm">
+      <section className="rounded-xl border border-mono-border/55 bg-mono-card p-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="relative min-w-0 flex-1 lg:max-w-md">
-            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -386,7 +386,7 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
                 key={item.key}
                 type="button"
                 onClick={() => setFilterMode(item.key as FilterMode)}
-                className={filterMode === item.key ? "ds-button" : "ds-button-outline"}
+                className={filterMode === item.key ? "monolith-button" : "monolith-button-outline"}
               >
                 {item.label}
               </button>
@@ -395,22 +395,22 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
         </div>
 
         {!kycUploadsAllowed ? (
-          <div className="mt-4 rounded-xl border border-[#fb923c]/30 bg-[#fb923c]/10 p-4 text-sm text-[#fb923c]">
+          <div className="mt-4 rounded-xl border border-[#D88700]/30 bg-[#D88700]/10 p-4 text-sm text-[#D88700]">
             Uploads are currently disabled for this customer by the CHA operations team.
           </div>
         ) : null}
       </section>
 
       {filteredShipments.length === 0 ? (
-        <section className="rounded-xl border border-outline-variant/55 bg-surface p-6 text-center shadow-sm">
-          <UploadCloud className="mx-auto size-10 text-[#00cec4] opacity-60" />
-          <h3 className="ds-h3 mt-4 text-on-surface">No matching shipments</h3>
-          <p className="mt-2 text-sm text-on-surface-variant">
+        <section className="rounded-xl border border-mono-border/55 bg-mono-card p-6 text-center shadow-sm">
+          <UploadCloud className="mx-auto size-10 text-[#F9D972] opacity-60" />
+          <h3 className="monolith-h3 mt-4 text-mono-text">No matching shipments</h3>
+          <p className="mt-2 text-sm text-mono-muted">
             Try another search term or switch filters to view shipment requirements.
           </p>
         </section>
       ) : (
-        <section className="rounded-xl border border-outline-variant/55 bg-surface shadow-sm">
+        <section className="rounded-xl border border-mono-border/55 bg-mono-card shadow-sm">
           <div className="space-y-0">
             {filteredShipments.map((group) => {
               const isExpanded = expandedShipmentId === group.shipment.id;
@@ -418,56 +418,56 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
               const categoryGroups = groupRequirementsByCategory(group.requirements);
 
               return (
-                <div key={group.shipment.id} className="border-b border-outline-variant/20 p-4 last:border-b-0 sm:p-5">
+                <div key={group.shipment.id} className="border-b border-mono-border/20 p-4 last:border-b-0 sm:p-5">
                   <button
                     type="button"
                     onClick={() => toggleShipment(group.shipment.id)}
-                    className="w-full rounded-xl border border-outline-variant/35 bg-surface-container-low/35 p-4 text-left transition hover:border-[#00cec4]/45 hover:bg-surface"
+                    className="w-full rounded-xl border border-mono-border/35 bg-mono-soft/35 p-4 text-left transition hover:border-[#F9D972]/45 hover:bg-mono-card"
                   >
                     <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                       <div className="flex items-start gap-3">
-                        <span className="mt-1 flex h-9 w-9 items-center justify-center rounded-xl border border-outline-variant/35 bg-surface text-[#00cec4]">
+                        <span className="mt-1 flex h-9 w-9 items-center justify-center rounded-xl border border-mono-border/35 bg-mono-card text-[#F9D972]">
                           {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                         </span>
                         <div className="min-w-0 space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="ds-label text-[#00cec4]">{group.shipment.jobNumber}</p>
+                            <p className="monolith-label text-[#F9D972]">{group.shipment.jobNumber}</p>
                             <Badge variant="secondary">{group.shipment.currentStage.toUpperCase()}</Badge>
                             <Badge variant="secondary">{group.shipment.clearanceType.toUpperCase()}</Badge>
                             {group.uploadLocked ? <Badge variant="success">PREVIEW ONLY</Badge> : null}
                           </div>
                           <div className="min-w-0">
-                            <h3 className="ds-h3 truncate text-on-surface">
+                            <h3 className="monolith-h3 truncate text-mono-text">
                               {group.shipment.customerRef || group.shipment.title || group.shipment.jobNumber}
                             </h3>
-                            <p className="mt-1 text-sm text-on-surface-variant">
+                            <p className="mt-1 text-sm text-mono-muted">
                               {group.shipment.shipmentType} • {group.shipment.contactName || "Assigned coordinator visible in shipment view"}
                             </p>
                           </div>
                           <div className="flex flex-wrap items-center gap-3 text-sm">
-                            <span className="rounded-full bg-[#00cec4]/10 px-3 py-1 font-semibold text-[#008f89]">
-                              <span className="ds-numeric">{group.uploadedCount}</span> / <span className="ds-numeric">{group.totalCount}</span> documents uploaded
+                            <span className="rounded-full bg-[#F9D972]/10 px-3 py-1 font-semibold text-[#008f89]">
+                              <span className="monolith-numeric">{group.uploadedCount}</span> / <span className="monolith-numeric">{group.totalCount}</span> documents uploaded
                             </span>
-                            <span className="text-on-surface-variant">
-                              Pending <span className="ds-numeric text-on-surface">{group.pendingCount}</span>
+                            <span className="text-mono-muted">
+                              Pending <span className="monolith-numeric text-mono-text">{group.pendingCount}</span>
                             </span>
-                            <span className="text-on-surface-variant">
-                              N/A / Exempt <span className="ds-numeric text-on-surface">{group.exceptionCount}</span>
+                            <span className="text-mono-muted">
+                              N/A / Exempt <span className="monolith-numeric text-mono-text">{group.exceptionCount}</span>
                             </span>
                           </div>
                         </div>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3 xl:justify-end">
-                        <div className="rounded-xl border border-outline-variant/35 bg-surface px-4 py-3">
-                          <p className="ds-label">Completion</p>
-                          <p className="mt-1 ds-numeric text-lg text-on-surface">
+                        <div className="rounded-xl border border-mono-border/35 bg-mono-card px-4 py-3">
+                          <p className="monolith-label">Completion</p>
+                          <p className="mt-1 monolith-numeric text-lg text-mono-text">
                             {group.completedCount}/{group.totalCount}
                           </p>
                         </div>
-                        <div className="rounded-xl border border-outline-variant/35 bg-surface px-4 py-3">
-                          <p className="ds-label">Shipment File</p>
-                          <Link href={`/customer-portal/shipments/${group.shipment.id}?tab=documents`} className="ds-button-outline mt-2">
+                        <div className="rounded-xl border border-mono-border/35 bg-mono-card px-4 py-3">
+                          <p className="monolith-label">Shipment File</p>
+                          <Link href={`/customer-portal/shipments/${group.shipment.id}?tab=documents`} className="monolith-button-outline mt-2">
                             Open shipment file
                           </Link>
                         </div>
@@ -478,7 +478,7 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
                   {isExpanded ? (
                     <div className="mt-4 space-y-4">
                       {group.uploadLocked ? (
-                        <div className="rounded-xl border border-green-500/25 bg-green-500/10 p-4 text-sm text-on-surface">
+                        <div className="rounded-xl border border-green-500/25 bg-green-500/10 p-4 text-sm text-mono-text">
                           All required documentation for this shipment is already completed. You can preview files here, and upload actions are locked.
                         </div>
                       ) : null}
@@ -487,11 +487,11 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
                         {categoryGroups.map((categoryGroup) => (
                           <section
                             key={`${group.shipment.id}-${categoryGroup.categoryName}`}
-                            className="space-y-4 rounded-xl border border-outline-variant/45 bg-surface p-5 shadow-sm"
+                            className="space-y-4 rounded-xl border border-mono-border/45 bg-mono-card p-5 shadow-sm"
                           >
-                            <div className="space-y-1 border-b border-outline-variant/20 pb-4">
-                              <p className="text-lg font-semibold text-on-surface">{categoryGroup.categoryName}</p>
-                              <p className="text-sm text-on-surface-variant">
+                            <div className="space-y-1 border-b border-mono-border/20 pb-4">
+                              <p className="text-lg font-semibold text-mono-text">{categoryGroup.categoryName}</p>
+                              <p className="text-sm text-mono-muted">
                                 {categoryGroup.requirements.length} requirement{categoryGroup.requirements.length === 1 ? "" : "s"} in this category.
                               </p>
                             </div>
@@ -530,27 +530,27 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
                                       helperContent={
                                         status === "UPLOADED" ? (
                                           <div className="space-y-1.5">
-                                            <p className="text-sm font-semibold text-on-surface">Verify this upload before CHA review</p>
-                                            <p className="text-xs text-on-surface-variant">
+                                            <p className="text-sm font-semibold text-mono-text">Verify this upload before CHA review</p>
+                                            <p className="text-xs text-mono-muted">
                                               Confirm it if everything looks correct, or upload a corrected file from the same card.
                                             </p>
                                           </div>
                                         ) : status === "UNDER_REVIEW" ? (
                                           <div className="space-y-1.5">
-                                            <p className="text-sm font-semibold text-on-surface">Submitted for verification</p>
-                                            <p className="text-xs text-on-surface-variant">
+                                            <p className="text-sm font-semibold text-mono-text">Submitted for verification</p>
+                                            <p className="text-xs text-mono-muted">
                                               The CHA team is reviewing this file now. You can still preview it from this card.
                                             </p>
                                           </div>
                                         ) : submission?.reviewerComment ? (
                                           <div className="space-y-1.5">
-                                            <p className="text-sm font-semibold text-on-surface">Review feedback</p>
-                                            <p className="text-xs text-on-surface-variant">{submission.reviewerComment}</p>
+                                            <p className="text-sm font-semibold text-mono-text">Review feedback</p>
+                                            <p className="text-xs text-mono-muted">{submission.reviewerComment}</p>
                                           </div>
                                         ) : submission?.customerComment ? (
                                           <div className="space-y-1.5">
-                                            <p className="text-sm font-semibold text-on-surface">Your upload note</p>
-                                            <p className="text-xs text-on-surface-variant">{submission.customerComment}</p>
+                                            <p className="text-sm font-semibold text-mono-text">Your upload note</p>
+                                            <p className="text-xs text-mono-muted">{submission.customerComment}</p>
                                           </div>
                                         ) : null
                                       }
@@ -644,13 +644,13 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
       >
         {uploadTarget ? (
           <div className="space-y-5">
-            <div className="rounded-xl border border-outline-variant/35 bg-surface-container-low/55 p-4">
+            <div className="rounded-xl border border-mono-border/35 bg-mono-soft/55 p-4">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="ds-label text-[#00cec4]">{uploadTarget.jobNumber}</span>
+                <span className="monolith-label text-[#F9D972]">{uploadTarget.jobNumber}</span>
                 <Badge variant="secondary">{uploadTarget.requirement.currentStage.toUpperCase()}</Badge>
               </div>
-              <p className="mt-2 text-sm font-semibold text-on-surface">{uploadTarget.requirement.shipmentTitle}</p>
-              <p className="mt-1 text-xs text-on-surface-variant">
+              <p className="mt-2 text-sm font-semibold text-mono-text">{uploadTarget.requirement.shipmentTitle}</p>
+              <p className="mt-1 text-xs text-mono-muted">
                 {uploadTarget.requirement.clearanceType} • {uploadTarget.requirement.shipmentType}
               </p>
             </div>
@@ -678,7 +678,7 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
             />
 
             <div className="space-y-2">
-              <label className="ds-label block">Upload Remark</label>
+              <label className="monolith-label block">Upload Remark</label>
               <Input
                 value={comment}
                 onChange={(event) => setComment(event.target.value)}
@@ -686,7 +686,7 @@ export function PortalKycWorkspace({ shipments, kycUploadsAllowed }: PortalKycWo
               />
             </div>
 
-            <div className="flex flex-wrap justify-end gap-3 border-t border-outline-variant/20 pt-4">
+            <div className="flex flex-wrap justify-end gap-3 border-t border-mono-border/20 pt-4">
               <Button
                 type="button"
                 variant="outline"

@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -61,37 +62,37 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
             required
             defaultValue={initialConfig?.dashboardUrl || "https://wap.justdial.com/analytics/leadsdashboard?el=0&min=1&docid=044PXX44.XX44.101103084537.I5S5&hide_header=1&old=1&source=77"}
             placeholder="https://wap.justdial.com/analytics/leadsdashboard?el=0&min=1&docid=..."
-            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-[#00c4b6]"
+            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-[#F9D972]"
           />
-          <p className="text-[10px] text-on-surface-variant">Provide the exact mobile leads URL visible when logged into your merchant portal.</p>
+          <p className="text-[10px] text-mono-muted">Provide the exact mobile leads URL visible when logged into your merchant portal.</p>
         </div>
 
         {/* Import Mode */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-300">Import Trigger Mode</label>
-          <select
+          <NativeSelect
             name="importMode"
             defaultValue={initialConfig?.importMode || "MANUAL"}
-            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
           >
             <option value="MANUAL">Manual Execution Only</option>
             <option value="SCHEDULED">Scheduled Automatic Sync</option>
-          </select>
+          </NativeSelect>
         </div>
 
         {/* Schedule Interval */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-300">Sync Interval (If Scheduled)</label>
-          <select
+          <NativeSelect
             name="scheduleInterval"
             defaultValue={initialConfig?.scheduleInterval || "1h"}
-            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
           >
             <option value="5m">Every 5 Minutes</option>
             <option value="15m">Every 15 Minutes</option>
             <option value="30m">Every 30 Minutes</option>
             <option value="1h">Every 1 Hour</option>
-          </select>
+          </NativeSelect>
         </div>
 
 
@@ -104,30 +105,30 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
             min={5}
             max={100}
             defaultValue={initialConfig?.maxLeads || 50}
-            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
           />
         </div>
 
         {/* Duplicate Handling */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-300">On Duplicate Found</label>
-          <select
+          <NativeSelect
             name="duplicateHandling"
             defaultValue={initialConfig?.duplicateHandling || "UPDATE_EXISTING"}
-            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
           >
             <option value="UPDATE_EXISTING">Update Timeline & Last Seen (Recommended)</option>
             <option value="SKIP">Skip & Ignore</option>
-          </select>
+          </NativeSelect>
         </div>
 
         {/* Default Owner */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-300">Default Lead Owner</label>
-          <select
+          <NativeSelect
             name="defaultOwnerId"
             defaultValue={initialConfig?.defaultOwnerId || ""}
-            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
           >
             <option value="">Select Assignee...</option>
             {employees.map((e) => (
@@ -135,21 +136,21 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
                 {e.name}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
 
         {/* Default Stage */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-300">Default Pipeline Stage</label>
-          <select
+          <NativeSelect
             name="defaultStage"
             defaultValue={initialConfig?.defaultStage || "NEW"}
-            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
           >
             <option value="NEW">New Lead</option>
             <option value="CONTACTED">Contacted</option>
             <option value="QUALIFIED">Qualified</option>
-          </select>
+          </NativeSelect>
         </div>
 
         {/* Active Toggle */}
@@ -160,7 +161,7 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
             name="isActive"
             value="true"
             defaultChecked={initialConfig ? initialConfig.isActive : true}
-            className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-[#00c4b6] focus:ring-0 cursor-pointer"
+            className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-[#F9D972] focus:ring-0 cursor-pointer"
           />
           <label htmlFor="isActive" className="text-xs font-semibold text-slate-300 select-none cursor-pointer">
             Enable importer synchronization processes
@@ -175,9 +176,9 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
             rows={8}
             defaultValue={initialConfig?.cookiesJson || ""}
             placeholder='[{"name": "MP_city", "value": "Chennai", "domain": ".justdial.com", "path": "/"}, ...]'
-            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs font-mono text-white placeholder-slate-600 focus:outline-none focus:border-[#00c4b6] leading-relaxed"
+            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs font-mono text-white placeholder-slate-600 focus:outline-none focus:border-[#F9D972] leading-relaxed"
           />
-          <p className="text-[10px] text-on-surface-variant">
+          <p className="text-[10px] text-mono-muted">
             Paste the cookies array exported from your browser. In development, it defaults to Cookie.txt in the current user&apos;s Downloads folder if left empty.
           </p>
         </div>
@@ -193,7 +194,7 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
         <button
           type="submit"
           disabled={isPending}
-          className="flex items-center gap-2 bg-[#00c4b6] hover:bg-[#00b0a3] disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[#00c4b6]/10 cursor-pointer"
+          className="flex items-center gap-2 bg-[#F9D972] hover:bg-[#00b0a3] disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
         >
           {isPending ? (
             <Loader2 className="size-4 animate-spin" />

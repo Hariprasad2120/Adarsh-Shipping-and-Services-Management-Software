@@ -22,21 +22,21 @@ export function DueThisMonthRow({ row }: { row: DueRow }) {
 
   return (
     <DataTableRow>
-      <DataTablePrimaryLinkCell href={href} className="font-medium text-on-surface-variant">
+      <DataTablePrimaryLinkCell href={href} className="font-medium text-mono-muted">
         <span>{row.employeeName}</span>
       </DataTablePrimaryLinkCell>
-      <DataTableCell className="text-xs text-on-surface-variant">{row.designation ?? "-"}</DataTableCell>
-      <DataTableCell className="text-xs text-on-surface-variant">{row.department ?? "-"}</DataTableCell>
+      <DataTableCell className="text-xs text-mono-muted">{row.designation ?? "-"}</DataTableCell>
+      <DataTableCell className="text-xs text-mono-muted">{row.department ?? "-"}</DataTableCell>
       <DataTableCell>
         {row.kind ? (
           <Badge className={row.kind === "INTERMEDIATE" ? "bg-amber-50 text-amber-700" : "bg-indigo-50 text-indigo-700"}>
             {row.kind}
           </Badge>
         ) : (
-          <span className="text-xs text-on-surface-variant">-</span>
+          <span className="text-xs text-mono-muted">-</span>
         )}
       </DataTableCell>
-      <DataTableCell className="text-xs text-on-surface-variant">
+      <DataTableCell className="text-xs text-mono-muted">
         {dueDateLabel}
       </DataTableCell>
       <DataTableCell className="text-right">

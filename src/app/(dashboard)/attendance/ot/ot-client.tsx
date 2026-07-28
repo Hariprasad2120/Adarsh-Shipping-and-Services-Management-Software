@@ -1,12 +1,13 @@
 "use client";
 
-import { DateInput } from "@/components/ui/date-input";
+import { NativeSelect } from "@/components/monolith/native-select";
+import { DateInput } from "@/components/monolith/date-input";
 import { Fragment, useState, useTransition, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
+import { Button } from "@/components/monolith/button";
 import { DataTable, DataTableBody, DataTableCell, DataTableEmpty, DataTableHead, DataTableHeader, DataTableRow } from "@/components/data-table";
 import {Plus, Check, X, Clock, User, Calendar, AlertCircle, IndianRupee,Sliders, ArrowRight, Download, Trash, RefreshCw,Search, SlidersHorizontal, ChevronRight, ChevronDown, CheckSquare} from "lucide-react";
 import {decideOtRecordAction,bulkDecideOtRecordsAction,adjustOtRecordAction,saveOtSettingsAction,saveWorkingCalendarAction,saveShiftAction,assignEmployeeShiftAction,saveHolidayAction,deleteHolidayAction,saveLopRecordAction,deleteLopRecordAction,processMonthOtAction,importAttendanceDataAction,clearMonthOtRecordsAction} from "./actions";
@@ -948,39 +949,39 @@ export function OtClient({
     return (
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <Card className="border-0 shadow-sm bg-surface">
-            <CardHeader className="pb-3 border-b border-outline-variant/60">
-              <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">
+          <Card className="border-0 shadow-sm bg-mono-card">
+            <CardHeader className="pb-3 border-b border-mono-border/60">
+              <CardTitle className="text-base font-bold text-mono-text dark:text-slate-200">
                 My Overtime Requests
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {legacyEntries.length === 0 ? (
-                <div className="text-center text-on-surface-variant/60/80 py-16 text-sm font-medium">
+                <div className="text-center text-mono-muted/60/80 py-16 text-sm font-medium">
                   No overtime entries requested yet.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-outline-variant bg-surface-container-low/40 dark:bg-surface-container-lowest/50 text-left">
-                        <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Date</th>
-                        <th className="px-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Requested Hours</th>
-                        <th className="px-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Status</th>
-                        <th className="px-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Notes</th>
+                      <tr className="border-b border-mono-border bg-mono-soft/40 dark:bg-mono-soft/50 text-left">
+                        <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider text-mono-muted/60">Date</th>
+                        <th className="px-4 text-xs font-bold uppercase tracking-wider text-mono-muted/60">Requested Hours</th>
+                        <th className="px-4 text-xs font-bold uppercase tracking-wider text-mono-muted/60">Status</th>
+                        <th className="px-4 text-xs font-bold uppercase tracking-wider text-mono-muted/60">Notes</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-outline-variant/40">
                       {legacyEntries.map((entry) => (
-                        <tr key={entry.id} className="hover:bg-surface-container-high/20 dark:hover:bg-slate-800/10 transition">
-                          <td className="py-3.5 px-4 font-semibold text-on-surface dark:text-on-surface-variant/40">
+                        <tr key={entry.id} className="hover:bg-mono-soft/20 dark:hover:bg-slate-800/10 transition">
+                          <td className="py-3.5 px-4 font-semibold text-mono-text dark:text-mono-muted/40">
                             {new Date(entry.date).toLocaleDateString("en-IN", {
                               day: "2-digit",
                               month: "short",
                               year: "numeric",
                             })}
                           </td>
-                          <td className="px-4 text-on-surface-variant dark:text-on-surface-variant/60 font-bold">
+                          <td className="px-4 text-mono-muted dark:text-mono-muted/60 font-bold">
                             {entry.hours} hrs
                           </td>
                           <td className="px-4">
@@ -996,7 +997,7 @@ export function OtClient({
                               {entry.status}
                             </span>
                           </td>
-                          <td className="px-4 text-xs text-on-surface-variant/60 font-semibold max-w-[200px] truncate">
+                          <td className="px-4 text-xs text-mono-muted/60 font-semibold max-w-[200px] truncate">
                             {entry.notes || "—"}
                           </td>
                         </tr>
@@ -1010,9 +1011,9 @@ export function OtClient({
         </div>
 
         <div>
-          <Card className="border-0 shadow-sm border-l-4 border-l-[#00cec4] bg-surface">
+          <Card className="border-0 shadow-sm border-l-4 border-l-[#F9D972] bg-mono-card">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">
+              <CardTitle className="text-base font-bold text-mono-text dark:text-slate-200">
                 Submit OT Request
               </CardTitle>
             </CardHeader>
@@ -1039,16 +1040,16 @@ export function OtClient({
                 });
               }} className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Date</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60">Date</label>
                   <DateInput
                     required
                     value={reqDate}
                     onChange={(e) => setReqDate(e.target.value)}
-                    className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Hours</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60">Hours</label>
                   <input
                     type="number"
                     step="0.5"
@@ -1058,17 +1059,17 @@ export function OtClient({
                     value={reqHours}
                     onChange={(e) => setReqHours(e.target.value)}
                     placeholder="e.g. 2.0"
-                    className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Work Description</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60">Work Description</label>
                   <textarea
                     value={reqNotes}
                     onChange={(e) => setReqNotes(e.target.value)}
                     placeholder="Provide details about what you worked on..."
                     rows={4}
-                    className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm resize-none"
+                    className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm resize-none"
                   />
                 </div>
                 <Button type="submit" disabled={isPending} className="w-full">
@@ -1085,7 +1086,7 @@ export function OtClient({
   return (
     <div className="space-y-6">
       {/* Dynamic Navigation Tabs & Month Selector */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-outline-variant/60 pb-2">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-mono-border/60 pb-2">
         <div className="flex flex-wrap gap-1">
           {(["overview", "records", "holidays", "lop", "payroll", "settings", "import"] as const).map((tab) => (
             <button
@@ -1093,8 +1094,8 @@ export function OtClient({
               onClick={() => setActiveTab(tab)}
               className={`rounded-xl px-4 py-2 text-sm font-medium capitalize transition ${
                 activeTab === tab
-                  ? "bg-[#00cec4]/14 text-[#008b85] shadow-[inset_0_0_0_1px_rgba(0,206,196,0.16)]"
-                  : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
+                  ? "bg-[#F9D972]/14 text-[#008b85] shadow-[inset_0_0_0_1px_rgba(0,206,196,0.16)]"
+                  : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
               }`}
             >
               {tab === "lop" ? "Loss of Pay (LOP)" : tab === "records" ? "OT Records" : tab === "import" ? "Import Punches" : tab}
@@ -1103,12 +1104,12 @@ export function OtClient({
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="shrink-0 text-xs font-semibold uppercase tracking-[0.14em] text-on-surface-variant">Month</label>
+          <label className="shrink-0 text-xs font-semibold uppercase tracking-[0.14em] text-mono-muted">Month</label>
           <input
             type="month"
             value={selectedMonth}
             onChange={(e) => handleMonthChange(e.target.value)}
-            className="rounded-xl border border-outline-variant bg-surface px-3 py-1.5 text-sm font-medium text-on-surface focus:outline-none focus:border-[#00cec4]"
+            className="rounded-xl border border-mono-border bg-mono-card px-3 py-1.5 text-sm font-medium text-mono-text focus:outline-none focus:border-[#F9D972]"
           />
         </div>
       </div>
@@ -1125,7 +1126,7 @@ export function OtClient({
                 <Card
                   key={item.label}
                   className={cn(
-                    "ds-shell-lg group relative overflow-hidden border bg-surface p-0 shadow-[0_18px_38px_-28px_rgba(15,23,42,0.3)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-28px_rgba(0,206,196,0.32)]",
+                    "monolith-shell-lg group relative overflow-hidden border bg-mono-card p-0 shadow-[0_18px_38px_-28px_rgba(15,23,42,0.3)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-28px_rgba(0,206,196,0.32)]",
                     item.cardClassName
                   )}
                 >
@@ -1138,7 +1139,7 @@ export function OtClient({
                         <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]", item.badgeClassName)}>
                           {item.badge}
                         </span>
-                        <p className="max-w-[18ch] text-xs font-semibold uppercase tracking-[0.18em] text-on-surface-variant">
+                        <p className="max-w-[18ch] text-xs font-semibold uppercase tracking-[0.18em] text-mono-muted">
                           {item.label}
                         </p>
                       </div>
@@ -1150,16 +1151,16 @@ export function OtClient({
 
                     <div>
                       <div className="flex flex-wrap items-end gap-2">
-                        <h3 className="ds-numeric text-[2.35rem] font-semibold leading-none tracking-[-0.05em] text-on-surface">
+                        <h3 className="monolith-numeric text-[2.35rem] font-semibold leading-none tracking-[-0.05em] text-mono-text">
                           {item.value}
                         </h3>
                         {item.unit ? (
-                          <span className="pb-1 text-sm font-semibold uppercase tracking-[0.14em] text-on-surface-variant">
+                          <span className="pb-1 text-sm font-semibold uppercase tracking-[0.14em] text-mono-muted">
                             {item.unit}
                           </span>
                         ) : null}
                       </div>
-                      <p className="mt-3 max-w-[28ch] text-sm leading-5 text-on-surface-variant">
+                      <p className="mt-3 max-w-[28ch] text-sm leading-5 text-mono-muted">
                         {item.helper}
                       </p>
                     </div>
@@ -1171,21 +1172,21 @@ export function OtClient({
 
           {/* Quick trigger panel */}
           <div className="grid gap-6 lg:grid-cols-3">
-            <Card className="card-top-accent ds-shell-lg border border-outline-variant/40 bg-surface shadow-sm lg:col-span-2">
-              <CardHeader className="border-b border-outline-variant/30 pb-3">
-                <CardTitle className="ds-h3 text-primary">
+            <Card className="monolith-card monolith-accent monolith-shell-lg border border-mono-border/40 bg-mono-card shadow-sm lg:col-span-2">
+              <CardHeader className="border-b border-mono-border/30 pb-3">
+                <CardTitle className="monolith-h3 text-mono-accent">
                   Recalculate Batch Engine
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm leading-6 text-on-surface-variant">
+                <p className="text-sm leading-6 text-mono-muted">
                   Punches imported from biometric devices are processed automatically in real-time. If you change global parameters (shift timings, grace bounds, or comp-off brackets), you can recompute the entire month&apos;s variables for active employees here.
                 </p>
                 <div className="flex flex-wrap items-center gap-3">
                   <Button
                     onClick={handleProcessMonth}
                     disabled={isPending}
-                    className="flex items-center gap-2 bg-[#00cec4] hover:bg-[#00b2a9] text-white"
+                    className="flex items-center gap-2 bg-[#F9D972] hover:bg-[#00b2a9] text-white"
                   >
                     <RefreshCw className={`size-4 ${isPending ? "animate-spin" : ""}`} />
                     {isPending ? "Calculating..." : "Recompute Month OT Records"}
@@ -1209,21 +1210,21 @@ export function OtClient({
               </CardContent>
             </Card>
 
-            <Card className="card-top-accent ds-shell-lg border border-outline-variant/40 bg-surface shadow-sm">
-              <CardHeader className="border-b border-outline-variant/30 pb-3">
-                <CardTitle className="ds-h3 text-primary">
+            <Card className="monolith-card monolith-accent monolith-shell-lg border border-mono-border/40 bg-mono-card shadow-sm">
+              <CardHeader className="border-b border-mono-border/30 pb-3">
+                <CardTitle className="monolith-h3 text-mono-accent">
                   Payroll Export Status
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-1 flex-col justify-end gap-4">
                 <div>
-                  <h4 className="ds-numeric text-[2rem] font-semibold leading-none text-on-surface">{payrollRows.length} Employees</h4>
-                  <p className="mt-1.5 text-sm text-on-surface-variant">Consolidated summaries ready for accounting</p>
+                  <h4 className="monolith-numeric text-[2rem] font-semibold leading-none text-mono-text">{payrollRows.length} Employees</h4>
+                  <p className="mt-1.5 text-sm text-mono-muted">Consolidated summaries ready for accounting</p>
                 </div>
                 <Button
                   onClick={() => setActiveTab("payroll")}
                   variant="outline"
-                  className="flex w-full items-center justify-center gap-2 !bg-transparent !text-on-surface hover:!bg-surface-container-low"
+                  className="flex w-full items-center justify-center gap-2 !bg-transparent !text-mono-text hover:!bg-mono-soft"
                 >
                   Go to Export Sheets
                   <ArrowRight className="size-4" />
@@ -1234,7 +1235,7 @@ export function OtClient({
 
           {/* Core Calculation Engine Visual Flow Diagram */}
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant">Core Calculation Engine Flow</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-mono-muted">Core Calculation Engine Flow</h3>
             <div className="grid gap-4 md:grid-cols-4">
               {[
                 {
@@ -1258,11 +1259,11 @@ export function OtClient({
                   desc: "Calculates hourly rate dynamically from annual CTC or falls back to standard base.",
                 },
               ].map((flow, i) => (
-                <div key={i} className="card-top-accent relative flex flex-col justify-between space-y-3 rounded-[24px] border border-outline-variant/30 bg-surface p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.18)]">
+                <div key={i} className="monolith-card monolith-accent relative flex flex-col justify-between space-y-3 rounded-[24px] border border-mono-border/30 bg-mono-card p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.18)]">
                   <div className="space-y-1">
-                    <span className="inline-flex rounded-full bg-[#00cec4]/10 px-2 py-0.5 text-[11px] font-semibold tracking-[0.14em] text-[#008b85]">{flow.step}</span>
-                    <h4 className="ds-h3 pt-1 text-primary">{flow.title}</h4>
-                    <p className="text-sm leading-6 text-on-surface-variant">{flow.desc}</p>
+                    <span className="inline-flex rounded-full bg-[#F9D972]/10 px-2 py-0.5 text-[11px] font-semibold tracking-[0.14em] text-[#008b85]">{flow.step}</span>
+                    <h4 className="monolith-h3 pt-1 text-mono-accent">{flow.title}</h4>
+                    <p className="text-sm leading-6 text-mono-muted">{flow.desc}</p>
                   </div>
                   {i < 3 && (
                     <div className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 text-outline-variant md:block">
@@ -1283,48 +1284,48 @@ export function OtClient({
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="relative sm:col-span-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-on-surface-variant" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-mono-muted" />
                 <input
                   type="text"
                   placeholder="Search employee name or ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-lg border border-outline-variant bg-surface pl-9 pr-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-[#00cec4]"
+                  className="w-full rounded-lg border border-mono-border bg-mono-card pl-9 pr-3 py-2 text-sm text-mono-text placeholder:text-mono-muted focus:outline-none focus:border-[#F9D972]"
                 />
               </div>
-              <select
+              <NativeSelect
                 value={shiftFilter}
                 onChange={(e) => setShiftFilter(e.target.value)}
-                className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+                className="rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm text-mono-text"
               >
                 <option value="ALL">All shifts</option>
                 <option value="__ORG_FALLBACK__">Org fallback</option>
                 {shifts.map((shift) => (
                   <option key={shift.id} value={shift.id}>{shift.name}</option>
                 ))}
-              </select>
+              </NativeSelect>
               <DateInput
                 value={dateFromFilter}
                 onChange={(e) => setDateFromFilter(e.target.value)}
-                className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+                className="rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm text-mono-text"
               />
               <DateInput
                 value={dateToFilter}
                 onChange={(e) => setDateToFilter(e.target.value)}
-                className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+                className="rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm text-mono-text"
               />
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <SlidersHorizontal className="mr-1 size-4 text-on-surface-variant" />
+              <SlidersHorizontal className="mr-1 size-4 text-mono-muted" />
               {(["ALL", "PENDING", "PENDING_MANAGER", "APPROVED", "REJECTED"] as const).map((filter) => (
                 <button
                   key={filter}
                   onClick={() => setStatusFilter(filter)}
                   className={`rounded-full px-3 py-1 text-xs font-bold transition border ${
                     statusFilter === filter
-                      ? "border-[#00cec4]/30 bg-[#00cec4]/12 text-[#008b84]"
-                      : "bg-surface text-on-surface-variant border-outline-variant hover:border-[#00cec4]/30 hover:text-on-surface"
+                      ? "border-[#F9D972]/30 bg-[#F9D972]/12 text-[#008b84]"
+                      : "bg-mono-card text-mono-muted border-mono-border hover:border-[#F9D972]/30 hover:text-mono-text"
                   }`}
                 >
                   {filter === "PENDING" ? "PENDING (ADMIN)" : filter === "PENDING_MANAGER" ? "PENDING (MANAGER)" : filter}
@@ -1342,7 +1343,7 @@ export function OtClient({
                       return copy;
                     });
                   }}
-                  className="rounded-full px-3 py-1 text-xs font-bold transition border bg-[#00cec4]/10 text-[#00cec4] border-[#00cec4]/20 hover:bg-[#00cec4]/20"
+                  className="rounded-full px-3 py-1 text-xs font-bold transition border bg-[#F9D972]/10 text-[#F9D972] border-[#F9D972]/20 hover:bg-[#F9D972]/20"
                 >
                   {allSelectableChecked ? "Deselect All Visible" : "Select All Visible"}
                 </button>
@@ -1384,7 +1385,7 @@ export function OtClient({
             </div>
           )}
 
-          <DataTable className="overflow-hidden border-outline-variant/60 shadow-sm">
+          <DataTable className="overflow-hidden border-mono-border/60 shadow-sm">
             <DataTableHeader>
               <DataTableRow className="hover:bg-transparent">
                 <DataTableHead className="w-12">
@@ -1401,7 +1402,7 @@ export function OtClient({
                         return copy;
                       });
                     }}
-                    className="h-4 w-4 rounded border-outline-variant text-[#00cec4] focus:ring-[#00cec4]"
+                    className="h-4 w-4 rounded border-mono-border text-[#F9D972] focus:ring-[#F9D972]"
                     aria-label="Select all visible records"
                   />
                 </DataTableHead>
@@ -1427,7 +1428,7 @@ export function OtClient({
                   return (
                     <Fragment key={rec.id}>
                       <DataTableRow
-                        className="cursor-pointer border-l-2 border-l-transparent hover:border-l-[#00cec4]/60"
+                        className="cursor-pointer border-l-2 border-l-transparent hover:border-l-[#F9D972]/60"
                         onClick={() => toggleUserExpand(rec.id)}
                       >
                         <DataTableCell className="w-12">
@@ -1437,7 +1438,7 @@ export function OtClient({
                               checked={!!selectedRecordIds[rec.id]}
                               onChange={(e) => handleSelectRecord(rec.id, e.target.checked)}
                               onClick={(e) => e.stopPropagation()}
-                              className="h-4 w-4 rounded border-outline-variant text-[#00cec4] focus:ring-[#00cec4]"
+                              className="h-4 w-4 rounded border-mono-border text-[#F9D972] focus:ring-[#F9D972]"
                               aria-label={`Select ${rec.user.name} ${formatOtDate(rec.date)}`}
                             />
                           ) : (
@@ -1446,27 +1447,27 @@ export function OtClient({
                         </DataTableCell>
                         <DataTableCell>
                           <div className="flex min-w-0 items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#00cec4]/12 text-xs font-semibold text-[#008b84]">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F9D972]/12 text-xs font-semibold text-[#008b84]">
                               {getInitials(rec.user.name)}
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
-                                <p className="truncate font-semibold text-on-surface">{rec.user.name}</p>
+                                <p className="truncate font-semibold text-mono-text">{rec.user.name}</p>
                                 {rec.user.employeeNumber ? (
-                                  <span className="rounded-full bg-surface-container-low px-2 py-0.5 text-[11px] font-medium text-on-surface-variant">
+                                  <span className="rounded-full bg-mono-soft px-2 py-0.5 text-[11px] font-medium text-mono-muted">
                                     #{rec.user.employeeNumber}
                                   </span>
                                 ) : null}
                               </div>
-                              <p className="truncate text-xs text-on-surface-variant">
+                              <p className="truncate text-xs text-mono-muted">
                                 {formatOtDate(rec.date)} • {rec.user.department?.name || "No Department"}
                               </p>
                             </div>
                           </div>
                         </DataTableCell>
-                        <DataTableCell className="text-on-surface-variant">
+                        <DataTableCell className="text-mono-muted">
                           <div className="space-y-1">
-                            <p className="text-sm font-medium text-on-surface">
+                            <p className="text-sm font-medium text-mono-text">
                               {rec.shift?.name || "Organisation Working Hours"}
                             </p>
                             <p className="text-xs">
@@ -1474,22 +1475,22 @@ export function OtClient({
                             </p>
                           </div>
                         </DataTableCell>
-                        <DataTableCell className="text-on-surface-variant">
+                        <DataTableCell className="text-mono-muted">
                           <div className="space-y-1 text-xs">
-                            <div>In: <span className="ds-numeric text-on-surface">{rec.firstPunchAt ? new Date(rec.firstPunchAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "—"}</span></div>
-                            <div>Out: <span className="ds-numeric text-on-surface">{rec.lastPunchAt ? new Date(rec.lastPunchAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "—"}</span></div>
+                            <div>In: <span className="monolith-numeric text-mono-text">{rec.firstPunchAt ? new Date(rec.firstPunchAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "—"}</span></div>
+                            <div>Out: <span className="monolith-numeric text-mono-text">{rec.lastPunchAt ? new Date(rec.lastPunchAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "—"}</span></div>
                           </div>
                         </DataTableCell>
                         <DataTableCell className="text-right">
-                          <div className="ds-numeric font-medium text-on-surface">{(rec.workedMinutes / 60).toFixed(2)}h</div>
-                          <div className="text-xs text-on-surface-variant">{rec.totalPunchCount} punches</div>
+                          <div className="monolith-numeric font-medium text-mono-text">{(rec.workedMinutes / 60).toFixed(2)}h</div>
+                          <div className="text-xs text-mono-muted">{rec.totalPunchCount} punches</div>
                         </DataTableCell>
                         <DataTableCell className="text-right">
-                          <div className="ds-numeric font-medium text-on-surface">{(rec.expectedMinutes / 60).toFixed(2)}h</div>
-                          <div className="text-xs text-on-surface-variant">{rec.usedOrgFallback ? "Org fallback" : "Assigned shift"}</div>
+                          <div className="monolith-numeric font-medium text-mono-text">{(rec.expectedMinutes / 60).toFixed(2)}h</div>
+                          <div className="text-xs text-mono-muted">{rec.usedOrgFallback ? "Org fallback" : "Assigned shift"}</div>
                         </DataTableCell>
                         <DataTableCell className="text-right">
-                          <div className="ds-numeric font-semibold text-on-surface">{rec.otHours.toFixed(2)}h</div>
+                          <div className="monolith-numeric font-semibold text-mono-text">{rec.otHours.toFixed(2)}h</div>
                           <div className="text-xs text-emerald-600">₹{rec.otAmount.toFixed(0)}</div>
                         </DataTableCell>
                         <DataTableCell>
@@ -1498,7 +1499,7 @@ export function OtClient({
                             rec.calculationStatus === "VALID"
                               ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700"
                               : rec.calculationStatus === "NO_OVERTIME"
-                              ? "border-outline-variant bg-surface-container-low text-on-surface-variant"
+                              ? "border-mono-border bg-mono-soft text-mono-muted"
                               : "border-amber-500/20 bg-amber-500/10 text-amber-700"
                           )}>
                             {rec.calculationStatus.replace(/_/g, " ")}
@@ -1506,60 +1507,60 @@ export function OtClient({
                         </DataTableCell>
                         <DataTableCell className="text-right">
                           {isExpanded ? (
-                            <ChevronDown className="ml-auto size-4 text-on-surface-variant" />
+                            <ChevronDown className="ml-auto size-4 text-mono-muted" />
                           ) : (
-                            <ChevronRight className="ml-auto size-4 text-on-surface-variant" />
+                            <ChevronRight className="ml-auto size-4 text-mono-muted" />
                           )}
                         </DataTableCell>
                       </DataTableRow>
 
                       {isExpanded ? (
                         <DataTableRow className="hover:bg-transparent">
-                          <DataTableCell colSpan={9} className="bg-surface-container-low/40 px-4 py-4">
+                          <DataTableCell colSpan={9} className="bg-mono-soft/40 px-4 py-4">
                             <div className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-                              <div className="space-y-3 rounded-xl border border-outline-variant/50 bg-surface p-4">
-                                <h4 className="ds-h3 text-primary">Calculation Summary</h4>
+                              <div className="space-y-3 rounded-xl border border-mono-border/50 bg-mono-card p-4">
+                                <h4 className="monolith-h3 text-mono-accent">Calculation Summary</h4>
                                 <div className="grid gap-3 sm:grid-cols-2">
-                                  <div className="rounded-xl bg-surface-container-low p-3">
-                                    <div className="ds-label">Difference From Expected</div>
-                                    <div className="ds-numeric mt-1 text-lg text-on-surface">{(rec.differenceMinutes / 60).toFixed(2)}h</div>
+                                  <div className="rounded-xl bg-mono-soft p-3">
+                                    <div className="monolith-label">Difference From Expected</div>
+                                    <div className="monolith-numeric mt-1 text-lg text-mono-text">{(rec.differenceMinutes / 60).toFixed(2)}h</div>
                                   </div>
-                                  <div className="rounded-xl bg-surface-container-low p-3">
-                                    <div className="ds-label">Early / Late Flags</div>
-                                    <div className="mt-1 text-sm text-on-surface">
+                                  <div className="rounded-xl bg-mono-soft p-3">
+                                    <div className="monolith-label">Early / Late Flags</div>
+                                    <div className="mt-1 text-sm text-mono-text">
                                       {rec.earlyLeavingMins > 0 ? `${rec.earlyLeavingMins} mins early out` : "No early departure"}
                                     </div>
                                   </div>
                                 </div>
-                                <div className="rounded-xl border border-outline-variant/50 bg-surface-container-low p-3 text-sm text-on-surface-variant">
-                                  <p><span className="ds-label">Remarks</span></p>
-                                  <p className="mt-1 text-on-surface">{rec.calculationRemarks || "No calculation remarks."}</p>
+                                <div className="rounded-xl border border-mono-border/50 bg-mono-soft p-3 text-sm text-mono-muted">
+                                  <p><span className="monolith-label">Remarks</span></p>
+                                  <p className="mt-1 text-mono-text">{rec.calculationRemarks || "No calculation remarks."}</p>
                                 </div>
                               </div>
 
-                              <div className="space-y-3 rounded-xl border border-outline-variant/50 bg-surface p-4">
-                                <h4 className="ds-h3 text-primary">All Punch Records</h4>
+                              <div className="space-y-3 rounded-xl border border-mono-border/50 bg-mono-card p-4">
+                                <h4 className="monolith-h3 text-mono-accent">All Punch Records</h4>
                                 {timelineEvents.length === 0 ? (
-                                  <div className="rounded-xl border border-outline-variant/50 bg-surface-container-low p-4 text-sm text-on-surface-variant">
+                                  <div className="rounded-xl border border-mono-border/50 bg-mono-soft p-4 text-sm text-mono-muted">
                                     No raw punch timeline is available for this record.
                                   </div>
                                 ) : (
                                   <div className="space-y-2">
                                     {timelineEvents.map((event, index) => (
-                                      <div key={`${event.punchedAt}-${index}`} className="card-left-accent rounded-xl border border-outline-variant/40 bg-surface-container-low/60 p-3">
+                                      <div key={`${event.punchedAt}-${index}`} className="monolith-card monolith-accent rounded-xl border border-mono-border/40 bg-mono-soft/60 p-3">
                                         <div className="flex items-center justify-between gap-3">
                                           <div>
-                                            <p className="text-sm font-medium text-on-surface">{event.eventType.replace(/_/g, " ")}</p>
-                                            <p className="text-xs text-on-surface-variant">{event.source.toUpperCase()}</p>
+                                            <p className="text-sm font-medium text-mono-text">{event.eventType.replace(/_/g, " ")}</p>
+                                            <p className="text-xs text-mono-muted">{event.source.toUpperCase()}</p>
                                           </div>
                                           <div className="text-right">
-                                            <p className="ds-numeric text-sm text-on-surface">
+                                            <p className="monolith-numeric text-sm text-mono-text">
                                               {new Date(event.punchedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                                             </p>
-                                            <p className="text-xs text-on-surface-variant">{event.status || "VALID"}</p>
+                                            <p className="text-xs text-mono-muted">{event.status || "VALID"}</p>
                                           </div>
                                         </div>
-                                        {event.notes ? <p className="mt-2 text-xs text-on-surface-variant">{event.notes}</p> : null}
+                                        {event.notes ? <p className="mt-2 text-xs text-mono-muted">{event.notes}</p> : null}
                                       </div>
                                     ))}
                                   </div>
@@ -1567,11 +1568,11 @@ export function OtClient({
                               </div>
                             </div>
 
-                            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-outline-variant/50 bg-surface px-4 py-3">
-                              <div className="flex flex-wrap items-center gap-3 text-xs text-on-surface-variant">
-                                <span className="rounded-full bg-surface-container-low px-2 py-1">Punches: <span className="ds-numeric text-on-surface">{rec.totalPunchCount}</span></span>
-                                <span className="rounded-full bg-surface-container-low px-2 py-1">Comp-Off: <span className="ds-numeric text-on-surface">{rec.compOffDays.toFixed(1)}</span></span>
-                                <span className="rounded-full bg-surface-container-low px-2 py-1">Approval: <span className="text-on-surface">{rec.approvalStatus}</span></span>
+                            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-mono-border/50 bg-mono-card px-4 py-3">
+                              <div className="flex flex-wrap items-center gap-3 text-xs text-mono-muted">
+                                <span className="rounded-full bg-mono-soft px-2 py-1">Punches: <span className="monolith-numeric text-mono-text">{rec.totalPunchCount}</span></span>
+                                <span className="rounded-full bg-mono-soft px-2 py-1">Comp-Off: <span className="monolith-numeric text-mono-text">{rec.compOffDays.toFixed(1)}</span></span>
+                                <span className="rounded-full bg-mono-soft px-2 py-1">Approval: <span className="text-mono-text">{rec.approvalStatus}</span></span>
                               </div>
                               <div className="inline-flex gap-1.5">
                                 <Button
@@ -1583,7 +1584,7 @@ export function OtClient({
                                     setAdjustedEarlyMins(rec.earlyLeavingMins);
                                     setAdjustedCompOff(rec.compOffDays);
                                   }}
-                                  className="h-8 w-8 p-0 bg-transparent border border-outline-variant hover:bg-surface-container-high text-on-surface-variant flex items-center justify-center rounded"
+                                  className="h-8 w-8 p-0 bg-transparent border border-mono-border hover:bg-mono-soft text-mono-muted flex items-center justify-center rounded"
                                 >
                                   <Sliders className="size-3.5" />
                                 </Button>
@@ -1636,22 +1637,22 @@ export function OtClient({
       {activeTab === "holidays" && (
         <div className="grid gap-6 lg:grid-cols-3 animate-in fade-in duration-300">
           <div className="lg:col-span-2 space-y-4">
-            <Card className="border-0 shadow-sm bg-surface">
-              <CardHeader className="pb-3 border-b border-outline-variant/60">
-                <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">
+            <Card className="border-0 shadow-sm bg-mono-card">
+              <CardHeader className="pb-3 border-b border-mono-border/60">
+                <CardTitle className="text-base font-bold text-mono-text dark:text-slate-200">
                   Holidays Calendar ({new Date().getFullYear()})
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 {holidays.length === 0 ? (
-                  <div className="text-center text-on-surface-variant/60 py-16 text-sm font-semibold">
+                  <div className="text-center text-mono-muted/60 py-16 text-sm font-semibold">
                     No holidays configured for this year.
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-outline-variant bg-surface-container-high/20 dark:bg-slate-800/10 text-left text-xs text-on-surface-variant/60 font-bold uppercase">
+                        <tr className="border-b border-mono-border bg-mono-soft/20 dark:bg-slate-800/10 text-left text-xs text-mono-muted/60 font-bold uppercase">
                           <th className="p-3.5">Date</th>
                           <th className="p-3.5">Name</th>
                           <th className="p-3.5">Type</th>
@@ -1661,8 +1662,8 @@ export function OtClient({
                       </thead>
                       <tbody className="divide-y divide-outline-variant/40">
                         {holidays.map((h) => (
-                          <tr key={h.id} className="hover:bg-surface-container-high/30 dark:hover:bg-slate-800/10 transition">
-                            <td className="p-3.5 font-bold text-on-surface dark:text-slate-200">
+                          <tr key={h.id} className="hover:bg-mono-soft/30 dark:hover:bg-slate-800/10 transition">
+                            <td className="p-3.5 font-bold text-mono-text dark:text-slate-200">
                               {new Date(h.date).toLocaleDateString("en-IN", {
                                 day: "2-digit",
                                 month: "short",
@@ -1670,19 +1671,19 @@ export function OtClient({
                                 weekday: "short",
                               })}
                             </td>
-                            <td className="p-3.5 font-medium text-on-surface dark:text-on-surface-variant/40">{h.name}</td>
+                            <td className="p-3.5 font-medium text-mono-text dark:text-mono-muted/40">{h.name}</td>
                             <td className="p-3.5">
                               <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border capitalize ${
                                 h.holidayType === "NATIONAL"
                                   ? "bg-red-100 text-red-700 border-red-200"
                                   : h.holidayType === "RESTRICTED"
                                   ? "bg-amber-100 text-amber-700 border-amber-200"
-                                  : "bg-surface-container-high text-on-surface border-outline-variant"
+                                  : "bg-mono-soft text-mono-text border-mono-border"
                               }`}>
                                 {h.holidayType.toLowerCase()}
                               </span>
                             </td>
-                            <td className="p-3.5 text-on-surface-variant font-semibold">{h.branch?.name || "All Branches"}</td>
+                            <td className="p-3.5 text-mono-muted font-semibold">{h.branch?.name || "All Branches"}</td>
                             <td className="p-3.5 text-right">
                               <Button
                                 size="sm"
@@ -1703,56 +1704,56 @@ export function OtClient({
           </div>
 
           <div>
-            <Card className="border-0 shadow-sm border-l-4 border-l-sky-500 bg-surface">
+            <Card className="border-0 shadow-sm border-l-4 border-l-sky-500 bg-mono-card">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">Add Holiday</CardTitle>
+                <CardTitle className="text-base font-bold text-mono-text dark:text-slate-200">Add Holiday</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSaveHoliday} className="space-y-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Date</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60">Date</label>
                     <DateInput
                       required
                       value={holidayDate}
                       onChange={(e) => setHolidayDate(e.target.value)}
-                      className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Holiday Name</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60">Holiday Name</label>
                     <input
                       type="text"
                       required
                       placeholder="e.g. Independence Day"
                       value={holidayName}
                       onChange={(e) => setHolidayName(e.target.value)}
-                      className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Type</label>
-                    <select
+                    <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60">Type</label>
+                    <NativeSelect
                       value={holidayType}
                       onChange={(e) => setHolidayType(e.target.value)}
-                      className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm"
                     >
                       <option value="NATIONAL">National Holiday</option>
                       <option value="COMPANY">Company Holiday</option>
                       <option value="RESTRICTED">Restricted Holiday</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Branch Applicability</label>
-                    <select
+                    <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60">Branch Applicability</label>
+                    <NativeSelect
                       value={holidayBranch}
                       onChange={(e) => setHolidayBranch(e.target.value)}
-                      className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm"
                     >
                       <option value="">All Branches</option>
                       {adminData?.branches.map((b) => (
                         <option key={b.id} value={b.id}>{b.name}</option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   </div>
                   <Button type="submit" disabled={isPending} className="w-full bg-sky-500 hover:bg-sky-600 text-white">
                     {isPending ? "Adding..." : "Add Holiday"}
@@ -1768,22 +1769,22 @@ export function OtClient({
       {activeTab === "lop" && (
         <div className="grid gap-6 lg:grid-cols-3 animate-in fade-in duration-300">
           <div className="lg:col-span-2 space-y-4">
-            <Card className="border-0 shadow-sm bg-surface">
-              <CardHeader className="pb-3 border-b border-outline-variant/60">
-                <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">
+            <Card className="border-0 shadow-sm bg-mono-card">
+              <CardHeader className="pb-3 border-b border-mono-border/60">
+                <CardTitle className="text-base font-bold text-mono-text dark:text-slate-200">
                   Loss of Pay (LOP) Log Sheets
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 {lopRecords.length === 0 ? (
-                  <div className="text-center text-on-surface-variant/60 py-16 text-sm font-semibold">
+                  <div className="text-center text-mono-muted/60 py-16 text-sm font-semibold">
                     No LOP records logged for this month.
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-outline-variant bg-surface-container-high/20 dark:bg-slate-800/10 text-left text-xs text-on-surface-variant/60 font-bold uppercase">
+                        <tr className="border-b border-mono-border bg-mono-soft/20 dark:bg-slate-800/10 text-left text-xs text-mono-muted/60 font-bold uppercase">
                           <th className="p-3.5">Employee</th>
                           <th className="p-3.5 text-right">LOP Days</th>
                           <th className="p-3.5">Remarks</th>
@@ -1792,20 +1793,20 @@ export function OtClient({
                       </thead>
                       <tbody className="divide-y divide-outline-variant/40">
                         {lopRecords.map((r) => (
-                          <tr key={r.id} className="hover:bg-surface-container-high/30 dark:hover:bg-slate-800/10 transition">
+                          <tr key={r.id} className="hover:bg-mono-soft/30 dark:hover:bg-slate-800/10 transition">
                             <td className="p-3.5">
                               <div className="flex items-center gap-2">
-                                <span className="p-1 bg-surface-container-high dark:bg-slate-800 text-on-surface-variant rounded shrink-0">
+                                <span className="p-1 bg-mono-soft dark:bg-slate-800 text-mono-muted rounded shrink-0">
                                   <User className="size-4" />
                                 </span>
                                 <div>
-                                  <span className="font-bold text-on-surface dark:text-slate-200">{r.user.name}</span>
-                                  {r.user.employeeNumber && <span className="text-[10px] text-on-surface-variant/60 font-bold ml-1">#{r.user.employeeNumber}</span>}
+                                  <span className="font-bold text-mono-text dark:text-slate-200">{r.user.name}</span>
+                                  {r.user.employeeNumber && <span className="text-[10px] text-mono-muted/60 font-bold ml-1">#{r.user.employeeNumber}</span>}
                                 </div>
                               </div>
                             </td>
                             <td className="p-3.5 text-right font-black text-rose-600 dark:text-rose-400">{r.lopDays.toFixed(1)} days</td>
-                            <td className="p-3.5 text-xs text-on-surface-variant font-semibold max-w-[200px] truncate">{r.remarks || "—"}</td>
+                            <td className="p-3.5 text-xs text-mono-muted font-semibold max-w-[200px] truncate">{r.remarks || "—"}</td>
                             <td className="p-3.5 text-right">
                               <Button
                                 size="sm"
@@ -1826,28 +1827,28 @@ export function OtClient({
           </div>
 
           <div>
-            <Card className="border-0 shadow-sm border-l-4 border-l-rose-500 bg-surface">
+            <Card className="border-0 shadow-sm border-l-4 border-l-rose-500 bg-mono-card">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">Log LOP Days</CardTitle>
+                <CardTitle className="text-base font-bold text-mono-text dark:text-slate-200">Log LOP Days</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSaveLop} className="space-y-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Employee</label>
-                    <select
+                    <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60">Employee</label>
+                    <NativeSelect
                       required
                       value={lopUser}
                       onChange={(e) => setLopUser(e.target.value)}
-                      className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm"
                     >
                       <option value="">Select Employee</option>
                       {adminData?.employees.map((emp) => (
                         <option key={emp.id} value={emp.id}>{emp.name} ({emp.employeeNumber ? `#${emp.employeeNumber}` : "No ID"})</option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">LOP Days</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60">LOP Days</label>
                     <input
                       type="number"
                       step="0.5"
@@ -1856,17 +1857,17 @@ export function OtClient({
                       placeholder="e.g. 1.0 or 0.5"
                       value={lopDays}
                       onChange={(e) => setLopDays(e.target.value)}
-                      className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">Remarks / Reason</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60">Remarks / Reason</label>
                     <textarea
                       value={lopRemarks}
                       onChange={(e) => setLopRemarks(e.target.value)}
                       placeholder="Sick leave without balance, unpaid leave..."
                       rows={3}
-                      className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm resize-none"
+                      className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm resize-none"
                     />
                   </div>
                   <Button type="submit" disabled={isPending} className="w-full bg-rose-500 hover:bg-rose-600 text-white">
@@ -1882,18 +1883,18 @@ export function OtClient({
       {/* Payroll Summary Tab */}
       {activeTab === "payroll" && (
         <div className="space-y-4 animate-in fade-in duration-300">
-          <Card className="border-0 shadow-sm bg-surface">
-            <CardHeader className="pb-3 border-b border-outline-variant/60 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <Card className="border-0 shadow-sm bg-mono-card">
+            <CardHeader className="pb-3 border-b border-mono-border/60 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">
+                <CardTitle className="text-base font-bold text-mono-text dark:text-slate-200">
                   Consolidated Payroll Summary
                 </CardTitle>
-                <p className="text-xs text-on-surface-variant/60 font-semibold mt-1">Payroll metrics merging Loss of Pay and approved Overtime payouts</p>
+                <p className="text-xs text-mono-muted/60 font-semibold mt-1">Payroll metrics merging Loss of Pay and approved Overtime payouts</p>
               </div>
               <Button
                 onClick={handleExportCsv}
                 disabled={payrollRows.length === 0}
-                className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white dark:bg-surface dark:text-slate-900 dark:hover:bg-surface-container-high text-xs px-3 h-9 rounded-lg"
+                className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white dark:bg-mono-card dark:text-slate-900 dark:hover:bg-mono-soft text-xs px-3 h-9 rounded-lg"
               >
                 <Download className="size-4" />
                 Export to CSV
@@ -1901,14 +1902,14 @@ export function OtClient({
             </CardHeader>
             <CardContent className="p-0">
               {payrollRows.length === 0 ? (
-                <div className="text-center text-on-surface-variant/60 py-20 text-sm font-semibold">
+                <div className="text-center text-mono-muted/60 py-20 text-sm font-semibold">
                   No payroll summary records available for this month. Ensure OT records are approved.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-outline-variant bg-surface-container-high/20 dark:bg-slate-800/10 text-left text-xs text-on-surface-variant/60 font-bold uppercase">
+                      <tr className="border-b border-mono-border bg-mono-soft/20 dark:bg-slate-800/10 text-left text-xs text-mono-muted/60 font-bold uppercase">
                         <th className="p-3.5">Employee ID</th>
                         <th className="p-3.5">Name</th>
                         <th className="p-3.5">Department</th>
@@ -1920,13 +1921,13 @@ export function OtClient({
                     </thead>
                     <tbody className="divide-y divide-outline-variant/40">
                       {payrollRows.map((r, i) => (
-                        <tr key={i} className="hover:bg-surface-container-high/30 dark:hover:bg-slate-800/10 transition">
-                          <td className="p-3.5 font-semibold text-on-surface-variant">#{r.employeeNumber || "N/A"}</td>
-                          <td className="p-3.5 font-bold text-on-surface dark:text-slate-100">{r.employeeName}</td>
-                          <td className="p-3.5 text-on-surface-variant font-semibold">{r.department || "No Department"}</td>
-                          <td className="p-3.5 text-right font-extrabold text-on-surface dark:text-on-surface-variant/40">{r.totalOtHours.toFixed(2)} hrs</td>
+                        <tr key={i} className="hover:bg-mono-soft/30 dark:hover:bg-slate-800/10 transition">
+                          <td className="p-3.5 font-semibold text-mono-muted">#{r.employeeNumber || "N/A"}</td>
+                          <td className="p-3.5 font-bold text-mono-text dark:text-slate-100">{r.employeeName}</td>
+                          <td className="p-3.5 text-mono-muted font-semibold">{r.department || "No Department"}</td>
+                          <td className="p-3.5 text-right font-extrabold text-mono-text dark:text-mono-muted/40">{r.totalOtHours.toFixed(2)} hrs</td>
                           <td className="p-3.5 text-right font-extrabold text-emerald-600 dark:text-emerald-400">₹{r.totalOtAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                          <td className="p-3.5 text-right font-bold text-[#00cec4]">{r.totalCompOffDays.toFixed(1)} days</td>
+                          <td className="p-3.5 text-right font-bold text-[#F9D972]">{r.totalCompOffDays.toFixed(1)} days</td>
                           <td className="p-3.5 text-right font-black text-rose-600 dark:text-rose-400">{r.lopDays.toFixed(1)} days</td>
                         </tr>
                       ))}
@@ -1943,49 +1944,49 @@ export function OtClient({
       {activeTab === "settings" && (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] animate-in fade-in duration-300">
           <div className="space-y-4">
-            <Card className="relative overflow-hidden border border-outline-variant/60 bg-surface shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#00cec4]">
-              <CardHeader className="pb-3 border-b border-outline-variant/60">
-                <CardTitle className="text-base font-semibold text-on-surface">Organisation Working Hours</CardTitle>
+            <Card className="relative overflow-hidden border border-mono-border/60 bg-mono-card shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#F9D972]">
+              <CardHeader className="pb-3 border-b border-mono-border/60">
+                <CardTitle className="text-base font-semibold text-mono-text">Organisation Working Hours</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSaveWorkingCalendar} className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <label className="ds-label">Working Start</label>
-                    <input type="time" value={workingCalendar.workStart} onChange={(e) => setWorkingCalendar({ ...workingCalendar, workStart: e.target.value })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">Working Start</label>
+                    <input type="time" value={workingCalendar.workStart} onChange={(e) => setWorkingCalendar({ ...workingCalendar, workStart: e.target.value })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="space-y-1">
-                    <label className="ds-label">Working End</label>
-                    <input type="time" value={workingCalendar.workEnd} onChange={(e) => setWorkingCalendar({ ...workingCalendar, workEnd: e.target.value })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">Working End</label>
+                    <input type="time" value={workingCalendar.workEnd} onChange={(e) => setWorkingCalendar({ ...workingCalendar, workEnd: e.target.value })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="space-y-1">
-                    <label className="ds-label">Grace Before Start</label>
-                    <input type="number" value={workingCalendar.graceBeforeStartMins} onChange={(e) => setWorkingCalendar({ ...workingCalendar, graceBeforeStartMins: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">Grace Before Start</label>
+                    <input type="number" value={workingCalendar.graceBeforeStartMins} onChange={(e) => setWorkingCalendar({ ...workingCalendar, graceBeforeStartMins: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="space-y-1">
-                    <label className="ds-label">Grace After End</label>
-                    <input type="number" value={workingCalendar.graceAfterEndMins} onChange={(e) => setWorkingCalendar({ ...workingCalendar, graceAfterEndMins: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">Grace After End</label>
+                    <input type="number" value={workingCalendar.graceAfterEndMins} onChange={(e) => setWorkingCalendar({ ...workingCalendar, graceAfterEndMins: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="space-y-1">
-                    <label className="ds-label">Default Working Minutes</label>
-                    <input type="number" value={workingCalendar.defaultWorkingMinutes} onChange={(e) => setWorkingCalendar({ ...workingCalendar, defaultWorkingMinutes: parseInt(e.target.value, 10) || 480 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">Default Working Minutes</label>
+                    <input type="number" value={workingCalendar.defaultWorkingMinutes} onChange={(e) => setWorkingCalendar({ ...workingCalendar, defaultWorkingMinutes: parseInt(e.target.value, 10) || 480 })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="space-y-1">
-                    <label className="ds-label">Minimum OT Minutes</label>
-                    <input type="number" value={workingCalendar.minOvertimeMinutes} onChange={(e) => setWorkingCalendar({ ...workingCalendar, minOvertimeMinutes: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">Minimum OT Minutes</label>
+                    <input type="number" value={workingCalendar.minOvertimeMinutes} onChange={(e) => setWorkingCalendar({ ...workingCalendar, minOvertimeMinutes: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="space-y-1 sm:col-span-2">
-                    <label className="ds-label">Weekly Working Days</label>
-                    <input type="text" value={workingCalendar.workingDays} onChange={(e) => setWorkingCalendar({ ...workingCalendar, workingDays: e.target.value })} placeholder="1,2,3,4,5,6" className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">Weekly Working Days</label>
+                    <input type="text" value={workingCalendar.workingDays} onChange={(e) => setWorkingCalendar({ ...workingCalendar, workingDays: e.target.value })} placeholder="1,2,3,4,5,6" className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="space-y-1 sm:col-span-2">
-                    <label className="ds-label">Default Break Window</label>
+                    <label className="monolith-label">Default Break Window</label>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <input type="time" value={workingCalendar.breaks[0]?.start || ""} onChange={(e) => setWorkingCalendar({ ...workingCalendar, breaks: [{ start: e.target.value, end: workingCalendar.breaks[0]?.end || "14:00" }] })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
-                      <input type="time" value={workingCalendar.breaks[0]?.end || ""} onChange={(e) => setWorkingCalendar({ ...workingCalendar, breaks: [{ start: workingCalendar.breaks[0]?.start || "13:00", end: e.target.value }] })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                      <input type="time" value={workingCalendar.breaks[0]?.start || ""} onChange={(e) => setWorkingCalendar({ ...workingCalendar, breaks: [{ start: e.target.value, end: workingCalendar.breaks[0]?.end || "14:00" }] })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
+                      <input type="time" value={workingCalendar.breaks[0]?.end || ""} onChange={(e) => setWorkingCalendar({ ...workingCalendar, breaks: [{ start: workingCalendar.breaks[0]?.start || "13:00", end: e.target.value }] })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                     </div>
                   </div>
                   <div className="sm:col-span-2">
-                    <Button type="submit" disabled={isPending} className="w-full bg-[#00cec4] hover:bg-[#00b2a9] text-white">
+                    <Button type="submit" disabled={isPending} className="w-full bg-[#F9D972] hover:bg-[#00b2a9] text-white">
                       {isPending ? "Saving working hours..." : "Save Organisation Hours"}
                     </Button>
                   </div>
@@ -1993,56 +1994,56 @@ export function OtClient({
               </CardContent>
             </Card>
 
-            <Card className="relative overflow-hidden border border-outline-variant/60 bg-surface shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#00cec4]">
-              <CardHeader className="pb-3 border-b border-outline-variant/60">
-                <CardTitle className="text-base font-semibold text-on-surface">Shift Management</CardTitle>
+            <Card className="relative overflow-hidden border border-mono-border/60 bg-mono-card shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#F9D972]">
+              <CardHeader className="pb-3 border-b border-mono-border/60">
+                <CardTitle className="text-base font-semibold text-mono-text">Shift Management</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <form onSubmit={handleSaveShift} className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1 sm:col-span-2">
-                    <label className="ds-label">Shift Name</label>
-                    <input type="text" value={shiftForm.name} onChange={(e) => setShiftForm({ ...shiftForm, name: e.target.value })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">Shift Name</label>
+                    <input type="text" value={shiftForm.name} onChange={(e) => setShiftForm({ ...shiftForm, name: e.target.value })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="space-y-1">
-                    <label className="ds-label">Start Time</label>
-                    <input type="time" value={shiftForm.startTime} onChange={(e) => setShiftForm({ ...shiftForm, startTime: e.target.value })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">Start Time</label>
+                    <input type="time" value={shiftForm.startTime} onChange={(e) => setShiftForm({ ...shiftForm, startTime: e.target.value })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="space-y-1">
-                    <label className="ds-label">End Time</label>
-                    <input type="time" value={shiftForm.endTime} onChange={(e) => setShiftForm({ ...shiftForm, endTime: e.target.value })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">End Time</label>
+                    <input type="time" value={shiftForm.endTime} onChange={(e) => setShiftForm({ ...shiftForm, endTime: e.target.value })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="space-y-1">
-                    <label className="ds-label">Expected Minutes</label>
-                    <input type="number" value={shiftForm.expectedWorkingMinutes} onChange={(e) => setShiftForm({ ...shiftForm, expectedWorkingMinutes: parseInt(e.target.value, 10) || 480 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">Expected Minutes</label>
+                    <input type="number" value={shiftForm.expectedWorkingMinutes} onChange={(e) => setShiftForm({ ...shiftForm, expectedWorkingMinutes: parseInt(e.target.value, 10) || 480 })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="space-y-1">
-                    <label className="ds-label">Minimum OT Minutes</label>
-                    <input type="number" value={shiftForm.minOvertimeMinutes} onChange={(e) => setShiftForm({ ...shiftForm, minOvertimeMinutes: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">Minimum OT Minutes</label>
+                    <input type="number" value={shiftForm.minOvertimeMinutes} onChange={(e) => setShiftForm({ ...shiftForm, minOvertimeMinutes: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="space-y-1">
-                    <label className="ds-label">Grace Before Start</label>
-                    <input type="number" value={shiftForm.graceBeforeStartMins} onChange={(e) => setShiftForm({ ...shiftForm, graceBeforeStartMins: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">Grace Before Start</label>
+                    <input type="number" value={shiftForm.graceBeforeStartMins} onChange={(e) => setShiftForm({ ...shiftForm, graceBeforeStartMins: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="space-y-1">
-                    <label className="ds-label">Grace After End</label>
-                    <input type="number" value={shiftForm.graceAfterEndMins} onChange={(e) => setShiftForm({ ...shiftForm, graceAfterEndMins: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">Grace After End</label>
+                    <input type="number" value={shiftForm.graceAfterEndMins} onChange={(e) => setShiftForm({ ...shiftForm, graceAfterEndMins: parseInt(e.target.value, 10) || 0 })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="space-y-1 sm:col-span-2">
-                    <label className="ds-label">Working Days</label>
-                    <input type="text" value={shiftForm.workingDays} onChange={(e) => setShiftForm({ ...shiftForm, workingDays: e.target.value })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">Working Days</label>
+                    <input type="text" value={shiftForm.workingDays} onChange={(e) => setShiftForm({ ...shiftForm, workingDays: e.target.value })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="sm:col-span-2 flex items-center gap-5">
-                    <label className="flex items-center gap-2 text-sm text-on-surface">
+                    <label className="flex items-center gap-2 text-sm text-mono-text">
                       <input type="checkbox" checked={shiftForm.isActive} onChange={(e) => setShiftForm({ ...shiftForm, isActive: e.target.checked })} />
                       Active
                     </label>
-                    <label className="flex items-center gap-2 text-sm text-on-surface">
+                    <label className="flex items-center gap-2 text-sm text-mono-text">
                       <input type="checkbox" checked={shiftForm.isDefault} onChange={(e) => setShiftForm({ ...shiftForm, isDefault: e.target.checked })} />
                       Default shift
                     </label>
                   </div>
                   <div className="sm:col-span-2 flex gap-3">
-                    <Button type="submit" disabled={isPending} className="bg-[#00cec4] hover:bg-[#00b2a9] text-white">
+                    <Button type="submit" disabled={isPending} className="bg-[#F9D972] hover:bg-[#00b2a9] text-white">
                       {shiftForm.id ? "Update Shift" : "Create Shift"}
                     </Button>
                     <Button type="button" variant="outline" onClick={resetShiftForm}>
@@ -2051,9 +2052,9 @@ export function OtClient({
                   </div>
                 </form>
 
-                <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface">
+                <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card">
                   <div className="overflow-x-auto">
-                    <table className="ds-table">
+                    <table className="monolith-table">
                       <thead>
                         <tr>
                           <th>Name</th>
@@ -2065,10 +2066,10 @@ export function OtClient({
                       </thead>
                       <tbody>
                         {shifts.map((shift) => (
-                          <tr key={shift.id} className="ds-row-link" onClick={() => setShiftForm({ ...shift, breakRules: shift.breakRules || [] })}>
+                          <tr key={shift.id} className="monolith-row-link" onClick={() => setShiftForm({ ...shift, breakRules: shift.breakRules || [] })}>
                             <td className="font-medium">{shift.name}</td>
-                            <td className="ds-numeric">{shift.startTime} - {shift.endTime}</td>
-                            <td className="ds-numeric">{shift.expectedWorkingMinutes} mins</td>
+                            <td className="monolith-numeric">{shift.startTime} - {shift.endTime}</td>
+                            <td className="monolith-numeric">{shift.expectedWorkingMinutes} mins</td>
                             <td>{shift.isActive ? "ACTIVE" : "INACTIVE"}</td>
                             <td>{shift.isDefault ? "YES" : "NO"}</td>
                           </tr>
@@ -2080,35 +2081,35 @@ export function OtClient({
               </CardContent>
             </Card>
 
-            <Card className="relative overflow-hidden border border-outline-variant/60 bg-surface shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#00cec4]">
-              <CardHeader className="pb-3 border-b border-outline-variant/60">
-                <CardTitle className="text-base font-semibold text-on-surface">Employee Shift Assignment</CardTitle>
+            <Card className="relative overflow-hidden border border-mono-border/60 bg-mono-card shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#F9D972]">
+              <CardHeader className="pb-3 border-b border-mono-border/60">
+                <CardTitle className="text-base font-semibold text-mono-text">Employee Shift Assignment</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleAssignShift} className="grid gap-4 sm:grid-cols-3">
-                  <select value={shiftAssignmentUserId} onChange={(e) => setShiftAssignmentUserId(e.target.value)} className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm">
+                  <NativeSelect value={shiftAssignmentUserId} onChange={(e) => setShiftAssignmentUserId(e.target.value)} className="rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm">
                     <option value="">Select employee</option>
                     {adminData?.employees.map((employee) => (
                       <option key={employee.id} value={employee.id}>{employee.name}</option>
                     ))}
-                  </select>
-                  <select value={shiftAssignmentShiftId} onChange={(e) => setShiftAssignmentShiftId(e.target.value)} className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm">
+                  </NativeSelect>
+                  <NativeSelect value={shiftAssignmentShiftId} onChange={(e) => setShiftAssignmentShiftId(e.target.value)} className="rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm">
                     <option value="">Select shift</option>
                     {shifts.filter((shift) => shift.isActive).map((shift) => (
                       <option key={shift.id} value={shift.id}>{shift.name}</option>
                     ))}
-                  </select>
-                  <DateInput value={shiftAssignmentStartDate} onChange={(e) => setShiftAssignmentStartDate(e.target.value)} className="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                  </NativeSelect>
+                  <DateInput value={shiftAssignmentStartDate} onChange={(e) => setShiftAssignmentStartDate(e.target.value)} className="rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   <div className="sm:col-span-3">
-                    <Button type="submit" disabled={isPending} className="bg-[#00cec4] hover:bg-[#00b2a9] text-white">
+                    <Button type="submit" disabled={isPending} className="bg-[#F9D972] hover:bg-[#00b2a9] text-white">
                       Save Shift Assignment
                     </Button>
                   </div>
                 </form>
 
-                <div className="mt-4 overflow-hidden rounded-xl border border-outline-variant bg-surface">
+                <div className="mt-4 overflow-hidden rounded-xl border border-mono-border bg-mono-card">
                   <div className="overflow-x-auto">
-                    <table className="ds-table">
+                    <table className="monolith-table">
                       <thead>
                         <tr>
                           <th>Employee</th>
@@ -2123,7 +2124,7 @@ export function OtClient({
                             <tr key={employee.id}>
                               <td className="font-medium">{employee.name}</td>
                               <td>{assignment?.shift.name || "Organisation Working Hours"}</td>
-                              <td className="ds-numeric">{assignment?.startDate ? new Date(assignment.startDate).toLocaleDateString("en-IN") : "—"}</td>
+                              <td className="monolith-numeric">{assignment?.startDate ? new Date(assignment.startDate).toLocaleDateString("en-IN") : "—"}</td>
                             </tr>
                           );
                         })}
@@ -2136,38 +2137,38 @@ export function OtClient({
           </div>
 
           <div className="space-y-4">
-            <Card className="relative overflow-hidden border border-outline-variant/60 bg-surface shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#00cec4]">
+            <Card className="relative overflow-hidden border border-mono-border/60 bg-mono-card shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#F9D972]">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-on-surface">OT Rate & Comp-Off Rules</CardTitle>
+                <CardTitle className="text-base font-semibold text-mono-text">OT Rate & Comp-Off Rules</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSaveSettings} className="space-y-4">
                   <div className="space-y-1">
-                    <label className="ds-label">Standard Shift Hours</label>
-                    <input type="number" step="0.5" required value={otSettings.standardHours} onChange={(e) => setOtSettings({ ...otSettings, standardHours: parseFloat(e.target.value) || 8.0 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">Standard Shift Hours</label>
+                    <input type="number" step="0.5" required value={otSettings.standardHours} onChange={(e) => setOtSettings({ ...otSettings, standardHours: parseFloat(e.target.value) || 8.0 })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="space-y-1">
-                    <label className="ds-label">OT Multiplier</label>
-                    <input type="number" step="0.1" required value={otSettings.otRate} onChange={(e) => setOtSettings({ ...otSettings, otRate: parseFloat(e.target.value) || 1.5 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">OT Multiplier</label>
+                    <input type="number" step="0.1" required value={otSettings.otRate} onChange={(e) => setOtSettings({ ...otSettings, otRate: parseFloat(e.target.value) || 1.5 })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
                   <div className="space-y-1">
-                    <label className="ds-label">Legacy Grace Minutes</label>
-                    <input type="number" required value={otSettings.graceMinutes} onChange={(e) => setOtSettings({ ...otSettings, graceMinutes: parseInt(e.target.value, 10) || 15 })} className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm" />
+                    <label className="monolith-label">Legacy Grace Minutes</label>
+                    <input type="number" required value={otSettings.graceMinutes} onChange={(e) => setOtSettings({ ...otSettings, graceMinutes: parseInt(e.target.value, 10) || 15 })} className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm" />
                   </div>
-                  <Button type="submit" disabled={isPending} className="w-full bg-[#00cec4] hover:bg-[#00b2a9] text-white">
+                  <Button type="submit" disabled={isPending} className="w-full bg-[#F9D972] hover:bg-[#00b2a9] text-white">
                     {isPending ? "Saving..." : "Save OT Rate Rules"}
                   </Button>
                 </form>
               </CardContent>
             </Card>
 
-            <Card className="relative overflow-hidden border border-outline-variant/60 bg-surface shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#00cec4]">
-              <CardHeader className="pb-3 border-b border-outline-variant/60">
-                <CardTitle className="text-base font-semibold text-on-surface">Comp-Off Slabs</CardTitle>
+            <Card className="relative overflow-hidden border border-mono-border/60 bg-mono-card shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#F9D972]">
+              <CardHeader className="pb-3 border-b border-mono-border/60">
+                <CardTitle className="text-base font-semibold text-mono-text">Comp-Off Slabs</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 {slabs.length === 0 ? (
-                  <div className="py-16 text-center text-sm text-on-surface-variant">No compensation slabs defined.</div>
+                  <div className="py-16 text-center text-sm text-mono-muted">No compensation slabs defined.</div>
                 ) : (
                   <DataTable className="rounded-none border-0 shadow-none">
                     <DataTableHeader>
@@ -2192,12 +2193,12 @@ export function OtClient({
                     </DataTableBody>
                   </DataTable>
                 )}
-                <div className="flex items-center gap-3 border-t border-outline-variant/60 bg-surface-container-low/40 p-4">
+                <div className="flex items-center gap-3 border-t border-mono-border/60 bg-mono-soft/40 p-4">
                   <div className="flex flex-1 gap-2">
-                    <input type="number" placeholder="Min hours worked" value={newSlabMinHours} onChange={(e) => setNewSlabMinHours(e.target.value)} className="flex-1 rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant" />
-                    <input type="number" step="0.5" placeholder="Comp-off days" value={newSlabDays} onChange={(e) => setNewSlabDays(e.target.value)} className="flex-1 rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant" />
+                    <input type="number" placeholder="Min hours worked" value={newSlabMinHours} onChange={(e) => setNewSlabMinHours(e.target.value)} className="flex-1 rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm text-mono-text placeholder:text-mono-muted" />
+                    <input type="number" step="0.5" placeholder="Comp-off days" value={newSlabDays} onChange={(e) => setNewSlabDays(e.target.value)} className="flex-1 rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm text-mono-text placeholder:text-mono-muted" />
                   </div>
-                  <Button onClick={handleAddSlab} className="flex h-9 items-center gap-1 bg-[#00cec4] px-3 text-sm text-white hover:bg-[#00b2a9]">
+                  <Button onClick={handleAddSlab} className="flex h-9 items-center gap-1 bg-[#F9D972] px-3 text-sm text-white hover:bg-[#00b2a9]">
                     <Plus className="size-3.5" /> Add
                   </Button>
                 </div>
@@ -2211,18 +2212,18 @@ export function OtClient({
       {activeTab === "import" && (
         <div className="space-y-6 animate-in fade-in duration-300">
           <div className="grid gap-6 lg:grid-cols-3">
-            <Card className="border-0 shadow-sm bg-surface lg:col-span-2">
-                <CardHeader className="pb-3 border-b border-outline-variant/60">
-                  <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">
+            <Card className="border-0 shadow-sm bg-mono-card lg:col-span-2">
+                <CardHeader className="pb-3 border-b border-mono-border/60">
+                  <CardTitle className="text-base font-bold text-mono-text dark:text-slate-200">
                   Upload Attendance Punch Log
                   </CardTitle>
-                  <p className="text-xs text-on-surface-variant/60 font-semibold mt-1">
+                  <p className="text-xs text-mono-muted/60 font-semibold mt-1">
                   Upload a raw punch card log in CSV, XLS, or XLSX format. For your Early/Late workbook, columns A-G are imported and the remaining columns are ignored.
                   </p>
                 </CardHeader>
               <CardContent className="p-6 space-y-6">
                 {/* Upload File Input */}
-                <div className="border-2 border-dashed border-outline-variant/60 hover:border-[#00cec4]/50 rounded-2xl p-8 text-center transition bg-surface-container-high/20 dark:bg-slate-900/10 cursor-pointer relative">
+                <div className="border-2 border-dashed border-mono-border/60 hover:border-[#F9D972]/50 rounded-2xl p-8 text-center transition bg-mono-soft/20 dark:bg-slate-900/10 cursor-pointer relative">
                   <input
                     type="file"
                     accept=".csv,.xls,.xlsx"
@@ -2230,124 +2231,124 @@ export function OtClient({
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
                   <div className="space-y-2">
-                    <div className="mx-auto w-12 h-12 rounded-full bg-surface-container-high dark:bg-slate-800 flex items-center justify-center text-on-surface-variant/60">
-                      <Download className="size-6 rotate-180 text-[#00cec4]" />
+                    <div className="mx-auto w-12 h-12 rounded-full bg-mono-soft dark:bg-slate-800 flex items-center justify-center text-mono-muted/60">
+                      <Download className="size-6 rotate-180 text-[#F9D972]" />
                     </div>
-                    <div className="text-sm font-bold text-on-surface dark:text-slate-200">
+                    <div className="text-sm font-bold text-mono-text dark:text-slate-200">
                       {csvFileName ? `Selected File: ${csvFileName}` : "Drag & Drop CSV/Excel file or click to select"}
                     </div>
-                    <p className="text-xs text-on-surface-variant/60">Supports `.csv`, `.xls`, and `.xlsx`. Early/Late Excel imports use only columns A-G.</p>
+                    <p className="text-xs text-mono-muted/60">Supports `.csv`, `.xls`, and `.xlsx`. Early/Late Excel imports use only columns A-G.</p>
                   </div>
                 </div>
 
                 {/* Column Mapping Section */}
                 {csvHeaders.length > 0 && (
-                  <div className="space-y-4 border border-outline-variant/60 rounded-xl p-4 bg-surface">
-                    <h4 className="text-sm font-black text-on-surface dark:text-white flex items-center gap-1.5">
-                      <Sliders className="size-4 text-[#00cec4]" /> Map Imported Columns to Attendance Variables
+                  <div className="space-y-4 border border-mono-border/60 rounded-xl p-4 bg-mono-card">
+                    <h4 className="text-sm font-black text-mono-text dark:text-white flex items-center gap-1.5">
+                      <Sliders className="size-4 text-[#F9D972]" /> Map Imported Columns to Attendance Variables
                     </h4>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60 flex items-center justify-between">
                           Employee Number / ID
-                          <span className="text-[9px] text-[#00cec4] font-black uppercase">(Matches ID)</span>
+                          <span className="text-[9px] text-[#F9D972] font-black uppercase">(Matches ID)</span>
                         </label>
-                        <select
+                        <NativeSelect
                           value={importMappings.employeeNumber}
                           onChange={(e) => setImportMappings({ ...importMappings, employeeNumber: e.target.value })}
-                          className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
+                          className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm"
                         >
                           <option value="">-- Don&apos;t Map / Optional --</option>
                           {csvHeaders.map((h) => <option key={h} value={h}>{h}</option>)}
-                        </select>
+                        </NativeSelect>
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60 flex items-center justify-between">
                           Official Email Address
-                          <span className="text-[9px] text-[#00cec4] font-black uppercase">(Matches Email)</span>
+                          <span className="text-[9px] text-[#F9D972] font-black uppercase">(Matches Email)</span>
                         </label>
-                        <select
+                        <NativeSelect
                           value={importMappings.officialEmail}
                           onChange={(e) => setImportMappings({ ...importMappings, officialEmail: e.target.value })}
-                          className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
+                          className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm"
                         >
                           <option value="">-- Don&apos;t Map / Optional --</option>
                           {csvHeaders.map((h) => <option key={h} value={h}>{h}</option>)}
-                        </select>
+                        </NativeSelect>
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60 flex items-center justify-between">
                           Employee Name
-                          <span className="text-[9px] text-[#00cec4] font-black uppercase">(Matches Name)</span>
+                          <span className="text-[9px] text-[#F9D972] font-black uppercase">(Matches Name)</span>
                         </label>
-                        <select
+                        <NativeSelect
                           value={importMappings.employeeName}
                           onChange={(e) => setImportMappings({ ...importMappings, employeeName: e.target.value })}
-                          className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
+                          className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm"
                         >
                           <option value="">-- Don&apos;t Map / Optional --</option>
                           {csvHeaders.map((h) => <option key={h} value={h}>{h}</option>)}
-                        </select>
+                        </NativeSelect>
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60 flex items-center justify-between">
                           Attendance Date *
                           <span className="text-[9px] text-rose-500 font-black uppercase">(Required)</span>
                         </label>
-                        <select
+                        <NativeSelect
                           value={importMappings.attendanceDate}
                           onChange={(e) => setImportMappings({ ...importMappings, attendanceDate: e.target.value })}
                           required
-                          className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm border-rose-200"
+                          className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm border-rose-200"
                         >
                           <option value="">-- Select Column --</option>
                           {csvHeaders.map((h) => <option key={h} value={h}>{h}</option>)}
-                        </select>
+                        </NativeSelect>
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60 flex items-center justify-between">
                           Check-in / Clock-in Time
                         </label>
-                        <select
+                        <NativeSelect
                           value={importMappings.checkIn}
                           onChange={(e) => setImportMappings({ ...importMappings, checkIn: e.target.value })}
-                          className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
+                          className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm"
                         >
                           <option value="">-- Don&apos;t Map / Optional --</option>
                           {csvHeaders.map((h) => <option key={h} value={h}>{h}</option>)}
-                        </select>
+                        </NativeSelect>
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60 flex items-center justify-between">
                           Check-out / Clock-out Time
                         </label>
-                        <select
+                        <NativeSelect
                           value={importMappings.checkOut}
                           onChange={(e) => setImportMappings({ ...importMappings, checkOut: e.target.value })}
-                          className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
+                          className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm"
                         >
                           <option value="">-- Don&apos;t Map / Optional --</option>
                           {csvHeaders.map((h) => <option key={h} value={h}>{h}</option>)}
-                        </select>
+                        </NativeSelect>
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant/60 flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-mono-muted/60 flex items-center justify-between">
                           Total Hours Worked
                         </label>
-                        <select
+                        <NativeSelect
                           value={importMappings.totalHours}
                           onChange={(e) => setImportMappings({ ...importMappings, totalHours: e.target.value })}
-                          className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
+                          className="w-full rounded-lg border border-mono-border bg-mono-card px-3 py-2 text-sm"
                         >
                           <option value="">-- Don&apos;t Map / Auto-calculate --</option>
                           {csvHeaders.map((h) => <option key={h} value={h}>{h}</option>)}
-                        </select>
+                        </NativeSelect>
                       </div>
                     </div>
 
@@ -2373,7 +2374,7 @@ export function OtClient({
                           });
                         }}
                         disabled={isPending}
-                        className="bg-[#00cec4] hover:bg-[#00b2a9] text-white flex items-center gap-1.5"
+                        className="bg-[#F9D972] hover:bg-[#00b2a9] text-white flex items-center gap-1.5"
                       >
                         <Check className="size-4" /> Import and Calculate OT
                       </Button>
@@ -2385,13 +2386,13 @@ export function OtClient({
 
             {/* Import Information and Summary Panel */}
             <div className="space-y-4">
-              <Card className="border-0 shadow-sm border-l-4 border-l-[#00cec4] bg-surface">
+              <Card className="border-0 shadow-sm border-l-4 border-l-[#F9D972] bg-mono-card">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-bold text-on-surface dark:text-slate-200">
+                  <CardTitle className="text-base font-bold text-mono-text dark:text-slate-200">
                     Import Information
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="text-xs text-on-surface-variant dark:text-on-surface-variant/60 space-y-2 leading-relaxed font-semibold">
+                <CardContent className="text-xs text-mono-muted dark:text-mono-muted/60 space-y-2 leading-relaxed font-semibold">
                   <p>
                     • Employees are matched dynamically using a fallback hierarchy: first by **Employee Number / ID**, then by **Official Email**, and finally by **Exact Name**.
                   </p>
@@ -2405,15 +2406,15 @@ export function OtClient({
                     • Check-in and check-out values support 24-hour time strings (`18:30:00`) or meridiem-tagged time strings (`06:30 PM`).
                   </p>
                   <p>
-                    • Smaller imports recalculate OT inline. Large imports return the punch import summary first and let you run <span className="ds-numeric">Recompute Month OT Records</span> separately for a faster and more reliable result.
+                    • Smaller imports recalculate OT inline. Large imports return the punch import summary first and let you run <span className="monolith-numeric">Recompute Month OT Records</span> separately for a faster and more reliable result.
                   </p>
                 </CardContent>
               </Card>
 
               {importSummary && (
-                <Card className="border-0 shadow-sm bg-surface animate-in zoom-in-95 duration-200">
+                <Card className="border-0 shadow-sm bg-mono-card animate-in zoom-in-95 duration-200">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-bold text-on-surface dark:text-slate-200">
+                    <CardTitle className="text-sm font-bold text-mono-text dark:text-slate-200">
                       Import Statistics Summary
                     </CardTitle>
                   </CardHeader>
@@ -2421,27 +2422,27 @@ export function OtClient({
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div className="p-2 bg-emerald-500/10 rounded-lg">
                         <div className="text-lg font-black text-emerald-600 dark:text-emerald-400">{importSummary.imported}</div>
-                        <div className="text-[10px] text-on-surface-variant/60 font-bold">Imported</div>
+                        <div className="text-[10px] text-mono-muted/60 font-bold">Imported</div>
                       </div>
                       <div className="p-2 bg-blue-500/10 rounded-lg">
                         <div className="text-lg font-black text-blue-600 dark:text-blue-400">{importSummary.updated}</div>
-                        <div className="text-[10px] text-on-surface-variant/60 font-bold">Updated</div>
+                        <div className="text-[10px] text-mono-muted/60 font-bold">Updated</div>
                       </div>
                       <div className="p-2 bg-rose-500/10 rounded-lg">
                         <div className="text-lg font-black text-rose-600 dark:text-rose-400">{importSummary.skipped}</div>
-                        <div className="text-[10px] text-on-surface-variant/60 font-bold">Skipped</div>
+                        <div className="text-[10px] text-mono-muted/60 font-bold">Skipped</div>
                       </div>
                     </div>
 
                     {importSummary.recalculationDeferred ? (
-                      <div className="rounded-xl border border-[#fb923c]/35 bg-[#fb923c]/10 p-3 text-xs font-semibold text-[#fb923c]">
-                        Large file import completed without inline OT recalculation to avoid the page hanging. Use <span className="ds-numeric">Recompute Month OT Records</span> for {importSummary.touchedMonths?.join(", ") || selectedMonth}.
+                      <div className="rounded-xl border border-[#D88700]/35 bg-[#D88700]/10 p-3 text-xs font-semibold text-[#D88700]">
+                        Large file import completed without inline OT recalculation to avoid the page hanging. Use <span className="monolith-numeric">Recompute Month OT Records</span> for {importSummary.touchedMonths?.join(", ") || selectedMonth}.
                       </div>
                     ) : null}
 
                     {importSummary.errors.length > 0 && (
                       <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase text-on-surface-variant/60 tracking-wider">Errors/Logs (Max 50):</label>
+                        <label className="text-[10px] font-black uppercase text-mono-muted/60 tracking-wider">Errors/Logs (Max 50):</label>
                         <div className="max-h-[150px] overflow-y-auto border border-rose-200/50 rounded-lg p-2 bg-rose-500/5 text-[10px] text-rose-600 font-mono space-y-1">
                           {importSummary.errors.map((err, i) => (
                             <div key={i}>{err}</div>
@@ -2460,13 +2461,13 @@ export function OtClient({
       {/* Adjustments Modal Overlay */}
       {adjustingRecord && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-surface rounded-2xl border border-outline-variant max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-5 border-b border-outline-variant/60">
-              <h3 className="text-base font-bold text-on-surface dark:text-white flex items-center gap-2">
-                <Sliders className="size-5 text-[#00cec4]" />
+          <div className="bg-mono-card rounded-2xl border border-mono-border max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-5 border-b border-mono-border/60">
+              <h3 className="text-base font-bold text-mono-text dark:text-white flex items-center gap-2">
+                <Sliders className="size-5 text-[#F9D972]" />
                 Manual Calculation Overrides
               </h3>
-              <p className="text-xs text-on-surface-variant/60 font-semibold mt-1">
+              <p className="text-xs text-mono-muted/60 font-semibold mt-1">
                 For {adjustingRecord.user.name} on {new Date(adjustingRecord.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
               </p>
             </div>
@@ -2480,22 +2481,22 @@ export function OtClient({
                 const daysInMonth = new Date(new Date(adjustingRecord.date).getFullYear(), new Date(adjustingRecord.date).getMonth() + 1, 0).getDate();
                 const monthlyGross = ctc ? ctc / 12 : 0;
                 return (
-                  <div className="rounded-xl border border-outline-variant bg-surface-container-low/50 px-3 py-2 text-[11px] leading-relaxed select-none">
-                    <span className="font-semibold text-on-surface">Rate Review:</span>
-                    <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-on-surface-variant font-medium">
-                      <div>Gross Salary: <span className="font-semibold font-mono text-on-surface">{ctc ? `₹${monthlyGross.toLocaleString("en-IN", { minimumFractionDigits: 2 })}/mo` : "N/A"}</span></div>
-                      <div>Days in Month: <span className="font-semibold font-mono text-on-surface">{daysInMonth}</span></div>
+                  <div className="rounded-xl border border-mono-border bg-mono-soft/50 px-3 py-2 text-[11px] leading-relaxed select-none">
+                    <span className="font-semibold text-mono-text">Rate Review:</span>
+                    <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-mono-muted font-medium">
+                      <div>Gross Salary: <span className="font-semibold font-mono text-mono-text">{ctc ? `₹${monthlyGross.toLocaleString("en-IN", { minimumFractionDigits: 2 })}/mo` : "N/A"}</span></div>
+                      <div>Days in Month: <span className="font-semibold font-mono text-mono-text">{daysInMonth}</span></div>
                       <div>Minute Salary: <span className="font-semibold font-mono text-emerald-600">₹{minSalary.toFixed(4)}/min</span></div>
-                      <div>OT Multiplier: <span className="font-semibold font-mono text-on-surface">{otSettings.otRate}x</span></div>
+                      <div>OT Multiplier: <span className="font-semibold font-mono text-mono-text">{otSettings.otRate}x</span></div>
                     </div>
                   </div>
                 );
               })()}
 
               <div className="space-y-1.5">
-                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">
+                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-mono-muted/60">
                   <span>Overtime Minutes</span>
-                  <span className="text-on-surface dark:text-white font-black">{adjustedMins} mins ({(adjustedMins / 60).toFixed(2)} hrs)</span>
+                  <span className="text-mono-text dark:text-white font-black">{adjustedMins} mins ({(adjustedMins / 60).toFixed(2)} hrs)</span>
                 </div>
                 <input
                   type="range"
@@ -2504,14 +2505,14 @@ export function OtClient({
                   step="15"
                   value={adjustedMins}
                   onChange={(e) => setAdjustedMins(parseInt(e.target.value, 10))}
-                  className="w-full accent-[#00cec4]"
+                  className="w-full accent-[#F9D972]"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">
+                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-mono-muted/60">
                   <span>Early Leaving Minutes</span>
-                  <span className="text-on-surface dark:text-white font-black">{adjustedEarlyMins} mins</span>
+                  <span className="text-mono-text dark:text-white font-black">{adjustedEarlyMins} mins</span>
                 </div>
                 <input
                   type="range"
@@ -2525,9 +2526,9 @@ export function OtClient({
               </div>
 
               <div className="space-y-1.5">
-                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-on-surface-variant/60">
+                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-mono-muted/60">
                   <span>Comp-Off Days</span>
-                  <span className="text-on-surface dark:text-white font-black">{adjustedCompOff.toFixed(1)} days</span>
+                  <span className="text-mono-text dark:text-white font-black">{adjustedCompOff.toFixed(1)} days</span>
                 </div>
                 <input
                   type="range"
@@ -2536,17 +2537,17 @@ export function OtClient({
                   step="0.5"
                   value={adjustedCompOff}
                   onChange={(e) => setAdjustedCompOff(parseFloat(e.target.value))}
-                  className="w-full accent-[#00cec4]"
+                  className="w-full accent-[#F9D972]"
                 />
               </div>
             </div>
 
-            <div className="p-4 bg-surface-container-high dark:bg-slate-900/40 border-t border-outline-variant/60 flex justify-end gap-2.5">
+            <div className="p-4 bg-mono-soft dark:bg-slate-900/40 border-t border-mono-border/60 flex justify-end gap-2.5">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => setAdjustingRecord(null)}
-                className="text-xs h-9 px-4 border-outline-variant text-on-surface-variant hover:bg-surface-container-high"
+                className="text-xs h-9 px-4 border-mono-border text-mono-muted hover:bg-mono-soft"
               >
                 Cancel
               </Button>
@@ -2554,7 +2555,7 @@ export function OtClient({
                 size="sm"
                 onClick={handleSaveAdjustments}
                 disabled={isPending}
-                className="bg-[#00cec4] hover:bg-[#00b2a9] text-white text-xs h-9 px-4 flex items-center gap-1.5"
+                className="bg-[#F9D972] hover:bg-[#00b2a9] text-white text-xs h-9 px-4 flex items-center gap-1.5"
               >
                 {isPending ? "Applying..." : "Save Overrides"}
               </Button>

@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Modal } from "@/components/ui/modal";
+import { Button } from "@/components/monolith/button";
+import { Modal } from "@/components/monolith/modal";
 import { submitJobDeletionAction } from "@/modules/cha/actions";
 
 type JobDeleteInlineButtonProps = {
@@ -95,7 +95,7 @@ export function JobDeleteInlineButton({
       <Modal
         open={open}
         title="Delete CHA Job"
-        titleClassName="font-[family:var(--font-kiona-sans)] tracking-[0.12em]"
+        titleClassName="font-[family:var(--font-geist-sans)] tracking-[0.12em]"
         description={`Confirm deletion for ${jobNumber}. This may affect related CHA workflow records and cannot be undone from the UI.`}
         onClose={resetState}
         className="max-w-2xl"
@@ -104,10 +104,10 @@ export function JobDeleteInlineButton({
           <div className="rounded-2xl border border-red-200/70 bg-red-50/70 p-4 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
             <p>Type these exact values to continue:</p>
             <p className="mt-1">
-              Job number: <span className="text-on-surface">{jobNumber}</span>
+              Job number: <span className="text-mono-text">{jobNumber}</span>
             </p>
             <p>
-              Confirmation phrase: <span className="text-on-surface">delete job</span>
+              Confirmation phrase: <span className="text-mono-text">delete job</span>
             </p>
             <p className="mt-2">
               Deleting this job will either delete it immediately if you are the assigned approval manager, or create a deletion approval request for the assigned manager.
@@ -115,7 +115,7 @@ export function JobDeleteInlineButton({
           </div>
 
           <div className="space-y-2">
-            <label className="ds-label block">Enter the exact job number</label>
+            <label className="monolith-label block">Enter the exact job number</label>
             <input
               value={confirmationJobNumber}
               onChange={(event) => setConfirmationJobNumber(event.target.value)}
@@ -124,14 +124,14 @@ export function JobDeleteInlineButton({
           </div>
 
           <div className="space-y-2">
-            <label className="ds-label block">Type `delete job` to confirm</label>
+            <label className="monolith-label block">Type `delete job` to confirm</label>
             <input
               value={confirmationPhrase}
               onChange={(event) => setConfirmationPhrase(event.target.value)}
               placeholder="delete job"
             />
-            <p className="text-xs text-on-surface-variant">
-              Enter exactly: <span className="text-on-surface">delete job</span>
+            <p className="text-xs text-mono-muted">
+              Enter exactly: <span className="text-mono-text">delete job</span>
             </p>
           </div>
 

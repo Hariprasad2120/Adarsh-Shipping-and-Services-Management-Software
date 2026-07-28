@@ -45,7 +45,7 @@ export default async function HrmsDashboardPage() {
   const recruitSection = isRecruitEnabled() ? getVisibleSectionById(caps, "recruit") : null;
 
   const stats = [
-    { label: "Active Employees", value: totalActiveCount, icon: Users, color: "text-[#00c4b6]", bg: "bg-[#00c4b6]/10" },
+    { label: "Active Employees", value: totalActiveCount, icon: Users, color: "text-[#F9D972]", bg: "bg-[#F9D972]/10" },
     { label: "Departments", value: org?.departments.length ?? 0, icon: Network, color: "text-[#818cf8]", bg: "bg-[#818cf8]/10" },
     { label: "Branches", value: org?.branches.length ?? 0, icon: Building2, color: "text-[#fbbf24]", bg: "bg-[#fbbf24]/10" },
     { label: "Roles", value: roles.length, icon: BarChart3, color: "text-[#34d399]", bg: "bg-[#34d399]/10" },
@@ -101,15 +101,15 @@ export default async function HrmsDashboardPage() {
           return (
             <div
               key={stat.label}
-              className="rounded-2xl border border-outline-variant/20 bg-surface p-5 shadow-ambient"
+              className="rounded-2xl border border-mono-border/20 bg-mono-card p-5 shadow-ambient"
             >
               <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${stat.bg}`}>
                 <Icon className={`size-5 ${stat.color}`} strokeWidth={1.8} />
               </div>
-              <p className="mt-4 text-[2rem] font-extralight leading-none tracking-tight text-on-surface">
+              <p className="mt-4 text-[2rem] font-extralight leading-none tracking-tight text-mono-text">
                 {stat.value}
               </p>
-              <p className="mt-1 text-sm text-on-surface-variant">{stat.label}</p>
+              <p className="mt-1 text-sm text-mono-muted">{stat.label}</p>
             </div>
           );
         })}
@@ -117,23 +117,23 @@ export default async function HrmsDashboardPage() {
 
       {/* Quick Actions */}
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-on-surface-variant">Quick Actions</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-widest text-mono-muted">Quick Actions</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {quickActions.map((action) => {
             return (
               <Link
                 key={action.href}
                 href={action.href}
-                className="group flex flex-col gap-3 rounded-2xl border border-outline-variant/20 bg-surface p-4 shadow-ambient transition hover:-translate-y-0.5 hover:border-[#00c4b6]/30 hover:shadow-ambient-hover"
+                className="group flex flex-col gap-3 rounded-2xl border border-mono-border/20 bg-mono-card p-4 shadow-ambient transition hover:-translate-y-0.5 hover:border-[#F9D972]/30 hover:shadow-ambient-hover"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#00c4b6]/10">
-                  <ArrowRight className="size-4 text-[#00c4b6]" strokeWidth={1.8} />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F9D972]/10">
+                  <ArrowRight className="size-4 text-[#F9D972]" strokeWidth={1.8} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-on-surface">{action.label}</p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-on-surface-variant">{action.description}</p>
+                  <p className="text-sm font-medium text-mono-text">{action.label}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-mono-muted">{action.description}</p>
                 </div>
-                <ArrowRight className="size-4 text-outline transition group-hover:translate-x-0.5 group-hover:text-[#00c4b6]" />
+                <ArrowRight className="size-4 text-outline transition group-hover:translate-x-0.5 group-hover:text-[#F9D972]" />
               </Link>
             );
           })}
@@ -143,8 +143,8 @@ export default async function HrmsDashboardPage() {
       {/* Recent Employees */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-on-surface-variant">Recent Employees</h2>
-          <Link href="/hrms/employees" className="inline-flex items-center gap-1 text-xs font-medium text-[#00c4b6] hover:underline">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-mono-muted">Recent Employees</h2>
+          <Link href="/hrms/employees" className="inline-flex items-center gap-1 text-xs font-medium text-[#F9D972] hover:underline">
             View all <ArrowRight className="size-3" />
           </Link>
         </div>
@@ -168,13 +168,13 @@ export default async function HrmsDashboardPage() {
                       <AvatarCell name={emp.name} secondary={emp.email} />
                     </Link>
                   </DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">
+                  <DataTableCell className="text-mono-muted">
                     {emp.employeeNumber ? `#${emp.employeeNumber}` : "—"}
                   </DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">
+                  <DataTableCell className="text-mono-muted">
                     {emp.department?.name ?? "—"}
                   </DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">
+                  <DataTableCell className="text-mono-muted">
                     {emp.branch?.name ?? "—"}
                   </DataTableCell>
                 </DataTableRow>

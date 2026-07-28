@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -67,20 +68,20 @@ export default function NewCandidatePage() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="ds-h1 text-on-surface">Add Candidate</h1>
-        <p className="text-sm text-on-surface-variant">Create a new candidate profile in the talent pool</p>
+        <h1 className="monolith-h1 text-mono-text">Add Candidate</h1>
+        <p className="text-sm text-mono-muted">Create a new candidate profile in the talent pool</p>
       </div>
 
       {duplicates.length > 0 && (
-        <div className="rounded-xl border border-[#fb923c]/30 bg-[#fb923c]/5 p-4 space-y-3">
-          <p className="text-sm font-medium text-[#fb923c]">Possible duplicate candidates found:</p>
+        <div className="rounded-xl border border-[#D88700]/30 bg-[#D88700]/5 p-4 space-y-3">
+          <p className="text-sm font-medium text-[#D88700]">Possible duplicate candidates found:</p>
           <ul className="space-y-1">
             {duplicates.map((d) => (
               <li key={d.id} className="flex items-center justify-between text-sm">
-                <span className="text-on-surface">
-                  {d.fullName} {d.email ? `· ${d.email}` : ""} <span className="ds-label ml-1">{d.candidateNumber}</span>
+                <span className="text-mono-text">
+                  {d.fullName} {d.email ? `· ${d.email}` : ""} <span className="monolith-label ml-1">{d.candidateNumber}</span>
                 </span>
-                <a href={`/hrms/recruit/employer/candidates/${d.id}`} className="text-[#00cec4] hover:underline">
+                <a href={`/hrms/recruit/employer/candidates/${d.id}`} className="text-[#F9D972] hover:underline">
                   View
                 </a>
               </li>
@@ -89,7 +90,7 @@ export default function NewCandidatePage() {
           <button
             onClick={proceedAnyway}
             disabled={saving}
-            className="rounded-xl bg-[#fb923c] px-4 py-2 text-sm font-medium text-white hover:bg-[#f97316]"
+            className="rounded-xl bg-[#D88700] px-4 py-2 text-sm font-medium text-white hover:bg-[#f97316]"
           >
             Create Anyway
           </button>
@@ -97,11 +98,11 @@ export default function NewCandidatePage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="ds-form-section space-y-4 rounded-xl border border-outline-variant bg-surface p-6">
-          <h3 className="text-on-surface">Personal Information</h3>
+        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+          <h3 className="text-mono-text">Personal Information</h3>
           <div className="space-y-3">
             <div>
-              <label className="ds-label mb-1 block">Full Name *</label>
+              <label className="monolith-label mb-1 block">Full Name *</label>
               <input
                 required
                 value={form.fullName}
@@ -112,7 +113,7 @@ export default function NewCandidatePage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="ds-label mb-1 block">Email</label>
+                <label className="monolith-label mb-1 block">Email</label>
                 <input
                   type="email"
                   value={form.email}
@@ -122,7 +123,7 @@ export default function NewCandidatePage() {
                 />
               </div>
               <div>
-                <label className="ds-label mb-1 block">Phone</label>
+                <label className="monolith-label mb-1 block">Phone</label>
                 <input
                   type="tel"
                   value={form.phone}
@@ -133,7 +134,7 @@ export default function NewCandidatePage() {
               </div>
             </div>
             <div>
-              <label className="ds-label mb-1 block">LinkedIn URL</label>
+              <label className="monolith-label mb-1 block">LinkedIn URL</label>
               <input
                 type="url"
                 value={form.linkedinUrl}
@@ -145,11 +146,11 @@ export default function NewCandidatePage() {
           </div>
         </div>
 
-        <div className="ds-form-section space-y-4 rounded-xl border border-outline-variant bg-surface p-6">
-          <h3 className="text-on-surface">Professional Details</h3>
+        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+          <h3 className="text-mono-text">Professional Details</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="ds-label mb-1 block">Current Title</label>
+              <label className="monolith-label mb-1 block">Current Title</label>
               <input
                 value={form.currentTitle}
                 onChange={(e) => set("currentTitle", e.target.value)}
@@ -158,7 +159,7 @@ export default function NewCandidatePage() {
               />
             </div>
             <div>
-              <label className="ds-label mb-1 block">Current Company</label>
+              <label className="monolith-label mb-1 block">Current Company</label>
               <input
                 value={form.currentCompany}
                 onChange={(e) => set("currentCompany", e.target.value)}
@@ -169,12 +170,12 @@ export default function NewCandidatePage() {
           </div>
         </div>
 
-        <div className="ds-form-section space-y-4 rounded-xl border border-outline-variant bg-surface p-6">
-          <h3 className="text-on-surface">Source</h3>
+        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+          <h3 className="text-mono-text">Source</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="ds-label mb-1 block">Source</label>
-              <select
+              <label className="monolith-label mb-1 block">Source</label>
+              <NativeSelect
                 value={form.source}
                 onChange={(e) => set("source", e.target.value)}
                 className="w-full rounded-xl px-3 py-2 text-sm"
@@ -186,10 +187,10 @@ export default function NewCandidatePage() {
                 <option value="LINKEDIN">LinkedIn</option>
                 <option value="CAMPUS">Campus Hire</option>
                 <option value="OTHER">Other</option>
-              </select>
+              </NativeSelect>
             </div>
             <div>
-              <label className="ds-label mb-1 block">Source Details</label>
+              <label className="monolith-label mb-1 block">Source Details</label>
               <input
                 value={form.sourceMeta}
                 onChange={(e) => set("sourceMeta", e.target.value)}
@@ -210,13 +211,13 @@ export default function NewCandidatePage() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-xl bg-[#00cec4] px-6 py-2 text-sm font-medium uppercase tracking-wide text-white transition hover:bg-[#00b8af] disabled:opacity-50"
+            className="rounded-xl bg-[#F9D972] px-6 py-2 text-sm font-medium uppercase tracking-wide text-white transition hover:bg-[#E8C85D] disabled:opacity-50"
           >
             {saving ? "Saving..." : "Add Candidate"}
           </button>
           <a
             href="/hrms/recruit/employer/candidates"
-            className="rounded-xl border border-outline-variant px-6 py-2 text-sm text-on-surface-variant transition hover:text-on-surface"
+            className="rounded-xl border border-mono-border px-6 py-2 text-sm text-mono-muted transition hover:text-mono-text"
           >
             Cancel
           </a>

@@ -9,32 +9,33 @@ import type { Caps } from "@/lib/rbac";
 import { useDashboardChrome } from "@/components/dashboard-chrome";
 import { cn } from "@/lib/utils";
 import { getActiveItemHref, getVisibleSections, matchesPath } from "@/lib/navigation";
-import {Sun,Moon,LogOut,ShieldCheck,ChevronDown,ChevronRight,ChevronLeft,X,} from "lucide-react";
+import {Sun,Moon,LogOut,ShieldCheck,ChevronDown,ChevronRight,ChevronLeft,X,Palette,} from "lucide-react";
 
-type ThemeMode = "light" | "dark";
+type ThemeMode = "light" | "night" | "violet";
 
 function applyTheme(theme: ThemeMode) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  root.classList.remove("dark", "light");
-  root.classList.add(theme);
-  root.style.colorScheme = theme;
+  root.classList.remove("dark", "light", "night", "violet", "theme-light", "theme-night", "theme-violet");
+  root.classList.add(theme, `theme-${theme}`);
+  root.style.colorScheme = theme === "light" ? "light" : "dark";
   window.localStorage.setItem("theme", theme);
 }
 
 function detectTheme(): ThemeMode {
   if (typeof document === "undefined") return "light";
   const root = document.documentElement;
-  if (root.classList.contains("dark")) return "dark";
+  if (root.classList.contains("violet")) return "violet";
+  if (root.classList.contains("night")) return "night";
   if (root.classList.contains("light")) return "light";
   return "light";
 }
 
 function getIconColor(label: string, isActive: boolean) {
-  if (isActive) return "text-[#00c4b6]";
+  if (isActive) return "text-[#F9D972]";
   const lowerLabel = label.toLowerCase();
-  if (lowerLabel.includes("dashboard")) return "text-[#00c4b6]";
-  if (lowerLabel.includes("catalogue") || lowerLabel.includes("catalog")) return "text-[#00cec4]";
+  if (lowerLabel.includes("dashboard")) return "text-[#F9D972]";
+  if (lowerLabel.includes("catalogue") || lowerLabel.includes("catalog")) return "text-[#F9D972]";
   if (lowerLabel.includes("hrms")) return "text-[#818cf8]";
   if (lowerLabel.includes("attendance")) return "text-[#fbbf24]";
   if (lowerLabel.includes("to-do") || lowerLabel.includes("todo") || lowerLabel.includes("task")) return "text-[#22c55e]";
@@ -47,10 +48,10 @@ function getIconColor(label: string, isActive: boolean) {
   if (lowerLabel.includes("appraisals") || lowerLabel.includes("my-appraisal")) return "text-[#c084fc]";
   if (lowerLabel.includes("reviews")) return "text-[#f472b6]";
   if (lowerLabel.includes("cycles")) return "text-[#38bdf8]";
-  if (lowerLabel.includes("criteria")) return "text-[#fb923c]";
+  if (lowerLabel.includes("criteria")) return "text-[#D88700]";
   if (lowerLabel.includes("salary structure") || lowerLabel.includes("salary sheet") || lowerLabel.includes("revisions")) return "text-[#34d399]";
   if (lowerLabel.includes("punch")) return "text-[#fbbf24]";
-  if (lowerLabel.includes("leaves")) return "text-[#fb923c]";
+  if (lowerLabel.includes("leaves")) return "text-[#D88700]";
   if (lowerLabel.includes("reports") || lowerLabel.includes("kpi")) return "text-[#34d399]";
   if (lowerLabel.includes("crm") || lowerLabel.includes("overview")) return "text-[#34d399]";
   if (lowerLabel.includes("communication")) return "text-[#38bdf8]";
@@ -234,7 +235,7 @@ export function Sidebar({
   };
 
   const toggleTheme = () => {
-    setDashboardTheme(theme === "dark" ? "light" : "dark");
+    setDashboardTheme(theme === "light" ? "night" : theme === "night" ? "violet" : "light");
   };
 
   const handleIconEnter = (sectionId: string, e: React.MouseEvent<HTMLElement>) => {
@@ -273,7 +274,7 @@ export function Sidebar({
 
     return (
       <>
-        <div className="relative flex h-[68px] shrink-0 items-center overflow-hidden border-b border-outline-variant/30 px-4">
+        <div className="relative flex h-[68px] shrink-0 items-center overflow-hidden border-b border-mono-border/30 px-4">
           {mobile ? (
             <>
               <Image
@@ -287,10 +288,10 @@ export function Sidebar({
               <button
                 type="button"
                 onClick={closeMobileNav}
-                className="ml-auto inline-flex size-11 items-center justify-center rounded-xl border border-outline-variant/60 bg-surface text-on-surface transition-colors hover:bg-surface-container-low"
+                className="ml-auto inline-flex size-11 items-center justify-center rounded-xl border border-mono-border/60 bg-mono-card text-mono-text transition-colors hover:bg-mono-soft"
                 aria-label="Close navigation menu"
               >
-                <X className="size-5 text-[#00cec4]" />
+                <X className="size-5 text-[#F9D972]" />
               </button>
             </>
           ) : (
@@ -331,13 +332,13 @@ export function Sidebar({
             const rowBase = cn(
               "group flex w-full items-center border-l-2 py-2.5 pl-[19px] pr-3 transition-colors duration-200",
               isActive
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-transparent text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
+                ? "border-primary bg-mono-accent/10 text-mono-accent"
+                : "border-transparent text-mono-muted hover:bg-mono-soft hover:text-mono-text",
             );
 
             const iconClass = cn(
               "shrink-0 transition-transform duration-200",
-              isActive ? "scale-105 text-[#00c4b6]" : `${getIconColor(section.label, false)} group-hover:scale-105`,
+              isActive ? "scale-105 text-[#F9D972]" : `${getIconColor(section.label, false)} group-hover:scale-105`,
             );
 
             const labelClass = mobile
@@ -403,8 +404,8 @@ export function Sidebar({
                             className={cn(
                               "flex w-full cursor-pointer items-center justify-between px-2 py-1 text-[10px] font-bold tracking-wide transition-colors",
                               hasActiveChild
-                                ? "text-primary"
-                                : "text-on-surface-variant hover:text-on-surface",
+                                ? "text-mono-accent"
+                                : "text-mono-muted hover:text-mono-text",
                             )}
                           >
                             <span>{groupTitle}</span>
@@ -424,15 +425,15 @@ export function Sidebar({
                                     className={cn(
                                       "group relative flex items-center border-l-2 py-1.5 pl-10 pr-3 text-[12px] transition-all duration-200",
                                       isChildActive
-                                        ? "border-primary bg-primary/10 text-primary"
-                                        : "border-transparent text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
+                                        ? "border-primary bg-mono-accent/10 text-mono-accent"
+                                        : "border-transparent text-mono-muted hover:bg-mono-soft hover:text-mono-text",
                                     )}
                                   >
                                     <ItemIcon
                                       size={13}
                                       className={cn(
                                         "mr-2 shrink-0",
-                                        isChildActive ? "text-[#00c4b6]" : getIconColor(item.label, false),
+                                        isChildActive ? "text-[#F9D972]" : getIconColor(item.label, false),
                                       )}
                                     />
                                     <span className="truncate font-medium tracking-wide">{item.label}</span>
@@ -461,15 +462,15 @@ export function Sidebar({
                             className={cn(
                               "group relative flex items-center border-l-2 py-2 pl-10 pr-3 text-[12px] transition-all duration-200",
                               isChildActive
-                                ? "border-primary bg-primary/10 text-primary"
-                                : "border-transparent text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
+                                ? "border-primary bg-mono-accent/10 text-mono-accent"
+                                : "border-transparent text-mono-muted hover:bg-mono-soft hover:text-mono-text",
                             )}
                           >
                             <ItemIcon
                               size={14}
                               className={cn(
                                 "mr-2.5 shrink-0",
-                                isChildActive ? "text-[#00c4b6]" : getIconColor(item.label, false),
+                                isChildActive ? "text-[#F9D972]" : getIconColor(item.label, false),
                               )}
                             />
                             <span className="font-medium tracking-wide">{item.label}</span>
@@ -484,8 +485,8 @@ export function Sidebar({
           })}
         </div>
 
-        <div className="flex shrink-0 items-center overflow-hidden border-t border-outline-variant/50 bg-surface-container-low px-3 py-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#00c4b6] text-sm font-bold text-white">
+        <div className="flex shrink-0 items-center overflow-hidden border-t border-mono-border/50 bg-mono-soft px-3 py-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F9D972] text-sm font-bold text-white">
             {userName ? userName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() : "SA"}
           </div>
           <div
@@ -494,7 +495,7 @@ export function Sidebar({
               collapsed ? "max-w-0 opacity-0" : "max-w-40 opacity-100",
             )}
           >
-            <span className="truncate whitespace-nowrap text-[13px] font-bold leading-none text-on-surface">
+            <span className="truncate whitespace-nowrap text-[13px] font-bold leading-none text-mono-text">
               {userName || "Site Admin"}
             </span>
             <span className="mt-1 inline-block w-fit whitespace-nowrap rounded bg-[#fef3c7] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#d97706]">
@@ -509,7 +510,7 @@ export function Sidebar({
           >
             <Link
               href="/account/security"
-              className="cursor-pointer rounded-md p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+              className="cursor-pointer rounded-md p-1.5 text-mono-muted transition-colors hover:bg-mono-soft hover:text-mono-text"
               title="Security & Sessions"
             >
               <ShieldCheck size={16} />
@@ -517,15 +518,15 @@ export function Sidebar({
             <button
               type="button"
               onClick={toggleTheme}
-              className="cursor-pointer rounded-md p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
-              title={!mounted ? "Switch Theme" : theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+              className="cursor-pointer rounded-md p-1.5 text-mono-muted transition-colors hover:bg-mono-soft hover:text-mono-text"
+              title={!mounted ? "Switch Theme" : `Switch theme (${theme})`}
             >
-              {!mounted ? <div className="h-4 w-4" /> : theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              {!mounted ? <div className="h-4 w-4" /> : theme === "light" ? <Moon size={16} /> : theme === "night" ? <Palette size={16} /> : <Sun size={16} />}
             </button>
             <button
               type="button"
               onClick={() => void performLogout()}
-              className="cursor-pointer rounded-md p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+              className="cursor-pointer rounded-md p-1.5 text-mono-muted transition-colors hover:bg-mono-soft hover:text-mono-text"
               title="Sign Out"
             >
               <LogOut size={16} />
@@ -540,7 +541,7 @@ export function Sidebar({
     <>
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 hidden flex-col overflow-hidden border-r border-outline-variant/50 bg-surface text-on-surface shadow-[0_12px_36px_-28px_rgba(15,23,42,0.28)] select-none transition-all duration-300 dark:shadow-[0_18px_42px_-30px_rgba(0,0,0,0.48)] lg:flex",
+          "fixed inset-y-0 left-0 z-40 hidden flex-col overflow-hidden border-r border-mono-border/50 bg-mono-card text-mono-text shadow-[0_12px_36px_-28px_rgba(15,23,42,0.28)] select-none transition-all duration-300 dark:shadow-[0_18px_42px_-30px_rgba(0,0,0,0.48)] lg:flex",
           isCollapsed ? "w-14" : "w-57.5",
         )}
       >
@@ -550,7 +551,7 @@ export function Sidebar({
       <button
         type="button"
         onClick={() => setIsCollapsed((value) => !value)}
-        className="fixed z-50 hidden h-8 w-4 items-center justify-center rounded-r-lg border border-l-0 border-outline-variant/50 bg-surface text-on-surface-variant shadow-sm transition-[left] duration-300 hover:text-on-surface lg:flex"
+        className="fixed z-50 hidden h-8 w-4 items-center justify-center rounded-r-lg border border-l-0 border-mono-border/50 bg-mono-card text-mono-muted shadow-sm transition-[left] duration-300 hover:text-mono-text lg:flex"
         style={{ left: isCollapsed ? "3.5rem" : "14.375rem", top: "5.5rem" }}
         title={isCollapsed ? "Expand" : "Collapse"}
       >
@@ -559,7 +560,7 @@ export function Sidebar({
 
       {isCollapsed && hoveredSection && (
         <div
-          className="fixed z-50 ml-1 hidden min-w-45 rounded-xl border border-outline-variant/50 bg-surface shadow-[0_8px_32px_-8px_rgba(0,0,0,0.32)] dark:shadow-[0_8px_32px_-8px_rgba(0,0,0,0.64)] lg:block"
+          className="fixed z-50 ml-1 hidden min-w-45 rounded-xl border border-mono-border/50 bg-mono-card shadow-[0_8px_32px_-8px_rgba(0,0,0,0.32)] dark:shadow-[0_8px_32px_-8px_rgba(0,0,0,0.64)] lg:block"
           style={{ left: "3.5rem", top: flyoutPos.top }}
           onMouseEnter={handleFlyoutEnter}
           onMouseLeave={handleFlyoutLeave}
@@ -567,7 +568,7 @@ export function Sidebar({
           {hoveredSection.items.length === 0 ? (
             <Link
               href={hoveredSection.href}
-              className="flex items-center gap-2 rounded-xl px-3 py-2 text-[12px] font-medium text-on-surface transition-colors hover:bg-surface-container"
+              className="flex items-center gap-2 rounded-xl px-3 py-2 text-[12px] font-medium text-mono-text transition-colors hover:bg-mono-soft"
             >
               {(() => {
                 const Icon = hoveredSection.icon;
@@ -588,7 +589,7 @@ export function Sidebar({
                 const activeChildHref = getActiveItemHref(pathname, hoveredSection.items);
                 return (
                   <div key={groupTitle}>
-                    <div className="px-3 pb-0.5 pt-2 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant/60">
+                    <div className="px-3 pb-0.5 pt-2 text-[9px] font-bold uppercase tracking-widest text-mono-muted/60">
                       {groupTitle}
                     </div>
                     {groupItems.map((item) => {
@@ -601,13 +602,13 @@ export function Sidebar({
                           className={cn(
                             "flex items-center gap-2 px-3 py-1.5 text-[12px] transition-colors",
                             isChildActive
-                              ? "bg-primary/10 text-primary"
-                              : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
+                              ? "bg-mono-accent/10 text-mono-accent"
+                              : "text-mono-muted hover:bg-mono-soft hover:text-mono-text",
                           )}
                         >
                           <ItemIcon
                             size={12}
-                            className={isChildActive ? "text-[#00c4b6]" : getIconColor(item.label, false)}
+                            className={isChildActive ? "text-[#F9D972]" : getIconColor(item.label, false)}
                           />
                           <span className="truncate font-medium">{item.label}</span>
                         </Link>
@@ -633,13 +634,13 @@ export function Sidebar({
                     className={cn(
                       "flex items-center gap-2.5 px-3 py-2 text-[12px] transition-colors",
                       isChildActive
-                        ? "bg-primary/10 text-primary"
-                        : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
+                        ? "bg-mono-accent/10 text-mono-accent"
+                        : "text-mono-muted hover:bg-mono-soft hover:text-mono-text",
                     )}
                   >
                     <ItemIcon
                       size={13}
-                      className={isChildActive ? "text-[#00c4b6]" : getIconColor(item.label, false)}
+                      className={isChildActive ? "text-[#F9D972]" : getIconColor(item.label, false)}
                     />
                     <span className="font-medium">{item.label}</span>
                   </Link>
@@ -668,7 +669,7 @@ export function Sidebar({
         aria-hidden={!mobileNavOpen}
         tabIndex={-1}
         className={cn(
-          "fixed inset-y-2 left-2 z-[60] flex w-[min(22rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-2xl border border-outline-variant/60 bg-surface text-on-surface shadow-2xl transition-transform duration-200 ease-out lg:hidden",
+          "fixed inset-y-2 left-2 z-[60] flex w-[min(22rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-2xl border border-mono-border/60 bg-mono-card text-mono-text shadow-2xl transition-transform duration-200 ease-out lg:hidden",
           mobileNavOpen ? "translate-x-0" : "-translate-x-[calc(100%+1rem)]",
         )}
       >

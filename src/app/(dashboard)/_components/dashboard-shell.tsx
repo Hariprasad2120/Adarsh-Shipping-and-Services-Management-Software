@@ -86,11 +86,11 @@ export function DashboardShell({
     ? `px-6 pb-8 ${isCha ? "pt-2" : "pt-5"} lg:px-8 xl:px-10`
     : "px-6 py-8 lg:px-8 xl:px-10";
   const topBarClass = showBreadcrumb
-    ? "sticky top-0 z-40 w-full shrink-0 bg-background/95 shadow-sm backdrop-blur-sm"
-    : "sticky top-0 z-40 w-full shrink-0 border-b border-outline-variant/40 bg-background/95 shadow-sm backdrop-blur-sm";
+    ? "sticky top-0 z-40 w-full shrink-0 bg-mono-page/95 shadow-sm backdrop-blur-sm"
+    : "sticky top-0 z-40 w-full shrink-0 border-b border-mono-border/40 bg-mono-page/95 shadow-sm backdrop-blur-sm";
 
   const content = isPortal ? (
-    <div className="flex min-h-full flex-1 flex-col bg-background text-on-surface" style={shellStyle}>
+    <div className="flex min-h-full flex-1 flex-col bg-mono-page text-mono-text" style={shellStyle}>
       <div ref={topBarRef} className={topBarClass}>
         <WelcomeBar userName={userName} sessionToken={sessionToken} enabledModuleIds={enabledModuleIds} />
       </div>
@@ -99,7 +99,7 @@ export function DashboardShell({
       </div>
     </div>
   ) : isCrm ? (
-    <div className="flex min-h-full flex-1 flex-col bg-background text-on-surface" style={shellStyle}>
+    <div className="flex min-h-full flex-1 flex-col bg-mono-page text-mono-text" style={shellStyle}>
       <div ref={topBarRef} className={topBarClass}>
         <WelcomeBar userName={userName} sessionToken={sessionToken} enabledModuleIds={enabledModuleIds} />
       </div>
@@ -108,13 +108,13 @@ export function DashboardShell({
       </div>
     </div>
   ) : (
-    <div className="flex min-h-full flex-1 flex-col bg-background text-on-surface" style={shellStyle}>
+    <div className="flex min-h-full flex-1 flex-col bg-mono-page text-mono-text" style={shellStyle}>
       <div ref={topBarRef} className={topBarClass}>
         <WelcomeBar userName={userName} sessionToken={sessionToken} enabledModuleIds={enabledModuleIds} />
       </div>
       <div
         ref={breadcrumbRef}
-        className="sticky top-[var(--dashboard-topbar-height)] z-30 w-full shrink-0 bg-background/95 backdrop-blur-sm"
+        className="sticky top-[var(--dashboard-topbar-height)] z-30 w-full shrink-0 bg-mono-page/95 backdrop-blur-sm"
       >
         <AutoBreadcrumb />
       </div>

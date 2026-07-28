@@ -1,6 +1,7 @@
 "use client";
 
-import { DateInput } from "@/components/ui/date-input";
+import { NativeSelect } from "@/components/monolith/native-select";
+import { DateInput } from "@/components/monolith/date-input";
 import React, { useState } from "react";
 import {Ship,Plus,TrendingUp,Percent,Calendar,DollarSign,AlertCircle,FileCheck2,} from "lucide-react";
 import { createJobCostingAction, getJobCostingAction } from "@/modules/accounting/actions";
@@ -120,9 +121,9 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
     <div className="space-y-6">
       {/* ─── Premium Metrics Grid ────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="card-top-accent bg-[var(--color-surface)] p-6 rounded-xl relative overflow-hidden shadow-md">
-          <p className="ds-label text-slate-400">Total Contract Value</p>
-          <h3 className="text-3xl font-bold mt-2 ds-numeric text-white">
+        <div className="monolith-card monolith-accent bg-[var(--color-surface)] p-6 rounded-xl relative overflow-hidden shadow-md">
+          <p className="monolith-label text-slate-400">Total Contract Value</p>
+          <h3 className="text-3xl font-bold mt-2 monolith-numeric text-white">
             ₹{totalContractVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           </h3>
           <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-wider">
@@ -130,9 +131,9 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
           </p>
         </div>
 
-        <div className="card-top-accent bg-[var(--color-surface)] p-6 rounded-xl relative overflow-hidden shadow-md">
-          <p className="ds-label text-slate-400">Total Actual Profit</p>
-          <h3 className="text-3xl font-bold mt-2 ds-numeric text-white">
+        <div className="monolith-card monolith-accent bg-[var(--color-surface)] p-6 rounded-xl relative overflow-hidden shadow-md">
+          <p className="monolith-label text-slate-400">Total Actual Profit</p>
+          <h3 className="text-3xl font-bold mt-2 monolith-numeric text-white">
             ₹{totalNetProfit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           </h3>
           <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-wider">
@@ -140,9 +141,9 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
           </p>
         </div>
 
-        <div className="card-top-accent bg-[var(--color-surface)] p-6 rounded-xl relative overflow-hidden shadow-md">
-          <p className="ds-label text-slate-400">Avg Profit Margin</p>
-          <h3 className="text-3xl font-bold mt-2 ds-numeric text-[#00cec4]">
+        <div className="monolith-card monolith-accent bg-[var(--color-surface)] p-6 rounded-xl relative overflow-hidden shadow-md">
+          <p className="monolith-label text-slate-400">Avg Profit Margin</p>
+          <h3 className="text-3xl font-bold mt-2 monolith-numeric text-[#F9D972]">
             {avgProfitMargin.toFixed(1)}%
           </h3>
           <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-wider">
@@ -150,9 +151,9 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
           </p>
         </div>
 
-        <div className="card-top-accent bg-[var(--color-surface)] p-6 rounded-xl relative overflow-hidden shadow-md">
-          <p className="ds-label text-slate-400">Active Cargo Jobs</p>
-          <h3 className="text-3xl font-bold mt-2 ds-numeric text-white">
+        <div className="monolith-card monolith-accent bg-[var(--color-surface)] p-6 rounded-xl relative overflow-hidden shadow-md">
+          <p className="monolith-label text-slate-400">Active Cargo Jobs</p>
+          <h3 className="text-3xl font-bold mt-2 monolith-numeric text-white">
             {activeJobsCount}
           </h3>
           <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-wider">
@@ -162,11 +163,11 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
       </div>
 
       {/* ─── Header Action Ribbon ────────────────────────────────────────────── */}
-      <div className="flex justify-between items-center bg-[var(--color-surface-container)] px-6 py-4 rounded-xl shadow-sm border border-outline-variant/10">
-        <h4 className="ds-h3 text-white">Cargo Jobs Costing Register</h4>
+      <div className="flex justify-between items-center bg-[var(--color-surface-container)] px-6 py-4 rounded-xl shadow-sm border border-mono-border/10">
+        <h4 className="monolith-h3 text-white">Cargo Jobs Costing Register</h4>
         <button
           onClick={() => setShowJobModal(true)}
-          className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all flex items-center gap-2"
+          className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all flex items-center gap-2"
         >
           <Plus size={14} /> New Costing Job
         </button>
@@ -177,20 +178,20 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
         {jobs.map((job) => {
           // If profit is negative, apply orange card indicator
           const isProfitable = job.netProfit >= 0;
-          const cardClass = isProfitable ? "card-left-accent" : "card-left-accent-orange";
+          const cardClass = isProfitable ? "monolith-card monolith-accent" : "monolith-card monolith-accent-warning";
 
           return (
             <div
               key={job.id}
               onClick={() => handleViewDetails(job)}
-              className={`${cardClass} bg-[var(--color-surface)] p-5 rounded-xl border border-outline-variant/10 shadow-sm hover-cyan cursor-pointer transition-all space-y-4`}
+              className={`${cardClass} bg-[var(--color-surface)] p-5 rounded-xl border border-mono-border/10 shadow-sm monolith-hover cursor-pointer transition-all space-y-4`}
             >
               <div className="flex justify-between items-start">
                 <div>
                   <h4 className="font-bold text-white uppercase tracking-wider text-sm">
                     {job.jobName}
                   </h4>
-                  <p className="ds-label text-[10px] text-slate-400 mt-1">
+                  <p className="monolith-label text-[10px] text-slate-400 mt-1">
                     {job.jobCode} • {job.customerName}
                   </p>
                 </div>
@@ -206,23 +207,23 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
               </div>
 
               {/* Progress margins info */}
-              <div className="grid grid-cols-3 gap-2 text-center py-2 bg-[var(--color-background)] rounded-lg border border-outline-variant/5">
+              <div className="grid grid-cols-3 gap-2 text-center py-2 bg-[var(--color-background)] rounded-lg border border-mono-border/5">
                 <div>
-                  <span className="ds-label text-[8px] text-slate-400 block">Contract</span>
-                  <span className="ds-numeric text-xs font-semibold text-white">
+                  <span className="monolith-label text-[8px] text-slate-400 block">Contract</span>
+                  <span className="monolith-numeric text-xs font-semibold text-white">
                     ₹{job.contractValue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
                   </span>
                 </div>
                 <div>
-                  <span className="ds-label text-[8px] text-slate-400 block">Expense</span>
-                  <span className="ds-numeric text-xs font-semibold text-rose-400">
+                  <span className="monolith-label text-[8px] text-slate-400 block">Expense</span>
+                  <span className="monolith-numeric text-xs font-semibold text-rose-400">
                     ₹{job.actualExpense.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
                   </span>
                 </div>
                 <div>
-                  <span className="ds-label text-[8px] text-slate-400 block">Margin</span>
+                  <span className="monolith-label text-[8px] text-slate-400 block">Margin</span>
                   <span
-                    className={`ds-numeric text-xs font-bold ${
+                    className={`monolith-numeric text-xs font-bold ${
                       isProfitable ? "text-emerald-400" : "text-orange-400"
                     }`}
                   >
@@ -231,7 +232,7 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center text-[10px] text-slate-500 pt-2 border-t border-outline-variant/5">
+              <div className="flex justify-between items-center text-[10px] text-slate-500 pt-2 border-t border-mono-border/5">
                 <span className="flex items-center gap-1">
                   <Calendar size={12} /> {new Date(job.startDate).toLocaleDateString("en-IN")}
                 </span>
@@ -249,11 +250,11 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
       {/* ─── Costing Detail Side Panel (Modal) ─────────────────────────────────── */}
       {selectedJob && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-end z-50">
-          <div className="bg-[var(--color-surface)] border-l border-outline-variant/10 w-full max-w-[650px] h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
-            <div className="px-6 py-4 bg-[var(--color-surface-container)] border-b border-outline-variant/10 flex justify-between items-center">
+          <div className="bg-[var(--color-surface)] border-l border-mono-border/10 w-full max-w-[650px] h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+            <div className="px-6 py-4 bg-[var(--color-surface-container)] border-b border-mono-border/10 flex justify-between items-center">
               <div>
-                <h3 className="ds-h2 text-white">{selectedJob.jobName} Details</h3>
-                <p className="ds-label text-[10px] text-slate-400 mt-1">
+                <h3 className="monolith-h2 text-white">{selectedJob.jobName} Details</h3>
+                <p className="monolith-label text-[10px] text-slate-400 mt-1">
                   Code: {selectedJob.jobCode} • Customer: {selectedJob.customer?.name}
                 </p>
               </div>
@@ -267,22 +268,22 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
 
             <div className="p-6 overflow-y-auto flex-1 space-y-6">
               {/* Financial Snapshot */}
-              <div className="grid grid-cols-3 gap-4 bg-[var(--color-background)] p-4 rounded-xl border border-outline-variant/10">
+              <div className="grid grid-cols-3 gap-4 bg-[var(--color-background)] p-4 rounded-xl border border-mono-border/10">
                 <div>
-                  <span className="ds-label text-slate-400 text-[10px] block">Contract Value</span>
-                  <span className="ds-numeric text-lg font-bold text-white">
+                  <span className="monolith-label text-slate-400 text-[10px] block">Contract Value</span>
+                  <span className="monolith-numeric text-lg font-bold text-white">
                     ₹{Number(selectedJob.contractValue).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div>
-                  <span className="ds-label text-slate-400 text-[10px] block">Total Invoiced</span>
-                  <span className="ds-numeric text-lg font-bold text-emerald-400">
+                  <span className="monolith-label text-slate-400 text-[10px] block">Total Invoiced</span>
+                  <span className="monolith-numeric text-lg font-bold text-emerald-400">
                     ₹{selectedJob.salesInvoices.reduce((sum: number, i: any) => sum + Number(i.grandTotal), 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div>
-                  <span className="ds-label text-slate-400 text-[10px] block">Total Purchase Cost</span>
-                  <span className="ds-numeric text-lg font-bold text-rose-400">
+                  <span className="monolith-label text-slate-400 text-[10px] block">Total Purchase Cost</span>
+                  <span className="monolith-numeric text-lg font-bold text-rose-400">
                     ₹{selectedJob.purchaseInvoices.reduce((sum: number, i: any) => sum + Number(i.grandTotal), 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </span>
                 </div>
@@ -290,9 +291,9 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
 
               {/* Transactions Ledger list */}
               <div className="space-y-3">
-                <h4 className="ds-h3 text-white">Linked General Ledger Postings</h4>
-                <div className="border border-outline-variant/10 rounded-xl overflow-hidden bg-[var(--color-surface-container-low)]">
-                  <table className="ds-table">
+                <h4 className="monolith-h3 text-white">Linked General Ledger Postings</h4>
+                <div className="border border-mono-border/10 rounded-xl overflow-hidden bg-[var(--color-surface-container-low)]">
+                  <table className="monolith-table">
                     <thead>
                       <tr>
                         <th>Date</th>
@@ -312,7 +313,7 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
                       ) : (
                         selectedJob.glEntries.map((t: any) => (
                           <tr key={t.id} className="hover:bg-slate-800/10">
-                            <td className="ds-numeric text-[11px]">
+                            <td className="monolith-numeric text-[11px]">
                               {new Date(t.postingDate).toLocaleDateString("en-IN")}
                             </td>
                             <td>
@@ -323,12 +324,12 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
                                 {t.account.accountCode}
                               </span>
                             </td>
-                            <td className="text-right ds-numeric text-emerald-400 text-xs">
+                            <td className="text-right monolith-numeric text-emerald-400 text-xs">
                               {Number(t.debit) > 0
                                 ? `₹${Number(t.debit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
                                 : "—"}
                             </td>
-                            <td className="text-right ds-numeric text-rose-400 text-xs">
+                            <td className="text-right monolith-numeric text-rose-400 text-xs">
                               {Number(t.credit) > 0
                                 ? `₹${Number(t.credit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
                                 : "—"}
@@ -349,9 +350,9 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
       {/* ─── Initialize Cargo Job Modal ────────────────────────────────────────── */}
       {showJobModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[var(--color-surface)] border border-outline-variant/10 rounded-2xl w-full max-w-[500px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 bg-[var(--color-surface-container)] border-b border-outline-variant/10 flex justify-between items-center">
-              <h3 className="ds-h3 text-white">Initialize New Cargo Job</h3>
+          <div className="bg-[var(--color-surface)] border border-mono-border/10 rounded-2xl w-full max-w-[500px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 bg-[var(--color-surface-container)] border-b border-mono-border/10 flex justify-between items-center">
+              <h3 className="monolith-h3 text-white">Initialize New Cargo Job</h3>
               <button
                 onClick={() => setShowJobModal(false)}
                 className="text-slate-400 hover:text-white text-lg font-bold"
@@ -373,7 +374,7 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
               )}
 
               <div className="space-y-2">
-                <label className="ds-label block">Cargo Job Name</label>
+                <label className="monolith-label block">Cargo Job Name</label>
                 <input
                   type="text"
                   required
@@ -385,8 +386,8 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
               </div>
 
               <div className="space-y-2">
-                <label className="ds-label block">Customer</label>
-                <select
+                <label className="monolith-label block">Customer</label>
+                <NativeSelect
                   value={customer}
                   onChange={(e) => setCustomer(e.target.value)}
                   required
@@ -398,11 +399,11 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
                       {c.name}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
 
               <div className="space-y-2">
-                <label className="ds-label block">Contract Value (INR)</label>
+                <label className="monolith-label block">Contract Value (INR)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -410,32 +411,32 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
                   value={contractValue}
                   onChange={(e) => setContractValue(e.target.value)}
                   placeholder="0.00"
-                  className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs ds-numeric"
+                  className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs monolith-numeric"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="ds-label block">Start Date</label>
+                  <label className="monolith-label block">Start Date</label>
                   <DateInput
                     required
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs ds-numeric"
+                    className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs monolith-numeric"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="ds-label block">Expected End Date</label>
+                  <label className="monolith-label block">Expected End Date</label>
                   <DateInput
                     value={expectedEndDate}
                     onChange={(e) => setExpectedEndDate(e.target.value)}
-                    className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs ds-numeric"
+                    className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs monolith-numeric"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="ds-label block">Cost Centre Code / Reference</label>
+                <label className="monolith-label block">Cost Centre Code / Reference</label>
                 <input
                   type="text"
                   value={costCentre}
@@ -445,7 +446,7 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-outline-variant/10">
+              <div className="flex justify-end gap-3 pt-4 border-t border-mono-border/10">
                 <button
                   type="button"
                   onClick={() => setShowJobModal(false)}
@@ -456,7 +457,7 @@ export function JobsClient({ jobs, customers }: JobsClientProps) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all disabled:opacity-50"
+                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all disabled:opacity-50"
                 >
                   {loading ? "Initializing..." : "Initialize Job"}
                 </button>

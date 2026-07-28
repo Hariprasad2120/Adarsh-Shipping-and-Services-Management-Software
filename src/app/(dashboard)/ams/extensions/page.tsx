@@ -16,7 +16,7 @@ export default async function ExtensionsPage() {
   const orgId = session.user.orgId;
   if (!orgId) {
     return (
-      <div className="rounded-xl border border-outline-variant bg-surface p-8 text-center text-sm text-on-surface-variant">
+      <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">
         Organisation configuration missing.
       </div>
     );

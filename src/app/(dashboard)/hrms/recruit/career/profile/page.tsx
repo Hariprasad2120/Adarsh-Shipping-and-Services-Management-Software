@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import { useState, useEffect } from "react";
 
 type Profile = {
@@ -44,18 +45,18 @@ function tagInput(
 ) {
   return (
     <div>
-      <label className="ds-label mb-1 block">{label}</label>
-      <div className="flex flex-wrap gap-1 rounded-xl border border-[rgba(0,206,196,0.55)] bg-surface-container-low p-2 min-h-[40px]">
+      <label className="monolith-label mb-1 block">{label}</label>
+      <div className="flex flex-wrap gap-1 rounded-xl border border-[rgba(0,206,196,0.55)] bg-mono-soft p-2 min-h-[40px]">
         {values.map((v) => (
           <span
             key={v}
-            className="flex items-center gap-1 rounded-lg bg-[#00cec4]/10 px-2 py-0.5 text-xs text-[#00cec4]"
+            className="flex items-center gap-1 rounded-lg bg-[#F9D972]/10 px-2 py-0.5 text-xs text-[#F9D972]"
           >
             {v}
             <button
               type="button"
               onClick={() => onChange(values.filter((x) => x !== v))}
-              className="text-[#00cec4]/60 hover:text-[#00cec4]"
+              className="text-[#F9D972]/60 hover:text-[#F9D972]"
             >
               ×
             </button>
@@ -75,7 +76,7 @@ function tagInput(
           }}
         />
       </div>
-      <p className="mt-1 text-xs text-on-surface-variant">Press Enter or comma to add</p>
+      <p className="mt-1 text-xs text-mono-muted">Press Enter or comma to add</p>
     </div>
   );
 }
@@ -111,25 +112,25 @@ export default function CareerProfilePage() {
     setTimeout(() => setSaved(false), 3000);
   };
 
-  if (loading) return <p className="text-sm text-on-surface-variant">Loading profile...</p>;
+  if (loading) return <p className="text-sm text-mono-muted">Loading profile...</p>;
 
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="ds-h1 text-on-surface">Career Profile</h1>
-        <p className="text-sm text-on-surface-variant">Private job search preferences — not visible to your employer</p>
+        <h1 className="monolith-h1 text-mono-text">Career Profile</h1>
+        <p className="text-sm text-mono-muted">Private job search preferences — not visible to your employer</p>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
-        <div className="ds-form-section space-y-4 rounded-xl border border-outline-variant bg-surface p-6">
-          <h3 className="text-on-surface">Job Preferences</h3>
+        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+          <h3 className="text-mono-text">Job Preferences</h3>
           <div className="space-y-4">
             {tagInput("Preferred Roles", profile.preferredRoles, (v) => set("preferredRoles", v), "e.g. Product Manager")}
             {tagInput("Preferred Locations", profile.preferredLocations, (v) => set("preferredLocations", v), "e.g. Mumbai, Remote")}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="ds-label mb-1 block">Workplace Preference</label>
-                <select
+                <label className="monolith-label mb-1 block">Workplace Preference</label>
+                <NativeSelect
                   value={profile.workplacePreference}
                   onChange={(e) => set("workplacePreference", e.target.value)}
                   className="w-full rounded-xl px-3 py-2 text-sm"
@@ -138,11 +139,11 @@ export default function CareerProfilePage() {
                   <option value="REMOTE">Remote</option>
                   <option value="HYBRID">Hybrid</option>
                   <option value="ONSITE">On-site</option>
-                </select>
+                </NativeSelect>
               </div>
               <div>
-                <label className="ds-label mb-1 block">Seniority</label>
-                <select
+                <label className="monolith-label mb-1 block">Seniority</label>
+                <NativeSelect
                   value={profile.seniority ?? ""}
                   onChange={(e) => set("seniority", e.target.value || null)}
                   className="w-full rounded-xl px-3 py-2 text-sm"
@@ -153,11 +154,11 @@ export default function CareerProfilePage() {
                   <option value="SENIOR">Senior</option>
                   <option value="LEAD">Lead / Manager</option>
                   <option value="EXECUTIVE">Executive</option>
-                </select>
+                </NativeSelect>
               </div>
             </div>
             <div>
-              <label className="ds-label mb-1 block">Total Experience (years)</label>
+              <label className="monolith-label mb-1 block">Total Experience (years)</label>
               <input
                 type="number"
                 min={0}
@@ -170,17 +171,17 @@ export default function CareerProfilePage() {
           </div>
         </div>
 
-        <div className="ds-form-section space-y-4 rounded-xl border border-outline-variant bg-surface p-6">
-          <h3 className="text-on-surface">Skills</h3>
+        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+          <h3 className="text-mono-text">Skills</h3>
           {tagInput("Skills", profile.skills, (v) => set("skills", v), "e.g. Python, Project Management")}
         </div>
 
-        <div className="ds-form-section space-y-4 rounded-xl border border-outline-variant bg-surface p-6">
-          <h3 className="text-on-surface">Compensation</h3>
+        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+          <h3 className="text-mono-text">Compensation</h3>
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="ds-label mb-1 block">Currency</label>
-              <select
+              <label className="monolith-label mb-1 block">Currency</label>
+              <NativeSelect
                 value={profile.compensationCcy}
                 onChange={(e) => set("compensationCcy", e.target.value)}
                 className="w-full rounded-xl px-3 py-2 text-sm"
@@ -188,10 +189,10 @@ export default function CareerProfilePage() {
                 <option value="INR">INR</option>
                 <option value="USD">USD</option>
                 <option value="AED">AED</option>
-              </select>
+              </NativeSelect>
             </div>
             <div>
-              <label className="ds-label mb-1 block">Min (annual)</label>
+              <label className="monolith-label mb-1 block">Min (annual)</label>
               <input
                 type="number"
                 min={0}
@@ -201,7 +202,7 @@ export default function CareerProfilePage() {
               />
             </div>
             <div>
-              <label className="ds-label mb-1 block">Max (annual)</label>
+              <label className="monolith-label mb-1 block">Max (annual)</label>
               <input
                 type="number"
                 min={0}
@@ -212,7 +213,7 @@ export default function CareerProfilePage() {
             </div>
           </div>
           <div>
-            <label className="ds-label mb-1 block">Notice Period (days)</label>
+            <label className="monolith-label mb-1 block">Notice Period (days)</label>
             <input
               type="number"
               min={0}
@@ -223,7 +224,7 @@ export default function CareerProfilePage() {
               placeholder="0 = immediate joiner"
             />
           </div>
-          <label className="flex items-center gap-2 text-sm text-on-surface">
+          <label className="flex items-center gap-2 text-sm text-mono-text">
             <input
               type="checkbox"
               checked={profile.relocationOpen}
@@ -234,9 +235,9 @@ export default function CareerProfilePage() {
           </label>
         </div>
 
-        <div className="ds-form-section space-y-4 rounded-xl border border-outline-variant bg-surface p-6">
-          <h3 className="text-on-surface">Job Alerts</h3>
-          <label className="flex items-center gap-2 text-sm text-on-surface">
+        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+          <h3 className="text-mono-text">Job Alerts</h3>
+          <label className="flex items-center gap-2 text-sm text-mono-text">
             <input
               type="checkbox"
               checked={profile.alertsEnabled}
@@ -247,8 +248,8 @@ export default function CareerProfilePage() {
           </label>
           {profile.alertsEnabled && (
             <div>
-              <label className="ds-label mb-1 block">Frequency</label>
-              <select
+              <label className="monolith-label mb-1 block">Frequency</label>
+              <NativeSelect
                 value={profile.alertFrequency}
                 onChange={(e) => set("alertFrequency", e.target.value)}
                 className="w-full rounded-xl px-3 py-2 text-sm"
@@ -256,7 +257,7 @@ export default function CareerProfilePage() {
                 <option value="INSTANT">Instant</option>
                 <option value="DAILY">Daily digest</option>
                 <option value="WEEKLY">Weekly digest</option>
-              </select>
+              </NativeSelect>
             </div>
           )}
         </div>
@@ -265,7 +266,7 @@ export default function CareerProfilePage() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-xl bg-[#00cec4] px-6 py-2 text-sm font-medium uppercase tracking-wide text-white transition hover:bg-[#00b8af] disabled:opacity-50"
+            className="rounded-xl bg-[#F9D972] px-6 py-2 text-sm font-medium uppercase tracking-wide text-white transition hover:bg-[#E8C85D] disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save Profile"}
           </button>

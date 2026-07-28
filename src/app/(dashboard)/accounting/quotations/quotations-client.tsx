@@ -1,6 +1,7 @@
 "use client";
 
-import { DateInput } from "@/components/ui/date-input";
+import { NativeSelect } from "@/components/monolith/native-select";
+import { DateInput } from "@/components/monolith/date-input";
 import React, { useState } from "react";
 import {FileText,Plus,RefreshCw,TrendingUp,FileCheck2,Undo2,Trash2,} from "lucide-react";
 import {createQuotationAction,convertQuotationToInvoiceAction,createCustomerNoteAction,submitCustomerNoteAction,} from "@/modules/accounting/actions";
@@ -271,12 +272,12 @@ export function QuotationsClient({
   return (
     <div className="space-y-6">
       {/* ─── Navigation Tabs ──────────────────────────────────────────────────── */}
-      <div className="flex border-b border-outline-variant/10 gap-2">
+      <div className="flex border-b border-mono-border/10 gap-2">
         <button
           onClick={() => setActiveTab("quotations")}
           className={`px-5 py-3 text-xs uppercase tracking-wider font-semibold border-b-2 transition-all flex items-center gap-2 ${
             activeTab === "quotations"
-              ? "border-[#00cec4] text-[#00cec4]"
+              ? "border-[#F9D972] text-[#F9D972]"
               : "border-transparent text-slate-400 hover:text-white"
           }`}
         >
@@ -286,7 +287,7 @@ export function QuotationsClient({
           onClick={() => setActiveTab("notes")}
           className={`px-5 py-3 text-xs uppercase tracking-wider font-semibold border-b-2 transition-all flex items-center gap-2 ${
             activeTab === "notes"
-              ? "border-[#00cec4] text-[#00cec4]"
+              ? "border-[#F9D972] text-[#F9D972]"
               : "border-transparent text-slate-400 hover:text-white"
           }`}
         >
@@ -297,23 +298,23 @@ export function QuotationsClient({
       {/* ─── Tab 1: Quotations ────────────────────────────────────────────────── */}
       {activeTab === "quotations" && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center bg-[var(--color-surface-container)] px-6 py-4 rounded-xl shadow-sm border border-outline-variant/10">
+          <div className="flex justify-between items-center bg-[var(--color-surface-container)] px-6 py-4 rounded-xl shadow-sm border border-mono-border/10">
             <div>
-              <h4 className="ds-h3 text-white">Pre-Sales Quotations</h4>
+              <h4 className="monolith-h3 text-white">Pre-Sales Quotations</h4>
               <p className="text-[10px] text-slate-400 mt-1">
                 Provide client pricing. Track open and expired configurations.
               </p>
             </div>
             <button
               onClick={() => setShowQuotModal(true)}
-              className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all flex items-center gap-2"
+              className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all flex items-center gap-2"
             >
               <Plus size={14} /> New Quotation
             </button>
           </div>
 
-          <div className="bg-[var(--color-surface)] rounded-xl border border-outline-variant/10 shadow-sm overflow-hidden">
-            <table className="ds-table">
+          <div className="bg-[var(--color-surface)] rounded-xl border border-mono-border/10 shadow-sm overflow-hidden">
+            <table className="monolith-table">
               <thead>
                 <tr>
                   <th>Quotation No</th>
@@ -337,25 +338,25 @@ export function QuotationsClient({
                 ) : (
                   quotations.map((q) => (
                     <tr key={q.id} className="hover:bg-slate-800/10">
-                      <td className="font-semibold text-xs text-white ds-numeric">
+                      <td className="font-semibold text-xs text-white monolith-numeric">
                         {q.quotationNumber}
                       </td>
                       <td className="text-xs uppercase text-white font-medium">
                         {q.customerName}
                       </td>
-                      <td className="ds-numeric text-xs">
+                      <td className="monolith-numeric text-xs">
                         {new Date(q.postingDate).toLocaleDateString("en-IN")}
                       </td>
-                      <td className="ds-numeric text-xs">
+                      <td className="monolith-numeric text-xs">
                         {new Date(q.validUntil).toLocaleDateString("en-IN")}
                       </td>
-                      <td className="text-right ds-numeric text-xs text-slate-300">
+                      <td className="text-right monolith-numeric text-xs text-slate-300">
                         ₹{q.taxableAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="text-right ds-numeric text-xs text-slate-400">
+                      <td className="text-right monolith-numeric text-xs text-slate-400">
                         ₹{q.taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="text-right ds-numeric text-xs font-semibold text-white">
+                      <td className="text-right monolith-numeric text-xs font-semibold text-white">
                         ₹{q.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </td>
                       <td>
@@ -375,7 +376,7 @@ export function QuotationsClient({
                         {q.status === "OPEN" && (
                           <button
                             onClick={() => handleConvertQuotation(q.id)}
-                            className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-3 py-1 rounded-lg text-[10px] uppercase tracking-wide transition-all inline-flex items-center gap-1"
+                            className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-3 py-1 rounded-lg text-[10px] uppercase tracking-wide transition-all inline-flex items-center gap-1"
                           >
                             <RefreshCw size={10} /> Convert to Invoice
                           </button>
@@ -398,23 +399,23 @@ export function QuotationsClient({
       {/* ─── Tab 2: Credit/Debit Notes ────────────────────────────────────────── */}
       {activeTab === "notes" && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center bg-[var(--color-surface-container)] px-6 py-4 rounded-xl shadow-sm border border-outline-variant/10">
+          <div className="flex justify-between items-center bg-[var(--color-surface-container)] px-6 py-4 rounded-xl shadow-sm border border-mono-border/10">
             <div>
-              <h4 className="ds-h3 text-white">Credit &amp; Debit Notes</h4>
+              <h4 className="monolith-h3 text-white">Credit &amp; Debit Notes</h4>
               <p className="text-[10px] text-slate-400 mt-1">
                 Post sales returns, write-offs, or additional charges directly against accounts receivable.
               </p>
             </div>
             <button
               onClick={() => setShowNoteModal(true)}
-              className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all flex items-center gap-2"
+              className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all flex items-center gap-2"
             >
               <Plus size={14} /> New Credit/Debit Note
             </button>
           </div>
 
-          <div className="bg-[var(--color-surface)] rounded-xl border border-outline-variant/10 shadow-sm overflow-hidden">
-            <table className="ds-table">
+          <div className="bg-[var(--color-surface)] rounded-xl border border-mono-border/10 shadow-sm overflow-hidden">
+            <table className="monolith-table">
               <thead>
                 <tr>
                   <th>Note Number</th>
@@ -439,7 +440,7 @@ export function QuotationsClient({
                 ) : (
                   notes.map((n) => (
                     <tr key={n.id} className="hover:bg-slate-800/10">
-                      <td className="font-semibold text-xs text-white ds-numeric">
+                      <td className="font-semibold text-xs text-white monolith-numeric">
                         {n.noteNumber}
                       </td>
                       <td>
@@ -456,16 +457,16 @@ export function QuotationsClient({
                       <td className="text-xs uppercase text-white font-medium">
                         {n.customerName}
                       </td>
-                      <td className="ds-numeric text-xs">
+                      <td className="monolith-numeric text-xs">
                         {new Date(n.postingDate).toLocaleDateString("en-IN")}
                       </td>
-                      <td className="text-right ds-numeric text-xs text-slate-300">
+                      <td className="text-right monolith-numeric text-xs text-slate-300">
                         ₹{n.taxableAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="text-right ds-numeric text-xs text-slate-400">
+                      <td className="text-right monolith-numeric text-xs text-slate-400">
                         ₹{n.taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="text-right ds-numeric text-xs font-semibold text-white">
+                      <td className="text-right monolith-numeric text-xs font-semibold text-white">
                         ₹{n.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </td>
                       <td className="text-slate-400 text-xs truncate max-w-[150px]">
@@ -486,7 +487,7 @@ export function QuotationsClient({
                         {n.status === "DRAFT" && (
                           <button
                             onClick={() => handleSubmitNote(n.id)}
-                            className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-3 py-1 rounded-lg text-[10px] uppercase tracking-wide transition-all inline-flex items-center gap-1"
+                            className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-3 py-1 rounded-lg text-[10px] uppercase tracking-wide transition-all inline-flex items-center gap-1"
                           >
                             <FileCheck2 size={10} /> Submit &amp; Post
                           </button>
@@ -509,9 +510,9 @@ export function QuotationsClient({
       {/* ─── Prepare Quotation Modal ────────────────────────────────────────── */}
       {showQuotModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[var(--color-surface)] border border-outline-variant/10 rounded-2xl w-full max-w-[700px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
-            <div className="px-6 py-4 bg-[var(--color-surface-container)] border-b border-outline-variant/10 flex justify-between items-center">
-              <h3 className="ds-h3 text-white">Prepare New Quotation</h3>
+          <div className="bg-[var(--color-surface)] border border-mono-border/10 rounded-2xl w-full max-w-[700px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 bg-[var(--color-surface-container)] border-b border-mono-border/10 flex justify-between items-center">
+              <h3 className="monolith-h3 text-white">Prepare New Quotation</h3>
               <button
                 onClick={() => setShowQuotModal(false)}
                 className="text-slate-400 hover:text-white text-lg font-bold"
@@ -534,8 +535,8 @@ export function QuotationsClient({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="ds-label block">Customer</label>
-                  <select
+                  <label className="monolith-label block">Customer</label>
+                  <NativeSelect
                     value={quotCustomer}
                     onChange={(e) => setQuotCustomer(e.target.value)}
                     required
@@ -547,15 +548,15 @@ export function QuotationsClient({
                         {c.name}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div className="space-y-2">
-                  <label className="ds-label block">Valid Until</label>
+                  <label className="monolith-label block">Valid Until</label>
                   <DateInput
                     value={quotValidUntil}
                     onChange={(e) => setQuotValidUntil(e.target.value)}
                     required
-                    className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs ds-numeric"
+                    className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs monolith-numeric"
                   />
                 </div>
               </div>
@@ -563,17 +564,17 @@ export function QuotationsClient({
               {/* Items Section */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <label className="ds-label">Line Items</label>
+                  <label className="monolith-label">Line Items</label>
                   <button
                     type="button"
                     onClick={handleAddQuotItem}
-                    className="text-[#00cec4] hover:text-[#00b8af] text-[11px] uppercase tracking-wider font-semibold flex items-center gap-1"
+                    className="text-[#F9D972] hover:text-[#E8C85D] text-[11px] uppercase tracking-wider font-semibold flex items-center gap-1"
                   >
                     <Plus size={12} /> Add Row
                   </button>
                 </div>
 
-                <div className="space-y-2 bg-[var(--color-background)] p-4 rounded-xl border border-outline-variant/10">
+                <div className="space-y-2 bg-[var(--color-background)] p-4 rounded-xl border border-mono-border/10">
                   {quotItems.map((item, idx) => (
                     <div key={idx} className="grid grid-cols-12 gap-3 items-center">
                       <div className="col-span-5">
@@ -594,7 +595,7 @@ export function QuotationsClient({
                           value={item.qty}
                           onChange={(e) => handleQuotItemChange(idx, "qty", parseInt(e.target.value) || 0)}
                           placeholder="Qty"
-                          className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-xs ds-numeric text-center"
+                          className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-xs monolith-numeric text-center"
                         />
                       </div>
                       <div className="col-span-3">
@@ -606,11 +607,11 @@ export function QuotationsClient({
                           value={item.rate}
                           onChange={(e) => handleQuotItemChange(idx, "rate", parseFloat(e.target.value) || 0)}
                           placeholder="Rate"
-                          className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-xs ds-numeric text-right"
+                          className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-xs monolith-numeric text-right"
                         />
                       </div>
                       <div className="col-span-1">
-                        <select
+                        <NativeSelect
                           value={item.taxRate}
                           onChange={(e) => handleQuotItemChange(idx, "taxRate", parseInt(e.target.value) || 0)}
                           className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-[10px] text-center"
@@ -620,7 +621,7 @@ export function QuotationsClient({
                           <option value="12">12%</option>
                           <option value="18">18%</option>
                           <option value="28">28%</option>
-                        </select>
+                        </NativeSelect>
                       </div>
                       <div className="col-span-1 text-center">
                         {quotItems.length > 1 && (
@@ -639,23 +640,23 @@ export function QuotationsClient({
               </div>
 
               {/* Totals box */}
-              <div className="flex justify-end p-4 bg-[var(--color-surface-container)] rounded-xl border border-outline-variant/10">
+              <div className="flex justify-end p-4 bg-[var(--color-surface-container)] rounded-xl border border-mono-border/10">
                 <div className="w-[250px] space-y-2 text-xs">
                   <div className="flex justify-between text-slate-400">
                     <span>Taxable Amount:</span>
-                    <span className="ds-numeric text-white">
+                    <span className="monolith-numeric text-white">
                       ₹{quotTaxable.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                   <div className="flex justify-between text-slate-400">
                     <span>GST (Estimated):</span>
-                    <span className="ds-numeric text-white">
+                    <span className="monolith-numeric text-white">
                       ₹{quotTax.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </span>
                   </div>
-                  <div className="flex justify-between font-bold border-t border-outline-variant/10 pt-2 text-white">
+                  <div className="flex justify-between font-bold border-t border-mono-border/10 pt-2 text-white">
                     <span>Grand Total:</span>
-                    <span className="ds-numeric text-[#00cec4]">
+                    <span className="monolith-numeric text-[#F9D972]">
                       ₹{quotTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </span>
                   </div>
@@ -663,7 +664,7 @@ export function QuotationsClient({
               </div>
 
               <div className="space-y-2">
-                <label className="ds-label block">Notes / Terms</label>
+                <label className="monolith-label block">Notes / Terms</label>
                 <textarea
                   value={quotRemarks}
                   onChange={(e) => setQuotRemarks(e.target.value)}
@@ -672,7 +673,7 @@ export function QuotationsClient({
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-outline-variant/10">
+              <div className="flex justify-end gap-3 pt-4 border-t border-mono-border/10">
                 <button
                   type="button"
                   onClick={() => setShowQuotModal(false)}
@@ -683,7 +684,7 @@ export function QuotationsClient({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all disabled:opacity-50"
+                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all disabled:opacity-50"
                 >
                   {loading ? "Preparing..." : "Prepare Quotation"}
                 </button>
@@ -696,9 +697,9 @@ export function QuotationsClient({
       {/* ─── Credit/Debit Note Modal ─────────────────────────────────────────── */}
       {showNoteModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[var(--color-surface)] border border-outline-variant/10 rounded-2xl w-full max-w-[700px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
-            <div className="px-6 py-4 bg-[var(--color-surface-container)] border-b border-outline-variant/10 flex justify-between items-center">
-              <h3 className="ds-h3 text-white">Create Adjustment Note</h3>
+          <div className="bg-[var(--color-surface)] border border-mono-border/10 rounded-2xl w-full max-w-[700px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 bg-[var(--color-surface-container)] border-b border-mono-border/10 flex justify-between items-center">
+              <h3 className="monolith-h3 text-white">Create Adjustment Note</h3>
               <button
                 onClick={() => setShowNoteModal(false)}
                 className="text-slate-400 hover:text-white text-lg font-bold"
@@ -721,8 +722,8 @@ export function QuotationsClient({
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <label className="ds-label block">Note Type</label>
-                  <select
+                  <label className="monolith-label block">Note Type</label>
+                  <NativeSelect
                     value={noteType}
                     onChange={(e) => setNoteType(e.target.value as any)}
                     required
@@ -730,11 +731,11 @@ export function QuotationsClient({
                   >
                     <option value="CREDIT">Credit Note (Return/Discount)</option>
                     <option value="DEBIT">Debit Note (Extra Charge)</option>
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div className="space-y-2">
-                  <label className="ds-label block">Customer</label>
-                  <select
+                  <label className="monolith-label block">Customer</label>
+                  <NativeSelect
                     value={noteCustomer}
                     onChange={(e) => setNoteCustomer(e.target.value)}
                     required
@@ -746,11 +747,11 @@ export function QuotationsClient({
                         {c.name}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div className="space-y-2">
-                  <label className="ds-label block">Link Sales Invoice (Optional)</label>
-                  <select
+                  <label className="monolith-label block">Link Sales Invoice (Optional)</label>
+                  <NativeSelect
                     value={noteInvoice}
                     onChange={(e) => setNoteInvoice(e.target.value)}
                     className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs"
@@ -761,13 +762,13 @@ export function QuotationsClient({
                         {inv.invoiceNumber} (₹{inv.grandTotal})
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="ds-label block">Reason for adjustment</label>
+                  <label className="monolith-label block">Reason for adjustment</label>
                   <input
                     type="text"
                     required
@@ -778,7 +779,7 @@ export function QuotationsClient({
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="ds-label block">Remarks</label>
+                  <label className="monolith-label block">Remarks</label>
                   <input
                     type="text"
                     value={noteRemarks}
@@ -792,17 +793,17 @@ export function QuotationsClient({
               {/* Items Section */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <label className="ds-label">Line Items</label>
+                  <label className="monolith-label">Line Items</label>
                   <button
                     type="button"
                     onClick={handleAddNoteItem}
-                    className="text-[#00cec4] hover:text-[#00b8af] text-[11px] uppercase tracking-wider font-semibold flex items-center gap-1"
+                    className="text-[#F9D972] hover:text-[#E8C85D] text-[11px] uppercase tracking-wider font-semibold flex items-center gap-1"
                   >
                     <Plus size={12} /> Add Row
                   </button>
                 </div>
 
-                <div className="space-y-2 bg-[var(--color-background)] p-4 rounded-xl border border-outline-variant/10">
+                <div className="space-y-2 bg-[var(--color-background)] p-4 rounded-xl border border-mono-border/10">
                   {noteItems.map((item, idx) => (
                     <div key={idx} className="grid grid-cols-12 gap-3 items-center">
                       <div className="col-span-5">
@@ -823,7 +824,7 @@ export function QuotationsClient({
                           value={item.qty}
                           onChange={(e) => handleNoteItemChange(idx, "qty", parseInt(e.target.value) || 0)}
                           placeholder="Qty"
-                          className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-xs ds-numeric text-center"
+                          className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-xs monolith-numeric text-center"
                         />
                       </div>
                       <div className="col-span-3">
@@ -835,11 +836,11 @@ export function QuotationsClient({
                           value={item.rate}
                           onChange={(e) => handleNoteItemChange(idx, "rate", parseFloat(e.target.value) || 0)}
                           placeholder="Amount"
-                          className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-xs ds-numeric text-right"
+                          className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-xs monolith-numeric text-right"
                         />
                       </div>
                       <div className="col-span-1">
-                        <select
+                        <NativeSelect
                           value={item.taxRate}
                           onChange={(e) => handleNoteItemChange(idx, "taxRate", parseInt(e.target.value) || 0)}
                           className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-[10px] text-center"
@@ -849,7 +850,7 @@ export function QuotationsClient({
                           <option value="12">12%</option>
                           <option value="18">18%</option>
                           <option value="28">28%</option>
-                        </select>
+                        </NativeSelect>
                       </div>
                       <div className="col-span-1 text-center">
                         {noteItems.length > 1 && (
@@ -868,30 +869,30 @@ export function QuotationsClient({
               </div>
 
               {/* Totals box */}
-              <div className="flex justify-end p-4 bg-[var(--color-surface-container)] rounded-xl border border-outline-variant/10">
+              <div className="flex justify-end p-4 bg-[var(--color-surface-container)] rounded-xl border border-mono-border/10">
                 <div className="w-[250px] space-y-2 text-xs">
                   <div className="flex justify-between text-slate-400">
                     <span>Taxable Value:</span>
-                    <span className="ds-numeric text-white">
+                    <span className="monolith-numeric text-white">
                       ₹{noteTaxable.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                   <div className="flex justify-between text-slate-400">
                     <span>GST (Estimated):</span>
-                    <span className="ds-numeric text-white">
+                    <span className="monolith-numeric text-white">
                       ₹{noteTax.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </span>
                   </div>
-                  <div className="flex justify-between font-bold border-t border-outline-variant/10 pt-2 text-white">
+                  <div className="flex justify-between font-bold border-t border-mono-border/10 pt-2 text-white">
                     <span>Adjustment Amount:</span>
-                    <span className="ds-numeric text-[#00cec4]">
+                    <span className="monolith-numeric text-[#F9D972]">
                       ₹{noteTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-outline-variant/10">
+              <div className="flex justify-end gap-3 pt-4 border-t border-mono-border/10">
                 <button
                   type="button"
                   onClick={() => setShowNoteModal(false)}
@@ -902,7 +903,7 @@ export function QuotationsClient({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all disabled:opacity-50"
+                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all disabled:opacity-50"
                 >
                   {loading ? "Creating..." : `Create ${noteType} Note`}
                 </button>

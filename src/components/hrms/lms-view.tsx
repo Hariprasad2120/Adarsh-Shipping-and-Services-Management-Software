@@ -84,7 +84,7 @@ export function LmsView() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
-        <Loader2 className="size-8 animate-spin text-[#00c4b6]" />
+        <Loader2 className="size-8 animate-spin text-[#F9D972]" />
         <p className="text-xs font-semibold tracking-wider">Syncing course files...</p>
       </div>
     );
@@ -94,9 +94,9 @@ export function LmsView() {
     <div className="space-y-6">
       {/* Banner */}
       <div className="relative rounded-3xl border border-slate-800 bg-[#0f121b]/80 p-6 overflow-hidden shadow-2xl backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c4b6]/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#F9D972]/5 rounded-full blur-3xl" />
         <div className="flex items-center gap-4">
-          <div className="size-12 rounded-2xl bg-[#00c4b6]/10 border border-[#00c4b6]/35 flex items-center justify-center text-[#00c4b6] shadow-sm">
+          <div className="size-12 rounded-2xl bg-[#F9D972]/10 border border-[#F9D972]/35 flex items-center justify-center text-[#F9D972] shadow-sm">
             <BookOpen className="size-6 animate-pulse" />
           </div>
           <div>
@@ -128,7 +128,7 @@ export function LmsView() {
                   <span className="px-2.5 py-1 rounded-xl bg-slate-950 text-slate-400 border border-slate-800/80 text-[9px] font-black uppercase tracking-wider select-none">
                     {course.category}
                   </span>
-                  <span className="text-[10px] font-black text-[#00c4b6] tracking-wider uppercase font-mono">
+                  <span className="text-[10px] font-black text-[#F9D972] tracking-wider uppercase font-mono">
                     {course.duration}
                   </span>
                 </div>
@@ -161,7 +161,7 @@ export function LmsView() {
                         value={progressVal}
                         disabled={isCompleted}
                         onChange={(e) => handleProgressChange(course.id, Number(e.target.value))}
-                        className="w-full accent-[#00c4b6] bg-slate-950 rounded-full h-1 cursor-pointer"
+                        className="w-full accent-[#F9D972] bg-slate-950 rounded-full h-1 cursor-pointer"
                       />
                     </div>
 
@@ -171,7 +171,7 @@ export function LmsView() {
                         <span>Completed & Certified</span>
                       </div>
                     ) : (
-                      <div className="text-center text-[9px] font-black text-[#00c4b6] animate-pulse select-none tracking-widest uppercase">
+                      <div className="text-center text-[9px] font-black text-[#F9D972] animate-pulse select-none tracking-widest uppercase">
                         Active Study Session
                       </div>
                     )}

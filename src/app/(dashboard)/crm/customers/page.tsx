@@ -1,24 +1,32 @@
-import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
-import { listAccounts } from "@/modules/crm/service";
+import { db } from "@/lib/db";
 import { deleteAccountAction } from "@/modules/crm/actions";
 import { DeleteRecordButton } from "../_components/delete-record-button";
+import { Badge } from "@/components/monolith/badge";
 import {
-  Building,
-  Plus,
-  Search,
-  Mail,
-  Phone,
+  CheckCircle2,
   Eye,
-  Edit2,
-  ArrowRight,
+  Globe,
+  Mail,
+  Pencil,
+  Phone,
   ShieldAlert,
+  Users,
 } from "lucide-react";
+import {
+  ChaMetricCard,
+  ChaPageHeader,
+} from "../../cha/_components/cha-operations-shared";
+import { CustomersFilterBar } from "../../cha/customers/customers-filter-bar";
 
 interface SearchParams {
   search?: string;
+  status?: string;
+  portal?: string;
+  balance?: string;
 }
 
 export default async function CrmCustomersPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
@@ -28,150 +36,182 @@ export default async function CrmCustomersPage({ searchParams }: { searchParams:
   const orgId = session.user.orgId;
   if (!orgId) {
     return (
-      <div className="p-8 text-center text-red-400">
-        <ShieldAlert className="size-12 mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Configuration Error</h2>
-        <p className="text-sm mt-1">Missing organisation context.</p>
+      <div className="text-center text-red-400">
+        <ShieldAlert className="mx-auto mb-4 size-12" />
+        <h2 className="monolith-h2 text-mono-text">Configuration Error</h2>
+        <p className="mt-1 text-sm text-mono-muted">Missing organisation context.</p>
       </div>
     );
   }
 
-  const awaitedParams = await searchParams;
-  const search = awaitedParams.search || "";
+  const params = await searchParams;
+  const searchTerm = params.search?.trim() ?? "";
+  const statusFilter = params.status ?? "";
+  const portalFilter = params.portal ?? "";
+  const balanceFilter = params.balance ?? "";
+  const hasActiveFilters = Boolean(searchTerm || statusFilter || portalFilter || balanceFilter);
 
-  // Fetch accounts (customers) from db
-  const accounts = await listAccounts(orgId, { search });
+  const customerWhere: Prisma.CrmAccountWhereInput = {
+    orgId,
+    type: "Customer",
+  };
+  const andFilters: Prisma.CrmAccountWhereInput[] = [];
+
+  if (searchTerm) {
+    andFilters.push({
+      OR: [
+        { name: { contains: searchTerm, mode: "insensitive" } },
+        { companyName: { contains: searchTerm, mode: "insensitive" } },
+        { email: { contains: searchTerm, mode: "insensitive" } },
+        { phone: { contains: searchTerm, mode: "insensitive" } },
+      ],
+    });
+  }
+
+  if (statusFilter) {
+    customerWhere.status = statusFilter;
+  }
+
+  if (portalFilter === "enabled") {
+    customerWhere.isPortalEnabled = true;
+  } else if (portalFilter === "disabled") {
+    customerWhere.isPortalEnabled = false;
+  }
+
+  if (balanceFilter === "outstanding") {
+    customerWhere.openingBalanceAmount = { gt: 0 };
+  } else if (balanceFilter === "clear") {
+    andFilters.push({
+      OR: [{ openingBalanceAmount: null }, { openingBalanceAmount: 0 }],
+    });
+  }
+
+  if (andFilters.length > 0) {
+    customerWhere.AND = andFilters;
+  }
+
+  const [customers, totalCount, activeCount, portalCount] = await Promise.all([
+    db.crmAccount.findMany({
+      where: customerWhere,
+      orderBy: { updatedAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        companyName: true,
+        email: true,
+        phone: true,
+        status: true,
+        customerSubType: true,
+        openingBalanceAmount: true,
+        updatedAt: true,
+      },
+    }),
+    db.crmAccount.count({ where: { orgId, type: "Customer" } }),
+    db.crmAccount.count({ where: { orgId, type: "Customer", status: "ACTIVE" } }),
+    db.crmAccount.count({ where: { orgId, type: "Customer", isPortalEnabled: true } }),
+  ]);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-b border-[#1c212a]/30 pb-5">
-        <div>
-          <h2 className="ds-h1 text-white">CUSTOMERS</h2>
-          <p className="text-sm text-slate-400 mt-1">Manage customer profiles, address routing, outstanding balances, and linked contact authority.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/crm/customers/new"
-            className="flex items-center gap-2 bg-[#00cec4] hover:bg-[#00b8af] text-white hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-[2px_2px_0px_0px_rgba(0,184,175,1)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none cursor-pointer"
-          >
-            <Plus className="size-4" />
-            <span>Create Customer</span>
-          </Link>
-        </div>
+    <div className="space-y-8">
+      <ChaPageHeader
+        eyebrow={null}
+        title="Customers"
+        description="Monitor and manage your customer master list, portal accessibility, and corporate parameters."
+        icon={<Users size={20} />}
+      />
+
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <ChaMetricCard
+          title="Total Customers"
+          value={totalCount}
+          note="All registered profiles"
+          icon={<Users size={16} />}
+          accent="blue"
+        />
+        <ChaMetricCard
+          title="Active Customers"
+          value={activeCount}
+          note="Currently trading profiles"
+          icon={<CheckCircle2 size={16} />}
+          accent="green"
+        />
+        <ChaMetricCard
+          title="Portal Access Enabled"
+          value={portalCount}
+          note="Customers with portal logins"
+          icon={<Globe size={16} />}
+          accent="violet"
+        />
       </div>
 
-      {/* Filters Bar */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-[#0f1319] p-4 rounded-xl border border-[#1c212a]/55 shadow-md">
-        <form method="GET" className="flex flex-1 flex-col sm:flex-row gap-3 w-full">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 size-4 text-slate-500" />
-            <input
-              type="text"
-              name="search"
-              defaultValue={search}
-              placeholder="Search customers by name, company, email..."
-              className="w-full pl-9 pr-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#00cec4] text-white"
-            />
-          </div>
+      <CustomersFilterBar
+        basePath="/crm/customers"
+        createHref="/crm/customers/new"
+        filters={{
+          search: searchTerm,
+          status: statusFilter,
+          portal: portalFilter,
+          balance: balanceFilter,
+        }}
+        canCreateCustomer
+      />
 
-          <button
-            type="submit"
-            className="px-4 py-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-200 rounded-lg text-xs font-semibold cursor-pointer transition-all"
-          >
-            Search
-          </button>
-          
-          {search && (
-            <Link
-              href="/crm/customers"
-              className="px-3 py-1.5 text-slate-400 hover:text-white text-xs font-semibold flex items-center justify-center cursor-pointer transition-all"
-            >
-              Reset
-            </Link>
-          )}
-        </form>
-        
-        <div className="text-xs text-slate-400 font-bold shrink-0">
-          Showing {accounts.length} Customers
-        </div>
-      </div>
-
-      {/* Customers Data Table */}
-      <div className="bg-[#0f1319] border border-[#1c212a]/55 rounded-xl overflow-hidden shadow-2xl">
-        {accounts.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 space-y-4">
-            <div className="size-12 rounded-full bg-[#00cec4]/10 text-[#00cec4] flex items-center justify-center mx-auto shadow-[0_0_15px_rgba(0,206,196,0.15)]">
-              <Building className="size-6" />
-            </div>
-            <h3 className="ds-h2 text-white">No Customers Found</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              {search 
-                ? `Your search "${search}" did not return any matches.` 
-                : "Create a customer profile to manage address routing, credit terms, and invoices."
-              }
-            </p>
-            {!search && (
-              <Link
-                href="/crm/customers/new"
-                className="inline-flex items-center gap-1.5 text-[#00cec4] hover:underline text-xs font-bold"
-              >
-                <span>Onboard a new customer</span>
-                <ArrowRight className="size-3.5" />
-              </Link>
-            )}
-          </div>
-        ) : (
-          <div className="overflow-x-auto font-sans">
-            <table className="ds-table w-full">
-              <thead>
+      <div className="overflow-hidden rounded-xl border border-mono-border/60 bg-mono-card shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="monolith-table min-w-full">
+            <thead>
+              <tr>
+                <th>Customer Name</th>
+                <th>Company Name</th>
+                <th>Contact Info</th>
+                <th>Outstanding Balance</th>
+                <th>Last Updated</th>
+                <th>Status</th>
+                <th className="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {customers.length === 0 ? (
                 <tr>
-                  <th className="px-6 py-4">Customer Name</th>
-                  <th className="px-6 py-4">Company Name</th>
-                  <th className="px-6 py-4">Contact Info</th>
-                  <th className="px-6 py-4">Outstanding Balance</th>
-                  <th className="px-6 py-4">Currency</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <td colSpan={7} className="px-6 py-12 text-center text-sm text-mono-muted">
+                    {hasActiveFilters ? "No customers match the current filters." : "No customers found in your master database."}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {accounts.map((acc) => {
-                  const unpaidInvoices = acc.invoices?.filter((inv: any) => inv.status !== "PAID" && inv.status !== "CANCELLED") || [];
-                  const balance = unpaidInvoices.reduce((sum: number, inv: any) => sum + inv.total, 0);
+              ) : (
+                customers.map((customer) => {
+                  const balance = customer.openingBalanceAmount || 0;
 
                   return (
-                    <tr key={acc.id} className="ds-row-link group">
-                      <td className="px-6 py-4 font-bold text-white">
-                        <Link href={`/crm/customers/${acc.id}`} className="hover:text-[#00cec4] transition-all block">
-                          {acc.name}
-                        </Link>
-                        {acc.customerSubType && (
-                          <span className="text-[10px] text-slate-400 block font-normal mt-0.5">{acc.customerSubType}</span>
-                        )}
+                    <tr key={customer.id} className="transition-colors">
+                      <td>
+                        <div>
+                          <p className="text-base text-mono-text">{customer.name}</p>
+                          <p className="mt-1 text-xs text-mono-muted">{customer.customerSubType || "Business"}</p>
+                        </div>
                       </td>
-                      <td className="px-6 py-4 text-slate-300 font-medium">
-                        {acc.companyName || <span className="text-slate-500 italic">None</span>}
-                      </td>
-                      <td className="px-6 py-4 text-slate-300 text-xs">
-                        {acc.email && (
-                          <div className="flex items-center gap-1.5 text-slate-300">
-                            <Mail className="size-3.5 text-slate-500" />
-                            <span>{acc.email}</span>
+                      <td className="text-base text-mono-text">{customer.companyName || customer.name}</td>
+                      <td>
+                        {customer.email || customer.phone ? (
+                          <div className="space-y-1 text-sm text-mono-text">
+                            {customer.email ? (
+                              <div className="flex items-center gap-2">
+                                <Mail className="size-4 text-mono-muted" />
+                                <span>{customer.email}</span>
+                              </div>
+                            ) : null}
+                            {customer.phone ? (
+                              <div className="flex items-center gap-2">
+                                <Phone className="size-4 text-mono-muted" />
+                                <span>{customer.phone}</span>
+                              </div>
+                            ) : null}
                           </div>
-                        )}
-                        {acc.phone && (
-                          <div className="flex items-center gap-1.5 text-slate-300 mt-1">
-                            <Phone className="size-3.5 text-slate-500" />
-                            <span>{acc.phone}</span>
-                          </div>
-                        )}
-                        {!acc.email && !acc.phone && (
-                          <span className="text-slate-500 italic">No contact details</span>
+                        ) : (
+                          <span className="text-sm italic text-mono-muted">No contact details</span>
                         )}
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`text-sm font-bold font-mono ds-numeric ${balance > 0 ? "text-[#fb923c]" : "text-slate-400"}`}>
+                      <td>
+                        <span className="monolith-numeric text-sm text-mono-text">
                           {new Intl.NumberFormat("en-IN", {
                             style: "currency",
                             currency: "INR",
@@ -179,37 +219,41 @@ export default async function CrmCustomersPage({ searchParams }: { searchParams:
                           }).format(balance)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-xs font-semibold text-slate-400">
-                        {acc.currency ? acc.currency.split("-")[0].trim() : "INR"}
+                      <td className="monolith-numeric text-mono-muted">
+                        {customer.updatedAt.toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="px-2 py-0.5 text-[9px] font-bold bg-emerald-500/10 text-emerald-400 rounded uppercase tracking-wider">
-                          {acc.status || "ACTIVE"}
-                        </span>
+                      <td>
+                        <Badge variant={customer.status === "ACTIVE" ? "success" : "secondary"} className="uppercase">
+                          {customer.status || "ACTIVE"}
+                        </Badge>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Link href={`/crm/customers/${acc.id}`} className="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800/40 cursor-pointer" title="View details">
+                          <Link href={`/crm/customers/${customer.id}`} className="monolith-action-icon monolith-action-icon-view" title="View details">
                             <Eye className="size-4" />
                           </Link>
-                          <Link href={`/crm/customers/${acc.id}/edit`} className="p-1.5 text-slate-400 hover:text-[#00cec4] rounded hover:bg-slate-800/40 cursor-pointer" title="Edit">
-                            <Edit2 className="size-4" />
+                          <Link href={`/crm/customers/${customer.id}/edit`} className="monolith-action-icon monolith-action-icon-edit" title="Edit customer">
+                            <Pencil className="size-4" />
                           </Link>
                           <DeleteRecordButton
-                            recordId={acc.id}
+                            recordId={customer.id}
                             confirmMessage="Are you sure you want to delete this customer account? All linked contacts, deals, and projects will be affected."
                             deleteAction={deleteAccountAction}
-                            className="p-1.5 text-slate-500 hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer transition-colors"
+                            className="monolith-plain monolith-action-icon monolith-action-icon-delete"
                           />
                         </div>
                       </td>
                     </tr>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, BriefcaseBusiness, CalendarDays, CircleUserRound, ExternalLink, Info, Sparkles, Users } from "lucide-react";
-import { DropdownSelect } from "@/components/ui/dropdown-select";
-import { Input } from "@/components/ui/input";
+import { DropdownSelect } from "@/components/monolith/dropdown-select";
+import { Input } from "@/components/monolith/input";
 import type { SalaryRevisionSummary } from "@/modules/hrms/salary-revisions-shared";
 import { formatINR, formatPercent } from "@/modules/hrms/salary-revisions-shared";
 
@@ -22,7 +22,7 @@ function statusBadgeClass(status: string) {
   if (status === "APPROVED") return "border-emerald-200 bg-emerald-50 text-emerald-700";
   if (status === "PENDING") return "border-amber-200 bg-amber-50 text-amber-700";
   if (status === "REJECTED") return "border-rose-200 bg-rose-50 text-rose-700";
-  return "border-outline-variant bg-surface-container-high text-on-surface-variant";
+  return "border-mono-border bg-mono-soft text-mono-muted";
 }
 
 function kindLabel(kind: "ANNUAL" | "INTERMEDIATE") {
@@ -30,7 +30,7 @@ function kindLabel(kind: "ANNUAL" | "INTERMEDIATE") {
 }
 
 function sectionCardClass(extra = "") {
-  return `card-top-accent ds-shell-lg border border-outline-variant/40 bg-surface p-5 shadow-sm sm:p-6 ${extra}`.trim();
+  return `monolith-card monolith-accent monolith-shell-lg border border-mono-border/40 bg-mono-card p-5 shadow-sm sm:p-6 ${extra}`.trim();
 }
 
 function ToggleCard({
@@ -48,14 +48,14 @@ function ToggleCard({
     <button
       type="button"
       onClick={onToggle}
-      className="flex w-full items-center justify-between rounded-2xl border border-outline-variant/35 bg-surface px-4 py-3 text-left transition hover:border-[#00cec4]/45"
+      className="flex w-full items-center justify-between rounded-2xl border border-mono-border/35 bg-mono-card px-4 py-3 text-left transition hover:border-[#F9D972]/45"
     >
       <div>
-        <p className="font-medium text-on-surface">{label}</p>
-        <p className="mt-1 text-xs text-on-surface-variant">{description}</p>
+        <p className="font-medium text-mono-text">{label}</p>
+        <p className="mt-1 text-xs text-mono-muted">{description}</p>
       </div>
       <span className={`relative inline-flex h-7 w-12 rounded-full transition ${active ? "bg-[#4e909a]" : "bg-outline-variant dark:bg-slate-600"}`}>
-        <span className={`absolute top-1 h-5 w-5 rounded-full bg-surface transition ${active ? "left-6" : "left-1"}`} />
+        <span className={`absolute top-1 h-5 w-5 rounded-full bg-mono-card transition ${active ? "left-6" : "left-1"}`} />
       </span>
     </button>
   );
@@ -63,8 +63,8 @@ function ToggleCard({
 
 function CurrentStepIcon({ children }: { children: React.ReactNode }) {
   return (
-    <span className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#00cec4]/35 bg-[#00cec4]/10 text-[#00a39a] shadow-[0_0_0_4px_rgba(0,206,196,0.12),0_0_18px_rgba(0,206,196,0.14)] animate-pulse">
-      <span className="absolute inset-[-6px] rounded-full border border-[#00cec4]/30 animate-ping" />
+    <span className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#F9D972]/35 bg-[#F9D972]/10 text-[#00a39a] shadow-[0_0_0_4px_rgba(0,206,196,0.12),0_0_18px_rgba(0,206,196,0.14)] animate-pulse">
+      <span className="absolute inset-[-6px] rounded-full border border-[#F9D972]/30 animate-ping" />
       <span className="relative z-10 inline-flex items-center justify-center">
         {children}
       </span>
@@ -109,8 +109,8 @@ function SalaryHistoryCard({
         <div className="flex items-center gap-3">
           <IndianRupeeIcon />
           <div>
-            <h2 className="ds-h2 text-on-surface">Salary & Revision History</h2>
-            <p className="mt-1 text-sm text-on-surface-variant">No salary revision records are available for this employee yet.</p>
+            <h2 className="monolith-h2 text-mono-text">Salary & Revision History</h2>
+            <p className="mt-1 text-sm text-mono-muted">No salary revision records are available for this employee yet.</p>
           </div>
         </div>
       </div>
@@ -122,7 +122,7 @@ function SalaryHistoryCard({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-3">
           <IndianRupeeIcon />
-          <h2 className="ds-h2 text-on-surface">Salary & Revision History</h2>
+          <h2 className="monolith-h2 text-mono-text">Salary & Revision History</h2>
         </div>
         <a
           href={`/hrms/salary-revisions?employeeId=${employeeId}`}
@@ -162,7 +162,7 @@ function SalaryHistoryCard({
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="border-b border-outline-variant/30">
+              <tr className="border-b border-mono-border/30">
                 {["Effective", "Gross", "CTC", "Revised CTC", "Rev %", "Status"].map((label) => (
                   <th key={label} className="px-0 py-2 text-left text-xs font-medium text-[#8ca0c2]">
                     {label}
@@ -172,12 +172,12 @@ function SalaryHistoryCard({
             </thead>
             <tbody>
               {rows.map((revision) => (
-                <tr key={revision.id} className="border-b border-outline-variant/20 last:border-b-0">
-                  <td className="py-3 text-on-surface">{revision.effectiveLabel}</td>
-                  <td className="ds-numeric py-3 text-on-surface">{formatINR(revision.revisedGrossAnnual ?? revision.grossAnnual)}</td>
-                  <td className="ds-numeric py-3 text-on-surface">{formatINR(revision.ctcAnnual)}</td>
-                  <td className="ds-numeric py-3 font-semibold text-on-surface">{formatINR(revision.revisedCtcAnnual)}</td>
-                  <td className="ds-numeric py-3 text-emerald-600">{formatPercent(revision.revisionPercent)}</td>
+                <tr key={revision.id} className="border-b border-mono-border/20 last:border-b-0">
+                  <td className="py-3 text-mono-text">{revision.effectiveLabel}</td>
+                  <td className="monolith-numeric py-3 text-mono-text">{formatINR(revision.revisedGrossAnnual ?? revision.grossAnnual)}</td>
+                  <td className="monolith-numeric py-3 text-mono-text">{formatINR(revision.ctcAnnual)}</td>
+                  <td className="monolith-numeric py-3 font-semibold text-mono-text">{formatINR(revision.revisedCtcAnnual)}</td>
+                  <td className="monolith-numeric py-3 text-emerald-600">{formatPercent(revision.revisionPercent)}</td>
                   <td className="py-3">
                     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusBadgeClass(revision.status)}`}>
                       {revision.statusLabel}
@@ -197,14 +197,14 @@ function InlineMetric({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-sm text-[#8ca0c2]">{label}</p>
-      <p className="mt-1 text-[1rem] font-normal text-on-surface sm:text-[1.05rem]">{value}</p>
+      <p className="mt-1 text-[1rem] font-normal text-mono-text sm:text-[1.05rem]">{value}</p>
     </div>
   );
 }
 
 function IndianRupeeIcon() {
   return (
-    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#f5faf9] text-lg font-semibold text-on-surface">
+    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#f5faf9] text-lg font-semibold text-mono-text">
       ₹
     </span>
   );
@@ -350,7 +350,7 @@ export function StartAppraisalClient({
           <div className="xl:justify-self-end">
             <Link
               href={employeeDetailsHref}
-              className="inline-flex items-center gap-2 self-start rounded-2xl border border-outline-variant/40 bg-surface px-4 py-2.5 text-sm font-medium text-on-surface shadow-sm transition hover:border-[#00cec4]/35 hover:text-[#00a79f]"
+              className="inline-flex items-center gap-2 self-start rounded-2xl border border-mono-border/40 bg-mono-card px-4 py-2.5 text-sm font-medium text-mono-text shadow-sm transition hover:border-[#F9D972]/35 hover:text-[#00a79f]"
             >
               <CircleUserRound className="size-4" />
               Employee Details
@@ -433,8 +433,8 @@ export function StartAppraisalClient({
               disabled={saving !== "" || !scheduledReviewersReady}
               className={
                 scheduledReviewersReady
-                  ? "rounded-2xl bg-[#00cec4] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#00b8af] disabled:cursor-not-allowed disabled:opacity-50"
-                  : "rounded-2xl bg-outline-variant px-5 py-3 text-sm font-medium text-on-surface-variant transition disabled:cursor-not-allowed"
+                  ? "rounded-2xl bg-[#F9D972] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#E8C85D] disabled:cursor-not-allowed disabled:opacity-50"
+                  : "rounded-2xl bg-outline-variant px-5 py-3 text-sm font-medium text-mono-muted transition disabled:cursor-not-allowed"
               }
             >
               {saving === "scheduled" ? "Assigning..." : "Assign Reviewers"}
@@ -448,7 +448,7 @@ export function StartAppraisalClient({
       </div>
 
       {canStartSpecial ? (
-        <div className={sectionCardClass("card-top-accent-violet border-[#b990ff]/55 shadow-[0_0_0_1px_rgba(185,144,255,0.08)]")}>
+        <div className={sectionCardClass("monolith-card monolith-accent-violet border-[#b990ff]/55 shadow-[0_0_0_1px_rgba(185,144,255,0.08)]")}>
           <SectionHeader
             icon={<Sparkles className="size-5 text-[#8a52ff]" />}
             title="Start Special Appraisal"
@@ -518,8 +518,8 @@ export function StartAppraisalClient({
               disabled={saving !== "" || !specialReviewersReady}
               className={
                 specialReviewersReady
-                  ? "rounded-2xl bg-[#00cec4] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#00b8af] disabled:cursor-not-allowed disabled:opacity-50"
-                  : "rounded-2xl bg-outline-variant px-5 py-3 text-sm font-medium text-on-surface-variant transition disabled:cursor-not-allowed"
+                  ? "rounded-2xl bg-[#F9D972] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#E8C85D] disabled:cursor-not-allowed disabled:opacity-50"
+                  : "rounded-2xl bg-outline-variant px-5 py-3 text-sm font-medium text-mono-muted transition disabled:cursor-not-allowed"
               }
             >
               {saving === "special" ? "Starting..." : "Start Special Appraisal"}
@@ -609,7 +609,7 @@ function ReviewerField({
 }) {
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2 text-sm text-on-surface">
+      <div className="flex items-center gap-2 text-sm text-mono-text">
         <span className={`h-2.5 w-2.5 rounded-full ${accent}`} />
         {label}
       </div>
@@ -636,7 +636,7 @@ function LabeledField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-on-surface">{label}</label>
+      <label className="text-sm font-medium text-mono-text">{label}</label>
       {children}
     </div>
   );
@@ -665,7 +665,7 @@ function EmployeeInfo({
             {value}
           </span>
         ) : (
-          <p className="mt-0.5 text-[0.95rem] font-normal text-on-surface sm:text-[1rem]">{value}</p>
+          <p className="mt-0.5 text-[0.95rem] font-normal text-mono-text sm:text-[1rem]">{value}</p>
         )}
       </div>
     </div>
@@ -676,7 +676,7 @@ function SectionHeader({
   description,
   icon,
   title,
-  titleClassName = "text-on-surface",
+  titleClassName = "text-mono-text",
 }: {
   description?: string;
   icon: React.ReactNode;
@@ -685,10 +685,10 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="mt-0.5 text-on-surface">{icon}</div>
+      <div className="mt-0.5 text-mono-text">{icon}</div>
       <div>
-        <h2 className={`ds-h2 ${titleClassName}`}>{title}</h2>
-        {description ? <p className="mt-1 text-sm text-on-surface-variant">{description}</p> : null}
+        <h2 className={`monolith-h2 ${titleClassName}`}>{title}</h2>
+        {description ? <p className="mt-1 text-sm text-mono-muted">{description}</p> : null}
       </div>
     </div>
   );

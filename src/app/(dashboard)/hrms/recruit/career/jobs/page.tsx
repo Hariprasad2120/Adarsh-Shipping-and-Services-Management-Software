@@ -67,13 +67,13 @@ export default function JobSearchPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="ds-h1 text-on-surface">Job Search</h1>
-          <p className="text-sm text-on-surface-variant">Matched and discovered job listings — private to you</p>
+          <h1 className="monolith-h1 text-mono-text">Job Search</h1>
+          <p className="text-sm text-mono-muted">Matched and discovered job listings — private to you</p>
         </div>
       </div>
 
       <div className="relative max-w-sm">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
         <input
           type="search"
           placeholder="Search job titles, companies..."
@@ -83,7 +83,7 @@ export default function JobSearchPage() {
         />
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
         <DataTable>
           <DataTableHeader>
             <tr>
@@ -109,32 +109,32 @@ export default function JobSearchPage() {
                         href={l.canonicalUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-medium text-on-surface hover:text-[#818cf8]"
+                        className="font-medium text-mono-text hover:text-[#818cf8]"
                       >
                         {l.title}
                       </a>
                     ) : (
-                      <span className="font-medium text-on-surface">{l.title}</span>
+                      <span className="font-medium text-mono-text">{l.title}</span>
                     )}
                     {l.salaryMin && (
-                      <p className="ds-numeric ds-label mt-0.5">
+                      <p className="monolith-numeric monolith-label mt-0.5">
                         {l.salaryMin.toLocaleString()} – {l.salaryMax?.toLocaleString() ?? "?"}
                       </p>
                     )}
                   </DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">{l.company}</DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">{l.location ?? "—"}</DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">
+                  <DataTableCell className="text-mono-muted">{l.company}</DataTableCell>
+                  <DataTableCell className="text-mono-muted">{l.location ?? "—"}</DataTableCell>
+                  <DataTableCell className="text-mono-muted">
                     {l.workplaceType ?? l.employmentType ?? "—"}
                   </DataTableCell>
-                  <DataTableCell className="ds-label">{l.source}</DataTableCell>
+                  <DataTableCell className="monolith-label">{l.source}</DataTableCell>
                   <DataTableCell>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => save(l.id)}
                         disabled={!!actionPending || !!l.savedAt}
                         title={l.savedAt ? "Saved" : "Save job"}
-                        className={`rounded-lg p-1.5 transition ${l.savedAt ? "text-[#818cf8]" : "text-on-surface-variant hover:text-[#818cf8]"}`}
+                        className={`rounded-lg p-1.5 transition ${l.savedAt ? "text-[#818cf8]" : "text-mono-muted hover:text-[#818cf8]"}`}
                       >
                         <Bookmark size={16} />
                       </button>
@@ -142,7 +142,7 @@ export default function JobSearchPage() {
                         onClick={() => dismiss(l.id)}
                         disabled={!!actionPending}
                         title="Dismiss"
-                        className="rounded-lg p-1.5 text-on-surface-variant transition hover:text-[#fb923c]"
+                        className="rounded-lg p-1.5 text-mono-muted transition hover:text-[#D88700]"
                       >
                         <Close size={16} />
                       </button>

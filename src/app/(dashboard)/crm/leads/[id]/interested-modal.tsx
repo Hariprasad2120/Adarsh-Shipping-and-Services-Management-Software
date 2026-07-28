@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { updateLeadStatusAction } from "@/modules/crm/actions";
@@ -199,14 +200,14 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-[#1c212a]/50 bg-[#0c0f14]">
           <div className="flex items-center gap-2">
-            <Info className="size-4.5 text-[#00cec4]" />
+            <Info className="size-4.5 text-[#F9D972]" />
             <span className="font-bold text-sm text-white uppercase tracking-wider">In-Call Enquiry Form</span>
           </div>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={handleFillDemo}
-              className="px-2.5 py-1 bg-[#00cec4]/10 hover:bg-[#00cec4]/20 border border-[#00cec4]/35 text-[#00cec4] rounded text-[10px] font-bold uppercase tracking-wider transition-all"
+              className="px-2.5 py-1 bg-[#F9D972]/10 hover:bg-[#F9D972]/20 border border-[#F9D972]/35 text-[#F9D972] rounded text-[10px] font-bold uppercase tracking-wider transition-all"
             >
               Fill Demo
             </button>
@@ -222,7 +223,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
             type="button"
             onClick={() => setActiveTab("Sea")}
             className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 transition-all cursor-pointer ${
-              activeTab === "Sea" ? "border-[#00cec4] text-white bg-[#161f28]/30" : "border-transparent text-slate-400 hover:text-white"
+              activeTab === "Sea" ? "border-[#F9D972] text-white bg-[#161f28]/30" : "border-transparent text-slate-400 hover:text-white"
             }`}
           >
             <Ship className="size-4" />
@@ -232,7 +233,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
             type="button"
             onClick={() => setActiveTab("Air")}
             className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 transition-all cursor-pointer ${
-              activeTab === "Air" ? "border-[#00cec4] text-white bg-[#161f28]/30" : "border-transparent text-slate-400 hover:text-white"
+              activeTab === "Air" ? "border-[#F9D972] text-white bg-[#161f28]/30" : "border-transparent text-slate-400 hover:text-white"
             }`}
           >
             <Plane className="size-4" />
@@ -263,7 +264,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     }}
                     className="sr-only peer"
                   />
-                  <div className="w-8 h-4.5 bg-[#161f28] border border-[#1c212a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-[#00cec4] after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#00cec4]/10 peer-checked:border-[#00cec4]/40"></div>
+                  <div className="w-8 h-4.5 bg-[#161f28] border border-[#1c212a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-[#F9D972] after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#F9D972]/10 peer-checked:border-[#F9D972]/40"></div>
                 </label>
               </div>
 
@@ -284,20 +285,20 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     }}
                     className="sr-only peer"
                   />
-                  <div className="w-8 h-4.5 bg-[#161f28] border border-[#1c212a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-[#00cec4] after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#00cec4]/10 peer-checked:border-[#00cec4]/40"></div>
+                  <div className="w-8 h-4.5 bg-[#161f28] border border-[#1c212a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-[#F9D972] after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#F9D972]/10 peer-checked:border-[#F9D972]/40"></div>
                 </label>
               </div>
             </div>
 
             {isFutureFollowUp && (
-              <div className="p-4 rounded-xl bg-[#fb923c]/5 border border-[#fb923c]/20 space-y-2 animate-in fade-in duration-200 mb-2">
+              <div className="p-4 rounded-xl bg-[#D88700]/5 border border-[#D88700]/20 space-y-2 animate-in fade-in duration-200 mb-2">
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide">Reminder Date & Time *</label>
                 <input
                   type="datetime-local"
                   required
                   value={followUpReminderDate}
                   onChange={(e) => setFollowUpReminderDate(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#fb923c]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#fb923c]"
+                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#D88700]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#D88700]"
                 />
               </div>
             )}
@@ -308,25 +309,25 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Direction</label>
-                  <select
+                  <NativeSelect
                     value={seaType}
                     onChange={(e) => setSeaType(e.target.value as any)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   >
                     <option value="Import">Import</option>
                     <option value="Export">Export</option>
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Load Type</label>
-                  <select
+                  <NativeSelect
                     value={seaLclFcl}
                     onChange={(e) => setSeaLclFcl(e.target.value as any)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   >
                     <option value="LCL">LCL (Less than Container Load)</option>
                     <option value="FCL">FCL (Full Container Load)</option>
-                  </select>
+                  </NativeSelect>
                 </div>
               </div>
 
@@ -339,7 +340,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     placeholder="e.g. Shanghai, China"
                     value={pol}
                     onChange={(e) => setPol(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00cec4]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
                 <div>
@@ -350,7 +351,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     placeholder="e.g. Chennai, India"
                     value={pod}
                     onChange={(e) => setPod(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00cec4]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
               </div>
@@ -364,7 +365,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     placeholder="e.g. Auto Parts"
                     value={seaCommodity}
                     onChange={(e) => setSeaCommodity(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00cec4]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
                 <div>
@@ -375,7 +376,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     placeholder="e.g. 1500 KG"
                     value={seaWeight}
                     onChange={(e) => setSeaWeight(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00cec4]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
                 {seaLclFcl === "LCL" ? (
@@ -388,7 +389,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                       placeholder="e.g. 2.5"
                       value={seaCbm}
                       onChange={(e) => setSeaCbm(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00cec4]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                     />
                   </div>
                 ) : (
@@ -399,7 +400,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                       placeholder="e.g. 20FT General"
                       value={seaDimensions}
                       onChange={(e) => setSeaDimensions(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                     />
                   </div>
                 )}
@@ -416,20 +417,20 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     placeholder={seaLclFcl === "LCL" ? "e.g. 12 boxes" : "e.g. 2 containers"}
                     value={seaPackages}
                     onChange={(e) => setSeaPackages(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00cec4]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Incoterm</label>
-                  <select
+                  <NativeSelect
                     value={seaIncoterm}
                     onChange={(e) => setSeaIncoterm(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   >
                     {incotermOptions.map((inc) => (
                       <option key={inc} value={inc}>{inc}</option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Location / Port of Entry</label>
@@ -438,7 +439,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     placeholder="e.g. Chennai Port"
                     value={seaLocation}
                     onChange={(e) => setSeaLocation(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
               </div>
@@ -450,7 +451,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     type="text"
                     value={seaClientName}
                     onChange={(e) => setSeaClientName(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
                 <div>
@@ -459,7 +460,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     type="text"
                     value={seaBusinessName}
                     onChange={(e) => setSeaBusinessName(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
               </div>
@@ -467,26 +468,26 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Shipment Planning</label>
-                  <select
+                  <NativeSelect
                     value={seaShipmentPlanning}
                     onChange={(e) => setSeaShipmentPlanning(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   >
                     {planningOptions.map((opt) => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Shipments Done Before?</label>
-                  <select
+                  <NativeSelect
                     value={seaShipmentsDone}
                     onChange={(e) => setSeaShipmentsDone(e.target.value as any)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   >
                     <option value="Yes">Yes</option>
                     <option value="No">No</option>
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Purpose of Cargo</label>
@@ -494,7 +495,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     type="text"
                     value={seaPurpose}
                     onChange={(e) => setSeaPurpose(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
               </div>
@@ -511,7 +512,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     placeholder="e.g. London Heathrow (LHR)"
                     value={aol}
                     onChange={(e) => setAol(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00cec4]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
                 <div>
@@ -522,7 +523,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     placeholder="e.g. Chennai International (MAA)"
                     value={aod}
                     onChange={(e) => setAod(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00cec4]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
               </div>
@@ -536,7 +537,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     placeholder="e.g. Electronics"
                     value={airCommodity}
                     onChange={(e) => setAirCommodity(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00cec4]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
                 <div>
@@ -548,16 +549,16 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                       placeholder="e.g. 250"
                       value={airWeight}
                       onChange={(e) => setAirWeight(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00cec4]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                     />
-                    <select
+                    <NativeSelect
                       value={airWeightUnit}
                       onChange={(e) => setAirWeightUnit(e.target.value)}
                       className="bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-slate-300 px-1 focus:outline-none"
                     >
                       <option value="KG">KG</option>
                       <option value="Lbs">Lbs</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
                 <div>
@@ -569,9 +570,9 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                       placeholder="e.g. 50x50x40"
                       value={airDimensions}
                       onChange={(e) => setAirDimensions(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00cec4]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                     />
-                    <select
+                    <NativeSelect
                       value={airDimensionsUnit}
                       onChange={(e) => setAirDimensionsUnit(e.target.value)}
                       className="bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-slate-300 px-1 focus:outline-none"
@@ -580,7 +581,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                       <option value="mm">mm</option>
                       <option value="inch">inch</option>
                       <option value="meter">meter</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
               </div>
@@ -595,9 +596,9 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                       placeholder="e.g. 5"
                       value={airPackages}
                       onChange={(e) => setAirPackages(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00cec4]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                     />
-                    <select
+                    <NativeSelect
                       value={airPackagesUnit}
                       onChange={(e) => setAirPackagesUnit(e.target.value)}
                       className="bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-slate-300 px-1 focus:outline-none"
@@ -606,20 +607,20 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                       <option value="Box">Box</option>
                       <option value="pallet">pallet</option>
                       <option value="cartons">cartons</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Incoterm</label>
-                  <select
+                  <NativeSelect
                     value={airIncoterm}
                     onChange={(e) => setAirIncoterm(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   >
                     {incotermOptions.map((inc) => (
                       <option key={inc} value={inc}>{inc}</option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Location</label>
@@ -628,7 +629,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     placeholder="e.g. Chennai airport"
                     value={airLocation}
                     onChange={(e) => setAirLocation(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
               </div>
@@ -640,7 +641,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     type="text"
                     value={airClientName}
                     onChange={(e) => setAirClientName(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
                 <div>
@@ -649,7 +650,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     type="text"
                     value={airBusinessName}
                     onChange={(e) => setAirBusinessName(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
               </div>
@@ -657,26 +658,26 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Shipment Planning</label>
-                  <select
+                  <NativeSelect
                     value={airShipmentPlanning}
                     onChange={(e) => setAirShipmentPlanning(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   >
                     {planningOptions.map((opt) => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Shipments Done Before?</label>
-                  <select
+                  <NativeSelect
                     value={airShipmentsDone}
                     onChange={(e) => setAirShipmentsDone(e.target.value as any)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   >
                     <option value="Yes">Yes</option>
                     <option value="No">No</option>
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Purpose of Cargo</label>
@@ -684,7 +685,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     type="text"
                     value={airPurpose}
                     onChange={(e) => setAirPurpose(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
               </div>
@@ -704,7 +705,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
               placeholder="Provide a brief reason for changing the status of this lead..."
               value={changeRemarks}
               onChange={(e) => setChangeRemarks(e.target.value)}
-              className="w-full p-2.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4] placeholder-slate-600 min-h-[50px]"
+              className="w-full p-2.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972] placeholder-slate-600 min-h-[50px]"
             />
           </div>
         </div>
@@ -721,7 +722,7 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-5 py-2 bg-[#00cec4] hover:bg-[#00b8af] disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-[#00cec4]/10 cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2 bg-[#F9D972] hover:bg-[#E8C85D] disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
             >
               {isSubmitting ? "Saving..." : "Save Enquiry Details"}
             </button>

@@ -1,10 +1,6 @@
 import { NotificationProvider } from "@/components/notifications/notification-provider";
-import { DashboardChromeProvider } from "@/components/dashboard-chrome";
-import { Sidebar } from "@/components/sidebar";
-import { MainShell } from "@/components/main-shell";
 import { TodoReminderAgent } from "@/components/todo/todo-reminder-agent";
 import { SessionSync } from "@/components/session-sync";
-import { PageAnimator } from "@/components/page-animator";
 import { auth } from "@/lib/auth";
 import { CapsProvider } from "@/lib/caps-context";
 import { loadCaps } from "@/lib/rbac";
@@ -12,13 +8,19 @@ import { getManagedModuleSectionIdForPath } from "@/modules/core/organisation/mo
 import { getEnabledModuleIds } from "@/modules/core/organisation/module-settings";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { DashboardShell } from "./_components/dashboard-shell";
+import { DashboardShellSwitcher } from "./_components/dashboard-shell-switcher";
+
+function normalizePathname(pathname: string | null) {
+  if (!pathname) return "/dashboard";
+  const normalized = pathname.replace(/\/+$/, "");
+  return normalized || "/";
+}
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session) redirect("/login");
 
-  const pathname = (await headers()).get("x-current-pathname") ?? "/dashboard";
+  const pathname = normalizePathname((await headers()).get("x-current-pathname"));
   const [caps, enabledModuleIds] = await Promise.all([
     loadCaps(session.user.id),
     getEnabledModuleIds(session.user.orgId!),
@@ -35,22 +37,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <NotificationProvider>
         <TodoReminderAgent />
         <SessionSync />
-        <DashboardChromeProvider>
-          <div className="flex h-screen overflow-hidden bg-background text-foreground">
-            <Sidebar caps={caps} userName={session.user.name} enabledModuleIds={enabledModuleIds} />
-            <MainShell>
-              <PageAnimator>
-                <DashboardShell
-                  userName={session.user.name}
-                  sessionToken={session.user.sessionNonce}
-                  enabledModuleIds={enabledModuleIds}
-                >
-                  {children}
-                </DashboardShell>
-              </PageAnimator>
-            </MainShell>
-          </div>
-        </DashboardChromeProvider>
+        <DashboardShellSwitcher
+          caps={caps}
+          userName={session.user.name}
+          sessionToken={session.user.sessionNonce}
+          enabledModuleIds={enabledModuleIds}
+        >
+          {children}
+        </DashboardShellSwitcher>
       </NotificationProvider>
     </CapsProvider>
   );

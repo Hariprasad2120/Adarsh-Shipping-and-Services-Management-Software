@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -315,7 +316,7 @@ export function EnquiryDetailClient({
         {/* Conversion to Quote Button */}
         <Link
           href={`/crm/quotes/new?leadId=${lead.id}`}
-          className="flex items-center gap-2 bg-[#00cec4] hover:bg-[#00b8af] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[#00cec4] shadow-[2px_2px_0px_0px_#008f88] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_#008f88] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
+          className="flex items-center gap-2 bg-[#F9D972] hover:bg-[#E8C85D] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[#F9D972] shadow-[2px_2px_0px_0px_#008f88] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_#008f88] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
         >
           <RefreshCcw className="size-4" />
           <span>Convert as Quote</span>
@@ -323,18 +324,18 @@ export function EnquiryDetailClient({
       </div>
 
       {/* ─── STATUS CONTROL & ASSIGNMENT PANEL ─── */}
-      <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a] shadow-[4px_4px_0px_0px_rgba(0,206,196,0.15)] hover:shadow-[6px_6px_0px_0px_rgba(0,206,196,0.22)] transition-all duration-200 flex flex-col xl:flex-row xl:items-center justify-between gap-6 card-left-accent">
+      <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a] shadow-[4px_4px_0px_0px_rgba(0,206,196,0.15)] hover:shadow-[6px_6px_0px_0px_rgba(0,206,196,0.22)] transition-all duration-200 flex flex-col xl:flex-row xl:items-center justify-between gap-6 monolith-card monolith-accent">
         
         {/* Left Side: status info */}
         <div className="space-y-2 flex-1">
           <div className="flex items-center gap-3">
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#00cec4]/10 text-[#00cec4] border border-[#00cec4]/20 font-mono">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#F9D972]/10 text-[#F9D972] border border-[#F9D972]/20 font-mono">
               Ref: {lead.enquiryRef || "GEN-ENQ"}
             </span>
             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
               lead.status === "FOLLOW_UP"
-                ? "bg-[#fb923c]/15 text-[#fb923c] border border-[#fb923c]/20"
-                : "bg-[#00cec4]/15 text-[#00cec4] border border-[#00cec4]/20"
+                ? "bg-[#D88700]/15 text-[#D88700] border border-[#D88700]/20"
+                : "bg-[#F9D972]/15 text-[#F9D972] border border-[#F9D972]/20"
             }`}>
               {lead.status === "FOLLOW_UP" ? "Follow Up Active" : "Interested Enquiry"}
             </span>
@@ -353,7 +354,7 @@ export function EnquiryDetailClient({
           {lead.status === "INTERESTED" && (
             <button
               onClick={() => setIsMarkingFollowUp(true)}
-              className="flex items-center gap-2 bg-[#fb923c] hover:bg-[#f97316] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[#fb923c] shadow-[2px_2px_0px_0px_#c2410c] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_#c2410c] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
+              className="flex items-center gap-2 bg-[#D88700] hover:bg-[#f97316] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[#D88700] shadow-[2px_2px_0px_0px_#c2410c] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_#c2410c] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
             >
               <Clock className="size-4" />
               <span>Schedule Follow Up</span>
@@ -364,10 +365,10 @@ export function EnquiryDetailClient({
           {lead.status === "FOLLOW_UP" && isManager && (
             <div className="flex items-center gap-2 p-2 bg-[#161f28] rounded-xl border border-[#1c212a] shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-2">Assign Owner:</span>
-              <select
+              <NativeSelect
                 value={selectedOwnerId}
                 onChange={(e) => setSelectedOwnerId(e.target.value)}
-                className="bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white px-2 py-1.5 focus:outline-none focus:border-[#00cec4]"
+                className="bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white px-2 py-1.5 focus:outline-none focus:border-[#F9D972]"
               >
                 <option value="">Unassigned</option>
                 {users.map((u) => (
@@ -375,11 +376,11 @@ export function EnquiryDetailClient({
                     {u.name}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
               <button
                 onClick={handleAssignOwner}
                 disabled={isAssigning}
-                className="px-3 py-1.5 bg-[#00cec4] hover:bg-[#00b8af] disabled:opacity-50 text-white rounded-lg text-xs font-bold uppercase tracking-wide cursor-pointer"
+                className="px-3 py-1.5 bg-[#F9D972] hover:bg-[#E8C85D] disabled:opacity-50 text-white rounded-lg text-xs font-bold uppercase tracking-wide cursor-pointer"
               >
                 {isAssigning ? "Saving..." : "Apply"}
               </button>
@@ -390,9 +391,9 @@ export function EnquiryDetailClient({
 
       {/* Mark as Follow Up Popup / Expandable Area */}
       {isMarkingFollowUp && (
-        <form onSubmit={handleMarkAsFollowUp} className="p-6 rounded-xl bg-[#0f1319] border border-[#fb923c]/40 space-y-4 animate-in slide-in-from-top-4 duration-200 card-left-accent-orange">
+        <form onSubmit={handleMarkAsFollowUp} className="p-6 rounded-xl bg-[#0f1319] border border-[#D88700]/40 space-y-4 animate-in slide-in-from-top-4 duration-200 monolith-card monolith-accent-warning">
           <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-2">
-            <h3 className="font-bold text-xs text-[#fb923c] uppercase tracking-wider flex items-center gap-2">
+            <h3 className="font-bold text-xs text-[#D88700] uppercase tracking-wider flex items-center gap-2">
               <Clock className="size-4" />
               <span>Schedule Sales Follow Up</span>
             </h3>
@@ -408,7 +409,7 @@ export function EnquiryDetailClient({
                 required
                 value={followUpDate}
                 onChange={(e) => setFollowUpDate(e.target.value)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#fb923c]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#fb923c]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#D88700]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#D88700]"
               />
             </div>
             <div>
@@ -419,7 +420,7 @@ export function EnquiryDetailClient({
                 value={followUpRemarks}
                 onChange={(e) => setFollowUpRemarks(e.target.value)}
                 placeholder="Call outcome, notes, and specific follow-up actions required..."
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#fb923c]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#fb923c] placeholder-slate-600"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#D88700]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#D88700] placeholder-slate-600"
               />
             </div>
           </div>
@@ -434,7 +435,7 @@ export function EnquiryDetailClient({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2 bg-[#fb923c] hover:bg-[#f97316] text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-[#fb923c]/15"
+              className="px-5 py-2 bg-[#D88700] hover:bg-[#f97316] text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-[#D88700]/15"
             >
               {isSubmitting ? "Scheduling..." : "Confirm Schedule & Save"}
             </button>
@@ -452,12 +453,12 @@ export function EnquiryDetailClient({
           <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a] shadow-[4px_4px_0px_0px_rgba(0,206,196,0.1)] space-y-4">
             <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3 mb-2">
               <div className="flex items-center gap-3">
-                <Info className="size-4.5 text-[#00cec4]" />
+                <Info className="size-4.5 text-[#F9D972]" />
                 <h3 className="font-bold text-sm text-white uppercase tracking-wider">Enquiry & Cargo Details</h3>
               </div>
               <button
                 onClick={() => setIsEditingCargoDetails(!isEditingCargoDetails)}
-                className="flex items-center gap-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] hover:border-[#00cec4]/50 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                className="flex items-center gap-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] hover:border-[#F9D972]/50 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
               >
                 {isEditingCargoDetails ? <X className="size-3.5" /> : <Edit2 className="size-3.5" />}
                 <span>{isEditingCargoDetails ? "Cancel" : "Edit Details"}</span>
@@ -469,7 +470,7 @@ export function EnquiryDetailClient({
                 
                 {/* Contact Sub-Grid */}
                 <div className="space-y-3">
-                  <span className="text-[10px] font-bold text-[#00cec4] uppercase tracking-wide block font-sans border-b border-[#1c212a]/20 pb-1">Client Contact Info</span>
+                  <span className="text-[10px] font-bold text-[#F9D972] uppercase tracking-wide block font-sans border-b border-[#1c212a]/20 pb-1">Client Contact Info</span>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Client Name</label>
@@ -524,18 +525,18 @@ export function EnquiryDetailClient({
 
                 {/* Cargo Details Sub-Grid */}
                 <div className="space-y-3 pt-2">
-                  <span className="text-[10px] font-bold text-[#00cec4] uppercase tracking-wide block font-sans border-b border-[#1c212a]/20 pb-1">Cargo Details & Route</span>
+                  <span className="text-[10px] font-bold text-[#F9D972] uppercase tracking-wide block font-sans border-b border-[#1c212a]/20 pb-1">Cargo Details & Route</span>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Cargo Mode</label>
-                      <select
+                      <NativeSelect
                         value={enquiryType}
                         onChange={(e) => setEnquiryType(e.target.value as any)}
                         className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white"
                       >
                         <option value="Sea">Sea Enquiry</option>
                         <option value="Air">Air Enquiry</option>
-                      </select>
+                      </NativeSelect>
                     </div>
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Commodity</label>
@@ -643,7 +644,7 @@ export function EnquiryDetailClient({
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex items-center gap-1.5 px-5 py-2 bg-[#00cec4] hover:bg-[#00b8af] text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-[#00cec4]/15"
+                    className="flex items-center gap-1.5 px-5 py-2 bg-[#F9D972] hover:bg-[#E8C85D] text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-[#F9D972]/15"
                   >
                     <Save className="size-3.5" />
                     <span>{isSubmitting ? "Saving..." : "Save Details"}</span>
@@ -683,12 +684,12 @@ export function EnquiryDetailClient({
                   
                   {enquiryType === "Sea" ? (
                     <div className="md:col-span-2 space-y-1">
-                      <span className="text-[11px] font-bold text-[#00cec4] uppercase tracking-wider block font-mono">Routing (Sea POL ➔ POD)</span>
+                      <span className="text-[11px] font-bold text-[#F9D972] uppercase tracking-wider block font-mono">Routing (Sea POL ➔ POD)</span>
                       <span className="text-white font-bold text-sm">{pol || "N/A"} ➔ {pod || "N/A"}</span>
                     </div>
                   ) : (
                     <div className="md:col-span-2 space-y-1">
-                      <span className="text-[11px] font-bold text-[#00cec4] uppercase tracking-wider block font-mono">Routing (Air AOL ➔ AOD)</span>
+                      <span className="text-[11px] font-bold text-[#F9D972] uppercase tracking-wider block font-mono">Routing (Air AOL ➔ AOD)</span>
                       <span className="text-white font-bold text-sm">{aol || "N/A"} ➔ {aod || "N/A"}</span>
                     </div>
                   )}
@@ -708,17 +709,17 @@ export function EnquiryDetailClient({
 
           {/* Perishable Cargo Card (displays always if lead.isPerishable is true, or provides toggle) */}
           {lead.isPerishable && (
-            <div className="p-6 rounded-xl bg-[#0f1319] border border-[#fb923c]/40 shadow-[4px_4px_0px_0px_rgba(251,146,60,0.15)] space-y-4 card-left-accent-orange">
+            <div className="p-6 rounded-xl bg-[#0f1319] border border-[#D88700]/40 shadow-[4px_4px_0px_0px_rgba(251,146,60,0.15)] space-y-4 monolith-card monolith-accent-warning">
               <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3 mb-2">
                 <div className="flex items-center gap-3">
-                  <span className="size-8 rounded-lg bg-[#fb923c]/10 text-[#fb923c] flex items-center justify-center text-base">
+                  <span className="size-8 rounded-lg bg-[#D88700]/10 text-[#D88700] flex items-center justify-center text-base">
                     ❄️
                   </span>
                   <h3 className="font-bold text-sm text-white uppercase tracking-wider">Perishable Cargo Parameters</h3>
                 </div>
                 <button
                   onClick={() => setIsEditingPerishables(!isEditingPerishables)}
-                  className="flex items-center gap-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] hover:border-[#fb923c]/50 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] hover:border-[#D88700]/50 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                 >
                   {isEditingPerishables ? <X className="size-3.5" /> : <Edit2 className="size-3.5" />}
                   <span>{isEditingPerishables ? "Cancel" : "Edit Parameters"}</span>
@@ -730,10 +731,10 @@ export function EnquiryDetailClient({
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Cargo Category</label>
-                      <select
+                      <NativeSelect
                         value={perishableType}
                         onChange={(e) => setPerishableType(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#fb923c]"
+                        className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#D88700]"
                       >
                         <option value="Fruit/Vegetables">Fruit & Vegetables</option>
                         <option value="Meat/Poultry">Meat & Poultry</option>
@@ -741,7 +742,7 @@ export function EnquiryDetailClient({
                         <option value="Pharmaceuticals">Pharmaceuticals / Medicine</option>
                         <option value="Chemicals">Temperature-sensitive Chemicals</option>
                         <option value="Dairy">Dairy Products</option>
-                      </select>
+                      </NativeSelect>
                     </div>
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Required Temp (°C)</label>
@@ -750,7 +751,7 @@ export function EnquiryDetailClient({
                         value={temperature}
                         onChange={(e) => setTemperature(e.target.value)}
                         placeholder="e.g. 2 to 8"
-                        className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#fb923c]"
+                        className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#D88700]"
                       />
                     </div>
                     <div>
@@ -760,7 +761,7 @@ export function EnquiryDetailClient({
                         value={humidity}
                         onChange={(e) => setHumidity(e.target.value)}
                         placeholder="e.g. 85%"
-                        className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#fb923c]"
+                        className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#D88700]"
                       />
                     </div>
                   </div>
@@ -771,7 +772,7 @@ export function EnquiryDetailClient({
                       value={perishableRemarks}
                       onChange={(e) => setPerishableRemarks(e.target.value)}
                       placeholder="Specify container ventilation settings, pre-cooling requirements, or emergency instructions..."
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#fb923c] placeholder-slate-600"
+                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#D88700] placeholder-slate-600"
                     />
                   </div>
                   <div className="flex justify-end gap-3">
@@ -785,7 +786,7 @@ export function EnquiryDetailClient({
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="flex items-center gap-1.5 px-5 py-2 bg-[#fb923c] hover:bg-[#f97316] text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-[#fb923c]/15"
+                      className="flex items-center gap-1.5 px-5 py-2 bg-[#D88700] hover:bg-[#f97316] text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-[#D88700]/15"
                     >
                       <Save className="size-3.5" />
                       <span>{isSubmitting ? "Saving..." : "Save Parameters"}</span>
@@ -800,11 +801,11 @@ export function EnquiryDetailClient({
                   </div>
                   <div className="space-y-1">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Operating Temp</span>
-                    <span className="text-[#fb923c] font-bold block ds-numeric">{temperature || "Ambient"} °C</span>
+                    <span className="text-[#D88700] font-bold block monolith-numeric">{temperature || "Ambient"} °C</span>
                   </div>
                   <div className="space-y-1">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Humidity Target</span>
-                    <span className="text-white font-medium block ds-numeric">{humidity || "N/A"}</span>
+                    <span className="text-white font-medium block monolith-numeric">{humidity || "N/A"}</span>
                   </div>
                   <div className="col-span-3 border-t border-[#1c212a]/30 pt-3 mt-1 space-y-1">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Ventilation & Airflow Remarks</span>
@@ -823,7 +824,7 @@ export function EnquiryDetailClient({
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                 Rates & Costing Worksheet
               </span>
-              <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#00cec4]/10 text-[#00cec4] border border-[#00cec4]/20 font-mono">
+              <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#F9D972]/10 text-[#F9D972] border border-[#F9D972]/20 font-mono">
                 Worksheet Calculator
               </span>
             </div>
@@ -844,20 +845,20 @@ export function EnquiryDetailClient({
 
             {/* Paste box tool */}
             <div className="space-y-3">
-              <span className="text-[10px] font-bold text-[#00cec4] uppercase tracking-wide block font-mono">1. Direct Text Paste Parser (Test Regex)</span>
+              <span className="text-[10px] font-bold text-[#F9D972] uppercase tracking-wide block font-mono">1. Direct Text Paste Parser (Test Regex)</span>
               <div className="space-y-2">
                 <textarea
                   rows={3}
                   value={pasteText}
                   onChange={(e) => setPasteText(e.target.value)}
                   placeholder="Paste raw quote email text here. E.g., 'Ocean Freight: 1500 USD, CFS Charges: 4000 INR...'"
-                  className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4] placeholder-slate-600"
+                  className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972] placeholder-slate-600"
                 />
                 <button
                   type="button"
                   onClick={handleParsePasteText}
                   disabled={isParsingPaste || !pasteText.trim()}
-                  className="px-4 py-2 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] hover:border-[#00cec4] text-slate-300 rounded-lg text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50"
+                  className="px-4 py-2 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] hover:border-[#F9D972] text-slate-300 rounded-lg text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50"
                 >
                   {isParsingPaste ? "Extracting..." : "Parse Text & Test"}
                 </button>
@@ -866,7 +867,7 @@ export function EnquiryDetailClient({
 
             {/* Simulation form */}
             <div className="space-y-3 pt-3 border-t border-[#1c212a]/30">
-              <span className="text-[10px] font-bold text-[#fb923c] uppercase tracking-wide block font-mono">2. Simulate Inbound Agent Reply Email (Database Update)</span>
+              <span className="text-[10px] font-bold text-[#D88700] uppercase tracking-wide block font-mono">2. Simulate Inbound Agent Reply Email (Database Update)</span>
               <form onSubmit={handleSimulateEmail} className="space-y-3 bg-[#0a0d12]/40 p-4 rounded-xl border border-[#1c212a]/40">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -876,7 +877,7 @@ export function EnquiryDetailClient({
                       required
                       value={simFromEmail}
                       onChange={(e) => setSimFromEmail(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#fb923c]"
+                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#D88700]"
                     />
                   </div>
                   <div>
@@ -886,7 +887,7 @@ export function EnquiryDetailClient({
                       required
                       value={simSubject}
                       onChange={(e) => setSimSubject(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#fb923c]"
+                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#D88700]"
                     />
                   </div>
                 </div>
@@ -897,14 +898,14 @@ export function EnquiryDetailClient({
                     required
                     value={simBody}
                     onChange={(e) => setSimBody(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#fb923c] font-mono leading-relaxed"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#D88700] font-mono leading-relaxed"
                   />
                 </div>
                 <div className="flex justify-end pt-1">
                   <button
                     type="submit"
                     disabled={isSimulatingEmail}
-                    className="flex items-center gap-2 bg-[#fb923c] hover:bg-[#f97316] text-white px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 bg-[#D88700] hover:bg-[#f97316] text-white px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50"
                   >
                     <Mail className="size-3.5" />
                     <span>{isSimulatingEmail ? "Processing Simulation..." : "Trigger Simulation"}</span>
@@ -922,11 +923,11 @@ export function EnquiryDetailClient({
           
           {/* Follow-up Reminder Details Card */}
           {lead.isFutureFollowUp && lead.followUpReminderDate && (
-            <div className="p-6 rounded-xl bg-[#0f1319] border border-[#fb923c]/40 shadow-[4px_4px_0px_0px_rgba(251,146,60,0.15)] space-y-3 card-top-accent-orange">
-              <span className="text-[10px] font-bold text-[#fb923c] uppercase tracking-widest block font-sans">Follow-up Alarm</span>
+            <div className="p-6 rounded-xl bg-[#0f1319] border border-[#D88700]/40 shadow-[4px_4px_0px_0px_rgba(251,146,60,0.15)] space-y-3 monolith-card monolith-accent-warning">
+              <span className="text-[10px] font-bold text-[#D88700] uppercase tracking-widest block font-sans">Follow-up Alarm</span>
               <div className="flex items-center gap-2 text-white">
-                <Clock className="size-4.5 text-[#fb923c] shrink-0" />
-                <span className="font-bold text-sm ds-numeric">
+                <Clock className="size-4.5 text-[#D88700] shrink-0" />
+                <span className="font-bold text-sm monolith-numeric">
                   {new Date(lead.followUpReminderDate).toLocaleString("en-IN")}
                 </span>
               </div>
@@ -944,7 +945,7 @@ export function EnquiryDetailClient({
               <button
                 onClick={() => setActiveTab("OVERVIEW")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "OVERVIEW" ? "border-[#00cec4] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "OVERVIEW" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Summary
@@ -952,7 +953,7 @@ export function EnquiryDetailClient({
               <button
                 onClick={() => setActiveTab("NOTES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "NOTES" ? "border-[#00cec4] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "NOTES" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Notes ({notes.length})
@@ -960,7 +961,7 @@ export function EnquiryDetailClient({
               <button
                 onClick={() => setActiveTab("ACTIVITIES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ACTIVITIES" ? "border-[#00cec4] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "ACTIVITIES" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Tasks ({activities.length})
@@ -968,7 +969,7 @@ export function EnquiryDetailClient({
               <button
                 onClick={() => setActiveTab("TIMELINE")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "TIMELINE" ? "border-[#00cec4] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "TIMELINE" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Audit
@@ -976,7 +977,7 @@ export function EnquiryDetailClient({
               <button
                 onClick={() => setActiveTab("TIME_TRACKER")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "TIME_TRACKER" ? "border-[#00cec4] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "TIME_TRACKER" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Time Tracker ({workTimeLogs.length})
@@ -984,7 +985,7 @@ export function EnquiryDetailClient({
               <button
                 onClick={() => setActiveTab("CALLS")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "CALLS" ? "border-[#00cec4] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "CALLS" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Calls ({calls.length})
@@ -1044,7 +1045,7 @@ export function EnquiryDetailClient({
                             )}
                           </div>
                           <div className="text-right shrink-0">
-                            <span className="text-[#00cec4] font-bold font-mono text-sm">{log.durationHours}h</span>
+                            <span className="text-[#F9D972] font-bold font-mono text-sm">{log.durationHours}h</span>
                             <span className="text-slate-500 text-[10px] block">
                               {new Date(log.loggedAt).toLocaleDateString("en-IN")}
                             </span>
@@ -1083,7 +1084,7 @@ export function EnquiryDetailClient({
                               className="w-full p-3 bg-[#0a0d12]/50 flex items-center justify-between text-left hover:bg-[#161f28] transition-all cursor-pointer"
                             >
                               <div className="flex items-center gap-3">
-                                <span className="size-8 rounded-lg bg-[#00cec4]/10 text-[#00cec4] flex items-center justify-center text-xs">📞</span>
+                                <span className="size-8 rounded-lg bg-[#F9D972]/10 text-[#F9D972] flex items-center justify-center text-xs">📞</span>
                                 <div>
                                   <span className="text-white font-bold text-xs block">
                                     {call.salesperson?.name || "Salesperson"}
@@ -1095,13 +1096,13 @@ export function EnquiryDetailClient({
                               </div>
                               <div className="flex items-center gap-2">
                                 {call.durationSeconds && (
-                                  <span className="text-[#00cec4] font-mono font-bold text-xs">
+                                  <span className="text-[#F9D972] font-mono font-bold text-xs">
                                     {Math.floor(call.durationSeconds / 60)}:{String(call.durationSeconds % 60).padStart(2, "0")}
                                   </span>
                                 )}
                                 <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
                                   (call.status === "COMPLETED" || recording?.uploadStatus === "UPLOADED") ? "bg-emerald-400/10 text-emerald-400" :
-                                  recording?.uploadStatus === "UPLOADING" ? "bg-cyan-400/10 text-[#00cec4]" :
+                                  recording?.uploadStatus === "UPLOADING" ? "bg-cyan-400/10 text-[#F9D972]" :
                                   recording?.uploadStatus === "CANCELLED" ? "bg-amber-400/10 text-amber-400" :
                                   recording?.uploadStatus === "FAILED" ? "bg-red-400/10 text-red-400" :
                                   call.status === "PENDING" ? "bg-amber-400/10 text-amber-400" :
@@ -1121,11 +1122,11 @@ export function EnquiryDetailClient({
 
                             {/* Expanded: recording + transcript */}
                             {isExpanded && (
-                              <div className="p-3 bg-surface border-t border-outline-variant space-y-3">
+                              <div className="p-3 bg-mono-card border-t border-mono-border space-y-3">
                                 {recording ? (
                                   <>
                                     {/* Audio player */}
-                                    <div className="space-y-2 p-2 bg-surface-container-low rounded-lg border border-outline-variant/40">
+                                    <div className="space-y-2 p-2 bg-mono-soft rounded-lg border border-mono-border/40">
                                       <div className="flex items-center justify-between gap-3 min-w-0">
                                         <div className="flex items-center gap-2 min-w-0 flex-1">
                                           <span className="text-[9px] font-bold text-slate-500 uppercase shrink-0">Recording:</span>
@@ -1136,7 +1137,7 @@ export function EnquiryDetailClient({
                                         <div className="flex items-center gap-2 shrink-0">
                                           <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${
                                             recording.uploadStatus === "UPLOADED" ? "bg-emerald-400/10 text-emerald-400" :
-                                            recording.uploadStatus === "UPLOADING" ? "bg-cyan-400/10 text-[#00cec4] animate-pulse" :
+                                            recording.uploadStatus === "UPLOADING" ? "bg-cyan-400/10 text-[#F9D972] animate-pulse" :
                                             recording.uploadStatus === "CANCELLED" ? "bg-amber-400/10 text-amber-400" :
                                             "bg-red-400/10 text-red-400"
                                           }`}>
@@ -1145,7 +1146,7 @@ export function EnquiryDetailClient({
                                           {recording.uploadStatus === "UPLOADED" && (
                                             <a
                                               href={`/api/crm/recordings/${recording.id}/download`}
-                                              className="text-[10px] text-[#00cec4] font-bold uppercase hover:underline transition-all cursor-pointer"
+                                              className="text-[10px] text-[#F9D972] font-bold uppercase hover:underline transition-all cursor-pointer"
                                               title="Download recording"
                                             >
                                               Download
@@ -1168,11 +1169,11 @@ export function EnquiryDetailClient({
                                         <div className="space-y-1">
                                           <div className="w-full bg-[#1c212a] h-1.5 rounded-full overflow-hidden">
                                             <div
-                                              className="bg-[#00cec4] h-1.5 rounded-full transition-all duration-300"
+                                              className="bg-[#F9D972] h-1.5 rounded-full transition-all duration-300"
                                               style={{ width: `${recording.uploadProgress || 0}%` }}
                                             />
                                           </div>
-                                          <div className="flex justify-between text-[9px] text-[#00cec4] font-mono">
+                                          <div className="flex justify-between text-[9px] text-[#F9D972] font-mono">
                                             <span>Uploading from mobile...</span>
                                             <span>{recording.uploadProgress || 0}%</span>
                                           </div>
@@ -1199,7 +1200,7 @@ export function EnquiryDetailClient({
                                       <button
                                         onClick={() => setCallSubTab("TRANSCRIPT")}
                                         className={`text-[10px] font-bold uppercase tracking-wider pb-1 border-b-2 cursor-pointer ${
-                                          callSubTab === "TRANSCRIPT" ? "border-[#00cec4] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
+                                          callSubTab === "TRANSCRIPT" ? "border-[#F9D972] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
                                         }`}
                                       >
                                         AI Transcript
@@ -1207,7 +1208,7 @@ export function EnquiryDetailClient({
                                       <button
                                         onClick={() => setCallSubTab("SUMMARY")}
                                         className={`text-[10px] font-bold uppercase tracking-wider pb-1 border-b-2 cursor-pointer ${
-                                          callSubTab === "SUMMARY" ? "border-[#00cec4] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
+                                          callSubTab === "SUMMARY" ? "border-[#F9D972] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
                                         }`}
                                       >
                                         AI Summary
@@ -1236,7 +1237,7 @@ export function EnquiryDetailClient({
                                             </div>
                                             <div>
                                               <span className="font-bold text-slate-500 uppercase text-[9px] block">Objections</span>
-                                              <p className={`text-[11px] mt-1 font-bold ${transcript.objections === "None" ? "text-emerald-400" : "text-[#fb923c]"}`}>
+                                              <p className={`text-[11px] mt-1 font-bold ${transcript.objections === "None" ? "text-emerald-400" : "text-[#D88700]"}`}>
                                                 {transcript.objections}
                                               </p>
                                             </div>
@@ -1429,7 +1430,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={oceanFreight}
                 onChange={(e) => setOceanFreight(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -1438,7 +1439,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={cfsCharges}
                 onChange={(e) => setCfsCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -1447,7 +1448,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={customsClearance}
                 onChange={(e) => setCustomsClearance(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -1456,7 +1457,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={blCharges}
                 onChange={(e) => setBlCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
           </div>
@@ -1468,7 +1469,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={vgmCharges}
                 onChange={(e) => setVgmCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -1477,7 +1478,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
                   LCL Charges (INR)
                 </label>
                 {isImportLcl && (
-                  <span className="text-[9px] text-[#00cec4] font-medium font-sans">
+                  <span className="text-[9px] text-[#F9D972] font-medium font-sans">
                     Calculated: {volume} CBM × {calculatedLclRate}/CBM
                   </span>
                 )}
@@ -1486,7 +1487,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={lclCharges}
                 onChange={(e) => setLclCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -1503,7 +1504,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
                         value="750"
                         checked={lclDoOption === "750"}
                         onChange={() => setLclDoOption("750")}
-                        className="mr-1 size-3 bg-[#0a0d12] text-[#00cec4] border-[#1c212a]"
+                        className="mr-1 size-3 bg-[#0a0d12] text-[#F9D972] border-[#1c212a]"
                       />
                       750
                     </label>
@@ -1514,7 +1515,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
                         value="500"
                         checked={lclDoOption === "500"}
                         onChange={() => setLclDoOption("500")}
-                        className="mr-1 size-3 bg-[#0a0d12] text-[#00cec4] border-[#1c212a]"
+                        className="mr-1 size-3 bg-[#0a0d12] text-[#F9D972] border-[#1c212a]"
                       />
                       500
                     </label>
@@ -1525,7 +1526,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={doCharges}
                 onChange={(e) => setDoCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -1534,7 +1535,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={cfsCustoms}
                 onChange={(e) => setCfsCustoms(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
           </div>
@@ -1548,7 +1549,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={airFreight}
                 onChange={(e) => setAirFreight(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -1557,7 +1558,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={handlingCharges}
                 onChange={(e) => setHandlingCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -1566,7 +1567,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={customsClearance}
                 onChange={(e) => setCustomsClearance(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
           </div>
@@ -1578,7 +1579,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={awbCharges}
                 onChange={(e) => setAwbCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -1587,7 +1588,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={deliveryCharges}
                 onChange={(e) => setDeliveryCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
           </div>
@@ -1597,12 +1598,12 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
       {/* Summary & Save Action */}
       <div className="flex items-center justify-between pt-3 border-t border-[#1c212a]/30">
         <div className="text-sm font-semibold text-white">
-          Total Estimated Rates: <span className="text-[#00cec4] font-bold ds-numeric">₹{calculateTotal().toLocaleString("en-IN")}</span>
+          Total Estimated Rates: <span className="text-[#F9D972] font-bold monolith-numeric">₹{calculateTotal().toLocaleString("en-IN")}</span>
         </div>
         <button
           type="submit"
           disabled={isSaving}
-          className="px-5 py-2 bg-[#00cec4] hover:bg-[#00b8af] disabled:opacity-50 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-all cursor-pointer shadow-md shadow-[#00cec4]/15 hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)]"
+          className="px-5 py-2 bg-[#F9D972] hover:bg-[#E8C85D] disabled:opacity-50 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-all cursor-pointer shadow-md shadow-[#F9D972]/15 hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)]"
         >
           {isSaving ? "Saving Worksheet..." : "Save Worksheet Rates"}
         </button>

@@ -40,7 +40,7 @@ export function HrmsTopNav({
               onClick={() => onChangeTab("myspace")}
               className={`text-[14px] font-semibold pb-4 pt-4 border-b-2 cursor-pointer transition-all ${
                 activeTab === "myspace"
-                  ? "border-[#00c4b6] text-[#00c4b6]"
+                  ? "border-[#F9D972] text-[#F9D972]"
                   : "border-transparent text-slate-500 hover:text-slate-900"
               }`}
             >
@@ -51,7 +51,7 @@ export function HrmsTopNav({
               onClick={() => onChangeTab("team")}
               className={`text-[14px] font-semibold pb-4 pt-4 border-b-2 cursor-pointer transition-all ${
                 activeTab === "team"
-                  ? "border-[#00c4b6] text-[#00c4b6]"
+                  ? "border-[#F9D972] text-[#F9D972]"
                   : "border-transparent text-slate-500 hover:text-slate-900"
               }`}
             >
@@ -62,7 +62,7 @@ export function HrmsTopNav({
               onClick={() => onChangeTab("organization")}
               className={`text-[14px] font-semibold pb-4 pt-4 border-b-2 cursor-pointer transition-all ${
                 activeTab === "organization"
-                  ? "border-[#00c4b6] text-[#00c4b6]"
+                  ? "border-[#F9D972] text-[#F9D972]"
                   : "border-transparent text-slate-500 hover:text-slate-900"
               }`}
             >
@@ -112,13 +112,13 @@ export function HrmsTopNav({
             placeholder="Search employee..."
             value={searchValue}
             onChange={handleSearchChange}
-            className="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[#00c4b6] focus:bg-white transition-colors"
+            className="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[#F9D972] focus:bg-white transition-colors"
           />
         </div>
 
         {/* User profile brief */}
         <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
-          <div className="size-8 rounded-full bg-[#00c4b6]/10 flex items-center justify-center text-[#00c4b6]">
+          <div className="size-8 rounded-full bg-[#F9D972]/10 flex items-center justify-center text-[#F9D972]">
             <User className="size-4" />
           </div>
           <span className="text-xs font-semibold text-slate-700 hidden sm:inline">

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 /**
  * Mona's animated avatar — a glowing cyan orb with a conic gradient ring.
- * Uses design-system accent color (#00cec4) and surfaces.
+ * Uses design-system accent color (#F9D972) and surfaces.
  */
 export function MonaAvatar({
   size = 40,
@@ -29,7 +29,7 @@ export function MonaAvatar({
           className="absolute inset-0 rounded-full"
           style={{
             background:
-              "conic-gradient(from 0deg, #00cec4, #38bdf8, #818cf8, #c084fc, #00cec4)",
+              "conic-gradient(from 0deg, #F9D972, #38bdf8, #818cf8, #c084fc, #F9D972)",
             opacity: 0.6,
           }}
           animate={
@@ -50,7 +50,7 @@ export function MonaAvatar({
 
       {/* Inner circle — uses surface-container for dark/light compat */}
       <motion.div
-        className="absolute flex items-center justify-center rounded-full bg-surface-container"
+        className="absolute flex items-center justify-center rounded-full bg-mono-soft"
         style={{
           width: innerSize,
           height: innerSize,
@@ -68,10 +68,10 @@ export function MonaAvatar({
           className="font-bold select-none"
           style={{
             fontSize,
-            background: "linear-gradient(135deg, #00cec4, #38bdf8)",
+            background: "linear-gradient(135deg, #F9D972, #38bdf8)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            fontFamily: "var(--font-kiona-sans), sans-serif",
+            fontFamily: "var(--font-geist-sans), sans-serif",
             letterSpacing: "0.05em",
           }}
         >
@@ -86,7 +86,7 @@ export function MonaAvatar({
             <motion.div
               key={i}
               className="absolute rounded-full"
-              style={{ width: 3, height: 3, background: "#00cec4" }}
+              style={{ width: 3, height: 3, background: "#F9D972" }}
               animate={{
                 x: [0, Math.cos((i * 120 * Math.PI) / 180) * size * 0.6],
                 y: [0, Math.sin((i * 120 * Math.PI) / 180) * size * 0.6],
@@ -114,7 +114,7 @@ export function MonaAvatar({
 export function MonaAvatarSmall() {
   return (
     <div
-      className="flex shrink-0 items-center justify-center rounded-full bg-surface-container border border-outline-variant"
+      className="flex shrink-0 items-center justify-center rounded-full bg-mono-soft border border-mono-border"
       style={{
         width: 28,
         height: 28,
@@ -125,10 +125,10 @@ export function MonaAvatarSmall() {
         className="font-bold select-none"
         style={{
           fontSize: 10,
-          background: "linear-gradient(135deg, #00cec4, #38bdf8)",
+          background: "linear-gradient(135deg, #F9D972, #38bdf8)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
-          fontFamily: "var(--font-kiona-sans), sans-serif",
+          fontFamily: "var(--font-geist-sans), sans-serif",
         }}
       >
         M

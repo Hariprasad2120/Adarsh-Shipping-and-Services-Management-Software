@@ -1,11 +1,12 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {AlertTriangle,CheckCircle2,ChevronDown,ChevronUp,Plus,RefreshCw,Save,Trash2,Workflow,X,PanelLeft,PanelRight,Settings2,ZoomIn,ZoomOut,} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/monolith/badge";
+import { Button } from "@/components/monolith/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
 import * as actions from "@/modules/cha/actions";
 
 interface WorkflowsClientProps {
@@ -131,6 +132,7 @@ type NodeDraft = {
   slaDuration: number;
   slaUnit: "BUSINESS_DAYS" | "CALENDAR_DAYS";
   commentsRequired: boolean;
+  delayRemarksRequired: boolean;
   canBeSkipped: boolean;
   canBeRevisited: boolean;
   approvalRequired: boolean;
@@ -159,7 +161,7 @@ const MIN_ZOOM = 0.45;
 const MAX_ZOOM = 2.2;
 const QUERY_PROCESSING_SECTION_KEY = "query_processing";
 const FLAT_TOOLBAR_BUTTON_CLASS =
-  "ds-plain shadow-none hover:shadow-none active:shadow-none hover:translate-y-0 active:translate-y-0 active:scale-100";
+  "monolith-plain !text-[10px] !tracking-[0.06em] shadow-none hover:shadow-none active:shadow-none hover:translate-y-0 active:translate-y-0 active:scale-100";
 
 function createDefaultNodeActionConfig(): NodeActionConfigDraft {
   return {
@@ -352,6 +354,10 @@ function normalizeNodeActionConfig(value: any): NodeActionConfigDraft {
   };
 }
 
+function isLegacyStageChecklistUpload(item: ChecklistItemDraft, node: Pick<NodeDraft, "name" | "photoRequirements">) {
+  return item.allowsUpload && node.photoRequirements.length > 0 && item.label.trim().toLowerCase() === node.name.trim().toLowerCase();
+}
+
 function getTemplateEditorSettings(value: any) {
   const settings = value && typeof value === "object" ? value : {};
   return {
@@ -374,7 +380,7 @@ function getDefaultWorkflowScopeLabel(clearanceTypeName?: string | null, filingF
 }
 
 function normalizeNode(node: any, index: number): NodeDraft {
-  return {
+  const normalizedNode: NodeDraft = {
     id: node.id || createId("node"),
     key: node.key || `${slugify(node.name || "node")}_${index + 1}`,
     name: node.name || `Node ${index + 1}`,
@@ -393,6 +399,7 @@ function normalizeNode(node: any, index: number): NodeDraft {
     slaDuration: Number(node.slaDuration ?? 2),
     slaUnit: node.slaUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : "BUSINESS_DAYS",
     commentsRequired: !!node.commentsRequired,
+    delayRemarksRequired: node.delayRemarksRequired !== false,
     canBeSkipped: !!node.canBeSkipped,
     canBeRevisited: node.canBeRevisited !== false,
     approvalRequired: !!node.approvalRequired,
@@ -412,6 +419,14 @@ function normalizeNode(node: any, index: number): NodeDraft {
       ? (node.conditionalSectionsJson ?? node.conditionalSections).map(normalizeConditionalSection)
       : [],
     actionConfig: normalizeNodeActionConfig(node.actionConfigJson ?? node.actionConfig),
+  };
+  return {
+    ...normalizedNode,
+    checklistItems: normalizedNode.checklistItems.map((item: ChecklistItemDraft) =>
+      isLegacyStageChecklistUpload(item, normalizedNode)
+        ? { ...item, allowsUpload: false, minUploads: 0, maxUploads: null }
+        : item,
+    ),
   };
 }
 
@@ -685,6 +700,7 @@ function createWorkflowStageNode(
     slaDuration: 2,
     slaUnit: "BUSINESS_DAYS",
     commentsRequired: false,
+    delayRemarksRequired: true,
     canBeSkipped: !!options.canBeSkipped,
     canBeRevisited: true,
     approvalRequired: false,
@@ -720,6 +736,11 @@ function createWorkflowChecklistNode(
     conditionalSections?: ConditionalSectionDraft[];
   } = {},
 ): NodeDraft {
+  const checklistOptions =
+    Array.isArray(options.photoRequirements) && options.photoRequirements.length > 0
+      ? { ...options, allowsUpload: false, minUploads: 0, maxUploads: null }
+      : options;
+
   return {
     id: createId("node"),
     key,
@@ -739,6 +760,7 @@ function createWorkflowChecklistNode(
     slaDuration: Number(options.deadlineDuration ?? 2),
     slaUnit: options.deadlineUnit || "BUSINESS_DAYS",
     commentsRequired: false,
+    delayRemarksRequired: options.delayRemarksRequired !== false,
     canBeSkipped: !!options.canBeSkipped,
     canBeRevisited: true,
     approvalRequired: false,
@@ -746,7 +768,7 @@ function createWorkflowChecklistNode(
     requireAllMandatoryChecklistItems: options.isMandatory === false ? false : true,
     requireMandatoryPhotos: !!options.allowsUpload,
       allowedRoles: [],
-      checklistItems: [createChecklistItemDraft(label, 1, options)],
+      checklistItems: [createChecklistItemDraft(label, 1, checklistOptions)],
       photoRequirements: options.photoRequirements || (options.allowsUpload ? [createStageUploadSlot(`${label} document`, options)] : []),
       fieldDefinitions: options.fieldDefinitions || [],
       documentRequirements: options.documentRequirements || [],
@@ -781,6 +803,7 @@ function createWorkflowNotificationNode(
     slaDuration: 1,
     slaUnit: "BUSINESS_DAYS",
     commentsRequired: false,
+    delayRemarksRequired: false,
     canBeSkipped: false,
     canBeRevisited: true,
     approvalRequired: false,
@@ -2240,27 +2263,27 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
   };
 
   return (
-    <div className="flex h-[calc(100dvh-8.5rem)] w-full min-h-0 flex-col overflow-hidden rounded-2xl border border-outline-variant/60 bg-surface">
-      <div className="flex flex-col gap-4 border-b border-outline-variant bg-surface px-4 py-3">
+    <div className="flex h-[calc(100dvh-8.5rem)] w-full min-h-0 flex-col overflow-hidden rounded-2xl border border-mono-border/60 bg-mono-card">
+      <div className="flex flex-col gap-4 border-b border-mono-border bg-mono-card px-4 py-3">
         <div className="min-w-0">
           <div className="max-w-full space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="ds-label text-primary">CHA Settings</p>
+              <p className="monolith-label text-mono-accent">CHA Settings</p>
               <Badge variant={activeVersion?.isPublished ? "success" : "warning"}>
                 {activeVersion ? `${activeVersion.isPublished ? "PUBLISHED" : "DRAFT"} V${activeVersion.versionNumber}` : "NO VERSION"}
               </Badge>
             </div>
-            <h1 className="ds-h1 text-on-surface" style={{ fontFamily: "var(--font-kiona-sans)", letterSpacing: "0.08em" }}>
+            <h1 className="monolith-h1 text-mono-text" style={{ fontFamily: "var(--font-geist-sans)", letterSpacing: "0.08em" }}>
               FILING WORKFLOW BLUEPRINT
             </h1>
-            <p className="max-w-3xl text-sm text-on-surface-variant">
+            <p className="max-w-3xl text-sm text-mono-muted">
               Build configurable filing stages, checklist deadlines, and non-linear routing without hardcoded CHA node types.
             </p>
           </div>
         </div>
 
         <div className="flex w-full flex-wrap items-start gap-2">
-          <select
+          <NativeSelect
             value={selectedTemplateId || ""}
             onChange={(event) => {
               const nextValue = event.target.value || null;
@@ -2277,12 +2300,12 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 {template.name}{template.settingsJson?.isDefault ? " (Default)" : ""}
               </option>
             ))}
-          </select>
+          </NativeSelect>
           <Button variant="outline" onClick={createNewWorkflow}>
             <Plus size={16} />
             New Workflow
           </Button>
-          <select
+          <NativeSelect
             value={selectedClearanceTypeId}
             onChange={(event) => setSelectedClearanceTypeId(event.target.value)}
             className="min-w-44 text-sm"
@@ -2294,8 +2317,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 {jobType.name}
               </option>
             ))}
-          </select>
-          <select
+          </NativeSelect>
+          <NativeSelect
             value={selectedFilingFlowCategory}
             onChange={(event) => setSelectedFilingFlowCategory(event.target.value as FilingFlowCategory)}
             className="min-w-40 text-sm"
@@ -2305,7 +2328,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
             <option value="IMPORT_BE">Import BE</option>
             <option value="EXPORT_SB">Export SB</option>
             <option value="CUSTOM">Custom</option>
-          </select>
+          </NativeSelect>
           {isWorkflowReadOnly ? (
             <>
               <Button variant="outline" onClick={forkDraft}>
@@ -2336,25 +2359,25 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
       <div className="relative flex min-h-0 flex-1 overflow-hidden">
         <aside
           data-canvas-ui="true"
-          className={`absolute inset-y-0 left-0 z-40 w-[min(330px,calc(100%-1rem))] shrink-0 overflow-y-auto border-r border-outline-variant bg-surface-container-low transition-transform duration-200 ${paletteOpen ? "translate-x-0 shadow-2xl" : "pointer-events-none -translate-x-full shadow-none"}`}
+          className={`absolute inset-y-0 left-0 z-40 w-[min(330px,calc(100%-1rem))] shrink-0 overflow-y-auto border-r border-mono-border bg-mono-soft transition-transform duration-200 ${paletteOpen ? "translate-x-0 shadow-2xl" : "pointer-events-none -translate-x-full shadow-none"}`}
         >
           <div className="space-y-5 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="ds-label">Tools</p>
-                <h2 className="ds-h3 text-on-surface">Workflow Palette</h2>
+                <p className="monolith-label">Tools</p>
+                <h2 className="monolith-h3 text-mono-text">Workflow Palette</h2>
               </div>
               <Button variant="outline" mode="icon" size="sm" onClick={() => setPaletteOpen(false)} aria-label="Close workflow palette">
                 <X size={15} />
               </Button>
             </div>
-            <Card className="card-left-accent">
+            <Card className="monolith-card monolith-accent">
               <CardHeader>
                 <CardTitle>Blueprint Palette</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="ds-label block">Workflow Name</label>
+                  <label className="monolith-label block">Workflow Name</label>
                   <input
                     value={templateName}
                     onChange={(event) => setTemplateName(event.target.value)}
@@ -2364,7 +2387,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="ds-label block">Workflow Description</label>
+                  <label className="monolith-label block">Workflow Description</label>
                   <textarea
                     value={templateDescription}
                     onChange={(event) => setTemplateDescription(event.target.value)}
@@ -2373,7 +2396,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     disabled={isWorkflowReadOnly}
                   />
                 </div>
-                <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
+                <label className="flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-3 py-2 text-sm text-mono-text">
                   <input
                     type="checkbox"
                     checked={isDefaultWorkflow}
@@ -2382,7 +2405,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                   />
                   <span>{defaultWorkflowScopeLabel}</span>
                 </label>
-                <div className="rounded-xl border border-outline-variant bg-surface p-3 text-xs text-on-surface-variant">
+                <div className="rounded-xl border border-mono-border bg-mono-card p-3 text-xs text-mono-muted">
                   Start from a preset blueprint or copy an existing workflow into a brand-new draft. After loading, every stage, checklist, deadline, upload slot, and connector can be changed.
                   <span className="mt-2 block">Processor roles are empty by default, so anyone with job access can work the filing node. Available roles: {availableRoles.length || 0}.</span>
                 </div>
@@ -2396,9 +2419,9 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     Load Export Starter
                   </Button>
                 </div>
-                <div className="space-y-2 rounded-xl border border-outline-variant bg-surface p-3">
-                  <label className="ds-label block">Copy Existing Workflow</label>
-                  <select
+                <div className="space-y-2 rounded-xl border border-mono-border bg-mono-card p-3">
+                  <label className="monolith-label block">Copy Existing Workflow</label>
+                  <NativeSelect
                     value={copySourceTemplateId}
                     onChange={(event) => setCopySourceTemplateId(event.target.value)}
                     className="w-full text-sm"
@@ -2409,24 +2432,24 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                         {template.name}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                   <Button variant="outline" className="w-full" onClick={() => void copyWorkflowIntoNewDraft()}>
                     <RefreshCw size={16} />
                     Copy Into New Workflow
                   </Button>
                 </div>
-                <div className="space-y-2 rounded-xl border border-outline-variant bg-surface p-3">
-                  <label className="ds-label block">Workflow Actions</label>
+                <div className="space-y-2 rounded-xl border border-mono-border bg-mono-card p-3">
+                  <label className="monolith-label block">Workflow Actions</label>
                   <Button variant="destructive" className="w-full" onClick={() => void deleteWorkflow()} disabled={!selectedTemplateId}>
                     <Trash2 size={16} />
                     Delete Workflow
                   </Button>
-                  <p className="text-xs text-on-surface-variant">
+                  <p className="text-xs text-mono-muted">
                     Deletion is managed from the tools tab and is blocked once filing instances exist for this workflow.
                   </p>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="ds-label block">Node Name</label>
+                  <label className="monolith-label block">Node Name</label>
                   <input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="First Check" className="w-full text-sm" />
                 </div>
                 <Button variant="outline" className="w-full" onClick={handleAddNode} disabled={isWorkflowReadOnly}>
@@ -2450,20 +2473,20 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
               </CardHeader>
               <CardContent className="space-y-3">
                 {validation.errors.length === 0 && validation.warnings.length === 0 ? (
-                  <p className="text-sm text-on-surface-variant">No blocking validation issues in the current draft.</p>
+                  <p className="text-sm text-mono-muted">No blocking validation issues in the current draft.</p>
                 ) : null}
                 {validation.errors.map((message) => (
-                  <div key={message} className="card-left-accent-orange rounded-xl bg-surface p-3 text-sm text-on-surface">
+                  <div key={message} className="monolith-card monolith-accent-warning rounded-xl bg-mono-card p-3 text-sm text-mono-text">
                     <div className="flex items-start gap-2">
-                      <AlertTriangle size={16} className="mt-0.5 text-[#fb923c]" />
+                      <AlertTriangle size={16} className="mt-0.5 text-[#D88700]" />
                       <span>{message}</span>
                     </div>
                   </div>
                 ))}
                 {validation.warnings.map((message) => (
-                  <div key={message} className="rounded-xl border border-outline-variant bg-surface p-3 text-sm text-on-surface-variant">
+                  <div key={message} className="rounded-xl border border-mono-border bg-mono-card p-3 text-sm text-mono-muted">
                     <div className="flex items-start gap-2">
-                      <Workflow size={16} className="mt-0.5 text-[#00cec4]" />
+                      <Workflow size={16} className="mt-0.5 text-[#F9D972]" />
                       <span>{message}</span>
                     </div>
                   </div>
@@ -2473,14 +2496,10 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1 bg-surface">
-          <div className="flex h-full min-h-0 flex-col overflow-hidden border border-outline-variant/60 bg-surface">
-            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-outline-variant px-3 py-2">
-              <div className="min-w-0">
-                <p className="ds-label">Canvas</p>
-                <p className="max-w-2xl text-xs text-on-surface-variant">Blueprint mode: drag nodes, connect handles, zoom with wheel, and route branches without leaving this canvas.</p>
-              </div>
-              <div className="flex max-w-full flex-nowrap items-center justify-end gap-1.5 overflow-x-auto pb-1">
+        <main className="min-w-0 flex-1 bg-mono-card">
+          <div className="flex h-full min-h-0 flex-col overflow-hidden border border-mono-border/60 bg-mono-card">
+            <div className="border-b border-mono-border px-3 py-1">
+              <div className="flex w-full max-w-full flex-nowrap items-center justify-center gap-1.5 overflow-x-auto py-1">
                 <Button variant="outline" size="sm" className={FLAT_TOOLBAR_BUTTON_CLASS} onClick={() => setPaletteOpen(true)}>
                   <PanelLeft size={14} />
                   Tools
@@ -2500,8 +2519,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                   Checks {validation.errors.length > 0 ? `(${validation.errors.length})` : ""}
                 </Button>
                 {selectedEdge ? (
-                  <div className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-2.5 py-1">
-                    <span className="text-xs text-on-surface-variant">
+                  <div className="flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-2.5 py-1">
+                    <span className="text-xs text-mono-muted">
                       {selectedEdge.sourceKey} → {selectedEdge.targetKey}
                     </span>
                     <Button variant="outline" size="sm" className={FLAT_TOOLBAR_BUTTON_CLASS} onClick={() => void deleteSelectedEdge()} disabled={isWorkflowReadOnly}>
@@ -2510,11 +2529,11 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     </Button>
                   </div>
                 ) : null}
-                <div className="flex items-center gap-1 rounded-xl border border-outline-variant bg-surface px-1.5 py-1">
+                <div className="flex items-center gap-1 rounded-xl border border-mono-border bg-mono-card px-1.5 py-1">
                   <Button variant="outline" mode="icon" size="sm" className={FLAT_TOOLBAR_BUTTON_CLASS} onClick={() => setZoom((value) => Math.max(MIN_ZOOM, Number((value - 0.1).toFixed(2))))} aria-label="Zoom out">
                     <ZoomOut size={15} />
                   </Button>
-                  <span className="min-w-14 text-center text-xs text-on-surface-variant ds-numeric">{Math.round(zoom * 100)}%</span>
+                  <span className="min-w-14 text-center text-xs text-mono-muted monolith-numeric">{Math.round(zoom * 100)}%</span>
                   <Button variant="outline" mode="icon" size="sm" className={FLAT_TOOLBAR_BUTTON_CLASS} onClick={() => setZoom((value) => Math.min(MAX_ZOOM, Number((value + 0.1).toFixed(2))))} aria-label="Zoom in">
                     <ZoomIn size={15} />
                   </Button>
@@ -2536,7 +2555,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
 
             <div
               ref={canvasRef}
-              className="relative flex-1 overflow-hidden border-t border-outline-variant/60 bg-surface-container-low select-none cursor-grab active:cursor-grabbing"
+              className="relative flex-1 overflow-hidden border-t border-mono-border/60 bg-mono-soft select-none cursor-grab active:cursor-grabbing"
               style={{
                 backgroundColor: "var(--color-surface-container-low)",
                 touchAction: "none",
@@ -2601,7 +2620,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     return (
                       <g
                         key={edge.id}
-                        className={selected ? "text-[#fb923c]" : connector.isBackRoute ? "text-[#fb923c]" : "text-[#00cec4]"}
+                        className={selected ? "text-[#D88700]" : connector.isBackRoute ? "text-[#D88700]" : "text-[#F9D972]"}
                         onClick={(event) => {
                           event.stopPropagation();
                           setSelectedNodeId(null);
@@ -2627,7 +2646,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                         />
                         {edge.label ? (
                           <foreignObject x={connector.labelX - 70} y={connector.labelY - 12} width="140" height="28" className="pointer-events-none overflow-visible">
-                            <div className="truncate rounded-full border border-outline-variant bg-surface/95 px-2 py-1 text-center text-[10px] uppercase tracking-[0.1em] text-on-surface-variant shadow-sm">
+                            <div className="truncate rounded-full border border-mono-border bg-mono-card/95 px-2 py-1 text-center text-[10px] uppercase tracking-[0.1em] text-mono-muted shadow-sm">
                               {edge.label}
                             </div>
                           </foreignObject>
@@ -2661,7 +2680,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     <button
                       key={node.id}
                       type="button"
-                      className={`absolute rounded-2xl border bg-surface/95 p-4 text-left shadow-sm backdrop-blur transition-all ${selected ? "border-[#00cec4] shadow-[0_0_0_3px_rgba(0,206,196,0.18),0_18px_42px_-28px_rgba(0,206,196,0.75)]" : "border-outline-variant hover:border-[#00cec4]/60 hover:shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
+                      className={`absolute rounded-2xl border bg-mono-card/95 p-4 text-left shadow-sm backdrop-blur transition-all ${selected ? "border-[#F9D972] shadow-[0_0_0_3px_rgba(0,206,196,0.18),0_18px_42px_-28px_rgba(0,206,196,0.75)]" : "border-mono-border hover:border-[#F9D972]/60 hover:shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
                         } ${node.isActive ? "" : "opacity-55"}`}
                       style={{ left: node.positionX, top: node.positionY, width: NODE_WIDTH, height: NODE_HEIGHT }}
                       onClick={() => { setSelectedNodeId(node.id); setSelectedEdgeId(null); setPropertiesOpen(true); }}
@@ -2683,20 +2702,20 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                         data-handle-role="target"
                         data-node-key={node.key}
                         title="Drop connector here"
-                        className={`absolute left-[126px] -top-2 h-4 w-4 rounded-full border-2 ${hoveredTargetKey === node.key ? "border-[#00cec4] bg-[#00cec4]/20" : "border-outline bg-surface"
+                        className={`absolute left-[126px] -top-2 h-4 w-4 rounded-full border-2 ${hoveredTargetKey === node.key ? "border-[#F9D972] bg-[#F9D972]/20" : "border-mono-border bg-mono-card"
                           }`}
                       />
                       <div
                         data-handle-role="target"
                         data-node-key={node.key}
                         title="Drop connector here"
-                        className={`absolute -left-2 top-[68px] h-4 w-4 rounded-full border-2 ${hoveredTargetKey === node.key ? "border-[#00cec4] bg-[#00cec4]/20" : "border-outline bg-surface"
+                        className={`absolute -left-2 top-[68px] h-4 w-4 rounded-full border-2 ${hoveredTargetKey === node.key ? "border-[#F9D972] bg-[#F9D972]/20" : "border-mono-border bg-mono-card"
                           }`}
                       />
                       <div
                         data-node-key={node.key}
                         title="Drag to connect"
-                        className="absolute bottom-[-8px] left-[126px] h-4 w-4 rounded-full border-2 border-[#00cec4] bg-surface shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
+                        className="absolute bottom-[-8px] left-[126px] h-4 w-4 rounded-full border-2 border-[#F9D972] bg-mono-card shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
                         onPointerDown={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
@@ -2713,7 +2732,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                       <div
                         data-node-key={node.key}
                         title="Drag to connect"
-                        className="absolute -right-2 top-[68px] h-4 w-4 rounded-full border-2 border-[#00cec4] bg-surface shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
+                        className="absolute -right-2 top-[68px] h-4 w-4 rounded-full border-2 border-[#F9D972] bg-mono-card shadow-[0_0_0_3px_rgba(0,206,196,0.12)]"
                         onPointerDown={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
@@ -2730,8 +2749,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
 
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-on-surface">{node.name}</p>
-                          <p className="mt-1 truncate text-xs text-on-surface-variant">
+                          <p className="truncate text-sm font-semibold text-mono-text">{node.name}</p>
+                          <p className="mt-1 truncate text-xs text-mono-muted">
                             {[node.sectionName || node.category, node.branchName].filter(Boolean).join(" / ")}
                           </p>
                         </div>
@@ -2743,12 +2762,12 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                           {!node.isActive ? <Badge variant="secondary">INACTIVE</Badge> : null}
                         </div>
                       </div>
-                      <p className="mt-3 line-clamp-2 text-xs text-on-surface-variant">
+                      <p className="mt-3 line-clamp-2 text-xs text-mono-muted">
                         {node.description || "No stage description configured."}
                       </p>
-                      <div className="mt-4 flex items-center justify-between border-t border-outline-variant pt-3 text-xs text-on-surface-variant">
+                      <div className="mt-4 flex items-center justify-between border-t border-mono-border pt-3 text-xs text-mono-muted">
                         <span>{describeNodeType(node)}</span>
-                        <span className="ds-numeric">{node.slaDuration} {node.slaUnit === "BUSINESS_DAYS" ? "BD" : "CD"}</span>
+                        <span className="monolith-numeric">{node.slaDuration} {node.slaUnit === "BUSINESS_DAYS" ? "BD" : "CD"}</span>
                       </div>
                     </button>
                   );
@@ -2761,12 +2780,12 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
         {validationOpen ? (
           <div
             data-canvas-ui="true"
-            className="absolute bottom-4 left-4 z-30 max-h-[45%] w-[min(420px,calc(100%-2rem))] overflow-y-auto rounded-2xl border border-outline-variant bg-surface/95 p-4 shadow-2xl backdrop-blur"
+            className="absolute bottom-4 left-4 z-30 max-h-[45%] w-[min(420px,calc(100%-2rem))] overflow-y-auto rounded-2xl border border-mono-border bg-mono-card/95 p-4 shadow-2xl backdrop-blur"
           >
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
-                <p className="ds-label">Publish Checks</p>
-                <h3 className="ds-h3 text-on-surface">Validation</h3>
+                <p className="monolith-label">Publish Checks</p>
+                <h3 className="monolith-h3 text-mono-text">Validation</h3>
               </div>
               <Button variant="outline" mode="icon" size="sm" onClick={() => setValidationOpen(false)} aria-label="Close validation panel">
                 <X size={15} />
@@ -2774,20 +2793,20 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
             </div>
             <div className="space-y-3">
               {validation.errors.length === 0 && validation.warnings.length === 0 ? (
-                <p className="text-sm text-on-surface-variant">No blocking validation issues in the current draft.</p>
+                <p className="text-sm text-mono-muted">No blocking validation issues in the current draft.</p>
               ) : null}
               {validation.errors.map((message) => (
-                <div key={message} className="card-left-accent-orange rounded-xl bg-surface-container-low p-3 text-sm text-on-surface">
+                <div key={message} className="monolith-card monolith-accent-warning rounded-xl bg-mono-soft p-3 text-sm text-mono-text">
                   <div className="flex items-start gap-2">
-                    <AlertTriangle size={16} className="mt-0.5 text-[#fb923c]" />
+                    <AlertTriangle size={16} className="mt-0.5 text-[#D88700]" />
                     <span>{message}</span>
                   </div>
                 </div>
               ))}
               {validation.warnings.map((message) => (
-                <div key={message} className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-sm text-on-surface-variant">
+                <div key={message} className="rounded-xl border border-mono-border bg-mono-soft p-3 text-sm text-mono-muted">
                   <div className="flex items-start gap-2">
-                    <Workflow size={16} className="mt-0.5 text-[#00cec4]" />
+                    <Workflow size={16} className="mt-0.5 text-[#F9D972]" />
                     <span>{message}</span>
                   </div>
                 </div>
@@ -2798,12 +2817,12 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
 
         <aside
           data-canvas-ui="true"
-          className={`absolute inset-y-0 right-0 z-40 w-[min(430px,calc(100%-1rem))] shrink-0 overflow-y-auto border-l border-outline-variant bg-surface transition-transform duration-200 ${propertiesOpen && (selectedNode || selectedEdge) ? "translate-x-0 shadow-2xl" : "pointer-events-none translate-x-full shadow-none"}`}
+          className={`absolute inset-y-0 right-0 z-40 w-[min(430px,calc(100%-1rem))] shrink-0 overflow-y-auto border-l border-mono-border bg-mono-card transition-transform duration-200 ${propertiesOpen && (selectedNode || selectedEdge) ? "translate-x-0 shadow-2xl" : "pointer-events-none translate-x-full shadow-none"}`}
         >
-          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant bg-surface/95 px-4 py-3 backdrop-blur">
+          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-mono-border bg-mono-card/95 px-4 py-3 backdrop-blur">
             <div>
-              <p className="ds-label">Properties</p>
-              <p className="text-sm font-semibold text-on-surface">{selectedNode?.name || (selectedEdge ? "Connector" : "Nothing selected")}</p>
+              <p className="monolith-label">Properties</p>
+              <p className="text-sm font-semibold text-mono-text">{selectedNode?.name || (selectedEdge ? "Connector" : "Nothing selected")}</p>
             </div>
             <Button variant="outline" mode="icon" size="sm" onClick={() => setPropertiesOpen(false)} aria-label="Close properties">
               <X size={15} />
@@ -2813,8 +2832,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
             <div className="space-y-5 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="ds-label">Selected Node</p>
-                  <h2 className="ds-h2 text-on-surface">{selectedNode.name}</h2>
+                  <p className="monolith-label">Selected Node</p>
+                  <h2 className="monolith-h2 text-mono-text">{selectedNode.name}</h2>
                 </div>
                 <Button
                   variant="outline"
@@ -2843,49 +2862,50 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                   .join(" ")}
                 aria-disabled={isWorkflowReadOnly}
               >
-              <div className="ds-form-section space-y-4">
-                <h3 className="ds-h3 text-on-surface">Node Settings</h3>
+              <div className="monolith-form-section space-y-4">
+                <h3 className="monolith-h3 text-mono-text">Node Settings</h3>
                 <div className="space-y-1.5">
-                  <label className="ds-label block">Node Name</label>
+                  <label className="monolith-label block">Node Name</label>
                   <input value={selectedNode.name} onChange={(event) => updateSelectedNode((node) => ({ ...node, name: event.target.value }))} className="w-full text-sm" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="ds-label block">Description</label>
+                  <label className="monolith-label block">Description</label>
                   <textarea value={selectedNode.description} onChange={(event) => updateSelectedNode((node) => ({ ...node, description: event.target.value }))} rows={3} className="w-full text-sm" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="ds-label block">Stage SLA</label>
+                    <label className="monolith-label block">Stage SLA</label>
                     <input
                       type="number"
                       min={1}
                       value={selectedNode.slaDuration}
                       onChange={(event) => updateSelectedNode((node) => ({ ...node, slaDuration: Math.max(1, Number(event.target.value || 1)) }))}
-                      className="w-full text-sm ds-numeric"
+                      className="w-full text-sm monolith-numeric"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="ds-label block">SLA Unit</label>
-                    <select
+                    <label className="monolith-label block">SLA Unit</label>
+                    <NativeSelect
                       value={selectedNode.slaUnit}
                       onChange={(event) => updateSelectedNode((node) => ({ ...node, slaUnit: event.target.value as NodeDraft["slaUnit"] }))}
                       className="w-full text-sm"
                     >
                       <option value="BUSINESS_DAYS">Business Days</option>
                       <option value="CALENDAR_DAYS">Calendar Days</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3 text-sm text-on-surface">
+                <div className="grid grid-cols-2 gap-3 text-sm text-mono-text">
                   {([
                     { label: "Active", checked: selectedNode.isActive, buildUpdate: (checked: boolean) => ({ isActive: checked }) },
                     { label: "Start Node", checked: selectedNode.isStart, buildUpdate: (checked: boolean) => ({ isStart: checked }) },
                     { label: "Completion Remarks", checked: selectedNode.commentsRequired, buildUpdate: (checked: boolean) => ({ commentsRequired: checked }) },
+                    { label: "Delay Remarks Required", checked: selectedNode.delayRemarksRequired, buildUpdate: (checked: boolean) => ({ delayRemarksRequired: checked }) },
                     { label: "Allow Double-Back", checked: selectedNode.canBeRevisited, buildUpdate: (checked: boolean) => ({ canBeRevisited: checked }) },
                     { label: "Approval Required", checked: selectedNode.approvalRequired, buildUpdate: (checked: boolean) => ({ approvalRequired: checked }) },
                     { label: "Checklist Gate", checked: selectedNode.requireAllMandatoryChecklistItems, buildUpdate: (checked: boolean) => ({ requireAllMandatoryChecklistItems: checked }) },
                   ] as const).map(({ label, checked, buildUpdate }) => (
-                    <label key={label} className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2">
+                    <label key={label} className="flex items-center gap-2 rounded-xl border border-mono-border bg-mono-soft px-3 py-2">
                       <input
                         type="checkbox"
                         checked={checked as boolean}
@@ -2901,8 +2921,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     </label>
                   ))}
                 </div>
-                <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3">
-                  <label className="flex items-center gap-2 text-sm text-on-surface">
+                <div className="rounded-xl border border-mono-border bg-mono-soft p-3">
+                  <label className="flex items-center gap-2 text-sm text-mono-text">
                     <input
                       type="checkbox"
                       checked={selectedNode.photoRequirements.length > 0}
@@ -2910,12 +2930,12 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     />
                     <span>Enable Stage Document Uploads</span>
                   </label>
-                  <p className="mt-2 text-xs text-on-surface-variant">
+                  <p className="mt-2 text-xs text-mono-muted">
                     Add a separate upload area for this stage instead of attaching document rules to checklist items.
                   </p>
                 </div>
-                <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3">
-                  <label className="flex items-center gap-2 text-sm text-on-surface">
+                <div className="rounded-xl border border-mono-border bg-mono-soft p-3">
+                  <label className="flex items-center gap-2 text-sm text-mono-text">
                     <input
                       type="checkbox"
                       checked={selectedNode.conditionalSections.some((section) => section.key === QUERY_PROCESSING_SECTION_KEY)}
@@ -2932,14 +2952,14 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     />
                     <span>Enable Query Processing Module</span>
                   </label>
-                  <p className="mt-2 text-xs text-on-surface-variant">
+                  <p className="mt-2 text-xs text-mono-muted">
                     Adds the reusable post-filing customs query workflow to this node. Operators can record whether no query was raised, open a query thread, post offline response updates, and clear the query before moving ahead.
                   </p>
                 </div>
                 {selectedNode.nodeType !== "START" && selectedNode.nodeType !== "END" && selectedNode.nodeType !== "NOTIFICATION" ? (
-                  <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 space-y-3">
+                  <div className="rounded-xl border border-mono-border bg-mono-soft p-3 space-y-3">
                     <div>
-                      <label className="flex items-center gap-2 text-sm text-on-surface">
+                      <label className="flex items-center gap-2 text-sm text-mono-text">
                         <input
                           type="checkbox"
                           checked={selectedNode.actionConfig.prerequisiteGate.enabled}
@@ -2958,15 +2978,15 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                         />
                         <span>Enable Stage Prerequisites</span>
                       </label>
-                      <p className="mt-2 text-xs text-on-surface-variant">
+                      <p className="mt-2 text-xs text-mono-muted">
                         Block this stage at runtime until the required earlier stage nodes have been completed.
                       </p>
                     </div>
                     {selectedNode.actionConfig.prerequisiteGate.enabled ? (
                       <>
                         <div className="space-y-1.5">
-                          <label className="ds-label block">Prerequisite Mode</label>
-                          <select
+                          <label className="monolith-label block">Prerequisite Mode</label>
+                          <NativeSelect
                             value={selectedNode.actionConfig.prerequisiteGate.mode}
                             onChange={(event) =>
                               updateSelectedNode((node) => ({
@@ -2984,17 +3004,17 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                           >
                             <option value="ALL">All selected stages must be completed</option>
                             <option value="ANY">Any one selected stage may unlock this stage</option>
-                          </select>
+                          </NativeSelect>
                         </div>
                         <div className="space-y-2">
-                          <label className="ds-label block">Required Stages</label>
-                          <div className="max-h-44 space-y-2 overflow-y-auto rounded-xl border border-outline-variant bg-surface p-3">
+                          <label className="monolith-label block">Required Stages</label>
+                          <div className="max-h-44 space-y-2 overflow-y-auto rounded-xl border border-mono-border bg-mono-card p-3">
                             {nodes
                               .filter((node) => node.isActive && node.key !== selectedNode.key)
                               .map((node) => {
                                 const checked = selectedNode.actionConfig.prerequisiteGate.requiredNodeKeys.includes(node.key);
                                 return (
-                                  <label key={node.key} className="flex items-center gap-2 text-sm text-on-surface">
+                                  <label key={node.key} className="flex items-center gap-2 text-sm text-mono-text">
                                     <input
                                       type="checkbox"
                                       checked={checked}
@@ -3014,7 +3034,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                                       }
                                     />
                                     <span>{node.name}</span>
-                                    <span className="ds-label">{node.key}</span>
+                                    <span className="monolith-label">{node.key}</span>
                                   </label>
                                 );
                               })}
@@ -3024,11 +3044,11 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     ) : null}
                   </div>
                 ) : null}
-                <details className="rounded-xl border border-outline-variant bg-surface p-3">
-                  <summary className="cursor-pointer text-sm font-medium text-on-surface">Advanced Routing And Metadata</summary>
+                <details className="rounded-xl border border-mono-border bg-mono-card p-3">
+                  <summary className="cursor-pointer text-sm font-medium text-mono-text">Advanced Routing And Metadata</summary>
                   <div className="mt-4 space-y-4">
                     <div className="space-y-1.5">
-                      <label className="ds-label block">Key</label>
+                      <label className="monolith-label block">Key</label>
                       <input
                         value={selectedNode.key}
                         onChange={(event) => {
@@ -3043,13 +3063,13 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                             })));
                           }
                         }}
-                        className="w-full text-sm ds-numeric"
+                        className="w-full text-sm monolith-numeric"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                        <label className="ds-label block">Node Type</label>
-                        <select
+                        <label className="monolith-label block">Node Type</label>
+                        <NativeSelect
                           value={selectedNode.nodeType}
                           onChange={(event) => updateSelectedNode((node) => ({ ...node, nodeType: event.target.value as NodeDraft["nodeType"] }))}
                           className="w-full text-sm"
@@ -3060,46 +3080,46 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                           <option value="DECISION">Decision</option>
                           <option value="SECTION">Section</option>
                           <option value="END">End</option>
-                        </select>
+                        </NativeSelect>
                       </div>
                       <div className="space-y-1.5">
-                        <label className="ds-label block">Sort Order</label>
+                        <label className="monolith-label block">Sort Order</label>
                         <input
                           type="number"
                           min={1}
                           value={selectedNode.sortOrder}
                           onChange={(event) => updateSelectedNode((node) => ({ ...node, sortOrder: Math.max(1, Number(event.target.value || 1)) }))}
-                          className="w-full text-sm ds-numeric"
+                          className="w-full text-sm monolith-numeric"
                         />
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="ds-label block">Category</label>
+                      <label className="monolith-label block">Category</label>
                       <input value={selectedNode.category} onChange={(event) => updateSelectedNode((node) => ({ ...node, category: event.target.value }))} className="w-full text-sm" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                        <label className="ds-label block">Section Key</label>
-                        <input value={selectedNode.sectionKey} onChange={(event) => updateSelectedNode((node) => ({ ...node, sectionKey: slugify(event.target.value) }))} className="w-full text-sm ds-numeric" />
+                        <label className="monolith-label block">Section Key</label>
+                        <input value={selectedNode.sectionKey} onChange={(event) => updateSelectedNode((node) => ({ ...node, sectionKey: slugify(event.target.value) }))} className="w-full text-sm monolith-numeric" />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="ds-label block">Section Label</label>
+                        <label className="monolith-label block">Section Label</label>
                         <input value={selectedNode.sectionName} onChange={(event) => updateSelectedNode((node) => ({ ...node, sectionName: event.target.value }))} className="w-full text-sm" />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                        <label className="ds-label block">Branch Key</label>
-                        <input value={selectedNode.branchKey} onChange={(event) => updateSelectedNode((node) => ({ ...node, branchKey: slugify(event.target.value) }))} className="w-full text-sm ds-numeric" />
+                        <label className="monolith-label block">Branch Key</label>
+                        <input value={selectedNode.branchKey} onChange={(event) => updateSelectedNode((node) => ({ ...node, branchKey: slugify(event.target.value) }))} className="w-full text-sm monolith-numeric" />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="ds-label block">Branch Label</label>
+                        <label className="monolith-label block">Branch Label</label>
                         <input value={selectedNode.branchName} onChange={(event) => updateSelectedNode((node) => ({ ...node, branchName: event.target.value }))} className="w-full text-sm" />
                       </div>
                     </div>
                     {selectedNode.approvalRequired ? (
                       <div className="space-y-1.5">
-                        <label className="ds-label block">Approval Roles</label>
+                        <label className="monolith-label block">Approval Roles</label>
                         <input
                           value={selectedNode.approvalRoles.join(", ")}
                           onChange={(event) => updateSelectedNode((node) => ({
@@ -3112,7 +3132,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                       </div>
                     ) : null}
                     <div className="space-y-1.5">
-                      <label className="ds-label block">Allowed Processor Roles</label>
+                      <label className="monolith-label block">Allowed Processor Roles</label>
                       <input
                         value={selectedNode.allowedRoles.join(", ")}
                         onChange={(event) => updateSelectedNode((node) => ({
@@ -3122,22 +3142,22 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                         className="w-full text-sm"
                         placeholder="Leave empty so anyone concerned with the job can process it"
                       />
-                      <p className="text-xs text-on-surface-variant">
+                      <p className="text-xs text-mono-muted">
                         Empty means anyone who can access the job can complete this node.
                       </p>
                     </div>
                   </div>
                 </details>
                 {selectedNode.nodeType === "NOTIFICATION" ? (
-                  <div className="rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+                  <div className="rounded-xl border border-mono-border bg-mono-soft px-4 py-3 text-sm text-mono-muted">
                     This node runs automatically. When the workflow enters it, the job owner, assigned manager, and all assigned users receive a notification, then the workflow advances through its single connected path.
                   </div>
                 ) : null}
               </div>
 
-              <div className="ds-form-section space-y-4">
+              <div className="monolith-form-section space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="ds-h3 text-on-surface">Stage Fields</h3>
+                  <h3 className="monolith-h3 text-mono-text">Stage Fields</h3>
                   <Button variant="outline" size="sm" onClick={addFieldDefinition}>
                     <Plus size={14} />
                     Add Field
@@ -3145,9 +3165,9 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 </div>
                 <div className="space-y-3">
                   {selectedNode.fieldDefinitions.map((field) => (
-                    <div key={field.id} className="rounded-xl border border-outline-variant bg-surface-container-low p-4">
+                    <div key={field.id} className="rounded-xl border border-mono-border bg-mono-soft p-4">
                       <div className="mb-3 flex items-start justify-between gap-2">
-                        <p className="text-sm font-semibold text-on-surface">{field.label || "Untitled Field"}</p>
+                        <p className="text-sm font-semibold text-mono-text">{field.label || "Untitled Field"}</p>
                         <Button
                           variant="outline"
                           mode="icon"
@@ -3169,12 +3189,12 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                           <input
                             value={field.key}
                             onChange={(event) => updateFieldDefinition(field.id, (current) => ({ ...current, key: slugify(event.target.value) }))}
-                            className="w-full text-sm ds-numeric"
+                            className="w-full text-sm monolith-numeric"
                             placeholder="field_key"
                           />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                          <select
+                          <NativeSelect
                             value={field.type}
                             onChange={(event) => updateFieldDefinition(field.id, (current) => ({ ...current, type: event.target.value as FieldDefinitionDraft["type"] }))}
                             className="w-full text-sm"
@@ -3182,8 +3202,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                             <option value="TEXT">Text</option>
                             <option value="TEXTAREA">Textarea</option>
                             <option value="DATE">Date</option>
-                          </select>
-                          <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface">
+                          </NativeSelect>
+                          <label className="flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-3 py-2 text-sm text-mono-text">
                             <input
                               type="checkbox"
                               checked={field.required}
@@ -3209,16 +3229,16 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     </div>
                   ))}
                   {selectedNode.fieldDefinitions.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-6 text-sm text-on-surface-variant">
+                    <div className="rounded-xl border border-dashed border-mono-border bg-mono-soft px-4 py-6 text-sm text-mono-muted">
                       No node-level fields configured for this stage.
                     </div>
                   ) : null}
                 </div>
               </div>
 
-              <div className="ds-form-section space-y-4">
+              <div className="monolith-form-section space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="ds-h3 text-on-surface">Required Documents</h3>
+                  <h3 className="monolith-h3 text-mono-text">Required Documents</h3>
                   <Button variant="outline" size="sm" onClick={addDocumentRequirement}>
                     <Plus size={14} />
                     Add Document
@@ -3226,9 +3246,9 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 </div>
                 <div className="space-y-3">
                   {selectedNode.documentRequirements.map((requirement) => (
-                    <div key={requirement.id} className="rounded-xl border border-outline-variant bg-surface-container-low p-4">
+                    <div key={requirement.id} className="rounded-xl border border-mono-border bg-mono-soft p-4">
                       <div className="mb-3 flex items-start justify-between gap-2">
-                        <p className="text-sm font-semibold text-on-surface">{requirement.label || "Untitled Document"}</p>
+                        <p className="text-sm font-semibold text-mono-text">{requirement.label || "Untitled Document"}</p>
                         <Button
                           variant="outline"
                           mode="icon"
@@ -3250,7 +3270,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                           <input
                             value={requirement.key}
                             onChange={(event) => updateDocumentRequirement(requirement.id, (current) => ({ ...current, key: slugify(event.target.value) }))}
-                            className="w-full text-sm ds-numeric"
+                            className="w-full text-sm monolith-numeric"
                             placeholder="document_key"
                           />
                         </div>
@@ -3265,8 +3285,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                           className="w-full text-sm"
                           placeholder="application/pdf, image/jpeg"
                         />
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 text-sm text-on-surface">
-                          <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2">
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 text-sm text-mono-text">
+                          <label className="flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-3 py-2">
                             <input
                               type="checkbox"
                               checked={requirement.required}
@@ -3274,7 +3294,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                             />
                             <span>Required</span>
                           </label>
-                          <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2">
+                          <label className="flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-3 py-2">
                             <input
                               type="checkbox"
                               checked={requirement.allowReplacement}
@@ -3282,7 +3302,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                             />
                             <span>Replaceable</span>
                           </label>
-                          <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2">
+                          <label className="flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-3 py-2">
                             <input
                               type="checkbox"
                               checked={requirement.allowPreview}
@@ -3295,16 +3315,16 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     </div>
                   ))}
                   {selectedNode.documentRequirements.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-6 text-sm text-on-surface-variant">
+                    <div className="rounded-xl border border-dashed border-mono-border bg-mono-soft px-4 py-6 text-sm text-mono-muted">
                       No node-level document requirements configured for this stage.
                     </div>
                   ) : null}
                 </div>
               </div>
 
-              <div className="ds-form-section space-y-4">
+              <div className="monolith-form-section space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="ds-h3 text-on-surface">Checklist Items</h3>
+                  <h3 className="monolith-h3 text-mono-text">Checklist Items</h3>
                   {selectedNode.nodeType === "CHECKLIST_NODE" ? (
                     selectedNode.checklistItems.length === 0 ? (
                       <Button variant="outline" size="sm" onClick={addChecklistItem}>
@@ -3323,30 +3343,30 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 </div>
 
                 {selectedNode.nodeType === "NOTIFICATION" ? (
-                  <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+                  <div className="rounded-xl border border-dashed border-mono-border bg-mono-soft px-4 py-3 text-sm text-mono-muted">
                     Notification nodes do not use checklist items. Use the node name as the notification title and the description as the message body.
                   </div>
                 ) : null}
 
                 {selectedNode.nodeType !== "CHECKLIST_NODE" && selectedNode.nodeType !== "NOTIFICATION" ? (
-                  <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
-                    Checklist items should be modeled as separate nodes. Use <span className="font-medium text-on-surface">Add Checklist Node</span> for new workflow checks.
+                  <div className="rounded-xl border border-dashed border-mono-border bg-mono-soft px-4 py-3 text-sm text-mono-muted">
+                    Checklist items should be modeled as separate nodes. Use <span className="font-medium text-mono-text">Add Checklist Node</span> for new workflow checks.
                   </div>
                 ) : null}
 
                 {selectedNode.checklistItems.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-6 text-sm text-on-surface-variant">
+                  <div className="rounded-xl border border-dashed border-mono-border bg-mono-soft px-4 py-6 text-sm text-mono-muted">
                     No checklist items configured for this node yet.
                   </div>
                 ) : null}
 
                 <div className="space-y-4">
                   {selectedNode.checklistItems.map((item, index) => (
-                    <div key={item.id} className="rounded-xl border border-outline-variant bg-surface-container-low p-4">
+                    <div key={item.id} className="rounded-xl border border-mono-border bg-mono-soft p-4">
                       <div className="mb-3 flex items-start justify-between gap-2">
                         <div>
-                          <p className="ds-label">Item {index + 1}</p>
-                          <p className="text-sm font-semibold text-on-surface">{item.label || "Untitled Checklist Item"}</p>
+                          <p className="monolith-label">Item {index + 1}</p>
+                          <p className="text-sm font-semibold text-mono-text">{item.label || "Untitled Checklist Item"}</p>
                         </div>
                         <div className="flex items-center gap-1">
                           <Button variant="outline" mode="icon" size="sm" onClick={() => reorderChecklistItem(item.id, -1)} aria-label="Move checklist item up">
@@ -3372,36 +3392,36 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                         <textarea value={item.description} onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, description: event.target.value }))} rows={2} className="w-full text-sm" placeholder="Help text or operator guidance" />
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
-                            <label className="ds-label block">Deadline</label>
+                            <label className="monolith-label block">Deadline</label>
                             <input
                               type="number"
                               min={1}
                               value={item.deadlineDuration}
                               onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, deadlineDuration: Math.max(1, Number(event.target.value || 1)) }))}
-                              className="w-full text-sm ds-numeric"
+                              className="w-full text-sm monolith-numeric"
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <label className="ds-label block">Deadline Unit</label>
-                            <select
+                            <label className="monolith-label block">Deadline Unit</label>
+                            <NativeSelect
                               value={item.deadlineUnit}
                               onChange={(event) => updateChecklistItem(item.id, (current) => ({ ...current, deadlineUnit: event.target.value as ChecklistItemDraft["deadlineUnit"] }))}
                               className="w-full text-sm"
                             >
                               <option value="BUSINESS_DAYS">Business Days</option>
                               <option value="CALENDAR_DAYS">Calendar Days</option>
-                            </select>
+                            </NativeSelect>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3 text-sm text-on-surface">
+                        <div className="grid grid-cols-2 gap-3 text-sm text-mono-text">
                           {([
                             { label: "Mandatory", checked: item.isMandatory, field: "isMandatory" },
                             { label: "Completion Remarks", checked: item.requiresRemarks, field: "requiresRemarks" },
                             { label: "Delay Remarks Required", checked: item.delayRemarksRequired, field: "delayRemarksRequired" },
                             { label: "Active", checked: item.isActive, field: "isActive" },
                           ] as const).map(({ label, checked, field }) => (
-                            <label key={label} className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2">
+                            <label key={label} className="flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-3 py-2">
                               <input
                                 type="checkbox"
                                 checked={checked as boolean}
@@ -3417,8 +3437,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                           ))}
                         </div>
                         {item.allowsUpload || item.documentType || item.requiresValidity || item.notifyBeforeExpiry ? (
-                          <div className="rounded-xl border border-dashed border-outline-variant bg-surface px-4 py-3 text-sm text-on-surface-variant">
-                            Legacy checklist-item document settings are preserved for existing workflows, but new upload rules should be configured at the node level using <span className="font-medium text-on-surface">Enable Stage Document Uploads</span>.
+                          <div className="rounded-xl border border-dashed border-mono-border bg-mono-card px-4 py-3 text-sm text-mono-muted">
+                            Legacy checklist-item document settings are preserved for existing workflows, but new upload rules should be configured at the node level using <span className="font-medium text-mono-text">Enable Stage Document Uploads</span>.
                           </div>
                         ) : null}
                       </div>
@@ -3427,9 +3447,9 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 </div>
               </div>
 
-              <div className="ds-form-section space-y-4">
+              <div className="monolith-form-section space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="ds-h3 text-on-surface">Stage Document Uploads</h3>
+                  <h3 className="monolith-h3 text-mono-text">Stage Document Uploads</h3>
                   {selectedNode.photoRequirements.length > 0 ? (
                     <Button variant="outline" size="sm" onClick={addPhotoRequirement}>
                       <Plus size={14} />
@@ -3439,14 +3459,14 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 </div>
                 <div className="space-y-3">
                   {selectedNode.photoRequirements.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-6 text-sm text-on-surface-variant">
-                      Stage document uploads are disabled for this node. Turn on <span className="font-medium text-on-surface">Enable Stage Document Uploads</span> in Node Settings to add a dedicated upload area.
+                    <div className="rounded-xl border border-dashed border-mono-border bg-mono-soft px-4 py-6 text-sm text-mono-muted">
+                      Stage document uploads are disabled for this node. Turn on <span className="font-medium text-mono-text">Enable Stage Document Uploads</span> in Node Settings to add a dedicated upload area.
                     </div>
                   ) : null}
                   {selectedNode.photoRequirements.map((photo) => (
-                    <div key={photo.id} className="rounded-xl border border-outline-variant bg-surface-container-low p-4">
+                    <div key={photo.id} className="rounded-xl border border-mono-border bg-mono-soft p-4">
                       <div className="mb-3 flex items-start justify-between gap-2">
-                        <p className="text-sm font-semibold text-on-surface">{photo.label || "Untitled Upload Slot"}</p>
+                        <p className="text-sm font-semibold text-mono-text">{photo.label || "Untitled Upload Slot"}</p>
                         <Button
                           variant="outline"
                           mode="icon"
@@ -3461,11 +3481,11 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                         <input value={photo.label} onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, label: event.target.value }))} className="w-full text-sm" placeholder="Upload slot label" />
                         <textarea value={photo.description} onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, description: event.target.value }))} rows={2} className="w-full text-sm" placeholder="What should operators upload here?" />
                         <div className="grid grid-cols-2 gap-3">
-                          <input type="number" min={0} value={photo.minPhotos} onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, minPhotos: Math.max(0, Number(event.target.value || 0)) }))} className="w-full text-sm ds-numeric" placeholder="Min uploads" />
-                          <input type="number" min={photo.minPhotos} value={photo.maxPhotos ?? ""} onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, maxPhotos: event.target.value ? Math.max(current.minPhotos, Number(event.target.value)) : null }))} className="w-full text-sm ds-numeric" placeholder="Max uploads" />
+                          <input type="number" min={0} value={photo.minPhotos} onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, minPhotos: Math.max(0, Number(event.target.value || 0)) }))} className="w-full text-sm monolith-numeric" placeholder="Min uploads" />
+                          <input type="number" min={photo.minPhotos} value={photo.maxPhotos ?? ""} onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, maxPhotos: event.target.value ? Math.max(current.minPhotos, Number(event.target.value)) : null }))} className="w-full text-sm monolith-numeric" placeholder="Max uploads" />
                         </div>
-                        <div className="grid grid-cols-2 gap-3 text-sm text-on-surface">
-                          <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2">
+                        <div className="grid grid-cols-2 gap-3 text-sm text-mono-text">
+                          <label className="flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-3 py-2">
                             <input
                               type="checkbox"
                               checked={photo.isMandatory}
@@ -3473,7 +3493,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                             />
                             <span>Mandatory</span>
                           </label>
-                          <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2">
+                          <label className="flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-3 py-2">
                             <input
                               type="checkbox"
                               checked={photo.isVisibleInTimeline}
@@ -3483,7 +3503,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                           </label>
                         </div>
                         <div className="space-y-1.5">
-                          <label className="ds-label block">Accepted File Types</label>
+                          <label className="monolith-label block">Accepted File Types</label>
                           <input
                             value={photo.acceptedFileTypes.join(", ")}
                             onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({
@@ -3494,9 +3514,9 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                             placeholder="image/jpeg, image/png, application/pdf"
                           />
                         </div>
-                        <div className="rounded-xl border border-outline-variant bg-surface p-3">
+                        <div className="rounded-xl border border-mono-border bg-mono-card p-3">
                           <div className="space-y-1.5">
-                            <label className="ds-label block">Document Type</label>
+                            <label className="monolith-label block">Document Type</label>
                             <input
                               value={photo.documentType}
                               onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, documentType: event.target.value }))}
@@ -3504,8 +3524,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                               placeholder="Example: E-Way Bill, OOC Document, CE/Lab Report"
                             />
                           </div>
-                          <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-on-surface">
-                            <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2">
+                          <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-mono-text">
+                            <label className="flex items-center gap-2 rounded-xl border border-mono-border bg-mono-soft px-3 py-2">
                               <input
                                 type="checkbox"
                                 checked={photo.requiresValidity}
@@ -3513,7 +3533,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                               />
                               <span>Validity Required</span>
                             </label>
-                            <label className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2">
+                            <label className="flex items-center gap-2 rounded-xl border border-mono-border bg-mono-soft px-3 py-2">
                               <input
                                 type="checkbox"
                                 checked={photo.notifyBeforeExpiry}
@@ -3525,48 +3545,48 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                           {photo.requiresValidity ? (
                             <div className="mt-3 grid grid-cols-2 gap-3">
                               <div className="space-y-1.5">
-                                <label className="ds-label block">Validity Duration</label>
+                                <label className="monolith-label block">Validity Duration</label>
                                 <input
                                   type="number"
                                   min={1}
                                   value={photo.validityDuration ?? ""}
                                   onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, validityDuration: event.target.value ? Math.max(1, Number(event.target.value)) : null }))}
-                                  className="w-full text-sm ds-numeric"
+                                  className="w-full text-sm monolith-numeric"
                                   placeholder="Set during filing"
                                 />
                               </div>
                               <div className="space-y-1.5">
-                                <label className="ds-label block">Validity Unit</label>
-                                <select
+                                <label className="monolith-label block">Validity Unit</label>
+                                <NativeSelect
                                   value={photo.validityUnit}
                                   onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, validityUnit: event.target.value as ValidityUnit }))}
                                   className="w-full text-sm"
                                 >
                                   <option value="BUSINESS_DAYS">Business Days</option>
                                   <option value="CALENDAR_DAYS">Calendar Days</option>
-                                </select>
+                                </NativeSelect>
                               </div>
                               <div className="space-y-1.5">
-                                <label className="ds-label block">Warn Before</label>
+                                <label className="monolith-label block">Warn Before</label>
                                 <input
                                   type="number"
                                   min={1}
                                   value={photo.warningBeforeDuration ?? ""}
                                   onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, warningBeforeDuration: event.target.value ? Math.max(1, Number(event.target.value)) : null }))}
-                                  className="w-full text-sm ds-numeric"
+                                  className="w-full text-sm monolith-numeric"
                                   placeholder="1"
                                 />
                               </div>
                               <div className="space-y-1.5">
-                                <label className="ds-label block">Warning Unit</label>
-                                <select
+                                <label className="monolith-label block">Warning Unit</label>
+                                <NativeSelect
                                   value={photo.warningBeforeUnit}
                                   onChange={(event) => updatePhotoRequirement(photo.id, (current) => ({ ...current, warningBeforeUnit: event.target.value as ValidityUnit }))}
                                   className="w-full text-sm"
                                 >
                                   <option value="BUSINESS_DAYS">Business Days</option>
                                   <option value="CALENDAR_DAYS">Calendar Days</option>
-                                </select>
+                                </NativeSelect>
                               </div>
                             </div>
                           ) : null}
@@ -3578,7 +3598,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
               </div>
               </div>
               {isWorkflowReadOnly ? (
-                <div className="rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+                <div className="rounded-xl border border-mono-border bg-mono-soft px-4 py-3 text-sm text-mono-muted">
                   This published workflow is read-only. Fork a draft to edit node properties, checklist items, documents, or routing.
                 </div>
               ) : null}
@@ -3587,8 +3607,8 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
             <div className="space-y-6 p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="ds-label">Selected Connector</p>
-                  <h2 className="ds-h2 text-on-surface">Route Settings</h2>
+                  <p className="monolith-label">Selected Connector</p>
+                  <h2 className="monolith-h2 text-mono-text">Route Settings</h2>
                 </div>
                 <Button
                   variant="outline"
@@ -3611,16 +3631,16 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                   .join(" ")}
                 aria-disabled={isWorkflowReadOnly}
               >
-              <div className="ds-form-section space-y-4">
-                <h3 className="ds-h3 text-on-surface">Connector</h3>
-                <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-sm text-on-surface">
-                  <div className="ds-label text-on-surface-variant">From</div>
-                  <div className="mt-1 break-all ds-numeric">{selectedEdge.sourceKey}</div>
-                  <div className="mt-3 ds-label text-on-surface-variant">To</div>
-                  <div className="mt-1 break-all ds-numeric">{selectedEdge.targetKey}</div>
+              <div className="monolith-form-section space-y-4">
+                <h3 className="monolith-h3 text-mono-text">Connector</h3>
+                <div className="rounded-xl border border-mono-border bg-mono-soft p-3 text-sm text-mono-text">
+                  <div className="monolith-label text-mono-muted">From</div>
+                  <div className="mt-1 break-all monolith-numeric">{selectedEdge.sourceKey}</div>
+                  <div className="mt-3 monolith-label text-mono-muted">To</div>
+                  <div className="mt-1 break-all monolith-numeric">{selectedEdge.targetKey}</div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="ds-label block">Connector Label</label>
+                  <label className="monolith-label block">Connector Label</label>
                   <input
                     value={selectedEdge.label || ""}
                     onChange={(event) => updateSelectedEdge((edge) => ({ ...edge, label: event.target.value || null }))}
@@ -3628,13 +3648,13 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                     placeholder="Example: RMS Path, Recheck BE, Next"
                   />
                 </div>
-                <div className="rounded-xl border border-outline-variant bg-surface-container-low p-3 text-xs text-on-surface-variant">
+                <div className="rounded-xl border border-mono-border bg-mono-soft p-3 text-xs text-mono-muted">
                   Backward connectors are allowed. Use them for cases like Examination returning to Bill of Entry upload, then routing forward again.
                 </div>
               </div>
               </div>
               {isWorkflowReadOnly ? (
-                <div className="rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+                <div className="rounded-xl border border-mono-border bg-mono-soft px-4 py-3 text-sm text-mono-muted">
                   This published workflow is read-only. Fork a draft to edit connector labels or routing.
                 </div>
               ) : null}
@@ -3642,11 +3662,11 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
           ) : (
             <div className="flex h-full items-center justify-center p-6 text-center">
               <div className="space-y-3">
-                <span className="ds-icon-badge mx-auto">
+                <span className="monolith-icon-badge mx-auto">
                   <Workflow size={18} />
                 </span>
-                <h2 className="ds-h3 text-on-surface">SELECT A NODE</h2>
-                <p className="max-w-xs text-sm text-on-surface-variant">
+                <h2 className="monolith-h3 text-mono-text">SELECT A NODE</h2>
+                <p className="max-w-xs text-sm text-mono-muted">
                   Choose a node on the canvas to edit checklist deadlines, upload rules, and route behavior.
                 </p>
               </div>

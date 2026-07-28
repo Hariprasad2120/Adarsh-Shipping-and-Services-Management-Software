@@ -35,7 +35,7 @@ export default function SyncDriveButton({ jobId }: { jobId: string }) {
       <button
         onClick={handleSync}
         disabled={loading}
-        className="inline-flex items-center justify-center space-x-2 bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] disabled:opacity-60 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all shadow-sm"
+        className="inline-flex items-center justify-center space-x-2 bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] disabled:opacity-60 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all shadow-sm"
       >
         <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
         <span>{loading ? "Syncing Workspace..." : "Sync to Google Shared Drive"}</span>

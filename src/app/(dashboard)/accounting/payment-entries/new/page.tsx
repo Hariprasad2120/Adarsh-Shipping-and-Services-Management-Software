@@ -53,9 +53,9 @@ export default async function NewPaymentEntryPage() {
 
   return (
     <div className="mx-auto max-w-[1200px] space-y-6 animate-in fade-in duration-200">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/20 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-mono-border/20 pb-5">
         <div>
-          <h2 className="ds-h1 text-white">Record Payment</h2>
+          <h2 className="monolith-h1 text-white">Record Payment</h2>
           <p className="text-slate-400 text-xs mt-1">
             Log custom cash receipt vouchers or vendor payouts, allocating payments directly against outstanding invoices.
           </p>

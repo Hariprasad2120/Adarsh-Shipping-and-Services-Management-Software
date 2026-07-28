@@ -20,10 +20,10 @@ export default async function RecruitLandingPage() {
         "Post jobs, track candidates, manage applications, run screenings, schedule interviews, issue offers, and automate hiring workflows.",
       href: "/hrms/recruit/employer",
       icon: Analytics,
-      accent: "#00cec4",
-      accentBg: "bg-[#00cec4]/10",
-      accentText: "text-[#00cec4]",
-      accentBorder: "border-[#00cec4]/20",
+      accent: "#F9D972",
+      accentBg: "bg-[#F9D972]/10",
+      accentText: "text-[#F9D972]",
+      accentBorder: "border-[#F9D972]/20",
       enabled: canEmployer,
       links: [
         { label: "Job Openings", href: "/hrms/recruit/employer/jobs" },
@@ -55,14 +55,14 @@ export default async function RecruitLandingPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-1">
-        <h1 className="ds-h1 text-on-surface">Recruit</h1>
-        <p className="text-sm text-on-surface-variant">
+        <h1 className="monolith-h1 text-mono-text">Recruit</h1>
+        <p className="text-sm text-mono-muted">
           Hiring and career management — two private workspaces, zero cross-contamination.
         </p>
       </div>
 
       {workspaces.length === 0 && (
-        <div className="rounded-xl border border-outline-variant bg-surface p-8 text-center text-on-surface-variant">
+        <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-mono-muted">
           No Recruit workspaces available. Contact your administrator.
         </div>
       )}
@@ -75,15 +75,15 @@ export default async function RecruitLandingPage() {
             <Link
               key={ws.key}
               href={ws.href}
-              className={`group flex flex-col gap-5 rounded-2xl border bg-surface p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${ws.accentBorder}`}
+              className={`group flex flex-col gap-5 rounded-2xl border bg-mono-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${ws.accentBorder}`}
             >
               <div className="flex items-start gap-4">
                 <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${ws.accentBg}`}>
                   <Icon size={22} className={ws.accentText} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-base font-semibold text-on-surface">{ws.title}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">{ws.description}</p>
+                  <p className="text-base font-semibold text-mono-text">{ws.title}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-mono-muted">{ws.description}</p>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -106,14 +106,14 @@ export default async function RecruitLandingPage() {
         <div className="flex gap-3">
           <Link
             href="/hrms/recruit/settings"
-            className="inline-flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-4 py-2 text-sm text-on-surface-variant transition hover:text-on-surface"
+            className="inline-flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-4 py-2 text-sm text-mono-muted transition hover:text-mono-text"
           >
             <Settings size={16} />
             Recruit Settings
           </Link>
           <Link
             href="/hrms/recruit/audit"
-            className="inline-flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-4 py-2 text-sm text-on-surface-variant transition hover:text-on-surface"
+            className="inline-flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-4 py-2 text-sm text-mono-muted transition hover:text-mono-text"
           >
             <Search size={16} />
             Audit Log

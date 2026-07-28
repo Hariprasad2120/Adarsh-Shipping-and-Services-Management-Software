@@ -1,6 +1,7 @@
 "use client";
 
-import { DateInput } from "@/components/ui/date-input";
+import { NativeSelect } from "@/components/monolith/native-select";
+import { DateInput } from "@/components/monolith/date-input";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -180,39 +181,39 @@ export function NewPaymentClient({
       {/* ─── PROPERTIES CARD ───────────────────────────────────────────── */}
       <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
         <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-          <Calendar className="size-4.5 text-[#00cec4]" />
+          <Calendar className="size-4.5 text-[#F9D972]" />
           <h3 className="font-bold text-xs text-white uppercase tracking-wider">Payment voucher header</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
           
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Payment Type</label>
-            <select
+            <label className="monolith-label block text-slate-400">Payment Type</label>
+            <NativeSelect
               value={paymentType}
               onChange={(e) => setPaymentType(e.target.value as any)}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
             >
               <option value="RECEIVE">Receipt (Receive Cash)</option>
               <option value="PAY">Payment (Disburse Cash)</option>
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Party Class</label>
-            <select
+            <label className="monolith-label block text-slate-400">Party Class</label>
+            <NativeSelect
               value={partyType}
               onChange={(e) => setPartyType(e.target.value as any)}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
             >
               <option value="CUSTOMER">Customer / Client</option>
               <option value="SUPPLIER">Vendor / Supplier</option>
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Select Party *</label>
-            <select
+            <label className="monolith-label block text-slate-400">Select Party *</label>
+            <NativeSelect
               required
               value={partyId}
               onChange={(e) => setPartyId(e.target.value)}
@@ -222,11 +223,11 @@ export function NewPaymentClient({
               {activeParties.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Posting Date</label>
+            <label className="monolith-label block text-slate-400">Posting Date</label>
             <DateInput
               required
               value={postingDate}
@@ -240,7 +241,7 @@ export function NewPaymentClient({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
           
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Payment Amount (₹) *</label>
+            <label className="monolith-label block text-slate-400">Payment Amount (₹) *</label>
             <input
               type="number"
               step="0.01"
@@ -254,8 +255,8 @@ export function NewPaymentClient({
           </div>
 
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Paid From Account (Source)</label>
-            <select
+            <label className="monolith-label block text-slate-400">Paid From Account (Source)</label>
+            <NativeSelect
               required
               value={paidFromAccountId}
               onChange={(e) => setPaidFromAccountId(e.target.value)}
@@ -271,12 +272,12 @@ export function NewPaymentClient({
                   <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
                 ))
               )}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Paid To Account (Destination)</label>
-            <select
+            <label className="monolith-label block text-slate-400">Paid To Account (Destination)</label>
+            <NativeSelect
               required
               value={paidToAccountId}
               onChange={(e) => setPaidToAccountId(e.target.value)}
@@ -292,11 +293,11 @@ export function NewPaymentClient({
                   <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName} ({a.accountType})</option>
                 ))
               )}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Reference No / Chq / TxID</label>
+            <label className="monolith-label block text-slate-400">Reference No / Chq / TxID</label>
             <input
               type="text"
               placeholder="e.g. CHQ-882310"
@@ -310,8 +311,8 @@ export function NewPaymentClient({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Branch Mapping</label>
-            <select
+            <label className="monolith-label block text-slate-400">Branch Mapping</label>
+            <NativeSelect
               value={branchId}
               onChange={(e) => setBranchId(e.target.value)}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs"
@@ -320,10 +321,10 @@ export function NewPaymentClient({
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">General Remarks</label>
+            <label className="monolith-label block text-slate-400">General Remarks</label>
             <input
               type="text"
               placeholder="Voucher details..."
@@ -340,7 +341,7 @@ export function NewPaymentClient({
         <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
           <div className="flex justify-between items-center border-b border-[#1c212a]/30 pb-3">
             <h3 className="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-2">
-              <Wallet className="size-4.5 text-[#00cec4]" /> Outstanding bills for allocation
+              <Wallet className="size-4.5 text-[#F9D972]" /> Outstanding bills for allocation
             </h3>
             {amount > 0 && (
               <button
@@ -354,7 +355,7 @@ export function NewPaymentClient({
           </div>
 
           <div className="overflow-x-auto">
-            <table className="ds-table">
+            <table className="monolith-table">
               <thead>
                 <tr>
                   <th>Invoice Number</th>
@@ -367,8 +368,8 @@ export function NewPaymentClient({
                 {filteredInvoices.map((inv) => (
                   <tr key={inv.id} className="hover:bg-[#161f28]/10 text-xs">
                     <td className="font-semibold text-white font-mono">{inv.invoiceNumber}</td>
-                    <td className="ds-numeric text-slate-350">₹{inv.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                    <td className="ds-numeric text-white font-bold">₹{inv.outstandingAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                    <td className="monolith-numeric text-slate-350">₹{inv.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                    <td className="monolith-numeric text-white font-bold">₹{inv.outstandingAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                     <td className="text-right">
                       <input
                         type="number"
@@ -389,7 +390,7 @@ export function NewPaymentClient({
 
           <div className="border-t border-[#1c212a]/50 pt-4 flex justify-between items-center text-xs font-semibold text-white">
             <span>Total Allocated: ₹{totalAllocated.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
-            <span className={amount - totalAllocated >= 0 ? "text-emerald-400" : "text-[#fb923c]"}>
+            <span className={amount - totalAllocated >= 0 ? "text-emerald-400" : "text-[#D88700]"}>
               Unallocated: ₹{(amount - totalAllocated).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </span>
           </div>
@@ -404,9 +405,9 @@ export function NewPaymentClient({
             id="submitImmediately"
             checked={submitImmediately}
             onChange={(e) => setSubmitImmediately(e.target.checked)}
-            className="size-4 accent-[#00cec4] rounded bg-slate-900 border-[#1c212a] cursor-pointer"
+            className="size-4 accent-[#F9D972] rounded bg-slate-900 border-[#1c212a] cursor-pointer"
           />
-          <label htmlFor="submitImmediately" className="ds-label block text-slate-200 cursor-pointer">
+          <label htmlFor="submitImmediately" className="monolith-label block text-slate-200 cursor-pointer">
             Post and finalize payment immediately? (Disburse funds and settle invoices)
           </label>
         </div>
@@ -414,7 +415,7 @@ export function NewPaymentClient({
         <button
           type="submit"
           disabled={isSaving}
-          className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-6 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+          className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-6 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
         >
           {isSaving ? (
             <>

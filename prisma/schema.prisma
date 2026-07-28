@@ -4113,25 +4113,32 @@ model ChaCustomerAdvanceReceipt {
 }
 
 model ChaExpenseRequest {
-  id                  String                    @id @default(cuid())
-  jobId               String
-  orgId               String
-  status              String                    @default("SUBMITTED") // SUBMITTED | UNDER_REVIEW | CLARIFICATION_REQUIRED | APPROVED | READY_FOR_DISBURSEMENT | PAYMENT_DUE | URGENT_PAYMENT_REQUIRED | PAID | QUERY_RAISED | RECEIPT_ACKNOWLEDGED | REJECTED | CANCELLED
-  requestedById       String
-  createdAt           DateTime                  @default(now())
-  updatedAt           DateTime                  @updatedAt
-  isUrgent            Boolean                   @default(false)
-  urgencyReason       String?
-  urgentTargetDate    DateTime?
-  urgentRequestedAt   DateTime?
-  urgentRequestedById String?
-  job                 ChaJob                    @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  org                 Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  requestedBy         User                      @relation("ChaExpenseRequestedBy", fields: [requestedById], references: [id])
-  lines               ChaExpenseLine[]
-  payments            ChaExpensePayment[]
-  queries             ChaExpenseQuery[]
-  statusHistory       ChaExpenseStatusHistory[]
+  id                    String                    @id @default(cuid())
+  jobId                 String?
+  orgId                 String
+  status                String                    @default("UNDER_REVIEW") // UNDER_REVIEW | ACCOUNTS_REVIEW | CLARIFICATION_REQUIRED | APPROVED | READY_FOR_DISBURSEMENT | PAID | QUERY_RAISED | RECEIPT_ACKNOWLEDGED | REJECTED | CANCELLED
+  requestedById         String
+  expenseScope          String                    @default("JOB") // JOB | OTHER
+  directPurpose         String?
+  approvalRoute         String                    @default("MANAGER_THEN_ACCOUNTS") // MANAGER_THEN_ACCOUNTS | DIRECT_ACCOUNTS
+  routedManagerId       String?
+  upiNumber             String?
+  upiId                 String?
+  clarificationResponse String?
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  isUrgent              Boolean                   @default(false)
+  urgencyReason         String?
+  urgentTargetDate      DateTime?
+  urgentRequestedAt     DateTime?
+  urgentRequestedById   String?
+  job                   ChaJob?                   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  org                   Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  requestedBy           User                      @relation("ChaExpenseRequestedBy", fields: [requestedById], references: [id])
+  lines                 ChaExpenseLine[]
+  payments              ChaExpensePayment[]
+  queries               ChaExpenseQuery[]
+  statusHistory         ChaExpenseStatusHistory[]
 
   @@index([jobId])
   @@index([orgId, status])
@@ -5609,6 +5616,7 @@ model FilingWorkflowNode {
   slaDuration                       Int                      @default(2)
   slaUnit                           String                   @default("BUSINESS_DAYS")
   commentsRequired                  Boolean                  @default(false)
+  delayRemarksRequired              Boolean                  @default(true)
   canBeSkipped                      Boolean                  @default(false)
   canBeRevisited                    Boolean                  @default(true)
   approvalRequired                  Boolean                  @default(false)
@@ -5729,25 +5737,27 @@ model FilingWorkflowInstance {
 }
 
 model FilingNodeRun {
-  id             String                    @id @default(cuid())
-  instanceId     String
-  nodeId         String
-  nodeKey        String
-  status         String                    @default("ACTIVE")
-  startedAt      DateTime                  @default(now())
-  completedAt    DateTime?
-  slaDueDate     DateTime?
-  completedById  String?
-  remarks        String?
-  resolutionJson Json?
-  instance       FilingWorkflowInstance    @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  node           FilingWorkflowNode        @relation(fields: [nodeId], references: [id])
-  completedBy    User?                     @relation(fields: [completedById], references: [id])
-  responses      FilingChecklistResponse[]
-  attachments    FilingAttachment[]
-  fieldValues    FilingFieldValue[]
-  toggleStates   FilingToggleState[]
-  queries        FilingWorkflowQuery[]
+  id              String                    @id @default(cuid())
+  instanceId      String
+  nodeId          String
+  nodeKey         String
+  status          String                    @default("ACTIVE")
+  startedAt       DateTime                  @default(now())
+  completedAt     DateTime?
+  slaDueDate      DateTime?
+  completedById   String?
+  remarks         String?
+  delayRemarks    String?
+  delayRemarkedAt DateTime?
+  resolutionJson  Json?
+  instance        FilingWorkflowInstance    @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  node            FilingWorkflowNode        @relation(fields: [nodeId], references: [id])
+  completedBy     User?                     @relation(fields: [completedById], references: [id])
+  responses       FilingChecklistResponse[]
+  attachments     FilingAttachment[]
+  fieldValues     FilingFieldValue[]
+  toggleStates    FilingToggleState[]
+  queries         FilingWorkflowQuery[]
 
   @@index([instanceId])
   @@index([nodeId])

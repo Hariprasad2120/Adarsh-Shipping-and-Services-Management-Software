@@ -68,7 +68,7 @@ export function PurchaseInvoiceDetailClient({ invoice }: PurchaseInvoiceDetailCl
         {/* Info panel */}
         <div className="md:col-span-2 p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
           <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-            <User className="size-4.5 text-[#00cec4]" />
+            <User className="size-4.5 text-[#F9D972]" />
             <h3 className="font-bold text-xs text-white uppercase tracking-wider">Supplier & Invoice Profile</h3>
           </div>
 
@@ -97,7 +97,7 @@ export function PurchaseInvoiceDetailClient({ invoice }: PurchaseInvoiceDetailCl
         </div>
 
         {/* Status panel */}
-        <div className="md:col-span-1 p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 flex flex-col justify-between card-left-accent">
+        <div className="md:col-span-1 p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 flex flex-col justify-between monolith-card monolith-accent">
           <div className="space-y-3">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Status & Control</span>
             <div className="flex items-center gap-2">
@@ -124,8 +124,8 @@ export function PurchaseInvoiceDetailClient({ invoice }: PurchaseInvoiceDetailCl
                 <span className="font-mono text-white">₹{invoice.paidAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between font-bold border-t border-[#1c212a]/30 pt-1 text-white">
-                <span className="text-[#00cec4]">Outstanding:</span>
-                <span className="font-mono text-[#00cec4]">₹{invoice.outstandingAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                <span className="text-[#F9D972]">Outstanding:</span>
+                <span className="font-mono text-[#F9D972]">₹{invoice.outstandingAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
           </div>
@@ -135,7 +135,7 @@ export function PurchaseInvoiceDetailClient({ invoice }: PurchaseInvoiceDetailCl
               <button
                 disabled={isSubmitting}
                 onClick={handleSubmit}
-                className="w-full bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
                 {isSubmitting ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle className="size-4" />}
                 <span>Submit & Post Bill</span>
@@ -160,12 +160,12 @@ export function PurchaseInvoiceDetailClient({ invoice }: PurchaseInvoiceDetailCl
       {/* ─── ITEMS LIST TABLE ───────────────────────────────────────────── */}
       <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
         <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-          <Receipt className="size-4.5 text-[#00cec4]" />
+          <Receipt className="size-4.5 text-[#F9D972]" />
           <h3 className="font-bold text-xs text-white uppercase tracking-wider">Line Items breakdown</h3>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="ds-table">
+          <table className="monolith-table">
             <thead>
               <tr>
                 <th>Item Name</th>
@@ -178,9 +178,9 @@ export function PurchaseInvoiceDetailClient({ invoice }: PurchaseInvoiceDetailCl
               {invoice.items.map((item: any) => (
                 <tr key={item.id} className="hover:bg-[#161f28]/10 text-xs">
                   <td className="font-semibold text-white">{item.itemName}</td>
-                  <td className="ds-numeric text-right">{item.qty}</td>
-                  <td className="ds-numeric text-slate-300 text-right">₹{item.rate.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                  <td className="ds-numeric text-white text-right font-semibold">₹{item.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                  <td className="monolith-numeric text-right">{item.qty}</td>
+                  <td className="monolith-numeric text-slate-300 text-right">₹{item.rate.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                  <td className="monolith-numeric text-white text-right font-semibold">₹{item.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                 </tr>
               ))}
             </tbody>
@@ -204,7 +204,7 @@ export function PurchaseInvoiceDetailClient({ invoice }: PurchaseInvoiceDetailCl
               <span>Tax (GST {invoice.taxLines[0]?.taxRate || 18}%):</span>
               <span className="font-mono text-white">₹{invoice.taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
             </div>
-            <div className="flex justify-between font-bold text-sm text-[#00cec4] pt-1">
+            <div className="flex justify-between font-bold text-sm text-[#F9D972] pt-1">
               <span>Grand Total:</span>
               <span className="font-mono">₹{invoice.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
             </div>
@@ -216,12 +216,12 @@ export function PurchaseInvoiceDetailClient({ invoice }: PurchaseInvoiceDetailCl
       {invoice.payments && invoice.payments.length > 0 && (
         <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
           <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-            <DollarSign className="size-4.5 text-[#00cec4]" />
+            <DollarSign className="size-4.5 text-[#F9D972]" />
             <h3 className="font-bold text-xs text-white uppercase tracking-wider">Applied Payment Clearances</h3>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="ds-table">
+            <table className="monolith-table">
               <thead>
                 <tr>
                   <th>Payment Voucher Ref</th>
@@ -235,7 +235,7 @@ export function PurchaseInvoiceDetailClient({ invoice }: PurchaseInvoiceDetailCl
                     <td>
                       <Link
                         href={`/accounting/payment-entries/${p.paymentEntry.id}`}
-                        className="text-[#00cec4] hover:underline font-mono font-bold"
+                        className="text-[#F9D972] hover:underline font-mono font-bold"
                       >
                         {p.paymentEntry.referenceNo || `PAY-${p.paymentEntry.id.slice(-6).toUpperCase()}`}
                       </Link>
@@ -243,7 +243,7 @@ export function PurchaseInvoiceDetailClient({ invoice }: PurchaseInvoiceDetailCl
                     <td className="text-slate-400">
                       {new Date(p.paymentEntry.postingDate).toLocaleDateString("en-IN")}
                     </td>
-                    <td className="ds-numeric text-white font-bold">
+                    <td className="monolith-numeric text-white font-bold">
                       ₹{p.allocatedAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </td>
                   </tr>
@@ -258,12 +258,12 @@ export function PurchaseInvoiceDetailClient({ invoice }: PurchaseInvoiceDetailCl
       {invoice.glEntries && invoice.glEntries.length > 0 && (
         <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
           <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-            <Database className="size-4.5 text-[#00cec4]" />
+            <Database className="size-4.5 text-[#F9D972]" />
             <h3 className="font-bold text-xs text-white uppercase tracking-wider">General Ledger Postings</h3>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="ds-table">
+            <table className="monolith-table">
               <thead>
                 <tr>
                   <th>Account Code/Name</th>
@@ -280,10 +280,10 @@ export function PurchaseInvoiceDetailClient({ invoice }: PurchaseInvoiceDetailCl
                       <span className="font-semibold text-white block">{gl.account.accountName}</span>
                       <span className="text-[10px] font-mono text-slate-400 block tracking-wider mt-0.5">{gl.account.accountCode}</span>
                     </td>
-                    <td className="ds-numeric text-white text-right font-semibold">
+                    <td className="monolith-numeric text-white text-right font-semibold">
                       {gl.debit > 0 ? `₹${gl.debit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
                     </td>
-                    <td className="ds-numeric text-white text-right font-semibold">
+                    <td className="monolith-numeric text-white text-right font-semibold">
                       {gl.credit > 0 ? `₹${gl.credit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
                     </td>
                     <td className="text-slate-400 text-xs">{gl.remarks || "—"}</td>

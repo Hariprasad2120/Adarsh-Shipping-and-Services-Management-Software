@@ -2,6 +2,8 @@ import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
 import { createNotification, getUsersWithPermission, recordNotificationActivity } from "@/modules/notifications/service";
 import * as XLSX from "xlsx";
+import fs from "fs/promises";
+import path from "path";
 import { Prisma } from "@/generated/prisma/client";
 import { can, ForbiddenError } from "@/lib/rbac";
 import * as driveClient from "@/lib/google-drive-client";
@@ -91,7 +93,7 @@ function buildChecklistCustomerMailContent(params: {
           <td align="center">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;background:#ffffff;border:1px solid #d9e3e1;border-radius:18px;overflow:hidden;box-shadow:0 18px 48px rgba(15,23,42,0.10);">
               <tr>
-                <td style="padding:22px 26px;border-top:5px solid #00cec4;background:#ffffff;">
+                <td style="padding:22px 26px;border-top:5px solid #F9D972;background:#ffffff;">
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                     <tr>
                       <td style="vertical-align:middle;">
@@ -1655,9 +1657,16 @@ async function applyChecklistWorkflowToFiling(
     data: { stage: "FILING" },
   });
 
-  const filing = await tx.chaFiling.findUniqueOrThrow({ where: { jobId: params.jobId } });
+  const filing = await tx.chaFiling.upsert({
+    where: { jobId: params.jobId },
+    update: {},
+    create: {
+      jobId: params.jobId,
+      status: "PENDING",
+    },
+  });
   if (!filing.estimatedFilingDate) {
-    const estDate = new Date();
+    const estDate = await getNow();
     estDate.setDate(estDate.getDate() + 3);
 
     await tx.chaFiling.update({
@@ -1675,6 +1684,79 @@ async function applyChecklistWorkflowToFiling(
   }
 
   return checklist;
+}
+
+async function applyCustomerChecklistDecision(
+  tx: Prisma.TransactionClient,
+  params: {
+    actorId: string;
+    orgId: string;
+    jobId: string;
+    checklistId: string;
+    currentFileVersionId: string;
+    existingPendingDecisionId?: string | null;
+    assignedToId?: string | null;
+    decision: "APPROVED" | "REJECTED";
+    remarks?: string;
+  },
+) {
+  const actedAt = await getNow();
+
+  if (params.existingPendingDecisionId) {
+    await tx.chaChecklistDecision.update({
+      where: { id: params.existingPendingDecisionId },
+      data: {
+        action: params.decision,
+        actedById: params.actorId,
+        actedAt,
+        remarks: params.remarks,
+      },
+    });
+  } else {
+    await tx.chaChecklistDecision.create({
+      data: {
+        checklistId: params.checklistId,
+        fileVersionId: params.currentFileVersionId,
+        stage: "CUSTOMER",
+        action: params.decision,
+        assignedToId: params.assignedToId ?? params.actorId,
+        actedById: params.actorId,
+        actedAt,
+        remarks: params.remarks,
+      },
+    });
+  }
+
+  if (params.decision === "REJECTED") {
+    await tx.chaChecklist.update({
+      where: { id: params.checklistId },
+      data: {
+        status: "CUSTOMER_REWORK_REQUIRED",
+        currentApprovalStage: "UPLOAD",
+        customerRejectedOnce: true,
+        customerApprovalAttempted: true,
+        updatedById: params.actorId,
+      },
+    });
+
+    await tx.chaJob.update({
+      where: { id: params.jobId },
+      data: { stage: "CHECKLIST_PREPARATION" },
+    });
+
+    return { outcome: "REJECTED" as const };
+  }
+
+  await applyChecklistWorkflowToFiling(tx, {
+    actorId: params.actorId,
+    orgId: params.orgId,
+    jobId: params.jobId,
+    checklistId: params.checklistId,
+    checklistStatus: "CUSTOMER_APPROVED",
+    remarks: "Customer approved checklist and workflow advanced to Filing.",
+  });
+
+  return { outcome: "APPROVED" as const };
 }
 
 function getActorRoleNames(user: { roles?: { role: { name: string } }[]; isPlatformAdmin?: boolean }) {
@@ -1705,6 +1787,127 @@ function getAssignedDeletionManager(job: {
   return [...job.assignments]
     .filter((assignment) => assignment.responsibility === "APPROVAL")
     .sort((a, b) => a.id.localeCompare(b.id))[0] ?? null;
+}
+
+async function assertCanReviewExpenseRequest(
+  actorId: string,
+  orgId: string,
+  requestId: string,
+) {
+  const request = await db.chaExpenseRequest.findFirst({
+    where: { id: requestId, orgId },
+    include: {
+      job: {
+        select: {
+          id: true,
+          primaryOwnerId: true,
+          assignedManagerId: true,
+          assignments: { select: { userId: true, responsibility: true } },
+        },
+      },
+      requestedBy: { select: { managerId: true, tlId: true } },
+    },
+  });
+
+  if (!request) {
+    throw new Error("Expense request not found.");
+  }
+
+  const isConcernedManager =
+    request.routedManagerId === actorId ||
+    request.requestedBy.managerId === actorId ||
+    request.requestedBy.tlId === actorId ||
+    request.job?.primaryOwnerId === actorId ||
+    request.job?.assignedManagerId === actorId ||
+    request.job?.assignments.some(
+      (assignment) => assignment.userId === actorId && assignment.responsibility === "APPROVAL",
+    );
+  const hasManagerAuthority = await can(actorId, "cha.expense.manage");
+
+  if (!isConcernedManager && !hasManagerAuthority) {
+    throw new ForbiddenError("cha.expense.manage");
+  }
+
+  return request;
+}
+
+async function assertCanClarifyExpenseRequest(actorId: string, orgId: string, requestId: string) {
+  const request = await db.chaExpenseRequest.findFirst({
+    where: { id: requestId, orgId },
+  });
+
+  if (!request) {
+    throw new Error("Expense request not found.");
+  }
+  if (request.requestedById !== actorId) {
+    throw new ForbiddenError("cha.expense.request");
+  }
+  if (request.status !== "CLARIFICATION_REQUIRED") {
+    throw new Error("Clarification can only be submitted when the request is awaiting clarification.");
+  }
+
+  return request;
+}
+
+async function assertCanProcessExpensePayment(actorId: string, orgId: string, requestId: string) {
+  const request = await db.chaExpenseRequest.findFirst({
+    where: { id: requestId, orgId },
+    include: {
+      job: {
+        select: {
+          assignments: { select: { userId: true, responsibility: true } },
+        },
+      },
+    },
+  });
+
+  if (!request) {
+    throw new Error("Expense request not found.");
+  }
+
+  const isAssignedAccountsUser = request.job?.assignments.some(
+    (assignment) => assignment.userId === actorId && assignment.responsibility === "ACCOUNTS",
+  );
+  const hasPaymentAuthority = await can(actorId, "cha.expense.pay");
+
+  if (!isAssignedAccountsUser && !hasPaymentAuthority) {
+    throw new ForbiddenError("cha.expense.pay");
+  }
+
+  return request;
+}
+
+async function assertCanAccountsReviewExpense(actorId: string, orgId: string, requestId: string) {
+  const request = await db.chaExpenseRequest.findFirst({
+    where: { id: requestId, orgId },
+    include: {
+      requestedBy: { select: { id: true, name: true, managerId: true, tlId: true } },
+      job: {
+        select: {
+          id: true,
+          jobNumber: true,
+          primaryOwnerId: true,
+          assignedManagerId: true,
+          assignments: { select: { userId: true, responsibility: true } },
+        },
+      },
+    },
+  });
+
+  if (!request) {
+    throw new Error("Expense request not found.");
+  }
+
+  const isAssignedAccountsUser = request.job?.assignments.some(
+    (assignment) => assignment.userId === actorId && assignment.responsibility === "ACCOUNTS",
+  );
+  const hasPaymentAuthority = await can(actorId, "cha.expense.pay");
+
+  if (!isAssignedAccountsUser && !hasPaymentAuthority) {
+    throw new ForbiddenError("cha.expense.pay");
+  }
+
+  return request;
 }
 
 async function getEligibleDeletionAdmins(orgId: string) {
@@ -2557,6 +2760,12 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
             currentFileVersion: true,
             fileVersions: { orderBy: { versionNumber: "desc" } },
             approvals: { orderBy: { createdAt: "asc" } },
+            customerResponses: {
+              include: {
+                portalUser: { select: { id: true, name: true, email: true } },
+              },
+              orderBy: { submittedAt: "desc" },
+            },
             customerMailLogs: {
               orderBy: { sentAt: "desc" },
               take: 5,
@@ -2576,11 +2785,11 @@ export async function getJobDetails(userId: string, orgId: string, jobId: string
     db.chaExpenseRequest.findMany({
       where: { jobId },
       include: {
-        requestedBy: { select: { name: true } },
+        requestedBy: { select: { id: true, name: true, email: true } },
         lines: true,
         payments: { include: { paidBy: { select: { name: true } } } },
         queries: { include: { author: { select: { name: true } } } },
-        statusHistory: true,
+        statusHistory: { orderBy: { createdAt: "desc" } },
       },
     }),
   ]);
@@ -5308,61 +5517,17 @@ export async function submitChecklistCustomerDecision(
   );
 
   const result = await db.$transaction(async (tx) => {
-    if (existingPending) {
-      await tx.chaChecklistDecision.update({
-        where: { id: existingPending.id },
-        data: {
-          action: decision,
-          actedById: actorId,
-          actedAt: await getNow(),
-          remarks,
-        },
-      });
-    } else {
-      await tx.chaChecklistDecision.create({
-        data: {
-          checklistId: checklist.id,
-          fileVersionId: checklist.currentFileVersionId!,
-          stage: "CUSTOMER",
-          action: decision,
-          assignedToId: actorId,
-          actedById: actorId,
-          actedAt: await getNow(),
-          remarks,
-        },
-      });
-    }
-
-    if (decision === "REJECTED") {
-      await tx.chaChecklist.update({
-        where: { id: checklist.id },
-        data: {
-          status: "CUSTOMER_REWORK_REQUIRED",
-          currentApprovalStage: "UPLOAD",
-          customerRejectedOnce: true,
-          customerApprovalAttempted: true,
-          updatedById: actorId,
-        },
-      });
-
-      await tx.chaJob.update({
-        where: { id: jobId },
-        data: { stage: "CHECKLIST_PREPARATION" },
-      });
-
-      return { outcome: "REJECTED" as const };
-    }
-
-    await applyChecklistWorkflowToFiling(tx, {
+    return applyCustomerChecklistDecision(tx, {
       actorId,
       orgId,
       jobId,
       checklistId: checklist.id,
-      checklistStatus: "CUSTOMER_APPROVED",
-      remarks: "Customer approved checklist and workflow advanced to Filing.",
+      currentFileVersionId: checklist.currentFileVersionId!,
+      existingPendingDecisionId: existingPending?.id,
+      assignedToId: actorId,
+      decision,
+      remarks,
     });
-
-    return { outcome: "APPROVED" as const };
   });
 
   await logChecklistApprovalAudit({
@@ -5404,6 +5569,153 @@ export async function submitChecklistCustomerDecision(
   }
 
   return result;
+}
+
+export async function submitPortalCustomerChecklistDecision(params: {
+  orgId: string;
+  customerId: string;
+  portalUserId: string;
+  jobId?: string;
+  checklistId: string;
+  decision: "APPROVED" | "REJECTED";
+  remarks?: string;
+}) {
+  const now = await getNow();
+
+  const checklist = await db.chaChecklist.findFirst({
+    where: {
+      id: params.checklistId,
+      job: {
+        ...(params.jobId ? { id: params.jobId } : {}),
+        orgId: params.orgId,
+        customerId: params.customerId,
+        deletedAt: null,
+      },
+    },
+    include: {
+      currentFileVersion: true,
+      approvals: { orderBy: { createdAt: "asc" } },
+      job: {
+        include: {
+          assignments: true,
+          customer: true,
+        },
+      },
+    },
+  });
+
+  if (!checklist || !checklist.currentFileVersionId || !checklist.currentFileVersion) {
+    throw new Error("Checklist not found.");
+  }
+  const portalCustomerApprovalOpen =
+    checklist.currentApprovalStage === "CUSTOMER" ||
+    checklist.currentApprovalStage === "PENDING_CUSTOMER_APPROVAL" ||
+    checklist.status === "CUSTOMER_APPROVAL_PENDING";
+  if (!portalCustomerApprovalOpen) {
+    throw new Error("Checklist is not awaiting customer approval.");
+  }
+
+  const actingUserId = checklist.job.primaryOwnerId || checklist.updatedById || checklist.createdById;
+  const trimmedRemarks = params.remarks?.trim() || undefined;
+  const portalRemarks = [
+    trimmedRemarks,
+    `Submitted from customer portal by portal user ${params.portalUserId}.`,
+  ].filter(Boolean).join(" ");
+
+  const existingPending = checklist.approvals.find(
+    (approval) =>
+      approval.fileVersionId === checklist.currentFileVersionId &&
+      approval.stage === "CUSTOMER" &&
+      approval.action === "PENDING",
+  );
+
+  const result = await db.$transaction(async (tx) => {
+    const existingResponse = await tx.customerChecklistResponse.findFirst({
+      where: {
+        orgId: params.orgId,
+        customerId: params.customerId,
+        jobId: checklist.jobId,
+        checklistId: checklist.id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (existingResponse) {
+      throw new Error("This checklist already has a customer decision.");
+    }
+
+    await tx.customerChecklistResponse.create({
+      data: {
+        orgId: params.orgId,
+        customerId: params.customerId,
+        jobId: checklist.jobId,
+        checklistId: checklist.id,
+        portalUserId: params.portalUserId,
+        decision: params.decision,
+        remarks: trimmedRemarks ?? null,
+        submittedAt: now,
+      },
+    });
+
+    return applyCustomerChecklistDecision(tx, {
+      actorId: actingUserId,
+      orgId: params.orgId,
+      jobId: checklist.jobId,
+      checklistId: checklist.id,
+      currentFileVersionId: checklist.currentFileVersionId!,
+      existingPendingDecisionId: existingPending?.id,
+      assignedToId: existingPending?.assignedToId ?? actingUserId,
+      decision: params.decision,
+      remarks: portalRemarks,
+    });
+  });
+
+  await logChecklistApprovalAudit({
+    orgId: params.orgId,
+    jobId: checklist.jobId,
+    jobNumber: checklist.job.jobNumber,
+    checklistId: checklist.id,
+    event: params.decision === "APPROVED" ? "CHECKLIST_CUSTOMER_APPROVED" : "CHECKLIST_CUSTOMER_REJECTED",
+    actorId: actingUserId,
+    approvalType: "CUSTOMER_APPROVAL",
+    prevState: "CUSTOMER_APPROVAL_PENDING",
+    newState: params.decision === "APPROVED" ? "CUSTOMER_APPROVED" : "CUSTOMER_REWORK_REQUIRED",
+    source: "/customer-portal/checklists/[checklistId]/decision",
+    remarks: portalRemarks,
+  });
+
+  if (result.outcome === "REJECTED") {
+    const internalApproverIds = await getChecklistInternalApproverIds(params.orgId, checklist.job);
+    await queueChecklistNotifications({
+      userIds: [checklist.job.primaryOwnerId, ...internalApproverIds],
+      orgId: params.orgId,
+      kind: "CHA_CHECKLIST_CUSTOMER_REJECTED",
+      title: `Customer Rework Required: ${checklist.job.jobNumber}`,
+      body: `Customer rejected the checklist.${trimmedRemarks ? ` Reason: ${trimmedRemarks}` : ""} After rework, internal approval will route it directly to Filing.`,
+      link: `/cha/jobs/${checklist.jobId}`,
+    });
+  } else {
+    const filingRecipients = checklist.job.assignments
+      .filter((assignment) => assignment.responsibility === "FILING" || assignment.responsibility === "OPERATIONS")
+      .map((assignment) => assignment.userId);
+    await queueChecklistNotifications({
+      userIds: [checklist.job.primaryOwnerId, ...filingRecipients],
+      orgId: params.orgId,
+      kind: "CHA_CHECKLIST_CUSTOMER_APPROVED",
+      title: `Checklist Approved By Customer: ${checklist.job.jobNumber}`,
+      body: "Customer approved the checklist. Filing is now ready.",
+      link: `/cha/jobs/${checklist.jobId}`,
+    });
+  }
+
+  return {
+    ...result,
+    checklistId: checklist.id,
+    jobId: checklist.jobId,
+    jobNumber: checklist.job.jobNumber,
+  };
 }
 
 // Parse and validate Excel checklist
@@ -6189,6 +6501,8 @@ export async function createExpenseRequest(
   data: {
     isUrgent: boolean;
     urgencyReason?: string;
+    upiNumber?: string;
+    upiId?: string;
     lines: {
       category: string;
       purpose: string;
@@ -6196,6 +6510,21 @@ export async function createExpenseRequest(
       requiredDate: Date;
       supportingDocumentKey?: string;
       remarks?: string;
+    }[];
+    receiptFileData?: {
+      fileName: string;
+      mimeType: string;
+      sizeBytes: number;
+    };
+    receiptFileBuffer?: Buffer;
+    receiptFilesByLineIndex?: {
+      lineIndex: number;
+      fileData: {
+        fileName: string;
+        mimeType: string;
+        sizeBytes: number;
+      };
+      fileBuffer: Buffer;
     }[];
   }
 ) {
@@ -6205,7 +6534,13 @@ export async function createExpenseRequest(
 
   const job = await db.chaJob.findFirstOrThrow({
     where: getActiveChaJobByIdWhere(orgId, jobId),
-    select: { id: true, jobNumber: true },
+    select: {
+      id: true,
+      jobNumber: true,
+      primaryOwnerId: true,
+      assignedManagerId: true,
+      assignments: { select: { userId: true, responsibility: true } },
+    },
   });
 
   // Verify requester is not accounts-only
@@ -6229,8 +6564,10 @@ export async function createExpenseRequest(
       data: {
         jobId,
         orgId,
-        status: data.isUrgent ? "URGENT_PAYMENT_REQUIRED" : "SUBMITTED",
+        status: "UNDER_REVIEW",
         requestedById: actorId,
+        upiNumber: data.upiNumber?.trim() || undefined,
+        upiId: data.upiId?.trim() || undefined,
         isUrgent: data.isUrgent,
         urgencyReason: data.isUrgent ? data.urgencyReason : undefined,
         urgentRequestedAt: data.isUrgent ? new Date() : undefined,
@@ -6257,7 +6594,7 @@ export async function createExpenseRequest(
         requestId: request.id,
         status: request.status,
         actionedById: actorId,
-        remarks: data.isUrgent ? `Submitted urgent: ${data.urgencyReason}` : "Submitted request",
+        remarks: data.isUrgent ? `Submitted urgent for review: ${data.urgencyReason}` : "Submitted request for review",
       },
     });
 
@@ -6275,30 +6612,80 @@ export async function createExpenseRequest(
     remarks: `Created request with ${data.lines.length} items. Urgent: ${data.isUrgent}`,
   });
 
-  // Notify Accounts members
-  const accountsPeople = await db.userRole.findMany({
-    where: { role: { orgId, permissions: { some: { permission: { key: "cha.expense.manage" } } } } },
-    select: { userId: true },
-  });
+  if (data.receiptFileBuffer && data.receiptFileData) {
+    const receiptKey = await uploadExpenseArtifactFile(
+      actorId,
+      result.jobId,
+      result.id,
+      "Receipt",
+      data.receiptFileData,
+      data.receiptFileBuffer,
+    );
+    const firstLine = await db.chaExpenseLine.findFirst({
+      where: { requestId: result.id },
+      orderBy: { id: "asc" },
+      select: { id: true },
+    });
+    if (firstLine) {
+      await db.chaExpenseLine.update({
+        where: { id: firstLine.id },
+        data: { supportingDocumentKey: receiptKey },
+      });
+    }
+  }
+  if (data.receiptFilesByLineIndex?.length) {
+    const createdLines = await db.chaExpenseLine.findMany({
+      where: { requestId: result.id },
+      orderBy: { id: "asc" },
+      select: { id: true },
+    });
+    const uploadsByLine = new Map<number, string[]>();
+    for (const upload of data.receiptFilesByLineIndex) {
+      const receiptKey = await uploadExpenseArtifactFile(
+        actorId,
+        result.jobId,
+        result.id,
+        "Receipt",
+        upload.fileData,
+        upload.fileBuffer,
+      );
+      uploadsByLine.set(upload.lineIndex, [...(uploadsByLine.get(upload.lineIndex) || []), receiptKey]);
+    }
+    for (const [lineIndex, receiptKeys] of uploadsByLine.entries()) {
+      const line = createdLines[lineIndex];
+      if (line) {
+        await db.chaExpenseLine.update({
+          where: { id: line.id },
+          data: { supportingDocumentKey: JSON.stringify(receiptKeys) },
+        });
+      }
+    }
+  }
 
-  for (const acc of accountsPeople) {
+  const reviewerIds = new Set<string>();
+  if (job.primaryOwnerId && job.primaryOwnerId !== actorId) reviewerIds.add(job.primaryOwnerId);
+  if (job.assignedManagerId && job.assignedManagerId !== actorId) reviewerIds.add(job.assignedManagerId);
+  job.assignments
+    .filter((assignment) => assignment.responsibility === "APPROVAL" && assignment.userId !== actorId)
+    .forEach((assignment) => reviewerIds.add(assignment.userId));
+
+  for (const reviewerId of reviewerIds) {
     await createNotification({
-      userId: acc.userId,
+      userId: reviewerId,
       orgId,
       kind: "CHA_EXPENSE_SUBMITTED",
-      title: data.isUrgent ? `URGENT Expense Request: ${job.jobNumber}` : `New Expense Request: ${job.jobNumber}`,
-      body: `Expense request for job ${job.jobNumber} is awaiting verification. Urgency: ${data.isUrgent ? "High" : "Standard"}.`,
+      title: data.isUrgent ? `URGENT Expense Review: ${job.jobNumber}` : `Expense Review Required: ${job.jobNumber}`,
+      body: `Expense request for job ${job.jobNumber} is awaiting owner/manager review. Urgency: ${data.isUrgent ? "High" : "Standard"}.`,
       link: `/cha/expenses`,
       priority: data.isUrgent ? "important" : "normal",
     });
 
-    // Create Todo task
     await db.todoTask.create({
       data: {
-        userId: acc.userId,
+        userId: reviewerId,
         orgId,
-        title: data.isUrgent ? `URGENT Pay Expense for Job ${job.jobNumber}` : `Verify Expense for Job ${job.jobNumber}`,
-        description: `Review line items and post payment disbursement details.`,
+        title: data.isUrgent ? `URGENT Review Expense for Job ${job.jobNumber}` : `Review Expense for Job ${job.jobNumber}`,
+        description: `Review line items and approve, reject, or request clarification.`,
         status: "PENDING",
       },
     });
@@ -6331,7 +6718,6 @@ export async function triggerUrgentExpenseEscalation(
     const updated = await tx.chaExpenseRequest.update({
       where: { id: requestId },
       data: {
-        status: "URGENT_PAYMENT_REQUIRED",
         isUrgent: true,
         urgencyReason,
         urgentRequestedAt: new Date(),
@@ -6342,7 +6728,7 @@ export async function triggerUrgentExpenseEscalation(
     await tx.chaExpenseStatusHistory.create({
       data: {
         requestId,
-        status: "URGENT_PAYMENT_REQUIRED",
+        status: updated.status,
         actionedById: actorId,
         remarks: `Escalated to Urgent: ${urgencyReason}`,
       },
@@ -6357,7 +6743,7 @@ export async function triggerUrgentExpenseEscalation(
     entityId: requestId,
     event: "EXPENSE_ESCALATED",
     actorId,
-    newState: "URGENT_PAYMENT_REQUIRED",
+    newState: result.status,
     remarks: urgencyReason,
   });
 
@@ -6383,32 +6769,37 @@ export async function triggerUrgentExpenseEscalation(
 }
 
 // Review action on Expense Request (Mark status update)
-export async function setExpenseStatus(
+export async function reviewExpenseRequest(
   actorId: string,
   orgId: string,
   requestId: string,
-  status: "UNDER_REVIEW" | "CLARIFICATION_REQUIRED" | "APPROVED" | "READY_FOR_DISBURSEMENT" | "REJECTED",
+  decision: "CLARIFICATION_REQUIRED" | "APPROVED" | "REJECTED",
   remarks?: string
 ) {
-  if (status === "CLARIFICATION_REQUIRED" && !remarks?.trim()) {
+  if (decision === "CLARIFICATION_REQUIRED" && !remarks?.trim()) {
     throw new Error("Clarification requests require a specific query note.");
   }
-  if (status === "REJECTED" && !remarks?.trim()) {
+  if (decision === "REJECTED" && !remarks?.trim()) {
     throw new Error("Expense rejections require an administrative rejection reason.");
+  }
+
+  const reviewableRequest = await assertCanReviewExpenseRequest(actorId, orgId, requestId);
+  if (reviewableRequest.status !== "UNDER_REVIEW") {
+    throw new Error("Only under-review expense requests can be actioned by job owners or managers.");
   }
 
   const result = await db.$transaction(async (tx) => {
     const updated = await tx.chaExpenseRequest.update({
       where: { id: requestId },
-      data: { status },
+      data: { status: decision },
     });
 
     await tx.chaExpenseStatusHistory.create({
       data: {
         requestId,
-        status,
+        status: decision,
         actionedById: actorId,
-        remarks: remarks || `Status set to ${status}`,
+        remarks: remarks || `Review decision: ${decision}`,
       },
     });
 
@@ -6419,24 +6810,579 @@ export async function setExpenseStatus(
     orgId,
     entityType: "ChaExpenseRequest",
     entityId: requestId,
-    event: `EXPENSE_STATUS_${status}`,
+    event: `EXPENSE_REVIEW_${decision}`,
     actorId,
-    newState: status,
+    newState: decision,
     remarks,
   });
 
-  // Notify requester
   await createNotification({
     userId: result.requestedById,
     orgId,
     kind: "CHA_EXPENSE_APPROVED",
-    title: `Expense Status Update: ${status.replace(/_/g, " ")}`,
-    body: `Your expense request status has been updated to ${status.replace(/_/g, " ")}. Details: "${remarks || ""}"`,
-    link: `/cha/jobs/${result.jobId}`,
-    priority: status === "CLARIFICATION_REQUIRED" || status === "REJECTED" ? "important" : "normal",
+    title: `Expense ${decision.replace(/_/g, " ")}`,
+    body: `Your expense request has been marked ${decision.replace(/_/g, " ")}. Details: "${remarks || ""}"`,
+    link: result.jobId ? `/cha/jobs/${result.jobId}` : "/expense",
+    priority: decision === "CLARIFICATION_REQUIRED" || decision === "REJECTED" ? "important" : "normal",
+  });
+
+  if (decision === "APPROVED") {
+    const accountsRecipients = new Set<string>();
+    const requestWithJob = await db.chaExpenseRequest.findUnique({
+      where: { id: requestId },
+      include: { job: { select: { assignments: { select: { userId: true, responsibility: true } }, jobNumber: true } } },
+    });
+    requestWithJob?.job?.assignments
+      .filter((assignment) => assignment.responsibility === "ACCOUNTS")
+      .forEach((assignment) => accountsRecipients.add(assignment.userId));
+    const payUsers = await db.userRole.findMany({
+      where: { role: { orgId, permissions: { some: { permission: { key: "cha.expense.pay" } } } } },
+      select: { userId: true },
+    });
+    payUsers.forEach((user) => accountsRecipients.add(user.userId));
+
+    for (const userId of accountsRecipients) {
+      await createNotification({
+        userId,
+        orgId,
+        kind: "CHA_EXPENSE_APPROVED",
+        title: `Expense Approved: ${requestWithJob?.job?.jobNumber ?? requestId}`,
+        body: "An approved expense request is ready for Accounts disbursement action.",
+        link: "/cha/expenses",
+        priority: result.isUrgent ? "important" : "normal",
+      });
+    }
+  }
+
+  return result;
+}
+
+export async function listExpenseJobOptions(orgId: string) {
+  return db.chaJob.findMany({
+    where: { orgId, deletedAt: null },
+    orderBy: { createdAt: "desc" },
+    take: 500,
+    select: {
+      id: true,
+      jobNumber: true,
+      title: true,
+      customer: { select: { name: true } },
+    },
+  });
+}
+
+async function getExpenseAccountsRecipients(orgId: string, job?: { assignments?: { userId: string; responsibility: string }[] } | null) {
+  const accountsRecipients = new Set<string>();
+  job?.assignments
+    ?.filter((assignment) => assignment.responsibility === "ACCOUNTS")
+    .forEach((assignment) => accountsRecipients.add(assignment.userId));
+  const payUsers = await db.userRole.findMany({
+    where: { role: { orgId, permissions: { some: { permission: { key: "cha.expense.pay" } } } } },
+    select: { userId: true },
+  });
+  payUsers.forEach((user) => accountsRecipients.add(user.userId));
+  return accountsRecipients;
+}
+
+export async function createDirectExpenseRequest(
+  actorId: string,
+  orgId: string,
+  data: {
+    jobId?: string;
+    expenseScope: "JOB" | "OTHER";
+    directPurpose?: string;
+    approvalRoute: "MANAGER_THEN_ACCOUNTS" | "DIRECT_ACCOUNTS";
+    isUrgent: boolean;
+    urgencyReason?: string;
+    upiNumber?: string;
+    upiId?: string;
+    lines: {
+      category: string;
+      purpose: string;
+      amount: number;
+      requiredDate: Date;
+      supportingDocumentKey?: string;
+      remarks?: string;
+    }[];
+    receiptFileData?: {
+      fileName: string;
+      mimeType: string;
+      sizeBytes: number;
+    };
+    receiptFileBuffer?: Buffer;
+    receiptFilesByLineIndex?: {
+      lineIndex: number;
+      fileData: {
+        fileName: string;
+        mimeType: string;
+        sizeBytes: number;
+      };
+      fileBuffer: Buffer;
+    }[];
+  },
+) {
+  if (data.lines.length === 0) {
+    throw new Error("An expense request must contain at least one line item.");
+  }
+  if (data.expenseScope === "JOB" && !data.jobId) {
+    throw new Error("Choose a job number or select Other for non-job expenses.");
+  }
+  if (data.expenseScope === "OTHER" && !data.directPurpose?.trim()) {
+    throw new Error("Enter the expense purpose for Other expenses.");
+  }
+
+  const requester = await db.user.findFirstOrThrow({
+    where: { id: actorId, orgId },
+    select: { id: true, name: true, managerId: true, tlId: true },
+  });
+  const job = data.jobId
+    ? await db.chaJob.findFirstOrThrow({
+        where: getActiveChaJobByIdWhere(orgId, data.jobId),
+        select: {
+          id: true,
+          jobNumber: true,
+          primaryOwnerId: true,
+          assignedManagerId: true,
+          assignments: { select: { userId: true, responsibility: true } },
+        },
+      })
+    : null;
+
+  const managerReviewerIds = new Set<string>();
+  if (job) {
+    if (job.primaryOwnerId && job.primaryOwnerId !== actorId) managerReviewerIds.add(job.primaryOwnerId);
+    if (job.assignedManagerId && job.assignedManagerId !== actorId) managerReviewerIds.add(job.assignedManagerId);
+    job.assignments
+      .filter((assignment) => assignment.responsibility === "APPROVAL" && assignment.userId !== actorId)
+      .forEach((assignment) => managerReviewerIds.add(assignment.userId));
+  }
+  if (managerReviewerIds.size === 0) {
+    if (requester.managerId && requester.managerId !== actorId) managerReviewerIds.add(requester.managerId);
+    if (requester.tlId && requester.tlId !== actorId) managerReviewerIds.add(requester.tlId);
+  }
+
+  if (data.approvalRoute === "MANAGER_THEN_ACCOUNTS" && managerReviewerIds.size === 0) {
+    throw new Error("No manager is configured for this request. Choose Direct to Accounts or update the requester reporting manager.");
+  }
+
+  const initialStatus = data.approvalRoute === "DIRECT_ACCOUNTS" ? "ACCOUNTS_REVIEW" : "UNDER_REVIEW";
+  const result = await db.$transaction(async (tx) => {
+    const request = await tx.chaExpenseRequest.create({
+      data: {
+        jobId: job?.id,
+        orgId,
+        status: initialStatus,
+        requestedById: actorId,
+        expenseScope: data.expenseScope,
+        directPurpose: data.expenseScope === "OTHER" ? data.directPurpose?.trim() : undefined,
+        approvalRoute: data.approvalRoute,
+        routedManagerId: data.approvalRoute === "MANAGER_THEN_ACCOUNTS" ? Array.from(managerReviewerIds)[0] : undefined,
+        upiNumber: data.upiNumber?.trim() || undefined,
+        upiId: data.upiId?.trim() || undefined,
+        isUrgent: data.isUrgent,
+        urgencyReason: data.isUrgent ? data.urgencyReason : undefined,
+        urgentRequestedAt: data.isUrgent ? new Date() : undefined,
+        urgentRequestedById: data.isUrgent ? actorId : undefined,
+      },
+    });
+
+    await tx.chaExpenseLine.createMany({
+      data: data.lines.map((line) => ({
+        requestId: request.id,
+        category: line.category,
+        purpose: line.purpose,
+        amount: new Prisma.Decimal(line.amount),
+        requiredDate: line.requiredDate,
+        supportingDocumentKey: line.supportingDocumentKey,
+        remarks: line.remarks,
+      })),
+    });
+
+    await tx.chaExpenseStatusHistory.create({
+      data: {
+        requestId: request.id,
+        status: request.status,
+        actionedById: actorId,
+        remarks:
+          data.approvalRoute === "DIRECT_ACCOUNTS"
+            ? "Submitted directly to Accounts for review."
+            : "Submitted request for manager review.",
+      },
+    });
+
+    return request;
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId: job?.id,
+    entityType: "ChaExpenseRequest",
+    entityId: result.id,
+    event: "EXPENSE_SUBMITTED",
+    actorId,
+    newState: result.status,
+    remarks: `${data.expenseScope === "OTHER" ? `Other expense: ${data.directPurpose}` : `Job expense: ${job?.jobNumber}`}. Route: ${data.approvalRoute}.`,
+  });
+
+  if (data.receiptFileBuffer && data.receiptFileData) {
+    const receiptKey = await uploadExpenseArtifactFile(
+      actorId,
+      result.jobId,
+      result.id,
+      "Receipt",
+      data.receiptFileData,
+      data.receiptFileBuffer,
+    );
+    const firstLine = await db.chaExpenseLine.findFirst({
+      where: { requestId: result.id },
+      orderBy: { id: "asc" },
+      select: { id: true },
+    });
+    if (firstLine) {
+      await db.chaExpenseLine.update({
+        where: { id: firstLine.id },
+        data: { supportingDocumentKey: receiptKey },
+      });
+    }
+  }
+  if (data.receiptFilesByLineIndex?.length) {
+    const createdLines = await db.chaExpenseLine.findMany({
+      where: { requestId: result.id },
+      orderBy: { id: "asc" },
+      select: { id: true },
+    });
+    const uploadsByLine = new Map<number, string[]>();
+    for (const upload of data.receiptFilesByLineIndex) {
+      const receiptKey = await uploadExpenseArtifactFile(
+        actorId,
+        result.jobId,
+        result.id,
+        "Receipt",
+        upload.fileData,
+        upload.fileBuffer,
+      );
+      uploadsByLine.set(upload.lineIndex, [...(uploadsByLine.get(upload.lineIndex) || []), receiptKey]);
+    }
+    for (const [lineIndex, receiptKeys] of uploadsByLine.entries()) {
+      const line = createdLines[lineIndex];
+      if (line) {
+        await db.chaExpenseLine.update({
+          where: { id: line.id },
+          data: { supportingDocumentKey: JSON.stringify(receiptKeys) },
+        });
+      }
+    }
+  }
+
+  const recipients =
+    data.approvalRoute === "DIRECT_ACCOUNTS"
+      ? await getExpenseAccountsRecipients(orgId, job)
+      : managerReviewerIds;
+
+  for (const userId of recipients) {
+    await createNotification({
+      userId,
+      orgId,
+      kind: "CHA_EXPENSE_SUBMITTED",
+      title: data.approvalRoute === "DIRECT_ACCOUNTS" ? "Expense Review Required: Accounts" : "Expense Review Required",
+      body:
+        data.expenseScope === "OTHER"
+          ? `Expense request from ${requester.name} for ${data.directPurpose}.`
+          : `Expense request for job ${job?.jobNumber} is awaiting review.`,
+      link: "/expense",
+      priority: data.isUrgent ? "important" : "normal",
+    });
+  }
+
+  return result;
+}
+
+export async function approveAccountsExpenseRequest(
+  actorId: string,
+  orgId: string,
+  requestId: string,
+  remarks?: string,
+) {
+  const request = await assertCanAccountsReviewExpense(actorId, orgId, requestId);
+  if (request.status !== "ACCOUNTS_REVIEW") {
+    throw new Error("Only direct-to-Accounts expense requests can be approved by Accounts at this step.");
+  }
+
+  const result = await db.$transaction(async (tx) => {
+    const updated = await tx.chaExpenseRequest.update({
+      where: { id: requestId },
+      data: { status: "APPROVED" },
+    });
+    await tx.chaExpenseStatusHistory.create({
+      data: {
+        requestId,
+        status: "APPROVED",
+        actionedById: actorId,
+        remarks: remarks?.trim() || "Approved by Accounts.",
+      },
+    });
+    return updated;
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId: result.jobId ?? undefined,
+    entityType: "ChaExpenseRequest",
+    entityId: requestId,
+    event: "EXPENSE_ACCOUNTS_APPROVED",
+    actorId,
+    newState: "APPROVED",
+    remarks,
+  });
+
+  await createNotification({
+    userId: result.requestedById,
+    orgId,
+    kind: "CHA_EXPENSE_APPROVED",
+    title: "Expense Approved by Accounts",
+    body: "Accounts approved your expense request. It is ready for disbursement processing.",
+    link: result.jobId ? `/cha/jobs/${result.jobId}` : "/expense",
+    priority: result.isUrgent ? "important" : "normal",
   });
 
   return result;
+}
+
+export async function routeExpenseRequestToManager(
+  actorId: string,
+  orgId: string,
+  requestId: string,
+  remarks?: string,
+) {
+  const request = await assertCanAccountsReviewExpense(actorId, orgId, requestId);
+  if (request.status !== "ACCOUNTS_REVIEW") {
+    throw new Error("Only direct-to-Accounts expense requests can be routed for manager approval.");
+  }
+
+  const managerId =
+    request.requestedBy.managerId ||
+    request.requestedBy.tlId ||
+    request.job?.assignedManagerId ||
+    request.job?.primaryOwnerId ||
+    request.job?.assignments.find((assignment) => assignment.responsibility === "APPROVAL")?.userId;
+
+  if (!managerId) {
+    throw new Error("No manager is configured for this requester or job.");
+  }
+
+  const result = await db.$transaction(async (tx) => {
+    const updated = await tx.chaExpenseRequest.update({
+      where: { id: requestId },
+      data: {
+        status: "UNDER_REVIEW",
+        approvalRoute: "MANAGER_THEN_ACCOUNTS",
+        routedManagerId: managerId,
+      },
+    });
+    await tx.chaExpenseStatusHistory.create({
+      data: {
+        requestId,
+        status: "UNDER_REVIEW",
+        actionedById: actorId,
+        remarks: remarks?.trim() || "Accounts routed this request for manager approval.",
+      },
+    });
+    return updated;
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId: result.jobId ?? undefined,
+    entityType: "ChaExpenseRequest",
+    entityId: requestId,
+    event: "EXPENSE_ROUTED_TO_MANAGER",
+    actorId,
+    newState: "UNDER_REVIEW",
+    remarks,
+  });
+
+  await createNotification({
+    userId: managerId,
+    orgId,
+    kind: "CHA_EXPENSE_SUBMITTED",
+    title: "Expense Routed for Manager Approval",
+    body: `Accounts routed an expense request from ${request.requestedBy.name} for manager review.`,
+    link: "/expense",
+    priority: result.isUrgent ? "important" : "normal",
+  });
+
+  return result;
+}
+
+export async function submitExpenseClarification(
+  actorId: string,
+  orgId: string,
+  requestId: string,
+  clarificationText: string,
+) {
+  if (!clarificationText.trim()) {
+    throw new Error("Clarification text is required.");
+  }
+  const request = await assertCanClarifyExpenseRequest(actorId, orgId, requestId);
+
+  const result = await db.$transaction(async (tx) => {
+    const updated = await tx.chaExpenseRequest.update({
+      where: { id: requestId },
+      data: {
+        status: "UNDER_REVIEW",
+        clarificationResponse: clarificationText.trim(),
+      },
+    });
+
+    await tx.chaExpenseStatusHistory.create({
+      data: {
+        requestId,
+        status: "UNDER_REVIEW",
+        actionedById: actorId,
+        remarks: `Clarification submitted: ${clarificationText.trim()}`,
+      },
+    });
+
+    return updated;
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId: request.jobId ?? undefined,
+    entityType: "ChaExpenseRequest",
+    entityId: requestId,
+    event: "EXPENSE_CLARIFICATION_SUBMITTED",
+    actorId,
+    newState: "UNDER_REVIEW",
+    remarks: clarificationText.trim(),
+  });
+
+  return result;
+}
+
+export async function markExpenseReadyForDisbursement(
+  actorId: string,
+  orgId: string,
+  requestId: string,
+  remarks?: string,
+) {
+  const request = await assertCanProcessExpensePayment(actorId, orgId, requestId);
+  if (request.status !== "APPROVED") {
+    throw new Error("Only approved expense requests can be marked ready for disbursement.");
+  }
+
+  const result = await db.$transaction(async (tx) => {
+    const updated = await tx.chaExpenseRequest.update({
+      where: { id: requestId },
+      data: { status: "READY_FOR_DISBURSEMENT" },
+    });
+    await tx.chaExpenseStatusHistory.create({
+      data: {
+        requestId,
+        status: "READY_FOR_DISBURSEMENT",
+        actionedById: actorId,
+        remarks: remarks?.trim() || "Marked ready for disbursement on due date.",
+      },
+    });
+    return updated;
+  });
+
+  await logChaAudit({
+    orgId,
+    jobId: result.jobId ?? undefined,
+    entityType: "ChaExpenseRequest",
+    entityId: requestId,
+    event: "EXPENSE_READY_FOR_DISBURSEMENT",
+    actorId,
+    newState: "READY_FOR_DISBURSEMENT",
+    remarks,
+  });
+
+  await createNotification({
+    userId: result.requestedById,
+    orgId,
+    kind: "CHA_EXPENSE_APPROVED",
+    title: "Expense Ready for Disbursement",
+    body: "Accounts has scheduled this expense for payment on the due date.",
+    link: result.jobId ? `/cha/jobs/${result.jobId}` : "/expense",
+    priority: "normal",
+  });
+
+  return result;
+}
+
+export async function setExpenseStatus(
+  actorId: string,
+  orgId: string,
+  requestId: string,
+  status: "UNDER_REVIEW" | "CLARIFICATION_REQUIRED" | "APPROVED" | "READY_FOR_DISBURSEMENT" | "REJECTED",
+  remarks?: string
+) {
+  if (status === "READY_FOR_DISBURSEMENT") {
+    return markExpenseReadyForDisbursement(actorId, orgId, requestId, remarks);
+  }
+  if (status === "UNDER_REVIEW") {
+    return submitExpenseClarification(actorId, orgId, requestId, remarks || "Clarification submitted.");
+  }
+  return reviewExpenseRequest(actorId, orgId, requestId, status, remarks);
+}
+
+const EXPENSE_ARTIFACT_DOCUMENT_CATEGORY = "Receipts and Payment Proof";
+const EXPENSE_ARTIFACT_LOCAL_ROOT = path.join(process.cwd(), "storage", "cha", "receipts-and-payment-proof");
+
+async function uploadExpenseArtifactFile(
+  actorId: string,
+  jobId: string | null,
+  requestId: string,
+  artifactKind: "Receipt" | "Payment Proof",
+  fileData: {
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+  },
+  fileBuffer: Buffer,
+) {
+  const uploadDate = new Date().toISOString().slice(0, 10);
+  const storedFileName = buildDriveStoredFileName(`${artifactKind} ${requestId} ${uploadDate}`, fileData.fileName);
+  if (!jobId) {
+    const localFolder = path.join(EXPENSE_ARTIFACT_LOCAL_ROOT, requestId, uploadDate);
+    await fs.mkdir(localFolder, { recursive: true });
+    await fs.writeFile(path.join(localFolder, storedFileName), fileBuffer);
+    return `/api/cha/expense-artifacts/${requestId}/${uploadDate}/${encodeURIComponent(storedFileName)}`;
+  }
+  let driveFolderId: string | undefined;
+  try {
+    driveFolderId = await ensureJobCategoryFolder(jobId, EXPENSE_ARTIFACT_DOCUMENT_CATEGORY, actorId);
+  } catch (err: any) {
+    console.warn(`[Expense Artifact Upload] Drive folder self-heal failed for job ${jobId}:`, err.message || err);
+    const profile = await findJobWorkspaceProfileByJobId(jobId);
+    driveFolderId = resolveDriveFolderForCategory(
+      profile?.categoryFolders as Record<string, string> | undefined,
+      profile?.rootFolderId,
+      EXPENSE_ARTIFACT_DOCUMENT_CATEGORY,
+    );
+  }
+
+  if (driveFolderId && !driveFolderId.startsWith("mock-")) {
+    try {
+      const uploadResult = await driveClient.uploadFile({
+        name: storedFileName,
+        mimeType: fileData.mimeType || "application/octet-stream",
+        parentFolderId: driveFolderId,
+        fileBuffer,
+      });
+      return uploadResult.webViewLink;
+    } catch (err: any) {
+      if (process.env.NODE_ENV === "production") {
+        throw new Error(`Google Drive upload failed: ${err.message || err}`);
+      }
+      console.warn("[Expense Artifact Upload] Google Drive upload failed. Falling back to mock URL:", err.message || err);
+    }
+  } else if (process.env.NODE_ENV === "production") {
+    throw new Error("Google Drive is not provisioned for this job. Please retry provisioning the workspace.");
+  }
+
+  return `https://drive.google.com/file/d/mock-expense-artifact-${requestId}-${Math.random().toString(36).substring(7)}/view`;
 }
 
 // Post payment disbursement details
@@ -6449,17 +7395,62 @@ export async function postExpensePayment(
     paymentDate: Date;
     paymentMethod: string;
     transactionReference: string;
-    paymentProofKey: string;
+    paymentProofKey?: string;
+    proofFileData?: {
+      fileName: string;
+      mimeType: string;
+      sizeBytes: number;
+    };
+    proofFileBuffer?: Buffer;
+    proofFiles?: {
+      fileData: {
+        fileName: string;
+        mimeType: string;
+        sizeBytes: number;
+      };
+      fileBuffer: Buffer;
+    }[];
     remarks?: string;
   }
 ) {
-  if (!paymentData.paymentProofKey.trim()) {
+  if (!paymentData.paymentProofKey?.trim() && !paymentData.proofFileBuffer && !paymentData.proofFiles?.length) {
     throw new Error("Payment proof screenshot upload is mandatory to post an expense payment.");
   }
 
+  const payableRequest = await assertCanProcessExpensePayment(actorId, orgId, requestId);
+  if (!["APPROVED", "READY_FOR_DISBURSEMENT"].includes(payableRequest.status)) {
+    throw new Error("Only approved or ready-for-disbursement expense requests can be paid.");
+  }
+
+  let paymentProofKey = paymentData.paymentProofKey?.trim() || "";
+  if (paymentData.proofFiles?.length) {
+    const uploadedProofKeys = await Promise.all(
+      paymentData.proofFiles.map((proofFile) =>
+        uploadExpenseArtifactFile(
+          actorId,
+          payableRequest.jobId,
+          requestId,
+          "Payment Proof",
+          proofFile.fileData,
+          proofFile.fileBuffer,
+        ),
+      ),
+    );
+    paymentProofKey = JSON.stringify(uploadedProofKeys);
+  } else if (paymentData.proofFileBuffer && paymentData.proofFileData) {
+    paymentProofKey = await uploadExpenseArtifactFile(
+      actorId,
+      payableRequest.jobId,
+      requestId,
+      "Payment Proof",
+      paymentData.proofFileData,
+      paymentData.proofFileBuffer,
+    );
+  }
+
   const result = await db.$transaction(async (tx) => {
-    const request = await tx.chaExpenseRequest.findUniqueOrThrow({
-      where: { id: requestId },
+    const request = await tx.chaExpenseRequest.findFirstOrThrow({
+      where: { id: requestId, orgId },
     });
 
     // Create payment entry
@@ -6470,7 +7461,7 @@ export async function postExpensePayment(
         paymentDate: paymentData.paymentDate,
         paymentMethod: paymentData.paymentMethod,
         transactionReference: paymentData.transactionReference,
-        paymentProofKey: paymentData.paymentProofKey,
+        paymentProofKey,
         remarks: paymentData.remarks,
         paidById: actorId,
       },
@@ -6496,7 +7487,7 @@ export async function postExpensePayment(
 
   await logChaAudit({
     orgId,
-    jobId: result.request.jobId,
+    jobId: result.request.jobId ?? undefined,
     entityType: "ChaExpenseRequest",
     entityId: requestId,
     event: "EXPENSE_PAID",
@@ -6512,11 +7503,11 @@ export async function postExpensePayment(
     kind: "CHA_EXPENSE_PAID",
     title: `Payment Disbursed: Expense Request`,
     body: `Accounts has processed and paid INR ${paymentData.amountPaid} for your request. Proof uploaded. Acknowledge receipt.`,
-    link: `/cha/jobs/${result.request.jobId}`,
+    link: result.request.jobId ? `/cha/jobs/${result.request.jobId}` : "/expense",
     priority: "important",
   });
 
-  return result.payment;
+  return result;
 }
 
 // Acknowledge expense receipt
@@ -6545,7 +7536,7 @@ export async function acknowledgeExpenseReceipt(
 
   await logChaAudit({
     orgId,
-    jobId: result.jobId,
+    jobId: result.jobId ?? undefined,
     entityType: "ChaExpenseRequest",
     entityId: requestId,
     event: "EXPENSE_RECEIPT_ACKNOWLEDGED",
@@ -6597,7 +7588,7 @@ export async function raisePaymentQuery(
 
   await logChaAudit({
     orgId,
-    jobId: result.request.jobId,
+    jobId: result.request.jobId ?? undefined,
     entityType: "ChaExpenseRequest",
     entityId: requestId,
     event: "EXPENSE_QUERY_RAISED",
@@ -6670,7 +7661,7 @@ export async function resolvePaymentQuery(
 
   await logChaAudit({
     orgId,
-    jobId: result.request.jobId,
+    jobId: result.request.jobId ?? undefined,
     entityType: "ChaExpenseRequest",
     entityId: result.query.requestId,
     event: "EXPENSE_QUERY_RESOLVED",
@@ -6686,7 +7677,7 @@ export async function resolvePaymentQuery(
     kind: "CHA_EXPENSE_PAID",
     title: `Payment Query Resolved`,
     body: `Accounts has resolved your query: "${resolutionText}". Please acknowledge receipt.`,
-    link: `/cha/jobs/${result.request.jobId}`,
+    link: result.request.jobId ? `/cha/jobs/${result.request.jobId}` : "/expense",
     priority: "important",
   });
 
@@ -6700,29 +7691,43 @@ export async function listAllExpenses(
     status?: string;
     search?: string;
     isUrgent?: boolean;
-  }
+  },
+  access?: { userId: string; canViewAll: boolean },
 ) {
   const where: any = { orgId };
+
+  if (access && !access.canViewAll) {
+    where.OR = [
+      { requestedById: access.userId },
+      { routedManagerId: access.userId },
+      { job: { primaryOwnerId: access.userId } },
+      { job: { assignedManagerId: access.userId } },
+      { job: { assignments: { some: { userId: access.userId } } } },
+    ];
+  }
 
   if (filters.status) where.status = filters.status;
   if (filters.isUrgent !== undefined) where.isUrgent = filters.isUrgent;
   if (filters.search) {
-    where.OR = [
+    const searchOr = [
       { job: { jobNumber: { contains: filters.search, mode: "insensitive" } } },
       { job: { customer: { name: { contains: filters.search, mode: "insensitive" } } } },
       { requestedBy: { name: { contains: filters.search, mode: "insensitive" } } },
+      { directPurpose: { contains: filters.search, mode: "insensitive" } },
     ];
+    where.AND = [...(where.AND ?? []), { OR: searchOr }];
   }
 
   return db.chaExpenseRequest.findMany({
     where,
     orderBy: { createdAt: "desc" },
     include: {
-      job: { include: { customer: true } },
+      job: { include: { customer: true, assignments: true, assignedManager: { select: { id: true, name: true, email: true } } } },
       requestedBy: { select: { id: true, name: true, email: true } },
       lines: true,
-      payments: true,
-      queries: true,
+      payments: { include: { paidBy: { select: { id: true, name: true, email: true } } } },
+      queries: { include: { author: { select: { id: true, name: true, email: true } } } },
+      statusHistory: { orderBy: { createdAt: "desc" } },
     },
   });
 }
@@ -8174,6 +9179,7 @@ function buildDefaultWorkflowNode(input: {
   positionX: number;
   positionY: number;
   canBeSkipped?: boolean;
+  delayRemarksRequired?: boolean;
   checklistItems?: any[];
   photoRequirements?: any[];
   fieldDefinitionsJson?: FilingFieldDefinition[];
@@ -8198,6 +9204,7 @@ function buildDefaultWorkflowNode(input: {
     approvalRequired: false,
     approvalRoles: [] as string[],
     canBeSkipped: !!input.canBeSkipped,
+    delayRemarksRequired: input.delayRemarksRequired !== false,
     checklistItems: input.checklistItems ?? [],
     photoRequirements: input.photoRequirements ?? [],
     fieldDefinitionsJson: input.fieldDefinitionsJson ?? [],
@@ -8989,6 +9996,7 @@ function normalizeWorkflowNodeDraft(node: any, nodeIndex: number) {
     slaDuration: node.slaDuration !== undefined ? Math.max(1, Number(node.slaDuration)) : 2,
     slaUnit: node.slaUnit === "CALENDAR_DAYS" ? "CALENDAR_DAYS" : "BUSINESS_DAYS",
     commentsRequired: !!node.commentsRequired,
+    delayRemarksRequired: node.delayRemarksRequired !== false,
     canBeSkipped: !!node.canBeSkipped,
     canBeRevisited: node.canBeRevisited !== undefined ? !!node.canBeRevisited : true,
     approvalRequired: !!node.approvalRequired,
@@ -9100,6 +10108,28 @@ function normalizeFilingChecklistItem(item: any, idx: number) {
   };
 }
 
+function isLegacyStageChecklistUpload(
+  item: { allowsUpload?: boolean; label?: string | null },
+  node: {
+    name?: string | null;
+    photoRequirements?: unknown[];
+    documentRequirements?: unknown;
+    documentRequirementsJson?: unknown;
+  },
+) {
+  const documentRequirements = Array.isArray(node.documentRequirementsJson)
+    ? node.documentRequirementsJson
+    : Array.isArray(node.documentRequirements)
+      ? node.documentRequirements
+      : [];
+  const hasConfiguredStageUploads = documentRequirements.length > 0 || (node.photoRequirements?.length ?? 0) > 0;
+
+  return (
+    !!item.allowsUpload &&
+    hasConfiguredStageUploads
+  );
+}
+
 function slugify(value: string) {
   const normalized = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
   return normalized || "node";
@@ -9182,7 +10212,7 @@ function validateFilingWorkflowDraft(data: { nodes: any[]; edges: any[] }) {
       if (Number(item.deadlineDuration ?? 2) <= 0) {
         errors.push(`Checklist item "${item.label || "Untitled"}" in node "${node.name || node.key}" must have a valid SLA duration.`);
       }
-      if (item.allowsUpload) {
+      if (item.allowsUpload && !isLegacyStageChecklistUpload(item, node)) {
         const minUploads = Number(item.minUploads ?? 0);
         const maxUploads = item.maxUploads === null || item.maxUploads === undefined ? null : Number(item.maxUploads);
         if (minUploads < 0) {
@@ -10004,6 +11034,7 @@ export async function saveFilingWorkflowDraft(
           slaDuration: n.slaDuration !== undefined ? n.slaDuration : 2,
           slaUnit: n.slaUnit || "BUSINESS_DAYS",
           commentsRequired: !!n.commentsRequired,
+          delayRemarksRequired: n.delayRemarksRequired !== false,
           canBeSkipped: !!n.canBeSkipped,
           canBeRevisited: n.canBeRevisited !== undefined ? !!n.canBeRevisited : true,
           approvalRequired: !!n.approvalRequired,
@@ -10502,10 +11533,45 @@ const FILING_WORKFLOW_INSTANCE_INCLUDE = {
   queries: true,
 } as const;
 
-function getCompletedFilingNodeKeys(instance: { nodeRuns: Array<{ status: string; nodeKey: string }> }) {
+function getCompletedFilingNodeKeys(instance: {
+  nodeRuns: Array<{
+    id?: string;
+    status: string;
+    nodeKey: string;
+    node?: {
+      checklistItems?: Array<{ id: string; isMandatory?: boolean; isActive?: boolean }>;
+    };
+  }>;
+  version?: {
+    nodes?: Array<{
+      key: string;
+      checklistItems?: Array<{ id: string; isMandatory?: boolean; isActive?: boolean }>;
+    }>;
+  } | null;
+  responses?: Array<{ nodeRunId?: string | null; checklistItemId: string; isChecked: boolean }>;
+}) {
+  const nodeConfigByKey = new Map((instance.version?.nodes || []).map((node) => [node.key, node]));
+  const checkedResponseKeys = new Set(
+    (instance.responses || [])
+      .filter((response) => response.isChecked && response.nodeRunId)
+      .map((response) => `${response.nodeRunId}:${response.checklistItemId}`),
+  );
+  const runHasSatisfiedChecklist = (run: (typeof instance.nodeRuns)[number]) => {
+    const checklistItems = run.node?.checklistItems ?? nodeConfigByKey.get(run.nodeKey)?.checklistItems ?? [];
+    const activeChecklistItems = checklistItems.filter((item) => item.isActive !== false);
+    if (activeChecklistItems.length === 0) return true;
+    const mandatoryItems = checklistItems.filter((item) => item.isActive !== false && item.isMandatory !== false);
+    if (!run.id) return false;
+    if (mandatoryItems.length > 0) {
+      return mandatoryItems.every((item) => checkedResponseKeys.has(`${run.id}:${item.id}`));
+    }
+    return activeChecklistItems.some((item) => checkedResponseKeys.has(`${run.id}:${item.id}`));
+  };
+
   return new Set(
     (instance.nodeRuns || [])
       .filter((run) => run.status === "COMPLETED")
+      .filter(runHasSatisfiedChecklist)
       .map((run) => run.nodeKey),
   );
 }
@@ -10817,6 +11883,7 @@ function summarizeWorkflowNodeForAudit(node: any) {
     slaDuration: node.slaDuration ?? 2,
     slaUnit: node.slaUnit ?? "BUSINESS_DAYS",
     commentsRequired: !!node.commentsRequired,
+    delayRemarksRequired: node.delayRemarksRequired !== false,
     canBeSkipped: !!node.canBeSkipped,
     canBeRevisited: node.canBeRevisited !== false,
     approvalRequired: !!node.approvalRequired,
@@ -10916,6 +11983,7 @@ export async function completeFilingNode(
   nodeRunId: string,
   data: {
     remarks?: string;
+    delayRemarks?: string;
     transitionReason?: string;
     checklistItemResponses: {
       checklistItemId: string;
@@ -10972,10 +12040,11 @@ export async function completeFilingNode(
             version: {
               include: {
                 edges: true,
-                nodes: true,
+                nodes: { include: { checklistItems: true } },
               },
             },
             nodeRuns: true,
+            responses: true,
           },
         },
       },
@@ -11007,6 +12076,11 @@ export async function completeFilingNode(
       throw new Error(`Remarks/Comments are required to complete stage: ${node.name}.`);
     }
 
+    const isStageOverdue = !!nodeRun.slaDueDate && nodeRun.slaDueDate.getTime() < now.getTime();
+    if (isStageOverdue && node.delayRemarksRequired !== false && (!data.delayRemarks || !data.delayRemarks.trim())) {
+      throw new Error(`Delay remarks are required because stage "${node.name}" crossed its SLA.`);
+    }
+
     const completedNodeKeys = getCompletedFilingNodeKeys(instance);
     const nodeNameMap = new Map(instance.version.nodes.map((entry) => [entry.key, entry.name || entry.key]));
     const prerequisiteStatus = evaluateNodePrerequisiteStatus(node, completedNodeKeys, nodeNameMap);
@@ -11032,27 +12106,29 @@ export async function completeFilingNode(
         : { sectionKey, isEnabled: false, state: null };
     };
 
-    for (const field of fieldDefinitions) {
-      const value = fieldValueMap.get(field.key);
-      const hasValue = value !== undefined && value !== null && String(value).trim().length > 0;
-      if (field.required !== false && !hasValue) {
-        throw new Error(`Field "${field.label}" is required for stage "${node.name}".`);
-      }
-    }
-
-    for (const section of conditionalSections) {
-      const sectionState = effectiveToggleState(section.key);
-      if (!sectionState.isEnabled) {
-        continue;
-      }
-      for (const field of section.unlocksFields ?? []) {
+    const validateRequiredStageFields = () => {
+      for (const field of fieldDefinitions) {
         const value = fieldValueMap.get(field.key);
         const hasValue = value !== undefined && value !== null && String(value).trim().length > 0;
         if (field.required !== false && !hasValue) {
-          throw new Error(`Field "${field.label}" is required when "${section.label}" is enabled.`);
+          throw new Error(`Field "${field.label}" is required for stage "${node.name}".`);
         }
       }
-    }
+
+      for (const section of conditionalSections) {
+        const sectionState = effectiveToggleState(section.key);
+        if (!sectionState.isEnabled) {
+          continue;
+        }
+        for (const field of section.unlocksFields ?? []) {
+          const value = fieldValueMap.get(field.key);
+          const hasValue = value !== undefined && value !== null && String(value).trim().length > 0;
+          if (field.required !== false && !hasValue) {
+            throw new Error(`Field "${field.label}" is required when "${section.label}" is enabled.`);
+          }
+        }
+      }
+    };
 
     const responsesMap = new Map(data.checklistItemResponses.map((r) => [r.checklistItemId, r]));
     const existingResponses = await tx.filingChecklistResponse.findMany({
@@ -11063,27 +12139,35 @@ export async function completeFilingNode(
     });
     const existingResponsesMap = new Map(existingResponses.map((response) => [response.checklistItemId, response]));
     const activeChecklistItems = node.checklistItems.filter((item) => item.isActive !== false);
+    const completedResponses = data.checklistItemResponses.filter((response) => response.isChecked);
+    const hasOnlyOptionalChecklistItems =
+      activeChecklistItems.length > 0 && activeChecklistItems.every((item) => item.isMandatory === false);
+    const isSkippingOptionalNode = (node.canBeSkipped || hasOnlyOptionalChecklistItems) && completedResponses.length === 0;
 
-    for (const item of activeChecklistItems) {
-      const res = responsesMap.get(item.id);
-      if (node.requireAllMandatoryChecklistItems && item.isMandatory) {
-        if (!res || !res.isChecked) {
-          throw new Error(`Mandatory checklist item "${item.label}" must be completed.`);
+    if (!isSkippingOptionalNode) {
+      validateRequiredStageFields();
+
+      for (const item of activeChecklistItems) {
+        const res = responsesMap.get(item.id);
+        if (node.requireAllMandatoryChecklistItems && item.isMandatory) {
+          if (!res || !res.isChecked) {
+            throw new Error(`Mandatory checklist item "${item.label}" must be completed.`);
+          }
         }
-      }
-      if (item.requiresRemarks && res?.isChecked && (!res.remarks || !res.remarks.trim())) {
-        throw new Error(`Remarks are required for checklist item "${item.label}".`);
-      }
-      const dueAt =
-        existingResponsesMap.get(item.id)?.dueAt ??
-        await calculateSlaDueDate(startedAt, item.deadlineDuration || 2, item.deadlineUnit || "BUSINESS_DAYS", orgId);
-      if (
-        res?.isChecked &&
-        item.delayRemarksRequired &&
-        dueAt.getTime() < now.getTime() &&
-        (!res.delayRemarks || !res.delayRemarks.trim())
-      ) {
-        throw new Error(`Delay remarks are required for overdue checklist item "${item.label}".`);
+        if (item.requiresRemarks && res?.isChecked && (!res.remarks || !res.remarks.trim())) {
+          throw new Error(`Remarks are required for checklist item "${item.label}".`);
+        }
+        const dueAt =
+          existingResponsesMap.get(item.id)?.dueAt ??
+          await calculateSlaDueDate(startedAt, item.deadlineDuration || 2, item.deadlineUnit || "BUSINESS_DAYS", orgId);
+        if (
+          res?.isChecked &&
+          item.delayRemarksRequired &&
+          dueAt.getTime() < now.getTime() &&
+          (!res.delayRemarks || !res.delayRemarks.trim())
+        ) {
+          throw new Error(`Delay remarks are required for overdue checklist item "${item.label}".`);
+        }
       }
     }
 
@@ -11091,34 +12175,36 @@ export async function completeFilingNode(
       where: { instanceId: instance.id, nodeRunId: nodeRun.id },
     });
 
-    for (const requirement of documentRequirements) {
-      const uploads = attachments.filter((attachment) => attachment.documentRequirementKey === requirement.key);
-      if (requirement.required !== false && uploads.length === 0) {
-        throw new Error(`Document "${requirement.label}" is required before completing "${node.name}".`);
-      }
-    }
-
-    for (const section of conditionalSections) {
-      const sectionState = effectiveToggleState(section.key);
-      if (!sectionState.isEnabled) {
-        continue;
-      }
-      for (const requirement of section.unlocksDocuments ?? []) {
+    if (!isSkippingOptionalNode) {
+      for (const requirement of documentRequirements) {
         const uploads = attachments.filter((attachment) => attachment.documentRequirementKey === requirement.key);
         if (requirement.required !== false && uploads.length === 0) {
-          throw new Error(`Document "${requirement.label}" is required when "${section.label}" is enabled.`);
+          throw new Error(`Document "${requirement.label}" is required before completing "${node.name}".`);
         }
       }
-    }
 
-    for (const item of activeChecklistItems) {
-      const itemUploads = attachments.filter((attachment) => attachment.checklistItemId === item.id);
-      if (item.allowsUpload) {
-        if (item.minUploads > 0 && itemUploads.length < item.minUploads) {
-          throw new Error(`Checklist item "${item.label}" requires at least ${item.minUploads} upload(s).`);
+      for (const section of conditionalSections) {
+        const sectionState = effectiveToggleState(section.key);
+        if (!sectionState.isEnabled) {
+          continue;
         }
-        if (item.maxUploads !== null && item.maxUploads !== undefined && itemUploads.length > item.maxUploads) {
-          throw new Error(`Checklist item "${item.label}" exceeds the maximum allowed uploads.`);
+        for (const requirement of section.unlocksDocuments ?? []) {
+          const uploads = attachments.filter((attachment) => attachment.documentRequirementKey === requirement.key);
+          if (requirement.required !== false && uploads.length === 0) {
+            throw new Error(`Document "${requirement.label}" is required when "${section.label}" is enabled.`);
+          }
+        }
+      }
+
+      for (const item of activeChecklistItems) {
+        const itemUploads = attachments.filter((attachment) => attachment.checklistItemId === item.id);
+        if (item.allowsUpload && !isLegacyStageChecklistUpload(item, node)) {
+          if (item.minUploads > 0 && itemUploads.length < item.minUploads) {
+            throw new Error(`Checklist item "${item.label}" requires at least ${item.minUploads} upload(s).`);
+          }
+          if (item.maxUploads !== null && item.maxUploads !== undefined && itemUploads.length > item.maxUploads) {
+            throw new Error(`Checklist item "${item.label}" exceeds the maximum allowed uploads.`);
+          }
         }
       }
     }
@@ -11239,11 +12325,13 @@ export async function completeFilingNode(
       });
     }
 
-    for (const pr of node.photoRequirements) {
-      if (pr.isMandatory) {
-        const prCount = attachments.filter((a) => a.photoRequirementId === pr.id).length;
-        if (prCount < pr.minPhotos) {
-          throw new Error(`Mandatory photo upload "${pr.label}" requires at least ${pr.minPhotos} image(s). Uploaded ${prCount}.`);
+    if (!isSkippingOptionalNode) {
+      for (const pr of node.photoRequirements) {
+        if (pr.isMandatory) {
+          const prCount = attachments.filter((a) => a.photoRequirementId === pr.id).length;
+          if (prCount < pr.minPhotos) {
+            throw new Error(`Mandatory photo upload "${pr.label}" requires at least ${pr.minPhotos} image(s). Uploaded ${prCount}.`);
+          }
         }
       }
     }
@@ -11251,20 +12339,23 @@ export async function completeFilingNode(
     await tx.filingNodeRun.update({
       where: { id: nodeRunId },
       data: {
-        status: "COMPLETED",
+        status: isSkippingOptionalNode ? "SKIPPED" : "COMPLETED",
         completedAt: now,
         completedById: userId,
-        remarks: data.remarks,
+        remarks: data.remarks?.trim() ? data.remarks.trim() : null,
+        delayRemarks: data.delayRemarks?.trim() ? data.delayRemarks.trim() : null,
+        delayRemarkedAt: data.delayRemarks?.trim() ? now : null,
         resolutionJson: {
           transitionReason: data.transitionReason ?? null,
+          delayRemarks: data.delayRemarks?.trim() ? data.delayRemarks.trim() : null,
+          skipped: isSkippingOptionalNode,
           fieldValues: data.fieldValues ?? [],
           toggleStates: data.toggleStates ?? [],
         } as Prisma.InputJsonValue,
       },
     });
 
-    const completedResponses = data.checklistItemResponses.filter((response) => response.isChecked);
-    if (node.canBeSkipped && completedResponses.length === 0) {
+    if (isSkippingOptionalNode) {
       await logChaAudit({
         orgId,
         jobId,
@@ -11274,6 +12365,75 @@ export async function completeFilingNode(
         actorId: userId,
         remarks: `Optional node "${node.name}" was skipped.`,
       });
+    }
+
+    const pendingBlockedStage = getPendingBlockedStageContext(instance.contextJson);
+    if (pendingBlockedStage && !isSkippingOptionalNode) {
+      const freshInstance = await tx.filingWorkflowInstance.findUniqueOrThrow({
+        where: { id: instance.id },
+        include: {
+          version: { include: { nodes: { include: { checklistItems: true } } } },
+          nodeRuns: true,
+          responses: true,
+        },
+      });
+      const freshCompletedNodeKeys = getCompletedFilingNodeKeys(freshInstance);
+      const freshNodeNameMap = new Map(freshInstance.version.nodes.map((entry) => [entry.key, entry.name || entry.key]));
+      const pendingStatus = evaluateNodePrerequisiteStatus(
+        {
+          key: pendingBlockedStage.nodeKey,
+          name: pendingBlockedStage.nodeName,
+          actionConfig: {
+            prerequisiteGate: {
+              enabled: true,
+              mode: pendingBlockedStage.mode,
+              requiredNodeKeys: pendingBlockedStage.requiredNodeKeys,
+            },
+          },
+        },
+        freshCompletedNodeKeys,
+        freshNodeNameMap,
+      );
+
+      if (!pendingStatus.isBlocked) {
+        const blockedNode = freshInstance.version.nodes.find((entry) => entry.key === pendingBlockedStage.nodeKey && entry.isActive);
+        if (!blockedNode) {
+          throw new Error("The blocked filing stage is no longer active.");
+        }
+        const resumedRun = await createFilingNodeRunWithResponses(tx, {
+          instanceId: instance.id,
+          node: blockedNode,
+          startedAt: now,
+          orgId,
+          preserveExistingProgress: true,
+        });
+        const resumedSlaDueDate = await calculateSlaDueDate(now, blockedNode.slaDuration, blockedNode.slaUnit, orgId);
+        await tx.filingNodeRun.update({
+          where: { id: resumedRun.id },
+          data: { slaDueDate: resumedSlaDueDate },
+        });
+        await tx.filingWorkflowInstance.update({
+          where: { id: instance.id },
+          data: {
+            currentNodeKey: blockedNode.key,
+            contextJson: buildInstanceContextWithPendingBlockedStage(instance.contextJson, null) as Prisma.InputJsonValue,
+          },
+        });
+        await tx.chaAuditLog.create({
+          data: {
+            orgId,
+            jobId,
+            entityType: "FilingWorkflowInstance",
+            entityId: instance.id,
+            event: "FILING_STAGE_BLOCKED_AUTO_RESUMED",
+            actorId: userId,
+            prevState: node.key,
+            newState: blockedNode.key,
+            remarks: `Automatically resumed blocked stage "${blockedNode.name}" after prerequisite "${node.name}" was completed.`,
+          },
+        });
+        return { resumedBlockedNodeKey: blockedNode.key, resumedBlockedNodeName: blockedNode.name };
+      }
     }
 
     const nextNodeKey = data.nextNodeKey;
@@ -11455,10 +12615,21 @@ export async function revertFilingWorkflowToPreviousStage(
 
     const instance = nodeRun.instance;
 
-    const targetRun = await tx.filingNodeRun.findFirst({
+    let targetRun = await tx.filingNodeRun.findFirst({
       where: {
         instanceId: instance.id,
-        status: { in: ["COMPLETED", "CANCELLED"] },
+        status: "COMPLETED",
+        nodeKey: targetNodeKey,
+      },
+      orderBy: [
+        { completedAt: "desc" },
+        { id: "desc" },
+      ],
+    });
+    targetRun ??= await tx.filingNodeRun.findFirst({
+      where: {
+        instanceId: instance.id,
+        status: "CANCELLED",
         nodeKey: targetNodeKey,
       },
       orderBy: [
@@ -11883,6 +13054,7 @@ export async function redirectBlockedFilingWorkflowStage(
           include: {
             version: { include: { nodes: { include: { checklistItems: true } } } },
             nodeRuns: true,
+            responses: true,
           },
         },
       },
@@ -11976,6 +13148,7 @@ export async function resumeBlockedFilingWorkflowStage(
           include: {
             version: { include: { nodes: { include: { checklistItems: true } } } },
             nodeRuns: true,
+            responses: true,
           },
         },
       },
@@ -12057,6 +13230,7 @@ export async function saveFilingNodeDraft(
   nodeRunId: string,
   data: {
     remarks?: string;
+    delayRemarks?: string;
     checklistItemResponses: {
       checklistItemId: string;
       isChecked: boolean;
@@ -12131,6 +13305,8 @@ export async function saveFilingNodeDraft(
       where: { id: nodeRun.id },
       data: {
         remarks: data.remarks?.trim() ? data.remarks.trim() : null,
+        delayRemarks: data.delayRemarks?.trim() ? data.delayRemarks.trim() : null,
+        delayRemarkedAt: data.delayRemarks?.trim() ? now : null,
       },
     });
 

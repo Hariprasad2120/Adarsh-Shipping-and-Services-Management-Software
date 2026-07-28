@@ -31,8 +31,8 @@ export default async function CareerDashboardPage() {
       value: totalApps,
       icon: Task,
       href: "/hrms/recruit/career/applications",
-      iconBg: "bg-[#00cec4]/10",
-      iconColor: "text-[#00cec4]",
+      iconBg: "bg-[#F9D972]/10",
+      iconColor: "text-[#F9D972]",
     },
     {
       label: "Saved Jobs",
@@ -65,8 +65,8 @@ export default async function CareerDashboardPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-1">
-        <h1 className="ds-h1 text-on-surface">Career Workspace</h1>
-        <p className="text-sm text-on-surface-variant">
+        <h1 className="monolith-h1 text-mono-text">Career Workspace</h1>
+        <p className="text-sm text-mono-muted">
           Your private career hub — completely isolated from your employer view.
         </p>
       </div>
@@ -79,14 +79,14 @@ export default async function CareerDashboardPage() {
             <Link
               key={stat.label}
               href={stat.href}
-              className="group flex flex-col gap-3 rounded-xl border border-outline-variant bg-surface p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              className="group flex flex-col gap-3 rounded-xl border border-mono-border bg-mono-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
               <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.iconBg}`}>
                 <Icon size={20} className={stat.iconColor} />
               </div>
               <div>
-                <p className="ds-numeric text-3xl font-light text-on-surface">{stat.value}</p>
-                <p className="mt-0.5 text-sm text-on-surface-variant">{stat.label}</p>
+                <p className="monolith-numeric text-3xl font-light text-mono-text">{stat.value}</p>
+                <p className="mt-0.5 text-sm text-mono-muted">{stat.label}</p>
               </div>
             </Link>
           );
@@ -98,9 +98,9 @@ export default async function CareerDashboardPage() {
         <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#818cf8]/20 text-[10px] font-bold text-[#818cf8]">
           ⚑
         </span>
-        <p className="text-sm text-on-surface-variant">
+        <p className="text-sm text-mono-muted">
           Everything in this workspace is{" "}
-          <span className="font-medium text-on-surface">completely private</span>. Your employer cannot see your
+          <span className="font-medium text-mono-text">completely private</span>. Your employer cannot see your
           job searches, saved jobs, applications, resumes, or career conversations.
         </p>
       </div>
@@ -111,10 +111,10 @@ export default async function CareerDashboardPage() {
           <Link
             key={s.href}
             href={s.href}
-            className="group flex flex-col gap-2 rounded-xl border border-outline-variant bg-surface p-4 transition hover:border-[#818cf8]/40 hover:shadow-sm"
+            className="group flex flex-col gap-2 rounded-xl border border-mono-border bg-mono-card p-4 transition hover:border-[#818cf8]/40 hover:shadow-sm"
           >
-            <p className="text-sm font-medium text-on-surface">{s.label}</p>
-            <p className="text-xs leading-relaxed text-on-surface-variant">{s.desc}</p>
+            <p className="text-sm font-medium text-mono-text">{s.label}</p>
+            <p className="text-xs leading-relaxed text-mono-muted">{s.desc}</p>
             <ArrowRight
               size={14}
               className="text-outline transition group-hover:translate-x-0.5 group-hover:text-[#818cf8]"

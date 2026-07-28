@@ -8,8 +8,8 @@ import { FormPreviewModal } from "@/components/ams/form-preview-modal";
 import { CriteriaPointsForm, CriteriaPointsView } from "@/components/ams/criteria-points-form";
 import { DemoFillButton } from "@/components/demo-fill-button";
 import { useNotifications } from "@/components/notifications/notification-provider";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/monolith/button";
+import { Input } from "@/components/monolith/input";
 import {buildReviewerDemoAnswers,demoPerformanceProfiles,type DemoPerformanceProfile,} from "@/lib/demo-fill";
 import type {AppraisalSelfFormTemplate,ManagementReviewAnswers,ReviewerRatingAnswers,SelfAssessmentAnswers,} from "@/modules/ams/criteria-config";
 import type { CriterionPoint } from "@/modules/ams/types";
@@ -50,8 +50,8 @@ type ScorePreview = {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-3 rounded-xl border border-cyan-100 bg-surface p-5">
-      <h2 className="ds-h2 text-on-surface">{title}</h2>
+    <div className="space-y-3 rounded-xl border border-cyan-100 bg-mono-card p-5">
+      <h2 className="monolith-h2 text-mono-text">{title}</h2>
       {children}
     </div>
   );
@@ -66,7 +66,7 @@ const STAGE_COLOR: Record<string, string> = {
   MEETING_PENDING: "bg-cyan-50 text-cyan-700 border-cyan-200",
   MEETING_LIVE: "bg-green-50 text-green-700 border-green-200",
   HIKE_FINALISATION: "bg-pink-50 text-pink-700 border-pink-200",
-  CLOSED: "bg-surface-container-high text-on-surface-variant border-outline-variant",
+  CLOSED: "bg-mono-soft text-mono-muted border-mono-border",
 };
 
 function getStatusMessage(appraisal: ManagementReviewDetail): string {
@@ -223,10 +223,10 @@ export function ManagementReviewClient({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Link href={`/ams/appraisals/${appraisal.id}`} className="text-sm text-on-surface-variant hover:text-on-surface">
+        <Link href={`/ams/appraisals/${appraisal.id}`} className="text-sm text-mono-muted hover:text-mono-text">
           {"< Appraisal Detail"}
         </Link>
-        <span className="text-on-surface-variant/40">/</span>
+        <span className="text-mono-muted/40">/</span>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] xl:items-start">
@@ -258,17 +258,17 @@ export function ManagementReviewClient({
           <div className="space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-1">
-                <p className="text-lg font-semibold text-on-surface">{appraisal.employee.name}</p>
-                <p className="text-sm text-on-surface-variant">
+                <p className="text-lg font-semibold text-mono-text">{appraisal.employee.name}</p>
+                <p className="text-sm text-mono-muted">
                   {appraisal.employee.designation ?? "No designation"} · {appraisal.cycle.name} {appraisal.cycle.year}
                 </p>
               </div>
-              <span className={`rounded-full border px-3 py-1 text-xs font-medium ${STAGE_COLOR[appraisal.stage] ?? "border-outline-variant bg-surface-container-high text-on-surface-variant"}`}>
+              <span className={`rounded-full border px-3 py-1 text-xs font-medium ${STAGE_COLOR[appraisal.stage] ?? "border-mono-border bg-mono-soft text-mono-muted"}`}>
                 {appraisal.stage.replace(/_/g, " ")}
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <Button variant="outline" className="border-[#00cec4]/35 text-[#008b85] hover:bg-[#00cec4]/8" onClick={() => setFormPreviewOpen(true)}>
+              <Button variant="outline" className="border-[#F9D972]/35 text-[#008b85] hover:bg-[#F9D972]/8" onClick={() => setFormPreviewOpen(true)}>
                 View Forms
               </Button>
             </div>
@@ -289,7 +289,7 @@ export function ManagementReviewClient({
       )}
 
       <Card title="Forms Access">
-        <p className="text-sm text-on-surface-variant">
+        <p className="text-sm text-mono-muted">
           The self-assessment and reviewer forms are available in the popup window.
           Use <strong>View Forms</strong> to open them.
         </p>
@@ -297,13 +297,13 @@ export function ManagementReviewClient({
 
       {appraisal.canClaim ? (
         <Card title="Claim Management Review">
-          <p className="text-sm text-on-surface-variant">
+          <p className="text-sm text-mono-muted">
             Claim this appraisal to open your separate management rating form.
           </p>
           <button
             onClick={() => void claimReview()}
             disabled={claiming}
-            className="rounded-lg bg-[#00cec4] px-4 py-2 text-sm font-medium text-white hover:bg-[#00b8af] disabled:opacity-50"
+            className="rounded-lg bg-[#F9D972] px-4 py-2 text-sm font-medium text-white hover:bg-[#E8C85D] disabled:opacity-50"
           >
             {claiming ? "Claiming..." : "Claim this appraisal"}
           </button>
@@ -320,7 +320,7 @@ export function ManagementReviewClient({
               />
             </div>
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Proposed Meeting Dates</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-mono-muted">Proposed Meeting Dates</p>
               {proposedDates.map((value, index) => (
                 <Input
                   key={index}
@@ -330,26 +330,26 @@ export function ManagementReviewClient({
                   className="w-full"
                 />
               ))}
-              <p className="text-xs text-on-surface-variant">
+              <p className="text-xs text-mono-muted">
                 Final submission stays disabled until at least one meeting date is selected.
               </p>
             </div>
             {scorePreview ? (
-              <div className="rounded-2xl border border-[#00cec4]/20 bg-[#00cec4]/8 px-4 py-4 text-sm">
+              <div className="rounded-2xl border border-[#F9D972]/20 bg-[#F9D972]/8 px-4 py-4 text-sm">
                 <p className="font-semibold text-[#008b85]">Live Hike Preview</p>
                 <div className="mt-2 grid gap-2 md:grid-cols-2">
-                  <p className="text-on-surface">Current calculated rating: <strong>{scorePreview.finalNormalized?.toFixed(2) ?? "-"}</strong></p>
-                  <p className="text-on-surface">Floored rating: <strong>{scorePreview.flooredScore ?? "-"}</strong></p>
-                  <p className="text-on-surface">Grade: <strong>{scorePreview.grade ?? "-"}</strong>{scorePreview.gradeLabel ? ` · ${scorePreview.gradeLabel}` : ""}</p>
-                  <p className="text-on-surface">Slab: <strong>{scorePreview.slabLabel ?? "Not configured"}</strong>{scorePreview.slabRange ? ` (${scorePreview.slabRange})` : ""}</p>
-                  <p className="text-on-surface md:col-span-2">Suggested hike percentage: <strong>{scorePreview.hikePercent != null ? `${scorePreview.hikePercent}%` : "No matching slab"}</strong></p>
+                  <p className="text-mono-text">Current calculated rating: <strong>{scorePreview.finalNormalized?.toFixed(2) ?? "-"}</strong></p>
+                  <p className="text-mono-text">Floored rating: <strong>{scorePreview.flooredScore ?? "-"}</strong></p>
+                  <p className="text-mono-text">Grade: <strong>{scorePreview.grade ?? "-"}</strong>{scorePreview.gradeLabel ? ` · ${scorePreview.gradeLabel}` : ""}</p>
+                  <p className="text-mono-text">Slab: <strong>{scorePreview.slabLabel ?? "Not configured"}</strong>{scorePreview.slabRange ? ` (${scorePreview.slabRange})` : ""}</p>
+                  <p className="text-mono-text md:col-span-2">Suggested hike percentage: <strong>{scorePreview.hikePercent != null ? `${scorePreview.hikePercent}%` : "No matching slab"}</strong></p>
                 </div>
                 {scorePreview.hikePercent == null ? (
                   <p className="mt-2 text-xs text-red-600">No increment slab matches this score. Fix the slab configuration before final submission.</p>
                 ) : null}
               </div>
             ) : previewLoading ? (
-              <div className="rounded-2xl border border-outline-variant/35 bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+              <div className="rounded-2xl border border-mono-border/35 bg-mono-soft px-4 py-3 text-sm text-mono-muted">
                 Calculating live hike preview…
               </div>
             ) : null}
@@ -373,20 +373,20 @@ export function ManagementReviewClient({
           <>
             {appraisal.proposedDates.length > 0 && (
               <div className="space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Proposed Meeting Dates</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-mono-muted">Proposed Meeting Dates</p>
                 {appraisal.proposedDates.map((value, index) => (
-                  <p key={index} className="text-sm text-on-surface">
+                  <p key={index} className="text-sm text-mono-text">
                     {new Date(value).toLocaleDateString("en-IN")}
                   </p>
                 ))}
               </div>
             )}
             <CriteriaPointsView criteria={managementCriteria} supplementary={[]} answers={currentRating} />
-            <div className="border-t border-outline-variant/40 pt-4">
+            <div className="border-t border-mono-border/40 pt-4">
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="rounded-lg border border-[#00cec4]/40 px-4 py-2 text-sm font-medium text-[#008b85] transition hover:bg-[#00cec4]/8"
+                className="rounded-lg border border-[#F9D972]/40 px-4 py-2 text-sm font-medium text-[#008b85] transition hover:bg-[#F9D972]/8"
               >
                 Edit Form
               </button>
@@ -398,9 +398,9 @@ export function ManagementReviewClient({
           <>
             {appraisal.proposedDates.length > 0 && (
               <div className="space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Proposed Meeting Dates</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-mono-muted">Proposed Meeting Dates</p>
                 {appraisal.proposedDates.map((value, index) => (
-                  <p key={index} className="text-sm text-on-surface">
+                  <p key={index} className="text-sm text-mono-text">
                     {new Date(value).toLocaleDateString("en-IN")}
                   </p>
                 ))}
@@ -411,7 +411,7 @@ export function ManagementReviewClient({
         </Card>
       ) : (
         <Card title="Review Status">
-          <p className="text-sm text-on-surface-variant">{getStatusMessage(appraisal)}</p>
+          <p className="text-sm text-mono-muted">{getStatusMessage(appraisal)}</p>
         </Card>
       )}
 

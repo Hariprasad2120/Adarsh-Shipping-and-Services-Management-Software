@@ -2,7 +2,7 @@
 
 import { Download } from "lucide-react";
 import { DataTable, DataTableBody, DataTableCell, DataTableEmpty, DataTableHead, DataTableHeader, DataTableRow, DataTableToolbar } from "@/components/data-table";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/monolith/badge";
 import { getChaDocumentStatusBadgeVariant } from "@/lib/cha-badges";
 import type { CustomerPortalShipmentDetailData } from "@/modules/customer-portal/shipments";
 
@@ -20,17 +20,17 @@ export function DocumentsTableClient({
 
   return (
     <DataTable
-      className="border border-outline-variant/45"
+      className="border border-mono-border/45"
       tableClassName="[&_td]:!px-5 [&_td]:!py-4"
     >
-      <DataTableToolbar className="bg-surface">
+      <DataTableToolbar className="bg-mono-card">
         <div className="flex items-center gap-3">
-          <span className="ds-icon-badge">
+          <span className="monolith-icon-badge">
             <Download size={16} />
           </span>
           <div>
-            <h2 className="ds-h2 text-on-surface">Document Status</h2>
-            <p className="text-xs text-on-surface-variant">Requirement-level status with the latest active customer submission.</p>
+            <h2 className="monolith-h2 text-mono-text">Document Status</h2>
+            <p className="text-xs text-mono-muted">Requirement-level status with the latest active customer submission.</p>
           </div>
         </div>
       </DataTableToolbar>
@@ -55,7 +55,7 @@ export function DocumentsTableClient({
                   <DataTableRow className="hover:bg-transparent">
                     <DataTableCell
                       colSpan={DOCUMENT_TABLE_COL_SPAN}
-                      className="!px-5 !py-4 text-xs text-on-surface-variant"
+                      className="!px-5 !py-4 text-xs text-mono-muted"
                     >
                       No shipment documents have been shared for download in the portal yet.
                     </DataTableCell>
@@ -75,7 +75,7 @@ export function DocumentsTableClient({
 
 function DocumentRow({ document }: { document: ShipmentDocument }) {
   const rowClassName = document.isDownloadable
-    ? "ds-row-link cursor-pointer transition-colors hover:bg-surface-container-low/80 focus-within:bg-surface-container-low/80"
+    ? "monolith-row-link cursor-pointer transition-colors hover:bg-mono-soft/80 focus-within:bg-mono-soft/80"
     : "";
 
   const handleActivate = () => {
@@ -105,30 +105,30 @@ function DocumentRow({ document }: { document: ShipmentDocument }) {
           {document.requirementStatus}
         </Badge>
       </DataTableCell>
-      <DataTableCell className="text-on-surface-variant">
+      <DataTableCell className="text-mono-muted">
         {document.latestSubmissionStatus ? (
-          <div className="flex min-w-0 items-center gap-2 text-sm text-on-surface">
+          <div className="flex min-w-0 items-center gap-2 text-sm text-mono-text">
             {document.latestFileName ? (
               <>
-                <Download className="size-3.5 shrink-0 text-[#00cec4]" />
-                <span className="truncate underline decoration-[#00cec4]/45 underline-offset-3">
+                <Download className="size-3.5 shrink-0 text-[#F9D972]" />
+                <span className="truncate underline decoration-[#F9D972]/45 underline-offset-3">
                   {document.latestFileName}
                 </span>
                 {document.lastUpdatedAt ? (
-                  <span className="shrink-0 text-xs text-on-surface-variant">
+                  <span className="shrink-0 text-xs text-mono-muted">
                     {formatDateTime(document.lastUpdatedAt)}
                   </span>
                 ) : null}
               </>
             ) : document.lastUpdatedAt ? (
-              <span className="text-xs text-on-surface-variant">{formatDateTime(document.lastUpdatedAt)}</span>
+              <span className="text-xs text-mono-muted">{formatDateTime(document.lastUpdatedAt)}</span>
             ) : null}
           </div>
         ) : (
           "No file shared yet"
         )}
       </DataTableCell>
-      <DataTableCell className="text-on-surface-variant">{document.reviewerComment || "—"}</DataTableCell>
+      <DataTableCell className="text-mono-muted">{document.reviewerComment || "—"}</DataTableCell>
     </tr>
   );
 }

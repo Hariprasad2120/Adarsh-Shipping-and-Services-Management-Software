@@ -9,7 +9,7 @@ export default function AccountingSalesOrdersPage({
   searchParams: Promise<{ search?: string }>;
 }) {
   return (
-    <Suspense fallback={<div className="p-8 text-sm text-on-surface-variant">Loading…</div>}>
+    <Suspense fallback={<div className="p-8 text-sm text-mono-muted">Loading…</div>}>
       <CommercialDocumentsPage
         title="Sales Orders"
         description="Track confirmed customer sales orders from the Accounting module."

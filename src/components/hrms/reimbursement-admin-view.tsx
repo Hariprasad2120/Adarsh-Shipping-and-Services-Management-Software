@@ -3,9 +3,9 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {Check,CreditCard,DollarSign,Loader2,RefreshCw,Settings,X,} from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Modal } from "@/components/ui/modal";
+import { Button } from "@/components/monolith/button";
+import { Card } from "@/components/monolith/card";
+import { Modal } from "@/components/monolith/modal";
 
 type ReimbursementClaim = {
   id: string;
@@ -29,7 +29,7 @@ type ReimbursementClaim = {
 
 const STATUS_STYLES: Record<string, string> = {
   PENDING: "bg-[#fbbf24]/10 text-[#d97706]",
-  APPROVED: "bg-primary/10 text-primary",
+  APPROVED: "bg-mono-accent/10 text-mono-accent",
   REJECTED: "bg-[#ef4444]/10 text-[#ef4444]",
   PAID: "bg-[#22c55e]/10 text-[#22c55e]",
 };
@@ -111,9 +111,9 @@ export function ReimbursementAdminView() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[24rem] flex-col items-center justify-center gap-3 text-on-surface-variant">
-        <Loader2 className="size-8 animate-spin text-primary" />
-        <p className="ds-label">Loading Reimbursement Data</p>
+      <div className="flex min-h-[24rem] flex-col items-center justify-center gap-3 text-mono-muted">
+        <Loader2 className="size-8 animate-spin text-mono-accent" />
+        <p className="monolith-label">Loading Reimbursement Data</p>
       </div>
     );
   }
@@ -126,15 +126,15 @@ export function ReimbursementAdminView() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="rounded-[24px] border border-outline-variant bg-surface p-6 shadow-sm">
+      <Card className="rounded-[24px] border border-mono-border bg-mono-card p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <span className="ds-icon-badge">
+            <span className="monolith-icon-badge">
               <CreditCard className="size-5" />
             </span>
             <div>
-              <h1 className="ds-h1 text-on-surface">FUEL REIMBURSEMENT</h1>
-              <p className="mt-2 text-sm text-on-surface-variant">
+              <h1 className="monolith-h1 text-mono-text">FUEL REIMBURSEMENT</h1>
+              <p className="mt-2 text-sm text-mono-muted">
                 Manage fuel reimbursement claims, policy rates, and payment tracking.
               </p>
             </div>
@@ -153,36 +153,36 @@ export function ReimbursementAdminView() {
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="card-top-accent-orange rounded-2xl border border-outline-variant bg-surface p-5 shadow-sm">
-          <p className="ds-label text-on-surface-variant">PENDING CLAIMS</p>
-          <p className="mt-2 text-[2rem] font-extralight tracking-tight text-on-surface ds-numeric">
+        <div className="monolith-card monolith-accent-warning rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
+          <p className="monolith-label text-mono-muted">PENDING CLAIMS</p>
+          <p className="mt-2 text-[2rem] font-extralight tracking-tight text-mono-text monolith-numeric">
             {pendingClaims.length}
           </p>
         </div>
-        <div className="card-top-accent-orange rounded-2xl border border-outline-variant bg-surface p-5 shadow-sm">
-          <p className="ds-label text-on-surface-variant">PENDING AMOUNT</p>
-          <p className="mt-2 text-[2rem] font-extralight tracking-tight text-on-surface ds-numeric">
+        <div className="monolith-card monolith-accent-warning rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
+          <p className="monolith-label text-mono-muted">PENDING AMOUNT</p>
+          <p className="mt-2 text-[2rem] font-extralight tracking-tight text-mono-text monolith-numeric">
             ₹{totalPending.toFixed(2)}
           </p>
         </div>
-        <div className="card-top-accent rounded-2xl border border-outline-variant bg-surface p-5 shadow-sm">
-          <p className="ds-label text-on-surface-variant">AWAITING PAYMENT</p>
-          <p className="mt-2 text-[2rem] font-extralight tracking-tight text-on-surface ds-numeric">
+        <div className="monolith-card monolith-accent rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
+          <p className="monolith-label text-mono-muted">AWAITING PAYMENT</p>
+          <p className="mt-2 text-[2rem] font-extralight tracking-tight text-mono-text monolith-numeric">
             {approvedClaims.length}
           </p>
         </div>
-        <div className="card-top-accent rounded-2xl border border-outline-variant bg-surface p-5 shadow-sm">
-          <p className="ds-label text-on-surface-variant">APPROVED AMOUNT</p>
-          <p className="mt-2 text-[2rem] font-extralight tracking-tight text-on-surface ds-numeric">
+        <div className="monolith-card monolith-accent rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
+          <p className="monolith-label text-mono-muted">APPROVED AMOUNT</p>
+          <p className="mt-2 text-[2rem] font-extralight tracking-tight text-mono-text monolith-numeric">
             ₹{totalApproved.toFixed(2)}
           </p>
         </div>
       </div>
 
       {/* Claims Table */}
-      <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
         <div className="overflow-x-auto">
-          <table className="ds-table">
+          <table className="monolith-table">
             <thead>
               <tr>
                 <th className="px-6 py-3">Employee</th>
@@ -197,24 +197,24 @@ export function ReimbursementAdminView() {
             <tbody>
               {claims.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-sm text-on-surface-variant">
+                  <td colSpan={7} className="py-10 text-center text-sm text-mono-muted">
                     No reimbursement claims yet.
                   </td>
                 </tr>
               ) : (
                 claims.map((claim) => (
                   <tr key={claim.id}>
-                    <td className="px-6 py-4 font-medium text-on-surface">{claim.user.name}</td>
-                    <td className="px-6 py-4 text-on-surface-variant">
+                    <td className="px-6 py-4 font-medium text-mono-text">{claim.user.name}</td>
+                    <td className="px-6 py-4 text-mono-muted">
                       {claim.onDutyRequest.purpose || "On-Duty Trip"}
                     </td>
-                    <td className="px-6 py-4 ds-numeric text-on-surface">
+                    <td className="px-6 py-4 monolith-numeric text-mono-text">
                       {claim.distanceKm} km
                     </td>
-                    <td className="px-6 py-4 ds-numeric text-on-surface-variant">
+                    <td className="px-6 py-4 monolith-numeric text-mono-muted">
                       ₹{claim.ratePerKm}/km
                     </td>
-                    <td className="px-6 py-4 ds-numeric font-medium text-on-surface">
+                    <td className="px-6 py-4 monolith-numeric font-medium text-mono-text">
                       ₹{claim.amount.toFixed(2)}
                     </td>
                     <td className="px-6 py-4">
@@ -279,11 +279,11 @@ export function ReimbursementAdminView() {
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="ds-label">Current Rate</label>
-            <p className="text-lg text-on-surface ds-numeric">₹{currentRate}/km</p>
+            <label className="monolith-label">Current Rate</label>
+            <p className="text-lg text-mono-text monolith-numeric">₹{currentRate}/km</p>
           </div>
           <div className="space-y-2">
-            <label className="ds-label">New Rate (₹/km)</label>
+            <label className="monolith-label">New Rate (₹/km)</label>
             <input
               type="number"
               step="0.25"

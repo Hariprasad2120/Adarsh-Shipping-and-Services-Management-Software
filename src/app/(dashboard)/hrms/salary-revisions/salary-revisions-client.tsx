@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
 import { ArrowUpRight, ChevronDown, ChevronRight, FileText, IndianRupee, TrendingUp, Users } from "lucide-react";
 import {Badge,DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableHead,DataTableHeader,DataTablePrimaryLinkCell,DataTableRow,} from "@/components/data-table";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/monolith/input";
 import type { SalaryRevisionStats, SalaryRevisionSummary } from "@/modules/hrms/salary-revisions-shared";
 import { formatINR, formatPercent } from "@/modules/hrms/salary-revisions-shared";
 
@@ -15,7 +15,7 @@ function statusBadgeClass(status: StatusFilter | "UNKNOWN") {
   if (status === "APPROVED") return "border-emerald-200 bg-emerald-50 text-emerald-700";
   if (status === "PENDING") return "border-amber-200 bg-amber-50 text-amber-700";
   if (status === "REJECTED") return "border-rose-200 bg-rose-50 text-rose-700";
-  return "border-outline-variant bg-surface-container-high text-on-surface-variant";
+  return "border-mono-border bg-mono-soft text-mono-muted";
 }
 
 function StatsCard({
@@ -29,22 +29,22 @@ function StatsCard({
 }) {
   return (
     <article
-      className="group relative overflow-hidden rounded-[24px] border border-outline-variant/20 bg-surface p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-surface dark:shadow-ambient dark:hover:shadow-ambient-hover"
+      className="group relative overflow-hidden rounded-[24px] border border-mono-border/20 bg-mono-card p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-mono-card dark:shadow-ambient dark:hover:shadow-ambient-hover"
     >
       <div className="absolute inset-x-0 top-0 h-14 bg-[linear-gradient(180deg,rgba(0,206,196,0.06),transparent)] dark:bg-[linear-gradient(180deg,rgba(0,206,196,0.08),transparent)]" />
       <div className="relative flex h-full flex-col">
         <div className="flex items-start justify-between">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#00cec4]/10 transition duration-300 group-hover:scale-105 group-hover:bg-[#00cec4]/14">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F9D972]/10 transition duration-300 group-hover:scale-105 group-hover:bg-[#F9D972]/14">
             {icon}
           </div>
-          <ArrowUpRight className="size-4 text-slate-300 transition duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#00cec4] dark:text-outline" />
+          <ArrowUpRight className="size-4 text-slate-300 transition duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#F9D972] dark:text-outline" />
         </div>
 
         <div className="mt-6">
-          <p className="text-[2.35rem] font-extralight leading-none tracking-[-0.04em] text-slate-900 dark:text-on-surface">
+          <p className="text-[2.35rem] font-extralight leading-none tracking-[-0.04em] text-slate-900 dark:text-mono-text">
             {value}
           </p>
-          <p className="mt-1.5 text-[14px] font-normal text-on-surface-variant dark:text-on-surface-variant">{label}</p>
+          <p className="mt-1.5 text-[14px] font-normal text-mono-muted dark:text-mono-muted">{label}</p>
         </div>
       </div>
     </article>
@@ -105,17 +105,17 @@ export function SalaryRevisionsClient({
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatsCard
-          icon={<IndianRupee className="size-5 text-[#00cec4]" strokeWidth={1.9} />}
+          icon={<IndianRupee className="size-5 text-[#F9D972]" strokeWidth={1.9} />}
           label="Total revisions"
           value={String(stats.totalRevisions)}
         />
         <StatsCard
-          icon={<Users className="size-5 text-[#00cec4]" strokeWidth={1.9} />}
+          icon={<Users className="size-5 text-[#F9D972]" strokeWidth={1.9} />}
           label="Employees"
           value={String(stats.employees)}
         />
         <StatsCard
-          icon={<FileText className="size-5 text-[#00cec4]" strokeWidth={1.9} />}
+          icon={<FileText className="size-5 text-[#F9D972]" strokeWidth={1.9} />}
           label="Approved"
           value={String(stats.approved)}
         />
@@ -126,7 +126,7 @@ export function SalaryRevisionsClient({
         />
       </div>
 
-      <div className="card-top-accent ds-shell-lg overflow-hidden border border-outline-variant/40 bg-surface shadow-sm">
+      <div className="monolith-card monolith-accent monolith-shell-lg overflow-hidden border border-mono-border/40 bg-mono-card shadow-sm">
         <div className="flex flex-col gap-3 p-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-2">
             {(["ALL", "APPROVED", "PENDING", "REJECTED"] as const).map((status) => (
@@ -136,8 +136,8 @@ export function SalaryRevisionsClient({
                 onClick={() => setStatusFilter(status)}
                 className={`rounded-full border px-4 py-2 text-sm transition ${
                   statusFilter === status
-                    ? "border-[#00cec4] bg-[#00cec4] text-white"
-                    : "border-outline-variant/40 bg-surface text-on-surface-variant hover:border-[#00cec4]/45 hover:text-on-surface"
+                    ? "border-[#F9D972] bg-[#F9D972] text-white"
+                    : "border-mono-border/40 bg-mono-card text-mono-muted hover:border-[#F9D972]/45 hover:text-mono-text"
                 }`}
               >
                 {status === "ALL" ? "All" : `${status.charAt(0)}${status.slice(1).toLowerCase()}`}
@@ -146,7 +146,7 @@ export function SalaryRevisionsClient({
             <button
               type="button"
               onClick={() => setSortMode((current) => (current === "LATEST" ? "EMPLOYEE" : "LATEST"))}
-              className="rounded-full border border-outline-variant/40 bg-surface px-4 py-2 text-sm text-on-surface-variant transition hover:border-[#00cec4]/45 hover:text-on-surface"
+              className="rounded-full border border-mono-border/40 bg-mono-card px-4 py-2 text-sm text-mono-muted transition hover:border-[#F9D972]/45 hover:text-mono-text"
             >
               {sortMode === "LATEST" ? "Latest first" : "By Emp #"}
             </button>
@@ -154,7 +154,7 @@ export function SalaryRevisionsClient({
               type="button"
               onClick={clearCriteria}
               disabled={!hasActiveCriteria}
-              className="rounded-full border border-outline-variant/40 bg-surface px-4 py-2 text-sm text-on-surface-variant transition hover:border-[#00cec4]/45 hover:text-on-surface disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full border border-mono-border/40 bg-mono-card px-4 py-2 text-sm text-mono-muted transition hover:border-[#F9D972]/45 hover:text-mono-text disabled:cursor-not-allowed disabled:opacity-50"
             >
               Clear criteria
             </button>
@@ -167,7 +167,7 @@ export function SalaryRevisionsClient({
           />
         </div>
 
-        <DataTable className="w-full overflow-visible rounded-none border-0 border-t border-outline-variant/30 bg-transparent shadow-none">
+        <DataTable className="w-full overflow-visible rounded-none border-0 border-t border-mono-border/30 bg-transparent shadow-none">
           <DataTableHeader>
             <tr>
               <DataTableHead className="px-5 py-3 text-left">EMP ID</DataTableHead>
@@ -193,7 +193,7 @@ export function SalaryRevisionsClient({
                 return (
                   <Fragment key={summary.userId}>
                     <DataTableRow key={summary.userId}>
-                      <DataTableCell className="px-5 py-4 font-medium text-on-surface">{summary.employeeNumber}</DataTableCell>
+                      <DataTableCell className="px-5 py-4 font-medium text-mono-text">{summary.employeeNumber}</DataTableCell>
                       {hasHistory ? (
                         <DataTableCell className="px-5 py-4">
                           <button
@@ -202,8 +202,8 @@ export function SalaryRevisionsClient({
                             className="block min-w-0 text-left"
                           >
                             <div className="min-w-0 space-y-0.5">
-                              <p className="font-medium text-on-surface">{summary.employeeName}</p>
-                              <p className="text-xs text-on-surface-variant">{summary.designation ?? "-"}</p>
+                              <p className="font-medium text-mono-text">{summary.employeeName}</p>
+                              <p className="text-xs text-mono-muted">{summary.designation ?? "-"}</p>
                             </div>
                           </button>
                         </DataTableCell>
@@ -214,15 +214,15 @@ export function SalaryRevisionsClient({
                           linkClassName="block min-w-0 py-4"
                         >
                           <div className="space-y-0.5">
-                            <p className="font-medium text-on-surface">{summary.employeeName}</p>
-                            <p className="text-xs text-on-surface-variant">{summary.designation ?? "-"}</p>
+                            <p className="font-medium text-mono-text">{summary.employeeName}</p>
+                            <p className="text-xs text-mono-muted">{summary.designation ?? "-"}</p>
                           </div>
                         </DataTablePrimaryLinkCell>
                       )}
-                      <DataTableCell className="px-5 py-4 text-on-surface-variant">{summary.departmentName ?? "-"}</DataTableCell>
-                      <DataTableCell className="px-5 py-4 text-on-surface-variant">{latest?.effectiveLabel ?? "-"}</DataTableCell>
-                      <DataTableCell className="ds-numeric px-5 py-4 font-semibold text-on-surface">{formatINR(latest?.revisedCtcAnnual ?? null)}</DataTableCell>
-                      <DataTableCell className="ds-numeric px-5 py-4 font-medium text-emerald-600">{formatPercent(latest?.revisionPercent ?? null)}</DataTableCell>
+                      <DataTableCell className="px-5 py-4 text-mono-muted">{summary.departmentName ?? "-"}</DataTableCell>
+                      <DataTableCell className="px-5 py-4 text-mono-muted">{latest?.effectiveLabel ?? "-"}</DataTableCell>
+                      <DataTableCell className="monolith-numeric px-5 py-4 font-semibold text-mono-text">{formatINR(latest?.revisedCtcAnnual ?? null)}</DataTableCell>
+                      <DataTableCell className="monolith-numeric px-5 py-4 font-medium text-emerald-600">{formatPercent(latest?.revisionPercent ?? null)}</DataTableCell>
                       <DataTableCell className="px-5 py-4">
                         <Badge className={`border ${statusBadgeClass(latest?.status ?? "UNKNOWN")}`}>
                           {latest?.statusLabel ?? "Unknown"}
@@ -250,11 +250,11 @@ export function SalaryRevisionsClient({
                       </DataTableCell>
                     </DataTableRow>
                     {isExpanded && hasHistory ? (
-                      <tr className="bg-surface-container-low/40">
+                      <tr className="bg-mono-soft/40">
                         <td colSpan={8} className="px-5 py-4">
                           <div className="space-y-4">
                             <div className="flex items-center justify-between gap-3">
-                              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-on-surface-variant">
+                              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-mono-muted">
                                 Revision History
                               </p>
                               <Link href={`/hrms/employees/${summary.userId}`} className="inline-flex text-sm font-medium text-[#00a9a0] transition hover:text-[#008c85]">
@@ -265,27 +265,27 @@ export function SalaryRevisionsClient({
                               {pastRevisions.map((revision) => (
                                 <div
                                   key={revision.id}
-                                  className="grid gap-3 rounded-[22px] border border-outline-variant/30 bg-surface px-4 py-4 md:grid-cols-4"
+                                  className="grid gap-3 rounded-[22px] border border-mono-border/30 bg-mono-card px-4 py-4 md:grid-cols-4"
                                 >
                                   <div>
-                                    <p className="text-xs text-on-surface-variant">Effective</p>
-                                    <p className="mt-1 font-medium text-on-surface">{revision.effectiveLabel}</p>
-                                    <p className="text-xs text-on-surface-variant">Payout {revision.payoutLabel}</p>
+                                    <p className="text-xs text-mono-muted">Effective</p>
+                                    <p className="mt-1 font-medium text-mono-text">{revision.effectiveLabel}</p>
+                                    <p className="text-xs text-mono-muted">Payout {revision.payoutLabel}</p>
                                   </div>
                                   <div>
-                                    <p className="text-xs text-on-surface-variant">Gross / Revised Gross</p>
-                                    <p className="ds-numeric mt-1 font-medium text-on-surface">
+                                    <p className="text-xs text-mono-muted">Gross / Revised Gross</p>
+                                    <p className="monolith-numeric mt-1 font-medium text-mono-text">
                                       {formatINR(revision.grossAnnual)} to {formatINR(revision.revisedGrossAnnual)}
                                     </p>
                                   </div>
                                   <div>
-                                    <p className="text-xs text-on-surface-variant">CTC / Revised CTC</p>
-                                    <p className="ds-numeric mt-1 font-medium text-on-surface">
+                                    <p className="text-xs text-mono-muted">CTC / Revised CTC</p>
+                                    <p className="monolith-numeric mt-1 font-medium text-mono-text">
                                       {formatINR(revision.ctcAnnual)} to {formatINR(revision.revisedCtcAnnual)}
                                     </p>
                                   </div>
                                   <div>
-                                    <p className="text-xs text-on-surface-variant">Revision / Status</p>
+                                    <p className="text-xs text-mono-muted">Revision / Status</p>
                                     <p className="mt-1 text-sm font-medium text-emerald-600">
                                       {formatPercent(revision.revisionPercent)}
                                     </p>

@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -53,7 +54,7 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
       {/* ─── SECTION: BASIC INFO ────────────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <User className="size-4 text-[#00c4b6]" />
+          <User className="size-4 text-[#F9D972]" />
           <span>Contact Identity</span>
         </h3>
 
@@ -65,7 +66,7 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
               name="firstName"
               defaultValue={initialData?.firstName || ""}
               placeholder="e.g. Adarsh"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -76,23 +77,23 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="e.g. Hari"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
               required
             />
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Linked Account (Company) *</label>
-            <select
+            <NativeSelect
               name="accountId"
               defaultValue={initialData?.accountId || ""}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
               required
             >
               <option value="">Select Account</option>
               {accounts.map((acc) => (
                 <option key={acc.id} value={acc.id}>{acc.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Designation</label>
@@ -101,7 +102,7 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
               name="designation"
               defaultValue={initialData?.designation || ""}
               placeholder="e.g. Purchase Manager"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -111,7 +112,7 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
               name="department"
               defaultValue={initialData?.department || ""}
               placeholder="e.g. Procurement / Import"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div className="flex items-center gap-2.5 pt-6">
@@ -121,7 +122,7 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
               value="true"
               defaultChecked={initialData?.isDecisionMaker}
               id="is-decision-maker"
-              className="size-4 rounded border-[#1c212a] bg-[#0a0d12] text-[#00c4b6] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+              className="size-4 rounded border-[#1c212a] bg-[#0a0d12] text-[#F9D972] focus:ring-0 focus:ring-offset-0 cursor-pointer"
             />
             <label htmlFor="is-decision-maker" className="text-xs font-bold text-white uppercase tracking-wide cursor-pointer select-none">
               Key Decision Maker / CHA Liaison
@@ -133,7 +134,7 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
       {/* ─── SECTION: CONTACT CHANNELS ───────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <Mail className="size-4 text-[#00c4b6]" />
+          <Mail className="size-4 text-[#F9D972]" />
           <span>Contact Channels</span>
         </h3>
 
@@ -145,7 +146,7 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
               name="email"
               defaultValue={initialData?.email || ""}
               placeholder="e.g. contact@domain.com"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -155,7 +156,7 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
               name="phone"
               defaultValue={initialData?.phone || ""}
               placeholder="e.g. +91 44 2819 1234"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -165,7 +166,7 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
               name="mobile"
               defaultValue={initialData?.mobile || ""}
               placeholder="e.g. +91 98840 12345"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
         </div>
@@ -174,24 +175,24 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
       {/* ─── SECTION: ASSIGNMENT ────────────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <Tag className="size-4 text-[#00c4b6]" />
+          <Tag className="size-4 text-[#F9D972]" />
           <span>Assignment & Ownership</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Contact Owner *</label>
-            <select
+            <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
               required
             >
               <option value="">Select Owner</option>
               {employees.map((emp) => (
                 <option key={emp.id} value={emp.id}>{emp.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Street Address</label>
@@ -200,7 +201,7 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
               name="address"
               defaultValue={initialData?.address || ""}
               placeholder="e.g. Chennai Office details"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
         </div>
@@ -218,7 +219,7 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[#00c4b6] hover:bg-[#00b0a3] disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-all shadow-md shadow-[#00c4b6]/10 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[#F9D972] hover:bg-[#00b0a3] disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
         >
           <Save className="size-4.5" />
           <span>{isSubmitting ? "Saving..." : isEdit ? "Update Contact" : "Save Contact"}</span>

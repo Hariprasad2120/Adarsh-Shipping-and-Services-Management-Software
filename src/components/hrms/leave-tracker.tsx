@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState, useEffect } from "react";
 import { Calendar, Search, Plus, Download, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import { toast } from "sonner";
@@ -21,7 +22,7 @@ export function LeaveTracker({ onFetchHolidays }: LeaveTrackerProps) {
 
   // Summary Leave Types
   const leaveTypes = [
-    { name: "Compensatory Off", available: 0, booked: 0, color: "text-[#00c4b6] bg-[#00c4b6]/10" },
+    { name: "Compensatory Off", available: 0, booked: 0, color: "text-[#F9D972] bg-[#F9D972]/10" },
     { name: "Leaves Without Pay", available: 2, booked: 0, color: "text-[#6366f1] bg-[#6366f1]/10" },
     { name: "Paternity Leave", available: 5, booked: 0, color: "text-[#ec4899] bg-[#ec4899]/10" },
     { name: "Sick Leave", available: 2, booked: 0, color: "text-[#f59e0b] bg-[#f59e0b]/10" },
@@ -114,7 +115,7 @@ export function LeaveTracker({ onFetchHolidays }: LeaveTrackerProps) {
             onClick={() => setActiveTab("mydata")}
             className={`text-xs font-bold pb-2 pt-1 border-b-2 cursor-pointer transition-all ${
               activeTab === "mydata"
-                ? "border-[#00c4b6] text-[#00c4b6]"
+                ? "border-[#F9D972] text-[#F9D972]"
                 : "border-transparent text-slate-400 hover:text-slate-700"
             }`}
           >
@@ -125,7 +126,7 @@ export function LeaveTracker({ onFetchHolidays }: LeaveTrackerProps) {
             onClick={() => setActiveTab("team")}
             className={`text-xs font-bold pb-2 pt-1 border-b-2 cursor-pointer transition-all ${
               activeTab === "team"
-                ? "border-[#00c4b6] text-[#00c4b6]"
+                ? "border-[#F9D972] text-[#F9D972]"
                 : "border-transparent text-slate-400 hover:text-slate-700"
             }`}
           >
@@ -136,7 +137,7 @@ export function LeaveTracker({ onFetchHolidays }: LeaveTrackerProps) {
             onClick={() => setActiveTab("holidays")}
             className={`text-xs font-bold pb-2 pt-1 border-b-2 cursor-pointer transition-all ${
               activeTab === "holidays"
-                ? "border-[#00c4b6] text-[#00c4b6]"
+                ? "border-[#F9D972] text-[#F9D972]"
                 : "border-transparent text-slate-400 hover:text-slate-700"
             }`}
           >
@@ -188,7 +189,7 @@ export function LeaveTracker({ onFetchHolidays }: LeaveTrackerProps) {
                     <button
                       type="button"
                       onClick={() => handleApplyLeave(day.date)}
-                      className="text-[10.5px] font-bold text-[#00c4b6] border border-[#00c4b6]/20 bg-[#00c4b6]/5 hover:bg-[#00c4b6]/10 px-3 py-1 rounded-lg transition-colors cursor-pointer"
+                      className="text-[10.5px] font-bold text-[#F9D972] border border-[#F9D972]/20 bg-[#F9D972]/5 hover:bg-[#F9D972]/10 px-3 py-1 rounded-lg transition-colors cursor-pointer"
                     >
                       Apply Leave
                     </button>
@@ -242,7 +243,7 @@ export function LeaveTracker({ onFetchHolidays }: LeaveTrackerProps) {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50 p-4 border border-slate-200 rounded-xl">
               {/* Date/Cal Range display */}
               <div className="flex items-center gap-2">
-                <Calendar className="size-4 text-[#00c4b6]" />
+                <Calendar className="size-4 text-[#F9D972]" />
                 <span className="text-xs font-bold text-slate-700">{dateRange}</span>
               </div>
 
@@ -250,7 +251,7 @@ export function LeaveTracker({ onFetchHolidays }: LeaveTrackerProps) {
               <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                 <div className="flex items-center gap-1">
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Location:</span>
-                  <select
+                  <NativeSelect
                     value={locationFilter}
                     onChange={(e) => setLocationFilter(e.target.value)}
                     className="text-xs font-semibold bg-white border border-slate-200 rounded-lg p-1 outline-none"
@@ -258,12 +259,12 @@ export function LeaveTracker({ onFetchHolidays }: LeaveTrackerProps) {
                     <option value="All">All Locations</option>
                     <option value="Chennai">Chennai</option>
                     <option value="All Locations">All Locations</option>
-                  </select>
+                  </NativeSelect>
                 </div>
 
                 <div className="flex items-center gap-1">
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Shifts:</span>
-                  <select
+                  <NativeSelect
                     value={shiftFilter}
                     onChange={(e) => setShiftFilter(e.target.value)}
                     className="text-xs font-semibold bg-white border border-slate-200 rounded-lg p-1 outline-none"
@@ -271,13 +272,13 @@ export function LeaveTracker({ onFetchHolidays }: LeaveTrackerProps) {
                     <option value="All">All Shifts</option>
                     <option value="General">General</option>
                     <option value="All Shifts">All Shifts</option>
-                  </select>
+                  </NativeSelect>
                 </div>
 
                 {/* Add Holidays option */}
                 <button
                   type="button"
-                  className="bg-[#00c4b6] hover:bg-[#00b0a3] text-white text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition-colors cursor-pointer ml-auto sm:ml-0"
+                  className="bg-[#F9D972] hover:bg-[#00b0a3] text-white text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition-colors cursor-pointer ml-auto sm:ml-0"
                 >
                   <Plus className="size-3.5" />
                   Add Holidays

@@ -1,6 +1,6 @@
 "use client";
 
-import { DateInput } from "@/components/ui/date-input";
+import { DateInput } from "@/components/monolith/date-input";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -46,7 +46,7 @@ export function ConvertModal({ leadId, leadName, companyName, onClose }: Convert
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-[#1c212a]/50 bg-[#0c0f14]">
           <div className="flex items-center gap-2">
-            <RefreshCcw className="size-4.5 text-[#00c4b6] animate-spin-slow" />
+            <RefreshCcw className="size-4.5 text-[#F9D972] animate-spin-slow" />
             <span className="font-bold text-sm text-white uppercase tracking-wider">Convert Lead</span>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white cursor-pointer">
@@ -57,7 +57,7 @@ export function ConvertModal({ leadId, leadName, companyName, onClose }: Convert
         {/* Form Body */}
         <form onSubmit={handleConvert} className="p-6 space-y-5">
           <div className="p-3 bg-[#161f28]/40 border border-[#1c212a]/50 rounded-lg flex items-start gap-3">
-            <AlertCircle className="size-5 text-[#00c4b6] shrink-0 mt-0.5" />
+            <AlertCircle className="size-5 text-[#F9D972] shrink-0 mt-0.5" />
             <div className="text-xs text-slate-300 leading-relaxed">
               Converting lead <strong className="text-white">{leadName}</strong> will establish:
               <ul className="list-disc pl-4 mt-1.5 space-y-1">
@@ -75,7 +75,7 @@ export function ConvertModal({ leadId, leadName, companyName, onClose }: Convert
               id="create-deal-checkbox"
               checked={createDeal}
               onChange={(e) => setCreateDeal(e.target.checked)}
-              className="size-4 rounded border-[#1c212a] bg-[#0a0d12] text-[#00c4b6] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+              className="size-4 rounded border-[#1c212a] bg-[#0a0d12] text-[#F9D972] focus:ring-0 focus:ring-offset-0 cursor-pointer"
             />
             <label htmlFor="create-deal-checkbox" className="text-xs font-bold text-white uppercase tracking-wide cursor-pointer select-none">
               Create a new Deal for this account
@@ -97,7 +97,7 @@ export function ConvertModal({ leadId, leadName, companyName, onClose }: Convert
                     placeholder="e.g. 50000"
                     value={dealAmount}
                     onChange={(e) => setDealAmount(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0f1319] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                    className="w-full px-3 py-1.5 bg-[#0f1319] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#F9D972]"
                     required={createDeal}
                   />
                 </div>
@@ -106,7 +106,7 @@ export function ConvertModal({ leadId, leadName, companyName, onClose }: Convert
                   <DateInput
                     value={dealCloseDate}
                     onChange={(e) => setDealCloseDate(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0f1319] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                    className="w-full px-3 py-1.5 bg-[#0f1319] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#F9D972]"
                     required={createDeal}
                   />
                 </div>
@@ -126,7 +126,7 @@ export function ConvertModal({ leadId, leadName, companyName, onClose }: Convert
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-5 py-2 bg-[#00c4b6] hover:bg-[#00b0a3] text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-[#00c4b6]/10 cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2 bg-[#F9D972] hover:bg-[#00b0a3] text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
             >
               {isSubmitting ? "Converting..." : "Convert Lead"}
             </button>

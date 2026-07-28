@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
 import { sendEmail } from "@/lib/email";
 import { can, ForbiddenError } from "@/lib/rbac";
+import { submitPortalCustomerChecklistDecision as submitChaPortalCustomerChecklistDecision } from "@/modules/cha/service";
 import type { Prisma } from "@/generated/prisma/client";
 import { assertAllowedFile, resolveInside, sanitizeFilename, sanitizeText } from "@/lib/security";
 import type { PortalShipmentDetailView } from "./types";
@@ -1188,118 +1189,14 @@ export async function submitPortalChecklistDecision(params: {
 }) {
   const portalUser = await getPortalUserContext(params.portalUserId);
   const remarks = params.remarks ? sanitizeText(params.remarks, 2000) : undefined;
-  const job = await db.chaJob.findFirst({
-    where: {
-      id: params.jobId,
-      orgId: portalUser.orgId,
-      customerId: portalUser.customerId,
-      deletedAt: null,
-    },
-    include: {
-      checklistWorkflow: true,
-      assignments: true,
-    },
-  });
-  if (!job?.checklistWorkflow || job.checklistWorkflow.id !== params.checklistId) {
-    throw new Error("Checklist not found.");
-  }
-  const currentFileVersionId = job.checklistWorkflow.currentFileVersionId;
-  if (!currentFileVersionId) {
-    throw new Error("Checklist file is not available for customer approval.");
-  }
-  if (job.checklistWorkflow.currentApprovalStage !== "CUSTOMER") {
-    throw new Error("Checklist is not awaiting customer approval.");
-  }
-  const existing = await db.customerChecklistResponse.findFirst({
-    where: {
-      jobId: params.jobId,
-      checklistId: params.checklistId,
-      portalUserId: portalUser.id,
-    },
-  });
-  if (existing) {
-    throw new Error("This portal user has already submitted a checklist decision.");
-  }
-
-  const now = await getNow();
-  await db.customerChecklistResponse.create({
-    data: {
-      orgId: portalUser.orgId,
-      customerId: portalUser.customerId,
-      jobId: params.jobId,
-      checklistId: params.checklistId,
-      portalUserId: portalUser.id,
-      decision: params.decision,
-      remarks,
-      submittedAt: now,
-    },
-  });
-
-  await db.$transaction(async (tx) => {
-    await tx.chaChecklistDecision.create({
-        data: {
-          checklistId: params.checklistId,
-          fileVersionId: currentFileVersionId,
-          stage: "CUSTOMER",
-        action: params.decision,
-        remarks,
-        actedById: portalUser.id,
-        assignedToId: portalUser.id,
-        actedAt: now,
-      },
-    });
-
-    if (params.decision === "REJECTED") {
-      await tx.chaChecklist.update({
-        where: { id: params.checklistId },
-        data: {
-          status: "CUSTOMER_REWORK_REQUIRED",
-          currentApprovalStage: "UPLOAD",
-          customerRejectedOnce: true,
-          customerApprovalAttempted: true,
-        },
-      });
-      await tx.chaJob.update({
-        where: { id: params.jobId },
-        data: { stage: "CHECKLIST_PREPARATION" },
-      });
-      return;
-    }
-
-    await tx.chaChecklist.update({
-      where: { id: params.checklistId },
-      data: {
-        status: "CUSTOMER_APPROVED",
-        currentApprovalStage: "COMPLETED",
-        customerApprovalAttempted: true,
-      },
-    });
-    await tx.chaJob.update({
-      where: { id: params.jobId },
-      data: { stage: "FILING" },
-    });
-  });
-
-  await writePortalAudit({
+  await submitChaPortalCustomerChecklistDecision({
     orgId: portalUser.orgId,
     customerId: portalUser.customerId,
     portalUserId: portalUser.id,
     jobId: params.jobId,
-    entityType: "CustomerChecklistResponse",
-    entityId: params.checklistId,
-    event: params.decision === "APPROVED" ? "CHECKLIST_APPROVED" : "CHECKLIST_REJECTED",
+    checklistId: params.checklistId,
+    decision: params.decision,
     remarks,
-  });
-
-  await notifyPortalUsers({
-    orgId: portalUser.orgId,
-    customerId: portalUser.customerId,
-    portalUserIds: [portalUser.id],
-    jobId: params.jobId,
-    kind: "PORTAL_CHECKLIST_SUBMITTED",
-    title: params.decision === "APPROVED" ? "Checklist approved" : "Checklist sent back for correction",
-    body: "Your response has been recorded.",
-    link: `/customer-portal/shipments/${params.jobId}`,
   });
 }
 

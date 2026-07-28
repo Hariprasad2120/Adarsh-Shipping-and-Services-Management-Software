@@ -17,7 +17,7 @@ import { ItemPriceListSection } from "./ItemPriceListSection";
 import { ItemPurchaseInfoSection } from "./ItemPurchaseInfoSection";
 import { ItemInventorySection } from "./ItemInventorySection";
 import { ItemLogisticsFieldsSection } from "./ItemLogisticsFieldsSection";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/monolith/button";
 
 interface NewItemDialogProps {
   open: boolean;
@@ -218,7 +218,7 @@ export function NewItemDialog({ open, onClose, onSaveSuccess, initialName = "", 
             Cancel
           </Button>
           <Button
-            className="h-9 bg-[#00cec4] hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] text-white px-4 text-[12px] transition-all"
+            className="h-9 bg-[#F9D972] hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] text-white px-4 text-[12px] transition-all"
             onClick={handleSave}
             disabled={isSubmitting}
           >

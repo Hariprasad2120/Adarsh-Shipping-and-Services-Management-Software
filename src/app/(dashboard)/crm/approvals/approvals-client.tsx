@@ -126,7 +126,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
       label: "Approved This Month",
       value: metrics.approvedThisMonth,
       icon: <CheckCircle2 size={20} />,
-      color: "#00cec4",
+      color: "#F9D972",
     },
     {
       label: "Declined This Month",
@@ -151,11 +151,11 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <span className="ds-icon-badge">
+        <span className="monolith-icon-badge">
           <ClipboardList size={18} />
         </span>
         <div>
-          <h1 className="ds-h1">Approval Queue</h1>
+          <h1 className="monolith-h1">Approval Queue</h1>
           <p className="text-sm" style={{ color: "var(--color-on-surface-variant)" }}>
             Review and act on pending submissions
           </p>
@@ -167,9 +167,9 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
         {statCards.map((s) => (
           <div
             key={s.label}
-            className="card-top-accent rounded-xl p-4"
+            className="monolith-card monolith-accent rounded-xl p-4"
             style={
-              s.color !== "#00cec4"
+              s.color !== "#F9D972"
                 ? ({
                     "--card-accent-color": s.color,
                   } as React.CSSProperties)
@@ -178,10 +178,10 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
           >
             <div className="flex items-center gap-2 mb-1">
               <span style={{ color: s.color }}>{s.icon}</span>
-              <span className="ds-label">{s.label}</span>
+              <span className="monolith-label">{s.label}</span>
             </div>
             <p
-              className="ds-numeric text-2xl font-bold"
+              className="monolith-numeric text-2xl font-bold"
               style={{ color: "var(--color-on-surface)" }}
             >
               {s.value}
@@ -202,7 +202,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
                 filterType === t
                   ? "rgba(0,206,196,0.15)"
                   : "var(--color-surface-container)",
-              color: filterType === t ? "#00cec4" : "var(--color-on-surface-variant)",
+              color: filterType === t ? "#F9D972" : "var(--color-on-surface-variant)",
               border:
                 filterType === t ? "1px solid rgba(0,206,196,0.4)" : "1px solid transparent",
             }}
@@ -218,7 +218,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
           className="flex flex-col items-center justify-center py-16 rounded-2xl"
           style={{ background: "var(--color-surface)" }}
         >
-          <CheckCircle2 size={40} style={{ color: "#00cec4" }} className="mb-3 opacity-60" />
+          <CheckCircle2 size={40} style={{ color: "#F9D972" }} className="mb-3 opacity-60" />
           <p className="text-sm font-medium" style={{ color: "var(--color-on-surface-variant)" }}>
             No pending approvals
           </p>
@@ -233,21 +233,21 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
             return (
               <div
                 key={item.id}
-                className="card-left-accent rounded-xl p-4"
+                className="monolith-card monolith-accent rounded-xl p-4"
                 style={{ background: "var(--color-surface)" }}
               >
                 <div className="flex items-start justify-between gap-4">
                   {/* Left info */}
                   <div className="flex items-start gap-3 min-w-0">
                     <span
-                      className="ds-icon-badge mt-0.5 flex-shrink-0"
-                      style={{ color: "#00cec4" }}
+                      className="monolith-icon-badge mt-0.5 flex-shrink-0"
+                      style={{ color: "#F9D972" }}
                     >
                       {TYPE_ICON[item.type] ?? <FileText size={14} />}
                     </span>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="ds-label">{TYPE_LABEL[item.type] ?? item.type}</span>
+                        <span className="monolith-label">{TYPE_LABEL[item.type] ?? item.type}</span>
                         <span
                           className="font-semibold text-sm"
                           style={{ color: "var(--color-on-surface)" }}
@@ -276,7 +276,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
 
                   {/* Amount */}
                   <div className="text-right flex-shrink-0">
-                    <p className="ds-numeric font-bold" style={{ color: "var(--color-on-surface)" }}>
+                    <p className="monolith-numeric font-bold" style={{ color: "var(--color-on-surface)" }}>
                       ₹{item.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </p>
                   </div>
@@ -288,7 +288,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
                     <button
                       onClick={() => approve(item.id)}
                       disabled={isActing}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[#00cec4] text-white hover:bg-[#00b8af] transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[#F9D972] text-white hover:bg-[#E8C85D] transition-colors disabled:opacity-50"
                     >
                       {isActing ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
                       Approve

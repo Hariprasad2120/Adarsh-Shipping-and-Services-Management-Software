@@ -41,12 +41,12 @@ export default function CandidatesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="ds-h1 text-on-surface">Candidates</h1>
-          <p className="text-sm text-on-surface-variant">Talent pool and candidate profiles</p>
+          <h1 className="monolith-h1 text-mono-text">Candidates</h1>
+          <p className="text-sm text-mono-muted">Talent pool and candidate profiles</p>
         </div>
         <Link
           href="/hrms/recruit/employer/candidates/new"
-          className="inline-flex items-center gap-2 rounded-xl bg-[#00cec4] px-4 py-2 text-sm font-medium text-white uppercase tracking-wide transition hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)]"
+          className="inline-flex items-center gap-2 rounded-xl bg-[#F9D972] px-4 py-2 text-sm font-medium text-white uppercase tracking-wide transition hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)]"
         >
           <Add size={16} />
           Add Candidate
@@ -54,7 +54,7 @@ export default function CandidatesPage() {
       </div>
 
       <div className="relative max-w-sm">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
         <input
           type="search"
           placeholder="Search by name, email..."
@@ -64,7 +64,7 @@ export default function CandidatesPage() {
         />
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
         <DataTable>
           <DataTableHeader>
             <tr>
@@ -86,21 +86,21 @@ export default function CandidatesPage() {
                   <DataTableCell>
                     <Link
                       href={`/hrms/recruit/employer/candidates/${c.id}`}
-                      className="font-medium text-on-surface hover:text-[#00cec4]"
+                      className="font-medium text-mono-text hover:text-[#F9D972]"
                     >
                       {c.fullName}
                     </Link>
-                    {c.email && <p className="ds-label mt-0.5">{c.email}</p>}
+                    {c.email && <p className="monolith-label mt-0.5">{c.email}</p>}
                   </DataTableCell>
-                  <DataTableCell className="ds-label">{c.candidateNumber}</DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">
+                  <DataTableCell className="monolith-label">{c.candidateNumber}</DataTableCell>
+                  <DataTableCell className="text-mono-muted">
                     {c.currentTitle ?? "—"}
                     {c.currentCompany && (
                       <span className="text-outline"> · {c.currentCompany}</span>
                     )}
                   </DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">{c.phone ?? "—"}</DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">
+                  <DataTableCell className="text-mono-muted">{c.phone ?? "—"}</DataTableCell>
+                  <DataTableCell className="text-mono-muted">
                     {new Date(c.createdAt).toLocaleDateString()}
                   </DataTableCell>
                 </DataTableRow>

@@ -99,7 +99,7 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
         {active && (
           <button
             onClick={() => setShowViewport(true)}
-            className="flex items-center gap-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-[#00c4b6] px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer mr-1 animate-pulse"
+            className="flex items-center gap-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-[#F9D972] px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer mr-1 animate-pulse"
             title="Show live scraper progress window"
           >
             <Monitor className="size-3.5" />
@@ -110,7 +110,7 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
         <button
           onClick={handleImport}
           disabled={isPending}
-          className="flex items-center gap-2 bg-[#00c4b6] hover:bg-[#00b0a3] disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[#00c4b6]/10 cursor-pointer"
+          className="flex items-center gap-2 bg-[#F9D972] hover:bg-[#00b0a3] disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
           title="Trigger manual browser scraper run"
         >
           {runningImport ? (
@@ -139,7 +139,7 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
                 
                 {/* Mock Address Bar */}
                 <div className="flex items-center gap-2 bg-[#0a0d12] border border-[#1c212a] px-3 py-1 rounded-lg text-xs text-slate-400 w-full max-w-2xl font-mono select-none">
-                  <Loader2 className="size-3 text-[#00c4b6] animate-spin shrink-0" />
+                  <Loader2 className="size-3 text-[#F9D972] animate-spin shrink-0" />
                   <span className="truncate">{status?.currentUrl || "https://wap.justdial.com/analytics/enquiries"}</span>
                 </div>
               </div>
@@ -185,7 +185,7 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
                       />
                     ) : (
                       <div className="text-center space-y-2 text-slate-500">
-                        <Loader2 className="size-8 animate-spin mx-auto text-[#00c4b6]" />
+                        <Loader2 className="size-8 animate-spin mx-auto text-[#F9D972]" />
                         <p className="text-xs">Connecting to headless browser...</p>
                       </div>
                     )}
@@ -202,7 +202,7 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
                   </div>
                   <div className="w-full bg-[#0a0d12] rounded-full h-2 overflow-hidden border border-[#1c212a]">
                     <div
-                      className="bg-[#00c4b6] h-full transition-all duration-500"
+                      className="bg-[#F9D972] h-full transition-all duration-500"
                       style={{
                         width: `${
                           status?.totalCount > 0
@@ -213,7 +213,7 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
                     />
                   </div>
                   <p className="text-xs text-slate-300 truncate">
-                    <span className="text-[#00c4b6] font-semibold">Active Step:</span> {status?.currentStep || "Booting RPA worker..."}
+                    <span className="text-[#F9D972] font-semibold">Active Step:</span> {status?.currentStep || "Booting RPA worker..."}
                   </p>
                 </div>
               </div>
@@ -222,7 +222,7 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
               <div className="p-4 bg-[#0a0d12] flex flex-col justify-between overflow-hidden">
                 <div className="space-y-3 flex flex-col overflow-hidden h-full">
                   <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
-                    <Terminal className="size-4 text-[#00c4b6]" />
+                    <Terminal className="size-4 text-[#F9D972]" />
                     <span className="font-semibold uppercase tracking-wider">Console Output Logs</span>
                   </div>
 

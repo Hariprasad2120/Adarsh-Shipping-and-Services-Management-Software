@@ -68,7 +68,7 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
-        <Loader2 className="size-8 animate-spin text-[#00c4b6]" />
+        <Loader2 className="size-8 animate-spin text-[#F9D972]" />
         <p className="text-xs font-semibold tracking-wider">Syncing pending approvals inbox...</p>
       </div>
     );
@@ -87,9 +87,9 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
     <div className="space-y-6">
       {/* Banner */}
       <div className="relative rounded-3xl border border-slate-800 bg-[#0f121b]/85 p-6 overflow-hidden shadow-2xl backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c4b6]/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#F9D972]/5 rounded-full blur-3xl" />
         <div className="flex items-center gap-4">
-          <div className="size-12 rounded-2xl bg-[#00c4b6]/10 border border-[#00c4b6]/35 flex items-center justify-center text-[#00c4b6] shadow-sm">
+          <div className="size-12 rounded-2xl bg-[#F9D972]/10 border border-[#F9D972]/35 flex items-center justify-center text-[#F9D972] shadow-sm">
             <CheckCircle2 className="size-6 animate-pulse" />
           </div>
           <div>
@@ -117,7 +117,7 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
                   <div key={req.id} className="rounded-3xl border border-slate-900 bg-[#0e121b]/40 p-5 space-y-4 transition hover:border-slate-850 flex flex-col justify-between backdrop-blur-sm">
                     <div className="space-y-3">
                       <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-full bg-[#00c4b6]/10 flex items-center justify-center font-bold text-xs text-[#00c4b6]">
+                        <div className="size-8 rounded-full bg-[#F9D972]/10 flex items-center justify-center font-bold text-xs text-[#F9D972]">
                           {req.user.name[0]}
                         </div>
                         <div>
@@ -143,7 +143,7 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
                         placeholder="Add review comments..."
                         value={remarks[req.id] || ""}
                         onChange={(e) => handleRemarkChange(req.id, e.target.value)}
-                        className="w-full px-3 py-1.5 text-[10.5px] bg-slate-950/60 border border-slate-900 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                        className="w-full px-3 py-1.5 text-[10.5px] bg-slate-950/60 border border-slate-900 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                       />
                       <div className="flex justify-end gap-2.5">
                         <button
@@ -179,7 +179,7 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
                   <div key={req.id} className="rounded-3xl border border-slate-900 bg-[#0e121b]/40 p-5 space-y-4 transition hover:border-slate-850 flex flex-col justify-between backdrop-blur-sm">
                     <div className="space-y-3">
                       <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-full bg-[#00c4b6]/10 flex items-center justify-center font-bold text-xs text-[#00c4b6]">
+                        <div className="size-8 rounded-full bg-[#F9D972]/10 flex items-center justify-center font-bold text-xs text-[#F9D972]">
                           {req.user.name[0]}
                         </div>
                         <div>
@@ -199,7 +199,7 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
                         placeholder="Add review comments..."
                         value={remarks[req.id] || ""}
                         onChange={(e) => handleRemarkChange(req.id, e.target.value)}
-                        className="w-full px-3 py-1.5 text-[10.5px] bg-slate-950/60 border border-slate-900 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                        className="w-full px-3 py-1.5 text-[10.5px] bg-slate-950/60 border border-slate-900 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
                       />
                       <div className="flex justify-end gap-2.5">
                         <button
@@ -235,7 +235,7 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
                   <div key={req.id} className="rounded-3xl border border-slate-900 bg-[#0e121b]/40 p-5 space-y-4 transition hover:border-slate-850 flex flex-col justify-between backdrop-blur-sm">
                     <div className="space-y-3">
                       <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-full bg-[#00c4b6]/10 flex items-center justify-center font-bold text-xs text-[#00c4b6]">
+                        <div className="size-8 rounded-full bg-[#F9D972]/10 flex items-center justify-center font-bold text-xs text-[#F9D972]">
                           {req.user.name[0]}
                         </div>
                         <div>
@@ -244,7 +244,7 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
                         </div>
                       </div>
                       <div className="space-y-1 text-xs text-slate-400">
-                        <p className="font-bold text-slate-350">To Destination: <span className="text-[#00c4b6] uppercase font-bold">{req.destination}</span></p>
+                        <p className="font-bold text-slate-350">To Destination: <span className="text-[#F9D972] uppercase font-bold">{req.destination}</span></p>
                         <p className="text-[10.5px] font-bold text-slate-500 mt-1 leading-normal italic">Trip details: "{req.purpose}"</p>
                       </div>
                     </div>

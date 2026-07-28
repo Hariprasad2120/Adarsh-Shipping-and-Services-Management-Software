@@ -17,7 +17,7 @@ import {
   View,
   Search,
 } from "@carbon/icons-react";
-import { FolderIcon } from "@/components/ui/folder-icon";
+import { FolderIcon } from "@/components/monolith/folder-icon";
 const Folder = FolderIcon as unknown as CarbonIconType;
 import type { Caps } from "@/lib/rbac";
 import { isNavSectionEnabled } from "@/lib/app-edition";
@@ -1008,6 +1008,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         icon: UserMultiple,
         permission: "admin.org.manage",
         matchPaths: ["/admin/roles"],
+      },
+      {
+        href: "/admin/design-system",
+        label: "Design System",
+        icon: View,
+        permission: "admin.org.manage",
+        matchPaths: ["/admin/design-system"],
       },
       {
         href: "/admin/settings",

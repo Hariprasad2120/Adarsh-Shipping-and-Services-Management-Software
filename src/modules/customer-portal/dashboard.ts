@@ -53,6 +53,15 @@ type RatingRecord = Awaited<ReturnType<typeof getRatingsForPortalUser>>[number];
 type AuditRecord = Awaited<ReturnType<typeof getCustomerSafeAuditLogs>>[number];
 type StageMappingRecord = Awaited<ReturnType<typeof getCustomerVisibleStageMappings>>[number];
 
+function isCustomerApprovalActionable(checklist: Pick<ChecklistRecord, "currentApprovalStage" | "status">) {
+  if (checklist.currentApprovalStage === "CUSTOMER") return true;
+  return checklist.status === "CUSTOMER_APPROVAL_PENDING" || checklist.status === "CUSTOMER_APPROVAL_WAITING_WINDOW";
+}
+
+function getCustomerApprovalOpenedAt(checklist: Pick<ChecklistRecord, "customerApprovalVisibleAt" | "updatedAt">) {
+  return checklist.customerApprovalVisibleAt ?? checklist.updatedAt;
+}
+
 export type CustomerPortalDashboardActionItem = {
   id: string;
   type: "DOCUMENT" | "CHECKLIST" | "QUERY";
@@ -349,6 +358,9 @@ export function buildActionRequiredItems(
   sectionErrors: CustomerPortalDashboardData["sectionErrors"],
   now: Date,
 ) {
+  void sectionErrors;
+  void now;
+
   if (!jobs || !submissions || !checklists || !checklistResponses || !queries) {
     return [] as CustomerPortalDashboardActionItem[];
   }
@@ -359,8 +371,9 @@ export function buildActionRequiredItems(
   const items: Array<CustomerPortalDashboardActionItem & { urgencyRank: number; dueSort: number; updatedSort: number }> = [];
 
   for (const checklist of checklists) {
-    if (!checklist.customerApprovalVisibleAt || checklist.customerApprovalVisibleAt > now) continue;
+    if (!isCustomerApprovalActionable(checklist)) continue;
     if (accountResponses.has(checklist.id)) continue;
+    const openedAt = getCustomerApprovalOpenedAt(checklist);
     items.push({
       id: `checklist-${checklist.id}`,
       type: "CHECKLIST",
@@ -374,12 +387,12 @@ export function buildActionRequiredItems(
       customerRef: checklist.job.customerRef,
       stageLabel: formatStageLabel(checklist.job.stage, stageMap),
       detail: "Your approval or rejection is pending for the latest checklist.",
-      dueAt: checklist.customerApprovalVisibleAt.toISOString(),
+      dueAt: openedAt.toISOString(),
       updatedAt: checklist.updatedAt.toISOString(),
       href: shipmentHref(checklist.jobId),
       tone: "warning",
       urgencyRank: 4,
-      dueSort: checklist.customerApprovalVisibleAt.getTime(),
+      dueSort: openedAt.getTime(),
       updatedSort: checklist.updatedAt.getTime(),
     });
   }
@@ -586,12 +599,15 @@ export function buildPendingChecklistDecisions(
   sectionErrors: CustomerPortalDashboardData["sectionErrors"],
   now: Date,
 ) {
+  void sectionErrors;
+  void now;
+
   if (!checklists || !checklistResponses) return [] as CustomerPortalDashboardData["pendingChecklistDecisions"];
   const stageMap = buildStageMap(stageMappings);
   const accountResponses = new Set(checklistResponses.map((response) => response.checklistId));
 
   return checklists
-    .filter((checklist) => checklist.customerApprovalVisibleAt && checklist.customerApprovalVisibleAt <= now)
+    .filter(isCustomerApprovalActionable)
     .filter((checklist) => !accountResponses.has(checklist.id))
     .map((checklist) => ({
       id: checklist.id,
@@ -602,7 +618,7 @@ export function buildPendingChecklistDecisions(
       checklistLabel: checklist.currentFileVersion
         ? `Checklist v${checklist.currentFileVersion.versionNumber}`
         : "Checklist Approval",
-      visibleAt: checklist.customerApprovalVisibleAt?.toISOString() ?? null,
+      visibleAt: getCustomerApprovalOpenedAt(checklist).toISOString(),
       status: formatChaBadgeLabel(checklist.currentApprovalStage),
       href: shipmentHref(checklist.jobId),
     }))
@@ -831,7 +847,11 @@ async function getVisibleChecklistsForCustomer(orgId: string, customerId: string
         customerId,
         deletedAt: null,
       },
-      customerApprovalVisibleAt: { not: null },
+      OR: [
+        { customerApprovalVisibleAt: { not: null } },
+        { currentApprovalStage: "CUSTOMER" },
+        { status: { in: ["CUSTOMER_APPROVAL_PENDING", "CUSTOMER_APPROVAL_WAITING_WINDOW"] } },
+      ],
     },
     orderBy: { updatedAt: "desc" },
     select: {

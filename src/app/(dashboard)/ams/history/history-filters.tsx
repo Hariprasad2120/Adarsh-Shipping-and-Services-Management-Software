@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarIcon, X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -61,8 +62,8 @@ function MonthYearPicker({
         className={[
           "flex items-center gap-2 border rounded-xl px-3.5 py-2 text-sm transition-all duration-200 whitespace-nowrap",
           hasSelection
-            ? "border-[#00cec4] bg-[#00cec4]/10 text-[#00cec4] font-semibold"
-            : "border-outline-variant/60 bg-surface text-on-surface-variant hover:border-[#00cec4]/70",
+            ? "border-[#F9D972] bg-[#F9D972]/10 text-[#F9D972] font-semibold"
+            : "border-mono-border/60 bg-mono-card text-mono-muted hover:border-[#F9D972]/70",
         ].join(" ")}
       >
         <CalendarIcon className="size-4 shrink-0" />
@@ -81,12 +82,12 @@ function MonthYearPicker({
       </button>
 
       {open && (
-        <div className="absolute top-full mt-2 left-0 z-50 bg-surface border border-outline-variant/70 rounded-xl shadow-lg p-4 w-64">
+        <div className="absolute top-full mt-2 left-0 z-50 bg-mono-card border border-mono-border/70 rounded-xl shadow-lg p-4 w-64">
           <div className="flex items-center justify-between mb-3">
             <button
               type="button"
               onClick={() => setViewYear((y) => y - 1)}
-              className="p-1 rounded hover:bg-surface-container-high dark:hover:bg-slate-800 text-on-surface-variant"
+              className="p-1 rounded hover:bg-mono-soft dark:hover:bg-slate-800 text-mono-muted"
             >
               <ChevronLeft className="size-4" />
             </button>
@@ -94,7 +95,7 @@ function MonthYearPicker({
             <button
               type="button"
               onClick={() => setViewYear((y) => y + 1)}
-              className="p-1 rounded hover:bg-surface-container-high dark:hover:bg-slate-800 text-on-surface-variant"
+              className="p-1 rounded hover:bg-mono-soft dark:hover:bg-slate-800 text-mono-muted"
             >
               <ChevronRight className="size-4" />
             </button>
@@ -111,8 +112,8 @@ function MonthYearPicker({
                   className={[
                     "rounded-lg py-1.5 text-xs font-semibold transition-colors",
                     isSelected
-                      ? "bg-[#00cec4] text-white"
-                      : "hover:bg-[#00cec4]/10 hover:text-[#00cec4] text-slate-600 dark:text-slate-400",
+                      ? "bg-[#F9D972] text-white"
+                      : "hover:bg-[#F9D972]/10 hover:text-[#F9D972] text-slate-600 dark:text-slate-400",
                   ].join(" ")}
                 >
                   {m.slice(0, 3)}
@@ -199,7 +200,7 @@ export function HistoryFilters({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Name or Emp #"
-          className="border border-outline-variant/60 bg-surface rounded-xl px-4 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-[#00cec4]/15 focus:border-[#00cec4]/50 w-48 transition"
+          className="border border-mono-border/60 bg-mono-card rounded-xl px-4 py-2 text-sm text-mono-text focus:outline-none focus:ring-2 focus:ring-[#F9D972]/15 focus:border-[#F9D972]/50 w-48 transition"
         />
       )}
 
@@ -210,22 +211,22 @@ export function HistoryFilters({
         onClear={handleDateClear}
       />
 
-      <select
+      <NativeSelect
         value={stage}
         onChange={(e) => setStage(e.target.value)}
-        className="border border-outline-variant/60 bg-surface rounded-xl px-4 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-[#00cec4]/15 focus:border-[#00cec4]/50 transition"
+        className="border border-mono-border/60 bg-mono-card rounded-xl px-4 py-2 text-sm text-mono-text focus:outline-none focus:ring-2 focus:ring-[#F9D972]/15 focus:border-[#F9D972]/50 transition"
       >
-        <option value="" className="bg-surface">All Stages</option>
+        <option value="" className="bg-mono-card">All Stages</option>
         {STAGE_OPTIONS.map((s) => (
-          <option key={s} value={s} className="bg-surface">
+          <option key={s} value={s} className="bg-mono-card">
             {s.replace(/_/g, " ")}
           </option>
         ))}
-      </select>
+      </NativeSelect>
 
       <button
         type="submit"
-        className="bg-[#00cec4] text-white font-semibold rounded-xl px-4 py-2 text-sm hover:bg-[#00b8af] transition"
+        className="bg-[#F9D972] text-white font-semibold rounded-xl px-4 py-2 text-sm hover:bg-[#E8C85D] transition"
       >
         Filter
       </button>
@@ -234,7 +235,7 @@ export function HistoryFilters({
         <button
           type="button"
           onClick={clearAll}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-on-surface-variant hover:text-rose-600 transition"
+          className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-mono-muted hover:text-rose-600 transition"
         >
           <X className="size-3.5 shrink-0" /> Clear all
         </button>

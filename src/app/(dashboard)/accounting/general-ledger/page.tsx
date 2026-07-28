@@ -1,3 +1,4 @@
+import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -6,7 +7,7 @@ import { getGeneralLedger } from "@/modules/accounting/reports";
 import { listAccounts } from "@/modules/accounting/service";
 import NextLink from "next/link";
 import { Filter, Scale } from "lucide-react";
-import { DateInput } from "@/components/ui/date-input";
+import { DateInput } from "@/components/monolith/date-input";
 
 interface GLPageProps {
   searchParams: Promise<{
@@ -52,9 +53,9 @@ export default async function GeneralLedgerReportPage({ searchParams }: GLPagePr
     <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/20 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-mono-border/20 pb-5">
         <div>
-          <h2 className="ds-h1 text-white">General Ledger</h2>
+          <h2 className="monolith-h1 text-white">General Ledger</h2>
           <p className="text-slate-400 text-xs mt-1">
             Audit comprehensive ledger entries, track running balances, and filter by accounts, dates, and branches.
           </p>
@@ -65,8 +66,8 @@ export default async function GeneralLedgerReportPage({ searchParams }: GLPagePr
       <div className="p-4 rounded-xl bg-[#0f1319] border border-[#1c212a]/55">
         <form method="GET" className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-xs">
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Ledger Account</label>
-            <select
+            <label className="monolith-label block text-slate-400">Ledger Account</label>
+            <NativeSelect
               name="accountId"
               defaultValue={accountId || ""}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2"
@@ -75,12 +76,12 @@ export default async function GeneralLedgerReportPage({ searchParams }: GLPagePr
               {leafAccounts.map((a) => (
                 <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Branch Dimension</label>
-            <select
+            <label className="monolith-label block text-slate-400">Branch Dimension</label>
+            <NativeSelect
               name="branchId"
               defaultValue={branchId || ""}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2"
@@ -89,12 +90,12 @@ export default async function GeneralLedgerReportPage({ searchParams }: GLPagePr
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">From Date</label>
+              <label className="monolith-label block text-slate-400">From Date</label>
               <DateInput
                 name="fromDate"
                 defaultValue={params.fromDate || ""}
@@ -102,7 +103,7 @@ export default async function GeneralLedgerReportPage({ searchParams }: GLPagePr
               />
             </div>
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">To Date</label>
+              <label className="monolith-label block text-slate-400">To Date</label>
               <DateInput
                 name="toDate"
                 defaultValue={params.toDate || ""}
@@ -113,7 +114,7 @@ export default async function GeneralLedgerReportPage({ searchParams }: GLPagePr
 
           <button
             type="submit"
-            className="flex items-center justify-center gap-1.5 bg-[#00cec4] text-white hover:bg-[#00b8af] px-4 py-2 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer w-full h-[38px]"
+            className="flex items-center justify-center gap-1.5 bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer w-full h-[38px]"
           >
             <Filter className="size-3.5" />
             <span>Apply Filters</span>
@@ -125,7 +126,7 @@ export default async function GeneralLedgerReportPage({ searchParams }: GLPagePr
       <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
         <div className="flex justify-between items-center border-b border-[#1c212a]/30 pb-3">
           <h3 className="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-2">
-            <Scale className="size-4.5 text-[#00cec4]" /> Audit Posting Records
+            <Scale className="size-4.5 text-[#F9D972]" /> Audit Posting Records
           </h3>
         </div>
 
@@ -135,7 +136,7 @@ export default async function GeneralLedgerReportPage({ searchParams }: GLPagePr
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="ds-table">
+            <table className="monolith-table">
               <thead>
                 <tr>
                   <th>Posting Date</th>
@@ -170,18 +171,18 @@ export default async function GeneralLedgerReportPage({ searchParams }: GLPagePr
                         </div>
                       </td>
                       <td>
-                        <NextLink href={path} className="text-[#00cec4] hover:underline font-mono font-bold">
+                        <NextLink href={path} className="text-[#F9D972] hover:underline font-mono font-bold">
                           {ent.voucherType.replace("_", " ")}
                         </NextLink>
                       </td>
                       <td className="text-slate-400 max-w-xs truncate">{ent.remarks || "—"}</td>
-                      <td className="ds-numeric text-white text-right font-semibold">
+                      <td className="monolith-numeric text-white text-right font-semibold">
                         {ent.debit > 0 ? `₹${ent.debit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
                       </td>
-                      <td className="ds-numeric text-white text-right font-semibold">
+                      <td className="monolith-numeric text-white text-right font-semibold">
                         {ent.credit > 0 ? `₹${ent.credit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
                       </td>
-                      <td className="ds-numeric text-white text-right font-bold text-[#00cec4]">
+                      <td className="monolith-numeric text-white text-right font-bold text-[#F9D972]">
                         ₹{ent.runningBalance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
@@ -194,8 +195,8 @@ export default async function GeneralLedgerReportPage({ searchParams }: GLPagePr
                   <td></td>
                   <td></td>
                   <td></td>
-                  <td className="ds-numeric text-right">₹{periodDebit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                  <td className="ds-numeric text-right">₹{periodCredit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                  <td className="monolith-numeric text-right">₹{periodDebit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                  <td className="monolith-numeric text-right">₹{periodCredit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                   <td></td>
                 </tr>
               </tfoot>

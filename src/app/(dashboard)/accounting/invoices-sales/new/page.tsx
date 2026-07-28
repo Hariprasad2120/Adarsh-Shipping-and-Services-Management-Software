@@ -3,7 +3,7 @@ import { CommercialDocumentFormPage } from "../../_components/commercial-documen
 
 export default function NewAccountingInvoiceSalesPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-sm text-on-surface-variant">Loading…</div>}>
+    <Suspense fallback={<div className="p-8 text-sm text-mono-muted">Loading…</div>}>
       <CommercialDocumentFormPage
         title="Create Commercial Document"
         description="Generate invoice, sales order, or purchase order records from the Accounting workspace."

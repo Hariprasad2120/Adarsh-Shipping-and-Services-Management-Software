@@ -1,13 +1,13 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
 import Link from "next/link";
 import { HistoryFilters } from "./history-filters";
 import { redirect } from "next/navigation";
 import { History } from "lucide-react";
 
 const STAGE_COLORS: Record<string, string> = {
-  DUE_NOTIFIED: "bg-surface-container-high text-on-surface-variant dark:bg-slate-800 dark:text-slate-400",
+  DUE_NOTIFIED: "bg-mono-soft text-mono-muted dark:bg-slate-800 dark:text-slate-400",
   REVIEWERS_ASSIGNED: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
   SELF_ASSESSMENT_OPEN: "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
   REVIEWER_RATING: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
@@ -66,7 +66,7 @@ export default async function HistoryPage({
   const orgId = currentUser.orgId;
   if (!orgId) {
     return (
-      <div className="rounded-xl border border-outline-variant bg-surface p-8 text-center text-sm text-on-surface-variant">
+      <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">
         Organisation configuration missing.
       </div>
     );
@@ -158,13 +158,13 @@ export default async function HistoryPage({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <p className="text-sm text-on-surface-variant dark:text-slate-400 font-medium">
+          <p className="text-sm text-mono-muted dark:text-slate-400 font-medium">
             Review history and status logs of employee appraisal cycles.
           </p>
         </div>
       </div>
 
-      <div className="border-b border-outline-variant pb-4">
+      <div className="border-b border-mono-border pb-4">
         <HistoryFilters
           defaultQ={sp.q}
           defaultMonth={sp.month}
@@ -178,12 +178,12 @@ export default async function HistoryPage({
         {appraisals.length} record{appraisals.length !== 1 ? "s" : ""} found
       </p>
 
-      <Card className="border-0 shadow-sm overflow-hidden bg-surface">
+      <Card className="border-0 shadow-sm overflow-hidden bg-mono-card">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left min-w-[800px]">
               <thead>
-                <tr className="border-b border-outline-variant bg-surface-container-high dark:bg-slate-800/30 text-xs font-bold text-on-surface-variant dark:text-slate-400">
+                <tr className="border-b border-mono-border bg-mono-soft dark:bg-slate-800/30 text-xs font-bold text-mono-muted dark:text-slate-400">
                   <th className="py-3.5 px-5 font-semibold">Employee</th>
                   {(isAdmin || isManagement) && (
                     <th className="px-5 py-3.5 font-semibold">Emp #</th>
@@ -216,10 +216,10 @@ export default async function HistoryPage({
                   const hikeAmount = decision?.amount ?? hikeFinal?.amount;
 
                   return (
-                    <tr key={c.id} className="hover:bg-surface-container-high/30 dark:hover:bg-slate-800/5 transition duration-150">
+                    <tr key={c.id} className="hover:bg-mono-soft/30 dark:hover:bg-slate-800/5 transition duration-150">
                       <td className="py-3.5 px-5 font-bold text-slate-900 dark:text-white">
                         {canViewEmployeeDetail ? (
-                          <Link href={`/hrms/employees/${c.employee.id}`} className="text-[#00cec4] hover:underline">
+                          <Link href={`/hrms/employees/${c.employee.id}`} className="text-[#F9D972] hover:underline">
                             {toTitleCase(c.employee.name)}
                           </Link>
                         ) : (
@@ -227,18 +227,18 @@ export default async function HistoryPage({
                         )}
                       </td>
                       {(isAdmin || isManagement) && (
-                        <td className="px-5 py-3.5 text-on-surface-variant font-semibold">
+                        <td className="px-5 py-3.5 text-mono-muted font-semibold">
                           {c.employee.employeeNumber ?? "—"}
                         </td>
                       )}
-                      <td className="px-5 py-3.5 text-on-surface-variant dark:text-slate-400">
+                      <td className="px-5 py-3.5 text-mono-muted dark:text-slate-400">
                         {c.cycle.name} ({c.cycle.year})
                       </td>
-                      <td className="px-5 py-3.5 text-on-surface-variant font-semibold">
+                      <td className="px-5 py-3.5 text-mono-muted font-semibold">
                         {new Date(c.dueDate).toLocaleDateString("en-IN")}
                       </td>
                       <td className="px-5 py-3.5">
-                        <span className={`text-[10px] font-bold rounded-full px-2.5 py-1 ${STAGE_COLORS[c.stage] ?? "bg-surface-container-high text-on-surface-variant"}`}>
+                        <span className={`text-[10px] font-bold rounded-full px-2.5 py-1 ${STAGE_COLORS[c.stage] ?? "bg-mono-soft text-mono-muted"}`}>
                           {c.stage.replace(/_/g, " ")}
                         </span>
                       </td>
@@ -254,7 +254,7 @@ export default async function HistoryPage({
                           "—"
                         )}
                       </td>
-                      <td className="px-5 py-3.5 text-on-surface-variant dark:text-slate-400 max-w-xs truncate">
+                      <td className="px-5 py-3.5 text-mono-muted dark:text-slate-400 max-w-xs truncate">
                         {decision?.slab?.label ?? "—"}
                       </td>
                       <td className="px-5 py-3.5">
@@ -268,7 +268,7 @@ export default async function HistoryPage({
                       </td>
                       {canViewCycleDetail && (
                         <td className="px-5 py-3.5 text-right">
-                          <Link href={`/ams/appraisals/${c.id}`} className="text-xs text-[#00cec4] hover:underline font-bold">
+                          <Link href={`/ams/appraisals/${c.id}`} className="text-xs text-[#F9D972] hover:underline font-bold">
                             View details →
                           </Link>
                         </td>

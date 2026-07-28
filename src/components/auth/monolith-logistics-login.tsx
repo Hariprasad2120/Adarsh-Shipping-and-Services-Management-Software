@@ -276,7 +276,7 @@ export function MonolithLogisticsLogin() {
 
           <button
             type="button"
-            className={`ds-plain ${styles.petButton} ${styles[`mood-${mood}`]}`}
+            className={`monolith-plain ${styles.petButton} ${styles[`mood-${mood}`]}`}
             onClick={interactWithPet}
             aria-label={`Interact with Monolith pet. ${petMessage}`}
           >

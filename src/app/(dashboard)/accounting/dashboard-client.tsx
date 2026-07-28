@@ -1,6 +1,6 @@
 "use client";
 
-import { DateInput } from "@/components/ui/date-input";
+import { DateInput } from "@/components/monolith/date-input";
 import React, { useState, useEffect, useRef } from "react";
 import NextLink from "next/link";
 import {Wallet,ArrowUpRight,ArrowDownRight,Scale,Receipt,ArrowRight,FileText,Clock,Settings,Lock,Unlock,Ship,FileSpreadsheet,} from "lucide-react";
@@ -72,12 +72,12 @@ export function DashboardClient({
       const endAngle = pct * 2 * Math.PI - Math.PI / 2;
 
       ctx.shadowBlur = 12;
-      ctx.shadowColor = "#00cec4";
+      ctx.shadowColor = "#F9D972";
 
       ctx.beginPath();
       ctx.arc(x, y, radius, -Math.PI / 2, endAngle);
       ctx.lineWidth = 10;
-      ctx.strokeStyle = "#00cec4";
+      ctx.strokeStyle = "#F9D972";
       ctx.stroke();
 
       // Reset shadow
@@ -125,12 +125,12 @@ export function DashboardClient({
       const endAngle = pct * 2 * Math.PI - Math.PI / 2;
 
       ctx.shadowBlur = 12;
-      ctx.shadowColor = "#fb923c";
+      ctx.shadowColor = "#D88700";
 
       ctx.beginPath();
       ctx.arc(x, y, radius, -Math.PI / 2, endAngle);
       ctx.lineWidth = 10;
-      ctx.strokeStyle = "#fb923c";
+      ctx.strokeStyle = "#D88700";
       ctx.stroke();
 
       ctx.shadowBlur = 0;
@@ -183,9 +183,9 @@ export function DashboardClient({
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
       {/* ─── Header Console ──────────────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/20 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-mono-border/20 pb-5">
         <div>
-          <h2 className="ds-h1 text-[var(--color-on-surface)]">Finance &amp; Accounting</h2>
+          <h2 className="monolith-h1 text-[var(--color-on-surface)]">Finance &amp; Accounting</h2>
 
           <p className="text-slate-400 text-xs mt-1">
             Real-time double-entry general ledger dashboard, cash liquidity tracking, and financial statements.
@@ -194,9 +194,9 @@ export function DashboardClient({
         <div className="flex gap-3">
           <button
             onClick={() => setShowLockModal(true)}
-            className={`border border-outline-variant/20 px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+            className={`border border-mono-border/20 px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
               periodLock
-                ? "bg-orange-950/20 text-[#fb923c] border-orange-500/20"
+                ? "bg-orange-950/20 text-[#D88700] border-orange-500/20"
                 : "bg-slate-900 text-slate-200 hover:bg-slate-800"
             }`}
           >
@@ -207,7 +207,7 @@ export function DashboardClient({
             href="/accounting/settings"
             className="flex items-center gap-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-200 px-4 py-2 rounded-xl text-xs font-semibold transition-all"
           >
-            <Settings className="size-3.5 text-[#00cec4]" />
+            <Settings className="size-3.5 text-[#F9D972]" />
             <span>Settings</span>
           </NextLink>
         </div>
@@ -217,9 +217,9 @@ export function DashboardClient({
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <NextLink
           href="/accounting/banking"
-          className="bg-[var(--color-surface)] border border-outline-variant/10 p-4 rounded-xl flex items-center gap-3 hover-cyan hover:scale-[1.02] transition-all"
+          className="bg-[var(--color-surface)] border border-mono-border/10 p-4 rounded-xl flex items-center gap-3 monolith-hover hover:scale-[1.02] transition-all"
         >
-          <span className="ds-icon-badge">
+          <span className="monolith-icon-badge">
             <Wallet size={16} />
           </span>
           <span className="text-xs uppercase font-bold text-[var(--color-on-surface)] tracking-wider">Banking &amp; Cash</span>
@@ -227,9 +227,9 @@ export function DashboardClient({
 
         <NextLink
           href="/accounting/quotations"
-          className="bg-[var(--color-surface)] border border-outline-variant/10 p-4 rounded-xl flex items-center gap-3 hover-cyan hover:scale-[1.02] transition-all"
+          className="bg-[var(--color-surface)] border border-mono-border/10 p-4 rounded-xl flex items-center gap-3 monolith-hover hover:scale-[1.02] transition-all"
         >
-          <span className="ds-icon-badge">
+          <span className="monolith-icon-badge">
             <FileText size={16} />
           </span>
           <span className="text-xs uppercase font-bold text-[var(--color-on-surface)] tracking-wider">Quotations &amp; Notes</span>
@@ -237,9 +237,9 @@ export function DashboardClient({
 
         <NextLink
           href="/accounting/jobs"
-          className="bg-[var(--color-surface)] border border-outline-variant/10 p-4 rounded-xl flex items-center gap-3 hover-cyan hover:scale-[1.02] transition-all"
+          className="bg-[var(--color-surface)] border border-mono-border/10 p-4 rounded-xl flex items-center gap-3 monolith-hover hover:scale-[1.02] transition-all"
         >
-          <span className="ds-icon-badge">
+          <span className="monolith-icon-badge">
             <Ship size={16} />
           </span>
           <span className="text-xs uppercase font-bold text-[var(--color-on-surface)] tracking-wider">Cargo Job Costing</span>
@@ -247,9 +247,9 @@ export function DashboardClient({
 
         <NextLink
           href="/accounting/reports"
-          className="bg-[var(--color-surface)] border border-outline-variant/10 p-4 rounded-xl flex items-center gap-3 hover-cyan hover:scale-[1.02] transition-all"
+          className="bg-[var(--color-surface)] border border-mono-border/10 p-4 rounded-xl flex items-center gap-3 monolith-hover hover:scale-[1.02] transition-all"
         >
-          <span className="ds-icon-badge">
+          <span className="monolith-icon-badge">
             <FileSpreadsheet size={16} />
           </span>
           <span className="text-xs uppercase font-bold text-[var(--color-on-surface)] tracking-wider">Reports Center</span>
@@ -257,9 +257,9 @@ export function DashboardClient({
 
         <NextLink
           href="/accounting/accounts"
-          className="bg-[var(--color-surface)] border border-outline-variant/10 p-4 rounded-xl flex items-center gap-3 hover-cyan hover:scale-[1.02] transition-all col-span-2 md:col-span-1"
+          className="bg-[var(--color-surface)] border border-mono-border/10 p-4 rounded-xl flex items-center gap-3 monolith-hover hover:scale-[1.02] transition-all col-span-2 md:col-span-1"
         >
-          <span className="ds-icon-badge">
+          <span className="monolith-icon-badge">
             <Scale size={16} />
           </span>
           <span className="text-xs uppercase font-bold text-[var(--color-on-surface)] tracking-wider">Chart of Accounts</span>
@@ -268,11 +268,11 @@ export function DashboardClient({
 
       {/* ─── Financial Gauges and Highlights ─────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="card-left-accent bg-[var(--color-surface)] p-6 rounded-xl border border-outline-variant/10 shadow-sm flex items-center justify-between">
+        <div className="monolith-card monolith-accent bg-[var(--color-surface)] p-6 rounded-xl border border-mono-border/10 shadow-sm flex items-center justify-between">
           <div className="space-y-2">
-            <span className="ds-label text-slate-400">Liquid Cash Ratio</span>
+            <span className="monolith-label text-slate-400">Liquid Cash Ratio</span>
             <h4 className="text-sm font-bold text-[var(--color-on-surface)] uppercase tracking-wider">Liquid-to-Asset</h4>
-            <p className="ds-numeric text-lg font-semibold text-[#00cec4] mt-1">
+            <p className="monolith-numeric text-lg font-semibold text-[#F9D972] mt-1">
               ₹{cashLiquidity.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
             </p>
             <p className="text-[10px] text-slate-500">Live bank/cash index</p>
@@ -280,11 +280,11 @@ export function DashboardClient({
           <canvas ref={canvasRef} width={130} height={130} className="w-[130px] h-[130px]" />
         </div>
 
-        <div className="card-left-accent bg-[var(--color-surface)] p-6 rounded-xl border border-outline-variant/10 shadow-sm flex items-center justify-between">
+        <div className="monolith-card monolith-accent bg-[var(--color-surface)] p-6 rounded-xl border border-mono-border/10 shadow-sm flex items-center justify-between">
           <div className="space-y-2">
-            <span className="ds-label text-slate-400">Profitability Ratio</span>
+            <span className="monolith-label text-slate-400">Profitability Ratio</span>
             <h4 className="text-sm font-bold text-[var(--color-on-surface)] uppercase tracking-wider">Asset Margin (YTD)</h4>
-            <p className="ds-numeric text-lg font-semibold text-[#fb923c] mt-1">
+            <p className="monolith-numeric text-lg font-semibold text-[#D88700] mt-1">
               ₹{netProfit.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
             </p>
             <p className="text-[10px] text-slate-500">Operating margins</p>
@@ -294,17 +294,17 @@ export function DashboardClient({
 
         <div className={`p-6 rounded-xl border shadow-sm flex flex-col justify-between ${
           periodLock
-            ? "card-left-accent-orange bg-orange-950/10 border-orange-500/20"
-            : "card-left-accent bg-[var(--color-surface)] border-outline-variant/10"
+            ? "monolith-card monolith-accent-warning bg-orange-950/10 border-orange-500/20"
+            : "monolith-card monolith-accent bg-[var(--color-surface)] border-mono-border/10"
         }`}>
           <div className="flex justify-between items-start">
             <div>
-              <span className="ds-label text-slate-400">Transaction Posting Lock</span>
-              <h4 className={`text-sm font-bold uppercase mt-1 ${periodLock ? "text-[#fb923c]" : "text-[var(--color-on-surface)]"}`}>
+              <span className="monolith-label text-slate-400">Transaction Posting Lock</span>
+              <h4 className={`text-sm font-bold uppercase mt-1 ${periodLock ? "text-[#D88700]" : "text-[var(--color-on-surface)]"}`}>
                 {periodLock ? "Full Lock Active" : "No Locks Configured"}
               </h4>
             </div>
-            <span className="ds-icon-badge" style={periodLock ? { background: 'rgba(251,146,60,0.10)', color: '#fb923c' } : undefined}>
+            <span className="monolith-icon-badge" style={periodLock ? { background: 'rgba(251,146,60,0.10)', color: '#D88700' } : undefined}>
               <Lock size={16} />
             </span>
           </div>
@@ -312,7 +312,7 @@ export function DashboardClient({
           <div className="mt-4">
             {periodLock ? (
               <p className="text-xs text-slate-300">
-                All records posted on or before <strong className="ds-numeric">{new Date(periodLock.lockDate).toLocaleDateString("en-IN")}</strong> are locked against edit/deletion.
+                All records posted on or before <strong className="monolith-numeric">{new Date(periodLock.lockDate).toLocaleDateString("en-IN")}</strong> are locked against edit/deletion.
               </p>
             ) : (
               <p className="text-xs text-slate-400">
@@ -325,23 +325,23 @@ export function DashboardClient({
 
       {/* ─── Core Ledger Metrics ─────────────────────────────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-5 flex flex-col justify-between shadow-sm card-top-accent">
-          <span className="ds-label text-slate-400">Total Assets</span>
-          <h3 className="mt-2 text-2xl font-bold ds-numeric text-[var(--color-on-surface)]">
+        <div className="rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-5 flex flex-col justify-between shadow-sm monolith-card monolith-accent">
+          <span className="monolith-label text-slate-400">Total Assets</span>
+          <h3 className="mt-2 text-2xl font-bold monolith-numeric text-[var(--color-on-surface)]">
             ₹{totalAssets.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           </h3>
         </div>
 
-        <div className="rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-5 flex flex-col justify-between shadow-sm card-top-accent-orange">
-          <span className="ds-label text-slate-400">Total Liabilities</span>
-          <h3 className="mt-2 text-2xl font-bold ds-numeric text-[#fb923c]">
+        <div className="rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-5 flex flex-col justify-between shadow-sm monolith-card monolith-accent-warning">
+          <span className="monolith-label text-slate-400">Total Liabilities</span>
+          <h3 className="mt-2 text-2xl font-bold monolith-numeric text-[#D88700]">
             ₹{totalLiabilities.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           </h3>
         </div>
 
-        <div className="rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-5 flex flex-col justify-between shadow-sm card-top-accent">
-          <span className="ds-label text-slate-400">Net Profit Statement</span>
-          <h3 className={`mt-2 text-2xl font-bold ds-numeric ${netProfit >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+        <div className="rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-5 flex flex-col justify-between shadow-sm monolith-card monolith-accent">
+          <span className="monolith-label text-slate-400">Net Profit Statement</span>
+          <h3 className={`mt-2 text-2xl font-bold monolith-numeric ${netProfit >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
             ₹{netProfit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           </h3>
         </div>
@@ -353,10 +353,10 @@ export function DashboardClient({
         <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4 shadow-sm">
           <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3">
             <div className="flex items-center gap-2">
-              <Receipt className="size-4 text-[#00cec4]" />
+              <Receipt className="size-4 text-[#F9D972]" />
               <h3 className="font-bold text-xs text-[var(--color-on-surface)] uppercase tracking-wider">Recent Invoices</h3>
             </div>
-            <NextLink href="/accounting/sales-invoices" className="text-[11px] text-[#00cec4] hover:underline flex items-center gap-1 uppercase tracking-wider font-semibold">
+            <NextLink href="/accounting/sales-invoices" className="text-[11px] text-[#F9D972] hover:underline flex items-center gap-1 uppercase tracking-wider font-semibold">
               View All <ArrowRight className="size-3" />
             </NextLink>
           </div>
@@ -374,7 +374,7 @@ export function DashboardClient({
                     <span className="text-[10px] text-slate-400 block mt-0.5 uppercase truncate max-w-[150px]">{inv.customerName}</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-mono text-[var(--color-on-surface)] font-bold block ds-numeric">₹{inv.grandTotal.toLocaleString("en-IN")}</span>
+                    <span className="font-mono text-[var(--color-on-surface)] font-bold block monolith-numeric">₹{inv.grandTotal.toLocaleString("en-IN")}</span>
                     <span className={`px-1.5 py-0.5 text-[8px] font-bold rounded uppercase tracking-wider block mt-1 inline-block ${
                       inv.status === "PAID" ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"
                     }`}>
@@ -391,10 +391,10 @@ export function DashboardClient({
         <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4 shadow-sm">
           <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3">
             <div className="flex items-center gap-2">
-              <Wallet className="size-4 text-[#00cec4]" />
+              <Wallet className="size-4 text-[#F9D972]" />
               <h3 className="font-bold text-xs text-[var(--color-on-surface)] uppercase tracking-wider">Recent Payments</h3>
             </div>
-            <NextLink href="/accounting/payment-entries" className="text-[11px] text-[#00cec4] hover:underline flex items-center gap-1 uppercase tracking-wider font-semibold">
+            <NextLink href="/accounting/payment-entries" className="text-[11px] text-[#F9D972] hover:underline flex items-center gap-1 uppercase tracking-wider font-semibold">
               View All <ArrowRight className="size-3" />
             </NextLink>
           </div>
@@ -412,7 +412,7 @@ export function DashboardClient({
                     <span className="text-[10px] text-slate-400 block mt-0.5 uppercase">{p.paymentType} - {p.partyType}</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-mono text-[var(--color-on-surface)] font-bold block ds-numeric">₹{p.amount.toLocaleString("en-IN")}</span>
+                    <span className="font-mono text-[var(--color-on-surface)] font-bold block monolith-numeric">₹{p.amount.toLocaleString("en-IN")}</span>
                     <span className="text-[9px] text-slate-400 block mt-0.5">{new Date(p.postingDate).toLocaleDateString("en-IN")}</span>
                   </div>
                 </div>
@@ -425,10 +425,10 @@ export function DashboardClient({
         <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4 shadow-sm">
           <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3">
             <div className="flex items-center gap-2">
-              <FileText className="size-4 text-[#00cec4]" />
+              <FileText className="size-4 text-[#F9D972]" />
               <h3 className="font-bold text-xs text-[var(--color-on-surface)] uppercase tracking-wider">Recent Vouchers</h3>
             </div>
-            <NextLink href="/accounting/journal-entries" className="text-[11px] text-[#00cec4] hover:underline flex items-center gap-1 uppercase tracking-wider font-semibold">
+            <NextLink href="/accounting/journal-entries" className="text-[11px] text-[#F9D972] hover:underline flex items-center gap-1 uppercase tracking-wider font-semibold">
               View All <ArrowRight className="size-3" />
             </NextLink>
           </div>
@@ -446,7 +446,7 @@ export function DashboardClient({
                     <span className="text-[10px] text-slate-400 block mt-0.5 truncate max-w-[150px]">{jv.remarks}</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-mono text-[var(--color-on-surface)] font-bold block ds-numeric">₹{jv.totalDebit.toLocaleString("en-IN")}</span>
+                    <span className="font-mono text-[var(--color-on-surface)] font-bold block monolith-numeric">₹{jv.totalDebit.toLocaleString("en-IN")}</span>
                     <span className={`px-1.5 py-0.5 text-[8px] font-bold rounded uppercase tracking-wider block mt-1 inline-block ${
                       jv.status === "SUBMITTED" ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"
                     }`}>
@@ -463,9 +463,9 @@ export function DashboardClient({
       {/* ─── Lock Period Modal ───────────────────────────────────────────────── */}
       {showLockModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[var(--color-surface)] border border-outline-variant/10 rounded-2xl w-full max-w-[450px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 bg-[var(--color-surface-container)] border-b border-outline-variant/10 flex justify-between items-center">
-              <h3 className="ds-h3 text-white">Configure Period Lock</h3>
+          <div className="bg-[var(--color-surface)] border border-mono-border/10 rounded-2xl w-full max-w-[450px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 bg-[var(--color-surface-container)] border-b border-mono-border/10 flex justify-between items-center">
+              <h3 className="monolith-h3 text-white">Configure Period Lock</h3>
               <button
                 onClick={() => setShowLockModal(false)}
                 className="text-slate-400 hover:text-white text-lg font-bold"
@@ -482,17 +482,17 @@ export function DashboardClient({
               )}
 
               <div className="space-y-2">
-                <label className="ds-label block">Lock Postings On Or Before</label>
+                <label className="monolith-label block">Lock Postings On Or Before</label>
                 <DateInput
                   value={lockDate}
                   onChange={(e) => setLockDate(e.target.value)}
                   required
-                  className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs ds-numeric"
+                  className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs monolith-numeric"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="ds-label block">Authorized Password (Optional)</label>
+                <label className="monolith-label block">Authorized Password (Optional)</label>
                 <input
                   type="password"
                   value={lockPassword}
@@ -505,7 +505,7 @@ export function DashboardClient({
                 </p>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-outline-variant/10">
+              <div className="flex justify-end gap-3 pt-4 border-t border-mono-border/10">
                 <button
                   type="button"
                   onClick={() => setShowLockModal(false)}
@@ -516,7 +516,7 @@ export function DashboardClient({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all disabled:opacity-50"
+                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all disabled:opacity-50"
                 >
                   {loading ? "Saving Lock..." : "Save Configuration"}
                 </button>

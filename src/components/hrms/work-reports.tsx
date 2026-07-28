@@ -1,6 +1,7 @@
 "use client";
 
-import { DateInput } from "@/components/ui/date-input";
+import { NativeSelect } from "@/components/monolith/native-select";
+import { DateInput } from "@/components/monolith/date-input";
 import React, { useState, useEffect } from "react";
 import { Plus, Check, X, Clock, HelpCircle, User, MapPin, Send } from "lucide-react";
 import { toast }from "sonner";
@@ -136,11 +137,11 @@ export function WorkReportsView() {
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-slate-400 uppercase">Daily Reports View</span>
           <span className="text-xs font-semibold text-slate-300">/</span>
-          <span className="text-xs font-bold text-[#00c4b6]">Edit</span>
+          <span className="text-xs font-bold text-[#F9D972]">Edit</span>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <select
+          <NativeSelect
             value={filter}
             onChange={(e) => setFilter(e.target.value as any)}
             className="text-xs font-bold bg-white border border-slate-200 rounded-lg p-1.5 outline-none cursor-pointer"
@@ -148,12 +149,12 @@ export function WorkReportsView() {
             <option value="all">Reportees + My Data</option>
             <option value="my">My Data</option>
             <option value="reportees">Reportees Only</option>
-          </select>
+          </NativeSelect>
 
           <button
             type="button"
             onClick={() => setShowAddModal(true)}
-            className="bg-[#00c4b6] hover:bg-[#00b0a3] text-white text-[11.5px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition-colors cursor-pointer ml-auto sm:ml-0"
+            className="bg-[#F9D972] hover:bg-[#00b0a3] text-white text-[11.5px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition-colors cursor-pointer ml-auto sm:ml-0"
           >
             <Plus className="size-3.5" />
             Add Record
@@ -196,7 +197,7 @@ export function WorkReportsView() {
                       key={report.id}
                       onClick={() => setSelectedReportId(report.id)}
                       className={`hover:bg-slate-50/50 transition-colors cursor-pointer ${
-                        isSelected ? "bg-[#00c4b6]/5" : ""
+                        isSelected ? "bg-[#F9D972]/5" : ""
                       }`}
                     >
                       <td className="px-6 py-4">
@@ -204,7 +205,7 @@ export function WorkReportsView() {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => setSelectedReportId(report.id)}
-                          className="rounded text-[#00c4b6] focus:ring-[#00c4b6]"
+                          className="rounded text-[#F9D972] focus:ring-[#F9D972]"
                         />
                       </td>
                       <td className="px-6 py-4">
@@ -258,7 +259,7 @@ export function WorkReportsView() {
               
               {/* Profile sub-header */}
               <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-                <div className="size-10 rounded-full bg-[#00c4b6]/10 flex items-center justify-center text-[#00c4b6] font-bold text-sm shrink-0">
+                <div className="size-10 rounded-full bg-[#F9D972]/10 flex items-center justify-center text-[#F9D972] font-bold text-sm shrink-0">
                   {selectedReport.user.photo ? (
                     <img src={selectedReport.user.photo} alt={selectedReport.user.name} className="size-full rounded-full object-cover" />
                   ) : (
@@ -284,7 +285,7 @@ export function WorkReportsView() {
               {/* Subtabs inner panel: Daily Update Report / Add Jobs */}
               <div className="space-y-4">
                 <div className="flex gap-4 border-b border-slate-100 pb-2">
-                  <span className="text-xs font-bold text-[#00c4b6] pb-2 border-b-2 border-[#00c4b6]">Daily Update report</span>
+                  <span className="text-xs font-bold text-[#F9D972] pb-2 border-b-2 border-[#F9D972]">Daily Update report</span>
                   <span className="text-xs font-semibold text-slate-400 cursor-not-allowed">Add Jobs</span>
                 </div>
 
@@ -339,14 +340,14 @@ export function WorkReportsView() {
                   <div className="md:col-span-2">
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">Added address</span>
                     <span className="text-slate-500 font-bold mt-1 block leading-normal flex items-start gap-1">
-                      <MapPin className="size-3.5 text-[#00c4b6] mt-0.5 shrink-0" />
+                      <MapPin className="size-3.5 text-[#F9D972] mt-0.5 shrink-0" />
                       {selectedReport.addedAddress || "Office HQ, Chennai"}
                     </span>
                   </div>
                   <div className="md:col-span-2">
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">Modified address</span>
                     <span className="text-slate-500 font-bold mt-1 block leading-normal flex items-start gap-1">
-                      <MapPin className="size-3.5 text-[#00c4b6] mt-0.5 shrink-0" />
+                      <MapPin className="size-3.5 text-[#F9D972] mt-0.5 shrink-0" />
                       {selectedReport.modifiedAddress || "Office HQ, Chennai"}
                     </span>
                   </div>
@@ -394,7 +395,7 @@ export function WorkReportsView() {
                     <div className="absolute -left-[30px] top-4.5 size-3.5 rounded-full bg-amber-500 border-2 border-white" />
                     
                     <div className="flex items-center gap-2">
-                      <div className="size-6 rounded-full bg-[#00c4b6]/10 flex items-center justify-center text-[#00c4b6] font-bold text-[10px]">
+                      <div className="size-6 rounded-full bg-[#F9D972]/10 flex items-center justify-center text-[#F9D972] font-bold text-[10px]">
                         Y
                       </div>
                       <div>
@@ -407,14 +408,14 @@ export function WorkReportsView() {
                       placeholder="Write approval comment..."
                       value={approvalComment}
                       onChange={(e) => setApprovalComment(e.target.value)}
-                      className="w-full text-xs p-2 border border-slate-200 rounded-lg outline-none focus:border-[#00c4b6] h-16 resize-none bg-white"
+                      className="w-full text-xs p-2 border border-slate-200 rounded-lg outline-none focus:border-[#F9D972] h-16 resize-none bg-white"
                     />
 
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => handleApprovalAction(selectedReport.id, "APPROVED")}
-                        className="bg-[#00c4b6] hover:bg-[#00b0a3] text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-sm transition-colors cursor-pointer"
+                        className="bg-[#F9D972] hover:bg-[#00b0a3] text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-sm transition-colors cursor-pointer"
                       >
                         Approve
                       </button>
@@ -475,21 +476,21 @@ export function WorkReportsView() {
                 <DateInput
                   value={newReport.date}
                   onChange={(e) => setNewReport({ ...newReport, date: e.target.value })}
-                  className="p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[#00c4b6]"
+                  className="p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[#F9D972]"
                 />
               </div>
 
               <div className="flex flex-col gap-1">
                 <label className="font-bold text-slate-500">Worked On</label>
-                <select
+                <NativeSelect
                   value={newReport.workedOn}
                   onChange={(e) => setNewReport({ ...newReport, workedOn: e.target.value as any })}
-                  className="p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[#00c4b6]"
+                  className="p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[#F9D972]"
                 >
                   <option value="Office">Office</option>
                   <option value="Home">Home</option>
                   <option value="Others">Others</option>
-                </select>
+                </NativeSelect>
               </div>
 
               <div className="flex flex-col gap-1">
@@ -499,7 +500,7 @@ export function WorkReportsView() {
                   placeholder="e.g. Kolkata clearance clearance"
                   value={newReport.jobNoName}
                   onChange={(e) => setNewReport({ ...newReport, jobNoName: e.target.value })}
-                  className="p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[#00c4b6]"
+                  className="p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[#F9D972]"
                 />
               </div>
 
@@ -509,7 +510,7 @@ export function WorkReportsView() {
                   placeholder="Explain today's clearances and clearances clearance logs..."
                   value={newReport.description}
                   onChange={(e) => setNewReport({ ...newReport, description: e.target.value })}
-                  className="p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[#00c4b6] h-20 resize-none"
+                  className="p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[#F9D972] h-20 resize-none"
                 />
               </div>
 
@@ -520,7 +521,7 @@ export function WorkReportsView() {
                   placeholder="e.g. Nimu Gossain Lane, Shobha Bazar, Kolkata..."
                   value={newReport.addedAddress}
                   onChange={(e) => setNewReport({ ...newReport, addedAddress: e.target.value })}
-                  className="p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[#00c4b6]"
+                  className="p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[#F9D972]"
                 />
               </div>
 
@@ -534,7 +535,7 @@ export function WorkReportsView() {
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#00c4b6] hover:bg-[#00b0a3] text-white px-4 py-2 rounded-lg font-bold transition-colors cursor-pointer"
+                  className="bg-[#F9D972] hover:bg-[#00b0a3] text-white px-4 py-2 rounded-lg font-bold transition-colors cursor-pointer"
                 >
                   Submit
                 </button>

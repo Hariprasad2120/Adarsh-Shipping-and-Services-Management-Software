@@ -1,5 +1,6 @@
 "use client";
 
+import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -121,14 +122,14 @@ export function PayrollClient({ initialBatches, settingsConfigured }: PayrollCli
       {/* ─── CONTROLS PANEL ────────────────────────────────────────────── */}
       <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
         <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-          <Calendar className="size-4.5 text-[#00cec4]" />
+          <Calendar className="size-4.5 text-[#F9D972]" />
           <h3 className="font-bold text-sm text-white uppercase tracking-wider">Payroll Control Center</h3>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-end gap-4">
           <div className="flex-1 space-y-1">
-            <label className="ds-label block text-slate-400">Select Month</label>
-            <select
+            <label className="monolith-label block text-slate-400">Select Month</label>
+            <NativeSelect
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-sm"
@@ -136,25 +137,25 @@ export function PayrollClient({ initialBatches, settingsConfigured }: PayrollCli
               {months.map((m, idx) => (
                 <option key={m} value={idx}>{m}</option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="flex-1 space-y-1">
-            <label className="ds-label block text-slate-400">Select Year</label>
-            <select
+            <label className="monolith-label block text-slate-400">Select Year</label>
+            <NativeSelect
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
               className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-sm"
             >
               <option value={2026}>2026</option>
               <option value={2027}>2027</option>
-            </select>
+            </NativeSelect>
           </div>
 
           <button
             disabled={isCompiling}
             onClick={handleCompilePreview}
-            className="flex items-center justify-center gap-2 bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-5 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all shrink-0 cursor-pointer disabled:opacity-50 h-[42px]"
+            className="flex items-center justify-center gap-2 bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-5 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all shrink-0 cursor-pointer disabled:opacity-50 h-[42px]"
           >
             {isCompiling ? (
               <>
@@ -173,7 +174,7 @@ export function PayrollClient({ initialBatches, settingsConfigured }: PayrollCli
         <button
           onClick={() => setActiveTab("BATCHES")}
           className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
-            activeTab === "BATCHES" ? "border-[#00cec4] text-white" : "border-transparent text-slate-400 hover:text-white"
+            activeTab === "BATCHES" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
           }`}
         >
           Payroll Batches ({batches.length})
@@ -182,7 +183,7 @@ export function PayrollClient({ initialBatches, settingsConfigured }: PayrollCli
           <button
             onClick={() => setActiveTab("PREVIEW")}
             className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
-              activeTab === "PREVIEW" ? "border-[#00cec4] text-white" : "border-transparent text-slate-400 hover:text-white"
+              activeTab === "PREVIEW" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
             }`}
           >
             Salary Sheet Compilation
@@ -200,7 +201,7 @@ export function PayrollClient({ initialBatches, settingsConfigured }: PayrollCli
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="ds-table">
+                <table className="monolith-table">
                   <thead>
                     <tr>
                       <th>Payroll Month</th>
@@ -217,7 +218,7 @@ export function PayrollClient({ initialBatches, settingsConfigured }: PayrollCli
                       return (
                         <tr key={batch.id} className="hover:bg-[#161f28]/20 transition-all">
                           <td className="font-semibold text-white">{monthLabel}</td>
-                          <td className="ds-numeric font-bold text-white">
+                          <td className="monolith-numeric font-bold text-white">
                             ₹{batch.totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                           <td>
@@ -225,7 +226,7 @@ export function PayrollClient({ initialBatches, settingsConfigured }: PayrollCli
                               batch.status === "PAID"
                                 ? "bg-emerald-500/10 text-emerald-400"
                                 : batch.status === "FINALIZED"
-                                ? "bg-[#00cec4]/10 text-[#00cec4]"
+                                ? "bg-[#F9D972]/10 text-[#F9D972]"
                                 : "bg-amber-500/10 text-amber-400"
                             }`}>
                               {batch.status}
@@ -235,7 +236,7 @@ export function PayrollClient({ initialBatches, settingsConfigured }: PayrollCli
                             {batch.journalEntry ? (
                               <Link
                                 href={`/accounting/journal-entries/${batch.journalEntry.id}`}
-                                className="text-[#00cec4] hover:underline font-mono text-xs font-bold"
+                                className="text-[#F9D972] hover:underline font-mono text-xs font-bold"
                               >
                                 {batch.journalEntry.voucherNo}
                               </Link>
@@ -249,7 +250,7 @@ export function PayrollClient({ initialBatches, settingsConfigured }: PayrollCli
                                 <button
                                   disabled={processingBatchId === batch.id}
                                   onClick={() => handleFinalizeBatch(batch.id)}
-                                  className="flex items-center gap-1 bg-[#00cec4] text-white hover:bg-[#00b8af] px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50"
+                                  className="flex items-center gap-1 bg-[#F9D972] text-white hover:bg-[#E8C85D] px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50"
                                 >
                                   {processingBatchId === batch.id ? (
                                     <Loader2 className="size-3 animate-spin" />
@@ -262,7 +263,7 @@ export function PayrollClient({ initialBatches, settingsConfigured }: PayrollCli
                                 <button
                                   disabled={processingBatchId === batch.id}
                                   onClick={() => handlePayBatch(batch.id)}
-                                  className="flex items-center gap-1 bg-[#fb923c] text-white hover:bg-orange-500 px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50"
+                                  className="flex items-center gap-1 bg-[#D88700] text-white hover:bg-orange-500 px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50"
                                 >
                                   {processingBatchId === batch.id ? (
                                     <Loader2 className="size-3 animate-spin" />
@@ -302,14 +303,14 @@ export function PayrollClient({ initialBatches, settingsConfigured }: PayrollCli
               <button
                 disabled={isCreating}
                 onClick={handleCreateBatch}
-                className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50"
+                className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50"
               >
                 {isCreating ? "Generating batch..." : "Confirm & Save Draft Batch"}
               </button>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="ds-table">
+              <table className="monolith-table">
                 <thead>
                   <tr>
                     <th>Emp Number</th>
@@ -325,14 +326,14 @@ export function PayrollClient({ initialBatches, settingsConfigured }: PayrollCli
                 <tbody>
                   {previewData.salarySheets.map((sheet: any) => (
                     <tr key={sheet.userId} className="hover:bg-[#161f28]/10">
-                      <td className="ds-numeric font-semibold text-slate-400">#{sheet.employeeNumber || "—"}</td>
+                      <td className="monolith-numeric font-semibold text-slate-400">#{sheet.employeeNumber || "—"}</td>
                       <td className="font-semibold text-white">{sheet.name}</td>
                       <td className="text-slate-400 text-xs">{sheet.designation || "—"}</td>
-                      <td className="ds-numeric text-white">₹{sheet.basic.toLocaleString("en-IN")}</td>
-                      <td className="ds-numeric text-white">₹{sheet.hra.toLocaleString("en-IN")}</td>
-                      <td className="ds-numeric text-white">₹{sheet.allowances.toLocaleString("en-IN")}</td>
-                      <td className="ds-numeric font-bold text-[#00cec4]">₹{sheet.gross.toLocaleString("en-IN")}</td>
-                      <td className="ds-numeric font-bold text-white">₹{sheet.inHand.toLocaleString("en-IN")}</td>
+                      <td className="monolith-numeric text-white">₹{sheet.basic.toLocaleString("en-IN")}</td>
+                      <td className="monolith-numeric text-white">₹{sheet.hra.toLocaleString("en-IN")}</td>
+                      <td className="monolith-numeric text-white">₹{sheet.allowances.toLocaleString("en-IN")}</td>
+                      <td className="monolith-numeric font-bold text-[#F9D972]">₹{sheet.gross.toLocaleString("en-IN")}</td>
+                      <td className="monolith-numeric font-bold text-white">₹{sheet.inHand.toLocaleString("en-IN")}</td>
                     </tr>
                   ))}
                 </tbody>

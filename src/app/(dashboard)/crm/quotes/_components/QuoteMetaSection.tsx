@@ -19,8 +19,8 @@ export function QuoteMetaSection({ form, salespersons, projectOptions, hasCustom
   const errors = form.formState.errors;
 
   return (
-    <section className="ds-form-section border-b border-[#d9dee7] px-5 py-5">
-      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-on-surface-variant">Quote Metadata</h2>
+    <section className="monolith-form-section border-b border-[#d9dee7] px-5 py-5">
+      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-mono-muted">Quote Metadata</h2>
       <div className="space-y-0">
         <FormRow label="Quote#" required error={errors.quoteNumber?.message}>
           <div className="flex gap-2">

@@ -49,7 +49,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${kionaSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
         <script
@@ -59,18 +59,18 @@ export default function RootLayout({
                 var root = document.documentElement;
                 var savedTheme = localStorage.getItem('theme');
                 var resolvedTheme =
-                  savedTheme === 'dark' || savedTheme === 'light'
+                  savedTheme === 'night' || savedTheme === 'violet' || savedTheme === 'light'
                     ? savedTheme
                     : 'light';
-                root.classList.remove('dark', 'light');
-                root.classList.add(resolvedTheme);
-                root.style.colorScheme = resolvedTheme;
+                root.classList.remove('dark', 'light', 'night', 'violet', 'theme-light', 'theme-night', 'theme-violet');
+                root.classList.add(resolvedTheme, 'theme-' + resolvedTheme);
+                root.style.colorScheme = resolvedTheme === 'light' ? 'light' : 'dark';
               } catch (_) {}
             `,
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body className="monolith-app min-h-full flex flex-col">
         {children}
         <ScrollNavigator />
         <Toaster
@@ -79,7 +79,7 @@ export default function RootLayout({
           closeButton
           toastOptions={{
             style: {
-              fontFamily: "var(--font-kiona-sans), sans-serif",
+              fontFamily: "var(--font-geist-sans), sans-serif",
               fontSize: "14px",
             },
           }}

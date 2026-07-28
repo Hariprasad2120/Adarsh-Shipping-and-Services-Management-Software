@@ -104,7 +104,7 @@ export function MonaInput({
   }, [isListening]);
 
   return (
-    <div className="flex items-end gap-2 border-t border-outline-variant bg-surface px-3 py-2.5">
+    <div className="flex items-end gap-2 border-t border-mono-border bg-mono-card px-3 py-2.5">
       {/* Voice button */}
       {voiceSupported && (
         <button
@@ -165,7 +165,7 @@ export function MonaInput({
         placeholder={isListening ? "Listening..." : "Ask Mona anything..."}
         disabled={isLoading}
         rows={1}
-        className="mona-input flex-1 resize-none rounded-xl bg-surface-container-low text-on-surface border border-outline-variant px-3 py-2 text-[13px] leading-relaxed outline-none transition-colors placeholder:text-on-surface-variant/60"
+        className="mona-input flex-1 resize-none rounded-xl bg-mono-soft text-mono-text border border-mono-border px-3 py-2 text-[13px] leading-relaxed outline-none transition-colors placeholder:text-mono-muted/60"
         style={{ maxHeight: 120, minHeight: 36 }}
       />
 
@@ -178,7 +178,7 @@ export function MonaInput({
         style={{
           background:
             text.trim() && !isLoading
-              ? "linear-gradient(135deg, #00cec4, #00b8af)"
+              ? "linear-gradient(135deg, #F9D972, #E8C85D)"
               : "transparent",
           color:
             text.trim() && !isLoading

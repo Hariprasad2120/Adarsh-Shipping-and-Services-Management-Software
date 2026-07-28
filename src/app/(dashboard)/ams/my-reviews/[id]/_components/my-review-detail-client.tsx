@@ -6,8 +6,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
 import { CriteriaPointsForm, CriteriaPointsView } from "@/components/ams/criteria-points-form";
 import { useNotifications } from "@/components/notifications/notification-provider";
-import { Button } from "@/components/ui/button-1";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/monolith/button-1";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
 import type { AppraisalSelfFormTemplate, ReviewerRatingAnswers, SelfAssessmentAnswers } from "@/modules/ams/criteria-config";
 import type { CriterionPoint } from "@/modules/ams/types";
 
@@ -45,11 +45,11 @@ const STAGE_COLOR: Record<string, string> = {
   MEETING_PENDING: "bg-cyan-50 text-cyan-700 border-cyan-200",
   MEETING_LIVE: "bg-green-50 text-green-700 border-green-200",
   HIKE_FINALISATION: "bg-pink-50 text-pink-700 border-pink-200",
-  CLOSED: "bg-surface-container-high text-on-surface-variant border-outline-variant",
+  CLOSED: "bg-mono-soft text-mono-muted border-mono-border",
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  PENDING: "bg-surface-container text-on-surface-variant border-outline-variant/40",
+  PENDING: "bg-mono-soft text-mono-muted border-mono-border/40",
   AVAILABLE: "bg-green-100 text-green-700 border-green-200",
   UNAVAILABLE: "bg-red-100 text-red-600 border-red-200",
   FORCED: "bg-orange-100 text-orange-600 border-orange-200",
@@ -62,8 +62,8 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 const REVIEW_SUBMISSION_COLOR: Record<string, string> = {
-  SUBMITTED: "bg-[#00cec4]/10 text-[#008b85] border-[#00cec4]/25",
-  DRAFT: "bg-surface-container text-on-surface-variant border-outline-variant/40",
+  SUBMITTED: "bg-[#F9D972]/10 text-[#008b85] border-[#F9D972]/25",
+  DRAFT: "bg-mono-soft text-mono-muted border-mono-border/40",
 };
 
 function DeadlineBanner({
@@ -232,7 +232,7 @@ export function MyReviewDetailClient({
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <p className="text-sm text-on-surface-variant">
+        <p className="text-sm text-mono-muted">
           Reviewer workspace for this appraisal assignment.
         </p>
       </div>
@@ -265,17 +265,17 @@ export function MyReviewDetailClient({
           <CardContent className="space-y-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-1">
-                <p className="text-[15px] font-semibold text-on-surface">
+                <p className="text-[15px] font-semibold text-mono-text">
                   {appraisal.employee.name}
                 </p>
-                <p className="text-sm text-on-surface-variant">
+                <p className="text-sm text-mono-muted">
                   {appraisal.employee.designation ?? "No designation"} — {appraisal.cycle.name}{" "}
                   {appraisal.cycle.year}
                 </p>
-                <p className="text-xs uppercase tracking-[0.14em] text-on-surface-variant/70">
+                <p className="text-xs uppercase tracking-[0.14em] text-mono-muted/70">
                   Your role: {KIND_LABEL[appraisal.reviewerKind] ?? appraisal.reviewerKind}
                 </p>
-                <p className="text-xs text-on-surface-variant/60">
+                <p className="text-xs text-mono-muted/60">
                   Self-assessment edited {appraisal.selfAssessmentEditCount} time
                   {appraisal.selfAssessmentEditCount === 1 ? "" : "s"}.
                 </p>
@@ -283,7 +283,7 @@ export function MyReviewDetailClient({
               <div className="flex flex-col items-start gap-2 sm:items-end">
                 <span
                   className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                    STAGE_COLOR[appraisal.stage] ?? "border-outline-variant/40 bg-surface-container text-on-surface-variant"
+                    STAGE_COLOR[appraisal.stage] ?? "border-mono-border/40 bg-mono-soft text-mono-muted"
                   }`}
                 >
                   {appraisal.stage.replace(/_/g, " ")}
@@ -291,7 +291,7 @@ export function MyReviewDetailClient({
                 <span
                   className={`rounded-full border px-3 py-1 text-xs font-medium ${
                     STATUS_COLOR[appraisal.reviewerStatus] ??
-                    "bg-surface-container text-on-surface-variant border-outline-variant/40"
+                    "bg-mono-soft text-mono-muted border-mono-border/40"
                   }`}
                 >
                   {appraisal.reviewerStatus}
@@ -310,21 +310,21 @@ export function MyReviewDetailClient({
               {appraisal.assignedReviewers.map((reviewer) => (
                 <div
                   key={reviewer.id}
-                  className="rounded-2xl border border-outline-variant/40 bg-surface-container-low px-4 py-4"
+                  className="rounded-2xl border border-mono-border/40 bg-mono-soft px-4 py-4"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-0.5">
-                      <p className="text-sm font-semibold text-on-surface">
+                      <p className="text-sm font-semibold text-mono-text">
                         {reviewer.name ?? KIND_LABEL[reviewer.kind] ?? reviewer.kind}
                       </p>
-                      <p className="text-xs text-on-surface-variant">
+                      <p className="text-xs text-mono-muted">
                         {reviewer.designation ?? KIND_LABEL[reviewer.kind] ?? reviewer.kind}
                       </p>
                     </div>
                     <span
                       className={`rounded-full border px-3 py-1 text-[11px] font-medium ${
                         STATUS_COLOR[reviewer.availabilityStatus] ??
-                        "bg-surface-container text-on-surface-variant border-outline-variant/40"
+                        "bg-mono-soft text-mono-muted border-mono-border/40"
                       }`}
                     >
                       {reviewer.availabilityStatus}
@@ -332,14 +332,14 @@ export function MyReviewDetailClient({
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="rounded-full border border-outline-variant/40 bg-surface px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-on-surface-variant">
+                    <span className="rounded-full border border-mono-border/40 bg-mono-card px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-mono-muted">
                       {KIND_LABEL[reviewer.kind] ?? reviewer.kind}
                     </span>
                     {reviewer.submissionStatus ? (
                       <span
                         className={`rounded-full border px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] ${
                           REVIEW_SUBMISSION_COLOR[reviewer.submissionStatus] ??
-                          "bg-surface-container text-on-surface-variant border-outline-variant/40"
+                          "bg-mono-soft text-mono-muted border-mono-border/40"
                         }`}
                       >
                         {reviewer.submissionStatus}
@@ -348,11 +348,11 @@ export function MyReviewDetailClient({
                   </div>
 
                   {reviewer.submittedAt ? (
-                    <p className="mt-3 text-xs text-on-surface-variant">
+                    <p className="mt-3 text-xs text-mono-muted">
                       Submitted on {new Date(reviewer.submittedAt).toLocaleString("en-IN")}
                     </p>
                   ) : (
-                    <p className="mt-3 text-xs text-on-surface-variant/60">
+                    <p className="mt-3 text-xs text-mono-muted/60">
                       No rating submitted yet.
                     </p>
                   )}
@@ -393,7 +393,7 @@ export function MyReviewDetailClient({
         ) : null}
 
         {appraisal.stage === "REVIEWER_RATING" && ratingDeadlinePassed ? (
-          <div className="rounded-xl border border-outline-variant/40 bg-surface-container px-4 py-3 text-sm text-on-surface-variant">
+          <div className="rounded-xl border border-mono-border/40 bg-mono-soft px-4 py-3 text-sm text-mono-muted">
             Reviewer rating is now view-only because the deadline has passed.
           </div>
         ) : null}
@@ -414,8 +414,8 @@ export function MyReviewDetailClient({
                 className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
               >
                 <div>
-                  <p className="text-sm font-semibold text-on-surface">Latest Submitted Rating</p>
-                  <p className="text-xs text-on-surface-variant">
+                  <p className="text-sm font-semibold text-mono-text">Latest Submitted Rating</p>
+                  <p className="text-xs text-mono-muted">
                     Expand to review the last submitted answers and jump back to any criterion.
                   </p>
                 </div>
@@ -451,19 +451,19 @@ export function MyReviewDetailClient({
               appraisal.selfAssessmentAnswers ? (
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00cec4]/10 px-3 py-1.5 text-xs font-medium text-[#008b85] ring-1 ring-[#00cec4]/25">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F9D972]/10 px-3 py-1.5 text-xs font-medium text-[#008b85] ring-1 ring-[#F9D972]/25">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                       Self-assessment submitted
                     </span>
                   </div>
-                  <p className="text-xs text-on-surface-variant/70">
+                  <p className="text-xs text-mono-muted/70">
                     The self-assessment content is available after the self-assessment deadline.
                   </p>
                 </div>
               ) : (
-                <p className="text-sm italic text-on-surface-variant/70">
+                <p className="text-sm italic text-mono-muted/70">
                   The appraisee has not submitted a self-assessment yet.
                 </p>
               )
@@ -476,7 +476,7 @@ export function MyReviewDetailClient({
                 selfTemplate={selfTemplate}
               />
             ) : (
-              <p className="text-sm italic text-on-surface-variant/70">
+              <p className="text-sm italic text-mono-muted/70">
                 The appraisee has not submitted a self-assessment yet.
               </p>
             )}
@@ -490,7 +490,7 @@ export function MyReviewDetailClient({
                 <CardTitle>Confirm Availability</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-on-surface-variant">
+                <p className="text-sm text-mono-muted">
                   Confirm whether you can take this review assignment.
                 </p>
                 <div className="flex flex-wrap gap-3 pt-1">
@@ -498,7 +498,7 @@ export function MyReviewDetailClient({
                     variant="default"
                     onClick={() => setAvailability(true)}
                     disabled={statusLoading !== null}
-                    className="bg-[#00cec4] hover:bg-[#00b8af] border-0"
+                    className="bg-[#F9D972] hover:bg-[#E8C85D] border-0"
                   >
                     {statusLoading === "available" ? "Saving…" : "Available"}
                   </Button>
@@ -506,7 +506,7 @@ export function MyReviewDetailClient({
                     variant="outline"
                     onClick={() => setAvailability(false)}
                     disabled={statusLoading !== null}
-                    className="border-[#00cec4]/40 text-[#008b85] hover:bg-[#00cec4]/5"
+                    className="border-[#F9D972]/40 text-[#008b85] hover:bg-[#F9D972]/5"
                   >
                     {statusLoading === "unavailable" ? "Saving…" : "Unavailable"}
                   </Button>
@@ -516,7 +516,7 @@ export function MyReviewDetailClient({
           ) : null}
 
           {showRatingEditor ? (
-            <Card className="card-top-accent-violet">
+            <Card className="monolith-card monolith-accent-violet">
               <CardHeader>
                 <CardTitle>Reviewer Rating</CardTitle>
               </CardHeader>
@@ -548,11 +548,11 @@ export function MyReviewDetailClient({
                   supplementary={[]}
                   answers={currentRating}
                 />
-                <div className="border-t border-outline-variant/40 pt-4">
+                <div className="border-t border-mono-border/40 pt-4">
                   <button
                     type="button"
                     onClick={() => setIsEditing(true)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-[#00cec4]/40 px-4 py-2 text-sm font-medium text-[#008b85] transition hover:bg-[#00cec4]/8"
+                    className="inline-flex items-center gap-2 rounded-xl border border-[#F9D972]/40 px-4 py-2 text-sm font-medium text-[#008b85] transition hover:bg-[#F9D972]/8"
                   >
                     Edit Rating
                   </button>
@@ -582,7 +582,7 @@ export function MyReviewDetailClient({
                 <CardTitle>Review Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-on-surface-variant">
+                <p className="text-sm text-mono-muted">
                   {getWaitingMessage(appraisal.stage)}
                 </p>
               </CardContent>
