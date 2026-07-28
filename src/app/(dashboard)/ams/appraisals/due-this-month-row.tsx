@@ -1,6 +1,11 @@
 "use client";
 
-import { Badge, DataTableCell, DataTablePrimaryLinkCell, DataTableRow } from "@/components/data-table";
+import {
+  Badge,
+  DataTableCell,
+  DataTablePrimaryLinkCell,
+  DataTableRow,
+} from "@/components/monolith/workspace-data-table";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
@@ -15,21 +20,38 @@ export type DueRow = {
 };
 
 export function DueThisMonthRow({ row }: { row: DueRow }) {
-  const href = row.appraisalId ? `/ams/appraisals/${row.appraisalId}` : `/ams/appraisals/assign/${row.employeeId}`;
+  const href = row.appraisalId
+    ? `/ams/appraisals/${row.appraisalId}`
+    : `/ams/appraisals/assign/${row.employeeId}`;
   const dueDateLabel = row.dueDate
-    ? new Intl.DateTimeFormat("en-IN", { timeZone: "UTC" }).format(new Date(row.dueDate))
+    ? new Intl.DateTimeFormat("en-IN", { timeZone: "UTC" }).format(
+        new Date(row.dueDate),
+      )
     : "-";
 
   return (
     <DataTableRow>
-      <DataTablePrimaryLinkCell href={href} className="font-medium text-mono-muted">
+      <DataTablePrimaryLinkCell
+        href={href}
+        className="font-medium text-mono-muted"
+      >
         <span>{row.employeeName}</span>
       </DataTablePrimaryLinkCell>
-      <DataTableCell className="text-xs text-mono-muted">{row.designation ?? "-"}</DataTableCell>
-      <DataTableCell className="text-xs text-mono-muted">{row.department ?? "-"}</DataTableCell>
+      <DataTableCell className="text-xs text-mono-muted">
+        {row.designation ?? "-"}
+      </DataTableCell>
+      <DataTableCell className="text-xs text-mono-muted">
+        {row.department ?? "-"}
+      </DataTableCell>
       <DataTableCell>
         {row.kind ? (
-          <Badge className={row.kind === "INTERMEDIATE" ? "bg-amber-50 text-amber-700" : "bg-indigo-50 text-indigo-700"}>
+          <Badge
+            className={
+              row.kind === "INTERMEDIATE"
+                ? "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]"
+                : "bg-mono-accent/10 text-mono-accent"
+            }
+          >
             {row.kind}
           </Badge>
         ) : (
@@ -43,7 +65,7 @@ export function DueThisMonthRow({ row }: { row: DueRow }) {
         <Link
           href={href}
           aria-label={`${row.appraisalId ? "Open" : "Start appraisal for"} ${row.employeeName}`}
-          className="inline-flex text-outline-variant transition-colors hover:text-[#00b5ad]"
+          className="inline-flex text-outline-variant transition-colors hover:text-mono-accent"
         >
           <ChevronRight className="h-4 w-4" />
         </Link>

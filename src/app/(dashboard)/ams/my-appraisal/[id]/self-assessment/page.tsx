@@ -5,12 +5,19 @@ import { getAppraisal, getSelfFormTemplate } from "@/modules/ams/service";
 import { db } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import { SelfAssessmentForm } from "./self-assessment-form";
-import type { AppraisalSelfFormTemplate, SelfAssessmentAnswers } from "@/modules/ams/criteria-config";
+import type {
+  AppraisalSelfFormTemplate,
+  SelfAssessmentAnswers,
+} from "@/modules/ams/criteria-config";
 import { mapCriterionRowToPoint } from "@/modules/ams/form-template";
 import { resolveSelfFormTemplate } from "@/modules/ams/self-form-template";
 import type { CriterionPoint } from "@/modules/ams/types";
 
-export default async function SelfAssessmentPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function SelfAssessmentPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const session = await auth();
   if (!session) redirect("/login");
 
@@ -44,9 +51,13 @@ export default async function SelfAssessmentPage({ params }: { params: Promise<{
   const categories: CriterionPoint[] = criteriaRows
     .filter((row) => row.kind === "CATEGORY")
     .map(mapCriterionRowToPoint);
-  const resolvedSelfTemplate = resolveSelfFormTemplate(categories, selfTemplate as AppraisalSelfFormTemplate);
+  const resolvedSelfTemplate = resolveSelfFormTemplate(
+    categories,
+    selfTemplate as AppraisalSelfFormTemplate,
+  );
 
-  const existingAnswers: SelfAssessmentAnswers | null = appraisal.selfAssessment?.answers
+  const existingAnswers: SelfAssessmentAnswers | null = appraisal.selfAssessment
+    ?.answers
     ? {
         ...(appraisal.selfAssessment.answers as SelfAssessmentAnswers),
         employeeInfo: {},
@@ -82,8 +93,9 @@ export default async function SelfAssessmentPage({ params }: { params: Promise<{
           }
           management={{
             claimedByName:
-              appraisal.reviewers.find((reviewer) => reviewer.kind === "MANAGEMENT")?.user.name ??
-              null,
+              appraisal.reviewers.find(
+                (reviewer) => reviewer.kind === "MANAGEMENT",
+              )?.user.name ?? null,
             submitted: appraisal.managementReviews.length > 0,
           }}
           meeting={{
@@ -92,10 +104,14 @@ export default async function SelfAssessmentPage({ params }: { params: Promise<{
           }}
         />
 
-        <div className="monolith-card monolith-accent rounded-[24px] border border-mono-border/35 bg-mono-card p-6">
-          <h2 className="monolith-h2 text-mono-text">Self-Assessment Summary</h2>
+        <div className="mnx-performance-surface mnx-accent-edge rounded-[24px] border border-mono-border/35 bg-mono-card p-6">
+          <h2 className="mnx-title-2 text-mono-text">
+            Self-Assessment Summary
+          </h2>
           <div className="mt-4 space-y-2 text-sm text-mono-muted">
-            <p className="text-base font-semibold text-mono-text">{appraisal.employee.name}</p>
+            <p className="text-base font-semibold text-mono-text">
+              {appraisal.employee.name}
+            </p>
             <p>{appraisal.employee.designation ?? "No designation"}</p>
             <p>
               {appraisal.cycle.name} {appraisal.cycle.year}
@@ -110,7 +126,9 @@ export default async function SelfAssessmentPage({ params }: { params: Promise<{
               <p>
                 Self-assessment deadline:{" "}
                 <span className="font-medium text-mono-text">
-                  {new Date(appraisal.selfAssessmentDeadline).toLocaleDateString("en-IN")}
+                  {new Date(
+                    appraisal.selfAssessmentDeadline,
+                  ).toLocaleDateString("en-IN")}
                 </span>
               </p>
             ) : null}
@@ -119,16 +137,18 @@ export default async function SelfAssessmentPage({ params }: { params: Promise<{
       </div>
 
       <div className="max-w-4xl">
-      <SelfAssessmentForm
-        appraisalId={id}
-        criteria={categories}
-        initialAnswers={existingAnswers}
-        selfAssessmentDeadline={appraisal.selfAssessmentDeadline?.toISOString() ?? null}
-        serverNow={now.toISOString()}
-        canEdit={canEdit}
-        status={appraisal.selfAssessment?.status ?? null}
-        template={resolvedSelfTemplate}
-      />
+        <SelfAssessmentForm
+          appraisalId={id}
+          criteria={categories}
+          initialAnswers={existingAnswers}
+          selfAssessmentDeadline={
+            appraisal.selfAssessmentDeadline?.toISOString() ?? null
+          }
+          serverNow={now.toISOString()}
+          canEdit={canEdit}
+          status={appraisal.selfAssessment?.status ?? null}
+          template={resolvedSelfTemplate}
+        />
       </div>
     </div>
   );

@@ -26,8 +26,21 @@ function isPeopleOperationsRoute(route) {
   );
 }
 
+function isPerformanceLearningRoute(route) {
+  return (
+    route === "/ams" ||
+    route.startsWith("/ams/") ||
+    route === "/lms" ||
+    route.startsWith("/lms/")
+  );
+}
+
 function isMonolithRoute(route) {
-  return knownMonolithRoutes.has(route) || isPeopleOperationsRoute(route);
+  return (
+    knownMonolithRoutes.has(route) ||
+    isPeopleOperationsRoute(route) ||
+    isPerformanceLearningRoute(route)
+  );
 }
 
 function walk(directory, targetName, found = []) {
@@ -104,6 +117,8 @@ function stateFor(route) {
   if (knownMonolithRoutes.has(route)) return "Migrated in batch 001";
   if (isPeopleOperationsRoute(route))
     return "Migrated in people operations batch 002";
+  if (isPerformanceLearningRoute(route))
+    return "Migrated in performance and learning batch 003";
   return "Pending module migration";
 }
 
@@ -163,7 +178,11 @@ const layouts = walk(appRoot, "layout.tsx")
                       ? "Shared HRMS route framing and asynchronous states"
                       : source.includes("/attendance/layout.tsx")
                         ? "Shared Attendance route framing and asynchronous states"
-                        : "Nested route layout";
+                        : source.includes("/ams/layout.tsx")
+                          ? "Shared AMS route framing and asynchronous states"
+                          : source.includes("/lms/layout.tsx")
+                            ? "Shared LMS route framing and asynchronous states"
+                            : "Nested route layout";
 
     return {
       source,
@@ -246,6 +265,7 @@ const lines = [
   "- `/notifications`, `/product-catalogue`, and `/todo` were migrated in batch 001.",
   "- `/admin/design-system` is the production showcase for reusable migration decisions.",
   "- All `/hrms` and `/attendance` routes were migrated in people operations batch 002.",
+  "- All `/ams` and `/lms` routes were migrated in performance and learning batch 003.",
   "- Every other route remains pending until its own presentation, behavior, RBAC,",
   "  themes, and responsive layout are verified in a later module batch.",
   "",

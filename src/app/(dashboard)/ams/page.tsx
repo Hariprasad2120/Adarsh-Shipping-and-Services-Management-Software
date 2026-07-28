@@ -1,10 +1,25 @@
-import { ModuleHome } from "@/components/module-home";
+import {
+  PerformanceCard,
+  PerformanceGrid,
+  PerformanceSection,
+  PerformanceSectionHeader,
+  PerformanceSummary,
+  PerformanceSummaryGrid,
+} from "@/components/monolith/performance-workspace";
 import { auth } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { db } from "@/lib/db";
 import { getVisibleSectionById } from "@/lib/navigation";
 import { loadCaps } from "@/lib/rbac";
 import { listDueAppraisals } from "@/modules/ams/service";
+import {
+  ArrowRight,
+  ClipboardCheck,
+  Gauge,
+  Sparkles,
+  Target,
+} from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 function monthBounds(year: number, month: number) {
@@ -29,27 +44,53 @@ export default async function AMSPage() {
     caps["admin.org.manage"] ||
     caps["ams.appraisal.assign_reviewers"] ||
     caps["ams.cycle.manage"] ||
-    caps["ams.criteria.manage"]
+    caps["ams.criteria.manage"],
   );
   const { start: monthStart, end: monthEnd } = monthBounds(year, month);
 
   const statContext = session.user.orgId
     ? canSeeAdminOverview
       ? await Promise.all([
-          listDueAppraisals(session.user.orgId, year, month).then((rows) => rows.length),
+          listDueAppraisals(session.user.orgId, year, month).then(
+            (rows) => rows.length,
+          ),
           db.appraisalCycle.count({ where: { orgId: session.user.orgId } }),
           db.appraisalCriterion.count({ where: { orgId: session.user.orgId } }),
           db.appraisalReviewer.count({ where: { userId: session.user.id } }),
           db.appraisal.count({ where: { employeeId: session.user.id } }),
-        ]).then(([dueCount, cycleCount, criteriaCount, myReviewCount, myAppraisalCount]) => ({
-          description: `Coordinate cycles, reviews, and criteria from one workspace.${dueCount > 0 ? ` ${dueCount} appraisal items are due this month.` : " There are no appraisal items due this month."}`,
-          stats: [
-            { label: "Due this month", value: dueCount.toString(), tone: "amber" as const },
-            { label: "Cycles", value: cycleCount.toString(), tone: "teal" as const },
-            { label: "Criteria", value: criteriaCount.toString(), tone: "blue" as const },
-            { label: "My active tasks", value: (myReviewCount + myAppraisalCount).toString(), tone: "slate" as const },
-          ],
-        }))
+        ]).then(
+          ([
+            dueCount,
+            cycleCount,
+            criteriaCount,
+            myReviewCount,
+            myAppraisalCount,
+          ]) => ({
+            description: `Coordinate cycles, reviews, and criteria from one workspace.${dueCount > 0 ? ` ${dueCount} appraisal items are due this month.` : " There are no appraisal items due this month."}`,
+            stats: [
+              {
+                label: "Due this month",
+                value: dueCount.toString(),
+                tone: "amber" as const,
+              },
+              {
+                label: "Cycles",
+                value: cycleCount.toString(),
+                tone: "teal" as const,
+              },
+              {
+                label: "Criteria",
+                value: criteriaCount.toString(),
+                tone: "blue" as const,
+              },
+              {
+                label: "My active tasks",
+                value: (myReviewCount + myAppraisalCount).toString(),
+                tone: "slate" as const,
+              },
+            ],
+          }),
+        )
       : await Promise.all([
           db.appraisal.count({
             where: {
@@ -70,17 +111,41 @@ export default async function AMSPage() {
             },
           }),
           db.appraisal.count({ where: { employeeId: session.user.id } }),
-        ]).then(([myDueCount, selfAssessmentOpenCount, myReviewCount, myAppraisalCount]) => ({
-          description: `Track your appraisal journey and complete only the work assigned to you.${myDueCount > 0 ? ` ${myDueCount} of your appraisal items are due this month.` : " You have no appraisal items due this month."}`,
-          stats: [
-            { label: "My due this month", value: myDueCount.toString(), tone: "amber" as const },
-            { label: "Self assessments open", value: selfAssessmentOpenCount.toString(), tone: "teal" as const },
-            { label: "My reviews", value: myReviewCount.toString(), tone: "blue" as const },
-            { label: "My appraisals", value: myAppraisalCount.toString(), tone: "slate" as const },
-          ],
-        }))
+        ]).then(
+          ([
+            myDueCount,
+            selfAssessmentOpenCount,
+            myReviewCount,
+            myAppraisalCount,
+          ]) => ({
+            description: `Track your appraisal journey and complete only the work assigned to you.${myDueCount > 0 ? ` ${myDueCount} of your appraisal items are due this month.` : " You have no appraisal items due this month."}`,
+            stats: [
+              {
+                label: "My due this month",
+                value: myDueCount.toString(),
+                tone: "amber" as const,
+              },
+              {
+                label: "Self assessments open",
+                value: selfAssessmentOpenCount.toString(),
+                tone: "teal" as const,
+              },
+              {
+                label: "My reviews",
+                value: myReviewCount.toString(),
+                tone: "blue" as const,
+              },
+              {
+                label: "My appraisals",
+                value: myAppraisalCount.toString(),
+                tone: "slate" as const,
+              },
+            ],
+          }),
+        )
     : {
-        description: "Track your appraisal journey and complete only the work assigned to you.",
+        description:
+          "Track your appraisal journey and complete only the work assigned to you.",
         stats: [],
       };
   const section = getVisibleSectionById(caps, "ams");
@@ -103,12 +168,53 @@ export default async function AMSPage() {
     })) ?? [];
 
   return (
-    <ModuleHome
-      title="Appraisal Management"
-      description={statContext.description}
-      stats={statContext.stats}
-      quickLinks={quickLinks}
-      pageIcon={section?.icon}
-    />
+    <>
+      <PerformanceSummaryGrid>
+        {statContext.stats.map((stat, index) => {
+          const Icon =
+            [ClipboardCheck, Gauge, Sparkles, Target][index] ?? Gauge;
+          return (
+            <PerformanceSummary
+              key={stat.label}
+              icon={<Icon aria-hidden="true" />}
+              label={stat.label}
+              value={stat.value}
+              detail={
+                index === 0 ? "Current appraisal month" : "Available to you"
+              }
+            />
+          );
+        })}
+      </PerformanceSummaryGrid>
+
+      <PerformanceSection>
+        <PerformanceSectionHeader
+          eyebrow="Workspace overview"
+          title="Performance activity"
+          description={statContext.description}
+        />
+        <PerformanceGrid className="p-5">
+          {quickLinks.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link key={item.href} href={item.href} className="mnx-row-link">
+                <PerformanceCard className="mnx-interactive-surface h-full">
+                  <span className="mnx-icon-badge">
+                    <Icon aria-hidden="true" />
+                  </span>
+                  <h2 className="mnx-title-3 mt-5">{item.label}</h2>
+                  <p className="mnx-text-muted mt-2 text-sm leading-6">
+                    {item.description}
+                  </p>
+                  <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-mono-accent">
+                    Open workspace <ArrowRight size={15} aria-hidden="true" />
+                  </span>
+                </PerformanceCard>
+              </Link>
+            );
+          })}
+        </PerformanceGrid>
+      </PerformanceSection>
+    </>
   );
 }

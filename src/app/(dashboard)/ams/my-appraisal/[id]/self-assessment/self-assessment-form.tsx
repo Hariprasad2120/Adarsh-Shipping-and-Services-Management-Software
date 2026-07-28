@@ -1,15 +1,19 @@
 "use client";
 
+import { PerformanceControlButton } from "@/components/monolith/performance-workspace";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CriteriaPointsForm } from "@/components/ams/criteria-points-form";
-import type { AppraisalSelfFormTemplate, SelfAssessmentAnswers } from "@/modules/ams/criteria-config";
+import type {
+  AppraisalSelfFormTemplate,
+  SelfAssessmentAnswers,
+} from "@/modules/ams/criteria-config";
 import type { CriterionPoint } from "@/modules/ams/types";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { cn } from "@/lib/utils";
 
 const CYAN_PILL_CLASS =
-  "border border-[rgba(0,148,140,0.28)] bg-[rgba(0,148,140,0.12)] text-[#005f5a]";
+  "border border-mono-border bg-mono-accent/10 text-mono-accent";
 
 function StatusStrip({
   deadline,
@@ -27,9 +31,10 @@ function StatusStrip({
   isEditable: boolean;
 }) {
   const passed = deadline ? nowMs >= new Date(deadline).getTime() : false;
-  const daysLeft = deadline && !passed
-    ? Math.ceil((new Date(deadline).getTime() - nowMs) / 86400000)
-    : null;
+  const daysLeft =
+    deadline && !passed
+      ? Math.ceil((new Date(deadline).getTime() - nowMs) / 86400000)
+      : null;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -38,31 +43,55 @@ function StatusStrip({
           className={cn(
             "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold",
             passed
-              ? "border border-red-200 bg-red-50 text-red-700"
+              ? "border border-mono-border bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]"
               : daysLeft !== null && daysLeft <= 3
-              ? "border border-amber-200 bg-amber-50 text-amber-700"
-              : CYAN_PILL_CLASS,
+                ? "border border-mono-border bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]"
+                : CYAN_PILL_CLASS,
           )}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <circle cx="12" cy="12" r="9" />
             <polyline points="12 7 12 12 15 15" />
           </svg>
           {passed
             ? "Deadline passed"
             : daysLeft === 1
-            ? "Due tomorrow"
-            : daysLeft !== null
-            ? `${daysLeft} days left`
-            : ""}
+              ? "Due tomorrow"
+              : daysLeft !== null
+                ? `${daysLeft} days left`
+                : ""}
           {" · "}
-          {new Date(deadline).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+          {new Date(deadline).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })}
         </span>
       ) : null}
 
       {currentStatus === "SUBMITTED" ? (
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${CYAN_PILL_CLASS}`}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${CYAN_PILL_CLASS}`}
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <polyline points="20 6 9 17 4 12" />
           </svg>
           Submitted
@@ -81,12 +110,15 @@ function StatusStrip({
 
       {savedAt && editCount !== null ? (
         <span className="text-xs text-mono-muted/60">
-          Saved {savedAt}{editCount > 0 ? ` · ${editCount} edit${editCount !== 1 ? "s" : ""}` : ""}
+          Saved {savedAt}
+          {editCount > 0
+            ? ` · ${editCount} edit${editCount !== 1 ? "s" : ""}`
+            : ""}
         </span>
       ) : null}
 
       {currentStatus === "SUBMITTED" && isEditable ? (
-        <span className="text-xs text-sky-600">
+        <span className="text-xs text-mono-accent">
           Still editable until deadline.
         </span>
       ) : null}
@@ -128,17 +160,26 @@ export function SelfAssessmentForm({
   }, []);
 
   const deadlinePassed = useMemo(
-    () => (selfAssessmentDeadline ? nowMs >= new Date(selfAssessmentDeadline).getTime() : false),
+    () =>
+      selfAssessmentDeadline
+        ? nowMs >= new Date(selfAssessmentDeadline).getTime()
+        : false,
     [nowMs, selfAssessmentDeadline],
   );
   const isEditable = canEdit && !deadlinePassed;
 
-  async function persist(action: "DRAFT" | "SUBMITTED", answers: SelfAssessmentAnswers) {
-    const res = await fetch(`/api/ams/appraisals/${appraisalId}/self-assessment`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, answers }),
-    });
+  async function persist(
+    action: "DRAFT" | "SUBMITTED",
+    answers: SelfAssessmentAnswers,
+  ) {
+    const res = await fetch(
+      `/api/ams/appraisals/${appraisalId}/self-assessment`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, answers }),
+      },
+    );
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
       error(d.error ?? (action === "DRAFT" ? "Save failed" : "Submit failed"));
@@ -171,29 +212,49 @@ export function SelfAssessmentForm({
           currentStatus={currentStatus}
           isEditable={isEditable}
         />
-        <div className="rounded-2xl border border-[#F9D972]/30 bg-[#F9D972]/5 px-6 py-5 space-y-3">
+        <div className="rounded-2xl border border-mono-border bg-mono-accent/5 px-6 py-5 space-y-3">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
-              <p className="text-base font-semibold text-[#008b85]">Self-assessment submitted</p>
+              <p className="text-base font-semibold text-mono-accent">
+                Self-assessment submitted
+              </p>
               <p className="text-sm text-mono-muted">
-                Your self-assessment has been submitted. You can edit it until the deadline.
+                Your self-assessment has been submitted. You can edit it until
+                the deadline.
               </p>
             </div>
-            <svg className="mt-0.5 size-6 shrink-0 text-[#F9D972]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              className="mt-0.5 size-6 shrink-0 text-mono-accent"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <button
+          <PerformanceControlButton
             type="button"
             onClick={() => setIsLocked(false)}
-            className="inline-flex items-center gap-2 rounded-xl border border-[#F9D972]/40 bg-white px-4 py-2 text-sm font-medium text-[#008b85] transition hover:bg-[#F9D972]/8"
+            className="inline-flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-4 py-2 text-sm font-medium text-mono-accent transition hover:bg-mono-accent/8"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
             </svg>
             Edit Self-Assessment
-          </button>
+          </PerformanceControlButton>
         </div>
       </div>
     );
@@ -212,8 +273,9 @@ export function SelfAssessmentForm({
 
       {/* In edit mode after a previous submission — show Save Changes label */}
       {isEditable && !isLocked && currentStatus === "SUBMITTED" && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-          You are editing a submitted self-assessment. Click <strong>Save Changes</strong> to update your submission.
+        <div className="rounded-xl border border-mono-border bg-[var(--mnx-warning-bg)] px-4 py-3 text-sm text-[var(--mnx-warning)]">
+          You are editing a submitted self-assessment. Click{" "}
+          <strong>Save Changes</strong> to update your submission.
         </div>
       )}
 
@@ -222,8 +284,12 @@ export function SelfAssessmentForm({
         criteria={criteria}
         initialAnswers={initialAnswers ?? undefined}
         supplementary={[]}
-        onSaveDraft={(answers) => persist("DRAFT", answers as SelfAssessmentAnswers)}
-        onSubmitFinal={(answers) => persist("SUBMITTED", answers as SelfAssessmentAnswers)}
+        onSaveDraft={(answers) =>
+          persist("DRAFT", answers as SelfAssessmentAnswers)
+        }
+        onSubmitFinal={(answers) =>
+          persist("SUBMITTED", answers as SelfAssessmentAnswers)
+        }
         disabled={!isEditable}
         selfTemplate={template}
         submitLabel={currentStatus === "SUBMITTED" ? "Save Changes" : undefined}

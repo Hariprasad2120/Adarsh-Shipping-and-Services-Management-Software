@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  PerformanceControlButton,
+  PerformanceControlInput,
+} from "@/components/monolith/performance-workspace";
 import { NativeSelect } from "@/components/monolith/native-select";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -18,8 +22,18 @@ const STAGE_OPTIONS = [
 ];
 
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 function MonthYearPicker({
@@ -38,7 +52,8 @@ function MonthYearPicker({
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const hasSelection = selectedMonth !== undefined && selectedYear !== undefined;
+  const hasSelection =
+    selectedMonth !== undefined && selectedYear !== undefined;
   const label = hasSelection
     ? `${MONTHS[selectedMonth - 1]} ${selectedYear}`
     : "Filter by month";
@@ -56,14 +71,14 @@ function MonthYearPicker({
 
   return (
     <div className="relative" ref={ref}>
-      <button
+      <PerformanceControlButton
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={[
           "flex items-center gap-2 border rounded-xl px-3.5 py-2 text-sm transition-all duration-200 whitespace-nowrap",
           hasSelection
-            ? "border-[#F9D972] bg-[#F9D972]/10 text-[#F9D972] font-semibold"
-            : "border-mono-border/60 bg-mono-card text-mono-muted hover:border-[#F9D972]/70",
+            ? "border-mono-border bg-mono-accent/10 text-mono-accent font-semibold"
+            : "border-mono-border/60 bg-mono-card text-mono-muted hover:border-mono-border",
         ].join(" ")}
       >
         <CalendarIcon className="size-4 shrink-0" />
@@ -72,52 +87,65 @@ function MonthYearPicker({
           <span
             role="button"
             tabIndex={0}
-            onClick={(e) => { e.stopPropagation(); onClear(); setOpen(false); }}
-            onKeyDown={(e) => e.key === "Enter" && (e.stopPropagation(), onClear(), setOpen(false))}
-            className="ml-1.5 hover:text-rose-500 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClear();
+              setOpen(false);
+            }}
+            onKeyDown={(e) =>
+              e.key === "Enter" &&
+              (e.stopPropagation(), onClear(), setOpen(false))
+            }
+            className="ml-1.5 hover:text-[var(--mnx-danger)] transition-colors"
           >
             <X className="size-3" />
           </span>
         )}
-      </button>
+      </PerformanceControlButton>
 
       {open && (
         <div className="absolute top-full mt-2 left-0 z-50 bg-mono-card border border-mono-border/70 rounded-xl shadow-lg p-4 w-64">
           <div className="flex items-center justify-between mb-3">
-            <button
+            <PerformanceControlButton
               type="button"
               onClick={() => setViewYear((y) => y - 1)}
-              className="p-1 rounded hover:bg-mono-soft dark:hover:bg-slate-800 text-mono-muted"
+              className="p-1 rounded hover:bg-mono-soft dark:hover:bg-mono-card text-mono-muted"
             >
               <ChevronLeft className="size-4" />
-            </button>
-            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{viewYear}</span>
-            <button
+            </PerformanceControlButton>
+            <span className="text-sm font-semibold text-mono-text dark:text-mono-text">
+              {viewYear}
+            </span>
+            <PerformanceControlButton
               type="button"
               onClick={() => setViewYear((y) => y + 1)}
-              className="p-1 rounded hover:bg-mono-soft dark:hover:bg-slate-800 text-mono-muted"
+              className="p-1 rounded hover:bg-mono-soft dark:hover:bg-mono-card text-mono-muted"
             >
               <ChevronRight className="size-4" />
-            </button>
+            </PerformanceControlButton>
           </div>
 
           <div className="grid grid-cols-3 gap-1.5">
             {MONTHS.map((m, i) => {
-              const isSelected = selectedMonth === i + 1 && selectedYear === viewYear;
+              const isSelected =
+                selectedMonth === i + 1 && selectedYear === viewYear;
               return (
-                <button
+                <PerformanceControlButton
                   key={m}
                   type="button"
-                  onClick={() => { onSelect(i + 1, viewYear); setOpen(false); }}
+                  onClick={() => {
+                    onSelect(i + 1, viewYear);
+                    setOpen(false);
+                  }}
                   className={[
                     "rounded-lg py-1.5 text-xs font-semibold transition-colors",
                     isSelected
-                      ? "bg-[#F9D972] text-white"
-                      : "hover:bg-[#F9D972]/10 hover:text-[#F9D972] text-slate-600 dark:text-slate-400",
+                      ? "bg-mono-accent/10 text-mono-text"
+                      : "hover:bg-mono-accent/10 hover:text-mono-accent text-mono-muted dark:text-mono-muted",
                   ].join(" ")}
                 >
                   {m.slice(0, 3)}
-                </button>
+                </PerformanceControlButton>
               );
             })}
           </div>
@@ -150,7 +178,14 @@ export function HistoryFilters({
     defaultYear ? Number(defaultYear) : undefined,
   );
 
-  function push(overrides: { q?: string; stage?: string; month?: number | null; year?: number | null } = {}) {
+  function push(
+    overrides: {
+      q?: string;
+      stage?: string;
+      month?: number | null;
+      year?: number | null;
+    } = {},
+  ) {
     const params = new URLSearchParams();
     const sq = overrides.q !== undefined ? overrides.q : q;
     const ss = overrides.stage !== undefined ? overrides.stage : stage;
@@ -196,11 +231,11 @@ export function HistoryFilters({
   return (
     <form onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-center">
       {showSearch && (
-        <input
+        <PerformanceControlInput
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Name or Emp #"
-          className="border border-mono-border/60 bg-mono-card rounded-xl px-4 py-2 text-sm text-mono-text focus:outline-none focus:ring-2 focus:ring-[#F9D972]/15 focus:border-[#F9D972]/50 w-48 transition"
+          className="border border-mono-border/60 bg-mono-card rounded-xl px-4 py-2 text-sm text-mono-text focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-mono-border w-48 transition"
         />
       )}
 
@@ -214,9 +249,11 @@ export function HistoryFilters({
       <NativeSelect
         value={stage}
         onChange={(e) => setStage(e.target.value)}
-        className="border border-mono-border/60 bg-mono-card rounded-xl px-4 py-2 text-sm text-mono-text focus:outline-none focus:ring-2 focus:ring-[#F9D972]/15 focus:border-[#F9D972]/50 transition"
+        className="border border-mono-border/60 bg-mono-card rounded-xl px-4 py-2 text-sm text-mono-text focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-mono-border transition"
       >
-        <option value="" className="bg-mono-card">All Stages</option>
+        <option value="" className="bg-mono-card">
+          All Stages
+        </option>
         {STAGE_OPTIONS.map((s) => (
           <option key={s} value={s} className="bg-mono-card">
             {s.replace(/_/g, " ")}
@@ -224,21 +261,21 @@ export function HistoryFilters({
         ))}
       </NativeSelect>
 
-      <button
+      <PerformanceControlButton
         type="submit"
-        className="bg-[#F9D972] text-white font-semibold rounded-xl px-4 py-2 text-sm hover:bg-[#E8C85D] transition"
+        className="bg-mono-accent/10 text-mono-text font-semibold rounded-xl px-4 py-2 text-sm hover:bg-mono-accent/10 transition"
       >
         Filter
-      </button>
+      </PerformanceControlButton>
 
       {hasFilters && (
-        <button
+        <PerformanceControlButton
           type="button"
           onClick={clearAll}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-mono-muted hover:text-rose-600 transition"
+          className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-mono-muted hover:text-[var(--mnx-danger)] transition"
         >
           <X className="size-3.5 shrink-0" /> Clear all
-        </button>
+        </PerformanceControlButton>
       )}
     </form>
   );

@@ -1,18 +1,44 @@
 "use client";
 
+import {
+  PerformanceControlButton,
+  PerformanceTableRow,
+} from "@/components/monolith/performance-workspace";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import {Badge,DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableHead,DataTableHeader,DataTableRow,DataTableToolbar,} from "@/components/data-table";
+import {
+  Badge,
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableEmpty,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+  DataTableToolbar,
+} from "@/components/monolith/workspace-data-table";
 
-type Cycle = { id: string; name: string; year: number; status: string; _count: { appraisals: number } };
+type Cycle = {
+  id: string;
+  name: string;
+  year: number;
+  status: string;
+  _count: { appraisals: number };
+};
 
 const STATUS_COLOR: Record<string, string> = {
   DRAFT: "bg-mono-soft text-mono-muted",
-  ACTIVE: "bg-green-50 text-green-700",
-  CLOSED: "bg-red-50 text-red-600",
+  ACTIVE: "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]",
+  CLOSED: "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]",
 };
 
-export function CyclesClient({ cycles, currentYear }: { cycles: Cycle[]; currentYear: number }) {
+export function CyclesClient({
+  cycles,
+  currentYear,
+}: {
+  cycles: Cycle[];
+  currentYear: number;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -32,7 +58,8 @@ export function CyclesClient({ cycles, currentYear }: { cycles: Cycle[]; current
   }
 
   async function updateStatus(id: string, action: "activate" | "close") {
-    if (!confirm(`${action === "activate" ? "Activate" : "Close"} this cycle?`)) return;
+    if (!confirm(`${action === "activate" ? "Activate" : "Close"} this cycle?`))
+      return;
     await fetch(`/api/ams/cycles/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -45,21 +72,21 @@ export function CyclesClient({ cycles, currentYear }: { cycles: Cycle[]; current
     <DataTable>
       <DataTableToolbar>
         <p className="font-semibold text-mono-text">All Cycles</p>
-        <button
+        <PerformanceControlButton
           onClick={createCycle}
           disabled={loading}
-          className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="rounded-lg bg-mono-accent/10 px-3 py-1.5 text-sm text-mono-text hover:bg-mono-accent/10 disabled:opacity-50"
         >
           + New Cycle
-        </button>
+        </PerformanceControlButton>
       </DataTableToolbar>
 
       <DataTableHeader>
-        <tr>
+        <PerformanceTableRow>
           {["Name", "Year", "Status", "Appraisals", ""].map((h) => (
             <DataTableHead key={h}>{h}</DataTableHead>
           ))}
-        </tr>
+        </PerformanceTableRow>
       </DataTableHeader>
       <DataTableBody>
         {cycles.length === 0 ? (
@@ -67,22 +94,40 @@ export function CyclesClient({ cycles, currentYear }: { cycles: Cycle[]; current
         ) : (
           cycles.map((c) => (
             <DataTableRow key={c.id}>
-              <DataTableCell className="font-medium text-mono-text">{c.name}</DataTableCell>
-              <DataTableCell className="text-mono-muted">{c.year}</DataTableCell>
-              <DataTableCell>
-                <Badge className={STATUS_COLOR[c.status] ?? "bg-mono-soft text-mono-muted"}>{c.status}</Badge>
+              <DataTableCell className="font-medium text-mono-text">
+                {c.name}
               </DataTableCell>
-              <DataTableCell className="text-mono-muted">{c._count.appraisals}</DataTableCell>
+              <DataTableCell className="text-mono-muted">
+                {c.year}
+              </DataTableCell>
+              <DataTableCell>
+                <Badge
+                  className={
+                    STATUS_COLOR[c.status] ?? "bg-mono-soft text-mono-muted"
+                  }
+                >
+                  {c.status}
+                </Badge>
+              </DataTableCell>
+              <DataTableCell className="text-mono-muted">
+                {c._count.appraisals}
+              </DataTableCell>
               <DataTableCell className="text-right">
                 {c.status === "DRAFT" && (
-                  <button onClick={() => updateStatus(c.id, "activate")} className="text-xs text-green-600 hover:underline">
+                  <PerformanceControlButton
+                    onClick={() => updateStatus(c.id, "activate")}
+                    className="text-xs text-[var(--mnx-success)] hover:underline"
+                  >
                     Activate
-                  </button>
+                  </PerformanceControlButton>
                 )}
                 {c.status === "ACTIVE" && (
-                  <button onClick={() => updateStatus(c.id, "close")} className="text-xs text-red-500 hover:underline">
+                  <PerformanceControlButton
+                    onClick={() => updateStatus(c.id, "close")}
+                    className="text-xs text-[var(--mnx-danger)] hover:underline"
+                  >
                     Close
-                  </button>
+                  </PerformanceControlButton>
                 )}
               </DataTableCell>
             </DataTableRow>

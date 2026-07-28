@@ -1,11 +1,46 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { BookOpen, Award, CheckCircle, Play, Sparkles, Loader2, BookOpenCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  BookOpen,
+  BookOpenCheck,
+  Clock3,
+  GraduationCap,
+  Loader2,
+  Play,
+} from "lucide-react";
 import { toast } from "sonner";
+import {
+  PerformanceCard,
+  PerformanceControlButton,
+  PerformanceControlInput,
+  PerformanceGrid,
+  PerformanceLoadingState,
+  PerformanceProgress,
+  PerformanceSection,
+  PerformanceSectionHeader,
+  PerformanceStatus,
+  PerformanceSummary,
+  PerformanceSummaryGrid,
+} from "@/components/monolith/performance-workspace";
+import { WorkspaceEmptyState } from "@/components/monolith/workspace-states";
+
+type Enrollment = {
+  progress: number;
+  status: string;
+};
+
+type Course = {
+  id: string;
+  category: string;
+  description: string;
+  duration: string;
+  enrollments?: Enrollment[];
+  title: string;
+};
 
 export function LmsView() {
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const [actingCourseId, setActingCourseId] = useState<string | null>(null);
 
@@ -17,7 +52,7 @@ export function LmsView() {
       if (json.ok) {
         setCourses(json.data);
       }
-    } catch (e) {
+    } catch {
       toast.error("Failed to load courses");
     } finally {
       setLoading(false);
@@ -25,7 +60,9 @@ export function LmsView() {
   };
 
   useEffect(() => {
-    fetchCourses();
+    // The catalogue is an external API snapshot loaded on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchCourses();
   }, []);
 
   const handleEnroll = async (courseId: string) => {
@@ -39,11 +76,11 @@ export function LmsView() {
       const json = await res.json();
       if (json.ok) {
         toast.success("Enrolled successfully! Start learning now.");
-        fetchCourses();
+        await fetchCourses();
       } else {
         toast.error("Enrollment failed");
       }
-    } catch (e) {
+    } catch {
       toast.error("Error during enrollment");
     } finally {
       setActingCourseId(null);
@@ -59,143 +96,177 @@ export function LmsView() {
       });
       const json = await res.json();
       if (json.ok) {
-        setCourses((prev) =>
-          prev.map((c) => {
-            if (c.id === courseId) {
-              const updatedEnrollments = c.enrollments.map((e: any) => ({
-                ...e,
+        setCourses((previous) =>
+          previous.map((course) => {
+            if (course.id !== courseId) return course;
+            return {
+              ...course,
+              enrollments: course.enrollments?.map((enrollment) => ({
+                ...enrollment,
                 progress: value,
                 status: value >= 100 ? "COMPLETED" : "IN_PROGRESS",
-              }));
-              return { ...c, enrollments: updatedEnrollments };
-            }
-            return c;
-          })
+              })),
+            };
+          }),
         );
         if (value >= 100) {
           toast.success("Congratulations! You completed the course.");
         }
       }
-    } catch (e) {
+    } catch {
       toast.error("Failed to save progress");
     }
   };
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
-        <Loader2 className="size-8 animate-spin text-[#F9D972]" />
-        <p className="text-xs font-semibold tracking-wider">Syncing course files...</p>
-      </div>
+      <PerformanceLoadingState description="Synchronising the learning catalogue and your enrolments." />
     );
   }
 
+  const enrolledCount = courses.filter(
+    (course) => course.enrollments?.length,
+  ).length;
+  const completedCount = courses.filter((course) => {
+    const enrollment = course.enrollments?.[0];
+    return (
+      enrollment?.status === "COMPLETED" || (enrollment?.progress ?? 0) >= 100
+    );
+  }).length;
+
   return (
-    <div className="space-y-6">
-      {/* Banner */}
-      <div className="relative rounded-3xl border border-slate-800 bg-[#0f121b]/80 p-6 overflow-hidden shadow-2xl backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#F9D972]/5 rounded-full blur-3xl" />
-        <div className="flex items-center gap-4">
-          <div className="size-12 rounded-2xl bg-[#F9D972]/10 border border-[#F9D972]/35 flex items-center justify-center text-[#F9D972] shadow-sm">
-            <BookOpen className="size-6 animate-pulse" />
-          </div>
-          <div>
-            <h1 className="text-lg font-black text-slate-100 uppercase tracking-widest">LMS TRAINING SYSTEM</h1>
-            <p className="text-xs text-slate-500 font-bold mt-0.5 uppercase tracking-wider">Enroll in standard cargo & logistics certification courses</p>
-          </div>
-        </div>
-      </div>
+    <>
+      <PerformanceSummaryGrid>
+        <PerformanceSummary
+          icon={<BookOpen aria-hidden="true" />}
+          label="Available courses"
+          value={courses.length}
+          detail="Current learning catalogue"
+        />
+        <PerformanceSummary
+          icon={<GraduationCap aria-hidden="true" />}
+          label="Enrolled"
+          value={enrolledCount}
+          detail="Courses in your learning plan"
+        />
+        <PerformanceSummary
+          icon={<BookOpenCheck aria-hidden="true" />}
+          label="Completed"
+          value={completedCount}
+          detail="Courses completed and certified"
+        />
+        <PerformanceSummary
+          icon={<Clock3 aria-hidden="true" />}
+          label="In progress"
+          value={Math.max(0, enrolledCount - completedCount)}
+          detail="Courses awaiting completion"
+        />
+      </PerformanceSummaryGrid>
 
-      {/* Grid */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {courses.map((course) => {
-          const enrollment = course.enrollments?.[0] || null;
-          const isEnrolled = !!enrollment;
-          const isCompleted = enrollment?.status === "COMPLETED" || enrollment?.progress >= 100;
-          const progressVal = enrollment?.progress || 0;
+      <PerformanceSection>
+        <PerformanceSectionHeader
+          eyebrow="Learning catalogue"
+          title="Cargo and logistics training"
+          description="Enrol in available courses and keep progress current as you complete each learning unit."
+        />
+        {courses.length === 0 ? (
+          <WorkspaceEmptyState
+            title="No courses are available"
+            description="Published learning courses will appear here when they are available to your organisation."
+          />
+        ) : (
+          <PerformanceGrid className="p-5">
+            {courses.map((course) => {
+              const enrollment = course.enrollments?.[0] ?? null;
+              const isEnrolled = Boolean(enrollment);
+              const progress = enrollment?.progress ?? 0;
+              const isCompleted =
+                enrollment?.status === "COMPLETED" || progress >= 100;
 
-          return (
-            <div
-              key={course.id}
-              className={`rounded-3xl border p-5 flex flex-col justify-between transition-all duration-300 relative overflow-hidden backdrop-blur-sm ${
-                isCompleted
-                  ? "bg-gradient-to-b from-[#0e121b] to-emerald-950/20 border-emerald-500/20"
-                  : "bg-[#0e121b]/60 border-slate-900 hover:border-slate-800"
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-1 rounded-xl bg-slate-950 text-slate-400 border border-slate-800/80 text-[9px] font-black uppercase tracking-wider select-none">
-                    {course.category}
-                  </span>
-                  <span className="text-[10px] font-black text-[#F9D972] tracking-wider uppercase font-mono">
-                    {course.duration}
-                  </span>
-                </div>
-
-                <div className="space-y-1">
-                  <h3 className="text-sm font-black text-slate-200 uppercase tracking-wide leading-tight">
-                    {course.title}
-                  </h3>
-                  <p className="text-[11px] text-slate-500 font-bold leading-relaxed line-clamp-3">
-                    {course.description}
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-6 mt-6 border-t border-slate-900 space-y-4">
-                {isEnrolled ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                      <span>Course Progress</span>
-                      <span className="font-mono text-slate-300">{Math.round(progressVal)}%</span>
+              return (
+                <PerformanceCard
+                  key={course.id}
+                  className="flex min-h-72 flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-3">
+                      <PerformanceStatus variant="neutral">
+                        {course.category}
+                      </PerformanceStatus>
+                      <span className="mnx-text-muted font-mono text-xs">
+                        {course.duration}
+                      </span>
                     </div>
+                    <h3 className="mnx-title-3 mt-5">{course.title}</h3>
+                    <p className="mnx-text-muted mt-2 line-clamp-3 text-sm leading-6">
+                      {course.description}
+                    </p>
+                  </div>
 
-                    {/* Progress Slider */}
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        step="10"
-                        value={progressVal}
-                        disabled={isCompleted}
-                        onChange={(e) => handleProgressChange(course.id, Number(e.target.value))}
-                        className="w-full accent-[#F9D972] bg-slate-950 rounded-full h-1 cursor-pointer"
-                      />
-                    </div>
-
-                    {isCompleted ? (
-                      <div className="flex items-center justify-center gap-2 bg-emerald-500/10 border border-emerald-500/25 py-2.5 rounded-2xl text-[10px] font-black text-emerald-400 select-none uppercase tracking-widest">
-                        <BookOpenCheck className="size-4 shrink-0" />
-                        <span>Completed & Certified</span>
+                  <div className="mt-6 border-t border-mono-border pt-5">
+                    {isEnrolled ? (
+                      <div className="grid gap-3">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="mnx-text-muted font-semibold uppercase tracking-wider">
+                            Course progress
+                          </span>
+                          <span className="mnx-text-strong font-mono">
+                            {Math.round(progress)}%
+                          </span>
+                        </div>
+                        <PerformanceProgress
+                          label={`${course.title} progress`}
+                          value={progress}
+                        />
+                        <PerformanceControlInput
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="10"
+                          value={progress}
+                          disabled={isCompleted}
+                          aria-label={`Update ${course.title} progress`}
+                          onChange={(event) =>
+                            void handleProgressChange(
+                              course.id,
+                              Number(event.target.value),
+                            )
+                          }
+                        />
+                        <PerformanceStatus
+                          variant={isCompleted ? "success" : "accent"}
+                        >
+                          {isCompleted
+                            ? "Completed and certified"
+                            : "Active study"}
+                        </PerformanceStatus>
                       </div>
                     ) : (
-                      <div className="text-center text-[9px] font-black text-[#F9D972] animate-pulse select-none tracking-widest uppercase">
-                        Active Study Session
-                      </div>
+                      <PerformanceControlButton
+                        className="w-full"
+                        disabled={actingCourseId !== null}
+                        onClick={() => void handleEnroll(course.id)}
+                      >
+                        {actingCourseId === course.id ? (
+                          <Loader2
+                            className="mnx-state-spinner"
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <Play aria-hidden="true" />
+                        )}
+                        {actingCourseId === course.id
+                          ? "Enrolling…"
+                          : "Enrol now"}
+                      </PerformanceControlButton>
                     )}
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={actingCourseId !== null}
-                    onClick={() => handleEnroll(course.id)}
-                    className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-slate-950 to-slate-900 hover:brightness-110 border border-slate-800 rounded-2xl py-3 text-xs font-black text-slate-200 cursor-pointer shadow-sm transition-all"
-                  >
-                    {actingCourseId === course.id ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <Play className="size-3.5 fill-current" />
-                    )}
-                    <span>{actingCourseId === course.id ? "Enrolling..." : "ENROLL NOW"}</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+                </PerformanceCard>
+              );
+            })}
+          </PerformanceGrid>
+        )}
+      </PerformanceSection>
+    </>
   );
 }

@@ -1,17 +1,30 @@
 "use client";
 
+import { PerformanceControlButton } from "@/components/monolith/performance-workspace";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
 import { FormPreviewModal } from "@/components/ams/form-preview-modal";
-import { CriteriaPointsForm, CriteriaPointsView } from "@/components/ams/criteria-points-form";
+import {
+  CriteriaPointsForm,
+  CriteriaPointsView,
+} from "@/components/ams/criteria-points-form";
 import { DemoFillButton } from "@/components/demo-fill-button";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { Button } from "@/components/monolith/button";
 import { Input } from "@/components/monolith/input";
-import {buildReviewerDemoAnswers,demoPerformanceProfiles,type DemoPerformanceProfile,} from "@/lib/demo-fill";
-import type {AppraisalSelfFormTemplate,ManagementReviewAnswers,ReviewerRatingAnswers,SelfAssessmentAnswers,} from "@/modules/ams/criteria-config";
+import {
+  buildReviewerDemoAnswers,
+  demoPerformanceProfiles,
+  type DemoPerformanceProfile,
+} from "@/lib/demo-fill";
+import type {
+  AppraisalSelfFormTemplate,
+  ManagementReviewAnswers,
+  ReviewerRatingAnswers,
+  SelfAssessmentAnswers,
+} from "@/modules/ams/criteria-config";
 import type { CriterionPoint } from "@/modules/ams/types";
 
 type ManagementReviewDetail = {
@@ -48,24 +61,33 @@ type ScorePreview = {
   slabRange: string | null;
 };
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+function Card({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="space-y-3 rounded-xl border border-cyan-100 bg-mono-card p-5">
-      <h2 className="monolith-h2 text-mono-text">{title}</h2>
+    <div className="space-y-3 rounded-xl border border-mono-border bg-mono-card p-5">
+      <h2 className="mnx-title-2 text-mono-text">{title}</h2>
       {children}
     </div>
   );
 }
 
 const STAGE_COLOR: Record<string, string> = {
-  DUE_NOTIFIED: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  REVIEWERS_ASSIGNED: "bg-blue-50 text-blue-700 border-blue-200",
-  SELF_ASSESSMENT_OPEN: "bg-purple-50 text-purple-700 border-purple-200",
-  REVIEWER_RATING: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  MANAGEMENT_REVIEW: "bg-orange-50 text-orange-700 border-orange-200",
-  MEETING_PENDING: "bg-cyan-50 text-cyan-700 border-cyan-200",
-  MEETING_LIVE: "bg-green-50 text-green-700 border-green-200",
-  HIKE_FINALISATION: "bg-pink-50 text-pink-700 border-pink-200",
+  DUE_NOTIFIED:
+    "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] border-mono-border",
+  REVIEWERS_ASSIGNED: "bg-mono-accent/10 text-mono-accent border-mono-border",
+  SELF_ASSESSMENT_OPEN: "bg-mono-accent/10 text-mono-accent border-mono-border",
+  REVIEWER_RATING: "bg-mono-accent/10 text-mono-accent border-mono-border",
+  MANAGEMENT_REVIEW:
+    "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] border-mono-border",
+  MEETING_PENDING: "bg-mono-accent/10 text-mono-accent border-mono-border",
+  MEETING_LIVE:
+    "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] border-mono-border",
+  HIKE_FINALISATION: "bg-mono-accent/10 text-mono-accent border-mono-border",
   CLOSED: "bg-mono-soft text-mono-muted border-mono-border",
 };
 
@@ -75,7 +97,10 @@ function getStatusMessage(appraisal: ManagementReviewDetail): string {
       ? `This appraisal is currently claimed by ${appraisal.claimedByName}.`
       : "Claim this appraisal to complete the management review.";
   }
-  if (appraisal.stage === "MEETING_PENDING" || appraisal.stage === "MEETING_LIVE") {
+  if (
+    appraisal.stage === "MEETING_PENDING" ||
+    appraisal.stage === "MEETING_LIVE"
+  ) {
     return "Your management review has been submitted and the appraisal is now in the meeting phase.";
   }
   if (appraisal.stage === "HIKE_FINALISATION" || appraisal.stage === "CLOSED") {
@@ -102,18 +127,22 @@ export function ManagementReviewClient({
   const router = useRouter();
   const [claiming, setClaiming] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
-  const [currentRating, setCurrentRating] = useState<ManagementReviewAnswers | null>(
-    appraisal.currentRating,
+  const [currentRating, setCurrentRating] =
+    useState<ManagementReviewAnswers | null>(appraisal.currentRating);
+  const [currentSubmissionStatus, setCurrentSubmissionStatus] = useState<
+    string | null
+  >(appraisal.submissionStatus);
+  const [currentSubmittedAt, setCurrentSubmittedAt] = useState<string | null>(
+    appraisal.submittedAt,
   );
-  const [currentSubmissionStatus, setCurrentSubmissionStatus] = useState<string | null>(
-    appraisal.submissionStatus,
+  const [currentUpdatedAt, setCurrentUpdatedAt] = useState<string | null>(
+    appraisal.updatedAt,
   );
-  const [currentSubmittedAt, setCurrentSubmittedAt] = useState<string | null>(appraisal.submittedAt);
-  const [currentUpdatedAt, setCurrentUpdatedAt] = useState<string | null>(appraisal.updatedAt);
   const [isEditing, setIsEditing] = useState<boolean>(
     appraisal.submissionStatus !== "SUBMITTED",
   );
-  const [demoProfile, setDemoProfile] = useState<DemoPerformanceProfile>("average");
+  const [demoProfile, setDemoProfile] =
+    useState<DemoPerformanceProfile>("average");
   const [formSeed, setFormSeed] = useState(0);
   const [formPreviewOpen, setFormPreviewOpen] = useState(false);
   const [scorePreview, setScorePreview] = useState<ScorePreview | null>(null);
@@ -125,7 +154,8 @@ export function ManagementReviewClient({
   });
   const { success, error } = useNotifications();
 
-  const canSubmit = appraisal.stage === "MANAGEMENT_REVIEW" && appraisal.isClaimant;
+  const canSubmit =
+    appraisal.stage === "MANAGEMENT_REVIEW" && appraisal.isClaimant;
   const hasRequiredMeetingDates = proposedDates.filter(Boolean).length > 0;
 
   useEffect(() => {
@@ -137,11 +167,14 @@ export function ManagementReviewClient({
     let cancelled = false;
     const run = async () => {
       setPreviewLoading(true);
-      const res = await fetch(`/api/ams/appraisals/${appraisal.id}/score-preview`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ratings: currentRating }),
-      });
+      const res = await fetch(
+        `/api/ams/appraisals/${appraisal.id}/score-preview`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ratings: currentRating }),
+        },
+      );
       if (cancelled) return;
       setPreviewLoading(false);
       if (!res.ok) return;
@@ -158,11 +191,14 @@ export function ManagementReviewClient({
 
   async function claimReview() {
     setClaiming(true);
-    const res = await fetch(`/api/ams/appraisals/${appraisal.id}/claim-management`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
+    const res = await fetch(
+      `/api/ams/appraisals/${appraisal.id}/claim-management`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      },
+    );
     setClaiming(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -173,26 +209,41 @@ export function ManagementReviewClient({
     router.refresh();
   }
 
-  async function persistRating(action: "DRAFT" | "SUBMITTED", answers: ManagementReviewAnswers) {
+  async function persistRating(
+    action: "DRAFT" | "SUBMITTED",
+    answers: ManagementReviewAnswers,
+  ) {
     if (action === "SUBMITTED" && !hasRequiredMeetingDates) {
       error("Select the required meeting date options before submitting.");
       return;
     }
-    const res = await fetch(`/api/ams/appraisals/${appraisal.id}/management-review`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action,
-        ratings: answers,
-        proposedDates: proposedDates.filter(Boolean),
-      }),
-    });
+    const res = await fetch(
+      `/api/ams/appraisals/${appraisal.id}/management-review`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          ratings: answers,
+          proposedDates: proposedDates.filter(Boolean),
+        }),
+      },
+    );
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      error(data.error ?? (action === "DRAFT" ? "Unable to save management draft" : "Unable to submit management review"));
+      error(
+        data.error ??
+          (action === "DRAFT"
+            ? "Unable to save management draft"
+            : "Unable to submit management review"),
+      );
       return;
     }
-    success(action === "DRAFT" ? "Management draft saved" : "Management review submitted");
+    success(
+      action === "DRAFT"
+        ? "Management draft saved"
+        : "Management review submitted",
+    );
     setCurrentRating(answers);
     setCurrentSubmissionStatus(action);
     const nowIso = new Date().toISOString();
@@ -215,7 +266,12 @@ export function ManagementReviewClient({
   }
 
   function fillManagementDemoData() {
-    setCurrentRating(buildReviewerDemoAnswers(managementCriteria, demoProfile) as ManagementReviewAnswers);
+    setCurrentRating(
+      buildReviewerDemoAnswers(
+        managementCriteria,
+        demoProfile,
+      ) as ManagementReviewAnswers,
+    );
     setProposedDates(buildDemoMeetingDates());
     setFormSeed((current) => current + 1);
   }
@@ -223,7 +279,10 @@ export function ManagementReviewClient({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Link href={`/ams/appraisals/${appraisal.id}`} className="text-sm text-mono-muted hover:text-mono-text">
+        <Link
+          href={`/ams/appraisals/${appraisal.id}`}
+          className="text-sm text-mono-muted hover:text-mono-text"
+        >
           {"< Appraisal Detail"}
         </Link>
         <span className="text-mono-muted/40">/</span>
@@ -250,7 +309,9 @@ export function ManagementReviewClient({
           }}
           meeting={{
             scheduledAt: appraisal.proposedDates[0] ?? null,
-            hasMinutes: appraisal.stage === "HIKE_FINALISATION" || appraisal.stage === "CLOSED",
+            hasMinutes:
+              appraisal.stage === "HIKE_FINALISATION" ||
+              appraisal.stage === "CLOSED",
           }}
         />
 
@@ -258,17 +319,26 @@ export function ManagementReviewClient({
           <div className="space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-1">
-                <p className="text-lg font-semibold text-mono-text">{appraisal.employee.name}</p>
+                <p className="text-lg font-semibold text-mono-text">
+                  {appraisal.employee.name}
+                </p>
                 <p className="text-sm text-mono-muted">
-                  {appraisal.employee.designation ?? "No designation"} · {appraisal.cycle.name} {appraisal.cycle.year}
+                  {appraisal.employee.designation ?? "No designation"} ·{" "}
+                  {appraisal.cycle.name} {appraisal.cycle.year}
                 </p>
               </div>
-              <span className={`rounded-full border px-3 py-1 text-xs font-medium ${STAGE_COLOR[appraisal.stage] ?? "border-mono-border bg-mono-soft text-mono-muted"}`}>
+              <span
+                className={`rounded-full border px-3 py-1 text-xs font-medium ${STAGE_COLOR[appraisal.stage] ?? "border-mono-border bg-mono-soft text-mono-muted"}`}
+              >
                 {appraisal.stage.replace(/_/g, " ")}
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <Button variant="outline" className="border-[#F9D972]/35 text-[#008b85] hover:bg-[#F9D972]/8" onClick={() => setFormPreviewOpen(true)}>
+              <Button
+                variant="outline"
+                className="border-mono-border text-mono-accent hover:bg-mono-accent/8"
+                onClick={() => setFormPreviewOpen(true)}
+              >
                 View Forms
               </Button>
             </div>
@@ -277,21 +347,27 @@ export function ManagementReviewClient({
       </div>
 
       {savedAt && (
-        <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
+        <div className="rounded-lg border border-mono-border bg-[var(--mnx-success-bg)] px-3 py-2 text-xs text-[var(--mnx-success)]">
           Management review saved at {savedAt}.
         </div>
       )}
 
-      {appraisal.submittedAt && appraisal.currentRating && appraisal.stage !== "MANAGEMENT_REVIEW" && (
-        <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
-          Last submitted on <strong>{new Date(appraisal.submittedAt).toLocaleString("en-IN")}</strong>.
-        </div>
-      )}
+      {appraisal.submittedAt &&
+        appraisal.currentRating &&
+        appraisal.stage !== "MANAGEMENT_REVIEW" && (
+          <div className="rounded-lg border border-mono-border bg-[var(--mnx-success-bg)] px-3 py-2 text-xs text-[var(--mnx-success)]">
+            Last submitted on{" "}
+            <strong>
+              {new Date(appraisal.submittedAt).toLocaleString("en-IN")}
+            </strong>
+            .
+          </div>
+        )}
 
       <Card title="Forms Access">
         <p className="text-sm text-mono-muted">
-          The self-assessment and reviewer forms are available in the popup window.
-          Use <strong>View Forms</strong> to open them.
+          The self-assessment and reviewer forms are available in the popup
+          window. Use <strong>View Forms</strong> to open them.
         </p>
       </Card>
 
@@ -300,13 +376,13 @@ export function ManagementReviewClient({
           <p className="text-sm text-mono-muted">
             Claim this appraisal to open your separate management rating form.
           </p>
-          <button
+          <PerformanceControlButton
             onClick={() => void claimReview()}
             disabled={claiming}
-            className="rounded-lg bg-[#F9D972] px-4 py-2 text-sm font-medium text-white hover:bg-[#E8C85D] disabled:opacity-50"
+            className="rounded-lg bg-mono-accent/10 px-4 py-2 text-sm font-medium text-mono-text hover:bg-mono-accent/10 disabled:opacity-50"
           >
             {claiming ? "Claiming..." : "Claim this appraisal"}
-          </button>
+          </PerformanceControlButton>
         </Card>
       ) : canSubmit && isEditing ? (
         <Card title="Your Management Rating">
@@ -320,32 +396,74 @@ export function ManagementReviewClient({
               />
             </div>
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-mono-muted">Proposed Meeting Dates</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-mono-muted">
+                Proposed Meeting Dates
+              </p>
               {proposedDates.map((value, index) => (
                 <Input
                   key={index}
                   type="date"
                   value={value}
-                  onChange={(e) => setProposedDates((current) => current.map((item, i) => (i === index ? e.target.value : item)))}
+                  onChange={(e) =>
+                    setProposedDates((current) =>
+                      current.map((item, i) =>
+                        i === index ? e.target.value : item,
+                      ),
+                    )
+                  }
                   className="w-full"
                 />
               ))}
               <p className="text-xs text-mono-muted">
-                Final submission stays disabled until at least one meeting date is selected.
+                Final submission stays disabled until at least one meeting date
+                is selected.
               </p>
             </div>
             {scorePreview ? (
-              <div className="rounded-2xl border border-[#F9D972]/20 bg-[#F9D972]/8 px-4 py-4 text-sm">
-                <p className="font-semibold text-[#008b85]">Live Hike Preview</p>
+              <div className="rounded-2xl border border-mono-border bg-mono-accent/8 px-4 py-4 text-sm">
+                <p className="font-semibold text-mono-accent">
+                  Live Hike Preview
+                </p>
                 <div className="mt-2 grid gap-2 md:grid-cols-2">
-                  <p className="text-mono-text">Current calculated rating: <strong>{scorePreview.finalNormalized?.toFixed(2) ?? "-"}</strong></p>
-                  <p className="text-mono-text">Floored rating: <strong>{scorePreview.flooredScore ?? "-"}</strong></p>
-                  <p className="text-mono-text">Grade: <strong>{scorePreview.grade ?? "-"}</strong>{scorePreview.gradeLabel ? ` · ${scorePreview.gradeLabel}` : ""}</p>
-                  <p className="text-mono-text">Slab: <strong>{scorePreview.slabLabel ?? "Not configured"}</strong>{scorePreview.slabRange ? ` (${scorePreview.slabRange})` : ""}</p>
-                  <p className="text-mono-text md:col-span-2">Suggested hike percentage: <strong>{scorePreview.hikePercent != null ? `${scorePreview.hikePercent}%` : "No matching slab"}</strong></p>
+                  <p className="text-mono-text">
+                    Current calculated rating:{" "}
+                    <strong>
+                      {scorePreview.finalNormalized?.toFixed(2) ?? "-"}
+                    </strong>
+                  </p>
+                  <p className="text-mono-text">
+                    Floored rating:{" "}
+                    <strong>{scorePreview.flooredScore ?? "-"}</strong>
+                  </p>
+                  <p className="text-mono-text">
+                    Grade: <strong>{scorePreview.grade ?? "-"}</strong>
+                    {scorePreview.gradeLabel
+                      ? ` · ${scorePreview.gradeLabel}`
+                      : ""}
+                  </p>
+                  <p className="text-mono-text">
+                    Slab:{" "}
+                    <strong>
+                      {scorePreview.slabLabel ?? "Not configured"}
+                    </strong>
+                    {scorePreview.slabRange
+                      ? ` (${scorePreview.slabRange})`
+                      : ""}
+                  </p>
+                  <p className="text-mono-text md:col-span-2">
+                    Suggested hike percentage:{" "}
+                    <strong>
+                      {scorePreview.hikePercent != null
+                        ? `${scorePreview.hikePercent}%`
+                        : "No matching slab"}
+                    </strong>
+                  </p>
                 </div>
                 {scorePreview.hikePercent == null ? (
-                  <p className="mt-2 text-xs text-red-600">No increment slab matches this score. Fix the slab configuration before final submission.</p>
+                  <p className="mt-2 text-xs text-[var(--mnx-danger)]">
+                    No increment slab matches this score. Fix the slab
+                    configuration before final submission.
+                  </p>
                 ) : null}
               </div>
             ) : previewLoading ? (
@@ -359,11 +477,22 @@ export function ManagementReviewClient({
               criteria={managementCriteria}
               supplementary={[]}
               initialAnswers={currentRating ?? undefined}
-              onAnswersChange={(answers) => setCurrentRating(answers as ManagementReviewAnswers)}
-              onSaveDraft={(answers) => persistRating("DRAFT", answers as ManagementReviewAnswers)}
-              onSubmitFinal={(answers) => persistRating("SUBMITTED", answers as ManagementReviewAnswers)}
+              onAnswersChange={(answers) =>
+                setCurrentRating(answers as ManagementReviewAnswers)
+              }
+              onSaveDraft={(answers) =>
+                persistRating("DRAFT", answers as ManagementReviewAnswers)
+              }
+              onSubmitFinal={(answers) =>
+                persistRating("SUBMITTED", answers as ManagementReviewAnswers)
+              }
               isResubmission={currentSubmissionStatus === "SUBMITTED"}
-              submitDisabled={!hasRequiredMeetingDates || previewLoading || !scorePreview || scorePreview.hikePercent === null}
+              submitDisabled={
+                !hasRequiredMeetingDates ||
+                previewLoading ||
+                !scorePreview ||
+                scorePreview.hikePercent === null
+              }
               showDemoFill={false}
             />
           </div>
@@ -373,7 +502,9 @@ export function ManagementReviewClient({
           <>
             {appraisal.proposedDates.length > 0 && (
               <div className="space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-wide text-mono-muted">Proposed Meeting Dates</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-mono-muted">
+                  Proposed Meeting Dates
+                </p>
                 {appraisal.proposedDates.map((value, index) => (
                   <p key={index} className="text-sm text-mono-text">
                     {new Date(value).toLocaleDateString("en-IN")}
@@ -381,15 +512,19 @@ export function ManagementReviewClient({
                 ))}
               </div>
             )}
-            <CriteriaPointsView criteria={managementCriteria} supplementary={[]} answers={currentRating} />
+            <CriteriaPointsView
+              criteria={managementCriteria}
+              supplementary={[]}
+              answers={currentRating}
+            />
             <div className="border-t border-mono-border/40 pt-4">
-              <button
+              <PerformanceControlButton
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="rounded-lg border border-[#F9D972]/40 px-4 py-2 text-sm font-medium text-[#008b85] transition hover:bg-[#F9D972]/8"
+                className="rounded-lg border border-mono-border px-4 py-2 text-sm font-medium text-mono-accent transition hover:bg-mono-accent/8"
               >
                 Edit Form
-              </button>
+              </PerformanceControlButton>
             </div>
           </>
         </Card>
@@ -398,7 +533,9 @@ export function ManagementReviewClient({
           <>
             {appraisal.proposedDates.length > 0 && (
               <div className="space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-wide text-mono-muted">Proposed Meeting Dates</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-mono-muted">
+                  Proposed Meeting Dates
+                </p>
                 {appraisal.proposedDates.map((value, index) => (
                   <p key={index} className="text-sm text-mono-text">
                     {new Date(value).toLocaleDateString("en-IN")}
@@ -406,12 +543,18 @@ export function ManagementReviewClient({
                 ))}
               </div>
             )}
-            <CriteriaPointsView criteria={managementCriteria} supplementary={[]} answers={currentRating} />
+            <CriteriaPointsView
+              criteria={managementCriteria}
+              supplementary={[]}
+              answers={currentRating}
+            />
           </>
         </Card>
       ) : (
         <Card title="Review Status">
-          <p className="text-sm text-mono-muted">{getStatusMessage(appraisal)}</p>
+          <p className="text-sm text-mono-muted">
+            {getStatusMessage(appraisal)}
+          </p>
         </Card>
       )}
 

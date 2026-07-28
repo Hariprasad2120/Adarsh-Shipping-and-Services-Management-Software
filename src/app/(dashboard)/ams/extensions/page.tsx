@@ -26,7 +26,7 @@ export default async function ExtensionsPage() {
   const isAdmin = Boolean(
     caps["ams.cycle.manage"] ||
     caps["ams.appraisal.assign_reviewers"] ||
-    caps["ams.appraisal.management_review"]
+    caps["ams.appraisal.management_review"],
   );
 
   // Fetch extension requests
@@ -94,7 +94,7 @@ export default async function ExtensionsPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+        <p className="text-sm text-mono-muted dark:text-mono-muted font-medium">
           {isAdmin
             ? "Manage extension request submissions and extend self-assessments or reviewer deadlines."
             : "Request more time to complete your self-assessments or reviewer ratings."}

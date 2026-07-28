@@ -1,40 +1,95 @@
 "use client";
 
-import { NativeSelect } from "@/components/monolith/native-select";
-import { DateInput } from "@/components/monolith/date-input";
-import React, { useState, useEffect } from "react";
-import { Target, Award, Heart, MessageSquare, Plus, Save, Loader2, Calendar } from "lucide-react";
-import { toast }from "sonner";
+import { useEffect, useState, type FormEvent } from "react";
+import {
+  Award,
+  Calendar,
+  CheckCircle2,
+  Heart,
+  MessageSquare,
+  Plus,
+  Target,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  PerformanceCard,
+  PerformanceControlButton,
+  PerformanceControlInput,
+  PerformanceControlSelect,
+  PerformanceControlTextarea,
+  PerformanceField,
+  PerformanceGrid,
+  PerformanceLoadingState,
+  PerformanceProgress,
+  PerformanceSection,
+  PerformanceSectionHeader,
+  PerformanceStatus,
+  PerformanceSummary,
+  PerformanceSummaryGrid,
+  PerformanceTabs,
+} from "@/components/monolith/performance-workspace";
+import { WorkspaceEmptyState } from "@/components/monolith/workspace-states";
+
+type Goal = {
+  dueDate: string;
+  id: string;
+  progress: number;
+  status: string;
+  target: string;
+  title: string;
+};
+
+type Skill = {
+  id: string;
+  proficiency: string;
+  skill: { name: string };
+};
+
+type Feedback = {
+  content: string;
+  createdAt: string;
+  feedbackType: string;
+  fromUser: { name: string };
+  id: string;
+  toUser: { name: string };
+};
+
+type PerformanceData = {
+  feedbacks: Feedback[];
+  goals: Goal[];
+  skills: Skill[];
+};
+
+type Colleague = {
+  employeeNo: string;
+  id: string;
+  name: string;
+};
 
 export function PmsView() {
-  const [activeTab, setActiveTab] = useState<"goals" | "skills" | "feedback">("goals");
-  const [data, setData] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<"goals" | "skills" | "feedback">(
+    "goals",
+  );
+  const [data, setData] = useState<PerformanceData | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  // New Goal fields
   const [newGoalTitle, setNewGoalTitle] = useState("");
   const [newGoalTarget, setNewGoalTarget] = useState("");
   const [newGoalDueDate, setNewGoalDueDate] = useState("");
   const [showGoalForm, setShowGoalForm] = useState(false);
-
-  // New Feedback fields
   const [feedbackTo, setFeedbackTo] = useState("");
   const [feedbackContent, setFeedbackContent] = useState("");
   const [feedbackType, setFeedbackType] = useState("PEER_TO_PEER");
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
-
-  const [colleagues, setColleagues] = useState<any[]>([]);
+  const [colleagues, setColleagues] = useState<Colleague[]>([]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/hrms/performance");
-      const json = await res.json();
-      if (json.ok) {
-        setData(json.data);
-      }
-    } catch (e) {
+      const response = await fetch("/api/hrms/performance");
+      const json = await response.json();
+      if (json.ok) setData(json.data);
+    } catch {
       toast.error("Failed to load PMS details");
     } finally {
       setLoading(false);
@@ -43,27 +98,29 @@ export function PmsView() {
 
   const fetchColleagues = async () => {
     try {
-      const res = await fetch("/api/hrms/employees");
-      const json = await res.json();
+      const response = await fetch("/api/hrms/employees");
+      const json = await response.json();
       if (json.ok) {
         setColleagues(json.data);
         if (json.data.length > 0) setFeedbackTo(json.data[0].id);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error(error);
     }
   };
 
   useEffect(() => {
-    fetchData();
-    fetchColleagues();
+    // Performance data is an external API snapshot loaded on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchData();
+    void fetchColleagues();
   }, []);
 
-  const handleCreateGoal = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateGoal = async (event: FormEvent) => {
+    event.preventDefault();
     setSubmitting(true);
     try {
-      const res = await fetch("/api/hrms/performance", {
+      const response = await fetch("/api/hrms/performance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -73,16 +130,16 @@ export function PmsView() {
           dueDate: newGoalDueDate,
         }),
       });
-      const json = await res.json();
+      const json = await response.json();
       if (json.ok) {
         toast.success("OKR/Goal created successfully!");
         setNewGoalTitle("");
         setNewGoalTarget("");
         setNewGoalDueDate("");
         setShowGoalForm(false);
-        fetchData();
+        await fetchData();
       }
-    } catch (err) {
+    } catch {
       toast.error("Failed to create Goal");
     } finally {
       setSubmitting(false);
@@ -91,7 +148,7 @@ export function PmsView() {
 
   const handleGoalProgress = async (goalId: string, value: number) => {
     try {
-      const res = await fetch("/api/hrms/performance", {
+      const response = await fetch("/api/hrms/performance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -100,27 +157,35 @@ export function PmsView() {
           progress: value,
         }),
       });
-      const json = await res.json();
+      const json = await response.json();
       if (json.ok) {
-        setData((prev: any) => ({
-          ...prev,
-          goals: prev.goals.map((g: any) =>
-            g.id === goalId
-              ? { ...g, progress: value, status: value >= 100 ? "COMPLETED" : "IN_PROGRESS" }
-              : g
-          ),
-        }));
+        setData((previous) =>
+          previous
+            ? {
+                ...previous,
+                goals: previous.goals.map((goal) =>
+                  goal.id === goalId
+                    ? {
+                        ...goal,
+                        progress: value,
+                        status: value >= 100 ? "COMPLETED" : "IN_PROGRESS",
+                      }
+                    : goal,
+                ),
+              }
+            : previous,
+        );
       }
-    } catch (e) {
+    } catch {
       toast.error("Failed to update goal progress");
     }
   };
 
-  const handleCreateFeedback = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateFeedback = async (event: FormEvent) => {
+    event.preventDefault();
     setSubmitting(true);
     try {
-      const res = await fetch("/api/hrms/performance", {
+      const response = await fetch("/api/hrms/performance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -130,14 +195,14 @@ export function PmsView() {
           feedbackType,
         }),
       });
-      const json = await res.json();
+      const json = await response.json();
       if (json.ok) {
         toast.success("Feedback submitted!");
         setFeedbackContent("");
         setShowFeedbackForm(false);
-        fetchData();
+        await fetchData();
       }
-    } catch (err) {
+    } catch {
       toast.error("Failed to submit feedback");
     } finally {
       setSubmitting(false);
@@ -146,348 +211,348 @@ export function PmsView() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
-        <Loader2 className="size-8 animate-spin text-[#F9D972]" />
-        <p className="text-xs font-semibold tracking-wider">Syncing appraisal records...</p>
-      </div>
+      <PerformanceLoadingState description="Synchronising goals, skills, and feedback records." />
     );
   }
 
+  const goals = data?.goals ?? [];
+  const skills = data?.skills ?? [];
+  const feedbacks = data?.feedbacks ?? [];
+  const completedGoals = goals.filter(
+    (goal) => goal.status === "COMPLETED" || goal.progress >= 100,
+  ).length;
+
   return (
-    <div className="space-y-6">
-      {/* Header Panel */}
-      <div className="relative rounded-3xl border border-slate-800 bg-[#0f121b]/85 p-6 overflow-hidden shadow-2xl backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#F9D972]/5 rounded-full blur-3xl" />
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="size-12 rounded-2xl bg-[#F9D972]/10 border border-[#F9D972]/35 flex items-center justify-center text-[#F9D972] shadow-sm">
-              <Award className="size-6 animate-pulse" />
-            </div>
-            <div>
-              <h1 className="text-lg font-black text-slate-100 uppercase tracking-widest">PERFORMANCE & APPRAISAL</h1>
-              <p className="text-xs text-slate-500 font-bold mt-0.5 uppercase tracking-wider">Set goals, map skills, and exchange active feedback</p>
-            </div>
-          </div>
+    <>
+      <PerformanceSummaryGrid>
+        <PerformanceSummary
+          icon={<Target aria-hidden="true" />}
+          label="Active goals"
+          value={goals.length - completedGoals}
+          detail="Goals still in progress"
+        />
+        <PerformanceSummary
+          icon={<CheckCircle2 aria-hidden="true" />}
+          label="Completed goals"
+          value={completedGoals}
+          detail="Goals at full completion"
+        />
+        <PerformanceSummary
+          icon={<Award aria-hidden="true" />}
+          label="Skills"
+          value={skills.length}
+          detail="Skills recorded on your profile"
+        />
+        <PerformanceSummary
+          icon={<MessageSquare aria-hidden="true" />}
+          label="Feedback entries"
+          value={feedbacks.length}
+          detail="Performance feedback journal"
+        />
+      </PerformanceSummaryGrid>
 
-          {/* Quick buttons */}
-          <div className="flex items-center gap-3">
-            {activeTab === "goals" && (
-              <button
-                type="button"
-                onClick={() => setShowGoalForm(!showGoalForm)}
-                className="inline-flex items-center justify-center gap-2 bg-[#F9D972]/15 hover:bg-[#F9D972]/25 border border-[#F9D972]/35 rounded-2xl px-4 py-2 text-xs font-black text-[#F9D972] cursor-pointer transition-all uppercase tracking-wider"
+      <PerformanceSection>
+        <PerformanceSectionHeader
+          eyebrow="Continuous performance"
+          title="Goals, skills, and feedback"
+          description="Keep performance evidence current between formal appraisal cycles."
+          actions={
+            activeTab === "goals" ? (
+              <PerformanceControlButton
+                onClick={() => setShowGoalForm((visible) => !visible)}
               >
-                <Plus className="size-4" />
-                <span>Add Goal</span>
-              </button>
-            )}
-            {activeTab === "feedback" && (
-              <button
-                type="button"
-                onClick={() => setShowFeedbackForm(!showFeedbackForm)}
-                className="inline-flex items-center justify-center gap-2 bg-[#F9D972]/15 hover:bg-[#F9D972]/25 border border-[#F9D972]/35 rounded-2xl px-4 py-2 text-xs font-black text-[#F9D972] cursor-pointer transition-all uppercase tracking-wider"
+                <Plus aria-hidden="true" /> Add goal
+              </PerformanceControlButton>
+            ) : activeTab === "feedback" ? (
+              <PerformanceControlButton
+                onClick={() => setShowFeedbackForm((visible) => !visible)}
               >
-                <Plus className="size-4" />
-                <span>Give Feedback</span>
-              </button>
-            )}
-          </div>
-        </div>
+                <Plus aria-hidden="true" /> Give feedback
+              </PerformanceControlButton>
+            ) : null
+          }
+        />
 
-        {/* Tab Toggle buttons */}
-        <div className="flex items-center gap-2 mt-6 border-b border-slate-900 pb-1.5 select-none text-xs font-black tracking-wider">
-          <button
-            onClick={() => setActiveTab("goals")}
-            className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
-              activeTab === "goals"
-                ? "bg-[#161f28]/80 text-[#F9D972] border border-[#F9D972]/25"
-                : "text-slate-500 hover:text-slate-350"
-            }`}
-          >
-            OKR & GOALS
-          </button>
-          <button
-            onClick={() => setActiveTab("skills")}
-            className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
-              activeTab === "skills"
-                ? "bg-[#161f28]/80 text-[#F9D972] border border-[#F9D972]/25"
-                : "text-slate-500 hover:text-slate-350"
-            }`}
-          >
-            SKILLS MATRIX
-          </button>
-          <button
-            onClick={() => setActiveTab("feedback")}
-            className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
-              activeTab === "feedback"
-                ? "bg-[#161f28]/80 text-[#F9D972] border border-[#F9D972]/25"
-                : "text-slate-500 hover:text-slate-350"
-            }`}
-          >
-            FEEDBACK JOURNAL
-          </button>
-        </div>
-      </div>
+        <div className="grid gap-5 p-5">
+          <PerformanceTabs aria-label="Performance views">
+            {(["goals", "skills", "feedback"] as const).map((tab) => (
+              <PerformanceControlButton
+                key={tab}
+                role="tab"
+                aria-selected={activeTab === tab}
+                variant={activeTab === tab ? "primary" : "secondary"}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab === "goals"
+                  ? "OKR and goals"
+                  : tab === "skills"
+                    ? "Skills matrix"
+                    : "Feedback journal"}
+              </PerformanceControlButton>
+            ))}
+          </PerformanceTabs>
 
-      {/* Goal creation Form */}
-      {showGoalForm && (
-        <form onSubmit={handleCreateGoal} className="rounded-3xl border border-slate-900 bg-[#0e121b]/80 p-5 space-y-4 shadow-xl max-w-xl">
-          <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest">New Target Goal / OKR</h3>
-          <div className="space-y-1">
-            <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Goal Title</label>
-            <input
-              type="text"
-              value={newGoalTitle}
-              onChange={(e) => setNewGoalTitle(e.target.value)}
-              required
-              placeholder="e.g. Reduce booking delays by 15%"
-              className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Target Key Metric</label>
-              <input
-                type="text"
-                value={newGoalTarget}
-                onChange={(e) => setNewGoalTarget(e.target.value)}
+          {showGoalForm ? (
+            <form
+              className="mnx-performance-card grid max-w-3xl gap-4"
+              onSubmit={handleCreateGoal}
+            >
+              <h3 className="mnx-title-3">Create target goal or OKR</h3>
+              <PerformanceField
+                label="Goal title"
+                htmlFor="pms-goal-title"
                 required
-                placeholder="e.g. 15% Reduction"
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Target Due Date</label>
-              <DateInput
-                value={newGoalDueDate}
-                onChange={(e) => setNewGoalDueDate(e.target.value)}
+              >
+                <PerformanceControlInput
+                  id="pms-goal-title"
+                  value={newGoalTitle}
+                  onChange={(event) => setNewGoalTitle(event.target.value)}
+                  required
+                  placeholder="Reduce booking delays by 15%"
+                />
+              </PerformanceField>
+              <div className="grid gap-4 md:grid-cols-2">
+                <PerformanceField
+                  label="Target key metric"
+                  htmlFor="pms-goal-target"
+                  required
+                >
+                  <PerformanceControlInput
+                    id="pms-goal-target"
+                    value={newGoalTarget}
+                    onChange={(event) => setNewGoalTarget(event.target.value)}
+                    required
+                    placeholder="15% reduction"
+                  />
+                </PerformanceField>
+                <PerformanceField
+                  label="Target due date"
+                  htmlFor="pms-goal-due"
+                  required
+                >
+                  <PerformanceControlInput
+                    id="pms-goal-due"
+                    type="date"
+                    value={newGoalDueDate}
+                    onChange={(event) => setNewGoalDueDate(event.target.value)}
+                    required
+                  />
+                </PerformanceField>
+              </div>
+              <div className="flex flex-wrap justify-end gap-3">
+                <PerformanceControlButton
+                  variant="secondary"
+                  onClick={() => setShowGoalForm(false)}
+                >
+                  Cancel
+                </PerformanceControlButton>
+                <PerformanceControlButton type="submit" disabled={submitting}>
+                  {submitting ? "Saving…" : "Create goal"}
+                </PerformanceControlButton>
+              </div>
+            </form>
+          ) : null}
+
+          {showFeedbackForm ? (
+            <form
+              className="mnx-performance-card grid max-w-3xl gap-4"
+              onSubmit={handleCreateFeedback}
+            >
+              <h3 className="mnx-title-3">Submit performance feedback</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <PerformanceField
+                  label="Feedback recipient"
+                  htmlFor="pms-feedback-recipient"
+                  required
+                >
+                  <PerformanceControlSelect
+                    id="pms-feedback-recipient"
+                    value={feedbackTo}
+                    onChange={(event) => setFeedbackTo(event.target.value)}
+                  >
+                    {colleagues.map((colleague) => (
+                      <option key={colleague.id} value={colleague.id}>
+                        {colleague.name} ({colleague.employeeNo})
+                      </option>
+                    ))}
+                  </PerformanceControlSelect>
+                </PerformanceField>
+                <PerformanceField
+                  label="Feedback type"
+                  htmlFor="pms-feedback-type"
+                >
+                  <PerformanceControlSelect
+                    id="pms-feedback-type"
+                    value={feedbackType}
+                    onChange={(event) => setFeedbackType(event.target.value)}
+                  >
+                    <option value="PEER_TO_PEER">Peer to peer</option>
+                    <option value="MANAGER_REVIEW">Manager review</option>
+                    <option value="SELF_REVIEW">Self review</option>
+                  </PerformanceControlSelect>
+                </PerformanceField>
+              </div>
+              <PerformanceField
+                label="Remarks or comments"
+                htmlFor="pms-feedback-content"
                 required
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+              >
+                <PerformanceControlTextarea
+                  id="pms-feedback-content"
+                  rows={4}
+                  value={feedbackContent}
+                  onChange={(event) => setFeedbackContent(event.target.value)}
+                  required
+                  placeholder="Provide constructive feedback about goals, deadlines, and ownership."
+                />
+              </PerformanceField>
+              <div className="flex flex-wrap justify-end gap-3">
+                <PerformanceControlButton
+                  variant="secondary"
+                  onClick={() => setShowFeedbackForm(false)}
+                >
+                  Cancel
+                </PerformanceControlButton>
+                <PerformanceControlButton type="submit" disabled={submitting}>
+                  {submitting ? "Submitting…" : "Submit feedback"}
+                </PerformanceControlButton>
+              </div>
+            </form>
+          ) : null}
+
+          {activeTab === "goals" ? (
+            goals.length === 0 ? (
+              <WorkspaceEmptyState
+                title="No active goals"
+                description="Create an OKR or target to begin tracking performance."
               />
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setShowGoalForm(false)}
-              className="px-4 py-2 border border-slate-800 rounded-xl text-xs font-bold text-slate-400 bg-transparent hover:bg-slate-900 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-[#F9D972] border-0 rounded-xl text-xs font-black text-slate-950 cursor-pointer transition-all disabled:opacity-50"
-            >
-              {submitting ? "Saving..." : "Create"}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Feedback submission Form */}
-      {showFeedbackForm && (
-        <form onSubmit={handleCreateFeedback} className="rounded-3xl border border-slate-900 bg-[#0e121b]/80 p-5 space-y-4 shadow-xl max-w-xl">
-          <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest">Submit Performance Feedback</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Feedback Recipient</label>
-              <NativeSelect
-                value={feedbackTo}
-                onChange={(e) => setFeedbackTo(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#F9D972]"
-              >
-                {colleagues.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.employeeNo})
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-            <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Feedback Type</label>
-              <NativeSelect
-                value={feedbackType}
-                onChange={(e) => setFeedbackType(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#F9D972]"
-              >
-                <option value="PEER_TO_PEER">Peer to Peer</option>
-                <option value="MANAGER_REVIEW">Manager Review</option>
-                <option value="SELF_REVIEW">Self Review</option>
-              </NativeSelect>
-            </div>
-          </div>
-          <div className="space-y-1">
-            <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Remarks / Comments</label>
-            <textarea
-              rows={3}
-              value={feedbackContent}
-              onChange={(e) => setFeedbackContent(e.target.value)}
-              required
-              placeholder="Provide constructive feedback regarding goals, timeline deadlines, and task ownership."
-              className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972] resize-none"
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setShowFeedbackForm(false)}
-              className="px-4 py-2 border border-slate-800 rounded-xl text-xs font-bold text-slate-400 bg-transparent hover:bg-slate-900 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-[#F9D972] border-0 rounded-xl text-xs font-black text-slate-950 cursor-pointer transition-all disabled:opacity-50"
-            >
-              {submitting ? "Submitting..." : "Submit"}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Tab Contents */}
-      {data && (
-        <div className="space-y-4">
-          
-          {activeTab === "goals" && (
-            <div className="grid gap-6 sm:grid-cols-2">
-              {data.goals.length === 0 ? (
-                <div className="sm:col-span-2 text-center py-12 text-xs text-slate-600 font-bold border border-dashed border-slate-900 rounded-3xl">
-                  No active goals set. Start adding OKRs to track performance metrics.
-                </div>
-              ) : (
-                data.goals.map((goal: any) => {
-                  const isCompleted = goal.status === "COMPLETED" || goal.progress >= 100;
+            ) : (
+              <PerformanceGrid>
+                {goals.map((goal) => {
+                  const completed =
+                    goal.status === "COMPLETED" || goal.progress >= 100;
                   return (
-                    <div
-                      key={goal.id}
-                      className="rounded-3xl border border-slate-900 bg-[#0e121b]/50 p-5 space-y-4 transition hover:border-slate-800 backdrop-blur-sm"
-                    >
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="space-y-1 min-w-0">
-                          <h3 className="text-xs font-black text-slate-200 uppercase tracking-wide truncate">
-                            {goal.title}
-                          </h3>
-                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    <PerformanceCard key={goal.id}>
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="mnx-title-3">{goal.title}</h3>
+                          <p className="mnx-text-muted mt-2 text-sm">
                             Target: {goal.target}
                           </p>
                         </div>
-                        <span className={`px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider ${
-                          isCompleted
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                            : "bg-orange-500/10 text-orange-400 border border-orange-500/20"
-                        }`}>
-                          {goal.status}
-                        </span>
+                        <PerformanceStatus
+                          variant={completed ? "success" : "warning"}
+                        >
+                          {goal.status.replace(/_/g, " ")}
+                        </PerformanceStatus>
                       </div>
-
-                      {/* Slider progress */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="size-3 text-[#F9D972]" />
-                            <span>Due: {new Date(goal.dueDate).toLocaleDateString()}</span>
+                      <div className="mt-6 grid gap-3">
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <span className="mnx-text-muted inline-flex items-center gap-2">
+                            <Calendar aria-hidden="true" size={14} />
+                            Due {new Date(goal.dueDate).toLocaleDateString()}
                           </span>
-                          <span className="font-mono text-slate-300">{Math.round(goal.progress)}%</span>
+                          <span className="mnx-text-strong font-mono">
+                            {Math.round(goal.progress)}%
+                          </span>
                         </div>
-                        <input
+                        <PerformanceProgress
+                          label={`${goal.title} progress`}
+                          value={goal.progress}
+                        />
+                        <PerformanceControlInput
                           type="range"
                           min="0"
                           max="100"
                           step="5"
                           value={goal.progress}
-                          onChange={(e) => handleGoalProgress(goal.id, Number(e.target.value))}
-                          className="w-full accent-[#F9D972] bg-slate-950 rounded-full h-1 cursor-pointer"
+                          aria-label={`Update ${goal.title} progress`}
+                          onChange={(event) =>
+                            void handleGoalProgress(
+                              goal.id,
+                              Number(event.target.value),
+                            )
+                          }
                         />
                       </div>
-                    </div>
+                    </PerformanceCard>
                   );
-                })
-              )}
-            </div>
-          )}
+                })}
+              </PerformanceGrid>
+            )
+          ) : null}
 
-          {activeTab === "skills" && (
-            <div className="rounded-3xl border border-slate-900 bg-[#0e121b]/40 p-6 space-y-6">
-              <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest">My Skills Matrix</h3>
-              {data.skills.length === 0 ? (
-                <div className="text-center py-10 text-xs text-slate-600 font-bold border border-dashed border-slate-900 rounded-3xl">
-                  No skills listed on profile yet.
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-4">
-                  {data.skills.map((item: any) => {
-                    const prof = item.proficiency;
-                    const badgeColor =
-                      prof === "EXPERT"
-                        ? "bg-[#F9D972]/10 text-[#F9D972] border-[#F9D972]/20"
-                        : prof === "ADVANCED"
-                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                          : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
-                    return (
-                      <div
-                        key={item.id}
-                        className={`px-4 py-2.5 rounded-2xl border flex items-center gap-3 ${badgeColor}`}
-                      >
-                        <Award className="size-4 shrink-0" />
-                        <div>
-                          <p className="text-xs font-black uppercase tracking-wider">{item.skill.name}</p>
-                          <p className="text-[8px] font-bold opacity-60 uppercase mt-0.5">{prof}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+          {activeTab === "skills" ? (
+            skills.length === 0 ? (
+              <WorkspaceEmptyState
+                title="No skills listed"
+                description="Skills recorded on your employee profile will appear here."
+              />
+            ) : (
+              <PerformanceGrid>
+                {skills.map((item) => (
+                  <PerformanceCard key={item.id}>
+                    <span className="mnx-icon-badge">
+                      <Award aria-hidden="true" />
+                    </span>
+                    <h3 className="mnx-title-3 mt-5">{item.skill.name}</h3>
+                    <PerformanceStatus
+                      className="mt-3"
+                      variant={
+                        item.proficiency === "EXPERT"
+                          ? "accent"
+                          : item.proficiency === "ADVANCED"
+                            ? "success"
+                            : "neutral"
+                      }
+                    >
+                      {item.proficiency}
+                    </PerformanceStatus>
+                  </PerformanceCard>
+                ))}
+              </PerformanceGrid>
+            )
+          ) : null}
 
-          {activeTab === "feedback" && (
-            <div className="space-y-4">
-              {data.feedbacks.length === 0 ? (
-                <div className="text-center py-12 text-xs text-slate-600 font-bold border border-dashed border-slate-900 rounded-3xl">
-                  No comments or feedback logs found.
-                </div>
-              ) : (
-                data.feedbacks.map((f: any) => (
-                  <div
-                    key={f.id}
-                    className="rounded-3xl border border-slate-900 bg-[#0e121b]/40 p-5 space-y-3 relative overflow-hidden backdrop-blur-sm"
-                  >
-                    <div className="flex items-center justify-between">
+          {activeTab === "feedback" ? (
+            feedbacks.length === 0 ? (
+              <WorkspaceEmptyState
+                title="No feedback entries"
+                description="Submitted performance feedback will appear in this private journal."
+              />
+            ) : (
+              <div className="grid gap-4">
+                {feedbacks.map((feedback) => (
+                  <PerformanceCard key={feedback.id}>
+                    <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-full bg-[#F9D972]/10 border border-[#F9D972]/20 flex items-center justify-center font-bold text-xs text-[#F9D972]">
-                          {f.fromUser.name[0]}
-                        </div>
+                        <span className="mnx-icon-badge">
+                          <Heart aria-hidden="true" />
+                        </span>
                         <div>
-                          <p className="text-xs font-black text-slate-200">{f.fromUser.name}</p>
-                          <p className="text-[8px] font-bold text-slate-500 uppercase mt-0.5">
-                            To: {f.toUser.name}
+                          <h3 className="mnx-title-3">
+                            {feedback.fromUser.name}
+                          </h3>
+                          <p className="mnx-text-muted mt-1 text-xs">
+                            To {feedback.toUser.name}
                           </p>
                         </div>
                       </div>
-                      <span className="px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800 text-[8px] font-black uppercase tracking-wider">
-                        {f.feedbackType.replace(/_/g, " ")}
-                      </span>
+                      <PerformanceStatus variant="neutral">
+                        {feedback.feedbackType.replace(/_/g, " ")}
+                      </PerformanceStatus>
                     </div>
-
-                    <p className="text-[11px] font-medium text-slate-400 pl-11 leading-relaxed">
-                      "{f.content}"
+                    <p className="mt-5 text-sm leading-6">{feedback.content}</p>
+                    <p className="mnx-text-muted mt-4 text-right text-xs">
+                      {new Date(feedback.createdAt).toLocaleString()}
                     </p>
-
-                    <div className="text-[8px] font-bold text-slate-600 text-right">
-                      {new Date(f.createdAt).toLocaleString()}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-
+                  </PerformanceCard>
+                ))}
+              </div>
+            )
+          ) : null}
         </div>
-      )}
-    </div>
+      </PerformanceSection>
+    </>
   );
 }

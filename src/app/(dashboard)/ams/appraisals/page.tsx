@@ -1,3 +1,4 @@
+import { PerformanceTableRow } from "@/components/monolith/performance-workspace";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -11,26 +12,34 @@ import {
   DataTableHeader,
   DataTablePrimaryLinkCell,
   DataTableRow,
-} from "@/components/data-table";
+} from "@/components/monolith/workspace-data-table";
 import { auth } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { requirePermission } from "@/lib/rbac";
-import { listAppraisals, listAppraisalEligibleUsers, listCycles, listDueAppraisals } from "@/modules/ams/service";
-import { EligibleAppraisalFilterMenu, InProgressFilterMenu } from "./appraisal-filters-menu";
+import {
+  listAppraisals,
+  listAppraisalEligibleUsers,
+  listCycles,
+  listDueAppraisals,
+} from "@/modules/ams/service";
+import {
+  EligibleAppraisalFilterMenu,
+  InProgressFilterMenu,
+} from "./appraisal-filters-menu";
 import { DueThisMonthRow } from "./due-this-month-row";
 
 type Appraisals = Awaited<ReturnType<typeof listAppraisals>>;
 type Cycles = Awaited<ReturnType<typeof listCycles>>;
 
 const STAGE_COLOR: Record<string, string> = {
-  DUE_NOTIFIED: "bg-yellow-50 text-yellow-700",
-  REVIEWERS_ASSIGNED: "bg-blue-50 text-blue-700",
-  SELF_ASSESSMENT_OPEN: "bg-purple-50 text-purple-700",
-  REVIEWER_RATING: "bg-indigo-50 text-indigo-700",
-  MANAGEMENT_REVIEW: "bg-orange-50 text-orange-700",
-  MEETING_PENDING: "bg-cyan-50 text-cyan-700",
-  MEETING_LIVE: "bg-green-50 text-green-700",
-  HIKE_FINALISATION: "bg-pink-50 text-pink-700",
+  DUE_NOTIFIED: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
+  REVIEWERS_ASSIGNED: "bg-mono-accent/10 text-mono-accent",
+  SELF_ASSESSMENT_OPEN: "bg-mono-accent/10 text-mono-accent",
+  REVIEWER_RATING: "bg-mono-accent/10 text-mono-accent",
+  MANAGEMENT_REVIEW: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
+  MEETING_PENDING: "bg-mono-accent/10 text-mono-accent",
+  MEETING_LIVE: "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]",
+  HIKE_FINALISATION: "bg-mono-accent/10 text-mono-accent",
   CLOSED: "bg-mono-soft text-mono-muted",
 };
 
@@ -51,7 +60,11 @@ const MONTH_NAMES = [
 
 const dueDateFormatter = new Intl.DateTimeFormat("en-IN", { timeZone: "UTC" });
 
-function parseDueMonth(value: string | undefined, fallbackYear: number, fallbackMonth: number) {
+function parseDueMonth(
+  value: string | undefined,
+  fallbackYear: number,
+  fallbackMonth: number,
+) {
   if (!value) return { year: fallbackYear, month: fallbackMonth };
 
   const match = value.match(/^(\d{4})-(\d{2})$/);
@@ -61,7 +74,12 @@ function parseDueMonth(value: string | undefined, fallbackYear: number, fallback
   const year = Number(rawYear);
   const month = Number(rawMonth) - 1;
 
-  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 0 || month > 11) {
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    month < 0 ||
+    month > 11
+  ) {
     return { year: fallbackYear, month: fallbackMonth };
   }
 
@@ -85,16 +103,19 @@ export default async function AppraisalsPage({
   const isDueFilterApplied = Boolean(sp.dueMonth);
   const { year, month } = parseDueMonth(sp.dueMonth, defaultYear, defaultMonth);
 
-  const [appraisals, cycles, dueThisMonthRows, eligibleDueRows, allEmployees] = await Promise.all([
-    listAppraisals(session.user.orgId!, {
-      cycleId: sp.cycleId,
-      stage: sp.stage,
-    }),
-    listCycles(session.user.orgId!),
-    listDueAppraisals(session.user.orgId!, defaultYear, defaultMonth),
-    isDueFilterApplied ? listDueAppraisals(session.user.orgId!, year, month) : Promise.resolve([]),
-    listAppraisalEligibleUsers(session.user.orgId!),
-  ]);
+  const [appraisals, cycles, dueThisMonthRows, eligibleDueRows, allEmployees] =
+    await Promise.all([
+      listAppraisals(session.user.orgId!, {
+        cycleId: sp.cycleId,
+        stage: sp.stage,
+      }),
+      listCycles(session.user.orgId!),
+      listDueAppraisals(session.user.orgId!, defaultYear, defaultMonth),
+      isDueFilterApplied
+        ? listDueAppraisals(session.user.orgId!, year, month)
+        : Promise.resolve([]),
+      listAppraisalEligibleUsers(session.user.orgId!),
+    ]);
 
   const dueThisMonthRowsSafe = dueThisMonthRows.map((row) => ({
     ...row,
@@ -113,35 +134,53 @@ export default async function AppraisalsPage({
     kind: null,
     appraisalId: null,
   }));
-  const eligibleRowsToShow = isDueFilterApplied ? eligibleDueRowsSafe : allEmployeesRows;
+  const eligibleRowsToShow = isDueFilterApplied
+    ? eligibleDueRowsSafe
+    : allEmployeesRows;
 
   return (
     <div className="space-y-8">
       <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <h2 className="monolith-h2 text-mono-text">Due This Month</h2>
+          <h2 className="mnx-title-2 text-mono-text">Due This Month</h2>
           <span className="text-sm text-mono-muted">
             - {MONTH_NAMES[defaultMonth]} {defaultYear}
           </span>
           {dueThisMonthRowsSafe.length > 0 && (
-            <Badge className="bg-red-50 text-red-600">{dueThisMonthRowsSafe.length}</Badge>
+            <Badge className="bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]">
+              {dueThisMonthRowsSafe.length}
+            </Badge>
           )}
         </div>
 
         <DataTable>
           <DataTableHeader>
-            <tr>
-              {["Employee", "Designation", "Department", "Type", "Due Date", ""].map((header) => (
+            <PerformanceTableRow>
+              {[
+                "Employee",
+                "Designation",
+                "Department",
+                "Type",
+                "Due Date",
+                "",
+              ].map((header) => (
                 <DataTableHead key={header}>{header}</DataTableHead>
               ))}
-            </tr>
+            </PerformanceTableRow>
           </DataTableHeader>
           <DataTableBody>
             {dueThisMonthRowsSafe.length === 0 ? (
-              <DataTableEmpty colSpan={6} message="No appraisals due this month." className="py-6 text-sm" />
+              <DataTableEmpty
+                colSpan={6}
+                message="No appraisals due this month."
+                className="py-6 text-sm"
+              />
             ) : (
               dueThisMonthRowsSafe.map((row) => (
-                <DueThisMonthRow key={`${row.employeeId}-${row.kind}-${row.dueDate}`} row={row} />
+                <DueThisMonthRow
+                  key={`${row.employeeId}-${row.kind}-${row.dueDate}`}
+                  row={row}
+                />
               ))
             )}
           </DataTableBody>
@@ -150,19 +189,24 @@ export default async function AppraisalsPage({
 
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="monolith-h2 text-mono-text">In Progress</h2>
-          <InProgressFilterMenu cycles={cycles as Cycles} stageOptions={Object.keys(STAGE_COLOR)} />
+          <h2 className="mnx-title-2 text-mono-text">In Progress</h2>
+          <InProgressFilterMenu
+            cycles={cycles as Cycles}
+            stageOptions={Object.keys(STAGE_COLOR)}
+          />
         </div>
 
         {sp.cycleId || sp.stage ? (
           <div className="flex flex-wrap gap-2">
             {sp.cycleId ? (
-              <Badge className="bg-cyan-50 text-cyan-700">
-                Cycle: {(cycles as Cycles).find((cycle) => cycle.id === sp.cycleId)?.name ?? "Selected"}
+              <Badge className="bg-mono-accent/10 text-mono-accent">
+                Cycle:{" "}
+                {(cycles as Cycles).find((cycle) => cycle.id === sp.cycleId)
+                  ?.name ?? "Selected"}
               </Badge>
             ) : null}
             {sp.stage ? (
-              <Badge className="bg-cyan-50 text-cyan-700">
+              <Badge className="bg-mono-accent/10 text-mono-accent">
                 Stage: {sp.stage.replace(/_/g, " ")}
               </Badge>
             ) : null}
@@ -171,11 +215,11 @@ export default async function AppraisalsPage({
 
         <DataTable>
           <DataTableHeader>
-            <tr>
+            <PerformanceTableRow>
               {["Employee", "Cycle", "Stage", "Due Date", ""].map((header) => (
                 <DataTableHead key={header}>{header}</DataTableHead>
               ))}
-            </tr>
+            </PerformanceTableRow>
           </DataTableHeader>
           <DataTableBody>
             {appraisals.length === 0 ? (
@@ -193,9 +237,16 @@ export default async function AppraisalsPage({
                   >
                     <span>{appraisal.employee.name}</span>
                   </DataTablePrimaryLinkCell>
-                  <DataTableCell className="text-mono-muted">{appraisal.cycle.name}</DataTableCell>
+                  <DataTableCell className="text-mono-muted">
+                    {appraisal.cycle.name}
+                  </DataTableCell>
                   <DataTableCell>
-                    <Badge className={STAGE_COLOR[appraisal.stage] ?? "bg-mono-soft text-mono-muted"}>
+                    <Badge
+                      className={
+                        STAGE_COLOR[appraisal.stage] ??
+                        "bg-mono-soft text-mono-muted"
+                      }
+                    >
                       {appraisal.stage.replace(/_/g, " ")}
                     </Badge>
                   </DataTableCell>
@@ -210,7 +261,7 @@ export default async function AppraisalsPage({
                           : `/ams/appraisals/${appraisal.id}`
                       }
                       aria-label={`${appraisal.stage === "DUE_NOTIFIED" ? "Assign reviewers for" : "Manage"} ${appraisal.employee.name}`}
-                      className="inline-flex text-outline-variant transition-colors hover:text-[#00b5ad]"
+                      className="inline-flex text-outline-variant transition-colors hover:text-mono-accent"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Link>
@@ -225,16 +276,22 @@ export default async function AppraisalsPage({
       <section className="space-y-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="flex items-center gap-2">
-            <h2 className="monolith-h2 text-mono-text">{isDueFilterApplied ? "Eligible For Appraisal" : "All Employees"}</h2>
+            <h2 className="mnx-title-2 text-mono-text">
+              {isDueFilterApplied ? "Eligible For Appraisal" : "All Employees"}
+            </h2>
             {isDueFilterApplied ? (
               <span className="text-sm text-mono-muted">
                 - {MONTH_NAMES[month]} {year}
               </span>
             ) : (
-              <span className="text-sm text-mono-muted">- Company directory</span>
+              <span className="text-sm text-mono-muted">
+                - Company directory
+              </span>
             )}
             {eligibleRowsToShow.length > 0 && (
-              <Badge className="bg-red-50 text-red-600">{eligibleRowsToShow.length}</Badge>
+              <Badge className="bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]">
+                {eligibleRowsToShow.length}
+              </Badge>
             )}
           </div>
           <EligibleAppraisalFilterMenu />
@@ -242,11 +299,18 @@ export default async function AppraisalsPage({
 
         <DataTable>
           <DataTableHeader>
-            <tr>
-              {["Employee", "Designation", "Department", "Type", "Due Date", ""].map((header) => (
+            <PerformanceTableRow>
+              {[
+                "Employee",
+                "Designation",
+                "Department",
+                "Type",
+                "Due Date",
+                "",
+              ].map((header) => (
                 <DataTableHead key={header}>{header}</DataTableHead>
               ))}
-            </tr>
+            </PerformanceTableRow>
           </DataTableHeader>
           <DataTableBody>
             {eligibleRowsToShow.length === 0 ? (
@@ -260,7 +324,12 @@ export default async function AppraisalsPage({
                 className="py-6 text-sm"
               />
             ) : (
-              eligibleRowsToShow.map((row) => <DueThisMonthRow key={`${row.employeeId}-${row.dueDate ?? "all"}`} row={row} />)
+              eligibleRowsToShow.map((row) => (
+                <DueThisMonthRow
+                  key={`${row.employeeId}-${row.dueDate ?? "all"}`}
+                  row={row}
+                />
+              ))
             )}
           </DataTableBody>
         </DataTable>

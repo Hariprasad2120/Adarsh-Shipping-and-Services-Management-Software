@@ -31,7 +31,11 @@ export function usesMonolithShell(pathname: string | null) {
     normalizedPathname === "/hrms" ||
     normalizedPathname.startsWith("/hrms/") ||
     normalizedPathname === "/attendance" ||
-    normalizedPathname.startsWith("/attendance/")
+    normalizedPathname.startsWith("/attendance/") ||
+    normalizedPathname === "/ams" ||
+    normalizedPathname.startsWith("/ams/") ||
+    normalizedPathname === "/lms" ||
+    normalizedPathname.startsWith("/lms/")
   );
 }
 
