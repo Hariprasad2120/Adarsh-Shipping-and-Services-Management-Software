@@ -14,6 +14,73 @@ export function normalizeMobileNumber(mobile: string): string {
   return cleaned;
 }
 
+export function parseJustdialEnquiryDate(
+  value: string | undefined,
+  now = new Date(),
+): Date | null {
+  if (!value?.trim()) return null;
+
+  const match = value
+    .trim()
+    .match(/^(\d{1,2})\s+([A-Za-z]{3}),?\s+(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) {
+    const nativeDate = new Date(value);
+    return Number.isNaN(nativeDate.getTime()) ? null : nativeDate;
+  }
+
+  const monthIndex = [
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "may",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dec",
+  ].indexOf(match[2]!.toLowerCase());
+  if (monthIndex < 0) return null;
+
+  const day = Number(match[1]);
+  let hour = Number(match[3]) % 12;
+  if (match[5]!.toUpperCase() === "PM") hour += 12;
+  const minute = Number(match[4]);
+  let candidate = new Date(
+    now.getFullYear(),
+    monthIndex,
+    day,
+    hour,
+    minute,
+    0,
+    0,
+  );
+
+  if (
+    candidate.getFullYear() !== now.getFullYear() ||
+    candidate.getMonth() !== monthIndex ||
+    candidate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  if (candidate.getTime() > now.getTime() + 24 * 60 * 60 * 1000) {
+    candidate = new Date(
+      now.getFullYear() - 1,
+      monthIndex,
+      day,
+      hour,
+      minute,
+      0,
+      0,
+    );
+  }
+
+  return candidate;
+}
+
 export function generateLeadKey(mobile: string, name: string, category: string, dateStr?: string): string {
   const normMobile = normalizeMobileNumber(mobile);
   const normName = name.trim().toLowerCase();
@@ -21,11 +88,10 @@ export function generateLeadKey(mobile: string, name: string, category: string, 
   
   let datePart = "";
   if (dateStr) {
-    try {
-      datePart = "_" + new Date(dateStr).toISOString().split("T")[0]; // group by day
-    } catch {
-      datePart = "_" + dateStr.trim().toLowerCase().replace(/\s+/g, "");
-    }
+    const parsedDate = parseJustdialEnquiryDate(dateStr);
+    datePart = parsedDate
+      ? "_" + parsedDate.toISOString().split("T")[0]
+      : "_" + dateStr.trim().toLowerCase().replace(/\s+/g, "");
   }
   
   return `${normMobile}_${normName}_${normCategory}${datePart}`;
@@ -187,54 +253,51 @@ export async function processJustdialLead(
       ownerId: ownerId,
     };
 
-    // Create the CrmLead
-    const newLead = await db.crmLead.create({
-      data: {
-        orgId,
-        createdById: sysUserId,
-        updatedById: sysUserId,
-        ...leadData
-      }
-    });
+    const enquiryDateObj = parseJustdialEnquiryDate(rawLead.enquiryDateTime);
 
-    let enquiryDateObj: Date | null = null;
-    if (rawLead.enquiryDateTime) {
-      try {
-        enquiryDateObj = new Date(rawLead.enquiryDateTime);
-      } catch {
-        enquiryDateObj = null;
-      }
-    }
+    const newLead = await db.$transaction(async (transaction) => {
+      const createdLead = await transaction.crmLead.create({
+        data: {
+          orgId,
+          createdById: sysUserId,
+          updatedById: sysUserId,
+          ...leadData,
+        },
+      });
 
-    // Create the Snapshot
-    await db.crmExternalLeadSnapshot.create({
-      data: {
-        orgId,
-        source: "JUSTDIAL",
-        externalLeadKey: leadKey,
-        customerName: rawLead.customerName,
-        mobileNumber: mobile,
-        city: rawLead.city || null,
-        category: rawLead.category || null,
-        queryText: rawLead.queryText || null,
-        enquirySource: rawLead.enquirySource || null,
-        enquiryStatus: rawLead.enquiryStatus || null,
-        enquiryDateTime: enquiryDateObj,
-        jdLeadStatus: rawLead.jdLeadStatus || null,
-        rawPayload: rawLead.rawPayload,
-        duplicateStatus: "NEW_LEAD",
-        crmLeadId: newLead.id,
-        assignedToUserId: ownerId
-      }
-    });
+      await transaction.crmExternalLeadSnapshot.create({
+        data: {
+          orgId,
+          source: "JUSTDIAL",
+          externalLeadKey: leadKey,
+          customerName: rawLead.customerName,
+          mobileNumber: mobile,
+          city: rawLead.city || null,
+          category: rawLead.category || null,
+          queryText: rawLead.queryText || null,
+          enquirySource: rawLead.enquirySource || null,
+          enquiryStatus: rawLead.enquiryStatus || null,
+          enquiryDateTime: enquiryDateObj,
+          jdLeadStatus: rawLead.jdLeadStatus || null,
+          rawPayload: rawLead.rawPayload,
+          duplicateStatus: "NEW_LEAD",
+          crmLeadId: createdLead.id,
+          assignedToUserId: ownerId,
+        },
+      });
 
-    // Write timeline event
-    await addTimelineEvent(orgId, {
-      relatedToType: "LEAD",
-      relatedToId: newLead.id,
-      eventType: "LEAD_CREATED",
-      description: "Lead automatically captured and imported from Justdial",
-      createdById: sysUserId
+      await transaction.crmTimelineEvent.create({
+        data: {
+          orgId,
+          relatedToType: "LEAD",
+          relatedToId: createdLead.id,
+          eventType: "LEAD_CREATED",
+          description: "Lead automatically captured and imported from Justdial",
+          createdById: sysUserId,
+        },
+      });
+
+      return createdLead;
     });
 
     return { ok: true, status: "NEW_LEAD", leadId: newLead.id };

@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-24T06:41:12.811Z
+> Generated at: 2026-07-27T08:30:03.146Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -10,7 +10,7 @@
 | App Routes (Pages) | 203 |
 | API Routes | 195 |
 | Prisma Models | 277 |
-| Module Service Files | 85 |
+| Module Service Files | 86 |
 | UI Components | 94 |
 
 ## Modules Overview
@@ -27,7 +27,7 @@
 | cha-ui-showcase | 1 | 1 | 0 | 0 | 0 |
 | communication | 11 | 18 | 2 | 1 | 0 |
 | core | 2 | 0 | 72 | 5 | 0 |
-| crm | 59 | 4 | 26 | 7 | 1 |
+| crm | 59 | 4 | 26 | 8 | 1 |
 | cron | 0 | 7 | 0 | 0 | 0 |
 | customer-portal | 0 | 19 | 0 | 12 | 0 |
 | dashboard | 1 | 0 | 0 | 0 | 0 |
@@ -785,10 +785,11 @@
 - **actions.ts**: createLeadAction, updateLeadAction, convertLeadAction, deleteLeadAction, updateLeadStatusAction, saveEnquiryRatesAction, createAccountAction, createContactAction, createDealAction, updateDealStageAction, createActivityAction, createNoteAction, deleteNoteAction, globalCrmSearchAction, updateContactAction, deleteContactAction, updateAccountAction, deleteAccountAction, updateDealAction, deleteDealAction, createProductAction, updateProductAction, deleteProductAction, createVendorAction, updateVendorAction, deleteVendorAction, createInvoiceAction, updateInvoiceAction, deleteInvoiceAction, createProjectAction, updateProjectAction, deleteProjectAction, createAttachmentAction, deleteAttachmentAction, seedCrmDemoDataAction, saveJustdialConfigAction, runJustdialImportAction, forceResetJustdialLockAction, testJustdialSessionAction, getJustdialLogsAction, toggleJustdialActiveAction, saveQuoteAction, logWorkTimeAction, deleteWorkTimeAction, assignLeadOwnerAction, updatePerishableDetailsAction, simulateInboundEmailAction, getCallAttemptsAction
 - **approval-actions.ts**: actionSubmitForApproval, actionApproveDocument, actionRequestRework, actionDeclineDocument, actionSendToCustomer, actionMarkCustomerViewed, actionAcceptQuote, actionMarkInvoiced, actionAdminRestoreToDraft, actionConvertToInvoice, actionRaiseDirectSalesOrder, fetchPendingApprovals, fetchApprovalLogs, fetchApprovalMetrics
 - **approval-workflow.ts**: calcSoSlaDeadline, submitForApproval, approveDocument, requestRework, declineDocument, sendToCustomer, markCustomerViewed, acceptQuote, convertToInvoice, raiseDirectSalesOrder, markInvoiced, adminRestoreToDraft, getPendingApprovals, getApprovalLogs, getApprovalMetrics, checkAndTriggerSlaNotifications
-- **crm-lead-conversion.service.ts**: normalizeMobileNumber, generateLeadKey, processJustdialLead
+- **crm-lead-conversion.service.ts**: normalizeMobileNumber, parseJustdialEnquiryDate, generateLeadKey, processJustdialLead
 - **justdial-import.service.ts**: runJustdialImport, testJustdialSession
 - **lead-source.service.ts**: getJustdialConfig, saveJustdialConfig, setImportingLock, getImportLogs, createImportLog, updateImportLog
 - **service.ts**: addTimelineEvent, getTimelineEvents, addNote, getNotes, deleteNote, addAttachment, getAttachments, deleteAttachment, listLeads, listEnquiries, getLead, createLead, updateLead, deleteLead, listContacts, getContact, createContact, updateContact, listAccounts, getAccount, createAccount, updateAccount, listDeals, getDeal, createDeal, updateDealStage, updateDeal, listActivities, createActivity, updateActivity, deleteActivity, listProducts, createProduct, listVendors, createVendor, listInvoices, getInvoice, createInvoice, listProjects, createProject
+- **justdial-import.test.ts**: no exports detected
 
 ### customer-portal
 - **actions.ts**: inviteCustomerPortalUserAction, resendCustomerPortalInvitationAction, suspendCustomerPortalUserAction, createCustomerPortalQueryAction, getPortalFeatureFlagAction, setPortalFeatureFlagAction

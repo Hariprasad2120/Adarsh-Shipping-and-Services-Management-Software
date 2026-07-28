@@ -1,0 +1,31 @@
+(node:17664) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[31m[auth][error][0m CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+    at av (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\.next\server\chunks\_0k.-wq5._.js:404:40971)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async aP (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\.next\server\chunks\_0k.-wq5._.js:404:50551)
+    at async aI (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\.next\server\chunks\_0k.-wq5._.js:404:54801)
+    at async rW.do (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.prod.js:5:20926)
+    at async rW.handle (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.prod.js:5:25781)
+    at async u (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\.next\server\chunks\[root-of-the-server]__0vah03a._.js:1:11652)
+    at async rW.handleResponse (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.prod.js:1:119701)
+    at async l (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\.next\server\chunks\[root-of-the-server]__0vah03a._.js:1:12693)
+    at async Module.A [as handler] (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\.next\server\chunks\[root-of-the-server]__0vah03a._.js:1:13800)
+[31m[auth][error][0m CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+    at av (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\.next\server\chunks\_0k.-wq5._.js:404:40971)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async aP (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\.next\server\chunks\_0k.-wq5._.js:404:50551)
+    at async aI (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\.next\server\chunks\_0k.-wq5._.js:404:54801)
+    at async rW.do (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.prod.js:5:20926)
+    at async rW.handle (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.prod.js:5:25781)
+    at async u (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\.next\server\chunks\[root-of-the-server]__0vah03a._.js:1:11652)
+    at async rW.handleResponse (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.prod.js:1:119701)
+    at async l (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\.next\server\chunks\[root-of-the-server]__0vah03a._.js:1:12693)
+    at async Module.A [as handler] (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\.next\server\chunks\[root-of-the-server]__0vah03a._.js:1:13800)

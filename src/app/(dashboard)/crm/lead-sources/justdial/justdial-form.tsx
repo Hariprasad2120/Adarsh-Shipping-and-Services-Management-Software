@@ -178,7 +178,7 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
             className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs font-mono text-white placeholder-slate-600 focus:outline-none focus:border-[#00c4b6] leading-relaxed"
           />
           <p className="text-[10px] text-on-surface-variant">
-            Paste the cookies array exported from your browser. In development, it defaults to reading from C:/Users/Purushothaman/Downloads/Cookie.txt if left empty.
+            Paste the cookies array exported from your browser. In development, it defaults to Cookie.txt in the current user&apos;s Downloads folder if left empty.
           </p>
         </div>
       </div>

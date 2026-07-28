@@ -7,8 +7,3 @@ export type LoginSceneState =
   | "authenticating"
   | "success"
   | "failure";
-
-export type LoginSceneStatus = {
-  eyebrow: string;
-  title: string;
-};

@@ -1,5 +1,6 @@
 import { chromium } from "playwright";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { db } from "@/lib/db";
 import { getJustdialConfig, updateImportLog } from "./lead-source.service";
@@ -15,6 +16,13 @@ if (!globalForScraper.justdialStatus) {
 }
 if (!globalForScraper.justdialScreenshot) {
   globalForScraper.justdialScreenshot = {};
+}
+
+function getLocalCookiePath() {
+  const configuredPath = process.env.JUSTDIAL_COOKIE_FILE?.trim();
+  return configuredPath
+    ? path.resolve(configuredPath)
+    : path.join(os.homedir(), "Downloads", "Cookie.txt");
 }
 
 function updateScrapeProgress(
@@ -63,6 +71,7 @@ export async function runJustdialImport(orgId: string, sysUserId: string, logId:
   let skippedCount = 0;
   let failedCount = 0;
   let totalCount = 0;
+  const errors: string[] = [];
 
   const scraperLogs: string[] = [];
   let currentUrl = "";
@@ -93,10 +102,10 @@ export async function runJustdialImport(orgId: string, sysUserId: string, logId:
       throw new Error("Justdial dashboard URL is not set in configuration.");
     }
 
-    // 1. Gather cookies from db or fallback to C:/Users/Purushothaman/Downloads/Cookie.txt
+    // 1. Gather cookies from the database or the configured local fallback.
     let cookiesJson = config.cookiesJson;
     if (!cookiesJson || cookiesJson.trim() === "") {
-      const localCookiePath = "C:/Users/Purushothaman/Downloads/Cookie.txt";
+      const localCookiePath = getLocalCookiePath();
       if (fs.existsSync(localCookiePath)) {
         cookiesJson = fs.readFileSync(localCookiePath, "utf8");
       }
@@ -297,8 +306,13 @@ export async function runJustdialImport(orgId: string, sysUserId: string, logId:
         const category = (await catEl.count() > 0) ? (await catEl.innerText()).trim() : "";
 
         // Date/Time (small text)
-        const dateEl = card.locator('p.color717.small.mb-0');
-        const enquiryDateTime = (await dateEl.count() > 0) ? (await dateEl.innerText()).trim() : new Date().toLocaleString();
+        const dateEl = card.locator(
+          "p.txt-secondary_717171.small.mb-0, p.color717.small.mb-0",
+        );
+        const enquiryDateTime =
+          (await dateEl.count()) > 0
+            ? (await dateEl.first().innerText()).trim()
+            : new Date().toISOString();
 
         // Status Badges & isHot
         const badges = await card.locator('span.badge').all();
@@ -410,6 +424,13 @@ export async function runJustdialImport(orgId: string, sysUserId: string, logId:
         else if (result.status === "DUPLICATE_SKIPPED") skippedCount++;
       } else {
         failedCount++;
+        const ingestionError = result.error || "Unknown CRM ingestion error";
+        console.error(
+          `[Justdial Scraper] Failed to ingest lead ${lead.customerName}: ${ingestionError}`,
+        );
+        if (errors.length < 20) {
+          errors.push(`${lead.customerName}: ${ingestionError}`);
+        }
       }
     }
 
@@ -420,6 +441,7 @@ export async function runJustdialImport(orgId: string, sysUserId: string, logId:
       newLeads: successCount,
       updatedLeads: updatedCount,
       failedLeads: failedCount + skippedCount,
+      errorMessage: errors.length > 0 ? errors.join("; ").substring(0, 500) : null,
     });
 
     // Update lastSyncedAt on config
@@ -483,7 +505,7 @@ export async function testJustdialSession(orgId: string): Promise<{ ok: boolean;
 
     let cookiesJson = config.cookiesJson;
     if (!cookiesJson || cookiesJson.trim() === "") {
-      const localCookiePath = "C:/Users/Purushothaman/Downloads/Cookie.txt";
+      const localCookiePath = getLocalCookiePath();
       if (fs.existsSync(localCookiePath)) {
         cookiesJson = fs.readFileSync(localCookiePath, "utf8");
       }

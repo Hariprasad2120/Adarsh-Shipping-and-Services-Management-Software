@@ -124,10 +124,10 @@ These are defined in `design-tokens.ts` under `colors.status` and are approved e
 
 | Role | CSS Variable | Font | Loaded In |
 |---|---|---|---|
-| Body / Sans | `--font-geist-sans` | Geist Sans | `layout.tsx` via `next/font/google` |
+| Body / Sans | `--font-geist-sans` | Geist Sans | `layout.tsx` via `next/font/local` using Next's bundled font |
 | Display / Headings | `--font-display` | Geist Sans | `@theme inline` maps to `var(--font-geist-sans)` |
 | Kiona Decorative | `--font-kiona-sans` | Kiona Sans | Logo/special decorative exceptions only |
-| Mono / Numeric | `--font-geist-mono` | Geist Mono | `layout.tsx` via `next/font/google` |
+| Mono / Numeric | `--font-geist-mono` | Geist Mono | `layout.tsx` via `next/font/local` using Next's bundled font |
 
 > **Important:** The CHA typography showcase uses `.ds-h*` on `--font-display`, and `@theme inline` maps `--font-display` to `var(--font-geist-sans)`. Do not force Kiona on `.ds-h*`; Kiona is reserved for logo/special decorative exceptions.
 

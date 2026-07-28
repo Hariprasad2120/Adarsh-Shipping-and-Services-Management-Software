@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-24T06:41:12.811Z",
+  "generatedAt": "2026-07-27T08:30:03.146Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -9,7 +9,7 @@
     "totalAppRoutes": 203,
     "totalApiRoutes": 195,
     "totalPrismaModels": 277,
-    "totalModuleServices": 85,
+    "totalModuleServices": 86,
     "totalComponents": 94
   },
   "appRoutes": [
@@ -10758,6 +10758,7 @@
       "filePath": "src/modules/crm/crm-lead-conversion.service.ts",
       "exportedFunctions": [
         "normalizeMobileNumber",
+        "parseJustdialEnquiryDate",
         "generateLeadKey",
         "processJustdialLead"
       ]
@@ -10830,6 +10831,12 @@
         "listProjects",
         "createProject"
       ]
+    },
+    {
+      "module": "crm",
+      "fileName": "justdial-import.test.ts",
+      "filePath": "src/modules/crm/__tests__/justdial-import.test.ts",
+      "exportedFunctions": []
     },
     {
       "module": "customer-portal",
@@ -12005,7 +12012,7 @@
       "appRoutes": 59,
       "apiRoutes": 4,
       "prismaModels": 26,
-      "serviceFiles": 7,
+      "serviceFiles": 8,
       "components": 1
     },
     "cron": {
