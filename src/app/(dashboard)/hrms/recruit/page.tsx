@@ -20,10 +20,10 @@ export default async function RecruitLandingPage() {
         "Post jobs, track candidates, manage applications, run screenings, schedule interviews, issue offers, and automate hiring workflows.",
       href: "/hrms/recruit/employer",
       icon: Analytics,
-      accent: "#F9D972",
-      accentBg: "bg-[#F9D972]/10",
-      accentText: "text-[#F9D972]",
-      accentBorder: "border-[#F9D972]/20",
+      accent: "var(--mnx-accent)",
+      accentBg: "bg-[var(--mnx-accent)]/10",
+      accentText: "text-[var(--mnx-accent)]",
+      accentBorder: "border-[var(--mnx-accent)]/20",
       enabled: canEmployer,
       links: [
         { label: "Job Openings", href: "/hrms/recruit/employer/jobs" },
@@ -38,10 +38,10 @@ export default async function RecruitLandingPage() {
         "Private career profile, job search, resume optimiser, cover letter builder, application tracker, alerts, and AI interview prep. Completely private from your employer.",
       href: "/hrms/recruit/career",
       icon: UserAvatar,
-      accent: "#818cf8",
-      accentBg: "bg-[#818cf8]/10",
-      accentText: "text-[#818cf8]",
-      accentBorder: "border-[#818cf8]/20",
+      accent: "var(--mnx-info)",
+      accentBg: "bg-[var(--mnx-info)]/10",
+      accentText: "text-[var(--mnx-info)]",
+      accentBorder: "border-[var(--mnx-info)]/20",
       enabled: canJobSeeker,
       links: [
         { label: "Job Search", href: "/hrms/recruit/career/jobs" },
@@ -55,9 +55,10 @@ export default async function RecruitLandingPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-1">
-        <h1 className="monolith-h1 text-mono-text">Recruit</h1>
+        <h1 className="mnx-title-1 text-mono-text">Recruit</h1>
         <p className="text-sm text-mono-muted">
-          Hiring and career management — two private workspaces, zero cross-contamination.
+          Hiring and career management — two private workspaces, zero
+          cross-contamination.
         </p>
       </div>
 
@@ -78,12 +79,18 @@ export default async function RecruitLandingPage() {
               className={`group flex flex-col gap-5 rounded-2xl border bg-mono-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${ws.accentBorder}`}
             >
               <div className="flex items-start gap-4">
-                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${ws.accentBg}`}>
+                <div
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${ws.accentBg}`}
+                >
                   <Icon size={22} className={ws.accentText} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-base font-semibold text-mono-text">{ws.title}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-mono-muted">{ws.description}</p>
+                  <p className="text-base font-semibold text-mono-text">
+                    {ws.title}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-mono-muted">
+                    {ws.description}
+                  </p>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">

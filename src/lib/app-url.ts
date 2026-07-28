@@ -4,8 +4,8 @@ function trimTrailingSlash(value: string) {
 
 export function getAppUrl() {
   const configured =
-    process.env.NEXTAUTH_URL ??
     process.env.APP_URL ??
+    process.env.NEXTAUTH_URL ??
     process.env.VERCEL_PROJECT_PRODUCTION_URL;
 
   if (configured) {

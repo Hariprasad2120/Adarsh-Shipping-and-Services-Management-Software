@@ -25,7 +25,14 @@ const MONOLITH_MIGRATED_ROUTES = new Set([
 ]);
 
 export function usesMonolithShell(pathname: string | null) {
-  return MONOLITH_MIGRATED_ROUTES.has(normalizePathname(pathname));
+  const normalizedPathname = normalizePathname(pathname);
+  return (
+    MONOLITH_MIGRATED_ROUTES.has(normalizedPathname) ||
+    normalizedPathname === "/hrms" ||
+    normalizedPathname.startsWith("/hrms/") ||
+    normalizedPathname === "/attendance" ||
+    normalizedPathname.startsWith("/attendance/")
+  );
 }
 
 export function DashboardShellSwitcher({
@@ -65,7 +72,11 @@ export function DashboardShellSwitcher({
   return (
     <DashboardChromeProvider>
       <div className="flex h-screen overflow-hidden bg-background text-foreground">
-        <Sidebar caps={caps} userName={userName} enabledModuleIds={enabledModuleIds} />
+        <Sidebar
+          caps={caps}
+          userName={userName}
+          enabledModuleIds={enabledModuleIds}
+        />
         <MainShell>
           <PageAnimator>
             <DashboardShell

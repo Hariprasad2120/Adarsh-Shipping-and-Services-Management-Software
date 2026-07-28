@@ -1,8 +1,21 @@
 "use client";
 
+import {
+  PeopleControlButton as MnxAction,
+  PeopleControlInput as MnxInput,
+} from "@/components/monolith/people-controls";
+
 import { useState, useEffect, useCallback } from "react";
 import { Search, Bookmark, Close } from "@carbon/icons-react";
-import {DataTable,DataTableBody,DataTableCell,DataTableHead,DataTableHeader,DataTableRow,DataTableEmpty,} from "@/components/data-table";
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+  DataTableEmpty,
+} from "@/components/monolith/people-data-table";
 
 type Listing = {
   id: string;
@@ -59,7 +72,11 @@ export default function JobSearchPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ listingId: id }),
     });
-    setListings((l) => l.map((x) => (x.id === id ? { ...x, savedAt: new Date().toISOString() } : x)));
+    setListings((l) =>
+      l.map((x) =>
+        x.id === id ? { ...x, savedAt: new Date().toISOString() } : x,
+      ),
+    );
     setActionPending(null);
   };
 
@@ -67,14 +84,19 @@ export default function JobSearchPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="monolith-h1 text-mono-text">Job Search</h1>
-          <p className="text-sm text-mono-muted">Matched and discovered job listings — private to you</p>
+          <h1 className="mnx-title-1 text-mono-text">Job Search</h1>
+          <p className="text-sm text-mono-muted">
+            Matched and discovered job listings — private to you
+          </p>
         </div>
       </div>
 
       <div className="relative max-w-sm">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
-        <input
+        <Search
+          size={16}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted"
+        />
+        <MnxInput
           type="search"
           placeholder="Search job titles, companies..."
           value={search}
@@ -99,7 +121,10 @@ export default function JobSearchPage() {
             {loading ? (
               <DataTableEmpty colSpan={6} message="Loading..." />
             ) : listings.length === 0 ? (
-              <DataTableEmpty colSpan={6} message="No jobs found. Update your career profile to get matched." />
+              <DataTableEmpty
+                colSpan={6}
+                message="No jobs found. Update your career profile to get matched."
+              />
             ) : (
               listings.map((l) => (
                 <DataTableRow key={l.id}>
@@ -109,43 +134,52 @@ export default function JobSearchPage() {
                         href={l.canonicalUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-medium text-mono-text hover:text-[#818cf8]"
+                        className="font-medium text-mono-text hover:text-[var(--mnx-info)]"
                       >
                         {l.title}
                       </a>
                     ) : (
-                      <span className="font-medium text-mono-text">{l.title}</span>
+                      <span className="font-medium text-mono-text">
+                        {l.title}
+                      </span>
                     )}
                     {l.salaryMin && (
-                      <p className="monolith-numeric monolith-label mt-0.5">
-                        {l.salaryMin.toLocaleString()} – {l.salaryMax?.toLocaleString() ?? "?"}
+                      <p className="mnx-numeric mnx-dashboard-spec-label mt-0.5">
+                        {l.salaryMin.toLocaleString()} –{" "}
+                        {l.salaryMax?.toLocaleString() ?? "?"}
                       </p>
                     )}
                   </DataTableCell>
-                  <DataTableCell className="text-mono-muted">{l.company}</DataTableCell>
-                  <DataTableCell className="text-mono-muted">{l.location ?? "—"}</DataTableCell>
+                  <DataTableCell className="text-mono-muted">
+                    {l.company}
+                  </DataTableCell>
+                  <DataTableCell className="text-mono-muted">
+                    {l.location ?? "—"}
+                  </DataTableCell>
                   <DataTableCell className="text-mono-muted">
                     {l.workplaceType ?? l.employmentType ?? "—"}
                   </DataTableCell>
-                  <DataTableCell className="monolith-label">{l.source}</DataTableCell>
+                  <DataTableCell className="mnx-dashboard-spec-label">
+                    {l.source}
+                  </DataTableCell>
                   <DataTableCell>
                     <div className="flex items-center gap-2">
-                      <button
+                      <MnxAction
                         onClick={() => save(l.id)}
                         disabled={!!actionPending || !!l.savedAt}
                         title={l.savedAt ? "Saved" : "Save job"}
-                        className={`rounded-lg p-1.5 transition ${l.savedAt ? "text-[#818cf8]" : "text-mono-muted hover:text-[#818cf8]"}`}
+                        className={`rounded-lg p-1.5 transition ${l.savedAt ? "text-[var(--mnx-info)]" : "text-mono-muted hover:text-[var(--mnx-info)]"}`}
                       >
                         <Bookmark size={16} />
-                      </button>
-                      <button
+                      </MnxAction>
+                      <MnxAction
                         onClick={() => dismiss(l.id)}
                         disabled={!!actionPending}
                         title="Dismiss"
-                        className="rounded-lg p-1.5 text-mono-muted transition hover:text-[#D88700]"
+                        className="rounded-lg p-1.5 text-mono-muted transition hover:text-[var(--mnx-warning)]"
                       >
                         <Close size={16} />
-                      </button>
+                      </MnxAction>
                     </div>
                   </DataTableCell>
                 </DataTableRow>

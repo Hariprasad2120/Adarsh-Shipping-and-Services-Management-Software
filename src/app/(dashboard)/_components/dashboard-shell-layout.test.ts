@@ -40,7 +40,10 @@ describe("CHA dashboard shell layout safeguards", () => {
       "utf8",
     );
     const dashboardShellSwitcherSource = readFileSync(
-      join(repoRoot, "src/app/(dashboard)/_components/dashboard-shell-switcher.tsx"),
+      join(
+        repoRoot,
+        "src/app/(dashboard)/_components/dashboard-shell-switcher.tsx",
+      ),
       "utf8",
     );
     const mainShellSource = readFileSync(
@@ -60,18 +63,21 @@ describe("CHA dashboard shell layout safeguards", () => {
     expect(dashboardShellSwitcherSource).toContain("usePathname");
     expect(dashboardShellSwitcherSource).toContain("DashboardChromeProvider");
     expect(dashboardShellSwitcherSource).toContain("MonolithAppShell");
-    expect(mainShellSource).toContain('pl-0');
-    expect(mainShellSource).toContain('lg:pl-[var(--sidebar-width)]');
+    expect(mainShellSource).toContain("pl-0");
+    expect(mainShellSource).toContain("lg:pl-[var(--sidebar-width)]");
     expect(sidebarSource).toContain('role="dialog"');
     expect(sidebarSource).toContain('aria-modal="true"');
-    expect(sidebarSource).toContain('Close navigation menu');
-    expect(welcomeBarSource).toContain('aria-controls={mobileNavId}');
-    expect(welcomeBarSource).toContain('aria-expanded={mobileNavOpen}');
+    expect(sidebarSource).toContain("Close navigation menu");
+    expect(welcomeBarSource).toContain("aria-controls={mobileNavId}");
+    expect(welcomeBarSource).toContain("aria-expanded={mobileNavOpen}");
   });
 
   it("opts only verified routes into the Monolith shell", () => {
     const dashboardShellSwitcherSource = readFileSync(
-      join(repoRoot, "src/app/(dashboard)/_components/dashboard-shell-switcher.tsx"),
+      join(
+        repoRoot,
+        "src/app/(dashboard)/_components/dashboard-shell-switcher.tsx",
+      ),
       "utf8",
     );
 
@@ -81,6 +87,41 @@ describe("CHA dashboard shell layout safeguards", () => {
     expect(dashboardShellSwitcherSource).toContain('"/notifications"');
     expect(dashboardShellSwitcherSource).toContain('"/product-catalogue"');
     expect(dashboardShellSwitcherSource).toContain('"/todo"');
+    expect(dashboardShellSwitcherSource).toContain(
+      'normalizedPathname === "/hrms"',
+    );
+    expect(dashboardShellSwitcherSource).toContain(
+      'normalizedPathname.startsWith("/hrms/")',
+    );
+    expect(dashboardShellSwitcherSource).toContain(
+      'normalizedPathname === "/attendance"',
+    );
+    expect(dashboardShellSwitcherSource).toContain(
+      'normalizedPathname.startsWith("/attendance/")',
+    );
     expect(dashboardShellSwitcherSource).toContain("usesMonolithShell");
+  });
+
+  it("keeps every Monolith workspace submenu interactive and accessible", () => {
+    const appShellSource = readFileSync(
+      join(repoRoot, "src/components/monolith/app-shell.tsx"),
+      "utf8",
+    );
+    const systemStyles = readFileSync(
+      join(repoRoot, "src/styles/monolith-system.css"),
+      "utf8",
+    );
+
+    expect(appShellSource).toContain("expandedSections");
+    expect(appShellSource).toContain("getActiveItemHref");
+    expect(appShellSource).toContain("aria-expanded={isExpanded}");
+    expect(appShellSource).toContain(
+      "aria-controls={`mnx-sidebar-items-${section.id}`}",
+    );
+    expect(appShellSource).toContain("section.items.map((item)");
+    expect(appShellSource).toContain("hidden={!isExpanded}");
+    expect(appShellSource).toContain('role="group"');
+    expect(systemStyles).toContain(".mnx-sidebar-subnav[hidden]");
+    expect(systemStyles).toContain(".mnx-sidebar-section.is-expanded");
   });
 });

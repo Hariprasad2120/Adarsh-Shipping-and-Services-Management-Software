@@ -12,7 +12,6 @@ import {
   CalendarClock,
   CheckCircle2,
   ChevronDown,
-  ClipboardCheck,
   ListChecks,
   Pencil,
   Plus,
@@ -98,6 +97,20 @@ const FILTER_OPTIONS: { value: TodoFilter; label: string }[] = [
   { value: "COMPLETED", label: "Completed tasks" },
   { value: "UPCOMING_ALERTS", label: "Upcoming alerts" },
 ];
+
+function TodoHeaderGraphic() {
+  return (
+    <div className="mnx-todo-header-graphic" aria-hidden="true">
+      <span />
+      <span />
+      <span />
+      <i />
+      <i />
+      <b />
+      <b />
+    </div>
+  );
+}
 
 function createDraftSubtask(
   partial?: Partial<TodoDraftSubtask>,
@@ -425,7 +438,7 @@ export function TodoClient({
       <WorkspacePageHeader
         eyebrow="Personal work queue"
         title="To-Do"
-        icon={<ClipboardCheck size={21} aria-hidden="true" />}
+        graphic={<TodoHeaderGraphic />}
         description={`Plan follow-ups, reminders, and nested checklists for ${currentUserName}.`}
         actions={
           <WorkspaceAction onClick={openCreateTask}>

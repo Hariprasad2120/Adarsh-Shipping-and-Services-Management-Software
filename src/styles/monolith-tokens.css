@@ -55,9 +55,9 @@ html.theme-light {
   --mn-radius-control: 0.6875rem;
   --mn-radius-panel: 1.125rem;
   --mn-radius-feature: 1.625rem;
-  --mn-motion-fast: 160ms;
-  --mn-motion-panel: 320ms;
-  --mn-ease-standard: ease;
+  --mn-motion-fast: 320ms;
+  --mn-motion-panel: 640ms;
+  --mn-ease-standard: cubic-bezier(0.12, 0.86, 0.18, 1);
 
   /* Light theme */
   --mn-color-canvas: #eff0eb;
@@ -139,39 +139,74 @@ html.theme-night {
 
 html.theme-violet {
   color-scheme: dark;
-  --mn-color-canvas: #0a0b13;
-  --mn-color-surface: #181827;
-  --mn-color-surface-soft: #181827;
-  --mn-color-surface-muted: #282a34;
+  --mn-color-canvas: #000000;
+  --mn-color-surface: #090909;
+  --mn-color-surface-soft: #151515;
+  --mn-color-surface-muted: #292929;
   --mn-color-text: #f8f7ff;
   --mn-color-text-strong: #ffffff;
   --mn-color-text-muted: #9493a2;
-  --mn-color-border: #282a34;
+  --mn-color-border: rgba(255, 255, 255, 0.13);
   --mn-color-primary: #b5aaf5;
-  --mn-color-on-primary: #0a0b13;
+  --mn-color-on-primary: #050505;
   --mn-color-accent: #b5aaf5;
   --mn-color-accent-soft: #cbbde1;
   --mn-color-accent-text: #cbbde1;
-  --mn-color-on-accent: #0a0b13;
-  --mn-shadow-panel: 0 18px 44px rgba(0, 0, 0, 0.42);
+  --mn-color-on-accent: #050505;
+  --mn-shadow-panel: 0 18px 44px rgba(0, 0, 0, 0.5);
   --mn-shadow-accent: 0 0 0 1px rgba(181, 170, 245, 0.2), 0 17px 42px rgba(137, 116, 185, 0.4);
   --mn-shadow-accent-soft: 0 0 0 1px rgba(181, 170, 245, 0.14), 0 11px 30px rgba(137, 116, 185, 0.28);
   --mn-gradient-canvas:
-    radial-gradient(ellipse at 92% -5%, rgba(181, 170, 245, 0.38) 0%, rgba(181, 170, 245, 0.13) 28%, transparent 52%),
-    radial-gradient(ellipse at -9% 104%, rgba(137, 116, 185, 0.22) 0%, transparent 44%),
-    radial-gradient(circle at 54% 42%, rgba(80, 58, 139, 0.1), transparent 38%),
-    linear-gradient(150deg, #0a0b13 0%, #0d0e17 55%, #080910 100%);
-  --mn-gradient-surface: linear-gradient(145deg, #1d1d2e 0%, #181827 52%, #10111a 100%);
-  --mn-gradient-surface-strong: linear-gradient(145deg, #24243a 0%, #181827 58%, #0d0e17 100%);
-  --mn-gradient-control: linear-gradient(145deg, #0d0e17 0%, #181827 100%);
-  --mn-gradient-navigation: linear-gradient(180deg, rgba(16, 17, 29, 0.98) 0%, rgba(10, 11, 19, 0.95) 100%);
+    radial-gradient(ellipse at 92% -5%, rgba(181, 170, 245, 0.24) 0%, rgba(181, 170, 245, 0.08) 28%, transparent 50%),
+    radial-gradient(ellipse at -10% 105%, rgba(181, 170, 245, 0.11) 0%, transparent 42%),
+    linear-gradient(150deg, #000000 0%, #030303 56%, #000000 100%);
+  --mn-gradient-surface: linear-gradient(145deg, #111111 0%, #080808 54%, #030303 100%);
+  --mn-gradient-surface-strong: linear-gradient(145deg, #181818 0%, #090909 62%, #020202 100%);
+  --mn-gradient-control: linear-gradient(145deg, #020202 0%, #0d0d0d 100%);
+  --mn-gradient-navigation: linear-gradient(180deg, rgba(5, 5, 5, 0.98) 0%, rgba(0, 0, 0, 0.95) 100%);
   --mn-gradient-accent: linear-gradient(135deg, #cbbde1 0%, #b5aaf5 48%, #8974b9 100%);
   --mn-gradient-highlight: linear-gradient(135deg, #ddd4f5 0%, #cbbde1 46%, #b5aaf5 100%);
   --mn-gradient-primary: linear-gradient(135deg, #cbbde1 0%, #b5aaf5 48%, #8974b9 100%);
   --mn-gradient-hero:
-    radial-gradient(circle at 84% 20%, rgba(181, 170, 245, 0.42), transparent 34%),
-    radial-gradient(circle at 58% 82%, rgba(80, 58, 139, 0.22), transparent 36%),
-    linear-gradient(125deg, #181827 0 48%, #241a4f 100%);
-  --mn-gradient-glass: linear-gradient(145deg, rgba(53, 51, 74, 0.88), rgba(24, 24, 39, 0.7));
-  --mn-gradient-task: linear-gradient(145deg, #181827 0%, #0a0b13 100%);
+    radial-gradient(circle at 82% 26%, rgba(181, 170, 245, 0.16), transparent 30%),
+    linear-gradient(125deg, #020202 0 48%, #0d0d0d 100%);
+  --mn-gradient-glass: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025));
+  --mn-gradient-task: linear-gradient(145deg, #171717 0%, #080808 100%);
+}
+
+html.theme-purple {
+  color-scheme: light;
+  --mn-color-canvas: #f3f0fb;
+  --mn-color-surface: #ffffff;
+  --mn-color-surface-soft: #eee8fb;
+  --mn-color-surface-muted: #ddd3f4;
+  --mn-color-text: #151021;
+  --mn-color-text-strong: #07040e;
+  --mn-color-text-muted: #70677e;
+  --mn-color-border: rgba(57, 36, 87, 0.12);
+  --mn-color-primary: #6d3fd6;
+  --mn-color-on-primary: #ffffff;
+  --mn-color-accent: #8b5cf6;
+  --mn-color-accent-soft: #d9ccff;
+  --mn-color-accent-text: #5b2dbf;
+  --mn-color-on-accent: #ffffff;
+  --mn-shadow-panel: 0 18px 44px rgba(52, 37, 76, 0.09);
+  --mn-shadow-accent: 0 16px 38px rgba(139, 92, 246, 0.28), 0 5px 16px rgba(91, 45, 191, 0.13);
+  --mn-shadow-accent-soft: 0 10px 26px rgba(139, 92, 246, 0.2);
+  --mn-gradient-canvas:
+    radial-gradient(ellipse at 92% -4%, rgba(139, 92, 246, 0.32) 0%, rgba(139, 92, 246, 0.12) 28%, transparent 50%),
+    radial-gradient(ellipse at -8% 104%, rgba(139, 92, 246, 0.18) 0%, transparent 42%),
+    linear-gradient(145deg, #ffffff 0%, #f3f0fb 56%, #ece6f9 100%);
+  --mn-gradient-surface: linear-gradient(145deg, #ffffff 0%, #faf8ff 58%, #f1ecfb 100%);
+  --mn-gradient-surface-strong: linear-gradient(145deg, #ffffff 0%, #f5f0ff 100%);
+  --mn-gradient-control: linear-gradient(145deg, #ffffff 0%, #f0ebfb 100%);
+  --mn-gradient-navigation: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(245, 240, 255, 0.94) 100%);
+  --mn-gradient-accent: linear-gradient(135deg, #bda8ff 0%, #8b5cf6 52%, #6d3fd6 100%);
+  --mn-gradient-highlight: linear-gradient(135deg, #eee7ff 0%, #d9ccff 48%, #bda8ff 100%);
+  --mn-gradient-primary: linear-gradient(135deg, #9d7cff 0%, #7c4de3 52%, #5b2dbf 100%);
+  --mn-gradient-hero:
+    radial-gradient(circle at 83% 16%, rgba(139, 92, 246, 0.26), transparent 34%),
+    linear-gradient(125deg, #ffffff 0 48%, #eee7ff 100%);
+  --mn-gradient-glass: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.62));
+  --mn-gradient-task: linear-gradient(145deg, #392457 0%, #20152f 100%);
 }

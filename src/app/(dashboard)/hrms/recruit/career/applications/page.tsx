@@ -1,9 +1,22 @@
 "use client";
 
+import {
+  PeopleControlButton as MnxAction,
+  PeopleControlInput as MnxInput,
+} from "@/components/monolith/people-controls";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import { useState, useEffect, useCallback } from "react";
 import { Add, Search } from "@carbon/icons-react";
-import {DataTable,DataTableBody,DataTableCell,DataTableHead,DataTableHeader,DataTableRow,DataTableEmpty,} from "@/components/data-table";
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+  DataTableEmpty,
+} from "@/components/monolith/people-data-table";
 
 type JsApp = {
   id: string;
@@ -16,14 +29,20 @@ type JsApp = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  APPLIED: "bg-[#818cf8]/10 text-[#818cf8] border-[#818cf8]/20",
-  UNDER_REVIEW: "bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20",
-  SHORTLISTED: "bg-[#F9D972]/10 text-[#F9D972] border-[#F9D972]/20",
-  INTERVIEWING: "bg-[#c084fc]/10 text-[#c084fc] border-[#c084fc]/20",
-  OFFER: "bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20",
+  APPLIED:
+    "bg-[var(--mnx-info)]/10 text-[var(--mnx-info)] border-[var(--mnx-info)]/20",
+  UNDER_REVIEW:
+    "bg-[var(--mnx-warning)]/10 text-[var(--mnx-warning)] border-[var(--mnx-warning)]/20",
+  SHORTLISTED:
+    "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] border-[var(--mnx-accent)]/20",
+  INTERVIEWING:
+    "bg-[var(--mnx-accent-soft)]/10 text-[var(--mnx-accent-soft)] border-[var(--mnx-accent-soft)]/20",
+  OFFER:
+    "bg-[var(--mnx-success)]/10 text-[var(--mnx-success)] border-[var(--mnx-success)]/20",
   REJECTED: "bg-mono-soft text-mono-muted border-mono-border",
   WITHDRAWN: "bg-mono-soft text-mono-muted border-mono-border",
-  ACCEPTED: "bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20",
+  ACCEPTED:
+    "bg-[var(--mnx-success)]/10 text-[var(--mnx-success)] border-[var(--mnx-success)]/20",
   GHOSTED: "bg-mono-soft text-mono-muted border-mono-border",
 };
 
@@ -33,7 +52,12 @@ export default function CareerApplicationsPage() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
-  const [addForm, setAddForm] = useState({ jobTitle: "", company: "", source: "", applicationUrl: "" });
+  const [addForm, setAddForm] = useState({
+    jobTitle: "",
+    company: "",
+    source: "",
+    applicationUrl: "",
+  });
   const [adding, setAdding] = useState(false);
 
   const load = useCallback(async () => {
@@ -73,16 +97,18 @@ export default function CareerApplicationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="monolith-h1 text-mono-text">My Applications</h1>
-          <p className="text-sm text-mono-muted">Track every job you have applied for — private to you</p>
+          <h1 className="mnx-title-1 text-mono-text">My Applications</h1>
+          <p className="text-sm text-mono-muted">
+            Track every job you have applied for — private to you
+          </p>
         </div>
-        <button
+        <MnxAction
           onClick={() => setShowAdd(!showAdd)}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#F9D972] px-4 py-2 text-sm font-medium text-white uppercase tracking-wide transition hover:bg-[#E8C85D]"
+          className="inline-flex items-center gap-2 rounded-xl bg-[var(--mnx-accent)] px-4 py-2 text-sm font-medium text-[var(--mnx-text)] uppercase tracking-wide transition hover:bg-[var(--mnx-accent-soft)]"
         >
           <Add size={16} />
           Log Application
-        </button>
+        </MnxAction>
       </div>
 
       {showAdd && (
@@ -90,71 +116,90 @@ export default function CareerApplicationsPage() {
           onSubmit={handleAdd}
           className="rounded-xl border border-mono-border bg-mono-card p-5 space-y-3"
         >
-          <h3 className="monolith-h3 text-mono-text">Log New Application</h3>
+          <h3 className="mnx-title-3 text-mono-text">Log New Application</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="monolith-label mb-1 block">Job Title *</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Job Title *
+              </label>
+              <MnxInput
                 required
                 value={addForm.jobTitle}
-                onChange={(e) => setAddForm((f) => ({ ...f, jobTitle: e.target.value }))}
+                onChange={(e) =>
+                  setAddForm((f) => ({ ...f, jobTitle: e.target.value }))
+                }
                 className="w-full rounded-xl px-3 py-2 text-sm"
                 placeholder="e.g. Marketing Manager"
               />
             </div>
             <div>
-              <label className="monolith-label mb-1 block">Company *</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Company *
+              </label>
+              <MnxInput
                 required
                 value={addForm.company}
-                onChange={(e) => setAddForm((f) => ({ ...f, company: e.target.value }))}
+                onChange={(e) =>
+                  setAddForm((f) => ({ ...f, company: e.target.value }))
+                }
                 className="w-full rounded-xl px-3 py-2 text-sm"
                 placeholder="e.g. Acme Corp"
               />
             </div>
             <div>
-              <label className="monolith-label mb-1 block">Source</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Source
+              </label>
+              <MnxInput
                 value={addForm.source}
-                onChange={(e) => setAddForm((f) => ({ ...f, source: e.target.value }))}
+                onChange={(e) =>
+                  setAddForm((f) => ({ ...f, source: e.target.value }))
+                }
                 className="w-full rounded-xl px-3 py-2 text-sm"
                 placeholder="LinkedIn, referral, etc."
               />
             </div>
             <div>
-              <label className="monolith-label mb-1 block">Application URL</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Application URL
+              </label>
+              <MnxInput
                 type="url"
                 value={addForm.applicationUrl}
-                onChange={(e) => setAddForm((f) => ({ ...f, applicationUrl: e.target.value }))}
+                onChange={(e) =>
+                  setAddForm((f) => ({ ...f, applicationUrl: e.target.value }))
+                }
                 className="w-full rounded-xl px-3 py-2 text-sm"
                 placeholder="https://..."
               />
             </div>
           </div>
           <div className="flex gap-2">
-            <button
+            <MnxAction
               type="submit"
               disabled={adding}
-              className="rounded-xl bg-[#F9D972] px-4 py-2 text-sm font-medium text-white hover:bg-[#E8C85D] disabled:opacity-50"
+              className="rounded-xl bg-[var(--mnx-accent)] px-4 py-2 text-sm font-medium text-[var(--mnx-text)] hover:bg-[var(--mnx-accent-soft)] disabled:opacity-50"
             >
               {adding ? "Saving..." : "Save"}
-            </button>
-            <button
+            </MnxAction>
+            <MnxAction
               type="button"
               onClick={() => setShowAdd(false)}
               className="rounded-xl border border-mono-border px-4 py-2 text-sm text-mono-muted"
             >
               Cancel
-            </button>
+            </MnxAction>
           </div>
         </form>
       )}
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-48">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
-          <input
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted"
+          />
+          <MnxInput
             type="search"
             placeholder="Search by job or company..."
             value={search}
@@ -169,7 +214,9 @@ export default function CareerApplicationsPage() {
         >
           <option value="">All Statuses</option>
           {Object.keys(STATUS_COLORS).map((s) => (
-            <option key={s} value={s}>{s}</option>
+            <option key={s} value={s}>
+              {s}
+            </option>
           ))}
         </NativeSelect>
       </div>
@@ -190,14 +237,21 @@ export default function CareerApplicationsPage() {
             {loading ? (
               <DataTableEmpty colSpan={6} message="Loading..." />
             ) : apps.length === 0 ? (
-              <DataTableEmpty colSpan={6} message="No applications logged yet." />
+              <DataTableEmpty
+                colSpan={6}
+                message="No applications logged yet."
+              />
             ) : (
               apps.map((app) => (
                 <DataTableRow key={app.id}>
                   <DataTableCell>
-                    <span className="font-medium text-mono-text">{app.jobTitle}</span>
+                    <span className="font-medium text-mono-text">
+                      {app.jobTitle}
+                    </span>
                   </DataTableCell>
-                  <DataTableCell className="text-mono-muted">{app.company}</DataTableCell>
+                  <DataTableCell className="text-mono-muted">
+                    {app.company}
+                  </DataTableCell>
                   <DataTableCell>
                     <span
                       className={`inline-flex rounded-lg border px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[app.privateStatus] ?? ""}`}
@@ -205,12 +259,16 @@ export default function CareerApplicationsPage() {
                       {app.privateStatus}
                     </span>
                   </DataTableCell>
-                  <DataTableCell className="monolith-label">{app.source ?? "—"}</DataTableCell>
+                  <DataTableCell className="mnx-dashboard-spec-label">
+                    {app.source ?? "—"}
+                  </DataTableCell>
                   <DataTableCell className="text-mono-muted">
                     {new Date(app.appliedAt).toLocaleDateString()}
                   </DataTableCell>
                   <DataTableCell className="text-mono-muted">
-                    {app.lastActivityAt ? new Date(app.lastActivityAt).toLocaleDateString() : "—"}
+                    {app.lastActivityAt
+                      ? new Date(app.lastActivityAt).toLocaleDateString()
+                      : "—"}
                   </DataTableCell>
                 </DataTableRow>
               ))

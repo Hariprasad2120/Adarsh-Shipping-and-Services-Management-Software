@@ -1,9 +1,18 @@
 "use client";
 
+import {
+  PeopleControlButton as MnxAction,
+  PeopleControlInput as MnxInput,
+} from "@/components/monolith/people-controls";
+
 import { useState, useEffect, useRef } from "react";
 import { Send, Add } from "@carbon/icons-react";
 
-type Message = { role: "USER" | "ASSISTANT"; content: string; createdAt: string };
+type Message = {
+  role: "USER" | "ASSISTANT";
+  content: string;
+  createdAt: string;
+};
 type Conversation = { id: string; title: string; createdAt: string };
 
 export default function CareerAssistantPage() {
@@ -58,12 +67,18 @@ export default function CareerAssistantPage() {
     const text = input.trim();
     setInput("");
     setSending(true);
-    setMessages((m) => [...m, { role: "USER", content: text, createdAt: new Date().toISOString() }]);
-    const res = await fetch(`/api/recruit/jobseeker/career/conversations/${activeId}/messages`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: text, role: "USER" }),
-    });
+    setMessages((m) => [
+      ...m,
+      { role: "USER", content: text, createdAt: new Date().toISOString() },
+    ]);
+    const res = await fetch(
+      `/api/recruit/jobseeker/career/conversations/${activeId}/messages`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: text, role: "USER" }),
+      },
+    );
     if (res.ok) {
       const data = await res.json();
       if (data.data?.assistantMessage) {
@@ -77,27 +92,27 @@ export default function CareerAssistantPage() {
     <div className="flex h-[calc(100vh-12rem)] gap-4 overflow-hidden">
       {/* Sidebar */}
       <aside className="flex w-56 flex-shrink-0 flex-col gap-2 overflow-y-auto rounded-xl border border-mono-border bg-mono-card p-3">
-        <button
+        <MnxAction
           onClick={newConversation}
-          className="flex items-center gap-2 rounded-xl bg-[#F9D972]/10 px-3 py-2 text-sm font-medium text-[#F9D972] transition hover:bg-[#F9D972]/20"
+          className="flex items-center gap-2 rounded-xl bg-[var(--mnx-accent)]/10 px-3 py-2 text-sm font-medium text-[var(--mnx-accent)] transition hover:bg-[var(--mnx-accent)]/20"
         >
           <Add size={16} />
           New Chat
-        </button>
-        <p className="monolith-label mt-2 px-1">Previous</p>
+        </MnxAction>
+        <p className="mnx-dashboard-spec-label mt-2 px-1">Previous</p>
         {loading && <p className="text-xs text-mono-muted px-1">Loading...</p>}
         {conversations.map((c) => (
-          <button
+          <MnxAction
             key={c.id}
             onClick={() => setActiveId(c.id)}
             className={`rounded-xl px-3 py-2 text-left text-sm transition ${
               activeId === c.id
-                ? "bg-[#F9D972]/10 text-[#F9D972]"
+                ? "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]"
                 : "text-mono-muted hover:bg-mono-soft"
             }`}
           >
             <span className="line-clamp-2">{c.title}</span>
-          </button>
+          </MnxAction>
         ))}
       </aside>
 
@@ -105,26 +120,28 @@ export default function CareerAssistantPage() {
       <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-mono-border bg-mono-card">
         {!activeId ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#818cf8]/10">
-              <Send size={24} className="text-[#818cf8]" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--mnx-info)]/10">
+              <Send size={24} className="text-[var(--mnx-info)]" />
             </div>
             <p className="font-medium text-mono-text">Career Assistant</p>
             <p className="max-w-xs text-sm text-mono-muted">
-              AI-powered career advice — completely private. Start a new chat or select a previous conversation.
+              AI-powered career advice — completely private. Start a new chat or
+              select a previous conversation.
             </p>
-            <button
+            <MnxAction
               onClick={newConversation}
-              className="rounded-xl bg-[#F9D972] px-5 py-2 text-sm font-medium text-white hover:bg-[#E8C85D]"
+              className="rounded-xl bg-[var(--mnx-accent)] px-5 py-2 text-sm font-medium text-[var(--mnx-text)] hover:bg-[var(--mnx-accent-soft)]"
             >
               Start Chat
-            </button>
+            </MnxAction>
           </div>
         ) : (
           <>
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.length === 0 && (
                 <p className="text-center text-sm text-mono-muted pt-8">
-                  Ask anything about your career, interview prep, or job search strategy.
+                  Ask anything about your career, interview prep, or job search
+                  strategy.
                 </p>
               )}
               {messages.map((msg, i) => (
@@ -135,7 +152,7 @@ export default function CareerAssistantPage() {
                   <div
                     className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                       msg.role === "USER"
-                        ? "bg-[#F9D972] text-white"
+                        ? "bg-[var(--mnx-accent)] text-[var(--mnx-text)]"
                         : "bg-mono-soft text-mono-text"
                     }`}
                   >
@@ -152,21 +169,24 @@ export default function CareerAssistantPage() {
               )}
               <div ref={bottomRef} />
             </div>
-            <form onSubmit={sendMessage} className="border-t border-mono-border p-3 flex gap-2">
-              <input
+            <form
+              onSubmit={sendMessage}
+              className="border-t border-mono-border p-3 flex gap-2"
+            >
+              <MnxInput
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask your career assistant..."
                 className="flex-1 rounded-xl px-3 py-2 text-sm"
                 disabled={sending}
               />
-              <button
+              <MnxAction
                 type="submit"
                 disabled={!input.trim() || sending}
-                className="flex items-center gap-1 rounded-xl bg-[#F9D972] px-4 py-2 text-sm font-medium text-white hover:bg-[#E8C85D] disabled:opacity-50"
+                className="flex items-center gap-1 rounded-xl bg-[var(--mnx-accent)] px-4 py-2 text-sm font-medium text-[var(--mnx-text)] hover:bg-[var(--mnx-accent-soft)] disabled:opacity-50"
               >
                 <Send size={16} />
-              </button>
+              </MnxAction>
             </form>
           </>
         )}

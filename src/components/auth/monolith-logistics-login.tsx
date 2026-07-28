@@ -73,6 +73,20 @@ function getSafeCallbackUrl(identifier: string) {
   return requestedCallbackUrl?.startsWith("/") ? requestedCallbackUrl : fallbackTarget;
 }
 
+function getSameOriginRedirectUrl(url: string | null | undefined, fallbackUrl: string) {
+  if (!url) return fallbackUrl;
+  if (url.startsWith("/")) return url;
+
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.origin === window.location.origin
+      ? `${parsedUrl.pathname}${parsedUrl.search}${parsedUrl.hash}`
+      : fallbackUrl;
+  } catch {
+    return fallbackUrl;
+  }
+}
+
 export function MonolithLogisticsLogin() {
   const panelRef = useRef<HTMLElement>(null);
   const petRef = useRef<HTMLSpanElement>(null);
@@ -250,7 +264,7 @@ export function MonolithLogisticsLogin() {
     setMood("happy");
     setPetMessage("You’re in! Let’s get moving.");
     await wait(SUCCESS_TRANSITION_MS);
-    window.location.replace(result.url ?? callbackUrl);
+    window.location.replace(getSameOriginRedirectUrl(result.url, callbackUrl));
   }
 
   return (

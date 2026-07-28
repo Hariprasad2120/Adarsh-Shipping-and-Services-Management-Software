@@ -1,9 +1,19 @@
 "use client";
 
+import { PeopleControlInput as MnxInput } from "@/components/monolith/people-controls";
+
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Add, Search } from "@carbon/icons-react";
-import {DataTable,DataTableBody,DataTableCell,DataTableHead,DataTableHeader,DataTableRow,DataTableEmpty,} from "@/components/data-table";
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+  DataTableEmpty,
+} from "@/components/monolith/people-data-table";
 
 type Candidate = {
   id: string;
@@ -41,12 +51,14 @@ export default function CandidatesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="monolith-h1 text-mono-text">Candidates</h1>
-          <p className="text-sm text-mono-muted">Talent pool and candidate profiles</p>
+          <h1 className="mnx-title-1 text-mono-text">Candidates</h1>
+          <p className="text-sm text-mono-muted">
+            Talent pool and candidate profiles
+          </p>
         </div>
         <Link
           href="/hrms/recruit/employer/candidates/new"
-          className="inline-flex items-center gap-2 rounded-xl bg-[#F9D972] px-4 py-2 text-sm font-medium text-white uppercase tracking-wide transition hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)]"
+          className="inline-flex items-center gap-2 rounded-xl bg-[var(--mnx-accent)] px-4 py-2 text-sm font-medium text-[var(--mnx-text)] uppercase tracking-wide transition hover:bg-[var(--mnx-accent-soft)] hover:shadow-ambient-hover"
         >
           <Add size={16} />
           Add Candidate
@@ -54,8 +66,11 @@ export default function CandidatesPage() {
       </div>
 
       <div className="relative max-w-sm">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
-        <input
+        <Search
+          size={16}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted"
+        />
+        <MnxInput
           type="search"
           placeholder="Search by name, email..."
           value={search}
@@ -79,27 +94,41 @@ export default function CandidatesPage() {
             {loading ? (
               <DataTableEmpty colSpan={5} message="Loading..." />
             ) : candidates.length === 0 ? (
-              <DataTableEmpty colSpan={5} message="No candidates yet. Add your first candidate." />
+              <DataTableEmpty
+                colSpan={5}
+                message="No candidates yet. Add your first candidate."
+              />
             ) : (
               candidates.map((c) => (
                 <DataTableRow key={c.id}>
                   <DataTableCell>
                     <Link
                       href={`/hrms/recruit/employer/candidates/${c.id}`}
-                      className="font-medium text-mono-text hover:text-[#F9D972]"
+                      className="font-medium text-mono-text hover:text-[var(--mnx-accent)]"
                     >
                       {c.fullName}
                     </Link>
-                    {c.email && <p className="monolith-label mt-0.5">{c.email}</p>}
+                    {c.email && (
+                      <p className="mnx-dashboard-spec-label mt-0.5">
+                        {c.email}
+                      </p>
+                    )}
                   </DataTableCell>
-                  <DataTableCell className="monolith-label">{c.candidateNumber}</DataTableCell>
+                  <DataTableCell className="mnx-dashboard-spec-label">
+                    {c.candidateNumber}
+                  </DataTableCell>
                   <DataTableCell className="text-mono-muted">
                     {c.currentTitle ?? "—"}
                     {c.currentCompany && (
-                      <span className="text-outline"> · {c.currentCompany}</span>
+                      <span className="text-outline">
+                        {" "}
+                        · {c.currentCompany}
+                      </span>
                     )}
                   </DataTableCell>
-                  <DataTableCell className="text-mono-muted">{c.phone ?? "—"}</DataTableCell>
+                  <DataTableCell className="text-mono-muted">
+                    {c.phone ?? "—"}
+                  </DataTableCell>
                   <DataTableCell className="text-mono-muted">
                     {new Date(c.createdAt).toLocaleDateString()}
                   </DataTableCell>

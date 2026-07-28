@@ -7,7 +7,14 @@ import { useState, useEffect, useTransition, useMemo, useRef } from "react";
 import { Button } from "@/components/monolith/button";
 import { DropdownSelect } from "@/components/monolith/dropdown-select";
 import { cn } from "@/lib/utils";
-import {Calendar,CheckCircle,ArrowRight,ChevronLeft,ChevronRight,TrendingUp,} from "lucide-react";
+import {
+  Calendar,
+  CheckCircle,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
+} from "lucide-react";
 
 type Punch = {
   id: string;
@@ -94,7 +101,8 @@ const getPercentRaw = (timeIso: string | null) => {
   return ((mins - WORK_START_MINUTES) / WORK_TOTAL_MINUTES) * 100;
 };
 
-const getPercent = (timeIso: string | null) => clampPercent(getPercentRaw(timeIso));
+const getPercent = (timeIso: string | null) =>
+  clampPercent(getPercentRaw(timeIso));
 
 export function PunchCard({
   punches,
@@ -141,7 +149,9 @@ export function PunchCard({
   });
 
   // Timeline detailed state for sidebar
-  const [timelineSessions, setTimelineSessions] = useState<TimelineSession[]>([]);
+  const [timelineSessions, setTimelineSessions] = useState<TimelineSession[]>(
+    [],
+  );
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [timelineError, setTimelineError] = useState<string | null>(null);
 
@@ -157,7 +167,10 @@ export function PunchCard({
   const [liveLineLeft, setLiveLineLeft] = useState<number | null>(null);
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
-      todayRowRef.current?.scrollIntoView({ behavior: "instant", block: "center" });
+      todayRowRef.current?.scrollIntoView({
+        behavior: "instant",
+        block: "center",
+      });
     });
     return () => cancelAnimationFrame(frame);
   }, [selectedEmployeeId]);
@@ -178,16 +191,18 @@ export function PunchCard({
     for (let d = 1; d <= totalDays; d++) {
       const date = new Date(selectedYear, selectedMonth - 1, d);
       const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-      
+
       const dayOfWeek = date.getDay();
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-      
+
       const punch = punches.find((p) => isSameLocalDate(p.date, dateStr));
       const ot = otRecords.find((o) => isSameLocalDate(o.date, dateStr));
-      
+
       list.push({
         dayNum: d,
-        dayName: date.toLocaleDateString("en-IN", { weekday: "short" }).toUpperCase(),
+        dayName: date
+          .toLocaleDateString("en-IN", { weekday: "short" })
+          .toUpperCase(),
         dateStr,
         isWeekend,
         dayOfWeek,
@@ -214,7 +229,7 @@ export function PunchCard({
           throw new Error(
             res.status === 404
               ? "No biometric account linked"
-              : "Biometric connection offline"
+              : "Biometric connection offline",
           );
         }
         const data = await res.json();
@@ -229,7 +244,9 @@ export function PunchCard({
         if (!active) return;
         const errMsg = err instanceof Error ? err.message : "Offline";
         setTimelineError(errMsg);
-        const matchPunch = punches.find((p) => isSameLocalDate(p.date, selectedDateStr));
+        const matchPunch = punches.find((p) =>
+          isSameLocalDate(p.date, selectedDateStr),
+        );
         if (matchPunch?.inAt) {
           setTimelineSessions([
             {
@@ -314,9 +331,14 @@ export function PunchCard({
   }, [selectedDateStr]);
 
   const selectedDayMetrics = useMemo(() => {
-    const dayPunch = punches.find((p) => isSameLocalDate(p.date, selectedDateStr));
-    const dayOt = otRecords.find((o) => isSameLocalDate(o.date, selectedDateStr));
-    const dayMeta = daysInMonth.find((day) => day.dateStr === selectedDateStr) ?? null;
+    const dayPunch = punches.find((p) =>
+      isSameLocalDate(p.date, selectedDateStr),
+    );
+    const dayOt = otRecords.find((o) =>
+      isSameLocalDate(o.date, selectedDateStr),
+    );
+    const dayMeta =
+      daysInMonth.find((day) => day.dateStr === selectedDateStr) ?? null;
     return { dayPunch, dayOt, dayMeta };
   }, [selectedDateStr, punches, otRecords, daysInMonth]);
 
@@ -332,21 +354,29 @@ export function PunchCard({
   }, [timelineSessions, selectedDayMetrics.dayPunch]);
 
   const totalWorkedSelectedDay = useMemo(() => {
-    const inAt = timelineSessions.length > 0 ? timelineSessions[0]!.in : selectedDayMetrics.dayPunch?.inAt;
+    const inAt =
+      timelineSessions.length > 0
+        ? timelineSessions[0]!.in
+        : selectedDayMetrics.dayPunch?.inAt;
     if (!inAt) return 0;
 
     const isToday = selectedDateStr === todayStr;
     const lastSession = timelineSessions[timelineSessions.length - 1];
     const isLive = lastSession && !lastSession.out && isToday;
 
-    const outAt = isLive
-      ? nowState.toISOString()
-      : lastProperOutTime;
+    const outAt = isLive ? nowState.toISOString() : lastProperOutTime;
 
     if (!outAt) return 0;
 
     return getDurationHoursNoSeconds(inAt, outAt);
-  }, [selectedDayMetrics.dayPunch, timelineSessions, lastProperOutTime, selectedDateStr, todayStr, nowState]);
+  }, [
+    selectedDayMetrics.dayPunch,
+    timelineSessions,
+    lastProperOutTime,
+    selectedDateStr,
+    todayStr,
+    nowState,
+  ]);
 
   const formatDuration = (decimalHours: number | null) => {
     if (decimalHours === null || decimalHours <= 0) return "0:00 Hrs";
@@ -356,8 +386,14 @@ export function PunchCard({
     return `${hrs}:${mins.toString().padStart(2, "0")} Hrs`;
   };
 
-  const nowPercentRaw = useMemo(() => getPercentRaw(nowState.toISOString()), [nowState]);
-  const nowPercent = useMemo(() => clampPercent(nowPercentRaw), [nowPercentRaw]);
+  const nowPercentRaw = useMemo(
+    () => getPercentRaw(nowState.toISOString()),
+    [nowState],
+  );
+  const nowPercent = useMemo(
+    () => clampPercent(nowPercentRaw),
+    [nowPercentRaw],
+  );
 
   // Show the current-time line for the current month even before 9:30 or after 5:30.
   // It clamps to the left/right edge instead of disappearing.
@@ -385,7 +421,8 @@ export function PunchCard({
 
       const tableRect = table.getBoundingClientRect();
       const trackRect = track.getBoundingClientRect();
-      const x = trackRect.left - tableRect.left + (trackRect.width * nowPercent) / 100;
+      const x =
+        trackRect.left - tableRect.left + (trackRect.width * nowPercent) / 100;
       setLiveLineLeft(x);
     };
 
@@ -396,7 +433,8 @@ export function PunchCard({
     if (typeof ResizeObserver !== "undefined") {
       resizeObserver = new ResizeObserver(updateLiveLine);
       if (tableRef.current) resizeObserver.observe(tableRef.current);
-      if (currentDayTrackRef.current) resizeObserver.observe(currentDayTrackRef.current);
+      if (currentDayTrackRef.current)
+        resizeObserver.observe(currentDayTrackRef.current);
     }
 
     return () => {
@@ -404,13 +442,19 @@ export function PunchCard({
       window.removeEventListener("resize", updateLiveLine);
       resizeObserver?.disconnect();
     };
-  }, [showLiveTimeLine, nowPercent, selectedEmployeeId, selectedYear, selectedMonth, todayStr]);
+  }, [
+    showLiveTimeLine,
+    nowPercent,
+    selectedEmployeeId,
+    selectedYear,
+    selectedMonth,
+    todayStr,
+  ]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-4">
       {/* Left Column: Timeline Table (spans 3 columns) */}
       <div className="flex flex-col gap-6 lg:col-span-3 lg:max-h-[calc(100vh-180px)]">
-
         {/* Header Block */}
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-b border-mono-border/30 pb-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -418,7 +462,9 @@ export function PunchCard({
               <div className="w-64">
                 <DropdownSelect
                   defaultValue={selectedEmployeeId}
-                  onValueChange={(val: string) => handleFilterChange({ employeeId: val })}
+                  onValueChange={(val: string) =>
+                    handleFilterChange({ employeeId: val })
+                  }
                   options={employees.map((e) => ({
                     value: e.id,
                     label: `${e.name} ${e.employeeNumber ? `(${e.employeeNumber})` : ""}`,
@@ -428,8 +474,8 @@ export function PunchCard({
               </div>
             )}
 
-            <div className="flex items-center gap-1.5 rounded-full border border-[#F9D972]/20 bg-[#F9D972]/10 px-3 py-1.5 text-[10px] font-medium tracking-[0.08em] text-[#009d96] dark:text-[#F9D972]">
-              <span className="size-1.5 rounded-full bg-[#F9D972] animate-pulse" />
+            <div className="flex items-center gap-1.5 rounded-full border border-[var(--mnx-accent)]/20 bg-[var(--mnx-accent)]/10 px-3 py-1.5 text-[10px] font-medium tracking-[0.08em] text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)]">
+              <span className="size-1.5 rounded-full bg-[var(--mnx-accent)] animate-pulse" />
               <span>{syncLabel}</span>
             </div>
 
@@ -445,10 +491,13 @@ export function PunchCard({
                 <ChevronLeft className="size-4" />
               </Button>
               <span className="min-w-[110px] select-none px-2 text-center text-xs font-medium tracking-[0.04em] text-mono-text">
-                {new Date(selectedYear, selectedMonth - 1).toLocaleString("en-IN", {
-                  month: "long",
-                  year: "numeric",
-                })}
+                {new Date(selectedYear, selectedMonth - 1).toLocaleString(
+                  "en-IN",
+                  {
+                    month: "long",
+                    year: "numeric",
+                  },
+                )}
               </span>
               <Button
                 variant="outline"
@@ -466,19 +515,18 @@ export function PunchCard({
         {/* Timeline Grid Table */}
         <div
           ref={tableRef}
-          className="monolith-shell-lg relative flex flex-1 flex-col min-h-0 overflow-hidden border border-mono-border/40 bg-mono-card shadow-sm"
+          className="mnx-content-wide relative flex flex-1 flex-col min-h-0 overflow-hidden border border-mono-border/40 bg-mono-card shadow-sm"
         >
-
           {showLiveTimeLine && liveLineLeft !== null && (
             <div
-              className="pointer-events-none absolute top-0 bottom-0 z-[90] -translate-x-1/2 border-l border-dashed border-[#4f8cff]/80"
+              className="pointer-events-none absolute top-0 bottom-0 z-[90] -translate-x-1/2 border-l border-dashed border-[var(--mnx-info)]/80"
               style={{ left: `${liveLineLeft}px` }}
               aria-hidden="true"
             >
-              <span className="absolute top-2 left-1/2 -translate-x-1/2 rounded-full border border-[#4f8cff]/25 bg-mono-card px-1.5 py-0.5 text-[7px] font-semibold tracking-[0.08em] text-[#4f8cff] shadow-sm">
+              <span className="absolute top-2 left-1/2 -translate-x-1/2 rounded-full border border-[var(--mnx-info)]/25 bg-mono-card px-1.5 py-0.5 text-[7px] font-semibold tracking-[0.08em] text-[var(--mnx-info)] shadow-sm">
                 NOW
               </span>
-              <span className="absolute top-[54px] left-1/2 flex size-2.5 -translate-x-1/2 items-center justify-center rounded-full bg-[#4f8cff] shadow-[0_0_0_4px_rgba(79,140,255,0.15)]" />
+              <span className="absolute top-[54px] left-1/2 flex size-2.5 -translate-x-1/2 items-center justify-center rounded-full bg-[var(--mnx-info)] shadow-ambient" />
             </div>
           )}
 
@@ -496,7 +544,6 @@ export function PunchCard({
               <span>3:30 PM</span>
               <span>4:30 PM</span>
               <span>5:30 PM</span>
-
             </div>
             <div className="text-center">OT</div>
             <div className="text-right">Hours</div>
@@ -510,11 +557,12 @@ export function PunchCard({
 
               // Prefer freshly fetched selected-day sessions, then fallback to monthSessions.
               // This makes the open/still-inside state appear without needing a page reload.
-              const fetchedSelectedSessions = selectedDateStr === day.dateStr ? timelineSessions : [];
+              const fetchedSelectedSessions =
+                selectedDateStr === day.dateStr ? timelineSessions : [];
               const daySessions =
                 fetchedSelectedSessions.length > 0
                   ? fetchedSelectedSessions
-                  : monthSessions[day.dateStr] ?? [];
+                  : (monthSessions[day.dateStr] ?? []);
               const hasSessionData = daySessions.length > 0;
 
               const inTime = day.punch?.inAt;
@@ -532,18 +580,22 @@ export function PunchCard({
                 }
               }
 
-              const lastSession = hasSessionData ? daySessions[daySessions.length - 1]! : null;
+              const lastSession = hasSessionData
+                ? daySessions[daySessions.length - 1]!
+                : null;
               const lastSessionOpen =
                 isCurrentDay &&
-                ((hasSessionData && !lastSession!.out) || (!!inTime && !outTime));
+                ((hasSessionData && !lastSession!.out) ||
+                  (!!inTime && !outTime));
 
               const effectiveOutForDay = lastSessionOpen
                 ? nowState.toISOString()
                 : lastProperOutForDay;
 
-              const hoursWorked = firstIn && effectiveOutForDay
-                ? getDurationHoursNoSeconds(firstIn, effectiveOutForDay)
-                : 0;
+              const hoursWorked =
+                firstIn && effectiveOutForDay
+                  ? getDurationHoursNoSeconds(firstIn, effectiveOutForDay)
+                  : 0;
 
               // The live-time line is rendered once as an overlay on the full table.
               // Do not render another per-row line here, otherwise the UI shows two lines.
@@ -553,11 +605,17 @@ export function PunchCard({
               let visualBar = null;
 
               if (firstIn) {
-                const lastOut = hasSessionData ? (lastSession!.out || null) : outTime;
-                const effectiveLastOut = lastOut || (lastSessionOpen ? nowState.toISOString() : firstIn);
+                const lastOut = hasSessionData
+                  ? lastSession!.out || null
+                  : outTime;
+                const effectiveLastOut =
+                  lastOut ||
+                  (lastSessionOpen ? nowState.toISOString() : firstIn);
                 const lastEndRawPct = getPercentRaw(effectiveLastOut);
                 const hasOt = !!(day.ot && day.ot.otHours > 0);
-                const otWidth = hasOt ? Math.min(28, Math.max(2, lastEndRawPct - 100)) : 0;
+                const otWidth = hasOt
+                  ? Math.min(28, Math.max(2, lastEndRawPct - 100))
+                  : 0;
                 const liveIndicatorPct = clampPercent(lastEndRawPct);
 
                 visualBar = (
@@ -569,62 +627,78 @@ export function PunchCard({
                     <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-outline-variant/30" />
                     {nowLine}
 
-                    {hasSessionData ? (
-                      // Per-session segments — gaps where employee was outside
-                      daySessions.map((session, idx) => {
-                        const sessionOut = session.out || null;
-                        const isOpenLiveSession = isCurrentDay && idx === daySessions.length - 1 && !sessionOut;
-                        const segStart = getPercent(session.in);
-                        const segOutIso = sessionOut ?? (isOpenLiveSession ? nowState.toISOString() : null);
-                        const segEnd = segOutIso ? Math.min(100, getPercent(segOutIso)) : segStart + 0.5;
-                        const segWidth = Math.max(0.5, segEnd - segStart);
-                        return (
-                          <div
-                            key={idx}
-                            className={cn(
-                              "absolute flex h-1 items-center rounded-full border-l border-r border-[#F9D972] bg-[#F9D972]/80 animate-fade-in",
-                              isOpenLiveSession && "shadow-[0_0_10px_rgba(0,206,196,0.45)]"
-                            )}
-                            style={{ left: `${segStart}%`, width: `${segWidth}%` }}
-                          >
-                            <span className="absolute left-0 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-green-500 bg-green-500 shadow-sm" />
-                            {sessionOut && (
-                              <span className="absolute right-0 top-1/2 h-1.5 w-1.5 translate-x-1/2 -translate-y-1/2 rounded-full border border-red-500 bg-red-500 shadow-sm" />
-                            )}
-                          </div>
-                        );
-                      })
-                    ) : (
-                      // Fallback: single summary bar (first-in → last-out)
-                      (() => {
-                        const startPct = getPercent(firstIn);
-                        const endPct = effectiveLastOut ? Math.min(100, getPercent(effectiveLastOut)) : 100;
-                        const width = Math.max(1, endPct - startPct);
-                        return (
-                          <div
-                            className="absolute flex h-1 items-center rounded-full border-l border-r border-[#F9D972] bg-[#F9D972]/80 animate-fade-in"
-                            style={{ left: `${startPct}%`, width: `${width}%` }}
-                          >
-                            <span className="absolute left-0 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-green-500 bg-green-500 shadow-sm" />
-                            {outTime && (
-                              <span className="absolute right-0 top-1/2 h-1.5 w-1.5 translate-x-1/2 -translate-y-1/2 rounded-full border border-red-500 bg-red-500 shadow-sm" />
-                            )}
-                          </div>
-                        );
-                      })()
-                    )}
+                    {hasSessionData
+                      ? // Per-session segments — gaps where employee was outside
+                        daySessions.map((session, idx) => {
+                          const sessionOut = session.out || null;
+                          const isOpenLiveSession =
+                            isCurrentDay &&
+                            idx === daySessions.length - 1 &&
+                            !sessionOut;
+                          const segStart = getPercent(session.in);
+                          const segOutIso =
+                            sessionOut ??
+                            (isOpenLiveSession ? nowState.toISOString() : null);
+                          const segEnd = segOutIso
+                            ? Math.min(100, getPercent(segOutIso))
+                            : segStart + 0.5;
+                          const segWidth = Math.max(0.5, segEnd - segStart);
+                          return (
+                            <div
+                              key={idx}
+                              className={cn(
+                                "absolute flex h-1 items-center rounded-full border-l border-r border-[var(--mnx-accent)] bg-[var(--mnx-accent)]/80 animate-fade-in",
+                                isOpenLiveSession && "shadow-ambient",
+                              )}
+                              style={{
+                                left: `${segStart}%`,
+                                width: `${segWidth}%`,
+                              }}
+                            >
+                              <span className="absolute left-0 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--mnx-success)] bg-[var(--mnx-success-bg)] shadow-sm" />
+                              {sessionOut && (
+                                <span className="absolute right-0 top-1/2 h-1.5 w-1.5 translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--mnx-danger)] bg-[var(--mnx-danger-bg)] shadow-sm" />
+                              )}
+                            </div>
+                          );
+                        })
+                      : // Fallback: single summary bar (first-in → last-out)
+                        (() => {
+                          const startPct = getPercent(firstIn);
+                          const endPct = effectiveLastOut
+                            ? Math.min(100, getPercent(effectiveLastOut))
+                            : 100;
+                          const width = Math.max(1, endPct - startPct);
+                          return (
+                            <div
+                              className="absolute flex h-1 items-center rounded-full border-l border-r border-[var(--mnx-accent)] bg-[var(--mnx-accent)]/80 animate-fade-in"
+                              style={{
+                                left: `${startPct}%`,
+                                width: `${width}%`,
+                              }}
+                            >
+                              <span className="absolute left-0 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--mnx-success)] bg-[var(--mnx-success-bg)] shadow-sm" />
+                              {outTime && (
+                                <span className="absolute right-0 top-1/2 h-1.5 w-1.5 translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--mnx-danger)] bg-[var(--mnx-danger-bg)] shadow-sm" />
+                              )}
+                            </div>
+                          );
+                        })()}
 
                     {/* OT segment */}
                     {hasOt && (
                       <div
-                        className="absolute flex h-1 items-center rounded-r-full border-y border-r border-orange-500 bg-orange-500/80 animate-fade-in"
+                        className="absolute flex h-1 items-center rounded-r-full border-y border-r border-[var(--mnx-warning)] bg-[var(--mnx-warning-bg)]/80 animate-fade-in"
                         style={{ left: "100%", width: `${otWidth}%` }}
                       >
                         {lastOut && (
-                          <span className="absolute right-0 top-1/2 h-1.5 w-1.5 translate-x-1/2 -translate-y-1/2 rounded-full border border-orange-500 bg-mono-card shadow-sm" />
+                          <span className="absolute right-0 top-1/2 h-1.5 w-1.5 translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--mnx-warning)] bg-mono-card shadow-sm" />
                         )}
-                        <span className="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 whitespace-nowrap text-[9px] font-medium text-orange-500">
-                          {day.ot ? `${Math.round(day.ot.otHours * 60)} Mins` : "0 Mins"} OT
+                        <span className="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 whitespace-nowrap text-[9px] font-medium text-[var(--mnx-warning)]">
+                          {day.ot
+                            ? `${Math.round(day.ot.otHours * 60)} Mins`
+                            : "0 Mins"}{" "}
+                          OT
                         </span>
                       </div>
                     )}
@@ -636,9 +710,9 @@ export function PunchCard({
                         style={{ left: `${liveIndicatorPct}%` }}
                         title="Still inside"
                       >
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#F9D972] opacity-75" />
-                        <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-white bg-[#F9D972] shadow-[0_0_12px_rgba(0,206,196,0.75)]" />
-                        <span className="absolute left-[calc(100%+6px)] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-[#F9D972]/20 bg-[#F9D972]/10 px-2 py-0.5 text-[8px] font-semibold tracking-[0.08em] text-[#009d96] dark:text-[#F9D972]">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--mnx-accent)] opacity-75" />
+                        <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-[var(--mnx-border)] bg-[var(--mnx-accent)] shadow-ambient" />
+                        <span className="absolute left-[calc(100%+6px)] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-[var(--mnx-accent)]/20 bg-[var(--mnx-accent)]/10 px-2 py-0.5 text-[8px] font-semibold tracking-[0.08em] text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)]">
                           INSIDE
                         </span>
                       </span>
@@ -652,7 +726,9 @@ export function PunchCard({
                       ref={isCurrentDay ? currentDayTrackRef : undefined}
                       className="relative flex h-6 w-[calc(100%-65px)] items-center justify-center rounded-full border border-secondary/10 bg-secondary/5 select-none overflow-visible"
                     >
-                      <span className="text-[9px] font-medium tracking-[0.08em] text-secondary/70">Saturday</span>
+                      <span className="text-[9px] font-medium tracking-[0.08em] text-secondary/70">
+                        Saturday
+                      </span>
                       {nowLine}
                     </div>
                   );
@@ -662,7 +738,9 @@ export function PunchCard({
                       ref={isCurrentDay ? currentDayTrackRef : undefined}
                       className="relative flex h-6 w-[calc(100%-65px)] items-center justify-center rounded-full border border-dashed border-mono-border/80 bg-mono-soft select-none overflow-visible"
                     >
-                      <span className="text-[9px] font-medium tracking-[0.08em] text-mono-muted">Sunday</span>
+                      <span className="text-[9px] font-medium tracking-[0.08em] text-mono-muted">
+                        Sunday
+                      </span>
                       {nowLine}
                     </div>
                   );
@@ -674,7 +752,7 @@ export function PunchCard({
                     ref={isCurrentDay ? currentDayTrackRef : undefined}
                     className="relative w-[calc(100%-65px)] h-6 flex items-center select-none overflow-visible"
                   >
-                    <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-rose-500/20" />
+                    <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[var(--mnx-danger-bg)]/20" />
                     {nowLine}
                   </div>
                 );
@@ -689,16 +767,24 @@ export function PunchCard({
                     "grid cursor-pointer grid-cols-[85px_1fr_65px_95px] items-center gap-4 border-l-2 px-6 py-3 transition select-none",
                     isSelected
                       ? "border-l-primary bg-mono-accent/8"
-                      : "border-l-transparent hover:bg-mono-soft/80"
+                      : "border-l-transparent hover:bg-mono-soft/80",
                   )}
                 >
                   {/* Day column */}
                   <div>
-                    <p className={cn("text-xs font-medium", day.isWeekend ? "text-mono-muted" : "text-mono-text")}>
-                      {day.dayNum} <span className="ml-0.5 text-[10px] font-medium text-mono-muted">{day.dayName}</span>
+                    <p
+                      className={cn(
+                        "text-xs font-medium",
+                        day.isWeekend ? "text-mono-muted" : "text-mono-text",
+                      )}
+                    >
+                      {day.dayNum}{" "}
+                      <span className="ml-0.5 text-[10px] font-medium text-mono-muted">
+                        {day.dayName}
+                      </span>
                     </p>
                     {inTime && (
-                      <p className="mt-0.5 font-mono text-[9px] font-medium text-[#009d96] dark:text-[#F9D972]">
+                      <p className="mt-0.5 font-mono text-[9px] font-medium text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)]">
                         {fmt(inTime)}
                       </p>
                     )}
@@ -710,7 +796,9 @@ export function PunchCard({
                   {/* OT column */}
                   <div className="text-center text-xs font-medium">
                     {day.ot && day.ot.otHours > 0 ? (
-                      <span className="text-orange-500">{Math.round(day.ot.otHours * 60)} Mins</span>
+                      <span className="text-[var(--mnx-warning)]">
+                        {Math.round(day.ot.otHours * 60)} Mins
+                      </span>
                     ) : (
                       <span className="text-mono-muted">0 Mins</span>
                     )}
@@ -719,24 +807,26 @@ export function PunchCard({
                   {/* Hours column */}
                   <div className="text-right">
                     <p className="font-mono text-xs font-medium text-mono-text">
-                      {hoursWorked > 0 ? formatHoursAndMins(hoursWorked) : "0 Mins"}
+                      {hoursWorked > 0
+                        ? formatHoursAndMins(hoursWorked)
+                        : "0 Mins"}
                     </p>
                     {hoursWorked > 0 && (
-                      <p className="mt-0.5 text-[8px] font-medium tracking-[0.08em] text-mono-muted">worked</p>
+                      <p className="mt-0.5 text-[8px] font-medium tracking-[0.08em] text-mono-muted">
+                        worked
+                      </p>
                     )}
                   </div>
                 </div>
               );
             })}
           </div>
-
         </div>
       </div>
 
       {/* Right Column: Detailed Day Panel (spans 1 column) */}
       <div className="space-y-6 lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-180px)] lg:overflow-hidden">
-        <div className="monolith-shell-lg flex h-full flex-col border border-mono-border/40 bg-mono-card shadow-sm">
-
+        <div className="mnx-content-wide flex h-full flex-col border border-mono-border/40 bg-mono-card shadow-sm">
           {/* Sidebar Header */}
           <div className="space-y-1 border-b border-mono-border/30 p-5 pb-4">
             <div className="flex items-center justify-between">
@@ -756,18 +846,20 @@ export function PunchCard({
 
           {/* Sidebar Body */}
           <div className="flex-1 space-y-6 overflow-y-auto p-5">
-            
             {/* Status Badge */}
             <div className="flex items-center justify-between rounded-2xl border border-mono-border/35 bg-mono-soft p-3">
               <span className="text-[10px] font-medium tracking-[0.08em] text-mono-muted">
                 Attendance Status
               </span>
               {selectedDayMetrics.dayPunch?.inAt ? (
-                <span className={`inline-flex items-center gap-1.5 rounded-full border border-[#F9D972]/20 bg-[#F9D972]/10 px-3 py-1 text-xs font-medium text-[#009d96] dark:text-[#F9D972] ${!selectedDayMetrics.dayPunch?.outAt && selectedDateStr === todayStr ? "animate-pulse" : ""}`}>
-                  {!selectedDayMetrics.dayPunch?.outAt && selectedDateStr === todayStr ? (
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full border border-[var(--mnx-accent)]/20 bg-[var(--mnx-accent)]/10 px-3 py-1 text-xs font-medium text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)] ${!selectedDayMetrics.dayPunch?.outAt && selectedDateStr === todayStr ? "animate-pulse" : ""}`}
+                >
+                  {!selectedDayMetrics.dayPunch?.outAt &&
+                  selectedDateStr === todayStr ? (
                     <span className="relative flex size-2 shrink-0">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F9D972] opacity-75" />
-                      <span className="relative inline-flex rounded-full size-2 bg-[#F9D972]" />
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--mnx-accent)] opacity-75" />
+                      <span className="relative inline-flex rounded-full size-2 bg-[var(--mnx-accent)]" />
                     </span>
                   ) : (
                     <CheckCircle className="size-3.5" />
@@ -779,7 +871,7 @@ export function PunchCard({
                   Weekend
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs font-medium text-rose-600 dark:text-rose-400">
+                <span className="inline-flex items-center gap-1 rounded-full border border-[var(--mnx-danger)]/20 bg-[var(--mnx-danger-bg)]/10 px-3 py-1 text-xs font-medium text-[var(--mnx-danger)] text-[var(--mnx-danger)]">
                   Absent
                 </span>
               )}
@@ -791,7 +883,7 @@ export function PunchCard({
                 Punch Sessions
               </p>
               {timelineError ? (
-                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[10px] font-medium tracking-[0.04em] text-amber-700 dark:text-amber-300">
+                <div className="rounded-2xl border border-[var(--mnx-warning)]/20 bg-[var(--mnx-warning-bg)]/10 px-3 py-2 text-[10px] font-medium tracking-[0.04em] text-[var(--mnx-warning)] text-[var(--mnx-warning)]">
                   {timelineError}. Showing summary data where available.
                 </div>
               ) : null}
@@ -807,13 +899,16 @@ export function PunchCard({
               ) : (
                 <div className="space-y-3.5">
                   {timelineSessions.map((session, idx) => {
-                    const isLive = session.out === null && selectedDateStr === todayStr;
+                    const isLive =
+                      session.out === null && selectedDateStr === todayStr;
                     const durationText = formatDuration(
                       session.durationHours !== null
                         ? session.durationHours
                         : isLive
-                          ? (nowState.getTime() - new Date(session.in).getTime()) / 3600000
-                          : 0
+                          ? (nowState.getTime() -
+                              new Date(session.in).getTime()) /
+                            3600000
+                          : 0,
                     );
 
                     return (
@@ -824,17 +919,22 @@ export function PunchCard({
                         <div className="grid grid-cols-2 gap-4">
                           {/* Check In */}
                           <div className="space-y-1">
-                            <div className="flex items-center gap-1.5 text-[#009d96] dark:text-[#F9D972]">
-                              <span className="inline-flex items-center justify-center rounded-lg bg-[#F9D972]/10 p-1">
+                            <div className="flex items-center gap-1.5 text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)]">
+                              <span className="inline-flex items-center justify-center rounded-lg bg-[var(--mnx-accent)]/10 p-1">
                                 <ArrowRight className="size-3.5 -rotate-45 shrink-0" />
                               </span>
-                              <span className="text-[9px] font-medium tracking-[0.08em]">IN</span>
+                              <span className="text-[9px] font-medium tracking-[0.08em]">
+                                IN
+                              </span>
                             </div>
                             <div className="pl-6">
                               <p className="text-xs font-medium text-mono-text">
                                 {fmt(session.in)}
                               </p>
-                              <p className="mt-0.5 truncate text-[8px] font-medium text-mono-muted" title={session.inDevice || "Unknown Device"}>
+                              <p
+                                className="mt-0.5 truncate text-[8px] font-medium text-mono-muted"
+                                title={session.inDevice || "Unknown Device"}
+                              >
                                 {session.inDevice || "Unknown Device"}
                               </p>
                             </div>
@@ -842,11 +942,13 @@ export function PunchCard({
 
                           {/* Check Out */}
                           <div className="space-y-1 border-l border-mono-border/30 pl-4">
-                            <div className="flex items-center gap-1.5 text-orange-500">
-                              <span className="inline-flex items-center justify-center rounded-lg bg-orange-500/10 p-1">
+                            <div className="flex items-center gap-1.5 text-[var(--mnx-warning)]">
+                              <span className="inline-flex items-center justify-center rounded-lg bg-[var(--mnx-warning-bg)]/10 p-1">
                                 <ArrowRight className="size-3.5 rotate-45 shrink-0" />
                               </span>
-                              <span className="text-[9px] font-medium tracking-[0.08em]">OUT</span>
+                              <span className="text-[9px] font-medium tracking-[0.08em]">
+                                OUT
+                              </span>
                             </div>
                             <div className="pl-6">
                               {session.out ? (
@@ -854,14 +956,20 @@ export function PunchCard({
                                   {fmt(session.out)}
                                 </p>
                               ) : isLive ? (
-                                <span className="inline-flex select-none items-center gap-1 rounded border border-orange-500/20 bg-orange-500/10 px-1.5 py-0.5 text-[8px] font-medium tracking-[0.08em] text-orange-500 animate-pulse">
+                                <span className="inline-flex select-none items-center gap-1 rounded border border-[var(--mnx-warning)]/20 bg-[var(--mnx-warning-bg)]/10 px-1.5 py-0.5 text-[8px] font-medium tracking-[0.08em] text-[var(--mnx-warning)] animate-pulse">
                                   STILL INSIDE
                                 </span>
                               ) : (
-                                <p className="text-xs font-medium text-mono-muted">—</p>
+                                <p className="text-xs font-medium text-mono-muted">
+                                  —
+                                </p>
                               )}
-                              <p className="mt-0.5 truncate text-[8px] font-medium text-mono-muted" title={session.outDevice || "—"}>
-                                {session.outDevice || (isLive ? "Currently Checked In" : "—")}
+                              <p
+                                className="mt-0.5 truncate text-[8px] font-medium text-mono-muted"
+                                title={session.outDevice || "—"}
+                              >
+                                {session.outDevice ||
+                                  (isLive ? "Currently Checked In" : "—")}
                               </p>
                             </div>
                           </div>
@@ -870,7 +978,7 @@ export function PunchCard({
                         {/* Session Footer Details */}
                         <div className="flex items-center justify-between border-t border-mono-border/25 pt-2.5 text-[9px] font-medium text-mono-muted">
                           <span>Session {idx + 1}</span>
-                          <span className="inline-flex select-none items-center rounded-full border border-[#F9D972]/20 bg-[#F9D972]/10 px-2 py-0.5 font-mono text-[9px] font-medium text-[#009d96] dark:text-[#F9D972]">
+                          <span className="inline-flex select-none items-center rounded-full border border-[var(--mnx-accent)]/20 bg-[var(--mnx-accent)]/10 px-2 py-0.5 font-mono text-[9px] font-medium text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)]">
                             {durationText}
                           </span>
                         </div>
@@ -882,24 +990,31 @@ export function PunchCard({
             </div>
 
             {/* Overtime Section Card */}
-            <div className="space-y-3.5 rounded-2xl border border-orange-500/20 bg-orange-500/4 p-4 select-none">
-              <div className="flex items-center gap-2 text-xs font-medium tracking-[0.08em] text-orange-500">
-                <TrendingUp className="size-4 shrink-0 text-orange-500" />
+            <div className="space-y-3.5 rounded-2xl border border-[var(--mnx-warning)]/20 bg-[var(--mnx-warning-bg)]/4 p-4 select-none">
+              <div className="flex items-center gap-2 text-xs font-medium tracking-[0.08em] text-[var(--mnx-warning)]">
+                <TrendingUp className="size-4 shrink-0 text-[var(--mnx-warning)]" />
                 <span>OVERTIME</span>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-[9px] font-medium tracking-[0.08em] text-mono-muted">OT Hours</p>
-                  <p className="mt-1 font-mono text-sm font-medium text-orange-500">
-                    {selectedDayMetrics.dayOt && selectedDayMetrics.dayOt.otHours > 0
+                  <p className="text-[9px] font-medium tracking-[0.08em] text-mono-muted">
+                    OT Hours
+                  </p>
+                  <p className="mt-1 font-mono text-sm font-medium text-[var(--mnx-warning)]">
+                    {selectedDayMetrics.dayOt &&
+                    selectedDayMetrics.dayOt.otHours > 0
                       ? `${Math.round(selectedDayMetrics.dayOt.otHours * 60)} Mins`
                       : "0 Mins"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[9px] font-medium tracking-[0.08em] text-mono-muted">OT Amount</p>
-                  <p className="mt-1 font-mono text-sm font-medium text-orange-500">
-                    ₹{selectedDayMetrics.dayOt && selectedDayMetrics.dayOt.otHours > 0
+                  <p className="text-[9px] font-medium tracking-[0.08em] text-mono-muted">
+                    OT Amount
+                  </p>
+                  <p className="mt-1 font-mono text-sm font-medium text-[var(--mnx-warning)]">
+                    ₹
+                    {selectedDayMetrics.dayOt &&
+                    selectedDayMetrics.dayOt.otHours > 0
                       ? selectedDayMetrics.dayOt.otAmount.toFixed(0)
                       : "0"}
                   </p>
@@ -915,23 +1030,26 @@ export function PunchCard({
                 <div>Hours</div>
               </div>
               <div className="grid grid-cols-3 gap-2 text-center font-mono text-xs font-medium text-mono-text">
-                <div>{timelineSessions.length > 0 ? fmt(timelineSessions[0]!.in) : "—"}</div>
                 <div>
-                  {lastProperOutTime
-                    ? fmt(lastProperOutTime)
+                  {timelineSessions.length > 0
+                    ? fmt(timelineSessions[0]!.in)
                     : "—"}
                 </div>
-                <div>{totalWorkedSelectedDay > 0 ? formatHoursAndMins(totalWorkedSelectedDay) : "—"}</div>
+                <div>{lastProperOutTime ? fmt(lastProperOutTime) : "—"}</div>
+                <div>
+                  {totalWorkedSelectedDay > 0
+                    ? formatHoursAndMins(totalWorkedSelectedDay)
+                    : "—"}
+                </div>
               </div>
 
               {selectedDayMetrics.dayPunch?.inAt && (
-                <div className="flex select-none items-center justify-center gap-1.5 rounded-xl border border-[#F9D972]/15 bg-[#F9D972]/6 py-2 text-[10px] font-medium tracking-[0.08em] text-[#009d96] dark:text-[#F9D972]">
+                <div className="flex select-none items-center justify-center gap-1.5 rounded-xl border border-[var(--mnx-accent)]/15 bg-[var(--mnx-accent)]/6 py-2 text-[10px] font-medium tracking-[0.08em] text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)]">
                   <CheckCircle className="size-3.5" />
                   <span>Approved</span>
                 </div>
               )}
             </div>
-
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import {
   WorkspaceProgress,
   WorkspaceSectionHeading,
 } from "./workspace";
+import { DropdownSelect } from "./dropdown-select";
 import {
   WorkspaceEmptyState,
   WorkspaceErrorState,
@@ -84,5 +85,23 @@ describe("Monolith workspace states", () => {
     expect(heading).toContain("02");
     expect(heading).toContain("Typography");
     expect(heading).toContain("Large, light headlines carry confidence.");
+  });
+
+  it("renders dropdown selects through the shared reference classes", () => {
+    const dropdown = renderToStaticMarkup(
+      <DropdownSelect
+        name="branchId"
+        placeholder="Select branch"
+        options={[
+          { value: "chennai", label: "Chennai" },
+          { value: "mumbai", label: "Mumbai" },
+        ]}
+      />,
+    );
+
+    expect(dropdown).toContain("mnx-select-shell");
+    expect(dropdown).toContain("mnx-field-control mnx-select-trigger");
+    expect(dropdown).toContain("Select branch");
+    expect(dropdown).toContain('name="branchId"');
   });
 });

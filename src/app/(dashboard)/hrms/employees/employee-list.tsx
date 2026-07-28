@@ -1,17 +1,20 @@
+import { PeopleControlTable as MnxTable } from "@/components/monolith/people-controls";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { toDisplayTitleCase } from "@/lib/text-case";
-import { Badge, DataTablePrimaryLinkCell } from "@/components/data-table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
+import {
+  Badge,
+  DataTablePrimaryLinkCell,
+} from "@/components/monolith/people-data-table";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/monolith/card";
 
 type UserRoleName =
-  | "Director"
-  | "Admin"
-  | "Management"
-  | "Manager"
-  | "TL"
-  | "HR"
-  | "Employee";
+  "Director" | "Admin" | "Management" | "Manager" | "TL" | "HR" | "Employee";
 
 type User = {
   id: string;
@@ -44,43 +47,49 @@ const ROLE_GROUPS = [
     key: "Director",
     label: "Directors",
     roles: ["Director"],
-    badgeClass: "border-cyan-200 bg-cyan-50 text-cyan-700",
+    badgeClass:
+      "border-[var(--mnx-info)] bg-[var(--mnx-info-bg)] text-[var(--mnx-info)]",
   },
   {
     key: "Admin",
     label: "Admins",
     roles: ["Admin"],
-    badgeClass: "border-cyan-200 bg-cyan-50 text-cyan-700",
+    badgeClass:
+      "border-[var(--mnx-info)] bg-[var(--mnx-info-bg)] text-[var(--mnx-info)]",
   },
   {
     key: "Management",
     label: "Management",
     roles: ["Management"],
-    badgeClass: "border-cyan-200 bg-cyan-50 text-cyan-700",
+    badgeClass:
+      "border-[var(--mnx-info)] bg-[var(--mnx-info-bg)] text-[var(--mnx-info)]",
   },
   {
     key: "Manager",
     label: "Managers",
     roles: ["Manager"],
-    badgeClass: "border-cyan-200 bg-cyan-50 text-cyan-700",
+    badgeClass:
+      "border-[var(--mnx-info)] bg-[var(--mnx-info-bg)] text-[var(--mnx-info)]",
   },
   {
     key: "TL",
     label: "Team Leads",
     roles: ["TL"],
-    badgeClass: "border-cyan-200 bg-cyan-50 text-cyan-700",
+    badgeClass:
+      "border-[var(--mnx-info)] bg-[var(--mnx-info-bg)] text-[var(--mnx-info)]",
   },
   {
     key: "HR",
     label: "HR",
     roles: ["HR"],
-    badgeClass: "border-cyan-200 bg-cyan-50 text-cyan-700",
+    badgeClass:
+      "border-[var(--mnx-info)] bg-[var(--mnx-info-bg)] text-[var(--mnx-info)]",
   },
   {
     key: "Employee",
     label: "Employees",
     roles: ["Employee"],
-    badgeClass: "border-mono-border bg-mono-soft text-slate-700",
+    badgeClass: "border-mono-border bg-mono-soft text-[var(--mnx-text)]",
   },
 ] as const;
 
@@ -151,8 +160,9 @@ function primaryRoleFor(user: User) {
   const roleNames = user.roles.map((entry) => entry.role.name);
 
   return (
-    [...roleNames].sort((left, right) => rankForRole(left) - rankForRole(right))[0] ??
-    "Employee"
+    [...roleNames].sort(
+      (left, right) => rankForRole(left) - rankForRole(right),
+    )[0] ?? "Employee"
   );
 }
 
@@ -164,10 +174,10 @@ function roleBadgeClass(roleName: string) {
     case "Manager":
     case "TL":
     case "HR":
-      return "border-cyan-200 bg-cyan-50 text-cyan-700";
+      return "border-[var(--mnx-info)] bg-[var(--mnx-info-bg)] text-[var(--mnx-info)]";
 
     default:
-      return "border-mono-border bg-mono-soft text-slate-700";
+      return "border-mono-border bg-mono-soft text-[var(--mnx-text)]";
   }
 }
 
@@ -185,7 +195,7 @@ function initialsFor(name: string) {
 function SectionTable({ users }: { users: User[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full text-sm">
+      <MnxTable className="min-w-full text-sm">
         <thead className="border-b border-mono-border/40 bg-mono-soft text-mono-text">
           <tr>
             <th className={`${HEADER_CELL_CLASS} text-left`}>EMP ID</th>
@@ -207,7 +217,7 @@ function SectionTable({ users }: { users: User[] }) {
             >
               <DataTablePrimaryLinkCell
                 href={`/hrms/employees/${user.id}`}
-                className="monolith-numeric px-0 py-0 text-sm text-mono-muted"
+                className="mnx-numeric px-0 py-0 text-sm text-mono-muted"
                 linkClassName="py-3"
               >
                 {employeeNumberFor(user)}
@@ -218,19 +228,19 @@ function SectionTable({ users }: { users: User[] }) {
                 className="px-0 py-0"
                 linkClassName="min-w-0 gap-3 py-3"
               >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F9D972]/15 text-xs text-[#008b85]">
-                    {initialsFor(user.name)}
-                  </div>
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--mnx-accent)]/15 text-xs text-[var(--mnx-accent-text)]">
+                  {initialsFor(user.name)}
+                </div>
 
-                  <div className="min-w-0">
-                    <p className="truncate text-base font-normal text-mono-text">
-                      {user.name}
-                    </p>
+                <div className="min-w-0">
+                  <p className="truncate text-base font-normal text-mono-text">
+                    {user.name}
+                  </p>
 
-                    <p className="truncate text-xs text-mono-muted">
-                      {user.email}
-                    </p>
-                  </div>
+                  <p className="truncate text-xs text-mono-muted">
+                    {user.email}
+                  </p>
+                </div>
               </DataTablePrimaryLinkCell>
 
               <td className="px-5 py-3">
@@ -260,18 +270,18 @@ function SectionTable({ users }: { users: User[] }) {
                 {toDisplayTitleCase(user.branch?.name)}
               </td>
 
-              <td className="monolith-numeric px-5 py-3 text-sm text-mono-muted">
+              <td className="mnx-numeric px-5 py-3 text-sm text-mono-muted">
                 {formatDate(user.employmentRecord?.joinDate)}
               </td>
 
-              <td className="monolith-numeric px-5 py-3 text-sm text-mono-muted">
+              <td className="mnx-numeric px-5 py-3 text-sm text-mono-muted">
                 {formatCurrency(user.employmentRecord?.ctc)}
               </td>
 
               <td className="px-5 py-3 text-right">
                 <Link
                   href={`/hrms/employees/${user.id}`}
-                  className="inline-flex text-outline-variant transition-colors group-hover:text-[#00b5ad]"
+                  className="inline-flex text-outline-variant transition-colors group-hover:text-[var(--mnx-accent)]"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Link>
@@ -279,7 +289,7 @@ function SectionTable({ users }: { users: User[] }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </MnxTable>
     </div>
   );
 }
@@ -306,7 +316,7 @@ export function EmployeeList({ users }: { users: User[] }) {
   return (
     <div className="space-y-6">
       {users.length === 0 ? (
-        <Card className="monolith-shell-lg border-mono-border shadow-sm dark:border-[#F9D972]/25">
+        <Card className="mnx-content-wide border-mono-border shadow-sm dark:border-[var(--mnx-accent)]/25">
           <CardContent className="py-10 text-center text-sm text-mono-muted">
             No employees found.
           </CardContent>
@@ -316,13 +326,13 @@ export function EmployeeList({ users }: { users: User[] }) {
           {groupedUsers.map((section) => (
             <Card
               key={section.key}
-              className="monolith-shell-lg overflow-hidden border-mono-border shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:border-[#F9D972]/25"
+              className="mnx-content-wide overflow-hidden border-mono-border shadow-ambient dark:border-[var(--mnx-accent)]/25"
             >
               <CardHeader className="bg-mono-card px-5 pb-4 pt-5">
-                <CardTitle className="w-full text-lg font-medium uppercase tracking-[0.12em] text-slate-700">
+                <CardTitle className="w-full text-lg font-medium uppercase tracking-[0.12em] text-[var(--mnx-text)]">
                   {section.label}
 
-                  <span className="ml-3 text-sm font-normal tracking-normal text-slate-400">
+                  <span className="ml-3 text-sm font-normal tracking-normal text-[var(--mnx-muted)]">
                     ({section.users.length})
                   </span>
                 </CardTitle>
@@ -335,12 +345,11 @@ export function EmployeeList({ users }: { users: User[] }) {
           ))}
 
           {uncategorizedUsers.length > 0 ? (
-            <Card className="monolith-shell-lg overflow-hidden border-mono-border shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:border-[#F9D972]/25">
+            <Card className="mnx-content-wide overflow-hidden border-mono-border shadow-ambient dark:border-[var(--mnx-accent)]/25">
               <CardHeader className="bg-mono-card px-5 pb-4 pt-5">
-                <CardTitle className="w-full text-lg font-medium uppercase tracking-[0.12em] text-slate-700">
+                <CardTitle className="w-full text-lg font-medium uppercase tracking-[0.12em] text-[var(--mnx-text)]">
                   Other Roles
-
-                  <span className="ml-3 text-sm font-normal tracking-normal text-slate-400">
+                  <span className="ml-3 text-sm font-normal tracking-normal text-[var(--mnx-muted)]">
                     ({uncategorizedUsers.length})
                   </span>
                 </CardTitle>

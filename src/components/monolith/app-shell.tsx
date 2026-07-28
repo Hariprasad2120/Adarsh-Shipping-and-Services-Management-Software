@@ -10,6 +10,7 @@ import {
   LogOut,
   Menu,
   Moon,
+  Palette,
   Search,
   ShieldCheck,
   Sparkles,
@@ -20,7 +21,11 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Caps } from "@/lib/rbac";
 import { performLogout } from "@/lib/logout";
-import { getVisibleSections, matchesPath } from "@/lib/navigation";
+import {
+  getActiveItemHref,
+  getVisibleSections,
+  matchesPath,
+} from "@/lib/navigation";
 import { getPathLabel, segmentToLabel } from "@/lib/route-labels";
 import { MonaProvider, useMonaChat } from "@/components/mona/mona-provider";
 
@@ -29,7 +34,7 @@ const MonaChat = dynamic(
   { ssr: false },
 );
 
-type MonolithTheme = "light" | "night" | "violet";
+type MonolithTheme = "night" | "violet" | "light" | "purple";
 
 export interface MonolithAppShellProps {
   children: React.ReactNode;
@@ -41,15 +46,18 @@ export interface MonolithAppShellProps {
 }
 
 const themes: { id: MonolithTheme; label: string; icon: typeof Sun }[] = [
-  { id: "light", label: "Light", icon: Sun },
   { id: "night", label: "Night", icon: Moon },
   { id: "violet", label: "Violet", icon: Sparkles },
+  { id: "light", label: "Light", icon: Sun },
+  { id: "purple", label: "Purple", icon: Palette },
 ];
 
 function resolveTheme(): MonolithTheme {
-  if (typeof window === "undefined") return "light";
+  if (typeof window === "undefined") return "night";
   const saved = window.localStorage.getItem("theme");
-  return saved === "night" || saved === "violet" ? saved : "light";
+  return saved === "night" || saved === "violet" || saved === "light" || saved === "purple"
+    ? saved
+    : "night";
 }
 
 function initials(name: string) {
@@ -80,15 +88,19 @@ function MonolithAppShellBody({
   userName,
 }: MonolithAppShellProps) {
   const pathname = usePathname();
-  const contextLabel = getPathLabel(pathname)
-    ?? segmentToLabel(pathname.split("/").filter(Boolean).at(-1) ?? "dashboard");
+  const contextLabel =
+    getPathLabel(pathname) ??
+    segmentToLabel(pathname.split("/").filter(Boolean).at(-1) ?? "dashboard");
   const { toggleChat } = useMonaChat();
-  const [theme, setTheme] = useState<MonolithTheme>("light");
+  const [theme, setTheme] = useState<MonolithTheme>("night");
   const [themeLoaded, setThemeLoaded] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({});
   const documentStateRef = useRef<{
     colorScheme: string;
     dashboardShell?: string;
@@ -105,10 +117,15 @@ function MonolithAppShellBody({
   const filteredSections = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     if (!normalizedQuery) return visibleSections.slice(0, 6);
-    return visibleSections.filter((section) =>
-      section.label.toLowerCase().includes(normalizedQuery)
-      || section.items.some((item) => item.label.toLowerCase().includes(normalizedQuery)),
-    ).slice(0, 8);
+    return visibleSections
+      .filter(
+        (section) =>
+          section.label.toLowerCase().includes(normalizedQuery) ||
+          section.items.some((item) =>
+            item.label.toLowerCase().includes(normalizedQuery),
+          ),
+      )
+      .slice(0, 8);
   }, [query, visibleSections]);
 
   useEffect(() => {
@@ -131,8 +148,17 @@ function MonolithAppShellBody({
       colorScheme: root.style.colorScheme,
       dashboardShell: root.dataset.dashboardShell,
       dashboardTheme: root.dataset.dashboardTheme,
-      themeClasses: ["theme-light", "theme-night", "theme-violet", "light", "night", "violet", "dark"]
-        .filter((className) => root.classList.contains(className)),
+      themeClasses: [
+        "theme-light",
+        "theme-night",
+        "theme-violet",
+        "theme-purple",
+        "light",
+        "night",
+        "violet",
+        "purple",
+        "dark",
+      ].filter((className) => root.classList.contains(className)),
     };
 
     return () => {
@@ -151,7 +177,17 @@ function MonolithAppShellBody({
         delete root.dataset.dashboardTheme;
       }
 
-      root.classList.remove("theme-light", "theme-night", "theme-violet", "light", "night", "violet", "dark");
+      root.classList.remove(
+        "theme-light",
+        "theme-night",
+        "theme-violet",
+        "theme-purple",
+        "light",
+        "night",
+        "violet",
+        "purple",
+        "dark",
+      );
       if (previousState.themeClasses.length > 0) {
         root.classList.add(...previousState.themeClasses);
       }
@@ -164,9 +200,19 @@ function MonolithAppShellBody({
     const root = document.documentElement;
     root.dataset.dashboardShell = "true";
     root.dataset.dashboardTheme = theme;
-    root.classList.remove("theme-light", "theme-night", "theme-violet", "light", "night", "violet", "dark");
+    root.classList.remove(
+      "theme-light",
+      "theme-night",
+      "theme-violet",
+      "theme-purple",
+      "light",
+      "night",
+      "violet",
+      "purple",
+      "dark",
+    );
     root.classList.add(`theme-${theme}`, theme);
-    root.style.colorScheme = theme === "light" ? "light" : "dark";
+    root.style.colorScheme = theme === "light" || theme === "purple" ? "light" : "dark";
   }, [theme]);
 
   useEffect(() => {
@@ -194,8 +240,8 @@ function MonolithAppShellBody({
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
       if (
-        profileRef.current
-        && !profileRef.current.contains(event.target as Node)
+        profileRef.current &&
+        !profileRef.current.contains(event.target as Node)
       ) {
         setProfileOpen(false);
       }
@@ -205,17 +251,45 @@ function MonolithAppShellBody({
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, []);
 
+  useEffect(() => {
+    const activeSection = visibleSections.find(
+      (section) =>
+        section.items.length > 0 &&
+        matchesPath(pathname, section.href, section.matchPaths),
+    );
+    if (!activeSection) return;
+
+    const frameId = window.requestAnimationFrame(() => {
+      setExpandedSections((current) =>
+        current[activeSection.id]
+          ? current
+          : { ...current, [activeSection.id]: true },
+      );
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [pathname, visibleSections]);
+
   function selectTheme(nextTheme: MonolithTheme) {
     setTheme(nextTheme);
   }
 
   return (
     <div className="mnx-dashboard-shell" data-theme={theme}>
-      <aside className={`mnx-sidebar ${mobileOpen ? "is-open" : ""}`} aria-label="Primary navigation">
+      <aside
+        className={`mnx-sidebar ${mobileOpen ? "is-open" : ""}`}
+        aria-label="Primary navigation"
+      >
         <div className="mnx-sidebar-brand">
           <Link href="/dashboard" aria-label="Monolith dashboard">
-            <span className="mnx-brand-mark"><i /><i /></span>
-            <span><b>MONOLITH</b><small>Adarsh Shipping & Services</small></span>
+            <span className="mnx-brand-mark">
+              <i />
+              <i />
+            </span>
+            <span>
+              <b>MONOLITH</b>
+              <small>Adarsh Shipping & Services</small>
+            </span>
           </Link>
           <button
             type="button"
@@ -231,33 +305,116 @@ function MonolithAppShellBody({
           <p>WORKSPACES</p>
           {visibleSections.map((section) => {
             const Icon = section.icon;
-            const isActive = matchesPath(pathname, section.href, section.matchPaths);
+            const isActive = matchesPath(
+              pathname,
+              section.href,
+              section.matchPaths,
+            );
+            const hasItems = section.items.length > 0;
+            const isExpanded = hasItems && !!expandedSections[section.id];
+            const activeItemHref = getActiveItemHref(pathname, section.items);
+
+            if (!hasItems) {
+              return (
+                <Link
+                  href={section.href}
+                  key={section.id}
+                  className={`mnx-sidebar-entry ${isActive ? "is-active" : ""}`}
+                  aria-current={isActive ? "page" : undefined}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <span>
+                    <Icon size={15} strokeWidth={1.9} />
+                  </span>
+                  <b>{section.label}</b>
+                </Link>
+              );
+            }
+
             return (
-              <Link
-                href={section.href}
+              <div
                 key={section.id}
-                className={isActive ? "is-active" : ""}
-                aria-current={isActive ? "page" : undefined}
-                onClick={() => setMobileOpen(false)}
+                className={`mnx-sidebar-section ${isExpanded ? "is-expanded" : ""}`}
               >
-                <span><Icon size={15} strokeWidth={1.9} /></span>
-                <b>{section.label}</b>
-                {section.items.length > 0 ? <ChevronDown size={11} strokeWidth={2} /> : null}
-              </Link>
+                <button
+                  type="button"
+                  className={`mnx-sidebar-entry ${isActive ? "is-active" : ""}`}
+                  aria-expanded={isExpanded}
+                  aria-controls={`mnx-sidebar-items-${section.id}`}
+                  onClick={() =>
+                    setExpandedSections((current) => ({
+                      ...current,
+                      [section.id]: !current[section.id],
+                    }))
+                  }
+                >
+                  <span>
+                    <Icon size={15} strokeWidth={1.9} />
+                  </span>
+                  <b>{section.label}</b>
+                  <ChevronDown
+                    size={11}
+                    className="mnx-sidebar-chevron"
+                    aria-hidden="true"
+                  />
+                </button>
+
+                <div
+                  id={`mnx-sidebar-items-${section.id}`}
+                  className="mnx-sidebar-subnav"
+                  role="group"
+                  aria-label={`${section.label} navigation`}
+                  hidden={!isExpanded}
+                >
+                  {section.items.map((item) => {
+                    const ItemIcon = item.icon;
+                    const isItemActive = activeItemHref === item.href;
+
+                    return (
+                      <Link
+                        href={item.href}
+                        key={item.href}
+                        className={isItemActive ? "is-active" : ""}
+                        aria-current={isItemActive ? "page" : undefined}
+                        title={item.label}
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        <span>
+                          <ItemIcon size={13} strokeWidth={1.9} />
+                        </span>
+                        <b>{item.label}</b>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </nav>
 
         <button type="button" className="mnx-mona-card" onClick={toggleChat}>
-          <span><Sparkles size={14} strokeWidth={2} /></span>
-          <span><b>Ask Mona</b><small>Open your workspace assistant</small></span>
+          <span>
+            <Sparkles size={14} strokeWidth={2} />
+          </span>
+          <span>
+            <b>Ask Mona</b>
+            <small>Open your workspace assistant</small>
+          </span>
           <kbd>⌘M</kbd>
         </button>
 
         <footer className="mnx-sidebar-user">
           <span>{initials(userName)}</span>
-          <div><b>{userName}</b><small>Operations workspace</small></div>
-          <button type="button" onClick={() => performLogout()} aria-label="Log out" title="Log out">
+          <div>
+            <b>{userName}</b>
+            <small>Operations workspace</small>
+          </div>
+          <button
+            type="button"
+            onClick={() => performLogout()}
+            aria-label="Log out"
+            title="Log out"
+          >
             <LogOut size={14} strokeWidth={2} />
           </button>
         </footer>
@@ -283,7 +440,11 @@ function MonolithAppShellBody({
             >
               <Menu size={19} />
             </button>
-            <div><span>Monolith</span><i>/</i><b>{contextLabel}</b></div>
+            <div>
+              <span>Monolith</span>
+              <i>/</i>
+              <b>{contextLabel}</b>
+            </div>
           </div>
 
           <div className="mnx-topbar-actions">
@@ -300,12 +461,20 @@ function MonolithAppShellBody({
               <kbd>⌘ K</kbd>
             </button>
 
-            <Link className="mnx-topbar-icon" href="/notifications" aria-label="Notifications">
+            <Link
+              className="mnx-topbar-icon"
+              href="/notifications"
+              aria-label="Notifications"
+            >
               <Bell size={17} />
               <i />
             </Link>
 
-            <div className="mnx-theme-picker" role="group" aria-label="Dashboard theme">
+            <div
+              className="mnx-theme-picker"
+              role="group"
+              aria-label="Dashboard theme"
+            >
               {themes.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -346,9 +515,15 @@ function MonolithAppShellBody({
                     </div>
                   </header>
                   <div className="mnx-profile-context">
-                    <span><UserRound size={14} /></span>
+                    <span>
+                      <UserRound size={14} />
+                    </span>
                     <div>
-                      <b>{isPlatformAdmin ? "Platform administrator" : "Workspace member"}</b>
+                      <b>
+                        {isPlatformAdmin
+                          ? "Platform administrator"
+                          : "Workspace member"}
+                      </b>
                       <small>Adarsh Shipping &amp; Services</small>
                     </div>
                   </div>
@@ -359,7 +534,10 @@ function MonolithAppShellBody({
                       onClick={() => setProfileOpen(false)}
                     >
                       <ShieldCheck size={16} />
-                      <span><b>Security &amp; sessions</b><small>Review signed-in devices</small></span>
+                      <span>
+                        <b>Security &amp; sessions</b>
+                        <small>Review signed-in devices</small>
+                      </span>
                     </Link>
                     <button
                       type="button"
@@ -367,7 +545,10 @@ function MonolithAppShellBody({
                       onClick={() => performLogout()}
                     >
                       <LogOut size={16} />
-                      <span><b>Sign out</b><small>End this workspace session</small></span>
+                      <span>
+                        <b>Sign out</b>
+                        <small>End this workspace session</small>
+                      </span>
                     </button>
                   </nav>
                 </section>
@@ -380,7 +561,11 @@ function MonolithAppShellBody({
       </div>
 
       {searchOpen ? (
-        <div className="mnx-command-layer" role="presentation" onMouseDown={() => setSearchOpen(false)}>
+        <div
+          className="mnx-command-layer"
+          role="presentation"
+          onMouseDown={() => setSearchOpen(false)}
+        >
           <section
             className="mnx-command-dialog"
             role="dialog"
@@ -396,7 +581,11 @@ function MonolithAppShellBody({
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search workspaces and modules"
               />
-              <button type="button" onClick={() => setSearchOpen(false)} aria-label="Close search">
+              <button
+                type="button"
+                onClick={() => setSearchOpen(false)}
+                aria-label="Close search"
+              >
                 <X size={16} />
               </button>
             </label>
@@ -405,9 +594,18 @@ function MonolithAppShellBody({
               {filteredSections.map((section) => {
                 const Icon = section.icon;
                 return (
-                  <Link href={section.href} key={section.id} onClick={() => setSearchOpen(false)}>
-                    <span><Icon size={17} /></span>
-                    <span><b>{section.label}</b><small>{section.items.length} linked pages</small></span>
+                  <Link
+                    href={section.href}
+                    key={section.id}
+                    onClick={() => setSearchOpen(false)}
+                  >
+                    <span>
+                      <Icon size={17} />
+                    </span>
+                    <span>
+                      <b>{section.label}</b>
+                      <small>{section.items.length} linked pages</small>
+                    </span>
                     <Command size={14} />
                   </Link>
                 );

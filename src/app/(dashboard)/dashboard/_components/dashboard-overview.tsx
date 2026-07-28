@@ -4,7 +4,6 @@ import {
   CalendarDays,
   CheckCircle2,
   ClipboardCheck,
-  Landmark,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -13,6 +12,7 @@ import {
   MonolithSpecLabel,
   MonolithSurface,
 } from "@/components/monolith/foundation";
+import { WorkspaceSectionHeading } from "@/components/monolith/workspace";
 import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 import type { DashboardSessionUser } from "./dashboard-types";
@@ -35,17 +35,24 @@ function formatDate(value: Date | string, options?: Intl.DateTimeFormatOptions) 
 
 function buildWeeklySchedule() {
   const today = new Date();
+  today.setHours(12, 0, 0, 0);
   const sunday = new Date(today);
   sunday.setDate(today.getDate() - today.getDay());
 
   return Array.from({ length: 7 }, (_, index) => {
     const date = new Date(sunday);
     date.setDate(sunday.getDate() + index);
+    date.setHours(12, 0, 0, 0);
     const weekday = date.toLocaleDateString("en-IN", { weekday: "short" });
     const isWeekend = weekday === "Sun" || weekday === "Sat";
+    const key = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
 
     return {
-      key: date.toISOString(),
+      key,
       weekday,
       date: date.toLocaleDateString("en-IN", { day: "2-digit" }),
       label: isWeekend ? "Weekend" : "General shift",
@@ -65,6 +72,10 @@ export function DashboardOverview({
   const nextTask = data.recentTasks[0];
   const nextHoliday = data.upcomingHolidays[0];
   const schedule = buildWeeklySchedule();
+  const scheduleRange = `${formatDate(schedule[0].key, { day: "2-digit", month: "short" })} - ${formatDate(
+    schedule[schedule.length - 1].key,
+    { day: "2-digit", month: "short" },
+  )}`;
 
   const metrics = [
     {
@@ -88,13 +99,11 @@ export function DashboardOverview({
     <div className="mnx-dashboard-overview">
       <ModuleCommandCenter snapshot={moduleSnapshot} />
 
-      <header className="mnx-dashboard-section-heading">
-        <div>
-          <MonolithSpecLabel>PERSONAL PULSE</MonolithSpecLabel>
-          <h2>Your day at a glance</h2>
-        </div>
-        <p>Company signals, assigned work, and the next date on your calendar.</p>
-      </header>
+      <WorkspaceSectionHeading
+        index="04"
+        title="Your day at a glance"
+        description="Company signals, assigned work, and the next date on your calendar."
+      />
 
       <section className="mnx-dashboard-metrics" aria-label="Workspace metrics">
         {metrics.map((metric) => (
@@ -202,15 +211,21 @@ export function DashboardOverview({
               <MonolithSpecLabel>WEEKLY RHYTHM</MonolithSpecLabel>
               <h2>Work schedule</h2>
             </div>
-            <CalendarDays size={19} />
+            <span className="mnx-count-pill">{scheduleRange}</span>
           </header>
 
-          <div className="mnx-schedule-list">
+          <div className="mnx-schedule-calendar" aria-label={`Work schedule for ${scheduleRange}`}>
             {schedule.map((day) => (
               <article className={day.isToday ? "is-today" : ""} key={day.key}>
-                <time><b>{day.weekday}</b><span>{day.date}</span></time>
-                <div><b>{day.label}</b><span>{day.hours}</span></div>
-                {day.isToday ? <MonolithBadge tone="warning"><i />Today</MonolithBadge> : null}
+                <time dateTime={day.key}>
+                  <span>{day.weekday}</span>
+                  <strong>{day.date}</strong>
+                </time>
+                <div>
+                  <b>{day.label}</b>
+                  <span>{day.hours}</span>
+                </div>
+                {day.isToday ? <em>Today</em> : null}
               </article>
             ))}
           </div>
@@ -222,7 +237,6 @@ export function DashboardOverview({
               <MonolithSpecLabel>UP NEXT</MonolithSpecLabel>
               <h2>Company calendar</h2>
             </div>
-            <Landmark size={19} />
           </header>
 
           {nextHoliday ? (

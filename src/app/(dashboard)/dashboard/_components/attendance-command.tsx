@@ -66,6 +66,15 @@ function formatClock(totalSeconds: number) {
   return [hours, minutes, seconds].map((part) => String(part).padStart(2, "0")).join(":");
 }
 
+function formatAttendanceDate() {
+  return new Intl.DateTimeFormat("en-IN", {
+    weekday: "long",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date());
+}
+
 function AttendanceTimer({
   status,
   startingValue,
@@ -110,6 +119,45 @@ export function AttendanceCommand({
   const [celebrating, setCelebrating] = useState(false);
   const status = attendanceCopy[profile.attendanceStatus];
   const pending = profile.pendingCounts ?? { tasks: 0, leaves: 0, cases: 0 };
+  const actionItems = [
+    {
+      module: "To-Do",
+      task:
+        pending.tasks > 0
+          ? `Review ${pending.tasks} pending task${pending.tasks === 1 ? "" : "s"}`
+          : "Scan the priority task queue",
+      meta: "Focus queue",
+    },
+    {
+      module: "Attendance",
+      task:
+        profile.attendanceStatus === "CHECKED_OUT"
+          ? "Confirm tomorrow's attendance plan"
+          : "Keep your attendance status current",
+      meta: status.label,
+    },
+    {
+      module: "HRMS",
+      task:
+        pending.leaves > 0
+          ? `Clear ${pending.leaves} leave request${pending.leaves === 1 ? "" : "s"}`
+          : "Check team leave movement",
+      meta: "People operations",
+    },
+    {
+      module: "Helpdesk",
+      task:
+        pending.cases > 0
+          ? `Respond to ${pending.cases} open HR case${pending.cases === 1 ? "" : "s"}`
+          : "Review open support signals",
+      meta: "Service desk",
+    },
+    {
+      module: "Product Catalogue",
+      task: "Validate module updates before the next handoff",
+      meta: "Workspace sync",
+    },
+  ];
 
   useEffect(() => {
     if (!celebrating) return;
@@ -129,6 +177,13 @@ export function AttendanceCommand({
 
   return (
     <section className={`mnx-dashboard-hero ${celebrating ? "is-celebrating" : ""}`}>
+      <div className="mnx-dashboard-hero-graphic" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+        <i />
+        <i />
+      </div>
       <div className="mnx-dashboard-hero-stage">
         <div className="mnx-dashboard-identity-card">
           <div className="mnx-dashboard-eyebrow">
@@ -155,6 +210,21 @@ export function AttendanceCommand({
             <span><ShieldCheck size={14} />{profile.branch || "Head office"}</span>
             {profile.manager ? <span><Sparkles size={14} />Reports to {profile.manager}</span> : null}
           </div>
+
+          <div className="mnx-dashboard-action-window" aria-label="Actions needing attention">
+            <p>Action stream</p>
+            <div className="mnx-dashboard-action-viewport">
+              <ul>
+                {[...actionItems, ...actionItems].map((item, index) => (
+                  <li key={`${item.module}-${index}`} aria-hidden={index >= actionItems.length}>
+                    <span>{item.module}</span>
+                    <strong>{item.task}</strong>
+                    <small>{item.meta}</small>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
 
         <div className="mnx-attendance-panel">
@@ -170,13 +240,25 @@ export function AttendanceCommand({
           </header>
 
           <div className="mnx-attendance-clock">
-            <div className="mnx-attendance-clock-icon"><Clock3 size={22} /></div>
-            <div>
-              <AttendanceTimer
-                key={`${profile.attendanceStatus}-${profile.totalInTime}`}
-                status={profile.attendanceStatus}
-                startingValue={profile.totalInTime}
-              />
+            <div className="mnx-attendance-date-row">
+              <Clock3 size={13} />
+              <span>{formatAttendanceDate()}</span>
+            </div>
+            <div className="mnx-attendance-time-stack">
+              <span className="mnx-attendance-time-label">Time worked</span>
+              <div className={`mnx-attendance-time-value is-${profile.attendanceStatus.toLowerCase()}`}>
+                <span className="mnx-attendance-time-icon" aria-hidden="true">
+                  {profile.attendanceStatus === "CHECKED_OUT" ? <Check size={12} /> : null}
+                  {profile.attendanceStatus === "CHECKED_IN" ? <Clock3 size={12} /> : null}
+                  {profile.attendanceStatus === "ON_BREAK" ? <Coffee size={12} /> : null}
+                  {profile.attendanceStatus === "YET_TO_CHECK_IN" ? <Play size={12} fill="currentColor" /> : null}
+                </span>
+                <AttendanceTimer
+                  key={`${profile.attendanceStatus}-${profile.totalInTime}`}
+                  status={profile.attendanceStatus}
+                  startingValue={profile.totalInTime}
+                />
+              </div>
               <p>{profile.attendanceStatus === "CHECKED_OUT" ? "Final recorded time" : "Live work duration"}</p>
             </div>
           </div>
@@ -249,24 +331,6 @@ export function AttendanceCommand({
             </div>
           ) : null}
         </div>
-      </div>
-
-      <div className="mnx-dashboard-mini-stats" aria-label="Pending work summary">
-        <article>
-          <span>Pending tasks</span>
-          <strong>{String(pending.tasks).padStart(2, "0")}</strong>
-          <small>Focus queue</small>
-        </article>
-        <article>
-          <span>Leave items</span>
-          <strong>{String(pending.leaves).padStart(2, "0")}</strong>
-          <small>Awaiting movement</small>
-        </article>
-        <article>
-          <span>HR cases</span>
-          <strong>{String(pending.cases).padStart(2, "0")}</strong>
-          <small>Open support</small>
-        </article>
       </div>
     </section>
   );

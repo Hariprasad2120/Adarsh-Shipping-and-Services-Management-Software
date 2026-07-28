@@ -2,7 +2,10 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const repositoryRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+);
 const appRoot = path.join(repositoryRoot, "src", "app");
 const outputPath = path.join(repositoryRoot, "docs", "ui-route-audit.md");
 const knownMonolithRoutes = new Set([
@@ -13,6 +16,19 @@ const knownMonolithRoutes = new Set([
   "/product-catalogue",
   "/todo",
 ]);
+
+function isPeopleOperationsRoute(route) {
+  return (
+    route === "/hrms" ||
+    route.startsWith("/hrms/") ||
+    route === "/attendance" ||
+    route.startsWith("/attendance/")
+  );
+}
+
+function isMonolithRoute(route) {
+  return knownMonolithRoutes.has(route) || isPeopleOperationsRoute(route);
+}
 
 function walk(directory, targetName, found = []) {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
@@ -69,18 +85,25 @@ function layoutChain(absolutePagePath) {
 
 function shellFor(pageSource, route) {
   if (pageSource.includes("/(dashboard)/")) {
-    return knownMonolithRoutes.has(route) ? "Monolith AppShell" : "Legacy authenticated shell";
+    return isMonolithRoute(route)
+      ? "Monolith AppShell"
+      : "Legacy authenticated shell";
   }
-  if (route.startsWith("/customer-portal")) return "Customer portal shell (conditional auth bypass)";
+  if (route.startsWith("/customer-portal"))
+    return "Customer portal shell (conditional auth bypass)";
   if (pageSource.includes("/(auth)/")) return "Public authentication layout";
   return "Root layout only";
 }
 
 function stateFor(route) {
   if (route === "/dashboard") return "Protected reference";
-  if (route === "/account/security") return "Migrated before this foundation session";
-  if (route === "/admin/design-system") return "Migrated design-system showcase";
+  if (route === "/account/security")
+    return "Migrated before this foundation session";
+  if (route === "/admin/design-system")
+    return "Migrated design-system showcase";
   if (knownMonolithRoutes.has(route)) return "Migrated in batch 001";
+  if (isPeopleOperationsRoute(route))
+    return "Migrated in people operations batch 002";
   return "Pending module migration";
 }
 
@@ -102,7 +125,11 @@ const pages = walk(appRoot, "page.tsx")
       state: stateFor(route),
     };
   })
-  .sort((left, right) => left.route.localeCompare(right.route) || left.source.localeCompare(right.source));
+  .sort(
+    (left, right) =>
+      left.route.localeCompare(right.route) ||
+      left.source.localeCompare(right.source),
+  );
 
 const layouts = walk(appRoot, "layout.tsx")
   .map((absolutePath) => {
@@ -110,7 +137,11 @@ const layouts = walk(appRoot, "layout.tsx")
     const directory = path.dirname(absolutePath);
     const coveredPages = pages.filter((page) => {
       const relative = path.relative(directory, page.absolutePath);
-      return relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative);
+      return (
+        relative !== "" &&
+        !relative.startsWith("..") &&
+        !path.isAbsolute(relative)
+      );
     });
     const content = readFileSync(absolutePath, "utf8");
     const role =
@@ -128,13 +159,18 @@ const layouts = walk(appRoot, "layout.tsx")
                   ? "CHA module spacing container"
                   : source.includes("/hrms/recruit/layout.tsx")
                     ? "Recruitment feature flag"
-                    : "Nested route layout";
+                    : source.includes("/hrms/layout.tsx")
+                      ? "Shared HRMS route framing and asynchronous states"
+                      : source.includes("/attendance/layout.tsx")
+                        ? "Shared Attendance route framing and asynchronous states"
+                        : "Nested route layout";
 
     return {
       source,
       pages: coveredPages.length,
       role,
-      client: content.includes('"use client"') || content.includes("'use client'"),
+      client:
+        content.includes('"use client"') || content.includes("'use client'"),
     };
   })
   .sort((left, right) => left.source.localeCompare(right.source));
@@ -209,10 +245,13 @@ const lines = [
   "- `/account/security` was migrated before the foundation session.",
   "- `/notifications`, `/product-catalogue`, and `/todo` were migrated in batch 001.",
   "- `/admin/design-system` is the production showcase for reusable migration decisions.",
+  "- All `/hrms` and `/attendance` routes were migrated in people operations batch 002.",
   "- Every other route remains pending until its own presentation, behavior, RBAC,",
   "  themes, and responsive layout are verified in a later module batch.",
   "",
 ];
 
 writeFileSync(outputPath, lines.join("\n"), "utf8");
-console.log(`Wrote ${path.relative(repositoryRoot, outputPath)} with ${pages.length} pages and ${layouts.length} layouts.`);
+console.log(
+  `Wrote ${path.relative(repositoryRoot, outputPath)} with ${pages.length} pages and ${layouts.length} layouts.`,
+);

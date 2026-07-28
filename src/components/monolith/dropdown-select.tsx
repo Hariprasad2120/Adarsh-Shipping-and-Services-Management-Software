@@ -49,9 +49,12 @@ export function DropdownSelect({
   value,
 }: DropdownSelectProps) {
   const isControlled = value !== undefined;
-  const [uncontrolledValue, setUncontrolledValue] = React.useState(defaultValue);
+  const [uncontrolledValue, setUncontrolledValue] =
+    React.useState(defaultValue);
   const selectedValue = isControlled ? value : uncontrolledValue;
-  const selectedOption = options.find((option) => option.value === selectedValue);
+  const selectedOption = options.find(
+    (option) => option.value === selectedValue,
+  );
 
   function handleValueChange(nextValue: string) {
     if (!isControlled) setUncontrolledValue(nextValue);
@@ -59,23 +62,63 @@ export function DropdownSelect({
   }
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn("mnx-select-shell", className)}>
       {name ? (
-        <select aria-hidden="true" className="hidden" disabled={disabled} name={name} required={required} tabIndex={-1} value={selectedValue} onChange={() => undefined}>
-          {options.map((option) => <option key={option.value} disabled={option.disabled} value={option.value}>{option.label}</option>)}
+        <select
+          aria-hidden="true"
+          className="hidden"
+          disabled={disabled}
+          name={name}
+          required={required}
+          tabIndex={-1}
+          value={selectedValue}
+          onChange={() => undefined}
+        >
+          {options.map((option) => (
+            <option
+              key={option.value}
+              disabled={option.disabled}
+              value={option.value}
+            >
+              {option.label}
+            </option>
+          ))}
         </select>
       ) : null}
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
-          <button id={id} aria-label={ariaLabel} type="button" disabled={disabled} className={cn("monolith-input flex items-center justify-between text-left", triggerClassName)}>
-            <span className="truncate">{selectedOption?.label ?? placeholder}</span>
-            <ChevronDown className="h-4 w-4 shrink-0 text-[var(--muted)]" />
+          <button
+            id={id}
+            aria-label={ariaLabel}
+            type="button"
+            disabled={disabled}
+            className={cn(
+              "mnx-field-control mnx-select-trigger",
+              triggerClassName,
+            )}
+          >
+            <span>{selectedOption?.label ?? placeholder}</span>
+            <ChevronDown aria-hidden="true" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className={cn("max-h-[320px] w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto", contentClassName)}>
-          <DropdownMenuRadioGroup value={selectedValue} onValueChange={handleValueChange}>
+        <DropdownMenuContent
+          align="start"
+          className={cn(
+            "mnx-select-content w-[var(--radix-dropdown-menu-trigger-width)]",
+            contentClassName,
+          )}
+        >
+          <DropdownMenuRadioGroup
+            value={selectedValue}
+            onValueChange={handleValueChange}
+          >
             {options.map((option) => (
-              <DropdownMenuRadioItem key={option.value} value={option.value} disabled={option.disabled}>
+              <DropdownMenuRadioItem
+                key={option.value}
+                className="mnx-select-item"
+                value={option.value}
+                disabled={option.disabled}
+              >
                 {option.label}
               </DropdownMenuRadioItem>
             ))}

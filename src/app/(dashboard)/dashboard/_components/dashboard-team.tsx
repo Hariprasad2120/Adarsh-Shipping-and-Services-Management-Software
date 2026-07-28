@@ -2,12 +2,9 @@
 
 import {
   Check,
-  Clock3,
   Copy,
   Search,
   TimerOff,
-  UserCheck,
-  Users,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -15,9 +12,9 @@ import {
   MonolithBadge,
   MonolithEmptyState,
   MonolithIconAction,
-  MonolithSpecLabel,
   MonolithSurface,
 } from "@/components/monolith/foundation";
+import { WorkspaceSectionHeading } from "@/components/monolith/workspace";
 import type { ReporteeSummary } from "./dashboard-types";
 
 interface DashboardTeamProps {
@@ -85,30 +82,49 @@ export function DashboardTeam({ reportees }: DashboardTeamProps) {
 
   return (
     <section className="mnx-team-workspace">
-      <div className="mnx-team-summary">
-        <article className="mnx-summary-stat">
-          <span><Users size={16} />Direct reportees</span>
+      <div className="mnx-dashboard-metrics mnx-team-metrics" aria-label="Team attendance metrics">
+        <article className="mnx-metric-card">
+          <header><span>Direct reportees</span></header>
           <strong>{String(reportees.length).padStart(2, "0")}</strong>
           <p>People in your immediate team</p>
         </article>
-        <article className="mnx-summary-stat mnx-semantic-success">
-          <span><UserCheck size={16} />Working now</span>
+        <article className="mnx-metric-card">
+          <header><span>Working now</span></header>
           <strong>{String(workingCount).padStart(2, "0")}</strong>
           <p>Checked in and active</p>
         </article>
-        <article className="mnx-summary-stat mnx-semantic-warning">
-          <span><Clock3 size={16} />On break</span>
+        <article className="mnx-metric-card">
+          <header><span>On break</span></header>
           <strong>{String(breakCount).padStart(2, "0")}</strong>
           <p>Temporarily away</p>
         </article>
       </div>
 
+      <WorkspaceSectionHeading
+        index="05"
+        title="Reportee directory"
+        description="Live attendance context for the people who report to you."
+      />
+
       <MonolithSurface className="mnx-table-card">
-        <header className="mnx-table-toolbar">
-          <div>
-            <MonolithSpecLabel>TEAM ATTENDANCE</MonolithSpecLabel>
-            <h2>Reportee directory</h2>
-            <p>Live attendance context for the people who report to you.</p>
+        <header className="mnx-table-toolbar mnx-table-toolbar-search">
+          <div className="mnx-filter-row" role="group" aria-label="Filter reportees by attendance">
+            {filters.map((item) => (
+              <button
+                type="button"
+                key={item.value}
+                className={filter === item.value ? "is-active" : ""}
+                onClick={() => setFilter(item.value)}
+                aria-pressed={filter === item.value}
+              >
+                {item.label}
+                <span>
+                  {item.value === "ALL"
+                    ? reportees.length
+                    : reportees.filter((reportee) => reportee.punchStatus === item.value).length}
+                </span>
+              </button>
+            ))}
           </div>
 
           <label className="mnx-search-field">
@@ -122,25 +138,6 @@ export function DashboardTeam({ reportees }: DashboardTeamProps) {
             />
           </label>
         </header>
-
-        <div className="mnx-filter-row" role="group" aria-label="Filter reportees by attendance">
-          {filters.map((item) => (
-            <button
-              type="button"
-              key={item.value}
-              className={filter === item.value ? "is-active" : ""}
-              onClick={() => setFilter(item.value)}
-              aria-pressed={filter === item.value}
-            >
-              {item.label}
-              <span>
-                {item.value === "ALL"
-                  ? reportees.length
-                  : reportees.filter((reportee) => reportee.punchStatus === item.value).length}
-              </span>
-            </button>
-          ))}
-        </div>
 
         <div className="mnx-table-wrap">
           <table>

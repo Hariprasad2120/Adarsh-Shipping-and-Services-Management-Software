@@ -16,6 +16,7 @@ import {
   WorkspaceAction,
   WorkspaceBadge,
   WorkspaceCheckbox,
+  DropdownSelect,
   WorkspaceField,
   WorkspaceInput,
   WorkspaceMetric,
@@ -24,7 +25,6 @@ import {
   WorkspacePanel,
   WorkspaceProgress,
   WorkspaceSectionHeading,
-  WorkspaceSelect,
   WorkspaceTable,
   WorkspaceTextarea,
 } from "@/components/monolith";
@@ -60,6 +60,18 @@ const changeLog = [
     detail:
       "Metric summaries now render as one divided surface; actionable metrics expose a top-right redirect cue.",
   },
+  {
+    date: "2026-07-28",
+    title: "Graphic page headers",
+    detail:
+      "Workspace page headers can replace left icon tiles with a right-side token graphic when the route needs a stronger hero composition.",
+  },
+  {
+    date: "2026-07-28",
+    title: "Theme order and memory",
+    detail:
+      "Night is the default theme, followed by Violet, Light, and Purple; the selected theme is saved for the user.",
+  },
 ];
 
 const typeRows = [
@@ -83,13 +95,20 @@ const tokens = [
 
 const componentMap = [
   ["Page shell", "WorkspacePage", "Centered 1200px content with shared gutters"],
-  ["Page header", "WorkspacePageHeader", "Hero-like page title, icon, copy, and actions"],
+  ["Page header", "WorkspacePageHeader", "Hero title with copy, actions, and optional icon or right-side graphic"],
   ["Section heading", "WorkspaceSectionHeading", "Numbered heading with right-side explanatory copy"],
   ["Panel", "WorkspacePanel", "Reusable surface for sections and grouped workflows"],
   ["Metric", "WorkspaceMetric", "Connected summary group with optional redirect affordance"],
-  ["Forms", "WorkspaceField/Input/Select/Textarea", "Shared labels, controls, hints, and focus states"],
+  ["Forms", "WorkspaceField/Input/DropdownSelect/Textarea", "Shared labels, controls, hints, dropdown menus, and focus states"],
   ["Tables", "WorkspaceTable", "Operational data layout with readable compact rows"],
+  ["People frame", "PeopleWorkspaceFrame", "HRMS and Attendance page shell"],
+  ["People action", "PeopleControlButton", "Shared People Operations command control"],
+  ["People table", "PeopleDataTable", "Operational people data table contract"],
+  ["Dialog", "WorkspaceDialog", "Shared modal workflow surface"],
+  ["People state", "PeopleLoadingState", "Shared HRMS and Attendance loading state"],
 ];
+
+const peopleOperationsNav = ["people", "People ops", "HR"] as const;
 
 const sampleRows = [
   ["MAA-IMP-260724", "Orion Retail Pvt Ltd", "Sea import", "Assessment", "On track"],
@@ -170,8 +189,8 @@ export default function DesignSystemClient() {
         <WorkspaceMetric
           icon={<ShieldCheck size={16} />}
           label="Themes"
-          value="03"
-          detail="Light, Night, Violet"
+          value="04"
+          detail="Night, Violet, Light, Purple"
         />
       </section>
 
@@ -256,7 +275,7 @@ export default function DesignSystemClient() {
         eyebrow="04 / TOKENS"
         index="04"
         title="Theme-aware foundations"
-        description="Showcase swatches use semantic CSS variables so Light, Night, and Violet can shift without route-level color overrides."
+        description="Showcase swatches use semantic CSS variables so Night, Violet, Light, and Purple can shift without route-level color overrides."
       >
         <div className="mnx-showcase-token-grid">
           {tokens.map(([name, token, use, tone]) => (
@@ -308,11 +327,16 @@ export default function DesignSystemClient() {
             <WorkspaceField label="Job number" required hint="Branch-prefixed and readable in Inter.">
               <WorkspaceInput defaultValue="MAA-IMP-260724" />
             </WorkspaceField>
-            <WorkspaceField label="Shipment type">
-              <WorkspaceSelect defaultValue="sea-import">
-                <option value="sea-import">Sea import</option>
-                <option value="air-export">Air export</option>
-              </WorkspaceSelect>
+            <WorkspaceField label="Branch">
+              <DropdownSelect
+                defaultValue="chennai"
+                options={[
+                  { value: "chennai", label: "Chennai" },
+                  { value: "mumbai", label: "Mumbai" },
+                  { value: "delhi", label: "Delhi" },
+                ]}
+                placeholder="Select branch"
+              />
             </WorkspaceField>
             <WorkspaceField label="Notes">
               <WorkspaceTextarea defaultValue="Keep descriptions compact and readable." />
@@ -388,7 +412,10 @@ export default function DesignSystemClient() {
         <div className="mnx-showcase-progress">
           <div>
             <MonolithSpecLabel>Migration baseline</MonolithSpecLabel>
-            <p>Use this page as the visual source after the protected dashboard.</p>
+            <p>
+              Use this page as the visual source after the protected dashboard,
+              including the {peopleOperationsNav[1]} catalogue entry.
+            </p>
           </div>
           <WorkspaceProgress label="Reusable design-system readiness" value={82} />
           <CheckCircle2 size={18} />

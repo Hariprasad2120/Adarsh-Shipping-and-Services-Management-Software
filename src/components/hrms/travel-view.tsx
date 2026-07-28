@@ -1,10 +1,27 @@
 "use client";
 
+import {
+  PeopleControlButton as MnxAction,
+  PeopleControlInput as MnxInput,
+} from "@/components/monolith/people-controls";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import { DateInput } from "@/components/monolith/date-input";
 import React, { useState, useEffect } from "react";
-import { Plane, DollarSign, Plus, Save, Loader2, AlertCircle, Calendar, MapPin, Receipt, CheckCircle, Clock } from "lucide-react";
-import { toast }from "sonner";
+import {
+  Plane,
+  DollarSign,
+  Plus,
+  Save,
+  Loader2,
+  AlertCircle,
+  Calendar,
+  MapPin,
+  Receipt,
+  CheckCircle,
+  Clock,
+} from "lucide-react";
+import { toast } from "sonner";
 
 export function TravelView() {
   const [requests, setRequests] = useState<any[]>([]);
@@ -108,9 +125,11 @@ export function TravelView() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
-        <Loader2 className="size-8 animate-spin text-[#F9D972]" />
-        <p className="text-xs font-semibold tracking-wider">Syncing travel logs...</p>
+      <div className="flex flex-col items-center justify-center py-20 gap-3 text-[var(--mnx-muted)]">
+        <Loader2 className="size-8 animate-spin text-[var(--mnx-accent)]" />
+        <p className="text-xs font-semibold tracking-wider">
+          Syncing travel logs...
+        </p>
       </div>
     );
   }
@@ -118,119 +137,145 @@ export function TravelView() {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="relative rounded-3xl border border-slate-800 bg-[#0f121b]/85 p-6 overflow-hidden shadow-2xl backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#F9D972]/5 rounded-full blur-3xl" />
+      <div className="relative rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/85 p-6 overflow-hidden shadow-2xl backdrop-blur-md">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--mnx-accent)]/5 rounded-full blur-3xl" />
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="size-12 rounded-2xl bg-[#F9D972]/10 border border-[#F9D972]/35 flex items-center justify-center text-[#F9D972] shadow-sm">
+            <div className="size-12 rounded-2xl bg-[var(--mnx-accent)]/10 border border-[var(--mnx-accent)]/35 flex items-center justify-center text-[var(--mnx-accent)] shadow-sm">
               <Plane className="size-6 animate-pulse" />
             </div>
             <div>
-              <h1 className="text-lg font-black text-slate-100 uppercase tracking-widest">TRAVEL & EXPENSES</h1>
-              <p className="text-xs text-slate-500 font-bold mt-0.5 uppercase tracking-wider">Request trips clearances and submit reimbursement expense bills</p>
+              <h1 className="text-lg font-black text-[var(--mnx-muted)] uppercase tracking-widest">
+                TRAVEL & EXPENSES
+              </h1>
+              <p className="text-xs text-[var(--mnx-muted)] font-bold mt-0.5 uppercase tracking-wider">
+                Request trips clearances and submit reimbursement expense bills
+              </p>
             </div>
           </div>
 
-          <button
+          <MnxAction
             type="button"
             onClick={() => setShowRequestForm(!showRequestForm)}
-            className="inline-flex items-center justify-center gap-2 bg-[#F9D972]/15 hover:bg-[#F9D972]/25 border border-[#F9D972]/35 rounded-2xl px-4 py-2 text-xs font-black text-[#F9D972] cursor-pointer transition-all uppercase tracking-wider"
+            className="inline-flex items-center justify-center gap-2 bg-[var(--mnx-accent)]/15 hover:bg-[var(--mnx-accent)]/25 border border-[var(--mnx-accent)]/35 rounded-2xl px-4 py-2 text-xs font-black text-[var(--mnx-accent)] cursor-pointer transition-all uppercase tracking-wider"
           >
             <Plus className="size-4" />
             <span>Request Trip</span>
-          </button>
+          </MnxAction>
         </div>
       </div>
 
       {/* Trip request Form */}
       {showRequestForm && (
-        <form onSubmit={handleCreateRequest} className="rounded-3xl border border-slate-900 bg-[#0e121b]/80 p-5 space-y-4 shadow-xl max-w-xl">
-          <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest">New Trip Request details</h3>
+        <form
+          onSubmit={handleCreateRequest}
+          className="rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/80 p-5 space-y-4 shadow-xl max-w-xl"
+        >
+          <h3 className="text-xs font-black text-[var(--mnx-muted)] uppercase tracking-widest">
+            New Trip Request details
+          </h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Destination</label>
-              <input
+              <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                Destination
+              </label>
+              <MnxInput
                 type="text"
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
                 required
                 placeholder="e.g. Mumbai branch office"
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Purpose</label>
-              <input
+              <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                Purpose
+              </label>
+              <MnxInput
                 type="text"
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
                 required
                 placeholder="e.g. Annual Audit review"
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">From Date</label>
+              <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                From Date
+              </label>
               <DateInput
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
                 required
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">To Date</label>
+              <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                To Date
+              </label>
               <DateInput
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
                 required
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button
+            <MnxAction
               type="button"
               onClick={() => setShowRequestForm(false)}
-              className="px-4 py-2 border border-slate-800 rounded-xl text-xs font-bold text-slate-400 bg-transparent hover:bg-slate-900 cursor-pointer"
+              className="px-4 py-2 border border-[var(--mnx-border)] rounded-xl text-xs font-bold text-[var(--mnx-muted)] bg-transparent hover:bg-[var(--mnx-soft)] cursor-pointer"
             >
               Cancel
-            </button>
-            <button
+            </MnxAction>
+            <MnxAction
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-[#F9D972] border-0 rounded-xl text-xs font-black text-slate-950 cursor-pointer transition-all disabled:opacity-50"
+              className="px-4 py-2 bg-gradient-to-r from-[var(--mnx-success)] to-[var(--mnx-accent)] border-0 rounded-xl text-xs font-black text-[var(--mnx-text)] cursor-pointer transition-all disabled:opacity-50"
             >
               {submitting ? "Submitting..." : "Send Request"}
-            </button>
+            </MnxAction>
           </div>
         </form>
       )}
 
       {/* Expense submission Form */}
       {showExpenseForm && (
-        <form onSubmit={handleCreateExpense} className="rounded-3xl border border-slate-900 bg-[#0e121b]/80 p-5 space-y-4 shadow-xl max-w-xl">
-          <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest text-[#F9D972]">File Travel Expense Receipt</h3>
+        <form
+          onSubmit={handleCreateExpense}
+          className="rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/80 p-5 space-y-4 shadow-xl max-w-xl"
+        >
+          <h3 className="text-xs font-black text-[var(--mnx-muted)] uppercase tracking-widest text-[var(--mnx-accent)]">
+            File Travel Expense Receipt
+          </h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Amount (INR)</label>
-              <input
+              <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                Amount (INR)
+              </label>
+              <MnxInput
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 required
                 placeholder="e.g. 1500"
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Category</label>
+              <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                Category
+              </label>
               <NativeSelect
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
               >
                 <option value="HOTEL">Hotel / Stay</option>
                 <option value="FOOD">Meals / Food</option>
@@ -241,23 +286,23 @@ export function TravelView() {
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button
+            <MnxAction
               type="button"
               onClick={() => {
                 setShowExpenseForm(false);
                 setActiveRequestId(null);
               }}
-              className="px-4 py-2 border border-slate-800 rounded-xl text-xs font-bold text-slate-400 bg-transparent hover:bg-slate-900 cursor-pointer"
+              className="px-4 py-2 border border-[var(--mnx-border)] rounded-xl text-xs font-bold text-[var(--mnx-muted)] bg-transparent hover:bg-[var(--mnx-soft)] cursor-pointer"
             >
               Cancel
-            </button>
-            <button
+            </MnxAction>
+            <MnxAction
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-[#F9D972] border-0 rounded-xl text-xs font-black text-slate-950 cursor-pointer transition-all disabled:opacity-50"
+              className="px-4 py-2 bg-gradient-to-r from-[var(--mnx-success)] to-[var(--mnx-accent)] border-0 rounded-xl text-xs font-black text-[var(--mnx-text)] cursor-pointer transition-all disabled:opacity-50"
             >
               {submitting ? "Uploading..." : "Claim Refund"}
-            </button>
+            </MnxAction>
           </div>
         </form>
       )}
@@ -265,7 +310,7 @@ export function TravelView() {
       {/* Trips display grid */}
       <div className="space-y-4">
         {requests.length === 0 ? (
-          <div className="text-center py-16 text-xs text-slate-600 font-bold border border-dashed border-slate-900 rounded-3xl">
+          <div className="text-center py-16 text-xs text-[var(--mnx-text)] font-bold border border-dashed border-[var(--mnx-border)] rounded-3xl">
             No travel trips requested. Raise a trip application above to start.
           </div>
         ) : (
@@ -273,78 +318,94 @@ export function TravelView() {
             {requests.map((req) => {
               const statusColors =
                 req.status === "APPROVED"
-                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                  ? "bg-[var(--mnx-success-bg)]/10 text-[var(--mnx-success)] border border-[var(--mnx-success)]/20"
                   : req.status === "REJECTED"
-                    ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                    : "bg-orange-500/10 text-orange-400 border border-orange-500/20";
+                    ? "bg-[var(--mnx-danger-bg)]/10 text-[var(--mnx-danger)] border border-[var(--mnx-danger)]/20"
+                    : "bg-[var(--mnx-warning-bg)]/10 text-[var(--mnx-warning)] border border-[var(--mnx-warning)]/20";
 
               return (
                 <div
                   key={req.id}
-                  className="rounded-3xl border border-slate-900 bg-[#0e121b]/40 p-5 space-y-4 transition hover:border-slate-800 backdrop-blur-sm flex flex-col justify-between"
+                  className="rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/40 p-5 space-y-4 transition hover:border-[var(--mnx-border)] backdrop-blur-sm flex flex-col justify-between"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-2 text-slate-200">
-                        <MapPin className="size-4 text-[#F9D972]" />
-                        <span className="text-xs font-black uppercase tracking-wider">{req.destination}</span>
+                      <div className="flex items-center gap-2 text-[var(--mnx-muted)]">
+                        <MapPin className="size-4 text-[var(--mnx-accent)]" />
+                        <span className="text-xs font-black uppercase tracking-wider">
+                          {req.destination}
+                        </span>
                       </div>
-                      <span className={`px-2.5 py-0.5 rounded-xl text-[8px] font-black uppercase tracking-wider ${statusColors}`}>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-xl text-[8px] font-black uppercase tracking-wider ${statusColors}`}
+                      >
                         {req.status}
                       </span>
                     </div>
 
-                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider leading-relaxed">
-                      Purpose: <span className="text-slate-355">{req.purpose}</span>
+                    <p className="text-[11px] font-bold text-[var(--mnx-muted)] uppercase tracking-wider leading-relaxed">
+                      Purpose:{" "}
+                      <span className="text-[var(--mnx-muted)]">
+                        {req.purpose}
+                      </span>
                     </p>
 
-                    <div className="flex items-center gap-2 text-[9px] font-bold text-slate-550 font-mono">
+                    <div className="flex items-center gap-2 text-[9px] font-bold text-[var(--mnx-muted)] font-mono">
                       <Calendar className="size-3.5" />
                       <span>
-                        {new Date(req.fromDate).toLocaleDateString()} - {new Date(req.toDate).toLocaleDateString()}
+                        {new Date(req.fromDate).toLocaleDateString()} -{" "}
+                        {new Date(req.toDate).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
 
                   {/* Expenses claimed under this trip */}
-                  <div className="pt-4 mt-4 border-t border-slate-900 space-y-3">
-                    <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                  <div className="pt-4 mt-4 border-t border-[var(--mnx-border)] space-y-3">
+                    <div className="flex justify-between items-center text-[10px] font-black text-[var(--mnx-muted)] uppercase tracking-widest">
                       <span>Expense Bills</span>
                       {req.status === "APPROVED" && (
-                        <button
+                        <MnxAction
                           type="button"
                           onClick={() => {
                             setActiveRequestId(req.id);
                             setShowExpenseForm(true);
                           }}
-                          className="text-[#F9D972] hover:underline inline-flex items-center gap-1 cursor-pointer bg-transparent border-0"
+                          className="text-[var(--mnx-accent)] hover:underline inline-flex items-center gap-1 cursor-pointer bg-transparent border-0"
                         >
                           <Plus className="size-3" />
                           <span>Add Bill</span>
-                        </button>
+                        </MnxAction>
                       )}
                     </div>
 
                     {req.expenses.length === 0 ? (
-                      <p className="text-[9px] font-bold text-slate-600 uppercase tracking-wider italic">No bills filed</p>
+                      <p className="text-[9px] font-bold text-[var(--mnx-text)] uppercase tracking-wider italic">
+                        No bills filed
+                      </p>
                     ) : (
                       <div className="space-y-1.5">
                         {req.expenses.map((exp: any) => (
                           <div
                             key={exp.id}
-                            className="flex items-center justify-between bg-slate-950/40 border border-slate-900 rounded-xl p-2.5 text-[10.5px] font-mono text-slate-400"
+                            className="flex items-center justify-between bg-[var(--mnx-soft)]/40 border border-[var(--mnx-border)] rounded-xl p-2.5 text-[10.5px] font-mono text-[var(--mnx-muted)]"
                           >
                             <div className="flex items-center gap-2">
-                              <Receipt className="size-3.5 text-slate-500" />
-                              <span className="font-bold text-slate-350">{exp.category}</span>
+                              <Receipt className="size-3.5 text-[var(--mnx-muted)]" />
+                              <span className="font-bold text-[var(--mnx-muted)]">
+                                {exp.category}
+                              </span>
                             </div>
                             <div className="flex items-center gap-3">
-                              <span className="font-bold text-slate-200">₹{exp.amount}</span>
-                              <span className={`text-[8px] px-1.5 py-0.5 rounded font-sans uppercase tracking-wider font-black ${
-                                exp.status === "APPROVED"
-                                  ? "bg-emerald-500/10 text-emerald-400"
-                                  : "bg-orange-500/10 text-orange-400"
-                              }`}>
+                              <span className="font-bold text-[var(--mnx-muted)]">
+                                ₹{exp.amount}
+                              </span>
+                              <span
+                                className={`text-[8px] px-1.5 py-0.5 rounded font-sans uppercase tracking-wider font-black ${
+                                  exp.status === "APPROVED"
+                                    ? "bg-[var(--mnx-success-bg)]/10 text-[var(--mnx-success)]"
+                                    : "bg-[var(--mnx-warning-bg)]/10 text-[var(--mnx-warning)]"
+                                }`}
+                              >
                                 {exp.status}
                               </span>
                             </div>

@@ -59,12 +59,12 @@ export default function RootLayout({
                 var root = document.documentElement;
                 var savedTheme = localStorage.getItem('theme');
                 var resolvedTheme =
-                  savedTheme === 'night' || savedTheme === 'violet' || savedTheme === 'light'
+                  savedTheme === 'night' || savedTheme === 'violet' || savedTheme === 'light' || savedTheme === 'purple'
                     ? savedTheme
-                    : 'light';
-                root.classList.remove('dark', 'light', 'night', 'violet', 'theme-light', 'theme-night', 'theme-violet');
+                    : 'night';
+                root.classList.remove('dark', 'light', 'night', 'violet', 'purple', 'theme-light', 'theme-night', 'theme-violet', 'theme-purple');
                 root.classList.add(resolvedTheme, 'theme-' + resolvedTheme);
-                root.style.colorScheme = resolvedTheme === 'light' ? 'light' : 'dark';
+                root.style.colorScheme = resolvedTheme === 'light' || resolvedTheme === 'purple' ? 'light' : 'dark';
               } catch (_) {}
             `,
           }}

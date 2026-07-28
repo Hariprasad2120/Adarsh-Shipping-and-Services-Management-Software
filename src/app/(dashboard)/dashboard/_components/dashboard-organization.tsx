@@ -16,9 +16,10 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import {
-  MonolithSpecLabel,
+  MonolithEmptyState,
   MonolithSurface,
 } from "@/components/monolith/foundation";
+import { WorkspaceSectionHeading } from "@/components/monolith/workspace";
 import type { DashboardWidgetsData } from "@/modules/hrms/types";
 
 interface DashboardOrganizationProps {
@@ -180,55 +181,69 @@ export function DashboardOrganization({
   );
 
   return (
-    <MonolithSurface as="section" className="mnx-organization-workspace">
-      <header className="mnx-organization-header">
-        <div>
-          <MonolithSpecLabel>ORGANIZATION SPACE</MonolithSpecLabel>
-          <h2>Company services & people</h2>
-          <p>Company signals, policy references, structures, and colleague records.</p>
-        </div>
-        {activeView === "directory" ? (
-          <label className="mnx-search-field">
-            <Search size={16} />
-            <input
-              type="search"
-              placeholder="Search colleagues…"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              aria-label="Search company directory"
-            />
-          </label>
-        ) : null}
-      </header>
+    <section className="mnx-organization-section">
+      <WorkspaceSectionHeading
+        index="06"
+        title="Company services & people"
+        description="Company signals, policy references, structures, and colleague records."
+      />
 
-      <nav className="mnx-organization-tabs" aria-label="Organization views">
-        {organizationTabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              type="button"
-              key={tab.id}
-              className={activeView === tab.id ? "is-active" : ""}
-              onClick={() => setActiveView(tab.id)}
-              aria-current={activeView === tab.id ? "page" : undefined}
-            >
-              <Icon size={15} />
-              {tab.label}
-            </button>
-          );
-        })}
-      </nav>
+      <MonolithSurface className="mnx-organization-workspace">
+        <header className="mnx-organization-toolbar">
+          <nav className="mnx-organization-tabs" aria-label="Organization views">
+            {organizationTabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  type="button"
+                  key={tab.id}
+                  className={activeView === tab.id ? "is-active" : ""}
+                  onClick={() => setActiveView(tab.id)}
+                  aria-current={activeView === tab.id ? "page" : undefined}
+                >
+                  <Icon size={15} />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
+
+          {activeView === "directory" ? (
+            <label className="mnx-search-field">
+              <Search size={16} />
+              <input
+                type="search"
+                placeholder="Search colleagues…"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                aria-label="Search company directory"
+              />
+            </label>
+          ) : null}
+        </header>
 
       <div className="mnx-organization-content">
         {activeView === "overview" ? (
           <div className="mnx-organization-overview">
-            <div className="mnx-org-stat-grid">
-              <article><Users size={19} /><strong>{normalizedEmployees.length}</strong><span>Active employees</span></article>
-              <article><GitBranch size={19} /><strong>{normalizedDepartments.length}</strong><span>Departments</span></article>
-              <article><Landmark size={19} /><strong>{normalizedBranches.length}</strong><span>Branches</span></article>
+            <div className="mnx-dashboard-metrics mnx-org-metrics" aria-label="Organization metrics">
+              <article className="mnx-metric-card">
+                <header><span>Active employees</span></header>
+                <strong>{String(normalizedEmployees.length).padStart(2, "0")}</strong>
+                <p>Colleagues currently active</p>
+              </article>
+              <article className="mnx-metric-card">
+                <header><span>Departments</span></header>
+                <strong>{String(normalizedDepartments.length).padStart(2, "0")}</strong>
+                <p>Operational teams mapped</p>
+              </article>
+              <article className="mnx-metric-card">
+                <header><span>Branches</span></header>
+                <strong>{String(normalizedBranches.length).padStart(2, "0")}</strong>
+                <p>Company locations configured</p>
+              </article>
             </div>
             <article className="mnx-org-announcement">
-              <header><Megaphone size={17} /><span>Latest company signal</span></header>
+              <header><span>Latest company signal</span></header>
               {data.announcements[0] ? (
                 <>
                   <h3>{data.announcements[0].title}</h3>
@@ -240,11 +255,11 @@ export function DashboardOrganization({
                   })}</small>
                 </>
               ) : (
-                <div className="mnx-empty-state">
+                <MonolithEmptyState>
                   <Megaphone size={23} />
                   <h3>No announcement posted</h3>
                   <p>New company updates will appear here.</p>
-                </div>
+                </MonolithEmptyState>
               )}
             </article>
           </div>
@@ -381,8 +396,9 @@ export function DashboardOrganization({
             detail="Employees who joined in the last 30 days will appear here."
           />
         ) : null}
-      </div>
-    </MonolithSurface>
+        </div>
+      </MonolithSurface>
+    </section>
   );
 }
 

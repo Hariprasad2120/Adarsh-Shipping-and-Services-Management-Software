@@ -1,14 +1,27 @@
 "use client";
 
+import { PeopleControlButton as MnxAction } from "@/components/monolith/people-controls";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/monolith/button";
 import { Input } from "@/components/monolith/input";
+import { WorkspaceDialog } from "@/components/monolith/workspace-dialog";
 
 type Division = { id: string; name: string };
-type Department = { id: string; name: string; code: string; divisions: Division[] };
+type Department = {
+  id: string;
+  name: string;
+  code: string;
+  divisions: Division[];
+};
 type Branch = { id: string; name: string; code: string };
-type Org = { id: string; name: string; branches: Branch[]; departments: Department[] } | null;
+type Org = {
+  id: string;
+  name: string;
+  branches: Branch[];
+  departments: Department[];
+} | null;
 type PromptState =
   | { kind: "department"; name: string; code: string }
   | { kind: "division"; name: string; departmentId: string }
@@ -52,7 +65,10 @@ export function OrgStructureManager({ org }: { org: Org }) {
   }
 
   async function deleteDept(id: string, name: string) {
-    if (!confirm(`Delete department "${name}"? This also deletes its divisions.`)) return;
+    if (
+      !confirm(`Delete department "${name}"? This also deletes its divisions.`)
+    )
+      return;
     await apiFetch(`/api/org/departments/${id}`, "DELETE");
   }
 
@@ -72,7 +88,9 @@ export function OrgStructureManager({ org }: { org: Org }) {
 
   function updatePrompt(values: Partial<Exclude<PromptState, null>>) {
     setPromptState((current) =>
-      current ? ({ ...current, ...values } as Exclude<PromptState, null>) : current,
+      current
+        ? ({ ...current, ...values } as Exclude<PromptState, null>)
+        : current,
     );
   }
 
@@ -87,7 +105,11 @@ export function OrgStructureManager({ org }: { org: Org }) {
       if (!code) return;
       await apiFetch("/api/org/departments", "POST", { name, code });
     } else {
-      await apiFetch(`/api/org/departments/${promptState.departmentId}/divisions`, "POST", { name });
+      await apiFetch(
+        `/api/org/departments/${promptState.departmentId}/divisions`,
+        "POST",
+        { name },
+      );
     }
 
     setPromptState(null);
@@ -113,7 +135,11 @@ export function OrgStructureManager({ org }: { org: Org }) {
           )}
         </Section>
 
-        <Section title="Departments & Divisions" onAdd={openDepartmentPrompt} loading={loading}>
+        <Section
+          title="Departments & Divisions"
+          onAdd={openDepartmentPrompt}
+          loading={loading}
+        >
           {org.departments.length === 0 ? (
             <EmptyState text="No departments yet." />
           ) : (
@@ -121,33 +147,40 @@ export function OrgStructureManager({ org }: { org: Org }) {
               <div key={d.id} className="space-y-1">
                 <div className="flex items-center justify-between rounded-lg bg-mono-soft px-3 py-2">
                   <div>
-                    <span className="text-sm font-medium text-mono-text">{d.name}</span>
-                    <span className="ml-2 text-xs text-mono-muted/60">{d.code}</span>
+                    <span className="text-sm font-medium text-mono-text">
+                      {d.name}
+                    </span>
+                    <span className="ml-2 text-xs text-mono-muted/60">
+                      {d.code}
+                    </span>
                   </div>
                   <div className="flex gap-2">
-                    <button
+                    <MnxAction
                       onClick={() => openDivisionPrompt(d.id)}
-                      className="text-xs text-indigo-600 hover:underline"
+                      className="text-xs text-[var(--mnx-info)] hover:underline"
                     >
                       + Division
-                    </button>
-                    <button
+                    </MnxAction>
+                    <MnxAction
                       onClick={() => deleteDept(d.id, d.name)}
-                      className="text-xs text-red-500 hover:underline"
+                      className="text-xs text-[var(--mnx-danger)] hover:underline"
                     >
                       Delete
-                    </button>
+                    </MnxAction>
                   </div>
                 </div>
                 {d.divisions.map((div) => (
-                  <div key={div.id} className="flex items-center justify-between py-1 pl-6 text-sm text-mono-muted">
+                  <div
+                    key={div.id}
+                    className="flex items-center justify-between py-1 pl-6 text-sm text-mono-muted"
+                  >
                     <span>&rarr; {div.name}</span>
-                    <button
+                    <MnxAction
                       onClick={() => deleteDivision(div.id, div.name)}
-                      className="text-xs text-red-400 hover:underline"
+                      className="text-xs text-[var(--mnx-danger)] hover:underline"
                     >
                       Delete
-                    </button>
+                    </MnxAction>
                   </div>
                 ))}
               </div>
@@ -179,16 +212,16 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="monolith-card monolith-accent space-y-3 rounded-xl border border-mono-border bg-mono-card p-5">
+    <div className="mnx-panel mnx-accent-edge space-y-3 rounded-xl border border-mono-border bg-mono-card p-5">
       <div className="flex items-center justify-between">
-        <h2 className="monolith-h2 text-mono-text">{title}</h2>
-        <button
+        <h2 className="mnx-title-2 text-mono-text">{title}</h2>
+        <MnxAction
           onClick={onAdd}
           disabled={loading}
-          className="text-sm text-indigo-600 hover:underline disabled:opacity-50"
+          className="text-sm text-[var(--mnx-info)] hover:underline disabled:opacity-50"
         >
           + Add
-        </button>
+        </MnxAction>
       </div>
       <div className="space-y-1">{children}</div>
     </div>
@@ -210,9 +243,12 @@ function Row({
         <span className="text-sm text-mono-text">{primary}</span>
         <span className="ml-2 text-xs text-mono-muted/60">{secondary}</span>
       </div>
-      <button onClick={onDelete} className="text-xs text-red-500 hover:underline">
+      <MnxAction
+        onClick={onDelete}
+        className="text-xs text-[var(--mnx-danger)] hover:underline"
+      >
         Delete
-      </button>
+      </MnxAction>
     </div>
   );
 }
@@ -239,53 +275,64 @@ function MinimalPrompt({
   const isDepartment = state.kind === "department";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/20 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-sm rounded-2xl border border-mono-border bg-mono-card p-5 shadow-xl shadow-slate-900/10">
-        <div className="space-y-1">
-          <h3 className="monolith-h3 text-slate-900">
-            {isDepartment ? "New department" : "New division"}
-          </h3>
-          <p className="text-sm text-slate-500">
-            {isDepartment ? "Add a name and short code." : "Add a name for this division."}
-          </p>
-        </div>
-
-        <form
-          className="mt-4 space-y-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void onSubmit();
-          }}
-        >
+    <WorkspaceDialog
+      open
+      onClose={onClose}
+      eyebrow="Organisation structure"
+      title={isDepartment ? "New department" : "New division"}
+      description={
+        isDepartment
+          ? "Add a name and short code."
+          : "Add a name for this division."
+      }
+      className="mnx-people-dialog-compact"
+    >
+      <form
+        className="space-y-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void onSubmit();
+        }}
+      >
+        <Input
+          autoFocus
+          value={state.name}
+          placeholder={isDepartment ? "Department name" : "Division name"}
+          onChange={(event) => onChange({ name: event.target.value })}
+        />
+        {isDepartment ? (
           <Input
-            autoFocus
-            value={state.name}
-            placeholder={isDepartment ? "Department name" : "Division name"}
-            onChange={(event) => onChange({ name: event.target.value })}
+            value={state.code}
+            placeholder="Code"
+            maxLength={10}
+            onChange={(event) =>
+              onChange({ code: event.target.value.toUpperCase() })
+            }
           />
-          {isDepartment ? (
-            <Input
-              value={state.code}
-              placeholder="Code"
-              maxLength={10}
-              onChange={(event) => onChange({ code: event.target.value.toUpperCase() })}
-            />
-          ) : null}
+        ) : null}
 
-          <div className="flex justify-end gap-2 pt-1">
-            <Button variant="outline" size="sm" onClick={onClose} disabled={loading}>
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              type="submit"
-              disabled={loading || !state.name.trim() || (isDepartment && !state.code.trim())}
-            >
-              {loading ? "Saving..." : "Save"}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="flex justify-end gap-2 pt-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            type="submit"
+            disabled={
+              loading ||
+              !state.name.trim() ||
+              (isDepartment && !state.code.trim())
+            }
+          >
+            {loading ? "Saving..." : "Save"}
+          </Button>
+        </div>
+      </form>
+    </WorkspaceDialog>
   );
 }

@@ -9,26 +9,34 @@ import type { Caps } from "@/lib/rbac";
 import { useDashboardChrome } from "@/components/dashboard-chrome";
 import { cn } from "@/lib/utils";
 import { getActiveItemHref, getVisibleSections, matchesPath } from "@/lib/navigation";
-import {Sun,Moon,LogOut,ShieldCheck,ChevronDown,ChevronRight,ChevronLeft,X,Palette,} from "lucide-react";
+import {Sun,Moon,LogOut,ShieldCheck,ChevronDown,ChevronRight,ChevronLeft,X,Palette,Sparkles,} from "lucide-react";
 
-type ThemeMode = "light" | "night" | "violet";
+type ThemeMode = "night" | "violet" | "light" | "purple";
+
+const themeIcons: Record<ThemeMode, React.ReactNode> = {
+  night: <Moon size={16} />,
+  violet: <Sparkles size={16} />,
+  light: <Sun size={16} />,
+  purple: <Palette size={16} />,
+};
 
 function applyTheme(theme: ThemeMode) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  root.classList.remove("dark", "light", "night", "violet", "theme-light", "theme-night", "theme-violet");
+  root.classList.remove("dark", "light", "night", "violet", "purple", "theme-light", "theme-night", "theme-violet", "theme-purple");
   root.classList.add(theme, `theme-${theme}`);
-  root.style.colorScheme = theme === "light" ? "light" : "dark";
+  root.style.colorScheme = theme === "light" || theme === "purple" ? "light" : "dark";
   window.localStorage.setItem("theme", theme);
 }
 
 function detectTheme(): ThemeMode {
-  if (typeof document === "undefined") return "light";
+  if (typeof document === "undefined") return "night";
   const root = document.documentElement;
+  if (root.classList.contains("purple")) return "purple";
   if (root.classList.contains("violet")) return "violet";
   if (root.classList.contains("night")) return "night";
   if (root.classList.contains("light")) return "light";
-  return "light";
+  return "night";
 }
 
 function getIconColor(label: string, isActive: boolean) {
@@ -114,7 +122,7 @@ export function Sidebar({
     () => getVisibleSections(caps, enabledModuleIds),
     [caps, enabledModuleIds],
   );
-  const [theme, setTheme] = useState<ThemeMode>("light");
+  const [theme, setTheme] = useState<ThemeMode>("night");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hoveredSectionId, setHoveredSectionId] = useState<string | null>(null);
   const [flyoutPos, setFlyoutPos] = useState({ top: 0, maxHeight: 400 });
@@ -235,7 +243,15 @@ export function Sidebar({
   };
 
   const toggleTheme = () => {
-    setDashboardTheme(theme === "light" ? "night" : theme === "night" ? "violet" : "light");
+    setDashboardTheme(
+      theme === "night"
+        ? "violet"
+        : theme === "violet"
+          ? "light"
+          : theme === "light"
+            ? "purple"
+            : "night",
+    );
   };
 
   const handleIconEnter = (sectionId: string, e: React.MouseEvent<HTMLElement>) => {
@@ -521,7 +537,7 @@ export function Sidebar({
               className="cursor-pointer rounded-md p-1.5 text-mono-muted transition-colors hover:bg-mono-soft hover:text-mono-text"
               title={!mounted ? "Switch Theme" : `Switch theme (${theme})`}
             >
-              {!mounted ? <div className="h-4 w-4" /> : theme === "light" ? <Moon size={16} /> : theme === "night" ? <Palette size={16} /> : <Sun size={16} />}
+              {!mounted ? <div className="h-4 w-4" /> : themeIcons[theme]}
             </button>
             <button
               type="button"

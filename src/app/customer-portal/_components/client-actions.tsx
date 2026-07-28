@@ -21,6 +21,7 @@ import {
   Settings,
   ShieldAlert,
   Ship,
+  Sparkles,
   Sun,
   X,
 } from "lucide-react";
@@ -38,7 +39,14 @@ import type {
   PortalStageMapping,
 } from "@/modules/customer-portal/types";
 
-type PortalTheme = "light" | "night" | "violet";
+type PortalTheme = "night" | "violet" | "light" | "purple";
+
+const portalThemeIcons: Record<PortalTheme, React.ReactNode> = {
+  night: <Moon />,
+  violet: <Sparkles />,
+  light: <Sun />,
+  purple: <Palette />,
+};
 
 type PortalShipmentAdditionalData = {
   assessedValue?: number | null;
@@ -70,17 +78,18 @@ function subscribeToPortalTheme(callback: () => void) {
 
 function getPortalThemeSnapshot(): PortalTheme {
   if (typeof document === "undefined") {
-    return "light";
+    return "night";
   }
 
   const root = document.documentElement;
+  if (root.classList.contains("purple")) return "purple";
   if (root.classList.contains("violet")) return "violet";
   if (root.classList.contains("night")) return "night";
   return "light";
 }
 
 function getPortalThemeServerSnapshot(): PortalTheme {
-  return "light";
+  return "night";
 }
 
 export function PortalHeaderNav({
@@ -589,10 +598,11 @@ export function PortalShellClient({
 
   const toggleTheme = () => {
     const root = document.documentElement;
-    const newTheme: PortalTheme = theme === "light" ? "night" : theme === "night" ? "violet" : "light";
-    root.classList.remove("dark", "light", "night", "violet", "theme-light", "theme-night", "theme-violet");
+    const newTheme: PortalTheme =
+      theme === "night" ? "violet" : theme === "violet" ? "light" : theme === "light" ? "purple" : "night";
+    root.classList.remove("dark", "light", "night", "violet", "purple", "theme-light", "theme-night", "theme-violet", "theme-purple");
     root.classList.add(newTheme, `theme-${newTheme}`);
-    root.style.colorScheme = newTheme === "light" ? "light" : "dark";
+    root.style.colorScheme = newTheme === "light" || newTheme === "purple" ? "light" : "dark";
     localStorage.setItem("theme", newTheme);
     window.dispatchEvent(new Event("themechange"));
     toast.success(`${newTheme[0].toUpperCase()}${newTheme.slice(1)} theme enabled`);
@@ -733,7 +743,7 @@ export function PortalShellClient({
                 onClick={toggleTheme}
                 aria-label="Toggle theme"
               >
-                {theme === "light" ? <Moon /> : theme === "night" ? <Palette /> : <Sun />}
+                {portalThemeIcons[theme]}
               </button>
               <Link
                 href="/customer-portal/notifications"

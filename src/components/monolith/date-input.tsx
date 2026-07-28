@@ -5,7 +5,12 @@ type DateInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "type">;
 
 export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
   ({ className, ...props }, ref) => (
-    <input ref={ref} type="date" className={cn("monolith-input", className)} {...props} />
+    <input
+      ref={ref}
+      type="date"
+      className={cn("mnx-field-control", className)}
+      {...props}
+    />
   ),
 );
 

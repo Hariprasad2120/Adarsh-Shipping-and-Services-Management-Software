@@ -26,6 +26,12 @@ Rules:
 - Update docs/ui-migration-status.md after every migrated page.
 - Update docs/ui-migration-handoff.md before ending an incomplete session.
 - Run lint, type checking and relevant tests after every migration batch.
+- Always run Node.js commands with an 8 GB heap by setting
+  `NODE_OPTIONS=--max-old-space-size=8192` before execution. Do not first
+  attempt builds, TypeScript, lint, tests, Next.js, Prisma, Playwright, or other
+  Node-powered tooling with Node's default heap. In PowerShell, use
+  `$env:NODE_OPTIONS='--max-old-space-size=8192'` in the same process that
+  launches the command so child processes inherit it.
 - Do not modify files inside `_design-reference`.
 - Do not import from the reference project’s node_modules.
 - Do not compile files inside `OLD UI code`.

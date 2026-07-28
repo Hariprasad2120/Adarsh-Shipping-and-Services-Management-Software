@@ -1,5 +1,17 @@
-import { DataTable, DataTableBody, DataTableCell, DataTableEmpty, DataTableHead, DataTableHeader, DataTableRow } from "@/components/data-table";
-import { DropdownSelect } from "@/components/monolith/dropdown-select";
+import {
+  PeopleAction,
+  PeopleField,
+  PeopleSection,
+  PeopleSectionHeader,
+  PeopleSelect,
+  PeopleTable,
+  PeopleTableBody,
+  PeopleTableCell,
+  PeopleTableEmpty,
+  PeopleTableHead,
+  PeopleTableHeader,
+  PeopleTableRow,
+} from "@/components/monolith/people-workspace";
 import { auth } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { requirePermission } from "@/lib/rbac";
@@ -27,42 +39,47 @@ export default async function AttendanceReportsPage({
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <form className="flex gap-2">
-          <AttendanceReportFilters month={month} now={now} year={year} />
-          <button
-            type="submit"
-            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700"
-          >
-            View
-          </button>
-        </form>
-      </div>
+    <PeopleSection>
+      <PeopleSectionHeader
+        eyebrow="Monthly report"
+        title={monthName}
+        description="Attendance presence totals returned by the production attendance service."
+        actions={
+          <form className="mnx-people-filter-form">
+            <AttendanceReportFilters month={month} now={now} year={year} />
+            <PeopleAction type="submit">View report</PeopleAction>
+          </form>
+        }
+      />
 
-      <DataTable>
-        <DataTableHeader>
+      <PeopleTable>
+        <PeopleTableHeader>
           <tr>
             {["Employee", "Designation", "Days Present"].map((h) => (
-              <DataTableHead key={h}>{h}</DataTableHead>
+              <PeopleTableHead key={h}>{h}</PeopleTableHead>
             ))}
           </tr>
-        </DataTableHeader>
-        <DataTableBody>
+        </PeopleTableHeader>
+        <PeopleTableBody>
           {report.length === 0 ? (
-            <DataTableEmpty colSpan={3} message="No data." />
+            <PeopleTableEmpty
+              colSpan={3}
+              message="No attendance data for this month."
+            />
           ) : (
             report.map((r) => (
-              <DataTableRow key={r.user.id}>
-                <DataTableCell className="font-medium text-gray-900">{r.user.name}</DataTableCell>
-                <DataTableCell className="text-gray-500">{r.user.designation ?? "-"}</DataTableCell>
-                <DataTableCell>{r.days}</DataTableCell>
-              </DataTableRow>
+              <PeopleTableRow key={r.user.id}>
+                <PeopleTableCell>{r.user.name}</PeopleTableCell>
+                <PeopleTableCell className="mnx-people-muted">
+                  {r.user.designation ?? "—"}
+                </PeopleTableCell>
+                <PeopleTableCell>{r.days}</PeopleTableCell>
+              </PeopleTableRow>
             ))
           )}
-        </DataTableBody>
-      </DataTable>
-    </div>
+        </PeopleTableBody>
+      </PeopleTable>
+    </PeopleSection>
   );
 }
 
@@ -77,24 +94,34 @@ function AttendanceReportFilters({
 }) {
   return (
     <>
-      <DropdownSelect
-        name="month"
-        defaultValue={String(month)}
-        options={Array.from({ length: 12 }, (_, index) => ({
-          value: String(index + 1),
-          label: new Date(2000, index, 1).toLocaleString("en-IN", { month: "long" }),
-        }))}
-        triggerClassName="py-1.5"
-      />
-      <DropdownSelect
-        name="year"
-        defaultValue={String(year)}
-        options={[now.getFullYear() - 1, now.getFullYear()].map((optionYear) => ({
-          value: String(optionYear),
-          label: String(optionYear),
-        }))}
-        triggerClassName="py-1.5"
-      />
+      <PeopleField label="Month" htmlFor="attendance-report-month">
+        <PeopleSelect
+          id="attendance-report-month"
+          name="month"
+          defaultValue={String(month)}
+        >
+          {Array.from({ length: 12 }, (_, index) => (
+            <option key={index + 1} value={String(index + 1)}>
+              {new Date(2000, index, 1).toLocaleString("en-IN", {
+                month: "long",
+              })}
+            </option>
+          ))}
+        </PeopleSelect>
+      </PeopleField>
+      <PeopleField label="Year" htmlFor="attendance-report-year">
+        <PeopleSelect
+          id="attendance-report-year"
+          name="year"
+          defaultValue={String(year)}
+        >
+          {[now.getFullYear() - 1, now.getFullYear()].map((optionYear) => (
+            <option key={optionYear} value={String(optionYear)}>
+              {optionYear}
+            </option>
+          ))}
+        </PeopleSelect>
+      </PeopleField>
     </>
   );
 }

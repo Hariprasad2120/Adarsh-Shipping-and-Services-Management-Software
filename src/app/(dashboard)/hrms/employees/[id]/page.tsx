@@ -8,7 +8,11 @@ import { BreadcrumbLabel } from "@/components/breadcrumb-label";
 
 type EmployeeProfileProps = React.ComponentProps<typeof EmployeeProfile>;
 
-export default async function EmployeeDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EmployeeDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const session = await auth();
   if (!session) redirect("/login");
   await requirePermission(session.user.id, "hrms.employee.read");
@@ -30,7 +34,9 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
     <div className="space-y-6">
       <BreadcrumbLabel segment={id} label={safeUser.name} />
       {!safeUser.active && (
-        <span className="self-start rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-600">Inactive</span>
+        <span className="self-start rounded-full bg-[var(--mnx-danger-bg)] px-2 py-0.5 text-xs text-[var(--mnx-danger)]">
+          Inactive
+        </span>
       )}
       <EmployeeProfile
         user={safeUser as EmployeeProfileProps["user"]}

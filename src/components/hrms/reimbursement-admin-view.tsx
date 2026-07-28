@@ -1,7 +1,20 @@
 "use client";
 
+import {
+  PeopleControlInput as MnxInput,
+  PeopleControlTable as MnxTable,
+} from "@/components/monolith/people-controls";
+
 import React, { useCallback, useEffect, useState } from "react";
-import {Check,CreditCard,DollarSign,Loader2,RefreshCw,Settings,X,} from "lucide-react";
+import {
+  Check,
+  CreditCard,
+  DollarSign,
+  Loader2,
+  RefreshCw,
+  Settings,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/monolith/button";
 import { Card } from "@/components/monolith/card";
@@ -28,10 +41,10 @@ type ReimbursementClaim = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  PENDING: "bg-[#fbbf24]/10 text-[#d97706]",
+  PENDING: "bg-[var(--mnx-warning)]/10 text-[var(--mnx-warning)]",
   APPROVED: "bg-mono-accent/10 text-mono-accent",
-  REJECTED: "bg-[#ef4444]/10 text-[#ef4444]",
-  PAID: "bg-[#22c55e]/10 text-[#22c55e]",
+  REJECTED: "bg-[var(--mnx-danger)]/10 text-[var(--mnx-danger)]",
+  PAID: "bg-[var(--mnx-success)]/10 text-[var(--mnx-success)]",
 };
 
 export function ReimbursementAdminView() {
@@ -49,7 +62,10 @@ export function ReimbursementAdminView() {
         fetch("/api/hrms/reimbursement"),
         fetch("/api/hrms/reimbursement?type=rate"),
       ]);
-      const [claimsJson, rateJson] = await Promise.all([claimsRes.json(), rateRes.json()]);
+      const [claimsJson, rateJson] = await Promise.all([
+        claimsRes.json(),
+        rateRes.json(),
+      ]);
 
       if (claimsJson.ok) setClaims(claimsJson.data);
       if (rateJson.ok) setCurrentRate(rateJson.data.ratePerKm);
@@ -64,7 +80,11 @@ export function ReimbursementAdminView() {
     fetchData();
   }, [fetchData]);
 
-  const handleAction = async (claimId: string, action: string, reason?: string) => {
+  const handleAction = async (
+    claimId: string,
+    action: string,
+    reason?: string,
+  ) => {
     setSubmitting(true);
     try {
       const response = await fetch("/api/hrms/reimbursement", {
@@ -113,7 +133,7 @@ export function ReimbursementAdminView() {
     return (
       <div className="flex min-h-[24rem] flex-col items-center justify-center gap-3 text-mono-muted">
         <Loader2 className="size-8 animate-spin text-mono-accent" />
-        <p className="monolith-label">Loading Reimbursement Data</p>
+        <p className="mnx-dashboard-spec-label">Loading Reimbursement Data</p>
       </div>
     );
   }
@@ -129,22 +149,32 @@ export function ReimbursementAdminView() {
       <Card className="rounded-[24px] border border-mono-border bg-mono-card p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <span className="monolith-icon-badge">
+            <span className="mnx-icon-badge">
               <CreditCard className="size-5" />
             </span>
             <div>
-              <h1 className="monolith-h1 text-mono-text">FUEL REIMBURSEMENT</h1>
+              <h1 className="mnx-title-1 text-mono-text">FUEL REIMBURSEMENT</h1>
               <p className="mt-2 text-sm text-mono-muted">
-                Manage fuel reimbursement claims, policy rates, and payment tracking.
+                Manage fuel reimbursement claims, policy rates, and payment
+                tracking.
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button type="button" variant="outline" onClick={() => setShowRateModal(true)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowRateModal(true)}
+            >
               <Settings className="size-4" />
               <span>Rate: ₹{currentRate}/km</span>
             </Button>
-            <Button type="button" variant="outline" mode="icon" onClick={fetchData}>
+            <Button
+              type="button"
+              variant="outline"
+              mode="icon"
+              onClick={fetchData}
+            >
               <RefreshCw className="size-4" />
             </Button>
           </div>
@@ -153,27 +183,35 @@ export function ReimbursementAdminView() {
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="monolith-card monolith-accent-warning rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
-          <p className="monolith-label text-mono-muted">PENDING CLAIMS</p>
-          <p className="mt-2 text-[2rem] font-extralight tracking-tight text-mono-text monolith-numeric">
+        <div className="mnx-panel mnx-accent-warning rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
+          <p className="mnx-dashboard-spec-label text-mono-muted">
+            PENDING CLAIMS
+          </p>
+          <p className="mt-2 text-[2rem] font-extralight tracking-tight text-mono-text mnx-numeric">
             {pendingClaims.length}
           </p>
         </div>
-        <div className="monolith-card monolith-accent-warning rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
-          <p className="monolith-label text-mono-muted">PENDING AMOUNT</p>
-          <p className="mt-2 text-[2rem] font-extralight tracking-tight text-mono-text monolith-numeric">
+        <div className="mnx-panel mnx-accent-warning rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
+          <p className="mnx-dashboard-spec-label text-mono-muted">
+            PENDING AMOUNT
+          </p>
+          <p className="mt-2 text-[2rem] font-extralight tracking-tight text-mono-text mnx-numeric">
             ₹{totalPending.toFixed(2)}
           </p>
         </div>
-        <div className="monolith-card monolith-accent rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
-          <p className="monolith-label text-mono-muted">AWAITING PAYMENT</p>
-          <p className="mt-2 text-[2rem] font-extralight tracking-tight text-mono-text monolith-numeric">
+        <div className="mnx-panel mnx-accent-edge rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
+          <p className="mnx-dashboard-spec-label text-mono-muted">
+            AWAITING PAYMENT
+          </p>
+          <p className="mt-2 text-[2rem] font-extralight tracking-tight text-mono-text mnx-numeric">
             {approvedClaims.length}
           </p>
         </div>
-        <div className="monolith-card monolith-accent rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
-          <p className="monolith-label text-mono-muted">APPROVED AMOUNT</p>
-          <p className="mt-2 text-[2rem] font-extralight tracking-tight text-mono-text monolith-numeric">
+        <div className="mnx-panel mnx-accent-edge rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
+          <p className="mnx-dashboard-spec-label text-mono-muted">
+            APPROVED AMOUNT
+          </p>
+          <p className="mt-2 text-[2rem] font-extralight tracking-tight text-mono-text mnx-numeric">
             ₹{totalApproved.toFixed(2)}
           </p>
         </div>
@@ -182,7 +220,7 @@ export function ReimbursementAdminView() {
       {/* Claims Table */}
       <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
         <div className="overflow-x-auto">
-          <table className="monolith-table">
+          <MnxTable className="mnx-workspace-table">
             <thead>
               <tr>
                 <th className="px-6 py-3">Employee</th>
@@ -197,28 +235,35 @@ export function ReimbursementAdminView() {
             <tbody>
               {claims.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-sm text-mono-muted">
+                  <td
+                    colSpan={7}
+                    className="py-10 text-center text-sm text-mono-muted"
+                  >
                     No reimbursement claims yet.
                   </td>
                 </tr>
               ) : (
                 claims.map((claim) => (
                   <tr key={claim.id}>
-                    <td className="px-6 py-4 font-medium text-mono-text">{claim.user.name}</td>
+                    <td className="px-6 py-4 font-medium text-mono-text">
+                      {claim.user.name}
+                    </td>
                     <td className="px-6 py-4 text-mono-muted">
                       {claim.onDutyRequest.purpose || "On-Duty Trip"}
                     </td>
-                    <td className="px-6 py-4 monolith-numeric text-mono-text">
+                    <td className="px-6 py-4 mnx-numeric text-mono-text">
                       {claim.distanceKm} km
                     </td>
-                    <td className="px-6 py-4 monolith-numeric text-mono-muted">
+                    <td className="px-6 py-4 mnx-numeric text-mono-muted">
                       ₹{claim.ratePerKm}/km
                     </td>
-                    <td className="px-6 py-4 monolith-numeric font-medium text-mono-text">
+                    <td className="px-6 py-4 mnx-numeric font-medium text-mono-text">
                       ₹{claim.amount.toFixed(2)}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${STATUS_STYLES[claim.status] ?? ""}`}>
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${STATUS_STYLES[claim.status] ?? ""}`}
+                      >
                         {claim.status}
                       </span>
                     </td>
@@ -265,7 +310,7 @@ export function ReimbursementAdminView() {
                 ))
               )}
             </tbody>
-          </table>
+          </MnxTable>
         </div>
       </div>
 
@@ -274,17 +319,22 @@ export function ReimbursementAdminView() {
         open={showRateModal}
         title="Update Reimbursement Rate"
         description="Set the per-kilometer fuel reimbursement rate. This will apply to all new claims."
-        onClose={() => { setShowRateModal(false); setNewRate(""); }}
+        onClose={() => {
+          setShowRateModal(false);
+          setNewRate("");
+        }}
         className="max-w-md"
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="monolith-label">Current Rate</label>
-            <p className="text-lg text-mono-text monolith-numeric">₹{currentRate}/km</p>
+            <label className="mnx-dashboard-spec-label">Current Rate</label>
+            <p className="text-lg text-mono-text mnx-numeric">
+              ₹{currentRate}/km
+            </p>
           </div>
           <div className="space-y-2">
-            <label className="monolith-label">New Rate (₹/km)</label>
-            <input
+            <label className="mnx-dashboard-spec-label">New Rate (₹/km)</label>
+            <MnxInput
               type="number"
               step="0.25"
               min="0.01"
@@ -295,10 +345,21 @@ export function ReimbursementAdminView() {
             />
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => { setShowRateModal(false); setNewRate(""); }}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowRateModal(false);
+                setNewRate("");
+              }}
+            >
               Cancel
             </Button>
-            <Button type="button" onClick={handleUpdateRate} disabled={submitting}>
+            <Button
+              type="button"
+              onClick={handleUpdateRate}
+              disabled={submitting}
+            >
               Update Rate
             </Button>
           </div>

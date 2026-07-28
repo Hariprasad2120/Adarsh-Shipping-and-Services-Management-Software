@@ -1,14 +1,28 @@
 "use client";
 
+import { PeopleControlButton as MnxAction } from "@/components/monolith/people-controls";
+
 import { Children, isValidElement, type ReactNode, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {BriefcaseBusiness,CircleUserRound,Landmark,MapPinned,ShieldCheck,Users,} from "lucide-react";
+import {
+  BriefcaseBusiness,
+  CircleUserRound,
+  Landmark,
+  MapPinned,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import { DropdownSelect } from "@/components/monolith/dropdown-select";
 import { Input } from "@/components/monolith/input";
 
 type Division = { id: string; name: string };
-type Department = { id: string; name: string; code: string; divisions: Division[] };
+type Department = {
+  id: string;
+  name: string;
+  code: string;
+  divisions: Division[];
+};
 type Branch = { id: string; name: string };
 type Role = { id: string; name: string };
 type Manager = { id: string; name: string; designation: string | null };
@@ -19,7 +33,7 @@ function optionalString(value: FormDataEntryValue | null) {
 }
 
 function sectionCardClass(extra = "") {
-  return `monolith-card monolith-accent monolith-shell-lg border border-mono-border/40 bg-mono-card p-5 shadow-sm sm:p-6 ${extra}`.trim();
+  return `mnx-panel mnx-accent-edge mnx-content-wide border border-mono-border/40 bg-mono-card p-5 shadow-sm sm:p-6 ${extra}`.trim();
 }
 
 export function OnboardForm({
@@ -41,11 +55,15 @@ export function OnboardForm({
   const [tlId, setTlId] = useState("");
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
 
-  const divisions = org?.departments.find((department) => department.id === deptId)?.divisions ?? [];
+  const divisions =
+    org?.departments.find((department) => department.id === deptId)
+      ?.divisions ?? [];
 
   function toggleRole(id: string) {
     setSelectedRoles((prev) =>
-      prev.includes(id) ? prev.filter((roleId) => roleId !== id) : [...prev, id],
+      prev.includes(id)
+        ? prev.filter((roleId) => roleId !== id)
+        : [...prev, id],
     );
   }
 
@@ -68,7 +86,10 @@ export function OnboardForm({
       joinDate: fd.get("joinDate"),
       grade: optionalString(fd.get("grade")),
       ctc: fd.get("ctc") ? Number(fd.get("ctc")) : undefined,
-      priorExperienceYears: fd.get("priorExperienceYears") !== "" ? Number(fd.get("priorExperienceYears")) : 0,
+      priorExperienceYears:
+        fd.get("priorExperienceYears") !== ""
+          ? Number(fd.get("priorExperienceYears"))
+          : 0,
       roleIds: selectedRoles,
       payrollMeta: {
         employeeNumber: optionalString(fd.get("employeeNumber")),
@@ -138,12 +159,39 @@ export function OnboardForm({
             <FormGrid>
               <Field label="Full Name" name="name" required />
               <Field label="Work Email" name="email" type="email" required />
-              <Field label="Password (temporary)" name="password" type="password" required placeholder="Min 8 chars" />
-              <Field label="Designation" name="designation" placeholder="e.g. Senior Executive" />
-              <Field label="Employee ID" name="employeeNumber" placeholder="e.g. EMP-1024" />
-              <Field label="Personal Email" name="personalEmail" type="email" placeholder="e.g. name@gmail.com" />
-              <Field label="Mobile Number" name="mobileNumber" placeholder="10-digit mobile number" />
-              <Field label="Father Name" name="fatherName" placeholder="Employee's father name" />
+              <Field
+                label="Password (temporary)"
+                name="password"
+                type="password"
+                required
+                placeholder="Min 8 chars"
+              />
+              <Field
+                label="Designation"
+                name="designation"
+                placeholder="e.g. Senior Executive"
+              />
+              <Field
+                label="Employee ID"
+                name="employeeNumber"
+                placeholder="e.g. EMP-1024"
+              />
+              <Field
+                label="Personal Email"
+                name="personalEmail"
+                type="email"
+                placeholder="e.g. name@gmail.com"
+              />
+              <Field
+                label="Mobile Number"
+                name="mobileNumber"
+                placeholder="10-digit mobile number"
+              />
+              <Field
+                label="Father Name"
+                name="fatherName"
+                placeholder="Employee's father name"
+              />
               <Field label="Date of Birth" name="dateOfBirth" type="date" />
               <SelectField label="Gender" name="gender">
                 <option value="">- Select -</option>
@@ -157,8 +205,16 @@ export function OnboardForm({
                 <option value="Married">Married</option>
                 <option value="Other">Other</option>
               </SelectField>
-              <Field label="Aadhaar" name="aadhaar" placeholder="12-digit Aadhaar number" />
-              <Field label="PAN" name="panNumber" placeholder="e.g. ABCDE1234F" />
+              <Field
+                label="Aadhaar"
+                name="aadhaar"
+                placeholder="12-digit Aadhaar number"
+              />
+              <Field
+                label="PAN"
+                name="panNumber"
+                placeholder="e.g. ABCDE1234F"
+              />
             </FormGrid>
           </InfoCard>
 
@@ -170,8 +226,18 @@ export function OnboardForm({
             <FormGrid>
               <Field label="Join Date" name="joinDate" type="date" required />
               <Field label="Grade" name="grade" placeholder="e.g. L3" />
-              <Field label="CTC (annual)" name="ctc" type="number" placeholder="e.g. 500000" />
-              <Field label="Prior Experience (years)" name="priorExperienceYears" type="number" placeholder="0 = fresher" />
+              <Field
+                label="CTC (annual)"
+                name="ctc"
+                type="number"
+                placeholder="e.g. 500000"
+              />
+              <Field
+                label="Prior Experience (years)"
+                name="priorExperienceYears"
+                type="number"
+                placeholder="0 = fresher"
+              />
             </FormGrid>
           </InfoCard>
 
@@ -181,12 +247,36 @@ export function OnboardForm({
             description="Current residential address used for communication and employee records."
           >
             <FormGrid>
-              <Field label="Address Line 1" name="presentAddressLine1" placeholder="House / flat / street" />
-              <Field label="Address Line 2" name="presentAddressLine2" placeholder="Area / landmark" />
-              <Field label="City" name="presentCity" placeholder="e.g. Chennai" />
-              <Field label="State" name="presentStateCode" placeholder="e.g. TN" />
-              <Field label="Postal Code" name="presentPostalCode" placeholder="e.g. 600001" />
-              <Field label="Country" name="presentCountry" placeholder="e.g. India" />
+              <Field
+                label="Address Line 1"
+                name="presentAddressLine1"
+                placeholder="House / flat / street"
+              />
+              <Field
+                label="Address Line 2"
+                name="presentAddressLine2"
+                placeholder="Area / landmark"
+              />
+              <Field
+                label="City"
+                name="presentCity"
+                placeholder="e.g. Chennai"
+              />
+              <Field
+                label="State"
+                name="presentStateCode"
+                placeholder="e.g. TN"
+              />
+              <Field
+                label="Postal Code"
+                name="presentPostalCode"
+                placeholder="e.g. 600001"
+              />
+              <Field
+                label="Country"
+                name="presentCountry"
+                placeholder="e.g. India"
+              />
             </FormGrid>
           </InfoCard>
         </div>
@@ -199,7 +289,12 @@ export function OnboardForm({
           >
             <div className="space-y-5">
               <FormGrid>
-                <SelectField label="Branch" name="branchId" onChange={setBranchId} value={branchId}>
+                <SelectField
+                  label="Branch"
+                  name="branchId"
+                  onChange={setBranchId}
+                  value={branchId}
+                >
                   <option value="">- None -</option>
                   {org?.branches.map((branch) => (
                     <option key={branch.id} value={branch.id}>
@@ -207,7 +302,12 @@ export function OnboardForm({
                     </option>
                   ))}
                 </SelectField>
-                <SelectField label="Department" name="departmentId" onChange={setDeptId} value={deptId}>
+                <SelectField
+                  label="Department"
+                  name="departmentId"
+                  onChange={setDeptId}
+                  value={deptId}
+                >
                   <option value="">- None -</option>
                   {org?.departments.map((department) => (
                     <option key={department.id} value={department.id}>
@@ -215,7 +315,12 @@ export function OnboardForm({
                     </option>
                   ))}
                 </SelectField>
-                <SelectField label="Division" name="divisionId" onChange={setDivisionId} value={divisionId}>
+                <SelectField
+                  label="Division"
+                  name="divisionId"
+                  onChange={setDivisionId}
+                  value={divisionId}
+                >
                   <option value="">- None -</option>
                   {divisions.map((division) => (
                     <option key={division.id} value={division.id}>
@@ -223,7 +328,12 @@ export function OnboardForm({
                     </option>
                   ))}
                 </SelectField>
-                <SelectField label="Manager" name="managerId" onChange={setManagerId} value={managerId}>
+                <SelectField
+                  label="Manager"
+                  name="managerId"
+                  onChange={setManagerId}
+                  value={managerId}
+                >
                   <option value="">- None -</option>
                   {managers.map((manager) => (
                     <option key={manager.id} value={manager.id}>
@@ -232,7 +342,12 @@ export function OnboardForm({
                     </option>
                   ))}
                 </SelectField>
-                <SelectField label="Team Lead" name="tlId" onChange={setTlId} value={tlId}>
+                <SelectField
+                  label="Team Lead"
+                  name="tlId"
+                  onChange={setTlId}
+                  value={tlId}
+                >
                   <option value="">- None -</option>
                   {managers.map((manager) => (
                     <option key={manager.id} value={manager.id}>
@@ -246,18 +361,18 @@ export function OnboardForm({
                 <p className="text-sm font-medium text-mono-text">Roles</p>
                 <div className="flex flex-wrap gap-2">
                   {roles.map((role) => (
-                    <button
+                    <MnxAction
                       key={role.id}
                       type="button"
                       onClick={() => toggleRole(role.id)}
                       className={`rounded-full border px-3 py-1.5 text-sm transition ${
                         selectedRoles.includes(role.id)
-                          ? "border-[#F9D972] bg-[#F9D972] text-white"
-                          : "border-mono-border/50 bg-mono-card text-mono-text hover:border-[#F9D972]/50"
+                          ? "border-[var(--mnx-accent)] bg-[var(--mnx-accent)] text-[var(--mnx-text)]"
+                          : "border-mono-border/50 bg-mono-card text-mono-text hover:border-[var(--mnx-accent)]/50"
                       }`}
                     >
                       {role.name}
-                    </button>
+                    </MnxAction>
                   ))}
                 </div>
               </div>
@@ -270,10 +385,26 @@ export function OnboardForm({
             description="Optional payout details for payroll and finance processing."
           >
             <FormGrid>
-              <Field label="Account Holder Name" name="bankHolderName" placeholder="As per bank account" />
-              <Field label="Bank Name" name="bankName" placeholder="e.g. HDFC Bank" />
-              <Field label="Account Number" name="bankAccountNumber" placeholder="Enter account number" />
-              <Field label="IFSC Code" name="ifscCode" placeholder="e.g. HDFC0001234" />
+              <Field
+                label="Account Holder Name"
+                name="bankHolderName"
+                placeholder="As per bank account"
+              />
+              <Field
+                label="Bank Name"
+                name="bankName"
+                placeholder="e.g. HDFC Bank"
+              />
+              <Field
+                label="Account Number"
+                name="bankAccountNumber"
+                placeholder="Enter account number"
+              />
+              <Field
+                label="IFSC Code"
+                name="ifscCode"
+                placeholder="e.g. HDFC0001234"
+              />
               <SelectField label="Account Type" name="accountType">
                 <option value="">- Select -</option>
                 <option value="Savings">Savings</option>
@@ -286,7 +417,11 @@ export function OnboardForm({
                 <option value="Cheque">Cheque</option>
                 <option value="Cash">Cash</option>
               </SelectField>
-              <Field label="Bank State Code" name="bankStateCode" placeholder="e.g. TN" />
+              <Field
+                label="Bank State Code"
+                name="bankStateCode"
+                placeholder="e.g. TN"
+              />
             </FormGrid>
           </InfoCard>
 
@@ -296,34 +431,68 @@ export function OnboardForm({
             description="Permanent address information for statutory and HR documentation."
           >
             <FormGrid>
-              <Field label="Address Line 1" name="permanentAddressLine1" placeholder="House / flat / street" />
-              <Field label="Address Line 2" name="permanentAddressLine2" placeholder="Area / landmark" />
-              <Field label="City" name="permanentCity" placeholder="e.g. Madurai" />
-              <Field label="State" name="permanentStateCode" placeholder="e.g. TN" />
-              <Field label="Postal Code" name="permanentPostalCode" placeholder="e.g. 625001" />
-              <Field label="Country" name="permanentCountry" placeholder="e.g. India" />
+              <Field
+                label="Address Line 1"
+                name="permanentAddressLine1"
+                placeholder="House / flat / street"
+              />
+              <Field
+                label="Address Line 2"
+                name="permanentAddressLine2"
+                placeholder="Area / landmark"
+              />
+              <Field
+                label="City"
+                name="permanentCity"
+                placeholder="e.g. Madurai"
+              />
+              <Field
+                label="State"
+                name="permanentStateCode"
+                placeholder="e.g. TN"
+              />
+              <Field
+                label="Postal Code"
+                name="permanentPostalCode"
+                placeholder="e.g. 625001"
+              />
+              <Field
+                label="Country"
+                name="permanentCountry"
+                placeholder="e.g. India"
+              />
             </FormGrid>
           </InfoCard>
 
           {error ? (
-            <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
+            <p className="rounded-2xl border border-[var(--mnx-danger)] bg-[var(--mnx-danger-bg)] px-4 py-3 text-sm text-[var(--mnx-danger)]">
+              {error}
+            </p>
           ) : null}
         </div>
       </div>
 
-      <div className={sectionCardClass("flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between")}>
+      <div
+        className={sectionCardClass(
+          "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+        )}
+      >
         <div>
-          <h2 className="text-base font-semibold text-mono-text">Create Employee</h2>
-          <p className="mt-1 text-sm text-mono-muted">Review the sections above and save the onboarding record.</p>
+          <h2 className="text-base font-semibold text-mono-text">
+            Create Employee
+          </h2>
+          <p className="mt-1 text-sm text-mono-muted">
+            Review the sections above and save the onboarding record.
+          </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <button
+          <MnxAction
             type="submit"
             disabled={loading}
-            className="rounded-lg bg-[#F9D972] px-5 py-2 font-medium text-white transition hover:bg-[#00b5ad] disabled:opacity-50"
+            className="rounded-lg bg-[var(--mnx-accent)] px-5 py-2 font-medium text-[var(--mnx-text)] transition hover:bg-[var(--mnx-accent)] disabled:opacity-50"
           >
             {loading ? "Creating..." : "Create Employee"}
-          </button>
+          </MnxAction>
           <Link
             href="/hrms/employees"
             className="rounded-lg border border-mono-border/50 bg-mono-card px-5 py-2 font-medium text-mono-text transition hover:bg-mono-soft"
@@ -350,12 +519,14 @@ function InfoCard({
   return (
     <section className={sectionCardClass()}>
       <div className="flex items-start gap-3">
-        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F9D972]/10 text-[#F9D972]">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]">
           {icon}
         </span>
         <div>
-          <h2 className="monolith-h2 text-mono-text">{title}</h2>
-          {description ? <p className="mt-1 text-sm text-mono-muted">{description}</p> : null}
+          <h2 className="mnx-title-2 text-mono-text">{title}</h2>
+          {description ? (
+            <p className="mt-1 text-sm text-mono-muted">{description}</p>
+          ) : null}
         </div>
       </div>
       <div className="mt-6">{children}</div>
@@ -364,7 +535,9 @@ function InfoCard({
 }
 
 function FormGrid({ children }: { children: ReactNode }) {
-  return <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{children}</div>;
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{children}</div>
+  );
 }
 
 function Field({
@@ -382,7 +555,9 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-mono-text">{label}</label>
+      <label className="block text-sm font-medium text-mono-text">
+        {label}
+      </label>
       <Input
         name={name}
         type={type}
@@ -414,7 +589,10 @@ function SelectField({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const props = child.props as any;
     const optionValue = typeof props.value === "string" ? props.value : "";
-    const optionLabel = typeof props.children === "string" ? props.children : String(props.children ?? "");
+    const optionLabel =
+      typeof props.children === "string"
+        ? props.children
+        : String(props.children ?? "");
 
     return [
       {
@@ -427,7 +605,9 @@ function SelectField({
 
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-mono-text">{label}</label>
+      <label className="block text-sm font-medium text-mono-text">
+        {label}
+      </label>
       <DropdownSelect
         ariaLabel={label}
         name={name}

@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  PeopleControlButton as MnxAction,
+  PeopleControlInput as MnxInput,
+} from "@/components/monolith/people-controls";
+
 import { useState, useEffect } from "react";
 import { Add, DocumentAdd, Star, StarFilled } from "@carbon/icons-react";
 
@@ -58,7 +63,14 @@ export default function CareerResumesPage() {
     });
     if (res.ok) {
       setShowAdd(false);
-      setAddForm({ name: "", fileKey: "", fileName: "", mimeType: "application/pdf", sizeBytes: 0, isBase: false });
+      setAddForm({
+        name: "",
+        fileKey: "",
+        fileName: "",
+        mimeType: "application/pdf",
+        sizeBytes: 0,
+        isBase: false,
+      });
       load();
     }
     setAdding(false);
@@ -77,68 +89,86 @@ export default function CareerResumesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="monolith-h1 text-mono-text">My Resumes</h1>
-          <p className="text-sm text-mono-muted">Manage your resume versions — private to you</p>
+          <h1 className="mnx-title-1 text-mono-text">My Resumes</h1>
+          <p className="text-sm text-mono-muted">
+            Manage your resume versions — private to you
+          </p>
         </div>
-        <button
+        <MnxAction
           onClick={() => setShowAdd(!showAdd)}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#F9D972] px-4 py-2 text-sm font-medium text-white uppercase tracking-wide transition hover:bg-[#E8C85D]"
+          className="inline-flex items-center gap-2 rounded-xl bg-[var(--mnx-accent)] px-4 py-2 text-sm font-medium text-[var(--mnx-text)] uppercase tracking-wide transition hover:bg-[var(--mnx-accent-soft)]"
         >
           <Add size={16} />
           Add Resume
-        </button>
+        </MnxAction>
       </div>
 
       {showAdd && (
-        <form onSubmit={handleAdd} className="rounded-xl border border-mono-border bg-mono-card p-5 space-y-3">
-          <h3 className="monolith-h3 text-mono-text">Register Resume</h3>
-          <p className="text-xs text-mono-muted">Register an existing resume file by name. File upload integration connects here.</p>
+        <form
+          onSubmit={handleAdd}
+          className="rounded-xl border border-mono-border bg-mono-card p-5 space-y-3"
+        >
+          <h3 className="mnx-title-3 text-mono-text">Register Resume</h3>
+          <p className="text-xs text-mono-muted">
+            Register an existing resume file by name. File upload integration
+            connects here.
+          </p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="monolith-label mb-1 block">Label / Version Name *</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Label / Version Name *
+              </label>
+              <MnxInput
                 required
                 value={addForm.name}
-                onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
+                onChange={(e) =>
+                  setAddForm((f) => ({ ...f, name: e.target.value }))
+                }
                 className="w-full rounded-xl px-3 py-2 text-sm"
                 placeholder="e.g. Senior Engineer v3"
               />
             </div>
             <div>
-              <label className="monolith-label mb-1 block">File Name *</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                File Name *
+              </label>
+              <MnxInput
                 required
                 value={addForm.fileName}
-                onChange={(e) => setAddForm((f) => ({ ...f, fileName: e.target.value }))}
+                onChange={(e) =>
+                  setAddForm((f) => ({ ...f, fileName: e.target.value }))
+                }
                 className="w-full rounded-xl px-3 py-2 text-sm"
                 placeholder="resume-2026.pdf"
               />
             </div>
           </div>
           <label className="flex items-center gap-2 text-sm text-mono-text">
-            <input
+            <MnxInput
               type="checkbox"
               checked={addForm.isBase}
-              onChange={(e) => setAddForm((f) => ({ ...f, isBase: e.target.checked }))}
+              onChange={(e) =>
+                setAddForm((f) => ({ ...f, isBase: e.target.checked }))
+              }
               className="h-4 w-4 rounded"
             />
             Mark as base / master resume
           </label>
           <div className="flex gap-2">
-            <button
+            <MnxAction
               type="submit"
               disabled={adding}
-              className="rounded-xl bg-[#F9D972] px-4 py-2 text-sm font-medium text-white hover:bg-[#E8C85D] disabled:opacity-50"
+              className="rounded-xl bg-[var(--mnx-accent)] px-4 py-2 text-sm font-medium text-[var(--mnx-text)] hover:bg-[var(--mnx-accent-soft)] disabled:opacity-50"
             >
               {adding ? "Saving..." : "Save"}
-            </button>
-            <button
+            </MnxAction>
+            <MnxAction
               type="button"
               onClick={() => setShowAdd(false)}
               className="rounded-xl border border-mono-border px-4 py-2 text-sm text-mono-muted"
             >
               Cancel
-            </button>
+            </MnxAction>
           </div>
         </form>
       )}
@@ -159,36 +189,44 @@ export default function CareerResumesPage() {
             <div
               key={r.id}
               className={`relative flex flex-col gap-3 rounded-xl border bg-mono-card p-4 ${
-                r.isBase ? "border-[#F9D972]/40 shadow-sm" : "border-mono-border"
+                r.isBase
+                  ? "border-[var(--mnx-accent)]/40 shadow-sm"
+                  : "border-mono-border"
               }`}
             >
               {r.isBase && (
-                <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-[#F9D972]/10 px-2 py-0.5 text-[10px] font-medium text-[#F9D972]">
+                <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-[var(--mnx-accent)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--mnx-accent)]">
                   <StarFilled size={10} />
                   BASE
                 </span>
               )}
               <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F9D972]/10">
-                  <DocumentAdd size={18} className="text-[#F9D972]" />
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--mnx-accent)]/10">
+                  <DocumentAdd size={18} className="text-[var(--mnx-accent)]" />
                 </div>
                 <div className="min-w-0 flex-1 pr-12">
-                  <p className="truncate font-medium text-mono-text">{r.name}</p>
-                  <p className="monolith-label mt-0.5">v{r.version}</p>
+                  <p className="truncate font-medium text-mono-text">
+                    {r.name}
+                  </p>
+                  <p className="mnx-dashboard-spec-label mt-0.5">
+                    v{r.version}
+                  </p>
                 </div>
               </div>
               <div className="text-xs text-mono-muted">
                 Updated {new Date(r.updatedAt).toLocaleDateString()}
-                <span className="ml-2">· {Math.round(r.sizeBytes / 1024)} KB</span>
+                <span className="ml-2">
+                  · {Math.round(r.sizeBytes / 1024)} KB
+                </span>
               </div>
               {!r.isBase && (
-                <button
+                <MnxAction
                   onClick={() => setBase(r.id)}
-                  className="flex items-center gap-1 text-xs text-mono-muted hover:text-[#F9D972]"
+                  className="flex items-center gap-1 text-xs text-mono-muted hover:text-[var(--mnx-accent)]"
                 >
                   <Star size={12} />
                   Set as base
-                </button>
+                </MnxAction>
               )}
             </div>
           ))}

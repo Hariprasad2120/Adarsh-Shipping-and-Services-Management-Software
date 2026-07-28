@@ -2,36 +2,34 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-const buttonVariants = cva(
-  "btn inline-flex items-center justify-center gap-2 disabled:pointer-events-none disabled:opacity-50",
-  {
-    variants: {
-      variant: {
-        default: "primary",
-        inverse: "ghost",
-        outline: "outline",
-        destructive: "destructive",
-      },
-      size: {
-        sm: "small",
-        md: "",
-        lg: "",
-      },
-      mode: {
-        default: "",
-        icon: "aspect-square !min-w-0 !px-0",
-      },
+const buttonVariants = cva("mnx-button", {
+  variants: {
+    variant: {
+      default: "mnx-button-primary",
+      inverse: "mnx-button-secondary",
+      outline: "mnx-button-secondary",
+      destructive: "mnx-button-destructive",
     },
-    defaultVariants: {
-      variant: "default",
-      size: "md",
-      mode: "default",
+    size: {
+      sm: "mnx-button-compact",
+      md: "",
+      lg: "",
+    },
+    mode: {
+      default: "",
+      icon: "mnx-icon-button",
     },
   },
-);
+  defaultVariants: {
+    variant: "default",
+    size: "md",
+    mode: "default",
+  },
+});
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {}
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(

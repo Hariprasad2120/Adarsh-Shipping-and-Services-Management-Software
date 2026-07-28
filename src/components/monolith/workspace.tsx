@@ -24,6 +24,7 @@ interface WorkspacePageHeaderProps
   eyebrow: string;
   title: React.ReactNode;
   description?: React.ReactNode;
+  graphic?: React.ReactNode;
   icon?: React.ReactNode;
   actions?: React.ReactNode;
 }
@@ -33,12 +34,20 @@ export function WorkspacePageHeader({
   className,
   description,
   eyebrow,
+  graphic,
   icon,
   title,
   ...props
 }: WorkspacePageHeaderProps) {
   return (
-    <header className={cn("mnx-page-header", className)} {...props}>
+    <header
+      className={cn(
+        "mnx-page-header",
+        graphic ? "mnx-page-header-with-graphic" : null,
+        className,
+      )}
+      {...props}
+    >
       <div className="mnx-page-header-copy">
         {icon ? <span className="mnx-page-header-icon">{icon}</span> : null}
         <div>
@@ -47,6 +56,11 @@ export function WorkspacePageHeader({
           {description ? <p>{description}</p> : null}
         </div>
       </div>
+      {graphic ? (
+        <div className="mnx-page-header-graphic" aria-hidden="true">
+          {graphic}
+        </div>
+      ) : null}
       {actions ? <div className="mnx-page-header-actions">{actions}</div> : null}
     </header>
   );
