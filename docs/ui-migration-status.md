@@ -291,3 +291,19 @@ The build retains six non-fatal Turbopack broad file-trace warnings from
 existing dynamic filesystem paths in HRMS letter generation, customer-portal
 file routes/service code, and the existing NFT trace through `next.config.ts`.
 They do not affect compilation or the verified runtime routes.
+
+## Post-batch 002 shell correction
+
+The Monolith workspace sidebar now renders functional, permission-filtered
+submenus for every navigation section that has children.
+
+- Parent rows are accessible expand/collapse buttons with `aria-expanded` and
+  `aria-controls`.
+- The active workspace opens automatically and the most-specific child route
+  receives `aria-current`.
+- Nested links work in the full desktop sidebar, compact desktop rail, and
+  mobile drawer; mobile child navigation closes the drawer.
+- Authenticated browser verification covered HRMS, Attendance, To-Do, and AMS,
+  including collapse/reopen and nested navigation.
+- Targeted ESLint, full TypeScript, 7 navigation/layout tests, and the 8 GB
+  production build passed.

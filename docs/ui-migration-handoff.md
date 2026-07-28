@@ -106,6 +106,15 @@ existing dynamic filesystem paths in HRMS letter generation, customer-portal
 file routes/service code, and the NFT trace through `next.config.ts`. They do
 not affect compilation or the verified runtime routes.
 
+## Post-batch 002 shell correction
+
+Workspace chevrons in `MonolithAppShell` are now real accessible submenu
+controls instead of decorative icons. Active workspaces auto-expand, child
+routes are permission-filtered and route-aware, and nested navigation works on
+desktop, compact desktop, and mobile. Authenticated browser checks covered
+HRMS, Attendance, To-Do, and AMS; targeted lint, full TypeScript, navigation
+tests, and the 8 GB production build passed.
+
 ## Important constraints
 
 - Do not redesign `/dashboard`.

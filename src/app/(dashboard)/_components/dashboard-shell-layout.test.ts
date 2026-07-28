@@ -101,4 +101,27 @@ describe("CHA dashboard shell layout safeguards", () => {
     );
     expect(dashboardShellSwitcherSource).toContain("usesMonolithShell");
   });
+
+  it("keeps every Monolith workspace submenu interactive and accessible", () => {
+    const appShellSource = readFileSync(
+      join(repoRoot, "src/components/monolith/app-shell.tsx"),
+      "utf8",
+    );
+    const systemStyles = readFileSync(
+      join(repoRoot, "src/styles/monolith-system.css"),
+      "utf8",
+    );
+
+    expect(appShellSource).toContain("expandedSections");
+    expect(appShellSource).toContain("getActiveItemHref");
+    expect(appShellSource).toContain("aria-expanded={isExpanded}");
+    expect(appShellSource).toContain(
+      "aria-controls={`mnx-sidebar-items-${section.id}`}",
+    );
+    expect(appShellSource).toContain("section.items.map((item)");
+    expect(appShellSource).toContain("hidden={!isExpanded}");
+    expect(appShellSource).toContain('role="group"');
+    expect(systemStyles).toContain(".mnx-sidebar-subnav[hidden]");
+    expect(systemStyles).toContain(".mnx-sidebar-section.is-expanded");
+  });
 });
