@@ -1,5 +1,6 @@
 "use client";
 
+import { PerformanceControlButton } from "@/components/monolith/performance-workspace";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
@@ -22,7 +23,9 @@ function buildUrl(pathname: string, params: URLSearchParams) {
   return query ? `${pathname}?${query}` : pathname;
 }
 
-function inProgressDraftFromSearchParams(sp: ReturnType<typeof useSearchParams>): InProgressDraft {
+function inProgressDraftFromSearchParams(
+  sp: ReturnType<typeof useSearchParams>,
+): InProgressDraft {
   return {
     cycleId: sp.get("cycleId") ?? "",
     stage: sp.get("stage") ?? "",
@@ -88,40 +91,50 @@ export function InProgressFilterMenu({
         <div className="space-y-3">
           <DropdownSelect
             ariaLabel="Cycle"
-            onValueChange={(value) => setDraft((current) => ({ ...current, cycleId: value }))}
+            onValueChange={(value) =>
+              setDraft((current) => ({ ...current, cycleId: value }))
+            }
             options={[
               { value: "", label: "All cycles" },
-              ...cycles.map((cycle) => ({ value: cycle.id, label: cycle.name })),
+              ...cycles.map((cycle) => ({
+                value: cycle.id,
+                label: cycle.name,
+              })),
             ]}
             triggerClassName="h-10 py-2 text-sm"
             value={draft.cycleId}
           />
           <DropdownSelect
             ariaLabel="Stage"
-            onValueChange={(value) => setDraft((current) => ({ ...current, stage: value }))}
+            onValueChange={(value) =>
+              setDraft((current) => ({ ...current, stage: value }))
+            }
             options={[
               { value: "", label: "All stages" },
-              ...stageOptions.map((stage) => ({ value: stage, label: stage.replace(/_/g, " ") })),
+              ...stageOptions.map((stage) => ({
+                value: stage,
+                label: stage.replace(/_/g, " "),
+              })),
             ]}
             triggerClassName="h-10 py-2 text-sm"
             value={draft.stage}
           />
         </div>
         <div className="flex items-center justify-between gap-2">
-          <button
+          <PerformanceControlButton
             type="button"
             onClick={clearFilters}
-            className="rounded-xl border border-mono-border/40 px-3 py-2 text-sm text-mono-muted transition hover:border-[#F9D972]/45 hover:text-mono-text"
+            className="rounded-xl border border-mono-border/40 px-3 py-2 text-sm text-mono-muted transition hover:border-mono-border hover:text-mono-text"
           >
             Clear
-          </button>
-          <button
+          </PerformanceControlButton>
+          <PerformanceControlButton
             type="button"
             onClick={applyFilters}
-            className="rounded-xl bg-[#F9D972] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#00b5ad]"
+            className="rounded-xl bg-mono-accent/10 px-3 py-2 text-sm font-medium text-mono-text transition hover:bg-mono-accent/10"
           >
             Apply filters
-          </button>
+          </PerformanceControlButton>
         </div>
       </div>
     </FilterMenu>
@@ -174,20 +187,20 @@ export function EligibleAppraisalFilterMenu() {
             className="h-10 py-2 text-sm"
           />
           <div className="flex items-center justify-between gap-2">
-            <button
+            <PerformanceControlButton
               type="button"
               onClick={clearFilters}
-              className="rounded-xl border border-mono-border/40 px-3 py-2 text-sm text-mono-muted transition hover:border-[#F9D972]/45 hover:text-mono-text"
+              className="rounded-xl border border-mono-border/40 px-3 py-2 text-sm text-mono-muted transition hover:border-mono-border hover:text-mono-text"
             >
               Clear
-            </button>
-            <button
+            </PerformanceControlButton>
+            <PerformanceControlButton
               type="button"
               onClick={applyFilters}
-              className="rounded-xl bg-[#F9D972] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#00b5ad]"
+              className="rounded-xl bg-mono-accent/10 px-3 py-2 text-sm font-medium text-mono-text transition hover:bg-mono-accent/10"
             >
               Apply filters
-            </button>
+            </PerformanceControlButton>
           </div>
         </div>
       </FilterMenu>
@@ -202,7 +215,7 @@ export function EligibleAppraisalFilterMenu() {
                 }).toString()}`
               : ""
           }`}
-          className="rounded-lg border border-mono-border/40 px-3 py-1.5 text-sm text-mono-muted transition hover:border-[#F9D972]/45 hover:text-mono-text"
+          className="rounded-lg border border-mono-border/40 px-3 py-1.5 text-sm text-mono-muted transition hover:border-mono-border hover:text-mono-text"
         >
           Clear Filter
         </Link>

@@ -1,10 +1,24 @@
 "use client";
 
+import {
+  PerformanceControlButton,
+  PerformanceTableRow,
+} from "@/components/monolith/performance-workspace";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useNotifications } from "@/components/notifications/notification-provider";
-import {Badge,DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableHead,DataTableHeader,DataTableRow,MetaText,} from "@/components/data-table";
+import {
+  Badge,
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableEmpty,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+  MetaText,
+} from "@/components/monolith/workspace-data-table";
 
 type ReviewEntry = {
   id: string;
@@ -20,24 +34,24 @@ type ReviewEntry = {
 };
 
 const STAGE_COLOR: Record<string, string> = {
-  DUE_NOTIFIED: "bg-yellow-50 text-yellow-700",
-  REVIEWERS_ASSIGNED: "bg-blue-50 text-blue-700",
-  SELF_ASSESSMENT_OPEN: "bg-purple-50 text-purple-700",
-  REVIEWER_RATING: "bg-indigo-50 text-indigo-700",
-  MANAGEMENT_REVIEW: "bg-orange-50 text-orange-700",
-  MEETING_PENDING: "bg-cyan-50 text-cyan-700",
-  MEETING_LIVE: "bg-green-50 text-green-700",
-  HIKE_FINALISATION: "bg-pink-50 text-pink-700",
+  DUE_NOTIFIED: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
+  REVIEWERS_ASSIGNED: "bg-mono-accent/10 text-mono-accent",
+  SELF_ASSESSMENT_OPEN: "bg-mono-accent/10 text-mono-accent",
+  REVIEWER_RATING: "bg-mono-accent/10 text-mono-accent",
+  MANAGEMENT_REVIEW: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
+  MEETING_PENDING: "bg-mono-accent/10 text-mono-accent",
+  MEETING_LIVE: "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]",
+  HIKE_FINALISATION: "bg-mono-accent/10 text-mono-accent",
   CLOSED: "bg-mono-soft text-mono-muted",
 };
 
 const STATUS_COLOR: Record<string, string> = {
   PENDING: "bg-mono-soft text-mono-muted",
-  AVAILABLE: "bg-green-100 text-green-700",
-  UNAVAILABLE: "bg-red-100 text-red-600",
-  FORCED: "bg-orange-100 text-orange-600",
-  CLAIMABLE: "bg-orange-100 text-orange-700",
-  CLAIMED: "bg-cyan-100 text-cyan-700",
+  AVAILABLE: "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]",
+  UNAVAILABLE: "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]",
+  FORCED: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
+  CLAIMABLE: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
+  CLAIMED: "bg-mono-accent/10 text-mono-accent",
 };
 
 const KIND_LABEL: Record<string, string> = {
@@ -95,15 +109,27 @@ export function MyReviewsClient({ appraisals }: { appraisals: ReviewEntry[] }) {
   return (
     <DataTable>
       <DataTableHeader>
-        <tr>
-          {["Employee", "Cycle", "Stage", "Your Role", "Your Status", "Deadline", ""].map((h) => (
+        <PerformanceTableRow>
+          {[
+            "Employee",
+            "Cycle",
+            "Stage",
+            "Your Role",
+            "Your Status",
+            "Deadline",
+            "",
+          ].map((h) => (
             <DataTableHead key={h}>{h}</DataTableHead>
           ))}
-        </tr>
+        </PerformanceTableRow>
       </DataTableHeader>
       <DataTableBody>
         {appraisals.length === 0 ? (
-          <DataTableEmpty colSpan={7} message="No review assignments or management reviews are waiting for you." className="py-12 text-sm" />
+          <DataTableEmpty
+            colSpan={7}
+            message="No review assignments or management reviews are waiting for you."
+            className="py-12 text-sm"
+          />
         ) : (
           appraisals.map((a) => {
             const canSetAvailability =
@@ -112,13 +138,20 @@ export function MyReviewsClient({ appraisals }: { appraisals: ReviewEntry[] }) {
             return (
               <DataTableRow key={a.id}>
                 <DataTableCell>
-                  <MetaText primary={a.employee.name} secondary={a.employee.designation ?? undefined} />
+                  <MetaText
+                    primary={a.employee.name}
+                    secondary={a.employee.designation ?? undefined}
+                  />
                 </DataTableCell>
                 <DataTableCell className="text-mono-muted">
                   {a.cycle.name} {a.cycle.year}
                 </DataTableCell>
                 <DataTableCell>
-                  <Badge className={STAGE_COLOR[a.stage] ?? "bg-mono-soft text-mono-muted"}>
+                  <Badge
+                    className={
+                      STAGE_COLOR[a.stage] ?? "bg-mono-soft text-mono-muted"
+                    }
+                  >
                     {a.stage.replace(/_/g, " ")}
                   </Badge>
                 </DataTableCell>
@@ -126,7 +159,11 @@ export function MyReviewsClient({ appraisals }: { appraisals: ReviewEntry[] }) {
                   {KIND_LABEL[a.myRole] ?? a.myRole}
                 </DataTableCell>
                 <DataTableCell>
-                  <Badge className={STATUS_COLOR[a.myStatus] ?? "bg-mono-soft text-mono-muted"}>
+                  <Badge
+                    className={
+                      STATUS_COLOR[a.myStatus] ?? "bg-mono-soft text-mono-muted"
+                    }
+                  >
                     {a.myStatus}
                   </Badge>
                 </DataTableCell>
@@ -136,23 +173,26 @@ export function MyReviewsClient({ appraisals }: { appraisals: ReviewEntry[] }) {
                 <DataTableCell>
                   {canSetAvailability ? (
                     <div className="flex gap-2">
-                      <button
+                      <PerformanceControlButton
                         onClick={() => setAvailability(a.id, true)}
                         disabled={loading !== null}
-                        className="rounded-lg bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                        className="rounded-lg bg-[var(--mnx-success-bg)] px-3 py-1 text-xs font-medium text-mono-text hover:bg-[var(--mnx-success-bg)] disabled:opacity-50"
                       >
                         {loading === a.id + "_yes" ? "..." : "Available"}
-                      </button>
-                      <button
+                      </PerformanceControlButton>
+                      <PerformanceControlButton
                         onClick={() => setAvailability(a.id, false)}
                         disabled={loading !== null}
-                        className="rounded-lg bg-red-500 px-3 py-1 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50"
+                        className="rounded-lg bg-[var(--mnx-danger-bg)] px-3 py-1 text-xs font-medium text-mono-text hover:bg-[var(--mnx-danger-bg)] disabled:opacity-50"
                       >
                         {loading === a.id + "_no" ? "..." : "Unavailable"}
-                      </button>
+                      </PerformanceControlButton>
                     </div>
                   ) : (
-                    <Link href={a.detailHref} className="text-xs text-indigo-600 hover:underline">
+                    <Link
+                      href={a.detailHref}
+                      className="text-xs text-mono-accent hover:underline"
+                    >
                       {getActionLabel(a.stage)} →
                     </Link>
                   )}

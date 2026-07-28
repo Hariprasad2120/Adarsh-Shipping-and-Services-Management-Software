@@ -17,6 +17,7 @@ export * from "./native-select";
 export * from "./neon-checkbox";
 export * from "./people-workspace";
 export * from "./people-controls";
+export * from "./performance-workspace";
 export * from "./warning-indicator-popover";
 export * from "./workspace";
 export * from "./workspace-dialog";

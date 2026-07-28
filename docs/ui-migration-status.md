@@ -4,18 +4,19 @@ Last updated: 2026-07-28
 
 ## Current milestone
 
-The production migration foundation plus batches 001 and 002 are implemented
-and verified.
+The production migration foundation plus batches 001 through 003 are
+implemented and verified.
 
-- Source audit: 211 page routes and 9 layouts.
+- Source audit: 211 page routes and 11 layouts.
 - Protected visual reference: `/dashboard`.
 - Migrated routes: `/account/security`, `/notifications`,
   `/product-catalogue`, `/todo`, all 38 `/hrms` routes, and all 7
-  `/attendance` routes.
+  `/attendance` routes, all 18 `/ams` routes, and all 5 `/lms` routes.
 - Migrated shared surfaces: authenticated user profile menu plus common
   permission, empty, loading, error, and not-found states; People Operations
-  workspace, controls, data table, dialog, navigation, and route states.
-- Pending individual route migrations: 161.
+  workspace; Performance and Learning workspace; centralized controls, data
+  tables, dialogs, navigation, and route states.
+- Pending individual route migrations: 138.
 - Exhaustive route/layout record: [UI route and layout audit](ui-route-audit.md).
 
 ## Status definitions
@@ -41,7 +42,7 @@ the route-by-route source of truth.
 | `/account`           |          1 |         0 |        1 |       0 |
 | `/accounting`        |         32 |         0 |        0 |      32 |
 | `/admin`             |         10 |         0 |        0 |      10 |
-| `/ams`               |         18 |         0 |        0 |      18 |
+| `/ams`               |         18 |         0 |       18 |       0 |
 | `/attendance`        |          7 |         0 |        7 |       0 |
 | `/cha`               |         11 |         0 |        0 |      11 |
 | `/communication`     |         10 |         0 |        0 |      10 |
@@ -51,14 +52,14 @@ the route-by-route source of truth.
 | `/expense`           |          1 |         0 |        0 |       1 |
 | `/google-chat-link`  |          1 |         0 |        0 |       1 |
 | `/hrms`              |         38 |         0 |       38 |       0 |
-| `/lms`               |          5 |         0 |        0 |       5 |
+| `/lms`               |          5 |         0 |        5 |       0 |
 | `/login`             |          1 |         0 |        0 |       1 |
 | `/notifications`     |          1 |         0 |        1 |       0 |
 | `/product-catalogue` |          1 |         0 |        1 |       0 |
 | `/setup`             |          1 |         0 |        0 |       1 |
 | `/todo`              |          1 |         0 |        1 |       0 |
 | `/verify`            |          1 |         0 |        0 |       1 |
-| **Total**            |    **211** |     **1** |   **49** | **161** |
+| **Total**            |    **211** |     **1** |   **72** | **138** |
 
 An import from `@/components/monolith` is not proof of route migration. A route
 remains pending until its rendered presentation and behavior satisfy the
@@ -71,11 +72,13 @@ completion gate.
 | `src/app/layout.tsx`                           |           211 | Fonts, initial theme, metadata, global providers   |
 | `src/app/(dashboard)/layout.tsx`               |           194 | Authentication, RBAC/module gates, shell selection |
 | `src/app/(dashboard)/attendance/layout.tsx`    |             7 | Attendance People Operations workspace             |
+| `src/app/(dashboard)/ams/layout.tsx`           |            18 | AMS Performance Operations workspace               |
 | `src/app/(dashboard)/cha/layout.tsx`           |            11 | CHA spacing container                              |
 | `src/app/(dashboard)/communication/layout.tsx` |            10 | Workspace connection gate/providers                |
 | `src/app/(dashboard)/crm/layout.tsx`           |            57 | CRM theme and scroll container                     |
 | `src/app/(dashboard)/hrms/layout.tsx`          |            38 | HRMS People Operations workspace                   |
 | `src/app/(dashboard)/hrms/recruit/layout.tsx`  |            15 | Recruitment feature flag                           |
+| `src/app/(dashboard)/lms/layout.tsx`           |             5 | LMS Learning Operations workspace                  |
 | `src/app/customer-portal/layout.tsx`           |            12 | Portal session gate and portal shell               |
 
 ## Reference design-system analysis
@@ -158,6 +161,17 @@ Batch 002 archive:
   `70A95661F9244DF4D49F35C7AEDAA40159A4365F77AAF6E1A8BB07B0E54F4313`
 - Archive listing verification: passed.
 
+Batch 003 archive:
+`OLD UI code/legacy-ui-before-monolith-ams-lms-0faa8b3.zip`
+
+- Source commit: `0faa8b3`
+- Entries: 47 active AMS/LMS route, view, and specialized component files
+  with original relative paths.
+- Size: 136,030 bytes.
+- SHA-256:
+  `0C851DAB4C38FC0D22004EF27F14CB260C75FF3291BB1111E7D68101D81B0256`
+- Archive checksum, size, and file listing verification: passed.
+
 ## Quality log: foundation
 
 Passed:
@@ -200,6 +214,7 @@ unrelated to the UI foundation.
 | Foundation         | No module routes                                | Foundation ready    | Audit, backup, tokens, themes, AppShell, layouts, dashboard normalization.                                                                                                                                                               |
 | Batch 001          | `/product-catalogue`, `/todo`, `/notifications` | Verified            | Full Monolith composition; profile menu and common authenticated states included.                                                                                                                                                        |
 | Batch 002          | All `/hrms` and `/attendance` routes            | Verified            | 45 complete People Operations routes, shared controls/data/dialog/state compositions, and preserved employee, leave, attendance, overtime, biometric, GPS, shift, approval, payroll, recruitment, letter, report, and settings behavior. |
+| Batch 003          | All `/ams` and `/lms` routes                    | Verified            | 23 complete Performance and Learning routes, shared workspace/control/table/dialog/state compositions, and preserved appraisal, reviewer, criteria, asset, goal, feedback, course, assignment, enrolment, progress, and report behavior. |
 
 ## Quality log: batch 001
 
@@ -307,3 +322,58 @@ submenus for every navigation section that has children.
   including collapse/reopen and nested navigation.
 - Targeted ESLint, full TypeScript, 7 navigation/layout tests, and the 8 GB
   production build passed.
+
+## Quality log: batch 003
+
+Passed:
+
+- Verified the batch archive checksum, size, and all 47 archived source paths.
+- Regenerated the exhaustive route audit: 211 pages, 11 layouts, 72 migrated,
+  and 138 pending.
+- Static Performance and Learning gate:
+  `node scripts/verify-monolith-performance-learning-ui.mjs`.
+  - all 23 routes (18 AMS and 5 LMS), including every dynamic route pattern;
+  - shared layouts plus loading and error boundaries;
+  - no scoped raw standard controls/tables, legacy data-table/ModuleHome
+    imports, custom fixed overlays, legacy visual class families, fixed palette
+    utilities, inline hex, or RGB colors;
+  - protected appraisal assignment/detail/criteria/self-assessment/management
+    review, asset, LMS, and PMS behavior signals retained.
+- Targeted ESLint for new shared components, layouts, boundaries, shell,
+  rewritten LMS/PMS views, verifier scripts, and tests.
+- Focused TypeScript: `npx tsc --noEmit -p tsconfig.ui-migration.json`.
+- Production TypeScript:
+  `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`.
+- Relevant Vitest suites: 34 tests in 7 suites covering foundation, workspace,
+  Performance and Learning metadata/composition, shell routing, navigation,
+  and session security.
+- Clean production build:
+  `NODE_OPTIONS=--max-old-space-size=8192 npm run build`.
+  - Prisma Client generated.
+  - Next.js production compilation and TypeScript passed.
+  - 315 static pages generated.
+- Authenticated runtime matrix:
+  - 23 routes: 18 AMS and 5 LMS;
+  - Light, Night, and Violet at 1440×1000 desktop;
+  - Violet at 1024×900 tablet and Light at 390×844 mobile;
+  - 115 route/theme/viewport combinations and 24 representative captures;
+  - exact path, completed route loading, shell/theme, semantic tokens, shared
+    controls/tables, no legacy composition, no application errors, and no
+    horizontal overflow;
+  - real appraisal and employee records exercised the available dynamic
+    detail and assignment routes; unavailable management-review, asset,
+    self-assessment, and reviewer fixtures were verified through their exact
+    authenticated not-found boundaries without mutating business data.
+
+Repository-wide `npm run lint` was executed with an 8 GB heap and reports the
+existing repository backlog: 2,120 findings (1,618 errors and 502 warnings) in
+seed/maintenance scripts and pending modules. The new batch infrastructure and
+rewritten LMS/PMS surfaces pass targeted ESLint. Presentation-converted legacy
+AMS business views retain 20 errors and 33 warnings from their existing
+`no-explicit-any`, hook-effect, purity, unused-symbol, escaped-text, and image
+rules; business behavior was not rewritten merely to mask that debt.
+
+The build retains six non-fatal Turbopack broad file-trace warnings from
+existing dynamic filesystem paths in HRMS letter generation, customer-portal
+file routes/service code, and the NFT trace through `next.config.ts`. They do
+not affect compilation or the verified runtime routes.

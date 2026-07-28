@@ -18,20 +18,32 @@ export function SlabForm() {
     null,
   );
 
-  const selectClass = "flex h-11 w-full rounded-xl border border-[#F9D972]/55 bg-mono-card px-4 py-2.5 text-mono-text focus:outline-none focus:ring-2 focus:ring-primary/15 hover:border-[#F9D972]/85 transition";
+  const selectClass =
+    "flex h-11 w-full rounded-xl border border-mono-border bg-mono-card px-4 py-2.5 text-mono-text focus:outline-none focus:ring-2 focus:ring-primary/15 hover:border-mono-border transition";
 
   return (
     <form action={action} className="space-y-4">
       <div>
         <Label>Label</Label>
-        <Input name="label" placeholder="e.g. Grade A+ (Up to 15k)" className="mt-1.5" required />
+        <Input
+          name="label"
+          placeholder="e.g. Grade A+ (Up to 15k)"
+          className="mt-1.5"
+          required
+        />
       </div>
       <div>
         <Label>Grade</Label>
         <div className="mt-1.5">
-          <NativeSelect value={grade} onChange={(e) => setGrade(e.target.value)} className={selectClass}>
+          <NativeSelect
+            value={grade}
+            onChange={(e) => setGrade(e.target.value)}
+            className={selectClass}
+          >
             {["A+", "A", "B+", "B", "C+", "C", "D"].map((g) => (
-              <option key={g} value={g} className="bg-mono-card">{g}</option>
+              <option key={g} value={g} className="bg-mono-card">
+                {g}
+              </option>
             ))}
           </NativeSelect>
         </div>
@@ -39,20 +51,59 @@ export function SlabForm() {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label>Min Rating (0–100)</Label>
-          <Input name="minRating" type="number" step="1" min="0" max="100" placeholder="0" className="mt-1.5" required />
+          <Input
+            name="minRating"
+            type="number"
+            step="1"
+            min="0"
+            max="100"
+            placeholder="0"
+            className="mt-1.5"
+            required
+          />
         </div>
         <div>
           <Label>Max Rating (0–100)</Label>
-          <Input name="maxRating" type="number" step="1" min="0" max="100" placeholder="100" className="mt-1.5" required />
+          <Input
+            name="maxRating"
+            type="number"
+            step="1"
+            min="0"
+            max="100"
+            placeholder="100"
+            className="mt-1.5"
+            required
+          />
         </div>
       </div>
       <div>
         <Label>Hike %</Label>
-        <Input name="hikePercent" type="number" step="0.1" min="0" max="100" placeholder="10" className="mt-1.5" required />
+        <Input
+          name="hikePercent"
+          type="number"
+          step="0.1"
+          min="0"
+          max="100"
+          placeholder="10"
+          className="mt-1.5"
+          required
+        />
       </div>
-      {state && !state.ok && <p className="text-sm font-semibold text-rose-600">{state.error}</p>}
-      {state && state.ok && <p className="text-sm font-semibold text-emerald-600">Slab created successfully.</p>}
-      <Button type="submit" disabled={pending} className="w-full h-11 text-xs font-semibold rounded-xl bg-[#F9D972] hover:bg-[#E8C85D] text-white">
+      {state && !state.ok && (
+        <p className="text-sm font-semibold text-[var(--mnx-danger)]">
+          {state.error}
+        </p>
+      )}
+      {state && state.ok && (
+        <p className="text-sm font-semibold text-[var(--mnx-success)]">
+          Slab created successfully.
+        </p>
+      )}
+      <Button
+        type="submit"
+        disabled={pending}
+        className="w-full h-11 text-xs font-semibold rounded-xl bg-mono-accent/10 hover:bg-mono-accent/10 text-mono-text"
+      >
         {pending ? "Saving..." : "Add Slab"}
       </Button>
     </form>

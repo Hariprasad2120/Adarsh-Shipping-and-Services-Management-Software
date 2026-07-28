@@ -5,115 +5,127 @@ Last updated: 2026-07-28
 ## Current state
 
 - Branch at batch start: `main`
-- Batch 002 parent: `e032bf2`
+- Batch 003 parent: `0faa8b3`
 - Protected reference: `/dashboard` was not redesigned.
-- Route inventory: 211 total, 1 protected, 49 migrated, 161 pending.
-- Verified migrated families: all 38 `/hrms` routes and all 7 `/attendance`
-  routes, in addition to the four previously migrated routes.
-- Batch 002 implementation, route audit, static gate, TypeScript, focused
-  tests, production build, and authenticated runtime matrix pass.
+- Route inventory: 211 total, 1 protected, 72 migrated, 138 pending, and 11
+  layouts.
+- Verified migrated families now include all 18 `/ams` routes and all 5 `/lms`
+  routes, in addition to the previously migrated account, notification,
+  product-catalogue, to-do, HRMS, and Attendance routes.
+- Batch 003 implementation, archive, route audit, static gate, TypeScript,
+  focused tests, production build, and authenticated runtime matrix pass.
 
-## Batch 002 completed
+## Batch 003 completed
 
-1. Archived the active legacy visual sources before replacement.
-2. Activated exact `/hrms`, `/hrms/**`, `/attendance`, and `/attendance/**`
-   routes in the production Monolith shell.
-3. Added family layouts plus shared loading and error boundaries.
-4. Added centralized People Operations metadata, page frame, summary, section,
-   navigation, record, notice, loading, error, control, table, and dialog
-   compositions.
-5. Replaced complete HRMS and Attendance page presentation, including nested
-   employee and letter details, onboarding, ownership, payroll, recruitment,
-   career/employer flows, approvals, reports, settings, helpdesk, leaves,
-   biometric sync, overtime, punch, and timesheets.
-6. Removed scoped legacy visual class families, fixed palette utilities,
-   inline colors, old data-table/ModuleHome composition, raw standard controls,
-   and custom overlays.
-7. Preserved RBAC, authentication, server actions, validation, employee and
-   leave flows, attendance calculations, biometric integration, GPS tracking,
-   shifts, overtime, payroll, letters, recruitment, approvals, and reports.
-8. Documented the shared People Operations components in the Admin Design
-   System catalogue.
-9. Scoped Tailwind discovery to `src`, ensuring `OLD UI code` and scratch
-   artifacts are never compiled.
+1. Discovered AMS and LMS from every `src/app/**/page.tsx` source rather than
+   relying on navigation: 18 AMS routes and 5 LMS routes, including all six
+   dynamic route patterns.
+2. Archived all 47 active legacy route, view, and specialized component
+   sources before replacing presentation.
+3. Activated exact `/ams`, `/ams/**`, `/lms`, and `/lms/**` routes in the
+   production Monolith shell.
+4. Added family layouts plus centralized loading and error boundaries.
+5. Added centralized Performance and Learning metadata, page frame, summary,
+   section, navigation, record, status, progress, notice, loading, error,
+   control, table, and dialog compositions.
+6. Replaced the complete presentation of AMS appraisal, cycle, criteria, slab,
+   extension, KPI, history, asset, goal, review, self-assessment, management
+   review, course, assignment, learning, and report pages.
+7. Removed active legacy `ModuleHome`, legacy data-table, old visual-class,
+   fixed-palette, inline-color, raw standard-control/table, and custom overlay
+   composition. No standalone shared AMS component file was deleted because
+   each remains referenced by active business views; their presentation was
+   migrated in place.
+8. Preserved authentication, RBAC, module gates, Prisma/data access, server
+   actions, form validation, appraisal stages, reviewer assignment,
+   self-assessment and management-review workflows, assets, goals, feedback,
+   course enrolment, assignment/progress operations, reporting, and
+   integrations.
+9. Added repeatable static and authenticated runtime gates for the complete
+   family and captured 24 representative loaded-state screenshots.
 10. Regenerated the exhaustive route audit and migration records.
 
 ## Backup record
 
 Archive:
-`OLD UI code/legacy-ui-before-monolith-hrms-attendance-e032bf2.zip`
+`OLD UI code/legacy-ui-before-monolith-ams-lms-0faa8b3.zip`
 
-- Source commit: `e032bf2`
-- Entries: 81 original files with relative paths retained.
-- Size: 219,295 bytes.
+- Source commit: `0faa8b3`
+- Entries: 47 original files with relative paths retained.
+- Size: 136,030 bytes.
 - SHA-256:
-  `70A95661F9244DF4D49F35C7AEDAA40159A4365F77AAF6E1A8BB07B0E54F4313`
-- Archive listing verification: passed.
+  `0C851DAB4C38FC0D22004EF27F14CB260C75FF3291BB1111E7D68101D81B0256`
+- Archive checksum, size, and file listing verification: passed.
 
-The foundation and batch 001 archives remain in `OLD UI code`.
+The foundation and batches 001 and 002 archives remain in `OLD UI code`.
 
 ## Key files
 
 - `docs/ui-route-audit.md`: regenerated route-by-route source record.
-- `scripts/audit-ui-routes.mjs`: recognizes all HRMS and Attendance routes as
-  batch 002.
-- `scripts/verify-monolith-people-operations-ui.mjs`: static presentation and
-  protected-behavior gate.
-- `scripts/verify-monolith-people-operations-runtime.mjs`: authenticated
-  production route/theme/viewport gate.
-- `src/components/monolith/people-workspace.tsx`: centralized page metadata
-  and People Operations compositions.
-- `src/components/monolith/people-controls.tsx`: production standard controls.
-- `src/components/monolith/people-data-table.tsx`: production data-table
-  contract.
-- `src/app/(dashboard)/hrms/layout.tsx` and
-  `src/app/(dashboard)/attendance/layout.tsx`: family workspace boundaries.
-- `src/app/(dashboard)/admin/design-system/design-system-client.tsx`: People
-  Operations component catalogue.
-- `src/styles/monolith-system.css`: shared People Operations presentation.
-- `src/app/globals.css`: Tailwind source detection restricted to active
-  production source.
+- `scripts/audit-ui-routes.mjs`: recognizes every AMS and LMS route as batch 003.
+- `scripts/verify-monolith-performance-learning-ui.mjs`: static presentation,
+  archive, route, and protected-behavior gate.
+- `scripts/verify-monolith-performance-learning-runtime.mjs`: authenticated
+  route/theme/viewport, loaded-state, semantic, responsive, and interaction
+  gate.
+- `src/components/monolith/performance-workspace.tsx`: centralized metadata
+  and Performance/Learning compositions.
+- `src/components/monolith/workspace-data-table.tsx`: shared production data
+  table entry point, reusing the existing centralized implementation.
+- `src/app/(dashboard)/ams/layout.tsx` and
+  `src/app/(dashboard)/lms/layout.tsx`: family workspace boundaries.
+- `src/components/hrms/lms-view.tsx`: migrated learning catalogue and progress
+  operations.
+- `src/components/hrms/pms-view.tsx`: migrated goals, progress, and feedback
+  operations.
+- `src/styles/monolith-system.css`: semantic and responsive Performance and
+  Learning presentation.
+- `artifacts/ui-migration/performance-learning`: 24 representative
+  loaded-state captures; `verification.json` is locally generated and ignored.
 
 ## Verification record
 
 Passed:
 
-- legacy archive checksum, size, and 81-entry listing;
-- route audit: 211 pages, 9 layouts, 49 migrated, 161 pending;
-- static UI/behavior verifier for all 45 routes;
-- targeted ESLint for new batch infrastructure;
+- legacy archive checksum, size, and 47-file listing;
+- route audit: 211 pages, 11 layouts, 72 migrated, 138 pending;
+- static UI/archive/behavior verifier for all 23 routes;
+- targeted ESLint for new batch infrastructure, shared components, layouts,
+  boundaries, shell, rewritten LMS/PMS views, and tests;
 - `npx tsc --noEmit -p tsconfig.ui-migration.json`;
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`;
-- 20 relevant Vitest tests in 7 suites;
+- 34 relevant Vitest tests in 7 suites;
 - clean `NODE_OPTIONS=--max-old-space-size=8192 npm run build`;
 - Prisma generation, Next.js compilation, production TypeScript, and 315
   static pages;
-- 225 authenticated runtime combinations across 45 routes:
+- 115 authenticated runtime combinations across 23 routes:
   - Light, Night, and Violet on 1440×1000 desktop;
   - Violet on 1024×900 tablet;
   - Light on 390×844 mobile;
-  - exact path, shell/theme, semantic tokens, shared controls/tables, no legacy
-    composition, no application errors, and no horizontal overflow;
-- 32 representative screenshots.
+  - exact path, completed route loading, shell/theme, semantic tokens, shared
+    controls/tables, no legacy composition, no application errors, and no
+    horizontal overflow;
+- 24 representative screenshots plus non-mutating PMS and LMS interaction
+  checks.
 
-Repository-wide lint was also executed and retains the known backlog: 2,147
-findings (1,631 errors and 516 warnings) across seed/maintenance scripts,
-pending modules, and unchanged business-code debt in presentation-converted
-views. New batch infrastructure passes targeted ESLint.
+The runtime fixture resolver used the existing appraisal and employee records
+for appraisal detail and assignment. No eligible current-user management
+review, asset, self-assessment, or reviewer record existed, so those exact
+dynamic URLs were verified through their authenticated not-found boundaries.
+The verifier does not create records or advance workflow state.
+
+Repository-wide lint was also executed and retains the known backlog: 2,120
+findings (1,618 errors and 502 warnings) across seed/maintenance scripts,
+pending modules, and unchanged business-code debt. New batch infrastructure
+and rewritten LMS/PMS surfaces pass targeted ESLint. The mechanically
+presentation-converted AMS views retain 20 errors and 33 warnings from their
+existing `no-explicit-any`, hook-effect, purity, unused-symbol, escaped-text,
+and image-rule debt.
 
 The build retains six non-fatal Turbopack broad file-trace warnings from
 existing dynamic filesystem paths in HRMS letter generation, customer-portal
 file routes/service code, and the NFT trace through `next.config.ts`. They do
 not affect compilation or the verified runtime routes.
-
-## Post-batch 002 shell correction
-
-Workspace chevrons in `MonolithAppShell` are now real accessible submenu
-controls instead of decorative icons. Active workspaces auto-expand, child
-routes are permission-filtered and route-aware, and nested navigation works on
-desktop, compact desktop, and mobile. Authenticated browser checks covered
-HRMS, Attendance, To-Do, and AMS; targeted lint, full TypeScript, navigation
-tests, and the 8 GB production build passed.
 
 ## Important constraints
 
@@ -130,7 +142,7 @@ tests, and the 8 GB production build passed.
 
 ## Next action
 
-Choose the next coherent family from the 161 pending routes, archive its active
+Choose the next coherent family from the 138 pending routes, archive its active
 visual sources, extend centralized production components before page use, and
 repeat the full static, type, test, build, and authenticated theme/responsive
 verification gate.

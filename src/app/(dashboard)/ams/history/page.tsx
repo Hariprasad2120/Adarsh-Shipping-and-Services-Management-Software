@@ -1,26 +1,51 @@
+import {
+  PerformanceTable,
+  PerformanceTableBody,
+  PerformanceTableCell,
+  PerformanceTableHead,
+  PerformanceTableHeader,
+  PerformanceTableRow,
+} from "@/components/monolith/performance-workspace";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/monolith/card";
 import Link from "next/link";
 import { HistoryFilters } from "./history-filters";
 import { redirect } from "next/navigation";
 import { History } from "lucide-react";
 
 const STAGE_COLORS: Record<string, string> = {
-  DUE_NOTIFIED: "bg-mono-soft text-mono-muted dark:bg-slate-800 dark:text-slate-400",
-  REVIEWERS_ASSIGNED: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  SELF_ASSESSMENT_OPEN: "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
-  REVIEWER_RATING: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-  MANAGEMENT_REVIEW: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  MEETING_PENDING: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  MEETING_LIVE: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
-  HIKE_FINALISATION: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
-  CLOSED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+  DUE_NOTIFIED:
+    "bg-mono-soft text-mono-muted dark:bg-mono-card dark:text-mono-muted",
+  REVIEWERS_ASSIGNED:
+    "bg-mono-accent/10 text-mono-accent dark:bg-mono-accent/30 dark:text-mono-accent",
+  SELF_ASSESSMENT_OPEN:
+    "bg-mono-accent/10 text-mono-accent dark:bg-mono-accent/40 dark:text-mono-accent",
+  REVIEWER_RATING:
+    "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] dark:bg-[var(--mnx-warning-bg)] dark:text-[var(--mnx-warning)]",
+  MANAGEMENT_REVIEW:
+    "bg-mono-accent/10 text-mono-accent dark:bg-mono-accent/30 dark:text-mono-accent",
+  MEETING_PENDING:
+    "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] dark:bg-[var(--mnx-warning-bg)] dark:text-[var(--mnx-warning)]",
+  MEETING_LIVE:
+    "bg-mono-accent/10 text-mono-accent dark:bg-mono-accent/30 dark:text-mono-accent",
+  HIKE_FINALISATION:
+    "bg-mono-accent/10 text-mono-accent dark:bg-mono-accent/30 dark:text-mono-accent",
+  CLOSED:
+    "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] dark:bg-[var(--mnx-success-bg)] dark:text-[var(--mnx-success)]",
 };
 
 function toTitleCase(str?: string | null): string {
   if (!str) return "";
-  return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+  return str.replace(
+    /\w\S*/g,
+    (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase(),
+  );
 }
 
 function getAverageReviewerRating(reviewerRatings: any[]) {
@@ -30,13 +55,15 @@ function getAverageReviewerRating(reviewerRatings: any[]) {
   for (const rr of reviewerRatings) {
     const ratingsObj = rr.ratings as any;
     const categoryPoints = ratingsObj?.categoryPoints || {};
-    const values = Object.values(categoryPoints).map(Number).filter((v) => !isNaN(v));
+    const values = Object.values(categoryPoints)
+      .map(Number)
+      .filter((v) => !isNaN(v));
     if (values.length > 0) {
       totalScore += values.reduce((a, b) => a + b, 0) / values.length;
       count++;
     }
   }
-  return count > 0 ? (totalScore / count) : null;
+  return count > 0 ? totalScore / count : null;
 }
 
 export const metadata = {
@@ -74,8 +101,11 @@ export default async function HistoryPage({
 
   const userRoleNames = currentUser.roles.map((r) => r.role.name);
   const isAdmin = userRoleNames.includes("Admin");
-  const isManagement = userRoleNames.includes("Management") || userRoleNames.includes("Director");
-  const isReviewer = userRoleNames.some((r) => ["HR", "TL", "Manager"].includes(r));
+  const isManagement =
+    userRoleNames.includes("Management") || userRoleNames.includes("Director");
+  const isReviewer = userRoleNames.some((r) =>
+    ["HR", "TL", "Manager"].includes(r),
+  );
 
   const where: any = {};
 
@@ -85,7 +115,7 @@ export default async function HistoryPage({
     where.cycle = { orgId };
     where.OR = [
       { employeeId: session.user.id },
-      { reviewers: { some: { userId: session.user.id } } }
+      { reviewers: { some: { userId: session.user.id } } },
     ];
   } else {
     where.employeeId = session.user.id;
@@ -158,7 +188,7 @@ export default async function HistoryPage({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <p className="text-sm text-mono-muted dark:text-slate-400 font-medium">
+          <p className="text-sm text-mono-muted dark:text-mono-muted font-medium">
             Review history and status logs of employee appraisal cycles.
           </p>
         </div>
@@ -174,39 +204,62 @@ export default async function HistoryPage({
         />
       </div>
 
-      <p className="text-xs font-semibold text-slate-400">
+      <p className="text-xs font-semibold text-mono-muted">
         {appraisals.length} record{appraisals.length !== 1 ? "s" : ""} found
       </p>
 
       <Card className="border-0 shadow-sm overflow-hidden bg-mono-card">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left min-w-[800px]">
-              <thead>
-                <tr className="border-b border-mono-border bg-mono-soft dark:bg-slate-800/30 text-xs font-bold text-mono-muted dark:text-slate-400">
-                  <th className="py-3.5 px-5 font-semibold">Employee</th>
+            <PerformanceTable className="w-full text-sm text-left min-w-[800px]">
+              <PerformanceTableHeader>
+                <PerformanceTableRow className="border-b border-mono-border bg-mono-soft dark:bg-mono-card text-xs font-bold text-mono-muted dark:text-mono-muted">
+                  <PerformanceTableHead className="py-3.5 px-5 font-semibold">
+                    Employee
+                  </PerformanceTableHead>
                   {(isAdmin || isManagement) && (
-                    <th className="px-5 py-3.5 font-semibold">Emp #</th>
+                    <PerformanceTableHead className="px-5 py-3.5 font-semibold">
+                      Emp #
+                    </PerformanceTableHead>
                   )}
-                  <th className="px-5 py-3.5 font-semibold">Appraisal Cycle</th>
-                  <th className="px-5 py-3.5 font-semibold">Due Date</th>
-                  <th className="px-5 py-3.5 font-semibold">Stage</th>
-                  <th className="px-5 py-3.5 font-semibold">Avg Rating</th>
-                  <th className="px-5 py-3.5 font-semibold">Grade</th>
-                  <th className="px-5 py-3.5 font-semibold">Slab</th>
-                  <th className="px-5 py-3.5 font-semibold">Final Hike</th>
+                  <PerformanceTableHead className="px-5 py-3.5 font-semibold">
+                    Appraisal Cycle
+                  </PerformanceTableHead>
+                  <PerformanceTableHead className="px-5 py-3.5 font-semibold">
+                    Due Date
+                  </PerformanceTableHead>
+                  <PerformanceTableHead className="px-5 py-3.5 font-semibold">
+                    Stage
+                  </PerformanceTableHead>
+                  <PerformanceTableHead className="px-5 py-3.5 font-semibold">
+                    Avg Rating
+                  </PerformanceTableHead>
+                  <PerformanceTableHead className="px-5 py-3.5 font-semibold">
+                    Grade
+                  </PerformanceTableHead>
+                  <PerformanceTableHead className="px-5 py-3.5 font-semibold">
+                    Slab
+                  </PerformanceTableHead>
+                  <PerformanceTableHead className="px-5 py-3.5 font-semibold">
+                    Final Hike
+                  </PerformanceTableHead>
                   {canViewCycleDetail && (
-                    <th className="px-5 py-3.5 font-semibold text-right">Actions</th>
+                    <PerformanceTableHead className="px-5 py-3.5 font-semibold text-right">
+                      Actions
+                    </PerformanceTableHead>
                   )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-outline-variant/60 font-medium text-slate-700 dark:text-slate-300">
+                </PerformanceTableRow>
+              </PerformanceTableHeader>
+              <PerformanceTableBody className="divide-y divide-outline-variant/60 font-medium text-mono-muted dark:text-mono-text">
                 {appraisals.length === 0 && (
-                  <tr>
-                    <td colSpan={10} className="py-16 text-center text-slate-400/80 text-sm font-medium">
+                  <PerformanceTableRow>
+                    <PerformanceTableCell
+                      colSpan={10}
+                      className="py-16 text-center text-mono-muted text-sm font-medium"
+                    >
                       No appraisal records found.
-                    </td>
-                  </tr>
+                    </PerformanceTableCell>
+                  </PerformanceTableRow>
                 )}
                 {appraisals.map((c) => {
                   const avg = getAverageReviewerRating(c.reviewerRatings);
@@ -216,68 +269,81 @@ export default async function HistoryPage({
                   const hikeAmount = decision?.amount ?? hikeFinal?.amount;
 
                   return (
-                    <tr key={c.id} className="hover:bg-mono-soft/30 dark:hover:bg-slate-800/5 transition duration-150">
-                      <td className="py-3.5 px-5 font-bold text-slate-900 dark:text-white">
+                    <PerformanceTableRow
+                      key={c.id}
+                      className="hover:bg-mono-soft/30 dark:hover:bg-mono-card transition duration-150"
+                    >
+                      <PerformanceTableCell className="py-3.5 px-5 font-bold text-mono-text dark:text-mono-text">
                         {canViewEmployeeDetail ? (
-                          <Link href={`/hrms/employees/${c.employee.id}`} className="text-[#F9D972] hover:underline">
+                          <Link
+                            href={`/hrms/employees/${c.employee.id}`}
+                            className="text-mono-accent hover:underline"
+                          >
                             {toTitleCase(c.employee.name)}
                           </Link>
                         ) : (
                           toTitleCase(c.employee.name)
                         )}
-                      </td>
+                      </PerformanceTableCell>
                       {(isAdmin || isManagement) && (
-                        <td className="px-5 py-3.5 text-mono-muted font-semibold">
+                        <PerformanceTableCell className="px-5 py-3.5 text-mono-muted font-semibold">
                           {c.employee.employeeNumber ?? "—"}
-                        </td>
+                        </PerformanceTableCell>
                       )}
-                      <td className="px-5 py-3.5 text-mono-muted dark:text-slate-400">
+                      <PerformanceTableCell className="px-5 py-3.5 text-mono-muted dark:text-mono-muted">
                         {c.cycle.name} ({c.cycle.year})
-                      </td>
-                      <td className="px-5 py-3.5 text-mono-muted font-semibold">
+                      </PerformanceTableCell>
+                      <PerformanceTableCell className="px-5 py-3.5 text-mono-muted font-semibold">
                         {new Date(c.dueDate).toLocaleDateString("en-IN")}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span className={`text-[10px] font-bold rounded-full px-2.5 py-1 ${STAGE_COLORS[c.stage] ?? "bg-mono-soft text-mono-muted"}`}>
+                      </PerformanceTableCell>
+                      <PerformanceTableCell className="px-5 py-3.5">
+                        <span
+                          className={`text-[10px] font-bold rounded-full px-2.5 py-1 ${STAGE_COLORS[c.stage] ?? "bg-mono-soft text-mono-muted"}`}
+                        >
                           {c.stage.replace(/_/g, " ")}
                         </span>
-                      </td>
-                      <td className="px-5 py-3.5 font-bold text-slate-800 dark:text-slate-200">
+                      </PerformanceTableCell>
+                      <PerformanceTableCell className="px-5 py-3.5 font-bold text-mono-text dark:text-mono-text">
                         {avg !== null ? avg.toFixed(2) : "—"}
-                      </td>
-                      <td className="px-5 py-3.5">
+                      </PerformanceTableCell>
+                      <PerformanceTableCell className="px-5 py-3.5">
                         {decision?.slab?.grade ? (
-                          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                          <span className="text-xs font-bold text-mono-accent dark:text-mono-accent">
                             {decision.slab.grade}
                           </span>
                         ) : (
                           "—"
                         )}
-                      </td>
-                      <td className="px-5 py-3.5 text-mono-muted dark:text-slate-400 max-w-xs truncate">
+                      </PerformanceTableCell>
+                      <PerformanceTableCell className="px-5 py-3.5 text-mono-muted dark:text-mono-muted max-w-xs truncate">
                         {decision?.slab?.label ?? "—"}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        {hikeAmount !== undefined && hikePercent !== undefined ? (
-                          <span className="font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                            +₹{Number(hikeAmount).toLocaleString("en-IN")} ({hikePercent}%)
+                      </PerformanceTableCell>
+                      <PerformanceTableCell className="px-5 py-3.5">
+                        {hikeAmount !== undefined &&
+                        hikePercent !== undefined ? (
+                          <span className="font-bold text-[var(--mnx-success)] dark:text-[var(--mnx-success)] whitespace-nowrap">
+                            +₹{Number(hikeAmount).toLocaleString("en-IN")} (
+                            {hikePercent}%)
                           </span>
                         ) : (
                           "—"
                         )}
-                      </td>
+                      </PerformanceTableCell>
                       {canViewCycleDetail && (
-                        <td className="px-5 py-3.5 text-right">
-                          <Link href={`/ams/appraisals/${c.id}`} className="text-xs text-[#F9D972] hover:underline font-bold">
+                        <PerformanceTableCell className="px-5 py-3.5 text-right">
+                          <Link
+                            href={`/ams/appraisals/${c.id}`}
+                            className="text-xs text-mono-accent hover:underline font-bold"
+                          >
                             View details →
                           </Link>
-                        </td>
+                        </PerformanceTableCell>
                       )}
-                    </tr>
+                    </PerformanceTableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </PerformanceTableBody>
+            </PerformanceTable>
           </div>
         </CardContent>
       </Card>

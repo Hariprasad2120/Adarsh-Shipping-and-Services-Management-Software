@@ -1,14 +1,27 @@
 "use client";
 
+import { PerformanceControlButton } from "@/components/monolith/performance-workspace";
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
-import { CriteriaPointsForm, CriteriaPointsView } from "@/components/ams/criteria-points-form";
+import {
+  CriteriaPointsForm,
+  CriteriaPointsView,
+} from "@/components/ams/criteria-points-form";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { Button } from "@/components/monolith/button-1";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
-import type { AppraisalSelfFormTemplate, ReviewerRatingAnswers, SelfAssessmentAnswers } from "@/modules/ams/criteria-config";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/monolith/card";
+import type {
+  AppraisalSelfFormTemplate,
+  ReviewerRatingAnswers,
+  SelfAssessmentAnswers,
+} from "@/modules/ams/criteria-config";
 import type { CriterionPoint } from "@/modules/ams/types";
 
 type MyReviewDetail = {
@@ -37,22 +50,28 @@ type MyReviewDetail = {
 };
 
 const STAGE_COLOR: Record<string, string> = {
-  DUE_NOTIFIED: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  REVIEWERS_ASSIGNED: "bg-blue-50 text-blue-700 border-blue-200",
-  SELF_ASSESSMENT_OPEN: "bg-purple-50 text-purple-700 border-purple-200",
-  REVIEWER_RATING: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  MANAGEMENT_REVIEW: "bg-orange-50 text-orange-700 border-orange-200",
-  MEETING_PENDING: "bg-cyan-50 text-cyan-700 border-cyan-200",
-  MEETING_LIVE: "bg-green-50 text-green-700 border-green-200",
-  HIKE_FINALISATION: "bg-pink-50 text-pink-700 border-pink-200",
+  DUE_NOTIFIED:
+    "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] border-mono-border",
+  REVIEWERS_ASSIGNED: "bg-mono-accent/10 text-mono-accent border-mono-border",
+  SELF_ASSESSMENT_OPEN: "bg-mono-accent/10 text-mono-accent border-mono-border",
+  REVIEWER_RATING: "bg-mono-accent/10 text-mono-accent border-mono-border",
+  MANAGEMENT_REVIEW:
+    "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] border-mono-border",
+  MEETING_PENDING: "bg-mono-accent/10 text-mono-accent border-mono-border",
+  MEETING_LIVE:
+    "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] border-mono-border",
+  HIKE_FINALISATION: "bg-mono-accent/10 text-mono-accent border-mono-border",
   CLOSED: "bg-mono-soft text-mono-muted border-mono-border",
 };
 
 const STATUS_COLOR: Record<string, string> = {
   PENDING: "bg-mono-soft text-mono-muted border-mono-border/40",
-  AVAILABLE: "bg-green-100 text-green-700 border-green-200",
-  UNAVAILABLE: "bg-red-100 text-red-600 border-red-200",
-  FORCED: "bg-orange-100 text-orange-600 border-orange-200",
+  AVAILABLE:
+    "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] border-mono-border",
+  UNAVAILABLE:
+    "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)] border-mono-border",
+  FORCED:
+    "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] border-mono-border",
 };
 
 const KIND_LABEL: Record<string, string> = {
@@ -62,7 +81,7 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 const REVIEW_SUBMISSION_COLOR: Record<string, string> = {
-  SUBMITTED: "bg-[#F9D972]/10 text-[#008b85] border-[#F9D972]/25",
+  SUBMITTED: "bg-mono-accent/10 text-mono-accent border-mono-border",
   DRAFT: "bg-mono-soft text-mono-muted border-mono-border/40",
 };
 
@@ -80,12 +99,11 @@ function DeadlineBanner({
     <div
       className={`rounded-xl border px-4 py-3 text-sm ${
         passed
-          ? "border-red-200 bg-red-50 text-red-700"
-          : "border-amber-200 bg-amber-50 text-amber-700"
+          ? "border-mono-border bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]"
+          : "border-mono-border bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]"
       }`}
     >
-      {label}:{" "}
-      <strong>{new Date(deadline).toLocaleDateString("en-IN")}</strong>
+      {label}: <strong>{new Date(deadline).toLocaleDateString("en-IN")}</strong>
       {passed ? " — deadline has passed" : ""}
     </div>
   );
@@ -117,15 +135,16 @@ export function MyReviewDetailClient({
   serverNow: string;
 }) {
   const router = useRouter();
-  const [statusLoading, setStatusLoading] = useState<"available" | "unavailable" | null>(null);
+  const [statusLoading, setStatusLoading] = useState<
+    "available" | "unavailable" | null
+  >(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => new Date(serverNow).getTime());
-  const [currentSubmissionStatus, setCurrentSubmissionStatus] = useState<string | null>(
-    appraisal.submissionStatus,
-  );
-  const [currentRating, setCurrentRating] = useState<ReviewerRatingAnswers | null>(
-    appraisal.currentRating,
-  );
+  const [currentSubmissionStatus, setCurrentSubmissionStatus] = useState<
+    string | null
+  >(appraisal.submissionStatus);
+  const [currentRating, setCurrentRating] =
+    useState<ReviewerRatingAnswers | null>(appraisal.currentRating);
   const [currentSubmittedAt, setCurrentSubmittedAt] = useState<string | null>(
     appraisal.submittedAt,
   );
@@ -150,27 +169,39 @@ export function MyReviewDetailClient({
   );
   const canRate =
     appraisal.stage === "REVIEWER_RATING" &&
-    (appraisal.reviewerStatus === "AVAILABLE" || appraisal.reviewerStatus === "FORCED") &&
+    (appraisal.reviewerStatus === "AVAILABLE" ||
+      appraisal.reviewerStatus === "FORCED") &&
     !ratingDeadlinePassed;
   const canSetAvailability =
-    appraisal.stage === "REVIEWERS_ASSIGNED" && appraisal.reviewerStatus === "PENDING";
+    appraisal.stage === "REVIEWERS_ASSIGNED" &&
+    appraisal.reviewerStatus === "PENDING";
 
-  async function persistRating(action: "DRAFT" | "SUBMITTED", answers: ReviewerRatingAnswers) {
+  async function persistRating(
+    action: "DRAFT" | "SUBMITTED",
+    answers: ReviewerRatingAnswers,
+  ) {
     const wasSubmitted = currentSubmissionStatus === "SUBMITTED";
-    const res = await fetch(`/api/ams/appraisals/${appraisal.id}/reviewer-rating`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, ratings: answers }),
-    });
+    const res = await fetch(
+      `/api/ams/appraisals/${appraisal.id}/reviewer-rating`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, ratings: answers }),
+      },
+    );
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       error(
         data.error ??
-          (action === "DRAFT" ? "Unable to save reviewer draft" : "Unable to submit reviewer rating"),
+          (action === "DRAFT"
+            ? "Unable to save reviewer draft"
+            : "Unable to submit reviewer rating"),
       );
       return;
     }
-    success(action === "DRAFT" ? "Reviewer draft saved" : "Reviewer rating submitted");
+    success(
+      action === "DRAFT" ? "Reviewer draft saved" : "Reviewer rating submitted",
+    );
     setCurrentRating(answers);
     setCurrentSubmissionStatus(action);
     if (action === "SUBMITTED") {
@@ -183,7 +214,8 @@ export function MyReviewDetailClient({
       setLatestSubmissionOpen(true);
       if (!wasSubmitted) {
         requestAnimationFrame(() => {
-          if (latestSubmissionRef.current) scrollToElement(latestSubmissionRef.current);
+          if (latestSubmissionRef.current)
+            scrollToElement(latestSubmissionRef.current);
         });
       }
     }
@@ -192,11 +224,14 @@ export function MyReviewDetailClient({
 
   async function setAvailability(available: boolean) {
     setStatusLoading(available ? "available" : "unavailable");
-    const res = await fetch(`/api/ams/appraisals/${appraisal.id}/availability`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ available }),
-    });
+    const res = await fetch(
+      `/api/ams/appraisals/${appraisal.id}/availability`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ available }),
+      },
+    );
     setStatusLoading(null);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -208,8 +243,16 @@ export function MyReviewDetailClient({
   }
 
   const showRatingEditor = canRate && isEditing;
-  const showSubmittedPreview = currentSubmissionStatus === "SUBMITTED" && currentRating && canRate && isEditing;
-  const showEditableSubmitted = canRate && !isEditing && currentSubmissionStatus === "SUBMITTED" && !!currentRating;
+  const showSubmittedPreview =
+    currentSubmissionStatus === "SUBMITTED" &&
+    currentRating &&
+    canRate &&
+    isEditing;
+  const showEditableSubmitted =
+    canRate &&
+    !isEditing &&
+    currentSubmissionStatus === "SUBMITTED" &&
+    !!currentRating;
   const showReadOnlyRating = !canRate && !!currentRating;
   const showStatusCard = !canRate && !currentRating;
 
@@ -218,14 +261,15 @@ export function MyReviewDetailClient({
   }
 
   function handleReviewerFieldNavigate(fieldId: string) {
-    const selector =
-      fieldId.startsWith("reviewer-criterion:")
-        ? `#reviewer-criterion-${fieldId.split(":")[1]}`
-        : `[data-field-id="${fieldId}"]`;
+    const selector = fieldId.startsWith("reviewer-criterion:")
+      ? `#reviewer-criterion-${fieldId.split(":")[1]}`
+      : `[data-field-id="${fieldId}"]`;
     const target = document.querySelector<HTMLElement>(selector);
     if (!target) return;
     scrollToElement(target);
-    const input = target.querySelector<HTMLInputElement | HTMLTextAreaElement>("input, textarea");
+    const input = target.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+      "input, textarea",
+    );
     input?.focus({ preventScroll: true });
   }
 
@@ -248,12 +292,22 @@ export function MyReviewDetailClient({
             availabilityStatus: reviewer.availabilityStatus,
             submissionStatus: reviewer.submissionStatus,
           }))}
-          selfAssessment={appraisal.selfAssessmentAnswers ? { editCount: appraisal.selfAssessmentEditCount } : null}
-          management={{ submitted: appraisal.stage !== "REVIEWER_RATING" && appraisal.stage !== "SELF_ASSESSMENT_OPEN" && appraisal.stage !== "REVIEWERS_ASSIGNED" }}
+          selfAssessment={
+            appraisal.selfAssessmentAnswers
+              ? { editCount: appraisal.selfAssessmentEditCount }
+              : null
+          }
+          management={{
+            submitted:
+              appraisal.stage !== "REVIEWER_RATING" &&
+              appraisal.stage !== "SELF_ASSESSMENT_OPEN" &&
+              appraisal.stage !== "REVIEWERS_ASSIGNED",
+          }}
           meeting={{
             scheduledAt: null,
             hasMinutes:
-              appraisal.stage === "HIKE_FINALISATION" || appraisal.stage === "CLOSED",
+              appraisal.stage === "HIKE_FINALISATION" ||
+              appraisal.stage === "CLOSED",
           }}
           className="h-full"
         />
@@ -269,21 +323,24 @@ export function MyReviewDetailClient({
                   {appraisal.employee.name}
                 </p>
                 <p className="text-sm text-mono-muted">
-                  {appraisal.employee.designation ?? "No designation"} — {appraisal.cycle.name}{" "}
-                  {appraisal.cycle.year}
+                  {appraisal.employee.designation ?? "No designation"} —{" "}
+                  {appraisal.cycle.name} {appraisal.cycle.year}
                 </p>
                 <p className="text-xs uppercase tracking-[0.14em] text-mono-muted/70">
-                  Your role: {KIND_LABEL[appraisal.reviewerKind] ?? appraisal.reviewerKind}
+                  Your role:{" "}
+                  {KIND_LABEL[appraisal.reviewerKind] ?? appraisal.reviewerKind}
                 </p>
                 <p className="text-xs text-mono-muted/60">
-                  Self-assessment edited {appraisal.selfAssessmentEditCount} time
+                  Self-assessment edited {appraisal.selfAssessmentEditCount}{" "}
+                  time
                   {appraisal.selfAssessmentEditCount === 1 ? "" : "s"}.
                 </p>
               </div>
               <div className="flex flex-col items-start gap-2 sm:items-end">
                 <span
                   className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                    STAGE_COLOR[appraisal.stage] ?? "border-mono-border/40 bg-mono-soft text-mono-muted"
+                    STAGE_COLOR[appraisal.stage] ??
+                    "border-mono-border/40 bg-mono-soft text-mono-muted"
                   }`}
                 >
                   {appraisal.stage.replace(/_/g, " ")}
@@ -315,10 +372,14 @@ export function MyReviewDetailClient({
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-0.5">
                       <p className="text-sm font-semibold text-mono-text">
-                        {reviewer.name ?? KIND_LABEL[reviewer.kind] ?? reviewer.kind}
+                        {reviewer.name ??
+                          KIND_LABEL[reviewer.kind] ??
+                          reviewer.kind}
                       </p>
                       <p className="text-xs text-mono-muted">
-                        {reviewer.designation ?? KIND_LABEL[reviewer.kind] ?? reviewer.kind}
+                        {reviewer.designation ??
+                          KIND_LABEL[reviewer.kind] ??
+                          reviewer.kind}
                       </p>
                     </div>
                     <span
@@ -349,7 +410,8 @@ export function MyReviewDetailClient({
 
                   {reviewer.submittedAt ? (
                     <p className="mt-3 text-xs text-mono-muted">
-                      Submitted on {new Date(reviewer.submittedAt).toLocaleString("en-IN")}
+                      Submitted on{" "}
+                      {new Date(reviewer.submittedAt).toLocaleString("en-IN")}
                     </p>
                   ) : (
                     <p className="mt-3 text-xs text-mono-muted/60">
@@ -364,14 +426,16 @@ export function MyReviewDetailClient({
       </div>
 
       <div className="space-y-3">
-        {appraisal.stage === "REVIEWERS_ASSIGNED" && appraisal.availabilityDeadline ? (
+        {appraisal.stage === "REVIEWERS_ASSIGNED" &&
+        appraisal.availabilityDeadline ? (
           <DeadlineBanner
             deadline={appraisal.availabilityDeadline}
             serverNow={serverNow}
             label="Availability deadline"
           />
         ) : null}
-        {appraisal.stage === "REVIEWER_RATING" && appraisal.reviewerRatingDeadline ? (
+        {appraisal.stage === "REVIEWER_RATING" &&
+        appraisal.reviewerRatingDeadline ? (
           <DeadlineBanner
             deadline={appraisal.reviewerRatingDeadline}
             serverNow={serverNow}
@@ -380,15 +444,15 @@ export function MyReviewDetailClient({
         ) : null}
 
         {savedAt ? (
-          <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          <div className="rounded-xl border border-mono-border bg-[var(--mnx-success-bg)] px-4 py-3 text-sm text-[var(--mnx-success)]">
             Reviewer rating saved at {savedAt}.
           </div>
         ) : null}
 
         {currentSubmissionStatus === "SUBMITTED" && canRate ? (
-          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-            This review is marked as submitted, but you can still edit and resubmit it until
-            the deadline.
+          <div className="rounded-xl border border-mono-border bg-mono-accent/10 px-4 py-3 text-sm text-mono-accent">
+            This review is marked as submitted, but you can still edit and
+            resubmit it until the deadline.
           </div>
         ) : null}
 
@@ -398,33 +462,41 @@ export function MyReviewDetailClient({
           </div>
         ) : null}
 
-        {currentSubmittedAt && currentRating && appraisal.stage !== "REVIEWERS_ASSIGNED" ? (
-          <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+        {currentSubmittedAt &&
+        currentRating &&
+        appraisal.stage !== "REVIEWERS_ASSIGNED" ? (
+          <div className="rounded-xl border border-mono-border bg-[var(--mnx-success-bg)] px-4 py-3 text-sm text-[var(--mnx-success)]">
             Last submitted on{" "}
-            <strong>{new Date(currentSubmittedAt).toLocaleString("en-IN")}</strong>.
+            <strong>
+              {new Date(currentSubmittedAt).toLocaleString("en-IN")}
+            </strong>
+            .
           </div>
         ) : null}
 
         {showSubmittedPreview ? (
           <Card>
             <div ref={latestSubmissionRef}>
-              <button
+              <PerformanceControlButton
                 type="button"
                 onClick={() => setLatestSubmissionOpen((current) => !current)}
                 className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
               >
                 <div>
-                  <p className="text-sm font-semibold text-mono-text">Latest Submitted Rating</p>
+                  <p className="text-sm font-semibold text-mono-text">
+                    Latest Submitted Rating
+                  </p>
                   <p className="text-xs text-mono-muted">
-                    Expand to review the last submitted answers and jump back to any criterion.
+                    Expand to review the last submitted answers and jump back to
+                    any criterion.
                   </p>
                 </div>
                 <ChevronDown
-                  className={`h-4 w-4 text-[#008b85] transition-transform duration-200 ${
+                  className={`h-4 w-4 text-mono-accent transition-transform duration-200 ${
                     latestSubmissionOpen ? "rotate-180" : "rotate-0"
                   }`}
                 />
-              </button>
+              </PerformanceControlButton>
 
               {latestSubmissionOpen ? (
                 <div className="px-5 pb-4">
@@ -451,15 +523,25 @@ export function MyReviewDetailClient({
               appraisal.selfAssessmentAnswers ? (
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F9D972]/10 px-3 py-1.5 text-xs font-medium text-[#008b85] ring-1 ring-[#F9D972]/25">
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-mono-accent/10 px-3 py-1.5 text-xs font-medium text-mono-accent ring-1 ring-primary/20">
+                      <svg
+                        width="11"
+                        height="11"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                       Self-assessment submitted
                     </span>
                   </div>
                   <p className="text-xs text-mono-muted/70">
-                    The self-assessment content is available after the self-assessment deadline.
+                    The self-assessment content is available after the
+                    self-assessment deadline.
                   </p>
                 </div>
               ) : (
@@ -498,7 +580,7 @@ export function MyReviewDetailClient({
                     variant="default"
                     onClick={() => setAvailability(true)}
                     disabled={statusLoading !== null}
-                    className="bg-[#F9D972] hover:bg-[#E8C85D] border-0"
+                    className="bg-mono-accent/10 hover:bg-mono-accent/10 border-0"
                   >
                     {statusLoading === "available" ? "Saving…" : "Available"}
                   </Button>
@@ -506,9 +588,11 @@ export function MyReviewDetailClient({
                     variant="outline"
                     onClick={() => setAvailability(false)}
                     disabled={statusLoading !== null}
-                    className="border-[#F9D972]/40 text-[#008b85] hover:bg-[#F9D972]/5"
+                    className="border-mono-border text-mono-accent hover:bg-mono-accent/5"
                   >
-                    {statusLoading === "unavailable" ? "Saving…" : "Unavailable"}
+                    {statusLoading === "unavailable"
+                      ? "Saving…"
+                      : "Unavailable"}
                   </Button>
                 </div>
               </CardContent>
@@ -516,7 +600,7 @@ export function MyReviewDetailClient({
           ) : null}
 
           {showRatingEditor ? (
-            <Card className="monolith-card monolith-accent-violet">
+            <Card className="mnx-performance-surface mnx-accent-edge-violet">
               <CardHeader>
                 <CardTitle>Reviewer Rating</CardTitle>
               </CardHeader>
@@ -526,7 +610,9 @@ export function MyReviewDetailClient({
                   criteria={criteria}
                   supplementary={[]}
                   initialAnswers={currentRating ?? undefined}
-                  onSaveDraft={(answers) => persistRating("DRAFT", answers as ReviewerRatingAnswers)}
+                  onSaveDraft={(answers) =>
+                    persistRating("DRAFT", answers as ReviewerRatingAnswers)
+                  }
                   onSubmitFinal={(answers) =>
                     persistRating("SUBMITTED", answers as ReviewerRatingAnswers)
                   }
@@ -549,13 +635,13 @@ export function MyReviewDetailClient({
                   answers={currentRating}
                 />
                 <div className="border-t border-mono-border/40 pt-4">
-                  <button
+                  <PerformanceControlButton
                     type="button"
                     onClick={() => setIsEditing(true)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-[#F9D972]/40 px-4 py-2 text-sm font-medium text-[#008b85] transition hover:bg-[#F9D972]/8"
+                    className="inline-flex items-center gap-2 rounded-xl border border-mono-border px-4 py-2 text-sm font-medium text-mono-accent transition hover:bg-mono-accent/8"
                   >
                     Edit Rating
-                  </button>
+                  </PerformanceControlButton>
                 </div>
               </CardContent>
             </Card>

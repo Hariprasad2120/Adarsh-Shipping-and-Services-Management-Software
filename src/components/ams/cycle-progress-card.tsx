@@ -54,15 +54,14 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 const ACTIVE_BADGE_CLASS =
-  "border-[rgba(0,148,140,0.3)] bg-[rgba(0,148,140,0.12)] text-[#005f5a]";
+  "border-mono-border bg-mono-accent/10 text-mono-accent";
 const PENDING_BADGE_CLASS =
-  "border-[rgba(112,121,119,0.35)] bg-[rgba(112,121,119,0.08)] text-[#56605e]";
-const CURRENT_STEP_GLOW_CLASS =
-  "shadow-[0_0_0_4px_rgba(0,206,196,0.14),0_0_22px_rgba(0,206,196,0.18)]";
+  "border-mono-border bg-mono-accent/10 text-mono-muted";
+const CURRENT_STEP_GLOW_CLASS = "shadow-[var(--mn-shadow-panel)]";
 
 function cardClassName(className?: string) {
   return [
-    "monolith-card monolith-accent rounded-[24px] border border-mono-border/35 bg-mono-card p-5",
+    "mnx-performance-surface mnx-accent-edge rounded-[24px] border border-mono-border/35 bg-mono-card p-5",
     className,
   ]
     .filter(Boolean)
@@ -89,10 +88,13 @@ export function CycleProgressCard({
   className,
 }: CycleProgressCardProps) {
   const cycleLabel = formatCycleLabel(cycleName, cycleYear);
-  const nonManagementReviewers = reviewers.filter((reviewer) => reviewer.kind !== "MANAGEMENT");
+  const nonManagementReviewers = reviewers.filter(
+    (reviewer) => reviewer.kind !== "MANAGEMENT",
+  );
   const availableCount = nonManagementReviewers.filter(
     (reviewer) =>
-      reviewer.availabilityStatus === "AVAILABLE" || reviewer.availabilityStatus === "FORCED",
+      reviewer.availabilityStatus === "AVAILABLE" ||
+      reviewer.availabilityStatus === "FORCED",
   ).length;
   const submittedRatings = nonManagementReviewers.filter(
     (reviewer) => reviewer.submissionStatus === "SUBMITTED",
@@ -144,9 +146,10 @@ export function CycleProgressCard({
     {
       key: "MANAGEMENT_REVIEW",
       title: "Reviewer Ratings",
-      description: nonManagementReviewers.length > 0
-        ? `${submittedRatings} / ${nonManagementReviewers.length} submitted`
-        : "Reviewer scoring not started",
+      description:
+        nonManagementReviewers.length > 0
+          ? `${submittedRatings} / ${nonManagementReviewers.length} submitted`
+          : "Reviewer scoring not started",
       icon: Star,
     },
     {
@@ -181,14 +184,14 @@ export function CycleProgressCard({
     <section className={cardClassName(className)}>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h2 className="monolith-h2 text-mono-text">Cycle Progress</h2>
+          <h2 className="mnx-title-2 text-mono-text">Cycle Progress</h2>
           {cycleLabel && (
-            <p className="text-xs text-mono-muted">
-              {cycleLabel}
-            </p>
+            <p className="text-xs text-mono-muted">{cycleLabel}</p>
           )}
         </div>
-        <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${ACTIVE_BADGE_CLASS}`}>
+        <span
+          className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${ACTIVE_BADGE_CLASS}`}
+        >
           {stageBadgeLabel}
         </span>
       </div>
@@ -209,7 +212,9 @@ export function CycleProgressCard({
                 {index < timelineItems.length - 1 ? (
                   <span
                     className={`absolute left-1/2 top-8 bottom-[-20px] w-px -translate-x-1/2 ${
-                      isDone || isCurrent ? "bg-[rgba(0,148,140,0.28)]" : "bg-outline-variant/80"
+                      isDone || isCurrent
+                        ? "bg-mono-accent/10"
+                        : "bg-outline-variant/80"
                     }`}
                   />
                 ) : null}
@@ -221,7 +226,7 @@ export function CycleProgressCard({
                   } ${isCurrent ? `animate-pulse ${CURRENT_STEP_GLOW_CLASS}` : ""}`}
                 >
                   {isCurrent ? (
-                    <span className="absolute inset-[-6px] rounded-full border border-[#F9D972]/35 animate-ping" />
+                    <span className="absolute inset-[-6px] rounded-full border border-mono-border animate-ping" />
                   ) : null}
                   <Icon className="relative z-10 size-4" />
                 </span>
@@ -236,7 +241,9 @@ export function CycleProgressCard({
                 </p>
                 <p
                   className={`mt-1 text-sm ${
-                    isDone || isCurrent ? "text-mono-muted" : "text-mono-muted/70"
+                    isDone || isCurrent
+                      ? "text-mono-muted"
+                      : "text-mono-muted/70"
                   }`}
                 >
                   {item.description}
