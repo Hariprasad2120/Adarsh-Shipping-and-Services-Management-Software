@@ -29,3 +29,23 @@ See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode de
     at async rW.handleResponse (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.prod.js:1:119701)
     at async l (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\.next\server\chunks\[root-of-the-server]__0vah03a._.js:1:12693)
     at async Module.A [as handler] (D:\AMS\Adarsh-Shipping-and-Services-Management-Software\.next\server\chunks\[root-of-the-server]__0vah03a._.js:1:13800)
+⨯ Error: Could not find the module "[project]/src/components/dashboard-chrome.tsx#DashboardChromeProvider" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '755413284'
+}
+⨯ Error: Could not find the module "[project]/src/components/sidebar.tsx#Sidebar" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '2912577220'
+}
+⨯ Error: Could not find the module "[project]/src/components/main-shell.tsx#MainShell" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '1523748548'
+}
+⨯ Error: Could not find the module "[project]/src/components/page-animator.tsx#PageAnimator" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '143948740'
+}
+⨯ Error: Could not find the module "[project]/src/app/(dashboard)/_components/dashboard-shell.tsx#DashboardShell" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '2985886020'
+}

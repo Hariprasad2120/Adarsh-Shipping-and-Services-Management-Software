@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-28T05:03:10.393Z
+> Generated at: 2026-07-28T06:25:02.949Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -10,7 +10,7 @@
 | App Routes (Pages) | 205 |
 | API Routes | 196 |
 | Prisma Models | 277 |
-| Module Service Files | 87 |
+| Module Service Files | 89 |
 | UI Components | 92 |
 
 ## Modules Overview
@@ -29,7 +29,7 @@
 | crm | 59 | 4 | 26 | 8 | 1 |
 | cron | 0 | 7 | 0 | 0 | 0 |
 | customer-portal | 0 | 19 | 0 | 12 | 0 |
-| dashboard | 3 | 0 | 0 | 0 | 0 |
+| dashboard | 3 | 0 | 0 | 2 | 0 |
 | dev | 0 | 1 | 0 | 0 | 0 |
 | expense | 1 | 0 | 0 | 0 | 0 |
 | google-chat | 0 | 6 | 6 | 8 | 0 |
@@ -805,6 +805,10 @@
 - **auth.test.ts**: no exports detected
 - **dashboard.test.ts**: no exports detected
 - **shipments.test.ts**: no exports detected
+
+### dashboard
+- **service.ts**: getDashboardModuleSnapshot
+- **types.ts**: no exports detected
 
 ### google-chat
 - **cards.ts**: buildConnectCard, buildHelpCard, buildStatusCard, buildTasksCard, buildAiResponseCard, buildErrorCard, buildNotificationCard, buildSpaceLinkedCard, buildPrivacyCard, buildProcessingCard

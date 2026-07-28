@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-28T05:03:10.393Z",
+  "generatedAt": "2026-07-28T06:25:02.949Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -9,7 +9,7 @@
     "totalAppRoutes": 205,
     "totalApiRoutes": 196,
     "totalPrismaModels": 277,
-    "totalModuleServices": 87,
+    "totalModuleServices": 89,
     "totalComponents": 92
   },
   "appRoutes": [
@@ -11039,6 +11039,20 @@
       "exportedFunctions": []
     },
     {
+      "module": "dashboard",
+      "fileName": "service.ts",
+      "filePath": "src/modules/dashboard/service.ts",
+      "exportedFunctions": [
+        "getDashboardModuleSnapshot"
+      ]
+    },
+    {
+      "module": "dashboard",
+      "fileName": "types.ts",
+      "filePath": "src/modules/dashboard/types.ts",
+      "exportedFunctions": []
+    },
+    {
       "module": "google-chat",
       "fileName": "cards.ts",
       "filePath": "src/modules/google-chat/cards.ts",
@@ -12071,7 +12085,7 @@
       "appRoutes": 3,
       "apiRoutes": 0,
       "prismaModels": 0,
-      "serviceFiles": 0,
+      "serviceFiles": 2,
       "components": 0
     },
     "dev": {

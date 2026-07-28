@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 const navItems = [
   ["overview", "Overview", "⌂"],
@@ -91,22 +91,6 @@ export default function Home() {
   const [filter, setFilter] = useState("All");
   const [selectOpen, setSelectOpen] = useState(false);
   const [uploaded, setUploaded] = useState(false);
-  const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    const saved = localStorage.getItem("theme") as Theme | null;
-    if (saved && ["light", "night", "violet"].includes(saved)) {
-      setTheme(saved);
-    }
-  }, []);
-
-  const handleThemeChange = (newTheme: Theme) => {
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    document.documentElement.classList.remove("theme-light", "theme-night", "theme-violet");
-    document.documentElement.classList.add(`theme-${newTheme}`);
-  };
-
   const activeColors = theme === "violet"
     ? [
         ["Night Ink", "#0A0B13", "Primary canvas · deep surfaces"],
@@ -157,16 +141,7 @@ export default function Home() {
         <header className="topbar">
           <div className="breadcrumbs"><span>Monolith</span><i>/</i><b>Design system</b></div>
           <div className="top-actions">
-            <div className="search">
-              <span>⌕</span>
-              <input
-                aria-label="Search components"
-                placeholder="Search components…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <kbd>⌘ K</kbd>
-            </div>
+            <div className="search"><span>⌕</span><input aria-label="Search components" placeholder="Search components…" /><kbd>⌘ K</kbd></div>
             <button className="icon-button notification" aria-label="Notifications">♢<i /></button>
             <div className="theme-picker" role="group" aria-label="Preview theme">
               {themes.map((item) => (
@@ -174,7 +149,7 @@ export default function Home() {
                   key={item.id}
                   type="button"
                   className={theme === item.id ? "active" : ""}
-                  onClick={() => handleThemeChange(item.id)}
+                  onClick={() => setTheme(item.id)}
                   aria-pressed={theme === item.id}
                   title={`${item.label} theme`}
                 >
