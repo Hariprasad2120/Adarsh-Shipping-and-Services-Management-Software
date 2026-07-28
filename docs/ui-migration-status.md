@@ -9,11 +9,11 @@ implemented and verified.
 
 - Source audit: 211 page routes and 7 layouts.
 - Protected visual reference: `/dashboard`.
-- Migrated routes: `/account/security`, `/notifications`,
-  `/product-catalogue`, and `/todo`.
+- Migrated routes: `/account/security`, `/admin/design-system`,
+  `/notifications`, `/product-catalogue`, and `/todo`.
 - Migrated shared surfaces: authenticated user profile menu plus common
   permission, empty, loading, error, and not-found states.
-- Pending individual route migrations: 206.
+- Pending individual route migrations: 205.
 - Exhaustive route/layout record: [UI route and layout audit](ui-route-audit.md).
 
 ## Status definitions
@@ -38,7 +38,7 @@ the route-by-route source of truth.
 | `/` | 1 | 0 | 0 | 1 |
 | `/account` | 1 | 0 | 1 | 0 |
 | `/accounting` | 32 | 0 | 0 | 32 |
-| `/admin` | 10 | 0 | 0 | 10 |
+| `/admin` | 10 | 0 | 1 | 9 |
 | `/ams` | 18 | 0 | 0 | 18 |
 | `/attendance` | 7 | 0 | 0 | 7 |
 | `/cha` | 11 | 0 | 0 | 11 |
@@ -56,7 +56,7 @@ the route-by-route source of truth.
 | `/setup` | 1 | 0 | 0 | 1 |
 | `/todo` | 1 | 0 | 1 | 0 |
 | `/verify` | 1 | 0 | 0 | 1 |
-| **Total** | **211** | **1** | **4** | **206** |
+| **Total** | **211** | **1** | **5** | **205** |
 
 An import from `@/components/monolith` is not proof of route migration. A route
 remains pending until its rendered presentation and behavior satisfy the
@@ -96,6 +96,9 @@ Production mapping:
   typography, spacing, radius, shadow, gradient, and motion tokens.
 - `src/styles/monolith-system.css` consumes semantic values through stable
   `--mnx-*` compatibility aliases so the protected dashboard does not change.
+- `WorkspaceMetric` now follows the reference metric-strip pattern: grouped
+  summaries render as one rounded surface with internal dividers, and actionable
+  metrics expose an explicit redirect/action icon.
 - Light, Night, and Violet are selected by root `theme-*` classes and the shared
   AppShell keeps `data-theme`, `color-scheme`, and persisted preference aligned.
 
@@ -184,6 +187,21 @@ unrelated to the UI foundation.
 | Pre-foundation 001 | `/account/security` | Verified previously | Migration predates this foundation-only session. |
 | Foundation | No module routes | Foundation ready | Audit, backup, tokens, themes, AppShell, layouts, dashboard normalization. |
 | Batch 001 | `/product-catalogue`, `/todo`, `/notifications` | Verified | Full Monolith composition; profile menu and common authenticated states included. |
+| Showcase | `/admin/design-system` | Verified | Production design-system showcase with Inter typography, centered spacing, token/component examples, and tracked redesign decisions. |
+
+## Quality log: showcase
+
+Passed:
+
+- Backed up the prior `/admin/design-system` visual source under
+  `OLD UI code/legacy-ui-before-design-system-showcase-20260728`.
+- Regenerated `docs/ui-route-audit.md`; `/admin/design-system` now resolves to
+  `Monolith AppShell`.
+- Targeted ESLint:
+  `npx eslint "src/app/(dashboard)/admin/design-system/page.tsx" "src/app/(dashboard)/admin/design-system/design-system-client.tsx" "src/app/(dashboard)/_components/dashboard-shell-switcher.tsx" scripts/audit-ui-routes.mjs`.
+- Focused TypeScript: `npx tsc --noEmit -p tsconfig.ui-migration.json`.
+- Relevant Vitest suites:
+  `npx vitest run "src/app/(dashboard)/_components/dashboard-shell-layout.test.ts" "src/components/monolith/workspace.test.tsx" "src/components/monolith/foundation.test.tsx"`.
 
 ## Quality log: batch 001
 

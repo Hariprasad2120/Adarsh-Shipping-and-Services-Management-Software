@@ -5,14 +5,32 @@ Last updated: 2026-07-28
 ## Current state
 
 - Branch: `redesign/monolith-primary-ui`
+- Shared typography and centered page-spacing tokens were refreshed on
+  2026-07-28 for future route migrations.
+- Monolith font tokens now use `Inter, "Segoe UI", Arial, sans-serif` for both
+  interface and numeric text.
+- Shared page scrolling now stays on the full-width app frame while the inner
+  page content remains centered at 1200px; desktop gutters use
+  `clamp(32px, 3.3vw, 50px)`.
+- This 1200px centered frame and shared gutter rhythm is the default for all
+  future Monolith page migrations.
+- Shared Monolith sidebar navigation hides its scrollbar and uses compact
+  reference-style rows with smaller icons and lighter labels.
+- Shared workspace metrics now use the connected reference-style card strip:
+  `.mnx-workspace-metrics` owns the rounded surface and `WorkspaceMetric`
+  children divide the single element internally. Actionable metrics should pass
+  `href`, `actionLabel`, and `actionIcon` so redirect behavior is visible.
+- Shared section headings now use `WorkspaceSectionHeading`: a small accent
+  number and large light heading on the left, with muted explanatory copy aligned
+  on the right for desktop layouts.
 - Batch 001 parent: `aed95fe`
 - Legacy visual baseline: `7120d79`
 - Protected reference: `/dashboard` remains unchanged.
-- Verified migrated routes: `/account/security`, `/notifications`,
-  `/product-catalogue`, and `/todo`.
+- Verified migrated routes: `/account/security`, `/admin/design-system`,
+  `/notifications`, `/product-catalogue`, and `/todo`.
 - Verified shared surfaces: authenticated user profile menu and common
   permission, empty, loading, error, and not-found states.
-- Route inventory: 211 total, 1 protected, 4 migrated, 206 pending.
+- Route inventory: 211 total, 1 protected, 5 migrated, 205 pending.
 - Batch 001 implementation, runtime matrix, tests, and production build pass.
 - The worktree should be clean after the batch 001 commit.
 
@@ -53,8 +71,20 @@ Archive:
 The foundation archive remains:
 `OLD UI code/legacy-ui-before-monolith-foundation-7120d79.zip`.
 
+Showcase backup:
+`OLD UI code/legacy-ui-before-design-system-showcase-20260728`
+
+- Entries: prior `/admin/design-system/page.tsx` and
+  `/admin/design-system/design-system-client.tsx`.
+- Purpose: preserved the copied legacy/reference-style visual showcase before
+  replacing it with production Monolith primitives.
+
 ## Key files
 
+- `docs/typography.md`: production typography and page-spacing guide derived
+  from the read-only Monolith reference.
+- `docs/design-system-showcase.md`: living log of visual decisions to keep in
+  sync with `/admin/design-system`.
 - `docs/ui-route-audit.md`: regenerated route-by-route audit.
 - `scripts/audit-ui-routes.mjs`: recognizes the three batch 001 routes.
 - `scripts/verify-monolith-batch-001-ui.mjs`: authenticated interaction,
@@ -64,8 +94,13 @@ The foundation archive remains:
 - `src/components/monolith/workspace-dialog.tsx`: production dialog.
 - `src/components/monolith/workspace-states.tsx`: shared state compositions.
 - `src/components/monolith/app-shell.tsx`: profile menu and shared shell.
+- `src/app/(dashboard)/admin/design-system/design-system-client.tsx`: living
+  production showcase for tokens, typography, spacing, examples, and request
+  tracking.
 - `src/styles/monolith-system.css`: production component and batch layout
   styling.
+- `src/styles/monolith-tokens.css`: shared font scale, numeric scale, and page
+  gutter tokens for migrated routes.
 - `src/app/globals.css`: legacy generic form/button/checkbox selectors are
   inactive under the Monolith shell.
 
@@ -87,6 +122,16 @@ Passed:
   - 1440×1000, 1024×900, 390×844;
 - no horizontal overflow, wrong-theme state, legacy composition, or route
   redirect in the verified matrix.
+
+Showcase verification:
+
+- `/admin/design-system` was added to `MonolithAppShell`.
+- Prior route visual source was backed up under `OLD UI code`.
+- Targeted ESLint passed for the showcase route, shell switcher, and route
+  audit script.
+- Focused TypeScript passed.
+- Relevant Vitest suites passed: dashboard shell layout, workspace primitives,
+  and foundation primitives.
 
 Runtime behavior exercised:
 

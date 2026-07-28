@@ -23,6 +23,18 @@ or compile it as part of this application.
 - Back up legacy visual code under `OLD UI code` before replacing or removing it.
 - Do not redesign the working `/dashboard`.
 - Use centralized semantic tokens and shared production components.
+- Use the approved default Monolith page frame for every migrated page:
+  `--mn-layout-page-max: 1200px`, `--mn-layout-workspace-max: 1200px`,
+  and `--mn-layout-page-gutter: clamp(32px, 3.3vw, 50px)`.
+  Pages must inherit this through `MonolithPage`, `WorkspacePage`, and
+  `.mnx-dashboard-main`; do not add route-local page width or gutter wrappers.
+- Metric summaries must use the shared connected group pattern:
+  `.mnx-workspace-metrics` plus `WorkspaceMetric`. Do not recreate metric
+  summaries as loose individual cards. If a metric/card navigates or performs an
+  action, include the shared redirect/action affordance.
+- Major page sections should use `WorkspaceSectionHeading`: small accent number
+  plus large light heading on the left, and a muted explanatory paragraph aligned
+  on the right at desktop sizes.
 - Do not create one-off buttons, fields, cards, tables, or typography.
 - Support Light, Night, and Violet themes.
 - Do not use inline hex colors when a semantic token exists.

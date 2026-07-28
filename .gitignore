@@ -70,6 +70,8 @@ pnpm-lock.yaml
 !/docs/ui-migration-status.md
 !/docs/ui-migration-handoff.md
 !/docs/ui-route-audit.md
+!/docs/typography.md
+!/docs/design-system-showcase.md
 
 # sensitive data output
 /import-output/

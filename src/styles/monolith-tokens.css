@@ -10,21 +10,31 @@ html.theme-light {
   color-scheme: light;
 
   /* Typography */
-  --mn-font-sans: var(--font-geist-sans), "Geist", "Segoe UI", sans-serif;
-  --mn-font-mono: var(--font-geist-mono), "Geist Mono", "SFMono-Regular", monospace;
+  --mn-font-sans: Inter, "Segoe UI", Arial, sans-serif;
+  --mn-font-mono: Inter, "Segoe UI", Arial, sans-serif;
   --mn-type-display-size: clamp(2.75rem, 5vw, 4rem);
   --mn-type-display-line: 1.05;
   --mn-type-display-tracking: -0.04em;
-  --mn-type-heading-size: clamp(1.875rem, 3vw, 2.75rem);
+  --mn-type-display-weight: 360;
+  --mn-type-heading-size: 2rem;
   --mn-type-heading-line: 1.08;
-  --mn-type-heading-tracking: -0.04em;
+  --mn-type-heading-tracking: -0.03em;
+  --mn-type-heading-weight: 430;
   --mn-type-title-size: 1.25rem;
   --mn-type-title-line: 1.25;
-  --mn-type-body-size: 0.875rem;
+  --mn-type-title-tracking: -0.02em;
+  --mn-type-body-size: 0.9375rem;
   --mn-type-body-line: 1.5;
   --mn-type-label-size: 0.6875rem;
   --mn-type-label-line: 1.2;
-  --mn-type-label-tracking: 0.08em;
+  --mn-type-label-tracking: 0.12em;
+  --mn-type-label-weight: 760;
+  --mn-type-control-size: 0.75rem;
+  --mn-type-helper-size: 0.625rem;
+  --mn-type-numeric-size: 2rem;
+  --mn-type-numeric-line: 1;
+  --mn-type-numeric-tracking: -0.05em;
+  --mn-type-numeric-weight: 440;
 
   /* Shape, spacing, motion */
   --mn-space-1: 0.25rem;
@@ -35,6 +45,13 @@ html.theme-light {
   --mn-space-6: 1.5rem;
   --mn-space-8: 2rem;
   --mn-space-10: 2.5rem;
+  --mn-layout-page-max: 75rem;
+  --mn-layout-workspace-max: 75rem;
+  --mn-layout-page-gutter: clamp(2rem, 3.3vw, 3.125rem);
+  --mn-layout-page-gutter-tablet: 1.75rem;
+  --mn-layout-page-gutter-mobile: 1rem;
+  --mn-layout-page-bottom: 5rem;
+  --mn-layout-page-bottom-mobile: 3.5rem;
   --mn-radius-control: 0.6875rem;
   --mn-radius-panel: 1.125rem;
   --mn-radius-feature: 1.625rem;

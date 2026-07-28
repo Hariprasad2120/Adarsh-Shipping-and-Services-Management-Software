@@ -240,16 +240,16 @@ function MonolithAppShellBody({
                 aria-current={isActive ? "page" : undefined}
                 onClick={() => setMobileOpen(false)}
               >
-                <span><Icon size={17} /></span>
+                <span><Icon size={15} strokeWidth={1.9} /></span>
                 <b>{section.label}</b>
-                {section.items.length > 0 ? <ChevronDown size={13} /> : null}
+                {section.items.length > 0 ? <ChevronDown size={11} strokeWidth={2} /> : null}
               </Link>
             );
           })}
         </nav>
 
         <button type="button" className="mnx-mona-card" onClick={toggleChat}>
-          <span><Sparkles size={16} /></span>
+          <span><Sparkles size={14} strokeWidth={2} /></span>
           <span><b>Ask Mona</b><small>Open your workspace assistant</small></span>
           <kbd>⌘M</kbd>
         </button>
@@ -258,7 +258,7 @@ function MonolithAppShellBody({
           <span>{initials(userName)}</span>
           <div><b>{userName}</b><small>Operations workspace</small></div>
           <button type="button" onClick={() => performLogout()} aria-label="Log out" title="Log out">
-            <LogOut size={16} />
+            <LogOut size={14} strokeWidth={2} />
           </button>
         </footer>
       </aside>

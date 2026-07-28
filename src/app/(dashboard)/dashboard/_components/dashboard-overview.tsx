@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   ClipboardCheck,
   Landmark,
-  Megaphone,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -72,22 +71,16 @@ export function DashboardOverview({
       label: "Announcements",
       value: data.announcements.length,
       note: nextAnnouncement?.title || "No new broadcast",
-      icon: Megaphone,
-      tone: "info",
     },
     {
       label: "Pending tasks",
       value: data.recentTasks.length,
       note: nextTask?.title || "Your queue is clear",
-      icon: ClipboardCheck,
-      tone: "warning",
     },
     {
       label: "Upcoming holidays",
       value: data.upcomingHolidays.length,
       note: nextHoliday?.name || "Nothing scheduled",
-      icon: Landmark,
-      tone: "success",
     },
   ] as const;
 
@@ -104,19 +97,15 @@ export function DashboardOverview({
       </header>
 
       <section className="mnx-dashboard-metrics" aria-label="Workspace metrics">
-        {metrics.map((metric) => {
-          const Icon = metric.icon;
-          return (
-            <article className={`mnx-metric-card mnx-semantic-${metric.tone}`} key={metric.label}>
-              <header>
-                <span>{metric.label}</span>
-                <i><Icon size={18} /></i>
-              </header>
-              <strong>{String(metric.value).padStart(2, "0")}</strong>
-              <p>{metric.note}</p>
-            </article>
-          );
-        })}
+        {metrics.map((metric) => (
+          <article className="mnx-metric-card" key={metric.label}>
+            <header>
+              <span>{metric.label}</span>
+            </header>
+            <strong>{String(metric.value).padStart(2, "0")}</strong>
+            <p>{metric.note}</p>
+          </article>
+        ))}
       </section>
 
       <section className="mnx-dashboard-grid">

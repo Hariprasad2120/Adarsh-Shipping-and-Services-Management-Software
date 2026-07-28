@@ -52,6 +52,31 @@ export function WorkspacePageHeader({
   );
 }
 
+interface WorkspaceSectionHeadingProps
+  extends Omit<React.HTMLAttributes<HTMLElement>, "title"> {
+  index: React.ReactNode;
+  title: React.ReactNode;
+  description: React.ReactNode;
+}
+
+export function WorkspaceSectionHeading({
+  className,
+  description,
+  index,
+  title,
+  ...props
+}: WorkspaceSectionHeadingProps) {
+  return (
+    <header className={cn("mnx-section-heading", className)} {...props}>
+      <div className="mnx-section-heading-title">
+        <span>{index}</span>
+        <h2>{title}</h2>
+      </div>
+      <p>{description}</p>
+    </header>
+  );
+}
+
 export function WorkspacePanel({
   className,
   ...props
@@ -60,6 +85,9 @@ export function WorkspacePanel({
 }
 
 interface WorkspaceMetricProps extends React.HTMLAttributes<HTMLElement> {
+  actionIcon?: React.ReactNode;
+  actionLabel?: string;
+  href?: string;
   icon?: React.ReactNode;
   label: React.ReactNode;
   value: React.ReactNode;
@@ -67,21 +95,56 @@ interface WorkspaceMetricProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 export function WorkspaceMetric({
+  actionIcon,
+  actionLabel,
   className,
   detail,
+  href,
   icon,
   label,
   value,
   ...props
 }: WorkspaceMetricProps) {
-  return (
-    <article className={cn("mnx-workspace-metric", className)} {...props}>
-      <div>
-        {icon ? <span>{icon}</span> : null}
-        <MonolithSpecLabel>{label}</MonolithSpecLabel>
+  const content = (
+    <>
+      <div className="mnx-workspace-metric-header">
+        <span className="mnx-workspace-metric-label">
+          {icon ? <span className="mnx-workspace-metric-icon">{icon}</span> : null}
+          <MonolithSpecLabel>{label}</MonolithSpecLabel>
+        </span>
+        {actionIcon ? (
+          <span className="mnx-workspace-metric-action" aria-hidden="true">
+            {actionIcon}
+          </span>
+        ) : null}
       </div>
       <strong>{value}</strong>
       {detail ? <p>{detail}</p> : null}
+    </>
+  );
+
+  const metricClassName = cn(
+    "mnx-workspace-metric",
+    href ? "is-actionable" : null,
+    className,
+  );
+
+  if (href) {
+    return (
+      <a
+        className={metricClassName}
+        href={href}
+        aria-label={actionLabel}
+        {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <article className={metricClassName} {...props}>
+      {content}
     </article>
   );
 }

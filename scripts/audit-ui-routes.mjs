@@ -8,6 +8,7 @@ const outputPath = path.join(repositoryRoot, "docs", "ui-route-audit.md");
 const knownMonolithRoutes = new Set([
   "/dashboard",
   "/account/security",
+  "/admin/design-system",
   "/notifications",
   "/product-catalogue",
   "/todo",
@@ -78,6 +79,7 @@ function shellFor(pageSource, route) {
 function stateFor(route) {
   if (route === "/dashboard") return "Protected reference";
   if (route === "/account/security") return "Migrated before this foundation session";
+  if (route === "/admin/design-system") return "Migrated design-system showcase";
   if (knownMonolithRoutes.has(route)) return "Migrated in batch 001";
   return "Pending module migration";
 }
@@ -206,6 +208,7 @@ const lines = [
   "- `/dashboard` remains the protected visual reference and is not redesigned.",
   "- `/account/security` was migrated before the foundation session.",
   "- `/notifications`, `/product-catalogue`, and `/todo` were migrated in batch 001.",
+  "- `/admin/design-system` is the production showcase for reusable migration decisions.",
   "- Every other route remains pending until its own presentation, behavior, RBAC,",
   "  themes, and responsive layout are verified in a later module batch.",
   "",

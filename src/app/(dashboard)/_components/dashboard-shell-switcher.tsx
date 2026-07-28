@@ -18,6 +18,7 @@ function normalizePathname(pathname: string | null) {
 const MONOLITH_MIGRATED_ROUTES = new Set([
   "/dashboard",
   "/account/security",
+  "/admin/design-system",
   "/notifications",
   "/product-catalogue",
   "/todo",

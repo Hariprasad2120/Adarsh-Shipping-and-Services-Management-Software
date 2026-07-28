@@ -3,13 +3,11 @@
 import {
   ArrowRight,
   BriefcaseBusiness,
-  CalendarCheck2,
   Check,
   Clock3,
   Coffee,
   LogOut,
   Play,
-  RotateCcw,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -131,139 +129,144 @@ export function AttendanceCommand({
 
   return (
     <section className={`mnx-dashboard-hero ${celebrating ? "is-celebrating" : ""}`}>
-      <div className="mnx-dashboard-hero-copy">
-        <div className="mnx-dashboard-eyebrow">
-          <span className="mnx-dashboard-pulse" />
-          OPERATIONS WORKSPACE
-        </div>
-
-        <div className="mnx-dashboard-profile">
-          <div className="mnx-dashboard-profile-mark" aria-hidden="true">
-            {initials(profile.name)}
+      <div className="mnx-dashboard-hero-stage">
+        <div className="mnx-dashboard-identity-card">
+          <div className="mnx-dashboard-eyebrow">
+            <span className="mnx-dashboard-pulse" />
+            OPERATIONS WORKSPACE
           </div>
-          <div>
-            <p className="mnx-dashboard-welcome">Welcome back,</p>
-            <h1>{profile.name}</h1>
-            <p className="mnx-dashboard-role">
-              {profile.designation || "Team member"}
-              {profile.employeeNo ? ` · Employee ${profile.employeeNo}` : ""}
-            </p>
+
+          <div className="mnx-dashboard-profile">
+            <div className="mnx-dashboard-profile-mark" aria-hidden="true">
+              {initials(profile.name)}
+            </div>
+            <div>
+              <p className="mnx-dashboard-welcome">Welcome back,</p>
+              <h1>{profile.name}</h1>
+              <p className="mnx-dashboard-role">
+                {profile.designation || "Team member"}
+                {profile.employeeNo ? ` · Employee ${profile.employeeNo}` : ""}
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="mnx-dashboard-context">
-          <span><BriefcaseBusiness size={14} />{profile.department || "General operations"}</span>
-          <span><ShieldCheck size={14} />{profile.branch || "Head office"}</span>
-          {profile.manager ? <span><Sparkles size={14} />Reports to {profile.manager}</span> : null}
-        </div>
-
-        <div className="mnx-dashboard-mini-stats" aria-label="Pending work summary">
-          <article>
-            <span><RotateCcw size={14} />Pending tasks</span>
-            <strong>{String(pending.tasks).padStart(2, "0")}</strong>
-          </article>
-          <article>
-            <span><CalendarCheck2 size={14} />Leave items</span>
-            <strong>{String(pending.leaves).padStart(2, "0")}</strong>
-          </article>
-          <article>
-            <span><BriefcaseBusiness size={14} />HR cases</span>
-            <strong>{String(pending.cases).padStart(2, "0")}</strong>
-          </article>
-        </div>
-      </div>
-
-      <div className="mnx-attendance-panel">
-        <header className="mnx-attendance-header">
-          <div>
-            <MonolithSpecLabel>LIVE ATTENDANCE</MonolithSpecLabel>
-            <h2>{status.label}</h2>
-          </div>
-          <MonolithBadge tone={status.tone}>
-            <i />
-            {profile.attendanceStatus.replaceAll("_", " ")}
-          </MonolithBadge>
-        </header>
-
-        <div className="mnx-attendance-clock">
-          <div className="mnx-attendance-clock-icon"><Clock3 size={22} /></div>
-          <div>
-            <AttendanceTimer
-              key={`${profile.attendanceStatus}-${profile.totalInTime}`}
-              status={profile.attendanceStatus}
-              startingValue={profile.totalInTime}
-            />
-            <p>{profile.attendanceStatus === "CHECKED_OUT" ? "Final recorded time" : "Live work duration"}</p>
+          <div className="mnx-dashboard-context" aria-label="Workspace context">
+            <span><BriefcaseBusiness size={14} />{profile.department || "General operations"}</span>
+            <span><ShieldCheck size={14} />{profile.branch || "Head office"}</span>
+            {profile.manager ? <span><Sparkles size={14} />Reports to {profile.manager}</span> : null}
           </div>
         </div>
 
-        <p className="mnx-attendance-detail">{status.detail}</p>
+        <div className="mnx-attendance-panel">
+          <header className="mnx-attendance-header">
+            <div>
+              <MonolithSpecLabel>LIVE ATTENDANCE</MonolithSpecLabel>
+              <h2>{status.label}</h2>
+            </div>
+            <MonolithBadge tone={status.tone}>
+              <i />
+              {profile.attendanceStatus.replaceAll("_", " ")}
+            </MonolithBadge>
+          </header>
 
-        <div className="mnx-attendance-actions">
-          {profile.attendanceStatus === "YET_TO_CHECK_IN" ? (
-            <MonolithAction
-              variant="primary"
-              className="mnx-button-wide"
-              disabled={loading}
-              onClick={() => handlePunch("CHECK_IN")}
-            >
-              <span>{loading ? "Updating…" : "Check in"}</span>
-              {loading ? <span className="mnx-button-spinner" /> : <Play size={16} fill="currentColor" />}
-            </MonolithAction>
-          ) : null}
+          <div className="mnx-attendance-clock">
+            <div className="mnx-attendance-clock-icon"><Clock3 size={22} /></div>
+            <div>
+              <AttendanceTimer
+                key={`${profile.attendanceStatus}-${profile.totalInTime}`}
+                status={profile.attendanceStatus}
+                startingValue={profile.totalInTime}
+              />
+              <p>{profile.attendanceStatus === "CHECKED_OUT" ? "Final recorded time" : "Live work duration"}</p>
+            </div>
+          </div>
 
-          {profile.attendanceStatus === "CHECKED_IN" ? (
-            <>
-              <MonolithAction
-                variant="secondary"
-                disabled={loading}
-                onClick={() => handlePunch("START_BREAK")}
-              >
-                <Coffee size={16} />
-                Start break
-              </MonolithAction>
+          <p className="mnx-attendance-detail">{status.detail}</p>
+
+          <div className="mnx-attendance-actions">
+            {profile.attendanceStatus === "YET_TO_CHECK_IN" ? (
               <MonolithAction
                 variant="primary"
+                className="mnx-button-wide"
                 disabled={loading}
-                onClick={() => handlePunch("CHECK_OUT")}
+                onClick={() => handlePunch("CHECK_IN")}
               >
-                Check out
-                <LogOut size={16} />
+                <span>{loading ? "Updating…" : "Check in"}</span>
+                {loading ? <span className="mnx-button-spinner" /> : <Play size={16} fill="currentColor" />}
               </MonolithAction>
-            </>
-          ) : null}
+            ) : null}
 
-          {profile.attendanceStatus === "ON_BREAK" ? (
-            <MonolithAction
-              variant="primary"
-              className="mnx-button-wide"
-              disabled={loading}
-              onClick={() => handlePunch("RESUME_WORK")}
-            >
-              <span>{loading ? "Updating…" : "Resume work"}</span>
-              {loading ? <span className="mnx-button-spinner" /> : <ArrowRight size={17} />}
-            </MonolithAction>
-          ) : null}
+            {profile.attendanceStatus === "CHECKED_IN" ? (
+              <>
+                <MonolithAction
+                  variant="secondary"
+                  disabled={loading}
+                  onClick={() => handlePunch("START_BREAK")}
+                >
+                  <Coffee size={16} />
+                  Start break
+                </MonolithAction>
+                <MonolithAction
+                  variant="primary"
+                  disabled={loading}
+                  onClick={() => handlePunch("CHECK_OUT")}
+                >
+                  Check out
+                  <LogOut size={16} />
+                </MonolithAction>
+              </>
+            ) : null}
 
-          {profile.attendanceStatus === "CHECKED_OUT" ? (
-            <div className="mnx-attendance-complete" role="status">
-              <span><Check size={17} /></span>
-              Attendance closed for today
+            {profile.attendanceStatus === "ON_BREAK" ? (
+              <MonolithAction
+                variant="primary"
+                className="mnx-button-wide"
+                disabled={loading}
+                onClick={() => handlePunch("RESUME_WORK")}
+              >
+                <span>{loading ? "Updating…" : "Resume work"}</span>
+                {loading ? <span className="mnx-button-spinner" /> : <ArrowRight size={17} />}
+              </MonolithAction>
+            ) : null}
+
+            {profile.attendanceStatus === "CHECKED_OUT" ? (
+              <div className="mnx-attendance-complete" role="status">
+                <span><Check size={17} /></span>
+                Attendance closed for today
+              </div>
+            ) : null}
+          </div>
+
+          <footer className="mnx-attendance-guide">
+            <span>Today&apos;s guide</span>
+            <p>Keep attendance current, clear priority work early, and review your next company update.</p>
+          </footer>
+
+          {celebrating ? (
+            <div className="mnx-celebration" aria-live="polite">
+              <span>✓</span>
+              <b>All synced</b>
             </div>
           ) : null}
         </div>
+      </div>
 
-        <footer className="mnx-attendance-guide">
-          <span>Today&apos;s guide</span>
-          <p>Keep attendance current, clear priority work early, and review your next company update.</p>
-        </footer>
-
-        {celebrating ? (
-          <div className="mnx-celebration" aria-live="polite">
-            <span>✓</span>
-            <b>All synced</b>
-          </div>
-        ) : null}
+      <div className="mnx-dashboard-mini-stats" aria-label="Pending work summary">
+        <article>
+          <span>Pending tasks</span>
+          <strong>{String(pending.tasks).padStart(2, "0")}</strong>
+          <small>Focus queue</small>
+        </article>
+        <article>
+          <span>Leave items</span>
+          <strong>{String(pending.leaves).padStart(2, "0")}</strong>
+          <small>Awaiting movement</small>
+        </article>
+        <article>
+          <span>HR cases</span>
+          <strong>{String(pending.cases).padStart(2, "0")}</strong>
+          <small>Open support</small>
+        </article>
       </div>
     </section>
   );

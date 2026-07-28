@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
-import { Lock } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { can } from "@/lib/rbac";
-import { WorkspaceState } from "@/components/monolith";
 import DesignSystemClient from "./design-system-client";
 
 export default async function AdminDesignSystemPage() {
@@ -12,13 +10,13 @@ export default async function AdminDesignSystemPage() {
   const allowed = await can(session.user.id, "admin.org.manage");
   if (!allowed) {
     return (
-      <WorkspaceState
-        variant="permission"
-        eyebrow="Permission required"
-        title="Design system"
-        description="You need administrator access to view the Monolith design-system showcase."
-        icon={<Lock size={22} />}
-      />
+      <section className="monolith-card p-6">
+        <p className="monolith-label">Permission Required</p>
+        <h1 className="monolith-section-title mt-2">Design System</h1>
+        <p className="mt-3 text-sm text-mono-muted">
+          You need administrator access to view the Monolith design-system reference.
+        </p>
+      </section>
     );
   }
 
