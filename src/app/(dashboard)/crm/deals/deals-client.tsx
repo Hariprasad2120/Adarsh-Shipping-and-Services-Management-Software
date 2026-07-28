@@ -1,6 +1,6 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -96,7 +96,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
         </div>
         <div className="space-y-1">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Weighted Forecast</span>
-          <span className="text-[#00c4b6] font-bold text-lg">₹{stats.totalForecast.toLocaleString("en-IN")}</span>
+          <span className="text-[#F9D972] font-bold text-lg">₹{stats.totalForecast.toLocaleString("en-IN")}</span>
         </div>
         <div className="space-y-1">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Active Enquiries</span>
@@ -117,7 +117,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
             placeholder="Filter deals by name or account..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#00c4b6] text-white"
+            className="w-full pl-9 pr-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#F9D972] text-white"
           />
         </div>
         <div className="flex items-center gap-3">
@@ -125,7 +125,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
             <button
               onClick={() => setViewMode("KANBAN")}
               className={`p-1.5 rounded-md cursor-pointer ${
-                viewMode === "KANBAN" ? "bg-[#161f28] text-[#00c4b6]" : "text-slate-400 hover:text-white"
+                viewMode === "KANBAN" ? "bg-[#161f28] text-[#F9D972]" : "text-slate-400 hover:text-white"
               }`}
               title="Pipeline Kanban Grid"
             >
@@ -134,7 +134,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
             <button
               onClick={() => setViewMode("LIST")}
               className={`p-1.5 rounded-md cursor-pointer ${
-                viewMode === "LIST" ? "bg-[#161f28] text-[#00c4b6]" : "text-slate-400 hover:text-white"
+                viewMode === "LIST" ? "bg-[#161f28] text-[#F9D972]" : "text-slate-400 hover:text-white"
               }`}
               title="Table List View"
             >
@@ -143,7 +143,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
           </div>
           <Link
             href="/crm/deals/new"
-            className="flex items-center gap-2 bg-[#00c4b6] hover:bg-[#00b0a3] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md shadow-[#00c4b6]/10 cursor-pointer"
+            className="flex items-center gap-2 bg-[#F9D972] hover:bg-[#00b0a3] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
           >
             <Plus className="size-3.5" />
             <span>Create Deal</span>
@@ -169,7 +169,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                     {stageDeals.length}
                   </span>
                 </div>
-                <div className="text-[10px] font-bold text-[#00c4b6]">₹{stageSum.toLocaleString("en-IN")}</div>
+                <div className="text-[10px] font-bold text-[#F9D972]">₹{stageSum.toLocaleString("en-IN")}</div>
 
                 {/* Cards List */}
                 <div className="space-y-2.5 min-h-[300px] overflow-y-auto max-h-[500px] custom-scrollbar">
@@ -179,13 +179,13 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                     stageDeals.map((deal) => (
                       <div
                         key={deal.id}
-                        className={`p-3 bg-[#0a0d12]/90 border border-[#1c212a]/70 rounded-lg hover:border-[#00c4b6]/60 transition-all space-y-2 relative ${
+                        className={`p-3 bg-[#0a0d12]/90 border border-[#1c212a]/70 rounded-lg hover:border-[#F9D972]/60 transition-all space-y-2 relative ${
                           updatingId === deal.id ? "opacity-50" : ""
                         }`}
                       >
                         {/* Title & Amount */}
                         <div className="space-y-1">
-                          <Link href={`/crm/deals/${deal.id}`} className="font-bold text-white text-xs block hover:underline hover:text-[#00c4b6] truncate pr-4">
+                          <Link href={`/crm/deals/${deal.id}`} className="font-bold text-white text-xs block hover:underline hover:text-[#F9D972] truncate pr-4">
                             {deal.name}
                           </Link>
                           {deal.account && (
@@ -193,7 +193,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                           )}
                         </div>
 
-                        <div className="flex items-center justify-between text-[11px] font-bold text-[#00c4b6]">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-[#F9D972]">
                           <span>₹{deal.amount.toLocaleString("en-IN")}</span>
                           <span className="text-[9px] text-slate-500 uppercase tracking-wide bg-slate-800/40 px-1.5 py-0.5 rounded">
                             {deal.probability}%
@@ -207,7 +207,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                             value={deal.stage}
                             onChange={(e) => handleStageChange(deal.id, e.target.value)}
                             disabled={updatingId === deal.id}
-                            className="bg-[#0c0f14] border border-[#1c212a] text-[9.5px] font-semibold text-slate-400 rounded px-1 py-0.5 focus:outline-none focus:border-[#00c4b6] cursor-pointer"
+                            className="bg-[#0c0f14] border border-[#1c212a] text-[9.5px] font-semibold text-slate-400 rounded px-1 py-0.5 focus:outline-none focus:border-[#F9D972] cursor-pointer"
                           >
                             {STAGES.map((st) => (
                               <option key={st} value={st}>{st.replace("_", " ")}</option>
@@ -224,12 +224,12 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
         </div>
       ) : (
         /* ─── LIST VIEW ─── */
-        <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
           {filteredDeals.length === 0 ? (
-            <div className="p-8 text-center text-on-surface-variant">No deals matched search criteria</div>
+            <div className="p-8 text-center text-mono-muted">No deals matched search criteria</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="ds-table">
+              <table className="monolith-table">
                 <thead>
                   <tr>
                     <th className="px-6 py-3">Deal Name</th>
@@ -243,24 +243,24 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                 </thead>
                 <tbody>
                   {filteredDeals.map((deal) => (
-                    <tr key={deal.id} className="ds-row-link">
+                    <tr key={deal.id} className="monolith-row-link">
                       <td className="px-6 py-4 font-medium">
-                        <Link href={`/crm/deals/${deal.id}`} className="hover:text-[#00cec4] transition-colors">
+                        <Link href={`/crm/deals/${deal.id}`} className="hover:text-[#F9D972] transition-colors">
                           {deal.name}
                         </Link>
                         {deal.serviceType && (
-                          <span className="ds-label block mt-0.5 font-normal">
+                          <span className="monolith-label block mt-0.5 font-normal">
                             {deal.serviceType} • {deal.logisticsCategory || "CHA"}
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4">
                         {deal.account ? (
-                          <Link href={`/crm/customers/${deal.account.id}`} className="hover:underline text-[#00cec4]">
+                          <Link href={`/crm/customers/${deal.account.id}`} className="hover:underline text-[#F9D972]">
                             {deal.account.name}
                           </Link>
                         ) : (
-                          <span className="text-on-surface-variant italic">No account</span>
+                          <span className="text-mono-muted italic">No account</span>
                         )}
                       </td>
                       <td className="px-6 py-4">
@@ -269,15 +269,15 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                             ? "bg-emerald-500/10 text-emerald-400"
                             : deal.stage === "LOST"
                             ? "bg-red-500/10 text-red-400"
-                            : "bg-[#00cec4]/10 text-[#00cec4]"
+                            : "bg-[#F9D972]/10 text-[#F9D972]"
                         }`}>
                           {deal.stage.replace("_", " ")}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-medium text-[#00cec4]">
+                      <td className="px-6 py-4 font-medium text-[#F9D972]">
                         ₹{deal.amount.toLocaleString("en-IN")}
                       </td>
-                      <td className="px-6 py-4 text-on-surface-variant text-xs">
+                      <td className="px-6 py-4 text-mono-muted text-xs">
                         {deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString("en-IN") : "No Close Date"}
                       </td>
                       <td className="px-6 py-4 text-xs">
@@ -285,12 +285,12 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Link href={`/crm/deals/${deal.id}`} className="p-1.5 text-on-surface-variant hover:text-on-surface rounded hover:bg-surface-container cursor-pointer">
+                          <Link href={`/crm/deals/${deal.id}`} className="p-1.5 text-mono-muted hover:text-mono-text rounded hover:bg-mono-soft cursor-pointer">
                             <Eye className="size-4" />
                           </Link>
                           <button
                             onClick={() => handleDelete(deal.id)}
-                            className="p-1.5 text-on-surface-variant hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer"
+                            className="p-1.5 text-mono-muted hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer"
                           >
                             <Trash2 className="size-4" />
                           </button>

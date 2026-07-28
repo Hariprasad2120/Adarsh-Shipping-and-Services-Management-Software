@@ -68,19 +68,19 @@ function StatusStrip({
           Submitted
         </span>
       ) : currentStatus === "DRAFT" ? (
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-semibold text-on-surface-variant">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-mono-border/40 bg-mono-soft px-3 py-1.5 text-xs font-semibold text-mono-muted">
           Draft
         </span>
       ) : null}
 
       {!isEditable && (
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-semibold text-on-surface-variant">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-mono-border/40 bg-mono-soft px-3 py-1.5 text-xs font-semibold text-mono-muted">
           View-only
         </span>
       )}
 
       {savedAt && editCount !== null ? (
-        <span className="text-xs text-on-surface-variant/60">
+        <span className="text-xs text-mono-muted/60">
           Saved {savedAt}{editCount > 0 ? ` · ${editCount} edit${editCount !== 1 ? "s" : ""}` : ""}
         </span>
       ) : null}
@@ -171,22 +171,22 @@ export function SelfAssessmentForm({
           currentStatus={currentStatus}
           isEditable={isEditable}
         />
-        <div className="rounded-2xl border border-[#00cec4]/30 bg-[#00cec4]/5 px-6 py-5 space-y-3">
+        <div className="rounded-2xl border border-[#F9D972]/30 bg-[#F9D972]/5 px-6 py-5 space-y-3">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
               <p className="text-base font-semibold text-[#008b85]">Self-assessment submitted</p>
-              <p className="text-sm text-on-surface-variant">
+              <p className="text-sm text-mono-muted">
                 Your self-assessment has been submitted. You can edit it until the deadline.
               </p>
             </div>
-            <svg className="mt-0.5 size-6 shrink-0 text-[#00cec4]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="mt-0.5 size-6 shrink-0 text-[#F9D972]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
           <button
             type="button"
             onClick={() => setIsLocked(false)}
-            className="inline-flex items-center gap-2 rounded-xl border border-[#00cec4]/40 bg-white px-4 py-2 text-sm font-medium text-[#008b85] transition hover:bg-[#00cec4]/8"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#F9D972]/40 bg-white px-4 py-2 text-sm font-medium text-[#008b85] transition hover:bg-[#F9D972]/8"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />

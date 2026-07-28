@@ -1,16 +1,16 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
-import { DateInput } from "@/components/ui/date-input";
+import { NativeSelect } from "@/components/monolith/native-select";
+import { DateInput } from "@/components/monolith/date-input";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CreditCard, Search, Filter, ExternalLink, MessageSquare, ChevronDown, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge, type BadgeVariant } from "@/components/ui/badge";
-import { FileUploadField } from "@/components/ui/file-upload-field";
-import { Modal } from "@/components/ui/modal";
-import { WarningIndicatorPopover } from "@/components/ui/warning-indicator-popover";
+import { Button } from "@/components/monolith/button";
+import { Badge, type BadgeVariant } from "@/components/monolith/badge";
+import { FileUploadField } from "@/components/monolith/file-upload-field";
+import { Modal } from "@/components/monolith/modal";
+import { WarningIndicatorPopover } from "@/components/monolith/warning-indicator-popover";
 import * as actions from "@/modules/cha/actions";
 import Link from "next/link";
 import { formatChaBadgeLabel } from "@/lib/cha-badges";
@@ -191,7 +191,7 @@ function createRouteSnapshotFile(row: FuelExpenseRow, fileName: string) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <rect width="100%" height="100%" fill="#f7f9fb"/>
   <rect x="16" y="16" width="${width - 32}" height="${height - 32}" rx="18" fill="#ffffff" stroke="#bfc8c6"/>
-  <polyline points="${points}" fill="none" stroke="#00cec4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="${points}" fill="none" stroke="#F9D972" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="${points.split(" ")[0].split(",")[0]}" cy="${points.split(" ")[0].split(",")[1]}" r="12" fill="#16a34a"/>
   <circle cx="${points.split(" ").at(-1)?.split(",")[0]}" cy="${points.split(" ").at(-1)?.split(",")[1]}" r="12" fill="#dc2626"/>
   <text x="36" y="52" font-family="Arial, sans-serif" font-size="18" fill="#191c1e">Fuel route snapshot</text>
@@ -259,7 +259,7 @@ function LocationSearchInput({
 
   return (
     <div className="relative space-y-1">
-      <label htmlFor={id} className="ds-label">{label}</label>
+      <label htmlFor={id} className="monolith-label">{label}</label>
       <input
         id={id}
         value={value}
@@ -269,15 +269,15 @@ function LocationSearchInput({
         autoComplete="off"
         required={required}
       />
-      {searching ? <p className="text-xs text-on-surface-variant">Searching OpenStreetMap...</p> : null}
+      {searching ? <p className="text-xs text-mono-muted">Searching OpenStreetMap...</p> : null}
       {searchError ? <p className="text-xs text-destructive">{searchError}</p> : null}
       {suggestions.length ? (
-        <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-xl border border-outline-variant/50 bg-surface p-1 shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-xl border border-mono-border/50 bg-mono-card p-1 shadow-lg">
           {suggestions.map((suggestion) => (
             <button
               key={`${suggestion.lat}-${suggestion.lon}-${suggestion.displayName}`}
               type="button"
-              className="w-full rounded-lg px-3 py-2 text-left text-xs text-on-surface transition hover:bg-surface-container-low"
+              className="w-full rounded-lg px-3 py-2 text-left text-xs text-mono-text transition hover:bg-mono-soft"
               onClick={() => {
                 onPlaceSelected(suggestion);
                 setSuggestions([]);
@@ -470,11 +470,11 @@ export function ExpensesClient({
 
   const renderRoutePlanner = (row: FuelExpenseRow) => (
     <div className="space-y-4">
-      <div className="space-y-3 rounded-xl border border-outline-variant/45 bg-surface p-3">
+      <div className="space-y-3 rounded-xl border border-mono-border/45 bg-mono-card p-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="ds-label">Route Details</p>
-            <p className="text-xs text-on-surface-variant">
+            <p className="monolith-label">Route Details</p>
+            <p className="text-xs text-mono-muted">
               Add start, optional stops, and destination before capturing KM.
             </p>
           </div>
@@ -560,20 +560,20 @@ export function ExpensesClient({
           }
           onPlaceSelected={(suggestion) => updateFuelRow(row.id, { toAddress: suggestion.displayName })}
         />
-        <div className="rounded-xl border border-outline-variant/45 bg-surface-container-low/35 p-3">
-          <p className="ds-label">Captured Distance</p>
-          <p className="text-sm text-on-surface">
+        <div className="rounded-xl border border-mono-border/45 bg-mono-soft/35 p-3">
+          <p className="monolith-label">Captured Distance</p>
+          <p className="text-sm text-mono-text">
             {row.routeDistanceKm ? `${row.routeDistanceKm.toLocaleString("en-IN")} one-way KM` : "Not captured"}
           </p>
           {row.routeDistanceStatus ? (
-            <p className="mt-1 text-xs text-on-surface-variant">{row.routeDistanceStatus}</p>
+            <p className="mt-1 text-xs text-mono-muted">{row.routeDistanceStatus}</p>
           ) : null}
         </div>
-        <div className="rounded-xl border border-outline-variant/45 bg-surface p-3">
+        <div className="rounded-xl border border-mono-border/45 bg-mono-card p-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="ds-label">Free Automatic KM</p>
-              <p className="mt-1 text-xs text-on-surface-variant">
+              <p className="monolith-label">Free Automatic KM</p>
+              <p className="mt-1 text-xs text-mono-muted">
                 Uses OpenStreetMap address search and free OSRM driving distance. It does not require a billing account.
               </p>
             </div>
@@ -586,14 +586,14 @@ export function ExpensesClient({
             </Button>
           </div>
         </div>
-        <div className="rounded-xl border border-outline-variant/45 bg-surface p-3">
-          <p className="ds-label">Google Maps Manual Capture</p>
-          <p className="mt-1 text-xs text-on-surface-variant">
+        <div className="rounded-xl border border-mono-border/45 bg-mono-card p-3">
+          <p className="monolith-label">Google Maps Manual Capture</p>
+          <p className="mt-1 text-xs text-mono-muted">
             Opens Google Maps without using paid APIs. Enter the one-way KM shown by Google Maps here.
           </p>
           <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
             <div className="space-y-1">
-              <label className="ds-label">One-way KM from Google Maps</label>
+              <label className="monolith-label">One-way KM from Google Maps</label>
               <input
                 type="number"
                 min="0"
@@ -613,7 +613,7 @@ export function ExpensesClient({
                   });
                 }}
                 placeholder="e.g. 12.4"
-                className="h-11 w-full text-sm ds-numeric"
+                className="h-11 w-full text-sm monolith-numeric"
               />
             </div>
             <Button
@@ -659,9 +659,9 @@ export function ExpensesClient({
           </div>
         </div>
         {row.mapSnapshotFile ? (
-          <div className="rounded-xl border border-outline-variant/45 bg-surface-container-low/35 p-3">
-            <p className="ds-label">Route Evidence</p>
-            <p className="mt-1 text-xs text-on-surface">
+          <div className="rounded-xl border border-mono-border/45 bg-mono-soft/35 p-3">
+            <p className="monolith-label">Route Evidence</p>
+            <p className="mt-1 text-xs text-mono-text">
               {row.mapSnapshotFile.type === "image/svg+xml" ? "Generated route snapshot" : "Uploaded route evidence"}:{" "}
               <span className="font-medium">{row.mapSnapshotFile.name}</span>
             </p>
@@ -931,42 +931,42 @@ export function ExpensesClient({
       />
 
       <div className="grid gap-3 md:grid-cols-4">
-        <div className="card-top-accent rounded-xl border border-outline-variant/45 bg-surface p-4">
-          <p className="ds-label">Visible Records</p>
-          <p className="mt-2 text-xl text-on-surface ds-numeric">{initialExpenses.length}</p>
+        <div className="monolith-card monolith-accent rounded-xl border border-mono-border/45 bg-mono-card p-4">
+          <p className="monolith-label">Visible Records</p>
+          <p className="mt-2 text-xl text-mono-text monolith-numeric">{initialExpenses.length}</p>
         </div>
-        <div className="rounded-xl border border-outline-variant/45 bg-surface p-4">
-          <p className="ds-label">Pending Review</p>
-          <p className="mt-2 text-xl text-on-surface ds-numeric">{pendingCount}</p>
+        <div className="rounded-xl border border-mono-border/45 bg-mono-card p-4">
+          <p className="monolith-label">Pending Review</p>
+          <p className="mt-2 text-xl text-mono-text monolith-numeric">{pendingCount}</p>
         </div>
-        <div className="rounded-xl border border-outline-variant/45 bg-surface p-4">
-          <p className="ds-label">Approved</p>
-          <p className="mt-2 text-xl text-on-surface ds-numeric">{approvedCount}</p>
+        <div className="rounded-xl border border-mono-border/45 bg-mono-card p-4">
+          <p className="monolith-label">Approved</p>
+          <p className="mt-2 text-xl text-mono-text monolith-numeric">{approvedCount}</p>
         </div>
-        <div className="rounded-xl border border-outline-variant/45 bg-surface p-4">
-          <p className="ds-label">Processed</p>
-          <p className="mt-2 text-xl text-on-surface ds-numeric">{processedCount}</p>
+        <div className="rounded-xl border border-mono-border/45 bg-mono-card p-4">
+          <p className="monolith-label">Processed</p>
+          <p className="mt-2 text-xl text-mono-text monolith-numeric">{processedCount}</p>
         </div>
       </div>
 
       {canCreateExpenses && showDirectRequestForm ? (
-        <section className="rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
+        <section className="rounded-xl border border-mono-border/60 bg-mono-card shadow-sm">
           <div className="flex items-center justify-between gap-3 p-5">
             <div className="grid min-w-0 grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
-              <span className="h-8 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+              <span className="h-8 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
               <div className="min-w-0">
-                <h2 className="ds-h2 text-on-surface">Raise Expense Request</h2>
-                <p className="text-xs text-on-surface-variant">
+                <h2 className="monolith-h2 text-mono-text">Raise Expense Request</h2>
+                <p className="text-xs text-mono-muted">
                   Submit against a CHA job or choose Other for office expenses.
                 </p>
               </div>
             </div>
           </div>
 
-          <form onSubmit={handleCreateDirectExpense} className="border-t border-outline-variant/35 p-5">
+          <form onSubmit={handleCreateDirectExpense} className="border-t border-mono-border/35 p-5">
             <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
                 <div className="space-y-4">
-                  <div className="inline-flex rounded-xl border border-outline-variant/45 bg-surface p-1">
+                  <div className="inline-flex rounded-xl border border-mono-border/45 bg-mono-card p-1">
                     <Button type="button" variant={raiseView === "GENERAL" ? "default" : "outline"} size="sm" onClick={() => setRaiseView("GENERAL")}>
                       General Expense
                     </Button>
@@ -986,7 +986,7 @@ export function ExpensesClient({
 
                   {directScope === "JOB" ? (
                     <div className="space-y-1">
-                      <label className="ds-label">Job Number *</label>
+                      <label className="monolith-label">Job Number *</label>
                       <input
                         list="expense-job-suggestions"
                         value={directJobQuery}
@@ -1008,7 +1008,7 @@ export function ExpensesClient({
                     </div>
                   ) : (
                     <div className="space-y-1">
-                      <label className="ds-label">Other Expense Purpose *</label>
+                      <label className="monolith-label">Other Expense Purpose *</label>
                       <input
                         value={directOtherPurpose}
                         onChange={(e) => setDirectOtherPurpose(e.target.value)}
@@ -1022,7 +1022,7 @@ export function ExpensesClient({
                   {raiseView === "GENERAL" ? (
                     <div className="grid gap-3 md:grid-cols-2">
                       <div className="space-y-1">
-                        <label className="ds-label">Category *</label>
+                        <label className="monolith-label">Category *</label>
                         <input
                           value={directCategory}
                           onChange={(e) => setDirectCategory(e.target.value)}
@@ -1032,7 +1032,7 @@ export function ExpensesClient({
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="ds-label">Purpose *</label>
+                        <label className="monolith-label">Purpose *</label>
                         <input
                           value={directPurpose}
                           onChange={(e) => setDirectPurpose(e.target.value)}
@@ -1042,19 +1042,19 @@ export function ExpensesClient({
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="ds-label">Amount (INR) *</label>
+                        <label className="monolith-label">Amount (INR) *</label>
                         <input
                           type="number"
                           min="1"
                           value={directAmount}
                           onChange={(e) => setDirectAmount(e.target.value)}
                           placeholder="Amount"
-                          className="h-11 w-full text-sm ds-numeric"
+                          className="h-11 w-full text-sm monolith-numeric"
                           required
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="ds-label">Required Date</label>
+                        <label className="monolith-label">Required Date</label>
                         <DateInput
                           value={directRequiredDate}
                           onChange={(e) => setDirectRequiredDate(e.target.value)}
@@ -1085,18 +1085,18 @@ export function ExpensesClient({
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <div className="rounded-xl border border-outline-variant/45 bg-surface-container-low/35 p-3">
+                      <div className="rounded-xl border border-mono-border/45 bg-mono-soft/35 p-3">
                         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                           <div>
-                            <p className="ds-label">Fuel Policy</p>
-                            <p className="text-sm text-on-surface">INR {FUEL_POLICY_RATE_PER_KM.toFixed(2)} per KM</p>
-                            <p className="mt-1 text-xs text-on-surface-variant">
+                            <p className="monolith-label">Fuel Policy</p>
+                            <p className="text-sm text-mono-text">INR {FUEL_POLICY_RATE_PER_KM.toFixed(2)} per KM</p>
+                            <p className="mt-1 text-xs text-mono-muted">
                               Free KM capture uses OSRM routing. Google Maps remains available as a manual evidence fallback.
                             </p>
                           </div>
-                          <div className="flex gap-4 text-xs text-on-surface-variant">
-                            <span className="ds-numeric">{fuelTotalKm.toLocaleString("en-IN")} KM</span>
-                            <span className="ds-numeric">INR {fuelTotalAmount.toLocaleString("en-IN")}</span>
+                          <div className="flex gap-4 text-xs text-mono-muted">
+                            <span className="monolith-numeric">{fuelTotalKm.toLocaleString("en-IN")} KM</span>
+                            <span className="monolith-numeric">INR {fuelTotalAmount.toLocaleString("en-IN")}</span>
                           </div>
                         </div>
                       </div>
@@ -1105,11 +1105,11 @@ export function ExpensesClient({
                         const distanceKm = getFuelRowDistanceKm(row);
                         const amount = getFuelRowAmount(row);
                         return (
-                          <div key={row.id} className="rounded-xl border border-outline-variant/45 bg-surface p-4">
+                          <div key={row.id} className="rounded-xl border border-mono-border/45 bg-mono-card p-4">
                             <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                               <div>
-                                <p className="ds-label">Fuel Expense {index + 1}</p>
-                                <p className="text-xs text-on-surface-variant">
+                                <p className="monolith-label">Fuel Expense {index + 1}</p>
+                                <p className="text-xs text-mono-muted">
                                   Distance {distanceKm.toLocaleString("en-IN")} KM • Amount INR {amount.toLocaleString("en-IN")}
                                 </p>
                               </div>
@@ -1130,7 +1130,7 @@ export function ExpensesClient({
 
                             <div className="grid gap-3 md:grid-cols-2">
                               <div className="space-y-1">
-                                <label className="ds-label">Purpose *</label>
+                                <label className="monolith-label">Purpose *</label>
                                 <input
                                   value={row.purpose}
                                   onChange={(e) => updateFuelRow(row.id, { purpose: e.target.value })}
@@ -1140,7 +1140,7 @@ export function ExpensesClient({
                                 />
                               </div>
                               <div className="space-y-1">
-                                <label className="ds-label">Travel Date *</label>
+                                <label className="monolith-label">Travel Date *</label>
                                 <DateInput
                                   required
                                   value={row.requiredDate}
@@ -1150,7 +1150,7 @@ export function ExpensesClient({
                               </div>
                               {row.mode === "KM" ? (
                                 <div className="space-y-1">
-                                  <label className="ds-label">KM Travelled *</label>
+                                  <label className="monolith-label">KM Travelled *</label>
                                   <input
                                     type="number"
                                     min="0"
@@ -1158,16 +1158,16 @@ export function ExpensesClient({
                                     value={row.km}
                                     onChange={(e) => updateFuelRow(row.id, { km: e.target.value })}
                                     placeholder="Enter distance"
-                                    className="h-11 w-full text-sm ds-numeric"
+                                    className="h-11 w-full text-sm monolith-numeric"
                                     required
                                   />
                                 </div>
                               ) : (
-                                <div className="md:col-span-2 rounded-xl border border-outline-variant/45 bg-surface p-3">
+                                <div className="md:col-span-2 rounded-xl border border-mono-border/45 bg-mono-card p-3">
                                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                     <div className="min-w-0 space-y-1">
-                                      <p className="ds-label">Route Planner</p>
-                                      <p className="truncate text-sm text-on-surface">
+                                      <p className="monolith-label">Route Planner</p>
+                                      <p className="truncate text-sm text-mono-text">
                                         {[
                                           row.fromAddress.trim() || "From address not set",
                                           ...(row.stopAddresses.filter((stop) => stop.trim()).length
@@ -1176,11 +1176,11 @@ export function ExpensesClient({
                                           row.toAddress.trim() || "To address not set",
                                         ].join(" -> ")}
                                       </p>
-                                      <p className="text-xs text-on-surface-variant">
+                                      <p className="text-xs text-mono-muted">
                                         {row.routeDistanceKm ? `${row.routeDistanceKm.toLocaleString("en-IN")} one-way KM captured` : "Open the planner to enter route, stops, capture KM, and attach map snapshot."}
                                       </p>
                                       {row.mapSnapshotFile ? (
-                                        <p className="text-xs font-medium uppercase tracking-[0.08em] text-primary">
+                                        <p className="text-xs font-medium uppercase tracking-[0.08em] text-mono-accent">
                                           Map snapshot ready
                                         </p>
                                       ) : null}
@@ -1191,15 +1191,15 @@ export function ExpensesClient({
                                   </div>
                                 </div>
                               )}
-                              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-outline-variant/45 bg-surface p-3">
+                              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-mono-border/45 bg-mono-card p-3">
                                 <input
                                   type="checkbox"
                                   checked={row.roundTrip}
                                   onChange={(e) => updateFuelRow(row.id, { roundTrip: e.target.checked })}
                                 />
                                 <span>
-                                  <span className="block text-sm font-medium text-on-surface">Round trip</span>
-                                  <span className="text-xs text-on-surface-variant">Doubles the captured one-way KM.</span>
+                                  <span className="block text-sm font-medium text-mono-text">Round trip</span>
+                                  <span className="text-xs text-mono-muted">Doubles the captured one-way KM.</span>
                                 </span>
                               </label>
                               <div className="md:col-span-2">
@@ -1238,16 +1238,16 @@ export function ExpensesClient({
 
                   <div className="grid gap-3 md:grid-cols-2">
                     <div className="space-y-1">
-                      <label className="ds-label">UPI Number</label>
+                      <label className="monolith-label">UPI Number</label>
                       <input
                         value={directUpiNumber}
                         onChange={(e) => setDirectUpiNumber(e.target.value)}
                         placeholder="Payee mobile number"
-                        className="h-11 w-full text-sm ds-numeric"
+                        className="h-11 w-full text-sm monolith-numeric"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="ds-label">UPI ID</label>
+                      <label className="monolith-label">UPI ID</label>
                       <input
                         value={directUpiId}
                         onChange={(e) => setDirectUpiId(e.target.value)}
@@ -1258,10 +1258,10 @@ export function ExpensesClient({
                   </div>
                 </div>
 
-                <aside className="space-y-4 border-outline-variant/35 xl:border-l xl:pl-5">
+                <aside className="space-y-4 border-mono-border/35 xl:border-l xl:pl-5">
                   <div className="space-y-2">
-                    <p className="ds-label">Approval Route</p>
-                    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-outline-variant/45 bg-surface p-3">
+                    <p className="monolith-label">Approval Route</p>
+                    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-mono-border/45 bg-mono-card p-3">
                       <input
                         type="radio"
                         name="directApprovalRoute"
@@ -1271,11 +1271,11 @@ export function ExpensesClient({
                         className="mt-1"
                       />
                       <span>
-                        <span className="block text-sm font-medium text-on-surface">Via manager, then Accounts</span>
-                        <span className="text-xs text-on-surface-variant">Manager approves first; Accounts handles disbursement.</span>
+                        <span className="block text-sm font-medium text-mono-text">Via manager, then Accounts</span>
+                        <span className="text-xs text-mono-muted">Manager approves first; Accounts handles disbursement.</span>
                       </span>
                     </label>
-                    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-outline-variant/45 bg-surface p-3">
+                    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-mono-border/45 bg-mono-card p-3">
                       <input
                         type="radio"
                         name="directApprovalRoute"
@@ -1285,13 +1285,13 @@ export function ExpensesClient({
                         className="mt-1"
                       />
                       <span>
-                        <span className="block text-sm font-medium text-on-surface">Direct to Accounts</span>
-                        <span className="text-xs text-on-surface-variant">Accounts can approve or send it to the manager.</span>
+                        <span className="block text-sm font-medium text-mono-text">Direct to Accounts</span>
+                        <span className="text-xs text-mono-muted">Accounts can approve or send it to the manager.</span>
                       </span>
                     </label>
                   </div>
 
-                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-outline-variant/45 bg-surface p-3">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-mono-border/45 bg-mono-card p-3">
                     <input
                       type="checkbox"
                       checked={directUrgent}
@@ -1299,14 +1299,14 @@ export function ExpensesClient({
                       className="mt-1"
                     />
                     <span>
-                      <span className="block text-sm font-medium text-on-surface">Mark urgent</span>
-                      <span className="text-xs text-on-surface-variant">Flags priority without bypassing approval.</span>
+                      <span className="block text-sm font-medium text-mono-text">Mark urgent</span>
+                      <span className="text-xs text-mono-muted">Flags priority without bypassing approval.</span>
                     </span>
                   </label>
 
                   {directUrgent ? (
                     <div className="space-y-1">
-                      <label className="ds-label text-tertiary">Urgency Reason *</label>
+                      <label className="monolith-label text-tertiary">Urgency Reason *</label>
                       <input
                         value={directUrgencyReason}
                         onChange={(e) => setDirectUrgencyReason(e.target.value)}
@@ -1332,19 +1332,19 @@ export function ExpensesClient({
       ) : null}
 
       {/* Expenses queue */}
-      <div className="w-full overflow-hidden rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
+      <div className="w-full overflow-hidden rounded-xl border border-mono-border/60 bg-mono-card shadow-sm">
         <div className="flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="h-8 w-1 rounded-sm bg-[#00cec4]" aria-hidden="true" />
+            <span className="h-8 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
             <div className="min-w-0">
-              <h2 className="ds-h2 text-on-surface">Expenses Queue</h2>
-              <p className="text-xs text-on-surface-variant">{initialExpenses.length} records visible</p>
+              <h2 className="monolith-h2 text-mono-text">Expenses Queue</h2>
+              <p className="text-xs text-mono-muted">{initialExpenses.length} records visible</p>
             </div>
           </div>
 
           <div className="flex min-w-0 flex-1 items-center gap-2 md:max-w-3xl">
             <div className="relative min-w-0 flex-1">
-              <span className="absolute inset-y-0 left-3 flex items-center text-on-surface-variant">
+              <span className="absolute inset-y-0 left-3 flex items-center text-mono-muted">
                 <Search size={16} />
               </span>
               <input
@@ -1365,13 +1365,13 @@ export function ExpensesClient({
                 aria-label="Open queue filters"
                 title="Queue filters"
                 onClick={() => setShowQueueFilters((value) => !value)}
-                className="flex size-10 items-center justify-center rounded-xl border border-outline-variant/60 bg-surface text-[#00cec4] transition-all hover:shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
+                className="flex size-10 items-center justify-center rounded-xl border border-mono-border/60 bg-mono-card text-[#F9D972] transition-all hover:shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
               >
                 <Filter size={17} />
               </button>
 
               {showQueueFilters ? (
-                <div className="absolute right-0 z-20 mt-2 w-[min(92vw,360px)] space-y-3 rounded-xl border border-outline-variant/60 bg-surface p-4 shadow-lg">
+                <div className="absolute right-0 z-20 mt-2 w-[min(92vw,360px)] space-y-3 rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-lg">
                   <div className="grid gap-3">
                     <NativeSelect value={status} onChange={(e) => setStatus(e.target.value)} className="h-10 w-full text-sm font-sans">
                       <option value="">All Statuses</option>
@@ -1428,19 +1428,19 @@ export function ExpensesClient({
         </div>
 
         {initialExpenses.length === 0 ? (
-          <div className="m-5 rounded-xl border border-outline-variant/30 bg-surface p-12 text-center text-on-surface-variant shadow-sm">
+          <div className="m-5 rounded-xl border border-mono-border/30 bg-mono-card p-12 text-center text-mono-muted shadow-sm">
             <CreditCard size={48} className="mx-auto mb-3 text-outline-variant" />
             <p className="text-sm font-semibold">Disbursement queue is currently empty.</p>
             <p className="mt-1 text-xs">Pending expense requests from operations will appear here.</p>
           </div>
         ) : (
-          <div className="w-full bg-surface">
-            <div className="hidden w-full grid-cols-[minmax(320px,1.8fr)_44px_minmax(170px,0.8fr)_minmax(130px,0.7fr)_minmax(220px,0.9fr)] items-center bg-surface-container-low px-5 py-4 text-on-surface md:grid">
-              <span className="ds-label">Request</span>
+          <div className="w-full bg-mono-card">
+            <div className="hidden w-full grid-cols-[minmax(320px,1.8fr)_44px_minmax(170px,0.8fr)_minmax(130px,0.7fr)_minmax(220px,0.9fr)] items-center bg-mono-soft px-5 py-4 text-mono-text md:grid">
+              <span className="monolith-label">Request</span>
               <span aria-hidden="true" />
-              <span className="ds-label text-center">Status</span>
-              <span className="ds-label text-right">Amount</span>
-              <span className="ds-label text-right">Actions</span>
+              <span className="monolith-label text-center">Status</span>
+              <span className="monolith-label text-right">Amount</span>
+              <span className="monolith-label text-right">Actions</span>
             </div>
 
             {initialExpenses.map((req) => {
@@ -1486,7 +1486,7 @@ export function ExpensesClient({
               return (
                 <div
                   key={req.id}
-                  className="cha-expense-row border-t border-outline-variant/30 first:border-t-0"
+                  className="cha-expense-row border-t border-mono-border/30 first:border-t-0"
                   data-urgent={isUrgent ? "true" : "false"}
                 >
                   <div
@@ -1495,9 +1495,9 @@ export function ExpensesClient({
                     <button
                       type="button"
                       onClick={() => setExpandedExpenseId(isExpanded ? null : req.id)}
-                      className="ds-plain flex min-w-0 items-start gap-3 text-left"
+                      className="monolith-plain flex min-w-0 items-start gap-3 text-left"
                     >
-                      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl border border-outline-variant/45 bg-surface text-on-surface-variant">
+                      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl border border-mono-border/45 bg-mono-card text-mono-muted">
                         <ChevronDown size={16} className={`transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                       </span>
                       <span className="min-w-0">
@@ -1511,12 +1511,12 @@ export function ExpensesClient({
                               {req.job.jobNumber}
                             </Link>
                           ) : (
-                            <span className="cha-expense-request-title truncate text-sm font-medium text-on-surface">
+                            <span className="cha-expense-request-title truncate text-sm font-medium text-mono-text">
                               {req.directPurpose ?? "Other Expense"}
                             </span>
                           )}
                         </span>
-                        <span className="block truncate text-xs text-on-surface-variant">
+                        <span className="block truncate text-xs text-mono-muted">
                           {req.job?.customer?.name ?? req.directPurpose ?? "Other expense"} • Requested by {req.requestedBy?.name}
                         </span>
                       </span>
@@ -1539,15 +1539,15 @@ export function ExpensesClient({
                     </div>
 
                     <div className="flex items-center justify-between gap-3 md:justify-center">
-                      <span className="ds-label md:hidden">Status</span>
+                      <span className="monolith-label md:hidden">Status</span>
                       <Badge variant={getExpenseStatusBadgeVariant(req.status)} className="uppercase">
                         {formatChaBadgeLabel(req.status)}
                       </Badge>
                     </div>
 
                     <div className="flex items-center justify-between gap-3 md:block md:text-right">
-                      <span className="ds-label md:hidden">Amount</span>
-                      <span className="text-lg text-cha-primary ds-numeric">₹{sum.toLocaleString("en-IN")}</span>
+                      <span className="monolith-label md:hidden">Amount</span>
+                      <span className="text-lg text-cha-primary monolith-numeric">₹{sum.toLocaleString("en-IN")}</span>
                     </div>
 
                     <div className="flex flex-wrap items-center justify-end gap-2">
@@ -1594,22 +1594,22 @@ export function ExpensesClient({
                         </Button>
                       ) : null}
                       {!canAccountsReviewThisExpense && !canReviewThisExpense && !canClarifyThisExpense && !canMarkReadyThisExpense && !canPayThisExpense ? (
-                        <span className="text-xs text-on-surface-variant">View-only</span>
+                        <span className="text-xs text-mono-muted">View-only</span>
                       ) : null}
                     </div>
                   </div>
 
                   {isExpanded ? (
-                    <div className="border-t border-outline-variant/30 bg-surface p-4">
+                    <div className="border-t border-mono-border/30 bg-mono-card p-4">
                       <div className="grid w-full gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)] xl:items-start">
                         <div className="min-w-0 space-y-4">
                           <section className="space-y-3">
                             <div className="flex items-center justify-between">
-                              <h3 className="ds-h3 text-on-surface">Expense Lines</h3>
-                              <span className="text-xs text-on-surface-variant ds-numeric">{req.lines.length} lines</span>
+                              <h3 className="monolith-h3 text-mono-text">Expense Lines</h3>
+                              <span className="text-xs text-mono-muted monolith-numeric">{req.lines.length} lines</span>
                             </div>
-                            <div className="w-full overflow-hidden border-y border-outline-variant/45 bg-surface rounded-none">
-                              <table className="ds-table ds-table-contained w-full">
+                            <div className="w-full overflow-hidden border-y border-mono-border/45 bg-mono-card rounded-none">
+                              <table className="monolith-table monolith-table-contained w-full">
                                 <thead>
                                   <tr>
                                     <th>Category</th>
@@ -1622,9 +1622,9 @@ export function ExpensesClient({
                                 <tbody>
                                   {req.lines.map((line: any) => (
                                     <tr key={line.id}>
-                                      <td className="ds-label">{line.category}</td>
+                                      <td className="monolith-label">{line.category}</td>
                                       <td>{line.purpose}</td>
-                                      <td className="ds-numeric">
+                                      <td className="monolith-numeric">
                                         {line.requiredDate ? new Date(line.requiredDate).toLocaleDateString("en-IN") : "Not recorded"}
                                       </td>
                                       <td>
@@ -1636,17 +1636,17 @@ export function ExpensesClient({
                                                 href={receiptLink}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="text-xs font-medium text-[#00cec4] hover:underline"
+                                                className="text-xs font-medium text-[#F9D972] hover:underline"
                                               >
                                                 Receipt {receiptIndex + 1}
                                               </a>
                                             ))}
                                           </div>
                                         ) : (
-                                          <span className="text-xs text-on-surface-variant">Not attached</span>
+                                          <span className="text-xs text-mono-muted">Not attached</span>
                                         )}
                                       </td>
-                                      <td className="text-right ds-numeric">₹{Number(line.amount).toLocaleString("en-IN")}</td>
+                                      <td className="text-right monolith-numeric">₹{Number(line.amount).toLocaleString("en-IN")}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -1657,37 +1657,37 @@ export function ExpensesClient({
                           {req.upiNumber || req.upiId ? (
                             <section className="grid gap-3 md:grid-cols-2">
                               {req.upiNumber ? (
-                                <div className="rounded-xl border border-outline-variant/40 bg-surface p-4">
-                                  <p className="ds-label">UPI Number</p>
-                                  <p className="mt-1 text-sm text-on-surface ds-numeric">{req.upiNumber}</p>
+                                <div className="rounded-xl border border-mono-border/40 bg-mono-card p-4">
+                                  <p className="monolith-label">UPI Number</p>
+                                  <p className="mt-1 text-sm text-mono-text monolith-numeric">{req.upiNumber}</p>
                                 </div>
                               ) : null}
                               {req.upiId ? (
-                                <div className="rounded-xl border border-outline-variant/40 bg-surface p-4">
-                                  <p className="ds-label">UPI ID</p>
-                                  <p className="mt-1 text-sm text-on-surface">{req.upiId}</p>
+                                <div className="rounded-xl border border-mono-border/40 bg-mono-card p-4">
+                                  <p className="monolith-label">UPI ID</p>
+                                  <p className="mt-1 text-sm text-mono-text">{req.upiId}</p>
                                 </div>
                               ) : null}
                             </section>
                           ) : null}
 
                           {isUrgent && req.urgencyReason ? (
-                            <section className="card-left-accent-orange rounded-xl border border-tertiary/35 bg-surface p-4 text-xs leading-relaxed">
-                              <p className="ds-label text-tertiary">Urgency Justification</p>
-                              <p className="mt-2 text-on-surface">{req.urgencyReason}</p>
+                            <section className="monolith-card monolith-accent-warning rounded-xl border border-tertiary/35 bg-mono-card p-4 text-xs leading-relaxed">
+                              <p className="monolith-label text-tertiary">Urgency Justification</p>
+                              <p className="mt-2 text-mono-text">{req.urgencyReason}</p>
                             </section>
                           ) : null}
 
                           {req.queries?.length ? (
                             <section className="space-y-3">
-                              <h3 className="ds-h3 text-on-surface">Queries</h3>
+                              <h3 className="monolith-h3 text-mono-text">Queries</h3>
                               {req.queries.map((q: any) => (
-                                <div key={q.id} className="rounded-xl border border-tertiary/35 bg-surface p-4 text-xs">
+                                <div key={q.id} className="rounded-xl border border-tertiary/35 bg-mono-card p-4 text-xs">
                                   <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                                     <div>
-                                      <p className="ds-label text-tertiary">Disbursement Query</p>
-                                      <p className="mt-1 text-on-surface">{q.queryText}</p>
-                                      <p className="mt-1 text-[10px] text-on-surface-variant">Raised by {q.author?.name}</p>
+                                      <p className="monolith-label text-tertiary">Disbursement Query</p>
+                                      <p className="mt-1 text-mono-text">{q.queryText}</p>
+                                      <p className="mt-1 text-[10px] text-mono-muted">Raised by {q.author?.name}</p>
                                     </div>
                                     <Badge variant={q.resolved ? "success" : "warning"} className="uppercase">
                                       {q.resolved ? "Resolved" : "Open"}
@@ -1695,12 +1695,12 @@ export function ExpensesClient({
                                   </div>
 
                                   {q.resolved ? (
-                                    <div className="mt-3 border-t border-outline-variant/25 pt-3">
-                                      <p className="text-on-surface">{q.resolutionText || "No resolution note recorded."}</p>
-                                      <p className="mt-1 text-[10px] text-on-surface-variant">Resolved by {q.resolvedBy?.name}</p>
+                                    <div className="mt-3 border-t border-mono-border/25 pt-3">
+                                      <p className="text-mono-text">{q.resolutionText || "No resolution note recorded."}</p>
+                                      <p className="mt-1 text-[10px] text-mono-muted">Resolved by {q.resolvedBy?.name}</p>
                                     </div>
                                   ) : canPayThisExpense && resolveQueryId === q.id ? (
-                                    <div className="mt-3 space-y-2 border-t border-outline-variant/25 pt-3">
+                                    <div className="mt-3 space-y-2 border-t border-mono-border/25 pt-3">
                                       <input
                                         type="text"
                                         placeholder="Enter query resolution note details..."
@@ -1723,7 +1723,7 @@ export function ExpensesClient({
                                         setResolveQueryId(q.id);
                                         setResolutionText("");
                                       }}
-                                      className="ds-plain mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-tertiary hover:underline"
+                                      className="monolith-plain mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-tertiary hover:underline"
                                     >
                                       <MessageSquare size={12} /> Post Resolution Reply
                                     </button>
@@ -1735,16 +1735,16 @@ export function ExpensesClient({
 
                           {req.payments?.length ? (
                             <section className="space-y-3">
-                              <h3 className="ds-h3 text-on-surface">Payouts</h3>
+                              <h3 className="monolith-h3 text-mono-text">Payouts</h3>
                               {req.payments.map((payment: any) => (
                                 <div
                                   key={payment.id}
-                                  className="rounded-xl border border-outline-variant/40 bg-surface p-4 text-xs"
+                                  className="rounded-xl border border-mono-border/40 bg-mono-card p-4 text-xs"
                                 >
                                   <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                                     <div>
-                                      <p className="font-medium text-on-surface">Payout completed via {payment.paymentMethod}</p>
-                                      <p className="mt-1 text-[10px] text-on-surface-variant">
+                                      <p className="font-medium text-mono-text">Payout completed via {payment.paymentMethod}</p>
+                                      <p className="mt-1 text-[10px] text-mono-muted">
                                         Txn ID: {payment.transactionReference} • Paid by {payment.paidBy?.name}
                                       </p>
                                       {getPaymentProofLinks(payment.paymentProofKey).length ? (
@@ -1755,7 +1755,7 @@ export function ExpensesClient({
                                               href={proofLink}
                                               target="_blank"
                                               rel="noreferrer"
-                                              className="inline-flex text-xs font-medium text-[#00cec4] hover:underline"
+                                              className="inline-flex text-xs font-medium text-[#F9D972] hover:underline"
                                             >
                                               View payment proof {index + 1}
                                             </a>
@@ -1763,7 +1763,7 @@ export function ExpensesClient({
                                         </div>
                                       ) : null}
                                     </div>
-                                    <span className="text-on-surface-variant ds-numeric">
+                                    <span className="text-mono-muted monolith-numeric">
                                       {new Date(payment.paymentDate).toLocaleDateString("en-IN")}
                                     </span>
                                   </div>
@@ -1773,30 +1773,30 @@ export function ExpensesClient({
                           ) : null}
                         </div>
 
-                        <aside className="grid gap-4 rounded-xl border border-outline-variant/45 bg-surface p-4">
+                        <aside className="grid gap-4 rounded-xl border border-mono-border/45 bg-mono-card p-4">
                           <section className="space-y-3">
-                            <h3 className="ds-h3 text-on-surface">Audit Trail</h3>
+                            <h3 className="monolith-h3 text-mono-text">Audit Trail</h3>
                             {req.statusHistory?.length ? (
                               <div className="max-h-72 space-y-3 overflow-y-auto pr-2">
                                 {req.statusHistory.map((entry: any) => (
-                                  <div key={entry.id} className="border-l-2 border-outline-variant/45 pl-3 text-xs">
-                                    <p className="font-medium text-on-surface">{formatChaBadgeLabel(entry.status)}</p>
-                                    <p className="mt-1 text-on-surface-variant">{entry.remarks || "No remarks recorded."}</p>
-                                    <p className="mt-1 text-[10px] text-on-surface-variant ds-numeric">
+                                  <div key={entry.id} className="border-l-2 border-mono-border/45 pl-3 text-xs">
+                                    <p className="font-medium text-mono-text">{formatChaBadgeLabel(entry.status)}</p>
+                                    <p className="mt-1 text-mono-muted">{entry.remarks || "No remarks recorded."}</p>
+                                    <p className="mt-1 text-[10px] text-mono-muted monolith-numeric">
                                       {new Date(entry.createdAt).toLocaleString("en-IN")}
                                     </p>
                                   </div>
                                 ))}
                               </div>
                             ) : (
-                              <p className="text-xs text-on-surface-variant">No audit entries recorded yet.</p>
+                              <p className="text-xs text-mono-muted">No audit entries recorded yet.</p>
                             )}
                           </section>
 
                           <div className="space-y-5">
                           {canAccountsReviewThisExpense || canReviewThisExpense || canClarifyThisExpense || canMarkReadyThisExpense || canPayThisExpense ? (
                             <section className="space-y-3">
-                              <h3 className="ds-h3 text-on-surface">Permitted Actions</h3>
+                              <h3 className="monolith-h3 text-mono-text">Permitted Actions</h3>
                               <div className="flex flex-wrap gap-2">
                                 {canAccountsReviewThisExpense ? (
                                   <>
@@ -1842,12 +1842,12 @@ export function ExpensesClient({
                               </div>
                             </section>
                           ) : (
-                            <p className="text-xs text-on-surface-variant">You have view-only access for this expense.</p>
+                            <p className="text-xs text-mono-muted">You have view-only access for this expense.</p>
                           )}
 
                           {canReviewThisExpense && reviewRequestId === req.id ? (
-                            <section className="space-y-3 rounded-xl border border-outline-variant/45 bg-surface p-4">
-                              <h3 className="ds-h3 text-on-surface">
+                            <section className="space-y-3 rounded-xl border border-mono-border/45 bg-mono-card p-4">
+                              <h3 className="monolith-h3 text-mono-text">
                                 {reviewStatus === "REJECTED" ? "Reject Expense" : "Require Clarification"}
                               </h3>
                               <input
@@ -1874,8 +1874,8 @@ export function ExpensesClient({
                           ) : null}
 
                           {canClarifyThisExpense && clarificationRequestId === req.id ? (
-                            <section className="space-y-3 rounded-xl border border-outline-variant/45 bg-surface p-4">
-                              <h3 className="ds-h3 text-on-surface">Clarification Response</h3>
+                            <section className="space-y-3 rounded-xl border border-mono-border/45 bg-mono-card p-4">
+                              <h3 className="monolith-h3 text-mono-text">Clarification Response</h3>
                               <textarea
                                 placeholder="Enter the clarification requested by the reviewer..."
                                 value={clarificationText}
@@ -1894,21 +1894,21 @@ export function ExpensesClient({
                           ) : null}
 
                           {canPayThisExpense && payRequestId === req.id ? (
-                            <form onSubmit={handlePostPayment} className="space-y-4 rounded-xl border border-cha-primary/45 bg-surface p-4">
-                              <h3 className="ds-h3 text-on-surface">Payout Details</h3>
+                            <form onSubmit={handlePostPayment} className="space-y-4 rounded-xl border border-cha-primary/45 bg-mono-card p-4">
+                              <h3 className="monolith-h3 text-mono-text">Payout Details</h3>
                               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                                 <div>
-                                  <label className="ds-label block">Amount Paid (₹) *</label>
+                                  <label className="monolith-label block">Amount Paid (₹) *</label>
                                   <input
                                     type="number"
                                     required
                                     value={payAmount}
                                     onChange={(e) => setPayAmount(e.target.value)}
-                                    className="h-11 w-full text-xs font-mono ds-numeric"
+                                    className="h-11 w-full text-xs font-mono monolith-numeric"
                                   />
                                 </div>
                                 <div>
-                                  <label className="ds-label block">Payment Date *</label>
+                                  <label className="monolith-label block">Payment Date *</label>
                                   <DateInput
                                     required
                                     value={payDate}
@@ -1917,7 +1917,7 @@ export function ExpensesClient({
                                   />
                                 </div>
                                 <div>
-                                  <label className="ds-label block">Disbursement Method *</label>
+                                  <label className="monolith-label block">Disbursement Method *</label>
                                   <NativeSelect
                                     value={payMethod}
                                     onChange={(e) => setPayMethod(e.target.value)}
@@ -1930,7 +1930,7 @@ export function ExpensesClient({
                                   </NativeSelect>
                                 </div>
                                 <div>
-                                  <label className="ds-label block">Txn Reference ID *</label>
+                                  <label className="monolith-label block">Txn Reference ID *</label>
                                   <input
                                     type="text"
                                     required

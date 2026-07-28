@@ -7,7 +7,7 @@ import {Badge,DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableHead
 type Cycle = { id: string; name: string; year: number; status: string; _count: { appraisals: number } };
 
 const STATUS_COLOR: Record<string, string> = {
-  DRAFT: "bg-surface-container-high text-on-surface-variant",
+  DRAFT: "bg-mono-soft text-mono-muted",
   ACTIVE: "bg-green-50 text-green-700",
   CLOSED: "bg-red-50 text-red-600",
 };
@@ -44,7 +44,7 @@ export function CyclesClient({ cycles, currentYear }: { cycles: Cycle[]; current
   return (
     <DataTable>
       <DataTableToolbar>
-        <p className="font-semibold text-on-surface">All Cycles</p>
+        <p className="font-semibold text-mono-text">All Cycles</p>
         <button
           onClick={createCycle}
           disabled={loading}
@@ -67,12 +67,12 @@ export function CyclesClient({ cycles, currentYear }: { cycles: Cycle[]; current
         ) : (
           cycles.map((c) => (
             <DataTableRow key={c.id}>
-              <DataTableCell className="font-medium text-on-surface">{c.name}</DataTableCell>
-              <DataTableCell className="text-on-surface-variant">{c.year}</DataTableCell>
+              <DataTableCell className="font-medium text-mono-text">{c.name}</DataTableCell>
+              <DataTableCell className="text-mono-muted">{c.year}</DataTableCell>
               <DataTableCell>
-                <Badge className={STATUS_COLOR[c.status] ?? "bg-surface-container-high text-on-surface-variant"}>{c.status}</Badge>
+                <Badge className={STATUS_COLOR[c.status] ?? "bg-mono-soft text-mono-muted"}>{c.status}</Badge>
               </DataTableCell>
-              <DataTableCell className="text-on-surface-variant">{c._count.appraisals}</DataTableCell>
+              <DataTableCell className="text-mono-muted">{c._count.appraisals}</DataTableCell>
               <DataTableCell className="text-right">
                 {c.status === "DRAFT" && (
                   <button onClick={() => updateStatus(c.id, "activate")} className="text-xs text-green-600 hover:underline">

@@ -1,6 +1,6 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -100,7 +100,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
       {/* ─── SECTION: BASIC INFO ────────────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <Briefcase className="size-4 text-[#00c4b6]" />
+          <Briefcase className="size-4 text-[#F9D972]" />
           <span>Lead & Company Information</span>
         </h3>
 
@@ -112,7 +112,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               name="firstName"
               defaultValue={initialData?.firstName || ""}
               placeholder="e.g. Adarsh"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -123,7 +123,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="e.g. Hari"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
               required
             />
           </div>
@@ -135,7 +135,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               placeholder="e.g. Adarsh Shipping Ltd"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
               required
             />
           </div>
@@ -146,7 +146,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               name="designation"
               defaultValue={initialData?.designation || ""}
               placeholder="e.g. Logistics Director"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
         </div>
@@ -155,7 +155,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
       {/* ─── SECTION: CONTACT CHANNELS ───────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <Mail className="size-4 text-[#00c4b6]" />
+          <Mail className="size-4 text-[#F9D972]" />
           <span>Contact Channels</span>
         </h3>
 
@@ -167,7 +167,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               name="email"
               defaultValue={initialData?.email || ""}
               placeholder="e.g. client@domain.com"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -177,7 +177,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               name="phone"
               defaultValue={initialData?.phone || ""}
               placeholder="e.g. +91 44 2819 1234"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -187,7 +187,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               name="mobile"
               defaultValue={initialData?.mobile || ""}
               placeholder="e.g. +91 98840 12345"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -197,7 +197,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               name="fax"
               defaultValue={initialData?.fax || ""}
               placeholder="e.g. +91 44 2819 5678"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -207,7 +207,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               name="website"
               defaultValue={initialData?.website || ""}
               placeholder="e.g. https://www.company.com"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
         </div>
@@ -216,7 +216,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
       {/* ─── SECTION: CLASSIFICATION ────────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <Tag className="size-4 text-[#00c4b6]" />
+          <Tag className="size-4 text-[#F9D972]" />
           <span>Classification & Scoring</span>
         </h3>
 
@@ -226,7 +226,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             <NativeSelect
               name="source"
               defaultValue={initialData?.source || "Cold Call"}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
             >
               {sources.map((src) => (
                 <option key={src} value={src}>{src}</option>
@@ -238,7 +238,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             <NativeSelect
               name="status"
               defaultValue={initialData?.status || "NEW"}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
             >
               {statuses.map((st) => (
                 <option key={st} value={st}>{st.replace("_", " ")}</option>
@@ -250,7 +250,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             <NativeSelect
               name="rating"
               defaultValue={initialData?.rating || "Warm"}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
             >
               {ratings.map((rt) => (
                 <option key={rt} value={rt}>{rt}</option>
@@ -264,7 +264,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               name="industry"
               defaultValue={initialData?.industry || ""}
               placeholder="e.g. Shipping / Logistics"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -274,7 +274,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               name="annualRevenue"
               defaultValue={initialData?.annualRevenue || ""}
               placeholder="e.g. 5000000"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -282,7 +282,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
               required
             >
               <option value="">Select Owner</option>
@@ -295,7 +295,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
       </div>
 
       {/* ─── SECTION: PERISHABLE CARGO ───────────────────────────────────── */}
-      <div className="space-y-4 p-5 rounded-xl bg-[#161f28]/45 border border-[#1c212a] hover-cyan transition-all">
+      <div className="space-y-4 p-5 rounded-xl bg-[#161f28]/45 border border-[#1c212a] monolith-hover transition-all">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <h4 className="text-xs font-bold text-white uppercase tracking-wider">Perishable Cargo Handling</h4>
@@ -314,7 +314,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               }}
               className="sr-only peer"
             />
-            <div className="w-9 h-5 bg-[#161f28] border border-[#1c212a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-[#00c4b6] after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#00c4b6]/10 peer-checked:border-[#00c4b6]/40"></div>
+            <div className="w-9 h-5 bg-[#161f28] border border-[#1c212a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-[#F9D972] after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#F9D972]/10 peer-checked:border-[#F9D972]/40"></div>
           </label>
         </div>
 
@@ -348,7 +348,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               <button
                 type="button"
                 onClick={() => setShowPerishablesDialog(true)}
-                className="px-3 py-1 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-[#00c4b6] rounded text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
+                className="px-3 py-1 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-[#F9D972] rounded text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
               >
                 Edit Perishable Info
               </button>
@@ -378,7 +378,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
                   placeholder="e.g. Chilled Blueberries"
                   value={perishableType}
                   onChange={(e) => setPerishableType(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00c4b6]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                 />
               </div>
               <div className="grid grid-cols-3 gap-3">
@@ -389,7 +389,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
                     placeholder="e.g. 2°C to 4°C"
                     value={tempRequired}
                     onChange={(e) => setTempRequired(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00c4b6]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
                 <div>
@@ -399,7 +399,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
                     placeholder="e.g. 85%"
                     value={humidityControl}
                     onChange={(e) => setHumidityControl(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00c4b6]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
                 <div>
@@ -409,7 +409,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
                     placeholder="e.g. 25 cbm/h"
                     value={ventilation}
                     onChange={(e) => setVentilation(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#00c4b6]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
               </div>
@@ -420,7 +420,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
                   placeholder="Provide remarks regarding temperature logging, reefer power connection, or pre-cooling needs..."
                   value={perishableRemarks}
                   onChange={(e) => setPerishableRemarks(e.target.value)}
-                  className="w-full p-2.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00c4b6] placeholder-slate-600 resize-none"
+                  className="w-full p-2.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972] placeholder-slate-600 resize-none"
                 />
               </div>
             </div>
@@ -430,7 +430,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
                 onClick={() => {
                   setShowPerishablesDialog(false);
                 }}
-                className="px-4 py-2 bg-[#00c4b6] hover:bg-[#00b0a3] text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                className="px-4 py-2 bg-[#F9D972] hover:bg-[#00b0a3] text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
               >
                 Save Details
               </button>
@@ -442,7 +442,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
       {/* ─── SECTION: ADDRESS ───────────────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <MapPin className="size-4 text-[#00c4b6]" />
+          <MapPin className="size-4 text-[#F9D972]" />
           <span>Address Details</span>
         </h3>
 
@@ -454,7 +454,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               name="address"
               defaultValue={initialData?.address || ""}
               placeholder="e.g. 14 East Coast Road, Thiruvanmiyur"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -464,7 +464,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               name="city"
               defaultValue={initialData?.city || ""}
               placeholder="e.g. Chennai"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -474,7 +474,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               name="state"
               defaultValue={initialData?.state || ""}
               placeholder="e.g. Tamil Nadu"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -484,7 +484,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               name="pincode"
               defaultValue={initialData?.pincode || ""}
               placeholder="e.g. 600041"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -494,7 +494,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               name="country"
               defaultValue={initialData?.country || ""}
               placeholder="e.g. India"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div className="md:col-span-2">
@@ -504,7 +504,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               name="tags"
               defaultValue={initialData?.tags?.join(", ") || ""}
               placeholder="e.g. VIP, Customs Clearance, CHA"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
         </div>
@@ -518,7 +518,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
           defaultValue={initialData?.description || ""}
           placeholder="Enter details of customer enquiry, freight needs, or meeting notes..."
           rows={4}
-          className="w-full p-3.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+          className="w-full p-3.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
         />
       </div>
 
@@ -527,7 +527,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
         <button
           type="button"
           onClick={handleFillDemo}
-          className="px-5 py-2 bg-[#00c4b6]/10 hover:bg-[#00c4b6]/20 border border-[#00c4b6]/35 text-[#00c4b6] rounded-lg text-sm font-semibold cursor-pointer"
+          className="px-5 py-2 bg-[#F9D972]/10 hover:bg-[#F9D972]/20 border border-[#F9D972]/35 text-[#F9D972] rounded-lg text-sm font-semibold cursor-pointer"
         >
           Fill Demo Data
         </button>
@@ -541,7 +541,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[#00c4b6] hover:bg-[#00b0a3] disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-all shadow-md shadow-[#00c4b6]/10 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[#F9D972] hover:bg-[#00b0a3] disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
         >
           <Save className="size-4.5" />
           <span>{isSubmitting ? "Saving..." : isEdit ? "Update Lead" : "Save Lead"}</span>

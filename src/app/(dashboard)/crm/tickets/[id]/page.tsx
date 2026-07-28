@@ -30,7 +30,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
 
   if (!orgId) {
     return (
-      <div className="rounded-xl border border-outline-variant bg-surface p-8 text-center text-sm text-on-surface-variant">
+      <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">
         Organisation configuration missing.
       </div>
     );
@@ -78,7 +78,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
 
   if (!ticket) {
     return (
-      <div className="rounded-xl border border-outline-variant bg-surface p-8 text-center text-sm text-on-surface-variant">
+      <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">
         Ticket not found.
       </div>
     );
@@ -89,7 +89,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
   // Security check: must be owner or admin/HR
   if (ticket.raisedById !== session.user.id && !isAdmin) {
     return (
-      <div className="rounded-xl border border-outline-variant bg-surface p-8 text-center text-sm text-on-surface-variant">
+      <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">
         Access denied. You do not have permission to view this ticket.
       </div>
     );

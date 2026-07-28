@@ -60,7 +60,7 @@ export function JournalEntryDetailClient({ jv }: JournalEntryDetailClientProps) 
         {/* Info panel */}
         <div className="md:col-span-2 p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
           <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-            <FileText className="size-4.5 text-[#00cec4]" />
+            <FileText className="size-4.5 text-[#F9D972]" />
             <h3 className="font-bold text-xs text-white uppercase tracking-wider">Voucher Info Summary</h3>
           </div>
 
@@ -81,7 +81,7 @@ export function JournalEntryDetailClient({ jv }: JournalEntryDetailClientProps) 
         </div>
 
         {/* Status panel */}
-        <div className="md:col-span-1 p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 flex flex-col justify-between card-left-accent">
+        <div className="md:col-span-1 p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 flex flex-col justify-between monolith-card monolith-accent">
           <div className="space-y-3">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Status & Control</span>
             <div className="flex items-center gap-2">
@@ -102,7 +102,7 @@ export function JournalEntryDetailClient({ jv }: JournalEntryDetailClientProps) 
               <button
                 disabled={isSubmitting}
                 onClick={handleSubmit}
-                className="w-full bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
                 {isSubmitting ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle className="size-4" />}
                 <span>Submit & Post JV</span>
@@ -127,12 +127,12 @@ export function JournalEntryDetailClient({ jv }: JournalEntryDetailClientProps) 
       {/* ─── LEDGER LINES TABLE ────────────────────────────────────────── */}
       <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
         <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-          <TrendingUp className="size-4.5 text-[#00cec4]" />
+          <TrendingUp className="size-4.5 text-[#F9D972]" />
           <h3 className="font-bold text-xs text-white uppercase tracking-wider">Debit & Credit Postings</h3>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="ds-table">
+          <table className="monolith-table">
             <thead>
               <tr>
                 <th>Account Code / Name</th>
@@ -154,10 +154,10 @@ export function JournalEntryDetailClient({ jv }: JournalEntryDetailClientProps) 
                   <td className="text-slate-400">
                     {l.partyType ? `${l.partyType}: ${l.partyId || "—"}` : "—"}
                   </td>
-                  <td className="ds-numeric text-white text-right font-semibold">
+                  <td className="monolith-numeric text-white text-right font-semibold">
                     {l.debit > 0 ? `₹${l.debit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
                   </td>
-                  <td className="ds-numeric text-white text-right font-semibold">
+                  <td className="monolith-numeric text-white text-right font-semibold">
                     {l.credit > 0 ? `₹${l.credit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
                   </td>
                   <td className="text-slate-400 text-xs">
@@ -170,10 +170,10 @@ export function JournalEntryDetailClient({ jv }: JournalEntryDetailClientProps) 
               <tr className="border-t border-[#1c212a]/50 font-bold bg-[#161f28]/10 text-white text-xs">
                 <td>Total</td>
                 <td></td>
-                <td className="ds-numeric text-right">
+                <td className="monolith-numeric text-right">
                   ₹{jv.totalDebit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                 </td>
-                <td className="ds-numeric text-right">
+                <td className="monolith-numeric text-right">
                   ₹{jv.totalCredit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                 </td>
                 <td></td>
@@ -187,12 +187,12 @@ export function JournalEntryDetailClient({ jv }: JournalEntryDetailClientProps) 
       {jv.glEntries && jv.glEntries.length > 0 && (
         <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
           <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-            <Database className="size-4.5 text-[#00cec4]" strokeWidth={2} />
+            <Database className="size-4.5 text-[#F9D972]" strokeWidth={2} />
             <h3 className="font-bold text-xs text-white uppercase tracking-wider">Posted General Ledger Entries</h3>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="ds-table">
+            <table className="monolith-table">
               <thead>
                 <tr>
                   <th>Account Code/Name</th>
@@ -213,10 +213,10 @@ export function JournalEntryDetailClient({ jv }: JournalEntryDetailClientProps) 
                     <td className="text-slate-400">
                       {new Date(gl.postingDate).toLocaleDateString("en-IN")}
                     </td>
-                    <td className="ds-numeric text-white text-right font-semibold">
+                    <td className="monolith-numeric text-white text-right font-semibold">
                       {gl.debit > 0 ? `₹${gl.debit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
                     </td>
-                    <td className="ds-numeric text-white text-right font-semibold">
+                    <td className="monolith-numeric text-white text-right font-semibold">
                       {gl.credit > 0 ? `₹${gl.credit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
                     </td>
                     <td className="text-slate-450 uppercase">{gl.voucherType}</td>

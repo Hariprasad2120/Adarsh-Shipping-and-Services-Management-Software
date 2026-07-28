@@ -50,7 +50,7 @@ export function RemarksModal({ leadId, onClose, onSuccess }: RemarksModalProps) 
         {/* Header */}
         <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[#1c212a]/50 bg-[#0c0f14]">
           <div className="flex items-center gap-2">
-            <AlertCircle className="size-4.5 text-[#fb923c]" />
+            <AlertCircle className="size-4.5 text-[#D88700]" />
             <span className="font-bold text-sm text-white uppercase tracking-wider">Lead Remarks (Not Interested)</span>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white cursor-pointer">
@@ -73,7 +73,7 @@ export function RemarksModal({ leadId, onClose, onSuccess }: RemarksModalProps) 
                 placeholder="State the reason why the client is not interested (e.g. Price too high, chose competitor, no requirement at present)..."
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                className="w-full p-3.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6] placeholder-slate-600 min-h-[80px]"
+                className="w-full p-3.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972] placeholder-slate-600 min-h-[80px]"
               />
             </div>
           </div>

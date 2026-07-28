@@ -259,7 +259,7 @@ export function NewQuotePage({
             <div className="border-b border-[#dfe6f3] bg-[#f8f9fa] px-6 py-4 flex items-center gap-4">
               <Link
                 href="/crm/quotes"
-                className="inline-flex size-10 items-center justify-center rounded-xl border border-[#dbe3f0] bg-white text-[#5d6c86] shadow-sm hover:bg-surface-container-low transition-colors"
+                className="inline-flex size-10 items-center justify-center rounded-xl border border-[#dbe3f0] bg-white text-[#5d6c86] shadow-sm hover:bg-mono-soft transition-colors"
                 aria-label="Back to quotes"
               >
                 <ArrowLeft className="size-4" />
@@ -276,7 +276,7 @@ export function NewQuotePage({
                 <button
                   type="button"
                   onClick={fillDemo}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-[#00cec4] bg-[rgba(0,206,196,0.06)] px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide text-[#00cec4] transition-colors hover:bg-[rgba(0,206,196,0.12)]"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-[#F9D972] bg-[rgba(0,206,196,0.06)] px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide text-[#F9D972] transition-colors hover:bg-[rgba(0,206,196,0.12)]"
                 >
                   <Wand2 className="size-3.5" />
                   Demo Fill

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { getCustomerPortalApprovalQueue } from "@/modules/customer-portal/shipments";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/monolith/badge";
+import { Button } from "@/components/monolith/button";
 import { CheckSquare, ArrowRight } from "lucide-react";
 
 export default async function CustomerPortalApprovalsPage() {
@@ -12,9 +12,9 @@ export default async function CustomerPortalApprovalsPage() {
   return (
     <div className="space-y-6 font-sans">
       {/* Header */}
-      <div className="rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-sm">
-        <h2 className="ds-h2">Actionable Approvals</h2>
-        <p className="mt-2 text-sm text-on-surface-variant">
+      <div className="rounded-xl border border-mono-border/60 bg-mono-card p-5 shadow-sm">
+        <h2 className="monolith-h2">Actionable Approvals</h2>
+        <p className="mt-2 text-sm text-mono-muted">
           Review and approve draft customs checklists before filing submissions are sent to customs house agents.
         </p>
       </div>
@@ -22,12 +22,12 @@ export default async function CustomerPortalApprovalsPage() {
       {/* Grid List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {pendingApprovals.length === 0 ? (
-          <div className="col-span-2 rounded-xl border border-outline-variant/40 bg-surface p-12 text-center space-y-3">
-            <CheckSquare className="size-10 text-[#00cec4] mx-auto opacity-50" />
-            <h3 className="ds-h3 text-on-surface">
+          <div className="col-span-2 rounded-xl border border-mono-border/40 bg-mono-card p-12 text-center space-y-3">
+            <CheckSquare className="size-10 text-[#F9D972] mx-auto opacity-50" />
+            <h3 className="monolith-h3 text-mono-text">
               No Pending Approvals
             </h3>
-            <p className="text-xs text-on-surface-variant max-w-sm mx-auto">
+            <p className="text-xs text-mono-muted max-w-sm mx-auto">
               You are all caught up! There are no draft checklists awaiting your confirmation right now.
             </p>
           </div>
@@ -35,11 +35,11 @@ export default async function CustomerPortalApprovalsPage() {
           pendingApprovals.map((approval) => (
             <div
               key={approval.id}
-              className="card-top-accent-orange flex flex-col justify-between rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-sm relative overflow-hidden"
+              className="monolith-card monolith-accent-warning flex flex-col justify-between rounded-xl border border-mono-border/60 bg-mono-card p-5 shadow-sm relative overflow-hidden"
             >
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="ds-label text-xs tracking-wider">{approval.jobNumber}</span>
+                  <span className="monolith-label text-xs tracking-wider">{approval.jobNumber}</span>
                   <Badge
                     variant="warning"
                   >
@@ -47,18 +47,18 @@ export default async function CustomerPortalApprovalsPage() {
                   </Badge>
                 </div>
 
-                <h3 className="ds-h3 text-on-surface">
+                <h3 className="monolith-h3 text-mono-text">
                   {approval.customerRef || approval.jobTitle || approval.checklistLabel}
                 </h3>
-                <p className="text-xs text-on-surface-variant font-medium">
+                <p className="text-xs text-mono-muted font-medium">
                   Stage: {approval.stageLabel} · Updated: {formatDate(approval.updatedAt)}
                 </p>
                 {approval.fileName ? (
-                  <p className="text-xs text-on-surface-variant">{approval.fileName}</p>
+                  <p className="text-xs text-mono-muted">{approval.fileName}</p>
                 ) : null}
               </div>
 
-              <div className="border-t border-outline-variant/20 mt-4 pt-4 flex justify-end">
+              <div className="border-t border-mono-border/20 mt-4 pt-4 flex justify-end">
                 <Link
                   href={approval.href}
                 >

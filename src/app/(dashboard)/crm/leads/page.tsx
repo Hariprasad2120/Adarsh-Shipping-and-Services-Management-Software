@@ -1,4 +1,4 @@
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -114,21 +114,21 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
     <div className="space-y-6">
 
       {/* Unified Table Shell — toolbar + tabs + table in one rounded container */}
-      <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
 
         {/* Toolbar */}
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 border-b border-outline-variant">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 border-b border-mono-border">
           <form method="GET" className="flex flex-1 flex-col sm:flex-row gap-3 w-full">
             <input type="hidden" name="tab" value={tab} />
             {/* Search Input */}
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-2.5 size-4 text-on-surface-variant" />
+              <Search className="absolute left-3 top-2.5 size-4 text-mono-muted" />
               <input
                 type="text"
                 name="search"
                 defaultValue={search}
                 placeholder="Search leads by name, email, company..."
-                className="w-full pl-9 pr-3 py-1.5 bg-surface-container-low rounded-lg text-sm text-on-surface placeholder:text-placeholder focus:outline-none"
+                className="w-full pl-9 pr-3 py-1.5 bg-mono-soft rounded-lg text-sm text-mono-text placeholder:text-placeholder focus:outline-none"
               />
             </div>
 
@@ -137,7 +137,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
               <NativeSelect
                 name="status"
                 defaultValue={status}
-                className="w-full pl-3 pr-8 py-1.5 bg-surface-container-low rounded-lg text-sm text-on-surface focus:outline-none"
+                className="w-full pl-3 pr-8 py-1.5 bg-mono-soft rounded-lg text-sm text-mono-text focus:outline-none"
               >
                 <option value="">All Statuses</option>
                 {leadStatuses.map((s) => (
@@ -150,7 +150,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
 
             <button
               type="submit"
-              className="px-4 py-1.5 bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+              className="px-4 py-1.5 bg-mono-soft hover:bg-mono-soft border border-mono-border text-mono-text rounded-lg text-xs font-semibold cursor-pointer transition-colors"
             >
               Apply Filters
             </button>
@@ -158,7 +158,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
             {(search || status) && (
               <Link
                 href={`/crm/leads?tab=${tab}`}
-                className="px-3 py-1.5 text-on-surface-variant hover:text-on-surface text-xs font-semibold flex items-center justify-center"
+                className="px-3 py-1.5 text-mono-muted hover:text-mono-text text-xs font-semibold flex items-center justify-center"
               >
                 Reset
               </Link>
@@ -166,12 +166,12 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
           </form>
           
           <div className="flex items-center gap-3 shrink-0">
-            <div className="text-xs text-on-surface-variant font-bold">
+            <div className="text-xs text-mono-muted font-bold">
               Showing {displayedLeads.length} leads
             </div>
             <Link
               href="/crm/leads/new"
-              className="flex items-center gap-2 bg-[#00cec4] hover:bg-[#00b8af] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+              className="flex items-center gap-2 bg-[#F9D972] hover:bg-[#E8C85D] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
             >
               <UserPlus className="size-3.5" />
               <span>Create Lead</span>
@@ -180,18 +180,18 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
         </div>
 
         {/* Sub-Navigation Tabs */}
-        <div className="flex border-b border-outline-variant px-2">
+        <div className="flex border-b border-mono-border px-2">
           <Link
             href={`/crm/leads?tab=unopened${search ? `&search=${search}` : ""}${status ? `&status=${status}` : ""}`}
             className={`px-4 py-3 text-xs uppercase tracking-wider font-bold transition-all border-b-2 -mb-px flex items-center ${
               tab === "unopened"
-                ? "border-[#00cec4] text-[#00cec4]"
-                : "border-transparent text-on-surface-variant hover:text-on-surface"
+                ? "border-[#F9D972] text-[#F9D972]"
+                : "border-transparent text-mono-muted hover:text-mono-text"
             }`}
           >
             <span>Unopened / Due</span>
-            <span className={`ml-2 px-1.5 py-0.5 text-[10px] rounded-full font-mono ds-numeric ${
-              tab === "unopened" ? "bg-[#00cec4]/10 text-[#00cec4]" : "bg-surface-container text-on-surface-variant"
+            <span className={`ml-2 px-1.5 py-0.5 text-[10px] rounded-full font-mono monolith-numeric ${
+              tab === "unopened" ? "bg-[#F9D972]/10 text-[#F9D972]" : "bg-mono-soft text-mono-muted"
             }`}>
               {unopenedLeads.length}
             </span>
@@ -200,13 +200,13 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
             href={`/crm/leads?tab=not_interested${search ? `&search=${search}` : ""}${status ? `&status=${status}` : ""}`}
             className={`px-4 py-3 text-xs uppercase tracking-wider font-bold transition-all border-b-2 -mb-px flex items-center ${
               tab === "not_interested"
-                ? "border-[#00cec4] text-[#00cec4]"
-                : "border-transparent text-on-surface-variant hover:text-on-surface"
+                ? "border-[#F9D972] text-[#F9D972]"
+                : "border-transparent text-mono-muted hover:text-mono-text"
             }`}
           >
             <span>Not Interested</span>
-            <span className={`ml-2 px-1.5 py-0.5 text-[10px] rounded-full font-mono ds-numeric ${
-              tab === "not_interested" ? "bg-[#00cec4]/10 text-[#00cec4]" : "bg-surface-container text-on-surface-variant"
+            <span className={`ml-2 px-1.5 py-0.5 text-[10px] rounded-full font-mono monolith-numeric ${
+              tab === "not_interested" ? "bg-[#F9D972]/10 text-[#F9D972]" : "bg-mono-soft text-mono-muted"
             }`}>
               {notInterestedLeads.length}
             </span>
@@ -215,13 +215,13 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
             href={`/crm/leads?tab=unreachable${search ? `&search=${search}` : ""}${status ? `&status=${status}` : ""}`}
             className={`px-4 py-3 text-xs uppercase tracking-wider font-bold transition-all border-b-2 -mb-px flex items-center ${
               tab === "unreachable"
-                ? "border-[#00cec4] text-[#00cec4]"
-                : "border-transparent text-on-surface-variant hover:text-on-surface"
+                ? "border-[#F9D972] text-[#F9D972]"
+                : "border-transparent text-mono-muted hover:text-mono-text"
             }`}
           >
             <span>Unreachable</span>
-            <span className={`ml-2 px-1.5 py-0.5 text-[10px] rounded-full font-mono ds-numeric ${
-              tab === "unreachable" ? "bg-[#00cec4]/10 text-[#00cec4]" : "bg-surface-container text-on-surface-variant"
+            <span className={`ml-2 px-1.5 py-0.5 text-[10px] rounded-full font-mono monolith-numeric ${
+              tab === "unreachable" ? "bg-[#F9D972]/10 text-[#F9D972]" : "bg-mono-soft text-mono-muted"
             }`}>
               {unreachableLeads.length}
             </span>
@@ -231,13 +231,13 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
         {/* Table Content */}
         {displayedLeads.length === 0 ? (
           <div className="p-12 text-center space-y-4">
-            <div className="size-12 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center mx-auto">
+            <div className="size-12 rounded-full bg-mono-soft text-mono-muted flex items-center justify-center mx-auto">
               <Users className="size-6" />
             </div>
-            <h3 className="font-bold text-base text-on-surface">
+            <h3 className="font-bold text-base text-mono-text">
               {tab === "unopened" ? "No active leads found" : tab === "not_interested" ? "No uninterested leads found" : "No unreachable leads found"}
             </h3>
-            <p className="text-xs text-on-surface-variant max-w-sm mx-auto">
+            <p className="text-xs text-mono-muted max-w-sm mx-auto">
               {tab === "unopened" 
                 ? "Either refine your filters or create a fresh lead record to get started with validation."
                 : tab === "not_interested"
@@ -248,7 +248,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
             {tab === "unopened" && (
               <Link
                 href="/crm/leads/new"
-                className="inline-flex items-center gap-1.5 text-[#00cec4] hover:underline text-xs font-bold"
+                className="inline-flex items-center gap-1.5 text-[#F9D972] hover:underline text-xs font-bold"
               >
                 <span>Onboard a new lead</span>
                 <ArrowRight className="size-3.5" />
@@ -257,7 +257,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="ds-table">
+            <table className="monolith-table">
               <thead>
                 <tr>
                   <th className="px-6 py-3">Lead Name</th>
@@ -271,30 +271,30 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
               </thead>
               <tbody>
                 {displayedLeads.map((lead) => (
-                  <tr key={lead.id} className="ds-row-link">
+                  <tr key={lead.id} className="monolith-row-link">
                     <td className="px-6 py-4 font-medium">
-                      <Link href={`/crm/leads/${lead.id}`} className="hover:text-[#00cec4] transition-colors block">
+                      <Link href={`/crm/leads/${lead.id}`} className="hover:text-[#F9D972] transition-colors block">
                         {lead.firstName ? `${lead.firstName} ` : ""}{lead.lastName}
                       </Link>
                       {lead.designation && (
-                        <span className="ds-label block mt-0.5 font-normal">{lead.designation}</span>
+                        <span className="monolith-label block mt-0.5 font-normal">{lead.designation}</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1.5">
-                        <Briefcase className="size-3.5 text-on-surface-variant" />
+                        <Briefcase className="size-3.5 text-mono-muted" />
                         <span>{lead.company}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 space-y-1">
                       {lead.email && (
-                        <div className="flex items-center gap-1.5 text-on-surface-variant text-xs">
+                        <div className="flex items-center gap-1.5 text-mono-muted text-xs">
                           <Mail className="size-3.5" />
                           <span className="truncate">{lead.email}</span>
                         </div>
                       )}
                       {lead.phone && (
-                        <div className="flex items-center gap-1.5 text-on-surface-variant text-xs">
+                        <div className="flex items-center gap-1.5 text-mono-muted text-xs">
                           <Phone className="size-3.5" />
                           <span>{lead.phone}</span>
                         </div>
@@ -309,7 +309,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
                           <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-orange-500/10 text-orange-400">
                             {lead.status.replace("_", " ")}
                           </span>
-                          <span className="block text-[11px] text-orange-400/80 font-mono ds-numeric">
+                          <span className="block text-[11px] text-orange-400/80 font-mono monolith-numeric">
                             {formatTimer(lead.updatedAt)}
                           </span>
                         </div>
@@ -336,7 +336,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
                       <div className="flex items-center justify-end gap-2">
                         <Link
                           href={`/crm/leads/${lead.id}`}
-                          className="p-1.5 text-on-surface-variant hover:text-on-surface rounded hover:bg-surface-container cursor-pointer"
+                          className="p-1.5 text-mono-muted hover:text-mono-text rounded hover:bg-mono-soft cursor-pointer"
                           title="View Details"
                         >
                           <Eye className="size-4" />

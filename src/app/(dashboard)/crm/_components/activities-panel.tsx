@@ -1,7 +1,7 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
-import { DateInput } from "@/components/ui/date-input";
+import { NativeSelect } from "@/components/monolith/native-select";
+import { DateInput } from "@/components/monolith/date-input";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { createActivityAction } from "@/modules/crm/actions";
@@ -102,13 +102,13 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
       {/* Header Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[#1c212a]/30 pb-3">
         <div className="flex items-center gap-2">
-          <CheckSquare className="size-4.5 text-[#00c4b6]" />
+          <CheckSquare className="size-4.5 text-[#F9D972]" />
           <h3 className="font-bold text-sm text-white uppercase tracking-wider">Scheduled Activities</h3>
         </div>
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => setActiveForm("TASK")}
-            className="flex items-center gap-1 px-2.5 py-1 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-[11px] font-bold text-[#00c4b6] rounded cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-[11px] font-bold text-[#F9D972] rounded cursor-pointer"
           >
             <Plus className="size-3" />
             <span>Task</span>
@@ -150,7 +150,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                 placeholder={activeForm === "TASK" ? "e.g. Email quote document" : activeForm === "EVENT" ? "e.g. Final pricing negotiation" : "e.g. Cold intro pitch"}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#F9D972]"
                 required
               />
             </div>
@@ -162,7 +162,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                   <DateInput
                     value={dueAt}
                     onChange={(e) => setDueAt(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#F9D972]"
                   />
                 </div>
               )}
@@ -175,7 +175,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                       type="datetime-local"
                       value={startAt}
                       onChange={(e) => setStartAt(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#F9D972]"
                     />
                   </div>
                   <div>
@@ -184,7 +184,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                       type="datetime-local"
                       value={endAt}
                       onChange={(e) => setEndAt(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#F9D972]"
                     />
                   </div>
                 </>
@@ -199,7 +199,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                       placeholder="e.g. 15"
                       value={durationMins}
                       onChange={(e) => setDurationMins(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#F9D972]"
                     />
                   </div>
                   <div>
@@ -209,7 +209,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                       placeholder="e.g. Busy, Answered, Left message"
                       value={callResult}
                       onChange={(e) => setCallResult(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#F9D972]"
                     />
                   </div>
                 </>
@@ -220,7 +220,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                 <NativeSelect
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#F9D972]"
                 >
                   <option value="LOW">Low</option>
                   <option value="NORMAL">Normal</option>
@@ -237,7 +237,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                   placeholder="e.g. Conference room, Google Meet link"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#F9D972]"
                 />
               </div>
             )}
@@ -249,7 +249,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
-                className="w-full p-2.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+                className="w-full p-2.5 bg-[#0a0d12] border border-[#1c212a] rounded text-sm text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
 
@@ -264,7 +264,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-4 py-1.5 bg-[#00c4b6] hover:bg-[#00b0a3] text-white rounded text-xs font-bold transition-all cursor-pointer"
+                className="px-4 py-1.5 bg-[#F9D972] hover:bg-[#00b0a3] text-white rounded text-xs font-bold transition-all cursor-pointer"
               >
                 {isSubmitting ? "Saving..." : "Save Activity"}
               </button>
@@ -275,7 +275,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
 
       {/* Activities List */}
       {activities.length === 0 ? (
-        <div className="p-6 text-center text-on-surface-variant text-sm border border-dashed border-[#1c212a]/50 rounded-lg">
+        <div className="p-6 text-center text-mono-muted text-sm border border-dashed border-[#1c212a]/50 rounded-lg">
           No activities planned yet.
         </div>
       ) : (
@@ -320,16 +320,16 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
 
                 <p className="text-xs text-slate-400 mt-1">{activity.description}</p>
 
-                <div className="flex flex-wrap items-center gap-3 text-[10px] text-on-surface-variant mt-2">
+                <div className="flex flex-wrap items-center gap-3 text-[10px] text-mono-muted mt-2">
                   {activity.type === "TASK" && activity.dueAt && (
                     <span className="flex items-center gap-1">
-                      <Clock className="size-3 text-on-surface-variant" />
+                      <Clock className="size-3 text-mono-muted" />
                       <span>Due: {new Date(activity.dueAt).toLocaleDateString("en-IN")}</span>
                     </span>
                   )}
                   {activity.type === "EVENT" && activity.startAt && (
                     <span className="flex items-center gap-1">
-                      <Clock className="size-3 text-on-surface-variant" />
+                      <Clock className="size-3 text-mono-muted" />
                       <span>
                         Time: {new Date(activity.startAt).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
                       </span>
@@ -337,7 +337,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                   )}
                   {activity.type === "CALL" && (
                     <span className="flex items-center gap-1">
-                      <Clock className="size-3 text-on-surface-variant" />
+                      <Clock className="size-3 text-mono-muted" />
                       <span>
                         Duration: {activity.durationMins || "0"}m • {activity.callResult || "No result"}
                       </span>
@@ -345,7 +345,7 @@ export function ActivitiesPanel({ relatedToType, relatedToId, initialActivities 
                   )}
                   {activity.location && (
                     <span className="flex items-center gap-1">
-                      <MapPin className="size-3 text-on-surface-variant" />
+                      <MapPin className="size-3 text-mono-muted" />
                       <span>{activity.location}</span>
                     </span>
                   )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import type { UseFormReturn } from "react-hook-form";
 import type { ItemFormSchema } from "@/lib/items/validation";
@@ -28,7 +28,7 @@ const APPLICABLE_FOR = [
 const CONTAINER_TYPES = ["20FT", "40FT", "40HQ", "LCL", "Air Cargo", "Not Applicable"];
 
 const selectCls =
-  "w-full px-3 py-1.5 text-sm border border-[#d9dee7] rounded focus:outline-none focus:border-[#00cec4] text-[#212529] bg-white h-[34px]";
+  "w-full px-3 py-1.5 text-sm border border-[#d9dee7] rounded focus:outline-none focus:border-[#F9D972] text-[#212529] bg-white h-[34px]";
 
 function FieldRow({
   label,

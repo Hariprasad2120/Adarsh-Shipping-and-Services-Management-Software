@@ -1,6 +1,6 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps, prefer-const, @typescript-eslint/no-require-imports, react-hooks/immutability, react-hooks/set-state-in-effect */
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -835,7 +835,7 @@ export default function MonolithMessenger() {
         return <em key={index} className="italic">{part.slice(1, -1)}</em>;
       }
       if (part.startsWith("`") && part.endsWith("`")) {
-        return <code key={index} className="font-mono bg-surface-container-high text-xs px-1 py-0.5 rounded border border-outline-variant">{part.slice(1, -1)}</code>;
+        return <code key={index} className="font-mono bg-mono-soft text-xs px-1 py-0.5 rounded border border-mono-border">{part.slice(1, -1)}</code>;
       }
       return part;
     });
@@ -996,24 +996,24 @@ export default function MonolithMessenger() {
                 setChatToasts(prev => prev.filter(t => t.id !== toast.id));
               }}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.currentTarget.click(); }}
-              className="pointer-events-auto flex items-start gap-3 bg-surface border border-[#00cec4]/30 rounded-xl px-4 py-3 shadow-lg backdrop-blur-sm animate-in slide-in-from-right duration-300 hover:border-[#00cec4]/60 hover:shadow-xl transition-all cursor-pointer text-left w-full"
+              className="pointer-events-auto flex items-start gap-3 bg-mono-card border border-[#F9D972]/30 rounded-xl px-4 py-3 shadow-lg backdrop-blur-sm animate-in slide-in-from-right duration-300 hover:border-[#F9D972]/60 hover:shadow-xl transition-all cursor-pointer text-left w-full"
             >
               <div className="shrink-0 mt-0.5">
-                <Bell className="size-4 text-[#00cec4]" />
+                <Bell className="size-4 text-[#F9D972]" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-on-surface truncate">{toast.sender}</span>
-                  <span className="text-[9px] text-on-surface-variant shrink-0">now</span>
+                  <span className="text-xs font-bold text-mono-text truncate">{toast.sender}</span>
+                  <span className="text-[9px] text-mono-muted shrink-0">now</span>
                 </div>
-                <p className="text-[11px] text-on-surface-variant mt-0.5 line-clamp-2 leading-snug">{toast.snippet}</p>
+                <p className="text-[11px] text-mono-muted mt-0.5 line-clamp-2 leading-snug">{toast.snippet}</p>
                 {toast.spaceName !== toast.sender && (
-                  <span className="text-[9px] text-[#00cec4] font-medium mt-1 block">in {toast.spaceName}</span>
+                  <span className="text-[9px] text-[#F9D972] font-medium mt-1 block">in {toast.spaceName}</span>
                 )}
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); setChatToasts(prev => prev.filter(t => t.id !== toast.id)); }}
-                className="shrink-0 p-0.5 hover:bg-surface-container rounded text-on-surface-variant"
+                className="shrink-0 p-0.5 hover:bg-mono-soft rounded text-mono-muted"
               >
                 <X className="size-3" />
               </button>
@@ -1022,19 +1022,19 @@ export default function MonolithMessenger() {
         </div>
       )}
 
-      <div className="flex border border-outline-variant bg-surface rounded-2xl overflow-hidden shadow-sm text-left font-sans" style={{ height: "calc(100vh - 9rem)" }}>
+      <div className="flex border border-mono-border bg-mono-card rounded-2xl overflow-hidden shadow-sm text-left font-sans" style={{ height: "calc(100vh - 9rem)" }}>
       
       {/* 1. Left Sidebar: Slack layout */}
-      <div className="w-[240px] border-r border-outline-variant flex flex-col bg-surface-container-low shrink-0 h-full">
+      <div className="w-[240px] border-r border-mono-border flex flex-col bg-mono-soft shrink-0 h-full">
         
         {/* Workspace selector */}
-        <div className="p-3 border-b border-outline-variant bg-surface flex items-center justify-between shrink-0">
+        <div className="p-3 border-b border-mono-border bg-mono-card flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-2 truncate">
-            <div className="size-6 bg-[#00cec4] rounded-lg text-white font-bold flex items-center justify-center text-xs shrink-0 font-display">
+            <div className="size-6 bg-[#F9D972] rounded-lg text-white font-bold flex items-center justify-center text-xs shrink-0 font-display">
               A
             </div>
             <div className="truncate">
-              <h2 className="text-xs font-bold text-on-surface uppercase tracking-wide font-display">Adarsh Shipping</h2>
+              <h2 className="text-xs font-bold text-mono-text uppercase tracking-wide font-display">Adarsh Shipping</h2>
               <div className="flex items-center space-x-1 mt-0.5">
                 <span className={`size-1.5 rounded-full ${
                   connectionStatus === "connected" ? "bg-emerald-500 animate-pulse" :
@@ -1043,7 +1043,7 @@ export default function MonolithMessenger() {
                   connectionStatus === "auth_error" ? "bg-red-500" :
                   "bg-red-500"
                 }`} />
-                <span className="text-[9px] text-on-surface-variant font-medium block uppercase tracking-wider">
+                <span className="text-[9px] text-mono-muted font-medium block uppercase tracking-wider">
                   {connectionStatus === "connected" ? "Connected" :
                    connectionStatus === "connecting" ? "Connecting..." :
                    connectionStatus === "reconnecting" ? "Reconnecting..." :
@@ -1058,8 +1058,8 @@ export default function MonolithMessenger() {
               type="button"
               onClick={handleSyncGoogleAccount}
               disabled={syncing}
-              className={`p-1.5 hover:bg-surface-container rounded-lg text-on-surface-variant transition-all hover:scale-105 ${
-                syncing ? "animate-spin text-[#00cec4]" : ""
+              className={`p-1.5 hover:bg-mono-soft rounded-lg text-mono-muted transition-all hover:scale-105 ${
+                syncing ? "animate-spin text-[#F9D972]" : ""
               }`}
               title="Sync spaces with Google account"
             >
@@ -1068,7 +1068,7 @@ export default function MonolithMessenger() {
             <button
               type="button"
               onClick={() => setShowNewChatModal(true)}
-              className="p-1.5 hover:bg-surface-container rounded-lg text-[#00cec4] transition-all hover:scale-105"
+              className="p-1.5 hover:bg-mono-soft rounded-lg text-[#F9D972] transition-all hover:scale-105"
               title="Compose direct message or space"
             >
               <Plus className="size-4" />
@@ -1080,36 +1080,36 @@ export default function MonolithMessenger() {
         {syncToast && (
           <div className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider flex items-center justify-between shrink-0 animate-in slide-in-from-top duration-200 ${
             syncToast.type === "success" 
-              ? "bg-[#00cec4]/10 text-[#00cec4] border-b border-[#00cec4]/20" 
+              ? "bg-[#F9D972]/10 text-[#F9D972] border-b border-[#F9D972]/20" 
               : "bg-red-500/10 text-red-500 border-b border-red-500/20"
           }`}>
             <span>{syncToast.message}</span>
-            <button onClick={() => setSyncToast(null)} className="p-0.5 hover:bg-surface-container rounded">
+            <button onClick={() => setSyncToast(null)} className="p-0.5 hover:bg-mono-soft rounded">
               <X className="size-3" />
             </button>
           </div>
         )}
 
         {/* Filter Quick Switcher */}
-        <div className="p-2 bg-surface-container-low border-b border-outline-variant shrink-0">
+        <div className="p-2 bg-mono-soft border-b border-mono-border shrink-0">
           <div className="relative">
             <input
               type="text"
               placeholder="Jump to channel or DM..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-[11px] bg-surface border border-outline-variant rounded-lg pl-7 pr-3 py-1.5 focus:outline-none focus:border-[#00cec4]/70 placeholder:text-on-surface-variant/40 text-on-surface"
+              className="w-full text-[11px] bg-mono-card border border-mono-border rounded-lg pl-7 pr-3 py-1.5 focus:outline-none focus:border-[#F9D972]/70 placeholder:text-mono-muted/40 text-mono-text"
             />
-            <Search className="absolute left-2.5 top-2.5 size-3.5 text-on-surface-variant/50" />
+            <Search className="absolute left-2.5 top-2.5 size-3.5 text-mono-muted/50" />
           </div>
         </div>
 
         {/* Shortcuts rail */}
-        <div className="px-2 pt-2 border-b border-outline-variant bg-surface-container-low flex justify-around items-center gap-1 shrink-0 pb-2">
+        <div className="px-2 pt-2 border-b border-mono-border bg-mono-soft flex justify-around items-center gap-1 shrink-0 pb-2">
           <button
             onClick={() => setActiveShortcut("home")}
             className={`flex-1 py-1 px-1.5 rounded-md text-[9px] font-bold uppercase tracking-wider text-center transition-all ${
-              activeShortcut === "home" ? "bg-[#00cec4]/15 text-[#00cec4]" : "text-on-surface-variant hover:bg-surface-container"
+              activeShortcut === "home" ? "bg-[#F9D972]/15 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft"
             }`}
           >
             Home
@@ -1117,7 +1117,7 @@ export default function MonolithMessenger() {
           <button
             onClick={() => setActiveShortcut("starred")}
             className={`flex-1 py-1 px-1.5 rounded-md text-[9px] font-bold uppercase tracking-wider text-center transition-all ${
-              activeShortcut === "starred" ? "bg-[#00cec4]/15 text-[#00cec4]" : "text-on-surface-variant hover:bg-surface-container"
+              activeShortcut === "starred" ? "bg-[#F9D972]/15 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft"
             }`}
           >
             Starred
@@ -1129,17 +1129,17 @@ export default function MonolithMessenger() {
           
           {/* Direct Messages */}
           <div className="space-y-0.5">
-            <div className="flex items-center justify-between px-2 py-1 text-on-surface-variant hover:text-on-surface cursor-pointer group">
+            <div className="flex items-center justify-between px-2 py-1 text-mono-muted hover:text-mono-text cursor-pointer group">
               <button 
                 onClick={() => toggleSection("dms")} 
                 className="flex items-center space-x-1 flex-1 text-left"
               >
                 {collapsedSections.dms ? <ChevronRight className="size-3 shrink-0" /> : <ChevronDown className="size-3 shrink-0" />}
-                <span className="ds-label text-[9px] font-bold tracking-wider">Direct Messages</span>
+                <span className="monolith-label text-[9px] font-bold tracking-wider">Direct Messages</span>
               </button>
               <button 
                 onClick={() => setShowNewChatModal(true)} 
-                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-surface-container rounded text-on-surface-variant transition-all"
+                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-mono-soft rounded text-mono-muted transition-all"
                 title="New Direct Message"
               >
                 <Plus className="size-3" />
@@ -1149,9 +1149,9 @@ export default function MonolithMessenger() {
             {!collapsedSections.dms && (
               <div className="space-y-0.5 pl-1.5">
                 {loading ? (
-                  <div className="text-[10px] text-on-surface-variant px-2 animate-pulse">Loading DMs...</div>
+                  <div className="text-[10px] text-mono-muted px-2 animate-pulse">Loading DMs...</div>
                 ) : filteredDMs.length === 0 ? (
-                  <div className="text-[10px] text-on-surface-variant px-2 italic">
+                  <div className="text-[10px] text-mono-muted px-2 italic">
                     {searchQuery ? "No matching conversations." : "No conversations yet. Click + to start a new DM."}
                   </div>
                 ) : (
@@ -1165,10 +1165,10 @@ export default function MonolithMessenger() {
                           onClick={() => handleSelectSpace(entry.spaceId, entry.name, "DM")}
                           className={`w-full flex items-center space-x-2 px-2.5 py-1.5 rounded-lg text-xs text-left transition-all ${
                             isSelected
-                              ? "bg-[#00cec4] text-white shadow-sm font-semibold"
+                              ? "bg-[#F9D972] text-white shadow-sm font-semibold"
                               : unreadCount > 0
-                                ? "text-on-surface font-bold hover:bg-surface-container"
-                                : "text-on-surface-variant font-medium hover:bg-surface-container hover:text-on-surface"
+                                ? "text-mono-text font-bold hover:bg-mono-soft"
+                                : "text-mono-muted font-medium hover:bg-mono-soft hover:text-mono-text"
                           }`}
                         >
                           <div className="relative shrink-0">
@@ -1179,16 +1179,16 @@ export default function MonolithMessenger() {
                           </div>
                           <span className="truncate flex-1">{entry.name}</span>
                           {unreadCount > 0 && !isSelected && (
-                            <span className="flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-[#00cec4] text-white text-[9px] font-bold px-1">
+                            <span className="flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-[#F9D972] text-white text-[9px] font-bold px-1">
                               {unreadCount > 99 ? "99+" : unreadCount}
                             </span>
                           )}
                           {ctx.mentionSpaces.has(entry.spaceId) && !isSelected && (
-                            <span className="flex items-center justify-center size-[18px] rounded-full bg-[#fb923c] text-white text-[9px] font-bold shrink-0" title="You were mentioned">
+                            <span className="flex items-center justify-center size-[18px] rounded-full bg-[#D88700] text-white text-[9px] font-bold shrink-0" title="You were mentioned">
                               <AtSign className="size-2.5" />
                             </span>
                           )}
-                          {starredSpaces.has(entry.spaceId) && <Star className={`size-3 ${isSelected ? "text-white" : "text-[#fb923c]"} fill-current`} />}
+                          {starredSpaces.has(entry.spaceId) && <Star className={`size-3 ${isSelected ? "text-white" : "text-[#D88700]"} fill-current`} />}
                         </button>
                       );
                     })}
@@ -1200,22 +1200,22 @@ export default function MonolithMessenger() {
 
           {/* Job Spaces */}
           <div className="space-y-0.5">
-            <div className="flex items-center justify-between px-2 py-1 text-on-surface-variant hover:text-on-surface cursor-pointer group">
+            <div className="flex items-center justify-between px-2 py-1 text-mono-muted hover:text-mono-text cursor-pointer group">
               <button 
                 onClick={() => toggleSection("jobSpaces")} 
                 className="flex items-center space-x-1 flex-1 text-left"
               >
                 {collapsedSections.jobSpaces ? <ChevronRight className="size-3 shrink-0" /> : <ChevronDown className="size-3 shrink-0" />}
-                <span className="ds-label text-[9px] font-bold tracking-wider">Job Spaces</span>
+                <span className="monolith-label text-[9px] font-bold tracking-wider">Job Spaces</span>
               </button>
             </div>
 
             {!collapsedSections.jobSpaces && (
               <div className="space-y-0.5 pl-1.5">
                 {loading ? (
-                  <div className="text-[10px] text-on-surface-variant px-2 animate-pulse">Loading spaces...</div>
+                  <div className="text-[10px] text-mono-muted px-2 animate-pulse">Loading spaces...</div>
                 ) : filteredJobs.length === 0 ? (
-                  <div className="text-[10px] text-on-surface-variant px-2 italic">No active jobs.</div>
+                  <div className="text-[10px] text-mono-muted px-2 italic">No active jobs.</div>
                 ) : (
                   filteredJobs.map((job) => {
                     const isSelected = selectedSpaceId === job.spaceId;
@@ -1227,25 +1227,25 @@ export default function MonolithMessenger() {
                         onClick={() => handleSelectSpace(job.spaceId, `job-${job.jobNumber}`, "JOB", job, null)}
                         className={`w-full flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs text-left transition-all ${
                           isSelected
-                            ? "bg-[#00cec4] text-white font-semibold"
+                            ? "bg-[#F9D972] text-white font-semibold"
                             : unreadCount > 0
-                              ? "text-on-surface font-bold hover:bg-surface-container"
-                              : "text-on-surface-variant font-medium hover:bg-surface-container hover:text-on-surface"
+                              ? "text-mono-text font-bold hover:bg-mono-soft"
+                              : "text-mono-muted font-medium hover:bg-mono-soft hover:text-mono-text"
                         }`}
                       >
-                        <Hash className={`size-3.5 shrink-0 ${isSelected ? "text-white" : "text-[#00cec4]"}`} />
+                        <Hash className={`size-3.5 shrink-0 ${isSelected ? "text-white" : "text-[#F9D972]"}`} />
                         <span className="truncate flex-1">{channelName}</span>
                         {unreadCount > 0 && !isSelected && (
-                          <span className="flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-[#00cec4] text-white text-[9px] font-bold px-1">
+                          <span className="flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-[#F9D972] text-white text-[9px] font-bold px-1">
                             {unreadCount > 99 ? "99+" : unreadCount}
                           </span>
                         )}
                         {ctx.mentionSpaces.has(job.spaceId) && !isSelected && (
-                          <span className="flex items-center justify-center size-[18px] rounded-full bg-[#fb923c] text-white text-[9px] font-bold shrink-0" title="You were mentioned">
+                          <span className="flex items-center justify-center size-[18px] rounded-full bg-[#D88700] text-white text-[9px] font-bold shrink-0" title="You were mentioned">
                             <AtSign className="size-2.5" />
                           </span>
                         )}
-                        {starredSpaces.has(job.spaceId) && <Star className={`size-3 ${isSelected ? "text-white" : "text-[#fb923c]"} fill-current`} />}
+                        {starredSpaces.has(job.spaceId) && <Star className={`size-3 ${isSelected ? "text-white" : "text-[#D88700]"} fill-current`} />}
                       </button>
                     );
                   })
@@ -1256,17 +1256,17 @@ export default function MonolithMessenger() {
 
           {/* Normal Spaces / Rooms */}
           <div className="space-y-0.5">
-            <div className="flex items-center justify-between px-2 py-1 text-on-surface-variant hover:text-on-surface cursor-pointer group">
+            <div className="flex items-center justify-between px-2 py-1 text-mono-muted hover:text-mono-text cursor-pointer group">
               <button 
                 onClick={() => toggleSection("spaces")} 
                 className="flex items-center space-x-1 flex-1 text-left"
               >
                 {collapsedSections.spaces ? <ChevronRight className="size-3 shrink-0" /> : <ChevronDown className="size-3 shrink-0" />}
-                <span className="ds-label text-[9px] font-bold tracking-wider">Group Channels</span>
+                <span className="monolith-label text-[9px] font-bold tracking-wider">Group Channels</span>
               </button>
               <button 
                 onClick={() => setShowCreateSpaceModal(true)} 
-                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-surface-container rounded text-on-surface-variant transition-all"
+                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-mono-soft rounded text-mono-muted transition-all"
                 title="Create Space"
               >
                 <Plus className="size-3" />
@@ -1276,9 +1276,9 @@ export default function MonolithMessenger() {
             {!collapsedSections.spaces && (
               <div className="space-y-0.5 pl-1.5">
                 {loading ? (
-                  <div className="text-[10px] text-on-surface-variant px-2 animate-pulse">Loading spaces...</div>
+                  <div className="text-[10px] text-mono-muted px-2 animate-pulse">Loading spaces...</div>
                 ) : filteredSpaces.length === 0 ? (
-                  <div className="text-[10px] text-on-surface-variant px-2 italic">No spaces.</div>
+                  <div className="text-[10px] text-mono-muted px-2 italic">No spaces.</div>
                 ) : (
                   filteredSpaces.map((space) => {
                     const isSelected = selectedSpaceId === space.name;
@@ -1289,25 +1289,25 @@ export default function MonolithMessenger() {
                         onClick={() => handleSelectSpace(space.name, space.displayName || "Google Space", "SPACE")}
                         className={`w-full flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs text-left transition-all ${
                           isSelected
-                            ? "bg-[#00cec4] text-white font-semibold"
+                            ? "bg-[#F9D972] text-white font-semibold"
                             : unreadCount > 0
-                              ? "text-on-surface font-bold hover:bg-surface-container"
-                              : "text-on-surface-variant font-medium hover:bg-surface-container hover:text-on-surface"
+                              ? "text-mono-text font-bold hover:bg-mono-soft"
+                              : "text-mono-muted font-medium hover:bg-mono-soft hover:text-mono-text"
                         }`}
                       >
                         <Users className={`size-3.5 shrink-0 ${isSelected ? "text-white" : "text-[#818cf8]"}`} />
                         <span className="truncate flex-1">{space.displayName || "Google Space"}</span>
                         {unreadCount > 0 && !isSelected && (
-                          <span className="flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-[#00cec4] text-white text-[9px] font-bold px-1">
+                          <span className="flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-[#F9D972] text-white text-[9px] font-bold px-1">
                             {unreadCount > 99 ? "99+" : unreadCount}
                           </span>
                         )}
                         {ctx.mentionSpaces.has(space.name) && !isSelected && (
-                          <span className="flex items-center justify-center size-[18px] rounded-full bg-[#fb923c] text-white text-[9px] font-bold shrink-0" title="You were mentioned">
+                          <span className="flex items-center justify-center size-[18px] rounded-full bg-[#D88700] text-white text-[9px] font-bold shrink-0" title="You were mentioned">
                             <AtSign className="size-2.5" />
                           </span>
                         )}
-                        {starredSpaces.has(space.name) && <Star className={`size-3 ${isSelected ? "text-white" : "text-[#fb923c]"} fill-current`} />}
+                        {starredSpaces.has(space.name) && <Star className={`size-3 ${isSelected ? "text-white" : "text-[#D88700]"} fill-current`} />}
                       </button>
                     );
                   })
@@ -1318,24 +1318,24 @@ export default function MonolithMessenger() {
 
           {/* Integrations & Apps */}
           <div className="space-y-0.5">
-            <div className="flex items-center justify-between px-2 py-1 text-on-surface-variant hover:text-on-surface cursor-pointer">
+            <div className="flex items-center justify-between px-2 py-1 text-mono-muted hover:text-mono-text cursor-pointer">
               <button 
                 onClick={() => toggleSection("apps")} 
                 className="flex items-center space-x-1 flex-1 text-left"
               >
                 {collapsedSections.apps ? <ChevronRight className="size-3 shrink-0" /> : <ChevronDown className="size-3 shrink-0" />}
-                <span className="ds-label text-[9px] font-bold tracking-wider">Workspace Apps</span>
+                <span className="monolith-label text-[9px] font-bold tracking-wider">Workspace Apps</span>
               </button>
             </div>
 
             {!collapsedSections.apps && (
-              <div className="space-y-0.5 pl-1.5 text-xs text-on-surface-variant font-medium">
-                <div className="flex items-center space-x-2 px-2.5 py-1.5 rounded-lg hover:bg-surface-container cursor-pointer transition-all">
-                  <span className="size-2 rounded-full bg-[#00cec4] shrink-0" />
+              <div className="space-y-0.5 pl-1.5 text-xs text-mono-muted font-medium">
+                <div className="flex items-center space-x-2 px-2.5 py-1.5 rounded-lg hover:bg-mono-soft cursor-pointer transition-all">
+                  <span className="size-2 rounded-full bg-[#F9D972] shrink-0" />
                   <span>Mono AI Bot</span>
                 </div>
-                <div className="flex items-center space-x-2 px-2.5 py-1.5 rounded-lg hover:bg-surface-container cursor-pointer transition-all">
-                  <span className="size-2 rounded-full bg-[#fb923c] shrink-0" />
+                <div className="flex items-center space-x-2 px-2.5 py-1.5 rounded-lg hover:bg-mono-soft cursor-pointer transition-all">
+                  <span className="size-2 rounded-full bg-[#D88700] shrink-0" />
                   <span>Google Drive App</span>
                 </div>
               </div>
@@ -1346,76 +1346,76 @@ export default function MonolithMessenger() {
       </div>
 
       {/* 2. Main Conversation Area */}
-      <div className="flex-1 flex flex-col bg-surface h-full min-w-0">
+      <div className="flex-1 flex flex-col bg-mono-card h-full min-w-0">
         {selectedSpaceId ? (
           <div className="flex flex-col h-full min-w-0 overflow-hidden relative">
             
             {/* Conversation Header */}
-            <div className="h-[48px] px-4 border-b border-outline-variant bg-surface flex justify-between items-center z-10 shrink-0 select-none">
+            <div className="h-[48px] px-4 border-b border-mono-border bg-mono-card flex justify-between items-center z-10 shrink-0 select-none">
               <div className="flex items-center space-x-2 min-w-0 relative">
                 
                 {/* Space Dropdown */}
                 <button
                   onClick={() => setShowCaretDropdown(!showCaretDropdown)}
-                  className="flex items-center gap-1 hover:bg-surface-container px-2 py-1 rounded-lg text-xs font-bold text-on-surface uppercase tracking-wide transition-all truncate"
+                  className="flex items-center gap-1 hover:bg-mono-soft px-2 py-1 rounded-lg text-xs font-bold text-mono-text uppercase tracking-wide transition-all truncate"
                 >
                   {selectedSpaceType === "JOB" ? (
-                    <Hash className="size-3.5 text-[#00cec4] shrink-0" />
+                    <Hash className="size-3.5 text-[#F9D972] shrink-0" />
                   ) : selectedSpaceType === "DM" ? (
                     <span className="size-2 bg-emerald-500 rounded-full shrink-0" />
                   ) : (
                     <Users className="size-3.5 text-[#818cf8] shrink-0" />
                   )}
                   <span className="truncate">{selectedSpaceTitle}</span>
-                  <ChevronDown className="size-3 text-on-surface-variant shrink-0" />
+                  <ChevronDown className="size-3 text-mono-muted shrink-0" />
                 </button>
 
                 {showCaretDropdown && (
-                  <div className="absolute left-0 top-full mt-1 w-52 rounded-xl bg-surface border border-outline-variant shadow-lg z-50 py-1 text-xs text-on-surface">
+                  <div className="absolute left-0 top-full mt-1 w-52 rounded-xl bg-mono-card border border-mono-border shadow-lg z-50 py-1 text-xs text-mono-text">
                     <button
                       onClick={() => { setShowCaretDropdown(false); handleOpenDetailsModal(); }}
-                      className="w-full text-left px-3 py-1.5 hover:bg-surface-container-low flex items-center gap-2"
+                      className="w-full text-left px-3 py-1.5 hover:bg-mono-soft flex items-center gap-2"
                     >
-                      <Info className="size-3.5 text-[#00cec4]" />
+                      <Info className="size-3.5 text-[#F9D972]" />
                       <span>Details</span>
                     </button>
                     {selectedSpaceType !== "DM" && (
                       <>
                         <button
                           onClick={() => { setShowCaretDropdown(false); handleOpenMembersModal(); }}
-                          className="w-full text-left px-3 py-1.5 hover:bg-surface-container-low flex items-center gap-2"
+                          className="w-full text-left px-3 py-1.5 hover:bg-mono-soft flex items-center gap-2"
                         >
                           <Users className="size-3.5 text-[#818cf8]" />
                           <span>Manage Members</span>
                         </button>
                         <button
                           onClick={() => { setShowCaretDropdown(false); handleOpenSettingsModal(); }}
-                          className="w-full text-left px-3 py-1.5 hover:bg-surface-container-low flex items-center gap-2"
+                          className="w-full text-left px-3 py-1.5 hover:bg-mono-soft flex items-center gap-2"
                         >
-                          <Clock className="size-3.5 text-[#fb923c]" />
+                          <Clock className="size-3.5 text-[#D88700]" />
                           <span>Settings</span>
                         </button>
                       </>
                     )}
                     <button
                       onClick={() => { setShowCaretDropdown(false); handleCopyLink(); }}
-                      className="w-full text-left px-3 py-1.5 hover:bg-surface-container-low flex items-center gap-2"
+                      className="w-full text-left px-3 py-1.5 hover:bg-mono-soft flex items-center gap-2"
                     >
                       <ExternalLink className="size-3.5 text-[#22c55e]" />
                       <span>Copy Space Link</span>
                     </button>
-                    <div className="border-t border-outline-variant my-1"></div>
+                    <div className="border-t border-mono-border my-1"></div>
                     <button
                       onClick={() => { setShowCaretDropdown(false); toggleStarSpace(selectedSpaceId); }}
-                      className="w-full text-left px-3 py-1.5 hover:bg-surface-container-low flex items-center gap-2"
+                      className="w-full text-left px-3 py-1.5 hover:bg-mono-soft flex items-center gap-2"
                     >
-                      <Star className={`size-3.5 ${starredSpaces.has(selectedSpaceId) ? "text-[#fb923c] fill-current" : "text-on-surface-variant"}`} />
+                      <Star className={`size-3.5 ${starredSpaces.has(selectedSpaceId) ? "text-[#D88700] fill-current" : "text-mono-muted"}`} />
                       <span>{starredSpaces.has(selectedSpaceId) ? "Unstar" : "Star"}</span>
                     </button>
                     {selectedSpaceType !== "DM" && (
                       <button
                         onClick={() => { setShowCaretDropdown(false); handleLeaveSpace(); }}
-                        className="w-full text-left px-3 py-1.5 hover:bg-surface-container-low text-red-500 flex items-center gap-2"
+                        className="w-full text-left px-3 py-1.5 hover:bg-mono-soft text-red-500 flex items-center gap-2"
                       >
                         <AlertCircle className="size-3.5 text-red-500" />
                         <span>Leave Space</span>
@@ -1427,14 +1427,14 @@ export default function MonolithMessenger() {
                 {/* Star toggle */}
                 <button
                   onClick={() => toggleStarSpace(selectedSpaceId)}
-                  className="p-1 text-on-surface-variant hover:text-[#fb923c] rounded-md transition-colors"
+                  className="p-1 text-mono-muted hover:text-[#D88700] rounded-md transition-colors"
                 >
-                  <Star className={`size-3.5 ${starredSpaces.has(selectedSpaceId) ? "text-[#fb923c] fill-current" : ""}`} />
+                  <Star className={`size-3.5 ${starredSpaces.has(selectedSpaceId) ? "text-[#D88700] fill-current" : ""}`} />
                 </button>
 
                 {/* Job stage badge */}
                 {selectedSpaceType === "JOB" && selectedJob && (
-                  <span className="hidden sm:inline-block bg-[#00cec4]/10 text-[#00cec4] border border-[#00cec4]/20 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider">
+                  <span className="hidden sm:inline-block bg-[#F9D972]/10 text-[#F9D972] border border-[#F9D972]/20 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider">
                     {selectedJob.stage?.replace(/_/g, " ")}
                   </span>
                 )}
@@ -1446,7 +1446,7 @@ export default function MonolithMessenger() {
                   selectedJob.workspaceProfile.rootFolderId.startsWith("mock-") ? (
                     <Link
                       href={`/communication/drive?jobId=${selectedJob.id}`}
-                      className="p-1.5 hover:bg-surface-container text-[#fb923c] rounded-lg transition-colors"
+                      className="p-1.5 hover:bg-mono-soft text-[#D88700] rounded-lg transition-colors"
                       title="Google Drive Storage (Sim)"
                     >
                       <Folder className="size-4" />
@@ -1456,7 +1456,7 @@ export default function MonolithMessenger() {
                       href={`https://drive.google.com/drive/folders/${selectedJob.workspaceProfile.rootFolderId}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-1.5 hover:bg-surface-container text-[#fb923c] rounded-lg transition-colors"
+                      className="p-1.5 hover:bg-mono-soft text-[#D88700] rounded-lg transition-colors"
                       title="Open Google Drive Folder"
                     >
                       <Folder className="size-4" />
@@ -1466,7 +1466,7 @@ export default function MonolithMessenger() {
                 
                 <Link
                   href="/communication/meetings"
-                  className="p-1.5 hover:bg-surface-container text-[#00cec4] rounded-lg transition-colors"
+                  className="p-1.5 hover:bg-mono-soft text-[#F9D972] rounded-lg transition-colors"
                   title="Schedule Google Meet"
                 >
                   <Video className="size-4" />
@@ -1478,7 +1478,7 @@ export default function MonolithMessenger() {
                     href={`https://chat.google.com/room/${selectedSpaceId.replace("spaces/", "")}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1.5 hover:bg-surface-container text-on-surface-variant hover:text-on-surface rounded-lg transition-colors"
+                    className="p-1.5 hover:bg-mono-soft text-mono-muted hover:text-mono-text rounded-lg transition-colors"
                     title="Open in native Google Chat app"
                   >
                     <ExternalLink className="size-4" />
@@ -1490,7 +1490,7 @@ export default function MonolithMessenger() {
                 {/* Details toggle */}
                 <button
                   onClick={() => setShowDetailsPanel(!showDetailsPanel)}
-                  className={`p-1.5 rounded-lg transition-colors ${showDetailsPanel ? "bg-surface-container text-[#00cec4]" : "hover:bg-surface-container text-on-surface-variant"}`}
+                  className={`p-1.5 rounded-lg transition-colors ${showDetailsPanel ? "bg-mono-soft text-[#F9D972]" : "hover:bg-mono-soft text-mono-muted"}`}
                   title="Toggle details panel"
                 >
                   <Info className="size-4" />
@@ -1499,16 +1499,16 @@ export default function MonolithMessenger() {
             </div>
 
             {/* Message Feed timeline */}
-            <div className="flex-1 overflow-y-auto bg-surface-container-low min-h-0 divide-y-0 relative">
+            <div className="flex-1 overflow-y-auto bg-mono-soft min-h-0 divide-y-0 relative">
               {messagesLoading && messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-xs text-on-surface-variant space-y-2 h-full">
-                  <RefreshCw className="size-5 animate-spin text-[#00cec4]" />
+                <div className="flex flex-col items-center justify-center py-20 text-xs text-mono-muted space-y-2 h-full">
+                  <RefreshCw className="size-5 animate-spin text-[#F9D972]" />
                   <span>Syncing conversation history...</span>
                 </div>
               ) : messages.length === 0 ? (
-                <div className="text-center py-20 text-xs text-on-surface-variant flex flex-col items-center justify-center space-y-2 h-full select-none">
+                <div className="text-center py-20 text-xs text-mono-muted flex flex-col items-center justify-center space-y-2 h-full select-none">
                   <span className="text-3xl">💬</span>
-                  <span className="font-semibold text-on-surface uppercase tracking-wider">Beginning of conversation</span>
+                  <span className="font-semibold text-mono-text uppercase tracking-wider">Beginning of conversation</span>
                   <span className="max-w-[200px]">Send a message to sync with this Google Workspace Chat space.</span>
                 </div>
               ) : (
@@ -1525,7 +1525,7 @@ export default function MonolithMessenger() {
                         {dateSep && (
                           <div className="flex items-center my-4 px-6 select-none">
                             <div className="flex-1 h-px bg-outline-variant/60" />
-                            <span className="mx-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest bg-surface px-3 py-1 rounded-full border border-outline-variant/40 shadow-sm">
+                            <span className="mx-4 text-[10px] font-bold text-mono-muted uppercase tracking-widest bg-mono-card px-3 py-1 rounded-full border border-mono-border/40 shadow-sm">
                               {formatDateSeparator(group.createTime)}
                             </span>
                             <div className="flex-1 h-px bg-outline-variant/60" />
@@ -1535,7 +1535,7 @@ export default function MonolithMessenger() {
                         {/* Slack message row format */}
                         <div 
                           className={`px-6 py-2 transition-colors duration-150 flex items-start space-x-3 relative group ${
-                            isSystem ? "bg-surface-container-low/30" : "hover:bg-surface-container-low"
+                            isSystem ? "bg-mono-soft/30" : "hover:bg-mono-soft"
                           }`}
                           onMouseEnter={() => setHoveredMessageId(group.messages[0].name)}
                           onMouseLeave={() => setHoveredMessageId(null)}
@@ -1543,7 +1543,7 @@ export default function MonolithMessenger() {
                           {/* Avatar */}
                           <div className="shrink-0 pt-0.5 select-none">
                             {isSystem ? (
-                              <span className="flex items-center justify-center size-8 rounded-lg bg-[#00cec4]/15 border border-[#00cec4]/20 text-[#00cec4] font-bold text-xs">
+                              <span className="flex items-center justify-center size-8 rounded-lg bg-[#F9D972]/15 border border-[#F9D972]/20 text-[#F9D972] font-bold text-xs">
                                 AI
                               </span>
                             ) : (
@@ -1556,15 +1556,15 @@ export default function MonolithMessenger() {
                           {/* Message content block */}
                           <div className="flex-1 min-w-0 text-xs">
                             <div className="flex items-baseline space-x-2 select-none mb-1">
-                              <span className="font-bold text-on-surface tracking-wide">
+                              <span className="font-bold text-mono-text tracking-wide">
                                 {group.sender?.displayName || "Google User"}
                               </span>
                               {isSystem && (
-                                <span className="bg-[#00cec4]/15 text-[#00cec4] px-1 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide border border-[#00cec4]/20">
+                                <span className="bg-[#F9D972]/15 text-[#F9D972] px-1 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide border border-[#F9D972]/20">
                                   Bot
                                 </span>
                               )}
-                              <span className="text-[10px] text-on-surface-variant/60 font-medium ds-numeric">
+                              <span className="text-[10px] text-mono-muted/60 font-medium monolith-numeric">
                                 {new Date(group.createTime).toLocaleTimeString("en-IN", {
                                   hour: "2-digit",
                                   minute: "2-digit"
@@ -1573,37 +1573,37 @@ export default function MonolithMessenger() {
                             </div>
 
                             {/* Consecutive messages text list */}
-                            <div className="space-y-1 text-on-surface font-normal leading-relaxed break-words pr-4">
+                            <div className="space-y-1 text-mono-text font-normal leading-relaxed break-words pr-4">
                               {group.messages.map((msg: any, msgIdx: number) => {
                                 const isMsgHovered = hoveredMessageId === msg.name;
                                 const reactions = messageReactions[msg.name] || [];
 
                                 return (
                                   <div key={msgIdx} className="relative py-0.5">
-                                    <div className="text-on-surface text-[12px] font-normal leading-relaxed">
+                                    <div className="text-mono-text text-[12px] font-normal leading-relaxed">
                                       {renderMessageText(msg.text)}
                                       {msg.edited && (
-                                        <span className="text-[9px] text-on-surface-variant/50 ml-1 select-none font-medium">(edited)</span>
+                                        <span className="text-[9px] text-mono-muted/50 ml-1 select-none font-medium">(edited)</span>
                                       )}
                                     </div>
 
                                     {/* Google card formatting if present */}
                                     {msg.cardsV2 && msg.cardsV2.length > 0 && (
-                                      <div className="mt-2 border border-outline-variant bg-surface rounded-xl p-3 max-w-sm shadow-sm">
-                                        <h5 className="font-bold text-xs text-on-surface uppercase tracking-wide">Workspace Card Notification</h5>
-                                        <p className="text-xs text-on-surface-variant mt-1">Details resolved from synced Workspace events.</p>
+                                      <div className="mt-2 border border-mono-border bg-mono-card rounded-xl p-3 max-w-sm shadow-sm">
+                                        <h5 className="font-bold text-xs text-mono-text uppercase tracking-wide">Workspace Card Notification</h5>
+                                        <p className="text-xs text-mono-muted mt-1">Details resolved from synced Workspace events.</p>
                                       </div>
                                     )}
 
                                     {/* Message Quick-Actions floating toolbar (Slack style) */}
                                     {isMsgHovered && (
-                                      <div className="absolute right-0 top-0 -translate-y-4 bg-surface border border-outline-variant rounded-lg shadow-md flex items-center p-1 space-x-0.5 z-10 select-none animate-in fade-in duration-75">
+                                      <div className="absolute right-0 top-0 -translate-y-4 bg-mono-card border border-mono-border rounded-lg shadow-md flex items-center p-1 space-x-0.5 z-10 select-none animate-in fade-in duration-75">
                                         <button
                                           onClick={() => {
                                             setEditingMessageName(msg.name);
                                             setEditingMessageText(msg.text);
                                           }}
-                                          className="p-1 hover:bg-surface-container-low rounded text-on-surface-variant hover:text-on-surface transition-colors"
+                                          className="p-1 hover:bg-mono-soft rounded text-mono-muted hover:text-mono-text transition-colors"
                                           title="Edit message"
                                         >
                                           <Edit2 className="size-3" />
@@ -1614,7 +1614,7 @@ export default function MonolithMessenger() {
                                               setMessages(prev => prev.filter(m => m.name !== msg.name));
                                             }
                                           }}
-                                          className="p-1 hover:bg-surface-container-low text-red-500 rounded transition-colors"
+                                          className="p-1 hover:bg-mono-soft text-red-500 rounded transition-colors"
                                           title="Delete message"
                                         >
                                           <Trash2 className="size-3" />
@@ -1638,24 +1638,24 @@ export default function MonolithMessenger() {
             </div>
 
             {/* Slack StyleComposer */}
-            <div className="p-4 border-t border-outline-variant bg-surface shrink-0">
+            <div className="p-4 border-t border-mono-border bg-mono-card shrink-0">
               
               {/* Draft edit pane */}
               {editingMessageName ? (
-                <div className="mb-2 p-2 bg-surface-container-low border border-outline-variant rounded-xl flex items-center justify-between text-xs animate-in slide-in-from-bottom duration-100">
+                <div className="mb-2 p-2 bg-mono-soft border border-mono-border rounded-xl flex items-center justify-between text-xs animate-in slide-in-from-bottom duration-100">
                   <div className="flex-1 mr-4">
-                    <span className="text-[10px] uppercase font-bold text-[#00cec4] block">Editing Message</span>
+                    <span className="text-[10px] uppercase font-bold text-[#F9D972] block">Editing Message</span>
                     <input
                       type="text"
                       value={editingMessageText}
                       onChange={(e) => setEditingMessageText(e.target.value)}
-                      className="w-full bg-transparent border-none text-xs text-on-surface focus:outline-none focus:ring-0 py-1"
+                      className="w-full bg-transparent border-none text-xs text-mono-text focus:outline-none focus:ring-0 py-1"
                     />
                   </div>
                   <div className="flex items-center space-x-1.5 shrink-0">
                     <button
                       onClick={() => setEditingMessageName(null)}
-                      className="px-2.5 py-1 border border-outline-variant hover:bg-surface-container-high text-on-surface rounded-lg font-bold"
+                      className="px-2.5 py-1 border border-mono-border hover:bg-mono-soft text-mono-text rounded-lg font-bold"
                     >
                       Cancel
                     </button>
@@ -1665,7 +1665,7 @@ export default function MonolithMessenger() {
                         setMessages(prev => prev.map(m => m.name === editingMessageName ? { ...m, text: editingMessageText, edited: true } : m));
                         setEditingMessageName(null);
                       }}
-                      className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-3 py-1 rounded-lg font-bold"
+                      className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-3 py-1 rounded-lg font-bold"
                     >
                       Save
                     </button>
@@ -1673,7 +1673,7 @@ export default function MonolithMessenger() {
                 </div>
               ) : null}
 
-              <div className="border border-outline-variant rounded-xl overflow-hidden focus-within:border-[#00cec4] focus-within:shadow-[0_0_0_3px_rgba(0,206,196,0.1)] transition-all">
+              <div className="border border-mono-border rounded-xl overflow-hidden focus-within:border-[#F9D972] focus-within:shadow-[0_0_0_3px_rgba(0,206,196,0.1)] transition-all">
                 <textarea
                   ref={composerRef}
                   rows={2}
@@ -1681,11 +1681,11 @@ export default function MonolithMessenger() {
                   value={newMessageText}
                   onChange={(e) => setNewMessageText(e.target.value)}
                   onKeyDown={handleComposerKeyDown}
-                  className="w-full p-3 bg-surface border-none text-xs text-on-surface focus:ring-0 focus:outline-none resize-none"
+                  className="w-full p-3 bg-mono-card border-none text-xs text-mono-text focus:ring-0 focus:outline-none resize-none"
                 />
 
                 {/* Format Toolbar & actions */}
-                <div className="px-3 py-2 bg-surface-container-low border-t border-outline-variant flex justify-between items-center select-none text-on-surface-variant">
+                <div className="px-3 py-2 bg-mono-soft border-t border-mono-border flex justify-between items-center select-none text-mono-muted">
                   <div className="flex items-center space-x-1">
                     
                     {/* Plus Actions button */}
@@ -1693,31 +1693,31 @@ export default function MonolithMessenger() {
                       <button
                         type="button"
                         onClick={() => setShowPlusMenu(!showPlusMenu)}
-                        className={`p-1.5 rounded hover:bg-surface-container-high transition-colors ${showPlusMenu ? "text-[#00cec4] bg-surface-container" : ""}`}
+                        className={`p-1.5 rounded hover:bg-mono-soft transition-colors ${showPlusMenu ? "text-[#F9D972] bg-mono-soft" : ""}`}
                         title="Add attachment or meeting room"
                       >
                         <Plus className="size-3.5" />
                       </button>
 
                       {showPlusMenu && (
-                        <div className="absolute left-0 bottom-full mb-2 w-48 rounded-xl bg-surface border border-outline-variant shadow-lg z-50 py-1 text-xs text-on-surface animate-page-enter">
+                        <div className="absolute left-0 bottom-full mb-2 w-48 rounded-xl bg-mono-card border border-mono-border shadow-lg z-50 py-1 text-xs text-mono-text animate-page-enter">
                           <button
                             onClick={() => { setShowPlusMenu(false); alert("To attach Drive file, search files in Job Context panel."); }}
-                            className="w-full text-left px-3 py-2 hover:bg-surface-container-low flex items-center gap-2"
+                            className="w-full text-left px-3 py-2 hover:bg-mono-soft flex items-center gap-2"
                           >
-                            <Folder className="size-3.5 text-[#fb923c]" />
+                            <Folder className="size-3.5 text-[#D88700]" />
                             <span>Share from Drive</span>
                           </button>
                           <Link
                             href="/communication/meetings"
-                            className="w-full text-left px-3 py-2 hover:bg-surface-container-low flex items-center gap-2"
+                            className="w-full text-left px-3 py-2 hover:bg-mono-soft flex items-center gap-2"
                           >
-                            <Video className="size-3.5 text-[#00cec4]" />
+                            <Video className="size-3.5 text-[#F9D972]" />
                             <span>Create Google Meet</span>
                           </Link>
                           <Link
                             href="/communication/calendar"
-                            className="w-full text-left px-3 py-2 hover:bg-surface-container-low flex items-center gap-2"
+                            className="w-full text-left px-3 py-2 hover:bg-mono-soft flex items-center gap-2"
                           >
                             <Clock className="size-3.5 text-[#818cf8]" />
                             <span>Schedule Calendar Event</span>
@@ -1731,7 +1731,7 @@ export default function MonolithMessenger() {
                     <button
                       type="button"
                       onClick={() => applyTextFormat("*")}
-                      className="p-1.5 rounded hover:bg-surface-container-high transition-colors"
+                      className="p-1.5 rounded hover:bg-mono-soft transition-colors"
                       title="Bold"
                     >
                       <Bold className="size-3.5" />
@@ -1739,7 +1739,7 @@ export default function MonolithMessenger() {
                     <button
                       type="button"
                       onClick={() => applyTextFormat("_")}
-                      className="p-1.5 rounded hover:bg-surface-container-high transition-colors"
+                      className="p-1.5 rounded hover:bg-mono-soft transition-colors"
                       title="Italic"
                     >
                       <Italic className="size-3.5" />
@@ -1747,7 +1747,7 @@ export default function MonolithMessenger() {
                     <button
                       type="button"
                       onClick={() => applyTextFormat("`")}
-                      className="p-1.5 rounded hover:bg-surface-container-high transition-colors"
+                      className="p-1.5 rounded hover:bg-mono-soft transition-colors"
                       title="Code Block"
                     >
                       <Code className="size-3.5" />
@@ -1759,7 +1759,7 @@ export default function MonolithMessenger() {
                     <button
                       type="button"
                       onClick={() => insertEmoji("😊")}
-                      className="p-1.5 rounded hover:bg-surface-container-high transition-colors text-xs"
+                      className="p-1.5 rounded hover:bg-mono-soft transition-colors text-xs"
                       title="Insert emoji 😊"
                     >
                       😊
@@ -1767,7 +1767,7 @@ export default function MonolithMessenger() {
                     <button
                       type="button"
                       onClick={() => insertEmoji("👍")}
-                      className="p-1.5 rounded hover:bg-surface-container-high transition-colors text-xs"
+                      className="p-1.5 rounded hover:bg-mono-soft transition-colors text-xs"
                       title="Insert emoji 👍"
                     >
                       👍
@@ -1775,7 +1775,7 @@ export default function MonolithMessenger() {
                     <button
                       type="button"
                       onClick={() => insertEmoji("🚀")}
-                      className="p-1.5 rounded hover:bg-surface-container-high transition-colors text-xs"
+                      className="p-1.5 rounded hover:bg-mono-soft transition-colors text-xs"
                       title="Insert emoji 🚀"
                     >
                       🚀
@@ -1786,23 +1786,23 @@ export default function MonolithMessenger() {
                   <button
                     onClick={() => handleSendMessage()}
                     disabled={sending || !newMessageText.trim()}
-                    className="bg-[#00cec4] text-white hover:bg-[#00b8af] disabled:opacity-40 px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all flex items-center space-x-1 shadow-sm"
+                    className="bg-[#F9D972] text-white hover:bg-[#E8C85D] disabled:opacity-40 px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all flex items-center space-x-1 shadow-sm"
                   >
                     <span>Send</span>
                     <Send className="size-3" />
                   </button>
                 </div>
               </div>
-              <div className="text-[10px] text-on-surface-variant/50 text-right mt-1 font-medium select-none">
+              <div className="text-[10px] text-mono-muted/50 text-right mt-1 font-medium select-none">
                 <strong>Enter</strong> to send • <strong>Shift+Enter</strong> for new line
               </div>
             </div>
 
           </div>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center h-full text-on-surface-variant text-xs space-y-2 bg-surface-container-low select-none">
+          <div className="flex-1 flex flex-col items-center justify-center h-full text-mono-muted text-xs space-y-2 bg-mono-soft select-none">
             <span className="text-4xl animate-bounce">💬</span>
-            <span className="font-semibold text-on-surface uppercase tracking-wider font-display">No Conversation Open</span>
+            <span className="font-semibold text-mono-text uppercase tracking-wider font-display">No Conversation Open</span>
             <span>Select a channel or DM chat thread to sync.</span>
           </div>
         )}
@@ -1810,13 +1810,13 @@ export default function MonolithMessenger() {
 
       {/* 3. Collapsible Right Context Panel */}
       {selectedSpaceId && showDetailsPanel && (
-        <div className="w-[300px] border-l border-outline-variant flex flex-col bg-surface h-full overflow-y-auto shrink-0 select-none animate-in slide-in-from-right duration-200">
+        <div className="w-[300px] border-l border-mono-border flex flex-col bg-mono-card h-full overflow-y-auto shrink-0 select-none animate-in slide-in-from-right duration-200">
           
-          <div className="p-4 border-b border-outline-variant flex items-center justify-between shrink-0">
-            <h4 className="ds-h3 text-on-surface font-bold font-display">Workspace Info</h4>
+          <div className="p-4 border-b border-mono-border flex items-center justify-between shrink-0">
+            <h4 className="monolith-h3 text-mono-text font-bold font-display">Workspace Info</h4>
             <button
               onClick={() => setShowDetailsPanel(false)}
-              className="p-1 hover:bg-surface-container rounded-lg text-on-surface-variant hover:text-on-surface"
+              className="p-1 hover:bg-mono-soft rounded-lg text-mono-muted hover:text-mono-text"
               title="Close panel"
             >
               <X className="size-4" />
@@ -1828,16 +1828,16 @@ export default function MonolithMessenger() {
               <div className="space-y-6">
                 
                 {/* Job identity */}
-                <div className="card-left-accent p-3.5 rounded-xl border border-outline-variant bg-surface-container-low space-y-1">
-                  <span className="text-[9px] uppercase font-bold text-[#00cec4] tracking-widest block">Linked Job File</span>
-                  <h5 className="text-xs font-bold text-on-surface font-mono ds-numeric">JOB-{selectedJob.jobNumber}</h5>
-                  <p className="text-[10px] text-on-surface-variant leading-relaxed font-semibold">{selectedJob.title}</p>
+                <div className="monolith-card monolith-accent p-3.5 rounded-xl border border-mono-border bg-mono-soft space-y-1">
+                  <span className="text-[9px] uppercase font-bold text-[#F9D972] tracking-widest block">Linked Job File</span>
+                  <h5 className="text-xs font-bold text-mono-text font-mono monolith-numeric">JOB-{selectedJob.jobNumber}</h5>
+                  <p className="text-[10px] text-mono-muted leading-relaxed font-semibold">{selectedJob.title}</p>
                 </div>
 
                 {/* Drive Provision slots */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="ds-label text-on-surface-variant font-bold">Drive Folder Files</span>
+                    <span className="monolith-label text-mono-muted font-bold">Drive Folder Files</span>
                     {selectedJob.workspaceProfile?.rootFolderId && (
                       <a
                         href={selectedJob.workspaceProfile.rootFolderId.startsWith("mock") 
@@ -1845,7 +1845,7 @@ export default function MonolithMessenger() {
                           : `https://drive.google.com/drive/folders/${selectedJob.workspaceProfile.rootFolderId}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[9px] font-bold text-[#00cec4] uppercase hover:underline flex items-center gap-0.5"
+                        className="text-[9px] font-bold text-[#F9D972] uppercase hover:underline flex items-center gap-0.5"
                       >
                         <span>Open Drive</span>
                         <ExternalLink className="size-2.5" />
@@ -1853,47 +1853,47 @@ export default function MonolithMessenger() {
                     )}
                   </div>
 
-                  <div className="bg-surface-container-low border border-outline-variant/60 rounded-xl p-2.5 space-y-1.5 text-[11px] font-medium text-on-surface">
-                    <div className="flex items-center justify-between p-1 hover:bg-surface-container rounded transition-colors">
+                  <div className="bg-mono-soft border border-mono-border/60 rounded-xl p-2.5 space-y-1.5 text-[11px] font-medium text-mono-text">
+                    <div className="flex items-center justify-between p-1 hover:bg-mono-soft rounded transition-colors">
                       <span className="truncate">01 Customer KYC</span>
-                      <Check className="size-3 text-[#00cec4]" />
+                      <Check className="size-3 text-[#F9D972]" />
                     </div>
-                    <div className="flex items-center justify-between p-1 hover:bg-surface-container rounded transition-colors">
+                    <div className="flex items-center justify-between p-1 hover:bg-mono-soft rounded transition-colors">
                       <span className="truncate">02 Job Documents</span>
-                      <Check className="size-3 text-[#00cec4]" />
+                      <Check className="size-3 text-[#F9D972]" />
                     </div>
-                    <div className="flex items-center justify-between p-1 hover:bg-surface-container rounded transition-colors">
+                    <div className="flex items-center justify-between p-1 hover:bg-mono-soft rounded transition-colors">
                       <span className="truncate">06 Invoices & Billing</span>
-                      <Clock className="size-3 text-[#fb923c]" />
+                      <Clock className="size-3 text-[#D88700]" />
                     </div>
                   </div>
                 </div>
 
                 {/* Job team members */}
                 <div className="space-y-2">
-                  <span className="ds-label text-on-surface-variant font-bold block">Assigned Officers</span>
+                  <span className="monolith-label text-mono-muted font-bold block">Assigned Officers</span>
                   <div className="max-h-32 overflow-y-auto space-y-2 pr-1">
-                    <div className="flex items-center space-x-2 bg-surface-container-low p-2 rounded-lg border border-outline-variant/30">
-                      <span className="size-5 rounded-full bg-[#00cec4]/15 text-[#00cec4] font-bold text-[9px] flex items-center justify-center">OP</span>
-                      <div className="text-[10px] font-semibold text-on-surface">Primary Owner</div>
+                    <div className="flex items-center space-x-2 bg-mono-soft p-2 rounded-lg border border-mono-border/30">
+                      <span className="size-5 rounded-full bg-[#F9D972]/15 text-[#F9D972] font-bold text-[9px] flex items-center justify-center">OP</span>
+                      <div className="text-[10px] font-semibold text-mono-text">Primary Owner</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Action links */}
-                <div className="pt-2 border-t border-outline-variant/60 space-y-2.5">
+                <div className="pt-2 border-t border-mono-border/60 space-y-2.5">
                   <Link
                     href={`/cha/jobs/${selectedJob.id}`}
-                    className="flex items-center space-x-2 text-xs font-bold text-on-surface hover:text-[#00cec4] transition-all p-2 rounded-lg hover:bg-surface-container-low"
+                    className="flex items-center space-x-2 text-xs font-bold text-mono-text hover:text-[#F9D972] transition-all p-2 rounded-lg hover:bg-mono-soft"
                   >
-                    <Briefcase className="size-4 text-[#00cec4]" />
+                    <Briefcase className="size-4 text-[#F9D972]" />
                     <span>Open CHA Job Profile</span>
                   </Link>
                   <Link
                     href={`/communication/drive?jobId=${selectedJob.id}`}
-                    className="flex items-center space-x-2 text-xs font-bold text-on-surface hover:text-[#00cec4] transition-all p-2 rounded-lg hover:bg-surface-container-low"
+                    className="flex items-center space-x-2 text-xs font-bold text-mono-text hover:text-[#F9D972] transition-all p-2 rounded-lg hover:bg-mono-soft"
                   >
-                    <Folder className="size-4 text-[#fb923c]" />
+                    <Folder className="size-4 text-[#D88700]" />
                     <span>View Sync Manager</span>
                   </Link>
                 </div>
@@ -1902,7 +1902,7 @@ export default function MonolithMessenger() {
               <div className="space-y-5 text-center flex flex-col items-center">
                 
                 {/* Employee Info Card */}
-                <div className="card-left-accent w-full p-4 rounded-xl border border-outline-variant bg-surface-container-low flex flex-col items-center space-y-3">
+                <div className="monolith-card monolith-accent w-full p-4 rounded-xl border border-mono-border bg-mono-soft flex flex-col items-center space-y-3">
                   <div className="relative">
                     <span className={`flex items-center justify-center size-14 rounded-full font-bold text-sm select-none ${getAvatarBg(selectedEmployee.name)}`}>
                       {getInitials(selectedEmployee.name)}
@@ -1910,8 +1910,8 @@ export default function MonolithMessenger() {
                     <span className="absolute bottom-0 right-0 size-3.5 bg-emerald-500 rounded-full border-2 border-surface" />
                   </div>
                   <div>
-                    <h5 className="text-xs font-bold text-on-surface uppercase tracking-wide">{selectedEmployee.name}</h5>
-                    <span className="text-[9px] text-[#00cec4] uppercase font-bold tracking-wider mt-0.5 block">
+                    <h5 className="text-xs font-bold text-mono-text uppercase tracking-wide">{selectedEmployee.name}</h5>
+                    <span className="text-[9px] text-[#F9D972] uppercase font-bold tracking-wider mt-0.5 block">
                       {selectedEmployee.designation || "Staff"}
                     </span>
                   </div>
@@ -1919,11 +1919,11 @@ export default function MonolithMessenger() {
 
                 {/* Employee quick metadata details */}
                 <div className="w-full text-left space-y-3">
-                  <span className="ds-label text-on-surface-variant font-bold block mb-1">Contact Information</span>
-                  <div className="space-y-2 text-xs text-on-surface">
+                  <span className="monolith-label text-mono-muted font-bold block mb-1">Contact Information</span>
+                  <div className="space-y-2 text-xs text-mono-text">
                     <a
                       href={`mailto:${selectedEmployee.email}`}
-                      className="flex items-center space-x-2.5 p-2 rounded-lg border border-outline-variant/30 hover:bg-surface-container-low"
+                      className="flex items-center space-x-2.5 p-2 rounded-lg border border-mono-border/30 hover:bg-mono-soft"
                     >
                       <Mail className="size-3.5 text-[#818cf8]" />
                       <span className="truncate">{selectedEmployee.email}</span>
@@ -1931,7 +1931,7 @@ export default function MonolithMessenger() {
                     {selectedEmployee.phone && (
                       <a
                         href={`tel:${selectedEmployee.phone}`}
-                        className="flex items-center space-x-2.5 p-2 rounded-lg border border-outline-variant/30 hover:bg-surface-container-low"
+                        className="flex items-center space-x-2.5 p-2 rounded-lg border border-mono-border/30 hover:bg-mono-soft"
                       >
                         <Phone className="size-3.5 text-emerald-500" />
                         <span>{selectedEmployee.phone}</span>
@@ -1941,18 +1941,18 @@ export default function MonolithMessenger() {
                 </div>
 
                 {/* Sync context */}
-                <div className="w-full pt-3 border-t border-outline-variant/60 text-left space-y-2 text-xs">
-                  <span className="ds-label text-on-surface-variant font-bold block">Integrations</span>
-                  <div className="flex items-center justify-between p-2 rounded-lg border border-outline-variant/30 bg-surface-container-low font-bold">
-                    <span className="text-on-surface-variant text-[10px]">Google Connection</span>
-                    <span className="text-[#00cec4] text-[10px]">ACTIVE</span>
+                <div className="w-full pt-3 border-t border-mono-border/60 text-left space-y-2 text-xs">
+                  <span className="monolith-label text-mono-muted font-bold block">Integrations</span>
+                  <div className="flex items-center justify-between p-2 rounded-lg border border-mono-border/30 bg-mono-soft font-bold">
+                    <span className="text-mono-muted text-[10px]">Google Connection</span>
+                    <span className="text-[#F9D972] text-[10px]">ACTIVE</span>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-center text-on-surface-variant text-xs space-y-2 select-none h-full h-[50vh]">
+              <div className="flex flex-col items-center justify-center py-20 text-center text-mono-muted text-xs space-y-2 select-none h-full h-[50vh]">
                 <span className="text-2xl">🗂</span>
-                <span className="font-semibold text-on-surface">No Context Profile</span>
+                <span className="font-semibold text-mono-text">No Context Profile</span>
                 <span className="max-w-[160px] leading-relaxed">Choose a job or contact DM to load Google metadata.</span>
               </div>
             )}
@@ -1964,24 +1964,24 @@ export default function MonolithMessenger() {
       {/* 1. New Chat Popover */}
       {showNewChatModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-surface border border-outline-variant rounded-2xl w-full max-w-md p-5 relative shadow-xl text-left animate-page-enter">
+          <div className="bg-mono-card border border-mono-border rounded-2xl w-full max-w-md p-5 relative shadow-xl text-left animate-page-enter">
             <button
               onClick={() => setShowNewChatModal(false)}
-              className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface p-1 hover:bg-surface-container rounded-lg"
+              className="absolute top-4 right-4 text-mono-muted hover:text-mono-text p-1 hover:bg-mono-soft rounded-lg"
             >
               <X className="size-4" />
             </button>
 
-            <h4 className="ds-h3 text-on-surface font-bold mb-4 font-display">New chat</h4>
+            <h4 className="monolith-h3 text-mono-text font-bold mb-4 font-display">New chat</h4>
             
             <div className="space-y-4">
               <div className="space-y-1">
-                <label className="ds-label block font-semibold text-on-surface-variant">Add people</label>
+                <label className="monolith-label block font-semibold text-mono-muted">Add people</label>
                 <div className="relative">
                   <input
                     type="text"
                     placeholder="Enter email or select from below..."
-                    className="w-full text-xs bg-surface border border-[#00cec4]/55 rounded-xl px-3 py-2.5 focus:outline-none"
+                    className="w-full text-xs bg-mono-card border border-[#F9D972]/55 rounded-xl px-3 py-2.5 focus:outline-none"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -1991,17 +1991,17 @@ export default function MonolithMessenger() {
               <div className="grid grid-cols-1 gap-2 pt-1">
                 <button
                   onClick={() => { setShowNewChatModal(false); setShowCreateSpaceModal(true); }}
-                  className="w-full text-left px-3 py-2.5 hover:bg-surface-container rounded-xl text-xs font-semibold flex items-center gap-2 text-[#00cec4] transition-all"
+                  className="w-full text-left px-3 py-2.5 hover:bg-mono-soft rounded-xl text-xs font-semibold flex items-center gap-2 text-[#F9D972] transition-all"
                 >
                   <Users className="size-4" />
                   <span>Create a space</span>
                 </button>
               </div>
 
-              <div className="border-t border-outline-variant/60 my-2"></div>
+              <div className="border-t border-mono-border/60 my-2"></div>
 
               <div className="space-y-1.5">
-                <span className="ds-label text-on-surface-variant font-bold block mb-1">Frequent Users</span>
+                <span className="monolith-label text-mono-muted font-bold block mb-1">Frequent Users</span>
                 <div className="max-h-[220px] overflow-y-auto space-y-1 pr-1">
                   {employees
                     .filter(emp => emp.name.toLowerCase().includes(searchQuery.toLowerCase()) || emp.email.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -2009,14 +2009,14 @@ export default function MonolithMessenger() {
                       <button
                         key={emp.id}
                         onClick={() => handleSelectEmployeeDM(emp)}
-                        className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-left transition-all hover:bg-surface-container"
+                        className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-left transition-all hover:bg-mono-soft"
                       >
                         <span className={`flex items-center justify-center size-6 rounded-full font-bold text-[9px] ${getAvatarBg(emp.name)} shrink-0`}>
                           {getInitials(emp.name)}
                         </span>
                         <div className="truncate flex-1">
-                          <div className="text-on-surface font-bold">{emp.name}</div>
-                          <div className="text-[9px] text-on-surface-variant font-normal">{emp.email}</div>
+                          <div className="text-mono-text font-bold">{emp.name}</div>
+                          <div className="text-[9px] text-mono-muted font-normal">{emp.email}</div>
                         </div>
                       </button>
                     ))}
@@ -2031,59 +2031,59 @@ export default function MonolithMessenger() {
       {/* 2. Create Space Modal */}
       {showCreateSpaceModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleCreateSpace} className="bg-surface border border-outline-variant rounded-2xl w-full max-w-md p-6 relative shadow-xl text-left animate-page-enter">
+          <form onSubmit={handleCreateSpace} className="bg-mono-card border border-mono-border rounded-2xl w-full max-w-md p-6 relative shadow-xl text-left animate-page-enter">
             <button
               type="button"
               onClick={() => setShowCreateSpaceModal(false)}
-              className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface p-1 hover:bg-surface-container rounded-lg"
+              className="absolute top-4 right-4 text-mono-muted hover:text-mono-text p-1 hover:bg-mono-soft rounded-lg"
             >
               <X className="size-4" />
             </button>
 
-            <h4 className="ds-h3 text-on-surface font-bold mb-4 font-display">Create space</h4>
+            <h4 className="monolith-h3 text-mono-text font-bold mb-4 font-display">Create space</h4>
             
             <div className="space-y-4">
               <div className="space-y-1">
-                <label className="ds-label block font-semibold text-on-surface-variant">Space name</label>
+                <label className="monolith-label block font-semibold text-mono-muted">Space name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Freight Forwarding Project"
                   value={newSpaceName}
                   onChange={(e) => setNewSpaceName(e.target.value)}
-                  className="w-full text-xs bg-surface border border-[#00cec4]/55 rounded-xl px-3 py-2.5 focus:outline-none"
+                  className="w-full text-xs bg-mono-card border border-[#F9D972]/55 rounded-xl px-3 py-2.5 focus:outline-none"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="ds-label block font-semibold text-on-surface-variant">Access Control</label>
+                <label className="monolith-label block font-semibold text-mono-muted">Access Control</label>
                 <div className="space-y-2">
-                  <label className="flex items-start space-x-2.5 text-xs text-on-surface font-medium cursor-pointer">
+                  <label className="flex items-start space-x-2.5 text-xs text-mono-text font-medium cursor-pointer">
                     <input
                       type="radio"
                       name="access"
                       value="Private"
                       checked={newSpaceAccess === "Private"}
                       onChange={() => setNewSpaceAccess("Private")}
-                      className="mt-0.5 accent-[#00cec4]"
+                      className="mt-0.5 accent-[#F9D972]"
                     />
                     <div>
                       <div className="font-bold">Private</div>
-                      <span className="text-[10px] text-on-surface-variant font-normal">Only invited employees can access this space.</span>
+                      <span className="text-[10px] text-mono-muted font-normal">Only invited employees can access this space.</span>
                     </div>
                   </label>
-                  <label className="flex items-start space-x-2.5 text-xs text-on-surface cursor-pointer">
+                  <label className="flex items-start space-x-2.5 text-xs text-mono-text cursor-pointer">
                     <input
                       type="radio"
                       name="access"
                       value="Open"
                       checked={newSpaceAccess === "Open"}
                       onChange={() => setNewSpaceAccess("Open")}
-                      className="mt-0.5 accent-[#00cec4]"
+                      className="mt-0.5 accent-[#F9D972]"
                     />
                     <div>
                       <div className="font-bold">Open</div>
-                      <span className="text-[10px] text-on-surface-variant font-normal">Anyone in organization can search and join this space.</span>
+                      <span className="text-[10px] text-mono-muted font-normal">Anyone in organization can search and join this space.</span>
                     </div>
                   </label>
                 </div>
@@ -2091,22 +2091,22 @@ export default function MonolithMessenger() {
 
               <div className="flex items-center justify-between text-xs pt-1">
                 <div>
-                  <span className="font-bold text-on-surface block">Request to Join</span>
-                  <span className="text-[10px] text-on-surface-variant leading-relaxed">Require manager approval to join this space.</span>
+                  <span className="font-bold text-mono-text block">Request to Join</span>
+                  <span className="text-[10px] text-mono-muted leading-relaxed">Require manager approval to join this space.</span>
                 </div>
                 <input
                   type="checkbox"
                   checked={newSpaceRequestToJoin}
                   onChange={(e) => setNewSpaceRequestToJoin(e.target.checked)}
-                  className="accent-[#00cec4] size-4 rounded cursor-pointer"
+                  className="accent-[#F9D972] size-4 rounded cursor-pointer"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="ds-label block font-semibold text-on-surface-variant">Invite initial members</label>
-                <div className="max-h-[120px] overflow-y-auto border border-outline-variant rounded-xl p-2 space-y-1.5">
+                <label className="monolith-label block font-semibold text-mono-muted">Invite initial members</label>
+                <div className="max-h-[120px] overflow-y-auto border border-mono-border rounded-xl p-2 space-y-1.5">
                   {employees.map((emp) => (
-                    <label key={emp.id} className="flex items-center justify-between text-xs text-on-surface cursor-pointer px-1 py-0.5 hover:bg-surface-container-low rounded-md">
+                    <label key={emp.id} className="flex items-center justify-between text-xs text-mono-text cursor-pointer px-1 py-0.5 hover:bg-mono-soft rounded-md">
                       <span className="truncate pr-2 font-medium">{emp.name} ({emp.designation || "Staff"})</span>
                       <input
                         type="checkbox"
@@ -2118,7 +2118,7 @@ export default function MonolithMessenger() {
                             setNewSpaceInvitees(newSpaceInvitees.filter(id => id !== emp.id));
                           }
                         }}
-                        className="accent-[#00cec4]"
+                        className="accent-[#F9D972]"
                       />
                     </label>
                   ))}
@@ -2129,14 +2129,14 @@ export default function MonolithMessenger() {
                 <button
                   type="button"
                   onClick={() => setShowCreateSpaceModal(false)}
-                  className="px-4 py-2 text-xs border border-outline-variant hover:bg-surface-container-low rounded-xl text-on-surface font-semibold"
+                  className="px-4 py-2 text-xs border border-mono-border hover:bg-mono-soft rounded-xl text-mono-text font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={spaceCreating}
-                  className="bg-[#00cec4] text-white hover:bg-[#00b8af] disabled:opacity-50 px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all"
+                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] disabled:opacity-50 px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all"
                 >
                   {spaceCreating ? "Creating..." : "Create"}
                 </button>
@@ -2150,67 +2150,67 @@ export default function MonolithMessenger() {
       {/* 3. Manage Members Modal */}
       {showManageMembersModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-surface border border-outline-variant rounded-2xl w-full max-w-lg p-5 relative shadow-xl text-left animate-page-enter">
+          <div className="bg-mono-card border border-mono-border rounded-2xl w-full max-w-lg p-5 relative shadow-xl text-left animate-page-enter">
             <button
               onClick={() => setShowManageMembersModal(false)}
-              className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface p-1 hover:bg-surface-container rounded-lg"
+              className="absolute top-4 right-4 text-mono-muted hover:text-mono-text p-1 hover:bg-mono-soft rounded-lg"
             >
               <X className="size-4" />
             </button>
 
-            <h4 className="ds-h3 text-on-surface font-bold mb-4 font-display">Members - {selectedSpaceTitle}</h4>
+            <h4 className="monolith-h3 text-mono-text font-bold mb-4 font-display">Members - {selectedSpaceTitle}</h4>
 
             <div className="flex justify-between items-center gap-4 mb-4 relative">
-              <span className="ds-label text-on-surface-variant font-bold">Space Members ({members.length})</span>
+              <span className="monolith-label text-mono-muted font-bold">Space Members ({members.length})</span>
               <div className="relative">
                 <button
                   disabled={memberActionLoading}
                   onClick={() => setShowAddMemberPopover(!showAddMemberPopover)}
-                  className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
                 >
                   <Plus className="size-3.5" /> Add member
                 </button>
 
                 {showAddMemberPopover && (
-                  <div className="absolute right-0 top-full mt-2 w-56 rounded-xl bg-surface border border-outline-variant shadow-lg z-50 py-1.5 text-xs text-on-surface max-h-52 overflow-y-auto animate-page-enter">
-                    <span className="ds-label px-3 py-1 text-[8px] font-bold text-on-surface-variant block mb-1">Add Employee</span>
+                  <div className="absolute right-0 top-full mt-2 w-56 rounded-xl bg-mono-card border border-mono-border shadow-lg z-50 py-1.5 text-xs text-mono-text max-h-52 overflow-y-auto animate-page-enter">
+                    <span className="monolith-label px-3 py-1 text-[8px] font-bold text-mono-muted block mb-1">Add Employee</span>
                     {employees
                       .filter(emp => !members.some(m => m.member?.displayName === emp.name))
                       .map((emp) => (
                         <button
                           key={emp.id}
                           onClick={() => handleAddMember(emp.id)}
-                          className="w-full text-left px-3 py-1.5 hover:bg-surface-container-low truncate font-medium block"
+                          className="w-full text-left px-3 py-1.5 hover:bg-mono-soft truncate font-medium block"
                         >
                           {emp.name}
                         </button>
                       ))}
                     {employees.filter(emp => !members.some(m => m.member?.displayName === emp.name)).length === 0 && (
-                      <span className="px-3 py-2 text-on-surface-variant italic block text-[10px]">All users added.</span>
+                      <span className="px-3 py-2 text-mono-muted italic block text-[10px]">All users added.</span>
                     )}
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="max-h-72 overflow-y-auto space-y-2.5 border border-outline-variant/60 rounded-xl p-3 bg-surface-container-low">
+            <div className="max-h-72 overflow-y-auto space-y-2.5 border border-mono-border/60 rounded-xl p-3 bg-mono-soft">
               {membersLoading ? (
-                <div className="text-center py-10 text-xs text-on-surface-variant animate-pulse">Loading memberships...</div>
+                <div className="text-center py-10 text-xs text-mono-muted animate-pulse">Loading memberships...</div>
               ) : members.length === 0 ? (
-                <div className="text-center py-10 text-xs text-on-surface-variant italic">No members found.</div>
+                <div className="text-center py-10 text-xs text-mono-muted italic">No members found.</div>
               ) : (
                 members.map((m, idx) => {
                   const mName = m.member?.displayName || "Google User";
                   const isCurrent = m.member?.employeeId === "current-user" || m.member?.displayName?.includes("You");
                   return (
-                    <div key={idx} className="flex justify-between items-center bg-surface border border-outline-variant/40 rounded-xl p-2.5">
+                    <div key={idx} className="flex justify-between items-center bg-mono-card border border-mono-border/40 rounded-xl p-2.5">
                       <div className="flex items-center space-x-2.5 truncate">
                         <span className={`flex items-center justify-center size-7 rounded-full font-bold text-[9px] ${getAvatarBg(mName)} shrink-0`}>
                           {getInitials(mName)}
                         </span>
                         <div className="truncate text-xs">
-                          <span className="font-bold text-on-surface block truncate">{mName}</span>
-                          <span className="text-[9px] text-on-surface-variant block uppercase tracking-wide">
+                          <span className="font-bold text-mono-text block truncate">{mName}</span>
+                          <span className="text-[9px] text-mono-muted block uppercase tracking-wide">
                             {m.member?.designation || "Member"} • {m.role === "ROLE_OWNER" ? "Owner" : "Member"}
                           </span>
                         </div>
@@ -2238,88 +2238,88 @@ export default function MonolithMessenger() {
       {/* 4. Space Settings Modal */}
       {showSpaceSettingsModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-surface border border-outline-variant rounded-2xl w-full max-w-md p-6 relative shadow-xl text-left animate-page-enter">
+          <div className="bg-mono-card border border-mono-border rounded-2xl w-full max-w-md p-6 relative shadow-xl text-left animate-page-enter">
             <button
               onClick={() => setShowSpaceSettingsModal(false)}
-              className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface p-1 hover:bg-surface-container rounded-lg"
+              className="absolute top-4 right-4 text-mono-muted hover:text-mono-text p-1 hover:bg-mono-soft rounded-lg"
             >
               <X className="size-4" />
             </button>
 
-            <h4 className="ds-h3 text-on-surface font-bold mb-4 font-display">Space Settings - {selectedSpaceTitle}</h4>
+            <h4 className="monolith-h3 text-mono-text font-bold mb-4 font-display">Space Settings - {selectedSpaceTitle}</h4>
 
             <div className="space-y-4 text-xs">
               
               <div className="space-y-2">
-                <label className="ds-label block font-semibold text-on-surface-variant">Access Control</label>
+                <label className="monolith-label block font-semibold text-mono-muted">Access Control</label>
                 <div className="space-y-2">
-                  <label className="flex items-start space-x-2.5 text-xs text-on-surface font-medium cursor-pointer">
+                  <label className="flex items-start space-x-2.5 text-xs text-mono-text font-medium cursor-pointer">
                     <input
                       type="radio"
                       name="settings-access"
                       value="Private"
                       checked={spaceSettingsAccess === "Private"}
                       onChange={() => setSpaceSettingsAccess("Private")}
-                      className="mt-0.5 accent-[#00cec4]"
+                      className="mt-0.5 accent-[#F9D972]"
                     />
                     <div>
                       <div className="font-bold">Private</div>
-                      <span className="text-[10px] text-on-surface-variant font-normal">Only invited employees can access this space.</span>
+                      <span className="text-[10px] text-mono-muted font-normal">Only invited employees can access this space.</span>
                     </div>
                   </label>
-                  <label className="flex items-start space-x-2.5 text-xs text-on-surface cursor-pointer">
+                  <label className="flex items-start space-x-2.5 text-xs text-mono-text cursor-pointer">
                     <input
                       type="radio"
                       name="settings-access"
                       value="Discoverable"
                       checked={spaceSettingsAccess === "Discoverable"}
                       onChange={() => setSpaceSettingsAccess("Discoverable")}
-                      className="mt-0.5 accent-[#00cec4]"
+                      className="mt-0.5 accent-[#F9D972]"
                     />
                     <div>
                       <div className="font-bold">Discoverable</div>
-                      <span className="text-[10px] text-on-surface-variant font-normal">Anyone in adarshshipping can search and join this space.</span>
+                      <span className="text-[10px] text-mono-muted font-normal">Anyone in adarshshipping can search and join this space.</span>
                     </div>
                   </label>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs pt-1 border-t border-outline-variant/60">
+              <div className="flex items-center justify-between text-xs pt-1 border-t border-mono-border/60">
                 <div>
-                  <span className="font-bold text-on-surface block">Request to Join</span>
-                  <span className="text-[10px] text-on-surface-variant leading-relaxed">Require manager approval to join this space.</span>
+                  <span className="font-bold text-mono-text block">Request to Join</span>
+                  <span className="text-[10px] text-mono-muted leading-relaxed">Require manager approval to join this space.</span>
                 </div>
                 <input
                   type="checkbox"
                   checked={spaceSettingsRequestToJoin}
                   onChange={(e) => setSpaceSettingsRequestToJoin(e.target.checked)}
-                  className="accent-[#00cec4] size-4 rounded cursor-pointer"
+                  className="accent-[#F9D972] size-4 rounded cursor-pointer"
                 />
               </div>
 
-              <div className="space-y-1.5 border-t border-outline-variant/60 pt-3">
-                <label className="ds-label block font-semibold text-on-surface-variant">Who can manage memberships</label>
+              <div className="space-y-1.5 border-t border-mono-border/60 pt-3">
+                <label className="monolith-label block font-semibold text-mono-muted">Who can manage memberships</label>
                 <NativeSelect
                   value={spaceSettingsPermissions}
                   onChange={(e) => setSpaceSettingsPermissions(e.target.value)}
-                  className="w-full bg-surface text-xs focus:ring-0 focus:outline-none"
+                  className="w-full bg-mono-card text-xs focus:ring-0 focus:outline-none"
                 >
                   <option value="all">Owners, managers, and members</option>
                   <option value="managers">Owners and managers only</option>
                 </NativeSelect>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2.5 border-t border-outline-variant/60">
+              <div className="flex justify-end space-x-2 pt-2.5 border-t border-mono-border/60">
                 <button
                   onClick={() => setShowSpaceSettingsModal(false)}
-                  className="px-4 py-2 border border-outline-variant hover:bg-surface-container-low rounded-xl text-on-surface font-semibold"
+                  className="px-4 py-2 border border-mono-border hover:bg-mono-soft rounded-xl text-mono-text font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveSpaceSettings}
                   disabled={spaceSettingsSaving}
-                  className="bg-[#00cec4] text-white hover:bg-[#00b8af] disabled:opacity-50 px-4 py-2 rounded-xl font-bold uppercase transition-all"
+                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] disabled:opacity-50 px-4 py-2 rounded-xl font-bold uppercase transition-all"
                 >
                   {spaceSettingsSaving ? "Saving..." : "Save"}
                 </button>
@@ -2333,46 +2333,46 @@ export default function MonolithMessenger() {
       {/* 5. Space Details Modal */}
       {showSpaceDetailsModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-surface border border-outline-variant rounded-2xl w-full max-w-md p-6 relative shadow-xl text-left animate-page-enter">
+          <div className="bg-mono-card border border-mono-border rounded-2xl w-full max-w-md p-6 relative shadow-xl text-left animate-page-enter">
             <button
               onClick={() => setShowSpaceDetailsModal(false)}
-              className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface p-1 hover:bg-surface-container rounded-lg"
+              className="absolute top-4 right-4 text-mono-muted hover:text-mono-text p-1 hover:bg-mono-soft rounded-lg"
             >
               <X className="size-4" />
             </button>
 
-            <h4 className="ds-h3 text-on-surface font-bold mb-4 font-display">Space Details</h4>
+            <h4 className="monolith-h3 text-mono-text font-bold mb-4 font-display">Space Details</h4>
 
             <div className="space-y-4 text-xs">
               <div className="space-y-1">
-                <span className="ds-label text-on-surface-variant">Name</span>
-                <div className="text-on-surface font-bold">{selectedSpaceTitle}</div>
+                <span className="monolith-label text-mono-muted">Name</span>
+                <div className="text-mono-text font-bold">{selectedSpaceTitle}</div>
               </div>
 
-              <div className="space-y-1 border-t border-outline-variant/60 pt-2.5">
-                <span className="ds-label text-on-surface-variant">Type</span>
-                <div className="text-on-surface font-bold uppercase tracking-wider">{selectedSpaceType}</div>
+              <div className="space-y-1 border-t border-mono-border/60 pt-2.5">
+                <span className="monolith-label text-mono-muted">Type</span>
+                <div className="text-mono-text font-bold uppercase tracking-wider">{selectedSpaceType}</div>
               </div>
 
-              <div className="space-y-1 border-t border-outline-variant/60 pt-2.5">
-                <span className="ds-label text-on-surface-variant">Access level</span>
-                <div className="text-on-surface font-bold">{spaceSettingsAccess}</div>
+              <div className="space-y-1 border-t border-mono-border/60 pt-2.5">
+                <span className="monolith-label text-mono-muted">Access level</span>
+                <div className="text-mono-text font-bold">{spaceSettingsAccess}</div>
               </div>
 
-              <div className="space-y-1 border-t border-outline-variant/60 pt-2.5">
-                <span className="ds-label text-on-surface-variant">Join approval</span>
-                <div className="text-on-surface font-bold">{spaceSettingsRequestToJoin ? "Requires manager approval" : "No approval required"}</div>
+              <div className="space-y-1 border-t border-mono-border/60 pt-2.5">
+                <span className="monolith-label text-mono-muted">Join approval</span>
+                <div className="text-mono-text font-bold">{spaceSettingsRequestToJoin ? "Requires manager approval" : "No approval required"}</div>
               </div>
 
-              <div className="space-y-1 border-t border-outline-variant/60 pt-2.5">
-                <span className="ds-label text-on-surface-variant">Space ID</span>
-                <div className="text-on-surface-variant font-mono text-[9px] select-all break-all">{selectedSpaceId}</div>
+              <div className="space-y-1 border-t border-mono-border/60 pt-2.5">
+                <span className="monolith-label text-mono-muted">Space ID</span>
+                <div className="text-mono-muted font-mono text-[9px] select-all break-all">{selectedSpaceId}</div>
               </div>
 
-              <div className="flex justify-end pt-2 border-t border-outline-variant/60">
+              <div className="flex justify-end pt-2 border-t border-mono-border/60">
                 <button
                   onClick={() => setShowSpaceDetailsModal(false)}
-                  className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-4 py-2 rounded-xl font-bold uppercase transition-all"
+                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl font-bold uppercase transition-all"
                 >
                   Close
                 </button>

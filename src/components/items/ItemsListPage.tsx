@@ -184,7 +184,7 @@ export function ItemsListPage({ basePath = "/crm/items" }: ItemsListPageProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-surface-container-low">
+    <div className="flex flex-col h-full bg-mono-soft">
       <ItemsToolbar
         filter={filter}
         onFilterChange={handleFilterChange}
@@ -195,7 +195,7 @@ export function ItemsListPage({ basePath = "/crm/items" }: ItemsListPageProps) {
         onAction={handleAction}
       />
 
-      <div className="flex-1 overflow-hidden flex flex-col bg-surface mx-0 rounded-xl border border-[var(--color-outline-variant)]">
+      <div className="flex-1 overflow-hidden flex flex-col bg-mono-card mx-0 rounded-xl border border-[var(--color-outline-variant)]">
         <ItemsTable
           items={paginated}
           selectedIds={selectedIds}

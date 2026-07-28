@@ -16,16 +16,16 @@ export default async function PurchaseInvoicesPage() {
     <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/20 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-mono-border/20 pb-5">
         <div>
-          <h2 className="ds-h1 text-white">Purchase Invoices</h2>
+          <h2 className="monolith-h1 text-white">Purchase Invoices</h2>
           <p className="text-slate-400 text-xs mt-1">
             Track operational bills, vendor purchase invoices, allocations, outstanding liabilities, and expense postings.
           </p>
         </div>
         <NextLink
           href="/accounting/purchase-invoices/new"
-          className="flex items-center gap-1.5 bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all cursor-pointer"
+          className="flex items-center gap-1.5 bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all cursor-pointer"
         >
           <Plus className="size-3.5" />
           <span>New Purchase Invoice</span>
@@ -40,7 +40,7 @@ export default async function PurchaseInvoicesPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="ds-table">
+            <table className="monolith-table">
               <thead>
                 <tr>
                   <th>Invoice Number</th>
@@ -58,7 +58,7 @@ export default async function PurchaseInvoicesPage() {
                     <td>
                       <NextLink
                         href={`/accounting/purchase-invoices/${inv.id}`}
-                        className="text-white hover:text-[#00cec4] font-mono font-bold hover:underline transition-colors"
+                        className="text-white hover:text-[#F9D972] font-mono font-bold hover:underline transition-colors"
                       >
                         {inv.invoiceNumber}
                       </NextLink>
@@ -69,10 +69,10 @@ export default async function PurchaseInvoicesPage() {
                     <td className="text-slate-350 text-xs">
                       {new Date(inv.postingDate).toLocaleDateString("en-IN")}
                     </td>
-                    <td className="ds-numeric font-bold text-white">
+                    <td className="monolith-numeric font-bold text-white">
                       ₹{Number(inv.grandTotal).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="ds-numeric font-bold text-[#00cec4]">
+                    <td className="monolith-numeric font-bold text-[#F9D972]">
                       ₹{Number(inv.outstandingAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </td>
                     <td>

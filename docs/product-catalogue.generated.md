@@ -1,17 +1,17 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-27T14:27:26.358Z
+> Generated at: 2026-07-27T18:48:49.292Z
 > Version: 0.1.0
 
 ## Codebase Statistics
 
 | Metric | Count |
 |---|---|
-| App Routes (Pages) | 203 |
-| API Routes | 197 |
+| App Routes (Pages) | 205 |
+| API Routes | 196 |
 | Prisma Models | 277 |
 | Module Service Files | 86 |
-| UI Components | 95 |
+| UI Components | 92 |
 
 ## Modules Overview
 
@@ -19,29 +19,29 @@
 |---|---|---|---|---|---|
 | account | 1 | 0 | 0 | 0 | 0 |
 | accounting | 32 | 0 | 18 | 6 | 0 |
-| admin | 9 | 6 | 0 | 0 | 0 |
+| admin | 10 | 6 | 0 | 0 | 0 |
 | ams | 18 | 17 | 17 | 11 | 3 |
 | attendance | 7 | 10 | 9 | 1 | 0 |
 | auth | 0 | 1 | 0 | 0 | 1 |
 | cha | 12 | 6 | 35 | 7 | 3 |
-| cha-ui-showcase | 1 | 1 | 0 | 0 | 0 |
 | communication | 11 | 18 | 2 | 1 | 0 |
 | core | 2 | 0 | 72 | 5 | 0 |
 | crm | 59 | 4 | 26 | 7 | 1 |
 | cron | 0 | 7 | 0 | 0 | 0 |
 | customer-portal | 0 | 19 | 0 | 12 | 0 |
-| dashboard | 1 | 0 | 0 | 0 | 0 |
+| dashboard | 3 | 0 | 0 | 0 | 0 |
 | dev | 0 | 1 | 0 | 0 | 0 |
 | expense | 1 | 0 | 0 | 0 | 0 |
 | google-chat | 0 | 6 | 6 | 8 | 0 |
 | health | 0 | 1 | 0 | 0 | 0 |
-| hrms | 39 | 34 | 38 | 14 | 25 |
+| hrms | 39 | 34 | 38 | 14 | 21 |
 | items | 0 | 0 | 0 | 0 | 17 |
 | landing-page | 0 | 0 | 0 | 0 | 5 |
 | lms | 5 | 0 | 5 | 0 | 0 |
 | login | 1 | 0 | 0 | 0 | 0 |
 | mobile | 0 | 18 | 0 | 0 | 0 |
 | mona | 0 | 2 | 0 | 7 | 5 |
+| monolith | 0 | 0 | 0 | 0 | 18 |
 | notifications | 1 | 9 | 4 | 2 | 1 |
 | org | 0 | 7 | 0 | 0 | 0 |
 | product-catalogue | 1 | 0 | 0 | 0 | 0 |
@@ -51,7 +51,6 @@
 | shared | 0 | 0 | 0 | 0 | 16 |
 | todo | 1 | 0 | 2 | 1 | 1 |
 | todos | 0 | 5 | 0 | 0 | 0 |
-| ui | 0 | 0 | 0 | 0 | 17 |
 | users | 0 | 4 | 0 | 0 | 0 |
 
 ## API Routes
@@ -98,7 +97,6 @@
 | GET | `/api/cha/due-date-warnings` | cha |
 | GET | `/api/cha/expense-artifacts/[...path]` | cha |
 | GET | `/api/cha/reports/jobs/[jobId]` | cha |
-| GET, POST | `/api/cha-ui-showcase` | cha-ui-showcase |
 | GET | `/api/communication/chat/check-new` | communication |
 | POST | `/api/communication/chat/dm` | communication |
 | GET | `/api/communication/chat/list` | communication |
@@ -294,6 +292,7 @@
 | `/accounting/settings` | accounting | page |
 | `/accounting/trial-balance` | accounting | page |
 | `/admin/data-tools` | admin | page |
+| `/admin/design-system` | admin | page |
 | `/admin/google-chat` | admin | page |
 | `/admin/notifications` | admin | page |
 | `/admin` | admin | page |
@@ -338,7 +337,6 @@
 | `/cha/reports` | cha | page |
 | `/cha/settings/filing-workflows` | cha | page |
 | `/cha/settings` | cha | page |
-| `/cha-ui-showcase` | cha-ui-showcase | page |
 | `/communication/calendar` | communication | page |
 | `/communication/chat` | communication | page |
 | `/communication/drive` | communication | page |

@@ -117,7 +117,7 @@ export function InvoiceDetailsPage({
         <aside className="flex w-full shrink-0 flex-col border-b border-[#dfe6f3] bg-white xl:w-[360px] xl:border-b-0 xl:border-r">
           <div className="border-b border-[#e8edf5] px-4 py-4">
             <div className="flex items-center justify-between gap-3">
-              <span className="ds-h3 font-bold tracking-wide text-[#0f172a]">
+              <span className="monolith-h3 font-bold tracking-wide text-[#0f172a]">
                 Documents
               </span>
               <div className="flex items-center gap-2">
@@ -172,7 +172,7 @@ export function InvoiceDetailsPage({
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search documents"
-                className="h-11 w-full rounded-xl border border-[#dbe3f0] bg-white pl-10 pr-3 text-sm text-[#1f2937] outline-none focus:border-[#00cec4] focus:ring-2 focus:ring-[#00cec4]/15"
+                className="h-11 w-full rounded-xl border border-[#dbe3f0] bg-white pl-10 pr-3 text-sm text-[#1f2937] outline-none focus:border-[#F9D972] focus:ring-2 focus:ring-[#F9D972]/15"
               />
             </div>
           </div>
@@ -195,7 +195,7 @@ export function InvoiceDetailsPage({
                         <span className="font-semibold text-[13px] text-[#1f2937]">
                           {record.invoiceNumber}
                         </span>
-                        <span className="ds-numeric text-xs font-bold text-[#1f2937]">
+                        <span className="monolith-numeric text-xs font-bold text-[#1f2937]">
                           {formatAmount(record.total)}
                         </span>
                       </div>
@@ -235,7 +235,7 @@ export function InvoiceDetailsPage({
           <div className="flex items-center justify-between">
             <Link
               href="/crm/quotes"
-              className="inline-flex items-center gap-2 text-sm font-medium text-[#4b5563] hover:text-[#00cec4] transition-colors"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[#4b5563] hover:text-[#F9D972] transition-colors"
             >
               <ArrowLeft className="size-4" />
               <span>Back to CRM</span>
@@ -258,10 +258,10 @@ export function InvoiceDetailsPage({
           </div>
 
           {/* Workflow Action Bar Card (Keep interactive outside gray-out) */}
-          <div className="card-left-accent bg-white rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="monolith-card monolith-accent bg-white rounded-2xl p-5 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <span className="ds-label block mb-1">Workflow Status</span>
+                <span className="monolith-label block mb-1">Workflow Status</span>
                 <div className="flex items-center gap-2">
                   <span className="text-xl font-bold uppercase tracking-tight text-[#0f172a]">
                     {invoice.invoiceNumber}
@@ -283,12 +283,12 @@ export function InvoiceDetailsPage({
 
           {/* SLA Banner */}
           {isSlaBreached && (
-            <div className="flex items-start gap-4 p-4 rounded-2xl bg-orange-50 border border-orange-200 text-orange-800 shadow-sm card-left-accent-orange">
-              <span className="ds-icon-badge mt-0.5 flex-shrink-0" style={{ background: "rgba(251,146,60,0.15)", color: "#fb923c" }}>
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-orange-50 border border-orange-200 text-orange-800 shadow-sm monolith-card monolith-accent-warning">
+              <span className="monolith-icon-badge mt-0.5 flex-shrink-0" style={{ background: "rgba(251,146,60,0.15)", color: "#D88700" }}>
                 <ShieldAlert size={18} />
               </span>
               <div>
-                <h4 className="ds-h3 font-semibold text-orange-950">
+                <h4 className="monolith-h3 font-semibold text-orange-950">
                   {invoice.type === "SALES_ORDER" ? "30-Day Conversion SLA Breached" : "Response SLA Breached"}
                 </h4>
                 <p className="text-sm text-orange-900 mt-1">
@@ -314,8 +314,8 @@ export function InvoiceDetailsPage({
                 className={cn(
                   "pb-3 text-sm font-semibold tracking-wide uppercase transition-colors relative",
                   activeTab === "details"
-                    ? "text-[#00cec4] border-b-2 border-[#00cec4]"
-                    : "text-[#6b7280] hover:text-[#00cec4]"
+                    ? "text-[#F9D972] border-b-2 border-[#F9D972]"
+                    : "text-[#6b7280] hover:text-[#F9D972]"
                 )}
               >
                 Document Details
@@ -325,8 +325,8 @@ export function InvoiceDetailsPage({
                 className={cn(
                   "pb-3 text-sm font-semibold tracking-wide uppercase transition-colors relative",
                   activeTab === "items"
-                    ? "text-[#00cec4] border-b-2 border-[#00cec4]"
-                    : "text-[#6b7280] hover:text-[#00cec4]"
+                    ? "text-[#F9D972] border-b-2 border-[#F9D972]"
+                    : "text-[#6b7280] hover:text-[#F9D972]"
                 )}
               >
                 Line Items ({invoice.items.length})
@@ -336,8 +336,8 @@ export function InvoiceDetailsPage({
                 className={cn(
                   "pb-3 text-sm font-semibold tracking-wide uppercase transition-colors relative",
                   activeTab === "history"
-                    ? "text-[#00cec4] border-b-2 border-[#00cec4]"
-                    : "text-[#6b7280] hover:text-[#00cec4]"
+                    ? "text-[#F9D972] border-b-2 border-[#F9D972]"
+                    : "text-[#6b7280] hover:text-[#F9D972]"
                 )}
               >
                 Approval Logs
@@ -351,35 +351,35 @@ export function InvoiceDetailsPage({
                 <div className="md:col-span-2 space-y-6">
                   {/* General Details */}
                   <div className="bg-white p-6 rounded-2xl border border-[#e7edf5] shadow-sm">
-                    <h3 className="ds-h3 font-semibold mb-4 text-[#0f172a]">
+                    <h3 className="monolith-h3 font-semibold mb-4 text-[#0f172a]">
                       General Information
                     </h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <span className="ds-label">Document Date</span>
+                        <span className="monolith-label">Document Date</span>
                         <div className="text-sm font-medium flex items-center gap-2 mt-1">
-                          <Calendar className="size-4 text-[#00cec4]" />
+                          <Calendar className="size-4 text-[#F9D972]" />
                           <span>{formatDate(invoice.date)}</span>
                         </div>
                       </div>
                       <div>
-                        <span className="ds-label">Due Date</span>
+                        <span className="monolith-label">Due Date</span>
                         <div className="text-sm font-medium flex items-center gap-2 mt-1">
-                          <Calendar className="size-4 text-[#00cec4]" />
+                          <Calendar className="size-4 text-[#F9D972]" />
                           <span>{formatDate(invoice.dueDate || "")}</span>
                         </div>
                       </div>
                       <div>
-                        <span className="ds-label">Salesperson / Owner</span>
+                        <span className="monolith-label">Salesperson / Owner</span>
                         <div className="text-sm font-medium flex items-center gap-2 mt-1">
-                          <User className="size-4 text-[#00cec4]" />
+                          <User className="size-4 text-[#F9D972]" />
                           <span>{invoice.salesperson}</span>
                         </div>
                       </div>
                       <div>
-                        <span className="ds-label">SLA Deadline</span>
+                        <span className="monolith-label">SLA Deadline</span>
                         <div className="text-sm font-medium flex items-center gap-2 mt-1">
-                          <ShieldAlert className="size-4 text-[#fb923c]" />
+                          <ShieldAlert className="size-4 text-[#D88700]" />
                           <span className={cn(isSlaBreached && "text-red-600 font-bold")}>
                             {formatDate(invoice.slaDeadline || "")}
                           </span>
@@ -390,25 +390,25 @@ export function InvoiceDetailsPage({
 
                   {/* Customer Block */}
                   <div className="bg-white p-6 rounded-2xl border border-[#e7edf5] shadow-sm">
-                    <h3 className="ds-h3 font-semibold mb-4 text-[#0f172a]">
+                    <h3 className="monolith-h3 font-semibold mb-4 text-[#0f172a]">
                       Customer Details
                     </h3>
                     <div className="space-y-4">
                       <div>
-                        <span className="ds-label">Customer Name</span>
+                        <span className="monolith-label">Customer Name</span>
                         <div className="text-sm font-bold text-[#1f2937] mt-1">
                           {invoice.customerName}
                         </div>
                       </div>
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
-                          <span className="ds-label">Billing Address</span>
+                          <span className="monolith-label">Billing Address</span>
                           <div className="text-xs text-[#4b5563] mt-1 leading-relaxed whitespace-pre-line">
                             {invoice.billingAddress || "No billing address listed."}
                           </div>
                         </div>
                         <div>
-                          <span className="ds-label">Shipping / Delivery Address</span>
+                          <span className="monolith-label">Shipping / Delivery Address</span>
                           <div className="text-xs text-[#4b5563] mt-1 leading-relaxed whitespace-pre-line">
                             {invoice.shippingAddress || "No shipping address listed."}
                           </div>
@@ -420,7 +420,7 @@ export function InvoiceDetailsPage({
                   {/* Notes Block */}
                   {invoice.notes && (
                     <div className="bg-white p-6 rounded-2xl border border-[#e7edf5] shadow-sm">
-                      <h3 className="ds-h3 font-semibold mb-2 text-[#0f172a]">
+                      <h3 className="monolith-h3 font-semibold mb-2 text-[#0f172a]">
                         Terms & Notes
                       </h3>
                       <p className="text-xs text-[#4b5563] leading-relaxed whitespace-pre-line">
@@ -432,32 +432,32 @@ export function InvoiceDetailsPage({
 
                 {/* Right Column - Financial Summary */}
                 <div className="space-y-6">
-                  <div className="bg-white p-6 rounded-2xl border border-[#e7edf5] shadow-sm card-top-accent">
-                    <h3 className="ds-h3 font-semibold mb-4 text-[#0f172a]">
+                  <div className="bg-white p-6 rounded-2xl border border-[#e7edf5] shadow-sm monolith-card monolith-accent">
+                    <h3 className="monolith-h3 font-semibold mb-4 text-[#0f172a]">
                       Financial Summary
                     </h3>
                     <div className="space-y-4">
                       <div className="flex justify-between items-center text-sm border-b border-[#f3f4f6] pb-2">
                         <span className="text-[#6b7280]">Subtotal</span>
-                        <span className="ds-numeric font-medium text-[#1f2937]">
+                        <span className="monolith-numeric font-medium text-[#1f2937]">
                           {formatAmount(invoice.total - invoice.tax)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-sm border-b border-[#f3f4f6] pb-2">
                         <span className="text-[#6b7280]">GST / Tax</span>
-                        <span className="ds-numeric font-medium text-[#1f2937]">
+                        <span className="monolith-numeric font-medium text-[#1f2937]">
                           {formatAmount(invoice.tax)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-sm border-b border-[#f3f4f6] pb-2">
                         <span className="text-[#6b7280]">Discount</span>
-                        <span className="ds-numeric font-medium text-[#1f2937]">
+                        <span className="monolith-numeric font-medium text-[#1f2937]">
                           {formatAmount(invoice.discount)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center pt-2">
                         <span className="font-bold text-[#0f172a]">Total</span>
-                        <span className="ds-numeric text-lg font-bold text-[#00cec4]">
+                        <span className="monolith-numeric text-lg font-bold text-[#F9D972]">
                           {formatAmount(invoice.total)}
                         </span>
                       </div>
@@ -470,7 +470,7 @@ export function InvoiceDetailsPage({
             {/* Tab content - Items */}
             {activeTab === "items" && (
               <div className="bg-white rounded-2xl border border-[#e7edf5] shadow-sm overflow-hidden">
-                <table className="ds-table w-full">
+                <table className="monolith-table w-full">
                   <thead>
                     <tr>
                       <th className="w-16 text-center">S.No</th>
@@ -486,10 +486,10 @@ export function InvoiceDetailsPage({
                       <tr key={item.id}>
                         <td className="w-16 text-center text-xs text-[#6b7280]">{idx + 1}</td>
                         <td className="font-medium text-[#1f2937]">{item.name}</td>
-                        <td className="text-right ds-numeric">{item.qty}</td>
-                        <td className="text-right ds-numeric">{formatAmount(item.rate)}</td>
-                        <td className="text-right ds-numeric">{item.taxPercent}%</td>
-                        <td className="text-right font-semibold text-[#1f2937] ds-numeric">
+                        <td className="text-right monolith-numeric">{item.qty}</td>
+                        <td className="text-right monolith-numeric">{formatAmount(item.rate)}</td>
+                        <td className="text-right monolith-numeric">{item.taxPercent}%</td>
+                        <td className="text-right font-semibold text-[#1f2937] monolith-numeric">
                           {formatAmount(item.amount)}
                         </td>
                       </tr>
@@ -509,8 +509,8 @@ export function InvoiceDetailsPage({
             {/* Tab content - History */}
             {activeTab === "history" && (
               <div className="bg-white p-6 rounded-2xl border border-[#e7edf5] shadow-sm">
-                <h3 className="ds-h3 font-semibold mb-4 text-[#0f172a] flex items-center gap-2">
-                  <History className="size-4 text-[#00cec4]" />
+                <h3 className="monolith-h3 font-semibold mb-4 text-[#0f172a] flex items-center gap-2">
+                  <History className="size-4 text-[#F9D972]" />
                   <span>Workflow Audit History</span>
                 </h3>
                 <ApprovalLogList logs={invoice.approvalLogs} />

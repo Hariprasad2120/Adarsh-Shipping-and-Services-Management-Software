@@ -1,12 +1,12 @@
 "use client";
 
-import { DateInput } from "@/components/ui/date-input";
-import { FileUploadField } from "@/components/ui/file-upload-field";
+import { DateInput } from "@/components/monolith/date-input";
+import { FileUploadField } from "@/components/monolith/file-upload-field";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ExternalLink, History } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/monolith/button";
 import * as actions from "@/modules/cha/actions";
 
 type DoExtension = {
@@ -92,14 +92,14 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
   };
 
   return (
-    <div className="ds-form-section space-y-4">
-      <h3 className="ds-h3">Delivery Order Document &amp; Extension</h3>
+    <div className="monolith-form-section space-y-4">
+      <h3 className="monolith-h3">Delivery Order Document &amp; Extension</h3>
 
       <div className="space-y-4">
         <div>
           <div>
-            <span className="ds-label">DO Document Upload</span>
-            <p className="mt-0.5 text-xs text-on-surface-variant">
+            <span className="monolith-label">DO Document Upload</span>
+            <p className="mt-0.5 text-xs text-mono-muted">
               Attach the Delivery Order document here. Uploading a new file replaces the current one.
             </p>
           </div>
@@ -131,21 +131,21 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
             onInputChange={(e) => void handleUpload(e.target.files?.[0] ?? null)}
           />
           {!additionalData.doDocumentFileKey ? (
-            <span className="text-xs text-on-surface-variant">No Delivery Order document uploaded yet.</span>
+            <span className="text-xs text-mono-muted">No Delivery Order document uploaded yet.</span>
           ) : null}
         </div>
 
         <div className="space-y-3">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
             <label className="space-y-1.5">
-              <span className="ds-label">Delivery Order Extension Date</span>
+              <span className="monolith-label">Delivery Order Extension Date</span>
               <DateInput
                 id="deliveryOrderExtensionDate"
                 value={extensionDate}
                 onChange={(e) => setExtensionDate(e.target.value)}
                 min={additionalData.deliveryOrderValidity?.slice(0, 10)}
                 disabled={busy || !canUpdateJob || !additionalData.deliveryOrderValidity}
-                className="w-full ds-numeric"
+                className="w-full monolith-numeric"
               />
             </label>
             <Button
@@ -158,22 +158,22 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
               {busy ? "Saving..." : "Save Extension Date"}
             </Button>
           </div>
-          <div className="grid grid-cols-1 gap-2 text-xs text-on-surface-variant md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 text-xs text-mono-muted md:grid-cols-2">
             <p>
               Original validity:{" "}
-              <span className="ds-numeric text-on-surface">
+              <span className="monolith-numeric text-mono-text">
                 {originalValidity ? originalValidity.toLocaleDateString("en-IN") : "—"}
               </span>
             </p>
             <p>
               Effective validity:{" "}
-              <span className="ds-numeric text-on-surface">
+              <span className="monolith-numeric text-mono-text">
                 {effectiveValidity ? effectiveValidity.toLocaleDateString("en-IN") : "—"}
               </span>
             </p>
           </div>
           {!additionalData.deliveryOrderValidity ? (
-            <p className="text-xs text-[#fb923c]">
+            <p className="text-xs text-[#D88700]">
               Set the original Delivery Order validity first before saving an extension date.
             </p>
           ) : null}
@@ -181,14 +181,14 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
 
         {/* Extension history — reflected column */}
         {extensions.length > 0 ? (
-          <div className="space-y-2 border-t border-outline-variant/40 pt-4">
-            <span className="ds-label inline-flex items-center gap-1.5">
+          <div className="space-y-2 border-t border-mono-border/40 pt-4">
+            <span className="monolith-label inline-flex items-center gap-1.5">
               <History size={12} />
               Extension History
             </span>
-            <div className="card-cyan-outline overflow-hidden rounded-xl border border-outline-variant/40 bg-surface shadow-sm">
+            <div className="monolith-card overflow-hidden rounded-xl border border-mono-border/40 bg-mono-card shadow-sm">
               <div className="overflow-x-auto">
-                <table className="ds-table">
+                <table className="monolith-table">
                   <thead>
                     <tr>
                       <th>Applied On</th>
@@ -200,13 +200,13 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
                   <tbody>
                     {extensions.map((ext) => (
                       <tr key={ext.id}>
-                        <td className="ds-numeric">{new Date(ext.createdAt).toLocaleDateString("en-IN")}</td>
-                        <td className="ds-numeric">
+                        <td className="monolith-numeric">{new Date(ext.createdAt).toLocaleDateString("en-IN")}</td>
+                        <td className="monolith-numeric">
                           {ext.previousValidity
                             ? new Date(ext.previousValidity).toLocaleDateString("en-IN")
                             : "—"}
                         </td>
-                        <td className="ds-numeric font-medium">
+                        <td className="monolith-numeric font-medium">
                           {new Date(ext.extensionDate).toLocaleDateString("en-IN")}
                         </td>
                         <td>
@@ -215,13 +215,13 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
                               href={ext.fileKey}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-[#00cec4] hover:underline"
+                              className="inline-flex items-center gap-1 text-[#F9D972] hover:underline"
                             >
                               <ExternalLink size={12} />
                               {ext.fileName || "View"}
                             </a>
                           ) : (
-                            <span className="text-on-surface-variant">—</span>
+                            <span className="text-mono-muted">—</span>
                           )}
                         </td>
                       </tr>

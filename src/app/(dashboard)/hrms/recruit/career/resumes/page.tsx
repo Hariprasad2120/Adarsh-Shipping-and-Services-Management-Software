@@ -77,12 +77,12 @@ export default function CareerResumesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="ds-h1 text-on-surface">My Resumes</h1>
-          <p className="text-sm text-on-surface-variant">Manage your resume versions — private to you</p>
+          <h1 className="monolith-h1 text-mono-text">My Resumes</h1>
+          <p className="text-sm text-mono-muted">Manage your resume versions — private to you</p>
         </div>
         <button
           onClick={() => setShowAdd(!showAdd)}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#00cec4] px-4 py-2 text-sm font-medium text-white uppercase tracking-wide transition hover:bg-[#00b8af]"
+          className="inline-flex items-center gap-2 rounded-xl bg-[#F9D972] px-4 py-2 text-sm font-medium text-white uppercase tracking-wide transition hover:bg-[#E8C85D]"
         >
           <Add size={16} />
           Add Resume
@@ -90,12 +90,12 @@ export default function CareerResumesPage() {
       </div>
 
       {showAdd && (
-        <form onSubmit={handleAdd} className="rounded-xl border border-outline-variant bg-surface p-5 space-y-3">
-          <h3 className="ds-h3 text-on-surface">Register Resume</h3>
-          <p className="text-xs text-on-surface-variant">Register an existing resume file by name. File upload integration connects here.</p>
+        <form onSubmit={handleAdd} className="rounded-xl border border-mono-border bg-mono-card p-5 space-y-3">
+          <h3 className="monolith-h3 text-mono-text">Register Resume</h3>
+          <p className="text-xs text-mono-muted">Register an existing resume file by name. File upload integration connects here.</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="ds-label mb-1 block">Label / Version Name *</label>
+              <label className="monolith-label mb-1 block">Label / Version Name *</label>
               <input
                 required
                 value={addForm.name}
@@ -105,7 +105,7 @@ export default function CareerResumesPage() {
               />
             </div>
             <div>
-              <label className="ds-label mb-1 block">File Name *</label>
+              <label className="monolith-label mb-1 block">File Name *</label>
               <input
                 required
                 value={addForm.fileName}
@@ -115,7 +115,7 @@ export default function CareerResumesPage() {
               />
             </div>
           </div>
-          <label className="flex items-center gap-2 text-sm text-on-surface">
+          <label className="flex items-center gap-2 text-sm text-mono-text">
             <input
               type="checkbox"
               checked={addForm.isBase}
@@ -128,14 +128,14 @@ export default function CareerResumesPage() {
             <button
               type="submit"
               disabled={adding}
-              className="rounded-xl bg-[#00cec4] px-4 py-2 text-sm font-medium text-white hover:bg-[#00b8af] disabled:opacity-50"
+              className="rounded-xl bg-[#F9D972] px-4 py-2 text-sm font-medium text-white hover:bg-[#E8C85D] disabled:opacity-50"
             >
               {adding ? "Saving..." : "Save"}
             </button>
             <button
               type="button"
               onClick={() => setShowAdd(false)}
-              className="rounded-xl border border-outline-variant px-4 py-2 text-sm text-on-surface-variant"
+              className="rounded-xl border border-mono-border px-4 py-2 text-sm text-mono-muted"
             >
               Cancel
             </button>
@@ -144,12 +144,12 @@ export default function CareerResumesPage() {
       )}
 
       {loading ? (
-        <p className="text-sm text-on-surface-variant">Loading resumes...</p>
+        <p className="text-sm text-mono-muted">Loading resumes...</p>
       ) : resumes.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-outline-variant bg-surface p-12 text-center">
+        <div className="rounded-xl border border-dashed border-mono-border bg-mono-card p-12 text-center">
           <DocumentAdd size={40} className="mx-auto mb-3 text-outline" />
-          <p className="font-medium text-on-surface">No resumes yet</p>
-          <p className="mt-1 text-sm text-on-surface-variant">
+          <p className="font-medium text-mono-text">No resumes yet</p>
+          <p className="mt-1 text-sm text-mono-muted">
             Register your first resume to start tracking tailored versions
           </p>
         </div>
@@ -158,33 +158,33 @@ export default function CareerResumesPage() {
           {resumes.map((r) => (
             <div
               key={r.id}
-              className={`relative flex flex-col gap-3 rounded-xl border bg-surface p-4 ${
-                r.isBase ? "border-[#00cec4]/40 shadow-sm" : "border-outline-variant"
+              className={`relative flex flex-col gap-3 rounded-xl border bg-mono-card p-4 ${
+                r.isBase ? "border-[#F9D972]/40 shadow-sm" : "border-mono-border"
               }`}
             >
               {r.isBase && (
-                <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-[#00cec4]/10 px-2 py-0.5 text-[10px] font-medium text-[#00cec4]">
+                <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-[#F9D972]/10 px-2 py-0.5 text-[10px] font-medium text-[#F9D972]">
                   <StarFilled size={10} />
                   BASE
                 </span>
               )}
               <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#00cec4]/10">
-                  <DocumentAdd size={18} className="text-[#00cec4]" />
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F9D972]/10">
+                  <DocumentAdd size={18} className="text-[#F9D972]" />
                 </div>
                 <div className="min-w-0 flex-1 pr-12">
-                  <p className="truncate font-medium text-on-surface">{r.name}</p>
-                  <p className="ds-label mt-0.5">v{r.version}</p>
+                  <p className="truncate font-medium text-mono-text">{r.name}</p>
+                  <p className="monolith-label mt-0.5">v{r.version}</p>
                 </div>
               </div>
-              <div className="text-xs text-on-surface-variant">
+              <div className="text-xs text-mono-muted">
                 Updated {new Date(r.updatedAt).toLocaleDateString()}
                 <span className="ml-2">· {Math.round(r.sizeBytes / 1024)} KB</span>
               </div>
               {!r.isBase && (
                 <button
                   onClick={() => setBase(r.id)}
-                  className="flex items-center gap-1 text-xs text-on-surface-variant hover:text-[#00cec4]"
+                  className="flex items-center gap-1 text-xs text-mono-muted hover:text-[#F9D972]"
                 >
                   <Star size={12} />
                   Set as base

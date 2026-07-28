@@ -60,26 +60,26 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
     <div className="space-y-6">
 
       {/* Unified Table Shell — toolbar + table in one rounded container */}
-      <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
 
         {/* Toolbar */}
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 border-b border-outline-variant">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 border-b border-mono-border">
           <form method="GET" className="flex flex-1 flex-col sm:flex-row gap-3 w-full">
             {/* Search Input */}
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-2.5 size-4 text-on-surface-variant" />
+              <Search className="absolute left-3 top-2.5 size-4 text-mono-muted" />
               <input
                 type="text"
                 name="search"
                 defaultValue={search}
                 placeholder="Search contacts by name, email, department..."
-                className="w-full pl-9 pr-3 py-1.5 bg-surface-container-low rounded-lg text-sm text-on-surface placeholder:text-placeholder focus:outline-none"
+                className="w-full pl-9 pr-3 py-1.5 bg-mono-soft rounded-lg text-sm text-mono-text placeholder:text-placeholder focus:outline-none"
               />
             </div>
 
             <button
               type="submit"
-              className="px-4 py-1.5 bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+              className="px-4 py-1.5 bg-mono-soft hover:bg-mono-soft border border-mono-border text-mono-text rounded-lg text-xs font-semibold cursor-pointer transition-colors"
             >
               Search
             </button>
@@ -87,7 +87,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
             {search && (
               <Link
                 href="/crm/contacts"
-                className="px-3 py-1.5 text-on-surface-variant hover:text-on-surface text-xs font-semibold flex items-center justify-center"
+                className="px-3 py-1.5 text-mono-muted hover:text-mono-text text-xs font-semibold flex items-center justify-center"
               >
                 Reset
               </Link>
@@ -95,12 +95,12 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
           </form>
           
           <div className="flex items-center gap-3 shrink-0">
-            <div className="text-xs text-on-surface-variant font-bold">
+            <div className="text-xs text-mono-muted font-bold">
               Showing {contacts.length} contacts
             </div>
             <Link
               href="/crm/contacts/new"
-              className="flex items-center gap-2 bg-[#00cec4] hover:bg-[#00b8af] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+              className="flex items-center gap-2 bg-[#F9D972] hover:bg-[#E8C85D] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
             >
               <Plus className="size-3.5" />
               <span>Create Contact</span>
@@ -111,14 +111,14 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
         {/* Table Content */}
         {contacts.length === 0 ? (
           <div className="p-12 text-center space-y-4">
-            <div className="size-12 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center mx-auto">
+            <div className="size-12 rounded-full bg-mono-soft text-mono-muted flex items-center justify-center mx-auto">
               <Users className="size-6" />
             </div>
-            <h3 className="font-bold text-base text-on-surface">No active contacts found</h3>
-            <p className="text-xs text-on-surface-variant max-w-sm mx-auto">Create a fresh contact details record linked to an existing customer account.</p>
+            <h3 className="font-bold text-base text-mono-text">No active contacts found</h3>
+            <p className="text-xs text-mono-muted max-w-sm mx-auto">Create a fresh contact details record linked to an existing customer account.</p>
             <Link
               href="/crm/contacts/new"
-              className="inline-flex items-center gap-1.5 text-[#00cec4] hover:underline text-xs font-bold"
+              className="inline-flex items-center gap-1.5 text-[#F9D972] hover:underline text-xs font-bold"
             >
               <span>Onboard a contact</span>
               <ArrowRight className="size-3.5" />
@@ -126,7 +126,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="ds-table">
+            <table className="monolith-table">
               <thead>
                 <tr>
                   <th className="px-6 py-3">Contact Name</th>
@@ -140,57 +140,57 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
               </thead>
               <tbody>
                 {contacts.map((contact) => (
-                  <tr key={contact.id} className="ds-row-link">
+                  <tr key={contact.id} className="monolith-row-link">
                     <td className="px-6 py-4 font-medium">
-                      <Link href={`/crm/contacts/${contact.id}`} className="hover:text-[#00cec4] transition-colors block">
+                      <Link href={`/crm/contacts/${contact.id}`} className="hover:text-[#F9D972] transition-colors block">
                         {contact.firstName ? `${contact.firstName} ` : ""}{contact.lastName}
                       </Link>
                       {contact.designation && (
-                        <span className="ds-label block mt-0.5 font-normal">{contact.designation}</span>
+                        <span className="monolith-label block mt-0.5 font-normal">{contact.designation}</span>
                       )}
                     </td>
                     <td className="px-6 py-4 p-0">
                       {contact.account ? (
                         <Link
                           href={`/crm/customers/${contact.account.id}`}
-                          className="flex items-center gap-1.5 text-on-surface-variant hover:text-[#00cec4] transition-colors px-6 py-4 block w-full h-full"
+                          className="flex items-center gap-1.5 text-mono-muted hover:text-[#F9D972] transition-colors px-6 py-4 block w-full h-full"
                         >
                           <Building className="size-3.5" />
                           <span>{contact.account.name}</span>
                         </Link>
                       ) : (
                         <div className="px-6 py-4">
-                          <span className="text-on-surface-variant italic">No account linked</span>
+                          <span className="text-mono-muted italic">No account linked</span>
                         </div>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {contact.email ? (
-                        <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
+                        <div className="flex items-center gap-1.5 text-xs text-mono-muted">
                           <Mail className="size-3.5" />
                           <span>{contact.email}</span>
                         </div>
                       ) : (
-                        <span className="text-on-surface-variant italic">No email</span>
+                        <span className="text-mono-muted italic">No email</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {contact.phone || contact.mobile ? (
-                        <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
+                        <div className="flex items-center gap-1.5 text-xs text-mono-muted">
                           <Phone className="size-3.5" />
                           <span>{contact.phone || contact.mobile}</span>
                         </div>
                       ) : (
-                        <span className="text-on-surface-variant italic">No phone</span>
+                        <span className="text-mono-muted italic">No phone</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {contact.isDecisionMaker ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#00cec4]/10 text-[#00cec4]">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#F9D972]/10 text-[#F9D972]">
                           DECISION MAKER
                         </span>
                       ) : (
-                        <span className="text-on-surface-variant text-xs">Standard</span>
+                        <span className="text-mono-muted text-xs">Standard</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-xs">
@@ -200,7 +200,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
                       <div className="flex items-center justify-end gap-2">
                         <Link
                           href={`/crm/contacts/${contact.id}`}
-                          className="p-1.5 text-on-surface-variant hover:text-on-surface rounded hover:bg-surface-container cursor-pointer"
+                          className="p-1.5 text-mono-muted hover:text-mono-text rounded hover:bg-mono-soft cursor-pointer"
                           title="View Details"
                         >
                           <Eye className="size-4" />
@@ -209,7 +209,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
                           recordId={contact.id}
                           deleteAction={deleteContactAction}
                           confirmMessage="Are you sure you want to delete this contact?"
-                          className="p-1.5 text-on-surface-variant hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer transition-colors"
+                          className="p-1.5 text-mono-muted hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer transition-colors"
                         />
                       </div>
                     </td>

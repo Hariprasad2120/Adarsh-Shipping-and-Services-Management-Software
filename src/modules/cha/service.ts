@@ -93,7 +93,7 @@ function buildChecklistCustomerMailContent(params: {
           <td align="center">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;background:#ffffff;border:1px solid #d9e3e1;border-radius:18px;overflow:hidden;box-shadow:0 18px 48px rgba(15,23,42,0.10);">
               <tr>
-                <td style="padding:22px 26px;border-top:5px solid #00cec4;background:#ffffff;">
+                <td style="padding:22px 26px;border-top:5px solid #F9D972;background:#ffffff;">
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                     <tr>
                       <td style="vertical-align:middle;">

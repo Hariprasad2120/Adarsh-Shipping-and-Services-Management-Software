@@ -1,6 +1,6 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -132,23 +132,23 @@ export function GoogleChatLiveViewFrame({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="ds-h1 text-on-surface">Google Chat Live View</h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-[#fb923c]/40 text-[#fb923c] bg-[#fb923c]/10">
+            <h1 className="monolith-h1 text-mono-text">Google Chat Live View</h1>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-[#D88700]/40 text-[#D88700] bg-[#D88700]/10">
               <FlaskConical size={10} />
               Experimental
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-xs text-on-surface-variant">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-mono-muted">
             {/* Connected account */}
             <span className="flex items-center gap-1.5">
-              <Globe size={12} className="text-[#00cec4]" />
+              <Globe size={12} className="text-[#F9D972]" />
               {googleEmail}
             </span>
             <span className="text-outline-variant">·</span>
             {/* Workspace domain */}
             <span className="flex items-center gap-1.5">
-              <span className="text-on-surface-variant">Domain:</span>
-              <code className="text-[#00cec4] bg-surface-container px-1.5 py-0.5 rounded text-[11px]">
+              <span className="text-mono-muted">Domain:</span>
+              <code className="text-[#F9D972] bg-mono-soft px-1.5 py-0.5 rounded text-[11px]">
                 {workspaceDomain}
               </code>
             </span>
@@ -156,19 +156,19 @@ export function GoogleChatLiveViewFrame({
             {/* Current mode */}
             <span className="flex items-center gap-1.5">
               {mode === "loaded" ? (
-                <Wifi size={12} className="text-[#00cec4]" />
+                <Wifi size={12} className="text-[#F9D972]" />
               ) : mode === "blocked" ? (
-                <WifiOff size={12} className="text-[#fb923c]" />
+                <WifiOff size={12} className="text-[#D88700]" />
               ) : (
-                <Loader2 size={12} className="animate-spin text-[#00cec4]" />
+                <Loader2 size={12} className="animate-spin text-[#F9D972]" />
               )}
               <span
                 className={
                   mode === "loaded"
-                    ? "text-[#00cec4]"
+                    ? "text-[#F9D972]"
                     : mode === "blocked"
-                    ? "text-[#fb923c]"
-                    : "text-on-surface-variant"
+                    ? "text-[#D88700]"
+                    : "text-mono-muted"
                 }
               >
                 {MODE_LABELS[mode]}
@@ -179,13 +179,13 @@ export function GoogleChatLiveViewFrame({
 
         {/* URL selector */}
         <div className="flex items-center gap-2 shrink-0">
-          <label className="ds-label">Chat URL:</label>
+          <label className="monolith-label">Chat URL:</label>
           <NativeSelect
             value={selectedUrl}
             onChange={(e) => {
               setSelectedUrl(e.target.value);
             }}
-            className="text-xs bg-surface border border-outline-variant rounded-xl px-3 py-1.5 text-on-surface focus:outline-none"
+            className="text-xs bg-mono-card border border-mono-border rounded-xl px-3 py-1.5 text-mono-text focus:outline-none"
           >
             {(embedUrls.length > 0 ? embedUrls : DEFAULT_EMBED_URLS).map((url) => (
               <option key={url} value={url}>
@@ -197,14 +197,14 @@ export function GoogleChatLiveViewFrame({
       </div>
 
       {/* ── Embed Area ── */}
-      <div className="rounded-xl border border-outline-variant overflow-hidden bg-surface">
+      <div className="rounded-xl border border-mono-border overflow-hidden bg-mono-card">
         {/* Embed attempt bar */}
         {mode === "embed-attempt" && (
-          <div className="flex items-center gap-3 px-5 py-3 bg-surface-container-low border-b border-outline-variant">
-            <Loader2 size={14} className="animate-spin text-[#00cec4] shrink-0" />
-            <span className="text-xs text-on-surface-variant">
+          <div className="flex items-center gap-3 px-5 py-3 bg-mono-soft border-b border-mono-border">
+            <Loader2 size={14} className="animate-spin text-[#F9D972] shrink-0" />
+            <span className="text-xs text-mono-muted">
               Attempting to embed Google Chat…{" "}
-              <span className="text-[#00cec4]">{selectedUrl}</span>
+              <span className="text-[#F9D972]">{selectedUrl}</span>
             </span>
           </div>
         )}
@@ -254,7 +254,7 @@ export function GoogleChatLiveViewFrame({
             window.open(selectedUrl, "_blank", "noopener,noreferrer");
             setFallbackUsed("new-tab");
           }}
-          className="flex items-center gap-2 border border-outline-variant text-on-surface-variant hover:text-[#00cec4] hover:border-[#00cec4]/40 px-3 py-1.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
+          className="flex items-center gap-2 border border-mono-border text-mono-muted hover:text-[#F9D972] hover:border-[#F9D972]/40 px-3 py-1.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
         >
           <ExternalLink size={12} />
           Quick Launch
@@ -265,27 +265,27 @@ export function GoogleChatLiveViewFrame({
               window.open(jobContext.googleSpaceUrl!, "_blank", "noopener,noreferrer");
               setFallbackUsed("job-space-quick-launch");
             }}
-            className="flex items-center gap-2 border border-outline-variant text-on-surface-variant hover:text-[#00cec4] hover:border-[#00cec4]/40 px-3 py-1.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
+            className="flex items-center gap-2 border border-mono-border text-mono-muted hover:text-[#F9D972] hover:border-[#F9D972]/40 px-3 py-1.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
           >
             <ExternalLink size={12} />
             Job Space
-            <span className="text-on-surface font-medium">{jobContext.jobNumber}</span>
+            <span className="text-mono-text font-medium">{jobContext.jobNumber}</span>
           </button>
         )}
       </div>
 
       {/* ── Diagnostics (admin only) ── */}
       {isAdmin && (
-        <div className="rounded-xl border border-outline-variant bg-surface overflow-hidden">
+        <div className="rounded-xl border border-mono-border bg-mono-card overflow-hidden">
           <button
             onClick={() => setShowDiagnostics((v) => !v)}
-            className="w-full flex items-center justify-between px-5 py-3 text-xs font-semibold uppercase tracking-wider text-on-surface-variant hover:bg-surface-container-low transition-all"
+            className="w-full flex items-center justify-between px-5 py-3 text-xs font-semibold uppercase tracking-wider text-mono-muted hover:bg-mono-soft transition-all"
           >
             <span>Diagnostics Panel</span>
             {showDiagnostics ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
           {showDiagnostics && (
-            <div className="border-t border-outline-variant p-5">
+            <div className="border-t border-mono-border p-5">
               <GoogleChatLiveViewDiagnostics
                 settingEnabled={true}
                 iframeAttempted={iframeAttempted}

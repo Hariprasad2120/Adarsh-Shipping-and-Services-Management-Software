@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Modal } from "@/components/ui/modal";
+import { Badge } from "@/components/monolith/badge";
+import { Button } from "@/components/monolith/button";
+import { Modal } from "@/components/monolith/modal";
 import {
   DataTable,
   DataTableBody,
@@ -71,18 +71,18 @@ export function ChecklistDecisionsClient({
   };
 
   return (
-    <DataTable className="border border-outline-variant/45">
-      <DataTableToolbar className="bg-surface">
+    <DataTable className="border border-mono-border/45">
+      <DataTableToolbar className="bg-mono-card">
         <div className="flex items-center gap-3">
-          <span className="ds-icon-badge">
+          <span className="monolith-icon-badge">
             <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path d="M9 12l2 2 4-4" />
               <path d="M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3c1.86 0 3.58.57 5 1.54" />
             </svg>
           </span>
           <div>
-            <h2 className="ds-h2 text-on-surface">Checklist Decisions</h2>
-            <p className="text-xs text-on-surface-variant">
+            <h2 className="monolith-h2 text-mono-text">Checklist Decisions</h2>
+            <p className="text-xs text-mono-muted">
               Download the visible checklist file and approve or reject it once your account is ready to respond.
             </p>
           </div>
@@ -91,7 +91,7 @@ export function ChecklistDecisionsClient({
       {error ? (
         <tbody>
           <tr>
-            <DataTableCell colSpan={5} className="px-5 py-8 text-center text-on-surface-variant">
+            <DataTableCell colSpan={5} className="px-5 py-8 text-center text-mono-muted">
               {error}
             </DataTableCell>
           </tr>
@@ -116,12 +116,12 @@ export function ChecklistDecisionsClient({
                 return (
                   <tr key={item.id}>
                     <DataTableCell className="font-medium">{item.checklistLabel}</DataTableCell>
-                    <DataTableCell className="text-on-surface-variant">
+                    <DataTableCell className="text-mono-muted">
                       {item.isDownloadable && item.downloadHref ? (
-                        <a href={item.downloadHref} className="inline-flex flex-col gap-1 text-[#00cec4] hover:underline">
+                        <a href={item.downloadHref} className="inline-flex flex-col gap-1 text-[#F9D972] hover:underline">
                           <span>{item.versionLabel || "Checklist File"}</span>
                           {item.fileName ? (
-                            <span className="text-xs text-on-surface-variant no-underline">{item.fileName}</span>
+                            <span className="text-xs text-mono-muted no-underline">{item.fileName}</span>
                           ) : null}
                         </a>
                       ) : (
@@ -131,7 +131,7 @@ export function ChecklistDecisionsClient({
                     <DataTableCell>
                       <Badge variant={item.canRespond ? "warning" : "secondary"}>{item.approvalStatus}</Badge>
                     </DataTableCell>
-                    <DataTableCell className="text-on-surface-variant">
+                    <DataTableCell className="text-mono-muted">
                       {item.visibleAt ? formatDateTime(item.visibleAt) : "—"}
                     </DataTableCell>
                     <DataTableCell>
@@ -154,13 +154,13 @@ export function ChecklistDecisionsClient({
                             <Badge variant={item.responseDecision === "REJECTED" ? "destructive" : "success"}>
                               {item.responseDecision || item.responseState}
                             </Badge>
-                            <div className="text-xs text-on-surface-variant">
+                            <div className="text-xs text-mono-muted">
                               {item.responseDecision ? "This customer account has already responded." : item.responseState}
                             </div>
                           </div>
                         )}
                         {rowError[item.id] ? (
-                          <div className="text-xs text-[#fb923c]">{rowError[item.id]}</div>
+                          <div className="text-xs text-[#D88700]">{rowError[item.id]}</div>
                         ) : null}
                       </div>
                     </DataTableCell>
@@ -185,10 +185,10 @@ export function ChecklistDecisionsClient({
         {reviewChecklist ? (
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_360px]">
             <section className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-outline-variant/35 bg-surface-container-low/35 px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-mono-border/35 bg-mono-soft/35 px-4 py-3">
                 <div className="min-w-0">
-                  <p className="ds-label">Visible File</p>
-                  <p className="mt-1 text-sm text-on-surface">
+                  <p className="monolith-label">Visible File</p>
+                  <p className="mt-1 text-sm text-mono-text">
                     {reviewChecklist.fileName || reviewChecklist.versionLabel || "Checklist File"}
                   </p>
                 </div>
@@ -198,20 +198,20 @@ export function ChecklistDecisionsClient({
                   </a>
                 ) : null}
               </div>
-              <div className="overflow-hidden rounded-xl border border-outline-variant/35 bg-surface-container-low/20">
+              <div className="overflow-hidden rounded-xl border border-mono-border/35 bg-mono-soft/20">
                 {reviewChecklist.downloadHref ? (
                   <FilePreview checklist={reviewChecklist} />
                 ) : (
-                  <div className="flex h-[65vh] items-center justify-center px-6 text-center text-sm text-on-surface-variant">
+                  <div className="flex h-[65vh] items-center justify-center px-6 text-center text-sm text-mono-muted">
                     A preview is not available for this checklist file.
                   </div>
                 )}
               </div>
             </section>
 
-            <section className="space-y-4 rounded-xl border border-outline-variant/35 bg-surface p-5">
+            <section className="space-y-4 rounded-xl border border-mono-border/35 bg-mono-card p-5">
               <div>
-                <p className="ds-label">Portal Status</p>
+                <p className="monolith-label">Portal Status</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <Badge variant="warning">{reviewChecklist.approvalStatus}</Badge>
                   <Badge variant="secondary">{reviewChecklist.visibleAt ? formatDateTime(reviewChecklist.visibleAt) : "Visible now"}</Badge>
@@ -221,7 +221,7 @@ export function ChecklistDecisionsClient({
               <div className="space-y-2">
                 <label
                   htmlFor={`checklist-remarks-modal-${reviewChecklist.id}`}
-                  className="ds-label block text-on-surface-variant"
+                  className="monolith-label block text-mono-muted"
                 >
                   Remarks
                 </label>
@@ -240,15 +240,15 @@ export function ChecklistDecisionsClient({
                   rows={8}
                   maxLength={500}
                   disabled={isPending && activeChecklistId === reviewChecklist.id}
-                  className="min-h-[200px] w-full rounded-xl border border-[#00cec4]/55 bg-surface px-4 py-3 text-sm text-on-surface placeholder:text-[var(--color-placeholder)] focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/15 hover:border-[#00cec4]/85 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="min-h-[200px] w-full rounded-xl border border-[#F9D972]/55 bg-mono-card px-4 py-3 text-sm text-mono-text placeholder:text-[var(--color-placeholder)] focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/15 hover:border-[#F9D972]/85 disabled:cursor-not-allowed disabled:opacity-50"
                 />
-                <p className="text-xs text-on-surface-variant">
+                <p className="text-xs text-mono-muted">
                   Remarks are optional for approval and useful for rejection.
                 </p>
               </div>
 
               {rowError[reviewChecklist.id] ? (
-                <div className="rounded-xl border border-[#fb923c]/30 bg-[#fb923c]/10 px-4 py-3 text-sm text-[#c96a16] dark:text-[#fdba74]">
+                <div className="rounded-xl border border-[#D88700]/30 bg-[#D88700]/10 px-4 py-3 text-sm text-[#c96a16] dark:text-[#fdba74]">
                   {rowError[reviewChecklist.id]}
                 </div>
               ) : null}
@@ -294,7 +294,7 @@ function FilePreview({ checklist }: { checklist: ChecklistItem }) {
 
   if (isImagePreview) {
     return (
-      <div className="flex h-[65vh] items-center justify-center bg-surface p-4">
+      <div className="flex h-[65vh] items-center justify-center bg-mono-card p-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
@@ -310,9 +310,9 @@ function FilePreview({ checklist }: { checklist: ChecklistItem }) {
       aria-label={`${checklist.checklistLabel} preview`}
       data={src}
       type={checklist.mimeType ?? undefined}
-      className="h-[65vh] w-full bg-surface"
+      className="h-[65vh] w-full bg-mono-card"
     >
-      <div className="flex h-[65vh] flex-col items-center justify-center gap-3 px-6 text-center text-sm text-on-surface-variant">
+      <div className="flex h-[65vh] flex-col items-center justify-center gap-3 px-6 text-center text-sm text-mono-muted">
         <p>This file type cannot be previewed in the browser.</p>
         {checklist.downloadHref ? (
           <a href={checklist.downloadHref}>

@@ -1,10 +1,10 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import { useState, useTransition, FormEvent } from "react";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
+import { Button } from "@/components/monolith/button";
 import { requestExtensionAction, decideExtensionAction } from "./actions";
 import { Plus, Check, X, Calendar, User, MessageSquare, AlertCircle, FileText } from "lucide-react";
 
@@ -107,8 +107,8 @@ export function ExtensionsClient({
       <div className="lg:col-span-2 space-y-6">
         {/* Pending approvals */}
         {isAdmin && pendingRequests.length > 0 && (
-          <Card className="border-0 shadow-sm border-l-4 border-l-orange-500 bg-surface">
-            <CardHeader className="pb-3 border-b border-outline-variant/60">
+          <Card className="border-0 shadow-sm border-l-4 border-l-orange-500 bg-mono-card">
+            <CardHeader className="pb-3 border-b border-mono-border/60">
               <CardTitle className="text-base font-bold text-orange-600 dark:text-orange-400">
                 Pending Extension Requests
               </CardTitle>
@@ -117,7 +117,7 @@ export function ExtensionsClient({
               {pendingRequests.map((req) => (
                 <div
                   key={req.id}
-                  className="rounded-xl border border-outline-variant/50 p-4 bg-surface-container-low/30 dark:bg-surface-container-lowest/30 space-y-3"
+                  className="rounded-xl border border-mono-border/50 p-4 bg-mono-soft/30 dark:bg-mono-soft/30 space-y-3"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="space-y-1">
@@ -151,7 +151,7 @@ export function ExtensionsClient({
                     </div>
                   </div>
 
-                  <div className="bg-surface p-3 rounded-lg border border-outline-variant/40 text-sm text-slate-700 dark:text-slate-300">
+                  <div className="bg-mono-card p-3 rounded-lg border border-mono-border/40 text-sm text-slate-700 dark:text-slate-300">
                     <span className="font-semibold text-xs text-slate-400 block mb-1 uppercase tracking-wider">
                       Reason:
                     </span>
@@ -164,8 +164,8 @@ export function ExtensionsClient({
         )}
 
         {/* Decided extensions */}
-        <Card className="border-0 shadow-sm bg-surface">
-          <CardHeader className="pb-3 border-b border-outline-variant/60">
+        <Card className="border-0 shadow-sm bg-mono-card">
+          <CardHeader className="pb-3 border-b border-mono-border/60">
             <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">
               Extension Logs
             </CardTitle>
@@ -183,7 +183,7 @@ export function ExtensionsClient({
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-outline-variant bg-surface-container-low/40 dark:bg-surface-container-lowest/50 text-left">
+                    <tr className="border-b border-mono-border bg-mono-soft/40 dark:bg-mono-soft/50 text-left">
                       <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider text-slate-400">Employee</th>
                       <th className="px-4 text-xs font-bold uppercase tracking-wider text-slate-400">Cycle</th>
                       <th className="px-4 text-xs font-bold uppercase tracking-wider text-slate-400">Status</th>
@@ -236,7 +236,7 @@ export function ExtensionsClient({
       {/* Form / Quick Links Column (Right) */}
       <div className="space-y-6">
         {!isAdmin && activeAppraisals.length > 0 && (
-          <Card className="border-0 shadow-sm border-l-4 border-l-[#00cec4] bg-surface">
+          <Card className="border-0 shadow-sm border-l-4 border-l-[#F9D972] bg-mono-card">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">
                 Request Deadline Extension
@@ -251,7 +251,7 @@ export function ExtensionsClient({
                   <NativeSelect
                     value={appraisalId}
                     onChange={(e) => setAppraisalId(e.target.value)}
-                    className="w-full rounded-lg border border-outline-variant/60 bg-surface px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#00cec4] transition"
+                    className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#F9D972] transition"
                   >
                     <option value="">Select Appraisal</option>
                     {activeAppraisals.map((a) => (
@@ -271,7 +271,7 @@ export function ExtensionsClient({
                     onChange={(e) => setReason(e.target.value)}
                     rows={4}
                     placeholder="Provide a clear justification for why you need more time to complete your ratings..."
-                    className="w-full rounded-lg border border-outline-variant/60 bg-surface px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#00cec4] transition resize-none"
+                    className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#F9D972] transition resize-none"
                   />
                 </div>
 
@@ -288,7 +288,7 @@ export function ExtensionsClient({
         )}
 
         {!isAdmin && activeAppraisals.length === 0 && (
-          <Card className="border-0 shadow-sm bg-surface">
+          <Card className="border-0 shadow-sm bg-mono-card">
             <CardContent className="py-8 text-center text-xs text-slate-400 font-semibold flex flex-col items-center gap-3">
               <AlertCircle className="size-8 text-slate-300" />
               <span>You have no active appraisal cycles that qualify for deadline extension requests.</span>
@@ -297,10 +297,10 @@ export function ExtensionsClient({
         )}
 
         {/* Informational Guidelines Card */}
-        <Card className="border-0 shadow-sm bg-surface">
-          <CardHeader className="border-b border-outline-variant/60 pb-3">
+        <Card className="border-0 shadow-sm bg-mono-card">
+          <CardHeader className="border-b border-mono-border/60 pb-3">
             <CardTitle className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-              <FileText className="size-4 text-[#00cec4]" /> Extension Policy
+              <FileText className="size-4 text-[#F9D972]" /> Extension Policy
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4 space-y-3 text-xs text-slate-500 dark:text-slate-400 font-semibold leading-relaxed">

@@ -77,14 +77,14 @@ export function AttachmentsPanel({ relatedToType, relatedToId, initialAttachment
     <div className="space-y-5">
       <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3">
         <div className="flex items-center gap-2">
-          <Paperclip className="size-4.5 text-[#00c4b6]" />
+          <Paperclip className="size-4.5 text-[#F9D972]" />
           <h3 className="font-bold text-sm text-white uppercase tracking-wider">File Attachments</h3>
         </div>
         <span className="text-xs text-slate-400 font-bold">{attachments.length} files</span>
       </div>
 
       {/* Upload Zone */}
-      <div className="relative border border-dashed border-[#1c212a] hover:border-[#00c4b6]/60 rounded-xl p-6 bg-[#0a0d12]/50 text-center transition-all">
+      <div className="relative border border-dashed border-[#1c212a] hover:border-[#F9D972]/60 rounded-xl p-6 bg-[#0a0d12]/50 text-center transition-all">
         <input
           type="file"
           id="crm-file-upload"
@@ -93,17 +93,17 @@ export function AttachmentsPanel({ relatedToType, relatedToId, initialAttachment
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
         />
         <div className="flex flex-col items-center gap-2">
-          <UploadCloud className="size-8 text-[#00c4b6]" />
+          <UploadCloud className="size-8 text-[#F9D972]" />
           <span className="text-sm font-semibold text-white">
             {isUploading ? "Uploading file..." : "Click or drag files to upload"}
           </span>
-          <span className="text-[11px] text-on-surface-variant">Max file size: 10MB</span>
+          <span className="text-[11px] text-mono-muted">Max file size: 10MB</span>
         </div>
       </div>
 
       {/* Attachments List */}
       {attachments.length === 0 ? (
-        <div className="p-6 text-center text-on-surface-variant text-sm border border-dashed border-[#1c212a]/50 rounded-lg">
+        <div className="p-6 text-center text-mono-muted text-sm border border-dashed border-[#1c212a]/50 rounded-lg">
           No files attached.
         </div>
       ) : (
@@ -133,14 +133,14 @@ export function AttachmentsPanel({ relatedToType, relatedToId, initialAttachment
                     e.preventDefault();
                     toast.success(`Simulating download of: ${attachment.fileName}`);
                   }}
-                  className="p-1.5 text-slate-400 hover:text-[#00c4b6] rounded hover:bg-slate-800/40 cursor-pointer"
+                  className="p-1.5 text-slate-400 hover:text-[#F9D972] rounded hover:bg-slate-800/40 cursor-pointer"
                   title="Download File"
                 >
                   <Download className="size-4" />
                 </a>
                 <button
                   onClick={() => handleDeleteAttachment(attachment.id)}
-                  className="p-1.5 text-on-surface-variant hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer"
+                  className="p-1.5 text-mono-muted hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer"
                   title="Remove Attachment"
                 >
                   <Trash2 className="size-4" />

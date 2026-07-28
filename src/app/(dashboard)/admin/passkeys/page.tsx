@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/monolith/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
 import { decidePasskeyResetAction, forcePasskeyResetAction } from "./actions";
 import { requirePermission } from "@/lib/rbac";
 import { redirect } from "next/navigation";
@@ -24,7 +24,7 @@ export default async function AdminPasskeysPage() {
   const orgId = session.user.orgId;
   if (!orgId) {
     return (
-      <div className="rounded-xl border border-outline-variant bg-surface p-8 text-center text-sm text-on-surface-variant">
+      <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">
         Organisation configuration missing.
       </div>
     );
@@ -50,30 +50,30 @@ export default async function AdminPasskeysPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <p className="text-sm text-on-surface-variant dark:text-on-surface-variant font-medium">
+        <p className="text-sm text-mono-muted dark:text-mono-muted font-medium">
           Manage user credentials reset requests or force users to register new passkeys.
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Reset requests list */}
-        <Card className="border-0 shadow-sm overflow-hidden bg-surface h-fit">
-          <CardHeader className="pb-3 border-b border-outline-variant/60">
-            <CardTitle className="text-base font-semibold text-on-surface-variant dark:text-on-surface-variant">
+        <Card className="border-0 shadow-sm overflow-hidden bg-mono-card h-fit">
+          <CardHeader className="pb-3 border-b border-mono-border/60">
+            <CardTitle className="text-base font-semibold text-mono-muted dark:text-mono-muted">
               Reset Requests
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0 divide-y divide-outline-variant/60">
             {requests.length === 0 ? (
-              <div className="text-center text-on-surface-variant/80 py-12 text-sm font-medium">
+              <div className="text-center text-mono-muted/80 py-12 text-sm font-medium">
                 No active passkey reset requests.
               </div>
             ) : (
               requests.map((request) => (
-                <div key={request.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 hover:bg-surface-container-high/20 transition">
+                <div key={request.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 hover:bg-mono-soft/20 transition">
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-on-surface-variant dark:text-white">{toTitleCase(request.user.name)}</p>
-                    <p className="text-xs text-on-surface-variant font-semibold mt-0.5">
+                    <p className="text-sm font-bold text-mono-muted dark:text-white">{toTitleCase(request.user.name)}</p>
+                    <p className="text-xs text-mono-muted font-semibold mt-0.5">
                       {request.user.email} · {new Date(request.requestedAt).toLocaleString("en-IN")}
                     </p>
                   </div>
@@ -92,14 +92,14 @@ export default async function AdminPasskeysPage() {
                         <form action={decidePasskeyResetAction}>
                           <input type="hidden" name="requestId" value={request.id} />
                           <input type="hidden" name="decision" value="APPROVED" />
-                          <Button type="submit" size="sm" className="h-8 text-[11px] font-semibold bg-[#00cec4] hover:bg-[#00b8af] text-white">
+                          <Button type="submit" size="sm" className="h-8 text-[11px] font-semibold bg-[#F9D972] hover:bg-[#E8C85D] text-white">
                             Approve
                           </Button>
                         </form>
                         <form action={decidePasskeyResetAction}>
                           <input type="hidden" name="requestId" value={request.id} />
                           <input type="hidden" name="decision" value="REJECTED" />
-                          <Button type="submit" size="sm" variant="outline" className="h-8 text-[11px] font-semibold border-outline-variant/60 text-rose-600 hover:text-rose-700 hover:bg-rose-50/30">
+                          <Button type="submit" size="sm" variant="outline" className="h-8 text-[11px] font-semibold border-mono-border/60 text-rose-600 hover:text-rose-700 hover:bg-rose-50/30">
                             Reject
                           </Button>
                         </form>
@@ -113,18 +113,18 @@ export default async function AdminPasskeysPage() {
         </Card>
 
         {/* Force reset list */}
-        <Card className="border-0 shadow-sm overflow-hidden bg-surface">
-          <CardHeader className="pb-3 border-b border-outline-variant/60">
-            <CardTitle className="text-base flex items-center gap-2 font-semibold text-on-surface-variant dark:text-on-surface-variant">
-              <ShieldAlert className="size-4 text-[#00cec4]" /> Force Reset Credentials
+        <Card className="border-0 shadow-sm overflow-hidden bg-mono-card">
+          <CardHeader className="pb-3 border-b border-mono-border/60">
+            <CardTitle className="text-base flex items-center gap-2 font-semibold text-mono-muted dark:text-mono-muted">
+              <ShieldAlert className="size-4 text-[#F9D972]" /> Force Reset Credentials
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0 max-h-[500px] overflow-y-auto divide-y divide-outline-variant/60">
             {users.map((user) => (
-              <div key={user.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 hover:bg-surface-container-high/20 transition">
+              <div key={user.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 hover:bg-mono-soft/20 transition">
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-on-surface-variant dark:text-white">{toTitleCase(user.name)}</p>
-                  <p className="text-xs text-on-surface-variant font-semibold mt-0.5">{user.email}</p>
+                  <p className="text-sm font-bold text-mono-muted dark:text-white">{toTitleCase(user.name)}</p>
+                  <p className="text-xs text-mono-muted font-semibold mt-0.5">{user.email}</p>
                 </div>
                 <form action={forcePasskeyResetAction}>
                   <input type="hidden" name="userId" value={user.id} />
@@ -133,10 +133,10 @@ export default async function AdminPasskeysPage() {
                     size="sm"
                     variant="outline"
                     disabled={!!user.passkeySetupRequired}
-                    className={`h-8 text-[11px] font-semibold border-outline-variant/60 transition ${
+                    className={`h-8 text-[11px] font-semibold border-mono-border/60 transition ${
                       user.passkeySetupRequired
-                        ? "bg-surface-container-high text-on-surface-variant border-outline-variant dark:bg-slate-800/40"
-                        : "text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-low"
+                        ? "bg-mono-soft text-mono-muted border-mono-border dark:bg-slate-800/40"
+                        : "text-mono-muted dark:text-mono-muted hover:bg-mono-soft"
                     }`}
                   >
                     {user.passkeySetupRequired ? "Reset pending" : "Force reset"}

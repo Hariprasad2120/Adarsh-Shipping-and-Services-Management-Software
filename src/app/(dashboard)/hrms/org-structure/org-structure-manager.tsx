@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/monolith/button";
+import { Input } from "@/components/monolith/input";
 
 type Division = { id: string; name: string };
 type Department = { id: string; name: string; code: string; divisions: Division[] };
@@ -93,7 +93,7 @@ export function OrgStructureManager({ org }: { org: Org }) {
     setPromptState(null);
   }
 
-  if (!org) return <p className="text-on-surface-variant">No organisation found.</p>;
+  if (!org) return <p className="text-mono-muted">No organisation found.</p>;
 
   return (
     <>
@@ -119,10 +119,10 @@ export function OrgStructureManager({ org }: { org: Org }) {
           ) : (
             org.departments.map((d) => (
               <div key={d.id} className="space-y-1">
-                <div className="flex items-center justify-between rounded-lg bg-surface-container-high px-3 py-2">
+                <div className="flex items-center justify-between rounded-lg bg-mono-soft px-3 py-2">
                   <div>
-                    <span className="text-sm font-medium text-on-surface">{d.name}</span>
-                    <span className="ml-2 text-xs text-on-surface-variant/60">{d.code}</span>
+                    <span className="text-sm font-medium text-mono-text">{d.name}</span>
+                    <span className="ml-2 text-xs text-mono-muted/60">{d.code}</span>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -140,7 +140,7 @@ export function OrgStructureManager({ org }: { org: Org }) {
                   </div>
                 </div>
                 {d.divisions.map((div) => (
-                  <div key={div.id} className="flex items-center justify-between py-1 pl-6 text-sm text-on-surface-variant">
+                  <div key={div.id} className="flex items-center justify-between py-1 pl-6 text-sm text-mono-muted">
                     <span>&rarr; {div.name}</span>
                     <button
                       onClick={() => deleteDivision(div.id, div.name)}
@@ -179,9 +179,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="card-top-accent space-y-3 rounded-xl border border-outline-variant bg-surface p-5">
+    <div className="monolith-card monolith-accent space-y-3 rounded-xl border border-mono-border bg-mono-card p-5">
       <div className="flex items-center justify-between">
-        <h2 className="ds-h2 text-on-surface">{title}</h2>
+        <h2 className="monolith-h2 text-mono-text">{title}</h2>
         <button
           onClick={onAdd}
           disabled={loading}
@@ -205,10 +205,10 @@ function Row({
   onDelete: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-surface-container-high">
+    <div className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-mono-soft">
       <div>
-        <span className="text-sm text-on-surface">{primary}</span>
-        <span className="ml-2 text-xs text-on-surface-variant/60">{secondary}</span>
+        <span className="text-sm text-mono-text">{primary}</span>
+        <span className="ml-2 text-xs text-mono-muted/60">{secondary}</span>
       </div>
       <button onClick={onDelete} className="text-xs text-red-500 hover:underline">
         Delete
@@ -218,7 +218,7 @@ function Row({
 }
 
 function EmptyState({ text }: { text: string }) {
-  return <p className="py-2 text-sm text-on-surface-variant/60">{text}</p>;
+  return <p className="py-2 text-sm text-mono-muted/60">{text}</p>;
 }
 
 function MinimalPrompt({
@@ -240,9 +240,9 @@ function MinimalPrompt({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/20 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-sm rounded-2xl border border-outline-variant bg-surface p-5 shadow-xl shadow-slate-900/10">
+      <div className="w-full max-w-sm rounded-2xl border border-mono-border bg-mono-card p-5 shadow-xl shadow-slate-900/10">
         <div className="space-y-1">
-          <h3 className="ds-h3 text-slate-900">
+          <h3 className="monolith-h3 text-slate-900">
             {isDepartment ? "New department" : "New division"}
           </h3>
           <p className="text-sm text-slate-500">

@@ -1,11 +1,11 @@
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getTrialBalance } from "@/modules/accounting/reports";
 import { Filter, Scale } from "lucide-react";
-import { DateInput } from "@/components/ui/date-input";
+import { DateInput } from "@/components/monolith/date-input";
 
 interface TBPageProps {
   searchParams: Promise<{
@@ -56,9 +56,9 @@ export default async function TrialBalanceReportPage({ searchParams }: TBPagePro
     <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/20 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-mono-border/20 pb-5">
         <div>
-          <h2 className="ds-h1 text-white">Trial Balance</h2>
+          <h2 className="monolith-h1 text-white">Trial Balance</h2>
           <p className="text-slate-400 text-xs mt-1">
             Compare period-end balances of all ledger accounts. Total Debits must exactly equal Total Credits.
           </p>
@@ -69,7 +69,7 @@ export default async function TrialBalanceReportPage({ searchParams }: TBPagePro
       <div className="p-4 rounded-xl bg-[#0f1319] border border-[#1c212a]/55">
         <form method="GET" className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-xs">
           <div className="space-y-1 md:col-span-2">
-            <label className="ds-label block text-slate-400">Branch Dimension</label>
+            <label className="monolith-label block text-slate-400">Branch Dimension</label>
             <NativeSelect
               name="branchId"
               defaultValue={branchId || ""}
@@ -84,7 +84,7 @@ export default async function TrialBalanceReportPage({ searchParams }: TBPagePro
 
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">From Date</label>
+              <label className="monolith-label block text-slate-400">From Date</label>
               <DateInput
                 name="fromDate"
                 defaultValue={params.fromDate || ""}
@@ -92,7 +92,7 @@ export default async function TrialBalanceReportPage({ searchParams }: TBPagePro
               />
             </div>
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">To Date</label>
+              <label className="monolith-label block text-slate-400">To Date</label>
               <DateInput
                 name="toDate"
                 defaultValue={params.toDate || ""}
@@ -103,7 +103,7 @@ export default async function TrialBalanceReportPage({ searchParams }: TBPagePro
 
           <button
             type="submit"
-            className="flex items-center justify-center gap-1.5 bg-[#00cec4] text-white hover:bg-[#00b8af] px-4 py-2 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer w-full h-[38px]"
+            className="flex items-center justify-center gap-1.5 bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer w-full h-[38px]"
           >
             <Filter className="size-3.5" />
             <span>Apply Filters</span>
@@ -115,7 +115,7 @@ export default async function TrialBalanceReportPage({ searchParams }: TBPagePro
       <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
         <div className="flex justify-between items-center border-b border-[#1c212a]/30 pb-3">
           <h3 className="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-2">
-            <Scale className="size-4.5 text-[#00cec4]" /> Period Balances Worksheet
+            <Scale className="size-4.5 text-[#F9D972]" /> Period Balances Worksheet
           </h3>
         </div>
 
@@ -125,7 +125,7 @@ export default async function TrialBalanceReportPage({ searchParams }: TBPagePro
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="ds-table text-xs">
+            <table className="monolith-table text-xs">
               <thead>
                 <tr className="border-b border-[#1c212a]/30">
                   <th rowSpan={2} className="align-bottom pb-3">Account Code / Name</th>
@@ -155,26 +155,26 @@ export default async function TrialBalanceReportPage({ searchParams }: TBPagePro
                     <td className="text-slate-400 font-semibold uppercase">{row.rootType}</td>
                     
                     {/* Opening */}
-                    <td className="ds-numeric text-right">
+                    <td className="monolith-numeric text-right">
                       {row.openingDebit > 0 ? `₹${row.openingDebit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
                     </td>
-                    <td className="ds-numeric text-right">
+                    <td className="monolith-numeric text-right">
                       {row.openingCredit > 0 ? `₹${row.openingCredit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
                     </td>
 
                     {/* Period */}
-                    <td className="ds-numeric text-right">
+                    <td className="monolith-numeric text-right">
                       {row.debit > 0 ? `₹${row.debit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
                     </td>
-                    <td className="ds-numeric text-right">
+                    <td className="monolith-numeric text-right">
                       {row.credit > 0 ? `₹${row.credit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
                     </td>
 
                     {/* Closing */}
-                    <td className="ds-numeric text-right font-semibold text-white">
+                    <td className="monolith-numeric text-right font-semibold text-white">
                       {row.closingDebit > 0 ? `₹${row.closingDebit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
                     </td>
-                    <td className="ds-numeric text-right font-semibold text-white">
+                    <td className="monolith-numeric text-right font-semibold text-white">
                       {row.closingCredit > 0 ? `₹${row.closingCredit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
                     </td>
                   </tr>
@@ -186,25 +186,25 @@ export default async function TrialBalanceReportPage({ searchParams }: TBPagePro
                 <tr className="border-t-2 border-slate-700 font-bold bg-[#161f28]/15 text-white text-xs">
                   <td>Summary Totals</td>
                   <td></td>
-                  <td className="ds-numeric text-right">₹{totalOpenDr.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                  <td className="ds-numeric text-right font-semibold">₹{totalOpenCr.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                  <td className="ds-numeric text-right">₹{totalPeriodDr.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                  <td className="ds-numeric text-right">₹{totalPeriodCr.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                  <td className="ds-numeric text-right text-[#00cec4]">₹{totalCloseDr.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                  <td className="ds-numeric text-right text-[#00cec4]">₹{totalCloseCr.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                  <td className="monolith-numeric text-right">₹{totalOpenDr.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                  <td className="monolith-numeric text-right font-semibold">₹{totalOpenCr.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                  <td className="monolith-numeric text-right">₹{totalPeriodDr.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                  <td className="monolith-numeric text-right">₹{totalPeriodCr.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                  <td className="monolith-numeric text-right text-[#F9D972]">₹{totalCloseDr.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                  <td className="monolith-numeric text-right text-[#F9D972]">₹{totalCloseCr.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                 </tr>
 
                 {/* Audit Check Row */}
                 <tr className="text-[10px] text-slate-450 border-t border-[#1c212a]/30">
                   <td>Ledger Check</td>
                   <td></td>
-                  <td colSpan={2} className={`text-center font-bold ${openingBalanced ? "text-emerald-400" : "text-[#fb923c]"}`}>
+                  <td colSpan={2} className={`text-center font-bold ${openingBalanced ? "text-emerald-400" : "text-[#D88700]"}`}>
                     {openingBalanced ? "Balanced ✓" : `Diff: ₹${Math.abs(totalOpenDr - totalOpenCr).toFixed(2)}`}
                   </td>
-                  <td colSpan={2} className={`text-center font-bold ${periodBalanced ? "text-emerald-400" : "text-[#fb923c]"}`}>
+                  <td colSpan={2} className={`text-center font-bold ${periodBalanced ? "text-emerald-400" : "text-[#D88700]"}`}>
                     {periodBalanced ? "Balanced ✓" : `Diff: ₹${Math.abs(totalPeriodDr - totalPeriodCr).toFixed(2)}`}
                   </td>
-                  <td colSpan={2} className={`text-center font-bold ${closingBalanced ? "text-emerald-400" : "text-[#fb923c]"}`}>
+                  <td colSpan={2} className={`text-center font-bold ${closingBalanced ? "text-emerald-400" : "text-[#D88700]"}`}>
                     {closingBalanced ? "Balanced ✓" : `Diff: ₹${Math.abs(totalCloseDr - totalCloseCr).toFixed(2)}`}
                   </td>
                 </tr>

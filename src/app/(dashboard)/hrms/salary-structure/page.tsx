@@ -21,7 +21,7 @@ export default async function SalaryStructurePage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="mt-1 text-sm text-on-surface-variant">
+        <p className="mt-1 text-sm text-mono-muted">
           Build the detailed salary sheet, validate take-home, and optionally update an employee&apos;s payroll meta.
         </p>
       </div>

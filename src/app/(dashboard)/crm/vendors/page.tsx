@@ -1,4 +1,4 @@
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -78,7 +78,7 @@ export default async function CrmVendorsPage({ searchParams }: { searchParams: P
               name="search"
               defaultValue={search}
               placeholder="Search vendors by name or service..."
-              className="w-full pl-9 pr-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#00c4b6] text-white"
+              className="w-full pl-9 pr-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#F9D972] text-white"
             />
           </form>
 
@@ -113,7 +113,7 @@ export default async function CrmVendorsPage({ searchParams }: { searchParams: P
         {/* Right Column: Inline Create Vendor Form */}
         <div className="bg-[#0f1319] border border-[#1c212a]/55 rounded-xl p-6 shadow-2xl space-y-4">
           <div className="flex items-center gap-2 border-b border-[#1c212a]/30 pb-2">
-            <Truck className="size-4.5 text-[#00c4b6]" />
+            <Truck className="size-4.5 text-[#F9D972]" />
             <h3 className="font-bold text-xs text-white uppercase tracking-wider">Add New Vendor</h3>
           </div>
 
@@ -130,7 +130,7 @@ export default async function CrmVendorsPage({ searchParams }: { searchParams: P
                 type="text"
                 name="name"
                 placeholder="e.g. South Linehaul Packers"
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#F9D972]"
                 required
               />
             </div>
@@ -140,7 +140,7 @@ export default async function CrmVendorsPage({ searchParams }: { searchParams: P
                 type="text"
                 name="contactName"
                 placeholder="e.g. Ramesh Kumar"
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -150,7 +150,7 @@ export default async function CrmVendorsPage({ searchParams }: { searchParams: P
                   type="text"
                   name="phone"
                   placeholder="e.g. +91 94440 12345"
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#F9D972]"
                 />
               </div>
               <div>
@@ -159,7 +159,7 @@ export default async function CrmVendorsPage({ searchParams }: { searchParams: P
                   type="email"
                   name="email"
                   placeholder="e.g. ramesh@vendor.com"
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#F9D972]"
                 />
               </div>
             </div>
@@ -169,7 +169,7 @@ export default async function CrmVendorsPage({ searchParams }: { searchParams: P
                 type="text"
                 name="gstin"
                 placeholder="e.g. 33AABCA1234F1Z1"
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -178,7 +178,7 @@ export default async function CrmVendorsPage({ searchParams }: { searchParams: P
                 type="text"
                 name="services"
                 placeholder="e.g. Custom clearance, Linehaul trucking"
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -187,14 +187,14 @@ export default async function CrmVendorsPage({ searchParams }: { searchParams: P
                 type="text"
                 name="address"
                 placeholder="Street office address..."
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Vendor Owner *</label>
               <NativeSelect
                 name="ownerId"
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#F9D972]"
                 required
               >
                 {employees.map((emp) => (
@@ -204,7 +204,7 @@ export default async function CrmVendorsPage({ searchParams }: { searchParams: P
             </div>
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-1.5 py-2 bg-[#00c4b6] hover:bg-[#00b0a3] text-white font-bold rounded-lg text-xs transition-all shadow-md shadow-[#00c4b6]/10 cursor-pointer"
+              className="w-full flex items-center justify-center gap-1.5 py-2 bg-[#F9D972] hover:bg-[#00b0a3] text-white font-bold rounded-lg text-xs transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
             >
               <Save className="size-4" />
               <span>Save Vendor Details</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import { useState, useEffect, useCallback } from "react";
 import { Add, Search } from "@carbon/icons-react";
 import {DataTable,DataTableBody,DataTableCell,DataTableHead,DataTableHeader,DataTableRow,DataTableEmpty,} from "@/components/data-table";
@@ -18,13 +18,13 @@ type JsApp = {
 const STATUS_COLORS: Record<string, string> = {
   APPLIED: "bg-[#818cf8]/10 text-[#818cf8] border-[#818cf8]/20",
   UNDER_REVIEW: "bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20",
-  SHORTLISTED: "bg-[#00cec4]/10 text-[#00cec4] border-[#00cec4]/20",
+  SHORTLISTED: "bg-[#F9D972]/10 text-[#F9D972] border-[#F9D972]/20",
   INTERVIEWING: "bg-[#c084fc]/10 text-[#c084fc] border-[#c084fc]/20",
   OFFER: "bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20",
-  REJECTED: "bg-surface-container text-on-surface-variant border-outline-variant",
-  WITHDRAWN: "bg-surface-container text-on-surface-variant border-outline-variant",
+  REJECTED: "bg-mono-soft text-mono-muted border-mono-border",
+  WITHDRAWN: "bg-mono-soft text-mono-muted border-mono-border",
   ACCEPTED: "bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20",
-  GHOSTED: "bg-surface-container text-on-surface-variant border-outline-variant",
+  GHOSTED: "bg-mono-soft text-mono-muted border-mono-border",
 };
 
 export default function CareerApplicationsPage() {
@@ -73,12 +73,12 @@ export default function CareerApplicationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="ds-h1 text-on-surface">My Applications</h1>
-          <p className="text-sm text-on-surface-variant">Track every job you have applied for — private to you</p>
+          <h1 className="monolith-h1 text-mono-text">My Applications</h1>
+          <p className="text-sm text-mono-muted">Track every job you have applied for — private to you</p>
         </div>
         <button
           onClick={() => setShowAdd(!showAdd)}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#00cec4] px-4 py-2 text-sm font-medium text-white uppercase tracking-wide transition hover:bg-[#00b8af]"
+          className="inline-flex items-center gap-2 rounded-xl bg-[#F9D972] px-4 py-2 text-sm font-medium text-white uppercase tracking-wide transition hover:bg-[#E8C85D]"
         >
           <Add size={16} />
           Log Application
@@ -88,12 +88,12 @@ export default function CareerApplicationsPage() {
       {showAdd && (
         <form
           onSubmit={handleAdd}
-          className="rounded-xl border border-outline-variant bg-surface p-5 space-y-3"
+          className="rounded-xl border border-mono-border bg-mono-card p-5 space-y-3"
         >
-          <h3 className="ds-h3 text-on-surface">Log New Application</h3>
+          <h3 className="monolith-h3 text-mono-text">Log New Application</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="ds-label mb-1 block">Job Title *</label>
+              <label className="monolith-label mb-1 block">Job Title *</label>
               <input
                 required
                 value={addForm.jobTitle}
@@ -103,7 +103,7 @@ export default function CareerApplicationsPage() {
               />
             </div>
             <div>
-              <label className="ds-label mb-1 block">Company *</label>
+              <label className="monolith-label mb-1 block">Company *</label>
               <input
                 required
                 value={addForm.company}
@@ -113,7 +113,7 @@ export default function CareerApplicationsPage() {
               />
             </div>
             <div>
-              <label className="ds-label mb-1 block">Source</label>
+              <label className="monolith-label mb-1 block">Source</label>
               <input
                 value={addForm.source}
                 onChange={(e) => setAddForm((f) => ({ ...f, source: e.target.value }))}
@@ -122,7 +122,7 @@ export default function CareerApplicationsPage() {
               />
             </div>
             <div>
-              <label className="ds-label mb-1 block">Application URL</label>
+              <label className="monolith-label mb-1 block">Application URL</label>
               <input
                 type="url"
                 value={addForm.applicationUrl}
@@ -136,14 +136,14 @@ export default function CareerApplicationsPage() {
             <button
               type="submit"
               disabled={adding}
-              className="rounded-xl bg-[#00cec4] px-4 py-2 text-sm font-medium text-white hover:bg-[#00b8af] disabled:opacity-50"
+              className="rounded-xl bg-[#F9D972] px-4 py-2 text-sm font-medium text-white hover:bg-[#E8C85D] disabled:opacity-50"
             >
               {adding ? "Saving..." : "Save"}
             </button>
             <button
               type="button"
               onClick={() => setShowAdd(false)}
-              className="rounded-xl border border-outline-variant px-4 py-2 text-sm text-on-surface-variant"
+              className="rounded-xl border border-mono-border px-4 py-2 text-sm text-mono-muted"
             >
               Cancel
             </button>
@@ -153,7 +153,7 @@ export default function CareerApplicationsPage() {
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-48">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
           <input
             type="search"
             placeholder="Search by job or company..."
@@ -174,7 +174,7 @@ export default function CareerApplicationsPage() {
         </NativeSelect>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
         <DataTable>
           <DataTableHeader>
             <tr>
@@ -195,9 +195,9 @@ export default function CareerApplicationsPage() {
               apps.map((app) => (
                 <DataTableRow key={app.id}>
                   <DataTableCell>
-                    <span className="font-medium text-on-surface">{app.jobTitle}</span>
+                    <span className="font-medium text-mono-text">{app.jobTitle}</span>
                   </DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">{app.company}</DataTableCell>
+                  <DataTableCell className="text-mono-muted">{app.company}</DataTableCell>
                   <DataTableCell>
                     <span
                       className={`inline-flex rounded-lg border px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[app.privateStatus] ?? ""}`}
@@ -205,11 +205,11 @@ export default function CareerApplicationsPage() {
                       {app.privateStatus}
                     </span>
                   </DataTableCell>
-                  <DataTableCell className="ds-label">{app.source ?? "—"}</DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">
+                  <DataTableCell className="monolith-label">{app.source ?? "—"}</DataTableCell>
+                  <DataTableCell className="text-mono-muted">
                     {new Date(app.appliedAt).toLocaleDateString()}
                   </DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">
+                  <DataTableCell className="text-mono-muted">
                     {app.lastActivityAt ? new Date(app.lastActivityAt).toLocaleDateString() : "—"}
                   </DataTableCell>
                 </DataTableRow>

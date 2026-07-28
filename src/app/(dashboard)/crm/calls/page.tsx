@@ -155,7 +155,7 @@ export default async function CrmCallsPage() {
       {/* Page Heading */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="ds-h1 text-white">Call Quality Center</h2>
+          <h2 className="monolith-h1 text-white">Call Quality Center</h2>
           <p className="text-xs text-slate-500 mt-1 uppercase tracking-wider">
             Monitor calling activity, listen to voice uploads, and review AI transcription audits
           </p>
@@ -164,41 +164,41 @@ export default async function CrmCallsPage() {
 
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="card-top-accent rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-5 space-y-2">
+        <div className="monolith-card monolith-accent rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-5 space-y-2">
           <div className="flex items-center justify-between text-slate-500 uppercase tracking-widest text-[9px] font-extrabold">
             <span>Call Attempts</span>
-            <Phone className="size-4 text-[#00cec4]" />
+            <Phone className="size-4 text-[#F9D972]" />
           </div>
-          <p className="ds-numeric text-white text-3xl font-black">{attemptsCount}</p>
+          <p className="monolith-numeric text-white text-3xl font-black">{attemptsCount}</p>
           <div className="text-[10px] text-slate-500">Initiated via mobile client</div>
         </div>
 
-        <div className="card-top-accent rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-5 space-y-2">
+        <div className="monolith-card monolith-accent rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-5 space-y-2">
           <div className="flex items-center justify-between text-slate-500 uppercase tracking-widest text-[9px] font-extrabold">
             <span>Audio Synced</span>
-            <Play className="size-4 text-[#00cec4]" />
+            <Play className="size-4 text-[#F9D972]" />
           </div>
-          <p className="ds-numeric text-white text-3xl font-black">{recordingsCount}</p>
+          <p className="monolith-numeric text-white text-3xl font-black">{recordingsCount}</p>
           <div className="text-[10px] text-slate-500">
             {attemptsCount > 0 ? Math.round((recordingsCount / attemptsCount) * 100) : 0}% sync rate from phone storage
           </div>
         </div>
 
-        <div className="card-top-accent rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-5 space-y-2">
+        <div className="monolith-card monolith-accent rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-5 space-y-2">
           <div className="flex items-center justify-between text-slate-500 uppercase tracking-widest text-[9px] font-extrabold">
             <span>AI Quality Score</span>
-            <Sparkles className="size-4 text-[#00cec4]" />
+            <Sparkles className="size-4 text-[#F9D972]" />
           </div>
-          <p className="ds-numeric text-white text-3xl font-black">{avgQuality}%</p>
+          <p className="monolith-numeric text-white text-3xl font-black">{avgQuality}%</p>
           <div className="text-[10px] text-slate-500">Average based on Whisper audits</div>
         </div>
 
-        <div className={`card-top-accent${pendingReviewsCount > 0 ? "-orange" : ""} rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-5 space-y-2`}>
+        <div className={`monolith-card monolith-accent${pendingReviewsCount > 0 ? "-orange" : ""} rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-5 space-y-2`}>
           <div className="flex items-center justify-between text-slate-500 uppercase tracking-widest text-[9px] font-extrabold">
             <span>Pending Audit</span>
-            <AlertTriangle className={`size-4 ${pendingReviewsCount > 0 ? "text-[#fb923c]" : "text-slate-500"}`} />
+            <AlertTriangle className={`size-4 ${pendingReviewsCount > 0 ? "text-[#D88700]" : "text-slate-500"}`} />
           </div>
-          <p className="ds-numeric text-white text-3xl font-black">{pendingReviewsCount}</p>
+          <p className="monolith-numeric text-white text-3xl font-black">{pendingReviewsCount}</p>
           <div className="text-[10px] text-slate-500">Recordings requiring manager review</div>
         </div>
       </div>
@@ -206,12 +206,12 @@ export default async function CrmCallsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Salesperson Performance Table */}
         <div className="lg:col-span-2 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-6 space-y-4">
-          <h3 className="ds-h3 text-white flex items-center gap-2">
-            <Activity className="size-4 text-[#00cec4]" />
+          <h3 className="monolith-h3 text-white flex items-center gap-2">
+            <Activity className="size-4 text-[#F9D972]" />
             Sales Representatives Standings
           </h3>
           <div className="overflow-x-auto">
-            <table className="ds-table">
+            <table className="monolith-table">
               <thead>
                 <tr>
                   <th>Representative</th>
@@ -232,19 +232,19 @@ export default async function CrmCallsPage() {
                   salespersonRankings.map((sp) => (
                     <tr key={sp.id}>
                       <td className="font-bold text-white flex items-center gap-2">
-                        <User className="size-3.5 text-[#00cec4]" />
+                        <User className="size-3.5 text-[#F9D972]" />
                         {sp.name}
                       </td>
-                      <td className="ds-numeric font-medium">{sp.calls}</td>
-                      <td className="ds-numeric font-medium">{sp.completedCalls}</td>
-                      <td className="ds-numeric text-slate-300">
+                      <td className="monolith-numeric font-medium">{sp.calls}</td>
+                      <td className="monolith-numeric font-medium">{sp.completedCalls}</td>
+                      <td className="monolith-numeric text-slate-300">
                         {sp.avgReviewRating === "N/A" ? (
                           <span className="text-slate-600">-</span>
                         ) : (
-                          <span className="text-[#fb923c] font-black">{sp.avgReviewRating} / 5.0</span>
+                          <span className="text-[#D88700] font-black">{sp.avgReviewRating} / 5.0</span>
                         )}
                       </td>
-                      <td className="ds-numeric text-white font-bold">{sp.conversionRate}%</td>
+                      <td className="monolith-numeric text-white font-bold">{sp.conversionRate}%</td>
                     </tr>
                   ))
                 )}
@@ -255,8 +255,8 @@ export default async function CrmCallsPage() {
 
         {/* Low Quality Call Audits */}
         <div className="rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-6 space-y-4">
-          <h3 className="ds-h3 text-[#fb923c] flex items-center gap-2">
-            <AlertTriangle className="size-4 text-[#fb923c]" />
+          <h3 className="monolith-h3 text-[#D88700] flex items-center gap-2">
+            <AlertTriangle className="size-4 text-[#D88700]" />
             Low Quality Call Alerts
           </h3>
           <div className="space-y-3">
@@ -287,7 +287,7 @@ export default async function CrmCallsPage() {
                     <div className="flex justify-end pt-1">
                       <Link
                         href={`/crm/leads/${rec.leadId}`}
-                        className="text-[9px] text-[#00cec4] font-bold uppercase tracking-wider flex items-center gap-1 hover:underline cursor-pointer"
+                        className="text-[9px] text-[#F9D972] font-bold uppercase tracking-wider flex items-center gap-1 hover:underline cursor-pointer"
                       >
                         Inspect Lead <ArrowUpRight className="size-3" />
                       </Link>
@@ -303,8 +303,8 @@ export default async function CrmCallsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Pending Quality Audits */}
         <div className="rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-6 space-y-4">
-          <h3 className="ds-h3 text-white flex items-center gap-2">
-            <CheckSquare className="size-4 text-[#00cec4]" />
+          <h3 className="monolith-h3 text-white flex items-center gap-2">
+            <CheckSquare className="size-4 text-[#F9D972]" />
             Pending Manager Review Registry
           </h3>
           <div className="space-y-3">
@@ -327,12 +327,12 @@ export default async function CrmCallsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <span className="ds-numeric font-extrabold text-[#00cec4] text-xs">
+                      <span className="monolith-numeric font-extrabold text-[#F9D972] text-xs">
                         AI {rec.transcript?.qualityScore || 0}%
                       </span>
                       <Link
                         href={`/crm/leads/${rec.leadId}`}
-                        className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer"
+                        className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer"
                       >
                         Audit
                       </Link>
@@ -346,7 +346,7 @@ export default async function CrmCallsPage() {
 
         {/* Calls Missing Audio Uploads */}
         <div className="rounded-xl bg-[#0f1319] border border-[#1c212a]/55 p-6 space-y-4">
-          <h3 className="ds-h3 text-slate-400 flex items-center gap-2">
+          <h3 className="monolith-h3 text-slate-400 flex items-center gap-2">
             <AlertTriangle className="size-4 text-slate-500" />
             Calls Missing Audio Uploads
           </h3>
@@ -373,7 +373,7 @@ export default async function CrmCallsPage() {
                       <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 block">
                         Status
                       </span>
-                      <span className="text-[10px] font-extrabold uppercase text-[#fb923c]">
+                      <span className="text-[10px] font-extrabold uppercase text-[#D88700]">
                         {call.status}
                       </span>
                     </div>

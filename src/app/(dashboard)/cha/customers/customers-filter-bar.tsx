@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { FilterMenu } from "@/components/ui/filter-menu";
+import { Button } from "@/components/monolith/button";
+import { FilterMenu } from "@/components/monolith/filter-menu";
 import { cn } from "@/lib/utils";
 
 type CustomerFilterKey = "status" | "portal" | "balance";
@@ -99,13 +99,13 @@ export function CustomersFilterBar({
       key={`${activeFilterType}-${label}-${note ?? ""}`}
       type="button"
       onClick={onClick}
-      className={cn("ds-plain ds-menu-option py-2 text-sm", selected && "ds-menu-option-active")}
+      className={cn("monolith-plain monolith-menu-option py-2 text-sm", selected && "monolith-menu-option-active")}
     >
       <span className="min-w-0">
         <span className="block truncate">{label}</span>
-        {note ? <span className="mt-0.5 block truncate text-xs text-on-surface-variant">{note}</span> : null}
+        {note ? <span className="mt-0.5 block truncate text-xs text-mono-muted">{note}</span> : null}
       </span>
-      {selected ? <span className="ds-state-dot" /> : null}
+      {selected ? <span className="monolith-state-dot" /> : null}
     </button>
   );
 
@@ -134,10 +134,10 @@ export function CustomersFilterBar({
   };
 
   return (
-    <div className="ds-section-panel p-4">
+    <div className="monolith-section-panel p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="relative min-w-0 flex-1 lg:max-w-md">
-          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
           <input
             type="search"
             value={search}
@@ -160,28 +160,28 @@ export function CustomersFilterBar({
             contentClassName="w-[min(460px,calc(100vw-2rem))]"
             label="Filter"
           >
-            <div className="overflow-hidden bg-surface">
+            <div className="overflow-hidden bg-mono-card">
               <div className="grid min-h-[220px] grid-cols-1 sm:grid-cols-[168px_minmax(0,1fr)]">
-                <div className="border-b border-outline-variant/50 bg-surface-container-low sm:border-b-0 sm:border-r">
+                <div className="border-b border-mono-border/50 bg-mono-soft sm:border-b-0 sm:border-r">
                   {filterTypes.map((item) => (
                     <button
                       key={item.key}
                       type="button"
                       onClick={() => setActiveFilterType(item.key)}
-                      className={cn("ds-plain ds-menu-option gap-2", activeFilterType === item.key && "ds-menu-option-active")}
+                      className={cn("monolith-plain monolith-menu-option gap-2", activeFilterType === item.key && "monolith-menu-option-active")}
                     >
                       <span className="min-w-0">
-                        <span className="ds-label block truncate text-on-surface">{item.label}</span>
-                        <span className="mt-1 block truncate text-xs text-on-surface-variant">{item.value}</span>
+                        <span className="monolith-label block truncate text-mono-text">{item.label}</span>
+                        <span className="mt-1 block truncate text-xs text-mono-muted">{item.value}</span>
                       </span>
-                      {item.active ? <span className="ds-state-dot" /> : null}
+                      {item.active ? <span className="monolith-state-dot" /> : null}
                     </button>
                   ))}
                 </div>
                 <div>{renderFilterOptions()}</div>
               </div>
             </div>
-            <div className="flex items-center justify-between gap-2 border-t border-outline-variant/50 bg-surface p-3">
+            <div className="flex items-center justify-between gap-2 border-t border-mono-border/50 bg-mono-card p-3">
               <Button variant="outline" onClick={resetFilters} className="flex-1">
                 Reset
               </Button>

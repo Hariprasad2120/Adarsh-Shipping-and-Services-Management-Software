@@ -4,9 +4,9 @@ import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { FilterMenu } from "@/components/ui/filter-menu";
-import { DropdownSelect } from "@/components/ui/dropdown-select";
-import { Input } from "@/components/ui/input";
+import { FilterMenu } from "@/components/monolith/filter-menu";
+import { DropdownSelect } from "@/components/monolith/dropdown-select";
+import { Input } from "@/components/monolith/input";
 
 type Branch = {
   id: string;
@@ -172,7 +172,7 @@ export function EmployeeDirectoryActions({
       >
         <div className="space-y-4">
           <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mono-muted" />
 
             <Input
               value={draft.search}
@@ -190,7 +190,7 @@ export function EmployeeDirectoryActions({
 
           <div className="space-y-3">
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-[0.14em] text-on-surface-variant">
+              <p className="text-xs font-medium uppercase tracking-[0.14em] text-mono-muted">
                 Organisation
               </p>
 
@@ -234,7 +234,7 @@ export function EmployeeDirectoryActions({
             </div>
 
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-[0.14em] text-on-surface-variant">
+              <p className="text-xs font-medium uppercase tracking-[0.14em] text-mono-muted">
                 Access
               </p>
 
@@ -282,7 +282,7 @@ export function EmployeeDirectoryActions({
             <button
               type="button"
               onClick={clearFilters}
-              className="rounded-xl border border-outline-variant/40 px-3 py-2 text-sm text-on-surface-variant transition hover:border-[#00cec4]/45 hover:text-on-surface"
+              className="rounded-xl border border-mono-border/40 px-3 py-2 text-sm text-mono-muted transition hover:border-[#F9D972]/45 hover:text-mono-text"
             >
               Clear
             </button>
@@ -290,7 +290,7 @@ export function EmployeeDirectoryActions({
             <button
               type="button"
               onClick={applyFilters}
-              className="rounded-xl bg-[#00cec4] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#00b5ad]"
+              className="rounded-xl bg-[#F9D972] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#00b5ad]"
             >
               Apply filters
             </button>
@@ -300,7 +300,7 @@ export function EmployeeDirectoryActions({
 
       <Link
         href="/hrms/employees/new"
-        className="inline-flex items-center gap-2 rounded-lg bg-[#00cec4] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#00b5ad]"
+        className="inline-flex items-center gap-2 rounded-lg bg-[#F9D972] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#00b5ad]"
       >
         <Plus className="h-4 w-4" />
         Onboard Employee

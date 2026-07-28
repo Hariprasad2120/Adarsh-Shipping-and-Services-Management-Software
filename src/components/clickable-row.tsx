@@ -55,7 +55,7 @@ export function ClickableRow({ href, children, className, ...props }: ClickableR
       role="link"
       onClick={handleNavigate}
       onKeyDown={handleKeyDown}
-      className={`ds-row-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00cec4] focus-visible:ring-inset ${className || ""}`}
+      className={`monolith-row-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F9D972] focus-visible:ring-inset ${className || ""}`}
     >
       {children}
     </DataTableRow>

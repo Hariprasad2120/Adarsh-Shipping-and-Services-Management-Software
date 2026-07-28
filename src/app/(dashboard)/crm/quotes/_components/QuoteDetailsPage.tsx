@@ -142,7 +142,7 @@ export function QuoteDetailsPage({
               <div className="flex items-center gap-2">
                 <Link
                   href="/crm/quotes/new"
-                  className="inline-flex size-10 items-center justify-center rounded-xl bg-[#00cec4] text-white transition-colors hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)]"
+                  className="inline-flex size-10 items-center justify-center rounded-xl bg-[#F9D972] text-white transition-colors hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)]"
                   aria-label="Create quote"
                 >
                   <Plus className="size-4" />
@@ -165,7 +165,7 @@ export function QuoteDetailsPage({
                   onClick={() => setActiveView(view.id)}
                   className={cn(
                     "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                    activeView === view.id ? "bg-[#00cec4]/10 text-[#00968f]" : "bg-[#f6f8fc] text-[#66758f] hover:bg-[#edf2f9]",
+                    activeView === view.id ? "bg-[#F9D972]/10 text-[#00968f]" : "bg-[#f6f8fc] text-[#66758f] hover:bg-[#edf2f9]",
                   )}
                 >
                   {view.label}
@@ -181,7 +181,7 @@ export function QuoteDetailsPage({
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search quotes"
-                className="h-11 w-full rounded-xl border border-[#dbe3f0] bg-white pl-10 pr-3 text-sm text-[#1f2937] outline-none focus:border-[#00cec4] focus:ring-2 focus:ring-[#00cec4]/20"
+                className="h-11 w-full rounded-xl border border-[#dbe3f0] bg-white pl-10 pr-3 text-sm text-[#1f2937] outline-none focus:border-[#F9D972] focus:ring-2 focus:ring-[#F9D972]/20"
               />
             </div>
           </div>
@@ -195,7 +195,7 @@ export function QuoteDetailsPage({
                   href={`/crm/quotes/${record.id}`}
                   className={cn(
                     "block border-b border-[#eef2f7] px-4 py-4 transition-colors",
-                    active ? "bg-[#00cec4]/5 shadow-[inset_3px_0_0_#00cec4]" : "hover:bg-[#fafcff]",
+                    active ? "bg-[#F9D972]/5 shadow-[inset_3px_0_0_#F9D972]" : "hover:bg-[#fafcff]",
                   )}
                 >
                   <div className="flex items-start gap-3">
@@ -206,7 +206,7 @@ export function QuoteDetailsPage({
                         <span className="shrink-0 text-sm font-semibold text-[#1f2937]">{formatAmount(record.amount)}</span>
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#71809a]">
-                        <span className="font-medium text-[#00cec4]">{record.quoteNumber}</span>
+                        <span className="font-medium text-[#F9D972]">{record.quoteNumber}</span>
                         <span className="size-1 rounded-full bg-[#cbd5e1]" />
                         <span>{formatDate(record.date)}</span>
                       </div>
@@ -315,7 +315,7 @@ export function QuoteDetailsPage({
           <div className="p-4 sm:p-6">
             <div className="grid gap-6">
               {/* Approval action bar */}
-              <section className="ds-shell-lg border border-[#dfe6f3] bg-white px-5 py-4 shadow-[0_12px_36px_rgba(15,23,42,0.05)]">
+              <section className="monolith-shell-lg border border-[#dfe6f3] bg-white px-5 py-4 shadow-[0_12px_36px_rgba(15,23,42,0.05)]">
                 <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--color-on-surface-variant)" }}>
                   Workflow
                 </p>
@@ -328,7 +328,7 @@ export function QuoteDetailsPage({
                 />
               </section>
 
-              <section className="ds-shell-lg overflow-hidden border border-[#dfe6f3] bg-white shadow-[0_12px_36px_rgba(15,23,42,0.05)]">
+              <section className="monolith-shell-lg overflow-hidden border border-[#dfe6f3] bg-white shadow-[0_12px_36px_rgba(15,23,42,0.05)]">
                 <div className="border-b border-[#eef2f7] px-5 pt-4">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-center gap-8">
@@ -337,7 +337,7 @@ export function QuoteDetailsPage({
                         onClick={() => setActiveTab("details")}
                         className={cn(
                           "border-b-[3px] pb-4 text-base font-semibold transition-colors",
-                          activeTab === "details" ? "border-[#00cec4] text-[#0f172a]" : "border-transparent text-[#64748b]",
+                          activeTab === "details" ? "border-[#F9D972] text-[#0f172a]" : "border-transparent text-[#64748b]",
                         )}
                       >
                         Quote Details
@@ -347,7 +347,7 @@ export function QuoteDetailsPage({
                         onClick={() => setActiveTab("activity")}
                         className={cn(
                           "border-b-[3px] pb-4 text-base font-medium transition-colors",
-                          activeTab === "activity" ? "border-[#00cec4] text-[#0f172a]" : "border-transparent text-[#64748b]",
+                          activeTab === "activity" ? "border-[#F9D972] text-[#0f172a]" : "border-transparent text-[#64748b]",
                         )}
                       >
                         Activity Logs
@@ -362,7 +362,7 @@ export function QuoteDetailsPage({
                             onClick={() => setDisplayCurrency("INR")}
                             className={cn(
                               "rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors",
-                              displayCurrency === "INR" ? "bg-[#00cec4] text-white shadow-sm" : "text-[#64748b]"
+                              displayCurrency === "INR" ? "bg-[#F9D972] text-white shadow-sm" : "text-[#64748b]"
                             )}
                           >
                             INR
@@ -372,7 +372,7 @@ export function QuoteDetailsPage({
                             onClick={() => setDisplayCurrency("foreign")}
                             className={cn(
                               "rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors",
-                              displayCurrency === "foreign" ? "bg-[#00cec4] text-white shadow-sm" : "text-[#64748b]"
+                              displayCurrency === "foreign" ? "bg-[#F9D972] text-white shadow-sm" : "text-[#64748b]"
                             )}
                           >
                             Foreign
@@ -410,11 +410,11 @@ export function QuoteDetailsPage({
                     <div className="space-y-6 p-5">
                       { (quote.status === "sent" || quote.status === "customer-viewed") && quote.slaDeadline && new Date() > new Date(quote.slaDeadline) && (
                         <div className="flex items-start gap-4 p-4 rounded-2xl bg-orange-50 border border-orange-200 text-orange-800 shadow-sm">
-                          <span className="ds-icon-badge mt-0.5 flex-shrink-0" style={{ background: "rgba(251,146,60,0.15)", color: "#fb923c" }}>
+                          <span className="monolith-icon-badge mt-0.5 flex-shrink-0" style={{ background: "rgba(251,146,60,0.15)", color: "#D88700" }}>
                             <ShieldAlert size={18} />
                           </span>
                           <div>
-                            <h4 className="ds-h3 font-semibold text-orange-950">2-Day Response SLA Breached</h4>
+                            <h4 className="monolith-h3 font-semibold text-orange-950">2-Day Response SLA Breached</h4>
                             <p className="text-sm text-orange-900 mt-1">
                               No update has been received from the customer on this quote within 2 business days. The owner and accounts department have been notified.
                             </p>
@@ -437,7 +437,7 @@ export function QuoteDetailsPage({
                         <div className="grid gap-5 lg:grid-cols-[1.2fr_1fr_1fr]">
                           <div>
                             <div className="flex items-center gap-3">
-                              <div className="flex size-10 items-center justify-center rounded-full bg-[#00cec4]/10 text-sm font-semibold text-[#00968f]">
+                              <div className="flex size-10 items-center justify-center rounded-full bg-[#F9D972]/10 text-sm font-semibold text-[#00968f]">
                                 {quote.customerInitial}
                               </div>
                               <div>
@@ -455,7 +455,7 @@ export function QuoteDetailsPage({
                         <div className="flex items-center justify-between border-b border-[#eef2f7] px-5 py-4">
                           <div className="flex items-center gap-3">
                             <h2 className="text-lg font-semibold tracking-[-0.02em] text-[#0f172a]">Items</h2>
-                            <span className="rounded-full bg-[#00cec4]/10 px-2.5 py-1 text-xs font-semibold text-[#00968f]">{quote.items.length}</span>
+                            <span className="rounded-full bg-[#F9D972]/10 px-2.5 py-1 text-xs font-semibold text-[#00968f]">{quote.items.length}</span>
                           </div>
                           <div className="inline-flex items-center gap-2 rounded-full bg-[#f5f7fb] px-3 py-1.5 text-xs font-medium text-[#67768e]">
                             <FileText className="size-4" />
@@ -677,7 +677,7 @@ function QuotePdfPreview({ quote, displayCurrency }: { quote: QuoteDetailRecord;
 
   return (
     <div className="overflow-auto bg-[#fbfcff] p-6 sm:p-8">
-      <div className="ds-shell-lg mx-auto w-full max-w-[1120px] border border-[#dfe6f3] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-10">
+      <div className="monolith-shell-lg mx-auto w-full max-w-[1120px] border border-[#dfe6f3] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-10">
         <div className="relative mx-auto max-w-[920px] border border-[#d6dde8] bg-white overflow-hidden">
           <StatusWatermark status={quote.status} />
 
@@ -955,7 +955,7 @@ const watermarkConfig: Record<
     text: "#fef2f2",
   },
   rework: {
-    from: "#fb923c",
+    from: "#D88700",
     via: "#f97316",
     to: "#ea580c",
     shadow: "rgba(234,88,12,0.55)",

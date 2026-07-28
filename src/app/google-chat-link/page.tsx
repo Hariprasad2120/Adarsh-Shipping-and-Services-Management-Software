@@ -4,9 +4,8 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {AlertCircle,CheckCircle2,Link2,Loader2,LogIn,RefreshCw,ShieldCheck,Sparkles,} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { fonts } from "@/lib/design-tokens";
+import { Button } from "@/components/monolith/button";
+import { Card, CardContent } from "@/components/monolith/card";
 
 type Phase = "loading" | "confirm" | "submitting" | "success" | "error";
 type TokenInfo = { googleEmail?: string; googleDisplayName?: string } | null;
@@ -47,13 +46,13 @@ function BrandMark() {
       >
         <div className="absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(0,206,196,0.18),transparent_60%)]" />
         <div className="absolute inset-2 rounded-[22px] border border-white/8 bg-white/[0.03]" />
-        <Sparkles className="relative z-10 size-8 text-[#00cec4]" />
+        <Sparkles className="relative z-10 size-8 text-[#F9D972]" />
       </motion.div>
 
       <div className="space-y-1">
         <h1
           className="text-[2.6rem] font-bold uppercase tracking-[-0.05em] text-white"
-          style={{ fontFamily: fonts.display }}
+          style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
         >
           monolith
         </h1>
@@ -82,9 +81,9 @@ function StatusPill({ phase }: { phase: Phase }) {
       <span
         className={`h-2 w-2 rounded-full ${
           phase === "error"
-            ? "bg-[#fb923c]"
+            ? "bg-[#D88700]"
             : phase === "success"
-              ? "bg-[#00cec4]"
+              ? "bg-[#F9D972]"
               : "bg-[#38bdf8]"
         }`}
       />
@@ -259,7 +258,7 @@ function LinkPageContent() {
                     </p>
                     <h2
                       className="text-[2rem] font-semibold tracking-[-0.04em] text-white"
-                      style={{ fontFamily: fonts.display }}
+                      style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
                     >
                       LINK YOUR ACCOUNT
                     </h2>
@@ -289,7 +288,7 @@ function LinkPageContent() {
                             transition={{ duration: 1.1, repeat: Infinity, ease: "linear" }}
                             className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]"
                           >
-                            <Loader2 size={18} className="text-[#00cec4]" />
+                            <Loader2 size={18} className="text-[#F9D972]" />
                           </motion.div>
                           <div>
                             <p className="text-[11px] uppercase tracking-[0.22em] text-white/40">
@@ -326,7 +325,7 @@ function LinkPageContent() {
                       <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
                         <div className="flex items-start gap-3">
                           <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]">
-                            <Link2 size={18} className="text-[#00cec4]" />
+                            <Link2 size={18} className="text-[#F9D972]" />
                           </div>
                           <div className="space-y-1">
                             <p className="text-[11px] uppercase tracking-[0.22em] text-white/40">
@@ -344,7 +343,7 @@ function LinkPageContent() {
 
                       <div className="rounded-[20px] border border-[rgba(0,206,196,0.22)] bg-[rgba(0,206,196,0.07)] p-4">
                         <div className="flex items-start gap-3">
-                          <ShieldCheck size={18} className="mt-0.5 text-[#00cec4]" />
+                          <ShieldCheck size={18} className="mt-0.5 text-[#F9D972]" />
                           <div className="space-y-1 text-sm leading-6 text-white/72">
                             <p>
                               This does not store your Google password. It only links your
@@ -394,7 +393,7 @@ function LinkPageContent() {
                             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                             className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]"
                           >
-                            <Loader2 size={18} className="text-[#00cec4]" />
+                            <Loader2 size={18} className="text-[#F9D972]" />
                           </motion.div>
                           <div>
                             <p className="text-[11px] uppercase tracking-[0.22em] text-white/40">
@@ -419,14 +418,14 @@ function LinkPageContent() {
                     >
                       <div className="flex justify-center">
                         <div className="flex h-18 w-18 items-center justify-center rounded-[24px] bg-[rgba(0,206,196,0.12)]">
-                          <CheckCircle2 size={34} className="text-[#00cec4]" />
+                          <CheckCircle2 size={34} className="text-[#F9D972]" />
                         </div>
                       </div>
 
                       <div className="space-y-2 text-center">
                         <h3
                           className="text-[1.8rem] font-semibold tracking-[-0.04em] text-white"
-                          style={{ fontFamily: fonts.display }}
+                          style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
                         >
                           ACCOUNTS LINKED
                         </h3>
@@ -458,14 +457,14 @@ function LinkPageContent() {
                     >
                       <div className="flex justify-center">
                         <div className="flex h-18 w-18 items-center justify-center rounded-[24px] bg-[rgba(251,146,60,0.12)]">
-                          <AlertCircle size={34} className="text-[#fb923c]" />
+                          <AlertCircle size={34} className="text-[#D88700]" />
                         </div>
                       </div>
 
                       <div className="space-y-2 text-center">
                         <h3
                           className="text-[1.8rem] font-semibold tracking-[-0.04em] text-white"
-                          style={{ fontFamily: fonts.display }}
+                          style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
                         >
                           LINK COULD NOT FINISH
                         </h3>
@@ -485,7 +484,7 @@ function LinkPageContent() {
                           <Button
                             size="lg"
                             onClick={() => void submitLink(true)}
-                            className="h-13 w-full rounded-[16px] bg-[#00cec4] text-[#0f1319] hover:bg-[#00b8af]"
+                            className="h-13 w-full rounded-[16px] bg-[#F9D972] text-[#0f1319] hover:bg-[#E8C85D]"
                           >
                             Replace Existing Google Link
                           </Button>
@@ -506,7 +505,7 @@ function LinkPageContent() {
               </CardContent>
 
               <div className="border-t border-white/8 px-6 py-5 text-center text-sm text-white/52 sm:px-8">
-                Need a fresh link? Go back to Google Chat and run <span className="font-medium text-[#00cec4]">/connect</span>.
+                Need a fresh link? Go back to Google Chat and run <span className="font-medium text-[#F9D972]">/connect</span>.
               </div>
             </Card>
           </div>
@@ -525,7 +524,7 @@ export default function GoogleChatLinkPage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center bg-[#151515]">
-          <Loader2 className="animate-spin text-[#00cec4]" size={28} />
+          <Loader2 className="animate-spin text-[#F9D972]" size={28} />
         </div>
       }
     >

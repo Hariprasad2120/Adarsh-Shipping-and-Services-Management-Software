@@ -7,7 +7,7 @@ export default function AccountingInvoicesSalesPage({
   searchParams: Promise<{ type?: string; search?: string }>;
 }) {
   return (
-    <Suspense fallback={<div className="p-8 text-sm text-on-surface-variant">Loading…</div>}>
+    <Suspense fallback={<div className="p-8 text-sm text-mono-muted">Loading…</div>}>
       <CommercialDocumentsPage
         title="Invoices & Sales"
         description="Manage commercial invoices, sales orders, purchase orders, and related billing documents from Accounting."

@@ -134,14 +134,14 @@ export function AccountDetailWrapper({
         {/* Sidebar Header */}
         <div className="p-4 border-b border-[#1c212a]/50 flex items-center justify-between gap-2 bg-[#0a0d12]">
           <div className="flex items-center gap-1.5">
-            <span className="ds-h3 text-sm font-bold text-white tracking-wide">All Customers</span>
-            <span className="px-2 py-0.5 rounded bg-[#161f28] border border-[#1c212a] text-[10px] text-slate-400 font-bold ds-numeric">
+            <span className="monolith-h3 text-sm font-bold text-white tracking-wide">All Customers</span>
+            <span className="px-2 py-0.5 rounded bg-[#161f28] border border-[#1c212a] text-[10px] text-slate-400 font-bold monolith-numeric">
               {accounts.length}
             </span>
           </div>
           <Link
             href="/crm/customers/new"
-            className="flex items-center justify-center bg-[#00cec4] hover:bg-[#00b8af] text-white p-2 rounded-xl transition-all shadow-[2px_2px_0px_0px_rgba(0,184,175,1)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none cursor-pointer"
+            className="flex items-center justify-center bg-[#F9D972] hover:bg-[#E8C85D] text-white p-2 rounded-xl transition-all shadow-[2px_2px_0px_0px_rgba(0,184,175,1)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none cursor-pointer"
             title="Create New Customer"
           >
             <Plus className="size-4" />
@@ -157,7 +157,7 @@ export function AccountDetailWrapper({
               placeholder="Search customers..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-6 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs placeholder-slate-500 text-white focus:outline-none focus:border-[#00cec4]"
+              className="w-full pl-8 pr-6 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs placeholder-slate-500 text-white focus:outline-none focus:border-[#F9D972]"
             />
             {searchQuery && (
               <button
@@ -191,13 +191,13 @@ export function AccountDetailWrapper({
                   href={`/crm/customers/${acc.id}${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ""}${isContactsTabOnly ? "?tab=contacts" : ""}`}
                   className={`block p-4 transition-all cursor-pointer ${
                     isActive
-                      ? "bg-[#161f28]/60 border-l-4 border-l-[#00cec4]"
+                      ? "bg-[#161f28]/60 border-l-4 border-l-[#F9D972]"
                       : "hover:bg-[#161f28]/25 border-l-4 border-l-transparent"
                   }`}
                 >
                   <div className="flex justify-between items-start gap-2">
                     <div className="space-y-1">
-                      <span className={`text-xs font-bold block ${isActive ? "text-[#00cec4]" : "text-white group-hover:text-[#00cec4]"}`}>
+                      <span className={`text-xs font-bold block ${isActive ? "text-[#F9D972]" : "text-white group-hover:text-[#F9D972]"}`}>
                         {acc.name}
                       </span>
                       {acc.email && (
@@ -205,7 +205,7 @@ export function AccountDetailWrapper({
                       )}
                     </div>
                     <div className="text-right">
-                      <span className={`text-xs font-bold block ds-numeric ${balance > 0 ? "text-[#fb923c]" : "text-slate-400"}`}>
+                      <span className={`text-xs font-bold block monolith-numeric ${balance > 0 ? "text-[#D88700]" : "text-slate-400"}`}>
                         {balance > 0 ? fmtCurrency(balance) : "₹0.00"}
                       </span>
                       <span className="text-[8px] uppercase tracking-wider text-slate-500 block mt-0.5">Balance</span>
@@ -225,11 +225,11 @@ export function AccountDetailWrapper({
         <div className="p-6 border-b border-[#1c212a]/50 bg-[#0f1319] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0 shadow-md">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded bg-[#00cec4]/10 border border-[#00cec4]/20 text-[9px] font-bold text-[#00cec4] uppercase tracking-wider">
+              <span className="px-2 py-0.5 rounded bg-[#F9D972]/10 border border-[#F9D972]/20 text-[9px] font-bold text-[#F9D972] uppercase tracking-wider">
                 {account.customerSubType || "Business"}
               </span>
             </div>
-            <h1 className="ds-h1 text-white truncate max-w-xl">{account.name}</h1>
+            <h1 className="monolith-h1 text-white truncate max-w-xl">{account.name}</h1>
           </div>
 
           {/* Action Button Toolbar (Tactile 3D Styling) */}
@@ -250,7 +250,7 @@ export function AccountDetailWrapper({
                   setShowNewTxnDropdown(!showNewTxnDropdown);
                   setShowMoreActions(false);
                 }}
-                className="flex items-center gap-1.5 bg-[#00cec4] hover:bg-[#00b8af] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-[2px_2px_0px_0px_rgba(0,184,175,1)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none cursor-pointer"
+                className="flex items-center gap-1.5 bg-[#F9D972] hover:bg-[#E8C85D] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-[2px_2px_0px_0px_rgba(0,184,175,1)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none cursor-pointer"
               >
                 <span>New Transaction</span>
                 <ChevronDown className="size-3.5" />
@@ -328,16 +328,16 @@ export function AccountDetailWrapper({
                 onClick={() => {
                   router.push(`/crm/customers/${account.id}`);
                 }}
-                className="bg-[#00cec4] hover:bg-[#00b8af] text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-[2px_2px_0px_0px_rgba(0,184,175,1)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none cursor-pointer"
+                className="bg-[#F9D972] hover:bg-[#E8C85D] text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-[2px_2px_0px_0px_rgba(0,184,175,1)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none cursor-pointer"
               >
                 View Full Profile
               </button>
             </div>
 
             {/* Primary Contact Details */}
-            <div className="card-left-accent bg-[#0f1319] border border-[#1c212a]/50 rounded-xl p-5 space-y-4">
+            <div className="monolith-card monolith-accent bg-[#0f1319] border border-[#1c212a]/50 rounded-xl p-5 space-y-4">
               <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-                <UserIcon className="size-4.5 text-[#00cec4]" />
+                <UserIcon className="size-4.5 text-[#F9D972]" />
                 <span>Primary Contact Info</span>
               </h3>
               {account.firstName || account.lastName ? (
@@ -357,7 +357,7 @@ export function AccountDetailWrapper({
                   {account.email && (
                     <div>
                       <span className="text-slate-400 block mb-0.5">Email Address</span>
-                      <a href={`mailto:${account.email}`} className="text-[#00cec4] hover:underline font-semibold text-sm">{account.email}</a>
+                      <a href={`mailto:${account.email}`} className="text-[#F9D972] hover:underline font-semibold text-sm">{account.email}</a>
                     </div>
                   )}
                   {account.phone && (
@@ -370,7 +370,7 @@ export function AccountDetailWrapper({
               ) : (
                 <div className="text-slate-400 text-xs italic py-2 flex items-center justify-between">
                   <span>There is no primary contact information.</span>
-                  <Link href={`/crm/customers/${account.id}/edit`} className="text-[#00cec4] font-bold hover:underline">Add Contact Info</Link>
+                  <Link href={`/crm/customers/${account.id}/edit`} className="text-[#F9D972] font-bold hover:underline">Add Contact Info</Link>
                 </div>
               )}
             </div>
@@ -378,7 +378,7 @@ export function AccountDetailWrapper({
             {/* Linked Contact Persons List */}
             <div className="bg-[#0f1319] border border-[#1c212a]/50 rounded-xl p-5 space-y-4">
               <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-                <Users className="size-4.5 text-[#00cec4]" />
+                <Users className="size-4.5 text-[#F9D972]" />
                 <span>Linked Contact Persons ({account.contacts?.length || 0})</span>
               </h3>
               
@@ -388,7 +388,7 @@ export function AccountDetailWrapper({
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="ds-table w-full">
+                  <table className="monolith-table w-full">
                     <thead>
                       <tr>
                         <th className="px-4 py-2">Name</th>
@@ -399,8 +399,8 @@ export function AccountDetailWrapper({
                     </thead>
                     <tbody>
                       {account.contacts.map((c) => (
-                        <tr key={c.id} className="ds-row-link" onClick={() => router.push(`/crm/contacts/${c.id}`)}>
-                          <td className="px-4 py-2 font-bold text-white hover:text-[#00cec4] transition-all">
+                        <tr key={c.id} className="monolith-row-link" onClick={() => router.push(`/crm/contacts/${c.id}`)}>
+                          <td className="px-4 py-2 font-bold text-white hover:text-[#F9D972] transition-all">
                             {c.firstName ? `${c.firstName} ` : ""}{c.lastName}
                           </td>
                           <td className="px-4 py-2 text-xs text-slate-300">
@@ -410,7 +410,7 @@ export function AccountDetailWrapper({
                             {c.phone || <span className="text-slate-500 italic">None</span>}
                           </td>
                           <td className="px-4 py-2 text-right" onClick={(e) => e.stopPropagation()}>
-                            <Link href={`/crm/contacts/${c.id}`} className="inline-flex items-center gap-1 text-xs text-[#00cec4] font-bold hover:underline">
+                            <Link href={`/crm/contacts/${c.id}`} className="inline-flex items-center gap-1 text-xs text-[#F9D972] font-bold hover:underline">
                               <span>View</span>
                               <ArrowRight className="size-3" />
                             </Link>
@@ -431,7 +431,7 @@ export function AccountDetailWrapper({
               <button
                 onClick={() => setActiveTab("OVERVIEW")}
                 className={`pb-3 pt-3 px-4 text-xs font-bold uppercase tracking-wider border-b-3 transition-all cursor-pointer ${
-                  activeTab === "OVERVIEW" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "OVERVIEW" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Overview
@@ -439,7 +439,7 @@ export function AccountDetailWrapper({
               <button
                 onClick={() => setActiveTab("NOTES")}
                 className={`pb-3 pt-3 px-4 text-xs font-bold uppercase tracking-wider border-b-3 transition-all cursor-pointer ${
-                  activeTab === "NOTES" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "NOTES" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Comments ({notes.length})
@@ -447,7 +447,7 @@ export function AccountDetailWrapper({
               <button
                 onClick={() => setActiveTab("TRANSACTIONS")}
                 className={`pb-3 pt-3 px-4 text-xs font-bold uppercase tracking-wider border-b-3 transition-all cursor-pointer ${
-                  activeTab === "TRANSACTIONS" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "TRANSACTIONS" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Transactions ({invoices.length})
@@ -455,7 +455,7 @@ export function AccountDetailWrapper({
               <button
                 onClick={() => setActiveTab("STATEMENT")}
                 className={`pb-3 pt-3 px-4 text-xs font-bold uppercase tracking-wider border-b-3 transition-all cursor-pointer ${
-                  activeTab === "STATEMENT" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "STATEMENT" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Statement
@@ -463,7 +463,7 @@ export function AccountDetailWrapper({
               <button
                 onClick={() => setActiveTab("TIMELINE")}
                 className={`pb-3 pt-3 px-4 text-xs font-bold uppercase tracking-wider border-b-3 transition-all cursor-pointer ${
-                  activeTab === "TIMELINE" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "TIMELINE" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 History Log
@@ -481,9 +481,9 @@ export function AccountDetailWrapper({
                   <div className="xl:col-span-2 space-y-6">
                     
                     {/* Primary Contact Details */}
-                    <div className="card-left-accent bg-[#0f1319] border border-[#1c212a]/50 rounded-xl p-5 space-y-4">
+                    <div className="monolith-card monolith-accent bg-[#0f1319] border border-[#1c212a]/50 rounded-xl p-5 space-y-4">
                       <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-                        <UserIcon className="size-4.5 text-[#00cec4]" />
+                        <UserIcon className="size-4.5 text-[#F9D972]" />
                         <span>Primary Contact Info</span>
                       </h3>
                       {account.firstName || account.lastName ? (
@@ -503,7 +503,7 @@ export function AccountDetailWrapper({
                           {account.email && (
                             <div>
                               <span className="text-slate-400 block mb-0.5">Email Address</span>
-                              <a href={`mailto:${account.email}`} className="text-[#00cec4] hover:underline font-semibold text-sm">{account.email}</a>
+                              <a href={`mailto:${account.email}`} className="text-[#F9D972] hover:underline font-semibold text-sm">{account.email}</a>
                             </div>
                           )}
                           {account.phone && (
@@ -516,7 +516,7 @@ export function AccountDetailWrapper({
                       ) : (
                         <div className="text-slate-400 text-xs italic py-2 flex items-center justify-between">
                           <span>There is no primary contact information.</span>
-                          <Link href={`/crm/customers/${account.id}/edit`} className="text-[#00cec4] font-bold hover:underline">Add Contact Info</Link>
+                          <Link href={`/crm/customers/${account.id}/edit`} className="text-[#F9D972] font-bold hover:underline">Add Contact Info</Link>
                         </div>
                       )}
                     </div>
@@ -524,12 +524,12 @@ export function AccountDetailWrapper({
                     {/* Billing and Shipping Address Card */}
                     <div className="bg-[#0f1319] border border-[#1c212a]/50 rounded-xl p-5 space-y-4">
                       <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-                        <MapPin className="size-4.5 text-[#00cec4]" />
+                        <MapPin className="size-4.5 text-[#F9D972]" />
                         <span>Address Details</span>
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs leading-relaxed">
                         <div className="space-y-1.5 p-3 rounded-lg bg-[#0a0d12]/50 border border-[#1c212a]/20">
-                          <span className="text-[10px] font-bold text-[#00cec4] uppercase tracking-wider block border-b border-[#1c212a]/30 pb-1.5 mb-2">Billing Address</span>
+                          <span className="text-[10px] font-bold text-[#F9D972] uppercase tracking-wider block border-b border-[#1c212a]/30 pb-1.5 mb-2">Billing Address</span>
                           {account.billingAddress ? (
                             <p className="whitespace-pre-line text-slate-300 font-medium">{account.billingAddress}</p>
                           ) : (
@@ -537,7 +537,7 @@ export function AccountDetailWrapper({
                           )}
                         </div>
                         <div className="space-y-1.5 p-3 rounded-lg bg-[#0a0d12]/50 border border-[#1c212a]/20">
-                          <span className="text-[10px] font-bold text-[#00cec4] uppercase tracking-wider block border-b border-[#1c212a]/30 pb-1.5 mb-2">Shipping Address</span>
+                          <span className="text-[10px] font-bold text-[#F9D972] uppercase tracking-wider block border-b border-[#1c212a]/30 pb-1.5 mb-2">Shipping Address</span>
                           {account.shippingAddress ? (
                             <p className="whitespace-pre-line text-slate-300 font-medium">{account.shippingAddress}</p>
                           ) : (
@@ -550,7 +550,7 @@ export function AccountDetailWrapper({
                     {/* Other Profile Specifics */}
                     <div className="bg-[#0f1319] border border-[#1c212a]/50 rounded-xl p-5 space-y-4">
                       <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-                        <Building className="size-4.5 text-[#00cec4]" />
+                        <Building className="size-4.5 text-[#F9D972]" />
                         <span>Profile Specifications</span>
                       </h3>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
@@ -564,7 +564,7 @@ export function AccountDetailWrapper({
                         </div>
                         <div>
                           <span className="text-slate-400 block mb-0.5">PAN Number</span>
-                          <span className="text-white font-semibold ds-numeric">{account.pan || "Not Specified"}</span>
+                          <span className="text-white font-semibold monolith-numeric">{account.pan || "Not Specified"}</span>
                         </div>
                         <div>
                           <span className="text-slate-400 block mb-0.5">Currency Preference</span>
@@ -591,20 +591,20 @@ export function AccountDetailWrapper({
                   <div className="space-y-6">
                     
                     {/* Financial Position Details */}
-                    <div className="card-top-accent bg-[#0f1319] border border-[#1c212a]/50 rounded-xl p-5 space-y-4">
+                    <div className="monolith-card monolith-accent bg-[#0f1319] border border-[#1c212a]/50 rounded-xl p-5 space-y-4">
                       <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                        <DollarSign className="size-4.5 text-[#00cec4]" />
+                        <DollarSign className="size-4.5 text-[#F9D972]" />
                         <span>Financial Status</span>
                       </h3>
                       
                       <div className="divide-y divide-[#1c212a]/30 space-y-3">
                         <div className="pt-2 flex justify-between items-center text-xs">
                           <span className="text-slate-400 font-medium">Outstanding Balance</span>
-                          <span className="text-white font-bold text-sm ds-numeric">{fmtCurrency(overdueTotal)}</span>
+                          <span className="text-white font-bold text-sm monolith-numeric">{fmtCurrency(overdueTotal)}</span>
                         </div>
                         <div className="pt-3 flex justify-between items-center text-xs">
                           <span className="text-slate-400 font-medium">Credit Limit</span>
-                          <span className="text-white font-bold text-sm ds-numeric">
+                          <span className="text-white font-bold text-sm monolith-numeric">
                             {(account.creditLimit ?? 0) > 0 ? fmtCurrency(account.creditLimit ?? 0) : "Unlimited"}
                           </span>
                         </div>
@@ -614,7 +614,7 @@ export function AccountDetailWrapper({
                         </div>
                         <div className="pt-3 flex justify-between items-center text-xs">
                           <span className="text-slate-400 font-medium">Total Billed</span>
-                          <span className="text-[#00cec4] font-bold text-sm ds-numeric">{fmtCurrency(totalInvoiced)}</span>
+                          <span className="text-[#F9D972] font-bold text-sm monolith-numeric">{fmtCurrency(totalInvoiced)}</span>
                         </div>
                       </div>
                     </div>
@@ -622,11 +622,11 @@ export function AccountDetailWrapper({
                     {/* SVG mock billing chart matching Zoho Books style */}
                     <div className="bg-[#0f1319] border border-[#1c212a]/50 rounded-xl p-5 space-y-4">
                       <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                        <TrendingUp className="size-4.5 text-[#00cec4]" />
+                        <TrendingUp className="size-4.5 text-[#F9D972]" />
                         <span>Income Chart (Sales history)</span>
                       </h3>
                       <div className="h-44 w-full bg-[#0a0d12]/50 border border-[#1c212a]/20 rounded-lg flex flex-col justify-end p-2 relative overflow-hidden">
-                        <svg className="w-full h-32 text-[#00cec4]" viewBox="0 0 300 100" fill="none" preserveAspectRatio="none">
+                        <svg className="w-full h-32 text-[#F9D972]" viewBox="0 0 300 100" fill="none" preserveAspectRatio="none">
                           <path
                             d="M0,80 Q50,40 100,60 T200,20 T300,50 L300,100 L0,100 Z"
                             fill="url(#gradient)"
@@ -634,14 +634,14 @@ export function AccountDetailWrapper({
                           />
                           <path
                             d="M0,80 Q50,40 100,60 T200,20 T300,50"
-                            stroke="#00cec4"
+                            stroke="#F9D972"
                             strokeWidth="2.5"
                             strokeLinecap="round"
                           />
                           <defs>
                             <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#00cec4" />
-                              <stop offset="100%" stopColor="#00cec4" stopOpacity="0" />
+                              <stop offset="0%" stopColor="#F9D972" />
+                              <stop offset="100%" stopColor="#F9D972" stopOpacity="0" />
                             </linearGradient>
                           </defs>
                         </svg>
@@ -669,12 +669,12 @@ export function AccountDetailWrapper({
                 <div className="bg-[#0f1319] border border-[#1c212a]/50 rounded-xl p-5 space-y-4">
                   <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3">
                     <div className="flex items-center gap-2">
-                      <FileText className="size-4.5 text-[#00cec4]" />
+                      <FileText className="size-4.5 text-[#F9D972]" />
                       <h3 className="font-bold text-sm text-white uppercase tracking-wider">Invoices & Quotations ({invoices.length})</h3>
                     </div>
                     <Link
                       href={`/crm/quotes/new?customerId=${account.id}`}
-                      className="flex items-center gap-1.5 text-xs text-[#00cec4] font-bold hover:underline cursor-pointer"
+                      className="flex items-center gap-1.5 text-xs text-[#F9D972] font-bold hover:underline cursor-pointer"
                     >
                       <Plus className="size-3.5" />
                       <span>Create Quotation</span>
@@ -696,10 +696,10 @@ export function AccountDetailWrapper({
                           <Link
                             key={inv.id}
                             href={href}
-                            className="p-3 bg-[#0a0d12]/50 border border-[#1c212a]/30 rounded-lg flex items-center justify-between gap-4 hover:border-[#00c4b6]/40 hover:bg-[#0a0d12]/80 transition-all group cursor-pointer"
+                            className="p-3 bg-[#0a0d12]/50 border border-[#1c212a]/30 rounded-lg flex items-center justify-between gap-4 hover:border-[#F9D972]/40 hover:bg-[#0a0d12]/80 transition-all group cursor-pointer"
                           >
                             <div>
-                              <span className="font-bold text-white text-sm group-hover:text-[#00cec4] transition-colors">{inv.invoiceNumber}</span>
+                              <span className="font-bold text-white text-sm group-hover:text-[#F9D972] transition-colors">{inv.invoiceNumber}</span>
                               <span className="text-[11px] text-slate-400 block mt-0.5">
                                 {inv.type} • Date: {inv.date ? new Date(inv.date).toLocaleDateString("en-IN") : "-"} • Amount: {fmtCurrency(inv.total ?? 0)}
                               </span>
@@ -721,11 +721,11 @@ export function AccountDetailWrapper({
               {activeTab === "STATEMENT" && (
                 <div className="bg-[#0f1319] border border-[#1c212a]/50 rounded-xl p-5 space-y-4">
                   <div className="flex items-center gap-2 border-b border-[#1c212a]/30 pb-3">
-                    <StatementIcon className="size-4.5 text-[#00cec4]" />
+                    <StatementIcon className="size-4.5 text-[#F9D972]" />
                     <h3 className="font-bold text-sm text-white uppercase tracking-wider">Account Statement</h3>
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="ds-table w-full">
+                    <table className="monolith-table w-full">
                       <thead>
                         <tr>
                           <th className="px-4 py-2">Date</th>
@@ -742,14 +742,14 @@ export function AccountDetailWrapper({
                           </tr>
                         ) : (
                           invoices.map((inv) => (
-                            <tr key={inv.id} className="ds-row-link" onClick={() => {
+                            <tr key={inv.id} className="monolith-row-link" onClick={() => {
                               const href = inv.type === "QUOTE" ? `/crm/quotes/${inv.id}` : `/crm/invoices/${inv.id}`;
                               router.push(href);
                             }}>
-                              <td className="px-4 py-2 ds-numeric">{inv.date ? new Date(inv.date).toLocaleDateString("en-IN") : "-"}</td>
+                              <td className="px-4 py-2 monolith-numeric">{inv.date ? new Date(inv.date).toLocaleDateString("en-IN") : "-"}</td>
                               <td className="px-4 py-2 text-xs font-semibold">{inv.type}</td>
                               <td className="px-4 py-2 font-semibold text-white">{inv.invoiceNumber}</td>
-                              <td className="px-4 py-2 ds-numeric font-bold">{fmtCurrency(inv.total ?? 0)}</td>
+                              <td className="px-4 py-2 monolith-numeric font-bold">{fmtCurrency(inv.total ?? 0)}</td>
                               <td className="px-4 py-2">
                                 <span className={`px-1.5 py-0.5 text-[8px] font-bold rounded uppercase tracking-wider ${
                                   inv.status === "PAID" ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"

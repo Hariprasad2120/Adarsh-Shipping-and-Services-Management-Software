@@ -1,7 +1,7 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
-import { DateInput } from "@/components/ui/date-input";
+import { NativeSelect } from "@/components/monolith/native-select";
+import { DateInput } from "@/components/monolith/date-input";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -115,14 +115,14 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
       {/* ─── VOUCHER PROPERTIES ────────────────────────────────────────── */}
       <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
         <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-          <Calendar className="size-4.5 text-[#00cec4]" />
+          <Calendar className="size-4.5 text-[#F9D972]" />
           <h3 className="font-bold text-xs text-white uppercase tracking-wider">Invoice Properties</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
           
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Supplier *</label>
+            <label className="monolith-label block text-slate-400">Supplier *</label>
             <NativeSelect
               required
               value={supplierId}
@@ -137,7 +137,7 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
           </div>
 
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Branch Mapping</label>
+            <label className="monolith-label block text-slate-400">Branch Mapping</label>
             <NativeSelect
               value={branchId}
               onChange={(e) => setBranchId(e.target.value)}
@@ -151,7 +151,7 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
           </div>
 
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Posting Date</label>
+            <label className="monolith-label block text-slate-400">Posting Date</label>
             <DateInput
               required
               value={postingDate}
@@ -161,7 +161,7 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
           </div>
 
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Due Date</label>
+            <label className="monolith-label block text-slate-400">Due Date</label>
             <DateInput
               required
               value={dueDate}
@@ -173,7 +173,7 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
         </div>
 
         <div className="space-y-1 text-xs">
-          <label className="ds-label block text-slate-400">Remarks / Description</label>
+          <label className="monolith-label block text-slate-400">Remarks / Description</label>
           <input
             type="text"
             placeholder="e.g. Fuel expenses for logistics fleet"
@@ -188,14 +188,14 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
       <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
         <div className="flex justify-between items-center border-b border-[#1c212a]/30 pb-3">
           <h3 className="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-2">
-            <Receipt className="size-4.5 text-[#00cec4]" /> Line items grid
+            <Receipt className="size-4.5 text-[#F9D972]" /> Line items grid
           </h3>
           <button
             type="button"
             onClick={handleAddItem}
             className="flex items-center gap-1 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-200 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
           >
-            <Plus className="size-3.5 text-[#00cec4]" />
+            <Plus className="size-3.5 text-[#F9D972]" />
             <span>Add Item</span>
           </button>
         </div>
@@ -206,7 +206,7 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
               
               {/* Item Description */}
               <div className="flex-1 space-y-1 w-full">
-                <label className="ds-label text-slate-500 md:hidden">Expense Item Details</label>
+                <label className="monolith-label text-slate-500 md:hidden">Expense Item Details</label>
                 <input
                   type="text"
                   required
@@ -219,7 +219,7 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
 
               {/* Quantity */}
               <div className="w-full md:w-24 space-y-1">
-                <label className="ds-label text-slate-500 md:hidden">Qty</label>
+                <label className="monolith-label text-slate-500 md:hidden">Qty</label>
                 <input
                   type="number"
                   min="0.01"
@@ -234,7 +234,7 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
 
               {/* Rate */}
               <div className="w-full md:w-36 space-y-1">
-                <label className="ds-label text-slate-500 md:hidden">Rate (₹)</label>
+                <label className="monolith-label text-slate-500 md:hidden">Rate (₹)</label>
                 <input
                   type="number"
                   min="0.01"
@@ -249,7 +249,7 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
 
               {/* Total Row Amount */}
               <div className="w-full md:w-36 space-y-1 text-right">
-                <span className="ds-label text-slate-500 block mb-1">Total (₹)</span>
+                <span className="monolith-label text-slate-500 block mb-1">Total (₹)</span>
                 <div className="w-full bg-[#161f28]/40 border border-[#1c212a]/30 text-white rounded-xl p-2 text-xs font-mono font-bold">
                   ₹{(item.qty * item.rate).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                 </div>
@@ -271,7 +271,7 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
         <div className="border-t border-[#1c212a]/50 pt-4 flex flex-col sm:flex-row sm:justify-between items-center sm:items-start gap-4 text-xs font-semibold text-white">
           <div className="flex gap-4">
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">Discount (₹)</label>
+              <label className="monolith-label block text-slate-400">Discount (₹)</label>
               <input
                 type="number"
                 min="0"
@@ -281,7 +281,7 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
               />
             </div>
             <div className="space-y-1">
-              <label className="ds-label block text-slate-400">Tax Rate (%)</label>
+              <label className="monolith-label block text-slate-400">Tax Rate (%)</label>
               <input
                 type="number"
                 min="0"
@@ -307,7 +307,7 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
               <span>Tax (GST {taxRate}%):</span>
               <span className="font-mono text-white">₹{taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
             </div>
-            <div className="flex justify-between font-bold text-sm text-[#00cec4] pt-1">
+            <div className="flex justify-between font-bold text-sm text-[#F9D972] pt-1">
               <span>Grand Total:</span>
               <span className="font-mono">₹{grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
             </div>
@@ -323,9 +323,9 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
             id="submitImmediately"
             checked={submitImmediately}
             onChange={(e) => setSubmitImmediately(e.target.checked)}
-            className="size-4 accent-[#00cec4] rounded bg-slate-900 border-[#1c212a] cursor-pointer"
+            className="size-4 accent-[#F9D972] rounded bg-slate-900 border-[#1c212a] cursor-pointer"
           />
-          <label htmlFor="submitImmediately" className="ds-label block text-slate-200 cursor-pointer">
+          <label htmlFor="submitImmediately" className="monolith-label block text-slate-200 cursor-pointer">
             Post and finalize invoice immediately? (UNPAID ledger postings)
           </label>
         </div>
@@ -333,7 +333,7 @@ export function NewPurchaseInvoiceClient({ suppliers, branches }: NewPurchaseInv
         <button
           type="submit"
           disabled={isSaving}
-          className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-6 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+          className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-6 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
         >
           {isSaving ? (
             <>

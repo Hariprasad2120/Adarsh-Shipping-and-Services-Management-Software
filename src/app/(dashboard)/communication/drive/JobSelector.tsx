@@ -1,6 +1,6 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import { useRouter } from "next/navigation";
 
 export default function JobSelector({
@@ -23,7 +23,7 @@ export default function JobSelector({
           router.push(`/communication/drive`);
         }
       }}
-      className="w-full text-xs bg-surface border border-outline-variant rounded-xl p-2.5 focus:outline-none"
+      className="w-full text-xs bg-mono-card border border-mono-border rounded-xl p-2.5 focus:outline-none"
     >
       <option value="">Choose a job...</option>
       {jobs.map((j) => (

@@ -34,12 +34,12 @@ export default async function AccountSecurityPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <span className="ds-icon-badge">
+        <span className="monolith-icon-badge">
           <ShieldCheck size={18} />
         </span>
         <div>
-          <h1 className="ds-h1">Security &amp; Sessions</h1>
-          <p className="text-sm text-on-surface-variant">
+          <h1 className="monolith-h1">Security &amp; Sessions</h1>
+          <p className="text-sm text-mono-muted">
             Devices currently signed in to your account. Idle sessions expire
             after {SESSION_IDLE_TIMEOUT_MINUTES} minutes; all sessions expire
             after {SESSION_ABSOLUTE_TIMEOUT_HOURS} hours.

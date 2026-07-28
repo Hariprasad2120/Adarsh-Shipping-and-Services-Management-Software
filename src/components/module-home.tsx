@@ -28,7 +28,7 @@ type ModuleQuickLink = {
 
 function getStatIcon(label: string, tone: ModuleStat["tone"]) {
   const normalized = label.toLowerCase();
-  const iconClassName = tone === "amber" ? "text-amber-600" : "text-[#00cec4]";
+  const iconClassName = tone === "amber" ? "text-amber-600" : "text-[#F9D972]";
 
   if (normalized.includes("due") || normalized.includes("deadline")) {
     return <CalendarDays className={`size-5 ${iconClassName}`} strokeWidth={1.9} />;
@@ -69,23 +69,23 @@ export function ModuleHome({
           {stats.map((stat, index) => (
             <article
               key={stat.label}
-              className="group relative overflow-hidden rounded-[24px] border border-outline-variant/20 bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-surface dark:shadow-ambient dark:hover:shadow-ambient-hover [animation:fade-in-up_0.5s_cubic-bezier(0.22,1,0.36,1)_both]"
+              className="group relative overflow-hidden rounded-[24px] border border-mono-border/20 bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-mono-card dark:shadow-ambient dark:hover:shadow-ambient-hover [animation:fade-in-up_0.5s_cubic-bezier(0.22,1,0.36,1)_both]"
               style={{ animationDelay: `${index * 75}ms` }}
             >
               <div className="absolute inset-x-0 top-0 h-14 bg-[linear-gradient(180deg,rgba(0,206,196,0.06),transparent)] dark:bg-[linear-gradient(180deg,rgba(0,206,196,0.08),transparent)]" />
               <div className="relative flex h-full flex-col">
                 <div className="flex items-start justify-between">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#00cec4]/10 transition duration-300 group-hover:scale-105 group-hover:bg-[#00cec4]/14">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F9D972]/10 transition duration-300 group-hover:scale-105 group-hover:bg-[#F9D972]/14">
                     {getStatIcon(stat.label, stat.tone)}
                   </div>
-                  <ArrowUpRight className="size-4 text-slate-300 transition duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#00cec4] dark:text-outline" />
+                  <ArrowUpRight className="size-4 text-slate-300 transition duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#F9D972] dark:text-outline" />
                 </div>
 
                 <div className="mt-6">
-                  <p className="text-[2.35rem] font-extralight leading-none tracking-[-0.04em] text-slate-900 dark:text-on-surface">
+                  <p className="text-[2.35rem] font-extralight leading-none tracking-[-0.04em] text-slate-900 dark:text-mono-text">
                     {stat.value}
                   </p>
-                  <p className="mt-1.5 text-[14px] font-normal text-slate-500 dark:text-on-surface-variant">
+                  <p className="mt-1.5 text-[14px] font-normal text-slate-500 dark:text-mono-muted">
                     {stat.label}
                   </p>
                 </div>
@@ -98,11 +98,11 @@ export function ModuleHome({
       {quickLinks.length > 0 && (
         <section className="space-y-3">
           <div>
-            <h2 className="ds-h2 inline-flex items-center gap-2 text-primary">
-              <ArrowUpRight className="size-4 text-[#00cec4]" />
+            <h2 className="monolith-h2 inline-flex items-center gap-2 text-mono-accent">
+              <ArrowUpRight className="size-4 text-[#F9D972]" />
               Quick actions
             </h2>
-            <p className="mt-1 text-sm text-on-surface-variant">Jump into the core tasks for this module.</p>
+            <p className="mt-1 text-sm text-mono-muted">Jump into the core tasks for this module.</p>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
@@ -110,22 +110,22 @@ export function ModuleHome({
               const Icon = item.icon;
               const cardContent = (
                 <div className="flex items-start gap-3.5">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4] transition duration-300 group-hover:scale-105 group-hover:bg-[#00cec4]/14">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#F9D972]/10 text-[#F9D972] transition duration-300 group-hover:scale-105 group-hover:bg-[#F9D972]/14">
                     <Icon size={18} />
                   </div>
 
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <ArrowUpRight className="size-4 shrink-0 text-[#00cec4]" />
-                      <h3 className="ds-h3 text-primary">{item.label}</h3>
+                      <ArrowUpRight className="size-4 shrink-0 text-[#F9D972]" />
+                      <h3 className="monolith-h3 text-mono-accent">{item.label}</h3>
                     </div>
 
-                    <p className="mt-1.5 text-sm leading-6 text-on-surface-variant">{item.description}</p>
+                    <p className="mt-1.5 text-sm leading-6 text-mono-muted">{item.description}</p>
 
                     {item.action ? (
                       item.action
                     ) : (
-                      <div className="mt-4 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.1rem] text-[#00cec4] transition duration-300 group-hover:gap-3 group-hover:text-[#00b8af] dark:group-hover:text-[#00cec4]">
+                      <div className="mt-4 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.1rem] text-[#F9D972] transition duration-300 group-hover:gap-3 group-hover:text-[#E8C85D] dark:group-hover:text-[#F9D972]">
                         Open module
                         <ArrowRight className="size-4" />
                       </div>
@@ -135,7 +135,7 @@ export function ModuleHome({
               );
 
               const cardClassName =
-                "group rounded-[24px] border border-outline-variant/20 bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:border-[#00cec4]/30 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-surface dark:hover:border-primary/40 dark:hover:shadow-ambient-hover [animation:fade-in-up_0.5s_cubic-bezier(0.22,1,0.36,1)_both]";
+                "group rounded-[24px] border border-mono-border/20 bg-white p-5 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.24)] transition duration-300 hover:-translate-y-1 hover:border-[#F9D972]/30 hover:shadow-[0_20px_40px_-24px_rgba(0,206,196,0.28)] dark:bg-mono-card dark:hover:border-primary/40 dark:hover:shadow-ambient-hover [animation:fade-in-up_0.5s_cubic-bezier(0.22,1,0.36,1)_both]";
               const animationStyle = { animationDelay: `${160 + index * 75}ms` };
 
               if (item.action) {

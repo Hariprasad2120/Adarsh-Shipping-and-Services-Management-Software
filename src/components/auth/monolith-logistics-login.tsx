@@ -1,26 +1,67 @@
 "use client";
 
-import type { CSSProperties, FormEvent, PointerEvent } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
+import type { FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { signIn } from "next-auth/react";
 import { clearStaleSessionData } from "@/lib/logout";
 import { isRootControlEmail } from "@/lib/root-access";
-import {
-  clampLoginProgress,
-  DEFAULT_CALLBACK_URL,
-  getLoginSceneStatus,
-  SUCCESS_TRANSITION_MS,
-} from "./login-scene.config";
-import type { LoginSceneState } from "./login-scene.types";
+import { DEFAULT_CALLBACK_URL, SUCCESS_TRANSITION_MS } from "./login-scene.config";
 import styles from "./monolith-logistics-login.module.css";
 
-type SceneStyle = CSSProperties & {
-  "--user-progress": number;
-  "--password-progress": number;
-  "--pointer-x": string;
-  "--pointer-y": string;
-};
+type Mood = "idle" | "happy" | "charging" | "shy" | "error";
+type SubmitState = "idle" | "loading" | "success";
+
+function MonolithPetGraphic() {
+  return (
+    <span className={styles.petCharacter} aria-hidden="true">
+      <span className={styles.energyRing} />
+      <span className={styles.energyRingSecondary} />
+      <svg className={styles.petSvg} viewBox="0 0 360 300">
+        <g className={styles.petShell}>
+          <path
+            className={styles.outerShell}
+            d="M98 92h164l38 30v70l-38 30H98l-38-30v-70Z"
+          />
+          <path
+            className={styles.faceGlass}
+            d="M116 116h128l24 18v46l-24 18H116l-24-18v-46Z"
+          />
+        </g>
+
+        <g className={styles.leftEar}>
+          <path d="m60 132-22 8v34l22 8Z" />
+          <path className={styles.earSignal} d="M28 135c-9 11-9 34 0 45" />
+        </g>
+        <g className={styles.rightEar}>
+          <path d="m300 132 22 8v34l-22 8Z" />
+          <path className={styles.earSignal} d="M332 135c9 11 9 34 0 45" />
+        </g>
+
+        <g className={styles.antenna}>
+          <path d="m116 94-15-18 12-10-14-18 8-14" />
+          <circle cx="109" cy="30" r="7" />
+          <path className={styles.antennaSignal} d="M91 29c-7 8-7 18 0 26M79 21c-13 14-13 33 0 47" />
+        </g>
+
+        <g className={styles.facePatch}>
+          <rect className={styles.patchBox} x="122" y="136" width="38" height="38" rx="9" />
+          <g className={styles.patchEye}>
+            <rect className={styles.crossArmA} x="128" y="151" width="26" height="8" rx="4" />
+            <rect className={styles.crossArmB} x="128" y="151" width="26" height="8" rx="4" />
+          </g>
+        </g>
+
+        <g className={styles.eyeLook}>
+          <g className={styles.liveEye}>
+            <rect x="221" y="146" width="12" height="20" rx="6" />
+          </g>
+        </g>
+
+        <path className={styles.scanLine} d="M112 185h136" />
+      </svg>
+    </span>
+  );
+}
 
 function wait(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
@@ -32,152 +73,162 @@ function getSafeCallbackUrl(identifier: string) {
   return requestedCallbackUrl?.startsWith("/") ? requestedCallbackUrl : fallbackTarget;
 }
 
-function UserIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" />
-    </svg>
-  );
-}
-
-function LockIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="5" y="10" width="14" height="11" rx="2" />
-      <path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3" />
-    </svg>
-  );
-}
-
-function EyeIcon({ hidden }: { hidden: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
-      <circle cx="12" cy="12" r="2.75" />
-      {hidden ? <path d="m4 4 16 16" /> : null}
-    </svg>
-  );
-}
-
-function GlobeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M3 12h18M12 3c2.4 2.5 3.6 5.5 3.6 9S14.4 18.5 12 21c-2.4-2.5-3.6-5.5-3.6-9S9.6 5.5 12 3Z" />
-    </svg>
-  );
-}
-
-function ArrowIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 12h13M13 6l6 6-6 6" />
-    </svg>
-  );
-}
-
-function PlaneIcon() {
-  return (
-    <svg viewBox="0 0 64 32" aria-hidden="true">
-      <path d="m4 18 23-4L39 3l5 1-5 10 17-2c3-.3 5 1 5 3s-2 3-5 3l-17-2 5 10-5 1-12-11-23-4v-4Z" />
-    </svg>
-  );
-}
-
-function TruckIcon() {
-  return (
-    <svg viewBox="0 0 96 42" aria-hidden="true">
-      <path d="M4 6h54v25H4zM58 15h18l12 10v6H58z" />
-      <circle cx="22" cy="34" r="6" />
-      <circle cx="70" cy="34" r="6" />
-      <path d="M76 18v8h9" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="m5 12 4 4L19 6" />
-    </svg>
-  );
-}
-
-function WarningIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 3 2.5 20h19L12 3Z" />
-      <path d="M12 9v5M12 17.4v.1" />
-    </svg>
-  );
-}
-
 export function MonolithLogisticsLogin() {
-  const [userId, setUserId] = useState("");
-  const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
-  const [sceneState, setSceneState] = useState<LoginSceneState>("idle");
-  const [error, setError] = useState<string | null>(null);
-  const [pointer, setPointer] = useState({ x: "0px", y: "0px" });
-  const lastFocus = useRef<"userId" | "password" | null>(null);
-  const userIdInputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
+  const petRef = useRef<HTMLSpanElement>(null);
+  const shadowRef = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
+  const target = useRef({ x: 0, y: 0 });
+  const current = useRef({ x: 0, y: 0 });
+  const velocity = useRef({ x: 0, y: 0 });
+  const passwordFocusedRef = useRef(false);
+  const frame = useRef<number | null>(null);
 
-  const userProgress = clampLoginProgress(userId.trim().length / 12);
-  const passwordProgress = clampLoginProgress(password.length / 10);
-  const busy = sceneState === "authenticating" || sceneState === "success";
-  const status = useMemo(() => getLoginSceneStatus(sceneState), [sceneState]);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(true);
+  const [mood, setMood] = useState<Mood>("idle");
+  const [petMessage, setPetMessage] = useState("Tap me!");
+  const [message, setMessage] = useState("");
+  const [submitState, setSubmitState] = useState<SubmitState>("idle");
+  const busy = submitState !== "idle";
 
   useEffect(() => {
     clearStaleSessionData();
   }, []);
 
-  const sceneStyle: SceneStyle = {
-    "--user-progress": userProgress,
-    "--password-progress": passwordProgress,
-    "--pointer-x": pointer.x,
-    "--pointer-y": pointer.y,
-  };
+  useEffect(() => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const motionScale = reduceMotion ? 0.35 : 1;
 
-  function handleScenePointerMove(event: PointerEvent<HTMLElement>) {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const followPointer = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      if (passwordFocusedRef.current) {
+        target.current = { x: -0.8, y: -0.08 };
+        return;
+      }
 
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - bounds.left) / bounds.width - 0.5) * 12;
-    const y = ((event.clientY - bounds.top) / bounds.height - 0.5) * 8;
-    setPointer({ x: `${x.toFixed(2)}px`, y: `${y.toFixed(2)}px` });
+      const bounds = panelRef.current?.getBoundingClientRect();
+      if (!bounds) return;
+
+      target.current = {
+        x: Math.max(-1, Math.min(1, ((event.clientX - bounds.left) / bounds.width - 0.5) * 2)),
+        y: Math.max(-1, Math.min(1, ((event.clientY - bounds.top) / bounds.height - 0.5) * 2)),
+      };
+    };
+
+    const resetPointer = (event: PointerEvent) => {
+      if (event.relatedTarget === null && !passwordFocusedRef.current) {
+        target.current = { x: 0, y: 0 };
+      }
+    };
+
+    const animate = () => {
+      velocity.current.x = (velocity.current.x + (target.current.x - current.current.x) * 0.055) * 0.78;
+      velocity.current.y = (velocity.current.y + (target.current.y - current.current.y) * 0.055) * 0.78;
+      current.current.x += velocity.current.x;
+      current.current.y += velocity.current.y;
+
+      const x = current.current.x;
+      const y = current.current.y;
+      const pet = petRef.current;
+      const shadow = shadowRef.current;
+      const glow = glowRef.current;
+
+      if (pet) {
+        pet.style.setProperty("--x", `${x * 76 * motionScale}px`);
+        pet.style.setProperty("--y", `${y * 52 * motionScale}px`);
+        pet.style.setProperty("--turn", `${x * 5.5 * motionScale}deg`);
+        pet.style.setProperty("--skew", `${y * -2.2 * motionScale}deg`);
+        const horizontalStretch = 1 + (Math.abs(x) * 0.11 - Math.abs(y) * 0.055) * motionScale;
+        const verticalStretch = 1 + (Math.abs(y) * 0.1 - Math.abs(x) * 0.05) * motionScale;
+        pet.style.setProperty("--stretch-x", `${horizontalStretch}`);
+        pet.style.setProperty("--stretch-y", `${verticalStretch}`);
+        pet.style.setProperty("--eye-x", `${x * 10 * motionScale}px`);
+        pet.style.setProperty("--eye-y", `${y * 5 * motionScale}px`);
+        pet.style.setProperty("--face-x", `${x * 2.4 * motionScale}px`);
+        pet.style.setProperty("--face-y", `${y * 1.8 * motionScale}px`);
+        pet.style.setProperty("--antenna-turn", `${x * -7 * motionScale}deg`);
+        pet.style.setProperty("--ear-shift", `${y * 2 * motionScale}px`);
+      }
+
+      if (shadow) {
+        shadow.style.transform = `translate(calc(-50% + ${x * -16}px), ${y * -6}px) scaleX(${1 - Math.abs(y) * 0.14})`;
+      }
+
+      if (glow) {
+        glow.style.setProperty("--gx", `${50 + x * 40}%`);
+        glow.style.setProperty("--gy", `${50 + y * 38}%`);
+      }
+
+      frame.current = window.requestAnimationFrame(animate);
+    };
+
+    window.addEventListener("pointermove", followPointer, { passive: true });
+    window.addEventListener("pointerout", resetPointer, { passive: true });
+    frame.current = window.requestAnimationFrame(animate);
+    return () => {
+      window.removeEventListener("pointermove", followPointer);
+      window.removeEventListener("pointerout", resetPointer);
+      if (frame.current) window.cancelAnimationFrame(frame.current);
+    };
+  }, []);
+
+  function interactWithPet() {
+    if (mood === "idle") {
+      setMood("happy");
+      setPetMessage("Beep! Good to see you.");
+    } else if (mood === "happy") {
+      setMood("charging");
+      setPetMessage("Charging… 84%");
+    } else {
+      setMood("idle");
+      setPetMessage("Ready for another route!");
+    }
   }
 
-  function resetPointer() {
-    setPointer({ x: "0px", y: "0px" });
+  function resetSubmitState() {
+    setMessage("");
+    if (submitState !== "idle") setSubmitState("idle");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
 
-    setError(null);
-
-    if (!userId.trim() || !password) {
-      setSceneState("failure");
-      setError("Enter both your user ID and password.");
-      if (!userId.trim()) userIdInputRef.current?.focus({ preventScroll: true });
-      else passwordInputRef.current?.focus({ preventScroll: true });
+    const normalizedEmail = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setMessage("Enter a valid work email.");
+      emailInputRef.current?.focus({ preventScroll: true });
+      setMood("error");
+      setPetMessage("That route looks incomplete.");
       return;
     }
 
-    setSceneState("authenticating");
+    if (!password) {
+      setMessage("Enter your password.");
+      passwordInputRef.current?.focus({ preventScroll: true });
+      setMood("error");
+      setPetMessage("The security code is missing.");
+      return;
+    }
 
-    const normalizedUserId = userId.trim();
-    const callbackUrl = getSafeCallbackUrl(normalizedUserId);
+    setMessage("");
+    setSubmitState("loading");
+    setMood("charging");
+    setPetMessage("Verifying your cargo route…");
 
+    const callbackUrl = getSafeCallbackUrl(normalizedEmail);
     let result: Awaited<ReturnType<typeof signIn>> | undefined;
+
     try {
       result = await signIn("credentials", {
-        email: normalizedUserId,
+        email: normalizedEmail,
         password,
-        rememberMe: rememberMe ? "true" : "false",
+        rememberMe: remember ? "true" : "false",
         redirect: false,
         callbackUrl,
       });
@@ -186,290 +237,208 @@ export function MonolithLogisticsLogin() {
     }
 
     if (!result || result.error) {
+      setSubmitState("idle");
       passwordInputRef.current?.focus({ preventScroll: true });
-      setSceneState("failure");
-      setError("Sign in failed. Check your credentials — after several failed attempts the account is temporarily locked.");
+      setMood("error");
+      setPetMessage("Access denied. Please try again.");
+      setMessage("Sign in failed. Check your credentials and try again.");
       return;
     }
 
     clearStaleSessionData();
-    setSceneState("success");
+    setSubmitState("success");
+    setMood("happy");
+    setPetMessage("You’re in! Let’s get moving.");
     await wait(SUCCESS_TRANSITION_MS);
     window.location.replace(result.url ?? callbackUrl);
   }
 
   return (
-    <div
-      className={styles.page}
-      data-monolith-login=""
-      data-state={sceneState}
-      style={sceneStyle}
-      onPointerMove={handleScenePointerMove}
-      onPointerLeave={resetPointer}
+    <main
+      className={`${styles.loginPage} ${submitState === "success" ? styles.success : ""}`}
+      data-monolith-login
     >
-      <section className={styles.scene} aria-label="Live Monolith logistics network">
-        <div className={styles.sceneImage} aria-hidden="true">
-          <Image
-            src="/login/logistics-port.webp"
-            alt=""
-            fill
-            priority
-            sizes="(max-width: 900px) 100vw, 64vw"
-          />
-        </div>
-        <div className={styles.sceneShade} aria-hidden="true" />
-        <div className={styles.sceneAtmosphere} aria-hidden="true" />
+      <section className={styles.loginCard} aria-label="Monolith secure login">
+        <aside
+          ref={panelRef}
+          className={styles.mascotPanel}
+          aria-label="Interactive Monolith digital pet"
+        >
+          <div ref={glowRef} className={styles.cursorGlow} aria-hidden="true" />
 
-        <header className={styles.brandHeader}>
-          <Image src="/brand/monolith-mark.svg" alt="" width={52} height={52} priority />
-          <div>
-            <strong>MONOLITH</strong>
-            <span>Intelligent Logistics. Limitless Delivery.</span>
-          </div>
-        </header>
-
-        <svg className={styles.routes} viewBox="0 0 1000 900" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <filter id="routeGlow" x="-80%" y="-80%" width="260%" height="260%">
-              <feGaussianBlur stdDeviation="7" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-            <linearGradient id="seaRoute" x1="0" x2="1">
-              <stop offset="0" stopColor="#1ad8e6" stopOpacity=".1" />
-              <stop offset=".5" stopColor="#52ddff" />
-              <stop offset="1" stopColor="#4fffd0" />
-            </linearGradient>
-            <linearGradient id="landRoute" x1="0" x2="1">
-              <stop offset="0" stopColor="#36ddec" />
-              <stop offset="1" stopColor="#5cffb8" />
-            </linearGradient>
-          </defs>
-          <path
-            className={styles.airRoute}
-            d="M390 178C520 125 650 150 730 270C768 325 780 382 738 430"
-            pathLength="100"
-          />
-          <path
-            className={styles.seaRoute}
-            d="M218 536C310 510 386 490 470 440C545 396 616 360 724 390"
-            pathLength="100"
-            style={{ strokeDashoffset: 100 - userProgress * 74 }}
-          />
-          <path
-            className={styles.landRoute}
-            d="M398 735C493 685 566 665 650 668C741 670 805 632 872 565"
-            pathLength="100"
-            style={{ strokeDashoffset: 100 - passwordProgress * 82 }}
-          />
-        </svg>
-
-        <div className={styles.aircraftMarker} aria-hidden="true">
-          <PlaneIcon />
-        </div>
-
-        <div className={styles.vesselPulse} aria-hidden="true" />
-        <div className={styles.truckLight} aria-hidden="true" />
-        <div className={styles.truckDispatch} aria-hidden="true">
-          <TruckIcon />
-        </div>
-
-        <section className={styles.portStatus} aria-live="polite">
-          <span>PORT STATUS</span>
-          <strong>{sceneState === "success" ? "Cleared for dispatch" : "Port systems ready"}</strong>
-          <p>{sceneState === "failure" ? "Clearance interrupted" : "All systems operational"}</p>
-          <dl>
-            <div><dt>Active ships</dt><dd className="ds-numeric">23</dd></div>
-            <div><dt>Containers</dt><dd className="ds-numeric">1,842</dd></div>
-            <div><dt>On-time performance</dt><dd className="ds-numeric">87%</dd></div>
-          </dl>
-        </section>
-
-        <section className={styles.liveTracking} aria-hidden="true">
-          <span>LIVE TRACKING</span>
-          <svg viewBox="0 0 240 80">
-            <path d="M10 54C42 18 77 68 111 39C147 9 170 70 229 31" />
-            <circle cx="11" cy="53" r="4" />
-            <circle cx="65" cy="45" r="4" />
-            <circle cx="112" cy="39" r="4" />
-            <circle cx="174" cy="46" r="4" />
-            <circle cx="229" cy="31" r="4" />
-          </svg>
-          <div>
-            <i /> Sea route <i /> Land route <i /> Air route
-          </div>
-        </section>
-
-        <div className={styles.sceneStatus} role="status" aria-live="polite">
-          <span>{status.eyebrow}</span>
-          <strong>{status.title}</strong>
-        </div>
-
-        {sceneState === "failure" ? (
-          <div className={styles.sceneError} role="alert">
-            <WarningIcon />
-            <div>
-              <strong>Shipment failed to load</strong>
-              <span>Verify credentials and retry clearance.</span>
-            </div>
-          </div>
-        ) : null}
-
-        <footer className={styles.sceneFooter} aria-hidden="true">
-          <div><span>◎</span><strong>Real-time visibility</strong><small>End-to-end cargo tracking</small></div>
-          <div><span>◇</span><strong>Secure &amp; compliant</strong><small>Enterprise-grade access control</small></div>
-          <div><span>⌁</span><strong>Dispatch intelligence</strong><small>Route-aware operational handoff</small></div>
-        </footer>
-      </section>
-
-      <section className={styles.authRegion} aria-label="Sign in">
-        <div className={styles.panelGlow} aria-hidden="true" />
-        <form className={styles.loginCard} onSubmit={handleSubmit} noValidate>
-          <div className={styles.mobileBrand}>
-            <Image src="/brand/monolith-mark.svg" alt="" width={46} height={46} />
-            <div>
-              <strong>MONOLITH</strong>
-              <span>Intelligent Logistics</span>
-            </div>
-          </div>
-
-          <div className={styles.locale} aria-label="Current language">
-            <GlobeIcon />
-            <span>EN</span>
-          </div>
-
-          <div className={styles.cardHeading}>
-            <span>LIVE OPERATIONS</span>
-            <h1>LOG IN TO YOUR<br />COMMAND CENTER</h1>
-            <p>Credential checks remain encrypted end-to-end across your secure operations workspace.</p>
-          </div>
-
-          <div className={styles.fieldGroup}>
-            <label htmlFor="userId">User ID</label>
-            <div className={styles.inputShell}>
-              <UserIcon />
-              <input
-                ref={userIdInputRef}
-                id="userId"
-                name="userId"
-                type="text"
-                autoComplete="username"
-                placeholder="Enter your user ID"
-                value={userId}
-                disabled={busy}
-                onFocus={() => {
-                  lastFocus.current = "userId";
-                  setSceneState(userId ? "userIdTyping" : "userIdFocused");
-                }}
-                onChange={(event) => {
-                  setUserId(event.target.value);
-                  setError(null);
-                  setSceneState(event.target.value ? "userIdTyping" : "userIdFocused");
-                }}
-                onBlur={() => {
-                  if (!busy && sceneState !== "failure") setSceneState("idle");
-                }}
-                aria-invalid={Boolean(error)}
-              />
-            </div>
-          </div>
-
-          <div className={styles.fieldGroup}>
-            <label htmlFor="password">Password</label>
-            <div className={styles.inputShell}>
-              <LockIcon />
-              <input
-                ref={passwordInputRef}
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                placeholder="Enter your password"
-                value={password}
-                disabled={busy}
-                onFocus={() => {
-                  lastFocus.current = "password";
-                  setSceneState(password ? "passwordTyping" : "passwordFocused");
-                }}
-                onChange={(event) => {
-                  setPassword(event.target.value);
-                  setError(null);
-                  setSceneState(event.target.value ? "passwordTyping" : "passwordFocused");
-                }}
-                onBlur={() => {
-                  if (!busy && sceneState !== "failure") setSceneState("idle");
-                }}
-                aria-invalid={Boolean(error)}
-                aria-describedby={error ? "login-error" : undefined}
-              />
-              <button
-                className={styles.passwordToggle}
-                type="button"
-                onClick={() => setShowPassword((value) => !value)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                disabled={busy}
-              >
-                <EyeIcon hidden={showPassword} />
-              </button>
-            </div>
-          </div>
-
-          <div className={styles.formMeta}>
-            <label className={styles.checkbox}>
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(event) => setRememberMe(event.target.checked)}
-                disabled={busy}
-              />
-              <span aria-hidden="true"><CheckIcon /></span>
-              Remember me
-            </label>
-            <a href="/forgot-password">Forgot password?</a>
-          </div>
-
-          {error ? <p id="login-error" className={styles.formError} role="alert">{error}</p> : null}
-
-          <button className={styles.primaryButton} type="submit" disabled={busy}>
+          <div className={`${styles.brand} ${styles.brandLight}`}>
+            <span className={styles.brandMark} aria-hidden="true"><i /><i /></span>
             <span>
-              {sceneState === "authenticating"
-                ? "VERIFYING CLEARANCE"
-                : sceneState === "success"
-                  ? "DISPATCH APPROVED"
-                  : "LOG IN"}
+              <strong>MONOLITH</strong>
+              <small>Intelligent logistics</small>
             </span>
-            {sceneState === "success" ? <CheckIcon /> : <ArrowIcon />}
-            <i aria-hidden="true" />
-          </button>
-
-          <div className={styles.divider}><span>or</span></div>
+          </div>
 
           <button
-            className={styles.ssoButton}
             type="button"
-            disabled={busy}
-            onClick={() => void signIn("google", { callbackUrl: getSafeCallbackUrl(userId.trim()) })}
+            className={`monolith-plain ${styles.petButton} ${styles[`mood-${mood}`]}`}
+            onClick={interactWithPet}
+            aria-label={`Interact with Monolith pet. ${petMessage}`}
           >
-            <GlobeIcon />
-            Log in with SSO
+            <span ref={petRef} className={styles.petFollower}>
+              <span className={styles.speechBubble} aria-live="polite">{petMessage}</span>
+              <span className={styles.petRig}>
+                <MonolithPetGraphic />
+              </span>
+            </span>
           </button>
 
-          <div className={styles.requestAccess}>
-            New to Monolith? <a href="/request-access">Request access</a>
+          <div ref={shadowRef} className={styles.petShadow} aria-hidden="true" />
+
+          <p className={styles.petStatus}>
+            <i />
+            {submitState === "success"
+              ? "Route cleared. Welcome aboard."
+              : password
+                ? "Cargo secured. Ready to dispatch."
+                : email
+                  ? "Route identified. Awaiting clearance."
+                  : "Your cargo command center is listening."}
+          </p>
+        </aside>
+
+        <section className={styles.formPanel} aria-labelledby="login-title">
+          <div className={`${styles.mobileBrand} ${styles.brand}`}>
+            <span className={styles.brandMark} aria-hidden="true"><i /><i /></span>
+            <strong>MONOLITH</strong>
           </div>
 
-          <div className={styles.securityLine} aria-hidden="true">
-            <span /> Encrypted session <span /> Protected workspace
-          </div>
-        </form>
+          <div className={styles.accountIcon} aria-hidden="true"><span /><i /></div>
+
+          <header className={styles.heading}>
+            <p>SECURE OPERATIONS ACCESS</p>
+            <h1 id="login-title">Welcome back!</h1>
+            <span>Enter your login details</span>
+          </header>
+
+          <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
+            <label className={styles.field}>
+              <span>Email</span>
+              <span className={styles.inputWrap}>
+                <input
+                  ref={emailInputRef}
+                  type="email"
+                  name="email"
+                  autoComplete="username"
+                  inputMode="email"
+                  placeholder="name@company.com"
+                  value={email}
+                  disabled={busy}
+                  aria-invalid={Boolean(message && !email.includes("@"))}
+                  aria-describedby={message ? "login-message" : undefined}
+                  onFocus={() => {
+                    target.current = { x: 0.7, y: -0.12 };
+                    setMood("happy");
+                    setPetMessage("I found your route!");
+                  }}
+                  onBlur={() => setMood("idle")}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setEmail(value);
+                    setMood(value ? "happy" : "idle");
+                    setPetMessage(
+                      value.length > 12
+                        ? "Route almost identified…"
+                        : value
+                          ? "Reading your route…"
+                          : "Tap me!",
+                    );
+                    resetSubmitState();
+                  }}
+                />
+                {email.includes("@") ? <b className={styles.valid} aria-label="Email entered">✓</b> : null}
+              </span>
+            </label>
+
+            <label className={styles.field}>
+              <span>Password</span>
+              <span className={styles.inputWrap}>
+                <input
+                  ref={passwordInputRef}
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  value={password}
+                  disabled={busy}
+                  aria-invalid={Boolean(message && !password)}
+                  aria-describedby={message ? "login-message" : undefined}
+                  onFocus={() => {
+                    passwordFocusedRef.current = true;
+                    target.current = { x: -0.8, y: -0.08 };
+                    setMood("shy");
+                    setPetMessage("I won’t peek. Promise.");
+                  }}
+                  onBlur={() => {
+                    passwordFocusedRef.current = false;
+                    target.current = { x: 0, y: 0 };
+                    setMood("idle");
+                  }}
+                  onChange={(event) => {
+                    setPassword(event.target.value);
+                    resetSubmitState();
+                  }}
+                />
+                <button
+                  className={styles.visibility}
+                  type="button"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  disabled={busy}
+                >
+                  {showPassword ? "●" : "◉"}
+                </button>
+              </span>
+            </label>
+
+            <div className={styles.options}>
+              <label className={styles.remember}>
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(event) => setRemember(event.target.checked)}
+                  disabled={busy}
+                />
+                <span>Remember me</span>
+              </label>
+              <a href="/forgot-password" className={styles.textButton}>Forgot password?</a>
+            </div>
+
+            <p id="login-message" className={styles.formMessage} role="alert">{message}</p>
+
+            <button className={styles.loginButton} type="submit" disabled={busy}>
+              {submitState === "loading" ? (
+                <><i className={styles.spinner} /> Verifying route…</>
+              ) : submitState === "success" ? (
+                <>Access granted ✓</>
+              ) : (
+                <>Log in <span>→</span></>
+              )}
+            </button>
+
+            <div className={styles.divider}><span>or</span></div>
+
+            <button
+              className={styles.ssoButton}
+              type="button"
+              disabled={busy}
+              onClick={() => void signIn("google", { callbackUrl: getSafeCallbackUrl(email.trim()) })}
+            >
+              <span>◎</span> Log in with SSO
+            </button>
+
+            <p className={styles.signup}>
+              Don’t have access?
+              <a href="/request-access" className={styles.textButton}>Request access</a>
+            </p>
+          </form>
+        </section>
       </section>
-
-      <div className={styles.successCurtain} aria-hidden="true">
-        <div><CheckIcon /></div>
-        <strong>Dispatch confirmed</strong>
-      </div>
-    </div>
+    </main>
   );
 }

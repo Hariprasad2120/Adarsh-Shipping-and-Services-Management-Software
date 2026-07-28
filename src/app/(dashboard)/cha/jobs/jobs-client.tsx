@@ -15,15 +15,15 @@ import {
   DataTableHead,
   DataTableHeader,
 } from "@/components/data-table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { FilterMenu } from "@/components/ui/filter-menu";
+import { Button } from "@/components/monolith/button";
+import { Badge } from "@/components/monolith/badge";
+import { FilterMenu } from "@/components/monolith/filter-menu";
 import { JobFilingQueryWarningIndicator } from "@/app/(dashboard)/cha/_components/job-filing-query-warning-indicator";
 import { ChaDueDateWarningsIndicator } from "@/app/(dashboard)/cha/_components/cha-due-date-warnings-indicator";
 import type { DueDateWarningViewModel } from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
 import { formatChaBadgeLabel, getChaPriorityBadgeVariant } from "@/lib/cha-badges";
 import { cn } from "@/lib/utils";
-import type { BadgeVariant } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/components/monolith/badge";
 import {
   ChaControlPanel,
   ChaMetricCard,
@@ -353,15 +353,15 @@ export function JobsClient({
       type="button"
       onClick={onClick}
       className={cn(
-        "ds-plain ds-menu-option py-2 text-sm",
-        selected && "ds-menu-option-active",
+        "monolith-plain monolith-menu-option py-2 text-sm",
+        selected && "monolith-menu-option-active",
       )}
     >
       <span className="min-w-0">
         <span className="block truncate">{label}</span>
-        {note ? <span className="mt-0.5 block truncate text-xs text-on-surface-variant">{note}</span> : null}
+        {note ? <span className="mt-0.5 block truncate text-xs text-mono-muted">{note}</span> : null}
       </span>
-      {selected ? <span className="ds-state-dot" /> : null}
+      {selected ? <span className="monolith-state-dot" /> : null}
     </button>
   );
 
@@ -476,11 +476,11 @@ export function JobsClient({
                   <DataTableEmpty
                     colSpan={9}
                     message={
-                      <div className="flex flex-col items-center justify-center p-14 text-center text-on-surface-variant">
-                        <div className="ds-empty-icon mb-4">
+                      <div className="flex flex-col items-center justify-center p-14 text-center text-mono-muted">
+                        <div className="monolith-empty-icon mb-4">
                           <Briefcase size={32} />
                         </div>
-                        <p className="text-sm text-on-surface">{emptyTitle}</p>
+                        <p className="text-sm text-mono-text">{emptyTitle}</p>
                         <p className="mt-1 text-xs">{emptyText}</p>
                       </div>
                     }
@@ -488,7 +488,7 @@ export function JobsClient({
                 ) : (
                   data.items.map((job) => (
                     <ClickableRow key={job.id} href={`/cha/jobs/${job.id}`}>
-                      <DataTableCell className="py-5 text-on-surface">
+                      <DataTableCell className="py-5 text-mono-text">
                         <div className="flex items-center gap-2">
                           <span>{job.jobNumber}</span>
                           <ChaDueDateWarningsIndicator warnings={job.dueDateWarnings} />
@@ -499,16 +499,16 @@ export function JobsClient({
                       </DataTableCell>
                       <DataTableCell className="py-5">
                         <div className="min-w-0">
-                          <p className="truncate text-on-surface">{job.title}</p>
-                          <p className="mt-1 truncate text-xs text-on-surface-variant">{job.branchName}</p>
+                          <p className="truncate text-mono-text">{job.title}</p>
+                          <p className="mt-1 truncate text-xs text-mono-muted">{job.branchName}</p>
                         </div>
                       </DataTableCell>
                       <DataTableCell className="py-5">{job.customerName}</DataTableCell>
-                      <DataTableCell className="py-5 ds-label">{job.jobTypeName}</DataTableCell>
-                      <DataTableCell className="py-5 ds-numeric text-on-surface-variant">
+                      <DataTableCell className="py-5 monolith-label">{job.jobTypeName}</DataTableCell>
+                      <DataTableCell className="py-5 monolith-numeric text-mono-muted">
                         {getFilingReference(job) || "Pending"}
                       </DataTableCell>
-                      <DataTableCell className="py-5 text-on-surface-variant">
+                      <DataTableCell className="py-5 text-mono-muted">
                         {formatJobDate(job.createdAt)}
                       </DataTableCell>
                       <DataTableCell className="py-5">
@@ -521,16 +521,16 @@ export function JobsClient({
                           {job.priority}
                         </Badge>
                       </DataTableCell>
-                      <DataTableCell className="py-5 text-on-surface-variant">{job.ownerName}</DataTableCell>
+                      <DataTableCell className="py-5 text-mono-muted">{job.ownerName}</DataTableCell>
                     </ClickableRow>
                   ))
                 )}
               </DataTableBody>
               {data.totalPages > 1 ? (
                 <DataTableFooter>
-                  <span className="text-xs text-on-surface-variant">
-                    Page <span className="text-on-surface">{data.page}</span> of{" "}
-                    <span className="text-on-surface">{data.totalPages}</span> ({data.total} jobs)
+                  <span className="text-xs text-mono-muted">
+                    Page <span className="text-mono-text">{data.page}</span> of{" "}
+                    <span className="text-mono-text">{data.totalPages}</span> ({data.total} jobs)
                   </span>
                   <div className="flex gap-2">
                     <Button
@@ -588,7 +588,7 @@ export function JobsClient({
         actions={
           <div className="flex w-full flex-col gap-3 lg:w-auto lg:flex-row lg:items-center lg:justify-end">
             <div className="relative w-full lg:w-[360px]">
-              <span className="absolute inset-y-0 left-4 flex items-center text-on-surface-variant">
+              <span className="absolute inset-y-0 left-4 flex items-center text-mono-muted">
                 <Search size={16} />
               </span>
               <input
@@ -614,24 +614,24 @@ export function JobsClient({
                 ariaLabel="Open filters"
                 contentClassName="w-[min(460px,calc(100vw-2rem))] max-h-[62vh] overflow-y-auto"
               >
-                <div className="overflow-hidden bg-surface">
+                <div className="overflow-hidden bg-mono-card">
                   <div className="grid min-h-[240px] grid-cols-1 sm:grid-cols-[156px_minmax(0,1fr)]">
-                    <div className="border-b border-outline-variant/50 bg-surface-container-low sm:border-b-0 sm:border-r">
+                    <div className="border-b border-mono-border/50 bg-mono-soft sm:border-b-0 sm:border-r">
                       {filterTypes.map((item) => (
                         <button
                           key={item.key}
                           type="button"
                           onClick={() => setActiveFilterType(item.key)}
                           className={cn(
-                            "ds-plain ds-menu-option gap-2",
-                            activeFilterType === item.key && "ds-menu-option-active",
+                            "monolith-plain monolith-menu-option gap-2",
+                            activeFilterType === item.key && "monolith-menu-option-active",
                           )}
                         >
                           <span className="min-w-0">
-                            <span className="ds-label block truncate text-on-surface">{item.label}</span>
-                            <span className="mt-1 block truncate text-xs text-on-surface-variant">{item.value}</span>
+                            <span className="monolith-label block truncate text-mono-text">{item.label}</span>
+                            <span className="mt-1 block truncate text-xs text-mono-muted">{item.value}</span>
                           </span>
-                          {item.active ? <span className="ds-state-dot" /> : null}
+                          {item.active ? <span className="monolith-state-dot" /> : null}
                         </button>
                       ))}
                     </div>
@@ -641,7 +641,7 @@ export function JobsClient({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-2 border-t border-outline-variant/50 bg-surface p-3">
+                <div className="flex items-center justify-between gap-2 border-t border-mono-border/50 bg-mono-card p-3">
                   <Button variant="outline" onClick={resetFilters} className="flex-1">
                     Reset
                   </Button>
@@ -678,7 +678,7 @@ export function JobsClient({
                 key={pill.key}
                 type="button"
                 onClick={() => removeFilter(pill.key)}
-                className="ds-plain ds-filter-chip"
+                className="monolith-plain monolith-filter-chip"
               >
                 {pill.label} x
               </button>

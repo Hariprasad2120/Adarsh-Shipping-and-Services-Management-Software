@@ -17,7 +17,7 @@ import {
   CheckSquare,
   MapPin,
 } from "lucide-react";
-import { FolderIcon as Folder } from "@/components/ui/folder-icon";
+import { FolderIcon as Folder } from "@/components/monolith/folder-icon";
 
 type WorkspaceDetails = {
   title?: string;
@@ -40,7 +40,7 @@ const CRM_WORKSPACE_DETAILS: Record<string, WorkspaceDetails> = {
     description: "Integrated email inbox mapping client email threads directly to Lead and Contact owner panels.",
     badge: "Liaison Inbox",
     icon: Inbox,
-    iconClassName: "text-[#00c4b6]",
+    iconClassName: "text-[#F9D972]",
     summary: "Direct IMAP/SMTP message sync.",
   },
   social: {
@@ -75,7 +75,7 @@ const CRM_WORKSPACE_DETAILS: Record<string, WorkspaceDetails> = {
     description: "Activity queue for follow-ups, owner assignments, and sales action items across the CRM team.",
     badge: "Action Queue",
     icon: CheckSquare,
-    iconClassName: "text-[#00c4b6]",
+    iconClassName: "text-[#F9D972]",
     summary: "Task ownership and completion tracking.",
   },
   events: {
@@ -134,7 +134,7 @@ const CRM_WORKSPACE_DETAILS: Record<string, WorkspaceDetails> = {
     description: "Service catalogue and delivery coordination area for recurring logistics support and managed offerings.",
     badge: "Service Operations",
     icon: ConciergeBell,
-    iconClassName: "text-[#00c4b6]",
+    iconClassName: "text-[#F9D972]",
     summary: "Operational services mapped to CRM accounts.",
   },
   voc: {
@@ -153,7 +153,7 @@ export function getCrmWorkspaceDetails(slug: string) {
       description: "Collaborative tracking workspace configured for your logistics network.",
       badge: "Integrated Mode",
       icon: Sparkles,
-      iconClassName: "text-[#00c4b6]",
+      iconClassName: "text-[#F9D972]",
       summary: "Workspace running on active monolith channels.",
     }
   );

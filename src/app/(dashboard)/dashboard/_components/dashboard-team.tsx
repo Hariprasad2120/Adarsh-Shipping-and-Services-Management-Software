@@ -1,0 +1,213 @@
+"use client";
+
+import {
+  Check,
+  Clock3,
+  Copy,
+  Search,
+  TimerOff,
+  UserCheck,
+  Users,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import type { ReporteeSummary } from "./dashboard-types";
+
+interface DashboardTeamProps {
+  reportees: ReporteeSummary[];
+}
+
+type TeamFilter = "ALL" | ReporteeSummary["punchStatus"];
+
+const filters: { value: TeamFilter; label: string }[] = [
+  { value: "ALL", label: "All" },
+  { value: "CHECKED_IN", label: "Working" },
+  { value: "ON_BREAK", label: "On break" },
+  { value: "CHECKED_OUT", label: "Checked out" },
+  { value: "YET_TO_CHECK_IN", label: "Not started" },
+];
+
+const statusCopy: Record<
+  ReporteeSummary["punchStatus"],
+  { label: string; className: string }
+> = {
+  CHECKED_IN: { label: "Working", className: "mnx-badge-success" },
+  ON_BREAK: { label: "On break", className: "mnx-badge-warning" },
+  CHECKED_OUT: { label: "Checked out", className: "mnx-badge-neutral" },
+  YET_TO_CHECK_IN: { label: "Not started", className: "mnx-badge-danger" },
+};
+
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+export function DashboardTeam({ reportees }: DashboardTeamProps) {
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<TeamFilter>("ALL");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const filteredReportees = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return reportees.filter((reportee) => {
+      const matchesFilter = filter === "ALL" || reportee.punchStatus === filter;
+      const matchesQuery = normalizedQuery.length === 0
+        || [reportee.name, reportee.email, reportee.designation, reportee.employeeNo]
+          .some((value) => value.toLowerCase().includes(normalizedQuery));
+      return matchesFilter && matchesQuery;
+    });
+  }, [filter, query, reportees]);
+
+  const workingCount = reportees.filter((item) => item.punchStatus === "CHECKED_IN").length;
+  const breakCount = reportees.filter((item) => item.punchStatus === "ON_BREAK").length;
+
+  async function copyEmail(reportee: ReporteeSummary) {
+    try {
+      await navigator.clipboard.writeText(reportee.email);
+      setCopiedId(reportee.id);
+      window.setTimeout(() => setCopiedId(null), 1200);
+    } catch {
+      toast.error("Email address could not be copied.");
+    }
+  }
+
+  return (
+    <section className="mnx-team-workspace">
+      <div className="mnx-team-summary">
+        <article className="mnx-summary-stat">
+          <span><Users size={16} />Direct reportees</span>
+          <strong>{String(reportees.length).padStart(2, "0")}</strong>
+          <p>People in your immediate team</p>
+        </article>
+        <article className="mnx-summary-stat mnx-semantic-success">
+          <span><UserCheck size={16} />Working now</span>
+          <strong>{String(workingCount).padStart(2, "0")}</strong>
+          <p>Checked in and active</p>
+        </article>
+        <article className="mnx-summary-stat mnx-semantic-warning">
+          <span><Clock3 size={16} />On break</span>
+          <strong>{String(breakCount).padStart(2, "0")}</strong>
+          <p>Temporarily away</p>
+        </article>
+      </div>
+
+      <article className="mnx-panel mnx-table-card">
+        <header className="mnx-table-toolbar">
+          <div>
+            <span className="mnx-dashboard-spec-label">TEAM ATTENDANCE</span>
+            <h2>Reportee directory</h2>
+            <p>Live attendance context for the people who report to you.</p>
+          </div>
+
+          <label className="mnx-search-field">
+            <Search size={16} />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search team…"
+              aria-label="Search reportees"
+            />
+          </label>
+        </header>
+
+        <div className="mnx-filter-row" role="group" aria-label="Filter reportees by attendance">
+          {filters.map((item) => (
+            <button
+              type="button"
+              key={item.value}
+              className={filter === item.value ? "is-active" : ""}
+              onClick={() => setFilter(item.value)}
+              aria-pressed={filter === item.value}
+            >
+              {item.label}
+              <span>
+                {item.value === "ALL"
+                  ? reportees.length
+                  : reportees.filter((reportee) => reportee.punchStatus === item.value).length}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <div className="mnx-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Designation</th>
+                <th>Location</th>
+                <th>Shift</th>
+                <th>Status</th>
+                <th aria-label="Actions" />
+              </tr>
+            </thead>
+            <tbody>
+              {filteredReportees.map((reportee) => {
+                const status = statusCopy[reportee.punchStatus];
+                return (
+                  <tr key={reportee.id}>
+                    <td>
+                      <div className="mnx-person-cell">
+                        <span className="mnx-person-avatar">{initials(reportee.name)}</span>
+                        <span>
+                          <b>{reportee.name}</b>
+                          <small>{reportee.email}</small>
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      <b className="mnx-table-primary">{reportee.designation || "Team member"}</b>
+                      <small>Employee {reportee.employeeNo || "—"}</small>
+                    </td>
+                    <td>{reportee.location || "Head office"}</td>
+                    <td>
+                      {reportee.shift ? (
+                        <>
+                          <b className="mnx-table-primary">{reportee.shift.name}</b>
+                          <small>{reportee.shift.startTime} – {reportee.shift.endTime}</small>
+                        </>
+                      ) : (
+                        <span className="mnx-muted-value"><TimerOff size={13} />Unassigned</span>
+                      )}
+                    </td>
+                    <td><span className={`mnx-badge ${status.className}`}><i />{status.label}</span></td>
+                    <td>
+                      <button
+                        type="button"
+                        className="mnx-icon-button"
+                        onClick={() => copyEmail(reportee)}
+                        aria-label={`Copy ${reportee.name}'s email`}
+                        title="Copy email"
+                      >
+                        {copiedId === reportee.id ? <Check size={15} /> : <Copy size={15} />}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {filteredReportees.length === 0 ? (
+          <div className="mnx-empty-state mnx-table-empty">
+            <Search size={24} />
+            <h3>No matching reportees</h3>
+            <p>Change the search or attendance filter to see more people.</p>
+          </div>
+        ) : null}
+
+        <footer className="mnx-table-footer">
+          <span>Showing {filteredReportees.length} of {reportees.length} reportees</span>
+          <span>Attendance syncs after every punch action</span>
+        </footer>
+      </article>
+    </section>
+  );
+}

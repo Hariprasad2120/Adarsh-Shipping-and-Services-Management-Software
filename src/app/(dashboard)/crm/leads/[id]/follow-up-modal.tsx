@@ -100,7 +100,7 @@ export function FollowUpModal({ leadId, status, onClose, onSuccess }: FollowUpMo
         {/* Header */}
         <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[#1c212a]/50 bg-[#0c0f14]">
           <div className="flex items-center gap-2">
-            <AlertCircle className="size-4.5 text-[#fb923c]" />
+            <AlertCircle className="size-4.5 text-[#D88700]" />
             <span className="font-bold text-sm text-white uppercase tracking-wider">
               Mark Lead as {statusLabel}
             </span>
@@ -115,8 +115,8 @@ export function FollowUpModal({ leadId, status, onClose, onSuccess }: FollowUpMo
           
           <div className="flex-1 overflow-y-auto p-6 space-y-5 pr-4">
             {/* Info/Warning alert matching the design system */}
-            <div className="p-4 bg-[#fb923c]/5 border border-[#fb923c]/20 rounded-xl space-y-2 text-slate-300">
-              <div className="flex items-center gap-2 text-[#fb923c] font-semibold text-xs uppercase tracking-wider">
+            <div className="p-4 bg-[#D88700]/5 border border-[#D88700]/20 rounded-xl space-y-2 text-slate-300">
+              <div className="flex items-center gap-2 text-[#D88700] font-semibold text-xs uppercase tracking-wider">
                 <Clock className="size-4" />
                 <span>Follow-up Alert Workflow</span>
               </div>
@@ -124,9 +124,9 @@ export function FollowUpModal({ leadId, status, onClose, onSuccess }: FollowUpMo
                 This action will automatically schedule a follow-up alert in 2 hours. If the alert falls outside normal working hours (9:30 AM - 5:30 PM), it will be scheduled for tomorrow morning at 9:30 AM.
               </p>
               {scheduledTime && (
-                <div className="pt-2 flex items-center gap-2 border-t border-[#fb923c]/10 text-xs">
+                <div className="pt-2 flex items-center gap-2 border-t border-[#D88700]/10 text-xs">
                   <span className="text-slate-400">Scheduled for:</span>
-                  <span className="font-bold text-[#fb923c] bg-[#fb923c]/10 px-2 py-0.5 rounded">
+                  <span className="font-bold text-[#D88700] bg-[#D88700]/10 px-2 py-0.5 rounded">
                     {formatScheduledTime(scheduledTime)}
                   </span>
                 </div>
@@ -145,7 +145,7 @@ export function FollowUpModal({ leadId, status, onClose, onSuccess }: FollowUpMo
                 placeholder="e.g. Number busy, switched off, customer asked to call back later..."
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                className="w-full p-3 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6] placeholder-slate-600 min-h-[60px]"
+                className="w-full p-3 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972] placeholder-slate-600 min-h-[60px]"
               />
               <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">
                 These remarks will be attached to the scheduled follow-up activity task and audit logs.
@@ -165,7 +165,7 @@ export function FollowUpModal({ leadId, status, onClose, onSuccess }: FollowUpMo
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2 bg-[#00cec4] hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] text-white rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer uppercase tracking-wider"
+              className="px-5 py-2 bg-[#F9D972] hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] text-white rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer uppercase tracking-wider"
             >
               {isSubmitting ? "Scheduling..." : "Confirm & Schedule"}
             </button>

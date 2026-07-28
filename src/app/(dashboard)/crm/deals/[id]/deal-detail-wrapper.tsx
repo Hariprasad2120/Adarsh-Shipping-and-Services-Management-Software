@@ -69,7 +69,7 @@ export function DealDetailWrapper({
             </div>
             <div className="space-y-1">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Win Probability</span>
-              <span className="text-[#00c4b6] font-bold text-lg">{deal.probability}%</span>
+              <span className="text-[#F9D972] font-bold text-lg">{deal.probability}%</span>
             </div>
             <div className="space-y-1">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Close Target</span>
@@ -96,7 +96,7 @@ export function DealDetailWrapper({
           {/* Deal Details */}
           <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
             <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
-              <Info className="size-4.5 text-[#00c4b6]" />
+              <Info className="size-4.5 text-[#F9D972]" />
               <h3 className="font-bold text-sm text-white uppercase tracking-wider">Deal Details</h3>
             </div>
 
@@ -105,7 +105,7 @@ export function DealDetailWrapper({
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Customer Company</span>
                 <span className="text-white font-medium">
                   {deal.account ? (
-                    <Link href={`/crm/customers/${deal.account.id}`} className="hover:underline text-[#00c4b6] font-bold">
+                    <Link href={`/crm/customers/${deal.account.id}`} className="hover:underline text-[#F9D972] font-bold">
                       {deal.account.name}
                     </Link>
                   ) : (
@@ -139,7 +139,7 @@ export function DealDetailWrapper({
           {/* Logistics Categorization */}
           <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
             <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
-              <Truck className="size-4.5 text-[#00c4b6]" />
+              <Truck className="size-4.5 text-[#F9D972]" />
               <h3 className="font-bold text-sm text-white uppercase tracking-wider">Logistics & Service Profile</h3>
             </div>
 
@@ -176,16 +176,16 @@ export function DealDetailWrapper({
               </div>
             )}
             {deal.stage === "WON" && (
-              <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4 card-left-accent">
+              <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4 monolith-card monolith-accent">
                 <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
-                  <Receipt className="size-4.5 text-[#00cec4]" />
+                  <Receipt className="size-4.5 text-[#F9D972]" />
                   <h3 className="font-bold text-sm text-white uppercase tracking-wider">Billing & Invoice</h3>
                 </div>
                 {invoice ? (
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400">Invoice Number:</span>
-                      <Link href={`/accounting/sales-invoices/${invoice.id}`} className="text-[#00cec4] hover:underline font-mono font-bold">
+                      <Link href={`/accounting/sales-invoices/${invoice.id}`} className="text-[#F9D972] hover:underline font-mono font-bold">
                         {invoice.invoiceNumber}
                       </Link>
                     </div>
@@ -208,7 +208,7 @@ export function DealDetailWrapper({
                     <div className="pt-2">
                       <Link
                         href={`/accounting/sales-invoices/${invoice.id}`}
-                        className="inline-block text-center bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all w-full"
+                        className="inline-block text-center bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all w-full"
                       >
                         View Invoice Detail
                       </Link>
@@ -237,7 +237,7 @@ export function DealDetailWrapper({
                           setIsGeneratingInvoice(false);
                         }
                       }}
-                      className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide transition-all w-full cursor-pointer disabled:opacity-50"
+                      className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide transition-all w-full cursor-pointer disabled:opacity-50"
                     >
                       {isGeneratingInvoice ? "Generating Invoice..." : "Generate Sales Invoice"}
                     </button>
@@ -258,7 +258,7 @@ export function DealDetailWrapper({
               <button
                 onClick={() => setActiveTab("OVERVIEW")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "OVERVIEW" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "OVERVIEW" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Overview
@@ -266,7 +266,7 @@ export function DealDetailWrapper({
               <button
                 onClick={() => setActiveTab("NOTES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "NOTES" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "NOTES" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Notes ({notes.length})
@@ -274,7 +274,7 @@ export function DealDetailWrapper({
               <button
                 onClick={() => setActiveTab("ACTIVITIES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ACTIVITIES" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "ACTIVITIES" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Activities ({activities.length})
@@ -282,7 +282,7 @@ export function DealDetailWrapper({
               <button
                 onClick={() => setActiveTab("ATTACHMENTS")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ATTACHMENTS" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "ATTACHMENTS" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Files ({attachments.length})
@@ -290,7 +290,7 @@ export function DealDetailWrapper({
               <button
                 onClick={() => setActiveTab("TIMELINE")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "TIMELINE" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "TIMELINE" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Audit

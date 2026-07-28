@@ -9,8 +9,8 @@ import { useState, useCallback } from "react";
 
 /**
  * Renders a single chat message bubble — user or Mona.
- * Uses design-system tokens: bg-surface, bg-surface-container-low,
- * text-on-surface, border-outline-variant, accent #00cec4.
+ * Uses design-system tokens: bg-mono-card, bg-mono-soft,
+ * text-mono-text, border-mono-border, accent #F9D972.
  */
 export function MonaMessage({ message }: { message: MonaChatMessage }) {
   const isUser = message.role === "user";
@@ -31,13 +31,13 @@ export function MonaMessage({ message }: { message: MonaChatMessage }) {
         className="flex items-start gap-2.5 px-4 py-1"
       >
         <MonaAvatarSmall />
-        <div className="rounded-2xl rounded-tl-md bg-surface-container-low border border-outline-variant px-4 py-3">
+        <div className="rounded-2xl rounded-tl-md bg-mono-soft border border-mono-border px-4 py-3">
           <div className="flex items-center gap-1.5">
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={i}
                 className="rounded-full"
-                style={{ width: 6, height: 6, background: "#00cec4" }}
+                style={{ width: 6, height: 6, background: "#F9D972" }}
                 animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
                 transition={{
                   duration: 0.8,
@@ -75,12 +75,12 @@ export function MonaMessage({ message }: { message: MonaChatMessage }) {
               ? /* User bubble — accent cyan */
                 "text-white"
               : /* Mona bubble — surface token */
-                "bg-surface-container-low text-on-surface border border-outline-variant"
+                "bg-mono-soft text-mono-text border border-mono-border"
           }`}
           style={
             isUser
               ? {
-                  background: "linear-gradient(135deg, #00cec4, #00b8af)",
+                  background: "linear-gradient(135deg, #F9D972, #E8C85D)",
                 }
               : undefined
           }
@@ -98,11 +98,11 @@ export function MonaMessage({ message }: { message: MonaChatMessage }) {
             <button
               type="button"
               onClick={handleCopy}
-              className="absolute -bottom-0.5 right-1 rounded-md p-1 text-on-surface-variant opacity-0 transition-opacity group-hover:opacity-60 hover:!opacity-100"
+              className="absolute -bottom-0.5 right-1 rounded-md p-1 text-mono-muted opacity-0 transition-opacity group-hover:opacity-60 hover:!opacity-100"
               title="Copy message"
             >
               {copied ? (
-                <Check size={12} className="text-[#00cec4]" />
+                <Check size={12} className="text-[#F9D972]" />
               ) : (
                 <Copy size={12} />
               )}
@@ -111,7 +111,7 @@ export function MonaMessage({ message }: { message: MonaChatMessage }) {
         </div>
 
         {/* Timestamp */}
-        <span className="px-1 text-[9px] text-on-surface-variant opacity-60">
+        <span className="px-1 text-[9px] text-mono-muted opacity-60">
           {formatTime(message.timestamp)}
         </span>
       </div>

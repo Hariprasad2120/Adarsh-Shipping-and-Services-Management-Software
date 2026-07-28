@@ -71,7 +71,7 @@ export function AttendanceCalendar({ onFetchCalendar }: AttendanceCalendarProps)
       {/* Calendar Header */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
         <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-          <Fingerprint className="size-5 text-[#00c4b6]" />
+          <Fingerprint className="size-5 text-[#F9D972]" />
           Attendance Ledger
         </h3>
 
@@ -108,14 +108,14 @@ export function AttendanceCalendar({ onFetchCalendar }: AttendanceCalendarProps)
               key={day.day}
               className={`p-4 border rounded-xl flex flex-col justify-between transition-all ${
                 day.isToday
-                  ? "bg-[#00c4b6]/5 border-[#00c4b6] shadow-sm"
+                  ? "bg-[#F9D972]/5 border-[#F9D972] shadow-sm"
                   : day.isWeekend
                   ? "bg-slate-50 border-slate-100 text-slate-400"
                   : "bg-white border-slate-200"
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className={`text-xs font-bold ${day.isToday ? "text-[#00c4b6]" : "text-slate-700"}`}>
+                <span className={`text-xs font-bold ${day.isToday ? "text-[#F9D972]" : "text-slate-700"}`}>
                   {day.day}
                 </span>
                 <span className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded-full ${

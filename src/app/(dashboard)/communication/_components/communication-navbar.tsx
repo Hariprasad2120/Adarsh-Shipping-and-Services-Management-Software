@@ -52,7 +52,7 @@ export default function CommunicationNavbar({ showGoogleChatLiveView = false }: 
     : BASE_NAV_ITEMS;
 
   return (
-    <div className="sticky top-0 z-20 flex items-center w-full border border-outline-variant bg-surface/85 backdrop-blur-md px-4 py-1.5 rounded-2xl shadow-sm mb-6 overflow-x-auto scrollbar-none">
+    <div className="sticky top-0 z-20 flex items-center w-full border border-mono-border bg-mono-card/85 backdrop-blur-md px-4 py-1.5 rounded-2xl shadow-sm mb-6 overflow-x-auto scrollbar-none">
       <div className="flex items-center space-x-1.5 min-w-max py-1">
         {navItems.map((item) => {
           const isActive = item.matchExact
@@ -67,25 +67,25 @@ export default function CommunicationNavbar({ showGoogleChatLiveView = false }: 
               href={item.href}
               className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-200 group ${
                 isActive
-                  ? "bg-[#00cec4]/10 text-[#00cec4] shadow-[0_2px_10px_-3px_rgba(0,206,196,0.15)]"
-                  : "text-on-surface-variant hover:text-[#00cec4] hover:bg-surface-container/60"
+                  ? "bg-[#F9D972]/10 text-[#F9D972] shadow-[0_2px_10px_-3px_rgba(0,206,196,0.15)]"
+                  : "text-mono-muted hover:text-[#F9D972] hover:bg-mono-soft/60"
               }`}
             >
               <Icon 
                 size={14} 
                 className={`transition-transform duration-200 group-hover:scale-110 ${
-                  isActive ? "text-[#00cec4]" : "text-on-surface-variant group-hover:text-[#00cec4]"
+                  isActive ? "text-[#F9D972]" : "text-mono-muted group-hover:text-[#F9D972]"
                 }`} 
               />
               <span>{item.label}</span>
 
               {/* Experimental badge — small dot indicator */}
               {item.experimental && (
-                <span className="w-1.5 h-1.5 rounded-full bg-[#fb923c] shrink-0" title="Experimental feature" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#D88700] shrink-0" title="Experimental feature" />
               )}
               
               {isActive && (
-                <span className="absolute bottom-0 left-1/4 right-1/4 h-[2px] bg-[#00cec4] rounded-full" />
+                <span className="absolute bottom-0 left-1/4 right-1/4 h-[2px] bg-[#F9D972] rounded-full" />
               )}
             </Link>
           );

@@ -32,7 +32,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#0d1117] text-[#f0f6fc] font-sans">
-        <Loader2 className="size-8 animate-spin text-[#00cec4] mb-3" />
+        <Loader2 className="size-8 animate-spin text-[#F9D972] mb-3" />
         <p className="text-xs uppercase tracking-widest font-mono">Verifying document credentials...</p>
       </div>
     );
@@ -44,13 +44,13 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#0d1117] text-[#f0f6fc] font-sans p-6">
       <div className="w-full max-w-xl bg-[#161b22] border border-[#30363d] rounded-2xl p-6 shadow-2xl space-y-6 relative overflow-hidden">
         {/* Accent Top Bar */}
-        <div className={`absolute top-0 left-0 right-0 h-1.5 ${isValid ? "bg-[#00cec4]" : "bg-[#fb923c]"}`} />
+        <div className={`absolute top-0 left-0 right-0 h-1.5 ${isValid ? "bg-[#F9D972]" : "bg-[#D88700]"}`} />
 
         <div className="flex flex-col items-center text-center space-y-2">
-          <div className={`size-14 rounded-full flex items-center justify-center ${isValid ? "bg-[#00cec4]/15 text-[#00cec4]" : "bg-[#fb923c]/15 text-[#fb923c]"}`}>
+          <div className={`size-14 rounded-full flex items-center justify-center ${isValid ? "bg-[#F9D972]/15 text-[#F9D972]" : "bg-[#D88700]/15 text-[#D88700]"}`}>
             {isValid ? <ShieldCheck className="size-8" /> : <AlertTriangle className="size-8" />}
           </div>
-          <h1 className="text-xl font-bold tracking-widest uppercase text-[#f0f6fc]" style={{ fontFamily: "var(--font-kiona-sans), sans-serif" }}>
+          <h1 className="text-xl font-bold tracking-widest uppercase text-[#f0f6fc]" style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}>
             Document Authenticity Registry
           </h1>
           <p className="text-xs text-[#8b949e] uppercase font-bold tracking-wider">
@@ -65,7 +65,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
           </div>
         ) : (
           <div className="space-y-4">
-            <div className={`border rounded-xl p-4 ${isValid ? "border-[#00cec4]/20 bg-[#00cec4]/5 text-[#00cec4]" : "border-[#fb923c]/20 bg-[#fb923c]/5 text-[#fb923c]"} flex items-center gap-3`}>
+            <div className={`border rounded-xl p-4 ${isValid ? "border-[#F9D972]/20 bg-[#F9D972]/5 text-[#F9D972]" : "border-[#D88700]/20 bg-[#D88700]/5 text-[#D88700]"} flex items-center gap-3`}>
               <CheckCircle className="size-5 shrink-0" />
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider">Status: {isValid ? "VERIFIED AUTHENTIC" : "NOT APPLICABLE / ARCHIVED"}</p>

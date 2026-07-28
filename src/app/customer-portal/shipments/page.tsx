@@ -1,4 +1,4 @@
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
@@ -10,9 +10,9 @@ import {
   Search,
   TriangleAlert,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/monolith/badge";
+import { Button } from "@/components/monolith/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
 import {
   DataTable,
   DataTableBody,
@@ -40,12 +40,12 @@ export default async function CustomerPortalShipmentsPage({
 
   return (
     <div className="space-y-6">
-      <section className="card-top-accent rounded-xl border border-outline-variant/50 bg-surface px-5 py-5 shadow-sm">
+      <section className="monolith-card monolith-accent rounded-xl border border-mono-border/50 bg-mono-card px-5 py-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
-            <p className="ds-label">CHA Customer Shipments</p>
-            <h2 className="ds-h1 text-on-surface">Shipment Catalogue</h2>
-            <p className="max-w-3xl text-sm text-on-surface-variant">
+            <p className="monolith-label">CHA Customer Shipments</p>
+            <h2 className="monolith-h1 text-mono-text">Shipment Catalogue</h2>
+            <p className="max-w-3xl text-sm text-mono-muted">
               Browse the CHA jobs linked to {session.portalUser.customer.name}, narrow them by status and stage, and
               open each shipment&apos;s workspace for read-only documents, checklist decisions, queries, recent updates,
               and optional extra customer uploads.
@@ -90,24 +90,24 @@ export default async function CustomerPortalShipmentsPage({
         />
       </section>
 
-      <Card className="card-top-accent rounded-xl border border-outline-variant/45">
+      <Card className="monolith-card monolith-accent rounded-xl border border-mono-border/45">
         <CardHeader className="pb-4">
           <div className="flex items-center gap-3">
-            <span className="ds-icon-badge">
+            <span className="monolith-icon-badge">
               <Filter size={16} />
             </span>
             <div>
               <CardTitle>Search And Filters</CardTitle>
-              <p className="text-xs text-on-surface-variant">Server-side filters scoped only to this customer account.</p>
+              <p className="text-xs text-mono-muted">Server-side filters scoped only to this customer account.</p>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <form className="grid grid-cols-1 gap-4 lg:grid-cols-12" method="get">
             <div className="lg:col-span-4">
-              <label className="ds-label block">Search</label>
+              <label className="monolith-label block">Search</label>
               <div className="relative mt-2">
-                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-variant" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-mono-muted" />
                 <input
                   name="q"
                   defaultValue={data.filters.q}
@@ -172,23 +172,23 @@ export default async function CustomerPortalShipmentsPage({
               <Link href="/customer-portal/shipments">
                 <Button variant="outline" size="sm">Reset</Button>
               </Link>
-              <p className="ml-auto text-xs text-on-surface-variant">
-                Showing <span className="ds-numeric text-on-surface">{data.totalResults}</span> shipment{data.totalResults === 1 ? "" : "s"}
+              <p className="ml-auto text-xs text-mono-muted">
+                Showing <span className="monolith-numeric text-mono-text">{data.totalResults}</span> shipment{data.totalResults === 1 ? "" : "s"}
               </p>
             </div>
           </form>
         </CardContent>
       </Card>
 
-      <DataTable className="border border-outline-variant/45">
-        <DataTableToolbar className="bg-surface">
+      <DataTable className="border border-mono-border/45">
+        <DataTableToolbar className="bg-mono-card">
           <div className="flex items-center gap-3">
-            <span className="ds-icon-badge">
+            <span className="monolith-icon-badge">
               <FolderKanban size={16} />
             </span>
             <div>
-              <h2 className="ds-h2 text-on-surface">Shipments</h2>
-              <p className="text-xs text-on-surface-variant">Read-only view of customer-scoped CHA jobs and follow-up indicators.</p>
+              <h2 className="monolith-h2 text-mono-text">Shipments</h2>
+              <p className="text-xs text-mono-muted">Read-only view of customer-scoped CHA jobs and follow-up indicators.</p>
             </div>
           </div>
         </DataTableToolbar>
@@ -220,12 +220,12 @@ export default async function CustomerPortalShipmentsPage({
                 data.shipments.map((shipment) => (
                   <tr key={shipment.id}>
                     <DataTableCell className="font-medium">
-                      <Link href={shipment.href} className="text-[#00cec4] transition-colors hover:text-[#00b8af]">
+                      <Link href={shipment.href} className="text-[#F9D972] transition-colors hover:text-[#E8C85D]">
                         {shipment.jobNumber}
                       </Link>
-                      <div className="mt-1 text-xs text-on-surface-variant">{shipment.title}</div>
+                      <div className="mt-1 text-xs text-mono-muted">{shipment.title}</div>
                     </DataTableCell>
-                    <DataTableCell className="text-on-surface-variant">{shipment.customerRef || "—"}</DataTableCell>
+                    <DataTableCell className="text-mono-muted">{shipment.customerRef || "—"}</DataTableCell>
                     <DataTableCell>
                       <Badge variant={getChaStageBadgeVariant(shipment.stageKey)}>{shipment.stageLabel}</Badge>
                     </DataTableCell>
@@ -239,7 +239,7 @@ export default async function CustomerPortalShipmentsPage({
                       {shipment.hasCustomerAction ? (
                         <div className="space-y-2">
                           <Badge variant="warning">Needs Follow-Up</Badge>
-                          <div className="text-xs text-on-surface-variant">
+                          <div className="text-xs text-mono-muted">
                             {buildAttentionSummary(shipment)}
                           </div>
                         </div>
@@ -247,13 +247,13 @@ export default async function CustomerPortalShipmentsPage({
                         <Badge variant="success">Up To Date</Badge>
                       )}
                     </DataTableCell>
-                    <DataTableCell className="text-on-surface-variant">
+                    <DataTableCell className="text-mono-muted">
                       <div>{formatDateTime(shipment.updatedAt)}</div>
                       {shipment.recentUpdateAt ? (
                         <div className="mt-1 text-xs">Visible update {formatDateTime(shipment.recentUpdateAt)}</div>
                       ) : null}
                     </DataTableCell>
-                    <DataTableCell className="text-on-surface-variant">
+                    <DataTableCell className="text-mono-muted">
                       {shipment.estimatedClosureDate ? formatDate(shipment.estimatedClosureDate) : "—"}
                     </DataTableCell>
                   </tr>
@@ -280,7 +280,7 @@ function FilterSelect({
 }) {
   return (
     <div className="lg:col-span-2">
-      <label className="ds-label block">{label}</label>
+      <label className="monolith-label block">{label}</label>
       <NativeSelect name={name} defaultValue={value} className="mt-2 w-full">
         <option value="">All</option>
         {options.map((option) => (
@@ -307,27 +307,27 @@ function StatCard({
   tone?: "primary" | "warning";
 }) {
   const iconStyle = tone === "warning"
-    ? { background: "rgba(251,146,60,0.10)", color: "#fb923c" }
+    ? { background: "rgba(251,146,60,0.10)", color: "#D88700" }
     : undefined;
 
   return (
     <Card
-      className={`rounded-xl border-outline-variant/40 bg-surface p-5 ${
-        tone === "warning" ? "card-top-accent-orange" : "card-top-accent"
+      className={`rounded-xl border-mono-border/40 bg-mono-card p-5 ${
+        tone === "warning" ? "monolith-card monolith-accent-warning" : "monolith-card monolith-accent"
       }`}
     >
       <div className="flex items-center justify-between gap-4">
         <div className="space-y-2">
-          <p className="ds-label">{title}</p>
-          <p className={`text-3xl ds-numeric ${tone === "warning" && value > 0 ? "text-[#fb923c]" : "text-on-surface"}`}>
+          <p className="monolith-label">{title}</p>
+          <p className={`text-3xl monolith-numeric ${tone === "warning" && value > 0 ? "text-[#D88700]" : "text-mono-text"}`}>
             {value}
           </p>
         </div>
-        <span className="ds-icon-badge" style={iconStyle}>
+        <span className="monolith-icon-badge" style={iconStyle}>
           {icon}
         </span>
       </div>
-      <p className="mt-3 text-xs text-on-surface-variant">{helper}</p>
+      <p className="mt-3 text-xs text-mono-muted">{helper}</p>
     </Card>
   );
 }

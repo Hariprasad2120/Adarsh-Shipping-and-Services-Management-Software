@@ -1,11 +1,11 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {FolderOpen,FileText,Plus,ChevronRight,ChevronDown,Info,Layers,HelpCircle,Loader2} from "lucide-react";
-import { FolderIcon as Folder } from "@/components/ui/folder-icon";
+import { FolderIcon as Folder } from "@/components/monolith/folder-icon";
 import { createAccountAction } from "@/modules/accounting/actions";
 
 interface AccountsClientProps {
@@ -120,7 +120,7 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
             <span className="w-4.5 shrink-0" />
           )}
 
-          <span className="shrink-0 text-[#00cec4]">
+          <span className="shrink-0 text-[#F9D972]">
             {node.isGroup ? (
               isExpanded ? <FolderOpen className="size-4" /> : <Folder className="size-4" />
             ) : (
@@ -167,11 +167,11 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
         <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
           <div className="flex justify-between items-center border-b border-[#1c212a]/30 pb-3">
             <h3 className="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-2">
-              <Layers className="size-4.5 text-[#00cec4]" /> Account Structure Tree
+              <Layers className="size-4.5 text-[#F9D972]" /> Account Structure Tree
             </h3>
             <button
               onClick={() => setShowAddForm(!showAddForm)}
-              className="flex items-center gap-1 bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wide font-bold transition-all cursor-pointer"
+              className="flex items-center gap-1 bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wide font-bold transition-all cursor-pointer"
             >
               <Plus className="size-3.5" />
               <span>Add Account</span>
@@ -187,9 +187,9 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
       {/* RIGHT COLUMN: Form editor */}
       <div className="lg:col-span-1 space-y-6">
         {(showAddForm || groupAccountsList.length === 0) && (
-          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4 card-left-accent">
+          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4 monolith-card monolith-accent">
             <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
-              <Plus className="size-4.5 text-[#00cec4]" />
+              <Plus className="size-4.5 text-[#F9D972]" />
               <h3 className="font-bold text-sm text-white uppercase tracking-wider">Register Ledger Account</h3>
             </div>
 
@@ -197,7 +197,7 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
               
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="ds-label block text-slate-400">Account Code *</label>
+                  <label className="monolith-label block text-slate-400">Account Code *</label>
                   <input
                     type="text"
                     required
@@ -208,7 +208,7 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="ds-label block text-slate-400">Account Name *</label>
+                  <label className="monolith-label block text-slate-400">Account Name *</label>
                   <input
                     type="text"
                     required
@@ -221,7 +221,7 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
               </div>
 
               <div className="space-y-1">
-                <label className="ds-label block text-slate-400">Parent Group Account</label>
+                <label className="monolith-label block text-slate-400">Parent Group Account</label>
                 <NativeSelect
                   value={formData.parentAccountId}
                   onChange={(e) => setFormData({ ...formData, parentAccountId: e.target.value })}
@@ -236,7 +236,7 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="ds-label block text-slate-400">Classification (Root Type)</label>
+                  <label className="monolith-label block text-slate-400">Classification (Root Type)</label>
                   <NativeSelect
                     value={formData.rootType}
                     onChange={(e) => setFormData({ ...formData, rootType: e.target.value as any })}
@@ -248,7 +248,7 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
                   </NativeSelect>
                 </div>
                 <div className="space-y-1">
-                  <label className="ds-label block text-slate-400">Account Function Type</label>
+                  <label className="monolith-label block text-slate-400">Account Function Type</label>
                   <NativeSelect
                     value={formData.accountType}
                     onChange={(e) => setFormData({ ...formData, accountType: e.target.value as any })}
@@ -263,7 +263,7 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="ds-label block text-slate-400">Opening Debit (₹)</label>
+                  <label className="monolith-label block text-slate-400">Opening Debit (₹)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -273,7 +273,7 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="ds-label block text-slate-400">Opening Credit (₹)</label>
+                  <label className="monolith-label block text-slate-400">Opening Credit (₹)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -286,7 +286,7 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="ds-label block text-slate-400">Branch Mapping</label>
+                  <label className="monolith-label block text-slate-400">Branch Mapping</label>
                   <NativeSelect
                     value={formData.branchId}
                     onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
@@ -304,9 +304,9 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
                     id="isGroup"
                     checked={formData.isGroup}
                     onChange={(e) => setFormData({ ...formData, isGroup: e.target.checked })}
-                    className="size-4 accent-[#00cec4] rounded bg-slate-900 border-[#1c212a] cursor-pointer"
+                    className="size-4 accent-[#F9D972] rounded bg-slate-900 border-[#1c212a] cursor-pointer"
                   />
-                  <label htmlFor="isGroup" className="ds-label block text-slate-200 cursor-pointer">
+                  <label htmlFor="isGroup" className="monolith-label block text-slate-200 cursor-pointer">
                     Is Group Account?
                   </label>
                 </div>
@@ -316,7 +316,7 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all w-full cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all w-full cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   {isSaving ? (
                     <>
@@ -335,7 +335,7 @@ export function AccountsClient({ initialCoa, branches }: AccountsClientProps) {
 
         <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
           <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-            <Info className="size-4.5 text-[#00cec4]" strokeWidth={2} />
+            <Info className="size-4.5 text-[#F9D972]" strokeWidth={2} />
             <h3 className="font-bold text-xs text-white uppercase tracking-wider">Accounting Definitions</h3>
           </div>
           <div className="space-y-3 text-xs text-slate-400 leading-relaxed">

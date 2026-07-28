@@ -33,7 +33,7 @@ export default async function OvertimePage({ searchParams }: PageProps) {
 
   if (!canApprove && !canRequest) {
     return (
-      <div className="rounded-xl border border-outline-variant bg-surface p-8 text-center text-sm text-on-surface-variant">
+      <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">
         Access Denied: You do not have permissions for Overtime Management.
       </div>
     );
@@ -42,7 +42,7 @@ export default async function OvertimePage({ searchParams }: PageProps) {
   const orgId = session.user.orgId;
   if (!orgId) {
     return (
-      <div className="rounded-xl border border-outline-variant bg-surface p-8 text-center text-sm text-on-surface-variant">
+      <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">
         Organisation configuration missing.
       </div>
     );
@@ -252,7 +252,7 @@ export default async function OvertimePage({ searchParams }: PageProps) {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <p className="text-sm font-medium text-on-surface-variant">
+        <p className="text-sm font-medium text-mono-muted">
           {canApprove
             ? "Configure grace periods, view overtime metrics, track holidays, manage LOP logs, and export payroll statements."
             : "Request overtime compensation and track your submission history."}

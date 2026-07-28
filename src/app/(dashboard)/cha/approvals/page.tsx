@@ -4,12 +4,12 @@ import { can } from "@/lib/rbac";
 import { listManagerChecklistApprovals, listManagerJobDeletionRequests } from "@/modules/cha/service";
 import Link from "next/link";
 import { CheckSquare, ArrowRight, Trash2, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/monolith/button";
 import {
   ChaPageHeader,
   ChaSectionShell,
 } from "../_components/cha-operations-shared";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/monolith/badge";
 
 export default async function ChaApprovalsPage() {
   const session = await auth();
@@ -58,7 +58,7 @@ export default async function ChaApprovalsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="ds-table">
+              <table className="monolith-table">
                 <thead>
                   <tr>
                     <th className="px-6 py-4">Job Number</th>
@@ -77,14 +77,14 @@ export default async function ChaApprovalsPage() {
                         <td className="px-6 py-4 font-semibold text-cha-primary dark:text-blue-400">
                           {job.jobNumber}
                         </td>
-                        <td className="px-6 py-4 font-medium max-w-xs truncate text-cha-text-primary">
+                        <td className="px-6 py-4 font-medium max-w-xs truncate text-cha-text-mono-accent">
                           {job.title}
                         </td>
                         <td className="px-6 py-4 text-cha-text-secondary">{job.customer.name}</td>
                         <td className="px-6 py-4 text-cha-text-secondary">
                           {app.checklistImport.uploadedBy?.name || "System"}
                         </td>
-                        <td className="px-6 py-4 ds-numeric text-cha-text-secondary">
+                        <td className="px-6 py-4 monolith-numeric text-cha-text-secondary">
                           {new Date(app.checklistImport.uploadedAt).toLocaleDateString("en-IN", {
                             day: "2-digit",
                             month: "short",
@@ -125,7 +125,7 @@ export default async function ChaApprovalsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="ds-table">
+              <table className="monolith-table">
                 <thead>
                   <tr>
                     <th className="px-6 py-4">Job Number</th>
@@ -144,7 +144,7 @@ export default async function ChaApprovalsPage() {
                       </td>
                       <td className="px-6 py-4 text-cha-text-secondary">{request.job.customer.name}</td>
                       <td className="px-6 py-4 text-cha-text-secondary">{request.requestedBy.name}</td>
-                      <td className="px-6 py-4 ds-numeric text-cha-text-secondary">
+                      <td className="px-6 py-4 monolith-numeric text-cha-text-secondary">
                         {new Date(request.requestedAt).toLocaleString("en-IN")}
                       </td>
                       <td className="px-6 py-4">

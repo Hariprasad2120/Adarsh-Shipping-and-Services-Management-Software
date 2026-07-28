@@ -1,11 +1,11 @@
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { listProjects } from "@/modules/crm/service";
 import { requirePermission } from "@/lib/rbac";
-import { DateInput } from "@/components/ui/date-input";
+import { DateInput } from "@/components/monolith/date-input";
 import {
   Search,
   FolderKanban,
@@ -85,7 +85,7 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
               name="search"
               defaultValue={search}
               placeholder="Search projects by name..."
-              className="w-full pl-9 pr-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#00c4b6] text-white"
+              className="w-full pl-9 pr-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#F9D972] text-white"
             />
           </form>
 
@@ -138,7 +138,7 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
         {/* Right Column: Inline Create Project Form */}
         <div className="bg-[#0f1319] border border-[#1c212a]/55 rounded-xl p-6 shadow-2xl space-y-4">
           <div className="flex items-center gap-2 border-b border-[#1c212a]/30 pb-2">
-            <FolderKanban className="size-4.5 text-[#00c4b6]" />
+            <FolderKanban className="size-4.5 text-[#F9D972]" />
             <h3 className="font-bold text-xs text-white uppercase tracking-wider">Start Operation Project</h3>
           </div>
 
@@ -155,7 +155,7 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
                 type="text"
                 name="name"
                 placeholder="e.g. Adarsh Cargo Dispatch setup"
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#F9D972]"
                 required
               />
             </div>
@@ -163,7 +163,7 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Linked Client Account *</label>
               <NativeSelect
                 name="accountId"
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#F9D972]"
                 required
               >
                 <option value="">Select Customer</option>
@@ -177,14 +177,14 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Start Date</label>
                 <DateInput
                   name="startDate"
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#F9D972]"
                 />
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">End Date</label>
                 <DateInput
                   name="endDate"
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#F9D972]"
                 />
               </div>
             </div>
@@ -194,7 +194,7 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
                 <NativeSelect
                   name="status"
                   defaultValue="PLANNING"
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#F9D972]"
                 >
                   <option value="PLANNING">Planning</option>
                   <option value="IN_PROGRESS">In Progress</option>
@@ -206,7 +206,7 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Project Owner *</label>
                 <NativeSelect
                   name="ownerId"
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#F9D972]"
                   required
                 >
                   {employees.map((emp) => (
@@ -221,12 +221,12 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
                 name="description"
                 placeholder="Log operational instructions..."
                 rows={3}
-                className="w-full p-2.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#00c4b6]"
+                className="w-full p-2.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-1.5 py-2 bg-[#00c4b6] hover:bg-[#00b0a3] text-white font-bold rounded-lg text-xs transition-all shadow-md shadow-[#00c4b6]/10 cursor-pointer"
+              className="w-full flex items-center justify-center gap-1.5 py-2 bg-[#F9D972] hover:bg-[#00b0a3] text-white font-bold rounded-lg text-xs transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
             >
               <Save className="size-4" />
               <span>Launch Project</span>

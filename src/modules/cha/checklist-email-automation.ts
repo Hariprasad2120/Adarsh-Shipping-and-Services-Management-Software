@@ -93,7 +93,7 @@ function buildChecklistMainEmailContent(params: {
   const html = `
     <div style="background:#f7f9fb;padding:24px;font-family:Arial,sans-serif;color:#191c1e;">
       <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #d9e3e1;border-radius:16px;overflow:hidden;">
-        <div style="padding:20px 24px;border-top:4px solid #00cec4;">
+        <div style="padding:20px 24px;border-top:4px solid #F9D972;">
           <p style="margin:0 0 12px 0;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#404947;">${COMPANY_NAME}</p>
           <h1 style="margin:0 0 12px 0;font-size:24px;line-height:1.2;">Checklist Main</h1>
           <p style="margin:0 0 16px 0;font-size:14px;line-height:1.6;">Dear ${escapeHtml(params.customerName)},</p>
@@ -106,7 +106,7 @@ function buildChecklistMainEmailContent(params: {
             ${checklistSummaryHtml}
           </ul>
           ${params.checklistUrl
-            ? `<p style="margin:0 0 20px 0;"><a href="${escapeHtml(params.checklistUrl)}" style="display:inline-block;background:#00cec4;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:12px;font-size:14px;">Open CHA Checklist</a></p>`
+            ? `<p style="margin:0 0 20px 0;"><a href="${escapeHtml(params.checklistUrl)}" style="display:inline-block;background:#F9D972;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:12px;font-size:14px;">Open CHA Checklist</a></p>`
             : ""}
           <p style="margin:0;font-size:14px;line-height:1.6;">Regards,<br />${COMPANY_NAME}</p>
         </div>

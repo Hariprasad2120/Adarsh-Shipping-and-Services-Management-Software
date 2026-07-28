@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Users, Clock, Wifi, MapPin, Shield, RefreshCw, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/monolith/button";
 import {saveTimeoutAction,getActiveSessionsAction,adminRevokeSessionAction,adminRevokeAllUserSessionsAction,} from "./actions";
 
 type ActiveSession = {
@@ -77,13 +77,13 @@ const roleColors: Record<string, string> = {
   Manager: "text-teal-600 bg-teal-100 dark:text-teal-400 dark:bg-teal-950/40",
   HR: "text-cyan-600 bg-cyan-100 dark:text-cyan-400 dark:bg-cyan-950/40",
   TL: "text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-950/40",
-  Employee: "text-on-surface-variant bg-surface-container-high dark:text-on-surface-variant dark:bg-slate-950/40",
+  Employee: "text-mono-muted bg-mono-soft dark:text-mono-muted dark:bg-slate-950/40",
 };
 
 const statusColors: Record<string, string> = {
   ACTIVE: "text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-950/40",
   TIMED_OUT: "text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-950/40",
-  LOGGED_OUT: "text-on-surface-variant bg-surface-container-high dark:text-on-surface-variant dark:bg-slate-950/40",
+  LOGGED_OUT: "text-mono-muted bg-mono-soft dark:text-mono-muted dark:bg-slate-950/40",
 };
 
 const outcomeColors: Record<string, string> = {
@@ -148,7 +148,7 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: "Active Now", value: active.length, icon: <Wifi className="size-4" />, color: "text-green-600 dark:text-green-400" },
-          { label: "Today's Sessions", value: history.filter((s) => new Date(s.loginAt).getTime() > todayCutoffMs).length, icon: <Users className="size-4" />, color: "text-[#00cec4]" },
+          { label: "Today's Sessions", value: history.filter((s) => new Date(s.loginAt).getTime() > todayCutoffMs).length, icon: <Users className="size-4" />, color: "text-[#F9D972]" },
           { label: "Timed Out", value: history.filter((s) => s.status === "TIMED_OUT").length, icon: <Clock className="size-4" />, color: "text-amber-600 dark:text-amber-400" },
           { label: "Timeout Config", value: `${timeoutMinutes}m`, icon: <Shield className="size-4" />, color: "text-[#ff8333]" },
         ].map((stat) => (
@@ -156,20 +156,20 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
             key={stat.label}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-surface border border-outline-variant rounded-xl p-4 flex items-center gap-3 shadow-sm"
+            className="bg-mono-card border border-mono-border rounded-xl p-4 flex items-center gap-3 shadow-sm"
           >
             <div className={`${stat.color} shrink-0`}>{stat.icon}</div>
             <div>
-              <div className="text-xl font-extrabold text-on-surface-variant dark:text-white">{stat.value}</div>
-              <div className="text-xs text-on-surface-variant font-semibold">{stat.label}</div>
+              <div className="text-xl font-extrabold text-mono-muted dark:text-white">{stat.value}</div>
+              <div className="text-xs text-mono-muted font-semibold">{stat.label}</div>
             </div>
           </motion.div>
         ))}
       </div>
 
       {/* Timeout config */}
-      <div className="bg-surface border border-outline-variant rounded-xl p-5 shadow-sm">
-        <h2 className="text-sm font-bold text-on-surface-variant dark:text-on-surface-variant mb-3 flex items-center gap-2">
+      <div className="bg-mono-card border border-mono-border rounded-xl p-5 shadow-sm">
+        <h2 className="text-sm font-bold text-mono-muted dark:text-mono-muted mb-3 flex items-center gap-2">
           <Shield className="size-4 text-[#ff8333]" />
           Inactivity Timeout Config
         </h2>
@@ -181,19 +181,19 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
               max={480}
               value={newTimeout}
               onChange={(e) => setNewTimeout(e.target.value)}
-              className="w-20 h-11 rounded-xl border border-[#00cec4]/55 bg-surface px-3 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/15 transition"
+              className="w-20 h-11 rounded-xl border border-[#F9D972]/55 bg-mono-card px-3 text-sm text-mono-text focus:outline-none focus:ring-2 focus:ring-primary/15 transition"
             />
-            <span className="text-sm font-semibold text-on-surface-variant">minutes</span>
+            <span className="text-sm font-semibold text-mono-muted">minutes</span>
           </div>
           <Button
             size="sm"
             onClick={saveTimeout}
             disabled={savingTimeout}
-            className="h-11 px-5 bg-[#00cec4] hover:bg-[#00b8af] text-white text-xs font-semibold rounded-xl"
+            className="h-11 px-5 bg-[#F9D972] hover:bg-[#E8C85D] text-white text-xs font-semibold rounded-xl"
           >
             {savingTimeout ? "Saving…" : timeoutSaved ? "Saved ✓" : "Save"}
           </Button>
-          <p className="text-xs font-semibold text-on-surface-variant max-w-md">
+          <p className="text-xs font-semibold text-mono-muted max-w-md">
             Warning appears during the final 20% of idle time, capped at 2 minutes. Changes apply after the next page load.
           </p>
         </div>
@@ -202,7 +202,7 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
       {/* Active sessions */}
       <div>
         <div className="flex items-center justify-between mb-3.5">
-          <h2 className="text-sm font-bold text-on-surface-variant dark:text-on-surface-variant flex items-center gap-2">
+          <h2 className="text-sm font-bold text-mono-muted dark:text-mono-muted flex items-center gap-2">
             <Wifi className="size-4 text-green-500" />
             Currently Active Sessions
             <span className="ml-1 text-xs bg-green-500/10 text-green-600 dark:text-green-400 px-2.5 py-0.5 rounded-full font-bold">
@@ -214,7 +214,7 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
             variant="outline"
             onClick={refresh}
             disabled={refreshing}
-            className="h-9 text-xs font-semibold border-outline-variant/60 hover:bg-surface-container-low text-on-surface gap-1.5 rounded-xl"
+            className="h-9 text-xs font-semibold border-mono-border/60 hover:bg-mono-soft text-mono-text gap-1.5 rounded-xl"
           >
             <RefreshCw className={`size-3 ${refreshing ? "animate-spin" : ""}`} />
             Refresh
@@ -222,7 +222,7 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
         </div>
 
         {active.length === 0 ? (
-          <div className="text-center py-16 text-on-surface-variant font-semibold border border-dashed border-outline-variant/80 rounded-xl bg-surface">
+          <div className="text-center py-16 text-mono-muted font-semibold border border-dashed border-mono-border/80 rounded-xl bg-mono-card">
             No active sessions
           </div>
         ) : (
@@ -233,24 +233,24 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.04 }}
-                className="bg-surface border border-outline-variant rounded-xl px-5 py-4 flex flex-col md:flex-row md:items-center gap-4 shadow-sm"
+                className="bg-mono-card border border-mono-border rounded-xl px-5 py-4 flex flex-col md:flex-row md:items-center gap-4 shadow-sm"
               >
                 {/* User info */}
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="size-9 rounded-xl bg-gradient-to-br from-[#00cec4] to-[#008993] flex items-center justify-center text-xs font-extrabold text-white shrink-0">
+                  <div className="size-9 rounded-xl bg-gradient-to-br from-[#F9D972] to-[#008993] flex items-center justify-center text-xs font-extrabold text-white shrink-0">
                     {s.userName.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-bold text-on-surface-variant dark:text-white truncate">{s.userName}</div>
-                    <div className="text-xs text-on-surface-variant font-semibold truncate">{s.userEmail}</div>
+                    <div className="text-sm font-bold text-mono-muted dark:text-white truncate">{s.userName}</div>
+                    <div className="text-xs text-mono-muted font-semibold truncate">{s.userEmail}</div>
                   </div>
-                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded ml-auto md:ml-2 uppercase ${roleColors[s.userRole] ?? "text-on-surface-variant bg-surface-container-high"}`}>
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded ml-auto md:ml-2 uppercase ${roleColors[s.userRole] ?? "text-mono-muted bg-mono-soft"}`}>
                     {s.userRole}
                   </span>
                 </div>
 
                 {/* Session meta */}
-                <div className="flex flex-wrap items-center gap-4 text-xs text-on-surface-variant dark:text-on-surface-variant font-semibold">
+                <div className="flex flex-wrap items-center gap-4 text-xs text-mono-muted dark:text-mono-muted font-semibold">
                   <div className="flex items-center gap-1.5">
                     <Clock className="size-3.5" />
                     <span>Login: {formatTime(s.loginAt)}</span>
@@ -299,7 +299,7 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
                         setRevokingId(null);
                       }
                     }}
-                    className="cursor-pointer rounded-lg border border-outline-variant px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant transition-colors hover:bg-surface-container disabled:opacity-50"
+                    className="cursor-pointer rounded-lg border border-mono-border px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-mono-muted transition-colors hover:bg-mono-soft disabled:opacity-50"
                     title="Force logout ALL sessions of this user"
                   >
                     All devices
@@ -313,15 +313,15 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
 
       {/* Session history */}
       <div className="space-y-3">
-        <h2 className="text-sm font-bold text-on-surface-variant dark:text-on-surface-variant flex items-center gap-2">
-          <Clock className="size-4 text-on-surface-variant" />
+        <h2 className="text-sm font-bold text-mono-muted dark:text-mono-muted flex items-center gap-2">
+          <Clock className="size-4 text-mono-muted" />
           Session History (last 100)
         </h2>
-        <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left min-w-[700px]">
               <thead>
-                <tr className="border-b border-outline-variant bg-slate-50 dark:bg-slate-800/30 text-xs font-bold text-on-surface-variant dark:text-on-surface-variant">
+                <tr className="border-b border-mono-border bg-slate-50 dark:bg-slate-800/30 text-xs font-bold text-mono-muted dark:text-mono-muted">
                   <th className="px-5 py-3 font-semibold">User</th>
                   <th className="px-5 py-3 font-semibold">Login</th>
                   <th className="px-5 py-3 font-semibold">Duration</th>
@@ -329,18 +329,18 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
                   <th className="px-5 py-3 font-semibold">IP / Location</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-outline-variant/60 font-medium text-on-surface-variant dark:text-on-surface-variant">
+              <tbody className="divide-y divide-outline-variant/60 font-medium text-mono-muted dark:text-mono-muted">
                 {history.map((s, idx) => (
                   <tr
                     key={s.id}
                     className="hover:bg-slate-50/30 dark:hover:bg-slate-800/5 transition duration-150"
                   >
                     <td className="px-5 py-3">
-                      <div className="font-bold text-on-surface-variant dark:text-white">{s.userName}</div>
-                      <div className="text-xs text-on-surface-variant font-semibold">{s.userEmail}</div>
+                      <div className="font-bold text-mono-muted dark:text-white">{s.userName}</div>
+                      <div className="text-xs text-mono-muted font-semibold">{s.userEmail}</div>
                     </td>
-                    <td className="px-5 py-3 text-on-surface-variant font-semibold whitespace-nowrap">{formatTime(s.loginAt)}</td>
-                    <td className="px-5 py-3 text-on-surface-variant font-semibold whitespace-nowrap">
+                    <td className="px-5 py-3 text-mono-muted font-semibold whitespace-nowrap">{formatTime(s.loginAt)}</td>
+                    <td className="px-5 py-3 text-mono-muted font-semibold whitespace-nowrap">
                       {formatDuration(
                         s.logoutAt
                           ? new Date(s.logoutAt).getTime() - new Date(s.loginAt).getTime()
@@ -348,11 +348,11 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
                       )}
                     </td>
                     <td className="px-5 py-3">
-                      <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] uppercase ${statusColors[s.status] ?? "text-on-surface-variant"}`}>
+                      <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] uppercase ${statusColors[s.status] ?? "text-mono-muted"}`}>
                         {s.status.replace("_", " ")}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-on-surface-variant font-semibold">
+                    <td className="px-5 py-3 text-mono-muted font-semibold">
                       {s.ipAddress ?? "—"}
                       {s.location ? ` · ${s.location}` : ""}
                     </td>
@@ -360,7 +360,7 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
                 ))}
                 {history.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-5 py-10 text-center text-on-surface-variant font-semibold">No session history</td>
+                    <td colSpan={5} className="px-5 py-10 text-center text-mono-muted font-semibold">No session history</td>
                   </tr>
                 )}
               </tbody>
@@ -371,15 +371,15 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
 
       {/* Security audit trail */}
       <div className="space-y-3">
-        <h2 className="text-sm font-bold text-on-surface-variant dark:text-on-surface-variant flex items-center gap-2">
+        <h2 className="text-sm font-bold text-mono-muted dark:text-mono-muted flex items-center gap-2">
           <Shield className="size-4 text-[#ff8333]" />
           Security Audit Trail (last 100)
         </h2>
-        <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left min-w-[800px]">
               <thead>
-                <tr className="border-b border-outline-variant bg-slate-50 dark:bg-slate-800/30 text-xs font-bold text-on-surface-variant dark:text-on-surface-variant">
+                <tr className="border-b border-mono-border bg-slate-50 dark:bg-slate-800/30 text-xs font-bold text-mono-muted dark:text-mono-muted">
                   <th className="px-5 py-3 font-semibold">When</th>
                   <th className="px-5 py-3 font-semibold">Event</th>
                   <th className="px-5 py-3 font-semibold">Outcome</th>
@@ -388,30 +388,30 @@ export function SessionsDashboard({ initialActive, history, securityEvents, rend
                   <th className="px-5 py-3 font-semibold">User Agent</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-outline-variant/60 font-medium text-on-surface-variant dark:text-on-surface-variant">
+              <tbody className="divide-y divide-outline-variant/60 font-medium text-mono-muted dark:text-mono-muted">
                 {securityEvents.map((event, idx) => (
                   <tr
                     key={event.id}
                     className="hover:bg-slate-50/30 dark:hover:bg-slate-800/5 transition duration-150"
                   >
-                    <td className="px-5 py-3 text-on-surface-variant font-semibold whitespace-nowrap">{formatTime(event.createdAt)}</td>
-                    <td className="px-5 py-3 text-on-surface-variant dark:text-on-surface-variant font-semibold whitespace-nowrap">{formatEventLabel(event.event)}</td>
+                    <td className="px-5 py-3 text-mono-muted font-semibold whitespace-nowrap">{formatTime(event.createdAt)}</td>
+                    <td className="px-5 py-3 text-mono-muted dark:text-mono-muted font-semibold whitespace-nowrap">{formatEventLabel(event.event)}</td>
                     <td className="px-5 py-3">
-                      <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] uppercase ${outcomeColors[event.outcome] ?? "text-on-surface-variant"}`}>
+                      <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] uppercase ${outcomeColors[event.outcome] ?? "text-mono-muted"}`}>
                         {event.outcome}
                       </span>
                     </td>
                     <td className="px-5 py-3">
-                      <div className="font-bold text-on-surface-variant dark:text-white">{event.userName ?? event.email ?? "Unknown"}</div>
-                      <div className="text-xs text-on-surface-variant font-semibold">{event.userEmail ?? event.email ?? "No account matched"}</div>
+                      <div className="font-bold text-mono-muted dark:text-white">{event.userName ?? event.email ?? "Unknown"}</div>
+                      <div className="text-xs text-mono-muted font-semibold">{event.userEmail ?? event.email ?? "No account matched"}</div>
                     </td>
-                    <td className="px-5 py-3 text-on-surface-variant font-semibold whitespace-nowrap">{event.ipAddress ?? "N/A"}</td>
-                    <td className="px-5 py-3 text-on-surface-variant font-semibold max-w-[260px] truncate" title={event.userAgent ?? ""}>{event.userAgent ?? "N/A"}</td>
+                    <td className="px-5 py-3 text-mono-muted font-semibold whitespace-nowrap">{event.ipAddress ?? "N/A"}</td>
+                    <td className="px-5 py-3 text-mono-muted font-semibold max-w-[260px] truncate" title={event.userAgent ?? ""}>{event.userAgent ?? "N/A"}</td>
                   </tr>
                 ))}
                 {securityEvents.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-5 py-10 text-center text-on-surface-variant font-semibold">No security events yet</td>
+                    <td colSpan={6} className="px-5 py-10 text-center text-mono-muted font-semibold">No security events yet</td>
                   </tr>
                 )}
               </tbody>

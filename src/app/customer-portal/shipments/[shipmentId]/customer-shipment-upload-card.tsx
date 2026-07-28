@@ -3,10 +3,10 @@
 import { useState, useTransition, type ChangeEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { UploadCloud } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileUploadField } from "@/components/ui/file-upload-field";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/monolith/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
+import { FileUploadField } from "@/components/monolith/file-upload-field";
+import { Input } from "@/components/monolith/input";
 
 type UploadState = {
   file: File | null;
@@ -76,16 +76,16 @@ export function CustomerShipmentUploadCard({ shipmentId }: { shipmentId: string 
   };
 
   return (
-    <Card className="rounded-xl border border-outline-variant/45">
+    <Card className="rounded-xl border border-mono-border/45">
       <CardHeader>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center gap-3">
-            <span className="ds-icon-badge">
+            <span className="monolith-icon-badge">
               <UploadCloud size={16} />
             </span>
             <div>
               <CardTitle>Share Additional Document</CardTitle>
-              <p className="text-xs text-on-surface-variant">
+              <p className="text-xs text-mono-muted">
                 Upload any extra customer document, clarification, or supporting file for this shipment.
               </p>
             </div>
@@ -105,7 +105,7 @@ export function CustomerShipmentUploadCard({ shipmentId }: { shipmentId: string 
         <form id="customer-shipment-upload-form" className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="customer-upload-name" className="ds-label">
+              <label htmlFor="customer-upload-name" className="monolith-label">
                 Document Name
               </label>
               <Input
@@ -122,7 +122,7 @@ export function CustomerShipmentUploadCard({ shipmentId }: { shipmentId: string 
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="customer-upload-description" className="ds-label">
+              <label htmlFor="customer-upload-description" className="monolith-label">
                 Description
               </label>
               <textarea
@@ -137,7 +137,7 @@ export function CustomerShipmentUploadCard({ shipmentId }: { shipmentId: string 
                 maxLength={500}
                 rows={3}
                 disabled={isPending}
-                className="min-h-[88px] w-full rounded-xl border border-[#00cec4]/55 bg-surface px-4 py-3 text-[var(--text-base)] text-on-surface placeholder:text-[var(--color-placeholder)] focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/15 hover:border-[#00cec4]/85 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-[88px] w-full rounded-xl border border-[#F9D972]/55 bg-mono-card px-4 py-3 text-[var(--text-base)] text-mono-text placeholder:text-[var(--color-placeholder)] focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/15 hover:border-[#F9D972]/85 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
           </div>
@@ -160,12 +160,12 @@ export function CustomerShipmentUploadCard({ shipmentId }: { shipmentId: string 
           />
 
           {error ? (
-            <div className="rounded-xl border border-[#fb923c]/35 bg-[#fb923c]/[0.08] px-4 py-3 text-sm text-[#fb923c]">
+            <div className="rounded-xl border border-[#D88700]/35 bg-[#D88700]/[0.08] px-4 py-3 text-sm text-[#D88700]">
               {error}
             </div>
           ) : null}
           {success ? (
-            <div className="rounded-xl border border-[#00cec4]/35 bg-[#00cec4]/[0.08] px-4 py-3 text-sm text-[#00cec4]">
+            <div className="rounded-xl border border-[#F9D972]/35 bg-[#F9D972]/[0.08] px-4 py-3 text-sm text-[#F9D972]">
               {success}
             </div>
           ) : null}

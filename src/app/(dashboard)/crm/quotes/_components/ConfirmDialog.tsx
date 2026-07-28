@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/monolith/button";
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -36,7 +36,7 @@ export function ConfirmDialog({ open, title, description, confirmLabel, onConfir
           <Button variant="outline" className="h-9 border-[#d9dee7] px-4 text-[12px]" onClick={onCancel}>
             Cancel
           </Button>
-          <Button className="h-9 bg-[#00cec4] px-4 text-[12px] hover:bg-[#00b8af]" onClick={onConfirm}>
+          <Button className="h-9 bg-[#F9D972] px-4 text-[12px] hover:bg-[#E8C85D]" onClick={onConfirm}>
             {confirmLabel}
           </Button>
         </div>

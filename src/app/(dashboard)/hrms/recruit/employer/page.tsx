@@ -23,36 +23,36 @@ export default async function EmployerDashboardPage() {
       value: counts.activeOpenings,
       icon: Analytics,
       href: "/hrms/recruit/employer/jobs",
-      accentClass: "card-top-accent",
-      iconBg: "bg-[#00cec4]/10",
-      iconColor: "text-[#00cec4]",
+      accentClass: "monolith-card monolith-accent",
+      iconBg: "bg-[#F9D972]/10",
+      iconColor: "text-[#F9D972]",
     },
     {
       label: "New Candidates (7d)",
       value: counts.newCandidates,
       icon: UserMultiple,
       href: "/hrms/recruit/employer/candidates",
-      accentClass: "card-top-accent-orange",
-      iconBg: "bg-[#fb923c]/10",
-      iconColor: "text-[#fb923c]",
+      accentClass: "monolith-card monolith-accent-warning",
+      iconBg: "bg-[#D88700]/10",
+      iconColor: "text-[#D88700]",
     },
     {
       label: "Applications",
       value: totalApplications,
       icon: Task,
       href: "/hrms/recruit/employer/applications",
-      accentClass: "card-top-accent",
-      iconBg: "bg-[#00cec4]/10",
-      iconColor: "text-[#00cec4]",
+      accentClass: "monolith-card monolith-accent",
+      iconBg: "bg-[#F9D972]/10",
+      iconColor: "text-[#F9D972]",
     },
     {
       label: "Offers Pending Approval",
       value: counts.offersAwaitingApproval,
       icon: Calendar,
       href: "/hrms/recruit/employer/applications",
-      accentClass: "card-top-accent-orange",
-      iconBg: "bg-[#fb923c]/10",
-      iconColor: "text-[#fb923c]",
+      accentClass: "monolith-card monolith-accent-warning",
+      iconBg: "bg-[#D88700]/10",
+      iconColor: "text-[#D88700]",
     },
   ];
 
@@ -68,8 +68,8 @@ export default async function EmployerDashboardPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-1">
-        <h1 className="ds-h1 text-on-surface">Employer Workspace</h1>
-        <p className="text-sm text-on-surface-variant">Hiring pipeline overview</p>
+        <h1 className="monolith-h1 text-mono-text">Employer Workspace</h1>
+        <p className="text-sm text-mono-muted">Hiring pipeline overview</p>
       </div>
 
       {/* Stats */}
@@ -80,14 +80,14 @@ export default async function EmployerDashboardPage() {
             <Link
               key={stat.label}
               href={stat.href}
-              className={`${stat.accentClass} group flex flex-col gap-3 rounded-xl border border-outline-variant bg-surface p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md`}
+              className={`${stat.accentClass} group flex flex-col gap-3 rounded-xl border border-mono-border bg-mono-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md`}
             >
               <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.iconBg}`}>
                 <Icon size={20} className={stat.iconColor} />
               </div>
               <div>
-                <p className="ds-numeric text-3xl font-light text-on-surface">{stat.value}</p>
-                <p className="mt-0.5 text-sm text-on-surface-variant">{stat.label}</p>
+                <p className="monolith-numeric text-3xl font-light text-mono-text">{stat.value}</p>
+                <p className="mt-0.5 text-sm text-mono-muted">{stat.label}</p>
               </div>
             </Link>
           );
@@ -96,18 +96,18 @@ export default async function EmployerDashboardPage() {
 
       {/* Quick Links */}
       <section className="space-y-3">
-        <h2 className="ds-h3 text-on-surface">Quick Actions</h2>
+        <h2 className="monolith-h3 text-mono-text">Quick Actions</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {quickLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="group flex items-center justify-between rounded-xl border border-outline-variant bg-surface px-4 py-3 text-sm text-on-surface transition hover:border-[#00cec4]/40 hover:shadow-sm"
+              className="group flex items-center justify-between rounded-xl border border-mono-border bg-mono-card px-4 py-3 text-sm text-mono-text transition hover:border-[#F9D972]/40 hover:shadow-sm"
             >
               <span>{link.label}</span>
               <ArrowRight
                 size={16}
-                className="text-outline transition group-hover:translate-x-0.5 group-hover:text-[#00cec4]"
+                className="text-outline transition group-hover:translate-x-0.5 group-hover:text-[#F9D972]"
               />
             </Link>
           ))}

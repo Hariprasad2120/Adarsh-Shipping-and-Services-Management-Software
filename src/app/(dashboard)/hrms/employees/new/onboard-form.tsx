@@ -4,8 +4,8 @@ import { Children, isValidElement, type ReactNode, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {BriefcaseBusiness,CircleUserRound,Landmark,MapPinned,ShieldCheck,Users,} from "lucide-react";
-import { DropdownSelect } from "@/components/ui/dropdown-select";
-import { Input } from "@/components/ui/input";
+import { DropdownSelect } from "@/components/monolith/dropdown-select";
+import { Input } from "@/components/monolith/input";
 
 type Division = { id: string; name: string };
 type Department = { id: string; name: string; code: string; divisions: Division[] };
@@ -19,7 +19,7 @@ function optionalString(value: FormDataEntryValue | null) {
 }
 
 function sectionCardClass(extra = "") {
-  return `card-top-accent ds-shell-lg border border-outline-variant/40 bg-surface p-5 shadow-sm sm:p-6 ${extra}`.trim();
+  return `monolith-card monolith-accent monolith-shell-lg border border-mono-border/40 bg-mono-card p-5 shadow-sm sm:p-6 ${extra}`.trim();
 }
 
 export function OnboardForm({
@@ -243,7 +243,7 @@ export function OnboardForm({
               </FormGrid>
 
               <div className="space-y-3">
-                <p className="text-sm font-medium text-on-surface">Roles</p>
+                <p className="text-sm font-medium text-mono-text">Roles</p>
                 <div className="flex flex-wrap gap-2">
                   {roles.map((role) => (
                     <button
@@ -252,8 +252,8 @@ export function OnboardForm({
                       onClick={() => toggleRole(role.id)}
                       className={`rounded-full border px-3 py-1.5 text-sm transition ${
                         selectedRoles.includes(role.id)
-                          ? "border-[#00cec4] bg-[#00cec4] text-white"
-                          : "border-outline-variant/50 bg-surface text-on-surface hover:border-[#00cec4]/50"
+                          ? "border-[#F9D972] bg-[#F9D972] text-white"
+                          : "border-mono-border/50 bg-mono-card text-mono-text hover:border-[#F9D972]/50"
                       }`}
                     >
                       {role.name}
@@ -313,20 +313,20 @@ export function OnboardForm({
 
       <div className={sectionCardClass("flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between")}>
         <div>
-          <h2 className="text-base font-semibold text-on-surface">Create Employee</h2>
-          <p className="mt-1 text-sm text-on-surface-variant">Review the sections above and save the onboarding record.</p>
+          <h2 className="text-base font-semibold text-mono-text">Create Employee</h2>
+          <p className="mt-1 text-sm text-mono-muted">Review the sections above and save the onboarding record.</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <button
             type="submit"
             disabled={loading}
-            className="rounded-lg bg-[#00cec4] px-5 py-2 font-medium text-white transition hover:bg-[#00b5ad] disabled:opacity-50"
+            className="rounded-lg bg-[#F9D972] px-5 py-2 font-medium text-white transition hover:bg-[#00b5ad] disabled:opacity-50"
           >
             {loading ? "Creating..." : "Create Employee"}
           </button>
           <Link
             href="/hrms/employees"
-            className="rounded-lg border border-outline-variant/50 bg-surface px-5 py-2 font-medium text-on-surface transition hover:bg-surface-container-low"
+            className="rounded-lg border border-mono-border/50 bg-mono-card px-5 py-2 font-medium text-mono-text transition hover:bg-mono-soft"
           >
             Cancel
           </Link>
@@ -350,12 +350,12 @@ function InfoCard({
   return (
     <section className={sectionCardClass()}>
       <div className="flex items-start gap-3">
-        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#00cec4]/10 text-[#00cec4]">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F9D972]/10 text-[#F9D972]">
           {icon}
         </span>
         <div>
-          <h2 className="ds-h2 text-on-surface">{title}</h2>
-          {description ? <p className="mt-1 text-sm text-on-surface-variant">{description}</p> : null}
+          <h2 className="monolith-h2 text-mono-text">{title}</h2>
+          {description ? <p className="mt-1 text-sm text-mono-muted">{description}</p> : null}
         </div>
       </div>
       <div className="mt-6">{children}</div>
@@ -382,7 +382,7 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-on-surface">{label}</label>
+      <label className="block text-sm font-medium text-mono-text">{label}</label>
       <Input
         name={name}
         type={type}
@@ -427,7 +427,7 @@ function SelectField({
 
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-on-surface">{label}</label>
+      <label className="block text-sm font-medium text-mono-text">{label}</label>
       <DropdownSelect
         ariaLabel={label}
         name={name}

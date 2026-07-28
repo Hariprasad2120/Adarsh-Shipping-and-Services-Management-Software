@@ -7,7 +7,7 @@ export default function AccountingPurchaseOrdersPage({
   searchParams: Promise<{ search?: string }>;
 }) {
   return (
-    <Suspense fallback={<div className="p-8 text-sm text-on-surface-variant">Loading…</div>}>
+    <Suspense fallback={<div className="p-8 text-sm text-mono-muted">Loading…</div>}>
       <CommercialDocumentsPage
         title="Purchase Orders"
         description="Track supplier purchase orders from the Accounting module."

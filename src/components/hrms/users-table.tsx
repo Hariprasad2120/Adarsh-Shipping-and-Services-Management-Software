@@ -81,7 +81,7 @@ export function UsersTable({
       {/* Title */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
         <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-          <Users className="size-5 text-[#00c4b6]" />
+          <Users className="size-5 text-[#F9D972]" />
           Account Credentials & Profiles Directory
         </h3>
 
@@ -91,7 +91,7 @@ export function UsersTable({
             placeholder="Search employee details..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-4 pr-4 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:border-[#00c4b6] bg-slate-50 focus:bg-white transition-colors"
+            className="pl-4 pr-4 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:border-[#F9D972] bg-slate-50 focus:bg-white transition-colors"
           />
         </div>
       </div>
@@ -107,7 +107,7 @@ export function UsersTable({
               type="button"
               disabled={actionLoading}
               onClick={() => handleBulkAction("LOGIN_ENABLED")}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10.5px] font-bold text-white bg-[#00c4b6] hover:bg-[#00b0a3] rounded-lg cursor-pointer transition-colors shadow-sm disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10.5px] font-bold text-white bg-[#F9D972] hover:bg-[#00b0a3] rounded-lg cursor-pointer transition-colors shadow-sm disabled:opacity-50"
             >
               <Power className="size-3" />
               Enable Login
@@ -168,7 +168,7 @@ export function UsersTable({
                         />
                       </td>
                       <td className="px-4 py-3.5 flex items-center gap-3">
-                        <div className="size-9 rounded-full bg-[#00c4b6]/10 flex items-center justify-center text-[#00c4b6] font-bold shrink-0">
+                        <div className="size-9 rounded-full bg-[#F9D972]/10 flex items-center justify-center text-[#F9D972] font-bold shrink-0">
                           {user.name.charAt(0)}
                         </div>
                         <div className="min-w-0">

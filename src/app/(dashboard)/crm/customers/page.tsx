@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { deleteAccountAction } from "@/modules/crm/actions";
 import { DeleteRecordButton } from "../_components/delete-record-button";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/monolith/badge";
 import {
   CheckCircle2,
   Eye,
@@ -38,8 +38,8 @@ export default async function CrmCustomersPage({ searchParams }: { searchParams:
     return (
       <div className="text-center text-red-400">
         <ShieldAlert className="mx-auto mb-4 size-12" />
-        <h2 className="ds-h2 text-on-surface">Configuration Error</h2>
-        <p className="mt-1 text-sm text-on-surface-variant">Missing organisation context.</p>
+        <h2 className="monolith-h2 text-mono-text">Configuration Error</h2>
+        <p className="mt-1 text-sm text-mono-muted">Missing organisation context.</p>
       </div>
     );
   }
@@ -156,9 +156,9 @@ export default async function CrmCustomersPage({ searchParams }: { searchParams:
         canCreateCustomer
       />
 
-      <div className="overflow-hidden rounded-xl border border-outline-variant/60 bg-surface shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-mono-border/60 bg-mono-card shadow-sm">
         <div className="overflow-x-auto">
-          <table className="ds-table min-w-full">
+          <table className="monolith-table min-w-full">
             <thead>
               <tr>
                 <th>Customer Name</th>
@@ -173,7 +173,7 @@ export default async function CrmCustomersPage({ searchParams }: { searchParams:
             <tbody>
               {customers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-sm text-on-surface-variant">
+                  <td colSpan={7} className="px-6 py-12 text-center text-sm text-mono-muted">
                     {hasActiveFilters ? "No customers match the current filters." : "No customers found in your master database."}
                   </td>
                 </tr>
@@ -185,33 +185,33 @@ export default async function CrmCustomersPage({ searchParams }: { searchParams:
                     <tr key={customer.id} className="transition-colors">
                       <td>
                         <div>
-                          <p className="text-base text-on-surface">{customer.name}</p>
-                          <p className="mt-1 text-xs text-on-surface-variant">{customer.customerSubType || "Business"}</p>
+                          <p className="text-base text-mono-text">{customer.name}</p>
+                          <p className="mt-1 text-xs text-mono-muted">{customer.customerSubType || "Business"}</p>
                         </div>
                       </td>
-                      <td className="text-base text-on-surface">{customer.companyName || customer.name}</td>
+                      <td className="text-base text-mono-text">{customer.companyName || customer.name}</td>
                       <td>
                         {customer.email || customer.phone ? (
-                          <div className="space-y-1 text-sm text-on-surface">
+                          <div className="space-y-1 text-sm text-mono-text">
                             {customer.email ? (
                               <div className="flex items-center gap-2">
-                                <Mail className="size-4 text-on-surface-variant" />
+                                <Mail className="size-4 text-mono-muted" />
                                 <span>{customer.email}</span>
                               </div>
                             ) : null}
                             {customer.phone ? (
                               <div className="flex items-center gap-2">
-                                <Phone className="size-4 text-on-surface-variant" />
+                                <Phone className="size-4 text-mono-muted" />
                                 <span>{customer.phone}</span>
                               </div>
                             ) : null}
                           </div>
                         ) : (
-                          <span className="text-sm italic text-on-surface-variant">No contact details</span>
+                          <span className="text-sm italic text-mono-muted">No contact details</span>
                         )}
                       </td>
                       <td>
-                        <span className="ds-numeric text-sm text-on-surface">
+                        <span className="monolith-numeric text-sm text-mono-text">
                           {new Intl.NumberFormat("en-IN", {
                             style: "currency",
                             currency: "INR",
@@ -219,7 +219,7 @@ export default async function CrmCustomersPage({ searchParams }: { searchParams:
                           }).format(balance)}
                         </span>
                       </td>
-                      <td className="ds-numeric text-on-surface-variant">
+                      <td className="monolith-numeric text-mono-muted">
                         {customer.updatedAt.toLocaleDateString("en-IN", {
                           day: "2-digit",
                           month: "short",
@@ -233,17 +233,17 @@ export default async function CrmCustomersPage({ searchParams }: { searchParams:
                       </td>
                       <td className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Link href={`/crm/customers/${customer.id}`} className="ds-action-icon ds-action-icon-view" title="View details">
+                          <Link href={`/crm/customers/${customer.id}`} className="monolith-action-icon monolith-action-icon-view" title="View details">
                             <Eye className="size-4" />
                           </Link>
-                          <Link href={`/crm/customers/${customer.id}/edit`} className="ds-action-icon ds-action-icon-edit" title="Edit customer">
+                          <Link href={`/crm/customers/${customer.id}/edit`} className="monolith-action-icon monolith-action-icon-edit" title="Edit customer">
                             <Pencil className="size-4" />
                           </Link>
                           <DeleteRecordButton
                             recordId={customer.id}
                             confirmMessage="Are you sure you want to delete this customer account? All linked contacts, deals, and projects will be affected."
                             deleteAction={deleteAccountAction}
-                            className="ds-plain ds-action-icon ds-action-icon-delete"
+                            className="monolith-plain monolith-action-icon monolith-action-icon-delete"
                           />
                         </div>
                       </td>

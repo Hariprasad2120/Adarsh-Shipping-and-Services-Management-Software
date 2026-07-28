@@ -1,7 +1,7 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
-import { DateInput } from "@/components/ui/date-input";
+import { NativeSelect } from "@/components/monolith/native-select";
+import { DateInput } from "@/components/monolith/date-input";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -34,10 +34,10 @@ import {
   Users2,
   Warehouse,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/monolith/button";
 import {createJobAction,createJobTypeAction,createShipmentTypeAction,getNextJobNumberPreviewAction,} from "@/modules/cha/actions";
-import { DropdownSelect } from "@/components/ui/dropdown-select";
-import { Input } from "@/components/ui/input";
+import { DropdownSelect } from "@/components/monolith/dropdown-select";
+import { Input } from "@/components/monolith/input";
 import { cn } from "@/lib/utils";
 
 const ADD_NEW_JOB_TYPE = "__add_new_job_type__";
@@ -220,7 +220,7 @@ function CreateJobSuccessOverlay({
                 </div>
                 <motion.button
                   animate={reducedMotion ? { scale: 1 } : { scale: [1, 1.04, 1] }}
-                  className="flex h-12 w-12 items-center justify-center rounded-full border border-[rgba(0,206,196,0.24)] bg-[rgba(0,206,196,0.18)] text-[var(--cha-create-success-primary,#00cec4)] shadow-[0_0_0_10px_rgba(0,206,196,0.08)] sm:h-14 sm:w-14"
+                  className="flex h-12 w-12 items-center justify-center rounded-full border border-[rgba(0,206,196,0.24)] bg-[rgba(0,206,196,0.18)] text-[var(--cha-create-success-primary,#F9D972)] shadow-[0_0_0_10px_rgba(0,206,196,0.08)] sm:h-14 sm:w-14"
                   transition={reducedMotion ? { duration: 0 } : { duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
                   type="button"
                 >
@@ -240,7 +240,7 @@ function CreateJobSuccessOverlay({
                         <p className="text-[11px] uppercase tracking-[0.18em] !text-slate-300">Origin</p>
                         <p className="mt-1 text-sm font-semibold !text-white">Job Initialized</p>
                       </div>
-                      <div className="flex items-center justify-center rounded-full border border-[rgba(0,206,196,0.24)] bg-[rgba(0,206,196,0.18)] p-3 text-[var(--cha-create-success-primary,#00cec4)]">
+                      <div className="flex items-center justify-center rounded-full border border-[rgba(0,206,196,0.24)] bg-[rgba(0,206,196,0.18)] p-3 text-[var(--cha-create-success-primary,#F9D972)]">
                         <TransportIcon size={22} />
                       </div>
                       <div className="md:text-right">
@@ -252,7 +252,7 @@ function CreateJobSuccessOverlay({
                     <div className="relative h-20 sm:h-24">
                       <motion.div
                         animate={{ x: ["0%", "88%"] }}
-                        className="absolute top-1/2 z-10 flex -translate-y-1/2 items-center gap-3 rounded-full border border-[rgba(0,206,196,0.24)] bg-[rgba(15,23,42,0.92)] px-4 py-2 text-[var(--cha-create-success-primary,#00cec4)] shadow-[0_20px_40px_-28px_rgba(0,206,196,0.7)]"
+                        className="absolute top-1/2 z-10 flex -translate-y-1/2 items-center gap-3 rounded-full border border-[rgba(0,206,196,0.24)] bg-[rgba(15,23,42,0.92)] px-4 py-2 text-[var(--cha-create-success-primary,#F9D972)] shadow-[0_20px_40px_-28px_rgba(0,206,196,0.7)]"
                         initial={{ x: "0%" }}
                         transition={{ duration: 1.2, ease: [0.2, 0.8, 0.2, 1] }}
                       >
@@ -301,14 +301,14 @@ function CreateJobSuccessOverlay({
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Button
-                    className="ds-plain rounded-2xl border border-[rgba(148,163,184,0.18)] bg-[rgba(15,23,42,0.72)] px-5 py-2.5 text-sm text-white hover:border-[rgba(0,206,196,0.32)] hover:bg-[rgba(15,23,42,0.88)]"
+                    className="monolith-plain rounded-2xl border border-[rgba(148,163,184,0.18)] bg-[rgba(15,23,42,0.72)] px-5 py-2.5 text-sm text-white hover:border-[rgba(0,206,196,0.32)] hover:bg-[rgba(15,23,42,0.88)]"
                     onClick={onCreateAnother}
                     type="button"
                   >
                     Create Another Job
                   </Button>
                   <Button
-                    className="!border-[var(--cha-create-success-primary,#00cec4)] !bg-[var(--cha-create-success-primary,#00cec4)] !text-white hover:!bg-[#00b8af]"
+                    className="!border-[var(--cha-create-success-primary,#F9D972)] !bg-[var(--cha-create-success-primary,#F9D972)] !text-white hover:!bg-[#E8C85D]"
                     onClick={onOpenJob}
                     type="button"
                   >
@@ -1089,8 +1089,8 @@ export function CreateJobDialog({
         className="fixed inset-0 z-50 flex h-dvh w-dvw items-center justify-center overflow-hidden bg-[rgba(2,6,23,0.66)] p-4 backdrop-blur-md animate-in fade-in duration-200"
         style={
           {
-            "--cha-create-primary": "#00cec4",
-            "--cha-create-primary-hover": "#00b8af",
+            "--cha-create-primary": "#F9D972",
+            "--cha-create-primary-hover": "#E8C85D",
             "--cha-create-primary-active": "#00a9b2",
             "--cha-create-primary-soft": "rgba(0,206,196,0.10)",
             "--cha-create-primary-border": "rgba(0,206,196,0.32)",
@@ -1105,7 +1105,7 @@ export function CreateJobDialog({
           } as React.CSSProperties
         }
       >
-        <div className="flex h-[calc(100dvh-2rem)] w-full max-w-[1120px] flex-col overflow-hidden rounded-[26px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] shadow-[0_28px_82px_-42px_rgba(15,23,42,0.4)] dark:border-[#263449] dark:bg-[#111827] dark:[--cha-create-primary:#00cec4] dark:[--cha-create-primary-hover:#5eead4] dark:[--cha-create-primary-active:#00b8af] dark:[--cha-create-primary-soft:rgba(0,206,196,0.16)] dark:[--cha-create-primary-border:rgba(0,206,196,0.28)] dark:[--cha-create-card:#111827] dark:[--cha-create-card-alt:#0F172A] dark:[--cha-create-text:#F8FAFC] dark:[--cha-create-secondary:#CBD5E1] dark:[--cha-create-muted:#94A3B8] dark:[--cha-create-border:#263449] dark:[--cha-create-divider:rgba(148,163,184,0.18)] dark:[--cha-create-ring:rgba(0,206,196,0.18)]">
+        <div className="flex h-[calc(100dvh-2rem)] w-full max-w-[1120px] flex-col overflow-hidden rounded-[26px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] shadow-[0_28px_82px_-42px_rgba(15,23,42,0.4)] dark:border-[#263449] dark:bg-[#111827] dark:[--cha-create-primary:#F9D972] dark:[--cha-create-primary-hover:#5eead4] dark:[--cha-create-primary-active:#E8C85D] dark:[--cha-create-primary-soft:rgba(0,206,196,0.16)] dark:[--cha-create-primary-border:rgba(0,206,196,0.28)] dark:[--cha-create-card:#111827] dark:[--cha-create-card-alt:#0F172A] dark:[--cha-create-text:#F8FAFC] dark:[--cha-create-secondary:#CBD5E1] dark:[--cha-create-muted:#94A3B8] dark:[--cha-create-border:#263449] dark:[--cha-create-divider:rgba(148,163,184,0.18)] dark:[--cha-create-ring:rgba(0,206,196,0.18)]">
             <div className="relative overflow-hidden border-b border-[var(--cha-create-divider)] bg-[var(--cha-create-card)] px-5 py-4 dark:bg-[var(--cha-create-card)] sm:px-6">
               <div className="pointer-events-none absolute inset-y-0 -right-24 w-[32%] overflow-hidden opacity-75">
                 <svg className="absolute inset-0 h-full w-full" fill="none" viewBox="0 0 540 220">
@@ -1159,7 +1159,7 @@ export function CreateJobDialog({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Branch Selection */}
               <div className="space-y-1">
-                <label className="ds-label block">Customs Branch Office *</label>
+                <label className="monolith-label block">Customs Branch Office *</label>
                 <DropdownSelect
                   required
                   value={newBranchId}
@@ -1174,7 +1174,7 @@ export function CreateJobDialog({
                   }))}
                 />
                 {newBranchId && !selectedBranchRule?.isActive && (
-                  <p className="text-xs text-[#fb923c]">
+                  <p className="text-xs text-[#D88700]">
                     This branch needs an active numbering rule before a job can be created.
                   </p>
                 )}
@@ -1182,7 +1182,7 @@ export function CreateJobDialog({
 
               {/* Job Number */}
               <div className="space-y-1">
-                <label className="ds-label block">Job Ref Number (Leave empty to Auto-number)</label>
+                <label className="monolith-label block">Job Ref Number (Leave empty to Auto-number)</label>
                 <div className="flex gap-2">
                   <Input
                     type="text"
@@ -1203,17 +1203,17 @@ export function CreateJobDialog({
                   </Button>
                 </div>
                 {generatedPreview ? (
-                  <p className="text-xs text-on-surface-variant">
-                    Preview: <span className="ds-numeric text-on-surface">{generatedPreview}</span>
+                  <p className="text-xs text-mono-muted">
+                    Preview: <span className="monolith-numeric text-mono-text">{generatedPreview}</span>
                   </p>
                 ) : (
-                  <p className="text-xs text-on-surface-variant">Select a branch to preview the next generated job number.</p>
+                  <p className="text-xs text-mono-muted">Select a branch to preview the next generated job number.</p>
                 )}
               </div>
 
               {/* Description */}
               <div className="space-y-1 md:col-span-2">
-                <label className="ds-label block">Description *</label>
+                <label className="monolith-label block">Description *</label>
                   <textarea
                     required
                     rows={4}
@@ -1226,7 +1226,7 @@ export function CreateJobDialog({
 
               {/* Customer Account Autocomplete */}
               <div className="space-y-1 relative">
-                <label className="ds-label block">Customer Account *</label>
+                <label className="monolith-label block">Customer Account *</label>
                 <Input
                   type="text"
                   required
@@ -1257,18 +1257,18 @@ export function CreateJobDialog({
                           setSelectedCustomerName(c.name);
                           setShowCustomerDropdown(false);
                         }}
-                        className="flex w-full cursor-pointer items-center rounded-md px-2 py-1.5 text-left text-sm text-on-surface transition-colors hover:bg-surface-container-low hover:text-on-surface focus:bg-surface-container-low focus:text-on-surface"
+                        className="flex w-full cursor-pointer items-center rounded-md px-2 py-1.5 text-left text-sm text-mono-text transition-colors hover:bg-mono-soft hover:text-mono-text focus:bg-mono-soft focus:text-mono-text"
                       >
                         {c.name}
                       </button>
                     ))}
                     {filteredCustomers.length === 0 && (
-                      <div className="p-3 text-xs text-on-surface-variant italic flex flex-col items-center gap-2">
+                      <div className="p-3 text-xs text-mono-muted italic flex flex-col items-center gap-2">
                         <span>No matching customer found.</span>
                         <button
                           type="button"
                           onClick={handleAddCustomerRedirect}
-                          className="ds-plain cha-link text-xs font-medium"
+                          className="monolith-plain cha-link text-xs font-medium"
                         >
                           + Add &quot;{customerSearch}&quot; as New Customer
                         </button>
@@ -1280,7 +1280,7 @@ export function CreateJobDialog({
                   <button
                     type="button"
                     onClick={handleAddCustomerRedirect}
-                    className="ds-plain cha-link text-xs font-medium"
+                    className="monolith-plain cha-link text-xs font-medium"
                   >
                     Add New Customer
                   </button>
@@ -1289,7 +1289,7 @@ export function CreateJobDialog({
 
               {/* Customer Ref */}
               <div className="space-y-1">
-                <label className="ds-label block">Customer Ref PO/WO (Optional)</label>
+                <label className="monolith-label block">Customer Ref PO/WO (Optional)</label>
                   <Input
                     type="text"
                     placeholder="e.g. PO-88712"
@@ -1301,7 +1301,7 @@ export function CreateJobDialog({
 
               {/* Job Type */}
               <div className="space-y-1">
-                <label className="ds-label block">Clearance Job Type *</label>
+                <label className="monolith-label block">Clearance Job Type *</label>
                 <DropdownSelect
                   required
                   value={newJobTypeId}
@@ -1333,7 +1333,7 @@ export function CreateJobDialog({
                     />
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                       <label className="space-y-1">
-                        <span className="ds-label block">Movement Direction</span>
+                        <span className="monolith-label block">Movement Direction</span>
                         <NativeSelect
                           value={newJobTypeMovementDirection}
                           onChange={(e) => setNewJobTypeMovementDirection(e.target.value as "IMPORT" | "EXPORT" | "BOTH" | "OTHER")}
@@ -1346,7 +1346,7 @@ export function CreateJobDialog({
                         </NativeSelect>
                       </label>
                       <label className="space-y-1">
-                        <span className="ds-label block">Manifest Requirement</span>
+                        <span className="monolith-label block">Manifest Requirement</span>
                         <NativeSelect
                           value={newJobTypeManifestRequirement}
                           onChange={(e) => setNewJobTypeManifestRequirement(e.target.value as "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM")}
@@ -1376,7 +1376,7 @@ export function CreateJobDialog({
                       placeholder="Help text / placeholder"
                       className={CHA_CREATE_INPUT_CLASS}
                     />
-                    <label className="flex items-center gap-2 text-xs text-on-surface-variant">
+                    <label className="flex items-center gap-2 text-xs text-mono-muted">
                       <input
                         type="checkbox"
                         checked={newJobTypeManifestMandatory}
@@ -1397,7 +1397,7 @@ export function CreateJobDialog({
               </div>
 
               <div className="space-y-1">
-                <label className="ds-label block">Shipment Type *</label>
+                <label className="monolith-label block">Shipment Type *</label>
                 <DropdownSelect
                   required
                   value={newShipmentTypeId}
@@ -1441,7 +1441,7 @@ export function CreateJobDialog({
 
               {/* Priority */}
               <div className="space-y-1">
-                <label className="ds-label block">Job Priority *</label>
+                <label className="monolith-label block">Job Priority *</label>
                 <DropdownSelect
                   required
                   value={newPriority}
@@ -1458,7 +1458,7 @@ export function CreateJobDialog({
 
               {/* Owner */}
               <div className="space-y-1 relative">
-                <label className="ds-label block">Primary Operations Owner *</label>
+                <label className="monolith-label block">Primary Operations Owner *</label>
                 <Input
                   type="text"
                   required
@@ -1490,29 +1490,29 @@ export function CreateJobDialog({
                           key={owner.id}
                           type="button"
                           onClick={() => selectOwner(owner)}
-                          className="flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-sm text-on-surface transition-colors hover:bg-surface-container-low hover:text-on-surface focus:bg-surface-container-low focus:text-on-surface"
+                          className="flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-sm text-mono-text transition-colors hover:bg-mono-soft hover:text-mono-text focus:bg-mono-soft focus:text-mono-text"
                         >
                           <span>{owner.name}</span>
-                          <span className="text-[10px] text-on-surface-variant">{owner.email}</span>
+                          <span className="text-[10px] text-mono-muted">{owner.email}</span>
                         </button>
                       ))
                     ) : (
-                      <div className="px-3 py-2 text-xs italic text-on-surface-variant">
+                      <div className="px-3 py-2 text-xs italic text-mono-muted">
                         No matching owners found.
                       </div>
                     )}
                   </div>
                 ) : null}
                 {newOwnerId ? (
-                  <p className="text-xs text-on-surface-variant">
-                    Selected owner: <span className="text-on-surface">{ownerSearch}</span>
+                  <p className="text-xs text-mono-muted">
+                    Selected owner: <span className="text-mono-text">{ownerSearch}</span>
                   </p>
                 ) : null}
               </div>
 
               {/* Assigned Manager */}
               <div className="space-y-1 relative">
-                <label className="ds-label block">Assigned Manager *</label>
+                <label className="monolith-label block">Assigned Manager *</label>
                 <Input
                   type="text"
                   required
@@ -1544,29 +1544,29 @@ export function CreateJobDialog({
                           key={manager.id}
                           type="button"
                           onClick={() => selectManager(manager)}
-                          className="flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-sm text-on-surface transition-colors hover:bg-surface-container-low hover:text-on-surface focus:bg-surface-container-low focus:text-on-surface"
+                          className="flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-sm text-mono-text transition-colors hover:bg-mono-soft hover:text-mono-text focus:bg-mono-soft focus:text-mono-text"
                         >
                           <span>{manager.name}</span>
-                          <span className="text-[10px] text-on-surface-variant">{manager.email}</span>
+                          <span className="text-[10px] text-mono-muted">{manager.email}</span>
                         </button>
                       ))
                     ) : (
-                      <div className="px-3 py-2 text-xs italic text-on-surface-variant">
+                      <div className="px-3 py-2 text-xs italic text-mono-muted">
                         No matching managers found.
                       </div>
                     )}
                   </div>
                 ) : null}
                 {newManagerId ? (
-                  <p className="text-xs text-on-surface-variant">
-                    Selected manager: <span className="text-on-surface">{managerSearch}</span>
+                  <p className="text-xs text-mono-muted">
+                    Selected manager: <span className="text-mono-text">{managerSearch}</span>
                   </p>
                 ) : null}
               </div>
 
               {/* Estimated Closure Date */}
               <div className="space-y-1">
-                <label className="ds-label block">Estimated Closure Date (Benchmark) *</label>
+                <label className="monolith-label block">Estimated Closure Date (Benchmark) *</label>
                 <DateInput
                   required
                   value={estimatedClosureDate}
@@ -1579,8 +1579,8 @@ export function CreateJobDialog({
             {/* Team Assignments Mapping */}
             <div className="space-y-3 pt-2">
               <div className="border-b border-[var(--cha-create-divider)] pb-3">
-                <label className="ds-label block">Team Assignments Mapping</label>
-                <p className="text-xs text-on-surface-variant mt-0.5">
+                <label className="monolith-label block">Team Assignments Mapping</label>
+                <p className="text-xs text-mono-muted mt-0.5">
                   Type employee name and press **Enter** (or select from list) to add them.
                 </p>
               </div>
@@ -1660,7 +1660,7 @@ export function CreateJobDialog({
                     </div>
 
                     {filteredTeamUsers.length === 0 && filteredTeamGroups.length === 0 && (
-                      <div className="p-3 text-xs text-on-surface-variant italic">No matching results found.</div>
+                      <div className="p-3 text-xs text-mono-muted italic">No matching results found.</div>
                     )}
                   </div>
                 )}
@@ -1676,7 +1676,7 @@ export function CreateJobDialog({
                       className="flex items-center justify-between gap-3 rounded-xl border border-[var(--cha-create-border)] bg-[var(--cha-create-card-alt)] p-4 shadow-[0_18px_38px_-34px_rgba(15,23,42,0.24)] transition"
                     >
                       <div className="space-y-1 flex-1 mr-3">
-                        <span className="text-xs font-semibold text-on-surface block">
+                        <span className="text-xs font-semibold text-mono-text block">
                           {emp?.name || "Unknown Employee"}
                         </span>
                         <DropdownSelect
@@ -1699,7 +1699,7 @@ export function CreateJobDialog({
                         size="md"
                         onClick={() => handleRemoveAssignment(index)}
                         aria-label="Remove assignment"
-                        className="ds-plain !h-10 !w-10 !min-w-10 shrink-0 rounded-xl border border-red-500/45 bg-surface !px-0 text-red-500 shadow-sm hover:border-red-500/70 hover:bg-red-500/10 hover:text-red-600 hover:shadow-[0_0_12px_rgba(239,68,68,0.22)]"
+                        className="monolith-plain !h-10 !w-10 !min-w-10 shrink-0 rounded-xl border border-red-500/45 bg-mono-card !px-0 text-red-500 shadow-sm hover:border-red-500/70 hover:bg-red-500/10 hover:text-red-600 hover:shadow-[0_0_12px_rgba(239,68,68,0.22)]"
                       >
                         <Trash2 className="size-5" strokeWidth={2.1} />
                       </Button>
@@ -1716,7 +1716,7 @@ export function CreateJobDialog({
 
             {/* Remarks */}
             <div className="space-y-2 pt-2">
-              <label className="ds-label block">Final Notes &amp; Details</label>
+              <label className="monolith-label block">Final Notes &amp; Details</label>
               <p className="text-xs text-[var(--cha-create-secondary)]">
                 Special shipment instructions, customs remarks, discharge notes, or operational handling context.
               </p>

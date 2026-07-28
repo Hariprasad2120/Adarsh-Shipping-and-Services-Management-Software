@@ -34,36 +34,36 @@ export function NotificationSettings() {
   };
 
   return (
-    <div className="rounded-xl border border-outline-variant bg-surface p-6 shadow-sm space-y-4">
-      <h3 className="ds-h3 text-on-surface flex items-center gap-2">
-        <Bell size={16} className="text-[#00cec4]" />
+    <div className="rounded-xl border border-mono-border bg-mono-card p-6 shadow-sm space-y-4">
+      <h3 className="monolith-h3 text-mono-text flex items-center gap-2">
+        <Bell size={16} className="text-[#F9D972]" />
         <span>Chat Notifications</span>
       </h3>
 
       <div className="space-y-3">
         {/* In-app notifications (always on) */}
-        <div className="flex items-center justify-between p-3 bg-surface-container-low border border-outline-variant rounded-xl">
+        <div className="flex items-center justify-between p-3 bg-mono-soft border border-mono-border rounded-xl">
           <div className="flex items-center gap-3">
-            <Volume2 size={16} className="text-[#00cec4] shrink-0" />
+            <Volume2 size={16} className="text-[#F9D972] shrink-0" />
             <div>
-              <span className="text-xs font-bold text-on-surface block">In-App Notifications</span>
-              <span className="text-[10px] text-on-surface-variant block">
+              <span className="text-xs font-bold text-mono-text block">In-App Notifications</span>
+              <span className="text-[10px] text-mono-muted block">
                 Toast alerts inside Monolith when new messages arrive
               </span>
             </div>
           </div>
-          <span className="text-[9px] font-bold text-[#00cec4] uppercase tracking-wider bg-[#00cec4]/10 px-2 py-1 rounded-lg">
+          <span className="text-[9px] font-bold text-[#F9D972] uppercase tracking-wider bg-[#F9D972]/10 px-2 py-1 rounded-lg">
             Always On
           </span>
         </div>
 
         {/* Desktop notifications toggle */}
-        <div className="flex items-center justify-between p-3 bg-surface-container-low border border-outline-variant rounded-xl">
+        <div className="flex items-center justify-between p-3 bg-mono-soft border border-mono-border rounded-xl">
           <div className="flex items-center gap-3">
-            <Monitor size={16} className={desktopEnabled ? "text-[#00cec4]" : "text-on-surface-variant"} />
+            <Monitor size={16} className={desktopEnabled ? "text-[#F9D972]" : "text-mono-muted"} />
             <div>
-              <span className="text-xs font-bold text-on-surface block">Desktop Notifications</span>
-              <span className="text-[10px] text-on-surface-variant block">
+              <span className="text-xs font-bold text-mono-text block">Desktop Notifications</span>
+              <span className="text-[10px] text-mono-muted block">
                 System-level alerts even when Monolith is minimized
               </span>
             </div>
@@ -71,7 +71,7 @@ export function NotificationSettings() {
           <button
             onClick={toggleDesktop}
             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-              desktopEnabled ? "bg-[#00cec4]" : "bg-outline-variant"
+              desktopEnabled ? "bg-[#F9D972]" : "bg-outline-variant"
             }`}
           >
             <span
@@ -84,12 +84,12 @@ export function NotificationSettings() {
 
         {/* Browser permission status */}
         {desktopEnabled && browserPermission !== "granted" && (
-          <div className="flex items-center justify-between p-3 bg-[#fb923c]/5 border border-[#fb923c]/20 rounded-xl">
+          <div className="flex items-center justify-between p-3 bg-[#D88700]/5 border border-[#D88700]/20 rounded-xl">
             <div className="flex items-center gap-3">
-              <VolumeX size={16} className="text-[#fb923c] shrink-0" />
+              <VolumeX size={16} className="text-[#D88700] shrink-0" />
               <div>
-                <span className="text-xs font-bold text-on-surface block">Browser Permission Required</span>
-                <span className="text-[10px] text-on-surface-variant block">
+                <span className="text-xs font-bold text-mono-text block">Browser Permission Required</span>
+                <span className="text-[10px] text-mono-muted block">
                   {browserPermission === "denied"
                     ? "Notifications are blocked. Please enable them in your browser settings."
                     : "Click below to allow desktop notifications in this browser."}
@@ -99,7 +99,7 @@ export function NotificationSettings() {
             {browserPermission !== "denied" && (
               <button
                 onClick={requestPermission}
-                className="bg-[#00cec4] text-white hover:bg-[#00b8af] px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all shrink-0"
+                className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all shrink-0"
               >
                 Allow
               </button>

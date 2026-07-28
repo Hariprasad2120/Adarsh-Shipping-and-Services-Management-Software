@@ -46,7 +46,7 @@ export default async function CrmLeadSourcesLogsPage() {
           >
             <ArrowLeft className="size-4" />
           </Link>
-          <History className="size-4.5 text-[#00c4b6]" />
+          <History className="size-4.5 text-[#F9D972]" />
           <h3 className="font-bold text-xs uppercase tracking-wider text-white">Ingestion Run Audit Log</h3>
         </div>
 
@@ -99,7 +99,7 @@ export default async function CrmLeadSourcesLogsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-center font-bold text-white">{log.totalScanned}</td>
-                      <td className="px-4 py-3 text-center font-bold text-[#00c4b6]">{log.newLeads}</td>
+                      <td className="px-4 py-3 text-center font-bold text-[#F9D972]">{log.newLeads}</td>
                       <td className="px-4 py-3 text-center font-bold text-amber-400">{log.updatedLeads}</td>
                       <td className="px-4 py-3 text-center font-bold text-red-400">{log.failedLeads}</td>
                       <td className="px-4 py-3 text-slate-400 max-w-sm break-words leading-relaxed">

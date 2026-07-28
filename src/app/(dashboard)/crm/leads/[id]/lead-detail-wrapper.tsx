@@ -1,6 +1,6 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -75,16 +75,16 @@ export function LeadDetailWrapper({
         <div className="lg:col-span-2 space-y-6">
           
           {/* 3D Call Action & Operations Panel */}
-          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a] shadow-[4px_4px_0px_0px_rgba(0,206,196,0.15)] hover:shadow-[6px_6px_0px_0px_rgba(0,206,196,0.22)] transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-6 card-left-accent">
+          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a] shadow-[4px_4px_0px_0px_rgba(0,206,196,0.15)] hover:shadow-[6px_6px_0px_0px_rgba(0,206,196,0.22)] transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-6 monolith-card monolith-accent">
             <div className="space-y-2 flex-1">
-              <span className="text-[10px] font-bold text-[#00cec4] uppercase tracking-widest block font-sans">Call Action / Lead Status</span>
+              <span className="text-[10px] font-bold text-[#F9D972] uppercase tracking-widest block font-sans">Call Action / Lead Status</span>
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => setShowInterestedModal(true)}
                   className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
                     lead.status === "INTERESTED"
-                      ? "bg-[#00cec4] text-white border-[#00cec4] shadow-none translate-y-[2px] translate-x-[2px]"
-                      : "bg-[#161f28] text-[#00cec4] border-[#00cec4]/40 hover:border-[#00cec4] shadow-[2px_2px_0px_0px_rgba(0,206,196,0.15)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(0,206,196,0.25)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
+                      ? "bg-[#F9D972] text-white border-[#F9D972] shadow-none translate-y-[2px] translate-x-[2px]"
+                      : "bg-[#161f28] text-[#F9D972] border-[#F9D972]/40 hover:border-[#F9D972] shadow-[2px_2px_0px_0px_rgba(0,206,196,0.15)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(0,206,196,0.25)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
                   }`}
                 >
                   Interested
@@ -106,8 +106,8 @@ export function LeadDetailWrapper({
                   }}
                   className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
                     lead.status === "NOT_PICKED"
-                      ? "bg-[#fb923c] text-white border-[#fb923c] shadow-none translate-y-[2px] translate-x-[2px]"
-                      : "bg-[#161f28] text-[#fb923c] border-[#fb923c]/40 hover:border-[#fb923c]/80 shadow-[2px_2px_0px_0px_rgba(251,146,60,0.15)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(251,146,60,0.25)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
+                      ? "bg-[#D88700] text-white border-[#D88700] shadow-none translate-y-[2px] translate-x-[2px]"
+                      : "bg-[#161f28] text-[#D88700] border-[#D88700]/40 hover:border-[#D88700]/80 shadow-[2px_2px_0px_0px_rgba(251,146,60,0.15)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(251,146,60,0.25)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
                   }`}
                 >
                   Not Picked
@@ -119,8 +119,8 @@ export function LeadDetailWrapper({
                   }}
                   className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
                     lead.status === "NOT_REACHABLE"
-                      ? "bg-[#fb923c] text-white border-[#fb923c] shadow-none translate-y-[2px] translate-x-[2px]"
-                      : "bg-[#161f28] text-[#fb923c] border-[#fb923c]/40 hover:border-[#fb923c]/80 shadow-[2px_2px_0px_0px_rgba(251,146,60,0.15)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(251,146,60,0.25)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
+                      ? "bg-[#D88700] text-white border-[#D88700] shadow-none translate-y-[2px] translate-x-[2px]"
+                      : "bg-[#161f28] text-[#D88700] border-[#D88700]/40 hover:border-[#D88700]/80 shadow-[2px_2px_0px_0px_rgba(251,146,60,0.15)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(251,146,60,0.25)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
                   }`}
                 >
                   Not Reachable
@@ -133,7 +133,7 @@ export function LeadDetailWrapper({
               <div className="flex flex-wrap items-center gap-3 justify-start md:justify-end">
                 <button
                   onClick={() => setShowConvertModal(true)}
-                  className="flex items-center gap-2 bg-[#00cec4] hover:bg-[#00b8af] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[#00cec4] shadow-[2px_2px_0px_0px_#008f88] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_#008f88] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
+                  className="flex items-center gap-2 bg-[#F9D972] hover:bg-[#E8C85D] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[#F9D972] shadow-[2px_2px_0px_0px_#008f88] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_#008f88] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
                 >
                   <RefreshCcw className="size-3.5" />
                   <span>Convert Lead</span>
@@ -159,7 +159,7 @@ export function LeadDetailWrapper({
           {/* Business Card Section */}
           <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
             <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
-              <Info className="size-4.5 text-[#00c4b6]" />
+              <Info className="size-4.5 text-[#F9D972]" />
               <h3 className="font-bold text-sm text-white uppercase tracking-wider">Business Card Details</h3>
             </div>
             
@@ -194,7 +194,7 @@ export function LeadDetailWrapper({
           {/* Lead Information Section */}
           <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
             <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
-              <Building className="size-4.5 text-[#00c4b6]" />
+              <Building className="size-4.5 text-[#F9D972]" />
               <h3 className="font-bold text-sm text-white uppercase tracking-wider">Lead Information</h3>
             </div>
 
@@ -228,17 +228,17 @@ export function LeadDetailWrapper({
 
           {/* Enquiry & Rates Worksheet Card */}
           {lead.status === "INTERESTED" && lead.enquiryDetails && (
-            <div className="p-6 rounded-xl bg-[#0f1319] border border-[#00cec4]/40 space-y-6">
+            <div className="p-6 rounded-xl bg-[#0f1319] border border-[#F9D972]/40 space-y-6">
               <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3 mb-2">
                 <div className="flex items-center gap-3">
-                  <div className="size-8 rounded-lg bg-[#00cec4]/10 text-[#00cec4] flex items-center justify-center font-bold text-sm">
+                  <div className="size-8 rounded-lg bg-[#F9D972]/10 text-[#F9D972] flex items-center justify-center font-bold text-sm">
                     {lead.enquiryDetails.type === "Sea" ? <Ship className="size-4.5" /> : <Plane className="size-4.5" />}
                   </div>
                   <h3 className="font-bold text-sm text-white uppercase tracking-wider">
                     Customer Enquiry Details ({lead.enquiryDetails.type})
                   </h3>
                 </div>
-                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#00cec4]/10 text-[#00cec4] border border-[#00cec4]/10">
+                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#F9D972]/10 text-[#F9D972] border border-[#F9D972]/10">
                   Active Enquiry
                 </span>
               </div>
@@ -357,7 +357,7 @@ export function LeadDetailWrapper({
                     Rates Worksheet (In-call rates & calculations)
                   </span>
                   {lead.enquiryDetails.seaType === "Import" && lead.enquiryDetails.seaLclFcl === "LCL" && (
-                    <span className="text-[10px] font-bold text-[#00cec4] uppercase tracking-wide bg-[#00cec4]/5 px-2 py-0.5 rounded border border-[#00cec4]/15">
+                    <span className="text-[10px] font-bold text-[#F9D972] uppercase tracking-wide bg-[#F9D972]/5 px-2 py-0.5 rounded border border-[#F9D972]/15">
                       Auto-Calculated Import LCL Rule Active
                     </span>
                   )}
@@ -440,7 +440,7 @@ export function LeadDetailWrapper({
                   <details className="group border border-[#1c212a]/30 rounded-lg p-3 bg-[#0a0d12]/40">
                     <summary className="text-[10px] font-bold uppercase tracking-wider text-slate-400 cursor-pointer list-none flex items-center justify-between select-none">
                       <span>View Raw Snapshot Payload</span>
-                      <span className="text-[#00c4b6] group-open:hidden">+ Expand</span>
+                      <span className="text-[#F9D972] group-open:hidden">+ Expand</span>
                       <span className="text-slate-500 hidden group-open:inline">- Collapse</span>
                     </summary>
                     <div className="mt-3 text-[10px] font-mono text-slate-400 bg-black/30 p-2 rounded max-h-48 overflow-y-auto whitespace-pre-wrap leading-relaxed border border-[#1c212a]/20">
@@ -455,7 +455,7 @@ export function LeadDetailWrapper({
           {/* Address & Tags Section */}
           <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
             <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
-              <MapPin className="size-4.5 text-[#00c4b6]" />
+              <MapPin className="size-4.5 text-[#F9D972]" />
               <h3 className="font-bold text-sm text-white uppercase tracking-wider">Address & Tags</h3>
             </div>
 
@@ -481,7 +481,7 @@ export function LeadDetailWrapper({
                 <div className="flex flex-wrap gap-1.5">
                   {lead.tags && lead.tags.length > 0 ? (
                     lead.tags.map((tg: string) => (
-                      <span key={tg} className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#161f28] text-[#00c4b6] border border-[#1c212a]">
+                      <span key={tg} className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#161f28] text-[#F9D972] border border-[#1c212a]">
                         {tg}
                       </span>
                     ))
@@ -514,7 +514,7 @@ export function LeadDetailWrapper({
               <button
                 onClick={() => setActiveTab("OVERVIEW")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "OVERVIEW" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "OVERVIEW" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Overview
@@ -522,7 +522,7 @@ export function LeadDetailWrapper({
               <button
                 onClick={() => setActiveTab("NOTES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "NOTES" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "NOTES" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Notes ({notes.length})
@@ -530,7 +530,7 @@ export function LeadDetailWrapper({
               <button
                 onClick={() => setActiveTab("ACTIVITIES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ACTIVITIES" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "ACTIVITIES" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Activities ({activities.length})
@@ -538,7 +538,7 @@ export function LeadDetailWrapper({
               <button
                 onClick={() => setActiveTab("ATTACHMENTS")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ATTACHMENTS" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "ATTACHMENTS" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Files ({attachments.length})
@@ -546,7 +546,7 @@ export function LeadDetailWrapper({
               <button
                 onClick={() => setActiveTab("TIMELINE")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "TIMELINE" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "TIMELINE" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Audit
@@ -554,7 +554,7 @@ export function LeadDetailWrapper({
               <button
                 onClick={() => setActiveTab("TIME_TRACKER")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "TIME_TRACKER" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "TIME_TRACKER" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Time Tracker ({workTimeLogs.length})
@@ -562,7 +562,7 @@ export function LeadDetailWrapper({
               <button
                 onClick={() => setActiveTab("CALLS")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "CALLS" ? "border-[#00c4b6] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "CALLS" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
                 }`}
               >
                 Calls ({calls.length})
@@ -806,7 +806,7 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={oceanFreight}
                 onChange={(e) => setOceanFreight(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -815,7 +815,7 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={cfsCharges}
                 onChange={(e) => setCfsCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -824,7 +824,7 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={customsClearance}
                 onChange={(e) => setCustomsClearance(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -833,7 +833,7 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={blCharges}
                 onChange={(e) => setBlCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
           </div>
@@ -845,7 +845,7 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={vgmCharges}
                 onChange={(e) => setVgmCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -854,7 +854,7 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
                   LCL Charges (INR)
                 </label>
                 {isImportLcl && (
-                  <span className="text-[9px] text-[#00cec4] font-medium">
+                  <span className="text-[9px] text-[#F9D972] font-medium">
                     Calculated: {volume} CBM × {calculatedLclRate}/CBM
                   </span>
                 )}
@@ -863,7 +863,7 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={lclCharges}
                 onChange={(e) => setLclCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -880,7 +880,7 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
                         value="750"
                         checked={lclDoOption === "750"}
                         onChange={() => setLclDoOption("750")}
-                        className="mr-1 size-3 bg-[#0a0d12] text-[#00cec4] border-[#1c212a]"
+                        className="mr-1 size-3 bg-[#0a0d12] text-[#F9D972] border-[#1c212a]"
                       />
                       750
                     </label>
@@ -891,7 +891,7 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
                         value="500"
                         checked={lclDoOption === "500"}
                         onChange={() => setLclDoOption("500")}
-                        className="mr-1 size-3 bg-[#0a0d12] text-[#00cec4] border-[#1c212a]"
+                        className="mr-1 size-3 bg-[#0a0d12] text-[#F9D972] border-[#1c212a]"
                       />
                       500
                     </label>
@@ -902,7 +902,7 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={doCharges}
                 onChange={(e) => setDoCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -911,7 +911,7 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={cfsCustoms}
                 onChange={(e) => setCfsCustoms(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
           </div>
@@ -925,7 +925,7 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={airFreight}
                 onChange={(e) => setAirFreight(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -934,7 +934,7 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={handlingCharges}
                 onChange={(e) => setHandlingCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -943,7 +943,7 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={customsClearance}
                 onChange={(e) => setCustomsClearance(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
           </div>
@@ -955,7 +955,7 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={awbCharges}
                 onChange={(e) => setAwbCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
             <div>
@@ -964,7 +964,7 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
                 type="number"
                 value={deliveryCharges}
                 onChange={(e) => setDeliveryCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
           </div>
@@ -974,12 +974,12 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
       {/* Summary & Save Action */}
       <div className="flex items-center justify-between pt-3 border-t border-[#1c212a]/30">
         <div className="text-sm font-semibold text-white">
-          Total Estimated Rates: <span className="text-[#00cec4] font-bold">₹{calculateTotal().toLocaleString("en-IN")}</span>
+          Total Estimated Rates: <span className="text-[#F9D972] font-bold">₹{calculateTotal().toLocaleString("en-IN")}</span>
         </div>
         <button
           type="submit"
           disabled={isSaving}
-          className="px-5 py-2 bg-[#00cec4] hover:bg-[#00b8af] disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-[#00cec4]/15"
+          className="px-5 py-2 bg-[#F9D972] hover:bg-[#E8C85D] disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-[#F9D972]/15"
         >
           {isSaving ? "Saving Worksheet..." : "Save Worksheet Rates"}
         </button>
@@ -1086,33 +1086,33 @@ function TimeTrackerPanel({ lead, workTimeLogs, quotes, timeline }: { lead: any;
   return (
     <div className="space-y-6 text-slate-300">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 bg-[#0a0d12]/50 border border-[#1c212a]/50 rounded-xl space-y-1.5 hover-cyan transition-all">
+        <div className="p-4 bg-[#0a0d12]/50 border border-[#1c212a]/50 rounded-xl space-y-1.5 monolith-hover transition-all">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
-            <Timer className="size-3.5 text-[#00cec4]" />
+            <Timer className="size-3.5 text-[#F9D972]" />
             Response Time
           </span>
           <div className="text-lg font-black text-white">{responseDurationStr}</div>
           <span className="text-[9px] text-slate-500 block truncate">Capture to first response</span>
         </div>
-        <div className="p-4 bg-[#0a0d12]/50 border border-[#1c212a]/50 rounded-xl space-y-1.5 hover-cyan transition-all">
+        <div className="p-4 bg-[#0a0d12]/50 border border-[#1c212a]/50 rounded-xl space-y-1.5 monolith-hover transition-all">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
-            <TrendingUp className="size-3.5 text-[#00cec4]" />
+            <TrendingUp className="size-3.5 text-[#F9D972]" />
             Conversion Time
           </span>
           <div className="text-lg font-black text-white">{conversionDurationStr}</div>
           <span className="text-[9px] text-slate-500 block truncate">Capture to account conversion</span>
         </div>
-        <div className="p-4 bg-[#0a0d12]/50 border border-[#1c212a]/50 rounded-xl space-y-1.5 hover-cyan transition-all">
+        <div className="p-4 bg-[#0a0d12]/50 border border-[#1c212a]/50 rounded-xl space-y-1.5 monolith-hover transition-all">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
-            <Clock className="size-3.5 text-[#00cec4]" />
+            <Clock className="size-3.5 text-[#F9D972]" />
             Quote Prep Time
           </span>
           <div className="text-lg font-black text-white">{quotePrepDurationStr}</div>
           <span className="text-[9px] text-slate-500 block truncate">Conversion to first quote draft</span>
         </div>
-        <div className="p-4 bg-[#0a0d12]/50 border border-[#1c212a]/50 rounded-xl space-y-1.5 hover-cyan transition-all">
+        <div className="p-4 bg-[#0a0d12]/50 border border-[#1c212a]/50 rounded-xl space-y-1.5 monolith-hover transition-all">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
-            <Clock className="size-3.5 text-[#00cec4]" />
+            <Clock className="size-3.5 text-[#F9D972]" />
             Submission SLA
           </span>
           <div className="text-lg font-black text-white">{submissionDurationStr}</div>
@@ -1123,7 +1123,7 @@ function TimeTrackerPanel({ lead, workTimeLogs, quotes, timeline }: { lead: any;
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-1 p-5 bg-[#0a0d12]/30 border border-[#1c212a]/40 rounded-xl space-y-4">
           <div className="flex items-center gap-2 border-b border-[#1c212a]/30 pb-2.5">
-            <Plus className="size-4 text-[#00cec4]" />
+            <Plus className="size-4 text-[#F9D972]" />
             <h4 className="text-xs font-bold uppercase tracking-wider text-white">Log Work Hours</h4>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -1132,7 +1132,7 @@ function TimeTrackerPanel({ lead, workTimeLogs, quotes, timeline }: { lead: any;
               <NativeSelect
                 value={activityType}
                 onChange={(e) => setActivityType(e.target.value)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-slate-300 focus:outline-none focus:border-[#00cec4]"
+                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-slate-300 focus:outline-none focus:border-[#F9D972]"
               >
                 {Object.entries(activityLabels).map(([key, value]) => (
                   <option key={key} value={key}>{value}</option>
@@ -1149,7 +1149,7 @@ function TimeTrackerPanel({ lead, workTimeLogs, quotes, timeline }: { lead: any;
                   min="0.1"
                   value={durationHours}
                   onChange={(e) => setDurationHours(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
                   required
                 />
               </div>
@@ -1159,7 +1159,7 @@ function TimeTrackerPanel({ lead, workTimeLogs, quotes, timeline }: { lead: any;
                   type="datetime-local"
                   value={loggedAt}
                   onChange={(e) => setLoggedAt(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-slate-300 focus:outline-none focus:border-[#00cec4]"
+                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-slate-300 focus:outline-none focus:border-[#F9D972]"
                   required
                 />
               </div>
@@ -1172,14 +1172,14 @@ function TimeTrackerPanel({ lead, workTimeLogs, quotes, timeline }: { lead: any;
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What details did you gather or process?"
                 rows={3}
-                className="w-full p-2.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#00cec4]"
+                className="w-full p-2.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
               />
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#00cec4] hover:bg-[#00b8af] disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-[#00cec4]/15"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#F9D972] hover:bg-[#E8C85D] disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-[#F9D972]/15"
             >
               <span>{isSubmitting ? "Logging Hours..." : "Log Work Time"}</span>
             </button>
@@ -1189,10 +1189,10 @@ function TimeTrackerPanel({ lead, workTimeLogs, quotes, timeline }: { lead: any;
         <div className="xl:col-span-2 p-5 bg-[#0a0d12]/30 border border-[#1c212a]/40 rounded-xl space-y-4">
           <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-2.5">
             <div className="flex items-center gap-2">
-              <History className="size-4 text-[#00cec4]" />
+              <History className="size-4 text-[#F9D972]" />
               <h4 className="text-xs font-bold uppercase tracking-wider text-white">Work Time Logs History</h4>
             </div>
-            <span className="text-[10px] font-bold text-[#00cec4] uppercase bg-[#00cec4]/10 px-2 py-0.5 rounded border border-[#00cec4]/10">
+            <span className="text-[10px] font-bold text-[#F9D972] uppercase bg-[#F9D972]/10 px-2 py-0.5 rounded border border-[#F9D972]/10">
               Total: {totalLoggedHours.toFixed(1)} hours
             </span>
           </div>
@@ -1210,7 +1210,7 @@ function TimeTrackerPanel({ lead, workTimeLogs, quotes, timeline }: { lead: any;
                       <span className="font-bold text-white uppercase text-[10px] bg-[#161f28] border border-[#1c212a] px-2 py-0.5 rounded">
                         {activityLabels[log.activityType] || log.activityType}
                       </span>
-                      <span className="text-[#00cec4] font-black">{log.durationHours} hr{log.durationHours === 1 ? "" : "s"}</span>
+                      <span className="text-[#F9D972] font-black">{log.durationHours} hr{log.durationHours === 1 ? "" : "s"}</span>
                       <span className="text-slate-500 font-semibold">•</span>
                       <span className="text-slate-400 font-medium">{log.user.name}</span>
                     </div>
@@ -1352,7 +1352,7 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
               onClick={() => setSelectedCallId(call.id)}
               className={`p-3 rounded-lg border cursor-pointer transition-all ${
                 selectedCallId === call.id
-                  ? "bg-[#161f28] border-[#00cec4]/70 shadow-[0_0_0_1px_rgba(0,206,196,0.2)]"
+                  ? "bg-[#161f28] border-[#F9D972]/70 shadow-[0_0_0_1px_rgba(0,206,196,0.2)]"
                   : "bg-[#0a0d12]/50 border-[#1c212a]/55 hover:border-slate-700"
               }`}
             >
@@ -1360,7 +1360,7 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                 <span className="font-bold text-slate-200">{call.salesperson?.name || "Agent"}</span>
                 {hasRecording && quality && (
                   <span className={`px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider ${
-                    quality >= 80 ? "bg-emerald-400/10 text-emerald-400 border border-emerald-400/20" : "bg-[#fb923c]/10 text-[#fb923c] border border-[#fb923c]/20"
+                    quality >= 80 ? "bg-emerald-400/10 text-emerald-400 border border-emerald-400/20" : "bg-[#D88700]/10 text-[#D88700] border border-[#D88700]/20"
                   }`}>
                     AI {quality}%
                   </span>
@@ -1373,7 +1373,7 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                 </span>
                 <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
                   (call.status === "COMPLETED" || rec?.uploadStatus === "UPLOADED") ? "text-emerald-400" :
-                  rec?.uploadStatus === "UPLOADING" ? "text-[#00cec4]" :
+                  rec?.uploadStatus === "UPLOADING" ? "text-[#F9D972]" :
                   rec?.uploadStatus === "CANCELLED" ? "text-amber-400" :
                   rec?.uploadStatus === "FAILED" ? "text-red-400" :
                   "text-amber-400"
@@ -1417,7 +1417,7 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                     <span className="font-bold text-white uppercase text-[10px] tracking-wide flex items-center gap-1.5">
                       <span className={`w-1.5 h-1.5 rounded-full ${
                         recording.uploadStatus === "UPLOADED" ? "bg-emerald-400" :
-                        recording.uploadStatus === "UPLOADING" ? "bg-[#00cec4] animate-pulse" :
+                        recording.uploadStatus === "UPLOADING" ? "bg-[#F9D972] animate-pulse" :
                         recording.uploadStatus === "CANCELLED" ? "bg-amber-400" :
                         "bg-red-400"
                       }`}></span>
@@ -1426,7 +1426,7 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                     <div className="flex items-center gap-2">
                       <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${
                         recording.uploadStatus === "UPLOADED" ? "bg-emerald-400/10 text-emerald-400" :
-                        recording.uploadStatus === "UPLOADING" ? "bg-cyan-400/10 text-[#00cec4] animate-pulse" :
+                        recording.uploadStatus === "UPLOADING" ? "bg-cyan-400/10 text-[#F9D972] animate-pulse" :
                         recording.uploadStatus === "CANCELLED" ? "bg-amber-400/10 text-amber-400" :
                         "bg-red-400/10 text-red-400"
                       }`}>
@@ -1435,7 +1435,7 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                       {recording.uploadStatus === "UPLOADED" && (
                         <a
                           href={`/api/crm/recordings/${recording.id}/download`}
-                          className="text-[10px] text-[#00cec4] font-bold uppercase hover:underline transition-all cursor-pointer"
+                          className="text-[10px] text-[#F9D972] font-bold uppercase hover:underline transition-all cursor-pointer"
                         >
                           Download MP3
                         </a>
@@ -1453,11 +1453,11 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                     <div className="space-y-1 py-1">
                       <div className="w-full bg-[#1c212a] h-1.5 rounded-full overflow-hidden">
                         <div
-                          className="bg-[#00cec4] h-1.5 rounded-full transition-all duration-300"
+                          className="bg-[#F9D972] h-1.5 rounded-full transition-all duration-300"
                           style={{ width: `${recording.uploadProgress || 0}%` }}
                         />
                       </div>
-                      <div className="flex justify-between text-[9px] text-[#00cec4] font-mono">
+                      <div className="flex justify-between text-[9px] text-[#F9D972] font-mono">
                         <span>Uploading from mobile...</span>
                         <span>{recording.uploadProgress || 0}%</span>
                       </div>
@@ -1495,7 +1495,7 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                   <button
                     onClick={() => setSubTab("TRANSCRIPT")}
                     className={`pb-1.5 text-[10px] font-bold uppercase tracking-wider border-b transition-all cursor-pointer ${
-                      subTab === "TRANSCRIPT" ? "border-[#00cec4] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
+                      subTab === "TRANSCRIPT" ? "border-[#F9D972] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
                     }`}
                   >
                     AI Transcript
@@ -1503,7 +1503,7 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                   <button
                     onClick={() => setSubTab("SUMMARY")}
                     className={`pb-1.5 text-[10px] font-bold uppercase tracking-wider border-b transition-all cursor-pointer ${
-                      subTab === "SUMMARY" ? "border-[#00cec4] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
+                      subTab === "SUMMARY" ? "border-[#F9D972] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
                     }`}
                   >
                     AI Analysis & Actions
@@ -1511,7 +1511,7 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                   <button
                     onClick={() => setSubTab("REVIEW")}
                     className={`pb-1.5 text-[10px] font-bold uppercase tracking-wider border-b transition-all cursor-pointer ${
-                      subTab === "REVIEW" ? "border-[#00cec4] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
+                      subTab === "REVIEW" ? "border-[#F9D972] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
                     }`}
                   >
                     Manager Quality Review ({recording.reviews?.length || 0})
@@ -1546,7 +1546,7 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                             </div>
                             <div>
                               <span className="font-bold text-slate-500 uppercase text-[9px] block">Objections Raised</span>
-                              <p className={`mt-1 font-bold ${transcript.objections === "None" ? "text-emerald-400" : "text-[#fb923c]"}`}>
+                              <p className={`mt-1 font-bold ${transcript.objections === "None" ? "text-emerald-400" : "text-[#D88700]"}`}>
                                 {transcript.objections}
                               </p>
                             </div>
@@ -1625,7 +1625,7 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                             <button
                               type="submit"
                               disabled={submitting}
-                              className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide cursor-pointer transition-all disabled:opacity-50"
+                              className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide cursor-pointer transition-all disabled:opacity-50"
                             >
                               {submitting ? "Submitting..." : "Submit Call Audit"}
                             </button>
@@ -1646,7 +1646,7 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                               <div key={rev.id} className="p-2.5 bg-[#0a0d12]/40 rounded border border-[#1c212a]/30 flex flex-col gap-1.5">
                                 <div className="flex items-center justify-between">
                                   <span className="font-bold text-slate-300">{rev.reviewer?.name || "Manager"}</span>
-                                  <span className="text-[#fb923c] font-bold">{"⭐".repeat(rev.rating)}</span>
+                                  <span className="text-[#D88700] font-bold">{"⭐".repeat(rev.rating)}</span>
                                 </div>
                                 {rev.comments && <p className="text-slate-400 text-xs font-normal pl-0.5 leading-normal">{rev.comments}</p>}
                                 <span className="text-[8px] text-slate-500 text-right pr-0.5">

@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { DropdownSelect } from "@/components/ui/dropdown-select";
-import { FilterMenu } from "@/components/ui/filter-menu";
-import { Input } from "@/components/ui/input";
+import { DropdownSelect } from "@/components/monolith/dropdown-select";
+import { FilterMenu } from "@/components/monolith/filter-menu";
+import { Input } from "@/components/monolith/input";
 
 type CycleOption = {
   id: string;
@@ -111,14 +111,14 @@ export function InProgressFilterMenu({
           <button
             type="button"
             onClick={clearFilters}
-            className="rounded-xl border border-outline-variant/40 px-3 py-2 text-sm text-on-surface-variant transition hover:border-[#00cec4]/45 hover:text-on-surface"
+            className="rounded-xl border border-mono-border/40 px-3 py-2 text-sm text-mono-muted transition hover:border-[#F9D972]/45 hover:text-mono-text"
           >
             Clear
           </button>
           <button
             type="button"
             onClick={applyFilters}
-            className="rounded-xl bg-[#00cec4] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#00b5ad]"
+            className="rounded-xl bg-[#F9D972] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#00b5ad]"
           >
             Apply filters
           </button>
@@ -177,14 +177,14 @@ export function EligibleAppraisalFilterMenu() {
             <button
               type="button"
               onClick={clearFilters}
-              className="rounded-xl border border-outline-variant/40 px-3 py-2 text-sm text-on-surface-variant transition hover:border-[#00cec4]/45 hover:text-on-surface"
+              className="rounded-xl border border-mono-border/40 px-3 py-2 text-sm text-mono-muted transition hover:border-[#F9D972]/45 hover:text-mono-text"
             >
               Clear
             </button>
             <button
               type="button"
               onClick={applyFilters}
-              className="rounded-xl bg-[#00cec4] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#00b5ad]"
+              className="rounded-xl bg-[#F9D972] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#00b5ad]"
             >
               Apply filters
             </button>
@@ -202,7 +202,7 @@ export function EligibleAppraisalFilterMenu() {
                 }).toString()}`
               : ""
           }`}
-          className="rounded-lg border border-outline-variant/40 px-3 py-1.5 text-sm text-on-surface-variant transition hover:border-[#00cec4]/45 hover:text-on-surface"
+          className="rounded-lg border border-mono-border/40 px-3 py-1.5 text-sm text-mono-muted transition hover:border-[#F9D972]/45 hover:text-mono-text"
         >
           Clear Filter
         </Link>

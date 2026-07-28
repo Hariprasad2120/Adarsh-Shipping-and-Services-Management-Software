@@ -1,6 +1,6 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import type { ChangeEvent } from "react";
@@ -10,7 +10,7 @@ import { GripVertical, ImagePlus, Plus, Trash2 } from "lucide-react";
 import { createEmptyLineItem, taxes, tdsOptions, units } from "../_lib/mock-data";
 import { formatMoney } from "../_lib/quote-calculations";
 import type { QuoteFormValues } from "../_lib/types";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/monolith/button";
 import { ItemAutocomplete } from "./ItemAutocomplete";
 import { getCurrencies } from "@/lib/items/currency-store";
 import { getAllItems } from "@/lib/items/item-store";
@@ -105,7 +105,7 @@ export function LineItemRow({
     <tr
       className={[
         "border-b border-[#eef2f6] align-top transition-colors",
-        isDragTarget ? "bg-[#00cec4]/5" : "bg-white",
+        isDragTarget ? "bg-[#F9D972]/5" : "bg-white",
       ].join(" ")}
       onDragOver={(event) => onDragOver(index, event)}
       onDrop={() => onDrop(index)}
@@ -116,7 +116,7 @@ export function LineItemRow({
           type="button"
           draggable
           onDragStart={() => onDragStart(index)}
-          className="rounded-md p-1 text-[#94a3b8] transition-colors hover:bg-[#00cec4]/10 hover:text-[#00cec4] cursor-grab active:cursor-grabbing"
+          className="rounded-md p-1 text-[#94a3b8] transition-colors hover:bg-[#F9D972]/10 hover:text-[#F9D972] cursor-grab active:cursor-grabbing"
           aria-label={`Reorder item ${index + 1}`}
           title="Drag to reorder"
         >
@@ -136,7 +136,7 @@ export function LineItemRow({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex size-9 overflow-hidden items-center justify-center rounded-md border border-[#d9dee7] bg-[#f8fafc] text-[#9ca3af] transition-colors hover:border-[#00cec4] hover:bg-[#00cec4]/10 hover:text-[#00cec4]"
+              className="flex size-9 overflow-hidden items-center justify-center rounded-md border border-[#d9dee7] bg-[#f8fafc] text-[#9ca3af] transition-colors hover:border-[#F9D972] hover:bg-[#F9D972]/10 hover:text-[#F9D972]"
               aria-label="Upload item image"
               title="Upload item image"
             >
@@ -422,14 +422,14 @@ export function LineItemsTable({ form }: LineItemsTableProps) {
 
       <div className="mt-3 flex flex-wrap gap-2">
         <Button
-          className="h-9 bg-[#00cec4] px-3 text-[12px] text-white hover:bg-[#00b8af]"
+          className="h-9 bg-[#F9D972] px-3 text-[12px] text-white hover:bg-[#E8C85D]"
           onClick={() => append(createEmptyLineItem())}
         >
           <Plus className="mr-1 size-4" />
           Add New Row
         </Button>
         <Button
-          className="h-9 bg-[#00cec4] px-3 text-[12px] text-white hover:bg-[#00b8af]"
+          className="h-9 bg-[#F9D972] px-3 text-[12px] text-white hover:bg-[#E8C85D]"
           onClick={() => append(createEmptyLineItem())}
         >
           <Plus className="mr-1 size-4" />

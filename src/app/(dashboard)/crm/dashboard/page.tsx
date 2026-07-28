@@ -119,7 +119,7 @@ export default async function CrmDashboardPage() {
         <DemoDataButton />
         <Link
           href="/crm/leads/new"
-          className="flex items-center gap-2 bg-[#00c4b6] hover:bg-[#00b0a3] text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[#00c4b6]/10 cursor-pointer"
+          className="flex items-center gap-2 bg-[#F9D972] hover:bg-[#00b0a3] text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
         >
           <span>+ Add Lead</span>
         </Link>
@@ -142,7 +142,7 @@ export default async function CrmDashboardPage() {
             <div className="text-xs text-slate-400 flex items-center gap-1.5 pt-1">
               <span className="text-emerald-400 font-bold">+{newLeadsThisMonth}</span> new this month
               <span className="text-slate-600">|</span>
-              <span className="text-[#00c4b6] font-bold">{convertedLeads}</span> converted
+              <span className="text-[#F9D972] font-bold">{convertedLeads}</span> converted
             </div>
           </div>
           <div className="p-3 bg-[#818cf8]/10 text-[#818cf8] rounded-lg">
@@ -161,7 +161,7 @@ export default async function CrmDashboardPage() {
               <span className="text-emerald-400 font-bold">{wonDeals.length}</span> won
             </div>
           </div>
-          <div className="p-3 bg-[#00c4b6]/10 text-[#00c4b6] rounded-lg">
+          <div className="p-3 bg-[#F9D972]/10 text-[#F9D972] rounded-lg">
             <Target className="size-5" />
           </div>
         </div>
@@ -184,7 +184,7 @@ export default async function CrmDashboardPage() {
         <div className="p-5 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 flex items-start justify-between">
           <div className="space-y-2">
             <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">Won Revenue</span>
-            <div className="text-3xl font-black text-[#00c4b6]">₹{(revenueTotal / 100000).toFixed(1)}L</div>
+            <div className="text-3xl font-black text-[#F9D972]">₹{(revenueTotal / 100000).toFixed(1)}L</div>
             <div className="text-xs text-slate-400 flex items-center gap-1.5 pt-1">
               <span className="text-slate-400">₹{(pendingRevenue / 100000).toFixed(1)}L pending invoices</span>
             </div>
@@ -231,7 +231,7 @@ export default async function CrmDashboardPage() {
                             ? "bg-emerald-500"
                             : stage === "LOST"
                             ? "bg-red-500"
-                            : "bg-[#00c4b6]"
+                            : "bg-[#F9D972]"
                         }`}
                       />
                     </div>
@@ -245,7 +245,7 @@ export default async function CrmDashboardPage() {
           <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
             <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3">
               <h3 className="font-bold text-sm text-white uppercase tracking-wider">Recently Acquired Leads</h3>
-              <Link href="/crm/leads" className="text-xs text-[#00c4b6] hover:underline flex items-center gap-1 font-semibold cursor-pointer">
+              <Link href="/crm/leads" className="text-xs text-[#F9D972] hover:underline flex items-center gap-1 font-semibold cursor-pointer">
                 <span>All Leads</span>
                 <ChevronRight className="size-3" />
               </Link>
@@ -258,7 +258,7 @@ export default async function CrmDashboardPage() {
                 {recentLeads.map((lead) => (
                   <div key={lead.id} className="py-3 flex items-center justify-between">
                     <div>
-                      <Link href={`/crm/leads/${lead.id}`} className="font-bold text-white hover:text-[#00c4b6] transition-colors block text-sm">
+                      <Link href={`/crm/leads/${lead.id}`} className="font-bold text-white hover:text-[#F9D972] transition-colors block text-sm">
                         {lead.firstName ? `${lead.firstName} ` : ""}{lead.lastName}
                       </Link>
                       <span className="text-xs text-slate-400">{lead.company} • Owner: {lead.owner.name}</span>
@@ -316,7 +316,7 @@ export default async function CrmDashboardPage() {
                 <Clock className="size-3.5 text-amber-500" />
                 <span>Overdue: {activities.filter(a => a.dueAt && new Date(a.dueAt) < new Date()).length} tasks</span>
               </div>
-              <Link href="/crm/tasks" className="text-[#00c4b6] hover:underline font-semibold flex items-center cursor-pointer">
+              <Link href="/crm/tasks" className="text-[#F9D972] hover:underline font-semibold flex items-center cursor-pointer">
                 <span>Manage</span>
                 <ChevronRight className="size-3" />
               </Link>

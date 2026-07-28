@@ -27,7 +27,7 @@ export default function HRModule({ employees }: Props) {
             PROTOCOL REFERENCE // 02
           </span>
         </div>
-        <h2 className="ds-h2 text-black md:text-[1.75rem]">
+        <h2 className="monolith-h2 text-black md:text-[1.75rem]">
           HR Workforce Suite
         </h2>
         <p className="text-sm text-neutral-600 leading-relaxed max-w-xl">
@@ -74,7 +74,7 @@ export default function HRModule({ employees }: Props) {
       {/* HR Workforce Database Scheme checklist */}
       <div className="border border-neutral-200 bg-white rounded-lg p-6 space-y-6">
         <div>
-          <h3 className="ds-h3 border-b border-neutral-100 pb-2 text-black">
+          <h3 className="monolith-h3 border-b border-neutral-100 pb-2 text-black">
             DEMOGRAPHICS & LIFECYCLE PARALLEL WORKFLOWS
           </h3>
           <p className="text-xs text-neutral-500 mt-1">

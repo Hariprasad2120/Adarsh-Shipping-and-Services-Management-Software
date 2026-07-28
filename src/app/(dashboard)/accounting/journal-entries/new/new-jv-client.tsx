@@ -1,7 +1,7 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
-import { DateInput } from "@/components/ui/date-input";
+import { NativeSelect } from "@/components/monolith/native-select";
+import { DateInput } from "@/components/monolith/date-input";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -110,13 +110,13 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
       {/* ─── VOUCHER PROPERTIES ────────────────────────────────────────── */}
       <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
         <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-          <Calendar className="size-4.5 text-[#00cec4]" />
+          <Calendar className="size-4.5 text-[#F9D972]" />
           <h3 className="font-bold text-xs text-white uppercase tracking-wider">Voucher Header Details</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Posting Date</label>
+            <label className="monolith-label block text-slate-400">Posting Date</label>
             <DateInput
               required
               value={postingDate}
@@ -126,7 +126,7 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
           </div>
 
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">Branch Dimension</label>
+            <label className="monolith-label block text-slate-400">Branch Dimension</label>
             <NativeSelect
               value={branchId}
               onChange={(e) => setBranchId(e.target.value)}
@@ -140,7 +140,7 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
           </div>
 
           <div className="space-y-1">
-            <label className="ds-label block text-slate-400">General Remarks</label>
+            <label className="monolith-label block text-slate-400">General Remarks</label>
             <input
               type="text"
               placeholder="e.g. Month-end depreciation adjustment"
@@ -156,14 +156,14 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
       <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
         <div className="flex justify-between items-center border-b border-[#1c212a]/30 pb-3">
           <h3 className="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-2">
-            <Landmark className="size-4.5 text-[#00cec4]" /> Debit & Credit Distribution Lines
+            <Landmark className="size-4.5 text-[#F9D972]" /> Debit & Credit Distribution Lines
           </h3>
           <button
             type="button"
             onClick={handleAddLine}
             className="flex items-center gap-1 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-200 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
           >
-            <Plus className="size-3.5 text-[#00cec4]" />
+            <Plus className="size-3.5 text-[#F9D972]" />
             <span>Add Row</span>
           </button>
         </div>
@@ -174,7 +174,7 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
               
               {/* Account Dropdown */}
               <div className="flex-1 space-y-1 w-full">
-                <label className="ds-label text-slate-500 md:hidden">Account</label>
+                <label className="monolith-label text-slate-500 md:hidden">Account</label>
                 <NativeSelect
                   required
                   value={line.accountId}
@@ -190,7 +190,7 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
 
               {/* Debit */}
               <div className="w-full md:w-36 space-y-1">
-                <label className="ds-label text-slate-500 md:hidden">Debit</label>
+                <label className="monolith-label text-slate-500 md:hidden">Debit</label>
                 <input
                   type="number"
                   step="0.01"
@@ -204,7 +204,7 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
 
               {/* Credit */}
               <div className="w-full md:w-36 space-y-1">
-                <label className="ds-label text-slate-500 md:hidden">Credit</label>
+                <label className="monolith-label text-slate-500 md:hidden">Credit</label>
                 <input
                   type="number"
                   step="0.01"
@@ -218,7 +218,7 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
 
               {/* Row Remarks */}
               <div className="flex-1 space-y-1 w-full">
-                <label className="ds-label text-slate-500 md:hidden">Description</label>
+                <label className="monolith-label text-slate-500 md:hidden">Description</label>
                 <input
                   type="text"
                   placeholder="Line description..."
@@ -245,17 +245,17 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
           <div className="flex gap-4">
             <div>
               <span className="text-slate-400 block mb-0.5">Total Debit:</span>
-              <span className="ds-numeric text-white text-sm font-bold">₹{totalDebit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+              <span className="monolith-numeric text-white text-sm font-bold">₹{totalDebit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
             </div>
             <div>
               <span className="text-slate-400 block mb-0.5">Total Credit:</span>
-              <span className="ds-numeric text-white text-sm font-bold">₹{totalCredit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+              <span className="monolith-numeric text-white text-sm font-bold">₹{totalCredit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
             </div>
           </div>
 
           <div className="text-center sm:text-right">
             <span className="text-slate-400 block mb-0.5">Difference:</span>
-            <span className={`ds-numeric text-sm font-bold ${isBalanced ? "text-emerald-400" : "text-[#fb923c]"}`}>
+            <span className={`monolith-numeric text-sm font-bold ${isBalanced ? "text-emerald-400" : "text-[#D88700]"}`}>
               ₹{difference.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               {isBalanced ? " (Balanced)" : " (Unbalanced)"}
             </span>
@@ -271,9 +271,9 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
             id="submitImmediately"
             checked={submitImmediately}
             onChange={(e) => setSubmitImmediately(e.target.checked)}
-            className="size-4 accent-[#00cec4] rounded bg-slate-900 border-[#1c212a] cursor-pointer"
+            className="size-4 accent-[#F9D972] rounded bg-slate-900 border-[#1c212a] cursor-pointer"
           />
-          <label htmlFor="submitImmediately" className="ds-label block text-slate-200 cursor-pointer">
+          <label htmlFor="submitImmediately" className="monolith-label block text-slate-200 cursor-pointer">
             Post directly to General Ledger? (Skip Draft status)
           </label>
         </div>
@@ -281,7 +281,7 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
         <button
           type="submit"
           disabled={isSaving}
-          className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-6 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+          className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-6 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
         >
           {isSaving ? (
             <>

@@ -1,11 +1,11 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/monolith/card";
+import { Button } from "@/components/monolith/button";
 import { updateTicketStatusAction, assignTicketAction } from "./actions";
 import { MessageSquare, User, Calendar, AlertTriangle, ArrowRight, Shield } from "lucide-react";
 
@@ -33,11 +33,11 @@ const STATUS_COLORS: Record<string, string> = {
   OPEN: "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-900/30",
   IN_PROGRESS: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-900/30",
   RESOLVED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/30",
-  CLOSED: "bg-surface-container-high text-on-surface-variant dark:bg-slate-800/40 dark:text-slate-400 border-outline-variant dark:border-slate-700/30",
+  CLOSED: "bg-mono-soft text-mono-muted dark:bg-slate-800/40 dark:text-slate-400 border-mono-border dark:border-slate-700/30",
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  LOW: "bg-surface-container-high text-on-surface-variant dark:bg-slate-800/40 dark:text-slate-400",
+  LOW: "bg-mono-soft text-mono-muted dark:bg-slate-800/40 dark:text-slate-400",
   MEDIUM: "bg-amber-100 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400",
   HIGH: "bg-orange-100 text-orange-600 dark:bg-orange-950/30 dark:text-orange-400",
   URGENT: "bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40",
@@ -124,19 +124,19 @@ export function TicketsClient({
   return (
     <div className="space-y-6">
       {/* Search & Filter Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-surface-container-low dark:bg-surface-container-lowest/50 p-4 rounded-xl border border-outline-variant/40">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-mono-soft dark:bg-mono-soft/50 p-4 rounded-xl border border-mono-border/40">
         <div className="flex-1 min-w-[280px]">
           <input
             type="text"
             placeholder="Search tickets by title, category, description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-lg border border-outline-variant/60 bg-surface px-4 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#00cec4] transition"
+            className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-4 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#F9D972] transition"
           />
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 bg-surface rounded-lg p-0.5 border border-outline-variant/60">
+          <div className="flex items-center gap-1.5 bg-mono-card rounded-lg p-0.5 border border-mono-border/60">
             {["ALL", "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"].map((s) => {
               const count = s === "ALL" ? tickets.length : tickets.filter((t) => t.status === s).length;
               return (
@@ -145,8 +145,8 @@ export function TicketsClient({
                   onClick={() => setStatusFilter(s)}
                   className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase transition ${
                     statusFilter === s
-                      ? "bg-[#00cec4] text-white"
-                      : "text-on-surface-variant hover:text-slate-900 dark:hover:text-white"
+                      ? "bg-[#F9D972] text-white"
+                      : "text-mono-muted hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
                   {s.replace("_", " ")} ({count})
@@ -158,7 +158,7 @@ export function TicketsClient({
           <NativeSelect
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="rounded-lg border border-outline-variant/60 bg-surface px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:border-[#00cec4] transition"
+            className="rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:border-[#F9D972] transition"
           >
             <option value="ALL">All Priorities</option>
             <option value="LOW">Low</option>
@@ -171,7 +171,7 @@ export function TicketsClient({
 
       {/* Ticket Cards List */}
       {filteredTickets.length === 0 ? (
-        <Card className="border-0 shadow-sm bg-surface">
+        <Card className="border-0 shadow-sm bg-mono-card">
           <CardContent className="py-16 text-center text-slate-400/80 text-sm font-medium">
             No support tickets match the current filters.
           </CardContent>
@@ -181,7 +181,7 @@ export function TicketsClient({
           {filteredTickets.map((ticket) => (
             <Card
               key={ticket.id}
-              className={`border-0 shadow-sm border-l-4 bg-surface transition hover:shadow-md ${
+              className={`border-0 shadow-sm border-l-4 bg-mono-card transition hover:shadow-md ${
                 ticket.priority === "URGENT"
                   ? "border-l-rose-500"
                   : ticket.priority === "HIGH"
@@ -210,14 +210,14 @@ export function TicketsClient({
                       {ticket.title}
                     </h3>
 
-                    <p className="text-xs text-on-surface-variant dark:text-slate-400 line-clamp-1">
+                    <p className="text-xs text-mono-muted dark:text-slate-400 line-clamp-1">
                       {ticket.description}
                     </p>
 
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-400 font-semibold">
                       <span className="flex items-center gap-1">
                         <User className="size-3.5" />
-                        Raised by: <span className="text-on-surface-variant dark:text-slate-300 font-bold">{ticket.raisedBy.name}</span>
+                        Raised by: <span className="text-mono-muted dark:text-slate-300 font-bold">{ticket.raisedBy.name}</span>
                         {ticket.raisedBy.designation && ` (${ticket.raisedBy.designation})`}
                       </span>
                       <span className="flex items-center gap-1">
@@ -231,7 +231,7 @@ export function TicketsClient({
                         })}</span>
                       </span>
                       {ticket.comments.length > 0 && (
-                        <span className="flex items-center gap-1 text-[#00cec4]">
+                        <span className="flex items-center gap-1 text-[#F9D972]">
                           <MessageSquare className="size-3.5" />
                           {ticket.comments.length} reply{ticket.comments.length > 1 ? "ies" : ""}
                         </span>
@@ -240,7 +240,7 @@ export function TicketsClient({
                   </div>
 
                   {/* Right side actions */}
-                  <div className="flex flex-wrap items-center gap-4 shrink-0 md:border-l md:border-outline-variant/30 md:pl-5">
+                  <div className="flex flex-wrap items-center gap-4 shrink-0 md:border-l md:border-mono-border/30 md:pl-5">
                     {/* Admin Status/Assign controls */}
                     {isAdmin ? (
                       <div className="flex flex-col gap-2 min-w-[140px]">
@@ -252,7 +252,7 @@ export function TicketsClient({
                             value={ticket.assignee?.id || ""}
                             onChange={(e) => handleAssigneeChange(ticket.id, e.target.value)}
                             disabled={assignPending}
-                            className="w-full rounded border border-outline-variant/60 bg-surface px-2.5 py-1 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-[#00cec4]"
+                            className="w-full rounded border border-mono-border/60 bg-mono-card px-2.5 py-1 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-[#F9D972]"
                           >
                             <option value="">Unassigned</option>
                             {admins.map((u) => (
@@ -271,7 +271,7 @@ export function TicketsClient({
                             value={ticket.status}
                             onChange={(e) => handleStatusChange(ticket.id, e.target.value)}
                             disabled={statusPending}
-                            className="w-full rounded border border-outline-variant/60 bg-surface px-2.5 py-1 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-[#00cec4]"
+                            className="w-full rounded border border-mono-border/60 bg-mono-card px-2.5 py-1 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-[#F9D972]"
                           >
                             <option value="OPEN">Open</option>
                             <option value="IN_PROGRESS">In Progress</option>
@@ -283,7 +283,7 @@ export function TicketsClient({
                     ) : (
                       <div className="flex flex-col gap-1 min-w-[130px] text-xs text-slate-400 font-semibold">
                         <span className="flex items-center gap-1.5">
-                          <Shield className="size-3.5 text-[#00cec4]" />
+                          <Shield className="size-3.5 text-[#F9D972]" />
                           Assignee:
                         </span>
                         <span className="text-slate-700 dark:text-slate-300 font-bold ml-5">

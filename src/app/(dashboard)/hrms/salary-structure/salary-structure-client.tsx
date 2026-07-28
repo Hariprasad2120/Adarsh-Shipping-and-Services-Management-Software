@@ -4,10 +4,10 @@ import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { FileSpreadsheet, IndianRupee, TrendingUp } from "lucide-react";
 import { DemoFillButton } from "@/components/demo-fill-button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { DropdownSelect } from "@/components/ui/dropdown-select";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
+import { Button } from "@/components/monolith/button";
+import { DropdownSelect } from "@/components/monolith/dropdown-select";
+import { Input } from "@/components/monolith/input";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { getSalaryDemoValues } from "@/lib/demo-fill";
 import {cityLabel,computeSalary,formatINR,type City,type InsuranceCoverage,type PFType,type SalaryInputs,type TaxRegime,} from "@/modules/hrms/salary-structure";
@@ -58,13 +58,13 @@ function Row({
   highlight?: boolean;
 }) {
   return (
-    <tr className={highlight ? "bg-surface-container-low font-semibold" : ""}>
-      <td className="px-4 py-3 text-sm text-on-surface">
+    <tr className={highlight ? "bg-mono-soft font-semibold" : ""}>
+      <td className="px-4 py-3 text-sm text-mono-text">
         {label}
-        {note ? <span className="ml-1.5 text-xs text-on-surface-variant">({note})</span> : null}
+        {note ? <span className="ml-1.5 text-xs text-mono-muted">({note})</span> : null}
       </td>
-      <td className="ds-numeric px-4 py-3 text-right text-sm text-on-surface">₹{formatNumber(monthly)}</td>
-      <td className="ds-numeric px-4 py-3 text-right text-sm text-on-surface">₹{formatNumber(annual)}</td>
+      <td className="monolith-numeric px-4 py-3 text-right text-sm text-mono-text">₹{formatNumber(monthly)}</td>
+      <td className="monolith-numeric px-4 py-3 text-right text-sm text-mono-text">₹{formatNumber(annual)}</td>
     </tr>
   );
 }
@@ -81,11 +81,11 @@ function SummaryCard({
   tone: string;
 }) {
   return (
-    <Card className="rounded-[22px] border-outline-variant/40 shadow-ambient">
+    <Card className="rounded-[22px] border-mono-border/40 shadow-ambient">
       <CardContent className="p-5">
         <p className={`text-xs font-medium ${tone}`}>{label}</p>
-        <p className="ds-numeric mt-1 text-3xl font-semibold tracking-tight text-on-surface">₹{formatNumber(value)}</p>
-        <p className="ds-numeric mt-1 text-xs text-on-surface-variant">₹{formatNumber(annual)} / yr</p>
+        <p className="monolith-numeric mt-1 text-3xl font-semibold tracking-tight text-mono-text">₹{formatNumber(value)}</p>
+        <p className="monolith-numeric mt-1 text-xs text-mono-muted">₹{formatNumber(annual)} / yr</p>
       </CardContent>
     </Card>
   );
@@ -101,8 +101,8 @@ function TableCard({
   rows: Array<{ label: string; monthly: number; annual: number; note?: string; highlight?: boolean }>;
 }) {
   return (
-    <Card className="overflow-hidden rounded-[24px] border-outline-variant/40 shadow-ambient">
-      <CardHeader className="border-b border-outline-variant/20 pb-4">
+    <Card className="overflow-hidden rounded-[24px] border-mono-border/40 shadow-ambient">
+      <CardHeader className="border-b border-mono-border/20 pb-4">
         <CardTitle className="flex items-center gap-2 text-base">
           {icon}
           {title}
@@ -111,11 +111,11 @@ function TableCard({
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-surface-container-low">
+            <thead className="bg-mono-soft">
               <tr>
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.14em] text-on-surface-variant">Component</th>
-                <th className="px-4 py-3 text-right text-xs uppercase tracking-[0.14em] text-on-surface-variant">Monthly</th>
-                <th className="px-4 py-3 text-right text-xs uppercase tracking-[0.14em] text-on-surface-variant">Annual</th>
+                <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.14em] text-mono-muted">Component</th>
+                <th className="px-4 py-3 text-right text-xs uppercase tracking-[0.14em] text-mono-muted">Monthly</th>
+                <th className="px-4 py-3 text-right text-xs uppercase tracking-[0.14em] text-mono-muted">Annual</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/20">
@@ -254,11 +254,11 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
 
   return (
     <div className="space-y-6">
-      <Card className="ds-shell-lg border-outline-variant/40 shadow-ambient">
+      <Card className="monolith-shell-lg border-mono-border/40 shadow-ambient">
         <CardHeader className="pb-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <FileSpreadsheet className="size-4 text-[#00cec4]" />
+              <FileSpreadsheet className="size-4 text-[#F9D972]" />
               Salary Inputs
             </CardTitle>
             <DemoFillButton disabled={saving} onClick={fillDemoData} />
@@ -267,7 +267,7 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
         <CardContent className="space-y-5">
           {employees.length > 0 ? (
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-on-surface">Employee (optional)</label>
+              <label className="text-sm font-medium text-mono-text">Employee (optional)</label>
               <DropdownSelect
                 ariaLabel="Employee"
                 onValueChange={(nextEmployeeId) => {
@@ -293,32 +293,32 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-on-surface">Employee Name</label>
+              <label className="text-sm font-medium text-mono-text">Employee Name</label>
               <Input
                 value={employeeName}
                 onChange={(event) => setEmployeeName(event.target.value)}
                 placeholder="Full name"
-                className="placeholder:text-on-surface-variant/60 dark:placeholder:text-on-surface-variant"
+                className="placeholder:text-mono-muted/60 dark:placeholder:text-mono-muted"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-on-surface">Role / Designation</label>
+              <label className="text-sm font-medium text-mono-text">Role / Designation</label>
               <Input
                 value={employeeRole}
                 onChange={(event) => setEmployeeRole(event.target.value)}
                 placeholder="e.g. Manager"
-                className="placeholder:text-on-surface-variant/60 dark:placeholder:text-on-surface-variant"
+                className="placeholder:text-mono-muted/60 dark:placeholder:text-mono-muted"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-on-surface">Date of Joining</label>
+              <label className="text-sm font-medium text-mono-text">Date of Joining</label>
               <Input type="date" value={dateOfJoining} onChange={(event) => setDateOfJoining(event.target.value)} />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 border-t border-outline-variant/20 pt-5 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 border-t border-mono-border/20 pt-5 md:grid-cols-3">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-on-surface">Annual CTC (₹)</label>
+              <label className="text-sm font-medium text-mono-text">Annual CTC (₹)</label>
               <Input
                 type="number"
                 min={0}
@@ -326,11 +326,11 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
                 value={inputs.annualCTC === 0 ? "" : inputs.annualCTC}
                 onChange={(event) => set("annualCTC", Number(event.target.value) || 0)}
                 placeholder="0"
-                className="placeholder:text-on-surface-variant/60 dark:placeholder:text-on-surface-variant"
+                className="placeholder:text-mono-muted/60 dark:placeholder:text-mono-muted"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-on-surface">PF Type</label>
+              <label className="text-sm font-medium text-mono-text">PF Type</label>
               <DropdownSelect
                 ariaLabel="PF Type"
                 onValueChange={(value) => set("pfType", value as PFType)}
@@ -339,7 +339,7 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-on-surface">City</label>
+              <label className="text-sm font-medium text-mono-text">City</label>
               <DropdownSelect
                 ariaLabel="City"
                 onValueChange={(value) => set("city", value as City)}
@@ -348,18 +348,18 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-on-surface">Monthly Incentive (₹)</label>
+              <label className="text-sm font-medium text-mono-text">Monthly Incentive (₹)</label>
               <Input
                 type="number"
                 min={0}
                 value={inputs.monthlyIncentive === 0 ? "" : inputs.monthlyIncentive}
                 onChange={(event) => set("monthlyIncentive", Number(event.target.value) || 0)}
                 placeholder="0"
-                className="placeholder:text-on-surface-variant/60 dark:placeholder:text-on-surface-variant"
+                className="placeholder:text-mono-muted/60 dark:placeholder:text-mono-muted"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-on-surface">Insurance Coverage</label>
+              <label className="text-sm font-medium text-mono-text">Insurance Coverage</label>
               <DropdownSelect
                 ariaLabel="Insurance Coverage"
                 onValueChange={(value) => set("insurance", value as InsuranceCoverage)}
@@ -368,7 +368,7 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-on-surface">Tax Regime</label>
+              <label className="text-sm font-medium text-mono-text">Tax Regime</label>
               <DropdownSelect
                 ariaLabel="Tax Regime"
                 onValueChange={(value) => set("taxRegime", value as TaxRegime)}
@@ -383,15 +383,15 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
       <div id="salary-print-area" className="space-y-6">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <SummaryCard label="Monthly CTC" value={breakup.monthlyCTC} annual={breakup.monthlyCTC * 12} tone="text-[#00a7a0]" />
-          <SummaryCard label="Gross Monthly" value={breakup.gross} annual={breakup.annualGross} tone="text-[#00b8af]" />
+          <SummaryCard label="Gross Monthly" value={breakup.gross} annual={breakup.annualGross} tone="text-[#E8C85D]" />
           <SummaryCard label="In-Hand Monthly" value={breakup.inHand} annual={breakup.annualInHand} tone="text-[#00A278]" />
           <SummaryCard label="Final Take Home" value={breakup.finalTakeHome} annual={breakup.annualFinalTakeHome} tone="text-[#0B8B8F]" />
         </div>
 
-        <div className="flex flex-wrap gap-2 text-xs text-on-surface-variant">
-          <span className="rounded-full bg-surface-container-low px-3 py-1">{insuranceBadge}</span>
+        <div className="flex flex-wrap gap-2 text-xs text-mono-muted">
+          <span className="rounded-full bg-mono-soft px-3 py-1">{insuranceBadge}</span>
           <span className="rounded-full bg-green-100 px-3 py-1 text-green-700 dark:bg-green-900/30 dark:text-green-300">{taxNote}</span>
-          <span className="rounded-full bg-surface-container-low px-3 py-1">PT: {cityLabel(inputs.city)} · ₹{formatNumber(breakup.professionalTax)}/mo</span>
+          <span className="rounded-full bg-mono-soft px-3 py-1">PT: {cityLabel(inputs.city)} · ₹{formatNumber(breakup.professionalTax)}/mo</span>
         </div>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.98fr)]">
@@ -400,15 +400,15 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
           <div className="space-y-6">
             <TableCard icon={<IndianRupee className="size-4" />} title="Offer Letter Structure" rows={offerRows} />
 
-            <Card className="rounded-[24px] border-outline-variant/40 shadow-ambient">
+            <Card className="rounded-[24px] border-mono-border/40 shadow-ambient">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Salary Notes</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 text-sm text-on-surface-variant">
-                {employeeName ? <p><span className="font-medium text-on-surface">Employee:</span> {employeeName}</p> : null}
-                {employeeRole ? <p><span className="font-medium text-on-surface">Role:</span> {employeeRole}</p> : null}
-                {dateOfJoining ? <p><span className="font-medium text-on-surface">DOJ:</span> {new Date(dateOfJoining).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p> : null}
-                <div className="border-t border-outline-variant/20 pt-3 text-xs leading-6">
+              <CardContent className="space-y-3 text-sm text-mono-muted">
+                {employeeName ? <p><span className="font-medium text-mono-text">Employee:</span> {employeeName}</p> : null}
+                {employeeRole ? <p><span className="font-medium text-mono-text">Role:</span> {employeeRole}</p> : null}
+                {dateOfJoining ? <p><span className="font-medium text-mono-text">DOJ:</span> {new Date(dateOfJoining).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p> : null}
+                <div className="border-t border-mono-border/20 pt-3 text-xs leading-6">
                   <p>• Basic is 50% of CTC.</p>
                   <p>• HRA based on city ({cityLabel(inputs.city)}) — {inputs.city === "CHENNAI" ? "50%" : "40%"} of basic.</p>
                   <p>• PF applied as per {inputs.pfType === "CAPPED" ? "Capped" : "Uncapped"} method.</p>
@@ -420,11 +420,11 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
               </CardContent>
             </Card>
 
-            <Card className="rounded-[24px] border-outline-variant/40 shadow-ambient print:hidden">
+            <Card className="rounded-[24px] border-mono-border/40 shadow-ambient print:hidden">
               <CardContent className="flex flex-wrap items-center justify-between gap-3 p-5">
                 <div>
-                  <p className="text-sm font-medium text-on-surface">Actions</p>
-                  <p className="mt-1 text-xs text-on-surface-variant">
+                  <p className="text-sm font-medium text-mono-text">Actions</p>
+                  <p className="mt-1 text-xs text-mono-muted">
                     Save gross salary for AMS hike calculations or export the page as PDF.
                   </p>
                   {confirmed ? (
@@ -437,7 +437,7 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
                   <Button
                     onClick={handlePrint}
                     variant="outline"
-                    className="border-[#00cec4]/30 text-[#008b85] hover:bg-[#00cec4]/8"
+                    className="border-[#F9D972]/30 text-[#008b85] hover:bg-[#F9D972]/8"
                   >
                     Print / PDF
                   </Button>
@@ -445,7 +445,7 @@ export function SalaryStructureClient({ employees }: { employees: Employee[] }) 
                   <Button
                       onClick={updateEmployee}
                       disabled={saving || confirmed}
-                      className="bg-[#00cec4] text-white hover:bg-[#00b5ad]"
+                      className="bg-[#F9D972] text-white hover:bg-[#00b5ad]"
                     >
                       {saving ? "Saving..." : confirmed ? "Updated" : "Update Employee Salary"}
                     </Button>

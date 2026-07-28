@@ -34,7 +34,7 @@ export function DashboardWidgets({
               data.announcements.map((item) => (
                 <div key={item.id} className="border-b border-slate-100 pb-2.5 last:border-0 last:pb-0">
                   <h4 className="text-xs font-bold text-slate-700 flex items-center gap-2">
-                    <Megaphone className="size-3.5 text-[#00c4b6] shrink-0" />
+                    <Megaphone className="size-3.5 text-[#F9D972] shrink-0" />
                     {item.title}
                   </h4>
                   <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">{item.body}</p>
@@ -80,7 +80,7 @@ export function DashboardWidgets({
               data.recentTasks.map((item) => (
                 <div key={item.id} className="flex items-center justify-between border-b border-slate-100 pb-2 last:border-0 last:pb-0">
                   <div className="flex items-center gap-2.5">
-                    <CheckSquare className="size-3.5 text-[#00c4b6] shrink-0" />
+                    <CheckSquare className="size-3.5 text-[#F9D972] shrink-0" />
                     <div>
                       <h4 className="text-xs font-semibold text-slate-700 line-clamp-1">{item.title}</h4>
                       <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
@@ -111,19 +111,19 @@ export function DashboardWidgets({
       case "QUICKLINKS":
         return (
           <div className="grid grid-cols-2 gap-2">
-            <a href="/attendance/leaves" className="p-2.5 border border-slate-100 hover:border-[#00c4b6] rounded-xl text-center bg-slate-50/50 transition-all flex flex-col items-center">
-              <Calendar className="size-4 text-[#00c4b6] mb-1" />
+            <a href="/attendance/leaves" className="p-2.5 border border-slate-100 hover:border-[#F9D972] rounded-xl text-center bg-slate-50/50 transition-all flex flex-col items-center">
+              <Calendar className="size-4 text-[#F9D972] mb-1" />
               <span className="text-[10.5px] font-semibold text-slate-700">Apply Leave</span>
             </a>
-            <a href="/hrms/helpdesk" className="p-2.5 border border-slate-100 hover:border-[#00c4b6] rounded-xl text-center bg-slate-50/50 transition-all flex flex-col items-center">
+            <a href="/hrms/helpdesk" className="p-2.5 border border-slate-100 hover:border-[#F9D972] rounded-xl text-center bg-slate-50/50 transition-all flex flex-col items-center">
               <Megaphone className="size-4 text-indigo-500 mb-1" />
               <span className="text-[10.5px] font-semibold text-slate-700">Ask HR</span>
             </a>
-            <a href="/attendance/timesheets" className="p-2.5 border border-slate-100 hover:border-[#00c4b6] rounded-xl text-center bg-slate-50/50 transition-all flex flex-col items-center">
+            <a href="/attendance/timesheets" className="p-2.5 border border-slate-100 hover:border-[#F9D972] rounded-xl text-center bg-slate-50/50 transition-all flex flex-col items-center">
               <CheckSquare className="size-4 text-emerald-500 mb-1" />
               <span className="text-[10.5px] font-semibold text-slate-700">Log Timesheet</span>
             </a>
-            <a href="/hrms/files" className="p-2.5 border border-slate-100 hover:border-[#00c4b6] rounded-xl text-center bg-slate-50/50 transition-all flex flex-col items-center">
+            <a href="/hrms/files" className="p-2.5 border border-slate-100 hover:border-[#F9D972] rounded-xl text-center bg-slate-50/50 transition-all flex flex-col items-center">
               <FileText className="size-4 text-amber-500 mb-1" />
               <span className="text-[10.5px] font-semibold text-slate-700">My Files</span>
             </a>
@@ -165,7 +165,7 @@ export function DashboardWidgets({
             <button
               type="button"
               onClick={() => onToggleWidget(widget.key)}
-              className="text-[10.5px] font-semibold text-[#00c4b6] hover:text-[#00b0a3] bg-slate-50 hover:bg-slate-100 px-2 py-0.5 rounded border border-slate-200 cursor-pointer"
+              className="text-[10.5px] font-semibold text-[#F9D972] hover:text-[#00b0a3] bg-slate-50 hover:bg-slate-100 px-2 py-0.5 rounded border border-slate-200 cursor-pointer"
             >
               Hide
             </button>

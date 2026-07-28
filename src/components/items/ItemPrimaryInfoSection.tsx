@@ -1,6 +1,6 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import { HelpCircle, Search } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
@@ -54,10 +54,10 @@ function FieldRow({
 }
 
 const inputCls =
-  "w-full px-3 py-1.5 text-sm border border-[#d9dee7] rounded focus:outline-none focus:border-[#00cec4] focus:ring-1 focus:ring-[#00cec4]/20 text-[#212529] placeholder-[#6b7280] h-[34px]";
+  "w-full px-3 py-1.5 text-sm border border-[#d9dee7] rounded focus:outline-none focus:border-[#F9D972] focus:ring-1 focus:ring-[#F9D972]/20 text-[#212529] placeholder-[#6b7280] h-[34px]";
 
 const selectCls =
-  "w-full px-3 py-1.5 text-sm border border-[#d9dee7] rounded focus:outline-none focus:border-[#00cec4] text-[#212529] bg-white h-[34px]";
+  "w-full px-3 py-1.5 text-sm border border-[#d9dee7] rounded focus:outline-none focus:border-[#F9D972] text-[#212529] bg-white h-[34px]";
 
 export function ItemPrimaryInfoSection({ form }: ItemPrimaryInfoSectionProps) {
   const {
@@ -90,7 +90,7 @@ export function ItemPrimaryInfoSection({ form }: ItemPrimaryInfoSectionProps) {
               <input
                 type="radio"
                 value={t}
-                className="accent-[#00cec4]"
+                className="accent-[#F9D972]"
                 {...register("type")}
               />
               {t}
@@ -151,7 +151,7 @@ export function ItemPrimaryInfoSection({ form }: ItemPrimaryInfoSectionProps) {
               <input
                 type="radio"
                 value={t}
-                className="accent-[#00cec4]"
+                className="accent-[#F9D972]"
                 {...register("taxPreference")}
               />
               {t}

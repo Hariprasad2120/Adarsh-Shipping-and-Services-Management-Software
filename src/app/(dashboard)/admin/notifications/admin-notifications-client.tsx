@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { DataTable, DataTableBody, DataTableCell, DataTableEmpty, DataTableHead, DataTableHeader, DataTableRow } from "@/components/data-table";
-import { Button } from "@/components/ui/button-1";
+import { Button } from "@/components/monolith/button-1";
 import { useNotifications } from "@/components/notifications/notification-provider";
 
 type AdminNotificationRow = {

@@ -1,6 +1,6 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -268,17 +268,17 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
     <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl bg-[var(--color-surface)] border-2 border-[var(--color-outline)] rounded-xl p-6 shadow-[4px_4px_0px_0px_rgba(0,206,196,0.15)] animate-in fade-in duration-200">
       
       {/* ─── SECTION 1: CUSTOMER TYPE ───────────────────────────────────── */}
-      <div className="card-left-accent bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl p-5 space-y-4">
+      <div className="monolith-card monolith-accent bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl p-5 space-y-4">
         <div className="flex items-center justify-between gap-4 border-b border-[var(--color-outline-variant)] pb-2 mb-2">
-          <h3 className="ds-h3 text-[var(--color-on-surface)] flex items-center gap-2 border-0 pb-0">
-            <User className="size-4.5 text-[#00cec4]" />
+          <h3 className="monolith-h3 text-[var(--color-on-surface)] flex items-center gap-2 border-0 pb-0">
+            <User className="size-4.5 text-[#F9D972]" />
             <span>Customer Profile</span>
           </h3>
           {!isEdit && (
             <button
               type="button"
               onClick={handleDemoFill}
-              className="px-3 py-1 bg-[#00cec4]/10 text-[#00cec4] hover:bg-[#00cec4]/20 border border-[#00cec4]/40 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-sm hover:shadow-[0_0_8px_rgba(0,206,196,0.15)]"
+              className="px-3 py-1 bg-[#F9D972]/10 text-[#F9D972] hover:bg-[#F9D972]/20 border border-[#F9D972]/40 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-sm hover:shadow-[0_0_8px_rgba(0,206,196,0.15)]"
             >
               Demo Fill
             </button>
@@ -287,7 +287,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
           <div>
-            <label className="ds-label mb-2 block">Customer Type</label>
+            <label className="monolith-label mb-2 block">Customer Type</label>
             <div className="flex gap-4">
               <label className="flex items-center gap-2 text-sm text-[var(--color-on-surface)] cursor-pointer">
                 <input
@@ -296,7 +296,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   value="Business"
                   checked={customerSubType === "Business"}
                   onChange={() => setCustomerSubType("Business")}
-                  className="accent-[#00cec4] size-4"
+                  className="accent-[#F9D972] size-4"
                 />
                 <span>Business</span>
               </label>
@@ -307,7 +307,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   value="Individual"
                   checked={customerSubType === "Individual"}
                   onChange={() => setCustomerSubType("Individual")}
-                  className="accent-[#00cec4] size-4"
+                  className="accent-[#F9D972] size-4"
                 />
                 <span>Individual</span>
               </label>
@@ -315,7 +315,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
           </div>
 
           <div className="md:col-span-2">
-            <label className="ds-label mb-1.5 block">Primary Contact Name</label>
+            <label className="monolith-label mb-1.5 block">Primary Contact Name</label>
             <div className="grid grid-cols-12 gap-2">
               <div className="col-span-3">
                 <NativeSelect
@@ -359,7 +359,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
           <div>
-            <label className="ds-label mb-1.5 block">Company Name</label>
+            <label className="monolith-label mb-1.5 block">Company Name</label>
             <input
               type="text"
               name="companyName"
@@ -371,7 +371,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             />
           </div>
           <div>
-            <label className="ds-label mb-1.5 block">Customer Display Name *</label>
+            <label className="monolith-label mb-1.5 block">Customer Display Name *</label>
             <input
               type="text"
               name="displayName"
@@ -387,14 +387,14 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
       {/* ─── SECTION 2: CONTACT DETAILS ────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="ds-h3 text-[var(--color-on-surface)] flex items-center gap-2 border-b border-[var(--color-outline-variant)] pb-2">
-          <Mail className="size-4 text-[#00cec4]" />
+        <h3 className="monolith-h3 text-[var(--color-on-surface)] flex items-center gap-2 border-b border-[var(--color-outline-variant)] pb-2">
+          <Mail className="size-4 text-[#F9D972]" />
           <span>Contact Information</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="ds-label mb-1.5 block">Email Address</label>
+            <label className="monolith-label mb-1.5 block">Email Address</label>
             <input
               type="email"
               name="email"
@@ -404,7 +404,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             />
           </div>
           <div>
-            <label className="ds-label mb-1.5 block">Phone Number</label>
+            <label className="monolith-label mb-1.5 block">Phone Number</label>
             <input
               type="text"
               name="phone"
@@ -414,7 +414,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             />
           </div>
           <div>
-            <label className="ds-label mb-1.5 block">Website</label>
+            <label className="monolith-label mb-1.5 block">Website</label>
             <input
               type="url"
               name="website"
@@ -427,7 +427,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="ds-label mb-1.5 block">Industry Segment</label>
+            <label className="monolith-label mb-1.5 block">Industry Segment</label>
             <input
               type="text"
               name="industry"
@@ -437,7 +437,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             />
           </div>
           <div>
-            <label className="ds-label mb-1.5 block">Customer Language</label>
+            <label className="monolith-label mb-1.5 block">Customer Language</label>
             <NativeSelect
               name="language"
               defaultValue={initialData?.language || "English"}
@@ -451,14 +451,14 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             </NativeSelect>
           </div>
           <div>
-            <label className="ds-label mb-1.5 block">Communication Channels</label>
+            <label className="monolith-label mb-1.5 block">Communication Channels</label>
             <div className="flex gap-4 pt-2.5">
               <label className="flex items-center gap-1.5 text-xs text-[var(--color-on-surface)] cursor-pointer">
                 <input
                   type="checkbox"
                   name="channelEmail"
                   defaultChecked={initialData?.communicationChannels?.includes("EMAIL") ?? true}
-                  className="accent-[#00cec4] rounded"
+                  className="accent-[#F9D972] rounded"
                 />
                 <span>Email Notifications</span>
               </label>
@@ -467,7 +467,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   type="checkbox"
                   name="channelSms"
                   defaultChecked={initialData?.communicationChannels?.includes("SMS") ?? false}
-                  className="accent-[#00cec4] rounded"
+                  className="accent-[#F9D972] rounded"
                 />
                 <span>SMS Alert</span>
               </label>
@@ -484,7 +484,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             type="button"
             onClick={() => setActiveTab("OTHER_DETAILS")}
             className={`pb-3 px-5 text-xs font-bold uppercase tracking-wider border-b-3 -mb-[3px] transition-all cursor-pointer ${
-              activeTab === "OTHER_DETAILS" ? "border-[#00cec4] text-[var(--color-on-surface)]" : "border-transparent text-slate-400 hover:text-[var(--color-on-surface)]"
+              activeTab === "OTHER_DETAILS" ? "border-[#F9D972] text-[var(--color-on-surface)]" : "border-transparent text-slate-400 hover:text-[var(--color-on-surface)]"
             }`}
           >
             Other Details
@@ -493,7 +493,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             type="button"
             onClick={() => setActiveTab("ADDRESS")}
             className={`pb-3 px-5 text-xs font-bold uppercase tracking-wider border-b-3 -mb-[3px] transition-all cursor-pointer ${
-              activeTab === "ADDRESS" ? "border-[#00cec4] text-[var(--color-on-surface)]" : "border-transparent text-slate-400 hover:text-[var(--color-on-surface)]"
+              activeTab === "ADDRESS" ? "border-[#F9D972] text-[var(--color-on-surface)]" : "border-transparent text-slate-400 hover:text-[var(--color-on-surface)]"
             }`}
           >
             Address
@@ -502,7 +502,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             type="button"
             onClick={() => setActiveTab("REMARKS")}
             className={`pb-3 px-5 text-xs font-bold uppercase tracking-wider border-b-3 -mb-[3px] transition-all cursor-pointer ${
-              activeTab === "REMARKS" ? "border-[#00cec4] text-[var(--color-on-surface)]" : "border-transparent text-slate-400 hover:text-[var(--color-on-surface)]"
+              activeTab === "REMARKS" ? "border-[#F9D972] text-[var(--color-on-surface)]" : "border-transparent text-slate-400 hover:text-[var(--color-on-surface)]"
             }`}
           >
             Remarks
@@ -514,7 +514,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
           <div className="p-6 bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl space-y-4 animate-in fade-in duration-150">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="ds-label mb-1.5 block">GST Treatment *</label>
+                <label className="monolith-label mb-1.5 block">GST Treatment *</label>
                 <NativeSelect
                   name="gstTreatment"
                   defaultValue={initialData?.gstTreatment || "Registered Business - Regular"}
@@ -526,7 +526,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 </NativeSelect>
               </div>
               <div>
-                <label className="ds-label mb-1.5 block">Place of Supply *</label>
+                <label className="monolith-label mb-1.5 block">Place of Supply *</label>
                 <NativeSelect
                   name="placeOfSupply"
                   defaultValue={initialData?.placeOfSupply || "Tamil Nadu"}
@@ -541,7 +541,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="ds-label mb-1.5 block">PAN ID / Tax Number</label>
+                <label className="monolith-label mb-1.5 block">PAN ID / Tax Number</label>
                 <input
                   type="text"
                   name="pan"
@@ -551,7 +551,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 />
               </div>
               <div>
-                <label className="ds-label mb-1.5 block">GSTIN / Tax ID</label>
+                <label className="monolith-label mb-1.5 block">GSTIN / Tax ID</label>
                 <input
                   type="text"
                   name="gstin"
@@ -561,7 +561,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 />
               </div>
               <div>
-                <label className="ds-label mb-1.5 block">Tax Preference</label>
+                <label className="monolith-label mb-1.5 block">Tax Preference</label>
                 <div className="flex gap-4 pt-2">
                   <label className="flex items-center gap-1.5 text-xs text-[var(--color-on-surface)] cursor-pointer">
                     <input
@@ -569,7 +569,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                       name="taxPreference"
                       value="Taxable"
                       defaultChecked={initialData?.taxPreference !== "Tax Exempt"}
-                      className="accent-[#00cec4] size-4"
+                      className="accent-[#F9D972] size-4"
                     />
                     <span>Taxable</span>
                   </label>
@@ -579,7 +579,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                       name="taxPreference"
                       value="Tax Exempt"
                       defaultChecked={initialData?.taxPreference === "Tax Exempt"}
-                      className="accent-[#00cec4] size-4"
+                      className="accent-[#F9D972] size-4"
                     />
                     <span>Tax Exempt</span>
                   </label>
@@ -589,7 +589,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-[var(--color-outline-variant)]">
               <div>
-                <label className="ds-label mb-1.5 block">Currency</label>
+                <label className="monolith-label mb-1.5 block">Currency</label>
                 <NativeSelect
                   name="currency"
                   defaultValue={initialData?.currency || "INR- Indian Rupee"}
@@ -602,7 +602,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
               </div>
 
               <div>
-                <label className="ds-label mb-1.5 block">Opening Balance Branch</label>
+                <label className="monolith-label mb-1.5 block">Opening Balance Branch</label>
                 <NativeSelect
                   name="openingBalanceBranch"
                   defaultValue={initialData?.openingBalanceBranch || "Chennai"}
@@ -615,7 +615,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
               </div>
 
               <div>
-                <label className="ds-label mb-1.5 block">Opening Balance Amount (INR)</label>
+                <label className="monolith-label mb-1.5 block">Opening Balance Amount (INR)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -628,7 +628,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-[var(--color-outline-variant)]">
               <div>
-                <label className="ds-label mb-1.5 block">Credit Limit (INR)</label>
+                <label className="monolith-label mb-1.5 block">Credit Limit (INR)</label>
                 <input
                   type="number"
                   name="creditLimit"
@@ -638,7 +638,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 />
               </div>
               <div>
-                <label className="ds-label mb-1.5 block">Payment Terms</label>
+                <label className="monolith-label mb-1.5 block">Payment Terms</label>
                 <NativeSelect
                   name="paymentTerms"
                   defaultValue={initialData?.paymentTerms || "Net 30"}
@@ -650,7 +650,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 </NativeSelect>
               </div>
               <div>
-                <label className="ds-label mb-1.5 block">Account Owner *</label>
+                <label className="monolith-label mb-1.5 block">Account Owner *</label>
                 <NativeSelect
                   name="ownerId"
                   defaultValue={initialData?.ownerId || ""}
@@ -672,17 +672,17 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
         {activeTab === "ADDRESS" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-150">
             {/* Billing Address Card */}
-            <div className="card-left-accent bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl p-5 space-y-3">
+            <div className="monolith-card monolith-accent bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl p-5 space-y-3">
               <div className="flex items-center justify-between border-b border-[var(--color-outline-variant)] pb-2">
-                <h4 className="ds-h3 text-xs text-[var(--color-on-surface)] flex items-center gap-2">
-                  <MapPin className="size-4 text-[#00cec4]" />
+                <h4 className="monolith-h3 text-xs text-[var(--color-on-surface)] flex items-center gap-2">
+                  <MapPin className="size-4 text-[#F9D972]" />
                   <span>Billing Address</span>
                 </h4>
               </div>
 
               <div className="grid grid-cols-1 gap-3 text-xs">
                 <div>
-                  <label className="ds-label block mb-1 text-[9px]">Attention</label>
+                  <label className="monolith-label block mb-1 text-[9px]">Attention</label>
                   <input
                     type="text"
                     name="billingAttention"
@@ -692,7 +692,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   />
                 </div>
                 <div>
-                  <label className="ds-label block mb-1 text-[9px]">Country/Region</label>
+                  <label className="monolith-label block mb-1 text-[9px]">Country/Region</label>
                   <input
                     type="text"
                     name="billingCountry"
@@ -702,7 +702,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   />
                 </div>
                 <div>
-                  <label className="ds-label block mb-1 text-[9px]">Address Line 1</label>
+                  <label className="monolith-label block mb-1 text-[9px]">Address Line 1</label>
                   <input
                     type="text"
                     name="billingStreet1"
@@ -713,7 +713,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   />
                 </div>
                 <div>
-                  <label className="ds-label block mb-1 text-[9px]">Address Line 2</label>
+                  <label className="monolith-label block mb-1 text-[9px]">Address Line 2</label>
                   <input
                     type="text"
                     name="billingStreet2"
@@ -725,7 +725,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="ds-label block mb-1 text-[9px]">City</label>
+                    <label className="monolith-label block mb-1 text-[9px]">City</label>
                     <input
                       type="text"
                       name="billingCity"
@@ -735,7 +735,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                     />
                   </div>
                   <div>
-                    <label className="ds-label block mb-1 text-[9px]">State</label>
+                    <label className="monolith-label block mb-1 text-[9px]">State</label>
                     <input
                       type="text"
                       name="billingState"
@@ -747,7 +747,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="ds-label block mb-1 text-[9px]">Pin Code</label>
+                    <label className="monolith-label block mb-1 text-[9px]">Pin Code</label>
                     <input
                       type="text"
                       name="billingPincode"
@@ -757,7 +757,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                     />
                   </div>
                   <div>
-                    <label className="ds-label block mb-1 text-[9px]">Phone</label>
+                    <label className="monolith-label block mb-1 text-[9px]">Phone</label>
                     <input
                       type="text"
                       name="billingPhone"
@@ -768,7 +768,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   </div>
                 </div>
                 <div>
-                  <label className="ds-label block mb-1 text-[9px]">Fax Number</label>
+                  <label className="monolith-label block mb-1 text-[9px]">Fax Number</label>
                   <input
                     type="text"
                     name="billingFax"
@@ -781,16 +781,16 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             </div>
 
             {/* Shipping Address Card */}
-            <div className="card-left-accent bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl p-5 space-y-3">
+            <div className="monolith-card monolith-accent bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl p-5 space-y-3">
               <div className="flex items-center justify-between border-b border-[var(--color-outline-variant)] pb-2">
-                <h4 className="ds-h3 text-xs text-[var(--color-on-surface)] flex items-center gap-2">
-                  <MapPin className="size-4 text-[#00cec4]" />
+                <h4 className="monolith-h3 text-xs text-[var(--color-on-surface)] flex items-center gap-2">
+                  <MapPin className="size-4 text-[#F9D972]" />
                   <span>Shipping Address</span>
                 </h4>
                 <button
                   type="button"
                   onClick={handleCopyBillingAddress}
-                  className="flex items-center gap-1 text-[10px] text-[#00cec4] font-bold hover:underline cursor-pointer bg-transparent border-0"
+                  className="flex items-center gap-1 text-[10px] text-[#F9D972] font-bold hover:underline cursor-pointer bg-transparent border-0"
                 >
                   <ArrowDown className="size-3" />
                   <span>Copy Billing Address</span>
@@ -799,7 +799,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
               <div className="grid grid-cols-1 gap-3 text-xs">
                 <div>
-                  <label className="ds-label block mb-1 text-[9px]">Attention</label>
+                  <label className="monolith-label block mb-1 text-[9px]">Attention</label>
                   <input
                     type="text"
                     name="shippingAttention"
@@ -809,7 +809,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   />
                 </div>
                 <div>
-                  <label className="ds-label block mb-1 text-[9px]">Country/Region</label>
+                  <label className="monolith-label block mb-1 text-[9px]">Country/Region</label>
                   <input
                     type="text"
                     name="shippingCountry"
@@ -819,7 +819,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   />
                 </div>
                 <div>
-                  <label className="ds-label block mb-1 text-[9px]">Address Line 1</label>
+                  <label className="monolith-label block mb-1 text-[9px]">Address Line 1</label>
                   <input
                     type="text"
                     name="shippingStreet1"
@@ -830,7 +830,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   />
                 </div>
                 <div>
-                  <label className="ds-label block mb-1 text-[9px]">Address Line 2</label>
+                  <label className="monolith-label block mb-1 text-[9px]">Address Line 2</label>
                   <input
                     type="text"
                     name="shippingStreet2"
@@ -842,7 +842,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="ds-label block mb-1 text-[9px]">City</label>
+                    <label className="monolith-label block mb-1 text-[9px]">City</label>
                     <input
                       type="text"
                       name="shippingCity"
@@ -852,7 +852,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                     />
                   </div>
                   <div>
-                    <label className="ds-label block mb-1 text-[9px]">State</label>
+                    <label className="monolith-label block mb-1 text-[9px]">State</label>
                     <input
                       type="text"
                       name="shippingState"
@@ -864,7 +864,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="ds-label block mb-1 text-[9px]">Pin Code</label>
+                    <label className="monolith-label block mb-1 text-[9px]">Pin Code</label>
                     <input
                       type="text"
                       name="shippingPincode"
@@ -874,7 +874,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                     />
                   </div>
                   <div>
-                    <label className="ds-label block mb-1 text-[9px]">Phone</label>
+                    <label className="monolith-label block mb-1 text-[9px]">Phone</label>
                     <input
                       type="text"
                       name="shippingPhone"
@@ -885,7 +885,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   </div>
                 </div>
                 <div>
-                  <label className="ds-label block mb-1 text-[9px]">Fax Number</label>
+                  <label className="monolith-label block mb-1 text-[9px]">Fax Number</label>
                   <input
                     type="text"
                     name="shippingFax"
@@ -902,12 +902,12 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
         {/* Tab Panel: Remarks */}
         {activeTab === "REMARKS" && (
           <div className="p-6 bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl space-y-4 animate-in fade-in duration-150">
-            <h4 className="ds-h3 text-xs text-[var(--color-on-surface)] flex items-center gap-2 border-b border-[var(--color-outline-variant)] pb-2">
-              <Notebook className="size-4.5 text-[#00cec4]" />
+            <h4 className="monolith-h3 text-xs text-[var(--color-on-surface)] flex items-center gap-2 border-b border-[var(--color-outline-variant)] pb-2">
+              <Notebook className="size-4.5 text-[#F9D972]" />
               <span>Customer Remarks & Notes</span>
             </h4>
             <div>
-              <label className="ds-label block mb-1.5">Remarks (For internal CRM use)</label>
+              <label className="monolith-label block mb-1.5">Remarks (For internal CRM use)</label>
               <textarea
                 name="remarks"
                 defaultValue={initialData?.remarks || ""}
@@ -932,7 +932,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[#00cec4] text-white rounded-xl text-sm font-bold transition-all shadow-[2px_2px_0px_0px_rgba(0,184,175,1)] hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,184,175,1)] hover:bg-[#00b8af] active:translate-y-0 active:shadow-none disabled:opacity-50 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[#F9D972] text-white rounded-xl text-sm font-bold transition-all shadow-[2px_2px_0px_0px_rgba(0,184,175,1)] hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,184,175,1)] hover:bg-[#E8C85D] active:translate-y-0 active:shadow-none disabled:opacity-50 cursor-pointer"
         >
           <Save className="size-4" />
           <span>{isSubmitting ? "Saving..." : isEdit ? "Update Customer" : "Save Customer"}</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Search } from "@carbon/icons-react";
@@ -18,10 +18,10 @@ type Application = {
 };
 
 const STAGE_COLORS: Record<string, string> = {
-  NEW: "bg-surface-container text-on-surface-variant border-outline-variant",
+  NEW: "bg-mono-soft text-mono-muted border-mono-border",
   SCREENING: "bg-[#818cf8]/10 text-[#818cf8] border-[#818cf8]/20",
   PHONE_SCREEN: "bg-[#818cf8]/10 text-[#818cf8] border-[#818cf8]/20",
-  SHORTLISTED: "bg-[#00cec4]/10 text-[#00cec4] border-[#00cec4]/20",
+  SHORTLISTED: "bg-[#F9D972]/10 text-[#F9D972] border-[#F9D972]/20",
   ASSESSMENT: "bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20",
   INTERVIEW_1: "bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20",
   INTERVIEW_2: "bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20",
@@ -30,10 +30,10 @@ const STAGE_COLORS: Record<string, string> = {
   OFFER_APPROVAL: "bg-[#c084fc]/10 text-[#c084fc] border-[#c084fc]/20",
   OFFER_EXTENDED: "bg-[#c084fc]/10 text-[#c084fc] border-[#c084fc]/20",
   OFFER_ACCEPTED: "bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20",
-  OFFER_DECLINED: "bg-[#fb923c]/10 text-[#fb923c] border-[#fb923c]/20",
+  OFFER_DECLINED: "bg-[#D88700]/10 text-[#D88700] border-[#D88700]/20",
   HIRED: "bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20",
-  REJECTED: "bg-surface-container text-on-surface-variant border-outline-variant",
-  WITHDRAWN: "bg-surface-container text-on-surface-variant border-outline-variant",
+  REJECTED: "bg-mono-soft text-mono-muted border-mono-border",
+  WITHDRAWN: "bg-mono-soft text-mono-muted border-mono-border",
 };
 
 export default function ApplicationsPage() {
@@ -62,13 +62,13 @@ export default function ApplicationsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="ds-h1 text-on-surface">Applications</h1>
-        <p className="text-sm text-on-surface-variant">All applications across open roles</p>
+        <h1 className="monolith-h1 text-mono-text">Applications</h1>
+        <p className="text-sm text-mono-muted">All applications across open roles</p>
       </div>
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-48">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
           <input
             type="search"
             placeholder="Search candidates or roles..."
@@ -89,7 +89,7 @@ export default function ApplicationsPage() {
         </NativeSelect>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
         <DataTable>
           <DataTableHeader>
             <tr>
@@ -112,21 +112,21 @@ export default function ApplicationsPage() {
                   <DataTableCell>
                     <Link
                       href={`/hrms/recruit/employer/applications/${app.id}`}
-                      className="font-medium text-on-surface hover:text-[#00cec4]"
+                      className="font-medium text-mono-text hover:text-[#F9D972]"
                     >
                       {app.candidate?.fullName ?? "—"}
                     </Link>
                     {app.candidate?.email && (
-                      <p className="ds-label mt-0.5">{app.candidate.email}</p>
+                      <p className="monolith-label mt-0.5">{app.candidate.email}</p>
                     )}
                   </DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">
+                  <DataTableCell className="text-mono-muted">
                     {app.jobOpening?.title ?? "—"}
                     {app.jobOpening?.requisitionNumber && (
-                      <p className="ds-label mt-0.5">{app.jobOpening.requisitionNumber}</p>
+                      <p className="monolith-label mt-0.5">{app.jobOpening.requisitionNumber}</p>
                     )}
                   </DataTableCell>
-                  <DataTableCell className="ds-label">{app.applicationNumber}</DataTableCell>
+                  <DataTableCell className="monolith-label">{app.applicationNumber}</DataTableCell>
                   <DataTableCell>
                     <span
                       className={`inline-flex rounded-lg border px-2 py-0.5 text-xs font-medium ${STAGE_COLORS[app.stage] ?? ""}`}
@@ -134,10 +134,10 @@ export default function ApplicationsPage() {
                       {app.stage.replace(/_/g, " ")}
                     </span>
                   </DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">
+                  <DataTableCell className="text-mono-muted">
                     {new Date(app.createdAt).toLocaleDateString()}
                   </DataTableCell>
-                  <DataTableCell className="text-on-surface-variant">
+                  <DataTableCell className="text-mono-muted">
                     {new Date(app.updatedAt).toLocaleDateString()}
                   </DataTableCell>
                 </DataTableRow>

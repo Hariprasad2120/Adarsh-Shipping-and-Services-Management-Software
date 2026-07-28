@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/monolith/button";
 import { CreateJobDialog } from "./create-job-dialog";
 import { CreateJobPermissionGuard } from "./create-job-permission-guard";
 

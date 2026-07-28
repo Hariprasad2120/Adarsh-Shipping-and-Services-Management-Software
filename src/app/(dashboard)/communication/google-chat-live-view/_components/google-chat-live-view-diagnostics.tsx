@@ -16,15 +16,15 @@ interface DiagnosticsProps {
 
 function DiagRow({ label, value, highlight }: { label: string; value: string; highlight?: "cyan" | "orange" }) {
   return (
-    <div className="flex items-center justify-between py-1.5 border-b border-outline-variant/30 last:border-0">
-      <span className="text-xs text-on-surface-variant">{label}</span>
+    <div className="flex items-center justify-between py-1.5 border-b border-mono-border/30 last:border-0">
+      <span className="text-xs text-mono-muted">{label}</span>
       <span
-        className={`text-xs ds-numeric font-medium ${
+        className={`text-xs monolith-numeric font-medium ${
           highlight === "cyan"
-            ? "text-[#00cec4]"
+            ? "text-[#F9D972]"
             : highlight === "orange"
-            ? "text-[#fb923c]"
-            : "text-on-surface"
+            ? "text-[#D88700]"
+            : "text-mono-text"
         }`}
       >
         {value}
@@ -58,10 +58,10 @@ export function GoogleChatLiveViewDiagnostics({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">
+        <span className="text-[10px] uppercase tracking-widest text-mono-muted font-bold">
           Admin Diagnostics
         </span>
-        <span className="px-2 py-0.5 rounded text-[10px] bg-surface-container text-on-surface-variant border border-outline-variant uppercase tracking-wide">
+        <span className="px-2 py-0.5 rounded text-[10px] bg-mono-soft text-mono-muted border border-mono-border uppercase tracking-wide">
           Live View
         </span>
       </div>
@@ -69,7 +69,7 @@ export function GoogleChatLiveViewDiagnostics({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Column 1: Feature state */}
         <div className="space-y-1">
-          <p className="ds-label text-on-surface-variant mb-2">Feature State</p>
+          <p className="monolith-label text-mono-muted mb-2">Feature State</p>
           <DiagRow
             label="Setting Enabled"
             value={settingEnabled ? "yes" : "no"}
@@ -101,7 +101,7 @@ export function GoogleChatLiveViewDiagnostics({
 
         {/* Column 2: Connection & context */}
         <div className="space-y-1">
-          <p className="ds-label text-on-surface-variant mb-2">Connection &amp; Context</p>
+          <p className="monolith-label text-mono-muted mb-2">Connection &amp; Context</p>
           <DiagRow label="Google Account" value={googleEmail} />
           <DiagRow
             label="OAuth Status"
@@ -123,7 +123,7 @@ export function GoogleChatLiveViewDiagnostics({
       </div>
 
       {/* Test timestamp & UA */}
-      <div className="space-y-1 pt-2 border-t border-outline-variant/30">
+      <div className="space-y-1 pt-2 border-t border-mono-border/30">
         <DiagRow
           label="Last Test Timestamp"
           value={lastTestAt ? new Date(lastTestAt).toLocaleString("en-IN") : "—"}
@@ -134,7 +134,7 @@ export function GoogleChatLiveViewDiagnostics({
         />
       </div>
 
-      <p className="text-[10px] text-on-surface-variant">
+      <p className="text-[10px] text-mono-muted">
         ℹ️ This panel is only visible to admins and users with Communication Settings permission.
         No Google Chat data is logged or stored here.
       </p>

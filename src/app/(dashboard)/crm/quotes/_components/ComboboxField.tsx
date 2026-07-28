@@ -131,7 +131,7 @@ export function ComboboxField({ options, value, onChange, placeholder, disabled,
                   aria-selected={isSelected}
                   className={cn(
                     "flex w-full items-start justify-between gap-3 px-3 py-2 text-left text-[13px]",
-                    isActive ? "bg-[#00cec4]/10" : "hover:bg-[#f5f7fa]",
+                    isActive ? "bg-[#F9D972]/10" : "hover:bg-[#f5f7fa]",
                   )}
                   onMouseEnter={() => setHighlightedIndex(index)}
                   onMouseDown={(event) => event.preventDefault()}
@@ -141,7 +141,7 @@ export function ComboboxField({ options, value, onChange, placeholder, disabled,
                     <span className="block text-[#1f2937]">{option.label}</span>
                     {option.description ? <span className="block text-[11px] text-[#6b7280]">{option.description}</span> : null}
                   </span>
-                  {isSelected ? <Check className="mt-0.5 size-4 text-[#00cec4]" /> : null}
+                  {isSelected ? <Check className="mt-0.5 size-4 text-[#F9D972]" /> : null}
                 </button>
               );
             })

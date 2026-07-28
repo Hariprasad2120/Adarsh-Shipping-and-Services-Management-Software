@@ -133,23 +133,23 @@ export default async function ChaReportsPage({
       {/* Grid: Financial & General Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Card: Client Advances */}
-        <div className="card-top-accent rounded-xl bg-cha-surface border border-cha-border p-5 space-y-3 shadow-sm hover:shadow-md transition-all dark:border-cha-border-strong">
+        <div className="monolith-card monolith-accent rounded-xl bg-cha-surface border border-cha-border p-5 space-y-3 shadow-sm hover:shadow-md transition-all dark:border-cha-border-strong">
           <div className="flex items-center justify-between text-cha-text-secondary">
-            <span className="ds-label">Client Advances</span>
+            <span className="monolith-label">Client Advances</span>
             <DollarSign size={18} className="text-cha-primary" />
           </div>
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs">
               <span className="text-cha-text-secondary font-medium">Expected Billing:</span>
-              <span className="ds-numeric text-cha-text-primary">₹{totalExpectedAdvance.toLocaleString("en-IN")}</span>
+              <span className="monolith-numeric text-cha-text-mono-accent">₹{totalExpectedAdvance.toLocaleString("en-IN")}</span>
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-cha-text-secondary font-medium">Collected:</span>
-              <span className="ds-numeric text-emerald-600 dark:text-emerald-400">₹{totalReceivedAdvance.toLocaleString("en-IN")}</span>
+              <span className="monolith-numeric text-emerald-600 dark:text-emerald-400">₹{totalReceivedAdvance.toLocaleString("en-IN")}</span>
             </div>
             <div className="border-t border-cha-border/40 pt-1.5 flex justify-between text-xs dark:border-cha-border-strong">
               <span className="text-cha-text-secondary font-semibold">Outstanding Balance:</span>
-              <span className="ds-numeric text-amber-600 dark:text-amber-400">
+              <span className="monolith-numeric text-amber-600 dark:text-amber-400">
                 ₹{Math.max(0, totalExpectedAdvance - totalReceivedAdvance).toLocaleString("en-IN")}
               </span>
             </div>
@@ -157,19 +157,19 @@ export default async function ChaReportsPage({
         </div>
 
         {/* Card: Operational Disbursements */}
-        <div className="card-top-accent-orange rounded-xl bg-cha-surface border border-cha-border p-5 space-y-3 shadow-sm hover:shadow-md transition-all dark:border-cha-border-strong">
+        <div className="monolith-card monolith-accent-warning rounded-xl bg-cha-surface border border-cha-border p-5 space-y-3 shadow-sm hover:shadow-md transition-all dark:border-cha-border-strong">
           <div className="flex items-center justify-between text-cha-text-secondary">
-            <span className="ds-label">Operational Outlays</span>
-            <DollarSign size={18} className="text-[#fb923c]" />
+            <span className="monolith-label">Operational Outlays</span>
+            <DollarSign size={18} className="text-[#D88700]" />
           </div>
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs">
               <span className="text-cha-text-secondary font-medium">Total Paid Expenses:</span>
-              <span className="ds-numeric text-cha-text-primary">₹{totalDisbursedExpense.toLocaleString("en-IN")}</span>
+              <span className="monolith-numeric text-cha-text-mono-accent">₹{totalDisbursedExpense.toLocaleString("en-IN")}</span>
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-cha-text-secondary font-medium">Net Financed Balance:</span>
-              <span className="ds-numeric text-emerald-600 dark:text-emerald-400">
+              <span className="monolith-numeric text-emerald-600 dark:text-emerald-400">
                 ₹{(totalReceivedAdvance - totalDisbursedExpense).toLocaleString("en-IN")}
               </span>
             </div>
@@ -180,31 +180,31 @@ export default async function ChaReportsPage({
         </div>
 
         {/* Card: Stage distributions */}
-        <div className="card-top-accent rounded-xl bg-cha-surface border border-cha-border p-5 space-y-3 shadow-sm hover:shadow-md transition-all dark:border-cha-border-strong">
+        <div className="monolith-card monolith-accent rounded-xl bg-cha-surface border border-cha-border p-5 space-y-3 shadow-sm hover:shadow-md transition-all dark:border-cha-border-strong">
           <div className="flex items-center justify-between text-cha-text-secondary">
-            <span className="ds-label">Workflow Pipelines</span>
+            <span className="monolith-label">Workflow Pipelines</span>
             <TrendingUp size={18} className="text-cha-primary" />
           </div>
           <div className="space-y-1 text-xs">
             <div className="flex justify-between">
               <span className="text-cha-text-secondary">Doc Collection:</span>
-              <span className="ds-numeric text-cha-text-primary">{stageMap.DOCUMENT_COLLECTION}</span>
+              <span className="monolith-numeric text-cha-text-mono-accent">{stageMap.DOCUMENT_COLLECTION}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-cha-text-secondary">Checklist Prep:</span>
-              <span className="ds-numeric text-cha-text-primary">{stageMap.CHECKLIST_PREPARATION}</span>
+              <span className="monolith-numeric text-cha-text-mono-accent">{stageMap.CHECKLIST_PREPARATION}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-cha-text-secondary">Checklist Approval:</span>
-              <span className="ds-numeric text-cha-text-primary">{stageMap.CHECKLIST_APPROVAL}</span>
+              <span className="monolith-numeric text-cha-text-mono-accent">{stageMap.CHECKLIST_APPROVAL}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-cha-text-secondary">Filing Stage:</span>
-              <span className="ds-numeric text-cha-text-primary">{stageMap.FILING}</span>
+              <span className="monolith-numeric text-cha-text-mono-accent">{stageMap.FILING}</span>
             </div>
             <div className="flex justify-between border-t border-cha-border/40 pt-1 dark:border-cha-border-strong">
               <span className="text-cha-text-secondary font-semibold">Completed / Filed:</span>
-              <span className="ds-numeric text-emerald-600 dark:text-emerald-400">{stageMap.FILED}</span>
+              <span className="monolith-numeric text-emerald-600 dark:text-emerald-400">{stageMap.FILED}</span>
             </div>
           </div>
         </div>
@@ -215,7 +215,7 @@ export default async function ChaReportsPage({
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <FileText size={18} className="text-cha-primary" />
-              <h2 className="ds-h2 text-cha-text-primary">Completed Job MIS Reports</h2>
+              <h2 className="monolith-h2 text-cha-text-mono-accent">Completed Job MIS Reports</h2>
             </div>
             <p className="text-xs text-cha-text-secondary">
               Search by job number. Reports are generated only after the job reaches FILED / COMPLETE.
@@ -233,14 +233,14 @@ export default async function ChaReportsPage({
                 className="h-11 w-full pl-10 text-sm"
               />
             </div>
-            <button className="rounded-xl bg-[#00cec4] px-5 text-xs font-medium uppercase tracking-wide text-white transition-all hover:bg-[#00b8af]">
+            <button className="rounded-xl bg-[#F9D972] px-5 text-xs font-medium uppercase tracking-wide text-white transition-all hover:bg-[#E8C85D]">
               Search
             </button>
           </form>
         </div>
 
         <div className="mt-5 overflow-hidden rounded-xl border border-cha-border dark:border-cha-border-strong">
-          <table className="ds-table">
+          <table className="monolith-table">
             <thead>
               <tr>
                 <th>Job Number</th>
@@ -274,12 +274,12 @@ export default async function ChaReportsPage({
                         <div className="text-[10px] text-cha-text-secondary">{job.title}</div>
                       </td>
                       <td>{job.customer.name}</td>
-                      <td className="ds-numeric">
+                      <td className="monolith-numeric">
                         {job.filing?.actualFilingDate
                           ? new Date(job.filing.actualFilingDate).toLocaleDateString("en-IN")
                           : new Date(job.updatedAt).toLocaleDateString("en-IN")}
                       </td>
-                      <td className="ds-numeric">
+                      <td className="monolith-numeric">
                         Requested INR {requested.toLocaleString("en-IN")} / Paid INR {paid.toLocaleString("en-IN")}
                       </td>
                       <td>
@@ -287,13 +287,13 @@ export default async function ChaReportsPage({
                           <Link
                             href={`/api/cha/reports/jobs/${job.id}`}
                             target="_blank"
-                            className="inline-flex items-center gap-1 rounded-xl border border-cha-primary/45 bg-surface px-3 py-2 text-xs font-medium uppercase tracking-wide text-cha-primary"
+                            className="inline-flex items-center gap-1 rounded-xl border border-cha-primary/45 bg-mono-card px-3 py-2 text-xs font-medium uppercase tracking-wide text-cha-primary"
                           >
                             <ExternalLink size={13} /> View PDF
                           </Link>
                           <Link
                             href={`/api/cha/reports/jobs/${job.id}?download=true`}
-                            className="inline-flex items-center gap-1 rounded-xl bg-[#00cec4] px-3 py-2 text-xs font-medium uppercase tracking-wide text-white"
+                            className="inline-flex items-center gap-1 rounded-xl bg-[#F9D972] px-3 py-2 text-xs font-medium uppercase tracking-wide text-white"
                           >
                             <Download size={13} /> Download
                           </Link>
@@ -311,8 +311,8 @@ export default async function ChaReportsPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left: Delayed filings reports */}
         <div className="lg:col-span-2 rounded-xl border border-cha-border bg-cha-surface p-6 space-y-6 shadow-sm dark:border-cha-border-strong">
-          <h2 className="text-base font-bold text-cha-text-primary uppercase font-display flex items-center gap-2">
-            <AlertTriangle size={18} className="text-[#fb923c]" /> Delay-Justified Customs Filings
+          <h2 className="text-base font-bold text-cha-text-mono-accent uppercase font-display flex items-center gap-2">
+            <AlertTriangle size={18} className="text-[#D88700]" /> Delay-Justified Customs Filings
           </h2>
 
           {delayedFilings.length === 0 ? (
@@ -321,7 +321,7 @@ export default async function ChaReportsPage({
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="ds-table">
+              <table className="monolith-table">
                 <thead>
                   <tr>
                     <th className="px-6 py-4">Job Number</th>
@@ -337,15 +337,15 @@ export default async function ChaReportsPage({
                       <td className="px-6 py-4 font-semibold text-cha-primary dark:text-blue-400">
                         {f.job.jobNumber}
                       </td>
-                      <td className="px-6 py-4 text-cha-text-primary">{f.job.customer.name}</td>
-                      <td className="px-6 py-4 ds-numeric text-cha-text-secondary">
+                      <td className="px-6 py-4 text-cha-text-mono-accent">{f.job.customer.name}</td>
+                      <td className="px-6 py-4 monolith-numeric text-cha-text-secondary">
                         {f.actualFilingDate ? new Date(f.actualFilingDate).toLocaleDateString("en-IN", {
                           day: "2-digit",
                           month: "short",
                           year: "numeric",
                         }) : "—"}
                       </td>
-                      <td className="px-6 py-4 ds-numeric text-cha-text-secondary">{f.filingRef}</td>
+                      <td className="px-6 py-4 monolith-numeric text-cha-text-secondary">{f.filingRef}</td>
                       <td className="px-6 py-4 text-xs text-red-600 dark:text-red-400 leading-relaxed font-medium bg-red-500/5 max-w-xs truncate">
                         {f.delayReason}
                       </td>
@@ -359,7 +359,7 @@ export default async function ChaReportsPage({
 
         {/* Right: Full organization Audit Logs feed */}
         <div className="rounded-xl border border-cha-border bg-cha-surface p-6 space-y-6 shadow-sm dark:border-cha-border-strong">
-          <h2 className="text-base font-bold text-cha-text-primary uppercase font-display flex items-center gap-2">
+          <h2 className="text-base font-bold text-cha-text-mono-accent uppercase font-display flex items-center gap-2">
             <FileText size={18} className="text-cha-primary" /> Organization Audit Feed
           </h2>
 
@@ -368,14 +368,14 @@ export default async function ChaReportsPage({
               <div key={log.id} className="text-xs p-3 bg-cha-surface-subtle border border-cha-border rounded-xl space-y-1.5 dark:border-cha-border-strong">
                 <div className="flex items-center justify-between border-b border-cha-border/40 pb-1 dark:border-cha-border-strong">
                   <span className="font-bold text-cha-primary dark:text-blue-400">{log.job?.jobNumber || "System"}</span>
-                  <span className="text-[9px] text-cha-text-muted ds-numeric">
+                  <span className="text-[9px] text-cha-text-muted monolith-numeric">
                     {new Date(log.timestamp).toLocaleDateString("en-IN", {
                       day: "2-digit",
                       month: "short",
                     })}
                   </span>
                 </div>
-                <p className="font-semibold text-[11px] uppercase tracking-wide text-cha-text-primary leading-tight">
+                <p className="font-semibold text-[11px] uppercase tracking-wide text-cha-text-mono-accent leading-tight">
                   {log.event.replace(/_/g, " ")}
                 </p>
                 <p className="text-[11px] text-cha-text-secondary leading-relaxed">

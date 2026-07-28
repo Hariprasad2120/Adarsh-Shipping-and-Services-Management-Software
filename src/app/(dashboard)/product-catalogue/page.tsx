@@ -134,7 +134,7 @@ export default function ProductCataloguePage() {
       <div className="no-print flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl p-4 shadow-sm">
         <div>
           <h1 className="text-lg font-bold text-[var(--color-on-surface)] flex items-center gap-2 font-display uppercase tracking-wider">
-            <LucideIcons.BookOpen size={20} className="text-[#00cec4]" />
+            <LucideIcons.BookOpen size={20} className="text-[#F9D972]" />
             Enterprise System Catalogue & Technical Manual
           </h1>
           <p className="text-[var(--color-on-surface-variant)] text-xs mt-0.5">
@@ -143,7 +143,7 @@ export default function ProductCataloguePage() {
         </div>
         <button
           onClick={handlePrint}
-          className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-widest font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
+          className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-widest font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
         >
           <LucideIcons.Printer size={14} />
           Export Technical Brochure
@@ -172,8 +172,8 @@ export default function ProductCataloguePage() {
                   ? f === "Implemented" ? "bg-emerald-950/40 text-emerald-400 border-emerald-400/40"
                   : f === "Partial" ? "bg-amber-950/40 text-amber-400 border-amber-400/40"
                   : f === "Planned" ? "bg-blue-950/40 text-blue-400 border-blue-400/40"
-                  : "bg-[#00cec4]/15 text-[#00cec4] border-[#00cec4]"
-                  : "bg-[var(--color-surface)] text-[var(--color-on-surface-variant)] border-[var(--color-outline-variant)]/60 hover:text-[var(--color-on-surface)] hover:border-[#00cec4]/40"
+                  : "bg-[#F9D972]/15 text-[#F9D972] border-[#F9D972]"
+                  : "bg-[var(--color-surface)] text-[var(--color-on-surface-variant)] border-[var(--color-outline-variant)]/60 hover:text-[var(--color-on-surface)] hover:border-[#F9D972]/40"
               }`}
             >
               {f === "all" ? "All Modules" : f}
@@ -201,11 +201,11 @@ export default function ProductCataloguePage() {
                 if (firstStage) setActiveStageId(firstStage.stageId);
                 document.getElementById("interactive-timelines")?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="cursor-pointer text-left p-4 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl hover:border-[#00cec4]/40 transition-all group"
+              className="cursor-pointer text-left p-4 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl hover:border-[#F9D972]/40 transition-all group"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  {renderIcon(m.iconName, 16, "text-[#00cec4]")}
+                  {renderIcon(m.iconName, 16, "text-[#F9D972]")}
                   <span className="text-[10px] font-bold text-[var(--color-on-surface)] uppercase tracking-wider">
                     {m.name.replace(" MODULE", "").replace(" SYSTEM", "")}
                   </span>
@@ -217,7 +217,7 @@ export default function ProductCataloguePage() {
               </p>
               <div className="flex flex-wrap gap-1 mt-2">
                 {m.keyFeatures.slice(0, 2).map((f, i) => (
-                  <span key={i} className="text-[7px] font-mono text-[#00cec4] border border-[#00cec4]/20 bg-[#00cec4]/5 px-1.5 py-0.5 rounded">
+                  <span key={i} className="text-[7px] font-mono text-[#F9D972] border border-[#F9D972]/20 bg-[#F9D972]/5 px-1.5 py-0.5 rounded">
                     {f.length > 35 ? f.slice(0, 32) + "…" : f}
                   </span>
                 ))}
@@ -231,10 +231,10 @@ export default function ProductCataloguePage() {
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-4">
         <div className="lg:col-span-7 space-y-6">
           <div className="space-y-2">
-            <span className="text-[10px] font-bold text-[#00cec4] uppercase tracking-widest block font-sans">
+            <span className="text-[10px] font-bold text-[#F9D972] uppercase tracking-widest block font-sans">
               SYSTEM ARCHITECTURE MANUAL
             </span>
-            <h2 className="ds-h1 text-white text-4xl sm:text-5xl leading-tight">
+            <h2 className="monolith-h1 text-white text-4xl sm:text-5xl leading-tight">
               {productOverview.name}
             </h2>
             <p className="text-orange-400 font-bold text-sm tracking-wider uppercase">
@@ -244,20 +244,20 @@ export default function ProductCataloguePage() {
           <p className="text-[var(--color-on-surface-variant)] text-sm leading-relaxed max-w-2xl">
             {productOverview.description}
           </p>
-          <div className="p-4 border-l-4 border-[#00cec4] bg-[var(--color-surface-container-low)] text-xs text-[var(--color-on-surface)] rounded-r-xl">
-            <span className="font-bold block text-[#00cec4] uppercase tracking-wider mb-1">Coded Business Outcome</span>
+          <div className="p-4 border-l-4 border-[#F9D972] bg-[var(--color-surface-container-low)] text-xs text-[var(--color-on-surface)] rounded-r-xl">
+            <span className="font-bold block text-[#F9D972] uppercase tracking-wider mb-1">Coded Business Outcome</span>
             {productOverview.keyBusinessValue}
           </div>
           <div className="flex flex-wrap gap-4 no-print">
             <a
               href="#interactive-timelines"
-              className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold transition-all cursor-pointer"
+              className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold transition-all cursor-pointer"
             >
               Interactive Timeline
             </a>
             <a
               href="#system-benefits"
-              className="border border-[#00cec4]/40 hover:border-[#00cec4] text-[#00cec4] px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold transition-all hover:bg-[#00cec4]/5 cursor-pointer"
+              className="border border-[#F9D972]/40 hover:border-[#F9D972] text-[#F9D972] px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold transition-all hover:bg-[#F9D972]/5 cursor-pointer"
             >
               View System ROI
             </a>
@@ -268,17 +268,17 @@ export default function ProductCataloguePage() {
         <div className="lg:col-span-5 flex justify-center items-center py-6 relative">
           <div className="relative w-72 h-72 flex items-center justify-center">
             {/* Center Core Node */}
-            <div className="absolute w-24 h-24 rounded-full bg-slate-900 border-2 border-[#00cec4] flex flex-col items-center justify-center pulse-logo-core z-10 shadow-[0_0_30px_rgba(0,206,196,0.25)]">
-              <LucideIcons.Layers size={32} className="text-[#00cec4] mb-1" />
+            <div className="absolute w-24 h-24 rounded-full bg-slate-900 border-2 border-[#F9D972] flex flex-col items-center justify-center pulse-logo-core z-10 shadow-[0_0_30px_rgba(0,206,196,0.25)]">
+              <LucideIcons.Layers size={32} className="text-[#F9D972] mb-1" />
               <span className="text-[8px] font-bold text-white tracking-widest uppercase">MONOLITH</span>
             </div>
 
             {/* Inner Ring (Clockwise) */}
-            <div className="absolute w-48 h-48 border border-[#00cec4]/15 rounded-full orbit-spin-clockwise flex items-center justify-between">
-              <div className="w-8 h-8 rounded-full bg-slate-950 border border-[#00cec4]/40 flex items-center justify-center text-[#00cec4] -ml-4 shadow-sm" title="HRMS">
+            <div className="absolute w-48 h-48 border border-[#F9D972]/15 rounded-full orbit-spin-clockwise flex items-center justify-between">
+              <div className="w-8 h-8 rounded-full bg-slate-950 border border-[#F9D972]/40 flex items-center justify-center text-[#F9D972] -ml-4 shadow-sm" title="HRMS">
                 <LucideIcons.Users size={14} />
               </div>
-              <div className="w-8 h-8 rounded-full bg-slate-950 border border-[#00cec4]/40 flex items-center justify-center text-[#00cec4] -mr-4 shadow-sm" title="CRM">
+              <div className="w-8 h-8 rounded-full bg-slate-950 border border-[#F9D972]/40 flex items-center justify-center text-[#F9D972] -mr-4 shadow-sm" title="CRM">
                 <LucideIcons.Sparkles size={14} />
               </div>
             </div>
@@ -302,7 +302,7 @@ export default function ProductCataloguePage() {
       {/* Hero Highlight Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {productOverview.highlightCards.map((card, i) => (
-          <div key={i} className="card-left-accent p-5 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl relative overflow-hidden print-card">
+          <div key={i} className="monolith-card monolith-accent p-5 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl relative overflow-hidden print-card">
             <h4 className="text-white font-bold text-xs uppercase tracking-wider mb-1.5">{card.title}</h4>
             <p className="text-[var(--color-on-surface-variant)] text-xs leading-relaxed">{card.description}</p>
           </div>
@@ -314,8 +314,8 @@ export default function ProductCataloguePage() {
       {/* ─── SECTION 2: PROBLEM VS. SOLUTION ─── */}
       <section className="space-y-8 print-break">
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-[#fb923c] uppercase tracking-widest block font-sans">CONVERSION METRIC AUDIT</span>
-          <h2 className="ds-h2 text-white">System Inefficiencies vs. Coded Platform Solutions</h2>
+          <span className="text-[10px] font-bold text-[#D88700] uppercase tracking-widest block font-sans">CONVERSION METRIC AUDIT</span>
+          <h2 className="monolith-h2 text-white">System Inefficiencies vs. Coded Platform Solutions</h2>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -327,10 +327,10 @@ export default function ProductCataloguePage() {
             </h3>
             <div className="space-y-4">
               {problems.map((problem) => (
-                <div key={problem.id} className="card-top-accent-orange p-5 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl print-card relative">
+                <div key={problem.id} className="monolith-card monolith-accent-warning p-5 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl print-card relative">
                   <div className="flex justify-between items-start mb-2 gap-4">
                     <h4 className="text-white font-bold text-xs uppercase tracking-wide">{problem.title}</h4>
-                    <span className="text-[10px] font-bold font-mono ds-numeric px-2 py-0.5 rounded bg-orange-950 text-orange-400 border border-orange-400/20 whitespace-nowrap">
+                    <span className="text-[10px] font-bold font-mono monolith-numeric px-2 py-0.5 rounded bg-orange-950 text-orange-400 border border-orange-400/20 whitespace-nowrap">
                       {problem.metric}
                     </span>
                   </div>
@@ -342,24 +342,24 @@ export default function ProductCataloguePage() {
 
           {/* Core Solutions */}
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-[#00cec4] uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#F9D972] uppercase tracking-wider flex items-center gap-2">
               <LucideIcons.Zap size={16} />
               Monolith Architecture Resolutions
             </h3>
             <div className="space-y-4">
               {solutions.map((sol) => (
-                <div key={sol.id} className="card-left-accent p-5 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl print-card relative h-fit">
-                  <h4 className="text-[#00cec4] font-bold text-xs uppercase tracking-wide mb-2">{sol.title}</h4>
+                <div key={sol.id} className="monolith-card monolith-accent p-5 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl print-card relative h-fit">
+                  <h4 className="text-[#F9D972] font-bold text-xs uppercase tracking-wide mb-2">{sol.title}</h4>
                   <p className="text-[var(--color-on-surface-variant)] text-xs leading-relaxed">{sol.description}</p>
                 </div>
               ))}
 
-              <div className="p-6 bg-gradient-to-br from-cyan-950/20 to-blue-950/20 border border-[#00cec4]/35 rounded-xl space-y-4">
+              <div className="p-6 bg-gradient-to-br from-cyan-950/20 to-blue-950/20 border border-[#F9D972]/35 rounded-xl space-y-4">
                 <h4 className="text-white font-bold text-sm uppercase tracking-wider">Ecosystem Synchronization</h4>
                 <p className="text-gray-300 text-xs leading-relaxed">
                   Instead of writing code wrappers and polling external software webhooks, Monolith Engine uses a single transactional database schema. Changes in employee CTC are processed immediately by biometric attendance registers; CRM invoice releases update ledger records dynamically.
                 </p>
-                <div className="text-[10px] font-bold text-[#00cec4] tracking-widest uppercase">
+                <div className="text-[10px] font-bold text-[#F9D972] tracking-widest uppercase">
                   ZERO DELAYED SYNC LOGS // ONE SOURCE OF TRUTH
                 </div>
               </div>
@@ -374,10 +374,10 @@ export default function ProductCataloguePage() {
       <section className="space-y-6 print-break" id="interactive-timelines">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="space-y-1">
-            <span className="text-[10px] font-bold text-[#00cec4] uppercase tracking-widest block font-sans">
+            <span className="text-[10px] font-bold text-[#F9D972] uppercase tracking-widest block font-sans">
               SYSTEM FLOW METALLURGY
             </span>
-            <h2 className="ds-h2 text-white">Interactive Modules & Technical Logs Visualizer</h2>
+            <h2 className="monolith-h2 text-white">Interactive Modules & Technical Logs Visualizer</h2>
           </div>
 
           {/* Toggle View Mode: Timeline vs Blueprint Manual */}
@@ -386,8 +386,8 @@ export default function ProductCataloguePage() {
               onClick={() => setViewMode("timeline")}
               className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
                 viewMode === "timeline"
-                  ? "bg-[#00cec4] text-slate-950 shadow-sm font-bold"
-                  : "text-[var(--color-on-surface-variant)] hover:text-white hover:bg-[#00cec4]/10"
+                  ? "bg-[#F9D972] text-slate-950 shadow-sm font-bold"
+                  : "text-[var(--color-on-surface-variant)] hover:text-white hover:bg-[#F9D972]/10"
               }`}
             >
               Operations Timeline
@@ -396,8 +396,8 @@ export default function ProductCataloguePage() {
               onClick={() => setViewMode("blueprint")}
               className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
                 viewMode === "blueprint"
-                  ? "bg-[#00cec4] text-slate-950 shadow-sm font-bold"
-                  : "text-[var(--color-on-surface-variant)] hover:text-white hover:bg-[#00cec4]/10"
+                  ? "bg-[#F9D972] text-slate-950 shadow-sm font-bold"
+                  : "text-[var(--color-on-surface-variant)] hover:text-white hover:bg-[#F9D972]/10"
               }`}
             >
               System Blueprint Manual
@@ -425,8 +425,8 @@ export default function ProductCataloguePage() {
                 }}
                 className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center justify-between border cursor-pointer ${
                   activeModuleTab === m.id
-                    ? "bg-[#00cec4]/15 border-[#00cec4] text-[#00cec4] shadow-sm font-bold"
-                    : "bg-[var(--color-surface)] border-[var(--color-outline-variant)]/60 text-[var(--color-on-surface-variant)] hover:text-white hover:border-[#00cec4]/40"
+                    ? "bg-[#F9D972]/15 border-[#F9D972] text-[#F9D972] shadow-sm font-bold"
+                    : "bg-[var(--color-surface)] border-[var(--color-outline-variant)]/60 text-[var(--color-on-surface-variant)] hover:text-white hover:border-[#F9D972]/40"
                 }`}
               >
                 <div className="flex items-center gap-2.5 text-xs uppercase tracking-wide flex-1 min-w-0">
@@ -435,7 +435,7 @@ export default function ProductCataloguePage() {
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <StatusBadge status={m.status} />
-                  <LucideIcons.ChevronRight size={12} className={activeModuleTab === m.id ? "text-[#00cec4]" : "text-slate-600"} />
+                  <LucideIcons.ChevronRight size={12} className={activeModuleTab === m.id ? "text-[#F9D972]" : "text-slate-600"} />
                 </div>
               </button>
             ))}
@@ -450,7 +450,7 @@ export default function ProductCataloguePage() {
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider">
                     Module Operational Stages
                   </span>
-                  <span className="text-[9px] text-[#00cec4] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#00cec4]/10">
+                  <span className="text-[9px] text-[#F9D972] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#F9D972]/10">
                     {currentStages.length} Stages
                   </span>
                 </div>
@@ -464,15 +464,15 @@ export default function ProductCataloguePage() {
                         onClick={() => setActiveStageId(stage.stageId)}
                         className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-2 relative overflow-hidden ${
                           isActive
-                            ? "bg-[#161f28]/45 border-[#00cec4] shadow-[0_0_12px_rgba(0,206,196,0.15)]"
-                            : "bg-[var(--color-surface-container-low)] border-[var(--color-outline-variant)]/50 hover:border-[#00cec4]/35"
+                            ? "bg-[#161f28]/45 border-[#F9D972] shadow-[0_0_12px_rgba(0,206,196,0.15)]"
+                            : "bg-[var(--color-surface-container-low)] border-[var(--color-outline-variant)]/50 hover:border-[#F9D972]/35"
                         }`}
                       >
                         {/* Stage Header Info */}
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2">
                             <span className={`px-2 py-0.5 rounded text-[8px] font-bold tracking-widest uppercase font-mono ${
-                              isActive ? "bg-[#00cec4] text-slate-950" : "bg-[#1c212a] text-slate-400"
+                              isActive ? "bg-[#F9D972] text-slate-950" : "bg-[#1c212a] text-slate-400"
                             }`}>
                               {stage.durationLabel}
                             </span>
@@ -480,7 +480,7 @@ export default function ProductCataloguePage() {
                               {stage.stageName.replace(/_/g, " ")}
                             </h4>
                           </div>
-                          {renderIcon(stage.iconName, 12, isActive ? "text-[#00cec4]" : "text-slate-500")}
+                          {renderIcon(stage.iconName, 12, isActive ? "text-[#F9D972]" : "text-slate-500")}
                         </div>
 
                         {/* Progress Bar Timeline mapping check-in visual style */}
@@ -488,7 +488,7 @@ export default function ProductCataloguePage() {
                           <div
                             className={`h-full rounded-full transition-all duration-500 ease-out glow-timeline-bar ${stage.barWidth} ${
                               isActive
-                                ? "bg-gradient-to-r from-[#00cec4]/30 to-[#00cec4]"
+                                ? "bg-gradient-to-r from-[#F9D972]/30 to-[#F9D972]"
                                 : "bg-slate-800"
                             }`}
                           />
@@ -513,7 +513,7 @@ export default function ProductCataloguePage() {
                       <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest font-mono">
                         TECHNICAL SPECIFICATION SHEET
                       </span>
-                      <h3 className="text-sm font-bold text-[#00cec4] uppercase tracking-wider font-display mt-0.5">
+                      <h3 className="text-sm font-bold text-[#F9D972] uppercase tracking-wider font-display mt-0.5">
                         {activeStage.stageName.replace(/_/g, " ")}
                       </h3>
                     </div>
@@ -529,7 +529,7 @@ export default function ProductCataloguePage() {
                 {/* Coded Backend Functions Deep Dive */}
                 <div className="space-y-4">
                   <h4 className="text-white font-bold text-[10px] uppercase tracking-widest flex items-center gap-1.5 border-b border-[var(--color-outline-variant)] pb-1.5">
-                    <LucideIcons.Code size={12} className="text-[#00cec4]" />
+                    <LucideIcons.Code size={12} className="text-[#F9D972]" />
                     Coded Backend Logic & Functions
                   </h4>
                   <div className="space-y-4">
@@ -537,11 +537,11 @@ export default function ProductCataloguePage() {
                       <div key={idx} className="space-y-1.5 p-3 rounded-lg bg-slate-950 border border-[#1c212a]">
                         <div className="flex justify-between items-center">
                           <span className="text-[10px] font-bold text-white font-mono">{fn.name}</span>
-                          <span className="text-[7px] font-bold uppercase tracking-wider text-[#00cec4] bg-[#00cec4]/10 px-1.5 py-0.5 rounded font-mono">
+                          <span className="text-[7px] font-bold uppercase tracking-wider text-[#F9D972] bg-[#F9D972]/10 px-1.5 py-0.5 rounded font-mono">
                             TypeScript
                           </span>
                         </div>
-                        <code className="block text-[9px] text-cyan-400 font-mono ds-numeric p-1.5 bg-[#070b10] rounded border border-cyan-500/10 overflow-x-auto whitespace-pre-wrap break-all leading-normal">
+                        <code className="block text-[9px] text-cyan-400 font-mono monolith-numeric p-1.5 bg-[#070b10] rounded border border-cyan-500/10 overflow-x-auto whitespace-pre-wrap break-all leading-normal">
                           {fn.signature}
                         </code>
                         <p className="text-[9px] text-[var(--color-on-surface-variant)] leading-relaxed">
@@ -585,12 +585,12 @@ export default function ProductCataloguePage() {
                 {/* Stage Integrations */}
                 <div className="space-y-2.5">
                   <h4 className="text-white font-bold text-[10px] uppercase tracking-widest flex items-center gap-1.5 border-b border-[var(--color-outline-variant)] pb-1.5">
-                    <LucideIcons.GitMerge size={12} className="text-[#00cec4]" />
+                    <LucideIcons.GitMerge size={12} className="text-[#F9D972]" />
                     Ecosystem Integration Mappings
                   </h4>
                   <div className="flex flex-wrap gap-1.5">
                     {activeStage.integrations.map((item, idx) => (
-                      <span key={idx} className="px-2 py-0.5 rounded border border-[#00cec4]/20 bg-[#00cec4]/5 text-[#00cec4] text-[8px] uppercase tracking-wider font-semibold">
+                      <span key={idx} className="px-2 py-0.5 rounded border border-[#F9D972]/20 bg-[#F9D972]/5 text-[#F9D972] text-[8px] uppercase tracking-wider font-semibold">
                         {item}
                       </span>
                     ))}
@@ -603,14 +603,14 @@ export default function ProductCataloguePage() {
             <div className="lg:col-span-9 space-y-8 animate-in fade-in duration-300">
               
               {/* Summary & Explanation Card */}
-              <div className="card-left-accent p-6 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl print-card relative">
-                <span className="text-[8px] font-bold text-[#00cec4] uppercase tracking-widest block font-mono mb-1">
+              <div className="monolith-card monolith-accent p-6 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl print-card relative">
+                <span className="text-[8px] font-bold text-[#F9D972] uppercase tracking-widest block font-mono mb-1">
                   MODULE SYSTEM BLUEPRINT
                 </span>
                 <h3 className="text-white font-bold text-lg uppercase tracking-wide mb-3">
                   {activeModule.name}
                 </h3>
-                <p className="text-[#00cec4] font-semibold text-xs mb-4">
+                <p className="text-[#F9D972] font-semibold text-xs mb-4">
                   {activeModule.lifecycleGuide.summary}
                 </p>
                 <div className="text-[var(--color-on-surface-variant)] text-xs leading-relaxed space-y-4">
@@ -627,8 +627,8 @@ export default function ProductCataloguePage() {
                 </span>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {activeModule.lifecycleGuide.steps.map((step, idx) => (
-                    <div key={idx} className="bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl p-4 flex gap-4 items-start hover:border-[#00cec4]/35 transition-all print-card">
-                      <span className="w-6 h-6 rounded-full bg-[#00cec4]/15 border border-[#00cec4] text-[#00cec4] flex items-center justify-center text-xs font-bold font-mono shrink-0">
+                    <div key={idx} className="bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl p-4 flex gap-4 items-start hover:border-[#F9D972]/35 transition-all print-card">
+                      <span className="w-6 h-6 rounded-full bg-[#F9D972]/15 border border-[#F9D972] text-[#F9D972] flex items-center justify-center text-xs font-bold font-mono shrink-0">
                         {idx + 1}
                       </span>
                       <div className="space-y-1">
@@ -646,7 +646,7 @@ export default function ProductCataloguePage() {
 
               {/* Mapped System Functions Deep-Dive */}
               <div className="space-y-4">
-                <span className="text-[8px] font-bold text-[#00cec4] uppercase tracking-widest block font-mono">
+                <span className="text-[8px] font-bold text-[#F9D972] uppercase tracking-widest block font-mono">
                   CORE BACKEND LOGIC & DATA OPERATIONS
                 </span>
                 <div className="space-y-4">
@@ -655,13 +655,13 @@ export default function ProductCataloguePage() {
                       <div className="flex justify-between items-center border-b border-[#1c212a] pb-2">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-white font-mono">{fn.name}</span>
-                          <span className="text-[8px] font-bold uppercase tracking-wider text-[#00cec4] bg-[#00cec4]/10 px-1.5 py-0.5 rounded font-mono">
+                          <span className="text-[8px] font-bold uppercase tracking-wider text-[#F9D972] bg-[#F9D972]/10 px-1.5 py-0.5 rounded font-mono">
                             TypeScript Signature
                           </span>
                         </div>
                       </div>
                       
-                      <code className="block text-[10px] text-cyan-400 font-mono ds-numeric p-2.5 bg-[#070b10] rounded border border-cyan-500/10 overflow-x-auto whitespace-pre-wrap break-all leading-normal">
+                      <code className="block text-[10px] text-cyan-400 font-mono monolith-numeric p-2.5 bg-[#070b10] rounded border border-cyan-500/10 overflow-x-auto whitespace-pre-wrap break-all leading-normal">
                         {fn.signature}
                       </code>
 
@@ -706,15 +706,15 @@ export default function ProductCataloguePage() {
       {/* ─── SECTION 4: UNIFIED PLATFORM INTERACTION MAP ─── */}
       <section className="space-y-6 print-break">
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-[#00cec4] uppercase tracking-widest block font-sans">CROSS-MODULE CONNECTIVITY</span>
-          <h2 className="ds-h2 text-white">Platform Subsystems Data Interactions</h2>
+          <span className="text-[10px] font-bold text-[#F9D972] uppercase tracking-widest block font-sans">CROSS-MODULE CONNECTIVITY</span>
+          <h2 className="monolith-h2 text-white">Platform Subsystems Data Interactions</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {moduleInteractions.map((item, i) => (
             <div key={i} className="p-5 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl relative print-card">
               <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-2.5">
-                <span className="text-[#00cec4]">{item.fromModule}</span>
+                <span className="text-[#F9D972]">{item.fromModule}</span>
                 <LucideIcons.GitCommit size={12} className="text-slate-500" />
                 <span className="text-purple-400">{item.toModule}</span>
               </div>
@@ -729,18 +729,18 @@ export default function ProductCataloguePage() {
       {/* ─── SECTION 5: CLIENT BENEFITS & OUTCOMES ─── */}
       <section className="space-y-8 print-break" id="system-benefits">
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-[#00cec4] uppercase tracking-widest block font-sans">ECONOMIC OUTCOMES</span>
-          <h2 className="ds-h2 text-white">Tangible Client Operating Benefits & ROI</h2>
+          <span className="text-[10px] font-bold text-[#F9D972] uppercase tracking-widest block font-sans">ECONOMIC OUTCOMES</span>
+          <h2 className="monolith-h2 text-white">Tangible Client Operating Benefits & ROI</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {benefits.map((b, i) => (
-            <div key={i} className="card-left-accent p-6 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl print-card relative flex flex-col justify-between gap-4">
+            <div key={i} className="monolith-card monolith-accent p-6 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl print-card relative flex flex-col justify-between gap-4">
               <div className="space-y-1">
                 <h3 className="text-white font-bold text-sm uppercase tracking-wide">{b.title}</h3>
                 <p className="text-[var(--color-on-surface-variant)] text-xs leading-relaxed">{b.description}</p>
               </div>
-              <div className="text-[10px] font-bold font-mono ds-numeric px-3 py-1 rounded-lg bg-cyan-950/40 text-[#00cec4] border border-[#00cec4]/20 w-fit">
+              <div className="text-[10px] font-bold font-mono monolith-numeric px-3 py-1 rounded-lg bg-cyan-950/40 text-[#F9D972] border border-[#F9D972]/20 w-fit">
                 {b.highlight}
               </div>
             </div>
@@ -751,10 +751,10 @@ export default function ProductCataloguePage() {
       <hr className="border-[var(--color-outline-variant)] opacity-40" />
 
       {/* ─── SECTION 6: EXECUTIVE CLOSING CTA ─── */}
-      <section className="no-print bg-gradient-to-br from-cyan-950/20 to-blue-950/15 border border-[#00cec4]/40 rounded-2xl p-8 sm:p-12 text-center space-y-6 relative overflow-hidden">
+      <section className="no-print bg-gradient-to-br from-cyan-950/20 to-blue-950/15 border border-[#F9D972]/40 rounded-2xl p-8 sm:p-12 text-center space-y-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(6,182,212,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(6,182,212,0.015)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
         <div className="max-w-3xl mx-auto space-y-4">
-          <h2 className="ds-h2 text-white text-3xl leading-tight">
+          <h2 className="monolith-h2 text-white text-3xl leading-tight">
             {ctaContent.title}
           </h2>
           <p className="text-gray-300 text-xs leading-relaxed max-w-xl mx-auto">
@@ -765,13 +765,13 @@ export default function ProductCataloguePage() {
         <div className="flex flex-wrap gap-4 justify-center pt-2">
           <button
             onClick={() => router.push("/crm/leads/new")}
-            className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-6 py-3 rounded-xl text-xs uppercase tracking-wider font-bold transition-all cursor-pointer"
+            className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-6 py-3 rounded-xl text-xs uppercase tracking-wider font-bold transition-all cursor-pointer"
           >
             {ctaContent.primaryCta}
           </button>
           <a
             href="mailto:solutions@monolithengine.internal"
-            className="border border-[#00cec4]/40 hover:border-[#00cec4] text-[#00cec4] px-6 py-3 rounded-xl text-xs uppercase tracking-wider font-bold transition-all hover:bg-[#00cec4]/5 cursor-pointer flex items-center justify-center"
+            className="border border-[#F9D972]/40 hover:border-[#F9D972] text-[#F9D972] px-6 py-3 rounded-xl text-xs uppercase tracking-wider font-bold transition-all hover:bg-[#F9D972]/5 cursor-pointer flex items-center justify-center"
           >
             {ctaContent.secondaryCta}
           </a>

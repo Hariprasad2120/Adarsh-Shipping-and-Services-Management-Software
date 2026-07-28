@@ -62,7 +62,7 @@ const CURRENT_STEP_GLOW_CLASS =
 
 function cardClassName(className?: string) {
   return [
-    "card-top-accent rounded-[24px] border border-outline-variant/35 bg-surface p-5",
+    "monolith-card monolith-accent rounded-[24px] border border-mono-border/35 bg-mono-card p-5",
     className,
   ]
     .filter(Boolean)
@@ -181,9 +181,9 @@ export function CycleProgressCard({
     <section className={cardClassName(className)}>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h2 className="ds-h2 text-on-surface">Cycle Progress</h2>
+          <h2 className="monolith-h2 text-mono-text">Cycle Progress</h2>
           {cycleLabel && (
-            <p className="text-xs text-on-surface-variant">
+            <p className="text-xs text-mono-muted">
               {cycleLabel}
             </p>
           )}
@@ -221,7 +221,7 @@ export function CycleProgressCard({
                   } ${isCurrent ? `animate-pulse ${CURRENT_STEP_GLOW_CLASS}` : ""}`}
                 >
                   {isCurrent ? (
-                    <span className="absolute inset-[-6px] rounded-full border border-[#00cec4]/35 animate-ping" />
+                    <span className="absolute inset-[-6px] rounded-full border border-[#F9D972]/35 animate-ping" />
                   ) : null}
                   <Icon className="relative z-10 size-4" />
                 </span>
@@ -229,14 +229,14 @@ export function CycleProgressCard({
               <div className="min-w-0 pt-1">
                 <p
                   className={`text-sm font-semibold ${
-                    isDone || isCurrent ? "text-on-surface" : "text-on-surface-variant"
+                    isDone || isCurrent ? "text-mono-text" : "text-mono-muted"
                   }`}
                 >
                   {item.title}
                 </p>
                 <p
                   className={`mt-1 text-sm ${
-                    isDone || isCurrent ? "text-on-surface-variant" : "text-on-surface-variant/70"
+                    isDone || isCurrent ? "text-mono-muted" : "text-mono-muted/70"
                   }`}
                 >
                   {item.description}

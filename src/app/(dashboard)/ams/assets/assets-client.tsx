@@ -1,7 +1,7 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
-import { DateInput } from "@/components/ui/date-input";
+import { NativeSelect } from "@/components/monolith/native-select";
+import { DateInput } from "@/components/monolith/date-input";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -118,7 +118,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
         <button
           onClick={() => setActiveTab("LIST")}
           className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
-            activeTab === "LIST" ? "border-[#00cec4] text-white" : "border-transparent text-slate-400 hover:text-white"
+            activeTab === "LIST" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
           }`}
         >
           Asset Register ({assets.length})
@@ -126,7 +126,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
         <button
           onClick={() => setActiveTab("NEW")}
           className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
-            activeTab === "NEW" ? "border-[#00cec4] text-white" : "border-transparent text-slate-400 hover:text-white"
+            activeTab === "NEW" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
           }`}
         >
           Onboard New Asset
@@ -140,9 +140,9 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
           <div className="space-y-4">
             
             {/* Depreciation batch runner configs */}
-            <div className="p-4 rounded-xl bg-[#0f1319]/80 border border-[#1c212a]/55 flex flex-col md:flex-row md:items-center justify-between gap-4 card-left-accent">
+            <div className="p-4 rounded-xl bg-[#0f1319]/80 border border-[#1c212a]/55 flex flex-col md:flex-row md:items-center justify-between gap-4 monolith-card monolith-accent">
               <div className="flex items-center gap-3">
-                <Calculator className="size-5 text-[#00cec4] shrink-0" />
+                <Calculator className="size-5 text-[#F9D972] shrink-0" />
                 <div>
                   <h4 className="font-bold text-xs text-white uppercase tracking-wider">Depreciation Period Selection</h4>
                   <p className="text-[11px] text-slate-400">Choose the month to compute and apply the monthly depreciation run.</p>
@@ -177,7 +177,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="ds-table">
+                  <table className="monolith-table">
                     <thead>
                       <tr>
                         <th>Asset Code / Name</th>
@@ -196,7 +196,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                             <div>
                               <Link
                                 href={`/ams/assets/${asset.id}`}
-                                className="text-white hover:text-[#00cec4] font-semibold block transition-colors"
+                                className="text-white hover:text-[#F9D972] font-semibold block transition-colors"
                               >
                                 {asset.assetName}
                               </Link>
@@ -206,13 +206,13 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                           <td className="text-slate-350 text-xs">
                             {new Date(asset.purchaseDate).toLocaleDateString("en-IN")}
                           </td>
-                          <td className="ds-numeric text-white">
+                          <td className="monolith-numeric text-white">
                             ₹{asset.purchaseValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                           </td>
-                          <td className="ds-numeric text-slate-400">
+                          <td className="monolith-numeric text-slate-400">
                             ₹{asset.accumulatedDepreciation.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                           </td>
-                          <td className="ds-numeric font-bold text-[#00cec4]">
+                          <td className="monolith-numeric font-bold text-[#F9D972]">
                             ₹{asset.bookValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                           </td>
                           <td>
@@ -228,7 +228,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                             <div className="flex justify-end gap-2 items-center">
                               <Link
                                 href={`/ams/assets/${asset.id}`}
-                                className="p-1.5 text-slate-400 hover:text-[#00cec4] hover:bg-[#00cec4]/5 rounded-lg transition-all"
+                                className="p-1.5 text-slate-400 hover:text-[#F9D972] hover:bg-[#F9D972]/5 rounded-lg transition-all"
                                 title="View History"
                               >
                                 <Eye className="size-4" />
@@ -237,7 +237,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                                 <button
                                   disabled={runningDepreciationAssetId === asset.id}
                                   onClick={() => handleRunDepreciation(asset.id)}
-                                  className="flex items-center gap-1 bg-[#00cec4] hover:bg-[#00b8af] text-white px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold tracking-wide transition-all disabled:opacity-50 cursor-pointer"
+                                  className="flex items-center gap-1 bg-[#F9D972] hover:bg-[#E8C85D] text-white px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold tracking-wide transition-all disabled:opacity-50 cursor-pointer"
                                 >
                                   {runningDepreciationAssetId === asset.id ? (
                                     <Loader2 className="size-3 animate-spin" />
@@ -266,12 +266,12 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
           <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 max-w-[800px] mx-auto">
             <form onSubmit={handleSubmit} className="space-y-6">
               
-              <div className="ds-form-section space-y-4">
+              <div className="monolith-form-section space-y-4">
                 <h3 className="text-white">Asset Core Profiler</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="ds-label">Asset Name *</label>
+                    <label className="monolith-label">Asset Name *</label>
                     <input
                       type="text"
                       required
@@ -282,7 +282,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="ds-label">Asset Code / Serial *</label>
+                    <label className="monolith-label">Asset Code / Serial *</label>
                     <input
                       type="text"
                       required
@@ -296,7 +296,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1">
-                    <label className="ds-label">Purchase Date *</label>
+                    <label className="monolith-label">Purchase Date *</label>
                     <DateInput
                       required
                       value={formData.purchaseDate}
@@ -305,7 +305,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="ds-label">Purchase Value (₹) *</label>
+                    <label className="monolith-label">Purchase Value (₹) *</label>
                     <input
                       type="number"
                       required
@@ -317,7 +317,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="ds-label">Depreciation Rate (% per annum)</label>
+                    <label className="monolith-label">Depreciation Rate (% per annum)</label>
                     <input
                       type="number"
                       step="0.1"
@@ -330,7 +330,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="ds-label">Branch Mapping</label>
+                    <label className="monolith-label">Branch Mapping</label>
                     <NativeSelect
                       value={formData.branchId}
                       onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
@@ -345,7 +345,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                 </div>
               </div>
 
-              <div className="ds-form-section space-y-4 pt-4 border-t border-[#1c212a]/30">
+              <div className="monolith-form-section space-y-4 pt-4 border-t border-[#1c212a]/30">
                 <h3 className="text-white">Custom Accounting Bindings (Optional)</h3>
                 <p className="text-[10px] text-slate-400 -mt-2">
                   Override default accounts. If left blank, settings configured in Accounting Settings are applied.
@@ -353,7 +353,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1">
-                    <label className="ds-label">Asset Account (Fixed Asset)</label>
+                    <label className="monolith-label">Asset Account (Fixed Asset)</label>
                     <NativeSelect
                       value={formData.assetAccount}
                       onChange={(e) => setFormData({ ...formData, assetAccount: e.target.value })}
@@ -367,7 +367,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                   </div>
 
                   <div className="space-y-1">
-                    <label className="ds-label">Depreciation Account (Expense)</label>
+                    <label className="monolith-label">Depreciation Account (Expense)</label>
                     <NativeSelect
                       value={formData.depreciationAccount}
                       onChange={(e) => setFormData({ ...formData, depreciationAccount: e.target.value })}
@@ -381,7 +381,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                   </div>
 
                   <div className="space-y-1">
-                    <label className="ds-label">Accumulated Depr. (Asset Offset)</label>
+                    <label className="monolith-label">Accumulated Depr. (Asset Offset)</label>
                     <NativeSelect
                       value={formData.accumulatedDepreciationAccount}
                       onChange={(e) => setFormData({ ...formData, accumulatedDepreciationAccount: e.target.value })}
@@ -400,7 +400,7 @@ export function AssetsClient({ initialAssets, accounts, branches, settingsConfig
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-6 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50"
+                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-6 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50"
                 >
                   {isSaving ? "Onboarding..." : "Register Fixed Asset"}
                 </button>

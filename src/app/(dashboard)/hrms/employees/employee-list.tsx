@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { toDisplayTitleCase } from "@/lib/text-case";
 import { Badge, DataTablePrimaryLinkCell } from "@/components/data-table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
 
 type UserRoleName =
   | "Director"
@@ -80,7 +80,7 @@ const ROLE_GROUPS = [
     key: "Employee",
     label: "Employees",
     roles: ["Employee"],
-    badgeClass: "border-outline-variant bg-surface-container-high text-slate-700",
+    badgeClass: "border-mono-border bg-mono-soft text-slate-700",
   },
 ] as const;
 
@@ -95,7 +95,7 @@ const GROUP_ORDER: UserRoleName[] = [
 ];
 
 const HEADER_CELL_CLASS =
-  "px-5 py-3 text-xs font-medium uppercase tracking-[0.14em] text-on-surface-variant";
+  "px-5 py-3 text-xs font-medium uppercase tracking-[0.14em] text-mono-muted";
 
 function employeeNumberFor(user: User) {
   return user.employmentRecord?.payrollMeta?.employeeNumber?.trim() || "-";
@@ -167,7 +167,7 @@ function roleBadgeClass(roleName: string) {
       return "border-cyan-200 bg-cyan-50 text-cyan-700";
 
     default:
-      return "border-outline-variant bg-surface-container-high text-slate-700";
+      return "border-mono-border bg-mono-soft text-slate-700";
   }
 }
 
@@ -186,7 +186,7 @@ function SectionTable({ users }: { users: User[] }) {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full text-sm">
-        <thead className="border-b border-outline-variant/40 bg-surface-container-low text-on-surface">
+        <thead className="border-b border-mono-border/40 bg-mono-soft text-mono-text">
           <tr>
             <th className={`${HEADER_CELL_CLASS} text-left`}>EMP ID</th>
             <th className={`${HEADER_CELL_CLASS} text-left`}>Name</th>
@@ -203,11 +203,11 @@ function SectionTable({ users }: { users: User[] }) {
           {users.map((user) => (
             <tr
               key={user.id}
-              className="group transition-colors hover:bg-surface-container-low/80"
+              className="group transition-colors hover:bg-mono-soft/80"
             >
               <DataTablePrimaryLinkCell
                 href={`/hrms/employees/${user.id}`}
-                className="ds-numeric px-0 py-0 text-sm text-on-surface-variant"
+                className="monolith-numeric px-0 py-0 text-sm text-mono-muted"
                 linkClassName="py-3"
               >
                 {employeeNumberFor(user)}
@@ -218,16 +218,16 @@ function SectionTable({ users }: { users: User[] }) {
                 className="px-0 py-0"
                 linkClassName="min-w-0 gap-3 py-3"
               >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#00cec4]/15 text-xs text-[#008b85]">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F9D972]/15 text-xs text-[#008b85]">
                     {initialsFor(user.name)}
                   </div>
 
                   <div className="min-w-0">
-                    <p className="truncate text-base font-normal text-on-surface">
+                    <p className="truncate text-base font-normal text-mono-text">
                       {user.name}
                     </p>
 
-                    <p className="truncate text-xs text-on-surface-variant">
+                    <p className="truncate text-xs text-mono-muted">
                       {user.email}
                     </p>
                   </div>
@@ -236,7 +236,7 @@ function SectionTable({ users }: { users: User[] }) {
               <td className="px-5 py-3">
                 <div className="flex flex-wrap gap-2">
                   {user.roles.length === 0 ? (
-                    <span className="text-sm text-on-surface-variant">-</span>
+                    <span className="text-sm text-mono-muted">-</span>
                   ) : (
                     user.roles.map((entry) => (
                       <Badge
@@ -252,19 +252,19 @@ function SectionTable({ users }: { users: User[] }) {
                 </div>
               </td>
 
-              <td className="px-5 py-3 text-sm text-on-surface-variant">
+              <td className="px-5 py-3 text-sm text-mono-muted">
                 {toDisplayTitleCase(user.department?.name ?? user.designation)}
               </td>
 
-              <td className="px-5 py-3 text-sm text-on-surface-variant">
+              <td className="px-5 py-3 text-sm text-mono-muted">
                 {toDisplayTitleCase(user.branch?.name)}
               </td>
 
-              <td className="ds-numeric px-5 py-3 text-sm text-on-surface-variant">
+              <td className="monolith-numeric px-5 py-3 text-sm text-mono-muted">
                 {formatDate(user.employmentRecord?.joinDate)}
               </td>
 
-              <td className="ds-numeric px-5 py-3 text-sm text-on-surface-variant">
+              <td className="monolith-numeric px-5 py-3 text-sm text-mono-muted">
                 {formatCurrency(user.employmentRecord?.ctc)}
               </td>
 
@@ -306,8 +306,8 @@ export function EmployeeList({ users }: { users: User[] }) {
   return (
     <div className="space-y-6">
       {users.length === 0 ? (
-        <Card className="ds-shell-lg border-outline-variant shadow-sm dark:border-[#00cec4]/25">
-          <CardContent className="py-10 text-center text-sm text-on-surface-variant">
+        <Card className="monolith-shell-lg border-mono-border shadow-sm dark:border-[#F9D972]/25">
+          <CardContent className="py-10 text-center text-sm text-mono-muted">
             No employees found.
           </CardContent>
         </Card>
@@ -316,9 +316,9 @@ export function EmployeeList({ users }: { users: User[] }) {
           {groupedUsers.map((section) => (
             <Card
               key={section.key}
-              className="ds-shell-lg overflow-hidden border-outline-variant shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:border-[#00cec4]/25"
+              className="monolith-shell-lg overflow-hidden border-mono-border shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:border-[#F9D972]/25"
             >
-              <CardHeader className="bg-surface px-5 pb-4 pt-5">
+              <CardHeader className="bg-mono-card px-5 pb-4 pt-5">
                 <CardTitle className="w-full text-lg font-medium uppercase tracking-[0.12em] text-slate-700">
                   {section.label}
 
@@ -335,8 +335,8 @@ export function EmployeeList({ users }: { users: User[] }) {
           ))}
 
           {uncategorizedUsers.length > 0 ? (
-            <Card className="ds-shell-lg overflow-hidden border-outline-variant shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:border-[#00cec4]/25">
-              <CardHeader className="bg-surface px-5 pb-4 pt-5">
+            <Card className="monolith-shell-lg overflow-hidden border-mono-border shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:border-[#F9D972]/25">
+              <CardHeader className="bg-mono-card px-5 pb-4 pt-5">
                 <CardTitle className="w-full text-lg font-medium uppercase tracking-[0.12em] text-slate-700">
                   Other Roles
 

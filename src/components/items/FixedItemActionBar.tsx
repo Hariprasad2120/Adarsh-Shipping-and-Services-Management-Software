@@ -21,7 +21,7 @@ export function FixedItemActionBar({
         type="button"
         onClick={onSave}
         disabled={isSubmitting}
-        className="px-5 py-2 bg-[#00cec4] hover:bg-[#00b8af] text-white text-sm font-semibold rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-5 py-2 bg-[#F9D972] hover:bg-[#E8C85D] text-white text-sm font-semibold rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isSubmitting ? "Saving…" : "Save"}
       </button>

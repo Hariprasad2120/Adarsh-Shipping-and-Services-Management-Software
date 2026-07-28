@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Bell, CheckSquare, Clock } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/monolith/badge";
+import { Button } from "@/components/monolith/button";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { getCustomerPortalApprovalQueue } from "@/modules/customer-portal/shipments";
 import { listPortalNotifications } from "@/modules/customer-portal/service";
@@ -39,12 +39,12 @@ export default async function CustomerPortalNotificationsPage() {
 
   return (
     <div className="space-y-6 font-sans">
-      <div className="rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-sm">
+      <div className="rounded-xl border border-mono-border/60 bg-mono-card p-5 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="ds-label">Customer Portal</p>
-            <h2 className="ds-h2 mt-2">Notifications</h2>
-            <p className="mt-2 text-sm text-on-surface-variant">
+            <p className="monolith-label">Customer Portal</p>
+            <h2 className="monolith-h2 mt-2">Notifications</h2>
+            <p className="mt-2 text-sm text-mono-muted">
               Shipment updates, document requests, and checklist approvals that need your attention.
             </p>
           </div>
@@ -53,10 +53,10 @@ export default async function CustomerPortalNotificationsPage() {
       </div>
 
       {notificationRows.length === 0 ? (
-        <div className="rounded-xl border border-outline-variant/40 bg-surface p-12 text-center">
-          <Bell className="mx-auto size-10 text-primary opacity-50" />
-          <h3 className="ds-h3 mt-4 text-on-surface">No Notifications</h3>
-          <p className="mx-auto mt-2 max-w-sm text-xs text-on-surface-variant">
+        <div className="rounded-xl border border-mono-border/40 bg-mono-card p-12 text-center">
+          <Bell className="mx-auto size-10 text-mono-accent opacity-50" />
+          <h3 className="monolith-h3 mt-4 text-mono-text">No Notifications</h3>
+          <p className="mx-auto mt-2 max-w-sm text-xs text-mono-muted">
             There are no customer portal notifications for your account right now.
           </p>
         </div>
@@ -65,23 +65,23 @@ export default async function CustomerPortalNotificationsPage() {
           {notificationRows.map((notification) => (
             <div
               key={notification.id}
-              className="card-left-accent flex flex-col gap-4 rounded-xl border border-outline-variant/60 bg-surface p-5 shadow-sm sm:flex-row sm:items-start sm:justify-between"
+              className="monolith-card monolith-accent flex flex-col gap-4 rounded-xl border border-mono-border/60 bg-mono-card p-5 shadow-sm sm:flex-row sm:items-start sm:justify-between"
             >
               <div className="flex min-w-0 gap-3">
-                <span className="ds-icon-badge shrink-0">
+                <span className="monolith-icon-badge shrink-0">
                   {notification.isActionable ? <CheckSquare size={18} /> : <Bell size={18} />}
                 </span>
                 <div className="min-w-0 space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-sm font-medium text-on-surface">{notification.title}</h3>
+                    <h3 className="text-sm font-medium text-mono-text">{notification.title}</h3>
                     <Badge variant={notification.isActionable ? "warning" : notification.readAt ? "secondary" : "default"}>
                       {notification.isActionable ? "Action Required" : notification.readAt ? "Read" : "Unread"}
                     </Badge>
                   </div>
                   {notification.body ? (
-                    <p className="text-sm text-on-surface-variant">{notification.body}</p>
+                    <p className="text-sm text-mono-muted">{notification.body}</p>
                   ) : null}
-                  <p className="flex items-center gap-2 text-xs text-on-surface-variant">
+                  <p className="flex items-center gap-2 text-xs text-mono-muted">
                     <Clock size={14} />
                     <span>{formatDateTime(notification.createdAt)}</span>
                   </p>

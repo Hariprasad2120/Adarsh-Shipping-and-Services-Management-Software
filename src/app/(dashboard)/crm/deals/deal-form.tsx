@@ -1,7 +1,7 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
-import { DateInput } from "@/components/ui/date-input";
+import { NativeSelect } from "@/components/monolith/native-select";
+import { DateInput } from "@/components/monolith/date-input";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -80,7 +80,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
       {/* ─── SECTION: BASIC INFO ────────────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <Landmark className="size-4 text-[#00c4b6]" />
+          <Landmark className="size-4 text-[#F9D972]" />
           <span>Deal Information</span>
         </h3>
 
@@ -93,7 +93,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Adarsh Freight Deal"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
               required
             />
           </div>
@@ -102,7 +102,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
               required
             >
               <option value="">Select Owner</option>
@@ -116,7 +116,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             <NativeSelect
               name="accountId"
               defaultValue={initialData?.accountId || ""}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
               required
             >
               <option value="">Link Account</option>
@@ -130,7 +130,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             <NativeSelect
               name="contactId"
               defaultValue={initialData?.contactId || ""}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
             >
               <option value="">Link Contact</option>
               {contacts.map((c) => (
@@ -144,7 +144,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
       {/* ─── SECTION: STAGING & METRICS ───────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <Tag className="size-4 text-[#00c4b6]" />
+          <Tag className="size-4 text-[#F9D972]" />
           <span>Stage & Valuation</span>
         </h3>
 
@@ -155,7 +155,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
               name="stage"
               value={stage}
               onChange={(e) => handleStageChange(e.target.value)}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
             >
               {stagesList.map((st) => (
                 <option key={st} value={st}>{st.replace("_", " ")}</option>
@@ -169,7 +169,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
               name="amount"
               defaultValue={initialData?.amount || ""}
               placeholder="e.g. 150000"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -179,7 +179,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
               value={probability}
               onChange={(e) => setProbability(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
               placeholder="e.g. 40"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -187,7 +187,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             <DateInput
               name="expectedCloseDate"
               defaultValue={initialData?.expectedCloseDate ? new Date(initialData.expectedCloseDate).toISOString().split("T")[0] : ""}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
             />
           </div>
           <div>
@@ -195,7 +195,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             <DateInput
               name="nextFollowUpDate"
               defaultValue={initialData?.nextFollowUpDate ? new Date(initialData.nextFollowUpDate).toISOString().split("T")[0] : ""}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
             />
           </div>
         </div>
@@ -204,7 +204,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
       {/* ─── SECTION: LOGISTICS & CATEGORIES ────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <Landmark className="size-4 text-[#00c4b6]" />
+          <Landmark className="size-4 text-[#F9D972]" />
           <span>Logistics & Shipping Details</span>
         </h3>
 
@@ -214,7 +214,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             <NativeSelect
               name="serviceType"
               defaultValue={initialData?.serviceType || "Freight Forwarding"}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
             >
               {serviceTypes.map((t) => (
                 <option key={t} value={t}>{t}</option>
@@ -226,7 +226,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             <NativeSelect
               name="logisticsCategory"
               defaultValue={initialData?.logisticsCategory || "Import"}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
             >
               {logisticsCategories.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -240,7 +240,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
               name="competitor"
               defaultValue={initialData?.competitor || ""}
               placeholder="e.g. DHL, FedEx"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
             />
           </div>
         </div>
@@ -255,7 +255,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             defaultValue={initialData?.description || ""}
             placeholder="Log key specifications or client demands..."
             rows={3}
-            className="w-full p-3 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+            className="w-full p-3 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
           />
         </div>
         <div>
@@ -265,7 +265,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             defaultValue={initialData?.lostReason || ""}
             placeholder="Specify reason if deal is lost..."
             rows={3}
-            className="w-full p-3 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#00c4b6]"
+            className="w-full p-3 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
           />
         </div>
       </div>
@@ -282,7 +282,7 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[#00c4b6] hover:bg-[#00b0a3] disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-all shadow-md shadow-[#00c4b6]/10 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[#F9D972] hover:bg-[#00b0a3] disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
         >
           <Save className="size-4.5" />
           <span>{isSubmitting ? "Saving..." : isEdit ? "Update Deal" : "Save Deal"}</span>

@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button-1";
-import { DropdownSelect } from "@/components/ui/dropdown-select";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/monolith/button-1";
+import { DropdownSelect } from "@/components/monolith/dropdown-select";
+import { Input } from "@/components/monolith/input";
 import { auth } from "@/lib/auth";
 import { getNotificationPolicy } from "@/modules/notifications/policy";
 import { listUserNotifications } from "@/modules/notifications/service";
@@ -48,7 +48,7 @@ export default async function NotificationsPage({
 
   return (
     <div className="space-y-5">
-      <form className="ds-shell-lg grid gap-3 border border-outline-variant/45 bg-white/78 p-5 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.16)] backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-5">
+      <form className="monolith-shell-lg grid gap-3 border border-mono-border/45 bg-white/78 p-5 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.16)] backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-5">
         <NotificationFilters
           requiresAck={typeof params.requiresAck === "string" ? params.requiresAck : "all"}
           status={typeof params.status === "string" ? params.status : "all"}
@@ -57,22 +57,22 @@ export default async function NotificationsPage({
           name="kind"
           defaultValue={typeof params.kind === "string" ? params.kind : ""}
           placeholder="Notification kind"
-          className="border-outline-variant/60 bg-white"
+          className="border-mono-border/60 bg-white"
         />
         <Input
           name="from"
           type="date"
           defaultValue={typeof params.from === "string" ? params.from : ""}
-          className="border-outline-variant/60 bg-white"
+          className="border-mono-border/60 bg-white"
         />
         <div className="flex gap-2">
           <Input
             name="to"
             type="date"
             defaultValue={typeof params.to === "string" ? params.to : ""}
-            className="w-full border-outline-variant/60 bg-white"
+            className="w-full border-mono-border/60 bg-white"
           />
-          <Button type="submit" size="sm" className="rounded-full border-0 bg-[#00cec4] px-4 text-white hover:bg-[#00b8af]">
+          <Button type="submit" size="sm" className="rounded-full border-0 bg-[#F9D972] px-4 text-white hover:bg-[#E8C85D]">
             Filter
           </Button>
         </div>
@@ -95,7 +95,7 @@ function NotificationFilters({
       <DropdownSelect
         name="status"
         defaultValue={status}
-        triggerClassName="border-outline-variant/60 bg-white"
+        triggerClassName="border-mono-border/60 bg-white"
         options={[
           { value: "all", label: "All statuses" },
           { value: "unread", label: "Unread" },
@@ -107,7 +107,7 @@ function NotificationFilters({
       <DropdownSelect
         name="requiresAck"
         defaultValue={requiresAck}
-        triggerClassName="border-outline-variant/60 bg-white"
+        triggerClassName="border-mono-border/60 bg-white"
         options={[
           { value: "all", label: "Ack required or not" },
           { value: "yes", label: "Ack required" },

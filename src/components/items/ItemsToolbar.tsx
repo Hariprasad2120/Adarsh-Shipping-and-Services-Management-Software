@@ -63,7 +63,7 @@ export function ItemsToolbar({
   }, []);
 
   return (
-    <div className="bg-surface border-b border-[var(--color-outline-variant)]">
+    <div className="bg-mono-card border-b border-[var(--color-outline-variant)]">
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2.5 gap-3">
         {/* Left: filter dropdown + selected count */}
@@ -71,7 +71,7 @@ export function ItemsToolbar({
           <div className="relative" ref={filterRef}>
             <button
               onClick={() => setFilterOpen((o) => !o)}
-              className="flex items-center gap-1 font-semibold text-sm text-on-surface hover:text-[#00cec4] transition-colors"
+              className="flex items-center gap-1 font-semibold text-sm text-mono-text hover:text-[#F9D972] transition-colors"
               aria-haspopup="listbox"
               aria-expanded={filterOpen}
             >
@@ -81,7 +81,7 @@ export function ItemsToolbar({
 
             {filterOpen && (
               <div
-                className="absolute top-full left-0 mt-1 z-30 bg-surface border border-[var(--color-outline-variant)] rounded-xl shadow-lg min-w-[160px] py-1"
+                className="absolute top-full left-0 mt-1 z-30 bg-mono-card border border-[var(--color-outline-variant)] rounded-xl shadow-lg min-w-[160px] py-1"
                 role="listbox"
               >
                 {FILTER_OPTIONS.map((f) => (
@@ -93,8 +93,8 @@ export function ItemsToolbar({
                       onFilterChange(f);
                       setFilterOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-surface-container-low transition-colors ${
-                      filter === f ? "text-[#00cec4] font-semibold" : "text-on-surface"
+                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-mono-soft transition-colors ${
+                      filter === f ? "text-[#F9D972] font-semibold" : "text-mono-text"
                     }`}
                   >
                     {FILTER_LABELS[f]}
@@ -105,7 +105,7 @@ export function ItemsToolbar({
           </div>
 
           {selectedCount > 0 && (
-            <span className="text-xs bg-[#00cec4]/10 text-[#00cec4] font-semibold px-2 py-0.5 rounded">
+            <span className="text-xs bg-[#F9D972]/10 text-[#F9D972] font-semibold px-2 py-0.5 rounded">
               {selectedCount} selected
             </span>
           )}
@@ -115,7 +115,7 @@ export function ItemsToolbar({
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => router.push(newPath)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00cec4] hover:bg-[#00b8af] text-white text-xs font-semibold rounded-xl transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F9D972] hover:bg-[#E8C85D] text-white text-xs font-semibold rounded-xl transition-colors"
             aria-label="Create new item"
           >
             <Plus size={14} />
@@ -125,7 +125,7 @@ export function ItemsToolbar({
           <div className="relative" ref={moreRef}>
             <button
               onClick={() => setMoreOpen((o) => !o)}
-              className="p-1.5 border border-[var(--color-outline-variant)] rounded-xl hover:bg-surface-container-low text-on-surface-variant hover:text-on-surface transition-colors"
+              className="p-1.5 border border-[var(--color-outline-variant)] rounded-xl hover:bg-mono-soft text-mono-muted hover:text-mono-text transition-colors"
               aria-label="More actions"
               aria-haspopup="menu"
               aria-expanded={moreOpen}
@@ -135,7 +135,7 @@ export function ItemsToolbar({
 
             {moreOpen && (
               <div
-                className="absolute top-full right-0 mt-1 z-30 bg-surface border border-[var(--color-outline-variant)] rounded-xl shadow-lg min-w-[180px] py-1"
+                className="absolute top-full right-0 mt-1 z-30 bg-mono-card border border-[var(--color-outline-variant)] rounded-xl shadow-lg min-w-[180px] py-1"
                 role="menu"
               >
                 {MORE_ACTIONS.map((action, i) =>
@@ -149,8 +149,8 @@ export function ItemsToolbar({
                         setMoreOpen(false);
                         if (onAction) onAction(action);
                       }}
-                      className={`w-full text-left px-3 py-1.5 text-xs hover:bg-surface-container-low transition-colors ${
-                        action === "Delete Selected" ? "text-[#fe4242]" : "text-on-surface"
+                      className={`w-full text-left px-3 py-1.5 text-xs hover:bg-mono-soft transition-colors ${
+                        action === "Delete Selected" ? "text-[#fe4242]" : "text-mono-text"
                       }`}
                     >
                       {action}
@@ -166,19 +166,19 @@ export function ItemsToolbar({
       {/* Search bar */}
       <div className="px-4 pb-2.5 flex items-center gap-2">
         <div className="relative flex-1 max-w-sm">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-mono-muted" />
           <input
             type="search"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search items..."
-            className="w-full pl-8 pr-8 py-1.5 text-xs rounded-xl bg-surface text-on-surface placeholder-[var(--color-placeholder)]"
+            className="w-full pl-8 pr-8 py-1.5 text-xs rounded-xl bg-mono-card text-mono-text placeholder-[var(--color-placeholder)]"
             aria-label="Search items"
           />
           {search && (
             <button
               onClick={() => onSearchChange("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-mono-muted hover:text-mono-text"
               aria-label="Clear search"
             >
               <X size={12} />

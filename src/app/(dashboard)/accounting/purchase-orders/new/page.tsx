@@ -3,7 +3,7 @@ import { CommercialDocumentFormPage } from "../../_components/commercial-documen
 
 export default function NewAccountingPurchaseOrderPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-sm text-on-surface-variant">Loading…</div>}>
+    <Suspense fallback={<div className="p-8 text-sm text-mono-muted">Loading…</div>}>
       <CommercialDocumentFormPage
         title="Create Purchase Order"
         description="Generate a supplier purchase order inside Accounting."

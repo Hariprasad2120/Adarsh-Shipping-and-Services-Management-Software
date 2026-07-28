@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./../styles/monolith-system.css";
 
 @variant dark (&:where(.dark, .dark *));
 
@@ -439,7 +440,7 @@ html.dark .shadow-2xl {
 .ds-h1 {
   font-size: var(--text-4xl) !important;
   line-height: 1.18;
-  letter-spacing: 0.10em !important;
+  letter-spacing: 0.22em !important;
   text-transform: uppercase;
 }
 
@@ -447,41 +448,32 @@ html.dark .shadow-2xl {
 .ds-h2 {
   font-size: var(--text-3xl) !important;
   line-height: 1.2;
-  letter-spacing: 0.10em !important;
+  letter-spacing: 0.20em !important;
   text-transform: uppercase;
 }
 
 .ds-h3 {
   font-size: var(--text-2xl) !important;
   line-height: 1.25;
-  letter-spacing: 0.10em !important;
+  letter-spacing: 0.18em !important;
   text-transform: uppercase;
 }
 
 @media (max-width: 640px) {
   .ds-h1 {
     font-size: var(--text-3xl) !important;
-    letter-spacing: 0.04em !important;
+    letter-spacing: 0.16em !important;
   }
 
   .ds-h2 {
     font-size: var(--text-2xl) !important;
-    letter-spacing: 0.04em !important;
+    letter-spacing: 0.14em !important;
   }
 
   .ds-h3 {
     font-size: var(--text-xl) !important;
-    letter-spacing: 0.04em !important;
+    letter-spacing: 0.12em !important;
   }
-}
-
-main h1[class*="tracking-"]:not(.ds-numeric),
-main h2[class*="tracking-"]:not(.ds-numeric),
-main h3[class*="tracking-"]:not(.ds-numeric),
-main h4[class*="tracking-"]:not(.ds-numeric),
-main h5[class*="tracking-"]:not(.ds-numeric),
-main h6[class*="tracking-"]:not(.ds-numeric) {
-  letter-spacing: 0.04em !important;
 }
 
 main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
@@ -631,191 +623,6 @@ main table td {
   border-left: 3px solid #fb923c;
 }
 
-.ds-section-panel {
-  border: 1px solid var(--color-outline-variant);
-  border-radius: var(--radius-xl);
-  background: var(--color-surface);
-  box-shadow: 0 18px 40px -34px rgba(15, 23, 42, 0.16);
-}
-
-.ds-section-panel-header {
-  border-bottom: 1px solid var(--color-outline-variant);
-  padding-bottom: 1rem;
-}
-
-.ds-inset-row {
-  border-radius: var(--radius-xl);
-  background: var(--color-surface-container-low);
-}
-
-.ds-action-row {
-  border: 1px solid var(--color-outline-variant);
-  border-radius: var(--radius-xl);
-  background: var(--color-surface);
-  box-shadow: 0 12px 28px -24px rgba(15, 23, 42, 0.18);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.ds-action-row:hover {
-  border-color: rgba(0, 206, 196, 0.55);
-  box-shadow: var(--shadow-ambient-hover);
-  transform: translateY(-1px);
-}
-
-.ds-workflow-dot {
-  border: 1px solid var(--color-outline-variant);
-  border-radius: var(--radius-full);
-  background: var(--color-surface);
-  color: var(--color-on-surface-variant);
-}
-
-.ds-workflow-dot-active {
-  border-color: #00cec4;
-  color: #00cec4;
-}
-
-.ds-workflow-link {
-  border-radius: var(--radius-full);
-  transition: background-color 0.2s ease;
-}
-
-.ds-workflow-link:hover {
-  background: rgba(0, 206, 196, 0.10);
-}
-
-.ds-state-dot {
-  display: inline-flex;
-  width: 0.5rem;
-  height: 0.5rem;
-  flex-shrink: 0;
-  border-radius: var(--radius-full);
-  background: #00cec4;
-}
-
-.ds-filter-chip {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid rgba(0, 206, 196, 0.35);
-  border-radius: var(--radius-full);
-  background: rgba(0, 206, 196, 0.10);
-  padding: 0.25rem 0.75rem;
-  color: #00cec4;
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-.ds-filter-chip:hover {
-  border-color: rgba(0, 206, 196, 0.55);
-  background: rgba(0, 206, 196, 0.16);
-}
-
-.ds-menu-option {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  text-align: left;
-  color: var(--color-on-surface-variant);
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.ds-menu-option:hover,
-.ds-menu-option-active {
-  background: var(--color-surface-container-low);
-  color: var(--color-on-surface);
-}
-
-.ds-empty-icon {
-  display: inline-flex;
-  width: 5rem;
-  height: 5rem;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--color-outline-variant);
-  border-radius: var(--radius-3xl);
-  background: var(--color-surface-container-low);
-  box-shadow: 0 22px 48px -34px rgba(15, 23, 42, 0.30);
-  color: var(--color-outline-variant);
-}
-
-.ds-action-icon {
-  display: inline-flex;
-  width: 2rem;
-  height: 2rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-md);
-  color: var(--color-on-surface-variant);
-  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
-}
-
-.ds-action-icon:hover {
-  transform: translateY(-1px);
-}
-
-.ds-action-icon-view {
-  color: #00cec4;
-}
-
-.ds-action-icon-view:hover {
-  background: rgba(0, 206, 196, 0.10);
-  color: #00b8af;
-}
-
-.ds-action-icon-edit {
-  color: #fb923c;
-}
-
-.ds-action-icon-edit:hover {
-  background: rgba(251, 146, 60, 0.10);
-  color: #f97316;
-}
-
-.ds-action-icon-delete {
-  color: #ef4444;
-}
-
-.ds-action-icon-delete:hover {
-  background: rgba(239, 68, 68, 0.10);
-  color: #dc2626;
-}
-
-.cha-job-workspace {
-  --cha-job-border: rgba(191, 200, 198, 0.24);
-  --cha-job-border-soft: rgba(191, 200, 198, 0.14);
-  --cha-job-cyan-border: rgba(0, 206, 196, 0.18);
-}
-
-html.dark .cha-job-workspace {
-  --cha-job-border: rgba(139, 148, 158, 0.16);
-  --cha-job-border-soft: rgba(139, 148, 158, 0.10);
-  --cha-job-cyan-border: rgba(0, 206, 196, 0.16);
-}
-
-.cha-job-workspace .ds-section-panel,
-.cha-job-workspace .ds-section-panel-header,
-.cha-job-workspace .ds-action-row,
-.cha-job-workspace [class*="border-outline-variant"] {
-  border-color: var(--cha-job-border) !important;
-}
-
-.cha-job-workspace .ds-action-row {
-  box-shadow: 0 12px 28px -26px rgba(15, 23, 42, 0.12);
-}
-
-.cha-job-workspace .card-top-accent,
-.cha-job-workspace .card-left-accent {
-  border-color: var(--cha-job-cyan-border) !important;
-}
-
-.cha-job-workspace [class*="bg-outline-variant"] {
-  background-color: var(--cha-job-border-soft) !important;
-}
-
 html.dark .card-top-accent,
 html.dark .card-cyan-outline,
 html.dark .card-left-accent {
@@ -825,10 +632,6 @@ html.dark .card-left-accent {
 html.dark .card-top-accent-orange,
 html.dark .card-left-accent-orange {
   border-color: rgba(251, 146, 60, 0.55) !important;
-}
-
-html.dark .ds-action-row:hover {
-  border-color: rgba(0, 206, 196, 0.65);
 }
 
 /* Global light mode: prevent text-white from becoming invisible on light surfaces */
@@ -1053,38 +856,6 @@ html.dark .cha-module .ds-table th {
 html.dark .cha-module .ds-table tbody tr:hover {
   background: rgba(99, 227, 215, 0.07);
   box-shadow: inset 2px 0 0 rgba(99, 227, 215, 0.68), 0 0 0 3px rgba(99, 227, 215, 0.08);
-}
-
-.cha-expense-row {
-  transition: background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
-}
-
-.cha-expense-row:hover {
-  background: rgba(0, 206, 196, 0.035);
-  box-shadow: inset 2px 0 0 rgba(0, 206, 196, 0.55), 0 0 0 3px rgba(0, 206, 196, 0.08);
-}
-
-.cha-expense-row[data-urgent="true"]:hover {
-  background: rgba(239, 68, 68, 0.04);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
-}
-
-.cha-expense-row[data-urgent="true"]:hover .cha-expense-request-title {
-  color: #dc2626;
-}
-
-html.dark .cha-expense-row:hover {
-  background: rgba(99, 227, 215, 0.07);
-  box-shadow: inset 2px 0 0 rgba(99, 227, 215, 0.68), 0 0 0 3px rgba(99, 227, 215, 0.08);
-}
-
-html.dark .cha-expense-row[data-urgent="true"]:hover {
-  background: rgba(239, 68, 68, 0.09);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.10);
-}
-
-html.dark .cha-expense-row[data-urgent="true"]:hover .cha-expense-request-title {
-  color: #fecaca;
 }
 
 /* Cyan hover glow — cards, stat panels, interactive containers */
@@ -1331,15 +1102,6 @@ html.dark .cha-expense-row[data-urgent="true"]:hover .cha-expense-request-title 
 .ds-button-outline:active,
 .ds-button-warning:active {
   transform: translateY(0) scale(0.96);
-}
-
-button[data-size="sm"] {
-  font-size: var(--text-xs) !important;
-}
-
-button[data-size="md"],
-button[data-size="lg"] {
-  font-size: var(--text-sm) !important;
 }
 
 main button:not(.ds-plain):not([data-mode="icon"]):not([data-variant="destructive"]):hover {
@@ -2551,4 +2313,3 @@ html.dark {
   --color-cha-border: var(--cha-border);
   --color-cha-border-strong: var(--cha-border-strong);
 }
-

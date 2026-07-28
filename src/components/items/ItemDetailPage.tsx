@@ -59,7 +59,7 @@ export function ItemDetailPage({ item, backPath = "/crm/items" }: ItemDetailPage
         {/* Overview */}
         <div className="bg-white border border-[#d9dee7] rounded">
           <div className="px-4 py-2.5 border-b border-[#d9dee7] flex items-center gap-2">
-            <Tag size={13} className="text-[#00cec4]" />
+            <Tag size={13} className="text-[#F9D972]" />
             <span className="text-xs font-semibold text-[#212529] uppercase tracking-wide">Item Details</span>
           </div>
           <dl className="px-4">
@@ -75,7 +75,7 @@ export function ItemDetailPage({ item, backPath = "/crm/items" }: ItemDetailPage
         {/* Sales */}
         <div className="bg-white border border-[#d9dee7] rounded">
           <div className="px-4 py-2.5 border-b border-[#d9dee7] flex items-center gap-2">
-            <Hash size={13} className="text-[#00cec4]" />
+            <Hash size={13} className="text-[#F9D972]" />
             <span className="text-xs font-semibold text-[#212529] uppercase tracking-wide">Sales Information</span>
           </div>
           <dl className="px-4">
@@ -87,7 +87,7 @@ export function ItemDetailPage({ item, backPath = "/crm/items" }: ItemDetailPage
         {/* Purchase */}
         <div className="bg-white border border-[#d9dee7] rounded">
           <div className="px-4 py-2.5 border-b border-[#d9dee7] flex items-center gap-2">
-            <Hash size={13} className="text-[#00cec4]" />
+            <Hash size={13} className="text-[#F9D972]" />
             <span className="text-xs font-semibold text-[#212529] uppercase tracking-wide">Purchase Information</span>
           </div>
           <dl className="px-4">
@@ -100,7 +100,7 @@ export function ItemDetailPage({ item, backPath = "/crm/items" }: ItemDetailPage
         {item.priceList && item.priceList.length > 0 && (
           <div className="bg-white border border-[#d9dee7] rounded">
             <div className="px-4 py-2.5 border-b border-[#d9dee7] flex items-center gap-2">
-              <Hash size={13} className="text-[#00cec4]" />
+              <Hash size={13} className="text-[#F9D972]" />
               <span className="text-xs font-semibold text-[#212529] uppercase tracking-wide">Multi-Currency Price List</span>
             </div>
             <div className="px-4 py-3">

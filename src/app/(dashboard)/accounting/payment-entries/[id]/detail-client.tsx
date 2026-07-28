@@ -61,7 +61,7 @@ export function PaymentEntryDetailClient({ payment }: PaymentEntryDetailClientPr
         {/* Info panel */}
         <div className="md:col-span-2 p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
           <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-            <Landmark className="size-4.5 text-[#00cec4]" />
+            <Landmark className="size-4.5 text-[#F9D972]" />
             <h3 className="font-bold text-xs text-white uppercase tracking-wider">Payment Transaction Details</h3>
           </div>
 
@@ -98,7 +98,7 @@ export function PaymentEntryDetailClient({ payment }: PaymentEntryDetailClientPr
         </div>
 
         {/* Status panel */}
-        <div className="md:col-span-1 p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 flex flex-col justify-between card-left-accent">
+        <div className="md:col-span-1 p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 flex flex-col justify-between monolith-card monolith-accent">
           <div className="space-y-3">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Status & Control</span>
             <div className="flex items-center gap-2">
@@ -115,8 +115,8 @@ export function PaymentEntryDetailClient({ payment }: PaymentEntryDetailClientPr
 
             <div className="pt-2 text-xs space-y-1 text-slate-400">
               <div className="flex justify-between font-bold border-t border-[#1c212a]/30 pt-1 text-white text-sm">
-                <span className="text-[#00cec4]">Payment Size:</span>
-                <span className="font-mono text-[#00cec4]">₹{payment.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                <span className="text-[#F9D972]">Payment Size:</span>
+                <span className="font-mono text-[#F9D972]">₹{payment.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
           </div>
@@ -126,7 +126,7 @@ export function PaymentEntryDetailClient({ payment }: PaymentEntryDetailClientPr
               <button
                 disabled={isSubmitting}
                 onClick={handleSubmit}
-                className="w-full bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
                 {isSubmitting ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle className="size-4" />}
                 <span>Submit Payment</span>
@@ -151,7 +151,7 @@ export function PaymentEntryDetailClient({ payment }: PaymentEntryDetailClientPr
       {/* ─── ALLOCATIONS TABLE ────────────────────────────────────────── */}
       <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
         <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-          <FileText className="size-4.5 text-[#00cec4]" />
+          <FileText className="size-4.5 text-[#F9D972]" />
           <h3 className="font-bold text-xs text-white uppercase tracking-wider">Invoice Allocations Breakdown</h3>
         </div>
 
@@ -161,7 +161,7 @@ export function PaymentEntryDetailClient({ payment }: PaymentEntryDetailClientPr
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="ds-table">
+            <table className="monolith-table">
               <thead>
                 <tr>
                   <th>Invoice Number</th>
@@ -177,17 +177,17 @@ export function PaymentEntryDetailClient({ payment }: PaymentEntryDetailClientPr
                   return (
                     <tr key={al.id} className="hover:bg-[#161f28]/10 text-xs">
                       <td>
-                        <Link href={path} className="text-[#00cec4] hover:underline font-mono font-bold">
+                        <Link href={path} className="text-[#F9D972] hover:underline font-mono font-bold">
                           {invoice.invoiceNumber}
                         </Link>
                       </td>
                       <td className="text-slate-450">
                         {new Date(invoice.postingDate).toLocaleDateString("en-IN")}
                       </td>
-                      <td className="ds-numeric text-slate-300">
+                      <td className="monolith-numeric text-slate-300">
                         ₹{invoice.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="ds-numeric text-white font-bold text-right">
+                      <td className="monolith-numeric text-white font-bold text-right">
                         ₹{al.allocatedAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </td>
                     </tr>

@@ -1,7 +1,7 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
-import { DateInput } from "@/components/ui/date-input";
+import { NativeSelect } from "@/components/monolith/native-select";
+import { DateInput } from "@/components/monolith/date-input";
 import React, { useState, useEffect } from "react";
 import { CheckSquare, Square, Plus, Save, Loader2, Calendar, User, Trash, CheckCircle } from "lucide-react";
 import { toast }from "sonner";
@@ -105,7 +105,7 @@ export function TasksView() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
-        <Loader2 className="size-8 animate-spin text-[#00c4b6]" />
+        <Loader2 className="size-8 animate-spin text-[#F9D972]" />
         <p className="text-xs font-semibold tracking-wider">Syncing task checklist...</p>
       </div>
     );
@@ -118,10 +118,10 @@ export function TasksView() {
     <div className="space-y-6">
       {/* Header Banner */}
       <div className="relative rounded-3xl border border-slate-800 bg-[#0f121b]/85 p-6 overflow-hidden shadow-2xl backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c4b6]/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#F9D972]/5 rounded-full blur-3xl" />
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="size-12 rounded-2xl bg-[#00c4b6]/10 border border-[#00c4b6]/35 flex items-center justify-center text-[#00c4b6] shadow-sm">
+            <div className="size-12 rounded-2xl bg-[#F9D972]/10 border border-[#F9D972]/35 flex items-center justify-center text-[#F9D972] shadow-sm">
               <CheckSquare className="size-6 animate-pulse" />
             </div>
             <div>
@@ -133,7 +133,7 @@ export function TasksView() {
           <button
             type="button"
             onClick={() => setShowForm(!showForm)}
-            className="inline-flex items-center justify-center gap-2 bg-[#00c4b6]/15 hover:bg-[#00c4b6]/25 border border-[#00c4b6]/35 rounded-2xl px-4 py-2 text-xs font-black text-[#00c4b6] cursor-pointer transition-all uppercase tracking-wider"
+            className="inline-flex items-center justify-center gap-2 bg-[#F9D972]/15 hover:bg-[#F9D972]/25 border border-[#F9D972]/35 rounded-2xl px-4 py-2 text-xs font-black text-[#F9D972] cursor-pointer transition-all uppercase tracking-wider"
           >
             <Plus className="size-4" />
             <span>Create Task</span>
@@ -153,7 +153,7 @@ export function TasksView() {
               onChange={(e) => setTitle(e.target.value)}
               required
               placeholder="e.g. Verify custom clearing clearance sheet"
-              className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+              className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
             />
           </div>
           <div className="space-y-1">
@@ -163,7 +163,7 @@ export function TasksView() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Provide context and notes regarding checklist requirements."
-              className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6] resize-none"
+              className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972] resize-none"
             />
           </div>
           <div className="grid grid-cols-3 gap-3">
@@ -172,7 +172,7 @@ export function TasksView() {
               <NativeSelect
                 value={assigneeId}
                 onChange={(e) => setAssigneeId(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#F9D972]"
               >
                 {colleagues.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -187,7 +187,7 @@ export function TasksView() {
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 required
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
               />
             </div>
             <div className="space-y-1">
@@ -195,7 +195,7 @@ export function TasksView() {
               <NativeSelect
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as any)}
-                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#00c4b6]"
+                className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-250 outline-none focus:border-[#F9D972]"
               >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -214,7 +214,7 @@ export function TasksView() {
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-[#00c4b6] border-0 rounded-xl text-xs font-black text-slate-950 cursor-pointer transition-all disabled:opacity-50"
+              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-[#F9D972] border-0 rounded-xl text-xs font-black text-slate-950 cursor-pointer transition-all disabled:opacity-50"
             >
               {submitting ? "Saving..." : "Create Task"}
             </button>
@@ -243,7 +243,7 @@ export function TasksView() {
                   <button
                     type="button"
                     onClick={() => handleToggleTask(t.id, t.status)}
-                    className="mt-0.5 text-[#00c4b6] hover:scale-105 transition bg-transparent border-0 cursor-pointer p-0"
+                    className="mt-0.5 text-[#F9D972] hover:scale-105 transition bg-transparent border-0 cursor-pointer p-0"
                   >
                     <Square className="size-4.5" />
                   </button>

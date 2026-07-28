@@ -38,7 +38,7 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
     <div className="p-8 space-y-6 max-w-[1200px] mx-auto animate-in fade-in duration-200">
       
       {/* ─── HEADER ────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 border-b border-outline-variant/20 pb-5">
+      <div className="flex items-center gap-3 border-b border-mono-border/20 pb-5">
         <NextLink
           href="/ams/assets"
           className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800/40 rounded-xl transition-all cursor-pointer border border-[#1c212a]/30"
@@ -56,9 +56,9 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
         
         {/* Left Column: Asset profile card */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4 card-left-accent">
+          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4 monolith-card monolith-accent">
             <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
-              <Settings className="size-4.5 text-[#00cec4]" />
+              <Settings className="size-4.5 text-[#F9D972]" />
               <h3 className="font-bold text-sm text-white uppercase tracking-wider">Asset Profile</h3>
             </div>
 
@@ -80,8 +80,8 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
                 <span className="text-white font-semibold font-mono">₹{accumulatedDepreciation.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between border-b border-[#1c212a]/20 pb-1.5 font-bold">
-                <span className="text-[#00cec4]">Net Book Value:</span>
-                <span className="text-[#00cec4] font-mono">₹{bookValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                <span className="text-[#F9D972]">Net Book Value:</span>
+                <span className="text-[#F9D972] font-mono">₹{bookValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between pt-2">
                 <span className="text-slate-400">Status:</span>
@@ -101,7 +101,7 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
         <div className="lg:col-span-2 space-y-6">
           <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
             <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-              <Calendar className="size-4.5 text-[#00cec4]" />
+              <Calendar className="size-4.5 text-[#F9D972]" />
               <h3 className="font-bold text-sm text-white uppercase tracking-wider">Depreciation Journal Listings</h3>
             </div>
 
@@ -111,7 +111,7 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="ds-table">
+                <table className="monolith-table">
                   <thead>
                     <tr>
                       <th>Depreciation Date</th>
@@ -126,14 +126,14 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
                       return (
                         <tr key={entry.id} className="hover:bg-[#161f28]/10 transition-all">
                           <td className="font-semibold text-white">{monthStr}</td>
-                          <td className="ds-numeric font-bold text-[#00cec4]">
+                          <td className="monolith-numeric font-bold text-[#F9D972]">
                             ₹{Number(entry.depreciationAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                           </td>
                           <td>
                             {entry.journalEntry ? (
                               <NextLink
                                 href={`/accounting/journal-entries/${entry.journalEntry.id}`}
-                                className="text-[#00cec4] hover:underline font-mono text-xs font-bold"
+                                className="text-[#F9D972] hover:underline font-mono text-xs font-bold"
                               >
                                 {entry.journalEntry.voucherNo}
                               </NextLink>

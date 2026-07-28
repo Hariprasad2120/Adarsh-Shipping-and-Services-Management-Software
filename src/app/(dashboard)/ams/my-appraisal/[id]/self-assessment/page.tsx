@@ -92,24 +92,24 @@ export default async function SelfAssessmentPage({ params }: { params: Promise<{
           }}
         />
 
-        <div className="card-left-accent rounded-[24px] border border-outline-variant/35 bg-surface p-6">
-          <h2 className="ds-h2 text-on-surface">Self-Assessment Summary</h2>
-          <div className="mt-4 space-y-2 text-sm text-on-surface-variant">
-            <p className="text-base font-semibold text-on-surface">{appraisal.employee.name}</p>
+        <div className="monolith-card monolith-accent rounded-[24px] border border-mono-border/35 bg-mono-card p-6">
+          <h2 className="monolith-h2 text-mono-text">Self-Assessment Summary</h2>
+          <div className="mt-4 space-y-2 text-sm text-mono-muted">
+            <p className="text-base font-semibold text-mono-text">{appraisal.employee.name}</p>
             <p>{appraisal.employee.designation ?? "No designation"}</p>
             <p>
               {appraisal.cycle.name} {appraisal.cycle.year}
             </p>
             <p>
               Current stage:{" "}
-              <span className="font-medium text-on-surface">
+              <span className="font-medium text-mono-text">
                 {appraisal.stage.replace(/_/g, " ")}
               </span>
             </p>
             {appraisal.selfAssessmentDeadline ? (
               <p>
                 Self-assessment deadline:{" "}
-                <span className="font-medium text-on-surface">
+                <span className="font-medium text-mono-text">
                   {new Date(appraisal.selfAssessmentDeadline).toLocaleDateString("en-IN")}
                 </span>
               </p>

@@ -1,10 +1,10 @@
 "use client";
 
-import { NativeSelect } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/monolith/native-select";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/monolith/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
 import { createTicketAction } from "./actions";
 import { Plus, ChevronDown, ChevronUp } from "lucide-react";
 
@@ -69,7 +69,7 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#00cec4]/30 bg-[#00cec4]/5 text-[#00cec4] hover:bg-[#00cec4]/10 transition-colors text-sm font-semibold shadow-sm"
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#F9D972]/30 bg-[#F9D972]/5 text-[#F9D972] hover:bg-[#F9D972]/10 transition-colors text-sm font-semibold shadow-sm"
       >
         <Plus className="size-4" /> Raise a support ticket
       </button>
@@ -77,7 +77,7 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
   }
 
   return (
-    <Card className="border-0 shadow-sm border-l-4 border-l-[#00cec4] bg-surface">
+    <Card className="border-0 shadow-sm border-l-4 border-l-[#F9D972] bg-mono-card">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">
           New Support Ticket
@@ -101,7 +101,7 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Brief summary of the issue..."
               maxLength={200}
-              className="w-full rounded-lg border border-outline-variant/60 bg-surface px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#00cec4] transition"
+              className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#F9D972] transition"
             />
           </div>
 
@@ -113,7 +113,7 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
               <NativeSelect
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-lg border border-outline-variant/60 bg-surface px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#00cec4] transition"
+                className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#F9D972] transition"
               >
                 <option value="">Select category</option>
                 {CATEGORIES.map((c) => (
@@ -129,7 +129,7 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
               <NativeSelect
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as any)}
-                className="w-full rounded-lg border border-outline-variant/60 bg-surface px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#00cec4] transition"
+                className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#F9D972] transition"
               >
                 {PRIORITIES.map((p) => (
                   <option key={p.value} value={p.value}>
@@ -149,7 +149,7 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
               placeholder="Describe the issue in detail — what happened, what you expected, and steps to reproduce..."
-              className="w-full rounded-lg border border-outline-variant/60 bg-surface px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#00cec4] transition resize-none"
+              className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#F9D972] transition resize-none"
             />
           </div>
 

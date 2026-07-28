@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Copy, Check, ExternalLink, Monitor, AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/monolith/button";
 
 interface GoogleChatLiveViewFallbackProps {
   /** The primary Google Chat URL that was attempted */
@@ -89,22 +89,22 @@ export function GoogleChatLiveViewFallback({
   return (
     <div className="space-y-6">
       {/* Blocked message */}
-      <div className="flex items-start gap-4 p-5 rounded-xl border border-outline-variant bg-surface-container-low">
+      <div className="flex items-start gap-4 p-5 rounded-xl border border-mono-border bg-mono-soft">
         <span
-          className="ds-icon-badge shrink-0 mt-0.5"
-          style={{ background: "rgba(251,146,60,0.10)", color: "#fb923c" }}
+          className="monolith-icon-badge shrink-0 mt-0.5"
+          style={{ background: "rgba(251,146,60,0.10)", color: "#D88700" }}
         >
           <AlertTriangle size={18} />
         </span>
         <div className="space-y-1.5">
-          <h3 className="ds-h3 text-on-surface">Iframe Embedding Blocked</h3>
-          <p className="text-sm text-on-surface-variant leading-relaxed">
+          <h3 className="monolith-h3 text-mono-text">Iframe Embedding Blocked</h3>
+          <p className="text-sm text-mono-muted leading-relaxed">
             Google Chat cannot be embedded directly because Google blocks iframe rendering for security.
             This is expected behaviour — use the external launch options below to access Google Chat.
           </p>
-          <p className="text-xs text-on-surface-variant">
+          <p className="text-xs text-mono-muted">
             Attempted URL:{" "}
-            <code className="text-[#00cec4] bg-surface-container px-1.5 py-0.5 rounded text-[11px]">
+            <code className="text-[#F9D972] bg-mono-soft px-1.5 py-0.5 rounded text-[11px]">
               {primaryUrl}
             </code>
           </p>
@@ -112,10 +112,10 @@ export function GoogleChatLiveViewFallback({
       </div>
 
       {/* External launch actions */}
-      <div className="rounded-xl border border-outline-variant bg-surface p-5 space-y-4">
+      <div className="rounded-xl border border-mono-border bg-mono-card p-5 space-y-4">
         <div>
-          <h3 className="ds-h3 text-on-surface mb-1">External Launch</h3>
-          <p className="text-xs text-on-surface-variant">
+          <h3 className="monolith-h3 text-mono-text mb-1">External Launch</h3>
+          <p className="text-xs text-mono-muted">
             Open the real Google Chat web experience in a separate window.
           </p>
         </div>
@@ -124,7 +124,7 @@ export function GoogleChatLiveViewFallback({
           <button
             id="gclv-open-new-tab"
             onClick={handleOpenNewTab}
-            className="flex items-center justify-center gap-2 bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
+            className="flex items-center justify-center gap-2 bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
           >
             <ExternalLink size={14} />
             Open in New Tab
@@ -133,7 +133,7 @@ export function GoogleChatLiveViewFallback({
           <button
             id="gclv-open-popout"
             onClick={handleOpenPopout}
-            className="flex items-center justify-center gap-2 border border-outline-variant text-on-surface hover:bg-surface-container-low hover:border-[#00cec4]/40 px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
+            className="flex items-center justify-center gap-2 border border-mono-border text-mono-text hover:bg-mono-soft hover:border-[#F9D972]/40 px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
           >
             <Monitor size={14} />
             Open Popout Window
@@ -142,12 +142,12 @@ export function GoogleChatLiveViewFallback({
           <button
             id="gclv-copy-link"
             onClick={handleCopyLink}
-            className="flex items-center justify-center gap-2 border border-outline-variant text-on-surface hover:bg-surface-container-low hover:border-[#00cec4]/40 px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
+            className="flex items-center justify-center gap-2 border border-mono-border text-mono-text hover:bg-mono-soft hover:border-[#F9D972]/40 px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
           >
             {copied ? (
               <>
-                <Check size={14} className="text-[#00cec4]" />
-                <span className="text-[#00cec4]">Copied!</span>
+                <Check size={14} className="text-[#F9D972]" />
+                <span className="text-[#F9D972]">Copied!</span>
               </>
             ) : (
               <>
@@ -160,27 +160,27 @@ export function GoogleChatLiveViewFallback({
       </div>
 
       {/* Job Space section */}
-      <div className="rounded-xl border border-outline-variant bg-surface p-5 space-y-4">
+      <div className="rounded-xl border border-mono-border bg-mono-card p-5 space-y-4">
         <div>
-          <h3 className="ds-h3 text-on-surface mb-1">Job Google Chat Space</h3>
+          <h3 className="monolith-h3 text-mono-text mb-1">Job Google Chat Space</h3>
           {jobLabel && (
-            <p className="text-xs text-on-surface-variant">
-              Context: <span className="text-on-surface font-medium">{jobLabel}</span>
+            <p className="text-xs text-mono-muted">
+              Context: <span className="text-mono-text font-medium">{jobLabel}</span>
             </p>
           )}
         </div>
 
         {jobSpaceUrl ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 p-3 bg-surface-container-low rounded-xl border border-outline-variant">
-              <div className="w-2 h-2 rounded-full bg-[#00cec4] shrink-0" />
-              <span className="text-xs text-on-surface-variant truncate">{jobSpaceUrl}</span>
+            <div className="flex items-center gap-2 p-3 bg-mono-soft rounded-xl border border-mono-border">
+              <div className="w-2 h-2 rounded-full bg-[#F9D972] shrink-0" />
+              <span className="text-xs text-mono-muted truncate">{jobSpaceUrl}</span>
             </div>
             <div className="flex flex-wrap gap-3">
               <button
                 id="gclv-open-job-space"
                 onClick={handleOpenJobSpace}
-                className="flex items-center gap-2 bg-[#00cec4] text-white hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
+                className="flex items-center gap-2 bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
               >
                 <ExternalLink size={14} />
                 Open Job Google Space
@@ -188,12 +188,12 @@ export function GoogleChatLiveViewFallback({
               <button
                 id="gclv-copy-job-space-link"
                 onClick={handleCopyJobSpaceLink}
-                className="flex items-center gap-2 border border-outline-variant text-on-surface hover:bg-surface-container-low px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
+                className="flex items-center gap-2 border border-mono-border text-mono-text hover:bg-mono-soft px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
               >
                 {jobLinkCopied ? (
                   <>
-                    <Check size={14} className="text-[#00cec4]" />
-                    <span className="text-[#00cec4]">Copied!</span>
+                    <Check size={14} className="text-[#F9D972]" />
+                    <span className="text-[#F9D972]">Copied!</span>
                   </>
                 ) : (
                   <>
@@ -206,7 +206,7 @@ export function GoogleChatLiveViewFallback({
           </div>
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-on-surface-variant">
+            <p className="text-sm text-mono-muted">
               No Google Chat space is linked to this job.
             </p>
             {canRetryProvisioning && onRetryProvisioning && (

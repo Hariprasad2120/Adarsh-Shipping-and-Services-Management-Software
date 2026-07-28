@@ -49,12 +49,12 @@ export function SecuritySessionsClient({ sessions }: { sessions: SessionRow[] })
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="ds-h3">Active Sessions</h2>
+        <h2 className="monolith-h3">Active Sessions</h2>
         <button
           type="button"
           onClick={revokeOthers}
           disabled={isPending || otherCount === 0}
-          className="flex items-center gap-2 rounded-xl bg-[#00cec4] px-4 py-2 text-sm uppercase tracking-wide text-white transition-all hover:bg-[#00b8af] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex items-center gap-2 rounded-xl bg-[#F9D972] px-4 py-2 text-sm uppercase tracking-wide text-white transition-all hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <LogOut size={14} />
           Logout from all other devices
@@ -67,9 +67,9 @@ export function SecuritySessionsClient({ sessions }: { sessions: SessionRow[] })
         </div>
       ) : null}
 
-      <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
         <div className="overflow-x-auto">
-          <table className="ds-table">
+          <table className="monolith-table">
             <thead>
               <tr>
                 <th>Device</th>
@@ -87,26 +87,26 @@ export function SecuritySessionsClient({ sessions }: { sessions: SessionRow[] })
                     <span className="flex items-center gap-2">
                       <MonitorSmartphone
                         size={15}
-                        className="shrink-0 text-[#00cec4]"
+                        className="shrink-0 text-[#F9D972]"
                       />
                       {s.device}
                       {s.isCurrent ? (
-                        <span className="rounded-full bg-[#00cec4]/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#00cec4]">
+                        <span className="rounded-full bg-[#F9D972]/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#F9D972]">
                           This device
                         </span>
                       ) : null}
                       {s.rememberMe ? (
-                        <span className="ds-label">Remembered</span>
+                        <span className="monolith-label">Remembered</span>
                       ) : null}
                     </span>
                   </td>
-                  <td className="ds-numeric">{s.ipAddress}</td>
+                  <td className="monolith-numeric">{s.ipAddress}</td>
                   <td>{formatTime(s.loginAt)}</td>
                   <td>{formatTime(s.lastSeenAt)}</td>
                   <td>{formatTime(s.expiresAt)}</td>
                   <td className="text-right">
                     {s.isCurrent ? (
-                      <span className="text-xs text-on-surface-variant">
+                      <span className="text-xs text-mono-muted">
                         Use logout
                       </span>
                     ) : (
@@ -124,7 +124,7 @@ export function SecuritySessionsClient({ sessions }: { sessions: SessionRow[] })
               ))}
               {sessions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center text-on-surface-variant">
+                  <td colSpan={6} className="text-center text-mono-muted">
                     No active sessions.
                   </td>
                 </tr>
