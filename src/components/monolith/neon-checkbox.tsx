@@ -18,7 +18,7 @@ const NeonCheckbox: React.FC<MonolithCheckboxProps> = ({ label, className = "", 
   };
 
   return (
-    <label className={cn("monolith-checkbox", className)}>
+    <label className={cn("mnx-checkbox", className)}>
       <input type="checkbox" checked={isChecked} onChange={handleChange} {...props} />
       <span aria-hidden="true">{isChecked ? "✓" : ""}</span>
       {label ? <em>{label}</em> : null}

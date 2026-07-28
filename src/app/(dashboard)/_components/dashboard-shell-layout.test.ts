@@ -18,7 +18,7 @@ describe("CHA dashboard shell layout safeguards", () => {
     expect(shellSource).toContain("scrollPaddingTop");
   });
 
-  it("applies a shared CHA content shell and avoids sticky-breaking containment", () => {
+  it("applies the production CHA workspace frame and avoids sticky-breaking containment", () => {
     const chaLayoutSource = readFileSync(
       join(repoRoot, "src/app/(dashboard)/cha/layout.tsx"),
       "utf8",
@@ -29,7 +29,7 @@ describe("CHA dashboard shell layout safeguards", () => {
     );
 
     expect(chaLayoutSource).not.toContain("max-w-7xl");
-    expect(chaLayoutSource).toContain("gap-8");
+    expect(chaLayoutSource).toContain("ChaWorkspaceFrame");
     expect(pageAnimatorSource).not.toContain("contain-[layout_paint]");
     expect(pageAnimatorSource).not.toContain("will-change-transform");
   });
@@ -110,6 +110,15 @@ describe("CHA dashboard shell layout safeguards", () => {
     );
     expect(dashboardShellSwitcherSource).toContain(
       'normalizedPathname.startsWith("/lms/")',
+    );
+    expect(dashboardShellSwitcherSource).toContain(
+      'normalizedPathname === "/cha"',
+    );
+    expect(dashboardShellSwitcherSource).toContain(
+      'normalizedPathname.startsWith("/cha/")',
+    );
+    expect(dashboardShellSwitcherSource).toContain(
+      'normalizedPathname === "/expense"',
     );
     expect(dashboardShellSwitcherSource).toContain("usesMonolithShell");
   });

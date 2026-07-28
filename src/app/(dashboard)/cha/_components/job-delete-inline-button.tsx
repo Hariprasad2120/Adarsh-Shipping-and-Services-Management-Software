@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@/components/monolith/input";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -101,13 +102,13 @@ export function JobDeleteInlineButton({
         className="max-w-2xl"
       >
         <div className="space-y-5">
-          <div className="rounded-2xl border border-red-200/70 bg-red-50/70 p-4 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+          <div className="rounded-2xl border mnx-border-danger mnx-bg-danger p-4 text-sm mnx-text-danger mnx-border-danger mnx-bg-danger mnx-text-danger">
             <p>Type these exact values to continue:</p>
             <p className="mt-1">
-              Job number: <span className="text-mono-text">{jobNumber}</span>
+              Job number: <span className="mnx-text-primary">{jobNumber}</span>
             </p>
             <p>
-              Confirmation phrase: <span className="text-mono-text">delete job</span>
+              Confirmation phrase: <span className="mnx-text-primary">delete job</span>
             </p>
             <p className="mt-2">
               Deleting this job will either delete it immediately if you are the assigned approval manager, or create a deletion approval request for the assigned manager.
@@ -115,8 +116,8 @@ export function JobDeleteInlineButton({
           </div>
 
           <div className="space-y-2">
-            <label className="monolith-label block">Enter the exact job number</label>
-            <input
+            <label className="mnx-label block">Enter the exact job number</label>
+            <Input
               value={confirmationJobNumber}
               onChange={(event) => setConfirmationJobNumber(event.target.value)}
               placeholder={jobNumber}
@@ -124,14 +125,14 @@ export function JobDeleteInlineButton({
           </div>
 
           <div className="space-y-2">
-            <label className="monolith-label block">Type `delete job` to confirm</label>
-            <input
+            <label className="mnx-label block">Type `delete job` to confirm</label>
+            <Input
               value={confirmationPhrase}
               onChange={(event) => setConfirmationPhrase(event.target.value)}
               placeholder="delete job"
             />
-            <p className="text-xs text-mono-muted">
-              Enter exactly: <span className="text-mono-text">delete job</span>
+            <p className="text-xs mnx-text-muted">
+              Enter exactly: <span className="mnx-text-primary">delete job</span>
             </p>
           </div>
 

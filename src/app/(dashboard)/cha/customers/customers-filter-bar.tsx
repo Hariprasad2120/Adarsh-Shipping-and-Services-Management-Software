@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@/components/monolith/input";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -95,18 +96,18 @@ export function CustomersFilterBar({
     selected: boolean;
     onClick: () => void;
   }) => (
-    <button
+    <Button
       key={`${activeFilterType}-${label}-${note ?? ""}`}
       type="button"
       onClick={onClick}
-      className={cn("monolith-plain monolith-menu-option py-2 text-sm", selected && "monolith-menu-option-active")}
+      className={cn("mnx-plain mnx-menu-option py-2 text-sm", selected && "mnx-menu-option-active")}
     >
       <span className="min-w-0">
         <span className="block truncate">{label}</span>
-        {note ? <span className="mt-0.5 block truncate text-xs text-mono-muted">{note}</span> : null}
+        {note ? <span className="mt-0.5 block truncate text-xs mnx-text-muted">{note}</span> : null}
       </span>
-      {selected ? <span className="monolith-state-dot" /> : null}
-    </button>
+      {selected ? <span className="mnx-state-dot" /> : null}
+    </Button>
   );
 
   const renderFilterOptions = () => {
@@ -134,11 +135,11 @@ export function CustomersFilterBar({
   };
 
   return (
-    <div className="monolith-section-panel p-4">
+    <div className="mnx-bg-surface mnx-border p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="relative min-w-0 flex-1 lg:max-w-md">
-          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
-          <input
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 mnx-text-muted" />
+          <Input
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -160,28 +161,28 @@ export function CustomersFilterBar({
             contentClassName="w-[min(460px,calc(100vw-2rem))]"
             label="Filter"
           >
-            <div className="overflow-hidden bg-mono-card">
+            <div className="overflow-hidden mnx-bg-surface">
               <div className="grid min-h-[220px] grid-cols-1 sm:grid-cols-[168px_minmax(0,1fr)]">
-                <div className="border-b border-mono-border/50 bg-mono-soft sm:border-b-0 sm:border-r">
+                <div className="border-b mnx-border mnx-bg-soft sm:border-b-0 sm:border-r">
                   {filterTypes.map((item) => (
-                    <button
+                    <Button
                       key={item.key}
                       type="button"
                       onClick={() => setActiveFilterType(item.key)}
-                      className={cn("monolith-plain monolith-menu-option gap-2", activeFilterType === item.key && "monolith-menu-option-active")}
+                      className={cn("mnx-plain mnx-menu-option gap-2", activeFilterType === item.key && "mnx-menu-option-active")}
                     >
                       <span className="min-w-0">
-                        <span className="monolith-label block truncate text-mono-text">{item.label}</span>
-                        <span className="mt-1 block truncate text-xs text-mono-muted">{item.value}</span>
+                        <span className="mnx-label block truncate mnx-text-primary">{item.label}</span>
+                        <span className="mt-1 block truncate text-xs mnx-text-muted">{item.value}</span>
                       </span>
-                      {item.active ? <span className="monolith-state-dot" /> : null}
-                    </button>
+                      {item.active ? <span className="mnx-state-dot" /> : null}
+                    </Button>
                   ))}
                 </div>
                 <div>{renderFilterOptions()}</div>
               </div>
             </div>
-            <div className="flex items-center justify-between gap-2 border-t border-mono-border/50 bg-mono-card p-3">
+            <div className="flex items-center justify-between gap-2 border-t mnx-border mnx-bg-surface p-3">
               <Button variant="outline" onClick={resetFilters} className="flex-1">
                 Reset
               </Button>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@/components/monolith/input";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Briefcase, CheckCircle2, Filter, Plus, Search, Users } from "lucide-react";
@@ -14,7 +15,7 @@ import {
   DataTableFooter,
   DataTableHead,
   DataTableHeader,
-} from "@/components/data-table";
+} from "@/components/monolith/workspace-data-table";
 import { Button } from "@/components/monolith/button";
 import { Badge } from "@/components/monolith/badge";
 import { FilterMenu } from "@/components/monolith/filter-menu";
@@ -27,6 +28,7 @@ import type { BadgeVariant } from "@/components/monolith/badge";
 import {
   ChaControlPanel,
   ChaMetricCard,
+  ChaMetrics,
   ChaPageHeader,
   ChaSectionShell,
   ChaVisibleRecords,
@@ -348,21 +350,21 @@ export function JobsClient({
     selected: boolean;
     onClick: () => void;
   }) => (
-    <button
+    <Button
       key={`${activeFilterType}-${label}-${note ?? ""}`}
       type="button"
       onClick={onClick}
       className={cn(
-        "monolith-plain monolith-menu-option py-2 text-sm",
-        selected && "monolith-menu-option-active",
+        "mnx-plain mnx-menu-option py-2 text-sm",
+        selected && "mnx-menu-option-active",
       )}
     >
       <span className="min-w-0">
         <span className="block truncate">{label}</span>
-        {note ? <span className="mt-0.5 block truncate text-xs text-mono-muted">{note}</span> : null}
+        {note ? <span className="mt-0.5 block truncate text-xs mnx-text-muted">{note}</span> : null}
       </span>
-      {selected ? <span className="monolith-state-dot" /> : null}
-    </button>
+      {selected ? <span className="mnx-state-dot" /> : null}
+    </Button>
   );
 
   const renderFilterOptions = () => {
@@ -476,11 +478,11 @@ export function JobsClient({
                   <DataTableEmpty
                     colSpan={9}
                     message={
-                      <div className="flex flex-col items-center justify-center p-14 text-center text-mono-muted">
-                        <div className="monolith-empty-icon mb-4">
+                      <div className="flex flex-col items-center justify-center p-14 text-center mnx-text-muted">
+                        <div className="mnx-icon-badge mb-4">
                           <Briefcase size={32} />
                         </div>
-                        <p className="text-sm text-mono-text">{emptyTitle}</p>
+                        <p className="text-sm mnx-text-primary">{emptyTitle}</p>
                         <p className="mt-1 text-xs">{emptyText}</p>
                       </div>
                     }
@@ -488,7 +490,7 @@ export function JobsClient({
                 ) : (
                   data.items.map((job) => (
                     <ClickableRow key={job.id} href={`/cha/jobs/${job.id}`}>
-                      <DataTableCell className="py-5 text-mono-text">
+                      <DataTableCell className="py-5 mnx-text-primary">
                         <div className="flex items-center gap-2">
                           <span>{job.jobNumber}</span>
                           <ChaDueDateWarningsIndicator warnings={job.dueDateWarnings} />
@@ -499,16 +501,16 @@ export function JobsClient({
                       </DataTableCell>
                       <DataTableCell className="py-5">
                         <div className="min-w-0">
-                          <p className="truncate text-mono-text">{job.title}</p>
-                          <p className="mt-1 truncate text-xs text-mono-muted">{job.branchName}</p>
+                          <p className="truncate mnx-text-primary">{job.title}</p>
+                          <p className="mt-1 truncate text-xs mnx-text-muted">{job.branchName}</p>
                         </div>
                       </DataTableCell>
                       <DataTableCell className="py-5">{job.customerName}</DataTableCell>
-                      <DataTableCell className="py-5 monolith-label">{job.jobTypeName}</DataTableCell>
-                      <DataTableCell className="py-5 monolith-numeric text-mono-muted">
+                      <DataTableCell className="py-5 mnx-label">{job.jobTypeName}</DataTableCell>
+                      <DataTableCell className="py-5 mnx-numeric mnx-text-muted">
                         {getFilingReference(job) || "Pending"}
                       </DataTableCell>
-                      <DataTableCell className="py-5 text-mono-muted">
+                      <DataTableCell className="py-5 mnx-text-muted">
                         {formatJobDate(job.createdAt)}
                       </DataTableCell>
                       <DataTableCell className="py-5">
@@ -521,16 +523,16 @@ export function JobsClient({
                           {job.priority}
                         </Badge>
                       </DataTableCell>
-                      <DataTableCell className="py-5 text-mono-muted">{job.ownerName}</DataTableCell>
+                      <DataTableCell className="py-5 mnx-text-muted">{job.ownerName}</DataTableCell>
                     </ClickableRow>
                   ))
                 )}
               </DataTableBody>
               {data.totalPages > 1 ? (
                 <DataTableFooter>
-                  <span className="text-xs text-mono-muted">
-                    Page <span className="text-mono-text">{data.page}</span> of{" "}
-                    <span className="text-mono-text">{data.totalPages}</span> ({data.total} jobs)
+                  <span className="text-xs mnx-text-muted">
+                    Page <span className="mnx-text-primary">{data.page}</span> of{" "}
+                    <span className="mnx-text-primary">{data.totalPages}</span> ({data.total} jobs)
                   </span>
                   <div className="flex gap-2">
                     <Button
@@ -568,7 +570,7 @@ export function JobsClient({
         icon={<Briefcase size={20} />}
       />
 
-      <div className="grid gap-4 xl:grid-cols-4">
+      <ChaMetrics>
         {summaryCards.map((card) => (
           <ChaMetricCard
             key={card.title}
@@ -579,7 +581,7 @@ export function JobsClient({
             accent={card.accent}
           />
         ))}
-      </div>
+      </ChaMetrics>
 
       <ChaControlPanel
         title="Job Command Center"
@@ -588,10 +590,10 @@ export function JobsClient({
         actions={
           <div className="flex w-full flex-col gap-3 lg:w-auto lg:flex-row lg:items-center lg:justify-end">
             <div className="relative w-full lg:w-[360px]">
-              <span className="absolute inset-y-0 left-4 flex items-center text-mono-muted">
+              <span className="absolute inset-y-0 left-4 flex items-center mnx-text-muted">
                 <Search size={16} />
               </span>
-              <input
+              <Input
                 type="text"
                 placeholder="Search job #, customer, reference, or title..."
                 value={search}
@@ -614,25 +616,25 @@ export function JobsClient({
                 ariaLabel="Open filters"
                 contentClassName="w-[min(460px,calc(100vw-2rem))] max-h-[62vh] overflow-y-auto"
               >
-                <div className="overflow-hidden bg-mono-card">
+                <div className="overflow-hidden mnx-bg-surface">
                   <div className="grid min-h-[240px] grid-cols-1 sm:grid-cols-[156px_minmax(0,1fr)]">
-                    <div className="border-b border-mono-border/50 bg-mono-soft sm:border-b-0 sm:border-r">
+                    <div className="border-b mnx-border mnx-bg-soft sm:border-b-0 sm:border-r">
                       {filterTypes.map((item) => (
-                        <button
+                        <Button
                           key={item.key}
                           type="button"
                           onClick={() => setActiveFilterType(item.key)}
                           className={cn(
-                            "monolith-plain monolith-menu-option gap-2",
-                            activeFilterType === item.key && "monolith-menu-option-active",
+                            "mnx-plain mnx-menu-option gap-2",
+                            activeFilterType === item.key && "mnx-menu-option-active",
                           )}
                         >
                           <span className="min-w-0">
-                            <span className="monolith-label block truncate text-mono-text">{item.label}</span>
-                            <span className="mt-1 block truncate text-xs text-mono-muted">{item.value}</span>
+                            <span className="mnx-label block truncate mnx-text-primary">{item.label}</span>
+                            <span className="mt-1 block truncate text-xs mnx-text-muted">{item.value}</span>
                           </span>
-                          {item.active ? <span className="monolith-state-dot" /> : null}
-                        </button>
+                          {item.active ? <span className="mnx-state-dot" /> : null}
+                        </Button>
                       ))}
                     </div>
                     <div className="space-y-0 p-0">
@@ -641,7 +643,7 @@ export function JobsClient({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-2 border-t border-mono-border/50 bg-mono-card p-3">
+                <div className="flex items-center justify-between gap-2 border-t mnx-border mnx-bg-surface p-3">
                   <Button variant="outline" onClick={resetFilters} className="flex-1">
                     Reset
                   </Button>
@@ -674,14 +676,14 @@ export function JobsClient({
         {activePills.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2">
             {activePills.map((pill) => (
-              <button
+              <Button
                 key={pill.key}
                 type="button"
                 onClick={() => removeFilter(pill.key)}
-                className="monolith-plain monolith-filter-chip"
+                className="mnx-plain mnx-badge"
               >
                 {pill.label} x
-              </button>
+              </Button>
             ))}
             <Button type="button" variant="outline" size="sm" onClick={resetFilters} className="h-7 text-[10px] rounded-full">
               Clear All

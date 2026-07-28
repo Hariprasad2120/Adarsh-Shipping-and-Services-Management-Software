@@ -1,3 +1,4 @@
+import { ChaTable } from "@/components/monolith/cha-workspace";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Prisma } from "@/generated/prisma/client";
@@ -18,6 +19,7 @@ import {
 import {
   ChaPageHeader,
   ChaMetricCard,
+  ChaMetrics,
 } from "../_components/cha-operations-shared";
 import { Badge } from "@/components/monolith/badge";
 import { CustomersFilterBar } from "./customers-filter-bar";
@@ -131,7 +133,7 @@ export default async function ChaCustomersPage({
       />
 
       {/* KPI Metrics */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <ChaMetrics>
         <ChaMetricCard
           title="Total Customers"
           value={totalCount}
@@ -153,7 +155,7 @@ export default async function ChaCustomersPage({
           icon={<Globe size={16} />}
           accent="violet"
         />
-      </div>
+      </ChaMetrics>
 
       {/* Action/Filter Command Bar */}
       <CustomersFilterBar
@@ -167,9 +169,9 @@ export default async function ChaCustomersPage({
       />
 
       {/* Customers Data Table */}
-      <div className="overflow-hidden rounded-xl border border-mono-border/60 bg-mono-card shadow-sm">
+      <div className="overflow-hidden rounded-xl border mnx-border mnx-bg-surface shadow-sm">
         <div className="overflow-x-auto">
-          <table className="monolith-table min-w-full">
+          <ChaTable className="mnx-cha-table min-w-full">
             <thead>
               <tr>
                 <th>Customer Name</th>
@@ -184,7 +186,7 @@ export default async function ChaCustomersPage({
             <tbody>
               {customers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-sm text-mono-muted">
+                  <td colSpan={7} className="px-6 py-12 text-center text-sm mnx-text-muted">
                     {hasActiveFilters ? "No customers match the current filters." : "No customers found in your master database."}
                   </td>
                 </tr>
@@ -196,33 +198,33 @@ export default async function ChaCustomersPage({
                     <tr key={customer.id} className="transition-colors">
                       <td>
                         <div>
-                          <p className="text-base text-mono-text">{customer.name}</p>
-                          <p className="mt-1 text-xs text-mono-muted">{customer.customerSubType || "Business"}</p>
+                          <p className="text-base mnx-text-primary">{customer.name}</p>
+                          <p className="mt-1 text-xs mnx-text-muted">{customer.customerSubType || "Business"}</p>
                         </div>
                       </td>
-                      <td className="text-base text-mono-text">{customer.companyName || customer.name}</td>
+                      <td className="text-base mnx-text-primary">{customer.companyName || customer.name}</td>
                       <td>
                         {customer.email || customer.phone ? (
-                          <div className="space-y-1 text-sm text-mono-text">
+                          <div className="space-y-1 text-sm mnx-text-primary">
                             {customer.email ? (
                               <div className="flex items-center gap-2">
-                                <Mail className="size-4 text-mono-muted" />
+                                <Mail className="size-4 mnx-text-muted" />
                                 <span>{customer.email}</span>
                               </div>
                             ) : null}
                             {customer.phone ? (
                               <div className="flex items-center gap-2">
-                                <Phone className="size-4 text-mono-muted" />
+                                <Phone className="size-4 mnx-text-muted" />
                                 <span>{customer.phone}</span>
                               </div>
                             ) : null}
                           </div>
                         ) : (
-                          <span className="text-sm italic text-mono-muted">No contact details</span>
+                          <span className="text-sm italic mnx-text-muted">No contact details</span>
                         )}
                       </td>
                       <td>
-                        <span className="monolith-numeric text-sm text-mono-text">
+                        <span className="mnx-numeric text-sm mnx-text-primary">
                           {new Intl.NumberFormat("en-IN", {
                             style: "currency",
                             currency: "INR",
@@ -230,7 +232,7 @@ export default async function ChaCustomersPage({
                           }).format(balance)}
                         </span>
                       </td>
-                      <td className="monolith-numeric text-mono-muted">
+                      <td className="mnx-numeric mnx-text-muted">
                         {customer.updatedAt.toLocaleDateString("en-IN", {
                           day: "2-digit",
                           month: "short",
@@ -244,19 +246,19 @@ export default async function ChaCustomersPage({
                       </td>
                       <td className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Link href={`/crm/customers/${customer.id}`} className="monolith-action-icon monolith-action-icon-view" title="View details">
+                          <Link href={`/crm/customers/${customer.id}`} className="mnx-icon-button mnx-icon-button mnx-text-info" title="View details">
                             <Eye className="size-4" />
                           </Link>
                           {(canManageChaCustomers || canManageCrmAccounts) ? (
                             <>
-                              <Link href={`/cha/customers/${customer.id}/edit`} className="monolith-action-icon monolith-action-icon-edit" title="Edit customer">
+                              <Link href={`/cha/customers/${customer.id}/edit`} className="mnx-icon-button mnx-icon-button mnx-text-accent" title="Edit customer">
                                 <Pencil className="size-4" />
                               </Link>
                               <DeleteRecordButton
                                 recordId={customer.id}
                                 confirmMessage="Are you sure you want to delete this customer account? All linked contacts, jobs, and portal access may be affected."
                                 deleteAction={deleteAccountAction}
-                                className="monolith-plain monolith-action-icon monolith-action-icon-delete"
+                                className="mnx-plain mnx-icon-button mnx-icon-button mnx-text-danger"
                               />
                             </>
                           ) : null}
@@ -267,7 +269,7 @@ export default async function ChaCustomersPage({
                 })
               )}
             </tbody>
-          </table>
+          </ChaTable>
         </div>
       </div>
     </div>

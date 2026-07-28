@@ -1,5 +1,7 @@
 "use client";
 
+import { ChaTable } from "@/components/monolith/cha-workspace";
+import { Textarea } from "@/components/monolith/textarea";
 import { NativeSelect } from "@/components/monolith/native-select";
 import { DateInput } from "@/components/monolith/date-input";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
@@ -11,6 +13,7 @@ import { Badge } from "@/components/monolith/badge";
 import { DropdownSelect } from "@/components/monolith/dropdown-select";
 import { FileUploadField } from "@/components/monolith/file-upload-field";
 import { Input } from "@/components/monolith/input";
+import { WorkspaceSectionHeading } from "@/components/monolith/workspace";
 import { Modal } from "@/components/monolith/modal";
 import * as actions from "@/modules/cha/actions";
 import { DoValidityPanel } from "./do-validity-panel";
@@ -103,51 +106,51 @@ const WORKFLOW_UI_STAGES = [
 
 const CHA_OVERVIEW_BANNER_ART = `data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 420" fill="none">
-  <rect width="1600" height="420" fill="#EAF4FF"/>
-  <path d="M0 112C148 76 280 70 412 88C544 106 690 148 862 136C1034 124 1224 52 1600 76V420H0V112Z" fill="#D8ECFF"/>
-  <path d="M0 150C162 126 314 132 490 158C666 184 806 212 968 194C1130 176 1298 108 1600 118V420H0V150Z" fill="#C9E4FF"/>
-  <path d="M1210 116H1248V258H1210V116Z" fill="#8CB9E8"/>
-  <path d="M1272 82H1310V258H1272V82Z" fill="#79AADF"/>
-  <path d="M1370 108H1408V258H1370V108Z" fill="#8CB9E8"/>
-  <path d="M1248 116L1338 168H1158L1248 116Z" fill="#7CAFE3"/>
-  <path d="M1310 82L1422 152H1198L1310 82Z" fill="#72A6DD"/>
-  <path d="M1408 108L1512 170H1304L1408 108Z" fill="#83B4E5"/>
-  <path d="M934 116L1088 104L1222 138L1314 160L1268 296L866 296L894 178L934 116Z" fill="#103F73"/>
-  <path d="M922 178H1288L1262 314H840L856 274L922 178Z" fill="#0E315B"/>
-  <rect x="962" y="96" width="30" height="80" rx="4" fill="#E4EEF8"/>
-  <rect x="1044" y="76" width="22" height="98" rx="4" fill="#E4EEF8"/>
-  <path d="M1054 70C1064 58 1072 42 1074 24C1078 46 1088 60 1102 72L1054 70Z" fill="#E4EEF8"/>
-  <rect x="928" y="148" width="52" height="30" fill="#BA473A"/>
-  <rect x="980" y="148" width="52" height="30" fill="#D17D52"/>
-  <rect x="1032" y="148" width="52" height="30" fill="#4E7FB7"/>
-  <rect x="1084" y="148" width="52" height="30" fill="#CC6547"/>
-  <rect x="1136" y="148" width="52" height="30" fill="#4E7FB7"/>
-  <rect x="926" y="118" width="58" height="30" fill="#4E7FB7"/>
-  <rect x="984" y="118" width="58" height="30" fill="#D17D52"/>
-  <rect x="1042" y="118" width="58" height="30" fill="#4E7FB7"/>
-  <rect x="1100" y="118" width="58" height="30" fill="#CC6547"/>
-  <rect x="1158" y="118" width="58" height="30" fill="#4E7FB7"/>
-  <path d="M0 322C194 294 394 288 608 304C822 320 1124 352 1600 330V420H0V322Z" fill="#5FA7E6"/>
-  <path d="M0 342C188 322 438 316 664 334C890 352 1148 388 1600 360V420H0V342Z" fill="#408FD6"/>
-  <path d="M754 60C800 18 884 10 930 56" stroke="#9AD0F8" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 12"/>
-  <path d="M742 84C828 30 930 26 1016 74" stroke="#9AD0F8" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 14"/>
+  <rect width="1600" height="420" fill="var(--mnx-surface)"/>
+  <path d="M0 112C148 76 280 70 412 88C544 106 690 148 862 136C1034 124 1224 52 1600 76V420H0V112Z" fill="var(--mnx-accent)"/>
+  <path d="M0 150C162 126 314 132 490 158C666 184 806 212 968 194C1130 176 1298 108 1600 118V420H0V150Z" fill="var(--mnx-accent)"/>
+  <path d="M1210 116H1248V258H1210V116Z" fill="var(--mnx-info)"/>
+  <path d="M1272 82H1310V258H1272V82Z" fill="var(--mnx-info)"/>
+  <path d="M1370 108H1408V258H1370V108Z" fill="var(--mnx-info)"/>
+  <path d="M1248 116L1338 168H1158L1248 116Z" fill="var(--mnx-info)"/>
+  <path d="M1310 82L1422 152H1198L1310 82Z" fill="var(--mnx-info)"/>
+  <path d="M1408 108L1512 170H1304L1408 108Z" fill="var(--mnx-info)"/>
+  <path d="M934 116L1088 104L1222 138L1314 160L1268 296L866 296L894 178L934 116Z" fill="var(--mnx-text)"/>
+  <path d="M922 178H1288L1262 314H840L856 274L922 178Z" fill="var(--mnx-text)"/>
+  <rect x="962" y="96" width="30" height="80" rx="4" fill="var(--mnx-surface)"/>
+  <rect x="1044" y="76" width="22" height="98" rx="4" fill="var(--mnx-surface)"/>
+  <path d="M1054 70C1064 58 1072 42 1074 24C1078 46 1088 60 1102 72L1054 70Z" fill="var(--mnx-surface)"/>
+  <rect x="928" y="148" width="52" height="30" fill="var(--mnx-danger)"/>
+  <rect x="980" y="148" width="52" height="30" fill="var(--mnx-accent)"/>
+  <rect x="1032" y="148" width="52" height="30" fill="var(--mnx-info)"/>
+  <rect x="1084" y="148" width="52" height="30" fill="var(--mnx-danger)"/>
+  <rect x="1136" y="148" width="52" height="30" fill="var(--mnx-info)"/>
+  <rect x="926" y="118" width="58" height="30" fill="var(--mnx-info)"/>
+  <rect x="984" y="118" width="58" height="30" fill="var(--mnx-accent)"/>
+  <rect x="1042" y="118" width="58" height="30" fill="var(--mnx-info)"/>
+  <rect x="1100" y="118" width="58" height="30" fill="var(--mnx-danger)"/>
+  <rect x="1158" y="118" width="58" height="30" fill="var(--mnx-info)"/>
+  <path d="M0 322C194 294 394 288 608 304C822 320 1124 352 1600 330V420H0V322Z" fill="var(--mnx-info)"/>
+  <path d="M0 342C188 322 438 316 664 334C890 352 1148 388 1600 360V420H0V342Z" fill="var(--mnx-info)"/>
+  <path d="M754 60C800 18 884 10 930 56" stroke="var(--mnx-accent)" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 12"/>
+  <path d="M742 84C828 30 930 26 1016 74" stroke="var(--mnx-accent)" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 14"/>
 </svg>
 `)}`;
 
 const CHA_OVERVIEW_MAP_ART = `data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" fill="none">
-  <rect width="900" height="420" rx="30" fill="#F8FBFF"/>
-  <path d="M98 250C180 192 250 176 338 170C446 162 560 198 650 182C714 170 764 140 818 92" stroke="#2563EB" stroke-width="5" stroke-linecap="round" stroke-dasharray="12 14"/>
-  <circle cx="126" cy="250" r="14" fill="#22C55E"/>
-  <circle cx="126" cy="250" r="26" fill="#22C55E" fill-opacity=".14"/>
-  <circle cx="792" cy="96" r="14" fill="#2563EB"/>
-  <circle cx="792" cy="96" r="26" fill="#2563EB" fill-opacity=".14"/>
-  <circle cx="470" cy="188" r="16" fill="#0EA5E9"/>
-  <circle cx="470" cy="188" r="34" fill="#0EA5E9" fill-opacity=".12"/>
+  <rect width="900" height="420" rx="30" fill="var(--mnx-surface)"/>
+  <path d="M98 250C180 192 250 176 338 170C446 162 560 198 650 182C714 170 764 140 818 92" stroke="var(--mnx-info)" stroke-width="5" stroke-linecap="round" stroke-dasharray="12 14"/>
+  <circle cx="126" cy="250" r="14" fill="var(--mnx-success)"/>
+  <circle cx="126" cy="250" r="26" fill="var(--mnx-success)" fill-opacity=".14"/>
+  <circle cx="792" cy="96" r="14" fill="var(--mnx-info)"/>
+  <circle cx="792" cy="96" r="26" fill="var(--mnx-info)" fill-opacity=".14"/>
+  <circle cx="470" cy="188" r="16" fill="var(--mnx-info)"/>
+  <circle cx="470" cy="188" r="34" fill="var(--mnx-info)" fill-opacity=".12"/>
   <path d="M454 188H486" stroke="white" stroke-width="4" stroke-linecap="round"/>
   <path d="M462 180L486 188L462 196" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M132 130C240 76 374 54 520 72C644 88 742 136 828 204" stroke="#BFDBFE" stroke-width="2.5" stroke-dasharray="10 12"/>
-  <path d="M86 328C210 258 338 244 512 270C632 288 728 326 820 300" stroke="#DBEAFE" stroke-width="2.5" stroke-dasharray="8 12"/>
+  <path d="M132 130C240 76 374 54 520 72C644 88 742 136 828 204" stroke="var(--mnx-accent)" stroke-width="2.5" stroke-dasharray="10 12"/>
+  <path d="M86 328C210 258 338 244 512 270C632 288 728 326 820 300" stroke="var(--mnx-accent)" stroke-width="2.5" stroke-dasharray="8 12"/>
 </svg>
 `)}`;
 
@@ -461,31 +464,31 @@ function AdditionalDataStatCard({
   numeric?: boolean;
 }) {
   return (
-    <div className="monolith-card monolith-card monolith-accent rounded-xl border border-mono-border/40 bg-mono-card p-3 shadow-sm">
-      <span className="monolith-label">{label}</span>
-      <p className={`mt-1 text-sm text-mono-text ${numeric ? "monolith-numeric" : ""}`}>{value}</p>
+    <div className="mnx-bg-surface mnx-border mnx-bg-surface mnx-border mnx-border-accent rounded-xl border mnx-border mnx-bg-surface p-3 shadow-sm">
+      <span className="mnx-label">{label}</span>
+      <p className={`mt-1 text-sm mnx-text-primary ${numeric ? "mnx-numeric" : ""}`}>{value}</p>
     </div>
   );
 }
 
 function SectionHeading({
+  index,
   title,
   description,
   aside,
 }: {
+  index: string;
   title: string;
   description?: string;
   aside?: React.ReactNode;
 }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
-      <div className="min-w-0 flex-1 space-y-1">
-        <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-4">
-          <span className="h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
-          <h3 className="monolith-h3 text-mono-text">{title}</h3>
-        </div>
-        {description ? <p className="pl-5 text-sm text-mono-muted">{description}</p> : null}
-      </div>
+      <WorkspaceSectionHeading
+        index={index}
+        title={title}
+        description={description ?? "Complete the controlled operation for this job stage."}
+      />
       {aside ? <div className="shrink-0">{aside}</div> : null}
     </div>
   );
@@ -504,23 +507,23 @@ function WarningNoteToggle({
 }) {
   return (
     <div className="group/warning-note relative shrink-0">
-      <button
+      <Button
         type="button"
         aria-label={title}
         aria-expanded={open}
         onClick={onToggle}
-        className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#D88700]/45 bg-[#D88700]/10 text-[#D88700] shadow-sm transition-transform duration-200 hover:scale-105 focus-visible:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F9D972]/30"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-lg border mnx-border-warning mnx-bg-warning mnx-text-warning shadow-sm transition-transform duration-200 hover:scale-105 focus-visible:scale-105 focus-visible:outline-none focus-visible:ring-2 mnx-focus-accent"
       >
         <AlertTriangle size={14} strokeWidth={2.2} />
-      </button>
+      </Button>
       <div
-        className={`monolith-card monolith-accent-warning absolute right-0 top-full z-20 mt-2 w-[20rem] max-w-[calc(100vw-2rem)] rounded-xl border border-[#D88700]/30 bg-mono-card px-4 py-3 shadow-[0_20px_44px_-26px_rgba(251,146,60,0.45)] transition-all duration-200 ${open
+        className={`mnx-bg-surface mnx-border mnx-border-warning absolute right-0 top-full z-20 mt-2 w-[20rem] max-w-[calc(100vw-2rem)] rounded-xl border mnx-border-warning mnx-bg-surface px-4 py-3 mnx-shadow-panel transition-all duration-200 ${open
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none translate-y-1 opacity-0 group-hover/warning-note:pointer-events-auto group-hover/warning-note:translate-y-0 group-hover/warning-note:opacity-100"
           }`}
       >
-        <h4 className="monolith-label !text-[#D88700]">{title}</h4>
-        <p className="mt-2 text-sm leading-relaxed text-mono-text">{description}</p>
+        <h4 className="mnx-label mnx-text-warning">{title}</h4>
+        <p className="mt-2 text-sm leading-relaxed mnx-text-primary">{description}</p>
       </div>
     </div>
   );
@@ -539,23 +542,23 @@ function InfoNoteToggle({
 }) {
   return (
     <div className="group/info-note relative shrink-0">
-      <button
+      <Button
         type="button"
         aria-label={title}
         aria-expanded={open}
         onClick={onToggle}
-        className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#F9D972]/45 bg-[#F9D972]/10 text-[#F9D972] shadow-sm transition-transform duration-200 hover:scale-105 focus-visible:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F9D972]/30"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-lg border mnx-border-accent mnx-bg-accent-soft mnx-text-accent shadow-sm transition-transform duration-200 hover:scale-105 focus-visible:scale-105 focus-visible:outline-none focus-visible:ring-2 mnx-focus-accent"
       >
         <AlertCircle size={14} strokeWidth={2.2} />
-      </button>
+      </Button>
       <div
-        className={`monolith-card monolith-accent absolute right-0 top-full z-20 mt-2 w-[20rem] max-w-[calc(100vw-2rem)] rounded-xl border border-[#F9D972]/30 bg-mono-card px-4 py-3 shadow-[0_20px_44px_-26px_rgba(0,206,196,0.45)] transition-all duration-200 ${open
+        className={`mnx-bg-surface mnx-border mnx-border-accent absolute right-0 top-full z-20 mt-2 w-[20rem] max-w-[calc(100vw-2rem)] rounded-xl border mnx-border-accent mnx-bg-surface px-4 py-3 mnx-shadow-panel transition-all duration-200 ${open
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none translate-y-1 opacity-0 group-hover/info-note:pointer-events-auto group-hover/info-note:translate-y-0 group-hover/info-note:opacity-100"
           }`}
       >
-        <h4 className="monolith-label !text-[#F9D972]">{title}</h4>
-        <p className="mt-2 text-sm leading-relaxed text-mono-text">{description}</p>
+        <h4 className="mnx-label mnx-text-accent">{title}</h4>
+        <p className="mt-2 text-sm leading-relaxed mnx-text-primary">{description}</p>
       </div>
     </div>
   );
@@ -627,10 +630,10 @@ function MilestoneCard({
   onToggle,
 }: MilestoneCardProps) {
   const cardBorderClass = isActive
-    ? "border-[#F9D972]/35 bg-mono-card shadow-[0_28px_60px_-38px_rgba(0,206,196,0.32)]"
+    ? "mnx-border-accent mnx-bg-surface mnx-shadow-panel"
     : isCompleted
-      ? "border-[#F9D972]/25 bg-mono-card"
-      : "border-mono-border/30 bg-mono-soft/30 opacity-70";
+      ? "mnx-border-accent mnx-bg-surface"
+      : "mnx-border mnx-bg-soft opacity-70";
 
   const badgeVariant = "secondary";
 
@@ -638,8 +641,8 @@ function MilestoneCard({
     <div
       id={`workflow-stage-${stageKey.toLowerCase()}`}
       data-stage-key={stageKey}
-      className={`scroll-mt-32 overflow-hidden rounded-xl border bg-mono-card transition-all duration-500 ${cardBorderClass} ${isSpotlit
-          ? "ring-2 ring-[#F9D972]/30 shadow-[0_28px_56px_-34px_rgba(0,206,196,0.4)]"
+      className={`scroll-mt-32 overflow-hidden rounded-xl border mnx-bg-surface transition-all duration-500 ${cardBorderClass} ${isSpotlit
+          ? "ring-2 mnx-border-accent mnx-shadow-panel"
           : ""
         }`}
       style={{ transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
@@ -649,16 +652,16 @@ function MilestoneCard({
           if (isLocked) return;
           onToggle(stageKey);
         }}
-        className={`select-none flex flex-col gap-4 px-5 py-5 lg:flex-row lg:items-center lg:justify-between ${isLocked ? "cursor-not-allowed" : "cursor-pointer hover:bg-mono-soft/45"
+        className={`select-none flex flex-col gap-4 px-5 py-5 lg:flex-row lg:items-center lg:justify-between ${isLocked ? "cursor-not-allowed" : "cursor-pointer mnx-hover-accent"
           }`}
       >
         <div className="flex min-w-0 items-center gap-4 lg:flex-1">
           <span
             className={`flex size-11 shrink-0 items-center justify-center rounded-full text-xs transition-all ${isCompleted
-                ? "border border-[#F9D972] bg-mono-card text-[#F9D972]"
+                ? "border mnx-border-accent mnx-bg-surface mnx-text-accent"
                 : isActive
-                  ? "border border-[#F9D972] bg-mono-card text-[#F9D972]"
-                  : "border border-mono-border bg-mono-card text-mono-muted/40"
+                  ? "border mnx-border-accent mnx-bg-surface mnx-text-accent"
+                  : "border mnx-border mnx-bg-surface mnx-text-muted"
               }`}
           >
             {isCompleted ? <Check size={14} /> : isLocked ? <Lock size={12} /> : percentage + "%"}
@@ -666,64 +669,64 @@ function MilestoneCard({
           <div className="grid min-w-0 flex-1 grid-cols-[4px_minmax(0,1fr)] items-start gap-x-4 gap-y-1">
             <div aria-hidden="true" />
             <div className="flex flex-wrap items-center gap-2">
-              <span className="monolith-label">Workflow Stage</span>
+              <span className="mnx-label">Workflow Stage</span>
               <Badge
                 variant={badgeVariant}
-                className={`uppercase tracking-wider text-[10px] ${isCompleted || isActive ? "!border-[#F9D972]/35 !bg-transparent !text-[#F9D972]" : ""
+                className={`uppercase tracking-wider text-[10px] ${isCompleted || isActive ? "mnx-border-accent !bg-transparent mnx-text-accent" : ""
                   }`}
               >
                 {statusLabel ?? (isCompleted ? "Completed" : isActive ? "Active" : "Locked")}
               </Badge>
               {assignedUser ? (
-                <span className="rounded-full border border-mono-border/30 bg-mono-soft px-2.5 py-1 text-[10px] font-medium text-mono-muted">
+                <span className="rounded-full border mnx-border mnx-bg-soft px-2.5 py-1 text-[10px] font-medium mnx-text-muted">
                   {assignedUser}
                 </span>
               ) : null}
             </div>
-            <span className="h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
+            <span className="h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
             <div>
-              <h3 className="monolith-h3 text-mono-text">
+              <h3 className="mnx-heading-3 mnx-text-primary">
                 {title}
               </h3>
             </div>
             <div aria-hidden="true" />
-            <p className="max-w-xl text-sm leading-snug text-mono-muted">{description}</p>
+            <p className="max-w-xl text-sm leading-snug mnx-text-muted">{description}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-4 self-end lg:self-center">
           {/* Inline Stats */}
           <div className="hidden sm:flex items-center gap-3">
-            <div className="rounded-xl border border-mono-border/25 bg-mono-soft/60 px-3 py-1.5 text-right">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-mono-muted">Readiness</p>
-              <p className="text-[11px] font-medium text-mono-text">{validationState}</p>
+            <div className="rounded-xl border mnx-border mnx-bg-soft px-3 py-1.5 text-right">
+              <p className="text-[9px] font-bold uppercase tracking-wider mnx-text-muted">Readiness</p>
+              <p className="text-[11px] font-medium mnx-text-primary">{validationState}</p>
             </div>
-            <div className="rounded-xl border border-mono-border/25 bg-mono-soft/60 px-3 py-1.5 text-right">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-mono-muted">Progress</p>
-              <p className="text-[11px] font-bold text-[#F9D972] monolith-numeric">{percentage}%</p>
+            <div className="rounded-xl border mnx-border mnx-bg-soft px-3 py-1.5 text-right">
+              <p className="text-[9px] font-bold uppercase tracking-wider mnx-text-muted">Progress</p>
+              <p className="text-[11px] font-bold mnx-text-accent mnx-numeric">{percentage}%</p>
             </div>
-            <div className="rounded-xl border border-mono-border/25 bg-mono-soft/60 px-3 py-1.5 text-right">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-mono-muted">{isCompleted ? "Closed" : "Due"}</p>
-              <p className="text-[11px] font-medium text-mono-text">{isCompleted ? (completedAt || "Pending") : (dueDate || "Open")}</p>
+            <div className="rounded-xl border mnx-border mnx-bg-soft px-3 py-1.5 text-right">
+              <p className="text-[9px] font-bold uppercase tracking-wider mnx-text-muted">{isCompleted ? "Closed" : "Due"}</p>
+              <p className="text-[11px] font-medium mnx-text-primary">{isCompleted ? (completedAt || "Pending") : (dueDate || "Open")}</p>
             </div>
           </div>
           {!isLocked && (
             <ChevronDown
               size={18}
-              className={`text-mono-muted transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
+              className={`mnx-text-muted transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
             />
           )}
         </div>
       </div>
 
       {isExpanded && !isLocked && (
-        <div className="space-y-4 border-t border-mono-border/25 bg-mono-card px-5 py-5">
+        <div className="space-y-4 border-t mnx-border mnx-bg-surface px-5 py-5">
           {children}
         </div>
       )}
 
       {!isExpanded && isCompleted && summary && (
-        <div className="rounded-b-xl border-t border-mono-border/20 bg-mono-soft/50 px-5 py-3">
+        <div className="rounded-b-xl border-t mnx-border mnx-bg-soft px-5 py-3">
           {summary}
         </div>
       )}
@@ -762,18 +765,18 @@ function FilingWorkflowStatusBanner({
 
   return (
     <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)_32px_minmax(0,1fr)] lg:items-center">
-      <div className="flex min-h-[92px] min-w-0 items-center gap-3 rounded-xl border border-mono-border/45 bg-mono-card px-4 py-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#F9D972]/35 bg-[#F9D972]/10 text-[#F9D972]">
+      <div className="flex min-h-[92px] min-w-0 items-center gap-3 rounded-xl border mnx-border mnx-bg-surface px-4 py-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border mnx-border-accent mnx-bg-accent-soft mnx-text-accent">
           <CheckCircle2 size={17} strokeWidth={2.2} />
         </span>
         <div className="min-w-0 space-y-0.5">
-          <span className="monolith-label text-[#00a9b2]">Previous</span>
-          <p className="truncate text-sm font-medium text-mono-text">
+          <span className="mnx-label mnx-text-accent">Previous</span>
+          <p className="truncate text-sm font-medium mnx-text-primary">
             {latestCompletedStep
               ? `${latestCompletedStep.nodeName}${latestCompletedStep.status === "SKIPPED" ? " (Skipped)" : ""}`
               : "No prior stage"}
           </p>
-          <p className="truncate text-xs text-mono-muted">
+          <p className="truncate text-xs mnx-text-muted">
             {latestCompletedDateLabel ? [latestCompletedDateLabel, latestCompletedTimeLabel].filter(Boolean).join(" | ") : "First active stage"}
           </p>
         </div>
@@ -783,18 +786,18 @@ function FilingWorkflowStatusBanner({
         <span className="h-px w-full bg-outline-variant/70" />
       </div>
 
-      <div className="relative flex min-h-[92px] min-w-0 items-center gap-3 overflow-hidden rounded-xl border border-[#F9D972]/35 bg-[#F9D972]/8 px-4 py-3">
-        <span className="absolute inset-x-4 top-0 h-0.5 rounded-b-full bg-[#F9D972]" aria-hidden="true" />
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#F9D972]/40 bg-mono-card text-[#F9D972]">
+      <div className="relative flex min-h-[92px] min-w-0 items-center gap-3 overflow-hidden rounded-xl border mnx-border-accent mnx-bg-accent-soft px-4 py-3">
+        <span className="absolute inset-x-4 top-0 h-0.5 rounded-b-full mnx-bg-accent-soft" aria-hidden="true" />
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border mnx-border-accent mnx-bg-surface mnx-text-accent">
           <FolderOpen size={17} />
         </span>
         <div className="min-w-0 space-y-0.5">
-          <span className="monolith-label text-[#00a9b2]">{statusLabel}</span>
-          <p className="truncate text-sm font-medium text-mono-text">
-            {activeNodeSequence ? <span className="monolith-numeric mr-1.5 text-[#00a9b2]">{String(activeNodeSequence).padStart(2, "0")}.</span> : null}
+          <span className="mnx-label mnx-text-accent">{statusLabel}</span>
+          <p className="truncate text-sm font-medium mnx-text-primary">
+            {activeNodeSequence ? <span className="mnx-numeric mr-1.5 mnx-text-accent">{String(activeNodeSequence).padStart(2, "0")}.</span> : null}
             {activeNodeName}
           </p>
-          <p className="truncate text-xs text-mono-muted">{activeDescription}</p>
+          <p className="truncate text-xs mnx-text-muted">{activeDescription}</p>
         </div>
       </div>
 
@@ -802,14 +805,14 @@ function FilingWorkflowStatusBanner({
         <span className="h-px w-full bg-outline-variant/70" />
       </div>
 
-      <div className="flex min-h-[92px] min-w-0 items-center gap-3 rounded-xl border border-mono-border/45 bg-mono-card px-4 py-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-mono-border/70 bg-mono-soft text-mono-muted">
+      <div className="flex min-h-[92px] min-w-0 items-center gap-3 rounded-xl border mnx-border mnx-bg-surface px-4 py-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border mnx-border mnx-bg-soft mnx-text-muted">
           <ArrowRight size={17} />
         </span>
         <div className="min-w-0 space-y-0.5">
-          <span className="monolith-label text-mono-muted">Up Next</span>
-          <p className="truncate text-sm font-medium text-mono-text">{nextStageName || "Workflow Completion"}</p>
-          <p className="truncate text-xs text-mono-muted">{nextStageName ? "Unlocks after completion" : "Finalizes after this step"}</p>
+          <span className="mnx-label mnx-text-muted">Up Next</span>
+          <p className="truncate text-sm font-medium mnx-text-primary">{nextStageName || "Workflow Completion"}</p>
+          <p className="truncate text-xs mnx-text-muted">{nextStageName ? "Unlocks after completion" : "Finalizes after this step"}</p>
         </div>
       </div>
     </div>
@@ -930,9 +933,9 @@ function SlideToComplete({
       aria-valuetext={isSubmitting ? `${actionVerbGerund} ${actionObject}` : `${progressPercent}% complete`}
       aria-busy={isSubmitting}
       className={cn(
-        "relative h-[60px] w-full overflow-visible rounded-full border border-[#F9D972]/30 bg-mono-card shadow-[0_14px_28px_-18px_rgba(0,206,196,0.24)] outline-none select-none",
+        "relative h-[60px] w-full overflow-visible rounded-full border mnx-border-accent mnx-bg-surface mnx-shadow-panel outline-none select-none",
         disabled || isSubmitting ? "cursor-not-allowed opacity-70" : "cursor-ew-resize touch-none",
-        "focus-visible:ring-2 focus-visible:ring-[#F9D972]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "focus-visible:ring-2 mnx-focus-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       )}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -961,11 +964,11 @@ function SlideToComplete({
       }}
     >
       <div
-        className="absolute inset-y-[6px] left-[6px] rounded-full bg-[linear-gradient(90deg,rgba(0,206,196,0.16),rgba(0,206,196,0.04))] transition-[width] duration-300 ease-out"
+        className="absolute inset-y-[6px] left-[6px] rounded-full bg-[linear-gradient(90deg,color-mix(in srgb, var(--mnx-surface) 72%, transparent),color-mix(in srgb, var(--mnx-surface) 72%, transparent))] transition-[width] duration-300 ease-out"
         style={{ width: `${Math.max(thumbWidth, sliderPos + thumbWidth)}px` }}
       />
       <div
-        className="pointer-events-none absolute inset-y-0 left-0 hidden items-center text-sm text-[#F9D972]/45 md:flex"
+        className="pointer-events-none absolute inset-y-0 left-0 hidden items-center text-sm mnx-text-accent md:flex"
         style={{ paddingLeft: `${contentStart}px` }}
       >
         <span className="animate-[workflow-chevron_1.15s_ease-in-out_infinite] font-semibold">{">"}</span>
@@ -974,25 +977,25 @@ function SlideToComplete({
       </div>
       <div
         className={cn(
-          "absolute left-[6px] top-[6px] flex h-[48px] w-[80px] items-center justify-center rounded-full border border-[#F9D972] bg-[linear-gradient(135deg,#F9D972,#E8C85D)] shadow-[0_10px_22px_-10px_rgba(0,206,196,0.75)]",
+          "absolute left-[6px] top-[6px] flex h-[48px] w-[80px] items-center justify-center rounded-full border mnx-border-accent bg-[linear-gradient(135deg,var(--mnx-accent),var(--mnx-accent))] mnx-shadow-panel",
           isDragging ? "" : "transition-transform duration-300 ease-out",
         )}
         style={{ transform: `translateX(${sliderPos}px) scale(${isDragging ? 1.04 : 1})` }}
       >
-        <ArrowRight size={22} className="text-white shrink-0" style={{ color: '#ffffff', stroke: '#ffffff' }} />
+        <ArrowRight size={22} className="mnx-text-muted shrink-0" style={{ color: 'var(--mnx-surface)', stroke: 'var(--mnx-surface)' }} />
       </div>
       <div
         className="relative z-10 grid h-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 pr-4 sm:pr-6"
         style={{ paddingLeft: `${mobileContentStart}px` }}
       >
         <div className="min-w-0 justify-self-center text-center leading-none">
-          <p className="text-[10px] font-normal uppercase tracking-[0.12em] text-[#00a9b2]">{isSubmitting ? actionVerbProgress : "Slide to"}</p>
-          <p className="mt-1 truncate text-sm font-normal uppercase tracking-[0.04em] text-mono-text">
-            <span className="text-[#00a9b2]">{isSubmitting ? actionVerbGerund : actionVerbPresent}</span> {actionObject}
+          <p className="text-[10px] font-normal uppercase tracking-[0.12em] mnx-text-accent">{isSubmitting ? actionVerbProgress : "Slide to"}</p>
+          <p className="mt-1 truncate text-sm font-normal uppercase tracking-[0.04em] mnx-text-primary">
+            <span className="mnx-text-accent">{isSubmitting ? actionVerbGerund : actionVerbPresent}</span> {actionObject}
           </p>
         </div>
-        <span className="hidden items-center gap-1.5 text-[11px] text-mono-muted sm:inline-flex">
-          <LockKeyhole size={12} className="text-[#F9D972]" />
+        <span className="hidden items-center gap-1.5 text-[11px] mnx-text-muted sm:inline-flex">
+          <LockKeyhole size={12} className="mnx-text-accent" />
           {helperText}
         </span>
       </div>
@@ -1028,9 +1031,9 @@ function FilingAttachmentValidityRow({
   const validityEnabled = hasValidityDate || isEditingValidity;
 
   return (
-    <div className="rounded-xl border border-mono-border/35 bg-mono-card px-3 py-3">
+    <div className="rounded-xl border mnx-border mnx-bg-surface px-3 py-3">
       <div className="flex items-start gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-[#F9D972]/25 bg-[#F9D972]/10 text-[#00a9b2]">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border mnx-border-accent mnx-bg-accent-soft mnx-text-accent">
           <FileText className="size-4" aria-hidden={true} />
         </span>
         <div className="min-w-0 flex-1 space-y-2">
@@ -1040,22 +1043,22 @@ function FilingAttachmentValidityRow({
                 href={attachment.fileKey}
                 target="_blank"
                 rel="noreferrer"
-                className="block truncate pr-2 text-sm font-medium text-mono-text transition-colors hover:text-[#F9D972] hover:underline"
+                className="block truncate pr-2 text-sm font-medium mnx-text-primary transition-colors mnx-hover-accent hover:underline"
               >
                 {attachment.fileName}
               </a>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-mono-muted">
-                <span className="monolith-label">Selected</span>
-                <span className="monolith-numeric">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs mnx-text-muted">
+                <span className="mnx-label">Selected</span>
+                <span className="mnx-numeric">
                   {attachment.uploadedAt ? `Uploaded ${new Date(attachment.uploadedAt).toLocaleDateString("en-IN")}` : "Uploaded"}
                 </span>
                 {validitySummary ? (
                   <span
                     className={`rounded-full px-2 py-0.5 uppercase tracking-[0.12em] ${validitySummary.tone === "destructive"
-                        ? "bg-red-500/10 text-red-600"
+                        ? "mnx-bg-danger mnx-text-danger"
                         : validitySummary.tone === "warning"
-                          ? "bg-[#D88700]/12 text-[#c76628]"
-                          : "bg-mono-soft text-mono-muted"
+                          ? "mnx-bg-warning mnx-text-warning"
+                          : "mnx-bg-soft mnx-text-muted"
                       }`}
                   >
                     {validitySummary.label}
@@ -1064,38 +1067,38 @@ function FilingAttachmentValidityRow({
               </div>
             </div>
             <div className="flex shrink-0 items-start gap-2">
-              <button
+              <Button
                 type="button"
                 role="switch"
                 aria-checked={validityEnabled}
                 onClick={() => onToggleValidity(!validityEnabled)}
-                className={`monolith-plain inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] transition-all ${validityEnabled
-                    ? "border-[#F9D972]/35 bg-[#F9D972]/10 text-[#0f766e]"
-                    : "border-mono-border/35 bg-mono-card text-mono-muted"
+                className={`mnx-plain inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] transition-all ${validityEnabled
+                    ? "mnx-border-accent mnx-bg-accent-soft mnx-text-accent"
+                    : "mnx-border mnx-bg-surface mnx-text-muted"
                   }`}
               >
                 <span
                   className={`relative inline-flex h-3.5 w-6 items-center rounded-full border transition-all ${validityEnabled
-                      ? "border-[#F9D972]/45 bg-[#F9D972]/18"
-                      : "border-mono-border/35 bg-mono-soft"
+                      ? "mnx-border-accent mnx-bg-accent-soft"
+                      : "mnx-border mnx-bg-soft"
                     }`}
                 >
                   <span
-                    className={`absolute top-[1px] h-2.5 w-2.5 rounded-full bg-mono-card shadow-sm transition-transform ${validityEnabled ? "translate-x-[12px]" : "translate-x-[1px]"
+                    className={`absolute top-[1px] h-2.5 w-2.5 rounded-full mnx-bg-surface shadow-sm transition-transform ${validityEnabled ? "translate-x-[12px]" : "translate-x-[1px]"
                       }`}
                   />
                 </span>
                 Validity
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 aria-label="Remove file"
                 title="Remove file"
                 onClick={onRemove}
-                className="group monolith-plain inline-flex size-8 shrink-0 items-center justify-center rounded-xl border border-mono-border/25 bg-mono-card text-mono-muted transition-all duration-200 hover:border-red-500/25 hover:bg-red-500/8 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/25"
+                className="group mnx-plain inline-flex size-8 shrink-0 items-center justify-center rounded-xl border mnx-border mnx-bg-surface mnx-text-muted transition-all duration-200 mnx-hover-danger mnx-hover-danger mnx-hover-danger focus-visible:outline-none focus-visible:ring-2 mnx-focus-accent"
               >
                 <X className="size-3.5 shrink-0 transition-transform duration-200 group-hover:rotate-90" aria-hidden={true} />
-              </button>
+              </Button>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -1127,10 +1130,10 @@ function FilingAttachmentValidityRow({
                 </Button>
               </div>
             ) : (
-              <span className="text-[10px] text-mono-muted">Optional validity date</span>
+              <span className="text-[10px] mnx-text-muted">Optional validity date</span>
             )}
             {validityEnabled && validitySummary?.detail ? (
-              <span className="text-[10px] text-mono-muted">{validitySummary.detail}</span>
+              <span className="text-[10px] mnx-text-muted">{validitySummary.detail}</span>
             ) : null}
           </div>
         </div>
@@ -5850,17 +5853,17 @@ export function JobWorkspaceClient({
     { label: "Job Activity", note: "View all activities", icon: <History size={16} />, onClick: () => navigateToWorkspaceTab("audit"), accent: "cyan" as const, visible: true },
   ].filter((action) => action.visible);
   return (
-    <main className="cha-job-workspace w-full space-y-5 overflow-x-hidden pb-6">
+    <main className="mnx-cha-workspace w-full space-y-5 overflow-x-hidden pb-6">
       <div className="space-y-4">
           <section
-            className="monolith-section-panel relative overflow-hidden"
+            className="mnx-bg-surface mnx-border relative overflow-hidden"
             style={{
-              backgroundImage: `linear-gradient(90deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.94) 46%, rgba(239,246,255,0.72) 68%, rgba(219,234,254,0.34) 100%), url("${CHA_OVERVIEW_BANNER_ART}")`,
+              backgroundImage: `linear-gradient(90deg, color-mix(in srgb, var(--mnx-surface) 72%, transparent) 0%, color-mix(in srgb, var(--mnx-surface) 72%, transparent) 46%, color-mix(in srgb, var(--mnx-surface) 72%, transparent) 68%, color-mix(in srgb, var(--mnx-surface) 72%, transparent) 100%), url("${CHA_OVERVIEW_BANNER_ART}")`,
               backgroundPosition: "right center",
               backgroundSize: "cover",
             }}
           >
-            <div className="absolute inset-0 hidden dark:block" style={{ background: "linear-gradient(90deg, rgba(17,24,39,0.96) 0%, rgba(17,24,39,0.88) 48%, rgba(15,23,42,0.62) 74%, rgba(15,23,42,0.36) 100%)" }} />
+            <div className="absolute inset-0 hidden dark:block" style={{ background: "linear-gradient(90deg, color-mix(in srgb, var(--mnx-surface) 72%, transparent) 0%, color-mix(in srgb, var(--mnx-surface) 72%, transparent) 48%, color-mix(in srgb, var(--mnx-surface) 72%, transparent) 74%, color-mix(in srgb, var(--mnx-surface) 72%, transparent) 100%)" }} />
             <div className="relative space-y-5 px-5 py-5">
               <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div className="min-w-0 space-y-2">
@@ -5872,20 +5875,20 @@ export function JobWorkspaceClient({
                     ))}
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <h1 className="monolith-h1 monolith-numeric text-mono-text">{job.jobNumber}</h1>
-                    <button
+                    <h1 className="mnx-heading-1 mnx-numeric mnx-text-primary">{job.jobNumber}</h1>
+                    <Button
                       type="button"
                       onClick={async () => {
                         await navigator.clipboard.writeText(job.jobNumber);
                         toast.success("Job number copied.");
                       }}
-                      className="monolith-plain rounded-full border border-mono-border p-2 text-mono-muted transition hover:border-[#F9D972] hover:text-[#F9D972]"
+                      className="mnx-plain rounded-full border mnx-border p-2 mnx-text-muted transition mnx-hover-accent mnx-hover-accent"
                       aria-label="Copy job number"
                     >
                       <Copy size={14} />
-                    </button>
+                    </Button>
                   </div>
-                  <p className="text-sm text-mono-muted">{job.title}</p>
+                  <p className="text-sm mnx-text-muted">{job.title}</p>
                 </div>
 
                 <div className="flex items-center gap-2 self-start">
@@ -5894,7 +5897,7 @@ export function JobWorkspaceClient({
                       <Button
                         variant="outline"
                         size="sm"
-                        className="shrink-0 !border-red-500/45 !bg-white !text-red-500 hover:!border-red-600 hover:!bg-white hover:!text-red-600 dark:!bg-mono-card [&_svg]:!text-red-500 [&_svg]:!stroke-red-500"
+                        className="shrink-0 mnx-border-danger mnx-bg-soft mnx-text-danger mnx-hover-danger mnx-hover-accent mnx-hover-danger mnx-bg-surface mnx-text-danger [&_svg]:!stroke-red-500"
                         disabled={loading !== null || Boolean(activeDeletionRequest)}
                         onClick={() => setDeleteModalMode("delete")}
                       >
@@ -5906,35 +5909,35 @@ export function JobWorkspaceClient({
                 </div>
               </div>
 
-              <div className="w-full rounded-xl border border-white/65 bg-white/78 shadow-[0_26px_44px_-32px_rgba(15,23,42,0.35)] backdrop-blur-xl dark:border-white/8 dark:bg-[rgba(15,23,42,0.82)]">
-                <div className="flex flex-col xl:flex-row w-full divide-y xl:divide-y-0 xl:divide-x divide-[#dbeafe] dark:divide-white/6">
+              <div className="w-full rounded-xl border mnx-border mnx-bg-soft mnx-shadow-panel backdrop-blur-xl mnx-border mnx-bg-accent-soft">
+                <div className="flex flex-col xl:flex-row w-full divide-y xl:divide-y-0 xl:divide-x mnx-border-accent mnx-border">
                   {overviewMetaItems.map((item) => (
                     <div
                       key={item.label}
                       className="flex min-h-[104px] items-start gap-3 px-4 py-4 flex-auto min-w-[140px]"
                     >
-                      <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#20e7df]/12 text-[#12d8d0] shadow-[inset_0_0_0_1px_rgba(32,231,223,0.18)]">
+                      <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl mnx-bg-accent-soft mnx-text-accent mnx-shadow-panel">
                         {item.icon}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="monolith-label">{item.label}</p>
-                        <p className="mt-1 break-words text-sm font-medium text-mono-text">{item.value}</p>
+                        <p className="mnx-label">{item.label}</p>
+                        <p className="mt-1 break-words text-sm font-medium mnx-text-primary">{item.value}</p>
                         {item.secondary ? (
                           <p 
-                            className="mt-1 break-all text-xs leading-normal text-mono-muted"
+                            className="mt-1 break-all text-xs leading-normal mnx-text-muted"
                             title={item.secondary}
                           >
                             {item.secondary}
                           </p>
                         ) : null}
                         {item.label === "Manager" && canUpdateJob ? (
-                          <button
+                          <Button
                             type="button"
                             onClick={() => setIsEditingManager(true)}
-                            className="mt-2 rounded-full border border-[#20e7df]/50 bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#E8C85D] transition-colors hover:bg-[#20e7df]/12 hover:text-[#00a9a5] dark:bg-[rgba(30,41,59,0.85)] dark:text-[#20e7df]"
+                            className="mt-2 rounded-full border mnx-border-accent mnx-bg-soft px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] mnx-text-accent transition-colors mnx-hover-accent mnx-hover-accent mnx-bg-accent-soft mnx-text-accent"
                           >
                             Change
-                          </button>
+                          </Button>
                         ) : null}
                       </div>
                     </div>
@@ -5944,43 +5947,43 @@ export function JobWorkspaceClient({
             </div>
           </section>
 
-          <section className="monolith-section-panel px-4 py-4">
+          <section className="mnx-bg-surface mnx-border px-4 py-4">
             <div className="mb-4">
               <div className="flex items-center justify-between gap-3">
-                <p className="monolith-label">Progress</p>
-                <p className="monolith-numeric text-sm text-[#F9D972]">{stageProgress}%</p>
+                <p className="mnx-label">Progress</p>
+                <p className="mnx-numeric text-sm mnx-text-accent">{stageProgress}%</p>
               </div>
-              <div className="monolith-progress-bar mt-2 w-full">
+              <div className="mnx-progress mt-2 w-full">
                 <span style={{ width: `${stageProgress}%` }} />
               </div>
             </div>
 
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex min-w-0 flex-1 items-center gap-2">
-                <button
+                <Button
                   type="button"
                   aria-label="Scroll workflow stages left"
                   onClick={() => overviewStageScrollerRef.current?.scrollBy({ left: -320, behavior: "smooth" })}
-                  className="monolith-plain monolith-workflow-link flex size-8 shrink-0 items-center justify-center text-mono-muted hover:text-[#F9D972]"
+                  className="mnx-plain mnx-workflow-link flex size-8 shrink-0 items-center justify-center mnx-text-muted mnx-hover-accent"
                 >
                   <ChevronLeft size={18} />
-                </button>
+                </Button>
                 <div ref={overviewStageScrollerRef} className="no-scrollbar min-w-0 flex-1 overflow-x-auto">
                   <div className="flex min-w-max items-center gap-0">
                     {overviewWorkflowStages.map((stage, index) => (
                       <div key={stage.key} className="flex items-center">
-                        <button
+                        <Button
                           type="button"
                           onClick={stage.onClick}
-                          className="monolith-plain monolith-workflow-link flex items-center gap-3 px-3 py-2 text-left"
+                          className="mnx-plain mnx-workflow-link flex items-center gap-3 px-3 py-2 text-left"
                         >
                           <span
                             className={cn(
-                              "flex size-7 items-center justify-center rounded-full border text-[11px] font-semibold monolith-numeric",
+                              "flex size-7 items-center justify-center rounded-full border text-[11px] font-semibold mnx-numeric",
                               stage.isCurrent && "animate-current-stage-number",
                               stage.isCompleted || stage.isCurrent
-                                ? "monolith-workflow-dot-active bg-mono-card"
-                                : "monolith-workflow-dot",
+                                ? "mnx-workflow-dot-active mnx-bg-surface"
+                                : "mnx-workflow-dot",
                             )}
                           >
                             {stage.isCompleted ? <Check size={12} /> : index}
@@ -5989,16 +5992,16 @@ export function JobWorkspaceClient({
                             <span className={cn(
                               "whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.14em]",
                               stage.isCurrent
-                                ? "text-[#F9D972]"
-                                : "text-mono-text",
+                                ? "mnx-text-accent"
+                                : "mnx-text-primary",
                             )}>
                               {stage.label}
                             </span>
                             {typeof stage.percent === "number" ? (
-                              <span className="monolith-numeric text-[10px] text-[#F9D972]">{stage.percent}%</span>
+                              <span className="mnx-numeric text-[10px] mnx-text-accent">{stage.percent}%</span>
                             ) : null}
                           </span>
-                        </button>
+                        </Button>
                         {index < overviewWorkflowStages.length - 1 ? (
                           <span className="mx-1 h-px w-8 rounded-full bg-outline-variant" />
                         ) : null}
@@ -6006,14 +6009,14 @@ export function JobWorkspaceClient({
                     ))}
                   </div>
                 </div>
-                <button
+                <Button
                   type="button"
                   aria-label="Scroll workflow stages right"
                   onClick={() => overviewStageScrollerRef.current?.scrollBy({ left: 320, behavior: "smooth" })}
-                  className="monolith-plain monolith-workflow-link flex size-8 shrink-0 items-center justify-center text-mono-muted hover:text-[#F9D972]"
+                  className="mnx-plain mnx-workflow-link flex size-8 shrink-0 items-center justify-center mnx-text-muted mnx-hover-accent"
                 >
                   <ChevronRight size={18} />
-                </button>
+                </Button>
               </div>
 
             </div>
@@ -6033,15 +6036,15 @@ export function JobWorkspaceClient({
       ))}
 
       {filingValidationWarning ? (
-        <div className="monolith-card monolith-accent-warning rounded-xl border border-red-500/35 bg-mono-card p-4 shadow-[0_18px_38px_-30px_rgba(239,68,68,0.38)]">
+        <div className="mnx-bg-surface mnx-border mnx-border-warning rounded-xl border mnx-border-danger mnx-bg-surface p-4 mnx-shadow-panel">
           <div className="flex items-start gap-3">
-            <span className="monolith-icon-badge animate-pulse-red shrink-0" style={{ background: "rgba(239,68,68,0.10)", color: "#f87171" }}>
+            <span className="mnx-icon-badge animate-pulse-red shrink-0" style={{ background: "color-mix(in srgb, var(--mnx-surface) 72%, transparent)", color: "var(--mnx-danger)" }}>
               <AlertTriangle size={18} />
             </span>
             <div className="min-w-0 space-y-2">
-              <p className="monolith-label !text-red-500">Filing Stage Warning</p>
-              <p className="text-sm font-medium text-mono-text">{filingValidationWarning.message}</p>
-              <ul className="grid gap-1 text-xs text-mono-muted md:grid-cols-2">
+              <p className="mnx-label mnx-text-danger">Filing Stage Warning</p>
+              <p className="text-sm font-medium mnx-text-primary">{filingValidationWarning.message}</p>
+              <ul className="grid gap-1 text-xs mnx-text-muted md:grid-cols-2">
                 {filingValidationWarning.details.slice(0, 6).map((detail) => (
                   <li key={detail}>{detail}</li>
                 ))}
@@ -6052,21 +6055,21 @@ export function JobWorkspaceClient({
       ) : null}
 
       {!job.assignedManagerId && (
-        <div className="rounded-2xl border border-[#D88700]/35 bg-[#D88700]/10 p-4">
+        <div className="rounded-2xl border mnx-border-warning mnx-bg-warning p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="space-y-1">
-              <span className="monolith-label text-[#D88700]">Job Settings Alert</span>
-              <p className="text-sm font-semibold text-mono-text">
+              <span className="mnx-label mnx-text-warning">Job Settings Alert</span>
+              <p className="text-sm font-semibold mnx-text-primary">
                 No manager assigned for this job.
               </p>
-              <p className="text-xs text-mono-muted">
+              <p className="text-xs mnx-text-muted">
                 An assigned manager is required to proceed with checklist upload and approval.
               </p>
             </div>
             {canUpdateJob && (
               <Button
                 variant="outline"
-                className="border-[#D88700]/50 text-[#D88700] hover:bg-[#D88700]/10 shrink-0"
+                className="mnx-border-warning mnx-text-warning mnx-hover-warning shrink-0"
                 onClick={() => setIsEditingManager(true)}
               >
                 Assign Manager
@@ -6077,16 +6080,16 @@ export function JobWorkspaceClient({
       )}
 
       {activeDeletionRequest ? (
-        <div className="rounded-2xl border border-[#D88700]/35 bg-[#D88700]/8 p-4">
+        <div className="rounded-2xl border mnx-border-warning mnx-bg-warning p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="space-y-1">
-              <span className="monolith-label text-[#D88700]">Deletion Workflow</span>
-              <p className="text-sm font-medium text-mono-text">
+              <span className="mnx-label mnx-text-warning">Deletion Workflow</span>
+              <p className="text-sm font-medium mnx-text-primary">
                 {activeDeletionRequest.status === "PENDING"
                   ? `Deletion request is pending with ${activeDeletionRequest.assignedManager?.name || "the assigned manager"}.`
                   : "Deletion request has been approved and is awaiting execution."}
               </p>
-              <p className="text-xs text-mono-muted">
+              <p className="text-xs mnx-text-muted">
                 Requested by {activeDeletionRequest.requestedBy?.name || "Unknown"} on{" "}
                 {new Date(activeDeletionRequest.requestedAt).toLocaleString("en-IN")}
               </p>
@@ -6096,7 +6099,7 @@ export function JobWorkspaceClient({
               <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
-                  className="border-red-200 text-red-500 hover:bg-red-50"
+                  className="mnx-border-danger mnx-text-danger mnx-hover-danger"
                   disabled={loading !== null}
                   onClick={() => setDeleteModalMode("reject")}
                 >
@@ -6117,9 +6120,9 @@ export function JobWorkspaceClient({
 
       <div className="space-y-3">
         <aside className="hidden">
-          <div className="border-b border-mono-border/20 px-2 pb-3">
-            <h2 className="monolith-h3 text-mono-text">Workflow</h2>
-            <p className="mt-1 text-xs text-mono-muted">Secondary stage navigator</p>
+          <div className="border-b mnx-border px-2 pb-3">
+            <h2 className="mnx-heading-3 mnx-text-primary">Workflow</h2>
+            <p className="mt-1 text-xs mnx-text-muted">Secondary stage navigator</p>
           </div>
 
           <nav className="space-y-2 pt-3">
@@ -6132,102 +6135,102 @@ export function JobWorkspaceClient({
 
               let percent = 0;
               let valState = "";
-              let statusColor = "text-mono-muted";
-              let statusBg = "bg-mono-soft";
+              let statusColor = "mnx-text-muted";
+              let statusBg = "mnx-bg-soft";
               let statusLabel = "Pending";
 
               if (stage.key === "DOCUMENT_COLLECTION") {
                 percent = docPercentage;
                 valState = docValidationState;
                 if (isCompleted) {
-                  statusColor = "text-green-500";
-                  statusBg = "bg-green-500/10";
+                  statusColor = "mnx-text-success";
+                  statusBg = "mnx-bg-success";
                   statusLabel = "Completed";
                 } else {
-                  statusColor = "text-[#F9D972]";
-                  statusBg = "bg-[#F9D972]/10";
+                  statusColor = "mnx-text-accent";
+                  statusBg = "mnx-bg-accent-soft";
                   statusLabel = "In Progress";
                 }
               } else if (stage.key === "ADDITIONAL_DATA") {
                 percent = additionalDataPercentage;
                 valState = additionalDataValidationState;
                 if (isCompleted) {
-                  statusColor = "text-green-500";
-                  statusBg = "bg-green-500/10";
+                  statusColor = "mnx-text-success";
+                  statusBg = "mnx-bg-success";
                   statusLabel = "Completed";
                 } else if (isActive) {
-                  statusColor = "text-[#F9D972]";
-                  statusBg = "bg-[#F9D972]/10";
+                  statusColor = "mnx-text-accent";
+                  statusBg = "mnx-bg-accent-soft";
                   statusLabel = "In Progress";
                 } else {
-                  statusColor = "text-mono-muted/40";
-                  statusBg = "bg-mono-soft/50";
+                  statusColor = "mnx-text-muted";
+                  statusBg = "mnx-bg-soft";
                   statusLabel = "Locked";
                 }
               } else if (stage.key === "CHECKLIST") {
                 percent = checklistCombinedPercentage;
                 valState = checklistCombinedValidationState;
                 if (isCompleted) {
-                  statusColor = "text-green-500";
-                  statusBg = "bg-green-500/10";
+                  statusColor = "mnx-text-success";
+                  statusBg = "mnx-bg-success";
                   statusLabel = "Completed";
                 } else if (isActive) {
                   if (checklistWorkflow?.currentApprovalStage === "CUSTOMER") {
-                    statusColor = "text-[#F9D972]";
-                    statusBg = "bg-[#F9D972]/10";
+                    statusColor = "mnx-text-accent";
+                    statusBg = "mnx-bg-accent-soft";
                     statusLabel = "Awaiting Customer";
                   } else if (currentChecklistVersion) {
-                    statusColor = "text-[#D88700]";
-                    statusBg = "bg-[#D88700]/10";
+                    statusColor = "mnx-text-warning";
+                    statusBg = "mnx-bg-warning";
                     statusLabel = "Awaiting Internal";
                   } else {
-                    statusColor = "text-[#F9D972]";
-                    statusBg = "bg-[#F9D972]/10";
+                    statusColor = "mnx-text-accent";
+                    statusBg = "mnx-bg-accent-soft";
                     statusLabel = "Awaiting Upload";
                   }
                 } else {
-                  statusColor = "text-mono-muted/40";
-                  statusBg = "bg-mono-soft/50";
+                  statusColor = "mnx-text-muted";
+                  statusBg = "mnx-bg-soft";
                   statusLabel = "Locked";
                 }
               } else if (stage.key === "FILING") {
                 percent = filingPercentage;
                 valState = filingValidationState;
                 if (isCompleted) {
-                  statusColor = "text-green-500";
-                  statusBg = "bg-green-500/10";
+                  statusColor = "mnx-text-success";
+                  statusBg = "mnx-bg-success";
                   statusLabel = "Completed";
                 } else if (isActive) {
-                  statusColor = "text-[#F9D972]";
-                  statusBg = "bg-[#F9D972]/10";
+                  statusColor = "mnx-text-accent";
+                  statusBg = "mnx-bg-accent-soft";
                   statusLabel = "In Progress";
                 } else {
-                  statusColor = "text-mono-muted/40";
-                  statusBg = "bg-mono-soft/50";
+                  statusColor = "mnx-text-muted";
+                  statusBg = "mnx-bg-soft";
                   statusLabel = "Locked";
                 }
               } else if (stage.key === "FILED") {
                 percent = filedPercentage;
                 valState = filedValidationState;
                 if (isCompleted) {
-                  statusColor = "text-green-500";
-                  statusBg = "bg-green-500/10";
+                  statusColor = "mnx-text-success";
+                  statusBg = "mnx-bg-success";
                   statusLabel = "Filed";
                 } else {
-                  statusColor = "text-mono-muted/40";
-                  statusBg = "bg-mono-soft/50";
+                  statusColor = "mnx-text-muted";
+                  statusBg = "mnx-bg-soft";
                   statusLabel = "Locked";
                 }
               } else if (stage.key === "EXPENSES") {
                 percent = 0;
                 valState = "Open";
                 if (isActive) {
-                  statusColor = "text-[#F9D972]";
-                  statusBg = "bg-[#F9D972]/10";
+                  statusColor = "mnx-text-accent";
+                  statusBg = "mnx-bg-accent-soft";
                   statusLabel = "Open";
                 } else {
-                  statusColor = "text-[#F9D972]";
-                  statusBg = "bg-[#F9D972]/10";
+                  statusColor = "mnx-text-accent";
+                  statusBg = "mnx-bg-accent-soft";
                   statusLabel = "Open";
                 }
               }
@@ -6246,7 +6249,7 @@ export function JobWorkspaceClient({
 
               return (
                 <div key={stage.key} className="relative">
-                  <button
+                  <Button
                     type="button"
                     onClick={() => {
                       if (isLocked) {
@@ -6256,31 +6259,31 @@ export function JobWorkspaceClient({
                     }}
                     disabled={isLocked}
                     className={`group relative flex w-full flex-col gap-2 rounded-[18px] p-3 text-left transition-all ${isHighlighted
-                        ? "bg-gradient-to-r from-[#F9D972]/12 via-[#F9D972]/10 to-[#E8C85D]/8 text-[#00a9b2] shadow-[0_20px_40px_-28px_rgba(0,206,196,0.65)]"
+                        ? "bg-gradient-to-r mnx-bg-accent-soft mnx-bg-accent-soft mnx-bg-accent-soft mnx-text-accent mnx-shadow-panel"
                         : isLocked
                           ? "cursor-not-allowed opacity-50"
-                          : "hover:bg-mono-soft/80"
+                          : "mnx-hover-accent"
                       }`}
                   >
                     {/* Left border indicator for highlighted step */}
                     {isHighlighted && (
-                      <span className="absolute left-0 top-3 bottom-3 w-1 rounded-r-md bg-gradient-to-b from-[#F9D972] to-[#E8C85D]" />
+                      <span className="absolute left-0 top-3 bottom-3 w-1 rounded-r-md bg-gradient-to-b mnx-bg-accent-soft mnx-bg-accent-soft" />
                     )}
 
                     {/* Header block with circle and stage label */}
                     <div className="flex items-center gap-2.5 w-full">
                       <span
                         className={`flex size-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition-all ${isCompleted
-                            ? "bg-green-600 text-white shadow-[0_14px_28px_-18px_rgba(22,163,74,0.8)]"
+                            ? "mnx-bg-success mnx-text-muted mnx-shadow-panel"
                             : isHighlighted
-                              ? "bg-gradient-to-br from-[#F9D972] via-[#F9D972] to-[#00a9b2] text-white shadow-[0_18px_34px_-18px_rgba(0,206,196,0.9)]"
-                              : "border border-mono-border bg-mono-card text-mono-muted"
+                              ? "bg-gradient-to-br mnx-bg-accent-soft mnx-bg-accent-soft mnx-bg-accent-soft mnx-text-muted mnx-shadow-panel"
+                              : "border mnx-border mnx-bg-surface mnx-text-muted"
                           }`}
                       >
                         {isCompleted ? <Check size={11} /> : isLocked ? <Lock size={9} /> : index + 1}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className={`text-xs font-bold uppercase tracking-wide truncate ${isHighlighted ? "text-[#00a9b2]" : "text-mono-text"
+                        <p className={`text-xs font-bold uppercase tracking-wide truncate ${isHighlighted ? "mnx-text-accent" : "mnx-text-primary"
                           }`}>
                           {stage.label}
                         </p>
@@ -6288,27 +6291,27 @@ export function JobWorkspaceClient({
                     </div>
 
                     {/* Stage parameters info block */}
-                    <div className="w-full space-y-1 pl-7 text-[10px] text-mono-muted">
+                    <div className="w-full space-y-1 pl-7 text-[10px] mnx-text-muted">
                       {/* Status badge and progress */}
                       <div className="flex items-center justify-between gap-2">
                         <span className={`inline-block rounded-full px-2 py-1 text-[8px] font-bold uppercase tracking-[0.16em] ${statusBg} ${statusColor}`}>
                           {statusLabel}
                         </span>
                         {!isLocked && (
-                          <span className="monolith-numeric font-mono text-[10px] text-mono-text font-semibold">{percent}%</span>
+                          <span className="mnx-numeric font-mono text-[10px] mnx-text-primary font-semibold">{percent}%</span>
                         )}
                       </div>
 
                       {/* Owner / Assignee */}
                       <div className="flex items-center justify-between text-[9px] opacity-80">
                         <span>Owner:</span>
-                        <span className="font-medium text-mono-text truncate max-w-[100px]">{job.primaryOwner.name}</span>
+                        <span className="font-medium mnx-text-primary truncate max-w-[100px]">{job.primaryOwner.name}</span>
                       </div>
 
                       {/* Due date or completion date */}
                       <div className="flex items-center justify-between text-[9px] opacity-80">
                         <span>{isCompleted ? "Closed:" : "Due:"}</span>
-                        <span className="monolith-numeric text-mono-text">
+                        <span className="mnx-numeric mnx-text-primary">
                           {isCompleted
                             ? formattedDate.split(" - ")[0]
                             : job.estimatedClosureDate
@@ -6320,16 +6323,16 @@ export function JobWorkspaceClient({
 
                       {/* Validation Text */}
                       {valState && (
-                        <div className="text-[8px] text-mono-muted/70 italic truncate">
+                        <div className="text-[8px] mnx-text-muted italic truncate">
                           {valState}
                         </div>
                       )}
                     </div>
-                  </button>
+                  </Button>
 
                   {/* Connector line */}
                   {index < WORKFLOW_UI_STAGES.length - 1 && (
-                    <div className={`ml-[15px] h-4 w-[2px] rounded-full ${index < workflowUiActiveStageIndex ? "bg-gradient-to-b from-green-500 to-green-400" : index === workflowUiActiveStageIndex ? "bg-gradient-to-b from-[#F9D972]/45 to-[#F9D972]/20" : "bg-outline-variant/40"
+                    <div className={`ml-[15px] h-4 w-[2px] rounded-full ${index < workflowUiActiveStageIndex ? "bg-gradient-to-b mnx-bg-success mnx-bg-success" : index === workflowUiActiveStageIndex ? "bg-gradient-to-b mnx-bg-accent-soft mnx-bg-accent-soft" : "bg-outline-variant/40"
                       }`} />
                   )}
                 </div>
@@ -6337,49 +6340,49 @@ export function JobWorkspaceClient({
             })}
 
             {/* Divider: Utility sections */}
-            <div className="my-2 border-t border-mono-border/30" />
+            <div className="my-2 border-t mnx-border" />
             {([
               { key: "advances" as WorkspaceTab, label: "Advances", icon: <CreditCard size={13} /> },
               { key: "expenses" as WorkspaceTab, label: "Expenses", icon: <BarChart2 size={13} />, count: job.expenseRequests?.length || 0 },
               { key: "audit" as WorkspaceTab, label: "Audit Log", icon: <ClipboardList size={13} /> },
             ] as { key: WorkspaceTab; label: string; icon: React.ReactNode; count?: number }[]).map((item) => (
-              <button
+              <Button
                 key={item.key}
                 type="button"
                 onClick={() => navigateToWorkspaceTab(item.key)}
                 className={`flex w-full items-center gap-2.5 rounded-[18px] px-3 py-2.5 text-left transition-all ${activeTab === item.key
-                    ? "bg-gradient-to-r from-[#F9D972]/10 to-[#E8C85D]/8 text-[#00a9b2]"
-                    : "hover:bg-mono-soft text-mono-muted"
+                    ? "bg-gradient-to-r mnx-bg-accent-soft mnx-bg-accent-soft mnx-text-accent"
+                    : "mnx-hover-accent mnx-text-muted"
                   }`}
               >
                 <span className={`flex size-6 shrink-0 items-center justify-center rounded-lg ${activeTab === item.key
-                    ? "bg-[#F9D972]/12 text-[#00a9b2]"
-                    : "bg-mono-soft text-mono-muted"
+                    ? "mnx-bg-accent-soft mnx-text-accent"
+                    : "mnx-bg-soft mnx-text-muted"
                   }`}>
                   {item.icon}
                 </span>
                 <span className="text-xs font-semibold uppercase tracking-wider">{item.label}</span>
                 {item.count !== undefined && item.count > 0 && (
-                  <span className={`ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-bold monolith-numeric ${activeTab === item.key ? "bg-[#F9D972] text-white" : "bg-mono-soft text-mono-muted"
+                  <span className={`ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-bold mnx-numeric ${activeTab === item.key ? "mnx-bg-accent-soft mnx-text-muted" : "mnx-bg-soft mnx-text-muted"
                     }`}>
                     {item.count}
                   </span>
                 )}
-              </button>
+              </Button>
             ))}
           </nav>
 
           {/* Overall Progress footer */}
-          <div className="border-t border-mono-border/30 px-4 py-4">
-            <p className="monolith-label text-mono-muted">Overall Progress</p>
-            <p className="monolith-numeric mt-1 text-3xl font-bold text-[#00a9b2]">{stageProgress}%</p>
+          <div className="border-t mnx-border px-4 py-4">
+            <p className="mnx-label mnx-text-muted">Overall Progress</p>
+            <p className="mnx-numeric mt-1 text-3xl font-bold mnx-text-accent">{stageProgress}%</p>
             <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-outline-variant/25">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-[#F9D972] via-[#E8C85D] to-[#22c55e] transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r mnx-bg-accent-soft mnx-bg-accent-soft mnx-bg-success transition-all duration-500"
                 style={{ width: `${stageProgress}%` }}
               />
             </div>
-            <p className="mt-1.5 text-[10px] text-mono-muted">
+            <p className="mt-1.5 text-[10px] mnx-text-muted">
               {workflowUiActiveStageIndex} of {WORKFLOW_UI_STAGES.length} stages completed
             </p>
           </div>
@@ -6411,23 +6414,23 @@ export function JobWorkspaceClient({
             const displayTitle = stageNum ? `${stageNum}. ${stageTitle}` : stageTitle;
 
             return (
-              <div className="rounded-[28px] border border-mono-border/35 bg-mono-card px-6 py-5 shadow-[0_22px_52px_-38px_rgba(15,23,42,0.34)]">
+              <div className="rounded-[28px] border mnx-border mnx-bg-surface px-6 py-5 mnx-shadow-panel">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <span className="flex size-12 items-center justify-center rounded-[18px] bg-gradient-to-br from-[#F9D972] via-[#F9D972] to-[#00a9b2] text-white shadow-[0_18px_36px_-18px_rgba(0,206,196,0.9)]">
+                    <span className="flex size-12 items-center justify-center rounded-[18px] bg-gradient-to-br mnx-bg-accent-soft mnx-bg-accent-soft mnx-bg-accent-soft mnx-text-muted mnx-shadow-panel">
                       {stageIcons[activeTab]}
                     </span>
                     <div>
-                      <h2 className="monolith-h2 text-mono-text">{displayTitle}</h2>
-                      <p className="mt-1 text-sm leading-relaxed text-mono-muted">{stageDescriptions[activeTab]}</p>
+                      <h2 className="mnx-heading-2 mnx-text-primary">{displayTitle}</h2>
+                      <p className="mt-1 text-sm leading-relaxed mnx-text-muted">{stageDescriptions[activeTab]}</p>
                     </div>
                   </div>
                   <a
                     href="#"
                     onClick={(e) => { e.preventDefault(); toast.info("Help instructions loading..."); }}
-                    className="flex items-center gap-1.5 rounded-full border border-[#F9D972]/20 bg-[#F9D972]/8 px-3 py-2 text-xs font-bold text-[#00a9b2] transition-colors hover:bg-[#F9D972]/14"
+                    className="flex items-center gap-1.5 rounded-full border mnx-border-accent mnx-bg-accent-soft px-3 py-2 text-xs font-bold mnx-text-accent transition-colors mnx-hover-accent"
                   >
-                    <HelpCircle size={15} className="rounded-full border border-[#F9D972]/30 p-0.5" />
+                    <HelpCircle size={15} className="rounded-full border mnx-border-accent p-0.5" />
                     Help
                   </a>
                 </div>
@@ -6458,12 +6461,12 @@ export function JobWorkspaceClient({
                   completedAt={activeStepIndex > 0 ? (job.updatedAt ? new Date(job.updatedAt).toLocaleString("en-IN") : null) : null}
                   summary={
                     <div className="flex flex-wrap gap-2 text-xs">
-                      <span className="text-mono-muted font-medium">Uploaded:</span>
+                      <span className="mnx-text-muted font-medium">Uploaded:</span>
                       {visibleDocumentRequirements.filter((r: any) => r.status === "UPLOADED").map((r: any) => (
                         <Badge key={r.id} variant="secondary" className="text-[10px] uppercase font-mono">{r.name}</Badge>
                       ))}
                       {visibleDocumentRequirements.filter((r: any) => r.status === "NOT_AVAILABLE" || r.exception).length > 0 && (
-                        <span className="text-orange-500 font-medium">({visibleDocumentRequirements.filter((r: any) => r.status === "NOT_AVAILABLE" || r.exception).length} exceptions)</span>
+                        <span className="mnx-text-warning font-medium">({visibleDocumentRequirements.filter((r: any) => r.status === "NOT_AVAILABLE" || r.exception).length} exceptions)</span>
                       )}
                     </div>
                   }
@@ -6485,7 +6488,7 @@ export function JobWorkspaceClient({
                             variant="outline"
                             onClick={handleMarkAllNotAvailable}
                             disabled={loading !== null || bulkNaEligibleRequirements.length === 0}
-                            className="border-[#D88700]/45 text-[#D88700] hover:bg-mono-card"
+                            className="mnx-border-warning mnx-text-warning mnx-hover-accent"
                           >
                             {loading === "na-all" ? "Marking..." : "Mark All N/A"}
                           </Button>
@@ -6496,8 +6499,8 @@ export function JobWorkspaceClient({
                             disabled={loading !== null || !canUpdateJob}
                             className={
                               section49Flag?.isEnabled
-                                ? "border-[#F9D972]/45 text-[#F9D972] hover:bg-mono-card"
-                                : "border-[#D88700]/45 text-[#D88700] hover:bg-mono-card"
+                                ? "mnx-border-accent mnx-text-accent mnx-hover-accent"
+                                : "mnx-border-warning mnx-text-warning mnx-hover-accent"
                             }
                           >
                             {section49Flag?.isEnabled ? "Deactivate Section 49" : "Activate Section 49"}
@@ -6571,19 +6574,19 @@ export function JobWorkspaceClient({
                                           <div className="flex flex-wrap items-center gap-2">
                                             <Badge variant="secondary">CUSTOMER PORTAL</Badge>
                                             {customerSubmission.portalUser?.name ? (
-                                              <span className="text-xs text-mono-muted">
+                                              <span className="text-xs mnx-text-muted">
                                                 Uploaded by {customerSubmission.portalUser.name}
                                               </span>
                                             ) : null}
                                           </div>
-                                          <p className="text-sm font-semibold text-mono-text">
+                                          <p className="text-sm font-semibold mnx-text-primary">
                                             Customer-uploaded file awaiting CHA decision
                                           </p>
-                                          <p className="text-xs text-mono-muted">
+                                          <p className="text-xs mnx-text-muted">
                                             Accept this file to save it as the submitted CHA document, or upload the CHA copy yourself if you need to replace it.
                                           </p>
                                           {customerSubmission.reviewerComment ? (
-                                            <p className="text-xs text-[#D88700]">{customerSubmission.reviewerComment}</p>
+                                            <p className="text-xs mnx-text-warning">{customerSubmission.reviewerComment}</p>
                                           ) : null}
                                         </div>
                                       ) : null
@@ -6607,23 +6610,23 @@ export function JobWorkspaceClient({
                               );
                             })
                           ) : (
-                            <div className="xl:col-span-2 flex items-center justify-center gap-3 rounded-xl border border-dashed border-mono-border/60 bg-mono-card p-8 text-center text-sm text-mono-muted shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
-                              <Search size={18} className="shrink-0 text-[#F9D972]" />
+                            <div className="xl:col-span-2 flex items-center justify-center gap-3 rounded-xl border border-dashed mnx-border mnx-bg-surface p-8 text-center text-sm mnx-text-muted mnx-shadow-panel">
+                              <Search size={18} className="shrink-0 mnx-text-accent" />
                               <span>No uploaded documents match the current search and filter state yet.</span>
                             </div>
                           )}
                         </div>
 
                         {section49Requirement ? (
-                          <div className="rounded-[24px] border border-mono-border/60 bg-mono-card p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)]">
+                          <div className="rounded-[24px] border mnx-border mnx-bg-surface p-5 mnx-shadow-panel">
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                               <div>
-                                <p className="monolith-label text-[#F9D972]">Section 49 Controls</p>
+                                <p className="mnx-label mnx-text-accent">Section 49 Controls</p>
                                 <div className="mt-2 grid grid-cols-[4px_minmax(0,1fr)] items-center gap-4">
-                                  <span className="h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
-                                  <h3 className="monolith-h3 text-mono-text">Manage Section 49 validity and extension workflow</h3>
+                                  <span className="h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
+                                  <h3 className="mnx-heading-3 mnx-text-primary">Manage Section 49 validity and extension workflow</h3>
                                 </div>
-                                <p className="mt-1 text-sm text-mono-muted">
+                                <p className="mt-1 text-sm mnx-text-muted">
                                   Keep the saved validity date current and attach extension evidence when customs warns of expiry.
                                 </p>
                               </div>
@@ -6644,10 +6647,10 @@ export function JobWorkspaceClient({
 
                             <div className="mt-4 space-y-4">
                               {section49Flag?.validityDate ? (
-                                <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-mono-border/50 bg-mono-soft/55 px-4 py-3">
+                                <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border mnx-border mnx-bg-soft px-4 py-3">
                                   <div>
-                                    <p className="monolith-label">Saved Section 49 Validity</p>
-                                    <p className="mt-1 monolith-numeric text-sm text-mono-text">
+                                    <p className="mnx-label">Saved Section 49 Validity</p>
+                                    <p className="mt-1 mnx-numeric text-sm mnx-text-primary">
                                       {new Date(section49Flag.validityDate).toLocaleDateString("en-IN")}
                                     </p>
                                   </div>
@@ -6662,14 +6665,14 @@ export function JobWorkspaceClient({
                                   </Button>
                                 </div>
                               ) : (
-                                <div className="grid gap-3 rounded-[20px] border border-mono-border/50 bg-mono-soft/55 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                                <div className="grid gap-3 rounded-[20px] border mnx-border mnx-bg-soft p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
                                   <label className="space-y-1">
-                                    <span className="monolith-label">Section 49 Validity Date</span>
+                                    <span className="mnx-label">Section 49 Validity Date</span>
                                     <DateInput
                                       value={section49ValidityDate}
                                       onChange={(e) => setSection49ValidityDate(e.target.value)}
                                       disabled={loading !== null || !canUpdateJob}
-                                      className="w-full monolith-numeric"
+                                      className="w-full mnx-numeric"
                                     />
                                   </label>
                                   <Button
@@ -6684,15 +6687,15 @@ export function JobWorkspaceClient({
                               )}
 
                               {section49Flag?.validityDate ? (
-                                <div className="space-y-3 rounded-[20px] border border-mono-border/50 bg-mono-soft/55 p-4">
+                                <div className="space-y-3 rounded-[20px] border mnx-border mnx-bg-soft p-4">
                                   <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_auto] lg:items-end">
                                     <label className="space-y-1">
-                                      <span className="monolith-label">New Validity Date</span>
+                                      <span className="mnx-label">New Validity Date</span>
                                       <DateInput
                                         value={section49ExtensionDate}
                                         onChange={(e) => setSection49ExtensionDate(e.target.value)}
                                         disabled={loading !== null || !canUpdateJob}
-                                        className="w-full monolith-numeric"
+                                        className="w-full mnx-numeric"
                                       />
                                     </label>
                                     <FileUploadField
@@ -6731,18 +6734,18 @@ export function JobWorkspaceClient({
                                       {loading === "section49-extension" ? "Applying..." : "Apply Extension"}
                                     </Button>
                                   </div>
-                                  <p className="text-xs text-mono-muted">
+                                  <p className="text-xs mnx-text-muted">
                                     {section49WarningActive
                                       ? "An extension document and new validity date are required to apply the extension."
                                       : "Extension submission becomes available only within four days of expiry or after expiry."}
                                   </p>
 
                                   {Array.isArray(job.section49Extensions) && job.section49Extensions.length > 0 ? (
-                                    <div className="space-y-2 border-t border-mono-border/30 pt-3">
-                                      <p className="monolith-label">Extension History</p>
+                                    <div className="space-y-2 border-t mnx-border pt-3">
+                                      <p className="mnx-label">Extension History</p>
                                       {job.section49Extensions.slice(0, 3).map((extension: any) => (
-                                        <div key={extension.id} className="flex flex-wrap items-center justify-between gap-2 text-sm text-mono-muted">
-                                          <span className="monolith-numeric">
+                                        <div key={extension.id} className="flex flex-wrap items-center justify-between gap-2 text-sm mnx-text-muted">
+                                          <span className="mnx-numeric">
                                             {new Date(extension.extensionDate).toLocaleDateString("en-IN")}
                                           </span>
                                           {extension.fileKey ? (
@@ -6750,7 +6753,7 @@ export function JobWorkspaceClient({
                                               href={extension.fileKey}
                                               target="_blank"
                                               rel="noreferrer"
-                                              className="text-[#F9D972] hover:underline"
+                                              className="mnx-text-accent hover:underline"
                                             >
                                               {extension.fileName || "View document"}
                                             </a>
@@ -6766,26 +6769,26 @@ export function JobWorkspaceClient({
                         ) : null}
 
                         {activeExceptionRequirement ? (
-                          <div className="rounded-[24px] border border-mono-border/60 bg-mono-card p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.16)]">
+                          <div className="rounded-[24px] border mnx-border mnx-bg-surface p-5 mnx-shadow-panel">
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                               <div>
-                                <p className="monolith-label text-[#D88700]">Exemption Draft</p>
+                                <p className="mnx-label mnx-text-warning">Exemption Draft</p>
                                 <div className="mt-2 grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
-                                  <span className="h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
-                                  <h3 className="monolith-h3 text-mono-text">{activeExceptionRequirement.name}</h3>
+                                  <span className="h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
+                                  <h3 className="mnx-heading-3 mnx-text-primary">{activeExceptionRequirement.name}</h3>
                                 </div>
-                                <p className="mt-1 text-sm text-mono-muted">
+                                <p className="mt-1 text-sm mnx-text-muted">
                                   Record the business reason for handling this requirement without a file upload.
                                 </p>
                               </div>
                               <Badge variant="warning">PENDING EXEMPTION</Badge>
                             </div>
                             <div className="mt-4 space-y-3">
-                              <textarea
+                              <Textarea
                                 value={exceptionReason}
                                 onChange={(event) => setExceptionReason(event.target.value)}
                                 placeholder="Enter detailed reason for exemption..."
-                                className="min-h-28 w-full rounded-[20px] border border-mono-border/55 bg-mono-card px-4 py-3 text-sm text-mono-text"
+                                className="min-h-28 w-full rounded-[20px] border mnx-border mnx-bg-surface px-4 py-3 text-sm mnx-text-primary"
                               />
                               <div className="flex flex-wrap justify-end gap-3">
                                 <Button
@@ -6811,10 +6814,10 @@ export function JobWorkspaceClient({
                             groupedPendingWorkflowDocuments.map((group) => (
                               <section key={group.categoryName} className="space-y-4">
                                 <div className="grid grid-cols-[4px_minmax(0,1fr)] items-start gap-3">
-                                  <span className="mt-0.5 h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
+                                  <span className="mt-0.5 h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
                                   <div className="min-w-0 space-y-1">
-                                    <p className="monolith-h3 text-mono-text">{group.categoryName}</p>
-                                    <p className="text-sm text-mono-muted">
+                                    <p className="mnx-heading-3 mnx-text-primary">{group.categoryName}</p>
+                                    <p className="text-sm mnx-text-muted">
                                       {group.requirements.length} requirement{group.requirements.length === 1 ? "" : "s"} pending action in this category.
                                     </p>
                                   </div>
@@ -6858,17 +6861,17 @@ export function JobWorkspaceClient({
                               </section>
                             ))
                           ) : (
-                            <div className="rounded-[24px] border border-mono-border/60 bg-mono-card p-8 text-center text-sm text-mono-muted shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
+                            <div className="rounded-[24px] border mnx-border mnx-bg-surface p-8 text-center text-sm mnx-text-muted mnx-shadow-panel">
                               No pending or exception-based requirements match the current filter.
                             </div>
                           )}
                         </div>
 
                         {job.stage === "DOCUMENT_COLLECTION" && (
-                          <div className="flex flex-col gap-3 border-t border-mono-border/25 pt-4 sm:items-end">
+                          <div className="flex flex-col gap-3 border-t mnx-border pt-4 sm:items-end">
                             {proceedErrors ? (
-                              <div className="w-full rounded-[20px] border border-[#D88700]/30 bg-[#D88700]/10 p-4 text-xs text-[#D88700] sm:max-w-xl">
-                                <p className="monolith-label mb-1 text-[#D88700]">Proceed Blocked</p>
+                              <div className="w-full rounded-[20px] border mnx-border-warning mnx-bg-warning p-4 text-xs mnx-text-warning sm:max-w-xl">
+                                <p className="mnx-label mb-1 mnx-text-warning">Proceed Blocked</p>
                                 <p>{proceedErrors[0]}</p>
                               </div>
                             ) : null}
@@ -6951,23 +6954,23 @@ export function JobWorkspaceClient({
                   summary={
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                       <div>
-                        <span className="text-mono-muted block text-[10px] uppercase">Vessel Inward Date</span>
-                        <span className="font-semibold text-mono-text monolith-numeric">{vesselInwardDate ? new Date(vesselInwardDate).toLocaleDateString("en-IN") : "-"}</span>
+                        <span className="mnx-text-muted block text-[10px] uppercase">Vessel Inward Date</span>
+                        <span className="font-semibold mnx-text-primary mnx-numeric">{vesselInwardDate ? new Date(vesselInwardDate).toLocaleDateString("en-IN") : "-"}</span>
                       </div>
                       <div>
-                        <span className="text-mono-muted block text-[10px] uppercase">DO Validity</span>
-                        <span className="font-semibold text-mono-text monolith-numeric">{deliveryOrderValidity ? new Date(deliveryOrderValidity).toLocaleDateString("en-IN") : "-"}</span>
+                        <span className="mnx-text-muted block text-[10px] uppercase">DO Validity</span>
+                        <span className="font-semibold mnx-text-primary mnx-numeric">{deliveryOrderValidity ? new Date(deliveryOrderValidity).toLocaleDateString("en-IN") : "-"}</span>
                       </div>
                       {requiresIgm && (
                         <div>
-                          <span className="text-mono-muted block text-[10px] uppercase">IGM Number</span>
-                          <span className="font-semibold text-mono-text font-mono">{importGeneralManifest || "-"}</span>
+                          <span className="mnx-text-muted block text-[10px] uppercase">IGM Number</span>
+                          <span className="font-semibold mnx-text-primary font-mono">{importGeneralManifest || "-"}</span>
                         </div>
                       )}
                       {requiresEgm && (
                         <div>
-                          <span className="text-mono-muted block text-[10px] uppercase">EGM Number</span>
-                          <span className="font-semibold text-mono-text font-mono">{exportGeneralManifest || "-"}</span>
+                          <span className="mnx-text-muted block text-[10px] uppercase">EGM Number</span>
+                          <span className="font-semibold mnx-text-primary font-mono">{exportGeneralManifest || "-"}</span>
                         </div>
                       )}
                     </div>
@@ -6975,11 +6978,11 @@ export function JobWorkspaceClient({
                 >
                   <div className="space-y-4">
                     {job.stage === "DOCUMENT_COLLECTION" ? (
-                      <div className="flex items-start gap-3 rounded-2xl border border-[#D88700]/40 bg-mono-card p-4">
-                        <AlertTriangle size={22} className="mt-0.5 shrink-0 text-[#D88700]" />
+                      <div className="flex items-start gap-3 rounded-2xl border mnx-border-warning mnx-bg-surface p-4">
+                        <AlertTriangle size={22} className="mt-0.5 shrink-0 mnx-text-warning" />
                         <div>
-                          <h4 className="text-sm font-bold uppercase tracking-wide text-[#D88700]">DOCUMENT GATE REQUIRED</h4>
-                          <p className="mt-1 text-xs leading-relaxed text-mono-muted">
+                          <h4 className="text-sm font-bold uppercase tracking-wide mnx-text-warning">DOCUMENT GATE REQUIRED</h4>
+                          <p className="mt-1 text-xs leading-relaxed mnx-text-muted">
                             Complete Document Collection before saving or completing Additional Data.
                           </p>
                         </div>
@@ -6987,11 +6990,11 @@ export function JobWorkspaceClient({
                     ) : null}
 
                     {manifestConfigMissing ? (
-                      <div className="flex items-start gap-3 rounded-2xl border border-[#D88700]/40 bg-mono-card p-4">
-                        <AlertTriangle size={22} className="mt-0.5 shrink-0 text-[#D88700]" />
+                      <div className="flex items-start gap-3 rounded-2xl border mnx-border-warning mnx-bg-surface p-4">
+                        <AlertTriangle size={22} className="mt-0.5 shrink-0 mnx-text-warning" />
                         <div>
-                          <h4 className="text-sm font-bold uppercase tracking-wide text-[#D88700]">Manifest Configuration Required</h4>
-                          <p className="mt-1 text-xs leading-relaxed text-mono-muted">
+                          <h4 className="text-sm font-bold uppercase tracking-wide mnx-text-warning">Manifest Configuration Required</h4>
+                          <p className="mt-1 text-xs leading-relaxed mnx-text-muted">
                             This clearance type is missing manifest configuration. Please update it in CHA settings before continuing.
                           </p>
                         </div>
@@ -7015,14 +7018,15 @@ export function JobWorkspaceClient({
 
                     <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(360px,1fr)]">
                       <div className="space-y-4">
-                        <div className="monolith-card monolith-card monolith-accent rounded-xl border border-mono-border/40 bg-mono-card p-4 shadow-sm">
+                        <div className="mnx-bg-surface mnx-border mnx-bg-surface mnx-border mnx-border-accent rounded-xl border mnx-border mnx-bg-surface p-4 shadow-sm">
                           <SectionHeading
+                            index="01"
                             title="Core Filing Data"
                             description="Complete the job movement and manifest references required before checklist preparation."
                           />
                           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12">
                             <label className="space-y-1.5 xl:col-span-4">
-                              <span className="monolith-label">Vessel Inward Date</span>
+                              <span className="mnx-label">Vessel Inward Date</span>
                               <DateInput
                                 value={vesselInwardDate}
                                 onChange={(e) => setVesselInwardDate(e.target.value)}
@@ -7032,7 +7036,7 @@ export function JobWorkspaceClient({
                               />
                             </label>
                             <label className="space-y-1.5 xl:col-span-4">
-                              <span className="monolith-label">Delivery Order Validity</span>
+                              <span className="mnx-label">Delivery Order Validity</span>
                               <DateInput
                                 id="deliveryOrderValidity"
                                 value={deliveryOrderValidity}
@@ -7044,7 +7048,7 @@ export function JobWorkspaceClient({
                             </label>
                             {requiresIgm ? (
                               <label className="space-y-1.5 xl:col-span-4">
-                                <span className="monolith-label">IGM Number</span>
+                                <span className="mnx-label">IGM Number</span>
                                 <Input
                                   type="text"
                                   inputMode="text"
@@ -7060,7 +7064,7 @@ export function JobWorkspaceClient({
                             ) : null}
                             {requiresEgm ? (
                               <label className="space-y-1.5 xl:col-span-4">
-                                <span className="monolith-label">EGM Number</span>
+                                <span className="mnx-label">EGM Number</span>
                                 <Input
                                   type="text"
                                   inputMode="text"
@@ -7076,7 +7080,7 @@ export function JobWorkspaceClient({
                             ) : null}
                             {requiresCustomManifest ? (
                               <label className="space-y-1.5 xl:col-span-4">
-                                <span className="monolith-label">{customManifestLabel}</span>
+                                <span className="mnx-label">{customManifestLabel}</span>
                                 <Input
                                   type="text"
                                   value={customManifestValue}
@@ -7110,14 +7114,15 @@ export function JobWorkspaceClient({
                       </div>
 
                       <div className="space-y-4">
-                        <div className="monolith-card monolith-card monolith-accent rounded-xl border border-mono-border/40 bg-mono-card p-4 shadow-sm">
+                        <div className="mnx-bg-surface mnx-border mnx-bg-surface mnx-border mnx-border-accent rounded-xl border mnx-border mnx-bg-surface p-4 shadow-sm">
                           <SectionHeading
+                            index="02"
                             title="BL References"
                             description="Store master and house bill numbers alongside the shipment record."
                           />
                           <div className="mt-4 grid grid-cols-1 gap-4">
                             <label className="space-y-1.5">
-                              <span className="monolith-label">MBL</span>
+                              <span className="mnx-label">MBL</span>
                               <Input
                                 type="text"
                                 value={mblNumber}
@@ -7128,7 +7133,7 @@ export function JobWorkspaceClient({
                               />
                             </label>
                             <label className="space-y-1.5">
-                              <span className="monolith-label">HBL</span>
+                              <span className="mnx-label">HBL</span>
                               <Input
                                 type="text"
                                 value={hblNumber}
@@ -7141,9 +7146,10 @@ export function JobWorkspaceClient({
                           </div>
                         </div>
 
-                        <div className="monolith-card monolith-card monolith-accent rounded-xl border border-mono-border/40 bg-mono-card p-4 shadow-sm">
+                        <div className="mnx-bg-surface mnx-border mnx-bg-surface mnx-border mnx-border-accent rounded-xl border mnx-border mnx-bg-surface p-4 shadow-sm">
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <SectionHeading
+                              index="03"
                               title="Containers"
                               description="Add only the container numbers that need to stay with this job."
                             />
@@ -7163,7 +7169,7 @@ export function JobWorkspaceClient({
                             {containerEntries.map((entry, index) => (
                               <div key={`container-${index}`} className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_64px] md:items-end">
                                 <label className="space-y-1.5">
-                                  <span className="monolith-label">Container {index + 1}</span>
+                                  <span className="mnx-label">Container {index + 1}</span>
                                   <Input
                                     type="text"
                                     value={entry.containerNumber}
@@ -7181,7 +7187,7 @@ export function JobWorkspaceClient({
                                     onClick={() => removeContainerEntry(index)}
                                     disabled={job.stage === "DOCUMENT_COLLECTION" || additionalDataLocked}
                                     aria-label={`Remove container ${index + 1}`}
-                                    className="h-11 w-full border-mono-border/60 text-mono-muted hover:border-red-500/40 hover:bg-mono-card hover:text-red-500 md:w-16"
+                                    className="h-11 w-full mnx-border mnx-text-muted mnx-hover-danger mnx-hover-accent mnx-hover-danger md:w-16"
                                   >
                                     <Trash2 className="size-5" strokeWidth={2.2} />
                                   </Button>
@@ -7263,18 +7269,18 @@ export function JobWorkspaceClient({
                   summary={
                     <div className="grid gap-3 text-xs sm:grid-cols-3">
                       <div className="sm:col-span-2">
-                        <span className="text-mono-muted">Checklist File:</span>{" "}
+                        <span className="mnx-text-muted">Checklist File:</span>{" "}
                         {currentChecklistVersion ? (
-                          <span className="font-mono font-semibold text-mono-text">{currentChecklistVersion.originalFileName} (V{currentChecklistVersion.versionNumber})</span>
+                          <span className="font-mono font-semibold mnx-text-primary">{currentChecklistVersion.originalFileName} (V{currentChecklistVersion.versionNumber})</span>
                         ) : (
-                          <span className="italic text-red-500">No checklist uploaded yet</span>
+                          <span className="italic mnx-text-danger">No checklist uploaded yet</span>
                         )}
                       </div>
                       <div className="flex gap-4 sm:justify-end">
-                        <span className={approvedInternalDecision ? "text-green-600" : "text-orange-500"}>
+                        <span className={approvedInternalDecision ? "mnx-text-success" : "mnx-text-warning"}>
                           Internal: {approvedInternalDecision ? "Approved" : "Pending"}
                         </span>
-                        <span className={approvedCustomerDecision ? "text-green-600" : "text-orange-500"}>
+                        <span className={approvedCustomerDecision ? "mnx-text-success" : "mnx-text-warning"}>
                           Customer: {approvedCustomerDecision ? "Approved" : "Pending"}
                         </span>
                       </div>
@@ -7283,21 +7289,21 @@ export function JobWorkspaceClient({
                 >
                   <div className="space-y-5">
                     {!job.assignedManagerId && (
-                      <div className="bg-mono-card border border-[#D88700]/40 p-4 rounded-2xl flex items-start gap-3">
-                        <AlertTriangle size={24} className="text-[#D88700] shrink-0 mt-0.5" />
+                      <div className="mnx-bg-surface border mnx-border-warning p-4 rounded-2xl flex items-start gap-3">
+                        <AlertTriangle size={24} className="mnx-text-warning shrink-0 mt-0.5" />
                         <div>
-                          <h4 className="font-bold text-sm uppercase text-[#D88700]">Manager Assignment Recommended</h4>
-                          <p className="text-xs text-mono-muted mt-1 leading-relaxed">
+                          <h4 className="font-bold text-sm uppercase mnx-text-warning">Manager Assignment Recommended</h4>
+                          <p className="text-xs mnx-text-muted mt-1 leading-relaxed">
                             No manager has been assigned to this job yet. Internal approval can still be completed by the job owner, or route through the owner&apos;s Manager or TL if configured in HRMS, but assigning a manager keeps responsibility explicit.
                           </p>
                           {canUpdateJob && (
-                            <button
+                            <Button
                               type="button"
                               onClick={() => setIsEditingManager(true)}
-                              className="monolith-plain cha-link mt-2 text-xs font-semibold hover:underline uppercase tracking-wider"
+                              className="mnx-plain mnx-text-accent mt-2 text-xs font-semibold hover:underline uppercase tracking-wider"
                             >
                               Assign Manager Now -&gt;
-                            </button>
+                            </Button>
                           )}
                         </div>
                       </div>
@@ -7305,23 +7311,23 @@ export function JobWorkspaceClient({
 
                     <div className="space-y-4">
                       <div className="space-y-1">
-                        <span className="monolith-label">
+                        <span className="mnx-label">
                           {currentChecklistVersion ? "Replacement Upload" : "Checklist Upload"}
                         </span>
-                        <p className="text-xs text-mono-muted">
+                        <p className="text-xs mnx-text-muted">
                           Any file format is allowed here. The uploaded file will move into internal approval automatically.
                         </p>
 
                         {isChecklistCustomerReworkRequired ? (
-                          <div className="monolith-card monolith-accent-warning rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+                          <div className="mnx-bg-surface mnx-border mnx-border-warning rounded-xl border mnx-border-danger mnx-bg-danger p-4">
                             <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                               <div className="space-y-1">
-                                <p className="text-sm font-medium text-mono-text">Customer rejected the latest checklist.</p>
-                                <p className="text-xs text-mono-muted">
+                                <p className="text-sm font-medium mnx-text-primary">Customer rejected the latest checklist.</p>
+                                <p className="text-xs mnx-text-muted">
                                   Upload a reworked checklist file here. The replacement will restart internal approval and will move directly to Filing after employee approval.
                                 </p>
                                 {rejectedCustomerDecision?.remarks ? (
-                                  <p className="text-xs text-mono-text">
+                                  <p className="text-xs mnx-text-primary">
                                     Reason: {rejectedCustomerDecision.remarks}
                                   </p>
                                 ) : null}
@@ -7353,13 +7359,13 @@ export function JobWorkspaceClient({
                           onClear={() => setChecklistFile(null)}
                           onInputChange={(e) => handleUploadChecklist(e.target.files?.[0] || null)}
                         />
-                        <textarea
+                        <Textarea
                           rows={2}
                           value={checklistRemarks}
                           disabled={internalApproversCount === 0}
                           onChange={(e) => setChecklistRemarks(e.target.value)}
                           placeholder="Optional upload remarks"
-                          className="monolith-textarea w-full disabled:opacity-50"
+                          className="mnx-field-textarea w-full disabled:opacity-50"
                         />
                       </div>
 
@@ -7367,12 +7373,12 @@ export function JobWorkspaceClient({
                         <div className="space-y-4">
                           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                             <div>
-                              <span className="monolith-label">Current File</span>
+                              <span className="mnx-label">Current File</span>
                             </div>
                           </div>
 
-                          <div className="overflow-hidden rounded-xl border border-mono-border/60">
-                            <table className="monolith-table">
+                          <div className="overflow-hidden rounded-xl border mnx-border">
+                            <ChaTable className="mnx-cha-table">
                               <thead>
                                 <tr>
                                   <th>Version</th>
@@ -7387,11 +7393,11 @@ export function JobWorkspaceClient({
                                   const versionStatus = getChecklistVersionStatus(version.id);
                                   return (
                                     <tr key={version.id}>
-                                      <td className="monolith-numeric font-medium">V{version.versionNumber}</td>
+                                      <td className="mnx-numeric font-medium">V{version.versionNumber}</td>
                                       <td className="text-xs">
-                                        <button
+                                        <Button
                                           type="button"
-                                          className="monolith-plain cha-link text-xs font-medium"
+                                          className="mnx-plain mnx-text-accent text-xs font-medium"
                                           onClick={() => setViewingVersion({
                                             ...version,
                                             type: "checklist",
@@ -7401,36 +7407,37 @@ export function JobWorkspaceClient({
                                           })}
                                         >
                                           {version.originalFileName}
-                                        </button>
+                                        </Button>
                                       </td>
-                                      <td className="text-xs text-mono-text">
+                                      <td className="text-xs mnx-text-primary">
                                         {versionStatus ? (
                                           <Badge variant={versionStatus.variant} className="uppercase">
                                             {versionStatus.label}
                                           </Badge>
                                         ) : (
-                                          <span className="text-mono-muted">Pending</span>
+                                          <span className="mnx-text-muted">Pending</span>
                                         )}
                                       </td>
-                                      <td className="text-xs text-mono-text">{getUserName(version.uploadedById)}</td>
-                                      <td className="text-xs text-mono-text monolith-numeric">
+                                      <td className="text-xs mnx-text-primary">{getUserName(version.uploadedById)}</td>
+                                      <td className="text-xs mnx-text-primary mnx-numeric">
                                         {new Date(version.uploadedAt).toLocaleString("en-IN")}
                                       </td>
                                     </tr>
                                   );
                                 })}
                               </tbody>
-                            </table>
+                            </ChaTable>
                           </div>
                         </div>
                       ) : null}
                     </div>
                   </div>
-                  <div className="border-t border-mono-border/25 pt-5">
+                  <div className="border-t mnx-border pt-5">
                   <div className="space-y-4">
-                    <div className="monolith-card rounded-xl border border-mono-border/60 bg-mono-card p-4 space-y-4 shadow-sm">
+                    <div className="mnx-bg-surface mnx-border rounded-xl border mnx-border mnx-bg-surface p-4 space-y-4 shadow-sm">
                       <div className="space-y-3">
                         <SectionHeading
+                          index="04"
                           title="Internal Approval"
                           aside={
                             <Badge
@@ -7451,7 +7458,7 @@ export function JobWorkspaceClient({
                             </Badge>
                           }
                         />
-                        <p className="text-sm font-semibold text-mono-text">
+                        <p className="text-sm font-semibold mnx-text-primary">
                           {!checklistWorkflow
                             ? "Starts after checklist upload."
                             : approvedInternalDecision
@@ -7461,11 +7468,11 @@ export function JobWorkspaceClient({
                                 : "Waiting for the current file version."}
                         </p>
 
-                        <div className="rounded-xl border border-mono-border/40 bg-mono-soft p-3 space-y-2">
+                        <div className="rounded-xl border mnx-border mnx-bg-soft p-3 space-y-2">
                           {approvedInternalDecision ? (
-                            <p className="text-xs text-mono-muted">
+                            <p className="text-xs mnx-text-muted">
                               {getInternalApproverRole(approvedInternalDecision)} approval recorded on{" "}
-                              <span className="text-mono-text monolith-numeric">
+                              <span className="mnx-text-primary mnx-numeric">
                                 {approvedInternalDecision.actedAt
                                   ? new Date(approvedInternalDecision.actedAt).toLocaleString("en-IN")
                                   : "Pending"}
@@ -7473,13 +7480,13 @@ export function JobWorkspaceClient({
                             </p>
                           ) : (
                             <>
-                              <p className="text-xs text-mono-muted">
-                                Eligible: <span className="text-mono-text">{eligibleInternalApproverLabels.join(", ") || "Owner, Manager, or TL"}</span>
+                              <p className="text-xs mnx-text-muted">
+                                Eligible: <span className="mnx-text-primary">{eligibleInternalApproverLabels.join(", ") || "Owner, Manager, or TL"}</span>
                               </p>
                               {checklistWorkflow?.currentApprovalStage === "INTERNAL" && !approvedInternalDecision ? (
-                                <p className="text-xs text-mono-muted">
+                                <p className="text-xs mnx-text-muted">
                                   Pending:{" "}
-                                  <span className="text-mono-text">
+                                  <span className="mnx-text-primary">
                                     {Array.from(
                                       new Set(
                                         currentInternalApprovals
@@ -7496,12 +7503,12 @@ export function JobWorkspaceClient({
                       </div>
                       {canCurrentUserInternalApprove && checklistWorkflow?.currentApprovalStage === "INTERNAL" ? (
                         <>
-                          <textarea
+                          <Textarea
                             rows={2}
                             value={internalApprovalRemarks}
                             onChange={(e) => setInternalApprovalRemarks(e.target.value)}
                             placeholder="Required for rejection, optional for approval"
-                            className="monolith-textarea w-full"
+                            className="mnx-field-textarea w-full"
                           />
                           <div className="flex justify-end gap-2">
                             <Button
@@ -7524,9 +7531,10 @@ export function JobWorkspaceClient({
                       ) : null}
                     </div>
 
-                    <div className="monolith-card rounded-xl border border-mono-border/60 bg-mono-card p-4 space-y-4 shadow-sm">
+                    <div className="mnx-bg-surface mnx-border rounded-xl border mnx-border mnx-bg-surface p-4 space-y-4 shadow-sm">
                       <div className="space-y-3">
                         <SectionHeading
+                          index="05"
                           title="Customer Approval"
                           aside={
                             finalCustomerDecision ? (
@@ -7543,7 +7551,7 @@ export function JobWorkspaceClient({
                             )
                           }
                         />
-                        <p className="text-sm text-mono-text">
+                        <p className="text-sm mnx-text-primary">
                           {rejectedCustomerDecision
                             ? `Rejected by ${getDecisionActorLabel(rejectedCustomerDecision)} on ${rejectedCustomerDecision.actedAt ? new Date(rejectedCustomerDecision.actedAt).toLocaleString("en-IN") : "recorded time unavailable"}. Reworked upload is required.`
                             : approvedCustomerDecision
@@ -7559,7 +7567,7 @@ export function JobWorkspaceClient({
                                     : "Customer approval starts after the first successful internal approval and mail dispatch."}
                         </p>
                         {latestCustomerMailLog ? (
-                          <p className="text-xs text-mono-muted">
+                          <p className="text-xs mnx-text-muted">
                             Mail recipients: {(latestCustomerMailLog.recipients || []).join(", ")}. Attachment: {latestCustomerMailLog.attachmentFileName || currentChecklistVersion?.originalFileName || "Checklist file"}.
                           </p>
                         ) : null}
@@ -7567,14 +7575,14 @@ export function JobWorkspaceClient({
                           <div className={cn(
                             "rounded-xl border px-4 py-3 text-xs",
                             finalCustomerDecision.action === "REJECTED"
-                              ? "border-red-500/25 bg-red-500/10 text-mono-text"
-                              : "border-green-500/25 bg-green-500/10 text-mono-text",
+                              ? "mnx-border-danger mnx-bg-danger mnx-text-primary"
+                              : "mnx-border-success mnx-bg-success mnx-text-primary",
                           )}>
                             Customer remarks: {finalCustomerDecision.remarks}
                           </div>
                         ) : null}
                         {checklistWorkflow?.currentApprovalStage === "CUSTOMER" && !approvedCustomerDecision ? (
-                          <p className="text-xs text-mono-muted">
+                          <p className="text-xs mnx-text-muted">
                             Eligible approvers: any concerned user linked to this job, including the job owner.
                             {pendingCustomerApproverNames.length > 0 ? ` Current linked users: ${pendingCustomerApproverNames.join(", ")}` : ""}
                           </p>
@@ -7583,8 +7591,8 @@ export function JobWorkspaceClient({
                       {checklistWorkflow?.currentApprovalStage === "CUSTOMER" && !latestCustomerMailLog ? (
                         <div className="space-y-3">
                           <div className="space-y-1.5">
-                            <label className="monolith-label block">Email Subject</label>
-                            <input
+                            <label className="mnx-label block">Email Subject</label>
+                            <Input
                               value={customerMailSubject}
                               onChange={(e) => setCustomerMailSubject(e.target.value)}
                               placeholder={`Checklist Approval Required - ${job.jobNumber}`}
@@ -7592,15 +7600,15 @@ export function JobWorkspaceClient({
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <label className="monolith-label block">Email Content</label>
-                            <textarea
+                            <label className="mnx-label block">Email Content</label>
+                            <Textarea
                               rows={5}
                               value={customerMailBody}
                               onChange={(e) => setCustomerMailBody(e.target.value)}
                               placeholder={`Please review the attached approved checklist for job ${job.jobNumber}.`}
-                              className="monolith-textarea w-full"
+                              className="mnx-field-textarea w-full"
                             />
-                            <p className="text-xs text-mono-muted">
+                            <p className="text-xs mnx-text-muted">
                               This content is placed inside the branded customer email template.
                             </p>
                           </div>
@@ -7621,7 +7629,7 @@ export function JobWorkspaceClient({
                             }))}
                           />
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                            <p className="max-w-xl text-xs text-mono-muted">
+                            <p className="max-w-xl text-xs mnx-text-muted">
                               The latest approved checklist file will be attached automatically, customer recipients will be fetched from the customer record, and any files above will be included after you send the mail.
                             </p>
                             <Button
@@ -7638,12 +7646,12 @@ export function JobWorkspaceClient({
                       ) : null}
                       {canCurrentUserCustomerApprove && checklistWorkflow?.currentApprovalStage === "CUSTOMER" && customerApprovalDelayElapsed ? (
                         <>
-                          <textarea
+                          <Textarea
                             rows={2}
                             value={customerApprovalRemarks}
                             onChange={(e) => setCustomerApprovalRemarks(e.target.value)}
                             placeholder="Required for rejection, optional for approval"
-                            className="monolith-textarea w-full"
+                            className="mnx-field-textarea w-full"
                           />
                           <div className="flex justify-end gap-2">
                             <Button
@@ -7666,15 +7674,15 @@ export function JobWorkspaceClient({
                       ) : null}
                     </div>
 
-                    <div className="monolith-card rounded-xl border border-mono-border/60 bg-mono-card p-4 space-y-4 shadow-sm">
+                    <div className="mnx-bg-surface mnx-border rounded-xl border mnx-border mnx-bg-surface p-4 space-y-4 shadow-sm">
                       <div className="flex items-center justify-between">
-                        <span className="monolith-label">Approval History</span>
-                        <span className="text-[11px] text-mono-muted">
+                        <span className="mnx-label">Approval History</span>
+                        <span className="text-[11px] mnx-text-muted">
                           {displayChecklistApprovals.length} entries
                         </span>
                       </div>
                       {displayChecklistApprovals.length === 0 ? (
-                        <p className="text-xs text-mono-muted">No approval history recorded yet.</p>
+                        <p className="text-xs mnx-text-muted">No approval history recorded yet.</p>
                       ) : (
                         <div className="space-y-4">
                           {displayChecklistApprovals
@@ -7683,7 +7691,7 @@ export function JobWorkspaceClient({
                             .map((approval: any, index: number, approvals: any[]) => (
                               <div key={approval.id} className="grid grid-cols-[18px_minmax(0,1fr)] gap-3">
                                 <div className="flex flex-col items-center">
-                                  <span className="mt-1 h-3.5 w-3.5 rounded-full border-2 border-surface bg-[#F9D972]" />
+                                  <span className="mt-1 h-3.5 w-3.5 rounded-full border-2 border-surface mnx-bg-accent-soft" />
                                   {index < approvals.length - 1 ? (
                                     <span className="mt-1 w-px flex-1 bg-outline-variant/60" />
                                   ) : null}
@@ -7691,35 +7699,35 @@ export function JobWorkspaceClient({
                                 <div className="space-y-2 pb-1">
                                   <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                                     <div className="space-y-1">
-                                      <p className="text-sm font-semibold text-mono-text">
+                                      <p className="text-sm font-semibold mnx-text-primary">
                                         {approval.stage.replace(/_/g, " ")} - {approval.action.replace(/_/g, " ")}
                                       </p>
-                                      <p className="text-xs text-mono-muted">
+                                      <p className="text-xs mnx-text-muted">
                                         {approval.source === "CUSTOMER_PORTAL" ? (
                                           <>
-                                            Submitted by <span className="text-mono-text">{getDecisionActorLabel(approval)}</span>
+                                            Submitted by <span className="mnx-text-primary">{getDecisionActorLabel(approval)}</span>
                                           </>
                                         ) : (
                                           <>
-                                            Assigned to <span className="text-mono-text">{getUserName(approval.assignedToId)}</span>
+                                            Assigned to <span className="mnx-text-primary">{getUserName(approval.assignedToId)}</span>
                                             {approval.actedById ? ` - acted by ${getUserName(approval.actedById)}` : ""}
                                           </>
                                         )}
                                       </p>
                                     </div>
                                     <span className={cn(
-                                      "text-[11px] monolith-numeric md:text-right",
+                                      "text-[11px] mnx-numeric md:text-right",
                                       approval.action === "REJECTED"
-                                        ? "text-red-500"
+                                        ? "mnx-text-danger"
                                         : approval.action === "APPROVED"
-                                          ? "text-[#F9D972]"
-                                          : "text-mono-muted",
+                                          ? "mnx-text-accent"
+                                          : "mnx-text-muted",
                                     )}>
                                       {approval.actedAt ? new Date(approval.actedAt).toLocaleString("en-IN") : "Pending"}
                                     </span>
                                   </div>
                                   {approval.remarks ? (
-                                    <p className="text-xs text-mono-muted">
+                                    <p className="text-xs mnx-text-muted">
                                       {approval.remarks}
                                     </p>
                                   ) : null}
@@ -7756,34 +7764,34 @@ export function JobWorkspaceClient({
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                       {job.filing?.billOfEntryNumber && (
                         <div>
-                          <span className="text-mono-muted block text-[10px] uppercase">BOE Number</span>
-                          <span className="font-semibold text-mono-text monolith-numeric">{job.filing.billOfEntryNumber}</span>
+                          <span className="mnx-text-muted block text-[10px] uppercase">BOE Number</span>
+                          <span className="font-semibold mnx-text-primary mnx-numeric">{job.filing.billOfEntryNumber}</span>
                         </div>
                       )}
                       {job.filing?.shippingBillNumber && (
                         <div>
-                          <span className="text-mono-muted block text-[10px] uppercase">Shipping Bill Number</span>
-                          <span className="font-semibold text-mono-text monolith-numeric">{job.filing.shippingBillNumber}</span>
+                          <span className="mnx-text-muted block text-[10px] uppercase">Shipping Bill Number</span>
+                          <span className="font-semibold mnx-text-primary mnx-numeric">{job.filing.shippingBillNumber}</span>
                         </div>
                       )}
                       <div>
-                        <span className="text-mono-muted block text-[10px] uppercase">Filing Date</span>
-                        <span className="font-semibold text-mono-text monolith-numeric">{job.filing?.actualFilingDate ? new Date(job.filing.actualFilingDate).toLocaleDateString("en-IN") : "-"}</span>
+                        <span className="mnx-text-muted block text-[10px] uppercase">Filing Date</span>
+                        <span className="font-semibold mnx-text-primary mnx-numeric">{job.filing?.actualFilingDate ? new Date(job.filing.actualFilingDate).toLocaleDateString("en-IN") : "-"}</span>
                       </div>
                     </div>
                   }
                 >
                   <div className="space-y-4">
                     {overdueChecklistCount > 0 && (
-                      <div className="monolith-card monolith-accent-warning rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm">
+                      <div className="mnx-bg-surface mnx-border mnx-border-warning rounded-xl border mnx-border mnx-bg-surface p-4 shadow-sm">
                         <div className="flex items-start gap-3">
-                          <AlertTriangle size={20} className="mt-0.5 shrink-0 text-[#D88700]" />
+                          <AlertTriangle size={20} className="mt-0.5 shrink-0 mnx-text-warning" />
                           <div className="space-y-1">
-                            <h4 className="monolith-label text-[#D88700]">Overdue Filing Checklist Items</h4>
-                            <p className="text-sm text-mono-text">
+                            <h4 className="mnx-label mnx-text-warning">Overdue Filing Checklist Items</h4>
+                            <p className="text-sm mnx-text-primary">
                               {overdueChecklistCount} Filing checklist item{overdueChecklistCount > 1 ? "s are" : " is"} overdue.
                             </p>
-                            <p className="text-xs text-mono-muted">
+                            <p className="text-xs mnx-text-muted">
                               Delay remarks are required before overdue items can be completed.
                             </p>
                           </div>
@@ -7792,17 +7800,17 @@ export function JobWorkspaceClient({
                     )}
 
                     {activeStepIndex < filingStageIndex ? (
-                      <div className="rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm">
+                      <div className="rounded-xl border mnx-border mnx-bg-surface p-4 shadow-sm">
                         <div className="flex items-start gap-3">
                           <span
-                            className="monolith-icon-badge mt-0.5 shrink-0"
-                            style={{ background: "rgba(251,146,60,0.10)", color: "#D88700" }}
+                            className="mnx-icon-badge mt-0.5 shrink-0"
+                            style={{ background: "color-mix(in srgb, var(--mnx-surface) 72%, transparent)", color: "var(--mnx-warning)" }}
                           >
                             <AlertTriangle size={18} />
                           </span>
                           <div className="space-y-1">
-                            <h4 className="monolith-label text-[#D88700]">Filing Stage Locked</h4>
-                            <p className="text-sm text-mono-muted leading-relaxed">
+                            <h4 className="mnx-label mnx-text-warning">Filing Stage Locked</h4>
+                            <p className="text-sm mnx-text-muted leading-relaxed">
                               Clearance files can only be submitted to customs after the checklist is approved. Complete all prior checklist preparation and approvals.
                             </p>
                           </div>
@@ -7811,15 +7819,15 @@ export function JobWorkspaceClient({
                     ) : (
                       <div className="space-y-4">
                         {!filingInstance ? (
-                          <div className="monolith-card monolith-accent rounded-xl border border-mono-border/60 bg-mono-card p-5 shadow-sm">
-                            <SectionHeading title="Filing Workflow" />
+                          <div className="mnx-bg-surface mnx-border mnx-border-accent rounded-xl border mnx-border mnx-bg-surface p-5 shadow-sm">
+                            <SectionHeading index="06" title="Filing Workflow" />
                             {loading === "filing-load" ? (
-                              <p className="mt-4 text-xs text-mono-muted">Loading filing workflow...</p>
+                              <p className="mt-4 text-xs mnx-text-muted">Loading filing workflow...</p>
                             ) : (
                               <div className="mt-4 space-y-4">
-                                <p className="max-w-3xl text-sm text-mono-muted leading-relaxed">
+                                <p className="max-w-3xl text-sm mnx-text-muted leading-relaxed">
                                   No active filing workflow instance found. Ensure a workflow is published in{" "}
-                                  <a href="/cha/settings/filing-workflows" className="text-[#F9D972] underline underline-offset-2">
+                                  <a href="/cha/settings/filing-workflows" className="mnx-text-accent underline underline-offset-2">
                                     CHA Settings -&gt; Filing Workflows
                                   </a>
                                   , then start the workflow below.
@@ -7847,8 +7855,9 @@ export function JobWorkspaceClient({
                                   onSubmit={handleCompleteFilingNode}
                                   className="grid gap-5 pt-2 xl:grid-cols-[minmax(0,680px)_minmax(0,1fr)] xl:items-start"
                                 >
-                                  <div ref={filingActiveNodeCardRef} className={`monolith-card monolith-accent ${filingPrimaryColumnClass} space-y-3 rounded-xl border border-mono-border/60 bg-mono-card p-4 shadow-sm`}>
+                                  <div ref={filingActiveNodeCardRef} className={`mnx-bg-surface mnx-border mnx-border-accent ${filingPrimaryColumnClass} space-y-3 rounded-xl border mnx-border mnx-bg-surface p-4 shadow-sm`}>
                                     <SectionHeading
+                                      index="07"
                                       title="Stage Checklist Verification"
                                       description="Review this active filing checkpoint, complete the checklist, and capture the required stage data."
                                       aside={
@@ -7867,15 +7876,15 @@ export function JobWorkspaceClient({
                                       {activeNodeRun.node.canBeSkipped ? <Badge variant="warning">Optional / Skippable</Badge> : null}
                                     </div>
                                     {overdueChecklistCount > 0 && (
-                                      <p className="pl-[17px] text-xs text-[#D88700]">
+                                      <p className="pl-[17px] text-xs mnx-text-warning">
                                         {overdueChecklistCount} overdue checklist item{overdueChecklistCount > 1 ? "s" : ""} in this active stage.
                                       </p>
                                     )}
                                     {isActiveStageBlocked ? (
-                                      <div className="monolith-card monolith-accent-warning rounded-xl border border-[#D88700]/35 bg-mono-card px-4 py-4 space-y-3">
+                                      <div className="mnx-bg-surface mnx-border mnx-border-warning rounded-xl border mnx-border-warning mnx-bg-surface px-4 py-4 space-y-3">
                                         <div className="space-y-1">
-                                          <p className="monolith-label !text-[#D88700]">Stage Blocked</p>
-                                          <p className="text-sm text-mono-text">
+                                          <p className="mnx-label mnx-text-warning">Stage Blocked</p>
+                                          <p className="text-sm mnx-text-primary">
                                             This stage is blocked until {activeNodePrerequisiteStatus?.mode === "ANY" ? "one of these stages is completed" : "all required stages are completed"}: {(activeNodePrerequisiteStatus?.missingNodeNames || []).join(", ")}.
                                           </p>
                                         </div>
@@ -7896,11 +7905,11 @@ export function JobWorkspaceClient({
                                       </div>
                                     ) : null}
                                     {pendingBlockedStage && canResumePendingBlockedStage ? (
-                                      <div className="rounded-xl border border-[#F9D972]/35 bg-mono-soft px-4 py-3">
+                                      <div className="rounded-xl border mnx-border-accent mnx-bg-soft px-4 py-3">
                                         <div className="flex flex-wrap items-center justify-between gap-3">
                                           <div className="space-y-1">
-                                            <p className="monolith-label text-[#F9D972]">Blocked Stage Ready</p>
-                                            <p className="text-sm text-mono-text">{pendingBlockedStage.nodeName} can now be resumed.</p>
+                                            <p className="mnx-label mnx-text-accent">Blocked Stage Ready</p>
+                                            <p className="text-sm mnx-text-primary">{pendingBlockedStage.nodeName} can now be resumed.</p>
                                           </div>
                                           <Button type="button" disabled={loading !== null} onClick={() => void handleResumeBlockedStage()}>
                                             Resume {pendingBlockedStage.nodeName}
@@ -7911,50 +7920,50 @@ export function JobWorkspaceClient({
                                     <div className={`space-y-3 ${isActiveStageBlocked ? "pointer-events-none opacity-60" : ""}`}>
                                       {activeNodeRun.node.nodeType === "DECISION" && outgoingEdges.length > 0 ? (
                                         <div className="space-y-2">
-                                          <label className="monolith-label text-mono-text block">Decision *</label>
+                                          <label className="mnx-label mnx-text-primary block">Decision *</label>
                                           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                                             {outgoingEdges.map((edge: any) => {
                                               const targetNode = targetNodesMap.get(edge.targetKey);
                                               const isSelected = selectedNextNodeKey === edge.targetKey;
                                               return (
-                                                <button
+                                                <Button
                                                   key={edge.targetKey}
                                                   type="button"
                                                   onClick={() => setSelectedNextNodeKey(edge.targetKey)}
                                                   className={`rounded-xl border px-4 py-3 text-left transition ${isSelected
-                                                      ? "border-[#F9D972] bg-[#F9D972]/10 shadow-[0_0_0_3px_rgba(0,206,196,0.18)]"
-                                                      : "border-mono-border bg-mono-card hover:border-[#F9D972]/55 hover:bg-mono-soft"
+                                                      ? "mnx-border-accent mnx-bg-accent-soft mnx-shadow-panel"
+                                                      : "mnx-border mnx-bg-surface mnx-hover-accent mnx-hover-accent"
                                                     }`}
                                                 >
-                                                  <span className="monolith-label block">{edge.label || "Choice"}</span>
-                                                  <span className="mt-1 block text-sm font-medium text-mono-text">
+                                                  <span className="mnx-label block">{edge.label || "Choice"}</span>
+                                                  <span className="mt-1 block text-sm font-medium mnx-text-primary">
                                                     {targetNode?.name || edge.targetKey}
                                                   </span>
-                                                </button>
+                                                </Button>
                                               );
                                             })}
                                           </div>
                                         </div>
                                       ) : null}
                                       {isFinalFilingNode ? (
-                                        <div className="space-y-3 bg-mono-card p-4 transition-all">
+                                        <div className="space-y-3 mnx-bg-surface p-4 transition-all">
                                           <div className="flex items-start gap-3">
-                                            <span className="monolith-icon-badge shrink-0">
+                                            <span className="mnx-icon-badge shrink-0">
                                               <ShieldCheck size={18} />
                                             </span>
                                             <div className="min-w-0 space-y-1">
-                                              <h4 className="monolith-h3 text-mono-text">Final Filing Closure</h4>
-                                              <p className="text-sm leading-5 text-mono-muted">
+                                              <h4 className="mnx-heading-3 mnx-text-primary">Final Filing Closure</h4>
+                                              <p className="text-sm leading-5 mnx-text-muted">
                                                 Review every completed filing stage before submitting this final step. Submitting this stage will close the filing workflow, record the audit event, and move the job to FILED.
                                               </p>
                                             </div>
                                           </div>
 
-                                          <div className="space-y-3 rounded-xl border border-mono-border/45 bg-mono-soft/35 p-3">
+                                          <div className="space-y-3 rounded-xl border mnx-border mnx-bg-soft p-3">
                                             <div className="flex flex-wrap items-center justify-between gap-3">
                                               <div className="space-y-1">
-                                                <p className="monolith-label text-mono-muted">Completed Stage Overview</p>
-                                                <p className="text-sm text-mono-text">
+                                                <p className="mnx-label mnx-text-muted">Completed Stage Overview</p>
+                                                <p className="text-sm mnx-text-primary">
                                                   {finalFilingReviewStages.length} stage{finalFilingReviewStages.length === 1 ? "" : "s"} ready for final review.
                                                 </p>
                                               </div>
@@ -7976,86 +7985,86 @@ export function JobWorkspaceClient({
                                                 {finalFilingReviewStages.map((stage: any) => (
                                                   <details
                                                     key={stage.id}
-                                                    className="group overflow-hidden rounded-xl border border-mono-border/50 bg-mono-card"
+                                                    className="group overflow-hidden rounded-xl border mnx-border mnx-bg-surface"
                                                     open={stage.sequence <= 3}
                                                   >
-                                                    <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-3 py-3 hover:bg-mono-soft/45">
+                                                    <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-3 py-3 mnx-hover-accent">
                                                       <div className="flex min-w-0 items-start gap-3">
-                                                        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-[#F9D972]/30 bg-[#F9D972]/10 text-[#00a9b2]">
-                                                          <span className="monolith-numeric text-xs">{String(stage.sequence).padStart(2, "0")}</span>
+                                                        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border mnx-border-accent mnx-bg-accent-soft mnx-text-accent">
+                                                          <span className="mnx-numeric text-xs">{String(stage.sequence).padStart(2, "0")}</span>
                                                         </span>
                                                         <div className="min-w-0 space-y-1">
                                                           <div className="flex flex-wrap items-center gap-2">
-                                                            <h5 className="truncate text-sm font-medium text-mono-text">{stage.nodeName}</h5>
+                                                            <h5 className="truncate text-sm font-medium mnx-text-primary">{stage.nodeName}</h5>
                                                             <Badge variant={stage.status === "SKIPPED" ? "secondary" : "success"}>{stage.status}</Badge>
                                                           </div>
                                                           {stage.sectionLabel ? (
-                                                            <p className="monolith-label text-mono-muted">{stage.sectionLabel}</p>
+                                                            <p className="mnx-label mnx-text-muted">{stage.sectionLabel}</p>
                                                           ) : null}
-                                                          <p className="text-xs text-mono-muted">
+                                                          <p className="text-xs mnx-text-muted">
                                                             {stage.completedAt ? `Completed ${new Date(stage.completedAt).toLocaleString("en-IN")}` : "Completion time not recorded"}
                                                             {stage.completedByName ? ` by ${stage.completedByName}` : ""}
                                                           </p>
                                                         </div>
                                                       </div>
                                                       <div className="flex shrink-0 items-center gap-2">
-                                                        <span className="monolith-numeric text-xs text-mono-muted">
+                                                        <span className="mnx-numeric text-xs mnx-text-muted">
                                                           {stage.checklistCompletedCount}/{stage.checklistTotalCount || 0}
                                                         </span>
-                                                        <ChevronRight className="mt-1 size-4 text-mono-muted transition-transform group-open:hidden" />
-                                                        <ChevronDown className="mt-1 hidden size-4 text-mono-muted group-open:block" />
+                                                        <ChevronRight className="mt-1 size-4 mnx-text-muted transition-transform group-open:hidden" />
+                                                        <ChevronDown className="mt-1 hidden size-4 mnx-text-muted group-open:block" />
                                                       </div>
                                                     </summary>
 
-                                                    <div className="space-y-3 border-t border-mono-border/35 px-3 py-3">
+                                                    <div className="space-y-3 border-t mnx-border px-3 py-3">
                                                       <div className="grid gap-2 sm:grid-cols-3">
-                                                        <div className="rounded-xl border border-mono-border/35 bg-mono-soft px-3 py-2">
-                                                          <p className="monolith-label text-mono-muted">Checks</p>
-                                                          <p className="monolith-numeric mt-1 text-sm text-mono-text">{stage.checklistCompletedCount}/{stage.checklistTotalCount || 0}</p>
+                                                        <div className="rounded-xl border mnx-border mnx-bg-soft px-3 py-2">
+                                                          <p className="mnx-label mnx-text-muted">Checks</p>
+                                                          <p className="mnx-numeric mt-1 text-sm mnx-text-primary">{stage.checklistCompletedCount}/{stage.checklistTotalCount || 0}</p>
                                                         </div>
-                                                        <div className="rounded-xl border border-mono-border/35 bg-mono-soft px-3 py-2">
-                                                          <p className="monolith-label text-mono-muted">Files</p>
-                                                          <p className="monolith-numeric mt-1 text-sm text-mono-text">{stage.attachments.length}</p>
+                                                        <div className="rounded-xl border mnx-border mnx-bg-soft px-3 py-2">
+                                                          <p className="mnx-label mnx-text-muted">Files</p>
+                                                          <p className="mnx-numeric mt-1 text-sm mnx-text-primary">{stage.attachments.length}</p>
                                                         </div>
-                                                        <div className="rounded-xl border border-mono-border/35 bg-mono-soft px-3 py-2">
-                                                          <p className="monolith-label text-mono-muted">Queries</p>
-                                                          <p className="monolith-numeric mt-1 text-sm text-mono-text">{stage.queries.length} total / {stage.openQueryCount} open</p>
+                                                        <div className="rounded-xl border mnx-border mnx-bg-soft px-3 py-2">
+                                                          <p className="mnx-label mnx-text-muted">Queries</p>
+                                                          <p className="mnx-numeric mt-1 text-sm mnx-text-primary">{stage.queries.length} total / {stage.openQueryCount} open</p>
                                                         </div>
                                                       </div>
 
                                                       {stage.remarks || stage.delayRemarks ? (
                                                         <div className="space-y-2">
                                                           {stage.remarks ? (
-                                                            <div className="rounded-xl border border-mono-border/35 bg-mono-soft px-3 py-2">
-                                                              <p className="monolith-label text-mono-muted">Remarks</p>
-                                                              <p className="mt-1 text-sm leading-5 text-mono-text">{stage.remarks}</p>
+                                                            <div className="rounded-xl border mnx-border mnx-bg-soft px-3 py-2">
+                                                              <p className="mnx-label mnx-text-muted">Remarks</p>
+                                                              <p className="mt-1 text-sm leading-5 mnx-text-primary">{stage.remarks}</p>
                                                             </div>
                                                           ) : null}
                                                           {stage.delayRemarks ? (
-                                                            <div className="monolith-card monolith-accent-warning rounded-xl border border-[#D88700]/30 bg-mono-card px-3 py-2">
-                                                              <p className="monolith-label !text-[#D88700]">Delay Remarks</p>
-                                                              <p className="mt-1 text-sm leading-5 text-mono-text">{stage.delayRemarks}</p>
+                                                            <div className="mnx-bg-surface mnx-border mnx-border-warning rounded-xl border mnx-border-warning mnx-bg-surface px-3 py-2">
+                                                              <p className="mnx-label mnx-text-warning">Delay Remarks</p>
+                                                              <p className="mt-1 text-sm leading-5 mnx-text-primary">{stage.delayRemarks}</p>
                                                             </div>
                                                           ) : null}
                                                         </div>
                                                       ) : (
-                                                        <div className="rounded-xl border border-mono-border/35 bg-mono-soft px-3 py-2 text-sm text-mono-muted">
+                                                        <div className="rounded-xl border mnx-border mnx-bg-soft px-3 py-2 text-sm mnx-text-muted">
                                                           No remarks recorded for this stage.
                                                         </div>
                                                       )}
 
                                                       {stage.completedResponses.length > 0 ? (
                                                         <div className="space-y-2">
-                                                          <p className="monolith-label text-mono-muted">Completed Checklist</p>
+                                                          <p className="mnx-label mnx-text-muted">Completed Checklist</p>
                                                           <div className="grid gap-2 md:grid-cols-2">
                                                             {stage.completedResponses.slice(0, 6).map((response: any) => (
-                                                              <div key={response.id || response.checklistItemId} className="rounded-xl border border-mono-border/35 bg-mono-soft px-3 py-2">
+                                                              <div key={response.id || response.checklistItemId} className="rounded-xl border mnx-border mnx-bg-soft px-3 py-2">
                                                                 <div className="flex items-start gap-2">
-                                                                  <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-[#00a9b2]" />
+                                                                  <CheckCircle2 size={14} className="mt-0.5 shrink-0 mnx-text-accent" />
                                                                   <div className="min-w-0">
-                                                                    <p className="text-sm text-mono-text">{response.checklistItem?.label || "Checklist item"}</p>
+                                                                    <p className="text-sm mnx-text-primary">{response.checklistItem?.label || "Checklist item"}</p>
                                                                     {response.remarks ? (
-                                                                      <p className="mt-1 text-xs leading-4 text-mono-muted">{response.remarks}</p>
+                                                                      <p className="mt-1 text-xs leading-4 mnx-text-muted">{response.remarks}</p>
                                                                     ) : null}
                                                                   </div>
                                                                 </div>
@@ -8063,7 +8072,7 @@ export function JobWorkspaceClient({
                                                             ))}
                                                           </div>
                                                           {stage.completedResponses.length > 6 ? (
-                                                            <p className="text-xs text-mono-muted">
+                                                            <p className="text-xs mnx-text-muted">
                                                               +{stage.completedResponses.length - 6} more checklist item{stage.completedResponses.length - 6 === 1 ? "" : "s"} completed.
                                                             </p>
                                                           ) : null}
@@ -8072,12 +8081,12 @@ export function JobWorkspaceClient({
 
                                                       {stage.fieldValues.length > 0 ? (
                                                         <div className="space-y-2">
-                                                          <p className="monolith-label text-mono-muted">Captured Data</p>
+                                                          <p className="mnx-label mnx-text-muted">Captured Data</p>
                                                           <div className="grid gap-2 md:grid-cols-2">
                                                             {stage.fieldValues.slice(0, 6).map((field: any) => (
-                                                              <div key={field.id || field.fieldKey} className="rounded-xl border border-mono-border/35 bg-mono-soft px-3 py-2">
-                                                                <p className="monolith-label text-mono-muted">{String(field.fieldKey || "Field").replace(/_/g, " ")}</p>
-                                                                <p className="mt-1 truncate text-sm text-mono-text">
+                                                              <div key={field.id || field.fieldKey} className="rounded-xl border mnx-border mnx-bg-soft px-3 py-2">
+                                                                <p className="mnx-label mnx-text-muted">{String(field.fieldKey || "Field").replace(/_/g, " ")}</p>
+                                                                <p className="mt-1 truncate text-sm mnx-text-primary">
                                                                   {field.valueJson === null || field.valueJson === undefined || field.valueJson === ""
                                                                     ? "Not recorded"
                                                                     : typeof field.valueJson === "object"
@@ -8092,7 +8101,7 @@ export function JobWorkspaceClient({
 
                                                       {stage.attachments.length > 0 ? (
                                                         <div className="space-y-2">
-                                                          <p className="monolith-label text-mono-muted">Uploaded Files</p>
+                                                          <p className="mnx-label mnx-text-muted">Uploaded Files</p>
                                                           <div className="grid gap-2 md:grid-cols-2">
                                                             {stage.attachments.map((attachment: any) => (
                                                               <a
@@ -8100,12 +8109,12 @@ export function JobWorkspaceClient({
                                                                 href={attachment.fileKey}
                                                                 target="_blank"
                                                                 rel="noreferrer"
-                                                                className="flex min-w-0 items-start gap-2 rounded-xl border border-mono-border/35 bg-mono-soft px-3 py-2 text-sm text-mono-text transition hover:border-[#F9D972]/55 hover:text-[#00a9b2]"
+                                                                className="flex min-w-0 items-start gap-2 rounded-xl border mnx-border mnx-bg-soft px-3 py-2 text-sm mnx-text-primary transition mnx-hover-accent mnx-hover-accent"
                                                               >
-                                                                <ExternalLink size={14} className="mt-0.5 shrink-0 text-[#00a9b2]" />
+                                                                <ExternalLink size={14} className="mt-0.5 shrink-0 mnx-text-accent" />
                                                                 <span className="min-w-0 flex-1">
                                                                   <span className="block truncate">{attachment.fileName || "Uploaded file"}</span>
-                                                                  <span className="mt-0.5 block truncate text-xs text-mono-muted">
+                                                                  <span className="mt-0.5 block truncate text-xs mnx-text-muted">
                                                                     {[attachment.checklistItem?.label, attachment.photoRequirement?.label, attachment.uploadedBy?.name ? `by ${attachment.uploadedBy.name}` : null]
                                                                       .filter(Boolean)
                                                                       .join(" / ") || "Workflow upload"}
@@ -8121,7 +8130,7 @@ export function JobWorkspaceClient({
                                                 ))}
                                               </div>
                                             ) : (
-                                              <div className="rounded-xl border border-dashed border-mono-border/60 px-4 py-5 text-sm text-mono-muted">
+                                              <div className="rounded-xl border border-dashed mnx-border px-4 py-5 text-sm mnx-text-muted">
                                                 No completed filing stages are available yet.
                                               </div>
                                             )}
@@ -8142,20 +8151,20 @@ export function JobWorkspaceClient({
                                                     key={field.key}
                                                     className={cn(
                                                       "space-y-1 rounded-xl transition-all",
-                                                      isMissingField && "animate-pulse-red border border-red-500/30 bg-mono-card p-2",
+                                                      isMissingField && "animate-pulse-red border mnx-border-danger mnx-bg-surface p-2",
                                                     )}
                                                   >
-                                                    <label className="monolith-label block text-mono-muted">
+                                                    <label className="mnx-label block mnx-text-muted">
                                                       {field.label} {field.required !== false ? "*" : ""}
                                                     </label>
                                                     {field.type === "DATE" ? (
                                                       <DateInput
                                                         value={filingFieldValues[field.key] || ""}
                                                         onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                                                        className={cn("w-full", isMissingField && "!border-red-500/60")}
+                                                        className={cn("w-full", isMissingField && "mnx-border-danger")}
                                                       />
                                                     ) : (
-                                                      <input
+                                                      <Input
                                                         value={filingFieldValues[field.key] || ""}
                                                         onChange={(e) =>
                                                           field.key === "bill_number"
@@ -8163,7 +8172,7 @@ export function JobWorkspaceClient({
                                                             : setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))
                                                         }
                                                         placeholder={field.placeholder || field.label}
-                                                        className={cn("w-full text-sm", isMissingField && "!border-red-500/60")}
+                                                        className={cn("w-full text-sm", isMissingField && "mnx-border-danger")}
                                                       />
                                                     )}
                                                   </div>
@@ -8184,33 +8193,33 @@ export function JobWorkspaceClient({
                                             );
 
                                             return (
-                                              <div className="space-y-3 pt-3 border-t border-mono-border/30 mt-3">
-                                                <h4 className="monolith-label text-mono-text">Stage Checklist Verification</h4>
+                                              <div className="space-y-3 pt-3 border-t mnx-border mt-3">
+                                                <h4 className="mnx-label mnx-text-primary">Stage Checklist Verification</h4>
                                                 <div
                                                   className={`relative overflow-hidden rounded-xl border px-4 py-4 transition-all duration-200 ${
                                                     isCompleted
-                                                      ? "border-[#22c55e]/28 bg-mono-card shadow-[0_16px_34px_-28px_rgba(34,197,94,0.28)]"
+                                                      ? "mnx-border-success mnx-bg-surface mnx-shadow-panel"
                                                       : hasMissingStandaloneDocuments
-                                                        ? "animate-pulse-red border-red-500/35 bg-mono-card shadow-[0_16px_34px_-28px_rgba(239,68,68,0.38)]"
-                                                        : "border-[#F9D972]/28 bg-mono-card shadow-[0_16px_34px_-28px_rgba(0,206,196,0.28)]"
+                                                        ? "animate-pulse-red mnx-border-danger mnx-bg-surface mnx-shadow-panel"
+                                                        : "mnx-border-accent mnx-bg-surface mnx-shadow-panel"
                                                   }`}
                                                 >
-                                                  <div className={`pointer-events-none absolute inset-y-4 left-0 w-1 rounded-r-sm ${isCompleted ? "bg-[#22c55e]" : hasMissingStandaloneDocuments ? "bg-red-500" : "bg-[#F9D972]"}`} />
+                                                  <div className={`pointer-events-none absolute inset-y-4 left-0 w-1 rounded-r-sm ${isCompleted ? "mnx-bg-success" : hasMissingStandaloneDocuments ? "mnx-bg-danger" : "mnx-bg-accent-soft"}`} />
 
                                                   <div className="flex w-full items-center gap-3 bg-transparent text-left">
                                                     <div className="flex min-w-0 flex-1 items-center gap-3">
                                                       <span
                                                         className={`flex size-9 shrink-0 items-center justify-center rounded-xl border text-xs font-medium transition-all ${
                                                           isCompleted
-                                                            ? "border-[#22c55e]/30 bg-[#22c55e]/12 text-[#15803d]"
-                                                            : "border-[#F9D972]/30 bg-[#F9D972]/12 text-[#00a9b2]"
+                                                            ? "mnx-border-success mnx-bg-success mnx-text-accent"
+                                                            : "mnx-border-accent mnx-bg-accent-soft mnx-text-accent"
                                                         }`}
                                                       >
                                                         {isCompleted ? <Check size={16} /> : <Upload size={16} />}
                                                       </span>
                                                       <div className="flex min-h-9 min-w-0 flex-1 items-center">
-                                                      <div className="text-base font-normal uppercase leading-none tracking-[0.04em] text-mono-text">
-                                                          Filing Document Verification <span className="text-red-500">*</span>
+                                                      <div className="text-base font-normal uppercase leading-none tracking-[0.04em] mnx-text-primary">
+                                                          Filing Document Verification <span className="mnx-text-danger">*</span>
                                                         </div>
                                                       </div>
                                                     </div>
@@ -8218,7 +8227,7 @@ export function JobWorkspaceClient({
 
                                                   <div className="ml-12 mt-3 space-y-3">
                                                     <div>
-                                                      <label className="monolith-label block">Required Document</label>
+                                                      <label className="mnx-label block">Required Document</label>
                                                     </div>
                                                     <div className="space-y-3">
                                                         {activeNodeDocumentRequirements.map((requirement: any) => {
@@ -8231,7 +8240,7 @@ export function JobWorkspaceClient({
                                                             key={requirement.key}
                                                             className={cn(
                                                               "space-y-2 rounded-xl transition-all",
-                                                              isMissingDocument && "animate-pulse-red border border-red-500/30 bg-mono-card p-2",
+                                                              isMissingDocument && "animate-pulse-red border mnx-border-danger mnx-bg-surface p-2",
                                                             )}
                                                           >
                                                             <FileUploadField
@@ -8289,7 +8298,7 @@ export function JobWorkspaceClient({
                                       ) : null}
                                       {activeNodeRun.node.checklistItems?.length > 0 && (
                                         <div className="space-y-3 pt-1">
-                                          <h4 className="monolith-label text-mono-text">Stage Checklist Verification</h4>
+                                          <h4 className="mnx-label mnx-text-primary">Stage Checklist Verification</h4>
                                           <div className="space-y-3.5">
                                             {activeChecklistItems.map((item: any, index: number) => {
                                               const resp = checklistResponses[item.id] || { isChecked: false, remarks: "", fileKey: undefined, delayRemarks: "" };
@@ -8356,19 +8365,19 @@ export function JobWorkspaceClient({
                                                 <div
                                                   key={item.id}
                                                   className={`relative overflow-hidden rounded-xl border p-4 space-y-2.5 transition-all duration-200 ${isLockedItem
-                                                      ? "border-mono-border/60 bg-mono-soft/75 opacity-70"
+                                                      ? "mnx-border mnx-bg-soft opacity-70"
                                                       : checklistItemComplete
-                                                        ? "border-green-500/30 bg-green-500/10 shadow-[0_20px_40px_-30px_rgba(34,197,94,0.32)]"
+                                                        ? "mnx-border-success mnx-bg-success mnx-shadow-panel"
                                                         : shouldBlinkChecklistItem
-                                                          ? "animate-pulse-red border-red-500/30 bg-mono-card shadow-[0_18px_38px_-30px_rgba(239,68,68,0.26)]"
-                                                          : "border-mono-border/60 bg-mono-card"
+                                                          ? "animate-pulse-red mnx-border-danger mnx-bg-surface mnx-shadow-panel"
+                                                          : "mnx-border mnx-bg-surface"
                                                       }`}
                                                 >
                                                   {!isLockedItem ? (
                                                     <div
                                                       className={`pointer-events-none absolute inset-y-4 left-0 w-1 rounded-full ${checklistItemComplete
-                                                          ? "bg-green-500"
-                                                          : "bg-red-500"
+                                                          ? "mnx-bg-success"
+                                                          : "mnx-bg-danger"
                                                         }`}
                                                     />
                                                   ) : null}
@@ -8388,7 +8397,7 @@ export function JobWorkspaceClient({
                                                         },
                                                       }));
                                                     }}
-                                                    className={`group relative flex w-full items-start bg-transparent text-left transition-all [&>div:first-child]:mt-1 [&_.neon-checkbox__box]:!bg-mono-card [&_.neon-checkbox__box]:!shadow-none [&_.neon-checkbox__glow]:!opacity-0 ${!canVerifyChecklistItem
+                                                    className={`group relative flex w-full items-start bg-transparent text-left transition-all [&>div:first-child]:mt-1 mnx-bg-surface [&_.neon-checkbox__box]:!shadow-none [&_.neon-checkbox__glow]:!opacity-0 ${!canVerifyChecklistItem
                                                         ? "cursor-not-allowed"
                                                         : resp.isChecked
                                                           ? "hover:scale-[1.005]"
@@ -8396,10 +8405,10 @@ export function JobWorkspaceClient({
                                                       }`}
                                                     label={
                                                       <span className="block min-w-0 flex-1 space-y-1">
-                                                        <span className="block font-[family:var(--font-geist-sans)] text-lg uppercase leading-6 tracking-[0.12em] text-mono-text">
-                                                          {item.label} {item.isMandatory && <span className="text-red-500 font-bold">*</span>}
+                                                        <span className="block font-[family:var(--font-geist-sans)] text-lg uppercase leading-6 tracking-[0.12em] mnx-text-primary">
+                                                          {item.label} {item.isMandatory && <span className="mnx-text-danger font-bold">*</span>}
                                                         </span>
-                                                        <span className="block max-w-3xl font-[family:var(--font-geist-sans)] text-sm font-normal leading-5 text-mono-muted">
+                                                        <span className="block max-w-3xl font-[family:var(--font-geist-sans)] text-sm font-normal leading-5 mnx-text-muted">
                                                           {checklistItemDescription}
                                                         </span>
                                                       </span>
@@ -8407,7 +8416,7 @@ export function JobWorkspaceClient({
                                                   />
 
                                                   {isLockedItem && (
-                                                    <div className="rounded-xl border border-mono-border/60 bg-mono-card px-3 py-2 text-[11px] text-mono-muted">
+                                                    <div className="rounded-xl border mnx-border mnx-bg-surface px-3 py-2 text-[11px] mnx-text-muted">
                                                       Complete the current checklist item first to unlock this step.
                                                     </div>
                                                   )}
@@ -8415,7 +8424,7 @@ export function JobWorkspaceClient({
                                                   {!isLockedItem && isCurrentItem && activeNodeDocumentRequirements.length > 0 && (
                                                     <div className="ml-10 space-y-2">
                                                       <div>
-                                                        <label className="monolith-label block">Required Documents</label>
+                                                        <label className="mnx-label block">Required Documents</label>
                                                       </div>
                                                       <div className="space-y-2.5">
                                                           {activeNodeDocumentRequirements.map((requirement: any) => {
@@ -8428,7 +8437,7 @@ export function JobWorkspaceClient({
                                                               key={requirement.key}
                                                               className={cn(
                                                                 "space-y-2 rounded-xl transition-all",
-                                                                isMissingDocument && "animate-pulse-red border border-red-500/30 bg-mono-card p-2",
+                                                                isMissingDocument && "animate-pulse-red border mnx-border-danger mnx-bg-surface p-2",
                                                               )}
                                                             >
                                                               <FileUploadField
@@ -8483,20 +8492,20 @@ export function JobWorkspaceClient({
                                                   {!isLockedItem && overdueMeta && (
                                                     <div
                                                       className={cn(
-                                                        "rounded-2xl border border-[#D88700]/35 bg-mono-card px-3 py-2 text-xs text-mono-text",
+                                                        "rounded-2xl border mnx-border-warning mnx-bg-surface px-3 py-2 text-xs mnx-text-primary",
                                                         filingValidationWarning?.checklistDelayRemarkItemIds.includes(item.id) &&
                                                         !resp.delayRemarks?.trim() &&
-                                                          "animate-pulse-red !border-red-500/35",
+                                                          "animate-pulse-red mnx-border-danger",
                                                       )}
                                                     >
                                                       <div className="flex flex-wrap items-center gap-3">
-                                                        <span className="font-semibold text-[#D88700] uppercase tracking-wide">Overdue</span>
-                                                        <span className="monolith-numeric">Due: {new Date(overdueMeta.dueAt).toLocaleDateString("en-IN")}</span>
-                                                        <span className="monolith-numeric">{overdueMeta.daysDelayed} day(s) delayed</span>
+                                                        <span className="font-semibold mnx-text-warning uppercase tracking-wide">Overdue</span>
+                                                        <span className="mnx-numeric">Due: {new Date(overdueMeta.dueAt).toLocaleDateString("en-IN")}</span>
+                                                        <span className="mnx-numeric">{overdueMeta.daysDelayed} day(s) delayed</span>
                                                       </div>
                                                       <div className="mt-2 space-y-1">
-                                                        <label className="monolith-label block text-[#D88700]">Delay Remarks *</label>
-                                                        <textarea
+                                                        <label className="mnx-label block mnx-text-warning">Delay Remarks *</label>
+                                                        <Textarea
                                                           rows={2}
                                                           value={resp.delayRemarks || ""}
                                                           onChange={(e) => {
@@ -8513,7 +8522,7 @@ export function JobWorkspaceClient({
                                                             "w-full text-xs",
                                                             filingValidationWarning?.checklistDelayRemarkItemIds.includes(item.id) &&
                                                             !resp.delayRemarks?.trim() &&
-                                                              "!border-red-500/60",
+                                                              "mnx-border-danger",
                                                           )}
                                                         />
                                                       </div>
@@ -8526,11 +8535,11 @@ export function JobWorkspaceClient({
                                                         "ml-10 space-y-1.5 rounded-xl transition-all",
                                                         filingValidationWarning?.checklistRemarkItemIds.includes(item.id) &&
                                                         !resp.remarks?.trim() &&
-                                                          "animate-pulse-red border border-red-500/30 bg-mono-card p-2",
+                                                          "animate-pulse-red border mnx-border-danger mnx-bg-surface p-2",
                                                       )}
                                                     >
-                                                      <label className="monolith-label block">Remarks / Notes *</label>
-                                                      <input
+                                                      <label className="mnx-label block">Remarks / Notes *</label>
+                                                      <Input
                                                         type="text"
                                                         required
                                                         value={resp.remarks || ""}
@@ -8548,7 +8557,7 @@ export function JobWorkspaceClient({
                                                           "w-full text-xs",
                                                           filingValidationWarning?.checklistRemarkItemIds.includes(item.id) &&
                                                           !resp.remarks?.trim() &&
-                                                            "!border-red-500/60",
+                                                            "mnx-border-danger",
                                                         )}
                                                       />
                                                     </div>
@@ -8559,12 +8568,12 @@ export function JobWorkspaceClient({
                                                       className={cn(
                                                         "ml-10 space-y-2 rounded-xl transition-all",
                                                         !checklistUploadsReady &&
-                                                          "animate-pulse-red border border-red-500/30 bg-mono-card p-2",
+                                                          "animate-pulse-red border mnx-border-danger mnx-bg-surface p-2",
                                                       )}
                                                     >
                                                       <div className="flex flex-wrap items-center justify-between gap-2">
-                                                        <label className="monolith-label block">Supporting File / Photo</label>
-                                                        <span className="text-[11px] text-mono-muted monolith-numeric">
+                                                        <label className="mnx-label block">Supporting File / Photo</label>
+                                                        <span className="text-[11px] mnx-text-muted mnx-numeric">
                                                           Uploaded {checklistItemAttachments.length} / Minimum {item.minUploads || 0}
                                                         </span>
                                                       </div>
@@ -8628,11 +8637,11 @@ export function JobWorkspaceClient({
 
                                   {visibleNodeConditionalSections.length > 0 && (
                                     <div className={`${filingPrimaryColumnClass} space-y-2.5 pt-0.5 ${isActiveStageBlocked ? "pointer-events-none opacity-60" : ""}`}>
-                                      <h4 className="monolith-label text-mono-text">Conditional Sections & Documents</h4>
+                                      <h4 className="mnx-label mnx-text-primary">Conditional Sections & Documents</h4>
                                       <div className="space-y-2.5">
                                         {visibleNodeConditionalSections.map((section: any) => (
-                                          <div key={section.key} className="rounded-xl border border-mono-border bg-mono-soft p-3 space-y-2.5">
-                                            <div className="flex items-center gap-3 text-sm text-mono-text">
+                                          <div key={section.key} className="rounded-xl border mnx-border mnx-bg-soft p-3 space-y-2.5">
+                                            <div className="flex items-center gap-3 text-sm mnx-text-primary">
                                               <NeonCheckbox
                                                 checked={!!filingToggleStates[section.key]}
                                                 onChange={(e) => {
@@ -8660,24 +8669,24 @@ export function JobWorkspaceClient({
                                                       key={field.key}
                                                       className={cn(
                                                         "space-y-1 rounded-xl transition-all",
-                                                        isMissingField && "animate-pulse-red border border-red-500/30 bg-mono-card p-2",
+                                                        isMissingField && "animate-pulse-red border mnx-border-danger mnx-bg-surface p-2",
                                                       )}
                                                     >
-                                                      <label className="monolith-label block text-mono-muted">
+                                                      <label className="mnx-label block mnx-text-muted">
                                                         {field.label} {field.required !== false ? "*" : ""}
                                                       </label>
                                                       {field.type === "DATE" ? (
                                                         <DateInput
                                                           value={filingFieldValues[field.key] || ""}
                                                           onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                                                          className={cn("w-full", isMissingField && "!border-red-500/60")}
+                                                          className={cn("w-full", isMissingField && "mnx-border-danger")}
                                                         />
                                                       ) : (
-                                                        <input
+                                                        <Input
                                                           value={filingFieldValues[field.key] || ""}
                                                           onChange={(e) => setFilingFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
                                                           placeholder={field.placeholder || field.label}
-                                                          className={cn("w-full text-sm", isMissingField && "!border-red-500/60")}
+                                                          className={cn("w-full text-sm", isMissingField && "mnx-border-danger")}
                                                         />
                                                       )}
                                                     </div>
@@ -8696,13 +8705,13 @@ export function JobWorkspaceClient({
                                                   <div
                                                     key={requirement.key}
                                                     className={cn(
-                                                      "rounded-xl border border-mono-border/60 bg-mono-card p-3",
-                                                      isMissingDocument && "animate-pulse-red !border-red-500/35",
+                                                      "rounded-xl border mnx-border mnx-bg-surface p-3",
+                                                      isMissingDocument && "animate-pulse-red mnx-border-danger",
                                                     )}
                                                   >
                                                     <div className="flex items-center justify-between gap-3">
                                                       <div>
-                                                        <div className="text-xs font-semibold text-mono-text">
+                                                        <div className="text-xs font-semibold mnx-text-primary">
                                                           {requirement.label} {requirement.required !== false ? "*" : ""}
                                                         </div>
                                                       </div>
@@ -8767,14 +8776,14 @@ export function JobWorkspaceClient({
                                   <div className={filingCompletionColumnClass}>
                                     {queryProcessingEnabled ? (
                                       <>
-                                        <div className="monolith-card monolith-accent-warning overflow-hidden rounded-xl border border-mono-border/60 bg-mono-card shadow-sm">
+                                        <div className="mnx-bg-surface mnx-border mnx-border-warning overflow-hidden rounded-xl border mnx-border mnx-bg-surface shadow-sm">
                                           <div className="flex items-start justify-between gap-3 px-5 py-4">
                                             <div className="min-w-0 flex-1 space-y-1">
                                               <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-4">
-                                                <span className="h-7 w-1 rounded-sm bg-[#D88700]" aria-hidden="true" />
-                                                <h3 className="monolith-h3 text-[#D88700]">Query Processing</h3>
+                                                <span className="h-7 w-1 rounded-sm mnx-bg-warning" aria-hidden="true" />
+                                                <h3 className="mnx-heading-3 mnx-text-warning">Query Processing</h3>
                                               </div>
-                                              <p className="pl-5 text-sm text-mono-muted">
+                                              <p className="pl-5 text-sm mnx-text-muted">
                                                 {activeNodeOpenQueries.length > 0
                                                   ? `${activeNodeOpenQueries.length} active quer${activeNodeOpenQueries.length > 1 ? "ies require" : "y requires"} attention.`
                                                   : queryProcessingStage === "CLEARED"
@@ -8795,32 +8804,32 @@ export function JobWorkspaceClient({
                                                   }
                                                 />
                                               ) : null}
-                                              <button
+                                              <Button
                                                 type="button"
                                                 role="switch"
                                                 aria-checked={queryProcessingToggleEnabled}
                                                 aria-label={queryProcessingToggleEnabled ? "Turn query processing off" : "Turn query processing on"}
                                                 disabled={isSavingQueryProcessingDecision}
                                                 onClick={() => void handleQueryProcessingToggleChange()}
-                                                className={`inline-flex items-center gap-2 rounded-xl border border-[#D88700]/20 bg-[#D88700]/8 px-3 py-1.5 text-sm text-mono-text transition-all ${isSavingQueryProcessingDecision
+                                                className={`inline-flex items-center gap-2 rounded-xl border mnx-border-warning mnx-bg-warning px-3 py-1.5 text-sm mnx-text-primary transition-all ${isSavingQueryProcessingDecision
                                                     ? "cursor-not-allowed opacity-60"
-                                                    : "hover:shadow-[0_8px_18px_-14px_rgba(251,146,60,0.7)]"
+                                                    : "mnx-shadow-panel"
                                                   }`}
                                               >
-                                                <span className="monolith-label text-[#c76628] whitespace-nowrap">{queryProcessingToggleEnabled ? "Queries On" : "Queries Off"}</span>
+                                                <span className="mnx-label mnx-text-warning whitespace-nowrap">{queryProcessingToggleEnabled ? "Queries On" : "Queries Off"}</span>
                                                 <span
                                                   className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-all ${queryProcessingToggleEnabled
-                                                      ? "border-[#D88700]/45 bg-[#D88700]/20"
-                                                      : "border-[#D88700]/25 bg-mono-soft"
+                                                      ? "mnx-border-warning mnx-bg-warning"
+                                                      : "mnx-border-warning mnx-bg-soft"
                                                     }`}
                                                   aria-hidden="true"
                                                 >
                                                   <span
-                                                    className={`pointer-events-none absolute top-[2px] left-[2px] h-[18px] w-[18px] rounded-full border border-[#D88700]/20 bg-mono-card shadow-sm transition-transform ${queryProcessingToggleEnabled ? "translate-x-[20px]" : "translate-x-0"
+                                                    className={`pointer-events-none absolute top-[2px] left-[2px] h-[18px] w-[18px] rounded-full border mnx-border-warning mnx-bg-surface shadow-sm transition-transform ${queryProcessingToggleEnabled ? "translate-x-[20px]" : "translate-x-0"
                                                       }`}
                                                   />
                                                 </span>
-                                              </button>
+                                              </Button>
                                             </div>
                                           </div>
 
@@ -8831,23 +8840,23 @@ export function JobWorkspaceClient({
                                               .map((card) => {
                                                 const toneClasses =
                                                   card.tone === "orange"
-                                                    ? "border-[#D88700]/30 text-[#c76628]"
-                                                    : "border-[#F9D972]/25 text-[#0f766e]";
+                                                    ? "mnx-border-warning mnx-text-warning"
+                                                    : "mnx-border-accent mnx-text-accent";
                                                 return (
                                                   <div
                                                     key={card.key}
-                                                    className={`rounded-[16px] border bg-mono-card px-3 py-3 shadow-[0_12px_28px_-22px_rgba(15,23,42,0.18)] ${toneClasses}`}
+                                                    className={`rounded-[16px] border mnx-bg-surface px-3 py-3 mnx-shadow-panel ${toneClasses}`}
                                                   >
                                                     <div className="flex items-start gap-2.5">
-                                                      <span className="monolith-icon-badge shrink-0">{card.icon}</span>
+                                                      <span className="mnx-icon-badge shrink-0">{card.icon}</span>
                                                       <div className="min-w-0 flex-1 space-y-0.5">
-                                                        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-mono-muted">
+                                                        <p className="text-[10px] font-medium uppercase tracking-[0.12em] mnx-text-muted">
                                                           {card.title}
                                                         </p>
-                                                        <p className="text-sm font-semibold leading-5 text-mono-text">
+                                                        <p className="text-sm font-semibold leading-5 mnx-text-primary">
                                                           {card.value}
                                                         </p>
-                                                        <p className="text-[11px] leading-4 text-mono-muted">
+                                                        <p className="text-[11px] leading-4 mnx-text-muted">
                                                           {card.note}
                                                         </p>
                                                       </div>
@@ -8860,36 +8869,36 @@ export function JobWorkspaceClient({
                                           {queryProcessingActive ? (
                                             <div className="space-y-3 px-4 py-3">
                                               <div className="grid gap-3 text-sm sm:grid-cols-2">
-                                                <div className="space-y-2 text-mono-muted">
+                                                <div className="space-y-2 mnx-text-muted">
                                                   <div className="flex items-center justify-between gap-3 sm:block">
-                                                    <span className="monolith-label block text-mono-muted">Ref</span>
-                                                    <span className="text-sm font-medium text-mono-text sm:mt-1 sm:block">
+                                                    <span className="mnx-label block mnx-text-muted">Ref</span>
+                                                    <span className="text-sm font-medium mnx-text-primary sm:mt-1 sm:block">
                                                       {typeof queryProcessingState?.queryReferenceNumber === "string" && queryProcessingState.queryReferenceNumber.trim()
                                                         ? queryProcessingState.queryReferenceNumber
                                                         : primaryQuerySummary?.title || "Not Recorded"}
                                                     </span>
                                                   </div>
                                                   <div className="flex items-center justify-between gap-3 sm:block">
-                                                    <span className="monolith-label block text-mono-muted">Officer</span>
-                                                    <span className="text-sm font-medium text-mono-text sm:mt-1 sm:block">
+                                                    <span className="mnx-label block mnx-text-muted">Officer</span>
+                                                    <span className="text-sm font-medium mnx-text-primary sm:mt-1 sm:block">
                                                       {typeof queryProcessingState?.customsOfficerName === "string" && queryProcessingState.customsOfficerName.trim()
                                                         ? queryProcessingState.customsOfficerName
                                                         : "Not Assigned"}
                                                     </span>
                                                   </div>
                                                 </div>
-                                                <div className="space-y-2 text-mono-muted">
+                                                <div className="space-y-2 mnx-text-muted">
                                                   <div className="flex items-center justify-between gap-3 sm:block">
-                                                    <span className="monolith-label block text-mono-muted">Received</span>
-                                                    <span className="text-sm font-medium text-mono-text sm:mt-1 sm:block">
+                                                    <span className="mnx-label block mnx-text-muted">Received</span>
+                                                    <span className="text-sm font-medium mnx-text-primary sm:mt-1 sm:block">
                                                       {typeof queryProcessingState?.queryReceivedAt === "string" && queryProcessingState.queryReceivedAt.trim()
                                                         ? new Date(queryProcessingState.queryReceivedAt).toLocaleDateString("en-IN")
                                                         : "Pending"}
                                                     </span>
                                                   </div>
                                                   <div className="flex items-center justify-between gap-3 sm:block">
-                                                    <span className="monolith-label block text-mono-muted">Open Cases</span>
-                                                    <span className="text-sm font-medium text-mono-text sm:mt-1 sm:block">
+                                                    <span className="mnx-label block mnx-text-muted">Open Cases</span>
+                                                    <span className="text-sm font-medium mnx-text-primary sm:mt-1 sm:block">
                                                       {activeNodeOpenQueries.length}
                                                     </span>
                                                   </div>
@@ -8899,7 +8908,7 @@ export function JobWorkspaceClient({
                                                 <Button
                                                   type="button"
                                                   variant="outline"
-                                                  className="w-full justify-center gap-2 border-[#D88700]/35 text-base text-[#c76628] hover:border-[#D88700]/50 hover:text-[#c76628] sm:w-auto sm:min-w-[220px]"
+                                                  className="w-full justify-center gap-2 mnx-border-warning text-base mnx-text-warning mnx-hover-warning mnx-hover-warning sm:w-auto sm:min-w-[220px]"
                                                   onClick={() => setQueryProcessingPanelExpanded(true)}
                                                 >
                                                   Manage Queries
@@ -8908,7 +8917,7 @@ export function JobWorkspaceClient({
                                               </div>
                                             </div>
                                           ) : (
-                                            <div className="px-4 py-3 text-sm text-mono-muted">
+                                            <div className="px-4 py-3 text-sm mnx-text-muted">
                                               Turn on queries to reveal the customs query card, summary details, and manage actions for this filing step.
                                             </div>
                                           )}
@@ -8925,7 +8934,7 @@ export function JobWorkspaceClient({
                                             <div className="space-y-5">
 
                                               {queryProcessingEnabled && queryProcessingStage === "CLEARED" ? (
-                                                <div className="rounded-xl border border-[#F9D972]/25 bg-[#F9D972]/10 p-4 text-sm text-mono-text">
+                                                <div className="rounded-xl border mnx-border-accent mnx-bg-accent-soft p-4 text-sm mnx-text-primary">
                                                   All customs queries are cleared for this workflow stage. You can continue to the next stage or record an additional query if customs raises another one.
                                                   <div className="mt-3">
                                                     <Button
@@ -8949,11 +8958,11 @@ export function JobWorkspaceClient({
                                                 </div>
                                               ) : null}
 
-                                              <div className="space-y-4 monolith-form-section">
+                                              <div className="space-y-4 mnx-form-section">
                                                 <div className="flex items-start justify-between gap-3">
                                                   <div>
                                                     <h4>Create Query</h4>
-                                                    <p className="pl-[13px] text-sm text-mono-muted">
+                                                    <p className="pl-[13px] text-sm mnx-text-muted">
                                                       Capture the customs note, reference number, officer, and received date.
                                                     </p>
                                                   </div>
@@ -8961,7 +8970,7 @@ export function JobWorkspaceClient({
                                                 </div>
                                                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                                                   <label className="space-y-1">
-                                                    <span className="monolith-label block text-mono-muted">Query Title *</span>
+                                                    <span className="mnx-label block mnx-text-muted">Query Title *</span>
                                                     <Input
                                                       value={filingQueryTitle}
                                                       onChange={(e) => setFilingQueryTitle(e.target.value)}
@@ -8970,7 +8979,7 @@ export function JobWorkspaceClient({
                                                     />
                                                   </label>
                                                   <label className="space-y-1">
-                                                    <span className="monolith-label block text-mono-muted">Reference Number</span>
+                                                    <span className="mnx-label block mnx-text-muted">Reference Number</span>
                                                     <Input
                                                       value={filingQueryReferenceNumber}
                                                       onChange={(e) => setFilingQueryReferenceNumber(e.target.value)}
@@ -8979,7 +8988,7 @@ export function JobWorkspaceClient({
                                                     />
                                                   </label>
                                                   <label className="space-y-1">
-                                                    <span className="monolith-label block text-mono-muted">Customs Officer</span>
+                                                    <span className="mnx-label block mnx-text-muted">Customs Officer</span>
                                                     <Input
                                                       value={filingQueryOfficerName}
                                                       onChange={(e) => setFilingQueryOfficerName(e.target.value)}
@@ -8988,7 +8997,7 @@ export function JobWorkspaceClient({
                                                     />
                                                   </label>
                                                   <label className="space-y-1">
-                                                    <span className="monolith-label block text-mono-muted">Received Date</span>
+                                                    <span className="mnx-label block mnx-text-muted">Received Date</span>
                                                     <DateInput
                                                       value={filingQueryReceivedAt}
                                                       onChange={(e) => setFilingQueryReceivedAt(e.target.value)}
@@ -8996,8 +9005,8 @@ export function JobWorkspaceClient({
                                                   </label>
                                                 </div>
                                                 <label className="space-y-1">
-                                                  <span className="monolith-label block text-mono-muted">Query Details *</span>
-                                                  <textarea
+                                                  <span className="mnx-label block mnx-text-muted">Query Details *</span>
+                                                  <Textarea
                                                     rows={3}
                                                     value={filingQueryDetails}
                                                     onChange={(e) => {
@@ -9005,7 +9014,7 @@ export function JobWorkspaceClient({
                                                       setFilingFieldValues((current) => ({ ...current, query_notes: e.target.value }));
                                                     }}
                                                     placeholder="Record customs query details, offline response notes, or follow-up context..."
-                                                    className="monolith-textarea w-full px-4 py-3 text-sm"
+                                                    className="mnx-field-textarea w-full px-4 py-3 text-sm"
                                                   />
                                                 </label>
                                                 <div className="flex justify-end">
@@ -9015,11 +9024,11 @@ export function JobWorkspaceClient({
                                                 </div>
                                               </div>
 
-                                              <div className="space-y-3 monolith-form-section">
+                                              <div className="space-y-3 mnx-form-section">
                                                 <div className="flex items-center justify-between gap-3">
                                                   <div>
                                                     <h4>Query Cases</h4>
-                                                    <p className="pl-[13px] text-sm text-mono-muted">
+                                                    <p className="pl-[13px] text-sm mnx-text-muted">
                                                       View responses, respond offline, submit updates, clear, or reopen any customs query.
                                                     </p>
                                                   </div>
@@ -9038,17 +9047,17 @@ export function JobWorkspaceClient({
                                                   return (
                                                     <details
                                                       key={query.id}
-                                                      className="group overflow-hidden rounded-xl border border-mono-border/60 bg-mono-card"
+                                                      className="group overflow-hidden rounded-xl border mnx-border mnx-bg-surface"
                                                     >
                                                       <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-3">
                                                         <div className="min-w-0">
                                                           <div className="flex flex-wrap items-center gap-2">
-                                                            <p className="text-sm font-medium text-mono-text">{query.title}</p>
-                                                            <span className="rounded-md bg-[#F9D972]/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#F9D972]">
+                                                            <p className="text-sm font-medium mnx-text-primary">{query.title}</p>
+                                                            <span className="rounded-md mnx-bg-accent-soft px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] mnx-text-accent">
                                                               {statusLabel}
                                                             </span>
                                                           </div>
-                                                          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-mono-muted">
+                                                          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] mnx-text-muted">
                                                             {query.id === queryProcessingState?.latestQueryId &&
                                                               typeof queryProcessingState?.queryReferenceNumber === "string" &&
                                                               queryProcessingState.queryReferenceNumber.trim() ? (
@@ -9066,29 +9075,29 @@ export function JobWorkspaceClient({
                                                           <Badge variant={isClosed ? "success" : "secondary"}>
                                                             {queryMessages.length} Update{queryMessages.length === 1 ? "" : "s"}
                                                           </Badge>
-                                                          <ChevronRight className="mt-0.5 size-4 shrink-0 text-mono-muted transition-transform group-open:hidden" />
-                                                          <ChevronDown className="mt-0.5 hidden size-4 shrink-0 text-mono-muted group-open:block" />
+                                                          <ChevronRight className="mt-0.5 size-4 shrink-0 mnx-text-muted transition-transform group-open:hidden" />
+                                                          <ChevronDown className="mt-0.5 hidden size-4 shrink-0 mnx-text-muted group-open:block" />
                                                         </div>
                                                       </summary>
-                                                      <div className="space-y-4 border-t border-mono-border/40 px-4 py-4">
-                                                        <div className="rounded-xl border border-mono-border/50 bg-mono-soft p-3 text-sm text-mono-text">
+                                                      <div className="space-y-4 border-t mnx-border px-4 py-4">
+                                                        <div className="rounded-xl border mnx-border mnx-bg-soft p-3 text-sm mnx-text-primary">
                                                           {query.details}
                                                         </div>
                                                         <div className="space-y-2">
-                                                          <label className="monolith-label block text-mono-muted">Offline Response / Status Update</label>
-                                                          <textarea
+                                                          <label className="mnx-label block mnx-text-muted">Offline Response / Status Update</label>
+                                                          <Textarea
                                                             rows={3}
                                                             value={filingQueryStatusUpdates[query.id] || ""}
                                                             onChange={(e) =>
                                                               setFilingQueryStatusUpdates((current) => ({ ...current, [query.id]: e.target.value }))
                                                             }
                                                             placeholder="Record the response shared with customs or the latest status update..."
-                                                            className="monolith-textarea w-full px-4 py-3 text-sm"
+                                                            className="mnx-field-textarea w-full px-4 py-3 text-sm"
                                                           />
                                                         </div>
                                                         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                                                           <label className="space-y-1">
-                                                            <span className="monolith-label block text-mono-muted">Responder Name</span>
+                                                            <span className="mnx-label block mnx-text-muted">Responder Name</span>
                                                             <Input
                                                               value={filingQueryResponderNames[query.id] || ""}
                                                               onChange={(e) =>
@@ -9156,15 +9165,15 @@ export function JobWorkspaceClient({
                                                         </div>
                                                         {queryMessages.length > 0 ? (
                                                           <div className="space-y-2">
-                                                            <span className="monolith-label block text-mono-muted">History</span>
+                                                            <span className="mnx-label block mnx-text-muted">History</span>
                                                             <div className="space-y-2">
                                                               {queryMessages.map((message: any) => (
-                                                                <div key={message.id} className="rounded-xl border border-mono-border/40 bg-mono-soft p-3">
-                                                                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-mono-muted">
+                                                                <div key={message.id} className="rounded-xl border mnx-border mnx-bg-soft p-3">
+                                                                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] mnx-text-muted">
                                                                     <span>{message.authorName || "System"}</span>
                                                                     <span>{new Date(message.createdAt).toLocaleString("en-IN")}</span>
                                                                   </div>
-                                                                  <p className="mt-2 text-sm text-mono-text">{message.body}</p>
+                                                                  <p className="mt-2 text-sm mnx-text-primary">{message.body}</p>
                                                                 </div>
                                                               ))}
                                                             </div>
@@ -9187,37 +9196,37 @@ export function JobWorkspaceClient({
                                           className="max-w-lg"
                                         >
                                           <div className="space-y-5">
-                                            <div className="rounded-[24px] border border-[#D88700]/18 bg-[linear-gradient(135deg,rgba(251,146,60,0.09),rgba(255,255,255,0.02))] px-4 py-3 shadow-[0_18px_36px_-30px_rgba(251,146,60,0.35)]">
+                                            <div className="rounded-[24px] border mnx-border-warning bg-[linear-gradient(135deg,color-mix(in srgb, var(--mnx-surface) 72%, transparent),color-mix(in srgb, var(--mnx-surface) 72%, transparent))] px-4 py-3 mnx-shadow-panel">
                                               <div className="flex items-start gap-3">
-                                                <span className="mt-0.5 h-10 w-1.5 rounded-full bg-[#D88700]" aria-hidden="true" />
+                                                <span className="mt-0.5 h-10 w-1.5 rounded-full mnx-bg-warning" aria-hidden="true" />
                                                 <div className="space-y-1">
-                                                  <p className="text-sm font-medium text-mono-text">
+                                                  <p className="text-sm font-medium mnx-text-primary">
                                                     Query processing can be turned off for this filing stage after adding operational remarks.
                                                   </p>
-                                                  <p className="text-xs text-mono-muted">
+                                                  <p className="text-xs mnx-text-muted">
                                                     Existing query records remain in the audit trail; this only closes the active query-processing path.
                                                   </p>
                                                 </div>
                                               </div>
                                             </div>
 
-                                            <div className="rounded-[24px] border border-mono-border/18 bg-mono-soft/35 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
+                                            <div className="rounded-[24px] border mnx-border mnx-bg-soft px-4 py-4 mnx-shadow-panel">
                                               <div className="space-y-2">
-                                                <label className="monolith-label block text-mono-muted">
+                                                <label className="mnx-label block mnx-text-muted">
                                                   Remarks for turning off query processing *
                                                 </label>
-                                                <textarea
+                                                <Textarea
                                                   rows={4}
                                                   value={queryToggleOffRemarks}
                                                   onChange={(e) => setQueryToggleOffRemarks(e.target.value)}
                                                   placeholder="Explain why query processing is being turned off..."
-                                                  className="w-full rounded-[18px] border border-mono-border/20 bg-mono-card px-4 py-3 text-sm shadow-[0_14px_28px_-24px_rgba(15,23,42,0.2)]"
+                                                  className="w-full rounded-[18px] border mnx-border mnx-bg-surface px-4 py-3 text-sm mnx-shadow-panel"
                                                   disabled={loading === "filing-toggle-query_processing"}
                                                 />
                                               </div>
                                             </div>
 
-                                            <div className="flex justify-end gap-2 border-t border-mono-border/14 pt-1">
+                                            <div className="flex justify-end gap-2 border-t mnx-border pt-1">
                                               <Button
                                                 type="button"
                                                 variant="outline"
@@ -9239,17 +9248,17 @@ export function JobWorkspaceClient({
                                           </div>
                                         </Modal>
                                         <div className="flex flex-1">
-                                          <div className="flex min-h-full w-full flex-col overflow-hidden rounded-[24px] border border-mono-border/40 bg-mono-card shadow-[0_22px_48px_-34px_rgba(15,23,42,0.22)]">
+                                          <div className="flex min-h-full w-full flex-col overflow-hidden rounded-[24px] border mnx-border mnx-bg-surface mnx-shadow-panel">
                                             <div className="flex flex-1 flex-col space-y-6 px-5 py-5">
                                               <div className="flex items-start gap-4">
-                                                <span className="monolith-icon-badge size-12 shrink-0">
+                                                <span className="mnx-icon-badge size-12 shrink-0">
                                                   <ClipboardList size={20} />
                                                 </span>
                                                 <div className="space-y-0.5">
-                                              <h3 className="monolith-h3 text-mono-text">
-                                                    {isFinalFilingNode ? "Final Filing Remarks" : "Completion Comments / Remarks"} {activeNodeRun.node.commentsRequired ? <span className="text-red-500">*</span> : null}
+                                              <h3 className="mnx-heading-3 mnx-text-primary">
+                                                    {isFinalFilingNode ? "Final Filing Remarks" : "Completion Comments / Remarks"} {activeNodeRun.node.commentsRequired ? <span className="mnx-text-danger">*</span> : null}
                                                   </h3>
-                                                  <p className="text-sm text-mono-muted">
+                                                  <p className="text-sm mnx-text-muted">
                                                     {isFinalFilingNode
                                                       ? "Record the final filing outcome or any closing note for the audit trail."
                                                       : "Provide checklist execution remarks or record the final outcome."}
@@ -9257,17 +9266,17 @@ export function JobWorkspaceClient({
                                                 </div>
                                               </div>
 
-                                              <textarea
+                                              <Textarea
                                                 ref={nodeRemarksTextareaRef}
                                                 rows={4}
                                                 value={nodeRemarks}
                                                 onChange={(e) => setNodeRemarks(e.target.value)}
                                                 placeholder="Enter comments, observations, or checklist outcome..."
                                                 className={cn(
-                                                  "min-h-[112px] flex-1 w-full resize-none overflow-hidden rounded-[16px] border border-mono-border/45 bg-mono-card px-5 py-4 text-sm font-sans shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]",
+                                                  "min-h-[112px] flex-1 w-full resize-none overflow-hidden rounded-[16px] border mnx-border mnx-bg-surface px-5 py-4 text-sm font-sans mnx-shadow-panel",
                                                   filingValidationWarning?.miscKeys.includes("nodeRemarks") &&
                                                   !nodeRemarks.trim() &&
-                                                    "animate-pulse-red !border-red-500/60",
+                                                    "animate-pulse-red mnx-border-danger",
                                                 )}
                                                 disabled={loading !== null || isActiveStageBlocked}
                                                 required={activeNodeRun.node.commentsRequired}
@@ -9276,23 +9285,23 @@ export function JobWorkspaceClient({
                                               {activeNodeIsOverdue ? (
                                                 <div
                                                   className={cn(
-                                                    "monolith-card monolith-accent-warning space-y-3 rounded-xl border border-[#D88700]/35 bg-mono-card p-4",
+                                                    "mnx-bg-surface mnx-border mnx-border-warning space-y-3 rounded-xl border mnx-border-warning mnx-bg-surface p-4",
                                                     filingValidationWarning?.miscKeys.includes("nodeDelayRemarks") &&
                                                     !nodeDelayRemarks.trim() &&
-                                                      "animate-pulse-red !border-red-500/35",
+                                                      "animate-pulse-red mnx-border-danger",
                                                   )}
                                                 >
                                                   <div className="flex flex-wrap items-center justify-between gap-2">
-                                                    <label className="monolith-label block !text-[#D88700]">
+                                                    <label className="mnx-label block mnx-text-warning">
                                                       Stage Delay Remarks {activeNodeDelayRemarksRequired ? "*" : ""}
                                                     </label>
                                                     {activeNodeSlaDueDate ? (
-                                                      <span className="monolith-numeric text-xs text-mono-muted">
+                                                      <span className="mnx-numeric text-xs mnx-text-muted">
                                                         Due: {activeNodeSlaDueDate.toLocaleDateString("en-IN")} · {activeNodeDelayDays} day(s) delayed
                                                       </span>
                                                     ) : null}
                                                   </div>
-                                                  <textarea
+                                                  <Textarea
                                                     rows={3}
                                                     value={nodeDelayRemarks}
                                                     onChange={(e) => setNodeDelayRemarks(e.target.value)}
@@ -9301,7 +9310,7 @@ export function JobWorkspaceClient({
                                                       "w-full resize-y text-sm",
                                                       filingValidationWarning?.miscKeys.includes("nodeDelayRemarks") &&
                                                       !nodeDelayRemarks.trim() &&
-                                                        "!border-red-500/60",
+                                                        "mnx-border-danger",
                                                     )}
                                                     disabled={loading !== null || isActiveStageBlocked}
                                                     required={activeNodeDelayRemarksRequired}
@@ -9310,7 +9319,7 @@ export function JobWorkspaceClient({
                                               ) : null}
 
                                               {isFinalFilingNode ? (
-                                                <div className="rounded-[18px] border border-mono-border/35 bg-mono-soft/35 p-4 text-sm text-mono-muted">
+                                                <div className="rounded-[18px] border mnx-border mnx-bg-soft p-4 text-sm mnx-text-muted">
                                                   Completing this node will finalize the filing workflow and transition the job stage to <strong>FILED</strong>.
                                                 </div>
                                               ) : null}
@@ -9373,7 +9382,7 @@ export function JobWorkspaceClient({
                                                 setSelectedJumpBackNodeKey(jumpBackTargets[0]?.nodeKey || "");
                                                 setGoBackOpen(true);
                                               }}
-                                              className="gap-2 rounded-[16px] border-[#F9D972]/40 bg-[#F9D972]/4 px-5 text-[#00a9b2]"
+                                              className="gap-2 rounded-[16px] mnx-border-accent mnx-bg-accent-soft px-5 mnx-text-accent"
                                             >
                                               <Undo2 size={16} />
                                               Jump Back to Earlier Stage
@@ -9385,7 +9394,7 @@ export function JobWorkspaceClient({
                                               variant="outline"
                                               disabled={loading !== null}
                                               onClick={() => void handleReturnToCurrentStage()}
-                                              className="gap-2 rounded-[16px] border-[#2563eb]/35 bg-[#2563eb]/5 px-5 text-[#2563eb] dark:text-[#9ab8ff]"
+                                              className="gap-2 rounded-[16px] mnx-border-info mnx-bg-info px-5 mnx-text-info mnx-text-accent"
                                             >
                                               <RotateCcw size={16} />
                                               {loading === "filing-go-back" ? "Returning..." : "Jump Back to Current Stage"}
@@ -9398,8 +9407,8 @@ export function JobWorkspaceClient({
 
                                   {/* Node Photo / File Upload Requirements */}
                                   {activeNodeRun.node.photoRequirements?.length > 0 && (
-                                    <div className={`${filingPrimaryColumnClass} space-y-4 border-t border-mono-border/30 pt-4 ${isActiveStageBlocked ? "pointer-events-none opacity-60" : ""}`}>
-                                      <h4 className="monolith-label text-mono-text">Required Photograph / Document Uploads</h4>
+                                    <div className={`${filingPrimaryColumnClass} space-y-4 border-t mnx-border pt-4 ${isActiveStageBlocked ? "pointer-events-none opacity-60" : ""}`}>
+                                      <h4 className="mnx-label mnx-text-primary">Required Photograph / Document Uploads</h4>
                                       <div className="space-y-4">
                                         {activeNodeRun.node.photoRequirements.map((pr: any) => {
                                           const reqAttachments = filingInstance.attachments?.filter(
@@ -9412,16 +9421,16 @@ export function JobWorkspaceClient({
                                             <div
                                               key={pr.id}
                                               className={cn(
-                                                "p-4 rounded-2xl border border-dashed border-mono-border/60 bg-mono-card space-y-3",
-                                                isMissingPhotoRequirement && "animate-pulse-red !border-red-500/35",
+                                                "p-4 rounded-2xl border border-dashed mnx-border mnx-bg-surface space-y-3",
+                                                isMissingPhotoRequirement && "animate-pulse-red mnx-border-danger",
                                               )}
                                             >
                                               <div>
-                                                <h5 className="text-xs font-semibold text-mono-text">
-                                                  {pr.label} {pr.isMandatory && <span className="text-red-500 font-bold">*</span>}
+                                                <h5 className="text-xs font-semibold mnx-text-primary">
+                                                  {pr.label} {pr.isMandatory && <span className="mnx-text-danger font-bold">*</span>}
                                                 </h5>
-                                                {pr.description && <p className="text-[11px] text-mono-muted mt-0.5">{pr.description}</p>}
-                                                <p className="text-[10px] text-mono-muted monolith-numeric mt-1 font-mono">
+                                                {pr.description && <p className="text-[11px] mnx-text-muted mt-0.5">{pr.description}</p>}
+                                                <p className="text-[10px] mnx-text-muted mnx-numeric mt-1 font-mono">
                                                   (Requires: min {pr.minPhotos} {pr.maxPhotos ? `max ${pr.maxPhotos}` : ""})
                                                 </p>
                                               </div>
@@ -9445,8 +9454,8 @@ export function JobWorkspaceClient({
 
                                               {/* Uploaded Attachments list */}
                                               {reqAttachments.length > 0 && (
-                                                <div className="overflow-hidden rounded-xl border border-mono-border/60">
-                                                  <table className="monolith-table">
+                                                <div className="overflow-hidden rounded-xl border mnx-border">
+                                                  <ChaTable className="mnx-cha-table">
                                                     <thead>
                                                       <tr>
                                                         <th>File Name</th>
@@ -9458,12 +9467,12 @@ export function JobWorkspaceClient({
                                                     <tbody>
                                                       {reqAttachments.map((a: any) => (
                                                         <tr key={a.id}>
-                                                          <td className="truncate max-w-[200px] text-xs font-medium text-mono-text">
-                                                            <a href={a.fileKey} target="_blank" rel="noreferrer" className="text-[#F9D972] hover:underline flex items-center gap-1 font-semibold">
+                                                          <td className="truncate max-w-[200px] text-xs font-medium mnx-text-primary">
+                                                            <a href={a.fileKey} target="_blank" rel="noreferrer" className="mnx-text-accent hover:underline flex items-center gap-1 font-semibold">
                                                               <ExternalLink size={12} className="shrink-0" /> {a.fileName}
                                                             </a>
                                                           </td>
-                                                          <td className="monolith-numeric text-xs font-mono">{(a.fileSize / 1024).toFixed(1)} KB</td>
+                                                          <td className="mnx-numeric text-xs font-mono">{(a.fileSize / 1024).toFixed(1)} KB</td>
                                                           <td className="text-xs">{a.uploadedBy?.name || "Unknown"}</td>
                                                           <td>
                                                             <Button
@@ -9472,7 +9481,7 @@ export function JobWorkspaceClient({
                                                               size="sm"
                                                               onClick={() => handleDeleteFilingPhoto(a.id)}
                                                               disabled={loading === `filing-delete-${a.id}`}
-                                                              className="text-red-500 hover:text-red-600 hover:bg-red-500/10 p-1"
+                                                              className="mnx-text-danger mnx-hover-danger mnx-hover-danger p-1"
                                                             >
                                                               Delete
                                                             </Button>
@@ -9480,7 +9489,7 @@ export function JobWorkspaceClient({
                                                         </tr>
                                                       ))}
                                                     </tbody>
-                                                  </table>
+                                                  </ChaTable>
                                                 </div>
                                               )}
                                             </div>
@@ -9510,12 +9519,12 @@ export function JobWorkspaceClient({
                                 >
                                   <div className="space-y-4">
                                     {goBackMode === "return" && returnToCurrentTarget ? (
-                                      <div className="rounded-2xl border border-[#2563eb]/18 bg-[#2563eb]/5 px-4 py-3">
+                                      <div className="rounded-2xl border mnx-border-info mnx-bg-info px-4 py-3">
                                         <div className="space-y-1">
-                                          <span className="monolith-label text-[#2563eb] dark:text-[#9ab8ff]">Returning To</span>
-                                          <p className="text-sm font-semibold text-mono-text">{returnToCurrentTarget.nodeName}</p>
+                                          <span className="mnx-label mnx-text-info mnx-text-accent">Returning To</span>
+                                          <p className="text-sm font-semibold mnx-text-primary">{returnToCurrentTarget.nodeName}</p>
                                           {returnToCurrentTarget.completedAt ? (
-                                            <p className="text-xs text-mono-muted">
+                                            <p className="text-xs mnx-text-muted">
                                               Last cancelled on {new Date(returnToCurrentTarget.completedAt).toLocaleString("en-IN")}
                                             </p>
                                           ) : null}
@@ -9523,7 +9532,7 @@ export function JobWorkspaceClient({
                                       </div>
                                     ) : (
                                       <label className="block space-y-1.5">
-                                        <span className="monolith-label">Select Earlier Stage *</span>
+                                        <span className="mnx-label">Select Earlier Stage *</span>
                                         <DropdownSelect
                                           ariaLabel="Select earlier filing stage"
                                           value={selectedJumpBackNodeKey}
@@ -9534,18 +9543,18 @@ export function JobWorkspaceClient({
                                             label: `${target.nodeName}${target.completedAt ? ` (${new Date(target.completedAt).toLocaleString("en-IN")})` : ""}`,
                                           }))}
                                           triggerClassName="rounded-xl"
-                                          contentClassName="rounded-xl border-[#F9D972]/25"
+                                          contentClassName="rounded-xl mnx-border-accent"
                                         />
                                       </label>
                                     )}
                                     <label className="block space-y-1.5">
-                                      <span className="monolith-label">{goBackMode === "return" ? "Reason for return *" : "Reason for jump-back *"}</span>
-                                      <textarea
+                                      <span className="mnx-label">{goBackMode === "return" ? "Reason for return *" : "Reason for jump-back *"}</span>
+                                      <Textarea
                                         rows={3}
                                         value={goBackReason}
                                         onChange={(e) => setGoBackReason(e.target.value)}
                                         placeholder={goBackMode === "return" ? "Explain why the workflow should return to the current filing stage..." : "Explain why this filing stage must be reworked..."}
-                                        className="min-h-28 w-full resize-none rounded-xl border border-[#F9D972]/45 bg-mono-card px-4 py-3 text-sm text-mono-text shadow-[0_12px_26px_-22px_rgba(0,206,196,0.28)] outline-none transition placeholder:text-placeholder focus:border-[#F9D972]/70 focus:shadow-[0_0_0_3px_rgba(0,206,196,0.16)]"
+                                        className="min-h-28 w-full resize-none rounded-xl border mnx-border-accent mnx-bg-surface px-4 py-3 text-sm mnx-text-primary mnx-shadow-panel outline-none transition placeholder:text-placeholder mnx-focus-accent mnx-shadow-panel"
                                         required
                                       />
                                     </label>
@@ -9578,32 +9587,32 @@ export function JobWorkspaceClient({
                                 </Modal>
                               </div>
                             ) : (
-                              <div className="monolith-card monolith-accent rounded-xl border border-mono-border/60 bg-mono-card p-5 space-y-4 shadow-sm">
+                              <div className="mnx-bg-surface mnx-border mnx-border-accent rounded-xl border mnx-border mnx-bg-surface p-5 space-y-4 shadow-sm">
                                 <div className="flex flex-wrap items-center gap-3">
-                                  <span className="monolith-icon-badge">
+                                  <span className="mnx-icon-badge">
                                     <CheckCircle2 size={18} />
                                   </span>
                                   <div className="space-y-1">
                                     <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
-                                      <span className="h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
-                                      <h4 className="monolith-h3 text-mono-text">Customs Filing Workflow Complete</h4>
+                                      <span className="h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
+                                      <h4 className="mnx-heading-3 mnx-text-primary">Customs Filing Workflow Complete</h4>
                                     </div>
                                     <Badge variant="success">Filed</Badge>
                                   </div>
                                 </div>
-                                <p className="max-w-xl text-sm text-mono-muted">
+                                <p className="max-w-xl text-sm mnx-text-muted">
                                   All blueprint checklist checks have been completed and the customs submission has been filed. The job stage is updated to <strong>FILED</strong>.
                                 </p>
-                                <div className="grid grid-cols-2 gap-4 rounded-xl border border-mono-border bg-mono-soft p-4 text-xs max-w-md">
+                                <div className="grid grid-cols-2 gap-4 rounded-xl border mnx-border mnx-bg-soft p-4 text-xs max-w-md">
                                   <div>
-                                    <span className="monolith-label block text-mono-muted">Actual Filing Date</span>
-                                    <span className="font-medium text-mono-text monolith-numeric">
+                                    <span className="mnx-label block mnx-text-muted">Actual Filing Date</span>
+                                    <span className="font-medium mnx-text-primary mnx-numeric">
                                       {job.filing.actualFilingDate ? new Date(job.filing.actualFilingDate).toLocaleDateString("en-IN") : "Completed"}
                                     </span>
                                   </div>
                                   <div>
-                                    <span className="monolith-label block text-mono-muted">Filing Reference ID</span>
-                                    <span className="font-medium text-mono-text monolith-numeric">{job.filing.filingRef || "Completed"}</span>
+                                    <span className="mnx-label block mnx-text-muted">Filing Reference ID</span>
+                                    <span className="font-medium mnx-text-primary mnx-numeric">{job.filing.filingRef || "Completed"}</span>
                                   </div>
                                 </div>
                               </div>
@@ -9638,14 +9647,14 @@ export function JobWorkspaceClient({
                 >
                   <div className="grid gap-6 xl:grid-cols-[minmax(360px,0.95fr)_minmax(420px,1.05fr)] xl:gap-0">
                     {canCreateExpenseRequests ? (
-                    <div className="space-y-4 bg-mono-card xl:pr-6">
+                    <div className="space-y-4 mnx-bg-surface xl:pr-6">
                       <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
-                        <span className="h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
-                        <h4 className="monolith-h3 text-mono-text">New Clearance Expense Request</h4>
+                        <span className="h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
+                        <h4 className="mnx-heading-3 mnx-text-primary">New Clearance Expense Request</h4>
                       </div>
 
                       <form onSubmit={handleCreateExpenseRequest} className="space-y-4">
-                        <div className="flex flex-col justify-between gap-4 rounded-xl border border-mono-border/60 bg-mono-card p-4">
+                        <div className="flex flex-col justify-between gap-4 rounded-xl border mnx-border mnx-bg-surface p-4">
                           <div className="flex items-start space-x-3">
                             <NeonCheckbox
                               checked={expenseUrgent}
@@ -9653,8 +9662,8 @@ export function JobWorkspaceClient({
                               className="mt-1"
                               label={
                                 <div>
-                                  <span className="block text-sm font-semibold text-mono-text">Escalate to URGENT Payment</span>
-                                  <span className="text-xs text-mono-muted">
+                                  <span className="block text-sm font-semibold mnx-text-primary">Escalate to URGENT Payment</span>
+                                  <span className="text-xs mnx-text-muted">
                                     Request accounts to disburse payment immediately to resolve critical port blocks.
                                   </span>
                                 </div>
@@ -9664,16 +9673,16 @@ export function JobWorkspaceClient({
 
                           {expenseUrgent ? (
                             <div className="max-w-md flex-1 space-y-1">
-                              <label className="monolith-label block text-[#D88700]">
+                              <label className="mnx-label block mnx-text-warning">
                                 Urgency Explanation Justification (REQUIRED) *
                               </label>
-                              <input
+                              <Input
                                 type="text"
                                 required
                                 placeholder="e.g. Demurrage free days end tomorrow"
                                 value={expenseUrgencyReason}
                                 onChange={(e) => setExpenseUrgencyReason(e.target.value)}
-                                className="w-full border-[#D88700]/50 text-xs font-sans"
+                                className="w-full mnx-border-warning text-xs font-sans"
                               />
                             </div>
                           ) : null}
@@ -9681,8 +9690,8 @@ export function JobWorkspaceClient({
 
                         <div className="grid gap-3 md:grid-cols-2">
                           <div className="space-y-1">
-                            <label className="monolith-label">UPI Number</label>
-                            <input
+                            <label className="mnx-label">UPI Number</label>
+                            <Input
                               type="text"
                               placeholder="Payee mobile number"
                               value={expenseUpiNumber}
@@ -9691,8 +9700,8 @@ export function JobWorkspaceClient({
                             />
                           </div>
                           <div className="space-y-1">
-                            <label className="monolith-label">UPI ID</label>
-                            <input
+                            <label className="mnx-label">UPI ID</label>
+                            <Input
                               type="text"
                               placeholder="name@bank"
                               value={expenseUpiId}
@@ -9703,14 +9712,14 @@ export function JobWorkspaceClient({
                         </div>
 
                         <div className="space-y-3">
-                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-mono-border/30 pb-2">
-                            <span className="monolith-label">Expense Line Items</span>
+                          <div className="flex flex-wrap items-center justify-between gap-2 border-b mnx-border pb-2">
+                            <span className="mnx-label">Expense Line Items</span>
                             <Button
                               type="button"
                               variant="outline"
                               size="sm"
                               onClick={handleAddExpenseLine}
-                              className="flex items-center gap-1 border-[#F9D972] text-[#F9D972]"
+                              className="flex items-center gap-1 mnx-border-accent mnx-text-accent"
                             >
                               <Plus size={12} /> Add Line Item
                             </Button>
@@ -9718,9 +9727,9 @@ export function JobWorkspaceClient({
 
                           <div className="space-y-3">
                             {expenseLines.map((line, index) => (
-                              <div key={index} className="grid grid-cols-1 items-end gap-3 border-b border-mono-border/20 pb-3 md:grid-cols-2 md:border-b-0 md:pb-0">
+                              <div key={index} className="grid grid-cols-1 items-end gap-3 border-b mnx-border pb-3 md:grid-cols-2 md:border-b-0 md:pb-0">
                                 <div className="space-y-1">
-                                  <label className="monolith-label">Category</label>
+                                  <label className="mnx-label">Category</label>
                                   <NativeSelect
                                     value={line.category}
                                     onChange={(e) => handleExpenseLineChange(index, "category", e.target.value)}
@@ -9735,8 +9744,8 @@ export function JobWorkspaceClient({
                                 </div>
 
                                 <div className="space-y-1">
-                                  <label className="monolith-label">Purpose / Purpose *</label>
-                                  <input
+                                  <label className="mnx-label">Purpose / Purpose *</label>
+                                  <Input
                                     type="text"
                                     required
                                     placeholder="Reason for payment"
@@ -9747,19 +9756,19 @@ export function JobWorkspaceClient({
                                 </div>
 
                                 <div className="space-y-1">
-                                  <label className="monolith-label">Amount (Rs.) *</label>
-                                  <input
+                                  <label className="mnx-label">Amount (Rs.) *</label>
+                                  <Input
                                     type="number"
                                     required
                                     placeholder="Amount"
                                     value={line.amount}
                                     onChange={(e) => handleExpenseLineChange(index, "amount", e.target.value)}
-                                    className="h-9 w-full text-xs font-mono monolith-numeric"
+                                    className="h-9 w-full text-xs font-mono mnx-numeric"
                                   />
                                 </div>
 
                                 <div className="space-y-1">
-                                  <label className="monolith-label">Required Date</label>
+                                  <label className="mnx-label">Required Date</label>
                                   <DateInput
                                     value={line.requiredDate}
                                     onChange={(e) => handleExpenseLineChange(index, "requiredDate", e.target.value)}
@@ -9814,13 +9823,13 @@ export function JobWorkspaceClient({
 
                                 {expenseLines.length > 1 ? (
                                   <div className="flex items-center justify-end md:col-span-2">
-                                    <button
+                                    <Button
                                       type="button"
                                       onClick={() => handleRemoveExpenseLine(index)}
-                                      className="p-1.5 text-red-500 hover:text-red-700"
+                                      className="p-1.5 mnx-text-danger mnx-hover-danger"
                                     >
                                       <Trash2 size={16} />
-                                    </button>
+                                    </Button>
                                   </div>
                                 ) : null}
                               </div>
@@ -9836,22 +9845,22 @@ export function JobWorkspaceClient({
                       </form>
                     </div>
                     ) : (
-                      <div className="bg-mono-card xl:pr-6">
-                        <p className="text-sm font-medium text-mono-text">Expense records are view-only for your role.</p>
-                        <p className="mt-1 text-xs text-mono-muted">
+                      <div className="mnx-bg-surface xl:pr-6">
+                        <p className="text-sm font-medium mnx-text-primary">Expense records are view-only for your role.</p>
+                        <p className="mt-1 text-xs mnx-text-muted">
                           You can track status, line items, payout details, and approval history after the filing stage is complete.
                         </p>
                       </div>
                     )}
 
-                    <div className="space-y-4 bg-mono-card xl:border-l xl:border-mono-border/50 xl:pl-6">
+                    <div className="space-y-4 mnx-bg-surface xl:border-l mnx-border xl:pl-6">
                       <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
-                        <span className="h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
-                        <h4 className="monolith-h3 text-mono-text">Expenses Queue</h4>
+                        <span className="h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
+                        <h4 className="mnx-heading-3 mnx-text-primary">Expenses Queue</h4>
                       </div>
 
                       {job.expenseRequests?.length === 0 ? (
-                        <p className="text-xs italic text-mono-muted">No expenses requested for this job clearance.</p>
+                        <p className="text-xs italic mnx-text-muted">No expenses requested for this job clearance.</p>
                       ) : (
                         <div className="space-y-3">
                           {job.expenseRequests.map((request: any) => {
@@ -9867,11 +9876,11 @@ export function JobWorkspaceClient({
                               canProcessExpensePayments &&
                               ["APPROVED", "READY_FOR_DISBURSEMENT"].includes(String(request.status));
                             return (
-                              <div key={request.id} className="space-y-3 rounded-xl border border-mono-border/45 bg-mono-card p-4">
+                              <div key={request.id} className="space-y-3 rounded-xl border mnx-border mnx-bg-surface p-4">
                                 <div className="flex flex-wrap items-center justify-between gap-2">
                                   <div>
-                                    <p className="text-sm font-medium text-mono-text monolith-numeric">Rs. {amount.toLocaleString("en-IN")}</p>
-                                    <p className="mt-0.5 text-xs text-mono-muted">
+                                    <p className="text-sm font-medium mnx-text-primary mnx-numeric">Rs. {amount.toLocaleString("en-IN")}</p>
+                                    <p className="mt-0.5 text-xs mnx-text-muted">
                                       Ref: {request.id} - Requested by {request.requestedBy?.name || "Team Member"}
                                     </p>
                                   </div>
@@ -9879,10 +9888,10 @@ export function JobWorkspaceClient({
                                 </div>
                                 <div className="grid gap-2 md:grid-cols-2">
                                   {request.lines.map((line: any) => (
-                                    <div key={line.id} className="rounded-lg border border-mono-border/35 bg-mono-soft p-3">
-                                      <p className="monolith-label">{line.category}</p>
-                                      <p className="mt-1 text-xs text-mono-text">{line.purpose}</p>
-                                      <p className="mt-2 text-xs text-mono-muted monolith-numeric">
+                                    <div key={line.id} className="rounded-lg border mnx-border mnx-bg-soft p-3">
+                                      <p className="mnx-label">{line.category}</p>
+                                      <p className="mt-1 text-xs mnx-text-primary">{line.purpose}</p>
+                                      <p className="mt-2 text-xs mnx-text-muted mnx-numeric">
                                         Rs. {Number(line.amount).toLocaleString("en-IN")} due {new Date(line.requiredDate).toLocaleDateString("en-IN")}
                                       </p>
                                       {getReceiptLinks(line.supportingDocumentKey).length ? (
@@ -9893,7 +9902,7 @@ export function JobWorkspaceClient({
                                               href={receiptLink}
                                               target="_blank"
                                               rel="noreferrer"
-                                              className="inline-flex text-xs font-medium text-[#F9D972] hover:underline"
+                                              className="inline-flex text-xs font-medium mnx-text-accent hover:underline"
                                             >
                                               Receipt {receiptIndex + 1}
                                             </a>
@@ -9904,23 +9913,23 @@ export function JobWorkspaceClient({
                                   ))}
                                 </div>
                                 {request.upiNumber || request.upiId ? (
-                                  <div className="grid gap-2 rounded-lg border border-mono-border/35 bg-mono-card p-3 md:grid-cols-2">
+                                  <div className="grid gap-2 rounded-lg border mnx-border mnx-bg-surface p-3 md:grid-cols-2">
                                     {request.upiNumber ? (
                                       <div>
-                                        <p className="monolith-label">UPI Number</p>
-                                        <p className="mt-1 text-xs text-mono-text monolith-numeric">{request.upiNumber}</p>
+                                        <p className="mnx-label">UPI Number</p>
+                                        <p className="mt-1 text-xs mnx-text-primary mnx-numeric">{request.upiNumber}</p>
                                       </div>
                                     ) : null}
                                     {request.upiId ? (
                                       <div>
-                                        <p className="monolith-label">UPI ID</p>
-                                        <p className="mt-1 text-xs text-mono-text">{request.upiId}</p>
+                                        <p className="mnx-label">UPI ID</p>
+                                        <p className="mt-1 text-xs mnx-text-primary">{request.upiId}</p>
                                       </div>
                                     ) : null}
                                   </div>
                                 ) : null}
                                 {request.payments?.length ? (
-                                  <div className="rounded-lg border border-green-600/20 bg-green-600/10 p-3 text-xs text-mono-text">
+                                  <div className="rounded-lg border mnx-border-success mnx-bg-success p-3 text-xs mnx-text-primary">
                                     {request.payments.map((payment: any) => (
                                       <div key={payment.id}>
                                         <p>
@@ -9935,7 +9944,7 @@ export function JobWorkspaceClient({
                                                 href={proofLink}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="inline-flex text-xs font-medium text-[#F9D972] hover:underline"
+                                                className="inline-flex text-xs font-medium mnx-text-accent hover:underline"
                                               >
                                                 View payment proof {index + 1}
                                               </a>
@@ -9947,10 +9956,10 @@ export function JobWorkspaceClient({
                                   </div>
                                 ) : null}
                                 {request.statusHistory?.length ? (
-                                  <div className="space-y-1 border-t border-mono-border/30 pt-3">
-                                    <p className="monolith-label">Approval History</p>
+                                  <div className="space-y-1 border-t mnx-border pt-3">
+                                    <p className="mnx-label">Approval History</p>
                                     {request.statusHistory.slice(0, 4).map((entry: any) => (
-                                      <p key={entry.id} className="text-xs text-mono-muted">
+                                      <p key={entry.id} className="text-xs mnx-text-muted">
                                         {String(entry.status).replace(/_/g, " ")} - {entry.remarks || "No remarks"} -{" "}
                                         {new Date(entry.createdAt).toLocaleString("en-IN")}
                                       </p>
@@ -9958,8 +9967,8 @@ export function JobWorkspaceClient({
                                   </div>
                                 ) : null}
                                 {expReviewId === request.id ? (
-                                  <div className="grid gap-2 rounded-lg border border-mono-border/45 bg-mono-card p-3 md:grid-cols-[minmax(0,1fr)_auto]">
-                                    <input
+                                  <div className="grid gap-2 rounded-lg border mnx-border mnx-bg-surface p-3 md:grid-cols-[minmax(0,1fr)_auto]">
+                                    <Input
                                       type="text"
                                       value={expReviewRemarks}
                                       onChange={(e) => setExpReviewRemarks(e.target.value)}
@@ -9972,8 +9981,8 @@ export function JobWorkspaceClient({
                                   </div>
                                 ) : null}
                                 {expenseClarificationId === request.id ? (
-                                  <div className="grid gap-2 rounded-lg border border-mono-border/45 bg-mono-card p-3 md:grid-cols-[minmax(0,1fr)_auto]">
-                                    <input
+                                  <div className="grid gap-2 rounded-lg border mnx-border mnx-bg-surface p-3 md:grid-cols-[minmax(0,1fr)_auto]">
+                                    <Input
                                       type="text"
                                       value={expenseClarificationText}
                                       onChange={(e) => setExpenseClarificationText(e.target.value)}
@@ -9986,14 +9995,14 @@ export function JobWorkspaceClient({
                                   </div>
                                 ) : null}
                                 {payRequestId === request.id ? (
-                                  <form onSubmit={handlePostExpensePayment} className="grid gap-2 rounded-lg border border-mono-border/45 bg-mono-card p-3 md:grid-cols-6">
-                                    <input
+                                  <form onSubmit={handlePostExpensePayment} className="grid gap-2 rounded-lg border mnx-border mnx-bg-surface p-3 md:grid-cols-6">
+                                    <Input
                                       type="number"
                                       required
                                       value={payAmount}
                                       onChange={(e) => setPayAmount(e.target.value)}
                                       placeholder="Amount paid"
-                                      className="h-10 text-xs monolith-numeric"
+                                      className="h-10 text-xs mnx-numeric"
                                     />
                                     <DateInput required value={payDate} onChange={(e) => setPayDate(e.target.value)} className="h-10 text-xs" />
                                     <NativeSelect
@@ -10006,7 +10015,7 @@ export function JobWorkspaceClient({
                                       <option value="UPI">UPI</option>
                                       <option value="CASH">Cash Drawer</option>
                                     </NativeSelect>
-                                    <input
+                                    <Input
                                       type="text"
                                       required
                                       value={payRef}
@@ -10039,7 +10048,7 @@ export function JobWorkspaceClient({
                                   </form>
                                 ) : null}
                                 {canReviewThisExpense || canClarifyThisExpense || canMarkReadyThisExpense || canPayThisExpense ? (
-                                  <div className="flex flex-wrap justify-end gap-2 border-t border-mono-border/30 pt-3">
+                                  <div className="flex flex-wrap justify-end gap-2 border-t mnx-border pt-3">
                                     {canReviewThisExpense ? (
                                       <>
                                         <Button type="button" variant="outline" size="sm" onClick={() => {
@@ -10123,18 +10132,18 @@ export function JobWorkspaceClient({
                 >
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
-                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-green-600/10 text-green-600">
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl mnx-bg-success mnx-text-success">
                         <Check size={20} />
                       </span>
                       <div className="space-y-1">
                         <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
-                          <span className="h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
-                          <h4 className="monolith-h3 text-mono-text">Customs Filing Complete</h4>
+                          <span className="h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
+                          <h4 className="mnx-heading-3 mnx-text-primary">Customs Filing Complete</h4>
                         </div>
                         <Badge variant="success">Filed</Badge>
                       </div>
                     </div>
-                    <p className="max-w-xl text-sm text-[#F9D972] font-medium font-sans">
+                    <p className="max-w-xl text-sm mnx-text-accent font-medium font-sans">
                       All checklist preparation checks have been validated and the customs declaration has been filed.
                     </p>
                   </div>
@@ -10145,22 +10154,22 @@ export function JobWorkspaceClient({
             <div
               className={cn(
                 "min-h-[320px] rounded-xl",
-                activeTab === "overview" ? "bg-transparent p-0 shadow-none" : "bg-mono-card p-6 shadow-sm",
+                activeTab === "overview" ? "bg-transparent p-0 shadow-none" : "mnx-bg-surface p-6 shadow-sm",
               )}
             >
 
               {activeTab === "overview" && (
                 <div id="workflow-stage-overview" className="scroll-mt-32 space-y-6">
                   <div className="grid items-stretch gap-4 xl:grid-cols-3">
-                    <section className="monolith-section-panel h-full p-5">
-                      <div className="monolith-section-panel-header flex items-center justify-between gap-3">
+                    <section className="mnx-bg-surface mnx-border h-full p-5">
+                      <div className="mnx-cha-section-header flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <span className="monolith-icon-badge">
+                          <span className="mnx-icon-badge">
                             <Package size={16} />
                           </span>
                           <div className="space-y-0.5">
-                            <h3 className="monolith-h3 text-mono-text">Job Summary</h3>
-                            <p className="text-xs text-mono-muted">Key shipment and clearance details for this job.</p>
+                            <h3 className="mnx-heading-3 mnx-text-primary">Job Summary</h3>
+                            <p className="text-xs mnx-text-muted">Key shipment and clearance details for this job.</p>
                           </div>
                         </div>
                         <Button type="button" variant="outline" size="sm" onClick={() => navigateToWorkspaceTab("additionalData")}>
@@ -10171,12 +10180,12 @@ export function JobWorkspaceClient({
                         {overviewSummaryItems.map((item) => (
                           <div key={item.label} className="px-3 py-3">
                             <div className="flex items-start gap-3">
-                              <span className="monolith-icon-badge !size-8">
+                              <span className="mnx-icon-badge !size-8">
                                 {item.icon}
                               </span>
                               <div className="min-w-0">
-                                <p className="monolith-label">{item.label}</p>
-                                <p className={cn("mt-1 text-sm text-mono-text", item.numeric && "monolith-numeric")}>{item.value}</p>
+                                <p className="mnx-label">{item.label}</p>
+                                <p className={cn("mt-1 text-sm mnx-text-primary", item.numeric && "mnx-numeric")}>{item.value}</p>
                               </div>
                             </div>
                           </div>
@@ -10184,38 +10193,38 @@ export function JobWorkspaceClient({
                       </div>
                     </section>
 
-                    <section className="monolith-section-panel h-full p-5">
-                      <div className="monolith-section-panel-header flex items-center gap-3">
-                        <span className="monolith-icon-badge">
+                    <section className="mnx-bg-surface mnx-border h-full p-5">
+                      <div className="mnx-cha-section-header flex items-center gap-3">
+                        <span className="mnx-icon-badge">
                           <CalendarDays size={16} />
                         </span>
                         <div className="space-y-0.5">
-                          <h3 className="monolith-h3 text-mono-text">Important Dates</h3>
-                          <p className="text-xs text-mono-muted">Validity and deadline signals for this shipment.</p>
+                          <h3 className="mnx-heading-3 mnx-text-primary">Important Dates</h3>
+                          <p className="text-xs mnx-text-muted">Validity and deadline signals for this shipment.</p>
                         </div>
                       </div>
                       <div className="mt-4 space-y-3">
                         {overviewDateItems.map((item) => (
-                          <div key={item.label} className="monolith-inset-row flex items-center justify-between gap-3 px-3 py-3">
+                          <div key={item.label} className="mnx-bg-soft mnx-border flex items-center justify-between gap-3 px-3 py-3">
                             <div className="flex min-w-0 items-center gap-3">
-                              <span className="monolith-icon-badge !size-8">
+                              <span className="mnx-icon-badge !size-8">
                                 {item.icon}
                               </span>
                               <div className="min-w-0">
-                                <p className="monolith-label">{item.label}</p>
-                                <p className="monolith-numeric mt-1 text-sm text-mono-text">{item.value}</p>
+                                <p className="mnx-label">{item.label}</p>
+                                <p className="mnx-numeric mt-1 text-sm mnx-text-primary">{item.value}</p>
                               </div>
                             </div>
                             <span
                               className={cn(
                                 "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold",
                                 item.badge.tone === "destructive"
-                                  ? "bg-red-500/10 text-red-500"
+                                  ? "mnx-bg-danger mnx-text-danger"
                                   : item.badge.tone === "warning"
-                                    ? "bg-[#D88700]/12 text-[#D88700]"
+                                    ? "mnx-bg-warning mnx-text-warning"
                                     : item.badge.tone === "success"
-                                      ? "bg-green-500/10 text-green-600"
-                                      : "bg-mono-soft text-mono-muted",
+                                      ? "mnx-bg-success mnx-text-success"
+                                      : "mnx-bg-soft mnx-text-muted",
                               )}
                             >
                               {item.badge.label}
@@ -10225,36 +10234,36 @@ export function JobWorkspaceClient({
                       </div>
                     </section>
 
-                    <section className="monolith-section-panel h-full p-5">
-                      <div className="monolith-section-panel-header flex items-center gap-3">
-                        <span className="monolith-icon-badge">
+                    <section className="mnx-bg-surface mnx-border h-full p-5">
+                      <div className="mnx-cha-section-header flex items-center gap-3">
+                        <span className="mnx-icon-badge">
                           <Zap size={16} />
                         </span>
                         <div className="space-y-0.5">
-                          <h3 className="monolith-h3 text-mono-text">Quick Actions</h3>
-                          <p className="text-xs text-mono-muted">Common job actions and workspace shortcuts.</p>
+                          <h3 className="mnx-heading-3 mnx-text-primary">Quick Actions</h3>
+                          <p className="text-xs mnx-text-muted">Common job actions and workspace shortcuts.</p>
                         </div>
                       </div>
                       <div className="mt-4 grid gap-3">
                         {workspaceQuickActions.map((action) => (
                           <div
                             key={action.label}
-                            className="monolith-action-row flex min-h-[76px] items-center justify-between gap-3 px-3 py-2 text-left"
+                            className="mnx-bg-soft mnx-border flex min-h-[76px] items-center justify-between gap-3 px-3 py-2 text-left"
                           >
                             <div className="flex min-w-0 items-center gap-3">
-                              <span className="monolith-icon-badge">
+                              <span className="mnx-icon-badge">
                                 {action.icon}
                               </span>
                               <div className="min-w-0">
-                                <p className="text-sm text-mono-text">{action.label}</p>
-                                <p className="mt-1 text-xs text-mono-muted">{action.note}</p>
+                                <p className="text-sm mnx-text-primary">{action.label}</p>
+                                <p className="mt-1 text-xs mnx-text-muted">{action.note}</p>
                               </div>
                             </div>
                             <Button
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="h-auto w-fit shrink-0 !border-transparent !bg-transparent px-0 py-0 text-xs uppercase tracking-[0.14em] !text-[#F9D972] !shadow-none hover:!border-transparent hover:!bg-transparent hover:!text-[#E8C85D] hover:!shadow-none"
+                              className="h-auto w-fit shrink-0 !border-transparent !bg-transparent px-0 py-0 text-xs uppercase tracking-[0.14em] mnx-text-accent !shadow-none hover:!border-transparent hover:!bg-transparent mnx-hover-accent hover:!shadow-none"
                               onClick={action.onClick}
                             >
                               Open
@@ -10266,13 +10275,13 @@ export function JobWorkspaceClient({
                     </section>
                   </div>
 
-                  <section className="monolith-section-panel p-5">
-                    <div className="monolith-section-panel-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <section className="mnx-bg-surface mnx-border p-5">
+                    <div className="mnx-cha-section-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-3">
-                        <span className="monolith-icon-badge">
+                        <span className="mnx-icon-badge">
                           <History size={16} />
                         </span>
-                        <h3 className="monolith-h3 text-mono-text">Recent Activity</h3>
+                        <h3 className="mnx-heading-3 mnx-text-primary">Recent Activity</h3>
                       </div>
                       <Button type="button" variant="outline" onClick={() => navigateToWorkspaceTab("audit")}>
                         View All Activity
@@ -10280,7 +10289,7 @@ export function JobWorkspaceClient({
                     </div>
                     <div className="mt-4 overflow-hidden rounded-[20px]">
                       {overviewRecentLogs.length === 0 ? (
-                        <div className="px-4 py-6 text-sm text-mono-muted">
+                        <div className="px-4 py-6 text-sm mnx-text-muted">
                           No recent job activity has been recorded yet.
                         </div>
                       ) : (
@@ -10291,25 +10300,25 @@ export function JobWorkspaceClient({
                                 <span className={cn(
                                   "flex size-8 shrink-0 items-center justify-center rounded-full",
                                   String(log.event || "").includes("QUERY") || String(log.event || "").includes("query")
-                                    ? "bg-[#D88700]/12 text-[#D88700]"
-                                    : "bg-[#F9D972]/10 text-[#F9D972]",
+                                    ? "mnx-bg-warning mnx-text-warning"
+                                    : "mnx-bg-accent-soft mnx-text-accent",
                                 )}>
                                   {String(log.event || "").includes("QUERY") || String(log.event || "").includes("query") ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
                                 </span>
-                                <p className="monolith-label text-mono-text">{String(log.event || "Activity").replace(/_/g, " ")}</p>
+                                <p className="mnx-label mnx-text-primary">{String(log.event || "Activity").replace(/_/g, " ")}</p>
                               </div>
-                              <p className="text-sm text-mono-muted">{log.remarks || "Operational update recorded for this job."}</p>
-                              <p className="monolith-numeric text-sm text-mono-muted">
+                              <p className="text-sm mnx-text-muted">{log.remarks || "Operational update recorded for this job."}</p>
+                              <p className="mnx-numeric text-sm mnx-text-muted">
                                 {log.timestamp ? new Date(log.timestamp).toLocaleDateString("en-IN") : "Not available"}
                               </p>
-                              <p className="monolith-numeric text-sm text-mono-muted">
+                              <p className="mnx-numeric text-sm mnx-text-muted">
                                 {log.timestamp ? new Date(log.timestamp).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : ""}
                               </p>
                               <div className="flex items-center justify-between gap-2 md:justify-end">
-                                <span className="inline-flex rounded-full bg-mono-soft px-2.5 py-1 text-xs font-medium text-mono-muted">
+                                <span className="inline-flex rounded-full mnx-bg-soft px-2.5 py-1 text-xs font-medium mnx-text-muted">
                                   {log.actor?.name || "System"}
                                 </span>
-                                <span className="size-2 rounded-full bg-green-500" />
+                                <span className="size-2 rounded-full mnx-bg-success" />
                               </div>
                             </div>
                           ))}
@@ -10325,10 +10334,10 @@ export function JobWorkspaceClient({
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
-                      <span className="h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
-                      <h3 className="monolith-h3 text-mono-text">Client Advance Collections</h3>
+                      <span className="h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
+                      <h3 className="mnx-heading-3 mnx-text-primary">Client Advance Collections</h3>
                     </div>
-                    <span className={`text-xs font-bold uppercase tracking-wider ${job.customerAdvance.status === "FULLY_RECEIVED" ? "text-green-600" : "text-[#D88700]"
+                    <span className={`text-xs font-bold uppercase tracking-wider ${job.customerAdvance.status === "FULLY_RECEIVED" ? "mnx-text-success" : "mnx-text-warning"
                       }`}>
                       Collection: {job.customerAdvance.status.replace(/_/g, " ")}
                     </span>
@@ -10337,21 +10346,21 @@ export function JobWorkspaceClient({
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {/* Expected settings */}
                     <div className="space-y-4">
-                      <div className="border border-mono-border p-4 rounded-2xl space-y-4">
-                        <span className="monolith-label block text-mono-text">Billing expected terms</span>
+                      <div className="border mnx-border p-4 rounded-2xl space-y-4">
+                        <span className="mnx-label block mnx-text-primary">Billing expected terms</span>
 
                         <div className="space-y-1">
-                          <label className="monolith-label block">Expected Advance Amount (Rs.) *</label>
-                          <input
+                          <label className="mnx-label block">Expected Advance Amount (Rs.) *</label>
+                          <Input
                             type="number"
                             value={expectedAdvance}
                             onChange={(e) => setExpectedAdvance(parseFloat(e.target.value) || 0)}
-                            className="w-full text-xs font-mono monolith-numeric"
+                            className="w-full text-xs font-mono mnx-numeric"
                           />
                         </div>
 
                         <div className="space-y-1">
-                          <label className="monolith-label block">Advance Due Date</label>
+                          <label className="mnx-label block">Advance Due Date</label>
                           <DateInput
                             value={advanceDueDate}
                             onChange={(e) => setAdvanceDueDate(e.target.value)}
@@ -10360,7 +10369,7 @@ export function JobWorkspaceClient({
                         </div>
 
                         <div className="space-y-1">
-                          <label className="monolith-label block">Assigned Collections Agent</label>
+                          <label className="mnx-label block">Assigned Collections Agent</label>
                           <NativeSelect
                             value={advanceAssigneeId}
                             onChange={(e) => setAdvanceAssigneeId(e.target.value)}
@@ -10382,7 +10391,7 @@ export function JobWorkspaceClient({
                           <Button
                             variant="outline"
                             onClick={() => setShowWaiveAdvance(!showWaiveAdvance)}
-                            className="flex-1 text-xs h-9 text-red-500 border-red-200"
+                            className="flex-1 text-xs h-9 mnx-text-danger mnx-border-danger"
                           >
                             Waive Collection
                           </Button>
@@ -10391,9 +10400,9 @@ export function JobWorkspaceClient({
 
                       {/* Waive advance drawer */}
                       {showWaiveAdvance && (
-                        <div className="border border-red-200 bg-red-50/5 p-4 rounded-2xl space-y-3">
-                          <span className="monolith-label text-red-500 block">Exempt / Waive Advance Requirement</span>
-                          <input
+                        <div className="border mnx-border-danger mnx-bg-danger p-4 rounded-2xl space-y-3">
+                          <span className="mnx-label mnx-text-danger block">Exempt / Waive Advance Requirement</span>
+                          <Input
                             type="text"
                             placeholder="Explain why client advance is not required..."
                             value={waiveAdvanceReason}
@@ -10416,22 +10425,22 @@ export function JobWorkspaceClient({
                     <div className="space-y-4">
                       {/* Form to add receipts */}
                       {job.customerAdvance.status !== "NOT_REQUIRED" && job.customerAdvance.status !== "FULLY_RECEIVED" && (
-                        <form onSubmit={handleRecordAdvanceReceipt} className="border border-mono-border p-4 rounded-2xl space-y-4">
-                          <span className="monolith-label block text-mono-text">Record Received Receipt</span>
+                        <form onSubmit={handleRecordAdvanceReceipt} className="border mnx-border p-4 rounded-2xl space-y-4">
+                          <span className="mnx-label block mnx-text-primary">Record Received Receipt</span>
 
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
-                              <label className="monolith-label block">Amount Paid (Rs.) *</label>
-                              <input
+                              <label className="mnx-label block">Amount Paid (Rs.) *</label>
+                              <Input
                                 type="number"
                                 required
                                 value={receiptAmount}
                                 onChange={(e) => setReceiptAmount(e.target.value)}
-                                className="w-full text-xs font-mono monolith-numeric"
+                                className="w-full text-xs font-mono mnx-numeric"
                               />
                             </div>
                             <div className="space-y-1">
-                              <label className="monolith-label block">Date Received *</label>
+                              <label className="mnx-label block">Date Received *</label>
                               <DateInput
                                 required
                                 value={receiptDate}
@@ -10443,7 +10452,7 @@ export function JobWorkspaceClient({
 
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
-                              <label className="monolith-label block">Payment Method *</label>
+                              <label className="mnx-label block">Payment Method *</label>
                               <NativeSelect
                                 value={receiptMethod}
                                 onChange={(e) => setReceiptMethod(e.target.value)}
@@ -10457,8 +10466,8 @@ export function JobWorkspaceClient({
                               </NativeSelect>
                             </div>
                             <div className="space-y-1">
-                              <label className="monolith-label block">Txn Reference Ref</label>
-                              <input
+                              <label className="mnx-label block">Txn Reference Ref</label>
+                              <Input
                                 type="text"
                                 placeholder="e.g. IMPS992812"
                                 value={receiptRef}
@@ -10469,8 +10478,8 @@ export function JobWorkspaceClient({
                           </div>
 
                           <div className="space-y-1">
-                            <label className="monolith-label block">Remarks</label>
-                            <input
+                            <label className="mnx-label block">Remarks</label>
+                            <Input
                               type="text"
                               placeholder="e.g. Paid online"
                               value={receiptRemarks}
@@ -10487,20 +10496,20 @@ export function JobWorkspaceClient({
 
                       {/* Receipts list */}
                       <div className="space-y-3">
-                        <span className="monolith-label block text-mono-text">Payment Receipts Catalog</span>
+                        <span className="mnx-label block mnx-text-primary">Payment Receipts Catalog</span>
                         {job.customerAdvance.receipts?.length === 0 ? (
-                          <p className="text-xs text-mono-muted italic">No receipts recorded for this job advance.</p>
+                          <p className="text-xs mnx-text-muted italic">No receipts recorded for this job advance.</p>
                         ) : (
                           <div className="space-y-2">
                             {job.customerAdvance.receipts.map((r: any) => (
-                              <div key={r.id} className="p-3 bg-mono-soft border border-mono-border/40 rounded-2xl flex items-center justify-between text-xs">
+                              <div key={r.id} className="p-3 mnx-bg-soft border mnx-border rounded-2xl flex items-center justify-between text-xs">
                                 <div>
-                                  <span className="font-bold text-[#F9D972] block">Rs. {Number(r.amount).toLocaleString("en-IN")}</span>
-                                  <span className="text-[10px] text-mono-muted block uppercase mt-0.5">
+                                  <span className="font-bold mnx-text-accent block">Rs. {Number(r.amount).toLocaleString("en-IN")}</span>
+                                  <span className="text-[10px] mnx-text-muted block uppercase mt-0.5">
                                     {r.paymentMethod} - Ref: {r.referenceNumber || "-"}
                                   </span>
                                 </div>
-                                <span className="text-[10px] text-mono-muted font-mono">
+                                <span className="text-[10px] mnx-text-muted font-mono">
                                   {new Date(r.receivedDate).toDateString()}
                                 </span>
                               </div>
@@ -10517,15 +10526,15 @@ export function JobWorkspaceClient({
               {activeTab === "expenses" && (
                 <div className="space-y-4">
                   {/* Create expense request */}
-                  <div className="space-y-4 rounded-xl border border-mono-border bg-mono-card p-4">
+                  <div className="space-y-4 rounded-xl border mnx-border mnx-bg-surface p-4">
                     <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
-                      <span className="h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
-                      <h3 className="monolith-h3 text-mono-text">New Clearance Expense Request</h3>
+                      <span className="h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
+                      <h3 className="mnx-heading-3 mnx-text-primary">New Clearance Expense Request</h3>
                     </div>
 
                     <form onSubmit={handleCreateExpenseRequest} className="space-y-4">
                       {/* Urgent switch */}
-                      <div className="flex flex-col md:flex-row gap-4 md:items-center justify-between p-4 border border-mono-border/60 rounded-2xl bg-mono-card">
+                      <div className="flex flex-col md:flex-row gap-4 md:items-center justify-between p-4 border mnx-border rounded-2xl mnx-bg-surface">
                         <div className="flex items-start space-x-3">
                           <NeonCheckbox
                             checked={expenseUrgent}
@@ -10533,8 +10542,8 @@ export function JobWorkspaceClient({
                             className="mt-1"
                             label={
                               <div>
-                                <span className="text-sm font-semibold text-mono-text block">Escalate to URGENT Payment</span>
-                                <span className="text-xs text-mono-muted">
+                                <span className="text-sm font-semibold mnx-text-primary block">Escalate to URGENT Payment</span>
+                                <span className="text-xs mnx-text-muted">
                                   Request accounts to disburse payment immediately to resolve critical port blocks.
                                 </span>
                               </div>
@@ -10544,16 +10553,16 @@ export function JobWorkspaceClient({
 
                         {expenseUrgent && (
                           <div className="flex-1 max-w-md space-y-1">
-                            <label className="monolith-label block text-[#D88700]">
+                            <label className="mnx-label block mnx-text-warning">
                               Urgency Explanation Justification (REQUIRED) *
                             </label>
-                            <input
+                            <Input
                               type="text"
                               required
                               placeholder="e.g. Demurrage free days end tomorrow"
                               value={expenseUrgencyReason}
                               onChange={(e) => setExpenseUrgencyReason(e.target.value)}
-                              className="w-full text-xs font-sans border-[#D88700]/50"
+                              className="w-full text-xs font-sans mnx-border-warning"
                             />
                           </div>
                         )}
@@ -10561,8 +10570,8 @@ export function JobWorkspaceClient({
 
                       <div className="grid gap-3 md:grid-cols-2">
                         <div className="space-y-1">
-                          <label className="monolith-label">UPI Number</label>
-                          <input
+                          <label className="mnx-label">UPI Number</label>
+                          <Input
                             type="text"
                             placeholder="Payee mobile number"
                             value={expenseUpiNumber}
@@ -10571,8 +10580,8 @@ export function JobWorkspaceClient({
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="monolith-label">UPI ID</label>
-                          <input
+                          <label className="mnx-label">UPI ID</label>
+                          <Input
                             type="text"
                             placeholder="name@bank"
                             value={expenseUpiId}
@@ -10584,14 +10593,14 @@ export function JobWorkspaceClient({
 
                       {/* Multi-lines lists */}
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between border-b border-mono-border/30 pb-2">
-                          <span className="monolith-label">Expense Line Items</span>
+                        <div className="flex items-center justify-between border-b mnx-border pb-2">
+                          <span className="mnx-label">Expense Line Items</span>
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             onClick={handleAddExpenseLine}
-                            className="flex items-center gap-1 border-[#F9D972] text-[#F9D972]"
+                            className="flex items-center gap-1 mnx-border-accent mnx-text-accent"
                           >
                             <Plus size={12} /> Add Line Item
                           </Button>
@@ -10599,10 +10608,10 @@ export function JobWorkspaceClient({
 
                         <div className="space-y-3">
                           {expenseLines.map((line, index) => (
-                            <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end border-b border-mono-border/20 pb-3 md:pb-0 md:border-b-0">
+                            <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end border-b mnx-border pb-3 md:pb-0 md:border-b-0">
                               {/* category */}
                               <div className="space-y-1 md:col-span-1">
-                                <label className="monolith-label">Category</label>
+                                <label className="mnx-label">Category</label>
                                 <NativeSelect
                                   value={line.category}
                                   onChange={(e) => handleExpenseLineChange(index, "category", e.target.value)}
@@ -10618,8 +10627,8 @@ export function JobWorkspaceClient({
 
                               {/* Purpose */}
                               <div className="space-y-1 md:col-span-2">
-                                <label className="monolith-label">Purpose / Purpose *</label>
-                                <input
+                                <label className="mnx-label">Purpose / Purpose *</label>
+                                <Input
                                   type="text"
                                   required
                                   placeholder="Reason for payment"
@@ -10631,20 +10640,20 @@ export function JobWorkspaceClient({
 
                               {/* Amount */}
                               <div className="space-y-1 md:col-span-1">
-                                <label className="monolith-label">Amount (Rs.) *</label>
-                                <input
+                                <label className="mnx-label">Amount (Rs.) *</label>
+                                <Input
                                   type="number"
                                   required
                                   placeholder="Amount"
                                   value={line.amount}
                                   onChange={(e) => handleExpenseLineChange(index, "amount", e.target.value)}
-                                  className="w-full text-xs font-mono monolith-numeric h-9"
+                                  className="w-full text-xs font-mono mnx-numeric h-9"
                                 />
                               </div>
 
                               {/* Required Date */}
                               <div className="space-y-1 md:col-span-1">
-                                <label className="monolith-label">Required Date</label>
+                                <label className="mnx-label">Required Date</label>
                                 <DateInput
                                   value={line.requiredDate}
                                   onChange={(e) => handleExpenseLineChange(index, "requiredDate", e.target.value)}
@@ -10699,13 +10708,13 @@ export function JobWorkspaceClient({
 
                               {expenseLines.length > 1 ? (
                                 <div className="flex items-center justify-end col-span-1">
-                                  <button
+                                  <Button
                                     type="button"
                                     onClick={() => handleRemoveExpenseLine(index)}
-                                    className="text-red-500 hover:text-red-700 p-1.5"
+                                    className="mnx-text-danger mnx-hover-danger p-1.5"
                                   >
                                     <Trash2 size={16} />
-                                  </button>
+                                  </Button>
                                 </div>
                               ) : null}
                             </div>
@@ -10723,13 +10732,13 @@ export function JobWorkspaceClient({
 
                   {/* List of requested expenses */}
                   <div className="space-y-4">
-                    <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3 border-b border-mono-border/30 pb-2">
-                      <span className="h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
-                      <h3 className="monolith-h3 text-mono-text">Expenses Queue</h3>
+                    <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3 border-b mnx-border pb-2">
+                      <span className="h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
+                      <h3 className="mnx-heading-3 mnx-text-primary">Expenses Queue</h3>
                     </div>
 
                     {job.expenseRequests?.length === 0 ? (
-                      <p className="text-xs text-mono-muted italic">No expenses requested for this job clearance.</p>
+                      <p className="text-xs mnx-text-muted italic">No expenses requested for this job clearance.</p>
                     ) : (
                       <div className="space-y-4">
                         {job.expenseRequests.map((req: any) => {
@@ -10746,53 +10755,53 @@ export function JobWorkspaceClient({
                           return (
                             <div
                               key={req.id}
-                              className={`overflow-hidden rounded-xl border bg-mono-card transition-all ${req.isUrgent
-                                  ? "border-red-200 bg-red-50/5"
-                                  : "border-mono-border"
+                              className={`overflow-hidden rounded-xl border mnx-bg-surface transition-all ${req.isUrgent
+                                  ? "mnx-border-danger mnx-bg-danger"
+                                  : "mnx-border"
                                 }`}
                             >
                               {/* Title Bar */}
-                              <div className="grid gap-3 bg-mono-card px-4 py-3 md:grid-cols-[minmax(0,1.3fr)_110px_110px_auto] md:items-center">
-                                <button
+                              <div className="grid gap-3 mnx-bg-surface px-4 py-3 md:grid-cols-[minmax(0,1.3fr)_110px_110px_auto] md:items-center">
+                                <Button
                                   type="button"
                                   onClick={() => setExpandedJobExpenseId(isExpanded ? null : req.id)}
-                                  className="monolith-plain flex min-w-0 items-start gap-3 text-left"
+                                  className="mnx-plain flex min-w-0 items-start gap-3 text-left"
                                 >
-                                  <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border border-mono-border/45 bg-mono-card text-mono-muted">
+                                  <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border mnx-border mnx-bg-surface mnx-text-muted">
                                     <ChevronDown size={15} className={`transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                                   </span>
                                   <span className="min-w-0">
-                                    <span className="block truncate text-xs text-mono-muted">
+                                    <span className="block truncate text-xs mnx-text-muted">
                                       Ref: {req.id}
                                     </span>
-                                    <span className="mt-0.5 block truncate text-sm font-medium text-mono-text">
+                                    <span className="mt-0.5 block truncate text-sm font-medium mnx-text-primary">
                                       {req.lines[0]?.category || "Expense"} • {req.lines.length} line{req.lines.length === 1 ? "" : "s"}
                                     </span>
-                                    <span className="mt-0.5 block truncate text-xs text-mono-muted">
+                                    <span className="mt-0.5 block truncate text-xs mnx-text-muted">
                                       Requested by {req.requestedBy?.name || "Team Member"}
                                     </span>
                                     {req.isUrgent && (
-                                      <span className="mt-1 inline-flex rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] uppercase text-red-500">
+                                      <span className="mt-1 inline-flex rounded-full border mnx-border-danger mnx-bg-danger px-2 py-0.5 text-[10px] uppercase mnx-text-danger">
                                         URGENT
                                       </span>
                                     )}
                                   </span>
-                                </button>
+                                </Button>
 
                                 <div className="flex items-center justify-between gap-2 md:block">
-                                  <span className="monolith-label md:hidden">Amount</span>
-                                  <span className="text-sm text-[#F9D972] monolith-numeric">Rs. {sum.toLocaleString("en-IN")}</span>
+                                  <span className="mnx-label md:hidden">Amount</span>
+                                  <span className="text-sm mnx-text-accent mnx-numeric">Rs. {sum.toLocaleString("en-IN")}</span>
                                 </div>
 
                                 <div className="flex items-center justify-between gap-2 md:block md:text-center">
-                                  <span className="monolith-label md:hidden">Status</span>
+                                  <span className="mnx-label md:hidden">Status</span>
                                   <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${isAck
-                                      ? "bg-green-100 text-green-700"
+                                      ? "mnx-bg-success mnx-text-success"
                                       : isPaid
-                                        ? "bg-[#F9D972]/10 text-[#00a9b2]"
+                                        ? "mnx-bg-accent-soft mnx-text-accent"
                                         : isQuery
-                                          ? "bg-orange-100 text-orange-700"
-                                          : "bg-mono-soft text-mono-muted border border-mono-border"
+                                          ? "mnx-bg-warning mnx-text-warning"
+                                          : "mnx-bg-soft mnx-text-muted border mnx-border"
                                     }`}>
                                     Status: {req.status.replace(/_/g, " ")}
                                   </span>
@@ -10816,14 +10825,14 @@ export function JobWorkspaceClient({
                               </div>
 
                               {isExpanded ? (
-                              <div className="space-y-4 border-t border-mono-border/25 p-4">
+                              <div className="space-y-4 border-t mnx-border p-4">
                               {/* Lines lists */}
-                              <div className="space-y-1.5 pl-2 border-l border-mono-border/40">
+                              <div className="space-y-1.5 pl-2 border-l mnx-border">
                                 {req.lines.map((l: any) => (
                                   <div key={l.id} className="flex flex-col gap-1 text-xs md:flex-row md:items-center md:justify-between">
                                     <div>
-                                      <span className="text-mono-text">
-                                        <strong className="text-mono-muted uppercase">{l.category}</strong>: {l.purpose}
+                                      <span className="mnx-text-primary">
+                                        <strong className="mnx-text-muted uppercase">{l.category}</strong>: {l.purpose}
                                       </span>
                                       {getReceiptLinks(l.supportingDocumentKey).length ? (
                                         <span className="ml-0 inline-flex flex-wrap gap-2 md:ml-2">
@@ -10833,7 +10842,7 @@ export function JobWorkspaceClient({
                                               href={receiptLink}
                                               target="_blank"
                                               rel="noreferrer"
-                                              className="font-medium text-[#F9D972] hover:underline"
+                                              className="font-medium mnx-text-accent hover:underline"
                                             >
                                               Receipt {receiptIndex + 1}
                                             </a>
@@ -10841,23 +10850,23 @@ export function JobWorkspaceClient({
                                         </span>
                                       ) : null}
                                     </div>
-                                    <span className="font-mono monolith-numeric text-mono-muted">Rs. {Number(l.amount).toLocaleString("en-IN")}</span>
+                                    <span className="font-mono mnx-numeric mnx-text-muted">Rs. {Number(l.amount).toLocaleString("en-IN")}</span>
                                   </div>
                                 ))}
                               </div>
 
                               {req.upiNumber || req.upiId ? (
-                                <div className="grid gap-2 rounded-lg border border-mono-border/35 bg-mono-card p-3 md:grid-cols-2">
+                                <div className="grid gap-2 rounded-lg border mnx-border mnx-bg-surface p-3 md:grid-cols-2">
                                   {req.upiNumber ? (
                                     <div>
-                                      <p className="monolith-label">UPI Number</p>
-                                      <p className="mt-1 text-xs text-mono-text monolith-numeric">{req.upiNumber}</p>
+                                      <p className="mnx-label">UPI Number</p>
+                                      <p className="mt-1 text-xs mnx-text-primary mnx-numeric">{req.upiNumber}</p>
                                     </div>
                                   ) : null}
                                   {req.upiId ? (
                                     <div>
-                                      <p className="monolith-label">UPI ID</p>
-                                      <p className="mt-1 text-xs text-mono-text">{req.upiId}</p>
+                                      <p className="mnx-label">UPI ID</p>
+                                      <p className="mt-1 text-xs mnx-text-primary">{req.upiId}</p>
                                     </div>
                                   ) : null}
                                 </div>
@@ -10865,28 +10874,28 @@ export function JobWorkspaceClient({
 
                               {/* Rework / Escalation Alerts */}
                               {req.isUrgent && req.urgencyReason && (
-                                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs leading-relaxed text-red-700">
+                                <div className="p-3 mnx-bg-danger border mnx-border-danger rounded-lg text-xs leading-relaxed mnx-text-danger">
                                   <strong>Urgent escalation reason:</strong> "{req.urgencyReason}"
                                 </div>
                               )}
 
                               {/* Query loop visibility */}
                               {req.queries?.map((q: any) => (
-                                <div key={q.id} className="p-3 bg-orange-50 border border-orange-200 rounded-lg text-xs space-y-2">
+                                <div key={q.id} className="p-3 mnx-bg-warning border mnx-border-warning rounded-lg text-xs space-y-2">
                                   <div>
-                                    <strong className="text-[#D88700]">DISBURSEMENT QUERY:</strong>
-                                    <p className="text-mono-text italic mt-0.5">"{q.queryText}"</p>
-                                    <span className="text-[10px] text-mono-muted block mt-0.5">Raised by: {q.author?.name}</span>
+                                    <strong className="mnx-text-warning">DISBURSEMENT QUERY:</strong>
+                                    <p className="mnx-text-primary italic mt-0.5">"{q.queryText}"</p>
+                                    <span className="text-[10px] mnx-text-muted block mt-0.5">Raised by: {q.author?.name}</span>
                                   </div>
 
                                   {q.resolved ? (
-                                    <div className="border-t border-orange-200/50 pt-2 text-[11px] text-green-700">
+                                    <div className="border-t mnx-border-warning pt-2 text-[11px] mnx-text-success">
                                       <strong>Resolution:</strong> "{q.resolutionText}" (Resolved by {q.resolvedBy?.name})
                                     </div>
                                   ) : (
                                     resolveQueryId === q.id ? (
-                                      <div className="space-y-2 border-t border-orange-200/50 pt-2">
-                                        <input
+                                      <div className="space-y-2 border-t mnx-border-warning pt-2">
+                                        <Input
                                           type="text"
                                           placeholder="Enter query resolution details..."
                                           value={resolutionText}
@@ -10903,15 +10912,15 @@ export function JobWorkspaceClient({
                                         </div>
                                       </div>
                                     ) : (
-                                      <button
+                                      <Button
                                         onClick={() => {
                                           setResolveQueryId(q.id);
                                           setResolutionText("");
                                         }}
-                                        className="text-xs font-semibold text-[#D88700] hover:underline"
+                                        className="text-xs font-semibold mnx-text-warning hover:underline"
                                       >
                                         Resolve Query
-                                      </button>
+                                      </Button>
                                     )
                                   )}
                                 </div>
@@ -10919,10 +10928,10 @@ export function JobWorkspaceClient({
 
                               {/* Payments Posted */}
                               {req.payments?.map((p: any) => (
-                                <div key={p.id} className="p-3 bg-green-50/5 border border-green-200 rounded-lg text-xs flex flex-col md:flex-row md:items-center justify-between gap-2">
+                                <div key={p.id} className="p-3 mnx-bg-success border mnx-border-success rounded-lg text-xs flex flex-col md:flex-row md:items-center justify-between gap-2">
                                   <div>
-                                    <span className="font-semibold text-green-700 block">Payment Disbursed via {p.paymentMethod}</span>
-                                    <span className="text-[10px] text-mono-muted">
+                                    <span className="font-semibold mnx-text-success block">Payment Disbursed via {p.paymentMethod}</span>
+                                    <span className="text-[10px] mnx-text-muted">
                                       Txn Ref: {p.transactionReference} - Paid by {p.paidBy?.name}
                                     </span>
                                     {getPaymentProofLinks(p.paymentProofKey).length ? (
@@ -10933,7 +10942,7 @@ export function JobWorkspaceClient({
                                             href={proofLink}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="inline-flex font-medium text-[#F9D972] hover:underline"
+                                            className="inline-flex font-medium mnx-text-accent hover:underline"
                                           >
                                             View payment proof {index + 1}
                                           </a>
@@ -10941,7 +10950,7 @@ export function JobWorkspaceClient({
                                       </div>
                                     ) : null}
                                   </div>
-                                  <span className="text-[10px] text-mono-muted font-mono font-bold">
+                                  <span className="text-[10px] mnx-text-muted font-mono font-bold">
                                     {new Date(p.paymentDate).toDateString()}
                                   </span>
                                 </div>
@@ -10949,9 +10958,9 @@ export function JobWorkspaceClient({
 
                               {/* Escalation dialog popup */}
                               {escRequestId === req.id && (
-                                <div className="p-4 border border-[#D88700]/40 bg-[#D88700]/5 rounded-2xl space-y-3">
-                                  <span className="monolith-label text-[#D88700] font-bold block">Escalate Request to Urgent</span>
-                                  <input
+                                <div className="p-4 border mnx-border-warning mnx-bg-warning rounded-2xl space-y-3">
+                                  <span className="mnx-label mnx-text-warning font-bold block">Escalate Request to Urgent</span>
+                                  <Input
                                     type="text"
                                     placeholder="Reason for immediate payment request..."
                                     value={escUrgencyReason}
@@ -10971,9 +10980,9 @@ export function JobWorkspaceClient({
 
                               {/* Review Action Drawer Popup */}
                               {expReviewId === req.id && (
-                                <div className="p-4 border border-mono-border/60 bg-mono-card rounded-2xl space-y-3">
-                                  <span className="monolith-label block text-mono-text">Administrative Expense Review</span>
-                                  <input
+                                <div className="p-4 border mnx-border mnx-bg-surface rounded-2xl space-y-3">
+                                  <span className="mnx-label block mnx-text-primary">Administrative Expense Review</span>
+                                  <Input
                                     type="text"
                                     placeholder={expReviewStatus === "REJECTED" ? "Rejection reason..." : "Clarification required..."}
                                     value={expReviewRemarks}
@@ -10992,9 +11001,9 @@ export function JobWorkspaceClient({
                               )}
 
                               {expenseClarificationId === req.id && (
-                                <div className="p-4 border border-mono-border/60 bg-mono-card rounded-2xl space-y-3">
-                                  <span className="monolith-label block text-mono-text">Clarification Response</span>
-                                  <input
+                                <div className="p-4 border mnx-border mnx-bg-surface rounded-2xl space-y-3">
+                                  <span className="mnx-label block mnx-text-primary">Clarification Response</span>
+                                  <Input
                                     type="text"
                                     placeholder="Enter clarification response..."
                                     value={expenseClarificationText}
@@ -11014,21 +11023,21 @@ export function JobWorkspaceClient({
 
                               {/* Post Payout Form Popup */}
                               {payRequestId === req.id && (
-                                <form onSubmit={handlePostExpensePayment} className="p-4 border border-[#F9D972]/40 bg-[#F9D972]/5 rounded-2xl space-y-4">
-                                  <span className="monolith-label text-[#F9D972] block">Post Payment Disbursement Confirmation</span>
+                                <form onSubmit={handlePostExpensePayment} className="p-4 border mnx-border-accent mnx-bg-accent-soft rounded-2xl space-y-4">
+                                  <span className="mnx-label mnx-text-accent block">Post Payment Disbursement Confirmation</span>
                                   <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                                     <div>
-                                      <label className="monolith-label block">Amount Disbursed (Rs.) *</label>
-                                      <input
+                                      <label className="mnx-label block">Amount Disbursed (Rs.) *</label>
+                                      <Input
                                         type="number"
                                         required
                                         value={payAmount}
                                         onChange={(e) => setPayAmount(e.target.value)}
-                                        className="w-full text-xs font-mono monolith-numeric h-8"
+                                        className="w-full text-xs font-mono mnx-numeric h-8"
                                       />
                                     </div>
                                     <div>
-                                      <label className="monolith-label block">Date Paid *</label>
+                                      <label className="mnx-label block">Date Paid *</label>
                                       <DateInput
                                         required
                                         value={payDate}
@@ -11037,7 +11046,7 @@ export function JobWorkspaceClient({
                                       />
                                     </div>
                                     <div>
-                                      <label className="monolith-label block">Payment Method *</label>
+                                      <label className="mnx-label block">Payment Method *</label>
                                       <NativeSelect
                                         value={payMethod}
                                         onChange={(e) => setPayMethod(e.target.value)}
@@ -11050,8 +11059,8 @@ export function JobWorkspaceClient({
                                       </NativeSelect>
                                     </div>
                                     <div>
-                                      <label className="monolith-label block">Txn Reference ID *</label>
-                                      <input
+                                      <label className="mnx-label block">Txn Reference ID *</label>
+                                      <Input
                                         type="text"
                                         required
                                         placeholder="Txn reference code"
@@ -11096,9 +11105,9 @@ export function JobWorkspaceClient({
 
                               {/* Query Form Popup */}
                               {queryRequestId === req.id && (
-                                <div className="p-4 border border-[#D88700]/40 bg-[#D88700]/5 rounded-2xl space-y-3">
-                                  <span className="monolith-label text-[#D88700] font-bold block">Raise Payment Discrepancy Query</span>
-                                  <input
+                                <div className="p-4 border mnx-border-warning mnx-bg-warning rounded-2xl space-y-3">
+                                  <span className="mnx-label mnx-text-warning font-bold block">Raise Payment Discrepancy Query</span>
+                                  <Input
                                     type="text"
                                     placeholder="What discrepancy is there in the posted payment details?..."
                                     value={queryText}
@@ -11117,63 +11126,63 @@ export function JobWorkspaceClient({
                               )}
 
                               {/* Action buttons footer */}
-                              <div className="flex justify-end gap-2 border-t border-mono-border/10 pt-3 text-xs">
+                              <div className="flex justify-end gap-2 border-t mnx-border pt-3 text-xs">
                                 {canReviewThisExpense ? (
                                   <>
-                                    <button
+                                    <Button
                                       onClick={() => {
                                         setExpReviewId(req.id);
                                         setExpReviewStatus("CLARIFICATION_REQUIRED");
                                         setExpReviewRemarks("");
                                       }}
-                                      className="monolith-plain cha-link hover:underline font-semibold"
+                                      className="mnx-plain mnx-text-accent hover:underline font-semibold"
                                     >
                                       Require Clarification
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
                                       onClick={() => {
                                         setExpReviewId(req.id);
                                         setExpReviewStatus("REJECTED");
                                         setExpReviewRemarks("");
                                       }}
-                                      className="monolith-plain text-red-600 hover:underline font-semibold"
+                                      className="mnx-plain mnx-text-danger hover:underline font-semibold"
                                     >
                                       Reject
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
                                       onClick={() => handleExpenseReview(req.id, "APPROVED", "")}
                                       disabled={loading !== null}
-                                      className="monolith-plain cha-link hover:underline font-bold"
+                                      className="mnx-plain mnx-text-accent hover:underline font-bold"
                                     >
                                       Approve
-                                    </button>
+                                    </Button>
                                   </>
                                 ) : null}
 
                                 {canClarifyThisExpense ? (
-                                  <button
+                                  <Button
                                     onClick={() => {
                                       setExpenseClarificationId(req.id);
                                       setExpenseClarificationText(req.clarificationResponse || "");
                                     }}
-                                    className="monolith-plain cha-link hover:underline font-semibold"
+                                    className="mnx-plain mnx-text-accent hover:underline font-semibold"
                                   >
                                     Submit Clarification
-                                  </button>
+                                  </Button>
                                 ) : null}
 
                                 {canMarkReadyThisExpense ? (
-                                  <button
+                                  <Button
                                     onClick={() => handleReadyForExpenseDisbursement(req.id)}
                                     disabled={loading !== null}
-                                    className="monolith-plain cha-link hover:underline font-semibold"
+                                    className="mnx-plain mnx-text-accent hover:underline font-semibold"
                                   >
                                     Ready for Disbursement
-                                  </button>
+                                  </Button>
                                 ) : null}
 
                                 {canPayThisExpense ? (
-                                  <button
+                                  <Button
                                     onClick={() => {
                                       setPayRequestId(req.id);
                                       setPayAmount(String(sum));
@@ -11181,31 +11190,31 @@ export function JobWorkspaceClient({
                                       setPayRef("");
                                       setPayProofFiles([]);
                                     }}
-                                    className="monolith-plain cha-link hover:underline font-bold"
+                                    className="mnx-plain mnx-text-accent hover:underline font-bold"
                                   >
                                     Register Payout
-                                  </button>
+                                  </Button>
                                 ) : null}
 
                                 {/* Requester Ack / Query */}
                                 {isPaid && (
                                   <>
-                                    <button
+                                    <Button
                                       onClick={() => {
                                         setQueryRequestId(req.id);
                                         setQueryText("");
                                       }}
-                                      className="text-[#D88700] hover:underline font-semibold"
+                                      className="mnx-text-warning hover:underline font-semibold"
                                     >
                                       Raise Query
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
                                       onClick={() => handleAcknowledgeExpense(req.id)}
                                       disabled={loading !== null}
-                                      className="text-green-600 hover:underline font-bold"
+                                      className="mnx-text-success hover:underline font-bold"
                                     >
                                       Acknowledge Receipt
-                                    </button>
+                                    </Button>
                                   </>
                                 )}
                               </div>
@@ -11224,31 +11233,31 @@ export function JobWorkspaceClient({
               {activeTab === "audit" && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
-                    <span className="h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
-                    <h3 className="monolith-h3 text-mono-text">Job Auditing History Trail</h3>
+                    <span className="h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
+                    <h3 className="mnx-heading-3 mnx-text-primary">Job Auditing History Trail</h3>
                   </div>
 
                   {job.auditLogs?.length === 0 ? (
-                    <p className="text-xs text-mono-muted">No audit log records for this clearance.</p>
+                    <p className="text-xs mnx-text-muted">No audit log records for this clearance.</p>
                   ) : (
                     <div className="relative pl-6 space-y-4 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-outline-variant/40">
                       {job.auditLogs.map((log: any) => (
                         <div key={log.id} className="relative space-y-1 text-xs">
                           {/* Dot */}
-                          <span className="absolute -left-[20px] top-1.5 w-3.5 h-3.5 rounded-full bg-[#F9D972] border-2 border-surface shadow-[0_0_0_2px_rgba(0,206,196,0.1)]" />
+                          <span className="absolute -left-[20px] top-1.5 w-3.5 h-3.5 rounded-full mnx-bg-accent-soft border-2 border-surface mnx-shadow-panel" />
 
                           <div className="flex items-center justify-between">
-                            <span className="font-bold text-mono-text">{log.event.replace(/_/g, " ")}</span>
-                            <span className="text-[10px] text-mono-muted font-mono">
+                            <span className="font-bold mnx-text-primary">{log.event.replace(/_/g, " ")}</span>
+                            <span className="text-[10px] mnx-text-muted font-mono">
                               {new Date(log.timestamp).toLocaleString("en-IN")}
                             </span>
                           </div>
 
-                          <p className="text-mono-muted leading-relaxed">
+                          <p className="mnx-text-muted leading-relaxed">
                             {log.remarks}
                           </p>
 
-                          <div className="flex gap-4 text-[10px] text-mono-muted pt-0.5">
+                          <div className="flex gap-4 text-[10px] mnx-text-muted pt-0.5">
                             <span>Actor: <strong>{log.actor?.name || "System"}</strong></span>
                             {log.newState && (
                               <span>New State: <strong>{log.newState}</strong></span>
@@ -11272,7 +11281,7 @@ export function JobWorkspaceClient({
           >
             <div className="space-y-4">
               {filingInstance?.nodeRuns?.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-mono-border/70 px-4 py-5 text-sm text-mono-muted">
+                <div className="rounded-xl border border-dashed mnx-border px-4 py-5 text-sm mnx-text-muted">
                   No workflow checks executed yet.
                 </div>
               ) : (
@@ -11281,42 +11290,42 @@ export function JobWorkspaceClient({
                   const runBadgeVariant =
                     run.status === "ACTIVE" ? "default" : run.completedAt ? "success" : "secondary";
                   return (
-                    <div key={run.id} className="rounded-xl border border-mono-border/60 bg-mono-card p-4">
+                    <div key={run.id} className="rounded-xl border mnx-border mnx-bg-surface p-4">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <h4 className={`text-sm font-medium ${isCurrent ? "text-[#F9D972]" : "text-mono-text"}`}>
+                            <h4 className={`text-sm font-medium ${isCurrent ? "mnx-text-accent" : "mnx-text-primary"}`}>
                               {run.node?.name || run.nodeKey}
                             </h4>
                             <Badge variant={runBadgeVariant}>{run.status}</Badge>
                           </div>
                           {(run.node?.sectionName || run.node?.branchName) && (
-                            <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-mono-muted">
+                            <p className="mt-1 text-[11px] uppercase tracking-[0.12em] mnx-text-muted">
                               {[run.node?.sectionName, run.node?.branchName].filter(Boolean).join(" / ")}
                             </p>
                           )}
                         </div>
-                        <span className="text-[11px] text-mono-muted">
+                        <span className="text-[11px] mnx-text-muted">
                           Started {new Date(run.startedAt).toLocaleString("en-IN")}
                           {run.completedAt ? ` - Finished ${new Date(run.completedAt).toLocaleString("en-IN")}` : ""}
                         </span>
                       </div>
 
                       {run.completedBy ? (
-                        <p className="mt-3 text-xs text-mono-muted">
-                          Completed by: <strong className="text-mono-text">{run.completedBy.name}</strong>
+                        <p className="mt-3 text-xs mnx-text-muted">
+                          Completed by: <strong className="mnx-text-primary">{run.completedBy.name}</strong>
                         </p>
                       ) : null}
 
                       {run.remarks ? (
-                        <div className="mt-3 rounded-xl border border-mono-border/50 bg-mono-soft p-3 text-xs italic text-mono-muted">
+                        <div className="mt-3 rounded-xl border mnx-border mnx-bg-soft p-3 text-xs italic mnx-text-muted">
                           "{run.remarks}"
                         </div>
                       ) : null}
 
                       {run.attachments?.length > 0 ? (
                         <div className="mt-4 space-y-2">
-                          <span className="monolith-label block text-mono-muted">Attachments</span>
+                          <span className="mnx-label block mnx-text-muted">Attachments</span>
                           <div className="space-y-2">
                             {run.attachments.map((att: any) => (
                               <a
@@ -11324,7 +11333,7 @@ export function JobWorkspaceClient({
                                 href={att.fileKey}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="flex items-center gap-2 rounded-lg border border-mono-border/50 bg-mono-soft px-3 py-2 text-xs font-medium text-[#F9D972] hover:underline"
+                                className="flex items-center gap-2 rounded-lg border mnx-border mnx-bg-soft px-3 py-2 text-xs font-medium mnx-text-accent hover:underline"
                               >
                                 <ExternalLink size={12} className="shrink-0" />
                                 <span className="truncate">{att.fileName}</span>
@@ -11353,18 +11362,18 @@ export function JobWorkspaceClient({
             className="max-w-2xl"
           >
             <div className="space-y-4">
-              <div className="rounded-2xl border border-red-200/70 bg-red-50/40 p-4 text-sm text-mono-text">
-                <p className="monolith-label text-red-600">Permanent action</p>
-                <p className="mt-1 text-mono-muted">
+              <div className="rounded-2xl border mnx-border-danger mnx-bg-danger p-4 text-sm mnx-text-primary">
+                <p className="mnx-label mnx-text-danger">Permanent action</p>
+                <p className="mt-1 mnx-text-muted">
                   Deleting this job affects linked CHA workflows, audit visibility, and operational references.
                 </p>
-                <p className="mt-3 text-mono-muted">
+                <p className="mt-3 mnx-text-muted">
                   Type the exact job number{" "}
-                  <span className="inline-flex rounded-md bg-mono-soft px-2 py-0.5 text-mono-text monolith-numeric">
+                  <span className="inline-flex rounded-md mnx-bg-soft px-2 py-0.5 mnx-text-primary mnx-numeric">
                     {job.jobNumber}
                   </span>{" "}
                   and the confirmation phrase{" "}
-                  <span className="inline-flex rounded-md bg-mono-soft px-2 py-0.5 text-mono-text">
+                  <span className="inline-flex rounded-md mnx-bg-soft px-2 py-0.5 mnx-text-primary">
                     delete job
                   </span>{" "}
                   to continue.
@@ -11373,7 +11382,7 @@ export function JobWorkspaceClient({
 
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="monolith-label block">Type Exact Job Number</label>
+                  <label className="mnx-label block">Type Exact Job Number</label>
                   <Input
                     type="text"
                     value={deleteConfirmJobNumber}
@@ -11383,7 +11392,7 @@ export function JobWorkspaceClient({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="monolith-label block">Type Confirmation Phrase</label>
+                  <label className="mnx-label block">Type Confirmation Phrase</label>
                   <Input
                     type="text"
                     value={deleteConfirmPhrase}
@@ -11391,8 +11400,8 @@ export function JobWorkspaceClient({
                     placeholder="delete job"
                     className="text-sm"
                   />
-                  <p className="text-xs text-mono-muted">
-                    Enter exactly: <span className="text-mono-text">delete job</span>
+                  <p className="text-xs mnx-text-muted">
+                    Enter exactly: <span className="mnx-text-primary">delete job</span>
                   </p>
                 </div>
               </div>
@@ -11431,16 +11440,16 @@ export function JobWorkspaceClient({
             className="max-w-2xl"
           >
             <div className="space-y-4">
-              <div className="rounded-2xl border border-red-200/70 bg-red-50/40 p-4 text-sm text-mono-text">
-                <p className="monolith-label text-red-600">Manager approval required</p>
-                <p className="mt-1 text-mono-muted">
-                  Confirm the exact job number and type <span className="text-mono-text">delete job</span> to execute this deletion request.
+              <div className="rounded-2xl border mnx-border-danger mnx-bg-danger p-4 text-sm mnx-text-primary">
+                <p className="mnx-label mnx-text-danger">Manager approval required</p>
+                <p className="mt-1 mnx-text-muted">
+                  Confirm the exact job number and type <span className="mnx-text-primary">delete job</span> to execute this deletion request.
                 </p>
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="monolith-label block">Type Exact Job Number</label>
+                  <label className="mnx-label block">Type Exact Job Number</label>
                   <Input
                     type="text"
                     value={deleteConfirmJobNumber}
@@ -11450,7 +11459,7 @@ export function JobWorkspaceClient({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="monolith-label block">Type Confirmation Phrase</label>
+                  <label className="mnx-label block">Type Confirmation Phrase</label>
                   <Input
                     type="text"
                     value={deleteConfirmPhrase}
@@ -11460,13 +11469,13 @@ export function JobWorkspaceClient({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="monolith-label block">Approval Note (Optional)</label>
-                  <textarea
+                  <label className="mnx-label block">Approval Note (Optional)</label>
+                  <Textarea
                     rows={3}
                     value={deleteDecisionRemarks}
                     onChange={(e) => setDeleteDecisionRemarks(e.target.value)}
                     placeholder="Add any execution note for the audit trail..."
-                    className="w-full rounded-xl border border-[#F9D972]/55 bg-mono-card px-4 py-3 text-sm text-mono-text placeholder:text-[var(--color-placeholder)] hover:border-[#F9D972]/85 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/15"
+                    className="w-full rounded-xl border mnx-border-accent mnx-bg-surface px-4 py-3 text-sm mnx-text-primary placeholder:text-[var(--color-placeholder)] mnx-hover-accent focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/15"
                   />
                 </div>
               </div>
@@ -11501,13 +11510,13 @@ export function JobWorkspaceClient({
           >
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="monolith-label block">Rejection Reason</label>
-                <textarea
+                <label className="mnx-label block">Rejection Reason</label>
+                <Textarea
                   rows={4}
                   value={deleteDecisionRemarks}
                   onChange={(e) => setDeleteDecisionRemarks(e.target.value)}
                   placeholder="Explain why this CHA job should not be deleted..."
-                  className="w-full rounded-xl border border-[#F9D972]/55 bg-mono-card px-4 py-3 text-sm text-mono-text placeholder:text-[var(--color-placeholder)] hover:border-[#F9D972]/85 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/15"
+                  className="w-full rounded-xl border mnx-border-accent mnx-bg-surface px-4 py-3 text-sm mnx-text-primary placeholder:text-[var(--color-placeholder)] mnx-hover-accent focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/15"
                 />
               </div>
 
@@ -11541,10 +11550,10 @@ export function JobWorkspaceClient({
               className="max-w-md"
             >
               <div className="space-y-4">
-                <p className="text-sm text-mono-text">
-                  File: <strong className="text-mono-muted font-medium">{deleteDocModal.fileName}</strong>
+                <p className="text-sm mnx-text-primary">
+                  File: <strong className="mnx-text-muted font-medium">{deleteDocModal.fileName}</strong>
                 </p>
-                <p className="text-xs text-red-500 font-medium">
+                <p className="text-xs mnx-text-danger font-medium">
                   This action is permanent and cannot be undone. If this is a mandatory document requirement, the workflow stage may revert to Document Collection.
                 </p>
                 <div className="flex justify-end gap-2">
@@ -11613,15 +11622,15 @@ export function JobWorkspaceClient({
             titleClassName="text-lg font-medium leading-none tracking-[0.075em]"
           >
             <div className="space-y-5">
-              <div className="flex items-start gap-3 rounded-xl border border-[#D88700]/30 bg-[#D88700]/8 px-4 py-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#D88700]/30 bg-[#D88700]/12 text-[#D88700]">
+              <div className="flex items-start gap-3 rounded-xl border mnx-border-warning mnx-bg-warning px-4 py-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border mnx-border-warning mnx-bg-warning mnx-text-warning">
                   <AlertTriangle size={18} />
                 </span>
                 <div className="min-w-0 space-y-1">
-                  <p className="text-sm font-medium text-mono-text">
+                  <p className="text-sm font-medium mnx-text-primary">
                     Mark {bulkNaEligibleRequirements.length} visible pending document requirement(s) as N/A?
                   </p>
-                  <p className="text-xs leading-5 text-mono-muted">
+                  <p className="text-xs leading-5 mnx-text-muted">
                     This will record each selected requirement as not available and add an audit entry. Uploaded or already resolved documents will not be changed.
                   </p>
                 </div>
@@ -11642,7 +11651,7 @@ export function JobWorkspaceClient({
                   onClick={handleConfirmMarkAllNotAvailable}
                   disabled={loading === "na-all" || bulkNaEligibleRequirements.length === 0}
                   variant="outline"
-                  className="rounded-xl !border-[#D88700]/45 !bg-mono-card px-5 text-xs font-medium uppercase tracking-[0.12em] !text-[#D88700] !shadow-none hover:!border-[#D88700]/70 hover:!bg-mono-card hover:!text-[#f97316] hover:!shadow-[0_0_0_3px_rgba(251,146,60,0.18),0_10px_24px_-18px_rgba(251,146,60,0.75)] hover:!animate-none focus-visible:!ring-[#D88700]/35"
+                  className="rounded-xl mnx-border-warning mnx-bg-surface px-5 text-xs font-medium uppercase tracking-[0.12em] mnx-text-warning !shadow-none mnx-hover-warning mnx-hover-accent mnx-hover-warning mnx-shadow-panel hover:!animate-none mnx-focus-accent"
                 >
                   {loading === "na-all" ? "Marking..." : "Mark As N/A"}
                 </Button>
@@ -11663,15 +11672,15 @@ export function JobWorkspaceClient({
           className="max-w-lg"
         >
           <div className="space-y-5">
-            <div className="flex items-start gap-3 rounded-xl border border-[#D88700]/30 bg-mono-card px-4 py-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#D88700]/30 bg-[#D88700]/12 text-[#D88700]">
+            <div className="flex items-start gap-3 rounded-xl border mnx-border-warning mnx-bg-surface px-4 py-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border mnx-border-warning mnx-bg-warning mnx-text-warning">
                 <AlertTriangle size={18} />
               </span>
               <div className="min-w-0 space-y-1">
-                <p className="text-sm font-medium text-mono-text">
+                <p className="text-sm font-medium mnx-text-primary">
                   {activeNodeRun?.node?.name || "This stage"} is waiting on {(activeNodePrerequisiteStatus?.missingNodeNames || []).join(", ") || "a prerequisite stage"}.
                 </p>
-                <p className="text-xs leading-5 text-mono-muted">
+                <p className="text-xs leading-5 mnx-text-muted">
                   A skipped prerequisite does not count as completed. Go to the required stage, tick the required work, complete it, then return here to continue.
                 </p>
               </div>
@@ -11718,20 +11727,20 @@ export function JobWorkspaceClient({
           className="max-w-xl"
         >
           <div className="space-y-4">
-            <div className="rounded-xl border border-mono-border bg-mono-soft p-4 text-xs text-mono-muted">
-              This custom document name is job-specific and will appear only inside <strong className="text-mono-text">this CHA job</strong>, under the <strong className="text-mono-text">User Uploads</strong> section.
+            <div className="rounded-xl border mnx-border mnx-bg-soft p-4 text-xs mnx-text-muted">
+              This custom document name is job-specific and will appear only inside <strong className="mnx-text-primary">this CHA job</strong>, under the <strong className="mnx-text-primary">User Uploads</strong> section.
             </div>
 
             <div className="space-y-4">
               <label className="space-y-1.5">
-                <span className="monolith-label">Custom Document Name</span>
-                <input
+                <span className="mnx-label">Custom Document Name</span>
+                <Input
                   type="text"
                   value={customDocumentName}
                   onChange={(e) => setCustomDocumentName(e.target.value)}
                   placeholder="Example: Supplier Email Approval"
                   maxLength={120}
-                  className="w-full rounded-2xl border border-mono-border/40 bg-mono-card px-3 py-2.5 text-sm text-mono-text"
+                  className="w-full rounded-2xl border mnx-border mnx-bg-surface px-3 py-2.5 text-sm mnx-text-primary"
                 />
               </label>
 
@@ -11755,7 +11764,7 @@ export function JobWorkspaceClient({
               />
             </div>
 
-            <div className="flex justify-end gap-2 border-t border-mono-border/20 pt-4">
+            <div className="flex justify-end gap-2 border-t mnx-border pt-4">
               <Button
                 type="button"
                 variant="outline"
@@ -11807,13 +11816,13 @@ export function JobWorkspaceClient({
             const canPreview = isImage || isPdf;
 
             return (
-              <div className="relative h-[60vh] flex flex-col bg-mono-card border border-mono-border/30 rounded-2xl overflow-hidden">
+              <div className="relative h-[60vh] flex flex-col mnx-bg-surface border mnx-border rounded-2xl overflow-hidden">
                 {canPreview ? (
                   <>
                     {loadingPreview && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-mono-card/80 backdrop-blur-[1px] z-10 gap-3">
-                        <div className="w-8 h-8 rounded-full border-2 border-t-[#F9D972] border-r-transparent border-b-[#F9D972] border-l-transparent animate-spin" />
-                        <span className="text-xs text-mono-muted font-sans">Loading preview...</span>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center mnx-bg-surface backdrop-blur-[1px] z-10 gap-3">
+                        <div className="w-8 h-8 rounded-full border-2 mnx-border-accent border-r-transparent mnx-border-accent border-l-transparent animate-spin" />
+                        <span className="text-xs mnx-text-muted font-sans">Loading preview...</span>
                       </div>
                     )}
                     {isImage ? (
@@ -11837,29 +11846,29 @@ export function JobWorkspaceClient({
                   </>
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center p-4 text-center space-y-4">
-                    <div className="w-16 h-16 rounded-2xl bg-[#F9D972]/10 text-[#F9D972] flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-2xl mnx-bg-accent-soft mnx-text-accent flex items-center justify-center">
                       <FileText size={32} />
                     </div>
                     <div className="space-y-2 max-w-md">
                       <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-3">
-                        <span className="h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
-                        <h4 className="monolith-h3 text-mono-text">Preview Unavailable</h4>
+                        <span className="h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
+                        <h4 className="mnx-heading-3 mnx-text-primary">Preview Unavailable</h4>
                       </div>
-                      <p className="text-xs text-mono-muted leading-relaxed font-sans">
+                      <p className="text-xs mnx-text-muted leading-relaxed font-sans">
                         Word, Excel, or binary formats cannot be previewed directly in the browser. You can download this file to view it locally.
                       </p>
                     </div>
-                    <div className="p-4 rounded-xl border border-mono-border bg-mono-soft text-left text-xs space-y-2 w-full max-w-md">
-                      <p className="font-semibold text-mono-text uppercase monolith-label">File Details</p>
-                      <div className="grid grid-cols-2 gap-2 text-mono-muted">
+                    <div className="p-4 rounded-xl border mnx-border mnx-bg-soft text-left text-xs space-y-2 w-full max-w-md">
+                      <p className="font-semibold mnx-text-primary uppercase mnx-label">File Details</p>
+                      <div className="grid grid-cols-2 gap-2 mnx-text-muted">
                         <span>Filename:</span>
-                        <span className="text-mono-text truncate font-sans">{viewingVersion.fileName}</span>
+                        <span className="mnx-text-primary truncate font-sans">{viewingVersion.fileName}</span>
                         <span>Size:</span>
-                        <span className="text-mono-text monolith-numeric font-sans">{(viewingVersion.sizeBytes / 1024).toFixed(1)} KB</span>
+                        <span className="mnx-text-primary mnx-numeric font-sans">{(viewingVersion.sizeBytes / 1024).toFixed(1)} KB</span>
                         <span>Uploaded By:</span>
-                        <span className="text-mono-text font-sans">{viewingVersion.uploadedBy?.name || "System"}</span>
+                        <span className="mnx-text-primary font-sans">{viewingVersion.uploadedBy?.name || "System"}</span>
                         <span>Uploaded At:</span>
-                        <span className="text-mono-text monolith-numeric font-sans">
+                        <span className="mnx-text-primary mnx-numeric font-sans">
                           {viewingVersion.uploadedAt ? new Date(viewingVersion.uploadedAt).toLocaleString("en-IN") : "N/A"}
                         </span>
                       </div>
@@ -11867,7 +11876,7 @@ export function JobWorkspaceClient({
                     <a
                       href={downloadUrl}
                       download={previewUrl?.startsWith("blob:") ? viewingVersion.fileName : undefined}
-                      className="inline-flex items-center justify-center bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-2xl text-xs uppercase tracking-wide transition-all font-medium"
+                      className="inline-flex items-center justify-center mnx-bg-accent-soft mnx-text-muted mnx-hover-accent mnx-shadow-panel px-4 py-2 rounded-2xl text-xs uppercase tracking-wide transition-all font-medium"
                     >
                       Download File
                     </a>
@@ -11889,7 +11898,7 @@ export function JobWorkspaceClient({
         >
           <div className="space-y-4 pt-2">
             <div className="space-y-1.5">
-              <label className="monolith-label block">Select Manager</label>
+              <label className="mnx-label block">Select Manager</label>
               <NativeSelect
                 value={selectedManagerId}
                 onChange={(e) => setSelectedManagerId(e.target.value)}
@@ -11936,17 +11945,17 @@ export function JobWorkspaceClient({
           className="max-w-md"
         >
           <div className="space-y-4 pt-2">
-            <p className="text-xs text-mono-muted font-sans">
+            <p className="text-xs mnx-text-muted font-sans">
               Are you sure you want to {section49Flag?.isEnabled ? "deactivate" : "activate"} Section 49 customs bond filing status? This change will be logged in the audit trail.
             </p>
             <div className="space-y-1.5">
-              <span className="monolith-label">Remarks / Explanation *</span>
-              <textarea
+              <span className="mnx-label">Remarks / Explanation *</span>
+              <Textarea
                 rows={3}
                 value={section49Remarks}
                 onChange={(e) => setSection49Remarks(e.target.value)}
                 placeholder="Provide justification or remarks for this status change..."
-                className="w-full resize-none rounded-xl border border-[rgba(0,206,196,0.55)] bg-mono-card px-[14px] py-[10px] text-sm text-mono-text placeholder:text-placeholder outline-none transition-colors hover:border-[rgba(0,206,196,0.4)] focus:border-[rgba(0,206,196,0.52)] focus:shadow-[0_0_0_3px_rgba(14,137,149,0.14)]"
+                className="w-full resize-none rounded-xl border mnx-border-accent mnx-bg-surface px-[14px] py-[10px] text-sm mnx-text-primary placeholder:text-placeholder outline-none transition-colors mnx-hover-accent mnx-focus-accent mnx-shadow-panel"
                 required
               />
             </div>
@@ -11963,7 +11972,7 @@ export function JobWorkspaceClient({
               <Button
                 disabled={loading !== null || !section49Remarks.trim()}
                 onClick={handleToggleSection49}
-                className="bg-[#F9D972] text-white hover:bg-[#E8C85D]"
+                className="mnx-bg-accent-soft mnx-text-muted mnx-hover-accent"
               >
                 {loading === "section49-toggle" ? "Updating..." : "Confirm Change"}
               </Button>

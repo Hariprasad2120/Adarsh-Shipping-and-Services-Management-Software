@@ -1,3 +1,4 @@
+import { ChaTable } from "@/components/monolith/cha-workspace";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { can } from "@/lib/rbac";
@@ -51,14 +52,14 @@ export default async function ChaApprovalsPage() {
       >
         <div className="overflow-hidden rounded-b-[20px]">
           {approvals.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-12 text-center text-cha-text-secondary">
-              <CheckSquare size={48} className="text-cha-text-muted mb-3" />
+            <div className="flex flex-col items-center justify-center p-12 text-center mnx-text-muted">
+              <CheckSquare size={48} className="mnx-text-muted mb-3" />
               <p className="text-sm font-semibold">Your review approvals queue is clear!</p>
               <p className="text-xs mt-1">Pending job checklist audits assigned to you will appear here.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="monolith-table">
+              <ChaTable className="mnx-cha-table">
                 <thead>
                   <tr>
                     <th className="px-6 py-4">Job Number</th>
@@ -73,18 +74,18 @@ export default async function ChaApprovalsPage() {
                   {approvals.map((app) => {
                     const job = app.checklistImport.job;
                     return (
-                      <tr key={app.id} className="hover:bg-cha-primary-soft/30 transition-colors">
-                        <td className="px-6 py-4 font-semibold text-cha-primary dark:text-blue-400">
+                      <tr key={app.id} className="mnx-hover-accent transition-colors">
+                        <td className="px-6 py-4 font-semibold mnx-text-accent mnx-text-info">
                           {job.jobNumber}
                         </td>
-                        <td className="px-6 py-4 font-medium max-w-xs truncate text-cha-text-mono-accent">
+                        <td className="px-6 py-4 font-medium max-w-xs truncate mnx-text-primary">
                           {job.title}
                         </td>
-                        <td className="px-6 py-4 text-cha-text-secondary">{job.customer.name}</td>
-                        <td className="px-6 py-4 text-cha-text-secondary">
+                        <td className="px-6 py-4 mnx-text-muted">{job.customer.name}</td>
+                        <td className="px-6 py-4 mnx-text-muted">
                           {app.checklistImport.uploadedBy?.name || "System"}
                         </td>
-                        <td className="px-6 py-4 monolith-numeric text-cha-text-secondary">
+                        <td className="px-6 py-4 mnx-numeric mnx-text-muted">
                           {new Date(app.checklistImport.uploadedAt).toLocaleDateString("en-IN", {
                             day: "2-digit",
                             month: "short",
@@ -93,16 +94,16 @@ export default async function ChaApprovalsPage() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <Link href={`/cha/jobs/${job.id}`}>
-                            <button className="flex items-center gap-1 bg-cha-primary text-white hover:bg-cha-primary-hover px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all shadow-sm">
+                            <Button className="flex items-center gap-1 mnx-bg-accent mnx-text-muted mnx-hover-accent px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all shadow-sm">
                               Audit & Review <ArrowRight size={12} />
-                            </button>
+                            </Button>
                           </Link>
                         </td>
                       </tr>
                     );
                   })}
                 </tbody>
-              </table>
+              </ChaTable>
             </div>
           )}
         </div>
@@ -118,14 +119,14 @@ export default async function ChaApprovalsPage() {
       >
         <div className="overflow-hidden rounded-b-[20px]">
           {deletionRequests.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-12 text-center text-cha-text-secondary">
-              <Trash2 size={48} className="text-cha-text-muted mb-3" />
+            <div className="flex flex-col items-center justify-center p-12 text-center mnx-text-muted">
+              <Trash2 size={48} className="mnx-text-muted mb-3" />
               <p className="text-sm font-semibold">No pending CHA deletion requests.</p>
               <p className="text-xs mt-1">Deletion approvals assigned to you will appear here.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="monolith-table">
+              <ChaTable className="mnx-cha-table">
                 <thead>
                   <tr>
                     <th className="px-6 py-4">Job Number</th>
@@ -138,31 +139,31 @@ export default async function ChaApprovalsPage() {
                 </thead>
                 <tbody>
                   {deletionRequests.map((request) => (
-                    <tr key={request.id} className="hover:bg-cha-primary-soft/30 transition-colors">
-                      <td className="px-6 py-4 font-semibold text-red-500">
+                    <tr key={request.id} className="mnx-hover-accent transition-colors">
+                      <td className="px-6 py-4 font-semibold mnx-text-danger">
                         {request.jobNumberSnapshot}
                       </td>
-                      <td className="px-6 py-4 text-cha-text-secondary">{request.job.customer.name}</td>
-                      <td className="px-6 py-4 text-cha-text-secondary">{request.requestedBy.name}</td>
-                      <td className="px-6 py-4 monolith-numeric text-cha-text-secondary">
+                      <td className="px-6 py-4 mnx-text-muted">{request.job.customer.name}</td>
+                      <td className="px-6 py-4 mnx-text-muted">{request.requestedBy.name}</td>
+                      <td className="px-6 py-4 mnx-numeric mnx-text-muted">
                         {new Date(request.requestedAt).toLocaleString("en-IN")}
                       </td>
                       <td className="px-6 py-4">
-                        <Badge className="bg-amber-500/10 text-amber-600 border border-amber-500/20 uppercase text-[9px] font-bold">
+                        <Badge className="mnx-bg-warning mnx-text-warning border mnx-border-warning uppercase text-[9px] font-bold">
                           {request.status}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <Link href={`/cha/jobs/${request.jobId}`}>
-                          <button className="flex items-center gap-1 bg-cha-primary text-white hover:bg-cha-primary-hover px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all shadow-sm">
+                          <Button className="flex items-center gap-1 mnx-bg-accent mnx-text-muted mnx-hover-accent px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all shadow-sm">
                             Review Request <ArrowRight size={12} />
-                          </button>
+                          </Button>
                         </Link>
                       </td>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </ChaTable>
             </div>
           )}
         </div>

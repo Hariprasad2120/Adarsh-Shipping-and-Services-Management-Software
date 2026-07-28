@@ -45,13 +45,13 @@ export function ChaDueDateWarningsIndicator({
       {warnings.map((warning) => (
         <div
           key={warning.notificationId}
-          className="rounded-xl border border-mono-border/30 bg-mono-soft/35 p-3"
+          className="rounded-xl border mnx-border mnx-bg-soft p-3"
         >
           <div className="space-y-1.5">
-            <p className="monolith-label text-mono-muted">
+            <p className="mnx-label mnx-text-muted">
               {warning.type === "DELIVERY_ORDER" ? "DELIVERY ORDER" : "SECTION 49"}
             </p>
-            <p className="text-sm leading-relaxed text-mono-text">{warning.message}</p>
+            <p className="text-sm leading-relaxed mnx-text-primary">{warning.message}</p>
           </div>
 
           <div className="mt-3 grid grid-cols-2 gap-2">
@@ -60,7 +60,7 @@ export function ChaDueDateWarningsIndicator({
               size="sm"
               variant="outline"
               disabled={isPending}
-              className="justify-center gap-1.5 border-mono-border/50 bg-mono-card px-3 text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+              className="justify-center gap-1.5 mnx-border mnx-bg-surface px-3 mnx-text-muted mnx-hover-accent mnx-hover-accent"
               onClick={() => {
                 startTransition(async () => {
                   const response = await fetch(`/api/notifications/${warning.notificationId}/ack`, { method: "POST" });
@@ -83,7 +83,7 @@ export function ChaDueDateWarningsIndicator({
             <Button
               type="button"
               size="sm"
-              className="justify-center gap-1.5 border border-[#D88700]/25 bg-[#D88700]/12 px-3 text-[#D88700] hover:bg-[#D88700]/18 hover:text-[#f97316]"
+              className="justify-center gap-1.5 border mnx-border-warning mnx-bg-warning px-3 mnx-text-warning mnx-hover-warning mnx-hover-warning"
               onClick={() => {
                 router.push(warning.link);
               }}

@@ -1,5 +1,9 @@
 import { ChaWorkspaceFrame } from "@/components/monolith/cha-workspace";
 
-export default function ChaLayout({ children }: { children: React.ReactNode }) {
+export default function ExpenseLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return <ChaWorkspaceFrame>{children}</ChaWorkspaceFrame>;
 }

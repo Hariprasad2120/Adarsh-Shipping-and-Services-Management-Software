@@ -1,5 +1,12 @@
 "use client";
 
+import { Textarea } from "@/components/monolith/textarea";
+import { Input } from "@/components/monolith/input";
+import { Button } from "@/components/monolith/button";
+import {
+  ChaPanel,
+  ChaRoutePageHeader,
+} from "@/components/monolith/cha-workspace";
 import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -259,30 +266,30 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
   const renderExistingKycRow = (type: string, fileInputNode: React.ReactNode) => {
     const existing = initialKyc[type];
     return (
-      <div className="p-4 border border-cha-border bg-cha-surface rounded-xl space-y-2.5 dark:border-cha-border-strong">
+      <div className="p-4 border mnx-border mnx-bg-surface rounded-xl space-y-2.5 mnx-border">
         <div className="flex justify-between items-center">
-          <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block">{type}</label>
+          <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block">{type}</label>
           {existing && (
             <a
               href={existing.fileKey}
               target="_blank"
               rel="noreferrer"
-              className="text-[10px] text-cha-primary hover:underline flex items-center gap-1 font-bold font-sans uppercase"
+              className="text-[10px] mnx-text-accent hover:underline flex items-center gap-1 font-bold font-sans uppercase"
             >
               View Document <ExternalLink size={10} />
             </a>
           )}
         </div>
         {existing ? (
-          <div className="bg-cha-surface-subtle p-2.5 rounded-lg border border-cha-border dark:border-cha-border-strong text-xs space-y-1">
-            <p className="font-semibold text-cha-text-mono-accent">Current file: <span className="font-mono text-cha-text-secondary font-medium">{existing.fileName}</span></p>
-            <p className="text-[10px] text-cha-text-muted">Uploaded: {new Date(existing.uploadedAt).toLocaleDateString()}</p>
+          <div className="mnx-bg-soft p-2.5 rounded-lg border mnx-border mnx-border text-xs space-y-1">
+            <p className="font-semibold mnx-text-primary">Current file: <span className="font-mono mnx-text-muted font-medium">{existing.fileName}</span></p>
+            <p className="text-[10px] mnx-text-muted">Uploaded: {new Date(existing.uploadedAt).toLocaleDateString()}</p>
           </div>
         ) : (
-          <p className="text-[10px] text-cha-text-muted italic">No document currently uploaded</p>
+          <p className="text-[10px] mnx-text-muted italic">No document currently uploaded</p>
         )}
         <div className="pt-1">
-          <span className="text-[10px] text-cha-text-secondary font-semibold block mb-1">Replace Document:</span>
+          <span className="text-[10px] mnx-text-muted font-semibold block mb-1">Replace Document:</span>
           {fileInputNode}
         </div>
       </div>
@@ -292,35 +299,33 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       {/* Wizard Header */}
-      <section className="relative overflow-hidden rounded-2xl border border-cha-border bg-cha-surface p-6 shadow-sm dark:border-cha-border-strong">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-cha-text-mono-accent uppercase font-display">Edit Customer</h1>
-            <p className="text-xs text-cha-text-secondary mt-1">Modify details and verification files for {initialData.name}.</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
+      <ChaRoutePageHeader
+        description={`Modify details and verification files for ${initialData.name}.`}
+        actions={
+          <>
+            <Button
+              variant="outline"
               type="button"
               onClick={() => router.back()}
-              className="px-4 py-2 border border-cha-border hover:bg-cha-primary-soft/50 rounded-xl text-sm font-medium transition-colors text-cha-text-secondary"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={currentStep === 7 ? handleSubmit : handleNext}
               disabled={isSubmitting}
-              className="flex items-center gap-1.5 bg-cha-primary hover:bg-cha-primary-hover text-white px-5 py-2 rounded-xl text-sm font-medium transition-colors"
             >
               {isSubmitting && <Loader2 className="size-4 animate-spin" />}
               {currentStep === 7 ? "Save Customer" : "Continue"}
-            </button>
-          </div>
-        </div>
+            </Button>
+          </>
+        }
+      />
 
+      <ChaPanel className="p-6">
         {/* Stepper Steps UI */}
         <div className="relative mt-8 select-none">
-          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-cha-border -translate-y-1/2 dark:bg-cha-border-strong hidden md:block" />
+          <div className="absolute top-1/2 left-0 right-0 h-0.5 mnx-bg-muted -translate-y-1/2 mnx-bg-muted hidden md:block" />
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
             {steps.map((s) => {
               const isActive = s.id === currentStep;
@@ -330,17 +335,17 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
                   <div
                     className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all ${
                       isActive
-                        ? "bg-cha-primary border-cha-primary text-white shadow-[0_0_0_4px_var(--cha-primary-ring)]"
+                        ? "mnx-bg-accent mnx-border-accent mnx-text-muted mnx-shadow-panel"
                         : isCompleted
-                          ? "bg-cha-primary border-cha-primary text-white"
-                          : "bg-cha-surface border-cha-border text-cha-text-muted dark:border-cha-border-strong"
+                          ? "mnx-bg-accent mnx-border-accent mnx-text-muted"
+                          : "mnx-bg-surface mnx-border mnx-text-muted mnx-border"
                     }`}
                   >
                     {isCompleted ? <Check size={18} /> : s.id}
                   </div>
                   <span
                     className={`mt-2 text-xs font-semibold uppercase tracking-wider ${
-                      isActive ? "text-cha-primary font-bold" : "text-cha-text-muted"
+                      isActive ? "mnx-text-accent font-bold" : "mnx-text-muted"
                     }`}
                   >
                     {s.label}
@@ -350,43 +355,43 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
             })}
           </div>
         </div>
-      </section>
+      </ChaPanel>
 
       {/* Main Form Fields Container */}
-      <form onSubmit={handleSubmit} className="bg-cha-surface rounded-2xl border border-cha-border p-6 shadow-sm dark:border-cha-border-strong space-y-6">
+      <form onSubmit={handleSubmit} className="mnx-bg-surface rounded-2xl border mnx-border p-6 shadow-sm mnx-border space-y-6">
         
         {/* Step 1: Profile */}
         {currentStep === 1 && (
           <div className="space-y-6">
-            <div className="border-b border-cha-border pb-3 dark:border-cha-border-strong">
-              <h2 className="text-base font-bold text-cha-text-mono-accent uppercase font-display flex items-center gap-2">
-                <User className="text-cha-primary size-5" /> Customer Profile
+            <div className="border-b mnx-border pb-3 mnx-border">
+              <h2 className="text-base font-bold mnx-text-primary uppercase font-display flex items-center gap-2">
+                <User className="mnx-text-accent size-5" /> Customer Profile
               </h2>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-2">Customer Type</label>
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-2">Customer Type</label>
                 <div className="flex gap-4">
-                  <label className="flex items-center gap-2 text-sm text-cha-text-mono-accent cursor-pointer font-medium">
-                    <input
+                  <label className="flex items-center gap-2 text-sm mnx-text-primary cursor-pointer font-medium">
+                    <Input
                       type="radio"
                       name="customerSubType"
                       value="Business"
                       checked={customerSubType === "Business"}
                       onChange={() => setCustomerSubType("Business")}
-                      className="accent-cha-primary size-4"
+                      className="mnx-choice-control size-4"
                     />
                     Business
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-cha-text-mono-accent cursor-pointer font-medium">
-                    <input
+                  <label className="flex items-center gap-2 text-sm mnx-text-primary cursor-pointer font-medium">
+                    <Input
                       type="radio"
                       name="customerSubType"
                       value="Individual"
                       checked={customerSubType === "Individual"}
                       onChange={() => setCustomerSubType("Individual")}
-                      className="accent-cha-primary size-4"
+                      className="mnx-choice-control size-4"
                     />
                     Individual
                   </label>
@@ -396,24 +401,24 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
               {customerSubType === "Business" ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Company Name *</label>
-                    <input
+                    <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Company Name *</label>
+                    <Input
                       type="text"
                       placeholder="e.g. Adarsh Shipping Ltd"
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
                       onBlur={handleNameFieldBlur}
-                      className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none focus:ring-2 focus:ring-cha-primary/30"
+                      className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none focus:ring-2 mnx-focus-accent"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Display Name *</label>
-                    <input
+                    <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Display Name *</label>
+                    <Input
                       type="text"
                       placeholder="Customer display name"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm font-semibold text-cha-text-mono-accent focus:outline-none focus:ring-2 focus:ring-cha-primary/30"
+                      className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm font-semibold mnx-text-primary focus:outline-none focus:ring-2 mnx-focus-accent"
                       required
                     />
                   </div>
@@ -422,11 +427,11 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
                 <div className="space-y-4">
                   <div className="grid grid-cols-12 gap-2">
                     <div className="col-span-3">
-                      <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Salutation</label>
+                      <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Salutation</label>
                       <NativeSelect
                         value={salutation}
                         onChange={(e) => setSalutation(e.target.value)}
-                        className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                        className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                       >
                         <option value="">Select</option>
                         <option value="Mr.">Mr.</option>
@@ -436,36 +441,36 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
                       </NativeSelect>
                     </div>
                     <div className="col-span-4">
-                      <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">First Name *</label>
-                      <input
+                      <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">First Name *</label>
+                      <Input
                         type="text"
                         placeholder="First Name"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         onBlur={handleNameFieldBlur}
-                        className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                        className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                       />
                     </div>
                     <div className="col-span-5">
-                      <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Last Name</label>
-                      <input
+                      <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Last Name</label>
+                      <Input
                         type="text"
                         placeholder="Last Name"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         onBlur={handleNameFieldBlur}
-                        className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                        className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Display Name *</label>
-                    <input
+                    <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Display Name *</label>
+                    <Input
                       type="text"
                       placeholder="Display Name"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm font-semibold text-cha-text-mono-accent focus:outline-none"
+                      className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm font-semibold mnx-text-primary focus:outline-none"
                       required
                     />
                   </div>
@@ -474,11 +479,11 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Industry Segment</label>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Industry Segment</label>
                   <NativeSelect
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                    className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                   >
                     <option value="Logistics & Freight Forwarding">Logistics & Freight Forwarding</option>
                     <option value="Manufacturing">Manufacturing</option>
@@ -488,11 +493,11 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
                   </NativeSelect>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Customer Language</label>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Customer Language</label>
                   <NativeSelect
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                    className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                   >
                     <option value="English">English</option>
                     <option value="Hindi">Hindi</option>
@@ -504,11 +509,11 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">GST Treatment</label>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">GST Treatment</label>
                   <NativeSelect
                     value={gstTreatment}
                     onChange={(e) => setGstTreatment(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                    className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                   >
                     <option value="Registered Business - Regular">Registered Business - Regular</option>
                     <option value="Registered Business - Composition">Registered Business - Composition</option>
@@ -519,23 +524,23 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
                   </NativeSelect>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">GSTIN</label>
-                  <input
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">GSTIN</label>
+                  <Input
                     type="text"
                     placeholder="e.g. 33AABCA1234F1Z1"
                     value={gstin}
                     onChange={(e) => setGstin(e.target.value)}
-                    className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                    className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">PAN Card Number</label>
-                  <input
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">PAN Card Number</label>
+                  <Input
                     type="text"
                     placeholder="e.g. ABCDE1234F"
                     value={pan}
                     onChange={(e) => setPan(e.target.value)}
-                    className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                    className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                   />
                 </div>
               </div>
@@ -546,63 +551,63 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
         {/* Step 2: Contact */}
         {currentStep === 2 && (
           <div className="space-y-6">
-            <div className="border-b border-cha-border pb-3 dark:border-cha-border-strong">
-              <h2 className="text-base font-bold text-cha-text-mono-accent uppercase font-display flex items-center gap-2">
-                <Mail className="text-cha-primary size-5" /> Contact Details
+            <div className="border-b mnx-border pb-3 mnx-border">
+              <h2 className="text-base font-bold mnx-text-primary uppercase font-display flex items-center gap-2">
+                <Mail className="mnx-text-accent size-5" /> Contact Details
               </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Email Address</label>
-                <input
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Email Address</label>
+                <Input
                   type="email"
                   placeholder="e.g. contact@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                  className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Phone Number</label>
-                <input
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Phone Number</label>
+                <Input
                   type="text"
                   placeholder="e.g. +91 44 1234 5678"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                  className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Website URL</label>
-                <input
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Website URL</label>
+                <Input
                   type="url"
                   placeholder="e.g. https://domain.com"
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                  className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-2">Notification Channels</label>
+              <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-2">Notification Channels</label>
               <div className="flex gap-6">
-                <label className="flex items-center gap-2 text-sm text-cha-text-mono-accent cursor-pointer font-medium">
-                  <input
+                <label className="flex items-center gap-2 text-sm mnx-text-primary cursor-pointer font-medium">
+                  <Input
                     type="checkbox"
                     checked={channelEmail}
                     onChange={(e) => setChannelEmail(e.target.checked)}
-                    className="accent-cha-primary size-4"
+                    className="mnx-choice-control size-4"
                   />
                   Email Notifications
                 </label>
-                <label className="flex items-center gap-2 text-sm text-cha-text-mono-accent cursor-pointer font-medium">
-                  <input
+                <label className="flex items-center gap-2 text-sm mnx-text-primary cursor-pointer font-medium">
+                  <Input
                     type="checkbox"
                     checked={channelSms}
                     onChange={(e) => setChannelSms(e.target.checked)}
-                    className="accent-cha-primary size-4"
+                    className="mnx-choice-control size-4"
                   />
                   SMS Alerts
                 </label>
@@ -614,88 +619,88 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
         {/* Step 3: Address */}
         {currentStep === 3 && (
           <div className="space-y-6">
-            <div className="border-b border-cha-border pb-3 dark:border-cha-border-strong flex items-center justify-between">
-              <h2 className="text-base font-bold text-cha-text-mono-accent uppercase font-display flex items-center gap-2">
-                <MapPin className="text-cha-primary size-5" /> Addresses
+            <div className="border-b mnx-border pb-3 mnx-border flex items-center justify-between">
+              <h2 className="text-base font-bold mnx-text-primary uppercase font-display flex items-center gap-2">
+                <MapPin className="mnx-text-accent size-5" /> Addresses
               </h2>
-              <button
+              <Button
                 type="button"
                 onClick={handleCopyAddress}
-                className="text-xs font-bold text-cha-primary hover:underline bg-transparent border-0"
+                className="text-xs font-bold mnx-text-accent hover:underline bg-transparent border-0"
               >
                 Copy Billing to Shipping
-              </button>
+              </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Billing */}
-              <div className="space-y-4 border-r border-cha-border pr-6 dark:border-cha-border-strong">
-                <h3 className="text-sm font-bold text-cha-text-mono-accent uppercase">Billing Address</h3>
+              <div className="space-y-4 border-r mnx-border pr-6 mnx-border">
+                <h3 className="text-sm font-bold mnx-text-primary uppercase">Billing Address</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-[10px] font-semibold text-cha-text-muted uppercase block mb-1">Attention</label>
-                    <input
+                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Attention</label>
+                    <Input
                       type="text"
                       value={billingAttention}
                       onChange={(e) => setBillingAttention(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                      className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-semibold text-cha-text-muted uppercase block mb-1">Street 1</label>
-                    <input
+                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Street 1</label>
+                    <Input
                       type="text"
                       value={billingStreet1}
                       onChange={(e) => setBillingStreet1(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                      className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-semibold text-cha-text-muted uppercase block mb-1">Street 2</label>
-                    <input
+                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Street 2</label>
+                    <Input
                       type="text"
                       value={billingStreet2}
                       onChange={(e) => setBillingStreet2(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                      className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-semibold text-cha-text-muted uppercase block mb-1">City</label>
-                      <input
+                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">City</label>
+                      <Input
                         type="text"
                         value={billingCity}
                         onChange={(e) => setBillingCity(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                        className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-semibold text-cha-text-muted uppercase block mb-1">State</label>
-                      <input
+                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">State</label>
+                      <Input
                         type="text"
                         value={billingState}
                         onChange={(e) => setBillingState(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                        className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-semibold text-cha-text-muted uppercase block mb-1">Pin Code</label>
-                      <input
+                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Pin Code</label>
+                      <Input
                         type="text"
                         value={billingPincode}
                         onChange={(e) => setBillingPincode(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                        className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-semibold text-cha-text-muted uppercase block mb-1">Country</label>
-                      <input
+                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Country</label>
+                      <Input
                         type="text"
                         value={billingCountry}
                         onChange={(e) => setBillingCountry(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                        className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                       />
                     </div>
                   </div>
@@ -704,72 +709,72 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
 
               {/* Shipping */}
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-cha-text-mono-accent uppercase">Shipping Address</h3>
+                <h3 className="text-sm font-bold mnx-text-primary uppercase">Shipping Address</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-[10px] font-semibold text-cha-text-muted uppercase block mb-1">Attention</label>
-                    <input
+                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Attention</label>
+                    <Input
                       type="text"
                       value={shippingAttention}
                       onChange={(e) => setShippingAttention(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                      className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-semibold text-cha-text-muted uppercase block mb-1">Street 1</label>
-                    <input
+                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Street 1</label>
+                    <Input
                       type="text"
                       value={shippingStreet1}
                       onChange={(e) => setShippingStreet1(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                      className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-semibold text-cha-text-muted uppercase block mb-1">Street 2</label>
-                    <input
+                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Street 2</label>
+                    <Input
                       type="text"
                       value={shippingStreet2}
                       onChange={(e) => setShippingStreet2(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                      className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-semibold text-cha-text-muted uppercase block mb-1">City</label>
-                      <input
+                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">City</label>
+                      <Input
                         type="text"
                         value={shippingCity}
                         onChange={(e) => setShippingCity(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                        className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-semibold text-cha-text-muted uppercase block mb-1">State</label>
-                      <input
+                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">State</label>
+                      <Input
                         type="text"
                         value={shippingState}
                         onChange={(e) => setShippingState(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                        className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-semibold text-cha-text-muted uppercase block mb-1">Pin Code</label>
-                      <input
+                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Pin Code</label>
+                      <Input
                         type="text"
                         value={shippingPincode}
                         onChange={(e) => setShippingPincode(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                        className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-semibold text-cha-text-muted uppercase block mb-1">Country</label>
-                      <input
+                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Country</label>
+                      <Input
                         type="text"
                         value={shippingCountry}
                         onChange={(e) => setShippingCountry(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                        className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                       />
                     </div>
                   </div>
@@ -782,28 +787,28 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
         {/* Step 4: Finance */}
         {currentStep === 4 && (
           <div className="space-y-6">
-            <div className="border-b border-cha-border pb-3 dark:border-cha-border-strong">
-              <h2 className="text-base font-bold text-cha-text-mono-accent uppercase font-display flex items-center gap-2">
-                <DollarSign className="text-cha-primary size-5" /> Financial Parameters
+            <div className="border-b mnx-border pb-3 mnx-border">
+              <h2 className="text-base font-bold mnx-text-primary uppercase font-display flex items-center gap-2">
+                <DollarSign className="mnx-text-accent size-5" /> Financial Parameters
               </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Credit Limit (INR)</label>
-                <input
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Credit Limit (INR)</label>
+                <Input
                   type="number"
                   value={creditLimit}
                   onChange={(e) => setCreditLimit(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                  className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Currency Preference</label>
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Currency Preference</label>
                 <NativeSelect
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                  className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                 >
                   <option value="INR">INR- Indian Rupee</option>
                   <option value="USD">USD- US Dollar</option>
@@ -814,11 +819,11 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Opening Balance Branch</label>
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Opening Balance Branch</label>
                 <NativeSelect
                   value={openingBalanceBranch}
                   onChange={(e) => setOpeningBalanceBranch(e.target.value)}
-                  className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                  className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                 >
                   <option value="Chennai">Chennai</option>
                   <option value="Mumbai">Mumbai</option>
@@ -826,20 +831,20 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
                 </NativeSelect>
               </div>
               <div>
-                <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Opening Balance Amount</label>
-                <input
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Opening Balance Amount</label>
+                <Input
                   type="number"
                   value={openingBalanceAmount}
                   onChange={(e) => setOpeningBalanceAmount(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                  className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Payment Terms</label>
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Payment Terms</label>
                 <NativeSelect
                   value={paymentTerms}
                   onChange={(e) => setPaymentTerms(e.target.value)}
-                  className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                  className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                 >
                   <option value="Net 15">Net 15</option>
                   <option value="Net 30">Net 30</option>
@@ -850,11 +855,11 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
             </div>
 
             <div>
-              <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Account Owner / Account Manager</label>
+              <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Account Owner / Account Manager</label>
               <NativeSelect
                 value={ownerId}
                 onChange={(e) => setOwnerId(e.target.value)}
-                className="w-full h-10 px-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
               >
                 {employees.map((emp) => (
                   <option key={emp.id} value={emp.id}>
@@ -865,11 +870,11 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
             </div>
 
             <div>
-              <label className="text-xs font-bold text-cha-text-secondary uppercase tracking-wider block mb-1.5">Customer Remarks / General Comments</label>
-              <textarea
+              <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Customer Remarks / General Comments</label>
+              <Textarea
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                className="w-full h-24 p-3 rounded-xl border border-cha-border bg-cha-surface text-sm text-cha-text-mono-accent focus:outline-none"
+                className="w-full h-24 p-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                 placeholder="Enter any customer specific remarks..."
               />
             </div>
@@ -879,14 +884,14 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
         {/* Step 5: KYC Documents */}
         {currentStep === 5 && (
           <div className="space-y-6">
-            <div className="border-b border-cha-border pb-3 dark:border-cha-border-strong">
-              <h2 className="text-base font-bold text-cha-text-mono-accent uppercase font-display flex items-center gap-2">
-                <FileText className="text-cha-primary size-5" /> KYC Documents Upload
+            <div className="border-b mnx-border pb-3 mnx-border">
+              <h2 className="text-base font-bold mnx-text-primary uppercase font-display flex items-center gap-2">
+                <FileText className="mnx-text-accent size-5" /> KYC Documents Upload
               </h2>
             </div>
 
             <div className="space-y-4">
-              <p className="text-xs text-cha-text-secondary leading-relaxed mb-4">
+              <p className="text-xs mnx-text-muted leading-relaxed mb-4">
                 Review, view, or replace customer KYC documents. These files sync automatically with custom clearance workflows.
               </p>
 
@@ -894,10 +899,10 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
                 {/* IEC */}
                 {renderExistingKycRow(
                   "IEC",
-                  <input
+                  <Input
                     type="file"
                     onChange={(e) => setIecFile(e.target.files?.[0] || null)}
-                    className="w-full text-xs text-cha-text-secondary file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-cha-primary/10 file:text-cha-primary hover:file:bg-cha-primary/20"
+                    className="w-full text-xs mnx-text-muted file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold mnx-bg-accent mnx-text-accent mnx-hover-accent"
                     accept=".pdf,.png,.jpg,.jpeg"
                   />
                 )}
@@ -905,10 +910,10 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
                 {/* GST */}
                 {renderExistingKycRow(
                   "GST",
-                  <input
+                  <Input
                     type="file"
                     onChange={(e) => setGstFile(e.target.files?.[0] || null)}
-                    className="w-full text-xs text-cha-text-secondary file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-cha-primary/10 file:text-cha-primary hover:file:bg-cha-primary/20"
+                    className="w-full text-xs mnx-text-muted file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold mnx-bg-accent mnx-text-accent mnx-hover-accent"
                     accept=".pdf,.png,.jpg,.jpeg"
                   />
                 )}
@@ -916,10 +921,10 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
                 {/* AD Code */}
                 {renderExistingKycRow(
                   "AD Code",
-                  <input
+                  <Input
                     type="file"
                     onChange={(e) => setAdCodeFile(e.target.files?.[0] || null)}
-                    className="w-full text-xs text-cha-text-secondary file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-cha-primary/10 file:text-cha-primary hover:file:bg-cha-primary/20"
+                    className="w-full text-xs mnx-text-muted file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold mnx-bg-accent mnx-text-accent mnx-hover-accent"
                     accept=".pdf,.png,.jpg,.jpeg"
                   />
                 )}
@@ -927,10 +932,10 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
                 {/* FSSAI Licence */}
                 {renderExistingKycRow(
                   "FSSAI Licence",
-                  <input
+                  <Input
                     type="file"
                     onChange={(e) => setFssaiLicenceFile(e.target.files?.[0] || null)}
-                    className="w-full text-xs text-cha-text-secondary file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-cha-primary/10 file:text-cha-primary hover:file:bg-cha-primary/20"
+                    className="w-full text-xs mnx-text-muted file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold mnx-bg-accent mnx-text-accent mnx-hover-accent"
                     accept=".pdf,.png,.jpg,.jpeg"
                   />
                 )}
@@ -938,10 +943,10 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
                 {/* Company Address Proof */}
                 {renderExistingKycRow(
                   "Company Address Proof",
-                  <input
+                  <Input
                     type="file"
                     onChange={(e) => setCompanyAddressProofFile(e.target.files?.[0] || null)}
-                    className="w-full text-xs text-cha-text-secondary file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-cha-primary/10 file:text-cha-primary hover:file:bg-cha-primary/20"
+                    className="w-full text-xs mnx-text-muted file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold mnx-bg-accent mnx-text-accent mnx-hover-accent"
                     accept=".pdf,.png,.jpg,.jpeg"
                   />
                 )}
@@ -949,10 +954,10 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
                 {/* Partner Address Proof */}
                 {renderExistingKycRow(
                   "Partner / Proprietor Address Proof",
-                  <input
+                  <Input
                     type="file"
                     onChange={(e) => setPartnerAddressProofFile(e.target.files?.[0] || null)}
-                    className="w-full text-xs text-cha-text-secondary file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-cha-primary/10 file:text-cha-primary hover:file:bg-cha-primary/20"
+                    className="w-full text-xs mnx-text-muted file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold mnx-bg-accent mnx-text-accent mnx-hover-accent"
                     accept=".pdf,.png,.jpg,.jpeg"
                   />
                 )}
@@ -961,10 +966,10 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
                 <div className="md:col-span-2">
                   {renderExistingKycRow(
                     "Authorisation Letter",
-                    <input
+                    <Input
                       type="file"
                       onChange={(e) => setAuthorisationLetterFile(e.target.files?.[0] || null)}
-                      className="w-full text-xs text-cha-text-secondary file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-cha-primary/10 file:text-cha-primary hover:file:bg-cha-primary/20"
+                      className="w-full text-xs mnx-text-muted file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold mnx-bg-accent mnx-text-accent mnx-hover-accent"
                       accept=".pdf,.png,.jpg,.jpeg"
                     />
                   )}
@@ -977,26 +982,26 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
         {/* Step 6: Portal */}
         {currentStep === 6 && (
           <div className="space-y-6">
-            <div className="border-b border-cha-border pb-3 dark:border-cha-border-strong">
-              <h2 className="text-base font-bold text-cha-text-mono-accent uppercase font-display flex items-center gap-2">
-                <Globe className="text-cha-primary size-5" /> Customer Portal Access
+            <div className="border-b mnx-border pb-3 mnx-border">
+              <h2 className="text-base font-bold mnx-text-primary uppercase font-display flex items-center gap-2">
+                <Globe className="mnx-text-accent size-5" /> Customer Portal Access
               </h2>
             </div>
 
-            <div className="rounded-xl border border-cha-border p-5 bg-cha-surface-subtle dark:border-cha-border-strong space-y-4">
+            <div className="rounded-xl border mnx-border p-5 mnx-bg-soft mnx-border space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-cha-text-mono-accent">Enable Customer Portal</h3>
-                  <p className="text-xs text-cha-text-secondary mt-1">Allows the customer to log in directly to track shipments, approve expenses, and upload documents.</p>
+                  <h3 className="text-sm font-bold mnx-text-primary">Enable Customer Portal</h3>
+                  <p className="text-xs mnx-text-muted mt-1">Allows the customer to log in directly to track shipments, approve expenses, and upload documents.</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer select-none">
-                  <input
+                  <Input
                     type="checkbox"
                     checked={isPortalEnabled}
                     onChange={(e) => setIsPortalEnabled(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-cha-border peer-focus:outline-none rounded-full peer dark:bg-cha-border-strong peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cha-primary"></div>
+                  <div className="w-11 h-6 mnx-bg-muted peer-focus:outline-none rounded-full peer mnx-bg-muted peer-checked:after:translate-x-full mnx-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] mnx-bg-soft mnx-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all mnx-bg-accent"></div>
                 </label>
               </div>
             </div>
@@ -1006,107 +1011,107 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
         {/* Step 7: Review */}
         {currentStep === 7 && (
           <div className="space-y-6">
-            <div className="border-b border-cha-border pb-3 dark:border-cha-border-strong">
-              <h2 className="text-base font-bold text-cha-text-mono-accent uppercase font-display flex items-center gap-2">
-                <Check className="text-cha-primary size-5" /> Review and Confirm Changes
+            <div className="border-b mnx-border pb-3 mnx-border">
+              <h2 className="text-base font-bold mnx-text-primary uppercase font-display flex items-center gap-2">
+                <Check className="mnx-text-accent size-5" /> Review and Confirm Changes
               </h2>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-3 rounded-xl border border-cha-border p-4 bg-cha-surface-subtle dark:border-cha-border-strong">
-                <h3 className="text-xs font-bold uppercase text-cha-text-muted">Primary Profile</h3>
+              <div className="space-y-3 rounded-xl border mnx-border p-4 mnx-bg-soft mnx-border">
+                <h3 className="text-xs font-bold uppercase mnx-text-muted">Primary Profile</h3>
                 <div className="space-y-1.5 text-sm">
-                  <p><span className="font-semibold text-cha-text-secondary">Type:</span> {customerSubType}</p>
-                  <p><span className="font-semibold text-cha-text-secondary">Name:</span> {displayName}</p>
-                  {companyName && <p><span className="font-semibold text-cha-text-secondary">Company:</span> {companyName}</p>}
-                  <p><span className="font-semibold text-cha-text-secondary">Industry:</span> {industry}</p>
+                  <p><span className="font-semibold mnx-text-muted">Type:</span> {customerSubType}</p>
+                  <p><span className="font-semibold mnx-text-muted">Name:</span> {displayName}</p>
+                  {companyName && <p><span className="font-semibold mnx-text-muted">Company:</span> {companyName}</p>}
+                  <p><span className="font-semibold mnx-text-muted">Industry:</span> {industry}</p>
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-xl border border-cha-border p-4 bg-cha-surface-subtle dark:border-cha-border-strong">
-                <h3 className="text-xs font-bold uppercase text-cha-text-muted">Contact Info</h3>
+              <div className="space-y-3 rounded-xl border mnx-border p-4 mnx-bg-soft mnx-border">
+                <h3 className="text-xs font-bold uppercase mnx-text-muted">Contact Info</h3>
                 <div className="space-y-1.5 text-sm">
-                  <p><span className="font-semibold text-cha-text-secondary">Email:</span> {email || "—"}</p>
-                  <p><span className="font-semibold text-cha-text-secondary">Phone:</span> {phone || "—"}</p>
-                  <p><span className="font-semibold text-cha-text-secondary">Portal:</span> {isPortalEnabled ? "Enabled" : "Disabled"}</p>
+                  <p><span className="font-semibold mnx-text-muted">Email:</span> {email || "—"}</p>
+                  <p><span className="font-semibold mnx-text-muted">Phone:</span> {phone || "—"}</p>
+                  <p><span className="font-semibold mnx-text-muted">Portal:</span> {isPortalEnabled ? "Enabled" : "Disabled"}</p>
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-xl border border-cha-border p-4 bg-cha-surface-subtle dark:border-cha-border-strong md:col-span-2">
-                <h3 className="text-xs font-bold uppercase text-cha-text-muted">KYC Documents Status</h3>
+              <div className="space-y-3 rounded-xl border mnx-border p-4 mnx-bg-soft mnx-border md:col-span-2">
+                <h3 className="text-xs font-bold uppercase mnx-text-muted">KYC Documents Status</h3>
                 <div className="space-y-2 text-xs font-mono">
                   {Object.keys(initialKyc).length === 0 && !iecFile && !gstFile && !adCodeFile && !fssaiLicenceFile && !companyAddressProofFile && !partnerAddressProofFile && !authorisationLetterFile ? (
-                    <p className="text-cha-text-muted italic">No KYC documents registered or selected.</p>
+                    <p className="mnx-text-muted italic">No KYC documents registered or selected.</p>
                   ) : (
                     <>
                       <p>
-                        <span className="font-semibold text-cha-text-secondary font-sans uppercase">IEC:</span>{" "}
+                        <span className="font-semibold mnx-text-muted font-sans uppercase">IEC:</span>{" "}
                         {iecFile ? (
-                          <span className="text-emerald-600 font-bold">Replacing with: {iecFile.name}</span>
+                          <span className="mnx-text-success font-bold">Replacing with: {iecFile.name}</span>
                         ) : initialKyc["IEC"] ? (
-                          <span className="text-cha-text-mono-accent">Current file: {initialKyc["IEC"].fileName}</span>
+                          <span className="mnx-text-primary">Current file: {initialKyc["IEC"].fileName}</span>
                         ) : (
-                          <span className="text-cha-text-muted">Not uploaded</span>
+                          <span className="mnx-text-muted">Not uploaded</span>
                         )}
                       </p>
                       <p>
-                        <span className="font-semibold text-cha-text-secondary font-sans uppercase">GST:</span>{" "}
+                        <span className="font-semibold mnx-text-muted font-sans uppercase">GST:</span>{" "}
                         {gstFile ? (
-                          <span className="text-emerald-600 font-bold">Replacing with: {gstFile.name}</span>
+                          <span className="mnx-text-success font-bold">Replacing with: {gstFile.name}</span>
                         ) : initialKyc["GST"] ? (
-                          <span className="text-cha-text-mono-accent">Current file: {initialKyc["GST"].fileName}</span>
+                          <span className="mnx-text-primary">Current file: {initialKyc["GST"].fileName}</span>
                         ) : (
-                          <span className="text-cha-text-muted">Not uploaded</span>
+                          <span className="mnx-text-muted">Not uploaded</span>
                         )}
                       </p>
                       <p>
-                        <span className="font-semibold text-cha-text-secondary font-sans uppercase">AD Code:</span>{" "}
+                        <span className="font-semibold mnx-text-muted font-sans uppercase">AD Code:</span>{" "}
                         {adCodeFile ? (
-                          <span className="text-emerald-600 font-bold">Replacing with: {adCodeFile.name}</span>
+                          <span className="mnx-text-success font-bold">Replacing with: {adCodeFile.name}</span>
                         ) : initialKyc["AD Code"] ? (
-                          <span className="text-cha-text-mono-accent">Current file: {initialKyc["AD Code"].fileName}</span>
+                          <span className="mnx-text-primary">Current file: {initialKyc["AD Code"].fileName}</span>
                         ) : (
-                          <span className="text-cha-text-muted">Not uploaded</span>
+                          <span className="mnx-text-muted">Not uploaded</span>
                         )}
                       </p>
                       <p>
-                        <span className="font-semibold text-cha-text-secondary font-sans uppercase">FSSAI Licence:</span>{" "}
+                        <span className="font-semibold mnx-text-muted font-sans uppercase">FSSAI Licence:</span>{" "}
                         {fssaiLicenceFile ? (
-                          <span className="text-emerald-600 font-bold">Replacing with: {fssaiLicenceFile.name}</span>
+                          <span className="mnx-text-success font-bold">Replacing with: {fssaiLicenceFile.name}</span>
                         ) : initialKyc["FSSAI Licence"] ? (
-                          <span className="text-cha-text-mono-accent">Current file: {initialKyc["FSSAI Licence"].fileName}</span>
+                          <span className="mnx-text-primary">Current file: {initialKyc["FSSAI Licence"].fileName}</span>
                         ) : (
-                          <span className="text-cha-text-muted">Not uploaded</span>
+                          <span className="mnx-text-muted">Not uploaded</span>
                         )}
                       </p>
                       <p>
-                        <span className="font-semibold text-cha-text-secondary font-sans uppercase">Company Address Proof:</span>{" "}
+                        <span className="font-semibold mnx-text-muted font-sans uppercase">Company Address Proof:</span>{" "}
                         {companyAddressProofFile ? (
-                          <span className="text-emerald-600 font-bold">Replacing with: {companyAddressProofFile.name}</span>
+                          <span className="mnx-text-success font-bold">Replacing with: {companyAddressProofFile.name}</span>
                         ) : initialKyc["Company Address Proof"] ? (
-                          <span className="text-cha-text-mono-accent">Current file: {initialKyc["Company Address Proof"].fileName}</span>
+                          <span className="mnx-text-primary">Current file: {initialKyc["Company Address Proof"].fileName}</span>
                         ) : (
-                          <span className="text-cha-text-muted">Not uploaded</span>
+                          <span className="mnx-text-muted">Not uploaded</span>
                         )}
                       </p>
                       <p>
-                        <span className="font-semibold text-cha-text-secondary font-sans uppercase">Partner Address Proof:</span>{" "}
+                        <span className="font-semibold mnx-text-muted font-sans uppercase">Partner Address Proof:</span>{" "}
                         {partnerAddressProofFile ? (
-                          <span className="text-emerald-600 font-bold">Replacing with: {partnerAddressProofFile.name}</span>
+                          <span className="mnx-text-success font-bold">Replacing with: {partnerAddressProofFile.name}</span>
                         ) : initialKyc["Partner / Proprietor Address Proof"] ? (
-                          <span className="text-cha-text-mono-accent">Current file: {initialKyc["Partner / Proprietor Address Proof"].fileName}</span>
+                          <span className="mnx-text-primary">Current file: {initialKyc["Partner / Proprietor Address Proof"].fileName}</span>
                         ) : (
-                          <span className="text-cha-text-muted">Not uploaded</span>
+                          <span className="mnx-text-muted">Not uploaded</span>
                         )}
                       </p>
                       <p>
-                        <span className="font-semibold text-cha-text-secondary font-sans uppercase">Authorisation Letter:</span>{" "}
+                        <span className="font-semibold mnx-text-muted font-sans uppercase">Authorisation Letter:</span>{" "}
                         {authorisationLetterFile ? (
-                          <span className="text-emerald-600 font-bold">Replacing with: {authorisationLetterFile.name}</span>
+                          <span className="mnx-text-success font-bold">Replacing with: {authorisationLetterFile.name}</span>
                         ) : initialKyc["Authorisation Letter"] ? (
-                          <span className="text-cha-text-mono-accent">Current file: {initialKyc["Authorisation Letter"].fileName}</span>
+                          <span className="mnx-text-primary">Current file: {initialKyc["Authorisation Letter"].fileName}</span>
                         ) : (
-                          <span className="text-cha-text-muted">Not uploaded</span>
+                          <span className="mnx-text-muted">Not uploaded</span>
                         )}
                       </p>
                     </>
@@ -1118,32 +1123,32 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
         )}
 
         {/* Footer Navigation */}
-        <div className="flex items-center justify-between pt-4 border-t border-cha-border dark:border-cha-border-strong">
+        <div className="flex items-center justify-between pt-4 border-t mnx-border mnx-border">
           {currentStep > 1 ? (
-            <button
+            <Button
               type="button"
               onClick={handleBack}
-              className="flex items-center gap-1 px-4 py-2 border border-cha-border hover:bg-cha-primary-soft/50 rounded-xl text-sm font-medium transition-colors text-cha-text-secondary"
+              className="flex items-center gap-1 px-4 py-2 border mnx-border mnx-hover-accent rounded-xl text-sm font-medium transition-colors mnx-text-muted"
             >
               <ArrowLeft size={16} /> Back
-            </button>
+            </Button>
           ) : (
             <div />
           )}
 
           {currentStep < 7 ? (
-            <button
+            <Button
               type="button"
               onClick={handleNext}
-              className="flex items-center gap-1 px-5 py-2 bg-cha-primary hover:bg-cha-primary-hover text-white rounded-xl text-sm font-medium transition-colors ml-auto"
+              className="flex items-center gap-1 px-5 py-2 mnx-bg-accent mnx-hover-accent mnx-text-muted rounded-xl text-sm font-medium transition-colors ml-auto"
             >
               Next <ChevronRight size={16} />
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-6 py-2 bg-cha-primary hover:bg-cha-primary-hover text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 ml-auto"
+              className="flex items-center gap-2 px-6 py-2 mnx-bg-accent mnx-hover-accent mnx-text-muted rounded-xl text-sm font-bold transition-all disabled:opacity-50 ml-auto"
             >
               {isSubmitting ? (
                 <>
@@ -1152,7 +1157,7 @@ export function EditCustomerClient({ initialData, employees }: EditCustomerClien
               ) : (
                 "Save Customer"
               )}
-            </button>
+            </Button>
           )}
         </div>
       </form>

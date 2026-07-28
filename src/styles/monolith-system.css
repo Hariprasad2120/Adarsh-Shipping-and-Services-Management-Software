@@ -6,9 +6,13 @@
 
 .mnx-dashboard-shell {
   --mnx-page: var(--mn-color-canvas);
+  --mnx-canvas: var(--mn-color-canvas);
   --mnx-card: var(--mn-color-surface);
+  --mnx-surface: var(--mn-color-surface);
   --mnx-soft: var(--mn-color-surface-soft);
+  --mnx-surface-soft: var(--mn-color-surface-soft);
   --mnx-mist: var(--mn-color-surface-muted);
+  --mnx-surface-muted: var(--mn-color-surface-muted);
   --mnx-text: var(--mn-color-text);
   --mnx-text-strong: var(--mn-color-text-strong);
   --mnx-muted: var(--mn-color-text-muted);
@@ -3820,34 +3824,61 @@ html[data-dashboard-shell="true"] body {
 
 .mnx-dialog-layer {
   position: fixed;
-  z-index: 80;
+  z-index: 120;
   inset: 0;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding:
+    max(24px, env(safe-area-inset-top))
+    max(24px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom))
+    max(24px, env(safe-area-inset-left));
+  isolation: isolate;
 }
 
 .mnx-dialog-backdrop {
   position: absolute;
+  z-index: 0;
   inset: 0;
   border: 0;
   background: color-mix(in srgb, var(--mnx-canvas) 42%, rgba(0, 0, 0, 0.72));
   backdrop-filter: blur(8px);
 }
 
-.mnx-dialog {
+.mnx-dialog-surface {
   position: relative;
+  z-index: 1;
   width: min(760px, 100%);
-  max-height: min(860px, calc(100dvh - 48px));
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  max-width: 100%;
+  max-height: min(52rem, 88dvh);
+  min-width: 0;
   overflow: hidden;
+  overscroll-behavior: contain;
+  outline: none;
   border: 1px solid var(--mnx-border);
   border-radius: 26px;
   color: var(--mnx-text);
   background: var(--mnx-surface-gradient);
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.36);
   animation: mnx-panel-in 220ms ease both;
+}
+
+.mnx-dialog-surface-compact {
+  width: min(480px, 100%);
+}
+
+.mnx-dialog-surface-wide {
+  width: min(1024px, 100%);
+}
+
+.mnx-dialog-surface-workspace {
+  width: min(1120px, 100%);
+  height: min(52rem, 88dvh);
+}
+
+.mnx-dialog {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
 .mnx-dialog > header,
@@ -6219,13 +6250,22 @@ html[data-dashboard-shell="true"] body {
 
   .mnx-dialog-layer {
     align-items: end;
-    padding: 0;
+    padding:
+      max(12px, env(safe-area-inset-top))
+      0
+      env(safe-area-inset-bottom)
+      0;
   }
 
-  .mnx-dialog {
+  .mnx-dialog-surface {
     width: 100%;
-    max-height: calc(100dvh - 20px);
+    max-width: none;
+    max-height: calc(100dvh - max(12px, env(safe-area-inset-top)));
     border-radius: 24px 24px 0 0;
+  }
+
+  .mnx-dialog-surface-workspace {
+    height: calc(100dvh - max(12px, env(safe-area-inset-top)));
   }
 
   .mnx-dialog > header,
@@ -6647,6 +6687,440 @@ html[data-dashboard-shell="true"] body {
   .mnx-catalogue-page section {
     break-inside: avoid;
     box-shadow: none;
+  }
+}
+
+/* Customs House Agent and Expense operations */
+.mnx-cha-page {
+  gap: var(--mn-space-6);
+}
+
+.mnx-cha-content {
+  display: grid;
+  gap: var(--mn-space-6);
+  min-width: 0;
+}
+
+.mnx-cha-content > :where(main, section, article, form, div) {
+  min-width: 0;
+}
+
+.mnx-cha-page-header {
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--mnx-accent) 22%, var(--mnx-border));
+  background: var(--mnx-hero-gradient);
+}
+
+.mnx-cha-page-header::after {
+  content: "";
+  position: absolute;
+  right: 2.5rem;
+  bottom: -2.1rem;
+  width: 12rem;
+  height: 7rem;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 32%, transparent);
+  border-radius: 55% 45% 12% 12%;
+  transform: skewX(-14deg);
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+.mnx-cha-page-header .mnx-page-header-icon {
+  color: var(--mnx-accent-text);
+  background: color-mix(in srgb, var(--mnx-accent) 18%, var(--mnx-surface));
+}
+
+.mnx-cha-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+
+.mnx-cha-section,
+.mnx-cha-panel {
+  overflow: hidden;
+}
+
+.mnx-cha-section-header {
+  border-bottom: 1px solid var(--mnx-border);
+}
+
+.mnx-cha-section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+}
+
+.mnx-cha-section-title > svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--mnx-accent-text);
+}
+
+.mnx-cha-section-content {
+  min-width: 0;
+  padding: var(--mn-space-5);
+}
+
+.mnx-cha-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-md);
+  background: var(--mnx-control-gradient);
+}
+
+.mnx-cha-tabs {
+  display: flex;
+  gap: var(--mn-space-1);
+  overflow-x: auto;
+  padding: var(--mn-space-1);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-sm);
+  background: var(--mnx-control-gradient);
+}
+
+.mnx-cha-visible-records {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-3);
+}
+
+.mnx-cha-visible-records > strong {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-sm);
+  color: var(--mnx-accent-text);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-cha-visible-records > span,
+.mnx-cha-visible-records small {
+  display: block;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  letter-spacing: var(--mn-type-label-tracking);
+  text-transform: uppercase;
+}
+
+.mnx-cha-visible-records small {
+  margin-top: 0.2rem;
+  color: var(--mnx-text);
+  letter-spacing: 0;
+}
+
+.mnx-cha-page-workflow-builder {
+  max-width: none;
+}
+
+.mnx-cha-page-workflow-builder .mnx-cha-content {
+  min-height: calc(100dvh - 8rem);
+}
+
+.mnx-cha-dialog {
+  overflow: auto;
+}
+
+.mnx-cha-dialog.mnx-dialog-surface-workspace {
+  overflow: hidden;
+}
+
+.mnx-cha-workspace,
+.cha-job-workspace {
+  color: var(--mnx-text);
+}
+
+.mnx-bg-surface {
+  background: var(--mnx-surface-gradient);
+}
+
+.mnx-bg-soft {
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-bg-muted {
+  background: var(--mnx-surface-muted);
+}
+
+.mnx-bg-accent {
+  color: var(--mnx-accent-contrast);
+  background: var(--mnx-accent-gradient);
+}
+
+.mnx-bg-accent-soft {
+  background: color-mix(in srgb, var(--mnx-accent) 14%, var(--mnx-surface));
+}
+
+.mnx-bg-success {
+  color: var(--mnx-success);
+  background: var(--mnx-success-bg);
+}
+
+.mnx-bg-warning {
+  color: var(--mnx-warning);
+  background: var(--mnx-warning-bg);
+}
+
+.mnx-bg-danger {
+  color: var(--mnx-danger);
+  background: var(--mnx-danger-bg);
+}
+
+.mnx-bg-info {
+  color: var(--mnx-info);
+  background: var(--mnx-info-bg);
+}
+
+.mnx-text-primary {
+  color: var(--mnx-text);
+}
+
+.mnx-text-muted {
+  color: var(--mnx-text-muted);
+}
+
+.mnx-text-accent {
+  color: var(--mnx-accent-text);
+}
+
+.mnx-text-success {
+  color: var(--mnx-success);
+}
+
+.mnx-text-warning {
+  color: var(--mnx-warning);
+}
+
+.mnx-text-danger {
+  color: var(--mnx-danger);
+}
+
+.mnx-text-info {
+  color: var(--mnx-info);
+}
+
+.mnx-border {
+  border-color: var(--mnx-border);
+}
+
+.mnx-border-accent {
+  border-color: color-mix(in srgb, var(--mnx-accent) 45%, var(--mnx-border));
+}
+
+.mnx-border-success {
+  border-color: color-mix(in srgb, var(--mnx-success) 36%, var(--mnx-border));
+}
+
+.mnx-border-warning {
+  border-color: color-mix(in srgb, var(--mnx-warning) 36%, var(--mnx-border));
+}
+
+.mnx-border-danger {
+  border-color: color-mix(in srgb, var(--mnx-danger) 36%, var(--mnx-border));
+}
+
+.mnx-border-info {
+  border-color: color-mix(in srgb, var(--mnx-info) 36%, var(--mnx-border));
+}
+
+.mnx-shadow-panel {
+  box-shadow: var(--mnx-shadow);
+}
+
+.mnx-hover-accent:hover {
+  border-color: color-mix(in srgb, var(--mnx-accent) 58%, var(--mnx-border));
+  color: var(--mnx-accent-text);
+  background: color-mix(in srgb, var(--mnx-accent) 13%, var(--mnx-surface));
+}
+
+.mnx-hover-success:hover {
+  color: var(--mnx-success);
+  background: var(--mnx-success-bg);
+}
+
+.mnx-hover-warning:hover {
+  color: var(--mnx-warning);
+  background: var(--mnx-warning-bg);
+}
+
+.mnx-hover-danger:hover {
+  color: var(--mnx-danger);
+  background: var(--mnx-danger-bg);
+}
+
+.mnx-hover-info:hover {
+  color: var(--mnx-info);
+  background: var(--mnx-info-bg);
+}
+
+.mnx-focus-accent:focus,
+.mnx-focus-accent:focus-visible {
+  border-color: var(--mnx-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mnx-accent) 28%, transparent);
+}
+
+.mnx-choice-control,
+.mnx-range-control {
+  accent-color: var(--mnx-accent);
+}
+
+.mnx-managed-input {
+  color: inherit;
+}
+
+.mnx-label {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  font-weight: var(--mn-type-label-weight);
+  letter-spacing: var(--mn-type-label-tracking);
+  line-height: var(--mn-type-label-line);
+  text-transform: uppercase;
+}
+
+.mnx-numeric {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.mnx-heading-1,
+.mnx-heading-2,
+.mnx-heading-3 {
+  margin: 0;
+  color: var(--mnx-text-strong);
+  text-wrap: balance;
+}
+
+.mnx-heading-1 {
+  font-size: var(--mn-type-heading-size);
+  font-weight: var(--mn-type-heading-weight);
+  letter-spacing: var(--mn-type-heading-tracking);
+  line-height: var(--mn-type-heading-line);
+}
+
+.mnx-heading-2 {
+  font-size: var(--mn-type-title-size);
+  font-weight: 520;
+  letter-spacing: var(--mn-type-title-tracking);
+}
+
+.mnx-heading-3 {
+  font-size: var(--mn-type-body-size);
+  font-weight: 620;
+  letter-spacing: -0.01em;
+}
+
+.mnx-plain {
+  appearance: none;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mnx-menu-option {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-2);
+  border-radius: var(--mnx-radius-sm);
+  color: var(--mnx-text-muted);
+}
+
+.mnx-menu-option:hover,
+.mnx-menu-option-active {
+  color: var(--mnx-text);
+  background: color-mix(in srgb, var(--mnx-accent) 12%, var(--mnx-surface));
+}
+
+.mnx-state-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--mnx-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mnx-accent) 18%, transparent);
+}
+
+.mnx-workflow-link {
+  color: var(--mnx-text-muted);
+}
+
+.mnx-workflow-link:hover {
+  color: var(--mnx-accent-text);
+}
+
+.mnx-workflow-dot,
+.mnx-workflow-dot-active {
+  border-color: var(--mnx-border);
+  color: var(--mnx-text-muted);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-workflow-dot-active {
+  border-color: color-mix(in srgb, var(--mnx-accent) 52%, var(--mnx-border));
+  color: var(--mnx-accent-text);
+}
+
+.mnx-cha-page :where(h1, h2, h3, h4) {
+  color: var(--mnx-text-strong);
+}
+
+.mnx-cha-page :where(p, small) {
+  text-wrap: pretty;
+}
+
+@media (max-width: 70rem) {
+  .mnx-cha-page-workflow-builder .mnx-cha-content {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 42rem) {
+  .mnx-cha-page-header {
+    padding: var(--mn-space-5);
+  }
+
+  .mnx-cha-page-header::after {
+    display: none;
+  }
+
+  .mnx-cha-toolbar {
+    align-items: stretch;
+  }
+
+  .mnx-cha-toolbar > * {
+    width: 100%;
+  }
+
+  .mnx-cha-tabs {
+    scroll-snap-type: x mandatory;
+  }
+
+  .mnx-cha-tabs > * {
+    scroll-snap-align: start;
+  }
+
+  .mnx-cha-section-content {
+    padding: var(--mn-space-4);
+  }
+}
+
+@media print {
+  .mnx-cha-page-header,
+  .mnx-cha-toolbar,
+  .mnx-cha-tabs {
+    display: none;
+  }
+
+  .mnx-cha-page,
+  .mnx-cha-content {
+    display: block;
   }
 }
 

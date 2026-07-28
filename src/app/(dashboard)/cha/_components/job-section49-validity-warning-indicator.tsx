@@ -32,7 +32,7 @@ export function JobSection49ValidityWarningIndicator({
       <Button
         type="button"
         size="sm"
-        className="w-full justify-start border border-[#D88700]/25 bg-[#D88700]/12 text-[#D88700] hover:bg-[#D88700]/18 hover:text-[#f97316]"
+        className="w-full justify-start border mnx-border-warning mnx-bg-warning mnx-text-warning mnx-hover-warning mnx-hover-warning"
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();

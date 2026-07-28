@@ -1,178 +1,221 @@
 # Monolith UI migration handoff
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
 
 ## Current state
 
-- Branch at batch start: `main`
-- Batch 003 parent: `0faa8b3`
+- Branch: `main`
+- Batch 004 parent: `384cfad`
 - Protected reference: `/dashboard` was not redesigned.
-- Route inventory: 211 total, 1 protected, 73 migrated, 137 pending, and 11
+- Route inventory: 211 total, 1 protected, 85 migrated, 125 pending, and 12
   layouts.
-- Verified migrated families now include all 18 `/ams` routes and all 5 `/lms`
-  routes, in addition to the previously migrated account, admin design-system,
-  notification, product-catalogue, to-do, HRMS, and Attendance routes.
-- Shared typography, centered page spacing, connected metric strips, numbered
-  section headings, compact sidebar rows, and the redesigned dashboard
-  welcome/attendance command surface are recorded as current design defaults.
-- Batch 003 implementation, archive, route audit, static gate, TypeScript,
-  focused tests, production build, and authenticated runtime matrix pass.
+- Batch 004 covers every discovered Expense and CHA page: 11 `/cha` routes and
+  `/expense`.
+- The presentation replacement, archive, audit, static gate, targeted lint,
+  focused and production TypeScript, focused tests, and production build pass.
+- The required authenticated Light/Night/Violet desktop/tablet/mobile matrix is
+  blocked because the connected in-app Browser service has no available browser
+  instance.
+- Batch 004 is migrated but not Verified. It has intentionally not been
+  committed as a verified batch.
+- The shared popup correction is implemented across the migrated Monolith
+  families. Static, type, focused test, and production-build gates pass; its
+  live theme/viewport matrix is included in the existing Browser blocker.
 
-## Batch 003 completed
+## Batch 004 implementation
 
-1. Discovered AMS and LMS from every `src/app/**/page.tsx` source rather than
-   relying on navigation: 18 AMS routes and 5 LMS routes, including all six
-   dynamic route patterns.
-2. Archived all 47 active legacy route, view, and specialized component
-   sources before replacing presentation.
-3. Activated exact `/ams`, `/ams/**`, `/lms`, and `/lms/**` routes in the
+1. Discovered routes from every `src/app/**/page.tsx` source rather than
+   relying on sidebar links:
+   - `/cha`
+   - `/cha/approvals`
+   - `/cha/customers`
+   - `/cha/customers/[id]/edit`
+   - `/cha/customers/new`
+   - `/cha/expenses`
+   - `/cha/jobs`
+   - `/cha/jobs/[jobId]`
+   - `/cha/reports`
+   - `/cha/settings`
+   - `/cha/settings/filing-workflows`
+   - `/expense`
+2. Archived 37 active legacy route, component, and style sources before
+   presentation replacement.
+3. Activated exact `/cha`, `/cha/**`, `/expense`, and `/expense/**` paths in the
    production Monolith shell.
-4. Added family layouts plus centralized loading and error boundaries.
-5. Added centralized Performance and Learning metadata, page frame, summary,
-   section, navigation, record, status, progress, notice, loading, error,
-   control, table, and dialog compositions.
-6. Replaced the complete presentation of AMS appraisal, cycle, criteria, slab,
-   extension, KPI, history, asset, goal, review, self-assessment, management
-   review, course, assignment, learning, and report pages.
-7. Removed active legacy `ModuleHome`, legacy data-table, old visual-class,
-   fixed-palette, inline-color, raw standard-control/table, and custom overlay
-   composition. No standalone shared AMS component file was deleted because
-   each remains referenced by active business views; their presentation was
-   migrated in place.
-8. Preserved authentication, RBAC, module gates, Prisma/data access, server
-   actions, form validation, appraisal stages, reviewer assignment,
-   self-assessment and management-review workflows, assets, goals, feedback,
-   course enrolment, assignment/progress operations, reporting, and
-   integrations.
-9. Added repeatable static and authenticated runtime gates for the complete
-   family and captured 24 representative loaded-state screenshots.
-10. Regenerated the exhaustive route audit and migration records.
+4. Added centralized Expense/CHA workspace composition, semantic panels,
+   connected metrics, numbered sections, toolbars, tabs, tables, badges,
+   actions, dialog layers, loading states, and error states.
+5. Replaced route-level legacy controls and presentation with shared Monolith
+   controls and workspace components. Added a centralized shared textarea and
+   normalized input handling for checkbox, radio, range, file, and hidden input
+   types.
+6. Migrated the full dynamic job workspace: details, documents, additional
+   data, checklist approvals, filing workflow, filing prerequisites, bill
+   filing, advances, expenses, audit history, warnings, dialogs, and drawers.
+7. Migrated customer list/create/edit, job list/create, expenses, approvals,
+   reports, settings, workflow configuration, and the Expense route.
+8. Removed the obsolete active CHA global visual skin and replaced active
+   legacy visual imports/classes with centralized semantic Monolith
+   presentation.
+9. Preserved authentication, RBAC and module gates, Prisma/data operations,
+   server actions, validation, job stages and prerequisites, approvals,
+   document handling, expenses, notifications, and integrations.
+10. Regenerated the exhaustive route audit and added a repeatable static
+    Expense/CHA verifier.
 
 ## Backup record
 
 Archive:
-`OLD UI code/legacy-ui-before-monolith-ams-lms-0faa8b3.zip`
+`OLD UI code/legacy-ui-before-monolith-expense-cha-384cfad.zip`
 
-- Source commit: `0faa8b3`
-- Entries: 47 original files with relative paths retained.
-- Size: 136,030 bytes.
+- Source commit: `384cfad`
+- Original files: 37, with relative paths retained.
+- ZIP entries including directories: 52.
+- Size: 269,883 bytes.
 - SHA-256:
-  `0C851DAB4C38FC0D22004EF27F14CB260C75FF3291BB1111E7D68101D81B0256`
-- Archive checksum, size, and file listing verification: passed.
+  `4BB7A161B2FC3D0C004500EA31FAE4DB3BAA49B098A3ABA8DAE07DAA32624F12`
+- Archive checksum, size, and file-list verification: passed through
+  `scripts/verify-monolith-expense-cha-ui.mjs`.
 
-The foundation and batches 001 and 002 archives remain in `OLD UI code`.
+The foundation and batches 001 through 003 archives remain in `OLD UI code`.
+
+Popup correction archive:
+`OLD UI code/legacy-ui-before-monolith-popup-fix-20260729-384cfad.zip`
+
+- Five pre-correction shared popup/CHA/style sources with relative paths
+  retained.
+- Size: 44,608 bytes.
+- SHA-256:
+  `6ED2CAF2AB94813E0BB5235B847C39DA9762FE7154E065EB4D595508FB2DE119`
+- Checksum, exact listing, and all required entries: passed.
 
 ## Key files
 
 - `docs/ui-route-audit.md`: regenerated route-by-route source record.
-- `docs/typography.md`: production typography, section heading, and spacing
-  guide.
-- `docs/design-system-showcase.md`: living log of approved visual decisions.
-- `scripts/audit-ui-routes.mjs`: recognizes `/admin/design-system`, all HRMS,
-  all Attendance, every AMS, and every LMS route.
-- `scripts/verify-monolith-people-operations-ui.mjs`: static presentation and
-  protected-behavior gate.
-- `scripts/verify-monolith-people-operations-runtime.mjs`: authenticated
-  production route/theme/viewport gate.
-- `scripts/verify-monolith-performance-learning-ui.mjs`: static presentation,
-  archive, route, and protected-behavior gate.
-- `scripts/verify-monolith-performance-learning-runtime.mjs`: authenticated
-  route/theme/viewport, loaded-state, semantic, responsive, and interaction
-  gate.
-- `src/components/monolith/people-workspace.tsx`: centralized page metadata
-  and People Operations compositions.
-- `src/components/monolith/people-controls.tsx`: production standard controls.
-- `src/components/monolith/people-data-table.tsx`: production data-table
-  contract.
-- `src/components/monolith/performance-workspace.tsx`: centralized metadata
-  and Performance/Learning compositions.
-- `src/components/monolith/workspace-data-table.tsx`: shared production data
-  table entry point, reusing the existing centralized implementation.
-- `src/app/(dashboard)/hrms/layout.tsx` and
-  `src/app/(dashboard)/attendance/layout.tsx`: family workspace boundaries.
-- `src/app/(dashboard)/ams/layout.tsx` and
-  `src/app/(dashboard)/lms/layout.tsx`: family workspace boundaries.
-- `src/app/(dashboard)/admin/design-system/design-system-client.tsx`:
-  production design-system showcase and People Operations component catalogue.
-- `src/components/hrms/lms-view.tsx`: migrated learning catalogue and progress
-  operations.
-- `src/components/hrms/pms-view.tsx`: migrated goals, progress, and feedback
-  operations.
-- `src/styles/monolith-system.css`: shared Monolith, People Operations,
-  Performance, and Learning presentation.
-- `src/app/globals.css`: Tailwind source detection restricted to active
-  production source.
-- `artifacts/ui-migration/performance-learning`: 24 representative
-  loaded-state captures; `verification.json` is locally generated and ignored.
+- `docs/ui-migration-status.md`: current migration counts and batch gate.
+- `scripts/audit-ui-routes.mjs`: recognizes every Expense and CHA route as
+  migrated.
+- `scripts/verify-monolith-expense-cha-ui.mjs`: archive, route, presentation,
+  and protected-workflow source gate.
+- `src/components/monolith/cha-workspace.tsx`: centralized Expense/CHA metadata
+  and workspace compositions.
+- `src/components/monolith/textarea.tsx`: centralized multiline control.
+- `src/components/monolith/input.tsx`: centralized input-type handling.
+- `src/components/monolith/workspace-dialog.tsx`: centralized popup portal,
+  responsive surface sizes, focus containment, keyboard handling, scroll lock,
+  accessible naming, and focus restoration.
+- `src/components/monolith/modal.tsx`: general compatibility adapter onto the
+  centralized popup contract.
+- `src/components/monolith/workspace-dialog.test.ts`: shared popup source and
+  responsive-style contract.
+- `src/app/(dashboard)/cha/layout.tsx`: CHA workspace boundary.
+- `src/app/(dashboard)/expense/layout.tsx`: Expense workspace boundary.
+- `src/app/(dashboard)/cha/jobs/[jobId]/job-workspace-client.tsx`: complete
+  migrated job operations workspace.
+- `src/components/cha/create-job-dialog.tsx`: migrated job creation dialog.
+- `src/app/(dashboard)/cha/settings/filing-workflows/workflows-client.tsx`:
+  migrated filing-workflow configuration workspace.
+- `src/styles/monolith-system.css`: shared Expense/CHA semantic presentation.
+- `src/app/globals.css`: obsolete legacy CHA UI skin removed.
 
 ## Verification record
 
 Passed:
 
-- legacy archive checksum, size, and 47-file listing;
-- route audit: 211 pages, 11 layouts, 73 migrated, 137 pending;
-- static UI/archive/behavior verifier for all 23 routes;
-- targeted ESLint for new batch infrastructure, shared components, layouts,
-  boundaries, shell, rewritten LMS/PMS views, and tests;
+- legacy archive checksum, size, and 37-file listing;
+- route audit: 211 pages, 12 layouts, 85 migrated, 125 pending;
+- static UI/archive/workflow verifier for all 12 routes;
+- targeted ESLint for new infrastructure, layouts, boundaries, shell, verifier,
+  and tests;
 - `npx tsc --noEmit -p tsconfig.ui-migration.json`;
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`;
-- 34 relevant Vitest tests in 7 suites;
-- clean `NODE_OPTIONS=--max-old-space-size=8192 npm run build`;
+- 14 Monolith workspace, foundation, and shell tests in 4 suites;
+- 12 CHA checklist/date-extension tests in 2 suites;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build`;
 - Prisma generation, Next.js compilation, production TypeScript, and 315
   static pages;
-- 115 authenticated runtime combinations across 23 routes:
-  - Light, Night, and Violet on 1440×1000 desktop;
-  - Violet on 1024×900 tablet;
-  - Light on 390×844 mobile;
-  - exact path, completed route loading, shell/theme, semantic tokens, shared
-    controls/tables, no legacy composition, no application errors, and no
-    horizontal overflow;
-- 24 representative screenshots plus non-mutating PMS and LMS interaction
-  checks.
+- `git diff --check`.
 
-The runtime fixture resolver used the existing appraisal and employee records
-for appraisal detail and assignment. No eligible current-user management
-review, asset, self-assessment, or reviewer record existed, so those exact
-dynamic URLs were verified through their authenticated not-found boundaries.
-The verifier does not create records or advance workflow state.
+Post-batch popup correction also passes:
 
-Repository-wide lint was also executed and retains the known backlog: 2,120
-findings (1,618 errors and 502 warnings) across seed/maintenance scripts,
-pending modules, and unchanged business-code debt. New batch infrastructure
-and rewritten LMS/PMS surfaces pass targeted ESLint. The mechanically
-presentation-converted AMS views retain 20 errors and 33 warnings from their
-existing `no-explicit-any`, hook-effect, purity, unused-symbol, escaped-text,
-and image-rule debt.
+- five-file pre-correction archive checksum and listing;
+- centralized popup static gate and migrated-source overlay scan;
+- targeted ESLint for all correction infrastructure;
+- full `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`;
+- 16 tests in 5 focused suites;
+- clean `NODE_OPTIONS=--max-old-space-size=8192 npm run build`, including
+  Prisma generation, Next.js compilation, production TypeScript, and 315
+  static pages.
 
-## Current dashboard design update
+The broader CHA integration suite completed 24 of 27 tests. The three failures
+are existing fixture/environment expectations unrelated to presentation:
 
-The dashboard theme order is now Night, Violet, Light, and Purple. Night is the
-default fallback, Purple is an additive light theme, and user preference remains
-stored in `localStorage.theme`. The work schedule highlight now has inset
-padding and hides adjacent dotted separators so the current-day pill no longer
-overlaps the row divider.
+- Google Drive checklist attachment unavailable;
+- `estimatedFilingDate` fixture is null;
+- the test expects `JOB_DELETED_DIRECT` while the service emits
+  `JOB_DELETE_EXECUTED`.
 
-The build retains six non-fatal Turbopack broad file-trace warnings from
-existing dynamic filesystem paths in HRMS letter generation, customer-portal
-file routes/service code, and the NFT trace through `next.config.ts`. They do
-not affect compilation or the verified runtime routes.
+Repository-wide lint retains its known backlog: 2,117 findings (1,617 errors and
+500 warnings). The presentation-converted Expense/CHA business views retain 375
+errors and 71 warnings from existing `no-explicit-any`, hook-effect,
+unused-symbol, and related debt. The new batch infrastructure passes targeted
+ESLint. No business behavior was rewritten merely to mask legacy lint debt.
+
+The production build retains the existing non-fatal Turbopack NFT trace warning
+through `next.config.ts` and the customer-portal checklist-file route.
+
+## Browser blocker
+
+The production application started successfully at `http://127.0.0.1:3100`.
+The Browser skill was then initialized against that URL, but
+`agent.browsers.getForUrl(...)` reported that no browser was available and
+`agent.browsers.list()` returned `[]`. The Browser skill prohibits substituting
+standalone Playwright when its connected browser runtime is unavailable.
+
+Consequently, none of these claims may be made yet:
+
+- authenticated loaded-state verification for all Expense/CHA routes;
+- Light, Night, and Violet visual verification;
+- desktop, tablet, and mobile responsive verification;
+- dialog/drawer and filing-workspace interaction verification;
+- application-error, overflow, or exact-theme runtime assertions;
+- verified-batch commit.
+
+The same Browser service check was repeated for the shared popup correction on
+2026-07-29 and still returned no available browser instance. The live matrix
+must now include representative shared dialogs in To-Do, HRMS, Attendance,
+AMS, Expense, and CHA, with the create-job workspace checked against the
+reported oversized/nested-scroll defect.
 
 ## Important constraints
 
 - Do not redesign `/dashboard`.
-- Do not opt a pending route into the Monolith shell before backing up and
-  replacing its complete presentation.
-- Do not treat a Monolith import as migration verification.
+- Do not modify workflow behavior, stage prerequisites, approvals, document
+  handling, expenses, role permissions, validation, integrations, or server
+  actions.
 - Do not compile or import from `OLD UI code`.
 - Do not compile, import, or modify `_design-reference`.
-- Preserve business logic, server actions, validation, RBAC, integrations,
-  navigation, pagination, filtering, and notifications.
-- Update status after every migrated page and this handoff before ending an
-  incomplete session.
+- Keep all Node.js processes at
+  `NODE_OPTIONS=--max-old-space-size=8192`.
+- Preserve the batch changes and archive until runtime verification is
+  available.
 
 ## Next action
 
-Choose the next coherent family from the 137 pending routes, archive its active
-visual sources, extend centralized production components before page use, and
-repeat the full static, type, test, build, and authenticated theme/responsive
-verification gate.
+Enable or attach an in-app Browser instance, then continue this same batch:
+
+1. Start the production app with the 8 GB Node heap.
+2. Use authenticated fixtures for the dynamic job and customer routes.
+3. Exercise all 12 routes in Light, Night, and Violet at desktop, tablet, and
+   mobile widths.
+4. Open and verify all reachable dialogs, drawers, document/additional-data
+   panels, checklist approvals, filing stages, workflow configuration, bill
+   filing, expenses, and permission/not-found states without mutating workflow
+   data.
+5. Include representative shared popup consumers from To-Do, HRMS,
+   Attendance, and AMS; assert that the surface stays inset on desktop/tablet,
+   becomes a safe-area-aware bottom sheet on mobile, keeps close/actions
+   visible, has one content scroller, contains keyboard focus, and restores
+   focus to its trigger.
+6. Fix any presentation defects, rerun the static/type/test/build gates, mark
+   Batch 004 Verified, and only then commit the verified batch.

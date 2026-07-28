@@ -1,5 +1,6 @@
 "use client";
 
+import { ChaTable } from "@/components/monolith/cha-workspace";
 import { DateInput } from "@/components/monolith/date-input";
 import { FileUploadField } from "@/components/monolith/file-upload-field";
 import { useState } from "react";
@@ -92,14 +93,14 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
   };
 
   return (
-    <div className="monolith-form-section space-y-4">
-      <h3 className="monolith-h3">Delivery Order Document &amp; Extension</h3>
+    <div className="mnx-form-section space-y-4">
+      <h3 className="mnx-heading-3">Delivery Order Document &amp; Extension</h3>
 
       <div className="space-y-4">
         <div>
           <div>
-            <span className="monolith-label">DO Document Upload</span>
-            <p className="mt-0.5 text-xs text-mono-muted">
+            <span className="mnx-label">DO Document Upload</span>
+            <p className="mt-0.5 text-xs mnx-text-muted">
               Attach the Delivery Order document here. Uploading a new file replaces the current one.
             </p>
           </div>
@@ -131,21 +132,21 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
             onInputChange={(e) => void handleUpload(e.target.files?.[0] ?? null)}
           />
           {!additionalData.doDocumentFileKey ? (
-            <span className="text-xs text-mono-muted">No Delivery Order document uploaded yet.</span>
+            <span className="text-xs mnx-text-muted">No Delivery Order document uploaded yet.</span>
           ) : null}
         </div>
 
         <div className="space-y-3">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
             <label className="space-y-1.5">
-              <span className="monolith-label">Delivery Order Extension Date</span>
+              <span className="mnx-label">Delivery Order Extension Date</span>
               <DateInput
                 id="deliveryOrderExtensionDate"
                 value={extensionDate}
                 onChange={(e) => setExtensionDate(e.target.value)}
                 min={additionalData.deliveryOrderValidity?.slice(0, 10)}
                 disabled={busy || !canUpdateJob || !additionalData.deliveryOrderValidity}
-                className="w-full monolith-numeric"
+                className="w-full mnx-numeric"
               />
             </label>
             <Button
@@ -158,22 +159,22 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
               {busy ? "Saving..." : "Save Extension Date"}
             </Button>
           </div>
-          <div className="grid grid-cols-1 gap-2 text-xs text-mono-muted md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 text-xs mnx-text-muted md:grid-cols-2">
             <p>
               Original validity:{" "}
-              <span className="monolith-numeric text-mono-text">
+              <span className="mnx-numeric mnx-text-primary">
                 {originalValidity ? originalValidity.toLocaleDateString("en-IN") : "—"}
               </span>
             </p>
             <p>
               Effective validity:{" "}
-              <span className="monolith-numeric text-mono-text">
+              <span className="mnx-numeric mnx-text-primary">
                 {effectiveValidity ? effectiveValidity.toLocaleDateString("en-IN") : "—"}
               </span>
             </p>
           </div>
           {!additionalData.deliveryOrderValidity ? (
-            <p className="text-xs text-[#D88700]">
+            <p className="text-xs mnx-text-warning">
               Set the original Delivery Order validity first before saving an extension date.
             </p>
           ) : null}
@@ -181,14 +182,14 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
 
         {/* Extension history — reflected column */}
         {extensions.length > 0 ? (
-          <div className="space-y-2 border-t border-mono-border/40 pt-4">
-            <span className="monolith-label inline-flex items-center gap-1.5">
+          <div className="space-y-2 border-t mnx-border pt-4">
+            <span className="mnx-label inline-flex items-center gap-1.5">
               <History size={12} />
               Extension History
             </span>
-            <div className="monolith-card overflow-hidden rounded-xl border border-mono-border/40 bg-mono-card shadow-sm">
+            <div className="mnx-bg-surface mnx-border overflow-hidden rounded-xl border mnx-border mnx-bg-surface shadow-sm">
               <div className="overflow-x-auto">
-                <table className="monolith-table">
+                <ChaTable className="mnx-cha-table">
                   <thead>
                     <tr>
                       <th>Applied On</th>
@@ -200,13 +201,13 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
                   <tbody>
                     {extensions.map((ext) => (
                       <tr key={ext.id}>
-                        <td className="monolith-numeric">{new Date(ext.createdAt).toLocaleDateString("en-IN")}</td>
-                        <td className="monolith-numeric">
+                        <td className="mnx-numeric">{new Date(ext.createdAt).toLocaleDateString("en-IN")}</td>
+                        <td className="mnx-numeric">
                           {ext.previousValidity
                             ? new Date(ext.previousValidity).toLocaleDateString("en-IN")
                             : "—"}
                         </td>
-                        <td className="monolith-numeric font-medium">
+                        <td className="mnx-numeric font-medium">
                           {new Date(ext.extensionDate).toLocaleDateString("en-IN")}
                         </td>
                         <td>
@@ -215,19 +216,19 @@ export function DoValidityPanel({ jobId, canUpdateJob, additionalData, extension
                               href={ext.fileKey}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-[#F9D972] hover:underline"
+                              className="inline-flex items-center gap-1 mnx-text-accent hover:underline"
                             >
                               <ExternalLink size={12} />
                               {ext.fileName || "View"}
                             </a>
                           ) : (
-                            <span className="text-mono-muted">—</span>
+                            <span className="mnx-text-muted">—</span>
                           )}
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </ChaTable>
               </div>
             </div>
           </div>

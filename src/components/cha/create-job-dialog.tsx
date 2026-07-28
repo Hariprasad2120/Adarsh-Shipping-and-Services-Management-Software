@@ -1,9 +1,10 @@
 "use client";
 
+import { Textarea } from "@/components/monolith/textarea";
 import { NativeSelect } from "@/components/monolith/native-select";
 import { DateInput } from "@/components/monolith/date-input";
+import { ChaDialogLayer } from "@/components/monolith/cha-workspace";
 import { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
@@ -40,15 +41,17 @@ import { DropdownSelect } from "@/components/monolith/dropdown-select";
 import { Input } from "@/components/monolith/input";
 import { cn } from "@/lib/utils";
 
+const MotionButton = motion.create(Button);
+
 const ADD_NEW_JOB_TYPE = "__add_new_job_type__";
 const ADD_NEW_SHIPMENT_TYPE = "__add_new_shipment_type__";
 const ALWAYS_VISIBLE_OWNER_MANAGER_EMAILS = ["hr@adarshshipping.in"];
 const CHA_CREATE_TEXTAREA_CLASS =
-  "min-h-[112px] w-full rounded-[18px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] px-4 py-3 text-sm text-[var(--cha-create-text)] shadow-[0_16px_36px_-34px_rgba(15,23,42,0.24)] outline-none transition placeholder:text-[var(--cha-create-muted)] focus:border-[var(--cha-create-primary)] focus:ring-4 focus:ring-[var(--cha-create-ring)] dark:shadow-[0_24px_60px_-42px_rgba(2,6,23,0.9)]";
+  "min-h-[112px] w-full rounded-[18px] border mnx-border-accent mnx-bg-accent-soft px-4 py-3 text-sm mnx-text-muted mnx-shadow-panel outline-none transition mnx-text-muted mnx-focus-accent focus:ring-4 mnx-focus-accent mnx-shadow-panel";
 const CHA_CREATE_INPUT_CLASS =
-  "!h-11 !rounded-[18px] !border-[var(--cha-create-border)] !bg-[var(--cha-create-card)] !text-[var(--cha-create-text)] !shadow-[0_14px_34px_-32px_rgba(15,23,42,0.22)] placeholder:!text-[var(--cha-create-muted)] focus:!border-[var(--cha-create-primary)] focus:!ring-4 focus:!ring-[var(--cha-create-ring)] dark:!shadow-[0_24px_60px_-42px_rgba(2,6,23,0.9)]";
+  "!h-11 !rounded-[18px] mnx-border-accent mnx-bg-accent-soft mnx-text-muted mnx-shadow-panel mnx-text-muted mnx-focus-accent focus:!ring-4 mnx-focus-accent mnx-shadow-panel";
 const CHA_CREATE_SELECT_CLASS =
-  "!h-11 !rounded-[18px] !border-[var(--cha-create-border)] !bg-[var(--cha-create-card)] !text-[var(--cha-create-text)] !shadow-[0_14px_34px_-32px_rgba(15,23,42,0.22)] hover:!border-[var(--cha-create-primary-border)] hover:!bg-[var(--cha-create-card-alt)] focus-visible:!border-[var(--cha-create-primary)] focus-visible:!ring-4 focus-visible:!ring-[var(--cha-create-ring)] dark:!shadow-[0_24px_60px_-42px_rgba(2,6,23,0.9)]";
+  "!h-11 !rounded-[18px] mnx-border-accent mnx-bg-accent-soft mnx-text-muted mnx-shadow-panel mnx-hover-accent mnx-hover-accent mnx-focus-accent focus-visible:!ring-4 mnx-focus-accent mnx-shadow-panel";
 
 type CreatedJobSummary = {
   id: string;
@@ -64,20 +67,20 @@ function getPriorityPresentation(priority: string) {
       return {
         badge: "P1",
         tone:
-          "border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/12 dark:text-red-200",
+          "mnx-border-danger mnx-bg-danger mnx-text-danger mnx-border-danger mnx-bg-danger mnx-text-danger",
       };
     case "LOW":
       return {
         badge: "P3",
         tone:
-          "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-500/30 dark:bg-slate-500/12 dark:text-slate-200",
+          "mnx-border mnx-bg-soft mnx-text-muted mnx-border mnx-bg-soft mnx-text-muted",
       };
     case "MEDIUM":
     default:
       return {
         badge: "P2",
         tone:
-          "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/12 dark:text-amber-200",
+          "mnx-border-warning mnx-bg-warning mnx-text-warning mnx-border-warning mnx-bg-warning mnx-text-warning",
       };
   }
 }
@@ -101,12 +104,12 @@ function CreateJobBenefit({
 }) {
   return (
     <div className="flex items-center justify-center gap-3 px-4 py-3 text-left">
-      <span className="flex h-9 w-9 items-center justify-center text-[var(--cha-create-primary)]">
+      <span className="flex h-9 w-9 items-center justify-center mnx-text-accent">
         <Icon size={16} />
       </span>
       <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-[var(--cha-create-text)]">{title}</p>
-        <p className="truncate text-xs text-[var(--cha-create-secondary)]">{description}</p>
+        <p className="truncate text-sm font-semibold mnx-text-muted">{title}</p>
+        <p className="truncate text-xs mnx-text-muted">{description}</p>
       </div>
     </div>
   );
@@ -122,12 +125,12 @@ function CreateJobSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-5 border-t border-[var(--cha-create-divider)] pt-6 first:border-t-0 first:pt-0">
+    <section className="space-y-5 border-t mnx-border-accent pt-6 first:border-t-0 first:pt-0">
       <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-primary-soft)] text-[var(--cha-create-primary)]">
+        <span className="flex h-10 w-10 items-center justify-center rounded-2xl border mnx-border-accent mnx-bg-accent-soft mnx-text-accent">
           <Icon size={18} />
         </span>
-        <h3 className="text-base font-semibold uppercase tracking-[0.04em] text-[var(--cha-create-text)]">
+        <h3 className="text-base font-semibold uppercase tracking-[0.04em] mnx-text-muted">
           {title}
         </h3>
       </div>
@@ -147,11 +150,11 @@ function CreateJobFieldLabel({
 }) {
   return (
     <div className="mb-2 flex items-center gap-2">
-      <label className="text-sm font-medium text-[var(--cha-create-text)]">
+      <label className="text-sm font-medium mnx-text-muted">
         {label}
-        {required ? <span className="ml-1 text-[var(--cha-create-primary)]">*</span> : null}
+        {required ? <span className="ml-1 mnx-text-accent">*</span> : null}
       </label>
-      {helper ? <span className="text-xs text-[var(--cha-create-muted)]">{helper}</span> : null}
+      {helper ? <span className="text-xs mnx-text-muted">{helper}</span> : null}
     </div>
   );
 }
@@ -171,34 +174,39 @@ function CreateJobSuccessOverlay({
   onAutoFinish: () => void;
   reducedMotion: boolean;
 }) {
-  if (!summary || typeof document === "undefined") return null;
+  if (!summary) return null;
 
   const { Icon: TransportIcon, label: transportLabel } = getShipmentVisual(summary.shipmentTypeName);
 
-  return createPortal(
-    <AnimatePresence>
-      {open ? (
+  return (
+    <ChaDialogLayer
+      open={open}
+      onClose={onAutoFinish}
+      size="wide"
+      labelledBy="create-job-success-title"
+    >
+      <AnimatePresence>
         <motion.div
           animate={{ opacity: 1 }}
-          className="fixed inset-0 z-[100] grid min-h-dvh place-items-center bg-[rgba(15,23,42,0.72)] p-3 backdrop-blur-md sm:p-4"
+          className="contents"
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >
           <motion.div
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="relative mx-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl overflow-y-auto rounded-[24px] border border-[rgba(0,206,196,0.22)] bg-[linear-gradient(180deg,rgba(15,23,42,0.99),rgba(17,24,39,0.98))] p-5 !text-slate-50 shadow-[0_32px_100px_-38px_rgba(15,23,42,0.95)] sm:max-h-[calc(100dvh-2rem)] sm:rounded-[28px] sm:p-8"
+            className="relative mx-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl overflow-y-auto rounded-[24px] border mnx-border-accent bg-[linear-gradient(180deg,color-mix(in srgb, var(--mnx-surface) 72%, transparent),color-mix(in srgb, var(--mnx-surface) 72%, transparent))] p-5 mnx-text-muted mnx-shadow-panel sm:max-h-[calc(100dvh-2rem)] sm:rounded-[28px] sm:p-8"
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             initial={{ opacity: 0, y: 24, scale: 0.97 }}
             transition={{ duration: 0.32, ease: "easeOut" }}
           >
             <div className="pointer-events-none absolute inset-0 opacity-50">
-              <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,rgba(0,206,196,0.22),transparent_60%)]" />
-              <div className="absolute right-10 top-8 h-40 w-80 rounded-full bg-[radial-gradient(circle,rgba(0,206,196,0.18),transparent_70%)] blur-2xl" />
+              <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,color-mix(in srgb, var(--mnx-surface) 72%, transparent),transparent_60%)]" />
+              <div className="absolute right-10 top-8 h-40 w-80 rounded-full bg-[radial-gradient(circle,color-mix(in srgb, var(--mnx-surface) 72%, transparent),transparent_70%)] blur-2xl" />
               <div
                 className="absolute inset-0 opacity-20"
                 style={{
                   backgroundImage:
-                    "radial-gradient(circle at 1px 1px, rgba(153,246,228,0.5) 1px, transparent 0)",
+                    "radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--mnx-surface) 72%, transparent) 1px, transparent 0)",
                   backgroundSize: "28px 28px",
                 }}
               />
@@ -207,52 +215,52 @@ function CreateJobSuccessOverlay({
             <div className="relative space-y-5 sm:space-y-8">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="space-y-2">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">
+                  <div className="inline-flex items-center gap-2 rounded-full border mnx-border-success mnx-bg-success px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] mnx-text-success">
                     <CircleDot size={12} />
                     Workflow launched
                   </div>
-                  <h2 className="text-2xl font-semibold tracking-tight !text-white sm:text-3xl">
+                  <h2 id="create-job-success-title" className="text-2xl font-semibold tracking-tight mnx-text-muted sm:text-3xl">
                     Customs Clearance Job Created
                   </h2>
-                  <p className="max-w-2xl text-sm !text-slate-200">
+                  <p className="max-w-2xl text-sm mnx-text-muted">
                     The shipment workflow has been initialized successfully.
                   </p>
                 </div>
-                <motion.button
+                <MotionButton
                   animate={reducedMotion ? { scale: 1 } : { scale: [1, 1.04, 1] }}
-                  className="flex h-12 w-12 items-center justify-center rounded-full border border-[rgba(0,206,196,0.24)] bg-[rgba(0,206,196,0.18)] text-[var(--cha-create-success-primary,#F9D972)] shadow-[0_0_0_10px_rgba(0,206,196,0.08)] sm:h-14 sm:w-14"
+                  className="flex h-12 w-12 items-center justify-center rounded-full border mnx-border-accent mnx-bg-accent-soft mnx-text-accent mnx-shadow-panel sm:h-14 sm:w-14"
                   transition={reducedMotion ? { duration: 0 } : { duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
                   type="button"
                 >
                   <CheckCircle2 size={24} />
-                </motion.button>
+                </MotionButton>
               </div>
 
-              <div className="rounded-[20px] border border-[rgba(148,163,184,0.18)] bg-[rgba(15,23,42,0.72)] p-4 sm:rounded-[24px] sm:p-6">
-                <div className="relative overflow-hidden rounded-[20px] border border-[rgba(0,206,196,0.16)] bg-[linear-gradient(180deg,rgba(15,23,42,0.95),rgba(2,6,23,0.9))] px-4 py-5 sm:rounded-[22px] sm:px-5 sm:py-6">
-                  <div className="absolute inset-x-6 top-1/2 h-px -translate-y-1/2 border-t border-dashed border-[rgba(0,206,196,0.35)] sm:inset-x-10" />
-                  <div className="absolute left-8 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-emerald-400 shadow-[0_0_0_8px_rgba(16,185,129,0.12)] sm:left-12" />
-                  <div className="absolute right-8 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-emerald-400 shadow-[0_0_0_8px_rgba(16,185,129,0.12)] sm:right-12" />
+              <div className="rounded-[20px] border mnx-border-accent mnx-bg-accent-soft p-4 sm:rounded-[24px] sm:p-6">
+                <div className="relative overflow-hidden rounded-[20px] border mnx-border-accent bg-[linear-gradient(180deg,color-mix(in srgb, var(--mnx-surface) 72%, transparent),color-mix(in srgb, var(--mnx-surface) 72%, transparent))] px-4 py-5 sm:rounded-[22px] sm:px-5 sm:py-6">
+                  <div className="absolute inset-x-6 top-1/2 h-px -translate-y-1/2 border-t border-dashed mnx-border-accent sm:inset-x-10" />
+                  <div className="absolute left-8 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full mnx-bg-success mnx-shadow-panel sm:left-12" />
+                  <div className="absolute right-8 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full mnx-bg-success mnx-shadow-panel sm:right-12" />
 
                   {reducedMotion ? (
                     <div className="relative grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
                       <div>
-                        <p className="text-[11px] uppercase tracking-[0.18em] !text-slate-300">Origin</p>
-                        <p className="mt-1 text-sm font-semibold !text-white">Job Initialized</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] mnx-text-muted">Origin</p>
+                        <p className="mt-1 text-sm font-semibold mnx-text-muted">Job Initialized</p>
                       </div>
-                      <div className="flex items-center justify-center rounded-full border border-[rgba(0,206,196,0.24)] bg-[rgba(0,206,196,0.18)] p-3 text-[var(--cha-create-success-primary,#F9D972)]">
+                      <div className="flex items-center justify-center rounded-full border mnx-border-accent mnx-bg-accent-soft p-3 mnx-text-accent">
                         <TransportIcon size={22} />
                       </div>
                       <div className="md:text-right">
-                        <p className="text-[11px] uppercase tracking-[0.18em] !text-slate-300">Destination</p>
-                        <p className="mt-1 text-sm font-semibold !text-white">Workflow Active</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] mnx-text-muted">Destination</p>
+                        <p className="mt-1 text-sm font-semibold mnx-text-muted">Workflow Active</p>
                       </div>
                     </div>
                   ) : (
                     <div className="relative h-20 sm:h-24">
                       <motion.div
                         animate={{ x: ["0%", "88%"] }}
-                        className="absolute top-1/2 z-10 flex -translate-y-1/2 items-center gap-3 rounded-full border border-[rgba(0,206,196,0.24)] bg-[rgba(15,23,42,0.92)] px-4 py-2 text-[var(--cha-create-success-primary,#F9D972)] shadow-[0_20px_40px_-28px_rgba(0,206,196,0.7)]"
+                        className="absolute top-1/2 z-10 flex -translate-y-1/2 items-center gap-3 rounded-full border mnx-border-accent mnx-bg-accent-soft px-4 py-2 mnx-text-accent mnx-shadow-panel"
                         initial={{ x: "0%" }}
                         transition={{ duration: 1.2, ease: [0.2, 0.8, 0.2, 1] }}
                       >
@@ -268,8 +276,8 @@ function CreateJobSuccessOverlay({
                             key={label}
                             transition={{ delay: 0.28 + index * 0.18, duration: 0.24 }}
                           >
-                            <span className="h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_0_8px_rgba(16,185,129,0.14)]" />
-                            <span className="text-[10px] uppercase tracking-[0.14em] !text-slate-300">{label}</span>
+                            <span className="h-3 w-3 rounded-full mnx-bg-success mnx-shadow-panel" />
+                            <span className="text-[10px] uppercase tracking-[0.14em] mnx-text-muted">{label}</span>
                           </motion.div>
                         ))}
                       </div>
@@ -286,29 +294,29 @@ function CreateJobSuccessOverlay({
                   { label: "Assigned Manager", value: summary.managerName },
                 ].map((item) => (
                   <div
-                    className="rounded-2xl border border-[rgba(148,163,184,0.16)] bg-[rgba(15,23,42,0.68)] px-4 py-3"
+                    className="rounded-2xl border mnx-border-accent mnx-bg-accent-soft px-4 py-3"
                     key={item.label}
                   >
-                    <p className="text-[11px] uppercase tracking-[0.16em] !text-slate-300">{item.label}</p>
-                    <p className="mt-1 text-sm font-semibold !text-white">{item.value}</p>
+                    <p className="text-[11px] uppercase tracking-[0.16em] mnx-text-muted">{item.label}</p>
+                    <p className="mt-1 text-sm font-semibold mnx-text-muted">{item.value}</p>
                   </div>
                 ))}
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-xs !text-slate-300">
+                <p className="text-xs mnx-text-muted">
                   Redirecting back to CHA shortly.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Button
-                    className="monolith-plain rounded-2xl border border-[rgba(148,163,184,0.18)] bg-[rgba(15,23,42,0.72)] px-5 py-2.5 text-sm text-white hover:border-[rgba(0,206,196,0.32)] hover:bg-[rgba(15,23,42,0.88)]"
+                    className="mnx-plain rounded-2xl border mnx-border-accent mnx-bg-accent-soft px-5 py-2.5 text-sm mnx-text-muted mnx-hover-accent mnx-hover-accent"
                     onClick={onCreateAnother}
                     type="button"
                   >
                     Create Another Job
                   </Button>
                   <Button
-                    className="!border-[var(--cha-create-success-primary,#F9D972)] !bg-[var(--cha-create-success-primary,#F9D972)] !text-white hover:!bg-[#E8C85D]"
+                    className="mnx-border-accent mnx-bg-accent-soft mnx-text-muted mnx-hover-accent"
                     onClick={onOpenJob}
                     type="button"
                   >
@@ -319,19 +327,18 @@ function CreateJobSuccessOverlay({
               </div>
             </div>
 
-            <button
+            <Button
               aria-label="Close success state"
-              className="absolute right-4 top-4 rounded-full border border-transparent p-2 text-slate-400 transition hover:border-[rgba(148,163,184,0.2)] hover:text-white"
+              className="absolute right-4 top-4 rounded-full border border-transparent p-2 mnx-text-muted transition mnx-hover-accent mnx-hover-accent"
               onClick={onAutoFinish}
               type="button"
             >
               <X size={18} />
-            </button>
+            </Button>
           </motion.div>
         </motion.div>
-      ) : null}
-    </AnimatePresence>,
-    document.body,
+      </AnimatePresence>
+    </ChaDialogLayer>
   );
 }
 
@@ -1081,58 +1088,44 @@ export function CreateJobDialog({
   const activeBranch = options.branches.find((branch) => branch.id === newBranchId);
   const activeCustomer = options.customers.find((customer) => customer.id === newCustomerId);
 
-  if (!open || typeof document === "undefined") return null;
+  if (!open) return null;
 
-  return createPortal(
+  return (
     <>
-      <div
-        className="fixed inset-0 z-50 flex h-dvh w-dvw items-center justify-center overflow-hidden bg-[rgba(2,6,23,0.66)] p-4 backdrop-blur-md animate-in fade-in duration-200"
-        style={
-          {
-            "--cha-create-primary": "#F9D972",
-            "--cha-create-primary-hover": "#E8C85D",
-            "--cha-create-primary-active": "#00a9b2",
-            "--cha-create-primary-soft": "rgba(0,206,196,0.10)",
-            "--cha-create-primary-border": "rgba(0,206,196,0.32)",
-            "--cha-create-card": "#FFFFFF",
-            "--cha-create-card-alt": "#F8FAFC",
-            "--cha-create-text": "#0F172A",
-            "--cha-create-secondary": "#475569",
-            "--cha-create-muted": "#64748B",
-            "--cha-create-border": "#E2E8F0",
-            "--cha-create-divider": "rgba(148,163,184,0.22)",
-            "--cha-create-ring": "rgba(0,206,196,0.16)",
-          } as React.CSSProperties
-        }
+      <ChaDialogLayer
+        open={open}
+        onClose={() => onOpenChange(false)}
+        size="workspace"
+        labelledBy="create-job-title"
       >
-        <div className="flex h-[calc(100dvh-2rem)] w-full max-w-[1120px] flex-col overflow-hidden rounded-[26px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] shadow-[0_28px_82px_-42px_rgba(15,23,42,0.4)] dark:border-[#263449] dark:bg-[#111827] dark:[--cha-create-primary:#F9D972] dark:[--cha-create-primary-hover:#5eead4] dark:[--cha-create-primary-active:#E8C85D] dark:[--cha-create-primary-soft:rgba(0,206,196,0.16)] dark:[--cha-create-primary-border:rgba(0,206,196,0.28)] dark:[--cha-create-card:#111827] dark:[--cha-create-card-alt:#0F172A] dark:[--cha-create-text:#F8FAFC] dark:[--cha-create-secondary:#CBD5E1] dark:[--cha-create-muted:#94A3B8] dark:[--cha-create-border:#263449] dark:[--cha-create-divider:rgba(148,163,184,0.18)] dark:[--cha-create-ring:rgba(0,206,196,0.18)]">
-            <div className="relative overflow-hidden border-b border-[var(--cha-create-divider)] bg-[var(--cha-create-card)] px-5 py-4 dark:bg-[var(--cha-create-card)] sm:px-6">
+        <div className="flex h-full w-full flex-col overflow-hidden mnx-bg-surface">
+            <div className="relative overflow-hidden border-b mnx-border-accent mnx-bg-accent-soft px-5 py-4 mnx-bg-accent-soft sm:px-6">
               <div className="pointer-events-none absolute inset-y-0 -right-24 w-[32%] overflow-hidden opacity-75">
                 <svg className="absolute inset-0 h-full w-full" fill="none" viewBox="0 0 540 220">
-                  <path d="M40 152C96 116 156 102 214 108C262 112 314 136 382 126C432 118 472 84 514 48" stroke="rgba(0,206,196,0.28)" strokeDasharray="6 8" strokeLinecap="round" strokeWidth="2" />
-                  <path d="M82 176C144 142 214 142 272 158C340 176 400 174 468 136" stroke="rgba(0,184,175,0.18)" strokeDasharray="4 10" strokeLinecap="round" strokeWidth="2" />
+                  <path d="M40 152C96 116 156 102 214 108C262 112 314 136 382 126C432 118 472 84 514 48" stroke="color-mix(in srgb, var(--mnx-surface) 72%, transparent)" strokeDasharray="6 8" strokeLinecap="round" strokeWidth="2" />
+                  <path d="M82 176C144 142 214 142 272 158C340 176 400 174 468 136" stroke="color-mix(in srgb, var(--mnx-surface) 72%, transparent)" strokeDasharray="4 10" strokeLinecap="round" strokeWidth="2" />
                 </svg>
-                <div className="absolute right-[20%] top-[22%] text-[var(--cha-create-primary)]/60"><Plane size={18} /></div>
-                <div className="absolute right-[38%] top-[62%] text-[var(--cha-create-primary)]/60"><Ship size={18} /></div>
-                <div className="absolute right-[8%] top-[46%] text-[var(--cha-create-primary)]/60"><Package2 size={18} /></div>
+                <div className="absolute right-[20%] top-[22%] mnx-text-accent"><Plane size={18} /></div>
+                <div className="absolute right-[38%] top-[62%] mnx-text-accent"><Ship size={18} /></div>
+                <div className="absolute right-[8%] top-[46%] mnx-text-accent"><Package2 size={18} /></div>
               </div>
               <div className="relative z-10 flex items-start justify-between gap-3">
                 <div className="flex max-w-[720px] items-center gap-4 pr-2">
-                  <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-primary-soft)] text-[var(--cha-create-primary)] shadow-[0_16px_34px_-28px_rgba(0,206,196,0.48)]">
+                  <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border mnx-border-accent mnx-bg-accent-soft mnx-text-accent mnx-shadow-panel">
                     <FilePlus size={21} />
                   </div>
                   <div className="min-w-0 space-y-1.5">
-                    <h2 className="max-w-[620px] text-xl font-medium uppercase leading-none tracking-[0.075em] text-[var(--cha-create-text)] sm:text-2xl">
+                    <h2 id="create-job-title" className="max-w-[620px] text-xl font-medium uppercase leading-none tracking-[0.075em] mnx-text-muted sm:text-2xl">
                       INITIALIZE CUSTOMS CLEARANCE JOB
                     </h2>
-                    <p className="max-w-[520px] text-[13px] leading-5 text-[var(--cha-create-secondary)]">
+                    <p className="max-w-[520px] text-[13px] leading-5 mnx-text-muted">
                       Start a new CHA shipment workflow and capture initial details.
                     </p>
                   </div>
                 </div>
                 <div className="relative z-10 flex shrink-0 items-center gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={handleDemoFill} className="rounded-[16px] border-[var(--cha-create-border)] bg-[var(--cha-create-card)]/84 px-3 text-[var(--cha-create-text)] hover:border-[var(--cha-create-primary-border)] hover:bg-[var(--cha-create-primary-soft)]"><Sparkles size={13} className="mr-1.5" />Demo Fill</Button>
-                  <button onClick={() => onOpenChange(false)} className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)]/88 text-[var(--cha-create-secondary)] transition hover:border-[var(--cha-create-primary-border)] hover:bg-[var(--cha-create-primary-soft)] hover:text-[var(--cha-create-primary)]" type="button" aria-label="Close job creation dialog"><X size={17} /></button>
+                  <Button type="button" variant="outline" size="sm" onClick={handleDemoFill} className="rounded-[16px] mnx-border-accent mnx-bg-accent-soft px-3 mnx-text-muted mnx-hover-accent mnx-hover-accent"><Sparkles size={13} className="mr-1.5" />Demo Fill</Button>
+                  <Button onClick={() => onOpenChange(false)} className="flex h-10 w-10 items-center justify-center rounded-[16px] border mnx-border-accent mnx-bg-accent-soft mnx-text-muted transition mnx-hover-accent mnx-hover-accent mnx-hover-accent" type="button" aria-label="Close job creation dialog"><X size={17} /></Button>
                 </div>
               </div>
               <div className="relative z-10 mt-4 grid gap-1 p-1.5 md:grid-cols-3">
@@ -1144,22 +1137,22 @@ export function CreateJobDialog({
             <form onSubmit={handleCreateJob} className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 py-5 sm:px-7 sm:py-6">
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
               <div className="rounded-[22px] bg-transparent p-4 sm:p-5">
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--cha-create-divider)] pb-4">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b mnx-border-accent pb-4">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--cha-create-muted)]">Job Initialization</p>
-                    <p className="mt-1 text-sm text-[var(--cha-create-secondary)]">Customer, numbering, shipment, and team configuration.</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] mnx-text-muted">Job Initialization</p>
+                    <p className="mt-1 text-sm mnx-text-muted">Customer, numbering, shipment, and team configuration.</p>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--cha-create-secondary)]">
-                    <span className="rounded-full border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-primary-soft)] px-3 py-1.5">{activeBranch?.name || 'Select branch'}</span>
-                    <span className="rounded-full border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] px-3 py-1.5">{activeCustomer?.name || 'Select customer'}</span>
-                    <span className="rounded-full border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] px-3 py-1.5 flex items-center gap-1.5"><ActiveShipmentIcon size={12} />{activeShipmentTypeName}</span>
+                  <div className="flex flex-wrap items-center gap-2 text-xs mnx-text-muted">
+                    <span className="rounded-full border mnx-border-accent mnx-bg-accent-soft px-3 py-1.5">{activeBranch?.name || 'Select branch'}</span>
+                    <span className="rounded-full border mnx-border-accent mnx-bg-accent-soft px-3 py-1.5">{activeCustomer?.name || 'Select customer'}</span>
+                    <span className="rounded-full border mnx-border-accent mnx-bg-accent-soft px-3 py-1.5 flex items-center gap-1.5"><ActiveShipmentIcon size={12} />{activeShipmentTypeName}</span>
                     <span className={cn('rounded-full border px-3 py-1.5 font-semibold', priorityPresentation.tone)}>{priorityPresentation.badge}</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Branch Selection */}
               <div className="space-y-1">
-                <label className="monolith-label block">Customs Branch Office *</label>
+                <label className="mnx-label block">Customs Branch Office *</label>
                 <DropdownSelect
                   required
                   value={newBranchId}
@@ -1174,7 +1167,7 @@ export function CreateJobDialog({
                   }))}
                 />
                 {newBranchId && !selectedBranchRule?.isActive && (
-                  <p className="text-xs text-[#D88700]">
+                  <p className="text-xs mnx-text-warning">
                     This branch needs an active numbering rule before a job can be created.
                   </p>
                 )}
@@ -1182,7 +1175,7 @@ export function CreateJobDialog({
 
               {/* Job Number */}
               <div className="space-y-1">
-                <label className="monolith-label block">Job Ref Number (Leave empty to Auto-number)</label>
+                <label className="mnx-label block">Job Ref Number (Leave empty to Auto-number)</label>
                 <div className="flex gap-2">
                   <Input
                     type="text"
@@ -1197,24 +1190,24 @@ export function CreateJobDialog({
                     size="sm"
                     onClick={handleAutoGenerateJobNumber}
                     disabled={!newBranchId || jobNumberPreviewLoading}
-                    className="shrink-0 rounded-2xl border-[var(--cha-create-primary-border)] bg-[var(--cha-create-card)] text-[var(--cha-create-primary)] hover:bg-[var(--cha-create-primary-soft)]"
+                    className="shrink-0 rounded-2xl mnx-border-accent mnx-bg-accent-soft mnx-text-accent mnx-hover-accent"
                   >
                     {jobNumberPreviewLoading ? "Loading..." : "Generate"}
                   </Button>
                 </div>
                 {generatedPreview ? (
-                  <p className="text-xs text-mono-muted">
-                    Preview: <span className="monolith-numeric text-mono-text">{generatedPreview}</span>
+                  <p className="text-xs mnx-text-muted">
+                    Preview: <span className="mnx-numeric mnx-text-primary">{generatedPreview}</span>
                   </p>
                 ) : (
-                  <p className="text-xs text-mono-muted">Select a branch to preview the next generated job number.</p>
+                  <p className="text-xs mnx-text-muted">Select a branch to preview the next generated job number.</p>
                 )}
               </div>
 
               {/* Description */}
               <div className="space-y-1 md:col-span-2">
-                <label className="monolith-label block">Description *</label>
-                  <textarea
+                <label className="mnx-label block">Description *</label>
+                  <Textarea
                     required
                     rows={4}
                     placeholder="Describe the customs clearance work, cargo details, and any critical handling notes..."
@@ -1226,7 +1219,7 @@ export function CreateJobDialog({
 
               {/* Customer Account Autocomplete */}
               <div className="space-y-1 relative">
-                <label className="monolith-label block">Customer Account *</label>
+                <label className="mnx-label block">Customer Account *</label>
                 <Input
                   type="text"
                   required
@@ -1246,9 +1239,9 @@ export function CreateJobDialog({
                   className={CHA_CREATE_INPUT_CLASS}
                 />
                 {showCustomerDropdown && (
-                  <div className="absolute left-0 right-0 z-50 mt-2 max-h-60 overflow-y-auto rounded-[20px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] p-2 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.34)]">
+                  <div className="absolute left-0 right-0 z-50 mt-2 max-h-60 overflow-y-auto rounded-[20px] border mnx-border-accent mnx-bg-accent-soft p-2 mnx-shadow-panel">
                     {filteredCustomers.map((c) => (
-                      <button
+                      <Button
                         key={c.id}
                         type="button"
                         onClick={() => {
@@ -1257,39 +1250,39 @@ export function CreateJobDialog({
                           setSelectedCustomerName(c.name);
                           setShowCustomerDropdown(false);
                         }}
-                        className="flex w-full cursor-pointer items-center rounded-md px-2 py-1.5 text-left text-sm text-mono-text transition-colors hover:bg-mono-soft hover:text-mono-text focus:bg-mono-soft focus:text-mono-text"
+                        className="flex w-full cursor-pointer items-center rounded-md px-2 py-1.5 text-left text-sm mnx-text-primary transition-colors mnx-hover-accent mnx-hover-accent mnx-focus-accent mnx-focus-accent"
                       >
                         {c.name}
-                      </button>
+                      </Button>
                     ))}
                     {filteredCustomers.length === 0 && (
-                      <div className="p-3 text-xs text-mono-muted italic flex flex-col items-center gap-2">
+                      <div className="p-3 text-xs mnx-text-muted italic flex flex-col items-center gap-2">
                         <span>No matching customer found.</span>
-                        <button
+                        <Button
                           type="button"
                           onClick={handleAddCustomerRedirect}
-                          className="monolith-plain cha-link text-xs font-medium"
+                          className="mnx-plain mnx-text-accent text-xs font-medium"
                         >
                           + Add &quot;{customerSearch}&quot; as New Customer
-                        </button>
+                        </Button>
                       </div>
                     )}
                   </div>
                 )}
                 <div className="pt-2 text-right">
-                  <button
+                  <Button
                     type="button"
                     onClick={handleAddCustomerRedirect}
-                    className="monolith-plain cha-link text-xs font-medium"
+                    className="mnx-plain mnx-text-accent text-xs font-medium"
                   >
                     Add New Customer
-                  </button>
+                  </Button>
                 </div>
               </div>
 
               {/* Customer Ref */}
               <div className="space-y-1">
-                <label className="monolith-label block">Customer Ref PO/WO (Optional)</label>
+                <label className="mnx-label block">Customer Ref PO/WO (Optional)</label>
                   <Input
                     type="text"
                     placeholder="e.g. PO-88712"
@@ -1301,7 +1294,7 @@ export function CreateJobDialog({
 
               {/* Job Type */}
               <div className="space-y-1">
-                <label className="monolith-label block">Clearance Job Type *</label>
+                <label className="mnx-label block">Clearance Job Type *</label>
                 <DropdownSelect
                   required
                   value={newJobTypeId}
@@ -1323,7 +1316,7 @@ export function CreateJobDialog({
                   ]}
                 />
                 {showAddJobType && (
-                  <div className="rounded-[20px] border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-primary-soft)] p-4 space-y-3">
+                  <div className="rounded-[20px] border mnx-border-accent mnx-bg-accent-soft p-4 space-y-3">
                     <Input
                       type="text"
                       value={newJobTypeName}
@@ -1333,7 +1326,7 @@ export function CreateJobDialog({
                     />
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                       <label className="space-y-1">
-                        <span className="monolith-label block">Movement Direction</span>
+                        <span className="mnx-label block">Movement Direction</span>
                         <NativeSelect
                           value={newJobTypeMovementDirection}
                           onChange={(e) => setNewJobTypeMovementDirection(e.target.value as "IMPORT" | "EXPORT" | "BOTH" | "OTHER")}
@@ -1346,7 +1339,7 @@ export function CreateJobDialog({
                         </NativeSelect>
                       </label>
                       <label className="space-y-1">
-                        <span className="monolith-label block">Manifest Requirement</span>
+                        <span className="mnx-label block">Manifest Requirement</span>
                         <NativeSelect
                           value={newJobTypeManifestRequirement}
                           onChange={(e) => setNewJobTypeManifestRequirement(e.target.value as "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM")}
@@ -1376,8 +1369,8 @@ export function CreateJobDialog({
                       placeholder="Help text / placeholder"
                       className={CHA_CREATE_INPUT_CLASS}
                     />
-                    <label className="flex items-center gap-2 text-xs text-mono-muted">
-                      <input
+                    <label className="flex items-center gap-2 text-xs mnx-text-muted">
+                      <Input
                         type="checkbox"
                         checked={newJobTypeManifestMandatory}
                         onChange={(e) => setNewJobTypeManifestMandatory(e.target.checked)}
@@ -1397,7 +1390,7 @@ export function CreateJobDialog({
               </div>
 
               <div className="space-y-1">
-                <label className="monolith-label block">Shipment Type *</label>
+                <label className="mnx-label block">Shipment Type *</label>
                 <DropdownSelect
                   required
                   value={newShipmentTypeId}
@@ -1419,7 +1412,7 @@ export function CreateJobDialog({
                   ]}
                 />
                 {showAddShipmentType && (
-                  <div className="rounded-[20px] border border-[var(--cha-create-primary-border)] bg-[var(--cha-create-primary-soft)] p-4 space-y-3">
+                  <div className="rounded-[20px] border mnx-border-accent mnx-bg-accent-soft p-4 space-y-3">
                     <Input
                       type="text"
                       value={newShipmentTypeName}
@@ -1441,7 +1434,7 @@ export function CreateJobDialog({
 
               {/* Priority */}
               <div className="space-y-1">
-                <label className="monolith-label block">Job Priority *</label>
+                <label className="mnx-label block">Job Priority *</label>
                 <DropdownSelect
                   required
                   value={newPriority}
@@ -1458,7 +1451,7 @@ export function CreateJobDialog({
 
               {/* Owner */}
               <div className="space-y-1 relative">
-                <label className="monolith-label block">Primary Operations Owner *</label>
+                <label className="mnx-label block">Primary Operations Owner *</label>
                 <Input
                   type="text"
                   required
@@ -1483,36 +1476,36 @@ export function CreateJobDialog({
                   className={CHA_CREATE_INPUT_CLASS}
                 />
                 {showOwnerDropdown ? (
-                  <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-56 overflow-y-auto rounded-[20px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] p-2 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.34)]">
+                  <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-56 overflow-y-auto rounded-[20px] border mnx-border-accent mnx-bg-accent-soft p-2 mnx-shadow-panel">
                     {filteredOwners.length > 0 ? (
                       filteredOwners.map((owner) => (
-                        <button
+                        <Button
                           key={owner.id}
                           type="button"
                           onClick={() => selectOwner(owner)}
-                          className="flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-sm text-mono-text transition-colors hover:bg-mono-soft hover:text-mono-text focus:bg-mono-soft focus:text-mono-text"
+                          className="flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-sm mnx-text-primary transition-colors mnx-hover-accent mnx-hover-accent mnx-focus-accent mnx-focus-accent"
                         >
                           <span>{owner.name}</span>
-                          <span className="text-[10px] text-mono-muted">{owner.email}</span>
-                        </button>
+                          <span className="text-[10px] mnx-text-muted">{owner.email}</span>
+                        </Button>
                       ))
                     ) : (
-                      <div className="px-3 py-2 text-xs italic text-mono-muted">
+                      <div className="px-3 py-2 text-xs italic mnx-text-muted">
                         No matching owners found.
                       </div>
                     )}
                   </div>
                 ) : null}
                 {newOwnerId ? (
-                  <p className="text-xs text-mono-muted">
-                    Selected owner: <span className="text-mono-text">{ownerSearch}</span>
+                  <p className="text-xs mnx-text-muted">
+                    Selected owner: <span className="mnx-text-primary">{ownerSearch}</span>
                   </p>
                 ) : null}
               </div>
 
               {/* Assigned Manager */}
               <div className="space-y-1 relative">
-                <label className="monolith-label block">Assigned Manager *</label>
+                <label className="mnx-label block">Assigned Manager *</label>
                 <Input
                   type="text"
                   required
@@ -1537,36 +1530,36 @@ export function CreateJobDialog({
                   className={CHA_CREATE_INPUT_CLASS}
                 />
                 {showManagerDropdown ? (
-                  <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-56 overflow-y-auto rounded-[20px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] p-2 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.34)]">
+                  <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-56 overflow-y-auto rounded-[20px] border mnx-border-accent mnx-bg-accent-soft p-2 mnx-shadow-panel">
                     {filteredManagers.length > 0 ? (
                       filteredManagers.map((manager) => (
-                        <button
+                        <Button
                           key={manager.id}
                           type="button"
                           onClick={() => selectManager(manager)}
-                          className="flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-sm text-mono-text transition-colors hover:bg-mono-soft hover:text-mono-text focus:bg-mono-soft focus:text-mono-text"
+                          className="flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-sm mnx-text-primary transition-colors mnx-hover-accent mnx-hover-accent mnx-focus-accent mnx-focus-accent"
                         >
                           <span>{manager.name}</span>
-                          <span className="text-[10px] text-mono-muted">{manager.email}</span>
-                        </button>
+                          <span className="text-[10px] mnx-text-muted">{manager.email}</span>
+                        </Button>
                       ))
                     ) : (
-                      <div className="px-3 py-2 text-xs italic text-mono-muted">
+                      <div className="px-3 py-2 text-xs italic mnx-text-muted">
                         No matching managers found.
                       </div>
                     )}
                   </div>
                 ) : null}
                 {newManagerId ? (
-                  <p className="text-xs text-mono-muted">
-                    Selected manager: <span className="text-mono-text">{managerSearch}</span>
+                  <p className="text-xs mnx-text-muted">
+                    Selected manager: <span className="mnx-text-primary">{managerSearch}</span>
                   </p>
                 ) : null}
               </div>
 
               {/* Estimated Closure Date */}
               <div className="space-y-1">
-                <label className="monolith-label block">Estimated Closure Date (Benchmark) *</label>
+                <label className="mnx-label block">Estimated Closure Date (Benchmark) *</label>
                 <DateInput
                   required
                   value={estimatedClosureDate}
@@ -1578,9 +1571,9 @@ export function CreateJobDialog({
 
             {/* Team Assignments Mapping */}
             <div className="space-y-3 pt-2">
-              <div className="border-b border-[var(--cha-create-divider)] pb-3">
-                <label className="monolith-label block">Team Assignments Mapping</label>
-                <p className="text-xs text-mono-muted mt-0.5">
+              <div className="border-b mnx-border-accent pb-3">
+                <label className="mnx-label block">Team Assignments Mapping</label>
+                <p className="text-xs mnx-text-muted mt-0.5">
                   Type employee name and press **Enter** (or select from list) to add them.
                 </p>
               </div>
@@ -1623,44 +1616,44 @@ export function CreateJobDialog({
                   className={CHA_CREATE_INPUT_CLASS}
                 />
                 {showTeamDropdown && teamSearch.trim() !== "" && (
-                  <div className="absolute left-0 right-0 mt-2 max-h-60 overflow-y-auto rounded-[20px] border border-[var(--cha-create-border)] bg-[var(--cha-create-card)] p-2 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.34)] z-50 space-y-2">
+                  <div className="absolute left-0 right-0 mt-2 max-h-60 overflow-y-auto rounded-[20px] border mnx-border-accent mnx-bg-accent-soft p-2 mnx-shadow-panel z-50 space-y-2">
                     {filteredTeamGroups.length > 0 && (
                       <div>
-                        <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--cha-create-muted)]">Team Groups</div>
+                        <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] mnx-text-muted">Team Groups</div>
                         {filteredTeamGroups.map((g) => (
-                          <button
+                          <Button
                             key={g.id}
                             type="button"
                             onClick={() => handleAddTeamGroup(g)}
-                            className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-[var(--cha-create-text)] transition hover:bg-[var(--cha-create-primary-soft)] hover:text-[var(--cha-create-primary)]"
+                            className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs font-semibold mnx-text-muted transition mnx-hover-accent mnx-hover-accent"
                           >
                             <span>{g.name}</span>
-                            <span className="rounded-full bg-[var(--cha-create-card-alt)] px-2 py-1 text-[10px] font-semibold text-[var(--cha-create-muted)]">
+                            <span className="rounded-full mnx-bg-accent-soft px-2 py-1 text-[10px] font-semibold mnx-text-muted">
                               GROUP ({parseJsonArray(g.memberIds).length})
                             </span>
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     )}
 
                     <div>
                       {filteredTeamGroups.length > 0 && (
-                        <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--cha-create-muted)]">Individual Employees</div>
+                        <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] mnx-text-muted">Individual Employees</div>
                       )}
                       {filteredTeamUsers.map((u) => (
-                        <button
+                        <Button
                           key={u.id}
                           type="button"
                           onClick={() => handleAddTeamUser(u)}
-                          className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs text-[var(--cha-create-text)] transition hover:bg-[var(--cha-create-primary-soft)] hover:text-[var(--cha-create-primary)]"
+                          className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs mnx-text-muted transition mnx-hover-accent mnx-hover-accent"
                         >
                           {u.name} ({u.email})
-                        </button>
+                        </Button>
                       ))}
                     </div>
 
                     {filteredTeamUsers.length === 0 && filteredTeamGroups.length === 0 && (
-                      <div className="p-3 text-xs text-mono-muted italic">No matching results found.</div>
+                      <div className="p-3 text-xs mnx-text-muted italic">No matching results found.</div>
                     )}
                   </div>
                 )}
@@ -1673,10 +1666,10 @@ export function CreateJobDialog({
                   return (
                     <div
                       key={assignment.userId || index}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-[var(--cha-create-border)] bg-[var(--cha-create-card-alt)] p-4 shadow-[0_18px_38px_-34px_rgba(15,23,42,0.24)] transition"
+                      className="flex items-center justify-between gap-3 rounded-xl border mnx-border-accent mnx-bg-accent-soft p-4 mnx-shadow-panel transition"
                     >
                       <div className="space-y-1 flex-1 mr-3">
-                        <span className="text-xs font-semibold text-mono-text block">
+                        <span className="text-xs font-semibold mnx-text-primary block">
                           {emp?.name || "Unknown Employee"}
                         </span>
                         <DropdownSelect
@@ -1699,7 +1692,7 @@ export function CreateJobDialog({
                         size="md"
                         onClick={() => handleRemoveAssignment(index)}
                         aria-label="Remove assignment"
-                        className="monolith-plain !h-10 !w-10 !min-w-10 shrink-0 rounded-xl border border-red-500/45 bg-mono-card !px-0 text-red-500 shadow-sm hover:border-red-500/70 hover:bg-red-500/10 hover:text-red-600 hover:shadow-[0_0_12px_rgba(239,68,68,0.22)]"
+                        className="mnx-plain !h-10 !w-10 !min-w-10 shrink-0 rounded-xl border mnx-border-danger mnx-bg-surface !px-0 mnx-text-danger shadow-sm mnx-hover-danger mnx-hover-danger mnx-hover-danger mnx-shadow-panel"
                       >
                         <Trash2 className="size-5" strokeWidth={2.1} />
                       </Button>
@@ -1707,7 +1700,7 @@ export function CreateJobDialog({
                   );
                 })}
                 {assignments.length === 0 && (
-                  <p className="col-span-2 rounded-xl border border-dashed border-[var(--cha-create-border)] bg-[var(--cha-create-card-alt)] p-3 text-center text-xs italic text-[var(--cha-create-muted)]">
+                  <p className="col-span-2 rounded-xl border border-dashed mnx-border-accent mnx-bg-accent-soft p-3 text-center text-xs italic mnx-text-muted">
                     No team members assigned yet. Add one above.
                   </p>
                 )}
@@ -1716,11 +1709,11 @@ export function CreateJobDialog({
 
             {/* Remarks */}
             <div className="space-y-2 pt-2">
-              <label className="monolith-label block">Final Notes &amp; Details</label>
-              <p className="text-xs text-[var(--cha-create-secondary)]">
+              <label className="mnx-label block">Final Notes &amp; Details</label>
+              <p className="text-xs mnx-text-muted">
                 Special shipment instructions, customs remarks, discharge notes, or operational handling context.
               </p>
-              <textarea
+              <Textarea
                 rows={4}
                 placeholder="Capture customs instructions, discharge context, free-day details, or any operational remarks the assigned team should see."
                 value={newRemarks}
@@ -1732,17 +1725,17 @@ export function CreateJobDialog({
             {/* Action Buttons */}
               </div>
 
-            <div className="shrink-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.84),rgba(255,255,255,0.98))] pt-4 backdrop-blur-md dark:bg-[linear-gradient(180deg,rgba(17,24,39,0.86),rgba(17,24,39,0.98))]">
+            <div className="shrink-0 bg-[linear-gradient(180deg,color-mix(in srgb, var(--mnx-surface) 72%, transparent),color-mix(in srgb, var(--mnx-surface) 72%, transparent))] pt-4 backdrop-blur-md dark:bg-[linear-gradient(180deg,color-mix(in srgb, var(--mnx-surface) 72%, transparent),color-mix(in srgb, var(--mnx-surface) 72%, transparent))]">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => onOpenChange(false)}
-                    className="rounded-2xl border-[var(--cha-create-border)] bg-transparent px-5 text-[var(--cha-create-secondary)] hover:border-[var(--cha-create-primary-border)] hover:text-[var(--cha-create-primary)]"
+                    className="rounded-2xl mnx-border-accent bg-transparent px-5 mnx-text-muted mnx-hover-accent mnx-hover-accent"
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={creating} className="rounded-2xl !border-[var(--cha-create-primary)] !bg-[var(--cha-create-primary)] px-6 !text-white shadow-[0_22px_46px_-28px_rgba(0,206,196,0.58)] hover:!bg-[var(--cha-create-primary-hover)]">
+                  <Button type="submit" disabled={creating} className="rounded-2xl mnx-border-accent mnx-bg-accent-soft px-6 mnx-text-muted mnx-shadow-panel mnx-hover-accent">
                     {creating ? "Launching Job..." : "Create & Launch Job"}
                   </Button>
               </div>
@@ -1750,7 +1743,7 @@ export function CreateJobDialog({
             </div>
           </form>
         </div>
-      </div>
+      </ChaDialogLayer>
 
       <CreateJobSuccessOverlay
         open={showSuccessAnimation}
@@ -1760,7 +1753,6 @@ export function CreateJobDialog({
         onAutoFinish={() => finishCreateFlow(false)}
         reducedMotion={!!reducedMotion}
       />
-    </>,
-    document.body,
+    </>
   );
 }

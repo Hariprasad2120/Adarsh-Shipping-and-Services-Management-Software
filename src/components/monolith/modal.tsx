@@ -1,7 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { WorkspaceDialog } from "./workspace-dialog";
+import {
+  WorkspaceDialog,
+  type WorkspaceDialogSize,
+} from "./workspace-dialog";
 
 type ModalProps = {
   open: boolean;
@@ -10,6 +13,8 @@ type ModalProps = {
   onClose: () => void;
   children: React.ReactNode;
   className?: string;
+  eyebrow?: string;
+  size?: WorkspaceDialogSize;
   titleClassName?: string;
 };
 
@@ -20,15 +25,18 @@ export function Modal({
   onClose,
   children,
   className,
+  eyebrow = "Workspace action",
+  size,
   titleClassName,
 }: ModalProps) {
   return (
     <WorkspaceDialog
       className={className}
       description={description}
-      eyebrow="People operations"
+      eyebrow={eyebrow}
       onClose={onClose}
       open={open}
+      size={size}
       title={<span className={titleClassName}>{title}</span>}
     >
       {children}

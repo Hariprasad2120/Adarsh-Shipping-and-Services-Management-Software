@@ -183,7 +183,7 @@ function formatFileSize(sizeBytes?: number | null) {
 
 function OrangeDocumentBadge({ children }: { children: React.ReactNode }) {
   return (
-    <Badge variant="warning" className="!border-[#D88700]/35 !bg-[#D88700]/10 !text-[#D88700]">
+    <Badge variant="warning" className="mnx-border-warning mnx-bg-warning mnx-text-warning">
       {children}
     </Badge>
   );
@@ -245,8 +245,8 @@ function DocumentStatusBadge({ status }: { status: string }) {
 function DocumentDetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 py-2">
-      <span className="monolith-label">{label}</span>
-      <span className="max-w-[60%] text-right text-sm text-mono-text">{value}</span>
+      <span className="mnx-label">{label}</span>
+      <span className="max-w-[60%] text-right text-sm mnx-text-primary">{value}</span>
     </div>
   );
 }
@@ -254,8 +254,8 @@ function DocumentDetailRow({ label, value }: { label: string; value: React.React
 function PreviewSectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-4">
-      <span className="h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
-      <h4 className="monolith-h3 text-mono-text">{children}</h4>
+      <span className="h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
+      <h4 className="mnx-heading-3 mnx-text-primary">{children}</h4>
     </div>
   );
 }
@@ -279,24 +279,24 @@ export function RequirementDocumentCard({
   const metadataLabel = isNa ? "Marked by" : "Declared by";
   const shouldShowUpload = !hideUploadWhenExempted || !isExempted;
   const statusPanelClass = isNa
-    ? "border-mono-border/60 bg-mono-soft"
-    : "border-[#D88700]/20 bg-[#D88700]/8";
+    ? "mnx-border mnx-bg-soft"
+    : "mnx-border-warning mnx-bg-warning";
   const statusIconClass = isNa
-    ? "bg-mono-soft text-mono-muted"
-    : "bg-[#D88700]/12 text-[#D88700]";
-  const statusHeadingClass = isNa ? "text-mono-muted" : "text-[#D88700]";
+    ? "mnx-bg-soft mnx-text-muted"
+    : "mnx-bg-warning mnx-text-warning";
+  const statusHeadingClass = isNa ? "mnx-text-muted" : "mnx-text-warning";
 
   return (
     <div
       className={cn(
-        "flex h-full min-h-[260px] flex-col rounded-xl border border-[#F9D972]/35 bg-mono-card p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.18)] transition-all",
-        selected ? "ring-2 ring-[#F9D972]/25 shadow-[0_22px_44px_-32px_rgba(0,206,196,0.28)]" : "hover:-translate-y-px",
+        "flex h-full min-h-[260px] flex-col rounded-xl border mnx-border-accent mnx-bg-surface p-5 mnx-shadow-panel transition-all",
+        selected ? "ring-2 mnx-border-accent mnx-shadow-panel" : "hover:-translate-y-px",
       )}
       onClick={() => onSelect?.(requirement.id)}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h3 className="text-base font-normal uppercase tracking-[0.12em] text-mono-text">{requirement.name}</h3>
+          <h3 className="text-base font-normal uppercase tracking-[0.12em] mnx-text-primary">{requirement.name}</h3>
         </div>
         <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2">
           {requirement.isMandatory ? <OrangeDocumentBadge>MANDATORY</OrangeDocumentBadge> : <Badge variant="secondary">OPTIONAL</Badge>}
@@ -313,9 +313,9 @@ export function RequirementDocumentCard({
             <div className="min-w-0">
               <p className={cn("text-xs font-normal uppercase tracking-[0.12em]", statusHeadingClass)}>{isNa ? "Marked as N/A" : isExempted ? "Exemption Declared" : "Awaiting Upload"}</p>
               {requirement.requirementItem?.description ? (
-                <p className="mt-1 text-xs text-mono-muted">{requirement.requirementItem.description}</p>
+                <p className="mt-1 text-xs mnx-text-muted">{requirement.requirementItem.description}</p>
               ) : null}
-              <p className="mt-1 text-xs text-mono-muted">
+              <p className="mt-1 text-xs mnx-text-muted">
                 {isExempted
                   ? `${metadataLabel}: ${requirement.exception?.user?.name || "Unknown"} • ${formatDateTime(requirement.exception?.createdAt)}`
                   : "This requirement is still waiting for an uploaded file or an approved exception."}
@@ -325,7 +325,7 @@ export function RequirementDocumentCard({
         </div>
       </div>
 
-      <div className="mt-auto flex flex-wrap items-center justify-end gap-3 border-t border-mono-border/20 pt-3.5">
+      <div className="mt-auto flex flex-wrap items-center justify-end gap-3 border-t mnx-border pt-3.5">
         <div className="flex flex-wrap gap-2">
           {showExceptionActions ? (
             isExempted ? (
@@ -333,7 +333,7 @@ export function RequirementDocumentCard({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="gap-2 border-[#D88700]/50 text-[#D88700] hover:bg-mono-card"
+                className="gap-2 mnx-border-warning mnx-text-warning mnx-hover-accent"
                 disabled={loadingKey !== null}
                 onClick={() => onUndo(requirement.id)}
               >
@@ -350,7 +350,7 @@ export function RequirementDocumentCard({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="gap-2 border-[#D88700]/50 text-[#D88700] hover:bg-mono-card"
+                  className="gap-2 mnx-border-warning mnx-text-warning mnx-hover-accent"
                   disabled={loadingKey !== null}
                   onClick={() => onMarkNa(requirement.id)}
                 >
@@ -392,17 +392,17 @@ export function WorkflowDocumentsSectionHeader({
     <div className="space-y-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="grid min-w-0 grid-cols-[4px_minmax(0,1fr)] items-start gap-4">
-          <span className="mt-0.5 h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
+          <span className="mt-0.5 h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
           <div className="min-w-0">
-            <h3 className="monolith-h3 text-mono-text">{title}</h3>
-            <p className="mt-1 text-sm text-mono-muted">
+            <h3 className="mnx-heading-3 mnx-text-primary">{title}</h3>
+            <p className="mt-1 text-sm mnx-text-muted">
               Review uploaded document files, metadata, and workflow context.
             </p>
           </div>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative min-w-0 flex-1 sm:min-w-[280px]">
-            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 mnx-text-muted" />
             <Input
               value={searchValue}
               onChange={(event) => onSearchChange(event.target.value)}
@@ -423,7 +423,7 @@ export function WorkflowDocumentsSectionHeader({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="monolith-label">Document Status</DropdownMenuLabel>
+              <DropdownMenuLabel className="mnx-label">Document Status</DropdownMenuLabel>
               <DropdownMenuRadioGroup value={filterMode} onValueChange={(value) => onFilterChange(value as FilterMode)}>
                 <DropdownMenuRadioItem value="ALL">All Documents</DropdownMenuRadioItem>
                 <DropdownMenuSeparator />
@@ -437,7 +437,7 @@ export function WorkflowDocumentsSectionHeader({
         </div>
       </div>
       <div className="flex flex-wrap items-center justify-end gap-2">
-        <span className="monolith-label">Filter</span>
+        <span className="mnx-label">Filter</span>
         <Badge variant={filterMode === "ALL" ? "secondary" : "default"}>{selectedFilterLabel}</Badge>
       </div>
     </div>
@@ -448,12 +448,12 @@ export function DocumentMetaItem({ label, value, accent = "default" }: DocumentM
   return (
     <div
       className={cn(
-        "min-w-0 border-r border-mono-border/30 px-3 py-1.5 last:border-r-0",
-        accent === "success" ? "bg-green-500/6" : accent === "warning" ? "bg-[#D88700]/8" : "",
+        "min-w-0 border-r mnx-border px-3 py-1.5 last:border-r-0",
+        accent === "success" ? "mnx-bg-success" : accent === "warning" ? "mnx-bg-warning" : "",
       )}
     >
-      <p className="monolith-label">{label}</p>
-      <div className="mt-2 text-sm text-mono-text">{value}</div>
+      <p className="mnx-label">{label}</p>
+      <div className="mt-2 text-sm mnx-text-primary">{value}</div>
     </div>
   );
 }
@@ -486,19 +486,19 @@ export function UploadedWorkflowDocumentCard({
   return (
     <div
       className={cn(
-        "flex h-full min-h-[260px] flex-col rounded-xl border border-[#F9D972]/35 bg-mono-card p-5 shadow-[0_22px_48px_-36px_rgba(15,23,42,0.18)] transition-all",
-        selected ? "ring-2 ring-[#F9D972]/25 shadow-[0_24px_52px_-34px_rgba(0,206,196,0.24)]" : "hover:-translate-y-px",
+        "flex h-full min-h-[260px] flex-col rounded-xl border mnx-border-accent mnx-bg-surface p-5 mnx-shadow-panel transition-all",
+        selected ? "ring-2 mnx-border-accent mnx-shadow-panel" : "hover:-translate-y-px",
       )}
       onClick={() => onSelect?.(requirement.id)}
     >
       <div className="flex h-full flex-col gap-3.5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="monolith-icon-badge">
+            <span className="mnx-icon-badge">
               <FileText size={18} />
             </span>
             <div className="min-w-0">
-              <h3 className="text-base font-normal uppercase tracking-[0.12em] text-mono-text">{requirement.name}</h3>
+              <h3 className="text-base font-normal uppercase tracking-[0.12em] mnx-text-primary">{requirement.name}</h3>
             </div>
           </div>
           <div className="flex shrink-0 items-center">
@@ -506,25 +506,25 @@ export function UploadedWorkflowDocumentCard({
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-mono-border/45 bg-mono-card shadow-[inset_0_1px_0_rgba(255,255,255,0.32)]">
+        <div className="overflow-hidden rounded-xl border mnx-border mnx-bg-surface mnx-shadow-panel">
           <div className="flex flex-col gap-3 px-4 py-3.5 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 items-center gap-4">
               <div className="min-w-0">
-                <div className="flex min-w-0 items-center gap-2 text-left text-sm font-semibold text-mono-text">
+                <div className="flex min-w-0 items-center gap-2 text-left text-sm font-semibold mnx-text-primary">
                   <span className="truncate">{version.fileName}</span>
-                  <Download size={16} className="shrink-0 text-[#F9D972]" />
+                  <Download size={16} className="shrink-0 mnx-text-accent" />
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="monolith-numeric text-sm text-mono-muted">{fileSize}</span>
+              <span className="mnx-numeric text-sm mnx-text-muted">{fileSize}</span>
               {showDeleteAction && canDeleteCurrentVersion ? (
                 <Button
                   type="button"
                   variant="outline"
                   mode="icon"
                   size="sm"
-                  className="monolith-plain !h-9 !w-9 !min-w-9 !rounded-xl !border-red-500/35 !bg-mono-card !p-0 !text-red-500 hover:!border-red-500 hover:!bg-red-500/10 hover:!text-red-600"
+                  className="mnx-plain !h-9 !w-9 !min-w-9 !rounded-xl mnx-border-danger mnx-bg-surface !p-0 mnx-text-danger mnx-hover-danger mnx-hover-danger mnx-hover-danger"
                   onClick={() => onDelete(requirement.id, version.id, version.fileName)}
                   disabled={loadingKey !== null}
                   aria-label={`Delete ${version.fileName}`}
@@ -535,7 +535,7 @@ export function UploadedWorkflowDocumentCard({
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-0 bg-mono-soft/25 px-3 py-2 [&>*]:w-full">
+          <div className="grid grid-cols-4 gap-0 mnx-bg-soft px-3 py-2 [&>*]:w-full">
             <DocumentMetaItem
               label="Source"
               value={
@@ -547,14 +547,14 @@ export function UploadedWorkflowDocumentCard({
               }
             />
             <DocumentMetaItem label="Uploaded By" value={version.uploadedBy?.name || "Unknown"} />
-            <DocumentMetaItem label="Uploaded On" value={<span className="monolith-numeric">{formatDateOnly(version.uploadedAt)}</span>} />
-            <DocumentMetaItem label="Validity" value={version.validityDate ? <span className="monolith-numeric">{formatDateOnly(version.validityDate)}</span> : "Not required"} accent={version.validityDate ? "default" : "success"} />
+            <DocumentMetaItem label="Uploaded On" value={<span className="mnx-numeric">{formatDateOnly(version.uploadedAt)}</span>} />
+            <DocumentMetaItem label="Validity" value={version.validityDate ? <span className="mnx-numeric">{formatDateOnly(version.validityDate)}</span> : "Not required"} accent={version.validityDate ? "default" : "success"} />
           </div>
         </div>
 
-        {helperContent ? <div className="rounded-xl border border-mono-border/35 bg-mono-soft/45 p-3">{helperContent}</div> : null}
+        {helperContent ? <div className="rounded-xl border mnx-border mnx-bg-soft p-3">{helperContent}</div> : null}
 
-        <div className="mt-auto flex flex-wrap items-center justify-end gap-3 border-t border-mono-border/20 pt-3.5">
+        <div className="mt-auto flex flex-wrap items-center justify-end gap-3 border-t mnx-border pt-3.5">
           <Button type="button" variant="outline" className="gap-2" onClick={() => onPreview(requirement.id)}>
             <Eye size={16} />
             View File
@@ -568,7 +568,7 @@ export function UploadedWorkflowDocumentCard({
               <Button
                 type="button"
                 variant="outline"
-                className="gap-2 border-[#D88700]/50 text-[#D88700] hover:bg-mono-card"
+                className="gap-2 mnx-border-warning mnx-text-warning mnx-hover-accent"
                 onClick={() => onMarkNa(requirement.id)}
                 disabled={loadingKey !== null}
               >
@@ -675,7 +675,7 @@ export function FilingDocumentPreviewDrawer({
   const canPreview = version ? (Boolean(previewUrl) && (isImage || isPdf)) : false;
   const sourceLabel = version?.source === "FILING_WORKFLOW" ? "Filing Workflow" : "Documents Page";
   const fileSize = version ? formatFileSize(version.sizeBytes) : "";
-  const previewDocumentNameClass = "monolith-label text-mono-text";
+  const previewDocumentNameClass = "mnx-label mnx-text-primary";
   const previewIconButtonClass = "!h-11 !w-11 !min-w-11 !rounded-xl !p-0";
   const exceptionState = requirement.exception?.reason
     ? requirement.exception.reason === "N/A"
@@ -684,13 +684,13 @@ export function FilingDocumentPreviewDrawer({
     : "None";
 
   return (
-    <aside className="rounded-xl border border-mono-border/45 bg-mono-card px-6 py-5 shadow-[0_24px_60px_-38px_rgba(15,23,42,0.22)] xl:sticky xl:top-24">
+    <aside className="rounded-xl border mnx-border mnx-bg-surface px-6 py-5 mnx-shadow-panel xl:sticky xl:top-24">
       <div className="space-y-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-2">
             <div className="flex items-start gap-3">
               <div className="min-w-0 space-y-2">
-                <h3 className="truncate text-base font-normal uppercase tracking-[0.12em] text-mono-text">{requirement.name}</h3>
+                <h3 className="truncate text-base font-normal uppercase tracking-[0.12em] mnx-text-primary">{requirement.name}</h3>
                 <DocumentStatusBadge status={requirement.status} />
               </div>
             </div>
@@ -700,56 +700,56 @@ export function FilingDocumentPreviewDrawer({
           </Button>
         </div>
 
-        <div className="border-b border-mono-border/20">
+        <div className="border-b mnx-border">
           <div role="tablist" aria-label="Document preview tabs" className="flex items-center gap-8">
-            <button
+            <Button
               type="button"
               role="tab"
               aria-selected={activeTab === "preview"}
               className={cn(
                 "border-b-2 px-1 pb-3 text-base font-medium transition-colors",
-                activeTab === "preview" ? "border-[#F9D972] text-[#F9D972]" : "border-transparent text-mono-text",
+                activeTab === "preview" ? "mnx-border-accent mnx-text-accent" : "border-transparent mnx-text-primary",
               )}
               onClick={() => onTabChange("preview")}
             >
               Preview
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               role="tab"
               aria-selected={activeTab === "details"}
               className={cn(
                 "border-b-2 px-1 pb-3 text-base font-medium transition-colors",
-                activeTab === "details" ? "border-[#F9D972] text-[#F9D972]" : "border-transparent text-mono-text",
+                activeTab === "details" ? "mnx-border-accent mnx-text-accent" : "border-transparent mnx-text-primary",
               )}
               onClick={() => onTabChange("details")}
             >
               Details
-            </button>
+            </Button>
           </div>
         </div>
 
         {activeTab === "preview" ? (
           <div className="space-y-5">
-            <div className="overflow-hidden rounded-xl border border-mono-border/35 bg-mono-card shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
-              <div className="relative flex min-h-[340px] items-center justify-center overflow-hidden border-b border-mono-border/15 bg-mono-soft/25">
+            <div className="overflow-hidden rounded-xl border mnx-border mnx-bg-surface mnx-shadow-panel">
+              <div className="relative flex min-h-[340px] items-center justify-center overflow-hidden border-b mnx-border mnx-bg-soft">
                 {!version ? (
                   <div className="space-y-4 p-6 text-center">
-                    <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-500">
+                    <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-xl border mnx-border-warning mnx-bg-warning mnx-text-warning">
                       <FileText size={40} />
                     </span>
                     <div className="space-y-1">
-                      <p className="text-base font-normal uppercase tracking-[0.12em] text-mono-text">No Document Uploaded</p>
+                      <p className="text-base font-normal uppercase tracking-[0.12em] mnx-text-primary">No Document Uploaded</p>
                     </div>
-                    <p className="mx-auto max-w-[240px] text-sm text-mono-muted">
+                    <p className="mx-auto max-w-[240px] text-sm mnx-text-muted">
                       Use the Quick Upload section or click the document card actions to add a file.
                     </p>
                   </div>
                 ) : canPreview ? (
                   <>
                     {loadingPreview ? (
-                      <div className="absolute inset-0 z-10 flex items-center justify-center bg-mono-card/80">
-                        <span className="text-sm text-mono-muted">Loading preview...</span>
+                      <div className="absolute inset-0 z-10 flex items-center justify-center mnx-bg-surface">
+                        <span className="text-sm mnx-text-muted">Loading preview...</span>
                       </div>
                     ) : null}
                     {isImage ? (
@@ -770,21 +770,21 @@ export function FilingDocumentPreviewDrawer({
                         onLoad={onPreviewLoad}
                       />
                     ) : (
-                      <div className="flex h-[340px] w-full items-center justify-center p-6 text-sm text-mono-muted">
+                      <div className="flex h-[340px] w-full items-center justify-center p-6 text-sm mnx-text-muted">
                         Loading PDF preview...
                       </div>
                     )}
                   </>
                 ) : (
                   <div className="space-y-4 p-6 text-center">
-                    <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-xl border border-[#F9D972]/20 bg-[#F9D972]/10 text-[#F9D972]">
+                    <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-xl border mnx-border-accent mnx-bg-accent-soft mnx-text-accent">
                       <FileText size={40} />
                     </span>
                     <div className="space-y-1">
                       <p className={previewDocumentNameClass}>{version.fileName}</p>
-                      <p className="text-sm text-mono-muted">{fileSize}</p>
+                      <p className="text-sm mnx-text-muted">{fileSize}</p>
                     </div>
-                    <p className="mx-auto max-w-[240px] text-sm text-mono-muted">
+                    <p className="mx-auto max-w-[240px] text-sm mnx-text-muted">
                       Inline preview is unavailable for this file type. Download the file to review it locally.
                     </p>
                   </div>
@@ -795,7 +795,7 @@ export function FilingDocumentPreviewDrawer({
                 <div className="space-y-3 px-4 py-3.5">
                   <div className="text-center">
                     <p className={previewDocumentNameClass}>{version.fileName}</p>
-                    <p className="mt-1.5 text-sm text-mono-muted">{fileSize}</p>
+                    <p className="mt-1.5 text-sm mnx-text-muted">{fileSize}</p>
                   </div>
 
                   <div className="flex items-center justify-center gap-3">
@@ -835,43 +835,43 @@ export function FilingDocumentPreviewDrawer({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3 text-sm">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-green-500/10 text-green-600">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full mnx-bg-success mnx-text-success">
                         <CheckCircle2 size={14} />
                       </span>
-                      <span className="text-mono-text">File uploaded</span>
+                      <span className="mnx-text-primary">File uploaded</span>
                     </div>
-                    <span className="text-mono-muted">{formatDateTime(version.uploadedAt)}</span>
+                    <span className="mnx-text-muted">{formatDateTime(version.uploadedAt)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-3 text-sm">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-mono-soft text-mono-muted">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full mnx-bg-soft mnx-text-muted">
                         <Circle size={10} fill="currentColor" />
                       </span>
-                      <span className="text-mono-text">Virus scan</span>
+                      <span className="mnx-text-primary">Virus scan</span>
                     </div>
-                    <span className="rounded-full bg-mono-soft px-3 py-1 text-xs font-medium text-mono-muted">Not checked</span>
+                    <span className="rounded-full mnx-bg-soft px-3 py-1 text-xs font-medium mnx-text-muted">Not checked</span>
                   </div>
                   <div className="flex items-center justify-between gap-3 text-sm">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-mono-soft text-mono-muted">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full mnx-bg-soft mnx-text-muted">
                         <Circle size={10} fill="currentColor" />
                       </span>
-                      <span className="text-mono-text">File integrity</span>
+                      <span className="mnx-text-primary">File integrity</span>
                     </div>
-                    <span className="rounded-full bg-mono-soft px-3 py-1 text-xs font-medium text-mono-muted">Not checked</span>
+                    <span className="rounded-full mnx-bg-soft px-3 py-1 text-xs font-medium mnx-text-muted">Not checked</span>
                   </div>
                 </div>
               </div>
             ) : null}
 
-            <div className="border-t border-mono-border/20 pt-5">
+            <div className="border-t mnx-border pt-5">
               <PreviewSectionHeading>Workflow Context</PreviewSectionHeading>
               <div className="mt-4 space-y-1">
                 <DocumentDetailRow label="Step" value={<span>{currentStageLabel}</span>} />
                 {version ? (
                   <>
-                    <DocumentDetailRow label="Current Status" value={<span className="rounded-full bg-[#F9D972]/10 px-3 py-1 text-xs font-medium text-[#F9D972]">{currentStepLabel}</span>} />
-                    <DocumentDetailRow label="Due Date" value={dueDate ? <span className="monolith-numeric">{formatDateOnly(dueDate)}</span> : "Not scheduled"} />
+                    <DocumentDetailRow label="Current Status" value={<span className="rounded-full mnx-bg-accent-soft px-3 py-1 text-xs font-medium mnx-text-accent">{currentStepLabel}</span>} />
+                    <DocumentDetailRow label="Due Date" value={dueDate ? <span className="mnx-numeric">{formatDateOnly(dueDate)}</span> : "Not scheduled"} />
                     <DocumentDetailRow label="Submitted By" value={version.uploadedBy?.name || "Unknown"} />
                     <DocumentDetailRow label="Requirement Status" value={requirement.status.replace(/_/g, " ")} />
                     <DocumentDetailRow label="Validity" value={version.validityDate ? formatDateOnly(version.validityDate) : "Not required"} />
@@ -880,7 +880,7 @@ export function FilingDocumentPreviewDrawer({
                 ) : (
                   <>
                     <DocumentDetailRow label="Requirement Status" value={requirement.status.replace(/_/g, " ")} />
-                    <DocumentDetailRow label="Due Date" value={dueDate ? <span className="monolith-numeric">{formatDateOnly(dueDate)}</span> : "Not scheduled"} />
+                    <DocumentDetailRow label="Due Date" value={dueDate ? <span className="mnx-numeric">{formatDateOnly(dueDate)}</span> : "Not scheduled"} />
                   </>
                 )}
               </div>
@@ -893,10 +893,10 @@ export function FilingDocumentPreviewDrawer({
               <>
                 <DocumentDetailRow label="Original File Name" value={version.fileName} />
                 <DocumentDetailRow label="MIME Type" value={mimeType} />
-                <DocumentDetailRow label="File Size" value={<span className="monolith-numeric">{fileSize}</span>} />
+                <DocumentDetailRow label="File Size" value={<span className="mnx-numeric">{fileSize}</span>} />
                 <DocumentDetailRow label="Source" value={sourceLabel} />
                 <DocumentDetailRow label="Uploaded By" value={version.uploadedBy?.name || "Unknown"} />
-                <DocumentDetailRow label="Uploaded On" value={<span className="monolith-numeric">{formatDateTime(version.uploadedAt)}</span>} />
+                <DocumentDetailRow label="Uploaded On" value={<span className="mnx-numeric">{formatDateTime(version.uploadedAt)}</span>} />
                 <DocumentDetailRow label="Validity" value={version.validityDate ? formatDateOnly(version.validityDate) : "Not required"} />
                 <DocumentDetailRow label="Linked Job Stage" value={currentStageLabel} />
                 <DocumentDetailRow label="Requirement Status" value={requirement.status.replace(/_/g, " ")} />
@@ -911,7 +911,7 @@ export function FilingDocumentPreviewDrawer({
             )}
             <DocumentDetailRow label="Exception State" value={exceptionState} />
             {requirement.exception?.createdAt ? (
-              <DocumentDetailRow label="Exception Recorded On" value={<span className="monolith-numeric">{formatDateTime(requirement.exception.createdAt)}</span>} />
+              <DocumentDetailRow label="Exception Recorded On" value={<span className="mnx-numeric">{formatDateTime(requirement.exception.createdAt)}</span>} />
             ) : null}
           </div>
         )}
@@ -929,13 +929,13 @@ export function WorkflowProgressPanel({
   helperNote = "N/A and exempted documents are excluded from the progress calculation.",
 }: WorkflowProgressPanelProps) {
   return (
-    <aside className="rounded-xl border border-mono-border/60 bg-mono-card p-5 shadow-[0_20px_46px_-34px_rgba(15,23,42,0.16)] xl:sticky xl:top-24">
+    <aside className="rounded-xl border mnx-border mnx-bg-surface p-5 mnx-shadow-panel xl:sticky xl:top-24">
       <div className="space-y-5">
         <div className="space-y-1">
-          <p className="monolith-label text-[#F9D972]">{eyebrow}</p>
+          <p className="mnx-label mnx-text-accent">{eyebrow}</p>
           <div className="grid grid-cols-[4px_minmax(0,1fr)] items-center gap-4">
-            <span className="h-7 w-1 rounded-sm bg-[#F9D972]" aria-hidden="true" />
-            <h3 className="monolith-h3 text-mono-text">{title}</h3>
+            <span className="h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
+            <h3 className="mnx-heading-3 mnx-text-primary">{title}</h3>
           </div>
         </div>
 
@@ -949,10 +949,10 @@ export function WorkflowProgressPanel({
                     className={cn(
                       "flex h-8 w-8 items-center justify-center rounded-full border",
                       step.status === "completed"
-                        ? "border-green-500/30 bg-green-500/12 text-green-600"
+                        ? "mnx-border-success mnx-bg-success mnx-text-success"
                         : step.status === "active"
-                          ? "border-[#F9D972]/40 bg-[#F9D972]/10 text-[#F9D972]"
-                          : "border-mono-border/60 bg-mono-soft text-mono-muted",
+                          ? "mnx-border-accent mnx-bg-accent-soft mnx-text-accent"
+                          : "mnx-border mnx-bg-soft mnx-text-muted",
                     )}
                   >
                     {step.status === "completed" ? <CheckCircle2 size={16} /> : <Circle size={12} fill="currentColor" />}
@@ -961,38 +961,38 @@ export function WorkflowProgressPanel({
                     <span
                       className={cn(
                         "mt-2 block h-10 w-px",
-                        step.status === "completed" ? "bg-green-500/35" : step.status === "active" ? "bg-[#F9D972]/28" : "bg-outline-variant/50",
+                        step.status === "completed" ? "mnx-bg-success" : step.status === "active" ? "mnx-bg-accent-soft" : "bg-outline-variant/50",
                       )}
                     />
                   ) : null}
                 </div>
                 <div className="min-w-0 pb-2">
-                  <p className="text-sm font-medium text-mono-text">{step.title}</p>
-                  <p className="mt-1 text-xs text-mono-muted">{step.detail}</p>
+                  <p className="text-sm font-medium mnx-text-primary">{step.title}</p>
+                  <p className="mt-1 text-xs mnx-text-muted">{step.detail}</p>
                 </div>
               </div>
             );
           })}
         </div>
 
-        <div className="rounded-xl border border-mono-border/55 bg-mono-soft/55 p-4">
+        <div className="rounded-xl border mnx-border mnx-bg-soft p-4">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <p className="monolith-label">Overall Progress</p>
-              <p className="monolith-numeric mt-2 text-2xl text-mono-text">{overallProgress}%</p>
+              <p className="mnx-label">Overall Progress</p>
+              <p className="mnx-numeric mt-2 text-2xl mnx-text-primary">{overallProgress}%</p>
             </div>
-            <span className="rounded-full border border-[#F9D972]/25 bg-[#F9D972]/10 px-3 py-1 text-xs font-medium text-[#F9D972]">
+            <span className="rounded-full border mnx-border-accent mnx-bg-accent-soft px-3 py-1 text-xs font-medium mnx-text-accent">
               {currentStepLabel}
             </span>
           </div>
-          <div className="mt-4 h-2 rounded-full bg-mono-soft">
+          <div className="mt-4 h-2 rounded-full mnx-bg-soft">
             <div
-              className="h-2 rounded-full bg-[linear-gradient(90deg,#F9D972_0%,#13b8c4_100%)]"
+              className="h-2 rounded-full bg-[linear-gradient(90deg,var(--mnx-accent)_0%,var(--mnx-accent)_100%)]"
               style={{ width: `${Math.max(0, Math.min(100, overallProgress))}%` }}
             />
           </div>
-          <p className="mt-3 text-xs text-mono-muted">Current status: {currentStepLabel}</p>
-          <p className="mt-2 text-xs text-mono-muted">{helperNote}</p>
+          <p className="mt-3 text-xs mnx-text-muted">Current status: {currentStepLabel}</p>
+          <p className="mt-2 text-xs mnx-text-muted">{helperNote}</p>
         </div>
       </div>
     </aside>
@@ -1016,10 +1016,10 @@ export function DocumentDropzone({
     })) ?? [];
 
   return (
-    <div className="rounded-xl border border-mono-border/60 bg-mono-card p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.14)]">
+    <div className="rounded-xl border mnx-border mnx-bg-surface p-5 mnx-shadow-panel">
       <div className="mb-4 flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <p className="monolith-label">Quick Upload</p>
+          <p className="mnx-label">Quick Upload</p>
           {requirement ? getDocumentStatusBadge(requirement.status) : null}
         </div>
         {requirementsList && requirementsList.length > 0 ? (
@@ -1031,12 +1031,12 @@ export function DocumentDropzone({
               onValueChange={(value) => onRequirementIdChange?.(value)}
               options={requirementOptions}
               placeholder="Select document slot to upload..."
-              triggerClassName="rounded-xl border-[#F9D972]/45 text-sm"
+              triggerClassName="rounded-xl mnx-border-accent text-sm"
               value={requirement?.id || ""}
             />
           </div>
         ) : (
-          <p className="mt-1 text-sm text-mono-muted">
+          <p className="mt-1 text-sm mnx-text-muted">
             {requirement ? `Uploading to ${requirement.name}` : "Select a document card to upload into the correct slot."}
           </p>
         )}
@@ -1044,9 +1044,9 @@ export function DocumentDropzone({
       <label
         htmlFor={inputId}
         className={cn(
-          "flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-mono-border/60 bg-mono-card px-6 py-10 text-center transition hover:border-[#F9D972]/60 hover:bg-mono-soft/40",
-          isDragActive ? "border-[#F9D972]/70 bg-mono-soft/50" : "",
-          disabled || !requirement ? "pointer-events-none cursor-not-allowed opacity-60 bg-mono-soft/10" : "",
+          "flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed mnx-border mnx-bg-surface px-6 py-10 text-center transition mnx-hover-accent mnx-hover-accent",
+          isDragActive ? "mnx-border-accent mnx-bg-soft" : "",
+          disabled || !requirement ? "pointer-events-none cursor-not-allowed opacity-60 mnx-bg-soft" : "",
         )}
         onDragOver={(event) => {
           if (disabled || !requirement) return;
@@ -1071,17 +1071,17 @@ export function DocumentDropzone({
           );
         }}
       >
-        <span className="monolith-icon-badge">
+        <span className="mnx-icon-badge">
           <Upload size={18} />
         </span>
         <div>
-          <p className="text-base font-medium text-mono-text">
-            Drag and drop files here, or <span className="text-[#F9D972]">browse</span>
+          <p className="text-base font-medium mnx-text-primary">
+            Drag and drop files here, or <span className="mnx-text-accent">browse</span>
           </p>
-          <p className="mt-1 text-sm text-mono-muted">Supports PNG, JPG, PDF up to {maxFileSizeLabel}</p>
+          <p className="mt-1 text-sm mnx-text-muted">Supports PNG, JPG, PDF up to {maxFileSizeLabel}</p>
         </div>
       </label>
-      <input
+      <Input
         id={inputId}
         type="file"
         accept="image/png,image/jpeg,application/pdf,image/jpg"

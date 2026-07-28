@@ -35,11 +35,21 @@ function isPerformanceLearningRoute(route) {
   );
 }
 
+function isCustomsExpenseRoute(route) {
+  return (
+    route === "/cha" ||
+    route.startsWith("/cha/") ||
+    route === "/expense" ||
+    route.startsWith("/expense/")
+  );
+}
+
 function isMonolithRoute(route) {
   return (
     knownMonolithRoutes.has(route) ||
     isPeopleOperationsRoute(route) ||
-    isPerformanceLearningRoute(route)
+    isPerformanceLearningRoute(route) ||
+    isCustomsExpenseRoute(route)
   );
 }
 
@@ -119,6 +129,8 @@ function stateFor(route) {
     return "Migrated in people operations batch 002";
   if (isPerformanceLearningRoute(route))
     return "Migrated in performance and learning batch 003";
+  if (isCustomsExpenseRoute(route))
+    return "Migrated in Expense and CHA batch 004";
   return "Pending module migration";
 }
 
@@ -171,7 +183,9 @@ const layouts = walk(appRoot, "layout.tsx")
               : source.includes("/crm/layout.tsx")
                 ? "CRM scroll/theme container"
                 : source.includes("/cha/layout.tsx")
-                  ? "CHA module spacing container"
+                  ? "Shared CHA workspace frame and asynchronous states"
+                  : source.includes("/expense/layout.tsx")
+                    ? "Shared Expense workspace frame and asynchronous states"
                   : source.includes("/hrms/recruit/layout.tsx")
                     ? "Recruitment feature flag"
                     : source.includes("/hrms/layout.tsx")
@@ -266,6 +280,7 @@ const lines = [
   "- `/admin/design-system` is the production showcase for reusable migration decisions.",
   "- All `/hrms` and `/attendance` routes were migrated in people operations batch 002.",
   "- All `/ams` and `/lms` routes were migrated in performance and learning batch 003.",
+  "- All `/cha` and `/expense` routes were migrated in Expense and CHA batch 004.",
   "- Every other route remains pending until its own presentation, behavior, RBAC,",
   "  themes, and responsive layout are verified in a later module batch.",
   "",

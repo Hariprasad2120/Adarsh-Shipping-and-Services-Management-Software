@@ -19,21 +19,21 @@ export function ChaDueDateWarningNote({
   const [isPending, startTransition] = useTransition();
 
   return (
-    <div className="monolith-card monolith-accent-warning rounded-xl border border-[#D88700]/35 bg-mono-card">
+    <div className="mnx-bg-surface mnx-border mnx-border-warning rounded-xl border mnx-border-warning mnx-bg-surface">
       <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4">
-          <div className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#D88700]/45 bg-[#D88700]/10 text-[#D88700] shadow-sm">
+          <div className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border mnx-border-warning mnx-bg-warning mnx-text-warning shadow-sm">
             <AlertTriangle size={14} strokeWidth={2.2} />
           </div>
           <div className="space-y-2">
-            <p className="monolith-label !text-[#D88700]">
+            <p className="mnx-label mnx-text-warning">
               {warning.type === "DELIVERY_ORDER"
                 ? "DELIVERY ORDER VALIDITY ALERT"
                 : warning.type === "FILING_ATTACHMENT"
                   ? "DOCUMENT VALIDITY ALERT"
                   : "SECTION 49 VALIDITY ALERT"}
             </p>
-            <p className="text-sm leading-relaxed text-mono-text">{warning.message}</p>
+            <p className="text-sm leading-relaxed mnx-text-primary">{warning.message}</p>
           </div>
         </div>
 
@@ -43,7 +43,7 @@ export function ChaDueDateWarningNote({
             size="sm"
             variant="outline"
             disabled={isPending}
-            className="justify-center gap-1.5 border-mono-border/50 bg-mono-card px-3 text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+            className="justify-center gap-1.5 mnx-border mnx-bg-surface px-3 mnx-text-muted mnx-hover-accent mnx-hover-accent"
             onClick={() => {
               startTransition(async () => {
                 const response = await fetch(`/api/notifications/${warning.notificationId}/ack`, { method: "POST" });
@@ -66,7 +66,7 @@ export function ChaDueDateWarningNote({
           <Button
             type="button"
             size="sm"
-            className="justify-center gap-1.5 border border-[#D88700]/25 bg-[#D88700]/12 px-3 text-[#D88700] hover:bg-[#D88700]/18 hover:text-[#f97316]"
+            className="justify-center gap-1.5 border mnx-border-warning mnx-bg-warning px-3 mnx-text-warning mnx-hover-warning mnx-hover-warning"
             onClick={() => router.push(warning.link)}
           >
             <ArrowUpRight size={14} />

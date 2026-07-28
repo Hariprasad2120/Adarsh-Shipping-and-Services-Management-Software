@@ -29,13 +29,13 @@ import {
   DataTableEmpty,
   DataTableHead,
   DataTableHeader,
-} from "@/components/data-table";
+} from "@/components/monolith/workspace-data-table";
 import {
   formatChaBadgeLabel,
   getChaPriorityBadgeVariant,
   getChaStageBadgeVariant,
 } from "@/lib/cha-badges";
-import { ChaControlPanel, ChaMetricCard, ChaPageHeader, ChaSectionShell } from "./_components/cha-operations-shared";
+import { ChaControlPanel, ChaMetricCard, ChaMetrics, ChaPageHeader, ChaSectionShell } from "./_components/cha-operations-shared";
 
 export default async function ChaDashboard() {
   const session = await auth();
@@ -298,7 +298,7 @@ export default async function ChaDashboard() {
         icon={<Sparkles size={20} />}
       />
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
+      <ChaMetrics>
         {metrics.map((metric) => (
           <ChaMetricCard
             key={metric.title}
@@ -309,7 +309,7 @@ export default async function ChaDashboard() {
             accent={metric.accent}
           />
         ))}
-      </div>
+      </ChaMetrics>
 
       <ChaControlPanel
         title="My Assigned Jobs"
@@ -365,11 +365,11 @@ export default async function ChaDashboard() {
                   colSpan={7}
                   message={
                     <div className="flex flex-col items-center justify-center p-14 text-center">
-                      <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[28px] border border-mono-border/25 bg-mono-soft shadow-[0_22px_48px_-34px_rgba(15,23,42,0.3)]">
+                      <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[28px] border mnx-border mnx-bg-soft mnx-shadow-panel">
                         <Briefcase size={30} className="text-outline-variant" />
                       </div>
-                      <p className="text-sm text-mono-text">You don&apos;t have any active job assignments yet.</p>
-                      <p className="mt-1 text-xs text-mono-muted">New work will appear here automatically.</p>
+                      <p className="text-sm mnx-text-primary">You don&apos;t have any active job assignments yet.</p>
+                      <p className="mt-1 text-xs mnx-text-muted">New work will appear here automatically.</p>
                     </div>
                   }
                 />
@@ -391,9 +391,9 @@ export default async function ChaDashboard() {
               <DataTableBody>
                 {myJobs.map((job) => (
                   <ClickableRow key={job.id} href={`/cha/jobs/${job.id}`}>
-                    <DataTableCell className="font-medium text-[#F9D972]">
+                    <DataTableCell className="font-medium mnx-text-accent">
                       <div className="flex items-center gap-2">
-                        <Link href={`/cha/jobs/${job.id}`} className="transition-colors hover:text-[#E8C85D]">
+                        <Link href={`/cha/jobs/${job.id}`} className="transition-colors mnx-hover-accent">
                           {job.jobNumber}
                         </Link>
                         {section49WarningMap.get(job.id) ? (
@@ -411,15 +411,15 @@ export default async function ChaDashboard() {
                       </div>
                     </DataTableCell>
                     <DataTableCell>{job.customer.name}</DataTableCell>
-                    <DataTableCell className="monolith-label">{job.jobType.name}</DataTableCell>
-                    <DataTableCell className="monolith-numeric text-mono-muted">
+                    <DataTableCell className="mnx-label">{job.jobType.name}</DataTableCell>
+                    <DataTableCell className="mnx-numeric mnx-text-muted">
                       {job.jobType.movementDirection === "IMPORT"
                         ? job.filing?.billOfEntryNumber || "Pending"
                         : job.jobType.movementDirection === "EXPORT"
                           ? job.filing?.shippingBillNumber || "Pending"
                           : job.filing?.billOfEntryNumber || job.filing?.shippingBillNumber || "Pending"}
                     </DataTableCell>
-                    <DataTableCell className="text-mono-muted">
+                    <DataTableCell className="mnx-text-muted">
                       {job.createdAt.toLocaleDateString("en-IN", {
                         day: "2-digit",
                         month: "short",
@@ -454,24 +454,24 @@ export default async function ChaDashboard() {
         >
           <div className="space-y-2.5 p-4">
             {pendingActions.length === 0 ? (
-              <p className="text-sm text-mono-muted">No pending actions are waiting right now.</p>
+              <p className="text-sm mnx-text-muted">No pending actions are waiting right now.</p>
             ) : (
               pendingActions.map((item) => (
                 <Link
                   key={item.id}
                   href={item.href}
-                  className="flex items-start gap-3 rounded-xl border border-mono-border/25 bg-mono-soft/35 px-3.5 py-2.5 transition hover:border-[#F9D972]/35 hover:bg-mono-card"
+                  className="flex items-start gap-3 rounded-xl border mnx-border mnx-bg-soft px-3.5 py-2.5 transition mnx-hover-accent mnx-hover-accent"
                 >
                   <span
                     className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
-                      item.tone === "orange" ? "bg-[#D88700]/12 text-[#D88700]" : "bg-[#F9D972]/10 text-[#F9D972]"
+                      item.tone === "orange" ? "mnx-bg-warning mnx-text-warning" : "mnx-bg-accent-soft mnx-text-accent"
                     }`}
                   >
                     <AlertCircle size={15} />
                   </span>
                   <div className="min-w-0">
-                    <p className="text-xs font-normal uppercase tracking-[0.12em] text-mono-text">{item.label}</p>
-                    <p className="mt-1 truncate text-xs text-mono-muted">{item.note}</p>
+                    <p className="text-xs font-normal uppercase tracking-[0.12em] mnx-text-primary">{item.label}</p>
+                    <p className="mt-1 truncate text-xs mnx-text-muted">{item.note}</p>
                   </div>
                 </Link>
               ))
@@ -488,22 +488,22 @@ export default async function ChaDashboard() {
         >
           <div className="space-y-2.5 p-4">
             {expiringItems.length === 0 ? (
-              <p className="text-sm text-mono-muted">No immediate expiry or deadline warnings were found.</p>
+              <p className="text-sm mnx-text-muted">No immediate expiry or deadline warnings were found.</p>
             ) : (
               expiringItems.map((item) => (
                 <Link
                   key={item.id}
                   href={item.href}
-                  className="flex items-start justify-between gap-3 rounded-xl border border-mono-border/25 bg-mono-soft/35 px-3.5 py-2.5 transition hover:border-[#F9D972]/35 hover:bg-mono-card"
+                  className="flex items-start justify-between gap-3 rounded-xl border mnx-border mnx-bg-soft px-3.5 py-2.5 transition mnx-hover-accent mnx-hover-accent"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs font-normal uppercase tracking-[0.12em] text-mono-text">{item.label}</p>
-                    <p className="mt-1 text-xs text-mono-muted">{item.note}</p>
-                    <p className="mt-1 text-xs text-mono-muted">{item.message}</p>
+                    <p className="text-xs font-normal uppercase tracking-[0.12em] mnx-text-primary">{item.label}</p>
+                    <p className="mt-1 text-xs mnx-text-muted">{item.note}</p>
+                    <p className="mt-1 text-xs mnx-text-muted">{item.message}</p>
                   </div>
                   <span
                     className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold ${
-                      item.tone === "destructive" ? "bg-red-500/10 text-red-500" : "bg-[#D88700]/12 text-[#D88700]"
+                      item.tone === "destructive" ? "mnx-bg-danger mnx-text-danger" : "mnx-bg-warning mnx-text-warning"
                     }`}
                   >
                     {item.tone === "destructive" ? "Expired" : "Attention"}
@@ -523,23 +523,23 @@ export default async function ChaDashboard() {
         >
           <div className="space-y-2.5 p-4">
             {recentActivity.length === 0 ? (
-              <p className="text-sm text-mono-muted">No recent activity has been recorded yet.</p>
+              <p className="text-sm mnx-text-muted">No recent activity has been recorded yet.</p>
             ) : (
               recentActivity.slice(0, 4).map((log) => (
                 <div
                   key={log.id}
-                  className="rounded-xl border border-mono-border/25 bg-mono-soft/35 px-3.5 py-2.5"
+                  className="rounded-xl border mnx-border mnx-bg-soft px-3.5 py-2.5"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-normal uppercase tracking-[0.12em] text-mono-text">{log.event.replace(/_/g, " ")}</p>
-                    <span className="text-xs text-mono-muted monolith-numeric">
+                    <p className="text-xs font-normal uppercase tracking-[0.12em] mnx-text-primary">{log.event.replace(/_/g, " ")}</p>
+                    <span className="text-xs mnx-text-muted mnx-numeric">
                       {log.timestamp.toLocaleString("en-IN")}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-mono-muted">{log.remarks || "Operational event logged."}</p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-mono-muted">
+                  <p className="mt-1 text-xs mnx-text-muted">{log.remarks || "Operational event logged."}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] mnx-text-muted">
                     {log.job ? (
-                      <Link href={`/cha/jobs/${log.job.id}`} className="text-[#F9D972] hover:text-[#E8C85D] hover:underline">
+                      <Link href={`/cha/jobs/${log.job.id}`} className="mnx-text-accent mnx-hover-accent hover:underline">
                         {log.job.jobNumber}
                       </Link>
                     ) : null}
