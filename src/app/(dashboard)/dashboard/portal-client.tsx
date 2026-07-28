@@ -4,6 +4,7 @@ import { Building2, Sparkles, Users2 } from "lucide-react";
 import { useState } from "react";
 import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
+import styles from "./dashboard.module.css";
 import { AttendanceCommand } from "./_components/attendance-command";
 import { DashboardOrganization } from "./_components/dashboard-organization";
 import { DashboardOverview } from "./_components/dashboard-overview";
@@ -157,7 +158,7 @@ export function HrmsPortalClient({
   }
 
   return (
-    <div className="mnx-dashboard-page">
+    <div className={`mnx-dashboard-page ${styles.page}`}>
       <AttendanceCommand
         profile={profile}
         loading={attendanceLoading}

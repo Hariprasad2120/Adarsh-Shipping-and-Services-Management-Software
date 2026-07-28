@@ -330,8 +330,10 @@ function MonolithDashboardShellBody({
         </header>
 
         <main className="mnx-dashboard-main">
-          <div className="mnx-route-content" data-route={pathname}>
-            {children}
+          <div className="mnx-dashboard-content">
+            <div className="mnx-route-content" data-route={pathname}>
+              {children}
+            </div>
           </div>
         </main>
       </div>

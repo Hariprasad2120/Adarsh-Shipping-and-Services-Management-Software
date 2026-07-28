@@ -194,9 +194,9 @@ function createRouteSnapshotFile(row: FuelExpenseRow, fileName: string) {
   <polyline points="${points}" fill="none" stroke="#F9D972" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="${points.split(" ")[0].split(",")[0]}" cy="${points.split(" ")[0].split(",")[1]}" r="12" fill="#16a34a"/>
   <circle cx="${points.split(" ").at(-1)?.split(",")[0]}" cy="${points.split(" ").at(-1)?.split(",")[1]}" r="12" fill="#dc2626"/>
-  <text x="36" y="52" font-family="Arial, sans-serif" font-size="18" fill="#191c1e">Fuel route snapshot</text>
-  <text x="36" y="${height - 62}" font-family="Arial, sans-serif" font-size="14" fill="#404947">From: ${escapedFrom}</text>
-  <text x="36" y="${height - 38}" font-family="Arial, sans-serif" font-size="14" fill="#404947">To: ${escapedTo}</text>
+  <text x="36" y="52" font-family='Inter, "Segoe UI", Arial, sans-serif' font-size="18" fill="#191c1e">Fuel route snapshot</text>
+  <text x="36" y="${height - 62}" font-family='Inter, "Segoe UI", Arial, sans-serif' font-size="14" fill="#404947">From: ${escapedFrom}</text>
+  <text x="36" y="${height - 38}" font-family='Inter, "Segoe UI", Arial, sans-serif' font-size="14" fill="#404947">To: ${escapedTo}</text>
 </svg>`;
   return new File([new Blob([svg], { type: "image/svg+xml" })], fileName, { type: "image/svg+xml" });
 }

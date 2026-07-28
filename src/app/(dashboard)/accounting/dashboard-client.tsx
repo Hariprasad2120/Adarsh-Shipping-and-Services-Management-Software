@@ -86,7 +86,7 @@ export function DashboardClient({
       // Draw center percentage text dynamically
       const isDark = document.documentElement.classList.contains("dark");
       ctx.fillStyle = isDark ? "#f0f6fc" : "#191c1e";
-      ctx.font = "bold 14px var(--font-sans)";
+      ctx.font = 'bold 14px Inter, "Segoe UI", Arial, sans-serif';
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(`${(pct * 100).toFixed(0)}%`, x, y);
@@ -138,7 +138,7 @@ export function DashboardClient({
       // Draw center percentage text dynamically
       const isDark = document.documentElement.classList.contains("dark");
       ctx.fillStyle = isDark ? "#f0f6fc" : "#191c1e";
-      ctx.font = "bold 14px var(--font-sans)";
+      ctx.font = 'bold 14px Inter, "Segoe UI", Arial, sans-serif';
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(`${(pct * 100).toFixed(1)}%`, x, y);

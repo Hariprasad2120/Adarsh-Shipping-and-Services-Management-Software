@@ -79,7 +79,7 @@ export default async function BankingPage() {
     }));
 
   return (
-    <div className="p-8 space-y-6 max-w-[1200px] mx-auto animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200">
       <div>
         <h2 className="monolith-h1 text-white">Banking &amp; Cash</h2>
         <p className="text-slate-400 text-xs mt-1">

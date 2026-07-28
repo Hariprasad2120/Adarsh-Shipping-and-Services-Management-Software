@@ -1,7 +1,6 @@
 import React from "react";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
 import { getAccountingSettings, listAccounts } from "@/modules/accounting/service";
 import { SettingsClient } from "./settings-client";
 
@@ -27,7 +26,7 @@ export default async function AccountingSettingsPage() {
     }));
 
   return (
-    <div className="mx-auto max-w-[1000px] space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-mono-border/20 pb-5">
         <div>
           <h2 className="monolith-h1 text-white">Accounting Configuration</h2>

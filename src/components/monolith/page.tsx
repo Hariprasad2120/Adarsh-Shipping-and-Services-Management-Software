@@ -1,11 +1,21 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export function Page({ className, ...props }: React.HTMLAttributes<HTMLElement>) {
-  return <section className={cn("mnx-page", className)} {...props} />;
+export interface PageProps extends React.HTMLAttributes<HTMLElement> {
+  variant?: "fluid" | "reading" | "form";
 }
 
-export interface PageHeaderProps extends React.HTMLAttributes<HTMLElement> {
+export function Page({ className, variant = "fluid", ...props }: PageProps) {
+  return (
+    <section
+      className={cn("mnx-page monolith-page", className)}
+      data-page-variant={variant}
+      {...props}
+    />
+  );
+}
+
+export interface PageHeaderProps extends Omit<React.HTMLAttributes<HTMLElement>, "title"> {
   eyebrow?: React.ReactNode;
   title: React.ReactNode;
   description?: React.ReactNode;
@@ -42,7 +52,7 @@ export function PageSection({ className, ...props }: React.HTMLAttributes<HTMLEl
   return <section className={cn("mnx-page-section", className)} {...props} />;
 }
 
-export interface SectionHeaderProps extends React.HTMLAttributes<HTMLElement> {
+export interface SectionHeaderProps extends Omit<React.HTMLAttributes<HTMLElement>, "title"> {
   eyebrow?: React.ReactNode;
   title: React.ReactNode;
   description?: React.ReactNode;

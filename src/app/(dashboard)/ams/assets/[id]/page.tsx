@@ -1,10 +1,9 @@
 import React from "react";
 import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
-import Link from "next/navigation";
 import NextLink from "next/link";
 import { getAsset } from "@/modules/accounting/service";
-import { ShieldAlert, ArrowLeft, Calendar, FileText, Settings, ShieldCheck } from "lucide-react";
+import { ShieldAlert, ArrowLeft, Calendar, Settings } from "lucide-react";
 
 interface AssetDetailPageProps {
   params: Promise<{ id: string }>;
@@ -35,7 +34,7 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
   const bookValue = Number(asset.bookValue);
 
   return (
-    <div className="p-8 space-y-6 max-w-[1200px] mx-auto animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* ─── HEADER ────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 border-b border-mono-border/20 pb-5">

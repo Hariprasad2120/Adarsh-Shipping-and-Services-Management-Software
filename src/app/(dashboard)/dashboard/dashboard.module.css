@@ -1,0 +1,6 @@
+.page:global(.mnx-dashboard-page) {
+  box-sizing: border-box;
+  width: min(100%, 1360px);
+  max-width: 1360px;
+  margin-inline: auto;
+}

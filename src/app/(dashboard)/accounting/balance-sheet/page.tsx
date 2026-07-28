@@ -34,14 +34,14 @@ export default async function BalanceSheetReportPage({ searchParams }: BSPagePro
   const isBalanced = bs.isBalanced;
 
   return (
-    <div className="p-8 space-y-6 max-w-[1200px] mx-auto animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-mono-border/20 pb-5">
         <div>
           <h2 className="monolith-h1 text-white">Balance Sheet Statement</h2>
           <p className="text-slate-400 text-xs mt-1">
-            Display corporate Assets, Liabilities, and Owner's Equity. Total Assets must equal Total Liabilities and Equity.
+            Display corporate Assets, Liabilities, and Owner&apos;s Equity. Total Assets must equal Total Liabilities and Equity.
           </p>
         </div>
       </div>
@@ -151,7 +151,7 @@ export default async function BalanceSheetReportPage({ searchParams }: BSPagePro
         {/* EQUITY SECTION */}
         <div className="space-y-3 pt-4">
           <div className="flex justify-between border-b border-[#1c212a]/40 pb-1">
-            <span className="font-bold text-xs text-white uppercase tracking-wider">3. Owner's Equity</span>
+            <span className="font-bold text-xs text-white uppercase tracking-wider">3. Owner&apos;s Equity</span>
           </div>
           <div className="space-y-2 pl-4 text-xs">
             {bs.equity.accounts.map((acc, i) => (

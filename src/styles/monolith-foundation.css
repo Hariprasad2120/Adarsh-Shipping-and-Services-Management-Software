@@ -7,8 +7,8 @@
  */
 
 :root {
-  --mnx-font-sans: var(--font-geist-sans), "Geist", "Segoe UI", sans-serif;
-  --mnx-font-code: var(--font-geist-mono), "SFMono-Regular", Consolas, monospace;
+  --mnx-font-sans: Inter, "Segoe UI", Arial, sans-serif;
+  --mnx-font-code: Inter, "Segoe UI", Arial, sans-serif;
 
   --mnx-type-display: clamp(2.5rem, 5vw, 4.5rem);
   --mnx-type-page-title: clamp(2rem, 3vw, 3rem);
@@ -24,7 +24,11 @@
   --mnx-weight-semibold: 600;
   --mnx-weight-bold: 700;
 
-  --mnx-content-max: 100rem;
+  --page-gutter-desktop: 40px;
+  --page-gutter-tablet: 24px;
+  --page-gutter-mobile: 16px;
+  --page-content-width: 1360px;
+  --mnx-content-max: var(--page-content-width);
   --mnx-page-gap: clamp(1.25rem, 2vw, 2rem);
   --mnx-section-gap: clamp(1rem, 1.6vw, 1.5rem);
 }
@@ -32,7 +36,7 @@
 .monolith-app,
 .mnx-dashboard-shell,
 .mnx-dashboard-shell :where(button, input, select, textarea) {
-  font-family: var(--mnx-font-sans);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-synthesis: none;
   font-optical-sizing: auto;
 }
@@ -43,13 +47,13 @@
 }
 
 .mnx-dashboard-shell :where(h1, h2, h3, h4, h5, h6) {
-  font-family: var(--mnx-font-sans);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-style: normal;
   text-wrap: balance;
 }
 
 .mnx-dashboard-shell :where(p, li, td, th, label, input, select, textarea, button) {
-  font-family: var(--mnx-font-sans);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
 }
 
 /*
@@ -69,7 +73,7 @@
   .mnx-summary-stat > strong,
   .mnx-org-stat-grid strong
 ) {
-  font-family: var(--mnx-font-sans) !important;
+  font-family: Inter, "Segoe UI", Arial, sans-serif !important;
   font-feature-settings: "tnum" 1;
   font-variant-numeric: tabular-nums;
   font-style: normal;
@@ -80,21 +84,40 @@
 kbd,
 code,
 pre {
-  font-family: var(--mnx-font-code);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
 }
 
-.mnx-route-content {
-  width: 100%;
+.mnx-route-content,
+.monolith-page {
+  box-sizing: border-box;
+  width: min(100%, var(--page-content-width));
+  max-width: var(--page-content-width);
   min-width: 0;
+  margin-inline: auto;
 }
 
-.mnx-page {
-  width: min(100%, var(--mnx-content-max));
+.mnx-page,
+.monolith-page {
+  box-sizing: border-box;
+  width: min(100%, var(--page-content-width));
+  max-width: var(--page-content-width);
   min-width: 0;
   display: grid;
   gap: var(--mnx-page-gap);
   margin-inline: auto;
   animation: mnx-page-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.mnx-page[data-page-variant="reading"],
+.monolith-page[data-page-variant="reading"] {
+  max-width: 72rem;
+  margin-inline: auto;
+}
+
+.mnx-page[data-page-variant="form"],
+.monolith-page[data-page-variant="form"] {
+  max-width: 64rem;
+  margin-inline: auto;
 }
 
 .mnx-page-header {
@@ -264,7 +287,7 @@ pre {
 .mnx-stat-value {
   margin: 0;
   color: var(--mnx-text-strong);
-  font-family: var(--mnx-font-sans);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-size: clamp(2.25rem, 4vw, 3.75rem);
   font-weight: var(--mnx-weight-medium);
   font-feature-settings: "tnum" 1;
@@ -285,7 +308,7 @@ pre {
 .mnx-dashboard-section-heading h2,
 .mnx-module-command-header h2,
 .mnx-panel-heading h2 {
-  font-family: var(--mnx-font-sans);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
 }
 
 .mnx-dashboard-profile h1 {

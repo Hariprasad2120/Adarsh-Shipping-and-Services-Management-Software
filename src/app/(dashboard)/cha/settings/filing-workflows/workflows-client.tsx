@@ -2273,7 +2273,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 {activeVersion ? `${activeVersion.isPublished ? "PUBLISHED" : "DRAFT"} V${activeVersion.versionNumber}` : "NO VERSION"}
               </Badge>
             </div>
-            <h1 className="monolith-h1 text-mono-text" style={{ fontFamily: "var(--font-geist-sans)", letterSpacing: "0.08em" }}>
+            <h1 className="monolith-h1 text-mono-text" style={{ fontFamily: 'Inter, "Segoe UI", Arial, sans-serif', letterSpacing: "0.08em" }}>
               FILING WORKFLOW BLUEPRINT
             </h1>
             <p className="max-w-3xl text-sm text-mono-muted">

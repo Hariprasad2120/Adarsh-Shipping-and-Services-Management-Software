@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { ComponentType } from "react";
 import {
   Calendar,
   DollarSign,
@@ -23,7 +23,7 @@ type WorkspaceDetails = {
   title?: string;
   description: string;
   badge: string;
-  icon: any;
+  icon: ComponentType<{ className?: string }>;
   iconClassName: string;
   summary: string;
 };
@@ -164,7 +164,7 @@ export function CrmWorkspacePage({ slug }: { slug: string }) {
   const Icon = details.icon;
 
   return (
-    <div className="mx-auto max-w-5xl animate-in space-y-6 p-8 fade-in duration-200">
+    <div className="animate-in space-y-6 fade-in duration-200">
       <div className="flex flex-col items-center justify-center space-y-4 rounded-xl border border-[#1c212a]/55 bg-[#0f1319] p-8 text-center shadow-2xl">
         <div className="rounded-full bg-slate-800/40 p-4 text-white">
           <Icon className={`size-8 ${details.iconClassName}`} />

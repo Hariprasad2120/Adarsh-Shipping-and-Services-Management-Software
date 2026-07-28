@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, RotateCcw } from "lucide-react";
+import styles from "./dashboard.module.css";
 
 export default function DashboardError({
   reset,
@@ -9,7 +10,7 @@ export default function DashboardError({
   reset: () => void;
 }) {
   return (
-    <div className="mnx-dashboard-page">
+    <div className={`mnx-dashboard-page ${styles.page}`}>
       <section className="mnx-dashboard-error" role="alert">
         <span><AlertTriangle size={24} /></span>
         <p className="mnx-dashboard-spec-label">DASHBOARD UNAVAILABLE</p>

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-28T05:36:36.802Z",
+  "generatedAt": "2026-07-28T06:57:51.609Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -56,12 +56,6 @@
       "type": "page"
     },
     {
-      "route": "/accounting/items/[id]",
-      "filePath": "src/app/(dashboard)/accounting/items/[id]/page.tsx",
-      "module": "accounting",
-      "type": "page"
-    },
-    {
       "route": "/accounting/items/new",
       "filePath": "src/app/(dashboard)/accounting/items/new/page.tsx",
       "module": "accounting",
@@ -74,14 +68,14 @@
       "type": "page"
     },
     {
-      "route": "/accounting/jobs",
-      "filePath": "src/app/(dashboard)/accounting/jobs/page.tsx",
+      "route": "/accounting/items/[id]",
+      "filePath": "src/app/(dashboard)/accounting/items/[id]/page.tsx",
       "module": "accounting",
       "type": "page"
     },
     {
-      "route": "/accounting/journal-entries/[id]",
-      "filePath": "src/app/(dashboard)/accounting/journal-entries/[id]/page.tsx",
+      "route": "/accounting/jobs",
+      "filePath": "src/app/(dashboard)/accounting/jobs/page.tsx",
       "module": "accounting",
       "type": "page"
     },
@@ -98,14 +92,14 @@
       "type": "page"
     },
     {
-      "route": "/accounting",
-      "filePath": "src/app/(dashboard)/accounting/page.tsx",
+      "route": "/accounting/journal-entries/[id]",
+      "filePath": "src/app/(dashboard)/accounting/journal-entries/[id]/page.tsx",
       "module": "accounting",
       "type": "page"
     },
     {
-      "route": "/accounting/payment-entries/[id]",
-      "filePath": "src/app/(dashboard)/accounting/payment-entries/[id]/page.tsx",
+      "route": "/accounting",
+      "filePath": "src/app/(dashboard)/accounting/page.tsx",
       "module": "accounting",
       "type": "page"
     },
@@ -122,14 +116,14 @@
       "type": "page"
     },
     {
-      "route": "/accounting/profit-loss",
-      "filePath": "src/app/(dashboard)/accounting/profit-loss/page.tsx",
+      "route": "/accounting/payment-entries/[id]",
+      "filePath": "src/app/(dashboard)/accounting/payment-entries/[id]/page.tsx",
       "module": "accounting",
       "type": "page"
     },
     {
-      "route": "/accounting/purchase-invoices/[id]",
-      "filePath": "src/app/(dashboard)/accounting/purchase-invoices/[id]/page.tsx",
+      "route": "/accounting/profit-loss",
+      "filePath": "src/app/(dashboard)/accounting/profit-loss/page.tsx",
       "module": "accounting",
       "type": "page"
     },
@@ -142,6 +136,12 @@
     {
       "route": "/accounting/purchase-invoices",
       "filePath": "src/app/(dashboard)/accounting/purchase-invoices/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
+      "route": "/accounting/purchase-invoices/[id]",
+      "filePath": "src/app/(dashboard)/accounting/purchase-invoices/[id]/page.tsx",
       "module": "accounting",
       "type": "page"
     },
@@ -170,12 +170,6 @@
       "type": "page"
     },
     {
-      "route": "/accounting/sales-invoices/[id]",
-      "filePath": "src/app/(dashboard)/accounting/sales-invoices/[id]/page.tsx",
-      "module": "accounting",
-      "type": "page"
-    },
-    {
       "route": "/accounting/sales-invoices/new",
       "filePath": "src/app/(dashboard)/accounting/sales-invoices/new/page.tsx",
       "module": "accounting",
@@ -184,6 +178,12 @@
     {
       "route": "/accounting/sales-invoices",
       "filePath": "src/app/(dashboard)/accounting/sales-invoices/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
+      "route": "/accounting/sales-invoices/[id]",
+      "filePath": "src/app/(dashboard)/accounting/sales-invoices/[id]/page.tsx",
       "module": "accounting",
       "type": "page"
     },
@@ -272,18 +272,6 @@
       "type": "page"
     },
     {
-      "route": "/ams/appraisals/[id]/management-review",
-      "filePath": "src/app/(dashboard)/ams/appraisals/[id]/management-review/page.tsx",
-      "module": "ams",
-      "type": "page"
-    },
-    {
-      "route": "/ams/appraisals/[id]",
-      "filePath": "src/app/(dashboard)/ams/appraisals/[id]/page.tsx",
-      "module": "ams",
-      "type": "page"
-    },
-    {
       "route": "/ams/appraisals/assign/[employeeId]",
       "filePath": "src/app/(dashboard)/ams/appraisals/assign/[employeeId]/page.tsx",
       "module": "ams",
@@ -296,14 +284,26 @@
       "type": "page"
     },
     {
-      "route": "/ams/assets/[id]",
-      "filePath": "src/app/(dashboard)/ams/assets/[id]/page.tsx",
+      "route": "/ams/appraisals/[id]/management-review",
+      "filePath": "src/app/(dashboard)/ams/appraisals/[id]/management-review/page.tsx",
+      "module": "ams",
+      "type": "page"
+    },
+    {
+      "route": "/ams/appraisals/[id]",
+      "filePath": "src/app/(dashboard)/ams/appraisals/[id]/page.tsx",
       "module": "ams",
       "type": "page"
     },
     {
       "route": "/ams/assets",
       "filePath": "src/app/(dashboard)/ams/assets/page.tsx",
+      "module": "ams",
+      "type": "page"
+    },
+    {
+      "route": "/ams/assets/[id]",
+      "filePath": "src/app/(dashboard)/ams/assets/[id]/page.tsx",
       "module": "ams",
       "type": "page"
     },
@@ -338,26 +338,26 @@
       "type": "page"
     },
     {
-      "route": "/ams/my-appraisal/[id]/self-assessment",
-      "filePath": "src/app/(dashboard)/ams/my-appraisal/[id]/self-assessment/page.tsx",
-      "module": "ams",
-      "type": "page"
-    },
-    {
       "route": "/ams/my-appraisal",
       "filePath": "src/app/(dashboard)/ams/my-appraisal/page.tsx",
       "module": "ams",
       "type": "page"
     },
     {
-      "route": "/ams/my-reviews/[id]",
-      "filePath": "src/app/(dashboard)/ams/my-reviews/[id]/page.tsx",
+      "route": "/ams/my-appraisal/[id]/self-assessment",
+      "filePath": "src/app/(dashboard)/ams/my-appraisal/[id]/self-assessment/page.tsx",
       "module": "ams",
       "type": "page"
     },
     {
       "route": "/ams/my-reviews",
       "filePath": "src/app/(dashboard)/ams/my-reviews/page.tsx",
+      "module": "ams",
+      "type": "page"
+    },
+    {
+      "route": "/ams/my-reviews/[id]",
+      "filePath": "src/app/(dashboard)/ams/my-reviews/[id]/page.tsx",
       "module": "ams",
       "type": "page"
     },
@@ -428,12 +428,6 @@
       "type": "page"
     },
     {
-      "route": "/cha/customers/[id]/edit",
-      "filePath": "src/app/(dashboard)/cha/customers/[id]/edit/page.tsx",
-      "module": "cha",
-      "type": "page"
-    },
-    {
       "route": "/cha/customers/new",
       "filePath": "src/app/(dashboard)/cha/customers/new/page.tsx",
       "module": "cha",
@@ -446,20 +440,26 @@
       "type": "page"
     },
     {
+      "route": "/cha/customers/[id]/edit",
+      "filePath": "src/app/(dashboard)/cha/customers/[id]/edit/page.tsx",
+      "module": "cha",
+      "type": "page"
+    },
+    {
       "route": "/cha/expenses",
       "filePath": "src/app/(dashboard)/cha/expenses/page.tsx",
       "module": "cha",
       "type": "page"
     },
     {
-      "route": "/cha/jobs/[jobId]",
-      "filePath": "src/app/(dashboard)/cha/jobs/[jobId]/page.tsx",
+      "route": "/cha/jobs",
+      "filePath": "src/app/(dashboard)/cha/jobs/page.tsx",
       "module": "cha",
       "type": "page"
     },
     {
-      "route": "/cha/jobs",
-      "filePath": "src/app/(dashboard)/cha/jobs/page.tsx",
+      "route": "/cha/jobs/[jobId]",
+      "filePath": "src/app/(dashboard)/cha/jobs/[jobId]/page.tsx",
       "module": "cha",
       "type": "page"
     },
@@ -560,12 +560,6 @@
       "type": "page"
     },
     {
-      "route": "/crm/[...slug]",
-      "filePath": "src/app/(dashboard)/crm/[...slug]/page.tsx",
-      "module": "crm",
-      "type": "page"
-    },
-    {
       "route": "/crm/approvals",
       "filePath": "src/app/(dashboard)/crm/approvals/page.tsx",
       "module": "crm",
@@ -584,18 +578,6 @@
       "type": "page"
     },
     {
-      "route": "/crm/contacts/[id]/edit",
-      "filePath": "src/app/(dashboard)/crm/contacts/[id]/edit/page.tsx",
-      "module": "crm",
-      "type": "page"
-    },
-    {
-      "route": "/crm/contacts/[id]",
-      "filePath": "src/app/(dashboard)/crm/contacts/[id]/page.tsx",
-      "module": "crm",
-      "type": "page"
-    },
-    {
       "route": "/crm/contacts/new",
       "filePath": "src/app/(dashboard)/crm/contacts/new/page.tsx",
       "module": "crm",
@@ -608,14 +590,14 @@
       "type": "page"
     },
     {
-      "route": "/crm/customers/[id]/edit",
-      "filePath": "src/app/(dashboard)/crm/customers/[id]/edit/page.tsx",
+      "route": "/crm/contacts/[id]/edit",
+      "filePath": "src/app/(dashboard)/crm/contacts/[id]/edit/page.tsx",
       "module": "crm",
       "type": "page"
     },
     {
-      "route": "/crm/customers/[id]",
-      "filePath": "src/app/(dashboard)/crm/customers/[id]/page.tsx",
+      "route": "/crm/contacts/[id]",
+      "filePath": "src/app/(dashboard)/crm/contacts/[id]/page.tsx",
       "module": "crm",
       "type": "page"
     },
@@ -632,20 +614,20 @@
       "type": "page"
     },
     {
+      "route": "/crm/customers/[id]/edit",
+      "filePath": "src/app/(dashboard)/crm/customers/[id]/edit/page.tsx",
+      "module": "crm",
+      "type": "page"
+    },
+    {
+      "route": "/crm/customers/[id]",
+      "filePath": "src/app/(dashboard)/crm/customers/[id]/page.tsx",
+      "module": "crm",
+      "type": "page"
+    },
+    {
       "route": "/crm/dashboard",
       "filePath": "src/app/(dashboard)/crm/dashboard/page.tsx",
-      "module": "crm",
-      "type": "page"
-    },
-    {
-      "route": "/crm/deals/[id]/edit",
-      "filePath": "src/app/(dashboard)/crm/deals/[id]/edit/page.tsx",
-      "module": "crm",
-      "type": "page"
-    },
-    {
-      "route": "/crm/deals/[id]",
-      "filePath": "src/app/(dashboard)/crm/deals/[id]/page.tsx",
       "module": "crm",
       "type": "page"
     },
@@ -662,6 +644,18 @@
       "type": "page"
     },
     {
+      "route": "/crm/deals/[id]/edit",
+      "filePath": "src/app/(dashboard)/crm/deals/[id]/edit/page.tsx",
+      "module": "crm",
+      "type": "page"
+    },
+    {
+      "route": "/crm/deals/[id]",
+      "filePath": "src/app/(dashboard)/crm/deals/[id]/page.tsx",
+      "module": "crm",
+      "type": "page"
+    },
+    {
       "route": "/crm/documents",
       "filePath": "src/app/(dashboard)/crm/documents/page.tsx",
       "module": "crm",
@@ -674,14 +668,14 @@
       "type": "page"
     },
     {
-      "route": "/crm/enquiries/[id]",
-      "filePath": "src/app/(dashboard)/crm/enquiries/[id]/page.tsx",
+      "route": "/crm/enquiries",
+      "filePath": "src/app/(dashboard)/crm/enquiries/page.tsx",
       "module": "crm",
       "type": "page"
     },
     {
-      "route": "/crm/enquiries",
-      "filePath": "src/app/(dashboard)/crm/enquiries/page.tsx",
+      "route": "/crm/enquiries/[id]",
+      "filePath": "src/app/(dashboard)/crm/enquiries/[id]/page.tsx",
       "module": "crm",
       "type": "page"
     },
@@ -698,12 +692,6 @@
       "type": "page"
     },
     {
-      "route": "/crm/invoices/[invoiceId]",
-      "filePath": "src/app/(dashboard)/crm/invoices/[invoiceId]/page.tsx",
-      "module": "crm",
-      "type": "page"
-    },
-    {
       "route": "/crm/invoices/new",
       "filePath": "src/app/(dashboard)/crm/invoices/new/page.tsx",
       "module": "crm",
@@ -716,8 +704,8 @@
       "type": "page"
     },
     {
-      "route": "/crm/items/[id]",
-      "filePath": "src/app/(dashboard)/crm/items/[id]/page.tsx",
+      "route": "/crm/invoices/[invoiceId]",
+      "filePath": "src/app/(dashboard)/crm/invoices/[invoiceId]/page.tsx",
       "module": "crm",
       "type": "page"
     },
@@ -730,6 +718,12 @@
     {
       "route": "/crm/items",
       "filePath": "src/app/(dashboard)/crm/items/page.tsx",
+      "module": "crm",
+      "type": "page"
+    },
+    {
+      "route": "/crm/items/[id]",
+      "filePath": "src/app/(dashboard)/crm/items/[id]/page.tsx",
       "module": "crm",
       "type": "page"
     },
@@ -758,18 +752,6 @@
       "type": "page"
     },
     {
-      "route": "/crm/leads/[id]/edit",
-      "filePath": "src/app/(dashboard)/crm/leads/[id]/edit/page.tsx",
-      "module": "crm",
-      "type": "page"
-    },
-    {
-      "route": "/crm/leads/[id]",
-      "filePath": "src/app/(dashboard)/crm/leads/[id]/page.tsx",
-      "module": "crm",
-      "type": "page"
-    },
-    {
       "route": "/crm/leads/new",
       "filePath": "src/app/(dashboard)/crm/leads/new/page.tsx",
       "module": "crm",
@@ -778,6 +760,18 @@
     {
       "route": "/crm/leads",
       "filePath": "src/app/(dashboard)/crm/leads/page.tsx",
+      "module": "crm",
+      "type": "page"
+    },
+    {
+      "route": "/crm/leads/[id]/edit",
+      "filePath": "src/app/(dashboard)/crm/leads/[id]/edit/page.tsx",
+      "module": "crm",
+      "type": "page"
+    },
+    {
+      "route": "/crm/leads/[id]",
+      "filePath": "src/app/(dashboard)/crm/leads/[id]/page.tsx",
       "module": "crm",
       "type": "page"
     },
@@ -818,18 +812,6 @@
       "type": "page"
     },
     {
-      "route": "/crm/quotes/[quoteId]/edit",
-      "filePath": "src/app/(dashboard)/crm/quotes/[quoteId]/edit/page.tsx",
-      "module": "crm",
-      "type": "page"
-    },
-    {
-      "route": "/crm/quotes/[quoteId]",
-      "filePath": "src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx",
-      "module": "crm",
-      "type": "page"
-    },
-    {
       "route": "/crm/quotes/new",
       "filePath": "src/app/(dashboard)/crm/quotes/new/page.tsx",
       "module": "crm",
@@ -838,6 +820,18 @@
     {
       "route": "/crm/quotes",
       "filePath": "src/app/(dashboard)/crm/quotes/page.tsx",
+      "module": "crm",
+      "type": "page"
+    },
+    {
+      "route": "/crm/quotes/[quoteId]/edit",
+      "filePath": "src/app/(dashboard)/crm/quotes/[quoteId]/edit/page.tsx",
+      "module": "crm",
+      "type": "page"
+    },
+    {
+      "route": "/crm/quotes/[quoteId]",
+      "filePath": "src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx",
       "module": "crm",
       "type": "page"
     },
@@ -878,12 +872,6 @@
       "type": "page"
     },
     {
-      "route": "/crm/tickets/[id]",
-      "filePath": "src/app/(dashboard)/crm/tickets/[id]/page.tsx",
-      "module": "crm",
-      "type": "page"
-    },
-    {
       "route": "/crm/tickets/new",
       "filePath": "src/app/(dashboard)/crm/tickets/new/page.tsx",
       "module": "crm",
@@ -892,6 +880,12 @@
     {
       "route": "/crm/tickets",
       "filePath": "src/app/(dashboard)/crm/tickets/page.tsx",
+      "module": "crm",
+      "type": "page"
+    },
+    {
+      "route": "/crm/tickets/[id]",
+      "filePath": "src/app/(dashboard)/crm/tickets/[id]/page.tsx",
       "module": "crm",
       "type": "page"
     },
@@ -910,6 +904,12 @@
     {
       "route": "/crm/voc",
       "filePath": "src/app/(dashboard)/crm/voc/page.tsx",
+      "module": "crm",
+      "type": "page"
+    },
+    {
+      "route": "/crm/[...slug]",
+      "filePath": "src/app/(dashboard)/crm/[...slug]/page.tsx",
       "module": "crm",
       "type": "page"
     },
@@ -944,12 +944,6 @@
       "type": "page"
     },
     {
-      "route": "/hrms/employees/[id]",
-      "filePath": "src/app/(dashboard)/hrms/employees/[id]/page.tsx",
-      "module": "hrms",
-      "type": "page"
-    },
-    {
       "route": "/hrms/employees/new",
       "filePath": "src/app/(dashboard)/hrms/employees/new/page.tsx",
       "module": "hrms",
@@ -958,6 +952,12 @@
     {
       "route": "/hrms/employees",
       "filePath": "src/app/(dashboard)/hrms/employees/page.tsx",
+      "module": "hrms",
+      "type": "page"
+    },
+    {
+      "route": "/hrms/employees/[id]",
+      "filePath": "src/app/(dashboard)/hrms/employees/[id]/page.tsx",
       "module": "hrms",
       "type": "page"
     },
@@ -1263,19 +1263,19 @@
       ]
     },
     {
-      "path": "/api/admin/notifications/[id]/resend",
-      "filePath": "src/app/api/admin/notifications/[id]/resend/route.ts",
-      "module": "admin",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
       "path": "/api/admin/notifications",
       "filePath": "src/app/api/admin/notifications/route.ts",
       "module": "admin",
       "methods": [
         "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/notifications/[id]/resend",
+      "filePath": "src/app/api/admin/notifications/[id]/resend/route.ts",
+      "module": "admin",
+      "methods": [
+        "POST"
       ]
     },
     {
@@ -1295,6 +1295,15 @@
         "GET",
         "POST",
         "PATCH"
+      ]
+    },
+    {
+      "path": "/api/ams/appraisals",
+      "filePath": "src/app/api/ams/appraisals/route.ts",
+      "module": "ams",
+      "methods": [
+        "GET",
+        "POST"
       ]
     },
     {
@@ -1386,15 +1395,6 @@
       ]
     },
     {
-      "path": "/api/ams/appraisals",
-      "filePath": "src/app/api/ams/appraisals/route.ts",
-      "module": "ams",
-      "methods": [
-        "GET",
-        "POST"
-      ]
-    },
-    {
       "path": "/api/ams/criteria",
       "filePath": "src/app/api/ams/criteria/route.ts",
       "module": "ams",
@@ -1414,20 +1414,20 @@
       ]
     },
     {
-      "path": "/api/ams/cycles/[id]",
-      "filePath": "src/app/api/ams/cycles/[id]/route.ts",
-      "module": "ams",
-      "methods": [
-        "PATCH"
-      ]
-    },
-    {
       "path": "/api/ams/cycles",
       "filePath": "src/app/api/ams/cycles/route.ts",
       "module": "ams",
       "methods": [
         "GET",
         "POST"
+      ]
+    },
+    {
+      "path": "/api/ams/cycles/[id]",
+      "filePath": "src/app/api/ams/cycles/[id]/route.ts",
+      "module": "ams",
+      "methods": [
+        "PATCH"
       ]
     },
     {
@@ -1466,14 +1466,6 @@
       ]
     },
     {
-      "path": "/api/attendance/leaves/[id]",
-      "filePath": "src/app/api/attendance/leaves/[id]/route.ts",
-      "module": "attendance",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
       "path": "/api/attendance/leaves",
       "filePath": "src/app/api/attendance/leaves/route.ts",
       "module": "attendance",
@@ -1483,8 +1475,8 @@
       ]
     },
     {
-      "path": "/api/attendance/ot/[id]",
-      "filePath": "src/app/api/attendance/ot/[id]/route.ts",
+      "path": "/api/attendance/leaves/[id]",
+      "filePath": "src/app/api/attendance/leaves/[id]/route.ts",
       "module": "attendance",
       "methods": [
         "POST"
@@ -1496,6 +1488,14 @@
       "module": "attendance",
       "methods": [
         "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/attendance/ot/[id]",
+      "filePath": "src/app/api/attendance/ot/[id]/route.ts",
+      "module": "attendance",
+      "methods": [
         "POST"
       ]
     },
@@ -1862,14 +1862,6 @@
       ]
     },
     {
-      "path": "/api/customer-portal/checklists/[checklistId]/decision",
-      "filePath": "src/app/api/customer-portal/checklists/[checklistId]/decision/route.ts",
-      "module": "customer-portal",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
       "path": "/api/customer-portal/checklists/respond",
       "filePath": "src/app/api/customer-portal/checklists/respond/route.ts",
       "module": "customer-portal",
@@ -1878,16 +1870,16 @@
       ]
     },
     {
-      "path": "/api/customer-portal/document-versions/[id]",
-      "filePath": "src/app/api/customer-portal/document-versions/[id]/route.ts",
+      "path": "/api/customer-portal/checklists/[checklistId]/decision",
+      "filePath": "src/app/api/customer-portal/checklists/[checklistId]/decision/route.ts",
       "module": "customer-portal",
       "methods": [
-        "GET"
+        "POST"
       ]
     },
     {
-      "path": "/api/customer-portal/documents/[versionId]",
-      "filePath": "src/app/api/customer-portal/documents/[versionId]/route.ts",
+      "path": "/api/customer-portal/document-versions/[id]",
+      "filePath": "src/app/api/customer-portal/document-versions/[id]/route.ts",
       "module": "customer-portal",
       "methods": [
         "GET"
@@ -1910,16 +1902,24 @@
       ]
     },
     {
-      "path": "/api/customer-portal/notifications/[id]/read",
-      "filePath": "src/app/api/customer-portal/notifications/[id]/read/route.ts",
+      "path": "/api/customer-portal/documents/[versionId]",
+      "filePath": "src/app/api/customer-portal/documents/[versionId]/route.ts",
+      "module": "customer-portal",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/customer-portal/notifications/read-all",
+      "filePath": "src/app/api/customer-portal/notifications/read-all/route.ts",
       "module": "customer-portal",
       "methods": [
         "POST"
       ]
     },
     {
-      "path": "/api/customer-portal/notifications/read-all",
-      "filePath": "src/app/api/customer-portal/notifications/read-all/route.ts",
+      "path": "/api/customer-portal/notifications/[id]/read",
+      "filePath": "src/app/api/customer-portal/notifications/[id]/read/route.ts",
       "module": "customer-portal",
       "methods": [
         "POST"
@@ -2071,20 +2071,20 @@
       ]
     },
     {
-      "path": "/api/hrms/employees/[id]/salary-structure",
-      "filePath": "src/app/api/hrms/employees/[id]/salary-structure/route.ts",
-      "module": "hrms",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
       "path": "/api/hrms/employees",
       "filePath": "src/app/api/hrms/employees/route.ts",
       "module": "hrms",
       "methods": [
         "GET",
         "PATCH"
+      ]
+    },
+    {
+      "path": "/api/hrms/employees/[id]/salary-structure",
+      "filePath": "src/app/api/hrms/employees/[id]/salary-structure/route.ts",
+      "module": "hrms",
+      "methods": [
+        "POST"
       ]
     },
     {
@@ -2097,19 +2097,19 @@
       ]
     },
     {
-      "path": "/api/hrms/hr-cases/[id]/comments",
-      "filePath": "src/app/api/hrms/hr-cases/[id]/comments/route.ts",
-      "module": "hrms",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
       "path": "/api/hrms/hr-cases",
       "filePath": "src/app/api/hrms/hr-cases/route.ts",
       "module": "hrms",
       "methods": [
         "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/hrms/hr-cases/[id]/comments",
+      "filePath": "src/app/api/hrms/hr-cases/[id]/comments/route.ts",
+      "module": "hrms",
+      "methods": [
         "POST"
       ]
     },
@@ -2127,32 +2127,6 @@
       "module": "hrms",
       "methods": [
         "GET"
-      ]
-    },
-    {
-      "path": "/api/hrms/letters/[id]/accept",
-      "filePath": "src/app/api/hrms/letters/[id]/accept/route.ts",
-      "module": "hrms",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
-      "path": "/api/hrms/letters/[id]/action",
-      "filePath": "src/app/api/hrms/letters/[id]/action/route.ts",
-      "module": "hrms",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
-      "path": "/api/hrms/letters/[id]",
-      "filePath": "src/app/api/hrms/letters/[id]/route.ts",
-      "module": "hrms",
-      "methods": [
-        "GET",
-        "PUT",
-        "DELETE"
       ]
     },
     {
@@ -2204,6 +2178,32 @@
       "module": "hrms",
       "methods": [
         "GET"
+      ]
+    },
+    {
+      "path": "/api/hrms/letters/[id]/accept",
+      "filePath": "src/app/api/hrms/letters/[id]/accept/route.ts",
+      "module": "hrms",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/hrms/letters/[id]/action",
+      "filePath": "src/app/api/hrms/letters/[id]/action/route.ts",
+      "module": "hrms",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/hrms/letters/[id]",
+      "filePath": "src/app/api/hrms/letters/[id]/route.ts",
+      "module": "hrms",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE"
       ]
     },
     {
@@ -2313,19 +2313,19 @@
       ]
     },
     {
-      "path": "/api/hrms/work-reports/[id]/approve",
-      "filePath": "src/app/api/hrms/work-reports/[id]/approve/route.ts",
-      "module": "hrms",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
       "path": "/api/hrms/work-reports",
       "filePath": "src/app/api/hrms/work-reports/route.ts",
       "module": "hrms",
       "methods": [
         "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/hrms/work-reports/[id]/approve",
+      "filePath": "src/app/api/hrms/work-reports/[id]/approve/route.ts",
+      "module": "hrms",
+      "methods": [
         "POST"
       ]
     },
@@ -2374,6 +2374,15 @@
       ]
     },
     {
+      "path": "/api/mobile/crm/leads",
+      "filePath": "src/app/api/mobile/crm/leads/route.ts",
+      "module": "mobile",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ]
+    },
+    {
       "path": "/api/mobile/crm/leads/[leadId]/call-attempts",
       "filePath": "src/app/api/mobile/crm/leads/[leadId]/call-attempts/route.ts",
       "module": "mobile",
@@ -2388,15 +2397,6 @@
       "module": "mobile",
       "methods": [
         "PATCH",
-        "OPTIONS"
-      ]
-    },
-    {
-      "path": "/api/mobile/crm/leads",
-      "filePath": "src/app/api/mobile/crm/leads/route.ts",
-      "module": "mobile",
-      "methods": [
-        "GET",
         "OPTIONS"
       ]
     },
@@ -2512,38 +2512,6 @@
       ]
     },
     {
-      "path": "/api/notifications/[id]/ack",
-      "filePath": "src/app/api/notifications/[id]/ack/route.ts",
-      "module": "notifications",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
-      "path": "/api/notifications/[id]/dismiss",
-      "filePath": "src/app/api/notifications/[id]/dismiss/route.ts",
-      "module": "notifications",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
-      "path": "/api/notifications/[id]/open",
-      "filePath": "src/app/api/notifications/[id]/open/route.ts",
-      "module": "notifications",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
-      "path": "/api/notifications/[id]/read",
-      "filePath": "src/app/api/notifications/[id]/read/route.ts",
-      "module": "notifications",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
       "path": "/api/notifications/active",
       "filePath": "src/app/api/notifications/active/route.ts",
       "module": "notifications",
@@ -2584,6 +2552,46 @@
       ]
     },
     {
+      "path": "/api/notifications/[id]/ack",
+      "filePath": "src/app/api/notifications/[id]/ack/route.ts",
+      "module": "notifications",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/notifications/[id]/dismiss",
+      "filePath": "src/app/api/notifications/[id]/dismiss/route.ts",
+      "module": "notifications",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/notifications/[id]/open",
+      "filePath": "src/app/api/notifications/[id]/open/route.ts",
+      "module": "notifications",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/notifications/[id]/read",
+      "filePath": "src/app/api/notifications/[id]/read/route.ts",
+      "module": "notifications",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/org/branches",
+      "filePath": "src/app/api/org/branches/route.ts",
+      "module": "org",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
       "path": "/api/org/branches/[id]",
       "filePath": "src/app/api/org/branches/[id]/route.ts",
       "module": "org",
@@ -2593,8 +2601,8 @@
       ]
     },
     {
-      "path": "/api/org/branches",
-      "filePath": "src/app/api/org/branches/route.ts",
+      "path": "/api/org/departments",
+      "filePath": "src/app/api/org/departments/route.ts",
       "module": "org",
       "methods": [
         "POST"
@@ -2618,14 +2626,6 @@
       ]
     },
     {
-      "path": "/api/org/departments",
-      "filePath": "src/app/api/org/departments/route.ts",
-      "module": "org",
-      "methods": [
-        "POST"
-      ]
-    },
-    {
       "path": "/api/org/divisions/[id]",
       "filePath": "src/app/api/org/divisions/[id]/route.ts",
       "module": "org",
@@ -2640,6 +2640,15 @@
       "module": "org",
       "methods": [
         "GET"
+      ]
+    },
+    {
+      "path": "/api/recruit/applications",
+      "filePath": "src/app/api/recruit/applications/route.ts",
+      "module": "recruit",
+      "methods": [
+        "GET",
+        "POST"
       ]
     },
     {
@@ -2659,20 +2668,20 @@
       ]
     },
     {
-      "path": "/api/recruit/applications",
-      "filePath": "src/app/api/recruit/applications/route.ts",
-      "module": "recruit",
-      "methods": [
-        "GET",
-        "POST"
-      ]
-    },
-    {
       "path": "/api/recruit/audit",
       "filePath": "src/app/api/recruit/audit/route.ts",
       "module": "recruit",
       "methods": [
         "GET"
+      ]
+    },
+    {
+      "path": "/api/recruit/candidates",
+      "filePath": "src/app/api/recruit/candidates/route.ts",
+      "module": "recruit",
+      "methods": [
+        "GET",
+        "POST"
       ]
     },
     {
@@ -2686,20 +2695,20 @@
       ]
     },
     {
-      "path": "/api/recruit/candidates",
-      "filePath": "src/app/api/recruit/candidates/route.ts",
-      "module": "recruit",
-      "methods": [
-        "GET",
-        "POST"
-      ]
-    },
-    {
       "path": "/api/recruit/dashboard",
       "filePath": "src/app/api/recruit/dashboard/route.ts",
       "module": "recruit",
       "methods": [
         "GET"
+      ]
+    },
+    {
+      "path": "/api/recruit/jobs",
+      "filePath": "src/app/api/recruit/jobs/route.ts",
+      "module": "recruit",
+      "methods": [
+        "GET",
+        "POST"
       ]
     },
     {
@@ -2713,8 +2722,8 @@
       ]
     },
     {
-      "path": "/api/recruit/jobs",
-      "filePath": "src/app/api/recruit/jobs/route.ts",
+      "path": "/api/recruit/jobseeker/applications",
+      "filePath": "src/app/api/recruit/jobseeker/applications/route.ts",
       "module": "recruit",
       "methods": [
         "GET",
@@ -2722,8 +2731,8 @@
       ]
     },
     {
-      "path": "/api/recruit/jobseeker/applications",
-      "filePath": "src/app/api/recruit/jobseeker/applications/route.ts",
+      "path": "/api/recruit/jobseeker/career/conversations",
+      "filePath": "src/app/api/recruit/jobseeker/career/conversations/route.ts",
       "module": "recruit",
       "methods": [
         "GET",
@@ -2744,15 +2753,6 @@
       "module": "recruit",
       "methods": [
         "GET"
-      ]
-    },
-    {
-      "path": "/api/recruit/jobseeker/career/conversations",
-      "filePath": "src/app/api/recruit/jobseeker/career/conversations/route.ts",
-      "module": "recruit",
-      "methods": [
-        "GET",
-        "POST"
       ]
     },
     {
@@ -2801,14 +2801,6 @@
       ]
     },
     {
-      "path": "/api/roles/[id]/permissions",
-      "filePath": "src/app/api/roles/[id]/permissions/route.ts",
-      "module": "roles",
-      "methods": [
-        "PUT"
-      ]
-    },
-    {
       "path": "/api/roles",
       "filePath": "src/app/api/roles/route.ts",
       "module": "roles",
@@ -2818,21 +2810,20 @@
       ]
     },
     {
+      "path": "/api/roles/[id]/permissions",
+      "filePath": "src/app/api/roles/[id]/permissions/route.ts",
+      "module": "roles",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
       "path": "/api/setup",
       "filePath": "src/app/api/setup/route.ts",
       "module": "setup",
       "methods": [
         "GET",
         "POST"
-      ]
-    },
-    {
-      "path": "/api/todos/[id]",
-      "filePath": "src/app/api/todos/[id]/route.ts",
-      "module": "todos",
-      "methods": [
-        "PATCH",
-        "DELETE"
       ]
     },
     {
@@ -2869,6 +2860,24 @@
       ]
     },
     {
+      "path": "/api/todos/[id]",
+      "filePath": "src/app/api/todos/[id]/route.ts",
+      "module": "todos",
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/users",
+      "filePath": "src/app/api/users/route.ts",
+      "module": "users",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
       "path": "/api/users/[id]/password",
       "filePath": "src/app/api/users/[id]/password/route.ts",
       "module": "users",
@@ -2891,15 +2900,6 @@
       "methods": [
         "GET",
         "PATCH"
-      ]
-    },
-    {
-      "path": "/api/users",
-      "filePath": "src/app/api/users/route.ts",
-      "module": "users",
-      "methods": [
-        "GET",
-        "POST"
       ]
     }
   ],
@@ -10039,12 +10039,6 @@
   "moduleServices": [
     {
       "module": "accounting",
-      "fileName": "accounting.test.ts",
-      "filePath": "src/modules/accounting/__tests__/accounting.test.ts",
-      "exportedFunctions": []
-    },
-    {
-      "module": "accounting",
       "fileName": "actions.ts",
       "filePath": "src/modules/accounting/actions.ts",
       "exportedFunctions": [
@@ -10210,6 +10204,12 @@
       "module": "accounting",
       "fileName": "validators.ts",
       "filePath": "src/modules/accounting/validators.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "accounting",
+      "fileName": "accounting.test.ts",
+      "filePath": "src/modules/accounting/__tests__/accounting.test.ts",
       "exportedFunctions": []
     },
     {
@@ -10380,24 +10380,6 @@
         "createHoliday",
         "getMonthlyReport"
       ]
-    },
-    {
-      "module": "cha",
-      "fileName": "cha.test.ts",
-      "filePath": "src/modules/cha/__tests__/cha.test.ts",
-      "exportedFunctions": []
-    },
-    {
-      "module": "cha",
-      "fileName": "checklist-email-automation.test.ts",
-      "filePath": "src/modules/cha/__tests__/checklist-email-automation.test.ts",
-      "exportedFunctions": []
-    },
-    {
-      "module": "cha",
-      "fileName": "do-extension.test.ts",
-      "filePath": "src/modules/cha/__tests__/do-extension.test.ts",
-      "exportedFunctions": []
     },
     {
       "module": "cha",
@@ -10633,6 +10615,24 @@
         "deleteFilingAttachment",
         "updateFilingAttachmentValidity"
       ]
+    },
+    {
+      "module": "cha",
+      "fileName": "cha.test.ts",
+      "filePath": "src/modules/cha/__tests__/cha.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "cha",
+      "fileName": "checklist-email-automation.test.ts",
+      "filePath": "src/modules/cha/__tests__/checklist-email-automation.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "cha",
+      "fileName": "do-extension.test.ts",
+      "filePath": "src/modules/cha/__tests__/do-extension.test.ts",
+      "exportedFunctions": []
     },
     {
       "module": "communication",
@@ -10887,24 +10887,6 @@
     },
     {
       "module": "customer-portal",
-      "fileName": "auth.test.ts",
-      "filePath": "src/modules/customer-portal/__tests__/auth.test.ts",
-      "exportedFunctions": []
-    },
-    {
-      "module": "customer-portal",
-      "fileName": "dashboard.test.ts",
-      "filePath": "src/modules/customer-portal/__tests__/dashboard.test.ts",
-      "exportedFunctions": []
-    },
-    {
-      "module": "customer-portal",
-      "fileName": "shipments.test.ts",
-      "filePath": "src/modules/customer-portal/__tests__/shipments.test.ts",
-      "exportedFunctions": []
-    },
-    {
-      "module": "customer-portal",
       "fileName": "actions.ts",
       "filePath": "src/modules/customer-portal/actions.ts",
       "exportedFunctions": [
@@ -11032,6 +11014,24 @@
       "exportedFunctions": []
     },
     {
+      "module": "customer-portal",
+      "fileName": "auth.test.ts",
+      "filePath": "src/modules/customer-portal/__tests__/auth.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "customer-portal",
+      "fileName": "dashboard.test.ts",
+      "filePath": "src/modules/customer-portal/__tests__/dashboard.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "customer-portal",
+      "fileName": "shipments.test.ts",
+      "filePath": "src/modules/customer-portal/__tests__/shipments.test.ts",
+      "exportedFunctions": []
+    },
+    {
       "module": "dashboard",
       "fileName": "service.ts",
       "filePath": "src/modules/dashboard/service.ts",
@@ -11135,12 +11135,6 @@
       "module": "google-chat",
       "fileName": "types.ts",
       "filePath": "src/modules/google-chat/types.ts",
-      "exportedFunctions": []
-    },
-    {
-      "module": "hrms",
-      "fileName": "letters.test.ts",
-      "filePath": "src/modules/hrms/__tests__/letters.test.ts",
       "exportedFunctions": []
     },
     {
@@ -11345,6 +11339,12 @@
       "module": "hrms",
       "fileName": "validators.ts",
       "filePath": "src/modules/hrms/validators.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "hrms",
+      "fileName": "letters.test.ts",
+      "filePath": "src/modules/hrms/__tests__/letters.test.ts",
       "exportedFunctions": []
     },
     {
@@ -11805,13 +11805,13 @@
     },
     {
       "module": "landing-page",
-      "fileName": "CRMModule.tsx",
-      "filePath": "src/components/landing-page/CRMModule.tsx"
+      "fileName": "CompanyOverview.tsx",
+      "filePath": "src/components/landing-page/CompanyOverview.tsx"
     },
     {
       "module": "landing-page",
-      "fileName": "CompanyOverview.tsx",
-      "filePath": "src/components/landing-page/CompanyOverview.tsx"
+      "fileName": "CRMModule.tsx",
+      "filePath": "src/components/landing-page/CRMModule.tsx"
     },
     {
       "module": "landing-page",

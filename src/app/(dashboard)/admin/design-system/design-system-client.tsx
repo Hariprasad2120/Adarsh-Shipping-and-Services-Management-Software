@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import "./design-system.module.css";
 
 const navItems = [
   ["overview", "Overview", "⌂"],

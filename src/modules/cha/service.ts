@@ -87,7 +87,7 @@ function buildChecklistCustomerMailContent(params: {
 
   const bodyText = params.body.trim() || `Please review the attached approved checklist for job ${params.jobNumber}.`;
   const html = `
-    <div style="margin:0;padding:0;background:#f7f9fb;font-family:Arial,Helvetica,sans-serif;color:#191c1e;">
+    <div style='margin:0;padding:0;background:#f7f9fb;font-family:Inter,"Segoe UI",Arial,sans-serif;color:#191c1e;'>
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f7f9fb;margin:0;padding:24px 12px;">
         <tr>
           <td align="center">

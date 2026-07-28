@@ -5,6 +5,10 @@
  */
 
 .mnx-dashboard-shell {
+  --mnx-shell-page-gutter-desktop: 40px;
+  --mnx-shell-page-gutter-tablet: 24px;
+  --mnx-shell-page-gutter-mobile: 16px;
+  --mnx-shell-content-width: 1360px;
   --mnx-page: #eff0eb;
   --mnx-card: #fffef9;
   --mnx-soft: #eeefe8;
@@ -60,7 +64,7 @@
   color: var(--mnx-text);
   background-color: var(--mnx-page);
   background-image: var(--mnx-page-gradient);
-  font-family: var(--font-geist-sans), "Geist", "Segoe UI", sans-serif;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-size: 14px;
   line-height: 1.5;
   isolation: isolate;
@@ -472,7 +476,7 @@ html[data-dashboard-theme="violet"] body {
   align-items: center;
   justify-content: space-between;
   gap: 22px;
-  padding: 0 34px;
+  padding-inline: var(--mnx-shell-page-gutter-desktop);
   border-bottom: 1px solid var(--mnx-border);
   background: color-mix(in srgb, var(--mnx-page) 84%, transparent);
   backdrop-filter: blur(18px);
@@ -616,12 +620,21 @@ html[data-dashboard-theme="violet"] body {
   min-height: 0;
   height: 100%;
   margin: 0;
-  padding: 32px 34px 80px;
+  padding: 0;
   overflow-x: hidden;
   overflow-y: auto;
 }
 
+.mnx-dashboard-content {
+  width: min(1240px, 100%);
+  min-width: 0;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 34px 34px 80px;
+}
+
 .mnx-dashboard-page {
+  box-sizing: border-box;
   width: 100%;
   min-width: 0;
   display: grid;
@@ -793,7 +806,7 @@ html[data-dashboard-theme="violet"] body {
 
 .mnx-dashboard-mini-stats strong {
   color: var(--mnx-text-strong);
-  font-family: var(--mnx-font-sans);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-size: 27px;
   font-weight: 400;
   line-height: 1;
@@ -914,7 +927,7 @@ html[data-dashboard-theme="violet"] body {
 .mnx-dashboard-timer {
   display: block;
   color: var(--mnx-text-strong);
-  font-family: var(--mnx-font-sans);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-size: clamp(24px, 2.8vw, 34px);
   font-weight: 500;
   line-height: 1;
@@ -1360,7 +1373,7 @@ html[data-dashboard-theme="violet"] body {
 
 .mnx-module-primary-stat > strong {
   color: var(--mnx-text-strong);
-  font-family: var(--mnx-font-sans);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-size: 37px;
   font-weight: 400;
   line-height: 1;
@@ -1422,7 +1435,7 @@ html[data-dashboard-theme="violet"] body {
 .mnx-module-supporting-stats dd {
   margin: 0;
   color: var(--mnx-module-tone);
-  font-family: var(--mnx-font-sans);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-size: 13px;
   font-weight: 600;
 }
@@ -1590,7 +1603,7 @@ html[data-dashboard-theme="violet"] body {
   display: block;
   margin: 16px 0 7px;
   color: var(--mnx-text-strong);
-  font-family: var(--mnx-font-sans);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-size: 43px;
   font-weight: 400;
   line-height: 1;
@@ -1861,7 +1874,7 @@ html[data-dashboard-theme="violet"] body {
 }
 
 .mnx-holiday-feature time strong {
-  font-family: var(--mnx-font-sans);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-size: 28px;
   font-weight: 500;
   line-height: 1;
@@ -2261,7 +2274,7 @@ html[data-dashboard-theme="violet"] body {
 
 .mnx-org-stat-grid strong {
   color: var(--mnx-text);
-  font-family: var(--mnx-font-sans);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-size: 34px;
   font-weight: 400;
 }
@@ -3055,7 +3068,7 @@ html[data-dashboard-theme="violet"] body {
   }
 
   .mnx-topbar {
-    padding: 0 22px;
+    padding-inline: var(--mnx-shell-page-gutter-tablet);
   }
 
   .mnx-topbar-context {
@@ -3073,7 +3086,7 @@ html[data-dashboard-theme="violet"] body {
     display: none;
   }
 
-  .mnx-dashboard-main {
+  .mnx-dashboard-content {
     padding: 24px 22px 64px;
   }
 
@@ -3103,7 +3116,7 @@ html[data-dashboard-theme="violet"] body {
 
   .mnx-topbar {
     height: 64px;
-    padding: 0 14px;
+    padding-inline: var(--mnx-shell-page-gutter-mobile);
   }
 
   .mnx-topbar-context > div,
@@ -3123,6 +3136,9 @@ html[data-dashboard-theme="violet"] body {
 
   .mnx-dashboard-main {
     min-height: calc(100vh - 64px);
+  }
+
+  .mnx-dashboard-content {
     padding: 16px 14px 52px;
   }
 

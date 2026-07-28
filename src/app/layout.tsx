@@ -1,18 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { ScrollNavigator } from "@/components/scroll-navigator";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Monolith Engine",
@@ -28,7 +17,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
       <head>
         <script
@@ -58,7 +47,7 @@ export default function RootLayout({
           closeButton
           toastOptions={{
             style: {
-              fontFamily: "var(--font-geist-sans), sans-serif",
+              fontFamily: 'Inter, "Segoe UI", Arial, sans-serif',
               fontSize: "14px",
             },
           }}

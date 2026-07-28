@@ -18,7 +18,7 @@ export default async function ReportsPage() {
   });
 
   return (
-    <div className="p-8 space-y-6 max-w-[1400px] mx-auto animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200">
       <div>
         <h2 className="monolith-h1 text-white">Reports Center</h2>
         <p className="text-slate-400 text-xs mt-1">
