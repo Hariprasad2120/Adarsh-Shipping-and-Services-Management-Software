@@ -1,10 +1,20 @@
 "use client";
 
+import {
+  PeopleControlButton as MnxAction,
+  PeopleControlInput as MnxInput,
+} from "@/components/monolith/people-controls";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Duplicate = { id: string; fullName: string; email: string | null; candidateNumber: string };
+type Duplicate = {
+  id: string;
+  fullName: string;
+  email: string | null;
+  candidateNumber: string;
+};
 
 export default function NewCandidatePage() {
   const router = useRouter();
@@ -68,42 +78,57 @@ export default function NewCandidatePage() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="monolith-h1 text-mono-text">Add Candidate</h1>
-        <p className="text-sm text-mono-muted">Create a new candidate profile in the talent pool</p>
+        <h1 className="mnx-title-1 text-mono-text">Add Candidate</h1>
+        <p className="text-sm text-mono-muted">
+          Create a new candidate profile in the talent pool
+        </p>
       </div>
 
       {duplicates.length > 0 && (
-        <div className="rounded-xl border border-[#D88700]/30 bg-[#D88700]/5 p-4 space-y-3">
-          <p className="text-sm font-medium text-[#D88700]">Possible duplicate candidates found:</p>
+        <div className="rounded-xl border border-[var(--mnx-warning)]/30 bg-[var(--mnx-warning)]/5 p-4 space-y-3">
+          <p className="text-sm font-medium text-[var(--mnx-warning)]">
+            Possible duplicate candidates found:
+          </p>
           <ul className="space-y-1">
             {duplicates.map((d) => (
-              <li key={d.id} className="flex items-center justify-between text-sm">
+              <li
+                key={d.id}
+                className="flex items-center justify-between text-sm"
+              >
                 <span className="text-mono-text">
-                  {d.fullName} {d.email ? `· ${d.email}` : ""} <span className="monolith-label ml-1">{d.candidateNumber}</span>
+                  {d.fullName} {d.email ? `· ${d.email}` : ""}{" "}
+                  <span className="mnx-dashboard-spec-label ml-1">
+                    {d.candidateNumber}
+                  </span>
                 </span>
-                <a href={`/hrms/recruit/employer/candidates/${d.id}`} className="text-[#F9D972] hover:underline">
+                <a
+                  href={`/hrms/recruit/employer/candidates/${d.id}`}
+                  className="text-[var(--mnx-accent)] hover:underline"
+                >
                   View
                 </a>
               </li>
             ))}
           </ul>
-          <button
+          <MnxAction
             onClick={proceedAnyway}
             disabled={saving}
-            className="rounded-xl bg-[#D88700] px-4 py-2 text-sm font-medium text-white hover:bg-[#f97316]"
+            className="rounded-xl bg-[var(--mnx-warning)] px-4 py-2 text-sm font-medium text-[var(--mnx-text)] hover:bg-[var(--mnx-warning)]"
           >
             Create Anyway
-          </button>
+          </MnxAction>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+        <div className="mnx-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
           <h3 className="text-mono-text">Personal Information</h3>
           <div className="space-y-3">
             <div>
-              <label className="monolith-label mb-1 block">Full Name *</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Full Name *
+              </label>
+              <MnxInput
                 required
                 value={form.fullName}
                 onChange={(e) => set("fullName", e.target.value)}
@@ -113,8 +138,10 @@ export default function NewCandidatePage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="monolith-label mb-1 block">Email</label>
-                <input
+                <label className="mnx-dashboard-spec-label mb-1 block">
+                  Email
+                </label>
+                <MnxInput
                   type="email"
                   value={form.email}
                   onChange={(e) => set("email", e.target.value)}
@@ -123,8 +150,10 @@ export default function NewCandidatePage() {
                 />
               </div>
               <div>
-                <label className="monolith-label mb-1 block">Phone</label>
-                <input
+                <label className="mnx-dashboard-spec-label mb-1 block">
+                  Phone
+                </label>
+                <MnxInput
                   type="tel"
                   value={form.phone}
                   onChange={(e) => set("phone", e.target.value)}
@@ -134,8 +163,10 @@ export default function NewCandidatePage() {
               </div>
             </div>
             <div>
-              <label className="monolith-label mb-1 block">LinkedIn URL</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                LinkedIn URL
+              </label>
+              <MnxInput
                 type="url"
                 value={form.linkedinUrl}
                 onChange={(e) => set("linkedinUrl", e.target.value)}
@@ -146,12 +177,14 @@ export default function NewCandidatePage() {
           </div>
         </div>
 
-        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+        <div className="mnx-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
           <h3 className="text-mono-text">Professional Details</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="monolith-label mb-1 block">Current Title</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Current Title
+              </label>
+              <MnxInput
                 value={form.currentTitle}
                 onChange={(e) => set("currentTitle", e.target.value)}
                 placeholder="Senior Engineer"
@@ -159,8 +192,10 @@ export default function NewCandidatePage() {
               />
             </div>
             <div>
-              <label className="monolith-label mb-1 block">Current Company</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Current Company
+              </label>
+              <MnxInput
                 value={form.currentCompany}
                 onChange={(e) => set("currentCompany", e.target.value)}
                 placeholder="Acme Corp"
@@ -170,11 +205,13 @@ export default function NewCandidatePage() {
           </div>
         </div>
 
-        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+        <div className="mnx-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
           <h3 className="text-mono-text">Source</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="monolith-label mb-1 block">Source</label>
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Source
+              </label>
               <NativeSelect
                 value={form.source}
                 onChange={(e) => set("source", e.target.value)}
@@ -190,8 +227,10 @@ export default function NewCandidatePage() {
               </NativeSelect>
             </div>
             <div>
-              <label className="monolith-label mb-1 block">Source Details</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Source Details
+              </label>
+              <MnxInput
                 value={form.sourceMeta}
                 onChange={(e) => set("sourceMeta", e.target.value)}
                 placeholder="Referral name, job board, etc."
@@ -202,19 +241,19 @@ export default function NewCandidatePage() {
         </div>
 
         {error && (
-          <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400">
+          <p className="rounded-xl border border-[var(--mnx-danger)] bg-[var(--mnx-danger-bg)] px-4 py-3 text-sm text-[var(--mnx-danger)] border-[var(--mnx-danger)] bg-[var(--mnx-danger-bg)]/30 text-[var(--mnx-danger)]">
             {error}
           </p>
         )}
 
         <div className="flex gap-3">
-          <button
+          <MnxAction
             type="submit"
             disabled={saving}
-            className="rounded-xl bg-[#F9D972] px-6 py-2 text-sm font-medium uppercase tracking-wide text-white transition hover:bg-[#E8C85D] disabled:opacity-50"
+            className="rounded-xl bg-[var(--mnx-accent)] px-6 py-2 text-sm font-medium uppercase tracking-wide text-[var(--mnx-text)] transition hover:bg-[var(--mnx-accent-soft)] disabled:opacity-50"
           >
             {saving ? "Saving..." : "Add Candidate"}
-          </button>
+          </MnxAction>
           <a
             href="/hrms/recruit/employer/candidates"
             className="rounded-xl border border-mono-border px-6 py-2 text-sm text-mono-muted transition hover:text-mono-text"

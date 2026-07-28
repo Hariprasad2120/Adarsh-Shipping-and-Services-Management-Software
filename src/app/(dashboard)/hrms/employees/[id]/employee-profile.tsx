@@ -1,9 +1,16 @@
 "use client";
 
+import { PeopleControlButton as MnxAction } from "@/components/monolith/people-controls";
+
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BriefcaseBusiness, CircleUserRound, Landmark, IndianRupee } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  CircleUserRound,
+  Landmark,
+  IndianRupee,
+} from "lucide-react";
 import { useCan } from "@/lib/caps-context";
 import { toDisplayTitleCase } from "@/lib/text-case";
 import { DropdownSelect } from "@/components/monolith/dropdown-select";
@@ -116,7 +123,11 @@ type User = {
 
 type OrgData = {
   branches: { id: string; name: string }[];
-  departments: { id: string; name: string; divisions: { id: string; name: string }[] }[];
+  departments: {
+    id: string;
+    name: string;
+    divisions: { id: string; name: string }[];
+  }[];
 } | null;
 
 type StubUser = { id: string; name: string; email: string };
@@ -163,14 +174,20 @@ function formatAddress(address?: {
 }
 
 function extractFirstName(user: User, meta: PayrollMeta | null) {
-  return toDisplayTitleCase(meta?.rawSheets?.employee?.["First Name"] ?? user.name.split(" ")[0] ?? "-");
+  return toDisplayTitleCase(
+    meta?.rawSheets?.employee?.["First Name"] ?? user.name.split(" ")[0] ?? "-",
+  );
 }
 
 function extractLastName(meta: PayrollMeta | null) {
   return toDisplayTitleCase(meta?.rawSheets?.employee?.["Last Name"] ?? "-");
 }
 
-function salaryValue(meta: PayrollMeta | null, key: string, fallbackKey?: string) {
+function salaryValue(
+  meta: PayrollMeta | null,
+  key: string,
+  fallbackKey?: string,
+) {
   const fromBreakup = meta?.breakup?.[key];
   if (typeof fromBreakup === "number") return fromBreakup;
   if (fallbackKey) {
@@ -215,13 +232,16 @@ export function EmployeeProfile({
   const router = useRouter();
   const canEdit = useCan("hrms.employee.edit");
   const canEditRoles = useCan("admin.roles.manage");
-  const canDeactivate = useCan("hrms.employee.deactivate") && user.id !== currentUserId;
+  const canDeactivate =
+    useCan("hrms.employee.deactivate") && user.id !== currentUserId;
   const canResetPassword = useCan("admin.users.manage");
 
   const [saving, setSaving] = useState(false);
   const [editDetails, setEditDetails] = useState(false);
   const [editRoles, setEditRoles] = useState(false);
-  const [selectedRoles, setSelectedRoles] = useState<string[]>(user.roles.map((r) => r.role.id));
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(
+    user.roles.map((r) => r.role.id),
+  );
   const [newPassword, setNewPassword] = useState("");
   const [showPwReset, setShowPwReset] = useState(false);
 
@@ -238,7 +258,8 @@ export function EmployeeProfile({
       : "",
     grade: user.employmentRecord?.grade ?? "",
     ctc: user.employmentRecord?.ctc?.toString() ?? "",
-    priorExperienceYears: user.employmentRecord?.priorExperienceYears?.toString() ?? "0",
+    priorExperienceYears:
+      user.employmentRecord?.priorExperienceYears?.toString() ?? "0",
   });
 
   function set(field: keyof typeof form, value: string) {
@@ -250,9 +271,11 @@ export function EmployeeProfile({
   }
 
   const activeDivisions =
-    org?.departments.find((department) => department.id === form.departmentId)?.divisions ?? [];
+    org?.departments.find((department) => department.id === form.departmentId)
+      ?.divisions ?? [];
   const otherUsers = allUsers.filter((item) => item.id !== user.id);
-  const payrollMeta = (user.employmentRecord?.payrollMeta ?? null) as PayrollMeta | null;
+  const payrollMeta = (user.employmentRecord?.payrollMeta ??
+    null) as PayrollMeta | null;
 
   async function patch(data: object) {
     setSaving(true);
@@ -277,7 +300,10 @@ export function EmployeeProfile({
       joinDate: form.joinDate || undefined,
       grade: form.grade || undefined,
       ctc: form.ctc ? Number(form.ctc) : null,
-      priorExperienceYears: form.priorExperienceYears !== "" ? Number(form.priorExperienceYears) : 0,
+      priorExperienceYears:
+        form.priorExperienceYears !== ""
+          ? Number(form.priorExperienceYears)
+          : 0,
     });
     setEditDetails(false);
   }
@@ -308,60 +334,145 @@ export function EmployeeProfile({
   }
 
   async function toggleActive() {
-    if (!confirm(`${user.active ? "Deactivate" : "Activate"} ${user.name}?`)) return;
+    if (!confirm(`${user.active ? "Deactivate" : "Activate"} ${user.name}?`))
+      return;
     await patch({ active: !user.active });
   }
 
   const salaryBreakup = [
-    { label: "Gross (Annual)", value: salaryValue(payrollMeta, "Revised Gross Amount (per annum)", "Gross Amount (per annum)_1") },
+    {
+      label: "Gross (Annual)",
+      value: salaryValue(
+        payrollMeta,
+        "Revised Gross Amount (per annum)",
+        "Gross Amount (per annum)_1",
+      ),
+    },
     { label: "Gross (Monthly)", value: payrollMeta?.monthlyGross ?? null },
-    { label: "CTC (Annual)", value: user.employmentRecord?.ctc ?? salaryValue(payrollMeta, "Revised CTC (per annum)", "CTC Per Annum") },
+    {
+      label: "CTC (Annual)",
+      value:
+        user.employmentRecord?.ctc ??
+        salaryValue(payrollMeta, "Revised CTC (per annum)", "CTC Per Annum"),
+    },
     { label: "Basic", value: salaryValue(payrollMeta, "Basic") },
-    { label: "HRA", value: salaryValue(payrollMeta, "House Rent Allowance", "hra") },
-    { label: "Conveyance", value: salaryValue(payrollMeta, "Conveyance Allowance") },
-    { label: "Transport", value: salaryValue(payrollMeta, "Transport Allowance") },
-    { label: "Travelling", value: salaryValue(payrollMeta, "Travelling Allowance") },
-    { label: "Fixed Allowance", value: salaryValue(payrollMeta, "Fixed Allowance", "specialAllowance") },
-    { label: "Stipend", value: salaryValue(payrollMeta, "Stipend", "monthlyIncentive") },
+    {
+      label: "HRA",
+      value: salaryValue(payrollMeta, "House Rent Allowance", "hra"),
+    },
+    {
+      label: "Conveyance",
+      value: salaryValue(payrollMeta, "Conveyance Allowance"),
+    },
+    {
+      label: "Transport",
+      value: salaryValue(payrollMeta, "Transport Allowance"),
+    },
+    {
+      label: "Travelling",
+      value: salaryValue(payrollMeta, "Travelling Allowance"),
+    },
+    {
+      label: "Fixed Allowance",
+      value: salaryValue(payrollMeta, "Fixed Allowance", "specialAllowance"),
+    },
+    {
+      label: "Stipend",
+      value: salaryValue(payrollMeta, "Stipend", "monthlyIncentive"),
+    },
   ];
 
   return (
     <div className="space-y-6">
       {canEdit && !editDetails ? (
         <div className="flex justify-end">
-          <button
+          <MnxAction
             onClick={() => setEditDetails(true)}
-            className="rounded-lg border border-[#F9D972]/30 bg-[#F9D972] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#00b5ad]"
+            className="rounded-lg border border-[var(--mnx-accent)]/30 bg-[var(--mnx-accent)] px-3 py-1.5 text-xs font-medium text-[var(--mnx-text)] transition hover:bg-[var(--mnx-accent)]"
           >
             Edit Details
-          </button>
+          </MnxAction>
         </div>
       ) : null}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <InfoCard icon={<CircleUserRound className="h-5 w-5" />} title="Personal Details">
+        <InfoCard
+          icon={<CircleUserRound className="h-5 w-5" />}
+          title="Personal Details"
+        >
           {editDetails ? (
-            <EditableIdentitySection form={form} set={set} saveDetails={saveDetails} saving={saving} setEditDetails={setEditDetails} />
+            <EditableIdentitySection
+              form={form}
+              set={set}
+              saveDetails={saveDetails}
+              saving={saving}
+              setEditDetails={setEditDetails}
+            />
           ) : (
             <KeyValueGrid
               items={[
-                { label: "First Name", value: extractFirstName(user, payrollMeta) },
+                {
+                  label: "First Name",
+                  value: extractFirstName(user, payrollMeta),
+                },
                 { label: "Last Name", value: extractLastName(payrollMeta) },
-                { label: "Father Name", value: toDisplayTitleCase(payrollMeta?.personalDetails?.fatherName) },
-                { label: "DOB", value: asDate(payrollMeta?.personalDetails?.dateOfBirth ?? payrollMeta?.rawSheets?.employee?.["Date of Birth"]) },
-                { label: "Gender", value: toDisplayTitleCase(payrollMeta?.personalDetails?.gender) },
-                { label: "Marital Status", value: toDisplayTitleCase(payrollMeta?.personalDetails?.maritalStatus) },
-                { label: "Personal Email", value: payrollMeta?.personalDetails?.personalEmail ?? "-" },
-                { label: "Personal Phone", value: payrollMeta?.personalDetails?.mobileNumber ?? "-" },
-                { label: "Aadhaar", value: payrollMeta?.personalDetails?.aadhaar ?? "-" },
-                { label: "PAN", value: payrollMeta?.personalDetails?.panNumber ?? "-" },
-                { label: "UAN", value: payrollMeta?.statutory?.parsed?.uanNumber ?? payrollMeta?.statutory?.["UAN Number"] ?? "-" },
+                {
+                  label: "Father Name",
+                  value: toDisplayTitleCase(
+                    payrollMeta?.personalDetails?.fatherName,
+                  ),
+                },
+                {
+                  label: "DOB",
+                  value: asDate(
+                    payrollMeta?.personalDetails?.dateOfBirth ??
+                      payrollMeta?.rawSheets?.employee?.["Date of Birth"],
+                  ),
+                },
+                {
+                  label: "Gender",
+                  value: toDisplayTitleCase(
+                    payrollMeta?.personalDetails?.gender,
+                  ),
+                },
+                {
+                  label: "Marital Status",
+                  value: toDisplayTitleCase(
+                    payrollMeta?.personalDetails?.maritalStatus,
+                  ),
+                },
+                {
+                  label: "Personal Email",
+                  value: payrollMeta?.personalDetails?.personalEmail ?? "-",
+                },
+                {
+                  label: "Personal Phone",
+                  value: payrollMeta?.personalDetails?.mobileNumber ?? "-",
+                },
+                {
+                  label: "Aadhaar",
+                  value: payrollMeta?.personalDetails?.aadhaar ?? "-",
+                },
+                {
+                  label: "PAN",
+                  value: payrollMeta?.personalDetails?.panNumber ?? "-",
+                },
+                {
+                  label: "UAN",
+                  value:
+                    payrollMeta?.statutory?.parsed?.uanNumber ??
+                    payrollMeta?.statutory?.["UAN Number"] ??
+                    "-",
+                },
               ]}
             />
           )}
         </InfoCard>
 
-        <InfoCard icon={<BriefcaseBusiness className="h-5 w-5" />} title="Employment">
+        <InfoCard
+          icon={<BriefcaseBusiness className="h-5 w-5" />}
+          title="Employment"
+        >
           {editDetails ? (
             <EditableEmploymentSection
               form={form}
@@ -373,17 +484,51 @@ export function EmployeeProfile({
           ) : (
             <KeyValueGrid
               items={[
-                { label: "Joining Date", value: asDate(user.employmentRecord?.joinDate ?? payrollMeta?.rawSheets?.employee?.["Date of Joining"]) },
+                {
+                  label: "Joining Date",
+                  value: asDate(
+                    user.employmentRecord?.joinDate ??
+                      payrollMeta?.rawSheets?.employee?.["Date of Joining"],
+                  ),
+                },
                 { label: "Employment Type", value: "-" },
-                { label: "Employee Status", value: user.active ? "Active" : "Inactive" },
+                {
+                  label: "Employee Status",
+                  value: user.active ? "Active" : "Inactive",
+                },
                 { label: "Source of Hire", value: "-" },
-                { label: "Designation", value: toDisplayTitleCase(user.designation) },
-                { label: "Reporting TL / Manager", value: toDisplayTitleCase(user.manager?.name ?? user.tl?.name) },
-                { label: "Branch", value: toDisplayTitleCase(user.branch?.name) },
-                { label: "Department", value: toDisplayTitleCase(user.department?.name) },
-                { label: "Division", value: toDisplayTitleCase(user.division?.name) },
-                { label: "Present Address", value: formatAddress(payrollMeta?.personalAddress), span: 2 },
-                { label: "Permanent Address", value: formatAddress(payrollMeta?.workLocation), span: 2 },
+                {
+                  label: "Designation",
+                  value: toDisplayTitleCase(user.designation),
+                },
+                {
+                  label: "Reporting TL / Manager",
+                  value: toDisplayTitleCase(
+                    user.manager?.name ?? user.tl?.name,
+                  ),
+                },
+                {
+                  label: "Branch",
+                  value: toDisplayTitleCase(user.branch?.name),
+                },
+                {
+                  label: "Department",
+                  value: toDisplayTitleCase(user.department?.name),
+                },
+                {
+                  label: "Division",
+                  value: toDisplayTitleCase(user.division?.name),
+                },
+                {
+                  label: "Present Address",
+                  value: formatAddress(payrollMeta?.personalAddress),
+                  span: 2,
+                },
+                {
+                  label: "Permanent Address",
+                  value: formatAddress(payrollMeta?.workLocation),
+                  span: 2,
+                },
               ]}
             />
           )}
@@ -391,26 +536,61 @@ export function EmployeeProfile({
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-        <InfoCard icon={<IndianRupee className="h-5 w-5" />} title="Salary Details">
+        <InfoCard
+          icon={<IndianRupee className="h-5 w-5" />}
+          title="Salary Details"
+        >
           <KeyValueGrid
             items={salaryBreakup.map((item) => ({
               label: item.label,
               value: asCurrency(item.value),
-              accent: ["Gross (Annual)", "Gross (Monthly)", "CTC (Annual)"].includes(item.label),
+              accent: [
+                "Gross (Annual)",
+                "Gross (Monthly)",
+                "CTC (Annual)",
+              ].includes(item.label),
             }))}
           />
         </InfoCard>
 
         <div className="space-y-6">
-          <InfoCard icon={<Landmark className="h-5 w-5" />} title="Bank Details">
+          <InfoCard
+            icon={<Landmark className="h-5 w-5" />}
+            title="Bank Details"
+          >
             <KeyValueGrid
               items={[
-                { label: "Bank", value: toDisplayTitleCase(payrollMeta?.bankDetails?.bankName) },
-                { label: "Account #", value: payrollMeta?.bankDetails?.accountNumber ?? "-" },
-                { label: "IFSC", value: payrollMeta?.bankDetails?.ifscCode ?? "-" },
-                { label: "Account Type", value: toDisplayTitleCase(payrollMeta?.bankDetails?.accountType) },
-                { label: "State Code", value: payrollMeta?.bankDetails?.stateCode ?? payrollMeta?.workLocation?.stateCode ?? "-" },
-                { label: "Payment Mode", value: toDisplayTitleCase(payrollMeta?.bankDetails?.paymentMode) },
+                {
+                  label: "Bank",
+                  value: toDisplayTitleCase(payrollMeta?.bankDetails?.bankName),
+                },
+                {
+                  label: "Account #",
+                  value: payrollMeta?.bankDetails?.accountNumber ?? "-",
+                },
+                {
+                  label: "IFSC",
+                  value: payrollMeta?.bankDetails?.ifscCode ?? "-",
+                },
+                {
+                  label: "Account Type",
+                  value: toDisplayTitleCase(
+                    payrollMeta?.bankDetails?.accountType,
+                  ),
+                },
+                {
+                  label: "State Code",
+                  value:
+                    payrollMeta?.bankDetails?.stateCode ??
+                    payrollMeta?.workLocation?.stateCode ??
+                    "-",
+                },
+                {
+                  label: "Payment Mode",
+                  value: toDisplayTitleCase(
+                    payrollMeta?.bankDetails?.paymentMode,
+                  ),
+                },
               ]}
             />
           </InfoCard>
@@ -420,45 +600,64 @@ export function EmployeeProfile({
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
                   {roles.map((role) => (
-                    <button
+                    <MnxAction
                       key={role.id}
                       type="button"
                       onClick={() =>
                         setSelectedRoles((prev) =>
-                          prev.includes(role.id) ? prev.filter((id) => id !== role.id) : [...prev, role.id],
+                          prev.includes(role.id)
+                            ? prev.filter((id) => id !== role.id)
+                            : [...prev, role.id],
                         )
                       }
                       className={`rounded-full border px-3 py-1 text-xs transition ${
                         selectedRoles.includes(role.id)
-                          ? "border-indigo-600 bg-indigo-600 text-white"
+                          ? "border-[var(--mnx-info)] bg-[var(--mnx-info-bg)] text-[var(--mnx-text)]"
                           : "border-mono-border/50 bg-mono-card text-mono-text"
                       }`}
                     >
                       {role.name}
-                    </button>
+                    </MnxAction>
                   ))}
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={saveRoles} disabled={saving} className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs text-white">
+                  <MnxAction
+                    onClick={saveRoles}
+                    disabled={saving}
+                    className="rounded-lg bg-[var(--mnx-info-bg)] px-3 py-1.5 text-xs text-[var(--mnx-text)]"
+                  >
                     Save
-                  </button>
-                  <button onClick={() => setEditRoles(false)} className="rounded-lg border px-3 py-1.5 text-xs">
+                  </MnxAction>
+                  <MnxAction
+                    onClick={() => setEditRoles(false)}
+                    className="rounded-lg border px-3 py-1.5 text-xs"
+                  >
                     Cancel
-                  </button>
+                  </MnxAction>
                 </div>
               </div>
             ) : (
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-1">
                   {user.roles.map((role) => (
-                    <span key={role.role.id} className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-200">
+                    <span
+                      key={role.role.id}
+                      className="rounded-full bg-[var(--mnx-info-bg)] px-2 py-0.5 text-xs text-[var(--mnx-info)] bg-[var(--mnx-info-bg)]/15 text-[var(--mnx-info)]"
+                    >
                       {role.role.name}
                     </span>
                   ))}
-                  {user.roles.length === 0 && <span className="text-sm text-mono-muted">No roles</span>}
+                  {user.roles.length === 0 && (
+                    <span className="text-sm text-mono-muted">No roles</span>
+                  )}
                 </div>
                 {canEditRoles && (
-                  <button onClick={() => setEditRoles(true)} className="text-xs text-indigo-600 hover:underline">Edit roles</button>
+                  <MnxAction
+                    onClick={() => setEditRoles(true)}
+                    className="text-xs text-[var(--mnx-info)] hover:underline"
+                  >
+                    Edit roles
+                  </MnxAction>
                 )}
               </div>
             )}
@@ -468,21 +667,21 @@ export function EmployeeProfile({
             <Card title="Actions">
               <div className="space-y-2">
                 {canDeactivate && (
-                  <button
+                  <MnxAction
                     onClick={toggleActive}
                     disabled={saving}
                     className={`w-full rounded-lg border py-2 text-sm transition ${
                       user.active
-                        ? "border-red-300 text-red-600 hover:bg-red-50"
-                        : "border-green-300 text-green-600 hover:bg-green-50"
+                        ? "border-[var(--mnx-danger)] text-[var(--mnx-danger)] hover:bg-[var(--mnx-danger-bg)]"
+                        : "border-[var(--mnx-success)] text-[var(--mnx-success)] hover:bg-[var(--mnx-success-bg)]"
                     }`}
                   >
                     {user.active ? "Deactivate" : "Reactivate"} Employee
-                  </button>
+                  </MnxAction>
                 )}
 
-                {canResetPassword && (
-                  showPwReset ? (
+                {canResetPassword &&
+                  (showPwReset ? (
                     <div className="space-y-2">
                       <Input
                         type="password"
@@ -492,27 +691,29 @@ export function EmployeeProfile({
                         className="w-full"
                       />
                       <div className="flex gap-2">
-                        <button
+                        <MnxAction
                           onClick={resetPassword}
                           disabled={saving || newPassword.length < 8}
-                          className="flex-1 rounded-lg bg-gray-800 py-1.5 text-sm text-white disabled:opacity-50"
+                          className="flex-1 rounded-lg bg-[var(--mnx-soft)] py-1.5 text-sm text-[var(--mnx-text)] disabled:opacity-50"
                         >
                           Reset
-                        </button>
-                        <button onClick={() => setShowPwReset(false)} className="flex-1 rounded-lg border py-1.5 text-sm">
+                        </MnxAction>
+                        <MnxAction
+                          onClick={() => setShowPwReset(false)}
+                          className="flex-1 rounded-lg border py-1.5 text-sm"
+                        >
                           Cancel
-                        </button>
+                        </MnxAction>
                       </div>
                     </div>
                   ) : (
-                    <button
+                    <MnxAction
                       onClick={() => setShowPwReset(true)}
                       className="w-full rounded-lg border border-mono-border/50 bg-mono-card py-2 text-sm text-mono-text transition hover:bg-mono-soft"
                     >
                       Reset Password
-                    </button>
-                  )
-                )}
+                    </MnxAction>
+                  ))}
               </div>
             </Card>
           )}
@@ -537,7 +738,16 @@ function EditableIdentitySection({
     ctc: string;
     priorExperienceYears: string;
   };
-  set: (field: "name" | "designation" | "joinDate" | "grade" | "ctc" | "priorExperienceYears", value: string) => void;
+  set: (
+    field:
+      | "name"
+      | "designation"
+      | "joinDate"
+      | "grade"
+      | "ctc"
+      | "priorExperienceYears",
+    value: string,
+  ) => void;
   saveDetails: () => Promise<void>;
   saving: boolean;
   setEditDetails: (value: boolean) => void;
@@ -545,30 +755,65 @@ function EditableIdentitySection({
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
       <Field label="Name">
-        <Input value={form.name} onChange={(event) => set("name", event.target.value)} className="w-full" />
+        <Input
+          value={form.name}
+          onChange={(event) => set("name", event.target.value)}
+          className="w-full"
+        />
       </Field>
       <Field label="Designation">
-        <Input value={form.designation} onChange={(event) => set("designation", event.target.value)} className="w-full" />
+        <Input
+          value={form.designation}
+          onChange={(event) => set("designation", event.target.value)}
+          className="w-full"
+        />
       </Field>
       <Field label="Join Date">
-        <Input type="date" value={form.joinDate} onChange={(event) => set("joinDate", event.target.value)} className="w-full" />
+        <Input
+          type="date"
+          value={form.joinDate}
+          onChange={(event) => set("joinDate", event.target.value)}
+          className="w-full"
+        />
       </Field>
       <Field label="Grade">
-        <Input value={form.grade} onChange={(event) => set("grade", event.target.value)} className="w-full" />
+        <Input
+          value={form.grade}
+          onChange={(event) => set("grade", event.target.value)}
+          className="w-full"
+        />
       </Field>
       <Field label="CTC (Rs)">
-        <Input type="number" value={form.ctc} onChange={(event) => set("ctc", event.target.value)} className="w-full" />
+        <Input
+          type="number"
+          value={form.ctc}
+          onChange={(event) => set("ctc", event.target.value)}
+          className="w-full"
+        />
       </Field>
       <Field label="Prior Experience (years)">
-        <Input type="number" min="0" value={form.priorExperienceYears} onChange={(event) => set("priorExperienceYears", event.target.value)} className="w-full" />
+        <Input
+          type="number"
+          min="0"
+          value={form.priorExperienceYears}
+          onChange={(event) => set("priorExperienceYears", event.target.value)}
+          className="w-full"
+        />
       </Field>
       <div className="md:col-span-2 flex gap-2 pt-1">
-        <button onClick={saveDetails} disabled={saving} className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs text-white disabled:opacity-50">
+        <MnxAction
+          onClick={saveDetails}
+          disabled={saving}
+          className="rounded-lg bg-[var(--mnx-info-bg)] px-3 py-1.5 text-xs text-[var(--mnx-text)] disabled:opacity-50"
+        >
           Save
-        </button>
-        <button onClick={() => setEditDetails(false)} className="rounded-lg border px-3 py-1.5 text-xs">
+        </MnxAction>
+        <MnxAction
+          onClick={() => setEditDetails(false)}
+          className="rounded-lg border px-3 py-1.5 text-xs"
+        >
           Cancel
-        </button>
+        </MnxAction>
       </div>
     </div>
   );
@@ -588,7 +833,10 @@ function EditableEmploymentSection({
     managerId: string;
     tlId: string;
   };
-  set: (field: "branchId" | "departmentId" | "divisionId" | "managerId" | "tlId", value: string) => void;
+  set: (
+    field: "branchId" | "departmentId" | "divisionId" | "managerId" | "tlId",
+    value: string,
+  ) => void;
   org: OrgData;
   activeDivisions: { id: string; name: string }[];
   otherUsers: StubUser[];
@@ -596,19 +844,45 @@ function EditableEmploymentSection({
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
       <Field label="Branch">
-        <Select value={form.branchId} onChange={(value) => set("branchId", value)} options={org?.branches ?? []} placeholder="No branch" />
+        <Select
+          value={form.branchId}
+          onChange={(value) => set("branchId", value)}
+          options={org?.branches ?? []}
+          placeholder="No branch"
+        />
       </Field>
       <Field label="Department">
-        <Select value={form.departmentId} onChange={(value) => set("departmentId", value)} options={org?.departments ?? []} placeholder="No department" />
+        <Select
+          value={form.departmentId}
+          onChange={(value) => set("departmentId", value)}
+          options={org?.departments ?? []}
+          placeholder="No department"
+        />
       </Field>
       <Field label="Division">
-        <Select value={form.divisionId} onChange={(value) => set("divisionId", value)} options={activeDivisions} placeholder="No division" disabled={!form.departmentId} />
+        <Select
+          value={form.divisionId}
+          onChange={(value) => set("divisionId", value)}
+          options={activeDivisions}
+          placeholder="No division"
+          disabled={!form.departmentId}
+        />
       </Field>
       <Field label="Manager">
-        <Select value={form.managerId} onChange={(value) => set("managerId", value)} options={otherUsers} placeholder="No manager" />
+        <Select
+          value={form.managerId}
+          onChange={(value) => set("managerId", value)}
+          options={otherUsers}
+          placeholder="No manager"
+        />
       </Field>
       <Field label="Team Lead">
-        <Select value={form.tlId} onChange={(value) => set("tlId", value)} options={otherUsers} placeholder="No TL" />
+        <Select
+          value={form.tlId}
+          onChange={(value) => set("tlId", value)}
+          options={otherUsers}
+          placeholder="No TL"
+        />
       </Field>
     </div>
   );
@@ -624,11 +898,11 @@ function InfoCard({
   children: ReactNode;
 }) {
   return (
-    <div className="monolith-card monolith-accent monolith-shell-lg border border-mono-border/40 bg-mono-card p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
+    <div className="mnx-panel mnx-accent-edge mnx-content-wide border border-mono-border/40 bg-mono-card p-6 shadow-ambient">
       <div className="mb-6 flex items-center gap-3">
         <div className="flex items-center gap-3">
           <div className="text-mono-text">{icon}</div>
-          <h2 className="monolith-h2 text-mono-text">{title}</h2>
+          <h2 className="mnx-title-2 text-mono-text">{title}</h2>
         </div>
       </div>
       {children}
@@ -638,8 +912,8 @@ function InfoCard({
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="monolith-card monolith-accent monolith-shell-lg border border-mono-border/40 bg-mono-card p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
-      <h2 className="monolith-h2 mb-4 text-mono-text">{title}</h2>
+    <div className="mnx-panel mnx-accent-edge mnx-content-wide border border-mono-border/40 bg-mono-card p-6 shadow-ambient">
+      <h2 className="mnx-title-2 mb-4 text-mono-text">{title}</h2>
       {children}
     </div>
   );
@@ -648,14 +922,26 @@ function Card({ title, children }: { title: string; children: ReactNode }) {
 function KeyValueGrid({
   items,
 }: {
-  items: Array<{ label: string; value: ReactNode; span?: 1 | 2; accent?: boolean }>;
+  items: Array<{
+    label: string;
+    value: ReactNode;
+    span?: 1 | 2;
+    accent?: boolean;
+  }>;
 }) {
   return (
     <div className="grid grid-cols-1 gap-x-10 gap-y-4 md:grid-cols-2">
       {items.map((item) => (
-        <div key={item.label} className={item.span === 2 ? "md:col-span-2" : undefined}>
-          <div className="text-[13px] font-medium text-mono-muted">{item.label}</div>
-          <div className={`mt-1 text-[15px] ${item.accent ? "font-semibold text-mono-text" : "text-mono-muted"}`}>
+        <div
+          key={item.label}
+          className={item.span === 2 ? "md:col-span-2" : undefined}
+        >
+          <div className="text-[13px] font-medium text-mono-muted">
+            {item.label}
+          </div>
+          <div
+            className={`mt-1 text-[15px] ${item.accent ? "font-semibold text-mono-text" : "text-mono-muted"}`}
+          >
             {item.value}
           </div>
         </div>

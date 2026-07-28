@@ -1,5 +1,7 @@
 "use client";
 
+import { PeopleControlButton as MnxAction } from "@/components/monolith/people-controls";
+
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -279,28 +281,28 @@ export function EmployeeDirectoryActions({
           </div>
 
           <div className="flex items-center justify-between gap-2">
-            <button
+            <MnxAction
               type="button"
               onClick={clearFilters}
-              className="rounded-xl border border-mono-border/40 px-3 py-2 text-sm text-mono-muted transition hover:border-[#F9D972]/45 hover:text-mono-text"
+              className="rounded-xl border border-mono-border/40 px-3 py-2 text-sm text-mono-muted transition hover:border-[var(--mnx-accent)]/45 hover:text-mono-text"
             >
               Clear
-            </button>
+            </MnxAction>
 
-            <button
+            <MnxAction
               type="button"
               onClick={applyFilters}
-              className="rounded-xl bg-[#F9D972] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#00b5ad]"
+              className="rounded-xl bg-[var(--mnx-accent)] px-3 py-2 text-sm font-medium text-[var(--mnx-text)] transition hover:bg-[var(--mnx-accent)]"
             >
               Apply filters
-            </button>
+            </MnxAction>
           </div>
         </div>
       </FilterMenu>
 
       <Link
         href="/hrms/employees/new"
-        className="inline-flex items-center gap-2 rounded-lg bg-[#F9D972] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#00b5ad]"
+        className="inline-flex items-center gap-2 rounded-lg bg-[var(--mnx-accent)] px-4 py-2 text-sm font-medium text-[var(--mnx-text)] transition hover:bg-[var(--mnx-accent)]"
       >
         <Plus className="h-4 w-4" />
         Onboard Employee

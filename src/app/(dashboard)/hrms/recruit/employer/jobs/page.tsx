@@ -1,10 +1,20 @@
 "use client";
 
+import { PeopleControlInput as MnxInput } from "@/components/monolith/people-controls";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Add, Search } from "@carbon/icons-react";
-import {DataTable,DataTableBody,DataTableCell,DataTableHead,DataTableHeader,DataTableRow,DataTableEmpty,} from "@/components/data-table";
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+  DataTableEmpty,
+} from "@/components/monolith/people-data-table";
 
 type JobOpening = {
   id: string;
@@ -19,11 +29,13 @@ type JobOpening = {
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "bg-mono-soft text-mono-muted border-mono-border",
-  OPEN: "bg-[#F9D972]/10 text-[#F9D972] border-[#F9D972]/20",
-  PAUSED: "bg-[#D88700]/10 text-[#D88700] border-[#D88700]/20",
+  OPEN: "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] border-[var(--mnx-accent)]/20",
+  PAUSED:
+    "bg-[var(--mnx-warning)]/10 text-[var(--mnx-warning)] border-[var(--mnx-warning)]/20",
   CLOSED: "bg-mono-soft text-mono-muted border-mono-border",
   CANCELLED: "bg-mono-soft text-mono-muted border-mono-border",
-  FILLED: "bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20",
+  FILLED:
+    "bg-[var(--mnx-success)]/10 text-[var(--mnx-success)] border-[var(--mnx-success)]/20",
 };
 
 export default function EmployerJobsPage() {
@@ -54,12 +66,14 @@ export default function EmployerJobsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="monolith-h1 text-mono-text">Job Openings</h1>
-          <p className="text-sm text-mono-muted">Active requisitions and hiring pipeline</p>
+          <h1 className="mnx-title-1 text-mono-text">Job Openings</h1>
+          <p className="text-sm text-mono-muted">
+            Active requisitions and hiring pipeline
+          </p>
         </div>
         <Link
           href="/hrms/recruit/employer/jobs/new"
-          className="inline-flex items-center gap-2 rounded-xl bg-[#F9D972] px-4 py-2 text-sm font-medium text-white uppercase tracking-wide transition hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)]"
+          className="inline-flex items-center gap-2 rounded-xl bg-[var(--mnx-accent)] px-4 py-2 text-sm font-medium text-[var(--mnx-text)] uppercase tracking-wide transition hover:bg-[var(--mnx-accent-soft)] hover:shadow-ambient-hover"
         >
           <Add size={16} />
           Post Job
@@ -69,8 +83,11 @@ export default function EmployerJobsPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-48">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
-          <input
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted"
+          />
+          <MnxInput
             type="search"
             placeholder="Search job titles..."
             value={search}
@@ -109,21 +126,30 @@ export default function EmployerJobsPage() {
             {loading ? (
               <DataTableEmpty colSpan={6} message="Loading..." />
             ) : jobs.length === 0 ? (
-              <DataTableEmpty colSpan={6} message="No job openings found. Post your first role." />
+              <DataTableEmpty
+                colSpan={6}
+                message="No job openings found. Post your first role."
+              />
             ) : (
               jobs.map((job) => (
                 <DataTableRow key={job.id}>
                   <DataTableCell>
                     <Link
                       href={`/hrms/recruit/employer/jobs/${job.id}`}
-                      className="font-medium text-mono-text hover:text-[#F9D972]"
+                      className="font-medium text-mono-text hover:text-[var(--mnx-accent)]"
                     >
                       {job.title}
                     </Link>
-                    <p className="monolith-label mt-0.5">{job.requisitionNumber}</p>
+                    <p className="mnx-dashboard-spec-label mt-0.5">
+                      {job.requisitionNumber}
+                    </p>
                   </DataTableCell>
-                  <DataTableCell className="text-mono-muted">{job.department ?? "—"}</DataTableCell>
-                  <DataTableCell className="text-mono-muted">{job.location ?? "—"}</DataTableCell>
+                  <DataTableCell className="text-mono-muted">
+                    {job.department ?? "—"}
+                  </DataTableCell>
+                  <DataTableCell className="text-mono-muted">
+                    {job.location ?? "—"}
+                  </DataTableCell>
                   <DataTableCell>
                     <span
                       className={`inline-flex rounded-lg border px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[job.status] ?? ""}`}
@@ -131,7 +157,7 @@ export default function EmployerJobsPage() {
                       {job.status}
                     </span>
                   </DataTableCell>
-                  <DataTableCell className="monolith-numeric text-mono-muted">
+                  <DataTableCell className="mnx-numeric text-mono-muted">
                     {job.applicationCount ?? 0}
                   </DataTableCell>
                   <DataTableCell className="text-mono-muted">

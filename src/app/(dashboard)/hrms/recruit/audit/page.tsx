@@ -1,9 +1,22 @@
 "use client";
 
+import {
+  PeopleControlButton as MnxAction,
+  PeopleControlInput as MnxInput,
+} from "@/components/monolith/people-controls";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import { useState, useEffect, useCallback } from "react";
 import { Search } from "@carbon/icons-react";
-import {DataTable,DataTableBody,DataTableCell,DataTableHead,DataTableHeader,DataTableRow,DataTableEmpty,} from "@/components/data-table";
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+  DataTableEmpty,
+} from "@/components/monolith/people-data-table";
 
 type AuditEvent = {
   id: string;
@@ -25,20 +38,23 @@ export default function RecruitAuditPage() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
 
-  const load = useCallback(async (p = 1) => {
-    setLoading(true);
-    const params = new URLSearchParams({ page: String(p), pageSize: "50" });
-    if (action) params.set("action", action);
-    const res = await fetch(`/api/recruit/audit?${params}`);
-    if (res.ok) {
-      const data = await res.json();
-      const items = data.data?.items ?? data.items ?? [];
-      setEvents(p === 1 ? items : (prev) => [...prev, ...items]);
-      setHasMore(data.data?.hasMore ?? false);
-      setPage(p);
-    }
-    setLoading(false);
-  }, [action]);
+  const load = useCallback(
+    async (p = 1) => {
+      setLoading(true);
+      const params = new URLSearchParams({ page: String(p), pageSize: "50" });
+      if (action) params.set("action", action);
+      const res = await fetch(`/api/recruit/audit?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        const items = data.data?.items ?? data.items ?? [];
+        setEvents(p === 1 ? items : (prev) => [...prev, ...items]);
+        setHasMore(data.data?.hasMore ?? false);
+        setPage(p);
+      }
+      setLoading(false);
+    },
+    [action],
+  );
 
   useEffect(() => {
     load(1);
@@ -49,21 +65,26 @@ export default function RecruitAuditPage() {
         (e) =>
           e.action.toLowerCase().includes(search.toLowerCase()) ||
           e.entityType.toLowerCase().includes(search.toLowerCase()) ||
-          e.actor?.name.toLowerCase().includes(search.toLowerCase())
+          e.actor?.name.toLowerCase().includes(search.toLowerCase()),
       )
     : events;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="monolith-h1 text-mono-text">Recruit Audit Log</h1>
-        <p className="text-sm text-mono-muted">Immutable log of all Recruit module mutations</p>
+        <h1 className="mnx-title-1 text-mono-text">Recruit Audit Log</h1>
+        <p className="text-sm text-mono-muted">
+          Immutable log of all Recruit module mutations
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-48">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
-          <input
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted"
+          />
+          <MnxInput
             type="search"
             placeholder="Filter by action, type, or actor..."
             value={search}
@@ -113,23 +134,41 @@ export default function RecruitAuditPage() {
                     </span>
                   </DataTableCell>
                   <DataTableCell className="text-mono-muted">
-                    <span className="monolith-label">{e.entityType}</span>
+                    <span className="mnx-dashboard-spec-label">
+                      {e.entityType}
+                    </span>
                     {e.entityId && (
-                      <p className="text-xs text-outline mt-0.5 font-mono">{e.entityId.slice(0, 8)}…</p>
+                      <p className="text-xs text-outline mt-0.5 font-mono">
+                        {e.entityId.slice(0, 8)}…
+                      </p>
                     )}
                   </DataTableCell>
                   <DataTableCell className="text-mono-muted">
                     {e.actor ? (
                       <>
-                        <span className="font-medium text-mono-text">{e.actor.name}</span>
-                        {e.actor.email && <p className="monolith-label mt-0.5">{e.actor.email}</p>}
+                        <span className="font-medium text-mono-text">
+                          {e.actor.name}
+                        </span>
+                        {e.actor.email && (
+                          <p className="mnx-dashboard-spec-label mt-0.5">
+                            {e.actor.email}
+                          </p>
+                        )}
                       </>
+                    ) : e.actorId ? (
+                      <span className="font-mono text-xs">
+                        {e.actorId.slice(0, 8)}…
+                      </span>
                     ) : (
-                      e.actorId ? <span className="font-mono text-xs">{e.actorId.slice(0, 8)}…</span> : "—"
+                      "—"
                     )}
                   </DataTableCell>
-                  <DataTableCell className="monolith-label">{e.source ?? "—"}</DataTableCell>
-                  <DataTableCell className="monolith-label font-mono">{e.ipAddress ?? "—"}</DataTableCell>
+                  <DataTableCell className="mnx-dashboard-spec-label">
+                    {e.source ?? "—"}
+                  </DataTableCell>
+                  <DataTableCell className="mnx-dashboard-spec-label font-mono">
+                    {e.ipAddress ?? "—"}
+                  </DataTableCell>
                   <DataTableCell className="text-mono-muted">
                     {new Date(e.createdAt).toLocaleString()}
                   </DataTableCell>
@@ -142,13 +181,13 @@ export default function RecruitAuditPage() {
 
       {hasMore && (
         <div className="text-center">
-          <button
+          <MnxAction
             onClick={() => load(page + 1)}
             disabled={loading}
             className="rounded-xl border border-mono-border px-5 py-2 text-sm text-mono-muted hover:text-mono-text disabled:opacity-50"
           >
             {loading ? "Loading..." : "Load more"}
-          </button>
+          </MnxAction>
         </div>
       )}
     </div>

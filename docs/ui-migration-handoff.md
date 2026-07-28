@@ -4,129 +4,124 @@ Last updated: 2026-07-28
 
 ## Current state
 
-- Branch: `redesign/monolith-primary-ui`
-- Batch 001 parent: `aed95fe`
-- Legacy visual baseline: `7120d79`
-- Protected reference: `/dashboard` remains unchanged.
-- Verified migrated routes: `/account/security`, `/notifications`,
-  `/product-catalogue`, and `/todo`.
-- Verified shared surfaces: authenticated user profile menu and common
-  permission, empty, loading, error, and not-found states.
-- Route inventory: 211 total, 1 protected, 4 migrated, 206 pending.
-- Batch 001 implementation, runtime matrix, tests, and production build pass.
-- The worktree should be clean after the batch 001 commit.
+- Branch at batch start: `main`
+- Batch 002 parent: `e032bf2`
+- Protected reference: `/dashboard` was not redesigned.
+- Route inventory: 211 total, 1 protected, 49 migrated, 161 pending.
+- Verified migrated families: all 38 `/hrms` routes and all 7 `/attendance`
+  routes, in addition to the four previously migrated routes.
+- Batch 002 implementation, route audit, static gate, TypeScript, focused
+  tests, production build, and authenticated runtime matrix pass.
 
-## Batch 001 completed
+## Batch 002 completed
 
-1. Backed up the replaced route and shell sources before visual replacement.
-2. Rebuilt Product Catalogue with production page, panel, field, badge,
-   metric, workflow, dossier, interaction, outcome, and print compositions.
-3. Rebuilt To-Do while preserving database-backed CRUD, validation,
-   reminders, checklist updates, filter behavior, deep-link editing, status
-   transitions, notifications, and destructive confirmation.
-4. Rebuilt Notifications while preserving server filtering, personal
-   isolation, read/acknowledge/open/dismiss actions, policy labels, links, and
-   bulk actions.
-5. Activated the three verified routes in `MonolithAppShell`.
-6. Replaced the inert top-bar avatar with the authenticated user profile menu,
-   including user identity, platform/workspace context, Security & Sessions,
-   and sign-out.
-7. Added reusable production metrics, fields, select/input/textarea/checkbox,
-   progress, dialog, and permission/empty/loading/error state primitives.
-8. Added authenticated loading, error, and not-found boundaries.
-9. Removed active legacy component imports and scoped old generic
-   input/select/textarea/button/checkbox CSS away from Monolith routes.
-10. Updated the repeatable route audit and migration records.
+1. Archived the active legacy visual sources before replacement.
+2. Activated exact `/hrms`, `/hrms/**`, `/attendance`, and `/attendance/**`
+   routes in the production Monolith shell.
+3. Added family layouts plus shared loading and error boundaries.
+4. Added centralized People Operations metadata, page frame, summary, section,
+   navigation, record, notice, loading, error, control, table, and dialog
+   compositions.
+5. Replaced complete HRMS and Attendance page presentation, including nested
+   employee and letter details, onboarding, ownership, payroll, recruitment,
+   career/employer flows, approvals, reports, settings, helpdesk, leaves,
+   biometric sync, overtime, punch, and timesheets.
+6. Removed scoped legacy visual class families, fixed palette utilities,
+   inline colors, old data-table/ModuleHome composition, raw standard controls,
+   and custom overlays.
+7. Preserved RBAC, authentication, server actions, validation, employee and
+   leave flows, attendance calculations, biometric integration, GPS tracking,
+   shifts, overtime, payroll, letters, recruitment, approvals, and reports.
+8. Documented the shared People Operations components in the Admin Design
+   System catalogue.
+9. Scoped Tailwind discovery to `src`, ensuring `OLD UI code` and scratch
+   artifacts are never compiled.
+10. Regenerated the exhaustive route audit and migration records.
 
 ## Backup record
 
 Archive:
-`OLD UI code/legacy-ui-before-monolith-batch-001-aed95fe.zip`
+`OLD UI code/legacy-ui-before-monolith-hrms-attendance-e032bf2.zip`
 
-- Source commit: `aed95fe`
-- Entries: 9 original targeted files with relative paths retained.
-- Size: 26,781 bytes.
+- Source commit: `e032bf2`
+- Entries: 81 original files with relative paths retained.
+- Size: 219,295 bytes.
 - SHA-256:
-  `676DAB6A2C6FC519F3616B880C1689562B868F0E1AF03CBE6B4A22C7554C7738`
-- `tar -tf` listing verification: passed.
+  `70A95661F9244DF4D49F35C7AEDAA40159A4365F77AAF6E1A8BB07B0E54F4313`
+- Archive listing verification: passed.
 
-The foundation archive remains:
-`OLD UI code/legacy-ui-before-monolith-foundation-7120d79.zip`.
+The foundation and batch 001 archives remain in `OLD UI code`.
 
 ## Key files
 
-- `docs/ui-route-audit.md`: regenerated route-by-route audit.
-- `scripts/audit-ui-routes.mjs`: recognizes the three batch 001 routes.
-- `scripts/verify-monolith-batch-001-ui.mjs`: authenticated interaction,
-  theme, viewport, profile, common-state, legacy-composition, and overflow
-  verification.
-- `src/components/monolith/workspace.tsx`: reusable workspace components.
-- `src/components/monolith/workspace-dialog.tsx`: production dialog.
-- `src/components/monolith/workspace-states.tsx`: shared state compositions.
-- `src/components/monolith/app-shell.tsx`: profile menu and shared shell.
-- `src/styles/monolith-system.css`: production component and batch layout
-  styling.
-- `src/app/globals.css`: legacy generic form/button/checkbox selectors are
-  inactive under the Monolith shell.
+- `docs/ui-route-audit.md`: regenerated route-by-route source record.
+- `scripts/audit-ui-routes.mjs`: recognizes all HRMS and Attendance routes as
+  batch 002.
+- `scripts/verify-monolith-people-operations-ui.mjs`: static presentation and
+  protected-behavior gate.
+- `scripts/verify-monolith-people-operations-runtime.mjs`: authenticated
+  production route/theme/viewport gate.
+- `src/components/monolith/people-workspace.tsx`: centralized page metadata
+  and People Operations compositions.
+- `src/components/monolith/people-controls.tsx`: production standard controls.
+- `src/components/monolith/people-data-table.tsx`: production data-table
+  contract.
+- `src/app/(dashboard)/hrms/layout.tsx` and
+  `src/app/(dashboard)/attendance/layout.tsx`: family workspace boundaries.
+- `src/app/(dashboard)/admin/design-system/design-system-client.tsx`: People
+  Operations component catalogue.
+- `src/styles/monolith-system.css`: shared People Operations presentation.
+- `src/app/globals.css`: Tailwind source detection restricted to active
+  production source.
 
 ## Verification record
 
 Passed:
 
-- targeted ESLint for all changed TypeScript/TSX and migration scripts;
+- legacy archive checksum, size, and 81-entry listing;
+- route audit: 211 pages, 9 layouts, 49 migrated, 161 pending;
+- static UI/behavior verifier for all 45 routes;
+- targeted ESLint for new batch infrastructure;
 - `npx tsc --noEmit -p tsconfig.ui-migration.json`;
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`;
-- 27 relevant Vitest tests in 5 suites;
-- `NODE_OPTIONS=--max-old-space-size=8192 npm run build`;
-- Prisma Client generation, production compilation, production TypeScript,
-  and all 315 static pages;
-- authenticated runtime interaction checks;
-- 45 authenticated visual captures:
-  - Product Catalogue, To-Do, Notifications, user profile, common states;
-  - Light, Night, Violet;
-  - 1440×1000, 1024×900, 390×844;
-- no horizontal overflow, wrong-theme state, legacy composition, or route
-  redirect in the verified matrix.
+- 20 relevant Vitest tests in 7 suites;
+- clean `NODE_OPTIONS=--max-old-space-size=8192 npm run build`;
+- Prisma generation, Next.js compilation, production TypeScript, and 315
+  static pages;
+- 225 authenticated runtime combinations across 45 routes:
+  - Light, Night, and Violet on 1440×1000 desktop;
+  - Violet on 1024×900 tablet;
+  - Light on 390×844 mobile;
+  - exact path, shell/theme, semantic tokens, shared controls/tables, no legacy
+    composition, no application errors, and no horizontal overflow;
+- 32 representative screenshots.
 
-Runtime behavior exercised:
+Repository-wide lint was also executed and retains the known backlog: 2,147
+findings (1,631 errors and 516 warnings) across seed/maintenance scripts,
+pending modules, and unchanged business-code debt in presentation-converted
+views. New batch infrastructure passes targeted ESLint.
 
-- Product Catalogue search/no-results, module selection, and blueprint view;
-- To-Do create/edit dialog surface, cancellation, shared checkbox, and task
-  expansion without mutating production data;
-- Notifications status/acknowledgement filters without running bulk mutations;
-- profile menu identity, Security & Sessions, and sign-out affordances.
-
-The local Turbopack development server panicked while compiling `/login`
-(`Next.js package not found`). The repository now defaults `npm run dev` to
-the officially supported `next dev --webpack` path so normal development no
-longer enters the failing Turbopack code path. Turbopack remains an explicit
-diagnostic opt-in through `npm run dev:turbopack`. The production Turbopack
-build passed; this was a local development-bundler issue.
-
-Repository-wide `npm run lint` was executed with an 8 GB heap and still reports
-the pre-existing backlog in seed/maintenance scripts and pending accounting,
-CHA, and other modules. No batch 001 file fails targeted ESLint.
-
-The existing non-fatal production-build NFT trace warning remains in
-`src/app/api/customer-portal/checklist-files/[id]/route.ts`.
+The build retains six non-fatal Turbopack broad file-trace warnings from
+existing dynamic filesystem paths in HRMS letter generation, customer-portal
+file routes/service code, and the NFT trace through `next.config.ts`. They do
+not affect compilation or the verified runtime routes.
 
 ## Important constraints
 
 - Do not redesign `/dashboard`.
-- Do not opt a pending route into `MonolithAppShell` before backing up and
-  replacing its presentation.
+- Do not opt a pending route into the Monolith shell before backing up and
+  replacing its complete presentation.
 - Do not treat a Monolith import as migration verification.
 - Do not compile or import from `OLD UI code`.
 - Do not compile, import, or modify `_design-reference`.
 - Preserve business logic, server actions, validation, RBAC, integrations,
   navigation, pagination, filtering, and notifications.
-- Keep legacy generic styling excluded from verified Monolith routes.
 - Update status after every migrated page and this handoff before ending an
   incomplete session.
 
 ## Next action
 
-Choose the next coherent family from the 206 pending routes. Read the migration
-instructions, confirm the clean worktree, back up the exact active visual
-sources, extend shared primitives before page use, and repeat the full
-theme/responsive/behavior validation gate.
+Choose the next coherent family from the 161 pending routes, archive its active
+visual sources, extend centralized production components before page use, and
+repeat the full static, type, test, build, and authenticated theme/responsive
+verification gate.

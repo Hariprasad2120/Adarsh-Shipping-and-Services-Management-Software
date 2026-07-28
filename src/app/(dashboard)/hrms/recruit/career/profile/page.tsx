@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  PeopleControlButton as MnxAction,
+  PeopleControlInput as MnxInput,
+} from "@/components/monolith/people-controls";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import { useState, useEffect } from "react";
 
@@ -41,28 +46,28 @@ function tagInput(
   label: string,
   values: string[],
   onChange: (v: string[]) => void,
-  placeholder: string
+  placeholder: string,
 ) {
   return (
     <div>
-      <label className="monolith-label mb-1 block">{label}</label>
-      <div className="flex flex-wrap gap-1 rounded-xl border border-[rgba(0,206,196,0.55)] bg-mono-soft p-2 min-h-[40px]">
+      <label className="mnx-dashboard-spec-label mb-1 block">{label}</label>
+      <div className="flex flex-wrap gap-1 rounded-xl border border-[var(--mnx-accent)]/55 bg-mono-soft p-2 min-h-[40px]">
         {values.map((v) => (
           <span
             key={v}
-            className="flex items-center gap-1 rounded-lg bg-[#F9D972]/10 px-2 py-0.5 text-xs text-[#F9D972]"
+            className="flex items-center gap-1 rounded-lg bg-[var(--mnx-accent)]/10 px-2 py-0.5 text-xs text-[var(--mnx-accent)]"
           >
             {v}
-            <button
+            <MnxAction
               type="button"
               onClick={() => onChange(values.filter((x) => x !== v))}
-              className="text-[#F9D972]/60 hover:text-[#F9D972]"
+              className="text-[var(--mnx-accent)]/60 hover:text-[var(--mnx-accent)]"
             >
               ×
-            </button>
+            </MnxAction>
           </span>
         ))}
-        <input
+        <MnxInput
           type="text"
           placeholder={placeholder}
           className="min-w-24 flex-1 border-none bg-transparent px-1 text-xs focus:outline-none"
@@ -76,7 +81,9 @@ function tagInput(
           }}
         />
       </div>
-      <p className="mt-1 text-xs text-mono-muted">Press Enter or comma to add</p>
+      <p className="mt-1 text-xs text-mono-muted">
+        Press Enter or comma to add
+      </p>
     </div>
   );
 }
@@ -112,24 +119,39 @@ export default function CareerProfilePage() {
     setTimeout(() => setSaved(false), 3000);
   };
 
-  if (loading) return <p className="text-sm text-mono-muted">Loading profile...</p>;
+  if (loading)
+    return <p className="text-sm text-mono-muted">Loading profile...</p>;
 
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="monolith-h1 text-mono-text">Career Profile</h1>
-        <p className="text-sm text-mono-muted">Private job search preferences — not visible to your employer</p>
+        <h1 className="mnx-title-1 text-mono-text">Career Profile</h1>
+        <p className="text-sm text-mono-muted">
+          Private job search preferences — not visible to your employer
+        </p>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
-        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+        <div className="mnx-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
           <h3 className="text-mono-text">Job Preferences</h3>
           <div className="space-y-4">
-            {tagInput("Preferred Roles", profile.preferredRoles, (v) => set("preferredRoles", v), "e.g. Product Manager")}
-            {tagInput("Preferred Locations", profile.preferredLocations, (v) => set("preferredLocations", v), "e.g. Mumbai, Remote")}
+            {tagInput(
+              "Preferred Roles",
+              profile.preferredRoles,
+              (v) => set("preferredRoles", v),
+              "e.g. Product Manager",
+            )}
+            {tagInput(
+              "Preferred Locations",
+              profile.preferredLocations,
+              (v) => set("preferredLocations", v),
+              "e.g. Mumbai, Remote",
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="monolith-label mb-1 block">Workplace Preference</label>
+                <label className="mnx-dashboard-spec-label mb-1 block">
+                  Workplace Preference
+                </label>
                 <NativeSelect
                   value={profile.workplacePreference}
                   onChange={(e) => set("workplacePreference", e.target.value)}
@@ -142,7 +164,9 @@ export default function CareerProfilePage() {
                 </NativeSelect>
               </div>
               <div>
-                <label className="monolith-label mb-1 block">Seniority</label>
+                <label className="mnx-dashboard-spec-label mb-1 block">
+                  Seniority
+                </label>
                 <NativeSelect
                   value={profile.seniority ?? ""}
                   onChange={(e) => set("seniority", e.target.value || null)}
@@ -158,29 +182,43 @@ export default function CareerProfilePage() {
               </div>
             </div>
             <div>
-              <label className="monolith-label mb-1 block">Total Experience (years)</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Total Experience (years)
+              </label>
+              <MnxInput
                 type="number"
                 min={0}
                 max={60}
                 value={profile.totalExpYears ?? ""}
-                onChange={(e) => set("totalExpYears", e.target.value ? Number(e.target.value) : null)}
+                onChange={(e) =>
+                  set(
+                    "totalExpYears",
+                    e.target.value ? Number(e.target.value) : null,
+                  )
+                }
                 className="w-full rounded-xl px-3 py-2 text-sm"
               />
             </div>
           </div>
         </div>
 
-        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+        <div className="mnx-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
           <h3 className="text-mono-text">Skills</h3>
-          {tagInput("Skills", profile.skills, (v) => set("skills", v), "e.g. Python, Project Management")}
+          {tagInput(
+            "Skills",
+            profile.skills,
+            (v) => set("skills", v),
+            "e.g. Python, Project Management",
+          )}
         </div>
 
-        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+        <div className="mnx-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
           <h3 className="text-mono-text">Compensation</h3>
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="monolith-label mb-1 block">Currency</label>
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Currency
+              </label>
               <NativeSelect
                 value={profile.compensationCcy}
                 onChange={(e) => set("compensationCcy", e.target.value)}
@@ -192,40 +230,61 @@ export default function CareerProfilePage() {
               </NativeSelect>
             </div>
             <div>
-              <label className="monolith-label mb-1 block">Min (annual)</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Min (annual)
+              </label>
+              <MnxInput
                 type="number"
                 min={0}
                 value={profile.compensationMin ?? ""}
-                onChange={(e) => set("compensationMin", e.target.value ? Number(e.target.value) : null)}
+                onChange={(e) =>
+                  set(
+                    "compensationMin",
+                    e.target.value ? Number(e.target.value) : null,
+                  )
+                }
                 className="w-full rounded-xl px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <label className="monolith-label mb-1 block">Max (annual)</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Max (annual)
+              </label>
+              <MnxInput
                 type="number"
                 min={0}
                 value={profile.compensationMax ?? ""}
-                onChange={(e) => set("compensationMax", e.target.value ? Number(e.target.value) : null)}
+                onChange={(e) =>
+                  set(
+                    "compensationMax",
+                    e.target.value ? Number(e.target.value) : null,
+                  )
+                }
                 className="w-full rounded-xl px-3 py-2 text-sm"
               />
             </div>
           </div>
           <div>
-            <label className="monolith-label mb-1 block">Notice Period (days)</label>
-            <input
+            <label className="mnx-dashboard-spec-label mb-1 block">
+              Notice Period (days)
+            </label>
+            <MnxInput
               type="number"
               min={0}
               max={365}
               value={profile.noticePeriodDays ?? ""}
-              onChange={(e) => set("noticePeriodDays", e.target.value ? Number(e.target.value) : null)}
+              onChange={(e) =>
+                set(
+                  "noticePeriodDays",
+                  e.target.value ? Number(e.target.value) : null,
+                )
+              }
               className="w-full rounded-xl px-3 py-2 text-sm"
               placeholder="0 = immediate joiner"
             />
           </div>
           <label className="flex items-center gap-2 text-sm text-mono-text">
-            <input
+            <MnxInput
               type="checkbox"
               checked={profile.relocationOpen}
               onChange={(e) => set("relocationOpen", e.target.checked)}
@@ -235,10 +294,10 @@ export default function CareerProfilePage() {
           </label>
         </div>
 
-        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+        <div className="mnx-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
           <h3 className="text-mono-text">Job Alerts</h3>
           <label className="flex items-center gap-2 text-sm text-mono-text">
-            <input
+            <MnxInput
               type="checkbox"
               checked={profile.alertsEnabled}
               onChange={(e) => set("alertsEnabled", e.target.checked)}
@@ -248,7 +307,9 @@ export default function CareerProfilePage() {
           </label>
           {profile.alertsEnabled && (
             <div>
-              <label className="monolith-label mb-1 block">Frequency</label>
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Frequency
+              </label>
               <NativeSelect
                 value={profile.alertFrequency}
                 onChange={(e) => set("alertFrequency", e.target.value)}
@@ -263,14 +324,16 @@ export default function CareerProfilePage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
+          <MnxAction
             type="submit"
             disabled={saving}
-            className="rounded-xl bg-[#F9D972] px-6 py-2 text-sm font-medium uppercase tracking-wide text-white transition hover:bg-[#E8C85D] disabled:opacity-50"
+            className="rounded-xl bg-[var(--mnx-accent)] px-6 py-2 text-sm font-medium uppercase tracking-wide text-[var(--mnx-text)] transition hover:bg-[var(--mnx-accent-soft)] disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save Profile"}
-          </button>
-          {saved && <span className="text-sm text-[#22c55e]">Saved!</span>}
+          </MnxAction>
+          {saved && (
+            <span className="text-sm text-[var(--mnx-success)]">Saved!</span>
+          )}
         </div>
       </form>
     </div>

@@ -1,10 +1,23 @@
 "use client";
 
+import {
+  PeopleControlButton as MnxAction,
+  PeopleControlInput as MnxInput,
+} from "@/components/monolith/people-controls";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import { DateInput } from "@/components/monolith/date-input";
 import React, { useState, useEffect } from "react";
-import { UserCheck, CheckCircle2, ChevronRight, Lock, Save, Loader2, AlertCircle } from "lucide-react";
-import { toast }from "sonner";
+import {
+  UserCheck,
+  CheckCircle2,
+  ChevronRight,
+  Lock,
+  Save,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import { toast } from "sonner";
 
 export function OnboardingView() {
   const [loading, setLoading] = useState(false);
@@ -13,9 +26,29 @@ export function OnboardingView() {
   const [activeStep, setActiveStep] = useState<string>("personal_details");
 
   // Form states
-  const [personal, setPersonal] = useState({ firstName: "", lastName: "", dob: "", gender: "MALE" });
-  const [contact, setContact] = useState({ personalPhone: "", personalEmail: "", emergencyName: "", emergencyPhone: "", addressLine1: "", addressLine2: "", city: "", state: "", country: "", zipCode: "" });
-  const [financial, setFinancial] = useState({ bankName: "", bankAccount: "", ifsc: "" });
+  const [personal, setPersonal] = useState({
+    firstName: "",
+    lastName: "",
+    dob: "",
+    gender: "MALE",
+  });
+  const [contact, setContact] = useState({
+    personalPhone: "",
+    personalEmail: "",
+    emergencyName: "",
+    emergencyPhone: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    country: "",
+    zipCode: "",
+  });
+  const [financial, setFinancial] = useState({
+    bankName: "",
+    bankAccount: "",
+    ifsc: "",
+  });
   const [statutory, setStatutory] = useState({ pan: "", aadhaar: "", uan: "" });
 
   const fetchStatus = async () => {
@@ -92,9 +125,11 @@ export function OnboardingView() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
-        <Loader2 className="size-8 animate-spin text-[#F9D972]" />
-        <p className="text-xs font-semibold tracking-wider">Syncing onboarding status...</p>
+      <div className="flex flex-col items-center justify-center py-20 gap-3 text-[var(--mnx-muted)]">
+        <Loader2 className="size-8 animate-spin text-[var(--mnx-accent)]" />
+        <p className="text-xs font-semibold tracking-wider">
+          Syncing onboarding status...
+        </p>
       </div>
     );
   }
@@ -102,28 +137,39 @@ export function OnboardingView() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header Banner */}
-      <div className="relative rounded-3xl border border-slate-800 bg-[#0f121b]/80 p-6 overflow-hidden shadow-2xl backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#F9D972]/5 rounded-full blur-3xl" />
+      <div className="relative rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/80 p-6 overflow-hidden shadow-2xl backdrop-blur-md">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--mnx-accent)]/5 rounded-full blur-3xl" />
         <div className="flex items-center gap-4">
-          <div className="size-12 rounded-2xl bg-[#F9D972]/10 border border-[#F9D972]/35 flex items-center justify-center text-[#F9D972] shadow-sm">
+          <div className="size-12 rounded-2xl bg-[var(--mnx-accent)]/10 border border-[var(--mnx-accent)]/35 flex items-center justify-center text-[var(--mnx-accent)] shadow-sm">
             <UserCheck className="size-6 animate-pulse" />
           </div>
           <div className="flex-1">
-            <h1 className="text-lg font-black text-slate-100 uppercase tracking-widest">EMPLOYEE ONBOARDING</h1>
-            <p className="text-xs text-slate-500 font-bold mt-0.5 uppercase tracking-wider">Complete all stages to verify your profile credentials</p>
+            <h1 className="text-lg font-black text-[var(--mnx-muted)] uppercase tracking-widest">
+              EMPLOYEE ONBOARDING
+            </h1>
+            <p className="text-xs text-[var(--mnx-muted)] font-bold mt-0.5 uppercase tracking-wider">
+              Complete all stages to verify your profile credentials
+            </p>
           </div>
           {data && (
             <div className="text-right">
-              <span className="text-2xl font-extrabold text-[#F9D972] font-mono">{data.progressPercent}%</span>
-              <p className="text-[9px] font-black text-slate-500 uppercase tracking-wider mt-0.5">COMPLETED</p>
+              <span className="text-2xl font-extrabold text-[var(--mnx-accent)] font-mono">
+                {data.progressPercent}%
+              </span>
+              <p className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider mt-0.5">
+                COMPLETED
+              </p>
             </div>
           )}
         </div>
 
         {/* Progress bar */}
         {data && (
-          <div className="mt-6 w-full h-1.5 bg-slate-900 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-emerald-500 to-[#F9D972] rounded-full transition-all duration-500" style={{ width: `${data.progressPercent}%` }} />
+          <div className="mt-6 w-full h-1.5 bg-[var(--mnx-soft)] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-[var(--mnx-success)] to-[var(--mnx-accent)] rounded-full transition-all duration-500"
+              style={{ width: `${data.progressPercent}%` }}
+            />
           </div>
         )}
       </div>
@@ -131,78 +177,102 @@ export function OnboardingView() {
       <div className="grid gap-6 md:grid-cols-3">
         {/* Left checklist menu */}
         <div className="md:col-span-1 space-y-3">
-          <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Checklist Checklist</div>
+          <div className="text-[10px] font-black text-[var(--mnx-muted)] uppercase tracking-widest px-1">
+            Checklist Checklist
+          </div>
           {data?.checklist.map((item: any) => {
             const isCurrent = activeStep === item.key;
             return (
-              <button
+              <MnxAction
                 key={item.key}
                 onClick={() => setActiveStep(item.key)}
                 className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between cursor-pointer ${
                   isCurrent
-                    ? "bg-[#161f28]/80 border-[#F9D972]/40 text-slate-100 shadow-md"
-                    : "bg-[#0e121b]/40 border-slate-900 text-slate-400 hover:bg-[#161f28]/20 hover:text-slate-200"
+                    ? "bg-[var(--mnx-surface-soft)]/80 border-[var(--mnx-accent)]/40 text-[var(--mnx-muted)] shadow-md"
+                    : "bg-[var(--mnx-surface)]/40 border-[var(--mnx-border)] text-[var(--mnx-muted)] hover:bg-[var(--mnx-surface-soft)]/20 hover:text-[var(--mnx-muted)]"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   {item.completed ? (
-                    <CheckCircle2 className="size-5 text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="size-5 text-[var(--mnx-success)] shrink-0" />
                   ) : (
-                    <div className="size-5 rounded-full border-2 border-slate-800 shrink-0" />
+                    <div className="size-5 rounded-full border-2 border-[var(--mnx-border)] shrink-0" />
                   )}
-                  <span className="text-xs font-black tracking-wide">{item.label}</span>
+                  <span className="text-xs font-black tracking-wide">
+                    {item.label}
+                  </span>
                 </div>
                 <ChevronRight className="size-4 opacity-50" />
-              </button>
+              </MnxAction>
             );
           })}
         </div>
 
         {/* Right Active Form Area */}
         <div className="md:col-span-2">
-          <form onSubmit={handleSave} className="rounded-3xl border border-slate-900 bg-[#0e121b]/60 p-6 shadow-xl space-y-6 backdrop-blur-sm">
-            
+          <form
+            onSubmit={handleSave}
+            className="rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/60 p-6 shadow-xl space-y-6 backdrop-blur-sm"
+          >
             {activeStep === "personal_details" && (
               <div className="space-y-4">
-                <h3 className="text-sm font-black text-slate-300 uppercase tracking-widest border-b border-slate-900 pb-2">Personal Profile details</h3>
+                <h3 className="text-sm font-black text-[var(--mnx-muted)] uppercase tracking-widest border-b border-[var(--mnx-border)] pb-2">
+                  Personal Profile details
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">First Name</label>
-                    <input
+                    <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                      First Name
+                    </label>
+                    <MnxInput
                       type="text"
                       value={personal.firstName}
-                      onChange={(e) => setPersonal({ ...personal, firstName: e.target.value })}
+                      onChange={(e) =>
+                        setPersonal({ ...personal, firstName: e.target.value })
+                      }
                       required
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                      className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Last Name</label>
-                    <input
+                    <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                      Last Name
+                    </label>
+                    <MnxInput
                       type="text"
                       value={personal.lastName}
-                      onChange={(e) => setPersonal({ ...personal, lastName: e.target.value })}
+                      onChange={(e) =>
+                        setPersonal({ ...personal, lastName: e.target.value })
+                      }
                       required
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                      className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Date of Birth</label>
+                    <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                      Date of Birth
+                    </label>
                     <DateInput
                       value={personal.dob}
-                      onChange={(e) => setPersonal({ ...personal, dob: e.target.value })}
+                      onChange={(e) =>
+                        setPersonal({ ...personal, dob: e.target.value })
+                      }
                       required
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                      className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Gender</label>
+                    <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                      Gender
+                    </label>
                     <NativeSelect
                       value={personal.gender}
-                      onChange={(e) => setPersonal({ ...personal, gender: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                      onChange={(e) =>
+                        setPersonal({ ...personal, gender: e.target.value })
+                      }
+                      className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                     >
                       <option value="MALE">Male</option>
                       <option value="FEMALE">Female</option>
@@ -215,82 +285,128 @@ export function OnboardingView() {
 
             {activeStep === "contact_details" && (
               <div className="space-y-4">
-                <h3 className="text-sm font-black text-slate-300 uppercase tracking-widest border-b border-slate-900 pb-2">Emergency Contact details</h3>
+                <h3 className="text-sm font-black text-[var(--mnx-muted)] uppercase tracking-widest border-b border-[var(--mnx-border)] pb-2">
+                  Emergency Contact details
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Personal Phone</label>
-                    <input
+                    <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                      Personal Phone
+                    </label>
+                    <MnxInput
                       type="text"
                       value={contact.personalPhone}
-                      onChange={(e) => setContact({ ...contact, personalPhone: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                      onChange={(e) =>
+                        setContact({
+                          ...contact,
+                          personalPhone: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Personal Email</label>
-                    <input
+                    <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                      Personal Email
+                    </label>
+                    <MnxInput
                       type="email"
                       value={contact.personalEmail}
-                      onChange={(e) => setContact({ ...contact, personalEmail: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                      onChange={(e) =>
+                        setContact({
+                          ...contact,
+                          personalEmail: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Emergency Contact Name</label>
-                    <input
+                    <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                      Emergency Contact Name
+                    </label>
+                    <MnxInput
                       type="text"
                       value={contact.emergencyName}
-                      onChange={(e) => setContact({ ...contact, emergencyName: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                      onChange={(e) =>
+                        setContact({
+                          ...contact,
+                          emergencyName: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Emergency Contact Phone</label>
-                    <input
+                    <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                      Emergency Contact Phone
+                    </label>
+                    <MnxInput
                       type="text"
                       value={contact.emergencyPhone}
-                      onChange={(e) => setContact({ ...contact, emergencyPhone: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                      onChange={(e) =>
+                        setContact({
+                          ...contact,
+                          emergencyPhone: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Address Line 1</label>
-                  <input
+                  <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                    Address Line 1
+                  </label>
+                  <MnxInput
                     type="text"
                     value={contact.addressLine1}
-                    onChange={(e) => setContact({ ...contact, addressLine1: e.target.value })}
-                    className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                    onChange={(e) =>
+                      setContact({ ...contact, addressLine1: e.target.value })
+                    }
+                    className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">City</label>
-                    <input
+                    <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                      City
+                    </label>
+                    <MnxInput
                       type="text"
                       value={contact.city}
-                      onChange={(e) => setContact({ ...contact, city: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                      onChange={(e) =>
+                        setContact({ ...contact, city: e.target.value })
+                      }
+                      className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">State</label>
-                    <input
+                    <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                      State
+                    </label>
+                    <MnxInput
                       type="text"
                       value={contact.state}
-                      onChange={(e) => setContact({ ...contact, state: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                      onChange={(e) =>
+                        setContact({ ...contact, state: e.target.value })
+                      }
+                      className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Zip Code</label>
-                    <input
+                    <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                      Zip Code
+                    </label>
+                    <MnxInput
                       type="text"
                       value={contact.zipCode}
-                      onChange={(e) => setContact({ ...contact, zipCode: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                      onChange={(e) =>
+                        setContact({ ...contact, zipCode: e.target.value })
+                      }
+                      className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                 </div>
@@ -299,33 +415,50 @@ export function OnboardingView() {
 
             {activeStep === "financial_details" && (
               <div className="space-y-4">
-                <h3 className="text-sm font-black text-slate-300 uppercase tracking-widest border-b border-slate-900 pb-2">Bank & Finance details</h3>
+                <h3 className="text-sm font-black text-[var(--mnx-muted)] uppercase tracking-widest border-b border-[var(--mnx-border)] pb-2">
+                  Bank & Finance details
+                </h3>
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Bank Name</label>
-                  <input
+                  <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                    Bank Name
+                  </label>
+                  <MnxInput
                     type="text"
                     value={financial.bankName}
-                    onChange={(e) => setFinancial({ ...financial, bankName: e.target.value })}
-                    className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                    onChange={(e) =>
+                      setFinancial({ ...financial, bankName: e.target.value })
+                    }
+                    className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Account Number</label>
-                    <input
+                    <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                      Account Number
+                    </label>
+                    <MnxInput
                       type="text"
                       value={financial.bankAccount}
-                      onChange={(e) => setFinancial({ ...financial, bankAccount: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                      onChange={(e) =>
+                        setFinancial({
+                          ...financial,
+                          bankAccount: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">IFSC Code</label>
-                    <input
+                    <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                      IFSC Code
+                    </label>
+                    <MnxInput
                       type="text"
                       value={financial.ifsc}
-                      onChange={(e) => setFinancial({ ...financial, ifsc: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                      onChange={(e) =>
+                        setFinancial({ ...financial, ifsc: e.target.value })
+                      }
+                      className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                 </div>
@@ -334,33 +467,47 @@ export function OnboardingView() {
 
             {activeStep === "statutory_ids" && (
               <div className="space-y-4">
-                <h3 className="text-sm font-black text-slate-300 uppercase tracking-widest border-b border-slate-900 pb-2">Government IDs</h3>
+                <h3 className="text-sm font-black text-[var(--mnx-muted)] uppercase tracking-widest border-b border-[var(--mnx-border)] pb-2">
+                  Government IDs
+                </h3>
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">PAN Card Number</label>
-                  <input
+                  <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                    PAN Card Number
+                  </label>
+                  <MnxInput
                     type="text"
                     value={statutory.pan}
-                    onChange={(e) => setStatutory({ ...statutory, pan: e.target.value })}
-                    className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                    onChange={(e) =>
+                      setStatutory({ ...statutory, pan: e.target.value })
+                    }
+                    className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Aadhaar Number</label>
-                    <input
+                    <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                      Aadhaar Number
+                    </label>
+                    <MnxInput
                       type="text"
                       value={statutory.aadhaar}
-                      onChange={(e) => setStatutory({ ...statutory, aadhaar: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                      onChange={(e) =>
+                        setStatutory({ ...statutory, aadhaar: e.target.value })
+                      }
+                      className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider">UAN Number</label>
-                    <input
+                    <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+                      UAN Number
+                    </label>
+                    <MnxInput
                       type="text"
                       value={statutory.uan}
-                      onChange={(e) => setStatutory({ ...statutory, uan: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 outline-none focus:border-[#F9D972]"
+                      onChange={(e) =>
+                        setStatutory({ ...statutory, uan: e.target.value })
+                      }
+                      className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                 </div>
@@ -368,15 +515,15 @@ export function OnboardingView() {
             )}
 
             {/* Action buttons */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-900">
-              <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold">
-                <AlertCircle className="size-3 text-[#F9D972]" />
+            <div className="flex items-center justify-between pt-4 border-t border-[var(--mnx-border)]">
+              <div className="flex items-center gap-1.5 text-[var(--mnx-muted)] text-[10px] font-bold">
+                <AlertCircle className="size-3 text-[var(--mnx-accent)]" />
                 <span>Values are encrypted securely in Postgres</span>
               </div>
-              <button
+              <MnxAction
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-[#F9D972] hover:brightness-105 border-0 rounded-2xl px-5 py-2.5 text-xs font-black text-slate-950 shadow-md cursor-pointer transition-all disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-[var(--mnx-success)] to-[var(--mnx-accent)] hover:brightness-105 border-0 rounded-2xl px-5 py-2.5 text-xs font-black text-[var(--mnx-text)] shadow-md cursor-pointer transition-all disabled:opacity-50"
               >
                 {saving ? (
                   <Loader2 className="size-4 animate-spin" />
@@ -384,9 +531,8 @@ export function OnboardingView() {
                   <Save className="size-4" />
                 )}
                 <span>{saving ? "Saving..." : "Save details"}</span>
-              </button>
+              </MnxAction>
             </div>
-
           </form>
         </div>
       </div>

@@ -5,7 +5,13 @@ import { requirePermission } from "@/lib/rbac";
 import { isRecruitEnabled } from "@/lib/recruit-flag";
 import { getJobSeekerDashboardCounts } from "@/modules/recruit/jobseeker-service";
 import { notFound } from "next/navigation";
-import { Search, Task, UserAvatar, Notification, ArrowRight } from "@carbon/icons-react";
+import {
+  Search,
+  Task,
+  UserAvatar,
+  Notification,
+  ArrowRight,
+} from "@carbon/icons-react";
 
 export default async function CareerDashboardPage() {
   if (!isRecruitEnabled()) notFound();
@@ -15,7 +21,10 @@ export default async function CareerDashboardPage() {
 
   const counts = await getJobSeekerDashboardCounts(session.user.id);
 
-  const totalApps = Object.values(counts.applicationsByStatus).reduce((a, b) => a + b, 0);
+  const totalApps = Object.values(counts.applicationsByStatus).reduce(
+    (a, b) => a + b,
+    0,
+  );
 
   const stats = [
     {
@@ -23,49 +32,73 @@ export default async function CareerDashboardPage() {
       value: counts.newMatchingJobs,
       icon: Search,
       href: "/hrms/recruit/career/jobs",
-      iconBg: "bg-[#818cf8]/10",
-      iconColor: "text-[#818cf8]",
+      iconBg: "bg-[var(--mnx-info)]/10",
+      iconColor: "text-[var(--mnx-info)]",
     },
     {
       label: "Applications Sent",
       value: totalApps,
       icon: Task,
       href: "/hrms/recruit/career/applications",
-      iconBg: "bg-[#F9D972]/10",
-      iconColor: "text-[#F9D972]",
+      iconBg: "bg-[var(--mnx-accent)]/10",
+      iconColor: "text-[var(--mnx-accent)]",
     },
     {
       label: "Saved Jobs",
       value: counts.savedJobs,
       icon: Notification,
       href: "/hrms/recruit/career/jobs",
-      iconBg: "bg-[#fbbf24]/10",
-      iconColor: "text-[#fbbf24]",
+      iconBg: "bg-[var(--mnx-warning)]/10",
+      iconColor: "text-[var(--mnx-warning)]",
     },
     {
       label: "Tailored Resumes (7d)",
       value: counts.recentTailoredResumes,
       icon: UserAvatar,
       href: "/hrms/recruit/career/resumes",
-      iconBg: "bg-[#22c55e]/10",
-      iconColor: "text-[#22c55e]",
+      iconBg: "bg-[var(--mnx-success)]/10",
+      iconColor: "text-[var(--mnx-success)]",
     },
   ];
 
   const sections = [
-    { label: "Job Search", href: "/hrms/recruit/career/jobs", desc: "Browse matched and discovered job listings." },
-    { label: "My Applications", href: "/hrms/recruit/career/applications", desc: "Track all jobs you have applied for." },
-    { label: "My Resumes", href: "/hrms/recruit/career/resumes", desc: "Manage base and tailored resume versions." },
-    { label: "Career Profile", href: "/hrms/recruit/career/profile", desc: "Update preferences, skills, and job search settings." },
-    { label: "Career Assistant", href: "/hrms/recruit/career/assistant", desc: "AI-powered career advice, completely private." },
-    { label: "Interview Prep", href: "/hrms/recruit/career/interview-prep", desc: "Practice answers and prepare for upcoming interviews." },
+    {
+      label: "Job Search",
+      href: "/hrms/recruit/career/jobs",
+      desc: "Browse matched and discovered job listings.",
+    },
+    {
+      label: "My Applications",
+      href: "/hrms/recruit/career/applications",
+      desc: "Track all jobs you have applied for.",
+    },
+    {
+      label: "My Resumes",
+      href: "/hrms/recruit/career/resumes",
+      desc: "Manage base and tailored resume versions.",
+    },
+    {
+      label: "Career Profile",
+      href: "/hrms/recruit/career/profile",
+      desc: "Update preferences, skills, and job search settings.",
+    },
+    {
+      label: "Career Assistant",
+      href: "/hrms/recruit/career/assistant",
+      desc: "AI-powered career advice, completely private.",
+    },
+    {
+      label: "Interview Prep",
+      href: "/hrms/recruit/career/interview-prep",
+      desc: "Practice answers and prepare for upcoming interviews.",
+    },
   ];
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-1">
-        <h1 className="monolith-h1 text-mono-text">Career Workspace</h1>
+        <h1 className="mnx-title-1 text-mono-text">Career Workspace</h1>
         <p className="text-sm text-mono-muted">
           Your private career hub — completely isolated from your employer view.
         </p>
@@ -81,11 +114,15 @@ export default async function CareerDashboardPage() {
               href={stat.href}
               className="group flex flex-col gap-3 rounded-xl border border-mono-border bg-mono-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
-              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.iconBg}`}>
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.iconBg}`}
+              >
                 <Icon size={20} className={stat.iconColor} />
               </div>
               <div>
-                <p className="monolith-numeric text-3xl font-light text-mono-text">{stat.value}</p>
+                <p className="mnx-numeric text-3xl font-light text-mono-text">
+                  {stat.value}
+                </p>
                 <p className="mt-0.5 text-sm text-mono-muted">{stat.label}</p>
               </div>
             </Link>
@@ -94,14 +131,15 @@ export default async function CareerDashboardPage() {
       </section>
 
       {/* Privacy Notice */}
-      <div className="flex items-start gap-3 rounded-xl border border-[#818cf8]/20 bg-[#818cf8]/5 p-4">
-        <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#818cf8]/20 text-[10px] font-bold text-[#818cf8]">
+      <div className="flex items-start gap-3 rounded-xl border border-[var(--mnx-info)]/20 bg-[var(--mnx-info)]/5 p-4">
+        <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[var(--mnx-info)]/20 text-[10px] font-bold text-[var(--mnx-info)]">
           ⚑
         </span>
         <p className="text-sm text-mono-muted">
           Everything in this workspace is{" "}
-          <span className="font-medium text-mono-text">completely private</span>. Your employer cannot see your
-          job searches, saved jobs, applications, resumes, or career conversations.
+          <span className="font-medium text-mono-text">completely private</span>
+          . Your employer cannot see your job searches, saved jobs,
+          applications, resumes, or career conversations.
         </p>
       </div>
 
@@ -111,13 +149,13 @@ export default async function CareerDashboardPage() {
           <Link
             key={s.href}
             href={s.href}
-            className="group flex flex-col gap-2 rounded-xl border border-mono-border bg-mono-card p-4 transition hover:border-[#818cf8]/40 hover:shadow-sm"
+            className="group flex flex-col gap-2 rounded-xl border border-mono-border bg-mono-card p-4 transition hover:border-[var(--mnx-info)]/40 hover:shadow-sm"
           >
             <p className="text-sm font-medium text-mono-text">{s.label}</p>
             <p className="text-xs leading-relaxed text-mono-muted">{s.desc}</p>
             <ArrowRight
               size={14}
-              className="text-outline transition group-hover:translate-x-0.5 group-hover:text-[#818cf8]"
+              className="text-outline transition group-hover:translate-x-0.5 group-hover:text-[var(--mnx-info)]"
             />
           </Link>
         ))}

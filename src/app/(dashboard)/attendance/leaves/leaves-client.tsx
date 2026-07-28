@@ -1,9 +1,24 @@
 "use client";
 
+import {
+  PeopleControlButton as MnxAction,
+  PeopleControlInput as MnxInput,
+} from "@/components/monolith/people-controls";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DemoFillButton } from "@/components/demo-fill-button";
-import {Badge,DataTable,DataTableBody,DataTableCell,DataTableEmpty,DataTableHead,DataTableHeader,DataTableRow,DataTableToolbar,} from "@/components/data-table";
+import {
+  Badge,
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableEmpty,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+  DataTableToolbar,
+} from "@/components/monolith/people-data-table";
 import { DropdownSelect } from "@/components/monolith/dropdown-select";
 import { Input } from "@/components/monolith/input";
 import { getLeaveDemoValues } from "@/lib/demo-fill";
@@ -23,9 +38,9 @@ type LeaveRequest = {
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  pending: "bg-yellow-50 text-yellow-700",
-  approved: "bg-green-50 text-green-700",
-  rejected: "bg-red-50 text-red-600",
+  pending: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
+  approved: "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]",
+  rejected: "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]",
   cancelled: "bg-mono-soft text-mono-muted",
 };
 
@@ -101,33 +116,50 @@ export function LeavesClient({
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {balances.map((b) => (
-          <div key={b.leaveType.id} className="rounded-xl border border-gray-200 bg-white p-4 text-center">
-            <p className="text-xs text-gray-500">{b.leaveType.name}</p>
-            <p className="mt-1 text-2xl font-bold text-gray-900">{b.balance}</p>
-            <p className="text-xs text-gray-400">{b.leaveType.paid ? "Paid" : "Unpaid"}</p>
+          <div
+            key={b.leaveType.id}
+            className="rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)] p-4 text-center"
+          >
+            <p className="text-xs text-[var(--mnx-muted)]">
+              {b.leaveType.name}
+            </p>
+            <p className="mt-1 text-2xl font-bold text-[var(--mnx-text)]">
+              {b.balance}
+            </p>
+            <p className="text-xs text-[var(--mnx-muted)]">
+              {b.leaveType.paid ? "Paid" : "Unpaid"}
+            </p>
           </div>
         ))}
       </div>
 
-      <div className="space-y-0 rounded-xl border border-gray-200 bg-white">
+      <div className="space-y-0 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]">
         <DataTableToolbar>
-          <h2 className="monolith-h2 text-gray-900">My Requests</h2>
+          <h2 className="mnx-title-2 text-[var(--mnx-text)]">My Requests</h2>
           <div className="flex gap-2">
-            <DemoFillButton disabled={loading || leaveTypes.length === 0} onClick={fillDemoData} />
-            <button
+            <DemoFillButton
+              disabled={loading || leaveTypes.length === 0}
+              onClick={fillDemoData}
+            />
+            <MnxAction
               onClick={() => setShowForm(!showForm)}
-              className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700"
+              className="rounded-lg bg-[var(--mnx-info-bg)] px-3 py-1.5 text-sm text-[var(--mnx-text)] hover:bg-[var(--mnx-info-bg)]"
             >
               + Request Leave
-            </button>
+            </MnxAction>
           </div>
         </DataTableToolbar>
 
         {showForm && (
-          <form onSubmit={submitLeave} className="space-y-3 border-b border-gray-100 bg-gray-50 px-5 py-4">
+          <form
+            onSubmit={submitLeave}
+            className="space-y-3 border-b border-[var(--mnx-border)] bg-[var(--mnx-card)] px-5 py-4"
+          >
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">Leave Type</label>
+                <label className="text-xs font-medium text-[var(--mnx-text)]">
+                  Leave Type
+                </label>
                 <DropdownSelect
                   name="leaveTypeId"
                   onValueChange={setLeaveTypeId}
@@ -140,17 +172,42 @@ export function LeavesClient({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">From</label>
-                <Input type="date" name="fromDate" onChange={(e) => setFromDate(e.target.value)} required value={fromDate} className="w-full" />
+                <label className="text-xs font-medium text-[var(--mnx-text)]">
+                  From
+                </label>
+                <Input
+                  type="date"
+                  name="fromDate"
+                  onChange={(e) => setFromDate(e.target.value)}
+                  required
+                  value={fromDate}
+                  className="w-full"
+                />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">To</label>
-                <Input type="date" name="toDate" onChange={(e) => setToDate(e.target.value)} required value={toDate} className="w-full" />
+                <label className="text-xs font-medium text-[var(--mnx-text)]">
+                  To
+                </label>
+                <Input
+                  type="date"
+                  name="toDate"
+                  onChange={(e) => setToDate(e.target.value)}
+                  required
+                  value={toDate}
+                  className="w-full"
+                />
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input checked={halfDay} name="halfDay" onChange={(e) => setHalfDay(e.target.checked)} type="checkbox" className="rounded" /> Half day
+              <label className="flex items-center gap-2 text-sm text-[var(--mnx-text)]">
+                <MnxInput
+                  checked={halfDay}
+                  name="halfDay"
+                  onChange={(e) => setHalfDay(e.target.checked)}
+                  type="checkbox"
+                  className="rounded"
+                />{" "}
+                Half day
               </label>
               <Input
                 type="text"
@@ -162,16 +219,20 @@ export function LeavesClient({
               />
             </div>
             <div className="flex gap-2">
-              <button
+              <MnxAction
                 type="submit"
                 disabled={loading}
-                className="rounded-lg bg-indigo-600 px-4 py-1.5 text-sm text-white disabled:opacity-50"
+                className="rounded-lg bg-[var(--mnx-info-bg)] px-4 py-1.5 text-sm text-[var(--mnx-text)] disabled:opacity-50"
               >
                 Submit
-              </button>
-              <button type="button" onClick={() => setShowForm(false)} className="rounded-lg border px-4 py-1.5 text-sm">
+              </MnxAction>
+              <MnxAction
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="rounded-lg border px-4 py-1.5 text-sm"
+              >
                 Cancel
-              </button>
+              </MnxAction>
             </div>
           </form>
         )}
@@ -186,7 +247,11 @@ export function LeavesClient({
           </DataTableHeader>
           <DataTableBody>
             {myRequests.length === 0 ? (
-              <DataTableEmpty colSpan={6} message="No requests." className="py-6" />
+              <DataTableEmpty
+                colSpan={6}
+                message="No requests."
+                className="py-6"
+              />
             ) : (
               myRequests.map((r) => (
                 <DataTableRow key={r.id}>
@@ -197,7 +262,9 @@ export function LeavesClient({
                   <DataTableCell>
                     <Badge className={STATUS_COLOR[r.status]}>{r.status}</Badge>
                   </DataTableCell>
-                  <DataTableCell className="text-gray-400">{r.notes ?? "-"}</DataTableCell>
+                  <DataTableCell className="text-[var(--mnx-muted)]">
+                    {r.notes ?? "-"}
+                  </DataTableCell>
                 </DataTableRow>
               ))
             )}
@@ -206,9 +273,11 @@ export function LeavesClient({
       </div>
 
       {canApprove && pendingApprovals.length > 0 && (
-        <div className="space-y-0 rounded-xl border border-gray-200 bg-white">
+        <div className="space-y-0 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]">
           <DataTableToolbar className="justify-start">
-            <h2 className="monolith-h2 text-gray-900">Pending Approvals</h2>
+            <h2 className="mnx-title-2 text-[var(--mnx-text)]">
+              Pending Approvals
+            </h2>
           </DataTableToolbar>
           <DataTable className="rounded-none border-0">
             <DataTableHeader>
@@ -221,29 +290,35 @@ export function LeavesClient({
             <DataTableBody>
               {pendingApprovals.map((r) => {
                 const days =
-                  Math.ceil((new Date(r.toDate).getTime() - new Date(r.fromDate).getTime()) / 86400000) + 1;
+                  Math.ceil(
+                    (new Date(r.toDate).getTime() -
+                      new Date(r.fromDate).getTime()) /
+                      86400000,
+                  ) + 1;
 
                 return (
                   <DataTableRow key={r.id}>
-                    <DataTableCell className="font-medium text-gray-900">{r.user.name}</DataTableCell>
+                    <DataTableCell className="font-medium text-[var(--mnx-text)]">
+                      {r.user.name}
+                    </DataTableCell>
                     <DataTableCell>{r.leaveType.name}</DataTableCell>
                     <DataTableCell>{fmtDate(r.fromDate)}</DataTableCell>
                     <DataTableCell>{fmtDate(r.toDate)}</DataTableCell>
                     <DataTableCell>{r.halfDay ? "0.5" : days}</DataTableCell>
                     <DataTableCell>
                       <div className="flex gap-2">
-                        <button
+                        <MnxAction
                           onClick={() => decide(r.id, "approved")}
-                          className="rounded bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700"
+                          className="rounded bg-[var(--mnx-success-bg)] px-2 py-1 text-xs text-[var(--mnx-text)] hover:bg-[var(--mnx-success-bg)]"
                         >
                           Approve
-                        </button>
-                        <button
+                        </MnxAction>
+                        <MnxAction
                           onClick={() => decide(r.id, "rejected")}
-                          className="rounded bg-red-500 px-2 py-1 text-xs text-white hover:bg-red-600"
+                          className="rounded bg-[var(--mnx-danger-bg)] px-2 py-1 text-xs text-[var(--mnx-text)] hover:bg-[var(--mnx-danger-bg)]"
                         >
                           Reject
-                        </button>
+                        </MnxAction>
                       </div>
                     </DataTableCell>
                   </DataTableRow>

@@ -1,10 +1,20 @@
 "use client";
 
+import { PeopleControlInput as MnxInput } from "@/components/monolith/people-controls";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Search } from "@carbon/icons-react";
-import {DataTable,DataTableBody,DataTableCell,DataTableHead,DataTableHeader,DataTableRow,DataTableEmpty,} from "@/components/data-table";
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+  DataTableEmpty,
+} from "@/components/monolith/people-data-table";
 import { RECRUIT_APP_STAGES } from "@/modules/recruit/types";
 
 type Application = {
@@ -19,19 +29,32 @@ type Application = {
 
 const STAGE_COLORS: Record<string, string> = {
   NEW: "bg-mono-soft text-mono-muted border-mono-border",
-  SCREENING: "bg-[#818cf8]/10 text-[#818cf8] border-[#818cf8]/20",
-  PHONE_SCREEN: "bg-[#818cf8]/10 text-[#818cf8] border-[#818cf8]/20",
-  SHORTLISTED: "bg-[#F9D972]/10 text-[#F9D972] border-[#F9D972]/20",
-  ASSESSMENT: "bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20",
-  INTERVIEW_1: "bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20",
-  INTERVIEW_2: "bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20",
-  INTERVIEW_3: "bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20",
-  FINAL_INTERVIEW: "bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20",
-  OFFER_APPROVAL: "bg-[#c084fc]/10 text-[#c084fc] border-[#c084fc]/20",
-  OFFER_EXTENDED: "bg-[#c084fc]/10 text-[#c084fc] border-[#c084fc]/20",
-  OFFER_ACCEPTED: "bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20",
-  OFFER_DECLINED: "bg-[#D88700]/10 text-[#D88700] border-[#D88700]/20",
-  HIRED: "bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20",
+  SCREENING:
+    "bg-[var(--mnx-info)]/10 text-[var(--mnx-info)] border-[var(--mnx-info)]/20",
+  PHONE_SCREEN:
+    "bg-[var(--mnx-info)]/10 text-[var(--mnx-info)] border-[var(--mnx-info)]/20",
+  SHORTLISTED:
+    "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] border-[var(--mnx-accent)]/20",
+  ASSESSMENT:
+    "bg-[var(--mnx-warning)]/10 text-[var(--mnx-warning)] border-[var(--mnx-warning)]/20",
+  INTERVIEW_1:
+    "bg-[var(--mnx-warning)]/10 text-[var(--mnx-warning)] border-[var(--mnx-warning)]/20",
+  INTERVIEW_2:
+    "bg-[var(--mnx-warning)]/10 text-[var(--mnx-warning)] border-[var(--mnx-warning)]/20",
+  INTERVIEW_3:
+    "bg-[var(--mnx-warning)]/10 text-[var(--mnx-warning)] border-[var(--mnx-warning)]/20",
+  FINAL_INTERVIEW:
+    "bg-[var(--mnx-warning)]/10 text-[var(--mnx-warning)] border-[var(--mnx-warning)]/20",
+  OFFER_APPROVAL:
+    "bg-[var(--mnx-accent-soft)]/10 text-[var(--mnx-accent-soft)] border-[var(--mnx-accent-soft)]/20",
+  OFFER_EXTENDED:
+    "bg-[var(--mnx-accent-soft)]/10 text-[var(--mnx-accent-soft)] border-[var(--mnx-accent-soft)]/20",
+  OFFER_ACCEPTED:
+    "bg-[var(--mnx-success)]/10 text-[var(--mnx-success)] border-[var(--mnx-success)]/20",
+  OFFER_DECLINED:
+    "bg-[var(--mnx-warning)]/10 text-[var(--mnx-warning)] border-[var(--mnx-warning)]/20",
+  HIRED:
+    "bg-[var(--mnx-success)]/10 text-[var(--mnx-success)] border-[var(--mnx-success)]/20",
   REJECTED: "bg-mono-soft text-mono-muted border-mono-border",
   WITHDRAWN: "bg-mono-soft text-mono-muted border-mono-border",
 };
@@ -62,14 +85,19 @@ export default function ApplicationsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="monolith-h1 text-mono-text">Applications</h1>
-        <p className="text-sm text-mono-muted">All applications across open roles</p>
+        <h1 className="mnx-title-1 text-mono-text">Applications</h1>
+        <p className="text-sm text-mono-muted">
+          All applications across open roles
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-48">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted" />
-          <input
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-mono-muted"
+          />
+          <MnxInput
             type="search"
             placeholder="Search candidates or roles..."
             value={search}
@@ -84,7 +112,9 @@ export default function ApplicationsPage() {
         >
           <option value="">All Stages</option>
           {RECRUIT_APP_STAGES.map((s) => (
-            <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
+            <option key={s} value={s}>
+              {s.replace(/_/g, " ")}
+            </option>
           ))}
         </NativeSelect>
       </div>
@@ -112,21 +142,27 @@ export default function ApplicationsPage() {
                   <DataTableCell>
                     <Link
                       href={`/hrms/recruit/employer/applications/${app.id}`}
-                      className="font-medium text-mono-text hover:text-[#F9D972]"
+                      className="font-medium text-mono-text hover:text-[var(--mnx-accent)]"
                     >
                       {app.candidate?.fullName ?? "—"}
                     </Link>
                     {app.candidate?.email && (
-                      <p className="monolith-label mt-0.5">{app.candidate.email}</p>
+                      <p className="mnx-dashboard-spec-label mt-0.5">
+                        {app.candidate.email}
+                      </p>
                     )}
                   </DataTableCell>
                   <DataTableCell className="text-mono-muted">
                     {app.jobOpening?.title ?? "—"}
                     {app.jobOpening?.requisitionNumber && (
-                      <p className="monolith-label mt-0.5">{app.jobOpening.requisitionNumber}</p>
+                      <p className="mnx-dashboard-spec-label mt-0.5">
+                        {app.jobOpening.requisitionNumber}
+                      </p>
                     )}
                   </DataTableCell>
-                  <DataTableCell className="monolith-label">{app.applicationNumber}</DataTableCell>
+                  <DataTableCell className="mnx-dashboard-spec-label">
+                    {app.applicationNumber}
+                  </DataTableCell>
                   <DataTableCell>
                     <span
                       className={`inline-flex rounded-lg border px-2 py-0.5 text-xs font-medium ${STAGE_COLORS[app.stage] ?? ""}`}

@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  PeopleControlButton as MnxAction,
+  PeopleControlInput as MnxInput,
+  PeopleControlTextarea as MnxTextarea,
+} from "@/components/monolith/people-controls";
+
 import { useState, useEffect } from "react";
 
 type Settings = {
@@ -70,7 +76,9 @@ export default function RecruitSettingsPage() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load settings");
+          setError(
+            err instanceof Error ? err.message : "Failed to load settings",
+          );
         }
       } finally {
         if (!cancelled) {
@@ -109,32 +117,41 @@ export default function RecruitSettingsPage() {
     setSaving(false);
   };
 
-  if (loading) return <p className="text-sm text-mono-muted">Loading settings...</p>;
+  if (loading)
+    return <p className="text-sm text-mono-muted">Loading settings...</p>;
 
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="monolith-h1 text-mono-text">Recruit Settings</h1>
-        <p className="text-sm text-mono-muted">Organisation-wide configuration for the Recruit module</p>
+        <h1 className="mnx-title-1 text-mono-text">Recruit Settings</h1>
+        <p className="text-sm text-mono-muted">
+          Organisation-wide configuration for the Recruit module
+        </p>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
-        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+        <div className="mnx-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
           <h3 className="text-mono-text">Number Formats</h3>
           <div className="space-y-3">
             <div>
-              <label className="monolith-label mb-1 block">Candidate Number Format</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Candidate Number Format
+              </label>
+              <MnxInput
                 value={settings.candidateNumberFormat ?? ""}
                 onChange={(e) => set("candidateNumberFormat", e.target.value)}
                 className="w-full rounded-xl px-3 py-2 text-sm font-mono"
                 placeholder="CAND-{YYYY}-{SEQ}"
               />
-              <p className="mt-1 text-xs text-mono-muted">Use {"{YYYY}"} for year, {"{SEQ}"} for padded sequence</p>
+              <p className="mt-1 text-xs text-mono-muted">
+                Use {"{YYYY}"} for year, {"{SEQ}"} for padded sequence
+              </p>
             </div>
             <div>
-              <label className="monolith-label mb-1 block">Application Number Format</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Application Number Format
+              </label>
+              <MnxInput
                 value={settings.applicationNumberFormat ?? ""}
                 onChange={(e) => set("applicationNumberFormat", e.target.value)}
                 className="w-full rounded-xl px-3 py-2 text-sm font-mono"
@@ -144,12 +161,14 @@ export default function RecruitSettingsPage() {
           </div>
         </div>
 
-        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+        <div className="mnx-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
           <h3 className="text-mono-text">Data Retention & Privacy</h3>
           <div className="space-y-3">
             <div>
-              <label className="monolith-label mb-1 block">Candidate Data Retention (days)</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Candidate Data Retention (days)
+              </label>
+              <MnxInput
                 type="number"
                 min={1}
                 max={3650}
@@ -159,22 +178,32 @@ export default function RecruitSettingsPage() {
               />
             </div>
             <div>
-              <label className="monolith-label mb-1 block">Max Resume File Size (bytes)</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Max Resume File Size (bytes)
+              </label>
+              <MnxInput
                 type="number"
                 min={1048576}
                 max={52428800}
                 value={settings.maxResumeSizeBytes ?? 10485760}
-                onChange={(e) => set("maxResumeSizeBytes", Number(e.target.value))}
+                onChange={(e) =>
+                  set("maxResumeSizeBytes", Number(e.target.value))
+                }
                 className="w-full rounded-xl px-3 py-2 text-sm"
               />
               <p className="mt-1 text-xs text-mono-muted">
-                Current: {Math.round((settings.maxResumeSizeBytes ?? 10485760) / 1048576)} MB
+                Current:{" "}
+                {Math.round(
+                  (settings.maxResumeSizeBytes ?? 10485760) / 1048576,
+                )}{" "}
+                MB
               </p>
             </div>
             <div>
-              <label className="monolith-label mb-1 block">Private Share Expiry (days)</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Private Share Expiry (days)
+              </label>
+              <MnxInput
                 type="number"
                 min={1}
                 max={90}
@@ -184,8 +213,10 @@ export default function RecruitSettingsPage() {
               />
             </div>
             <div>
-              <label className="monolith-label mb-2 block">Candidate Consent Text</label>
-              <textarea
+              <label className="mnx-dashboard-spec-label mb-2 block">
+                Candidate Consent Text
+              </label>
+              <MnxTextarea
                 rows={4}
                 value={settings.consentText ?? ""}
                 onChange={(e) => set("consentText", e.target.value || null)}
@@ -196,12 +227,21 @@ export default function RecruitSettingsPage() {
           </div>
         </div>
 
-        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+        <div className="mnx-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
           <h3 className="text-mono-text">Duplicate Detection</h3>
           <div className="space-y-2">
-            {(["duplicateCheckEmail", "duplicateCheckPhone", "duplicateCheckResumeHash"] as const).map((key) => (
-              <label key={key} className="flex items-center gap-2 text-sm text-mono-text">
-                <input
+            {(
+              [
+                "duplicateCheckEmail",
+                "duplicateCheckPhone",
+                "duplicateCheckResumeHash",
+              ] as const
+            ).map((key) => (
+              <label
+                key={key}
+                className="flex items-center gap-2 text-sm text-mono-text"
+              >
+                <MnxInput
                   type="checkbox"
                   checked={settings[key] ?? false}
                   onChange={(e) => set(key, e.target.checked)}
@@ -209,19 +249,22 @@ export default function RecruitSettingsPage() {
                 />
                 {key === "duplicateCheckEmail" && "Check by email address"}
                 {key === "duplicateCheckPhone" && "Check by phone number"}
-                {key === "duplicateCheckResumeHash" && "Check by resume content hash"}
+                {key === "duplicateCheckResumeHash" &&
+                  "Check by resume content hash"}
               </label>
             ))}
           </div>
         </div>
 
-        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+        <div className="mnx-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
           <h3 className="text-mono-text">AI & Automation</h3>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="monolith-label mb-1 block">AI Provider</label>
-                <input
+                <label className="mnx-dashboard-spec-label mb-1 block">
+                  AI Provider
+                </label>
+                <MnxInput
                   value={settings.aiProvider ?? ""}
                   onChange={(e) => set("aiProvider", e.target.value)}
                   className="w-full rounded-xl px-3 py-2 text-sm"
@@ -229,8 +272,10 @@ export default function RecruitSettingsPage() {
                 />
               </div>
               <div>
-                <label className="monolith-label mb-1 block">AI Model</label>
-                <input
+                <label className="mnx-dashboard-spec-label mb-1 block">
+                  AI Model
+                </label>
+                <MnxInput
                   value={settings.aiModel ?? ""}
                   onChange={(e) => set("aiModel", e.target.value)}
                   className="w-full rounded-xl px-3 py-2 text-sm"
@@ -239,23 +284,27 @@ export default function RecruitSettingsPage() {
               </div>
             </div>
             <div>
-              <label className="monolith-label mb-1 block">Automation Batch Size</label>
-              <input
+              <label className="mnx-dashboard-spec-label mb-1 block">
+                Automation Batch Size
+              </label>
+              <MnxInput
                 type="number"
                 min={1}
                 max={500}
                 value={settings.automationBatchSize ?? 50}
-                onChange={(e) => set("automationBatchSize", Number(e.target.value))}
+                onChange={(e) =>
+                  set("automationBatchSize", Number(e.target.value))
+                }
                 className="w-full rounded-xl px-3 py-2 text-sm"
               />
             </div>
           </div>
         </div>
 
-        <div className="monolith-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
+        <div className="mnx-form-section space-y-4 rounded-xl border border-mono-border bg-mono-card p-6">
           <h3 className="text-mono-text">Feature Flags</h3>
           <label className="flex items-center gap-2 text-sm text-mono-text">
-            <input
+            <MnxInput
               type="checkbox"
               checked={settings.jobSeekerEnabled ?? true}
               onChange={(e) => set("jobSeekerEnabled", e.target.checked)}
@@ -266,20 +315,22 @@ export default function RecruitSettingsPage() {
         </div>
 
         {error && (
-          <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400">
+          <p className="rounded-xl border border-[var(--mnx-danger)] bg-[var(--mnx-danger-bg)] px-4 py-3 text-sm text-[var(--mnx-danger)] border-[var(--mnx-danger)] bg-[var(--mnx-danger-bg)]/30 text-[var(--mnx-danger)]">
             {error}
           </p>
         )}
 
         <div className="flex items-center gap-3">
-          <button
+          <MnxAction
             type="submit"
             disabled={saving}
-            className="rounded-xl bg-[#F9D972] px-6 py-2 text-sm font-medium uppercase tracking-wide text-white transition hover:bg-[#E8C85D] disabled:opacity-50"
+            className="rounded-xl bg-[var(--mnx-accent)] px-6 py-2 text-sm font-medium uppercase tracking-wide text-[var(--mnx-text)] transition hover:bg-[var(--mnx-accent-soft)] disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save Settings"}
-          </button>
-          {saved && <span className="text-sm text-[#22c55e]">Saved!</span>}
+          </MnxAction>
+          {saved && (
+            <span className="text-sm text-[var(--mnx-success)]">Saved!</span>
+          )}
         </div>
       </form>
     </div>

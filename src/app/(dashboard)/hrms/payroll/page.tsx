@@ -13,7 +13,7 @@ export default async function PayrollPage() {
   const orgId = session.user.orgId;
   if (!orgId) {
     return (
-      <div className="p-8 text-center text-red-400">
+      <div className="p-8 text-center text-[var(--mnx-danger)]">
         <ShieldAlert className="size-12 mx-auto mb-4" />
         <h2 className="text-xl font-bold">Configuration Error</h2>
         <p className="text-sm mt-1">Missing organisation context.</p>
@@ -28,7 +28,7 @@ export default async function PayrollPage() {
   ]);
 
   // Convert Prisma Decimals to Numbers for client-side serialization compatibility
-  const serializedBatches = batches.map(batch => ({
+  const serializedBatches = batches.map((batch) => ({
     ...batch,
     totalAmount: Number(batch.totalAmount),
     month: batch.month.toISOString(),
@@ -36,25 +36,37 @@ export default async function PayrollPage() {
     updatedAt: batch.updatedAt.toISOString(),
   }));
 
-  const settingsConfigured = !!(settings?.defaultSalaryExpenseAccountId && settings?.defaultSalaryPayableAccountId && settings?.defaultBankAccountId);
+  const settingsConfigured = !!(
+    settings?.defaultSalaryExpenseAccountId &&
+    settings?.defaultSalaryPayableAccountId &&
+    settings?.defaultBankAccountId
+  );
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-mono-border/20 pb-5">
         <div>
-          <h2 className="monolith-h1 text-white">HRMS Payroll Batches</h2>
-          <p className="text-slate-400 text-xs mt-1">
-            Accrue and process monthly employee salaries, posting balanced ledger journal entries automatically.
+          <h2 className="mnx-title-1 text-[var(--mnx-text)]">
+            HRMS Payroll Batches
+          </h2>
+          <p className="text-[var(--mnx-muted)] text-xs mt-1">
+            Accrue and process monthly employee salaries, posting balanced
+            ledger journal entries automatically.
           </p>
         </div>
       </div>
 
       {!settingsConfigured && (
-        <div className="p-4 rounded-xl border border-orange-500/30 bg-orange-500/5 text-orange-400 text-xs flex gap-3 items-start monolith-card monolith-accent-warning">
+        <div className="p-4 rounded-xl border border-[var(--mnx-warning)]/30 bg-[var(--mnx-warning-bg)]/5 text-[var(--mnx-warning)] text-xs flex gap-3 items-start mnx-panel mnx-accent-warning">
           <ShieldAlert className="size-5 shrink-0" />
           <div>
-            <span className="font-bold uppercase tracking-wider block mb-1">Accounting Config Required</span>
-            To finalize or pay payroll batches, configure the default accounts (Salary Expense, Salary Payable, and Bank) in <span className="font-bold underline">Accounting Settings</span> first.
+            <span className="font-bold uppercase tracking-wider block mb-1">
+              Accounting Config Required
+            </span>
+            To finalize or pay payroll batches, configure the default accounts
+            (Salary Expense, Salary Payable, and Bank) in{" "}
+            <span className="font-bold underline">Accounting Settings</span>{" "}
+            first.
           </div>
         </div>
       )}

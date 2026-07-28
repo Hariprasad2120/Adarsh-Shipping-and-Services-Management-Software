@@ -1,9 +1,33 @@
 "use client";
+
+import {
+  PeopleControlButton as MnxAction,
+  PeopleControlInput as MnxInput,
+  PeopleControlTextarea as MnxTextarea,
+  PeopleControlTable as MnxTable,
+} from "@/components/monolith/people-controls";
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect */
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import DOMPurify from "isomorphic-dompurify";
-import {AlertTriangle,CheckCircle2,Eye,FileCheck,FilePenLine,ImagePlus,Loader2,Mail,Plus,RefreshCw,Save,Send,Shield,Trash,Upload,WandSparkles,} from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Eye,
+  FileCheck,
+  FilePenLine,
+  ImagePlus,
+  Loader2,
+  Mail,
+  Plus,
+  RefreshCw,
+  Save,
+  Send,
+  Shield,
+  Trash,
+  Upload,
+  WandSparkles,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/monolith/button";
 import { Card } from "@/components/monolith/card";
@@ -13,7 +37,15 @@ import { NativeSelect } from "@/components/monolith/native-select";
 type TemplateField = {
   key: string;
   label: string;
-  inputType: "text" | "textarea" | "date" | "number" | "currency" | "email" | "select" | "image";
+  inputType:
+    | "text"
+    | "textarea"
+    | "date"
+    | "number"
+    | "currency"
+    | "email"
+    | "select"
+    | "image";
   required: boolean;
   defaultSource: string;
   placeholder?: string;
@@ -76,12 +108,17 @@ function RichTemplateEditor({
   };
 
   const insertPlaceholder = () => {
-    const choice = window.prompt("Enter placeholder key to insert", variables[0] ?? "employee_name");
+    const choice = window.prompt(
+      "Enter placeholder key to insert",
+      variables[0] ?? "employee_name",
+    );
     if (!choice) return;
     runCommand("insertText", `{{${choice}}}`);
   };
 
-  const handleImageSelection = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelection = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
     const uploadedPath = await onUploadImage(file);
@@ -94,16 +131,62 @@ function RichTemplateEditor({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-mono-border bg-mono-soft p-3">
-        <Button type="button" variant="outline" size="sm" onClick={() => runCommand("bold")}>Bold</Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => runCommand("italic")}>Italic</Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => runCommand("formatBlock", "<h2>")}>Heading</Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => runCommand("insertUnorderedList")}>Bullets</Button>
-        <Button type="button" variant="outline" size="sm" onClick={insertPlaceholder}>Placeholder</Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => imageInputRef.current?.click()}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => runCommand("bold")}
+        >
+          Bold
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => runCommand("italic")}
+        >
+          Italic
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => runCommand("formatBlock", "<h2>")}
+        >
+          Heading
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => runCommand("insertUnorderedList")}
+        >
+          Bullets
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={insertPlaceholder}
+        >
+          Placeholder
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => imageInputRef.current?.click()}
+        >
           <ImagePlus className="size-4" />
           <span>Image</span>
         </Button>
-        <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelection} />
+        <MnxInput
+          ref={imageInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleImageSelection}
+        />
       </div>
 
       <div
@@ -118,7 +201,9 @@ function RichTemplateEditor({
 }
 
 export function LettersView() {
-  const [activeTab, setActiveTab] = useState<"register" | "inbox" | "templates" | "settings">("register");
+  const [activeTab, setActiveTab] = useState<
+    "register" | "inbox" | "templates" | "settings"
+  >("register");
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [templates, setTemplates] = useState<TemplateRecord[]>([]);
@@ -128,11 +213,14 @@ export function LettersView() {
   const [showPrepareModal, setShowPrepareModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateRecord | null>(null);
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<TemplateRecord | null>(null);
   const [editorHtml, setEditorHtml] = useState("");
   const [wizardUserId, setWizardUserId] = useState("");
   const [wizardTemplateId, setWizardTemplateId] = useState("");
-  const [wizardDetails, setWizardDetails] = useState<Record<string, string>>({});
+  const [wizardDetails, setWizardDetails] = useState<Record<string, string>>(
+    {},
+  );
   const [wizardLoading, setWizardLoading] = useState(false);
   const [templateUploading, setTemplateUploading] = useState(false);
   const templateUploadInputRef = useRef<HTMLInputElement | null>(null);
@@ -148,7 +236,7 @@ export function LettersView() {
     signatoryDesignation: "",
     signatorySignatureUrl: "",
     companySealUrl: "",
-    emailTemplate: ""
+    emailTemplate: "",
   });
 
   const fetchData = useCallback(async () => {
@@ -162,13 +250,14 @@ export function LettersView() {
         fetch("/api/hrms/letters/settings"),
       ]);
 
-      const [meJson, reqJson, tempJson, empJson, settingsJson] = await Promise.all([
-        meRes.json(),
-        reqRes.json(),
-        tempRes.json(),
-        empRes.json(),
-        settingsRes.json(),
-      ]);
+      const [meJson, reqJson, tempJson, empJson, settingsJson] =
+        await Promise.all([
+          meRes.json(),
+          reqRes.json(),
+          tempRes.json(),
+          empRes.json(),
+          settingsRes.json(),
+        ]);
 
       if (meJson.ok) {
         setUserPermissions(meJson.data.permissions || []);
@@ -178,7 +267,13 @@ export function LettersView() {
         setTemplates(tempJson.data);
         setSelectedTemplate((current) => current ?? tempJson.data[0] ?? null);
         if (tempJson.data.length > 0) {
-          setEditorHtml((current) => current || tempJson.data[0].editorDocument?.html || tempJson.data[0].previewHtml || "");
+          setEditorHtml(
+            (current) =>
+              current ||
+              tempJson.data[0].editorDocument?.html ||
+              tempJson.data[0].previewHtml ||
+              "",
+          );
         }
       }
       if (empJson.ok) setEmployees(empJson.data);
@@ -186,8 +281,10 @@ export function LettersView() {
         setSettingsForm({
           numberingPattern: settingsJson.data.numberingPattern || "",
           probationDaysDefault: settingsJson.data.probationDaysDefault || 90,
-          noticePeriodDaysDefault: settingsJson.data.noticePeriodDaysDefault || 30,
-          letterValidityDaysDefault: settingsJson.data.letterValidityDaysDefault || 7,
+          noticePeriodDaysDefault:
+            settingsJson.data.noticePeriodDaysDefault || 30,
+          letterValidityDaysDefault:
+            settingsJson.data.letterValidityDaysDefault || 7,
           legalJurisdiction: settingsJson.data.legalJurisdiction || "",
           complianceVersion: settingsJson.data.complianceVersion || "",
           signatoryName: settingsJson.data.signatoryName || "",
@@ -208,26 +305,34 @@ export function LettersView() {
     fetchData();
   }, [fetchData]);
 
-  const isHR = userPermissions.includes("hrms.letters.settings") || userPermissions.includes("hrms.letters.manage");
+  const isHR =
+    userPermissions.includes("hrms.letters.settings") ||
+    userPermissions.includes("hrms.letters.manage");
   const isLegal = userPermissions.includes("hrms.letters.legal_review");
   const isManagement = userPermissions.includes("hrms.letters.mgmt_approve");
 
-  const inboxRequests = requests.filter((request) =>
-    (isHR && request.status === "HR_REVIEW") ||
-    (isLegal && request.status === "LEGAL_REVIEW") ||
-    (isManagement && request.status === "MGMT_APPROVAL") ||
-    (isHR && request.status === "READY_TO_ISSUE")
+  const inboxRequests = requests.filter(
+    (request) =>
+      (isHR && request.status === "HR_REVIEW") ||
+      (isLegal && request.status === "LEGAL_REVIEW") ||
+      (isManagement && request.status === "MGMT_APPROVAL") ||
+      (isHR && request.status === "READY_TO_ISSUE"),
   );
 
-  const activeTemplate = templates.find((template) => template.id === wizardTemplateId) || selectedTemplate;
+  const activeTemplate =
+    templates.find((template) => template.id === wizardTemplateId) ||
+    selectedTemplate;
 
   const loadTemplateDefaults = async (userId: string, templateId: string) => {
     if (!userId || !templateId) return;
     setWizardLoading(true);
     try {
-      const response = await fetch(`/api/hrms/letters?type=prepopulate&userId=${userId}&templateId=${templateId}`);
+      const response = await fetch(
+        `/api/hrms/letters?type=prepopulate&userId=${userId}&templateId=${templateId}`,
+      );
       const json = await response.json();
-      if (!json.ok) throw new Error(json.error?.message || "Failed to load defaults");
+      if (!json.ok)
+        throw new Error(json.error?.message || "Failed to load defaults");
       setWizardDetails(json.data || {});
     } catch (error: any) {
       toast.error(error.message || "Failed to load prefilled template fields");
@@ -250,7 +355,8 @@ export function LettersView() {
         }),
       });
       const json = await response.json();
-      if (!json.ok) throw new Error(json.error?.message || "Failed to create draft");
+      if (!json.ok)
+        throw new Error(json.error?.message || "Failed to create draft");
 
       toast.success("Letter draft created");
       setShowPrepareModal(false);
@@ -265,7 +371,11 @@ export function LettersView() {
     }
   };
 
-  const handleWorkflowTransition = async (requestId: string, action: string, notes?: string) => {
+  const handleWorkflowTransition = async (
+    requestId: string,
+    action: string,
+    notes?: string,
+  ) => {
     setSubmitting(true);
     try {
       const response = await fetch(`/api/hrms/letters/${requestId}/action`, {
@@ -289,7 +399,9 @@ export function LettersView() {
     if (!window.confirm("Delete this draft?")) return;
     setSubmitting(true);
     try {
-      const response = await fetch(`/api/hrms/letters/${requestId}`, { method: "DELETE" });
+      const response = await fetch(`/api/hrms/letters/${requestId}`, {
+        method: "DELETE",
+      });
       const json = await response.json();
       if (!json.ok) throw new Error(json.error?.message || "Delete failed");
       toast.success("Draft deleted");
@@ -315,12 +427,15 @@ export function LettersView() {
         }),
       });
       const json = await response.json();
-      if (!json.ok) throw new Error(json.error?.message || "Failed to save template");
+      if (!json.ok)
+        throw new Error(json.error?.message || "Failed to save template");
       toast.success("Template revision saved. Legal review reset.");
       await fetchData();
       const refreshed = json.data;
       setSelectedTemplate(refreshed);
-      setEditorHtml(refreshed.editorDocument?.html || refreshed.previewHtml || "");
+      setEditorHtml(
+        refreshed.editorDocument?.html || refreshed.previewHtml || "",
+      );
     } catch (error: any) {
       toast.error(error.message || "Failed to save template");
     } finally {
@@ -366,16 +481,22 @@ export function LettersView() {
     }
   };
 
-  const handleUploadTemplateDocx = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadTemplateDocx = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setTemplateUploading(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const response = await fetch("/api/hrms/letters/templates/upload", { method: "POST", body: formData });
+      const response = await fetch("/api/hrms/letters/templates/upload", {
+        method: "POST",
+        body: formData,
+      });
       const json = await response.json();
-      if (!json.ok) throw new Error(json.error?.message || "Template upload failed");
+      if (!json.ok)
+        throw new Error(json.error?.message || "Template upload failed");
       toast.success("DOCX template uploaded");
       fetchData();
     } catch (error: any) {
@@ -389,7 +510,10 @@ export function LettersView() {
   const uploadEditorImage = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    const response = await fetch("/api/hrms/letters/assets/upload", { method: "POST", body: formData });
+    const response = await fetch("/api/hrms/letters/assets/upload", {
+      method: "POST",
+      body: formData,
+    });
     const json = await response.json();
     if (!json.ok) {
       toast.error(json.error?.message || "Image upload failed");
@@ -408,7 +532,8 @@ export function LettersView() {
         body: JSON.stringify(settingsForm),
       });
       const json = await response.json();
-      if (!json.ok) throw new Error(json.error?.message || "Failed to save settings");
+      if (!json.ok)
+        throw new Error(json.error?.message || "Failed to save settings");
       toast.success("Letter settings saved");
       fetchData();
     } catch (error: any) {
@@ -422,7 +547,7 @@ export function LettersView() {
     return (
       <div className="flex min-h-[24rem] flex-col items-center justify-center gap-3 text-mono-muted">
         <Loader2 className="size-8 animate-spin text-mono-accent" />
-        <p className="monolith-label">Loading HR Letters</p>
+        <p className="mnx-dashboard-spec-label">Loading HR Letters</p>
       </div>
     );
   }
@@ -432,13 +557,16 @@ export function LettersView() {
       <Card className="rounded-[24px] border border-mono-border bg-mono-card p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <span className="monolith-icon-badge">
+            <span className="mnx-icon-badge">
               <Mail className="size-5" />
             </span>
             <div>
-              <h1 className="monolith-h1 font-semibold text-mono-text">HR Letters & Contracts</h1>
+              <h1 className="mnx-title-1 font-semibold text-mono-text">
+                HR Letters & Contracts
+              </h1>
               <p className="mt-2 text-sm text-mono-muted">
-                DOCX-based templates, guided drafting, approvals, and issuance in one workspace.
+                DOCX-based templates, guided drafting, approvals, and issuance
+                in one workspace.
               </p>
             </div>
           </div>
@@ -450,7 +578,12 @@ export function LettersView() {
                 <span>Prepare Letter</span>
               </Button>
             ) : null}
-            <Button type="button" variant="outline" mode="icon" onClick={fetchData}>
+            <Button
+              type="button"
+              variant="outline"
+              mode="icon"
+              onClick={fetchData}
+            >
               <RefreshCw className="size-4" />
             </Button>
           </div>
@@ -458,8 +591,10 @@ export function LettersView() {
       </Card>
 
       <div className="flex flex-wrap gap-5 border-b border-mono-border">
-        {TABS.filter((tab) => (tab.key === "templates" || tab.key === "settings" ? isHR : true)).map((tab) => (
-          <button
+        {TABS.filter((tab) =>
+          tab.key === "templates" || tab.key === "settings" ? isHR : true,
+        ).map((tab) => (
+          <MnxAction
             key={tab.key}
             type="button"
             onClick={() => setActiveTab(tab.key)}
@@ -470,14 +605,14 @@ export function LettersView() {
             }`}
           >
             {tab.label}
-          </button>
+          </MnxAction>
         ))}
       </div>
 
       {activeTab === "register" ? (
         <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
           <div className="overflow-x-auto">
-            <table className="monolith-table">
+            <MnxTable className="mnx-workspace-table">
               <thead>
                 <tr>
                   <th className="px-6 py-3">Employee</th>
@@ -491,45 +626,84 @@ export function LettersView() {
               <tbody>
                 {requests.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-10 text-center text-sm text-mono-muted">No letters generated yet.</td>
+                    <td
+                      colSpan={6}
+                      className="py-10 text-center text-sm text-mono-muted"
+                    >
+                      No letters generated yet.
+                    </td>
                   </tr>
-                ) : requests.map((request) => {
-                  const template = templates.find((item) => item.id === request.templateId);
-                  return (
-                    <tr key={request.id}>
-                      <td className="px-6 py-4 font-medium text-mono-text">{request.user.name}</td>
-                      <td className="px-6 py-4 text-mono-text">{template?.name || "Letter"}</td>
-                      <td className="px-6 py-4 monolith-numeric">{request.letterNumber}</td>
-                      <td className="px-6 py-4 text-mono-muted">{new Date(request.createdAt).toLocaleString()}</td>
-                      <td className="px-6 py-4">
-                        <span className="rounded-full border border-mono-border bg-mono-soft px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-mono-text">
-                          {request.status.replace(/_/g, " ")}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex justify-end gap-2">
-                          <Button type="button" variant="outline" mode="icon" onClick={() => { setSelectedRequest(request); setShowViewModal(true); }}>
-                            <Eye className="size-4" />
-                          </Button>
-                          {request.status === "ISSUED" ? (
-                            <a href={`/verify/${request.id}`} target="_blank" rel="noreferrer" className="inline-flex">
-                              <Button type="button" variant="outline" mode="icon">
-                                <Shield className="size-4" />
-                              </Button>
-                            </a>
-                          ) : null}
-                          {isHR && request.status === "DRAFT" ? (
-                            <Button type="button" variant="outline" mode="icon" onClick={() => handleDeleteRequest(request.id)}>
-                              <Trash className="size-4" />
+                ) : (
+                  requests.map((request) => {
+                    const template = templates.find(
+                      (item) => item.id === request.templateId,
+                    );
+                    return (
+                      <tr key={request.id}>
+                        <td className="px-6 py-4 font-medium text-mono-text">
+                          {request.user.name}
+                        </td>
+                        <td className="px-6 py-4 text-mono-text">
+                          {template?.name || "Letter"}
+                        </td>
+                        <td className="px-6 py-4 mnx-numeric">
+                          {request.letterNumber}
+                        </td>
+                        <td className="px-6 py-4 text-mono-muted">
+                          {new Date(request.createdAt).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="rounded-full border border-mono-border bg-mono-soft px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-mono-text">
+                            {request.status.replace(/_/g, " ")}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              mode="icon"
+                              onClick={() => {
+                                setSelectedRequest(request);
+                                setShowViewModal(true);
+                              }}
+                            >
+                              <Eye className="size-4" />
                             </Button>
-                          ) : null}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                            {request.status === "ISSUED" ? (
+                              <a
+                                href={`/verify/${request.id}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex"
+                              >
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  mode="icon"
+                                >
+                                  <Shield className="size-4" />
+                                </Button>
+                              </a>
+                            ) : null}
+                            {isHR && request.status === "DRAFT" ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                mode="icon"
+                                onClick={() => handleDeleteRequest(request.id)}
+                              >
+                                <Trash className="size-4" />
+                              </Button>
+                            ) : null}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
-            </table>
+            </MnxTable>
           </div>
         </div>
       ) : null}
@@ -539,33 +713,91 @@ export function LettersView() {
           {inboxRequests.length === 0 ? (
             <Card className="rounded-2xl border border-dashed border-mono-border bg-mono-card p-10 text-center text-mono-muted">
               <CheckCircle2 className="mx-auto mb-3 size-10 text-mono-accent" />
-              <p className="text-sm">No letters are waiting for your approval.</p>
+              <p className="text-sm">
+                No letters are waiting for your approval.
+              </p>
             </Card>
-          ) : inboxRequests.map((request) => {
-            const template = templates.find((item) => item.id === request.templateId);
-            return (
-              <Card key={request.id} className="monolith-card monolith-accent rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="space-y-2">
-                    <p className="text-base font-semibold uppercase tracking-[0.05em] text-mono-text">{template?.name} for {request.user.name}</p>
-                    <p className="text-sm text-mono-muted">Stage: {request.status.replace(/_/g, " ")} | Created: {new Date(request.createdAt).toLocaleString()}</p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button type="button" variant="outline" onClick={() => { setSelectedRequest(request); setShowViewModal(true); }}>Review</Button>
-                    {isHR && request.status === "HR_REVIEW" ? <Button type="button" onClick={() => handleWorkflowTransition(request.id, "HR_APPROVE")}>Approve HR</Button> : null}
-                    {isLegal && request.status === "LEGAL_REVIEW" ? <Button type="button" onClick={() => handleWorkflowTransition(request.id, "LEGAL_APPROVE")}>Approve Legal</Button> : null}
-                    {isManagement && request.status === "MGMT_APPROVAL" ? <Button type="button" onClick={() => handleWorkflowTransition(request.id, "MGMT_APPROVE")}>Approve Mgmt</Button> : null}
-                    {isHR && request.status === "READY_TO_ISSUE" ? (
-                      <Button type="button" onClick={() => handleWorkflowTransition(request.id, "ISSUE")}>
-                        <Send className="size-4" />
-                        <span>Issue Document</span>
+          ) : (
+            inboxRequests.map((request) => {
+              const template = templates.find(
+                (item) => item.id === request.templateId,
+              );
+              return (
+                <Card
+                  key={request.id}
+                  className="mnx-panel mnx-accent-edge rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="space-y-2">
+                      <p className="text-base font-semibold uppercase tracking-[0.05em] text-mono-text">
+                        {template?.name} for {request.user.name}
+                      </p>
+                      <p className="text-sm text-mono-muted">
+                        Stage: {request.status.replace(/_/g, " ")} | Created:{" "}
+                        {new Date(request.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedRequest(request);
+                          setShowViewModal(true);
+                        }}
+                      >
+                        Review
                       </Button>
-                    ) : null}
+                      {isHR && request.status === "HR_REVIEW" ? (
+                        <Button
+                          type="button"
+                          onClick={() =>
+                            handleWorkflowTransition(request.id, "HR_APPROVE")
+                          }
+                        >
+                          Approve HR
+                        </Button>
+                      ) : null}
+                      {isLegal && request.status === "LEGAL_REVIEW" ? (
+                        <Button
+                          type="button"
+                          onClick={() =>
+                            handleWorkflowTransition(
+                              request.id,
+                              "LEGAL_APPROVE",
+                            )
+                          }
+                        >
+                          Approve Legal
+                        </Button>
+                      ) : null}
+                      {isManagement && request.status === "MGMT_APPROVAL" ? (
+                        <Button
+                          type="button"
+                          onClick={() =>
+                            handleWorkflowTransition(request.id, "MGMT_APPROVE")
+                          }
+                        >
+                          Approve Mgmt
+                        </Button>
+                      ) : null}
+                      {isHR && request.status === "READY_TO_ISSUE" ? (
+                        <Button
+                          type="button"
+                          onClick={() =>
+                            handleWorkflowTransition(request.id, "ISSUE")
+                          }
+                        >
+                          <Send className="size-4" />
+                          <span>Issue Document</span>
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              </Card>
-            );
-          })}
+                </Card>
+              );
+            })
+          )}
         </div>
       ) : null}
 
@@ -575,30 +807,52 @@ export function LettersView() {
             <Card className="rounded-2xl border border-mono-border bg-mono-card p-4 shadow-sm">
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" onClick={handleImportBundledTemplates} disabled={submitting}>
+                  <Button
+                    type="button"
+                    onClick={handleImportBundledTemplates}
+                    disabled={submitting}
+                  >
                     <WandSparkles className="size-4" />
                     <span>Import Bundled DOCX</span>
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => templateUploadInputRef.current?.click()} disabled={templateUploading}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => templateUploadInputRef.current?.click()}
+                    disabled={templateUploading}
+                  >
                     <Upload className="size-4" />
-                    <span>{templateUploading ? "Uploading..." : "Upload DOCX"}</span>
+                    <span>
+                      {templateUploading ? "Uploading..." : "Upload DOCX"}
+                    </span>
                   </Button>
-                  <input ref={templateUploadInputRef} type="file" accept=".docx" className="hidden" onChange={handleUploadTemplateDocx} />
+                  <MnxInput
+                    ref={templateUploadInputRef}
+                    type="file"
+                    accept=".docx"
+                    className="hidden"
+                    onChange={handleUploadTemplateDocx}
+                  />
                 </div>
                 <p className="text-sm text-mono-muted">
-                  Manage authoritative DOCX templates, rich-editor revisions, and legal activation.
+                  Manage authoritative DOCX templates, rich-editor revisions,
+                  and legal activation.
                 </p>
               </div>
             </Card>
 
             <div className="space-y-3">
               {templates.map((template) => (
-                <button
+                <MnxAction
                   key={template.id}
                   type="button"
                   onClick={() => {
                     setSelectedTemplate(template);
-                    setEditorHtml(template.editorDocument?.html || template.previewHtml || "");
+                    setEditorHtml(
+                      template.editorDocument?.html ||
+                        template.previewHtml ||
+                        "",
+                    );
                   }}
                   className={`w-full rounded-2xl border p-4 text-left shadow-sm transition ${
                     selectedTemplate?.id === template.id
@@ -608,16 +862,24 @@ export function LettersView() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold uppercase tracking-[0.08em] text-mono-text">{template.name}</p>
-                      <p className="mt-2 text-xs text-mono-muted">Type: {template.type} | Ver: {template.version}</p>
+                      <p className="text-sm font-semibold uppercase tracking-[0.08em] text-mono-text">
+                        {template.name}
+                      </p>
+                      <p className="mt-2 text-xs text-mono-muted">
+                        Type: {template.type} | Ver: {template.version}
+                      </p>
                     </div>
-                    <span className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${
-                      template.isLegalReviewed ? "bg-mono-accent/10 text-mono-accent" : "bg-orange-500/10 text-orange-600"
-                    }`}>
+                    <span
+                      className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${
+                        template.isLegalReviewed
+                          ? "bg-mono-accent/10 text-mono-accent"
+                          : "bg-[var(--mnx-warning-bg)]/10 text-[var(--mnx-warning)]"
+                      }`}
+                    >
                       {template.isLegalReviewed ? "Legal OK" : "Review Needed"}
                     </span>
                   </div>
-                </button>
+                </MnxAction>
               ))}
             </div>
           </div>
@@ -628,19 +890,32 @@ export function LettersView() {
                 <Card className="rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-mono-border pb-4">
                     <div>
-                      <h2 className="monolith-h2 font-semibold text-mono-text">{selectedTemplate.name}</h2>
+                      <h2 className="mnx-title-2 font-semibold text-mono-text">
+                        {selectedTemplate.name}
+                      </h2>
                       <p className="mt-2 text-sm text-mono-muted">
-                        Source: {selectedTemplate.sourceFileName || "DOCX"} | Stored DOCX: {selectedTemplate.sourceDocxPath || "N/A"}
+                        Source: {selectedTemplate.sourceFileName || "DOCX"} |
+                        Stored DOCX: {selectedTemplate.sourceDocxPath || "N/A"}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {isLegal && !selectedTemplate.isLegalReviewed ? (
-                        <Button type="button" onClick={() => handleLegalApproveTemplate(selectedTemplate.id)}>
+                        <Button
+                          type="button"
+                          onClick={() =>
+                            handleLegalApproveTemplate(selectedTemplate.id)
+                          }
+                        >
                           <FileCheck className="size-4" />
                           <span>Approve Legal</span>
                         </Button>
                       ) : null}
-                      <Button type="button" variant="outline" onClick={handleSaveTemplateRevision} disabled={submitting}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleSaveTemplateRevision}
+                        disabled={submitting}
+                      >
                         <Save className="size-4" />
                         <span>Save Revision</span>
                       </Button>
@@ -649,8 +924,10 @@ export function LettersView() {
 
                   <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_22rem]">
                     <div className="space-y-4">
-                      <div className="monolith-form-section space-y-3">
-                        <h3 className="monolith-h3 font-semibold text-mono-text">Rich Template Editor</h3>
+                      <div className="mnx-form-section space-y-3">
+                        <h3 className="mnx-title-3 font-semibold text-mono-text">
+                          Rich Template Editor
+                        </h3>
                         <RichTemplateEditor
                           value={editorHtml}
                           variables={selectedTemplate.variables}
@@ -659,25 +936,42 @@ export function LettersView() {
                         />
                       </div>
 
-                      <div className="monolith-form-section space-y-3">
-                        <h3 className="monolith-h3 font-semibold text-mono-text">Preview</h3>
+                      <div className="mnx-form-section space-y-3">
+                        <h3 className="mnx-title-3 font-semibold text-mono-text">
+                          Preview
+                        </h3>
                         <div className="rounded-2xl border border-mono-border bg-mono-soft p-5">
-                          <div className="prose max-w-none text-mono-text" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(editorHtml) }} />
+                          <div
+                            className="prose max-w-none text-mono-text"
+                            dangerouslySetInnerHTML={{
+                              __html: DOMPurify.sanitize(editorHtml),
+                            }}
+                          />
                         </div>
                       </div>
                     </div>
 
                     <div className="space-y-4">
-                      <div className="monolith-form-section space-y-3">
-                        <h3 className="monolith-h3 font-semibold text-mono-text">Template Fields</h3>
+                      <div className="mnx-form-section space-y-3">
+                        <h3 className="mnx-title-3 font-semibold text-mono-text">
+                          Template Fields
+                        </h3>
                         <div className="rounded-2xl border border-mono-border bg-mono-soft p-4">
                           <div className="space-y-3">
                             {selectedTemplate.fieldSchema.map((field) => (
-                              <div key={field.key} className="rounded-xl border border-mono-border bg-mono-card p-3">
-                                <p className="text-sm font-medium text-mono-text">{field.label}</p>
-                                <p className="mt-1 text-xs text-mono-muted">{field.key}</p>
+                              <div
+                                key={field.key}
+                                className="rounded-xl border border-mono-border bg-mono-card p-3"
+                              >
+                                <p className="text-sm font-medium text-mono-text">
+                                  {field.label}
+                                </p>
+                                <p className="mt-1 text-xs text-mono-muted">
+                                  {field.key}
+                                </p>
                                 <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-mono-muted">
-                                  {field.inputType} | {field.defaultSource} | {field.required ? "required" : "optional"}
+                                  {field.inputType} | {field.defaultSource} |{" "}
+                                  {field.required ? "required" : "optional"}
                                 </p>
                               </div>
                             ))}
@@ -691,7 +985,9 @@ export function LettersView() {
             ) : (
               <Card className="rounded-2xl border border-dashed border-mono-border bg-mono-card p-12 text-center text-mono-muted">
                 <FilePenLine className="mx-auto mb-3 size-12 text-mono-accent" />
-                <p className="text-sm">Select a template to preview and edit it.</p>
+                <p className="text-sm">
+                  Select a template to preview and edit it.
+                </p>
               </Card>
             )}
           </div>
@@ -699,9 +995,14 @@ export function LettersView() {
       ) : null}
 
       {activeTab === "settings" && isHR ? (
-        <form onSubmit={handleUpdateSettings} className="max-w-4xl rounded-2xl border border-mono-border bg-mono-card p-6 shadow-sm">
+        <form
+          onSubmit={handleUpdateSettings}
+          className="max-w-4xl rounded-2xl border border-mono-border bg-mono-card p-6 shadow-sm"
+        >
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-mono-border pb-4">
-            <h2 className="monolith-h2 font-semibold text-mono-text">Letter Settings</h2>
+            <h2 className="mnx-title-2 font-semibold text-mono-text">
+              Letter Settings
+            </h2>
             <Button type="submit" disabled={submitting}>
               <Save className="size-4" />
               <span>Save Settings</span>
@@ -710,37 +1011,88 @@ export function LettersView() {
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {[
-              { key: "numberingPattern", label: "Numbering Pattern", type: "text" },
-              { key: "probationDaysDefault", label: "Default Probation Days", type: "number" },
-              { key: "noticePeriodDaysDefault", label: "Default Notice Days", type: "number" },
-              { key: "letterValidityDaysDefault", label: "Letter Validity Days", type: "number" },
-              { key: "legalJurisdiction", label: "Legal Jurisdiction", type: "text" },
-              { key: "complianceVersion", label: "Compliance Version", type: "text" },
+              {
+                key: "numberingPattern",
+                label: "Numbering Pattern",
+                type: "text",
+              },
+              {
+                key: "probationDaysDefault",
+                label: "Default Probation Days",
+                type: "number",
+              },
+              {
+                key: "noticePeriodDaysDefault",
+                label: "Default Notice Days",
+                type: "number",
+              },
+              {
+                key: "letterValidityDaysDefault",
+                label: "Letter Validity Days",
+                type: "number",
+              },
+              {
+                key: "legalJurisdiction",
+                label: "Legal Jurisdiction",
+                type: "text",
+              },
+              {
+                key: "complianceVersion",
+                label: "Compliance Version",
+                type: "text",
+              },
               { key: "signatoryName", label: "Signatory Name", type: "text" },
-              { key: "signatoryDesignation", label: "Signatory Designation", type: "text" },
-              { key: "signatorySignatureUrl", label: "Signatory Signature Path", type: "text" },
-              { key: "companySealUrl", label: "Company Seal Path", type: "text" },
+              {
+                key: "signatoryDesignation",
+                label: "Signatory Designation",
+                type: "text",
+              },
+              {
+                key: "signatorySignatureUrl",
+                label: "Signatory Signature Path",
+                type: "text",
+              },
+              {
+                key: "companySealUrl",
+                label: "Company Seal Path",
+                type: "text",
+              },
             ].map((field) => (
-              <div key={field.key} className={`space-y-2 ${field.key === "companySealUrl" || field.key === "signatorySignatureUrl" ? "sm:col-span-2" : ""}`}>
-                <label className="monolith-label">{field.label}</label>
-                <input
+              <div
+                key={field.key}
+                className={`space-y-2 ${field.key === "companySealUrl" || field.key === "signatorySignatureUrl" ? "sm:col-span-2" : ""}`}
+              >
+                <label className="mnx-dashboard-spec-label">
+                  {field.label}
+                </label>
+                <MnxInput
                   type={field.type}
                   value={(settingsForm as any)[field.key]}
-                  onChange={(event) => setSettingsForm((current) => ({
-                    ...current,
-                    [field.key]: field.type === "number" ? Number(event.target.value) : event.target.value,
-                  }))}
+                  onChange={(event) =>
+                    setSettingsForm((current) => ({
+                      ...current,
+                      [field.key]:
+                        field.type === "number"
+                          ? Number(event.target.value)
+                          : event.target.value,
+                    }))
+                  }
                   className="w-full text-sm"
                 />
               </div>
             ))}
 
             <div className="space-y-2 sm:col-span-2">
-              <label className="monolith-label">Email Template</label>
-              <textarea
+              <label className="mnx-dashboard-spec-label">Email Template</label>
+              <MnxTextarea
                 rows={4}
                 value={settingsForm.emailTemplate}
-                onChange={(event) => setSettingsForm((current) => ({ ...current, emailTemplate: event.target.value }))}
+                onChange={(event) =>
+                  setSettingsForm((current) => ({
+                    ...current,
+                    emailTemplate: event.target.value,
+                  }))
+                }
                 className="w-full text-sm"
               />
             </div>
@@ -758,42 +1110,52 @@ export function LettersView() {
         <form onSubmit={handleCreateRequest} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="monolith-label">Recipient Employee</label>
+              <label className="mnx-dashboard-spec-label">
+                Recipient Employee
+              </label>
               <NativeSelect
                 value={wizardUserId}
                 onChange={(event) => {
                   const value = event.target.value;
                   setWizardUserId(value);
                   setWizardDetails({});
-                  if (value && wizardTemplateId) void loadTemplateDefaults(value, wizardTemplateId);
+                  if (value && wizardTemplateId)
+                    void loadTemplateDefaults(value, wizardTemplateId);
                 }}
                 required
                 className="w-full text-sm"
               >
                 <option value="">Choose employee</option>
                 {employees.map((employee) => (
-                  <option key={employee.id} value={employee.id}>{employee.name} ({employee.email})</option>
+                  <option key={employee.id} value={employee.id}>
+                    {employee.name} ({employee.email})
+                  </option>
                 ))}
               </NativeSelect>
             </div>
 
             <div className="space-y-2">
-              <label className="monolith-label">Letter Format</label>
+              <label className="mnx-dashboard-spec-label">Letter Format</label>
               <NativeSelect
                 value={wizardTemplateId}
                 onChange={(event) => {
                   const value = event.target.value;
                   setWizardTemplateId(value);
                   setWizardDetails({});
-                  if (wizardUserId && value) void loadTemplateDefaults(wizardUserId, value);
+                  if (wizardUserId && value)
+                    void loadTemplateDefaults(wizardUserId, value);
                 }}
                 required
                 className="w-full text-sm"
               >
                 <option value="">Choose format</option>
-                {templates.filter((template) => template.isActive).map((template) => (
-                  <option key={template.id} value={template.id}>{template.name} (v{template.version})</option>
-                ))}
+                {templates
+                  .filter((template) => template.isActive)
+                  .map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name} (v{template.version})
+                    </option>
+                  ))}
               </NativeSelect>
             </div>
           </div>
@@ -803,34 +1165,59 @@ export function LettersView() {
               <Loader2 className="size-6 animate-spin text-mono-accent" />
             </div>
           ) : activeTemplate ? (
-            <div className="monolith-form-section space-y-4">
-              <h3 className="monolith-h3 font-semibold text-mono-text">Template Details</h3>
+            <div className="mnx-form-section space-y-4">
+              <h3 className="mnx-title-3 font-semibold text-mono-text">
+                Template Details
+              </h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 {activeTemplate.fieldSchema.map((field) => (
-                  <div key={field.key} className={`space-y-2 ${field.inputType === "textarea" ? "sm:col-span-2" : ""}`}>
-                    <label className="monolith-label">{field.label}</label>
+                  <div
+                    key={field.key}
+                    className={`space-y-2 ${field.inputType === "textarea" ? "sm:col-span-2" : ""}`}
+                  >
+                    <label className="mnx-dashboard-spec-label">
+                      {field.label}
+                    </label>
                     {field.inputType === "textarea" ? (
-                      <textarea
+                      <MnxTextarea
                         rows={4}
                         required={field.required}
                         readOnly={field.readOnly}
                         value={wizardDetails[field.key] || ""}
-                        onChange={(event) => setWizardDetails((current) => ({ ...current, [field.key]: event.target.value }))}
+                        onChange={(event) =>
+                          setWizardDetails((current) => ({
+                            ...current,
+                            [field.key]: event.target.value,
+                          }))
+                        }
                         placeholder={field.placeholder}
                         className="w-full text-sm"
                       />
                     ) : (
-                      <input
-                        type={field.inputType === "currency" ? "text" : field.inputType}
+                      <MnxInput
+                        type={
+                          field.inputType === "currency"
+                            ? "text"
+                            : field.inputType
+                        }
                         required={field.required}
                         readOnly={field.readOnly}
                         value={wizardDetails[field.key] || ""}
-                        onChange={(event) => setWizardDetails((current) => ({ ...current, [field.key]: event.target.value }))}
+                        onChange={(event) =>
+                          setWizardDetails((current) => ({
+                            ...current,
+                            [field.key]: event.target.value,
+                          }))
+                        }
                         placeholder={field.placeholder}
-                        className={`w-full text-sm ${field.inputType === "currency" ? "monolith-numeric" : ""}`}
+                        className={`w-full text-sm ${field.inputType === "currency" ? "mnx-numeric" : ""}`}
                       />
                     )}
-                    {field.helpText ? <p className="text-xs text-mono-muted">{field.helpText}</p> : null}
+                    {field.helpText ? (
+                      <p className="text-xs text-mono-muted">
+                        {field.helpText}
+                      </p>
+                    ) : null}
                   </div>
                 ))}
               </div>
@@ -838,8 +1225,17 @@ export function LettersView() {
           ) : null}
 
           <div className="flex justify-end gap-3 border-t border-mono-border pt-4">
-            <Button type="button" variant="outline" onClick={() => setShowPrepareModal(false)}>Cancel</Button>
-            <Button type="submit" disabled={submitting || !wizardUserId || !wizardTemplateId}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowPrepareModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={submitting || !wizardUserId || !wizardTemplateId}
+            >
               {submitting ? "Creating..." : "Create Draft"}
             </Button>
           </div>
@@ -848,8 +1244,16 @@ export function LettersView() {
 
       <Modal
         open={showViewModal && !!selectedRequest}
-        title={selectedRequest ? `Review ${selectedRequest.letterNumber}` : "Review Letter"}
-        description={selectedRequest ? `${selectedRequest.user.name} | ${selectedRequest.status.replace(/_/g, " ")}` : ""}
+        title={
+          selectedRequest
+            ? `Review ${selectedRequest.letterNumber}`
+            : "Review Letter"
+        }
+        description={
+          selectedRequest
+            ? `${selectedRequest.user.name} | ${selectedRequest.status.replace(/_/g, " ")}`
+            : ""
+        }
         onClose={() => setShowViewModal(false)}
         className="max-w-5xl"
       >
@@ -857,36 +1261,102 @@ export function LettersView() {
           <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
             <div className="space-y-4">
               <Card className="rounded-2xl border border-mono-border bg-mono-soft p-4">
-                <h3 className="monolith-h3 font-semibold text-mono-text">Field Values</h3>
+                <h3 className="mnx-title-3 font-semibold text-mono-text">
+                  Field Values
+                </h3>
                 <div className="mt-4 space-y-3">
-                  {Object.entries(selectedRequest.details || {}).map(([key, value]) => (
-                    <div key={key} className="rounded-xl border border-mono-border bg-mono-card p-3">
-                      <p className="monolith-label">{key.replace(/_/g, " ")}</p>
-                      <p className="mt-2 text-sm text-mono-text break-words">{String(value || "N/A")}</p>
-                    </div>
-                  ))}
+                  {Object.entries(selectedRequest.details || {}).map(
+                    ([key, value]) => (
+                      <div
+                        key={key}
+                        className="rounded-xl border border-mono-border bg-mono-card p-3"
+                      >
+                        <p className="mnx-dashboard-spec-label">
+                          {key.replace(/_/g, " ")}
+                        </p>
+                        <p className="mt-2 text-sm text-mono-text break-words">
+                          {String(value || "N/A")}
+                        </p>
+                      </div>
+                    ),
+                  )}
                 </div>
               </Card>
             </div>
 
             <div className="space-y-4">
               {selectedRequest.pdfPath ? (
-                <iframe src={`/${selectedRequest.pdfPath}`} className="h-[34rem] w-full rounded-2xl border border-mono-border bg-mono-card" title="Letter preview" />
+                <iframe
+                  src={`/${selectedRequest.pdfPath}`}
+                  className="h-[34rem] w-full rounded-2xl border border-mono-border bg-mono-card"
+                  title="Letter preview"
+                />
               ) : (
                 <Card className="rounded-2xl border border-dashed border-mono-border bg-mono-card p-12 text-center text-mono-muted">
-                  <AlertTriangle className="mx-auto mb-3 size-10 text-orange-600" />
-                  <p className="text-sm">This draft has not been issued yet, so the final PDF is not available.</p>
+                  <AlertTriangle className="mx-auto mb-3 size-10 text-[var(--mnx-warning)]" />
+                  <p className="text-sm">
+                    This draft has not been issued yet, so the final PDF is not
+                    available.
+                  </p>
                 </Card>
               )}
 
               <div className="flex flex-wrap justify-end gap-2">
-                {isHR && selectedRequest.status === "HR_REVIEW" ? <Button type="button" onClick={() => handleWorkflowTransition(selectedRequest.id, "HR_APPROVE")}>Approve HR</Button> : null}
-                {isLegal && selectedRequest.status === "LEGAL_REVIEW" ? <Button type="button" onClick={() => handleWorkflowTransition(selectedRequest.id, "LEGAL_APPROVE")}>Approve Legal</Button> : null}
-                {isManagement && selectedRequest.status === "MGMT_APPROVAL" ? <Button type="button" onClick={() => handleWorkflowTransition(selectedRequest.id, "MGMT_APPROVE")}>Approve Mgmt</Button> : null}
-                {isHR && selectedRequest.status === "READY_TO_ISSUE" ? <Button type="button" onClick={() => handleWorkflowTransition(selectedRequest.id, "ISSUE")}>Issue</Button> : null}
-                {(selectedRequest.status === "ISSUED" || selectedRequest.status === "ACCEPTED") && selectedRequest.pdfPath ? (
+                {isHR && selectedRequest.status === "HR_REVIEW" ? (
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      handleWorkflowTransition(selectedRequest.id, "HR_APPROVE")
+                    }
+                  >
+                    Approve HR
+                  </Button>
+                ) : null}
+                {isLegal && selectedRequest.status === "LEGAL_REVIEW" ? (
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      handleWorkflowTransition(
+                        selectedRequest.id,
+                        "LEGAL_APPROVE",
+                      )
+                    }
+                  >
+                    Approve Legal
+                  </Button>
+                ) : null}
+                {isManagement && selectedRequest.status === "MGMT_APPROVAL" ? (
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      handleWorkflowTransition(
+                        selectedRequest.id,
+                        "MGMT_APPROVE",
+                      )
+                    }
+                  >
+                    Approve Mgmt
+                  </Button>
+                ) : null}
+                {isHR && selectedRequest.status === "READY_TO_ISSUE" ? (
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      handleWorkflowTransition(selectedRequest.id, "ISSUE")
+                    }
+                  >
+                    Issue
+                  </Button>
+                ) : null}
+                {(selectedRequest.status === "ISSUED" ||
+                  selectedRequest.status === "ACCEPTED") &&
+                selectedRequest.pdfPath ? (
                   <>
-                    <a href={`/${selectedRequest.pdfPath}`} download className="inline-flex">
+                    <a
+                      href={`/${selectedRequest.pdfPath}`}
+                      download
+                      className="inline-flex"
+                    >
                       <Button type="button" variant="outline">
                         <Save className="size-4" />
                         <span>Download PDF</span>
@@ -897,18 +1367,30 @@ export function LettersView() {
                       variant="outline"
                       onClick={async () => {
                         try {
-                          const response = await fetch("/api/hrms/letters/share-mail", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ letterRequestId: selectedRequest.id }),
-                          });
+                          const response = await fetch(
+                            "/api/hrms/letters/share-mail",
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                letterRequestId: selectedRequest.id,
+                              }),
+                            },
+                          );
                           const json = await response.json();
-                          if (!json.ok) throw new Error(json.error?.message || json.error || "Failed to prepare email");
+                          if (!json.ok)
+                            throw new Error(
+                              json.error?.message ||
+                                json.error ||
+                                "Failed to prepare email",
+                            );
                           // Open communication module mail composer
                           window.open(json.data.composerLink, "_blank");
                           toast.success("Opening mail composer...");
                         } catch (error: any) {
-                          toast.error(error.message || "Failed to share via mail");
+                          toast.error(
+                            error.message || "Failed to share via mail",
+                          );
                         }
                       }}
                     >

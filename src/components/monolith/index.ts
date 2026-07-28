@@ -15,6 +15,8 @@ export * from "./label";
 export * from "./modal";
 export * from "./native-select";
 export * from "./neon-checkbox";
+export * from "./people-workspace";
+export * from "./people-controls";
 export * from "./warning-indicator-popover";
 export * from "./workspace";
 export * from "./workspace-dialog";
