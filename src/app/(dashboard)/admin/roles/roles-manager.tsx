@@ -2,10 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  AdminButton,
+  AdminInput,
+  AdminPanel,
+  AdminPanelHeader,
+  WorkspaceState,
+} from "@/components/monolith";
 
 type Permission = { id: string; key: string; label: string; group: string };
 type RolePermission = { permission: Permission };
-type Role = { id: string; name: string; isSystem: boolean; permissions: RolePermission[] };
+type Role = {
+  id: string;
+  name: string;
+  isSystem: boolean;
+  permissions: RolePermission[];
+};
 
 export function RolesManager({
   roles: initialRoles,
@@ -15,20 +27,21 @@ export function RolesManager({
   permissions: Permission[];
 }) {
   const router = useRouter();
-  const [roles, setRoles] = useState(initialRoles);
+  const [roles] = useState(initialRoles);
   const [selected, setSelected] = useState<Role | null>(null);
   const [saving, setSaving] = useState(false);
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
 
   function selectRole(role: Role) {
     setSelected(role);
-    setCheckedIds(new Set(role.permissions.map((rp) => rp.permission.id)));
+    setCheckedIds(new Set(role.permissions.map((entry) => entry.permission.id)));
   }
 
   function togglePerm(id: string) {
-    setCheckedIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+    setCheckedIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
@@ -48,83 +61,101 @@ export function RolesManager({
   async function addRole() {
     const name = prompt("Role name:");
     if (!name) return;
-    const res = await fetch("/api/roles", {
+    const response = await fetch("/api/roles", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
     });
-    if (res.ok) router.refresh();
+    if (response.ok) router.refresh();
   }
 
-  // Group permissions by group
-  const groups = permissions.reduce<Record<string, Permission[]>>((acc, p) => {
-    (acc[p.group] ??= []).push(p);
-    return acc;
-  }, {});
+  const groups = permissions.reduce<Record<string, Permission[]>>(
+    (result, permission) => {
+      (result[permission.group] ??= []).push(permission);
+      return result;
+    },
+    {},
+  );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Role list */}
-      <div className="bg-mono-card rounded-xl border border-mono-border p-4 space-y-2">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="monolith-h2 text-mono-text">Roles</h2>
-          <button onClick={addRole} className="text-xs text-indigo-600 hover:underline">+ New</button>
+    <div className="mnx-admin-role-layout">
+      <AdminPanel>
+        <AdminPanelHeader
+          eyebrow="Access profiles"
+          title="Roles"
+          actions={
+            <AdminButton onClick={addRole} size="compact">
+              New role
+            </AdminButton>
+          }
+        />
+        <div className="mnx-admin-role-list">
+          {roles.map((role) => (
+            <AdminButton
+              key={role.id}
+              onClick={() => selectRole(role)}
+              variant="secondary"
+              className={`mnx-admin-role-option ${
+                selected?.id === role.id ? "is-selected" : ""
+              }`}
+            >
+              <span>{role.name}</span>
+              {role.isSystem ? <small>system</small> : null}
+            </AdminButton>
+          ))}
         </div>
-        {roles.map((r) => (
-          <button
-            key={r.id}
-            onClick={() => selectRole(r)}
-            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
-              selected?.id === r.id
-                ? "bg-indigo-50 text-indigo-700 font-medium"
-                : "hover:bg-mono-soft text-mono-text"
-            }`}
-          >
-            {r.name}
-            {r.isSystem && <span className="ml-2 text-xs text-mono-muted/60">system</span>}
-          </button>
-        ))}
-      </div>
+      </AdminPanel>
 
-      {/* Permission matrix */}
-      <div className="lg:col-span-2 bg-mono-card rounded-xl border border-mono-border p-5 space-y-4">
+      <AdminPanel>
         {!selected ? (
-          <p className="text-sm text-mono-muted/60">Select a role to edit permissions.</p>
+          <WorkspaceState
+            variant="empty"
+            eyebrow="Permissions"
+            title="Select a role"
+            description="Choose an access profile to review and edit its assigned permissions."
+            icon={<span aria-hidden="true">—</span>}
+          />
         ) : (
           <>
-            <div className="flex items-center justify-between">
-              <h2 className="monolith-h2 text-mono-text">{selected.name} — Permissions</h2>
-              <button
-                onClick={savePermissions}
-                disabled={saving}
-                className="px-4 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {saving ? "Saving…" : "Save"}
-              </button>
+            <AdminPanelHeader
+              eyebrow="Permission matrix"
+              title={`${selected.name} — permissions`}
+              actions={
+                <AdminButton
+                  onClick={savePermissions}
+                  disabled={saving}
+                  variant="primary"
+                >
+                  {saving ? "Saving…" : "Save permissions"}
+                </AdminButton>
+              }
+            />
+            <div className="mnx-admin-permission-groups">
+              {Object.entries(groups).map(([group, groupPermissions]) => (
+                <section key={group}>
+                  <h3>{group}</h3>
+                  <div className="mnx-admin-permission-list">
+                    {groupPermissions.map((permission) => (
+                      <label
+                        key={permission.id}
+                        className="mnx-admin-permission"
+                      >
+                        <AdminInput
+                          type="checkbox"
+                          checked={checkedIds.has(permission.id)}
+                          onChange={() => togglePerm(permission.id)}
+                        />
+                        <span>{permission.label}</span>
+                        <code>{permission.key}</code>
+                      </label>
+                    ))}
+                  </div>
+                </section>
+              ))}
             </div>
-
-            {Object.entries(groups).map(([group, perms]) => (
-              <div key={group}>
-                <p className="text-xs font-semibold text-mono-muted uppercase tracking-wide mb-2">{group}</p>
-                <div className="space-y-1">
-                  {perms.map((p) => (
-                    <label key={p.id} className="flex items-center gap-3 py-1 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={checkedIds.has(p.id)}
-                        onChange={() => togglePerm(p.id)}
-                        className="h-4 w-4 rounded border-mono-border text-indigo-600"
-                      />
-                      <span className="text-sm text-mono-text">{p.label}</span>
-                      <span className="text-xs text-mono-muted/60 font-mono">{p.key}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ))}
           </>
         )}
-      </div>
+      </AdminPanel>
     </div>
   );
 }

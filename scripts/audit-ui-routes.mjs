@@ -52,6 +52,14 @@ function isCrmRoute(route) {
   return route === "/crm" || route.startsWith("/crm/");
 }
 
+function isCommunicationRoute(route) {
+  return route === "/communication" || route.startsWith("/communication/");
+}
+
+function isAdminRoute(route) {
+  return route === "/admin" || route.startsWith("/admin/");
+}
+
 function isMonolithRoute(route) {
   return (
     knownMonolithRoutes.has(route) ||
@@ -59,7 +67,9 @@ function isMonolithRoute(route) {
     isPerformanceLearningRoute(route) ||
     isCustomsExpenseRoute(route) ||
     isAccountingRoute(route) ||
-    isCrmRoute(route)
+    isCrmRoute(route) ||
+    isCommunicationRoute(route) ||
+    isAdminRoute(route)
   );
 }
 
@@ -145,6 +155,10 @@ function stateFor(route) {
     return "Migrated in Accounting batch 005";
   if (isCrmRoute(route))
     return "Migrated in CRM batch 005";
+  if (isCommunicationRoute(route))
+    return "Migrated in Communication and Admin batch 006";
+  if (isAdminRoute(route))
+    return "Migrated in Communication and Admin batch 006";
   return "Pending module migration";
 }
 
@@ -194,6 +208,8 @@ const layouts = walk(appRoot, "layout.tsx")
             ? "Customer portal session gate and portal chrome"
             : source.includes("/communication/layout.tsx")
               ? "Workspace connection gate and communication providers"
+              : source.includes("/admin/layout.tsx")
+                ? "Shared administration workspace frame and asynchronous states"
               : source.includes("/crm/layout.tsx")
                 ? "Shared CRM workspace frame and asynchronous states"
                 : source.includes("/cha/layout.tsx")

@@ -1,10 +1,32 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
-import { Users, Clock, Wifi, MapPin, Shield, RefreshCw, LogOut } from "lucide-react";
-import { Button } from "@/components/monolith/button";
-import {saveTimeoutAction,getActiveSessionsAction,adminRevokeSessionAction,adminRevokeAllUserSessionsAction,} from "./actions";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Clock,
+  LogOut,
+  MapPin,
+  RefreshCw,
+  Shield,
+  Users,
+  Wifi,
+} from "lucide-react";
+import {
+  AdminBadge,
+  AdminButton,
+  AdminEmptyTableRow,
+  AdminField,
+  AdminInput,
+  AdminPanel,
+  AdminPanelHeader,
+  AdminTable,
+  WorkspaceMetric,
+} from "@/components/monolith";
+import {
+  adminRevokeAllUserSessionsAction,
+  adminRevokeSessionAction,
+  getActiveSessionsAction,
+  saveTimeoutAction,
+} from "./actions";
 
 type ActiveSession = {
   id: string;
@@ -19,19 +41,9 @@ type ActiveSession = {
   durationMs: number;
 };
 
-type SessionHistory = {
-  id: string;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  userRole: string;
-  loginAt: string;
-  lastSeenAt: string;
+type SessionHistory = ActiveSession & {
   logoutAt: string | null;
   status: string;
-  ipAddress: string | null;
-  location: string | null;
-  durationMs: number;
 };
 
 type SecurityEvent = {
@@ -55,370 +67,342 @@ type Props = {
   timeoutMinutes: number;
 };
 
-function formatDuration(ms: number): string {
-  const s = Math.floor(ms / 1000);
-  if (s < 60) return `${s}s`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ${s % 60}s`;
-  const h = Math.floor(m / 60);
-  return `${h}h ${m % 60}m`;
+function formatDuration(milliseconds: number): string {
+  const seconds = Math.max(0, Math.floor(milliseconds / 1000));
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ${seconds % 60}s`;
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
 }
 
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleString("en-IN", {
-    day: "2-digit", month: "short", year: "numeric",
-    hour: "2-digit", minute: "2-digit", hour12: true,
+function formatTime(value: string): string {
+  return new Date(value).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
   });
 }
 
-const roleColors: Record<string, string> = {
-  Admin: "text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-950/40",
-  Management: "text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-950/40",
-  Manager: "text-teal-600 bg-teal-100 dark:text-teal-400 dark:bg-teal-950/40",
-  HR: "text-cyan-600 bg-cyan-100 dark:text-cyan-400 dark:bg-cyan-950/40",
-  TL: "text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-950/40",
-  Employee: "text-mono-muted bg-mono-soft dark:text-mono-muted dark:bg-slate-950/40",
-};
-
-const statusColors: Record<string, string> = {
-  ACTIVE: "text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-950/40",
-  TIMED_OUT: "text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-950/40",
-  LOGGED_OUT: "text-mono-muted bg-mono-soft dark:text-mono-muted dark:bg-slate-950/40",
-};
-
-const outcomeColors: Record<string, string> = {
-  SUCCESS: "text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-950/40",
-  FAILED: "text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-950/40",
-};
-
 function formatEventLabel(event: string): string {
-  return event.replaceAll("_", " ").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  return event
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-export function SessionsDashboard({ initialActive, history, securityEvents, renderedAt, timeoutMinutes }: Props) {
-  const [active, setActive] = useState<ActiveSession[]>(initialActive);
+function sessionVariant(status: string) {
+  if (status === "ACTIVE") return "success" as const;
+  if (status === "TIMED_OUT") return "warning" as const;
+  return "neutral" as const;
+}
+
+export function SessionsDashboard({
+  initialActive,
+  history,
+  securityEvents,
+  renderedAt,
+  timeoutMinutes,
+}: Props) {
+  const [active, setActive] = useState(initialActive);
   const [nowMs, setNowMs] = useState(() => new Date(renderedAt).getTime());
-  const [newTimeout, setNewTimeout] = useState<string>(String(timeoutMinutes));
+  const [newTimeout, setNewTimeout] = useState(String(timeoutMinutes));
   const [savingTimeout, setSavingTimeout] = useState(false);
   const [timeoutSaved, setTimeoutSaved] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const todayCutoffMs = nowMs - 86_400_000;
-
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const todayCutoffMs = nowMs - 86_400_000;
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      const data = await getActiveSessionsAction();
-      setActive(data);
-    } catch {
-      // silent
+      setActive(await getActiveSessionsAction());
+    } finally {
+      setRefreshing(false);
     }
-    setRefreshing(false);
   }, []);
 
-  // Auto-refresh every 30s
   useEffect(() => {
     const interval = setInterval(refresh, 30_000);
     return () => clearInterval(interval);
   }, [refresh]);
 
   useEffect(() => {
-    const interval = setInterval(() => setNowMs(new Date().getTime()), 30_000);
+    const interval = setInterval(() => setNowMs(Date.now()), 30_000);
     return () => clearInterval(interval);
   }, []);
 
   async function saveTimeout() {
-    const mins = parseInt(newTimeout, 10);
-    if (isNaN(mins) || mins < 1) return;
+    const minutes = Number.parseInt(newTimeout, 10);
+    if (Number.isNaN(minutes) || minutes < 1) return;
     setSavingTimeout(true);
     try {
-      await saveTimeoutAction(mins);
+      await saveTimeoutAction(minutes);
       setTimeoutSaved(true);
       setTimeout(() => setTimeoutSaved(false), 2000);
-    } catch {
-      // silent
+    } finally {
+      setSavingTimeout(false);
     }
-    setSavingTimeout(false);
+  }
+
+  async function revokeSession(id: string) {
+    setRevokingId(id);
+    try {
+      await adminRevokeSessionAction(id);
+      await refresh();
+    } finally {
+      setRevokingId(null);
+    }
+  }
+
+  async function revokeUserSessions(userId: string) {
+    setRevokingId(userId);
+    try {
+      await adminRevokeAllUserSessionsAction(userId);
+      await refresh();
+    } finally {
+      setRevokingId(null);
+    }
   }
 
   return (
-    <div className="space-y-6">
-      {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Active Now", value: active.length, icon: <Wifi className="size-4" />, color: "text-green-600 dark:text-green-400" },
-          { label: "Today's Sessions", value: history.filter((s) => new Date(s.loginAt).getTime() > todayCutoffMs).length, icon: <Users className="size-4" />, color: "text-[#F9D972]" },
-          { label: "Timed Out", value: history.filter((s) => s.status === "TIMED_OUT").length, icon: <Clock className="size-4" />, color: "text-amber-600 dark:text-amber-400" },
-          { label: "Timeout Config", value: `${timeoutMinutes}m`, icon: <Shield className="size-4" />, color: "text-[#ff8333]" },
-        ].map((stat) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-mono-card border border-mono-border rounded-xl p-4 flex items-center gap-3 shadow-sm"
-          >
-            <div className={`${stat.color} shrink-0`}>{stat.icon}</div>
-            <div>
-              <div className="text-xl font-extrabold text-mono-muted dark:text-white">{stat.value}</div>
-              <div className="text-xs text-mono-muted font-semibold">{stat.label}</div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+    <>
+      <section className="mnx-workspace-metrics" aria-label="Session summary">
+        <WorkspaceMetric
+          icon={<Wifi aria-hidden="true" />}
+          label="Active now"
+          value={active.length}
+          detail="Seen in the last two minutes"
+        />
+        <WorkspaceMetric
+          icon={<Users aria-hidden="true" />}
+          label="Today"
+          value={
+            history.filter(
+              (session) =>
+                new Date(session.loginAt).getTime() > todayCutoffMs,
+            ).length
+          }
+          detail="Sessions opened today"
+        />
+        <WorkspaceMetric
+          icon={<Clock aria-hidden="true" />}
+          label="Timed out"
+          value={history.filter((session) => session.status === "TIMED_OUT").length}
+          detail="Within retained history"
+        />
+        <WorkspaceMetric
+          icon={<Shield aria-hidden="true" />}
+          label="Timeout"
+          value={`${timeoutMinutes}m`}
+          detail="Current inactivity limit"
+        />
+      </section>
 
-      {/* Timeout config */}
-      <div className="bg-mono-card border border-mono-border rounded-xl p-5 shadow-sm">
-        <h2 className="text-sm font-bold text-mono-muted dark:text-mono-muted mb-3 flex items-center gap-2">
-          <Shield className="size-4 text-[#ff8333]" />
-          Inactivity Timeout Config
-        </h2>
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <input
+      <AdminPanel>
+        <AdminPanelHeader
+          eyebrow="Security policy"
+          title="Inactivity timeout"
+          description="Warnings appear during the final 20% of idle time, capped at two minutes. Changes apply after the next page load."
+        />
+        <div className="mnx-admin-panel-body mnx-admin-timeout-control">
+          <AdminField label="Timeout in minutes">
+            <AdminInput
               type="number"
               min={1}
               max={480}
               value={newTimeout}
-              onChange={(e) => setNewTimeout(e.target.value)}
-              className="w-20 h-11 rounded-xl border border-[#F9D972]/55 bg-mono-card px-3 text-sm text-mono-text focus:outline-none focus:ring-2 focus:ring-primary/15 transition"
+              onChange={(event) => setNewTimeout(event.target.value)}
             />
-            <span className="text-sm font-semibold text-mono-muted">minutes</span>
-          </div>
-          <Button
-            size="sm"
+          </AdminField>
+          <AdminButton
             onClick={saveTimeout}
             disabled={savingTimeout}
-            className="h-11 px-5 bg-[#F9D972] hover:bg-[#E8C85D] text-white text-xs font-semibold rounded-xl"
+            variant="primary"
           >
-            {savingTimeout ? "Saving…" : timeoutSaved ? "Saved ✓" : "Save"}
-          </Button>
-          <p className="text-xs font-semibold text-mono-muted max-w-md">
-            Warning appears during the final 20% of idle time, capped at 2 minutes. Changes apply after the next page load.
-          </p>
+            {savingTimeout ? "Saving…" : timeoutSaved ? "Saved" : "Save"}
+          </AdminButton>
         </div>
-      </div>
+      </AdminPanel>
 
-      {/* Active sessions */}
-      <div>
-        <div className="flex items-center justify-between mb-3.5">
-          <h2 className="text-sm font-bold text-mono-muted dark:text-mono-muted flex items-center gap-2">
-            <Wifi className="size-4 text-green-500" />
-            Currently Active Sessions
-            <span className="ml-1 text-xs bg-green-500/10 text-green-600 dark:text-green-400 px-2.5 py-0.5 rounded-full font-bold">
-              {active.length}
-            </span>
-          </h2>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={refresh}
-            disabled={refreshing}
-            className="h-9 text-xs font-semibold border-mono-border/60 hover:bg-mono-soft text-mono-text gap-1.5 rounded-xl"
-          >
-            <RefreshCw className={`size-3 ${refreshing ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-        </div>
-
+      <AdminPanel>
+        <AdminPanelHeader
+          eyebrow="Live activity"
+          title="Currently active sessions"
+          description={`${active.length} session${active.length === 1 ? "" : "s"} seen in the active window.`}
+          actions={
+            <AdminButton onClick={refresh} disabled={refreshing} size="compact">
+              <RefreshCw
+                className={refreshing ? "mnx-state-spinner" : undefined}
+                aria-hidden="true"
+              />
+              Refresh
+            </AdminButton>
+          }
+        />
         {active.length === 0 ? (
-          <div className="text-center py-16 text-mono-muted font-semibold border border-dashed border-mono-border/80 rounded-xl bg-mono-card">
-            No active sessions
-          </div>
+          <div className="mnx-empty-state">No active sessions</div>
         ) : (
-          <div className="space-y-3">
-            {active.map((s, idx) => (
-              <motion.div
-                key={s.id}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.04 }}
-                className="bg-mono-card border border-mono-border rounded-xl px-5 py-4 flex flex-col md:flex-row md:items-center gap-4 shadow-sm"
-              >
-                {/* User info */}
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="size-9 rounded-xl bg-gradient-to-br from-[#F9D972] to-[#008993] flex items-center justify-center text-xs font-extrabold text-white shrink-0">
-                    {s.userName.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-sm font-bold text-mono-muted dark:text-white truncate">{s.userName}</div>
-                    <div className="text-xs text-mono-muted font-semibold truncate">{s.userEmail}</div>
-                  </div>
-                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded ml-auto md:ml-2 uppercase ${roleColors[s.userRole] ?? "text-mono-muted bg-mono-soft"}`}>
-                    {s.userRole}
+          <div className="mnx-admin-record-list">
+            {active.map((session) => (
+              <article key={session.id} className="mnx-admin-session-record">
+                <span className="mnx-admin-avatar" aria-hidden="true">
+                  {session.userName.charAt(0).toUpperCase()}
+                </span>
+                <div className="mnx-admin-session-person">
+                  <strong>{session.userName}</strong>
+                  <small>{session.userEmail}</small>
+                  <AdminBadge>{session.userRole}</AdminBadge>
+                </div>
+                <div className="mnx-admin-session-meta">
+                  <span>
+                    <Clock aria-hidden="true" />
+                    Login: {formatTime(session.loginAt)}
                   </span>
+                  <span>
+                    <Wifi aria-hidden="true" />
+                    Active{" "}
+                    {formatDuration(
+                      nowMs - new Date(session.loginAt).getTime(),
+                    )}
+                  </span>
+                  {session.ipAddress ? (
+                    <span>
+                      <MapPin aria-hidden="true" />
+                      {session.ipAddress}
+                      {session.location ? ` · ${session.location}` : ""}
+                    </span>
+                  ) : null}
                 </div>
-
-                {/* Session meta */}
-                <div className="flex flex-wrap items-center gap-4 text-xs text-mono-muted dark:text-mono-muted font-semibold">
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="size-3.5" />
-                    <span>Login: {formatTime(s.loginAt)}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Wifi className="size-3.5 text-green-500" />
-                    <span className="text-green-500">Active {formatDuration(nowMs - new Date(s.loginAt).getTime())}</span>
-                  </div>
-                  {s.ipAddress && (
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="size-3.5" />
-                      <span>{s.ipAddress}{s.location ? ` · ${s.location}` : ""}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Admin force-logout controls */}
-                <div className="flex shrink-0 items-center gap-2">
-                  <button
-                    type="button"
-                    disabled={revokingId === s.id}
-                    onClick={async () => {
-                      setRevokingId(s.id);
-                      try {
-                        await adminRevokeSessionAction(s.id);
-                        await refresh();
-                      } finally {
-                        setRevokingId(null);
-                      }
-                    }}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-500/30 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-red-500 transition-colors hover:bg-red-500/10 disabled:opacity-50"
-                    title="Force logout this session"
+                <div className="mnx-admin-record-actions">
+                  <AdminButton
+                    size="compact"
+                    variant="destructive"
+                    disabled={revokingId === session.id}
+                    onClick={() => revokeSession(session.id)}
                   >
-                    <LogOut className="size-3" />
-                    {revokingId === s.id ? "Revoking…" : "Force logout"}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={revokingId === s.userId}
-                    onClick={async () => {
-                      setRevokingId(s.userId);
-                      try {
-                        await adminRevokeAllUserSessionsAction(s.userId);
-                        await refresh();
-                      } finally {
-                        setRevokingId(null);
-                      }
-                    }}
-                    className="cursor-pointer rounded-lg border border-mono-border px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-mono-muted transition-colors hover:bg-mono-soft disabled:opacity-50"
-                    title="Force logout ALL sessions of this user"
+                    <LogOut aria-hidden="true" />
+                    {revokingId === session.id ? "Revoking…" : "Force logout"}
+                  </AdminButton>
+                  <AdminButton
+                    size="compact"
+                    disabled={revokingId === session.userId}
+                    onClick={() => revokeUserSessions(session.userId)}
                   >
                     All devices
-                  </button>
+                  </AdminButton>
                 </div>
-              </motion.div>
+              </article>
             ))}
           </div>
         )}
-      </div>
+      </AdminPanel>
 
-      {/* Session history */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-bold text-mono-muted dark:text-mono-muted flex items-center gap-2">
-          <Clock className="size-4 text-mono-muted" />
-          Session History (last 100)
-        </h2>
-        <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left min-w-[700px]">
-              <thead>
-                <tr className="border-b border-mono-border bg-slate-50 dark:bg-slate-800/30 text-xs font-bold text-mono-muted dark:text-mono-muted">
-                  <th className="px-5 py-3 font-semibold">User</th>
-                  <th className="px-5 py-3 font-semibold">Login</th>
-                  <th className="px-5 py-3 font-semibold">Duration</th>
-                  <th className="px-5 py-3 font-semibold">Status</th>
-                  <th className="px-5 py-3 font-semibold">IP / Location</th>
+      <AdminPanel>
+        <AdminPanelHeader
+          eyebrow="Last 100"
+          title="Session history"
+          description="Retained sign-in, duration, outcome, and network context."
+        />
+        <AdminTable>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Login</th>
+              <th>Duration</th>
+              <th>Status</th>
+              <th>IP / location</th>
+            </tr>
+          </thead>
+          <tbody>
+            {history.length === 0 ? (
+              <AdminEmptyTableRow colSpan={5}>
+                No session history
+              </AdminEmptyTableRow>
+            ) : (
+              history.map((session) => (
+                <tr key={session.id}>
+                  <td>
+                    <strong>{session.userName}</strong>
+                    <small>{session.userEmail}</small>
+                  </td>
+                  <td>{formatTime(session.loginAt)}</td>
+                  <td>
+                    {formatDuration(
+                      new Date(session.logoutAt ?? session.lastSeenAt).getTime() -
+                        new Date(session.loginAt).getTime(),
+                    )}
+                  </td>
+                  <td>
+                    <AdminBadge variant={sessionVariant(session.status)}>
+                      {session.status.replace("_", " ")}
+                    </AdminBadge>
+                  </td>
+                  <td>
+                    {session.ipAddress ?? "—"}
+                    {session.location ? ` · ${session.location}` : ""}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-outline-variant/60 font-medium text-mono-muted dark:text-mono-muted">
-                {history.map((s, idx) => (
-                  <tr
-                    key={s.id}
-                    className="hover:bg-slate-50/30 dark:hover:bg-slate-800/5 transition duration-150"
-                  >
-                    <td className="px-5 py-3">
-                      <div className="font-bold text-mono-muted dark:text-white">{s.userName}</div>
-                      <div className="text-xs text-mono-muted font-semibold">{s.userEmail}</div>
-                    </td>
-                    <td className="px-5 py-3 text-mono-muted font-semibold whitespace-nowrap">{formatTime(s.loginAt)}</td>
-                    <td className="px-5 py-3 text-mono-muted font-semibold whitespace-nowrap">
-                      {formatDuration(
-                        s.logoutAt
-                          ? new Date(s.logoutAt).getTime() - new Date(s.loginAt).getTime()
-                          : new Date(s.lastSeenAt).getTime() - new Date(s.loginAt).getTime()
-                      )}
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] uppercase ${statusColors[s.status] ?? "text-mono-muted"}`}>
-                        {s.status.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-mono-muted font-semibold">
-                      {s.ipAddress ?? "—"}
-                      {s.location ? ` · ${s.location}` : ""}
-                    </td>
-                  </tr>
-                ))}
-                {history.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-5 py-10 text-center text-mono-muted font-semibold">No session history</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+              ))
+            )}
+          </tbody>
+        </AdminTable>
+      </AdminPanel>
 
-      {/* Security audit trail */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-bold text-mono-muted dark:text-mono-muted flex items-center gap-2">
-          <Shield className="size-4 text-[#ff8333]" />
-          Security Audit Trail (last 100)
-        </h2>
-        <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left min-w-[800px]">
-              <thead>
-                <tr className="border-b border-mono-border bg-slate-50 dark:bg-slate-800/30 text-xs font-bold text-mono-muted dark:text-mono-muted">
-                  <th className="px-5 py-3 font-semibold">When</th>
-                  <th className="px-5 py-3 font-semibold">Event</th>
-                  <th className="px-5 py-3 font-semibold">Outcome</th>
-                  <th className="px-5 py-3 font-semibold">User</th>
-                  <th className="px-5 py-3 font-semibold">IP</th>
-                  <th className="px-5 py-3 font-semibold">User Agent</th>
+      <AdminPanel>
+        <AdminPanelHeader
+          eyebrow="Last 100"
+          title="Security audit trail"
+          description="Authentication and session-security outcomes with actor and network context."
+        />
+        <AdminTable>
+          <thead>
+            <tr>
+              <th>When</th>
+              <th>Event</th>
+              <th>Outcome</th>
+              <th>User</th>
+              <th>IP</th>
+              <th>User agent</th>
+            </tr>
+          </thead>
+          <tbody>
+            {securityEvents.length === 0 ? (
+              <AdminEmptyTableRow colSpan={6}>
+                No security events yet
+              </AdminEmptyTableRow>
+            ) : (
+              securityEvents.map((event) => (
+                <tr key={event.id}>
+                  <td>{formatTime(event.createdAt)}</td>
+                  <td>{formatEventLabel(event.event)}</td>
+                  <td>
+                    <AdminBadge
+                      variant={event.outcome === "SUCCESS" ? "success" : "danger"}
+                    >
+                      {event.outcome}
+                    </AdminBadge>
+                  </td>
+                  <td>
+                    <strong>
+                      {event.userName ?? event.email ?? "Unknown"}
+                    </strong>
+                    <small>
+                      {event.userEmail ?? event.email ?? "No account matched"}
+                    </small>
+                  </td>
+                  <td>{event.ipAddress ?? "N/A"}</td>
+                  <td title={event.userAgent ?? ""}>
+                    {event.userAgent ?? "N/A"}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-outline-variant/60 font-medium text-mono-muted dark:text-mono-muted">
-                {securityEvents.map((event, idx) => (
-                  <tr
-                    key={event.id}
-                    className="hover:bg-slate-50/30 dark:hover:bg-slate-800/5 transition duration-150"
-                  >
-                    <td className="px-5 py-3 text-mono-muted font-semibold whitespace-nowrap">{formatTime(event.createdAt)}</td>
-                    <td className="px-5 py-3 text-mono-muted dark:text-mono-muted font-semibold whitespace-nowrap">{formatEventLabel(event.event)}</td>
-                    <td className="px-5 py-3">
-                      <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] uppercase ${outcomeColors[event.outcome] ?? "text-mono-muted"}`}>
-                        {event.outcome}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <div className="font-bold text-mono-muted dark:text-white">{event.userName ?? event.email ?? "Unknown"}</div>
-                      <div className="text-xs text-mono-muted font-semibold">{event.userEmail ?? event.email ?? "No account matched"}</div>
-                    </td>
-                    <td className="px-5 py-3 text-mono-muted font-semibold whitespace-nowrap">{event.ipAddress ?? "N/A"}</td>
-                    <td className="px-5 py-3 text-mono-muted font-semibold max-w-[260px] truncate" title={event.userAgent ?? ""}>{event.userAgent ?? "N/A"}</td>
-                  </tr>
-                ))}
-                {securityEvents.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-5 py-10 text-center text-mono-muted font-semibold">No security events yet</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
+              ))
+            )}
+          </tbody>
+        </AdminTable>
+      </AdminPanel>
+    </>
   );
 }

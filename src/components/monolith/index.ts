@@ -1,4 +1,5 @@
 export * from "./alert";
+export * from "./admin-workspace";
 export * from "./accounting-workspace";
 export * from "./accounting-invoice-form";
 export * from "./accounting-invoice-detail";
@@ -10,6 +11,7 @@ export * from "./badge";
 export * from "./button";
 export * from "./card";
 export * from "./cha-workspace";
+export * from "./communication-workspace";
 export * from "./crm-workspace";
 export * from "./date-input";
 export * from "./dropdown-menu";

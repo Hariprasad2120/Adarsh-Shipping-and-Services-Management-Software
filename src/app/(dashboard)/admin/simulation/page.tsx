@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { getClockState } from "@/lib/clock";
 import { can } from "@/lib/rbac";
@@ -13,18 +12,5 @@ export default async function SimulationPage() {
 
   const { frozenAt } = await getClockState();
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <Link href="/admin" className="text-sm text-gray-500 hover:text-gray-700">
-          ← Admin
-        </Link>
-        <p className="mt-1 text-sm text-gray-500">
-          Freeze the system clock for testing deadline and date-driven features.
-        </p>
-      </div>
-
-      <SimulationClient initialFrozenAt={frozenAt?.toISOString() ?? null} />
-    </div>
-  );
+  return <SimulationClient initialFrozenAt={frozenAt?.toISOString() ?? null} />;
 }

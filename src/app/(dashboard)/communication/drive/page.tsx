@@ -1,227 +1,207 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { listFiles } from "@/lib/google-drive-client";
-import { Folder, File, ExternalLink, ArrowLeft, RefreshCw, AlertCircle, HardDrive } from "lucide-react";
+import {
+  ArrowLeft,
+  ExternalLink,
+  File,
+  Folder,
+  HardDrive,
+} from "lucide-react";
 import Link from "next/link";
 import JobSelector from "./JobSelector";
 import SyncDriveButton from "./SyncDriveButton";
+import {
+  CommunicationEmptyTableRow,
+  CommunicationField,
+  CommunicationPanel,
+  CommunicationPanelHeader,
+  CommunicationTable,
+  WorkspaceState,
+} from "@/components/monolith";
 
-type SearchParams = Promise<{
-  jobId?: string;
-  folderId?: string;
-}>;
+type SearchParams = Promise<{ jobId?: string; folderId?: string }>;
+type DriveFile = Awaited<ReturnType<typeof listFiles>>[number];
 
-export default async function JobDrivePortal(props: {
+export default async function JobDrivePortal({
+  searchParams: searchParamsPromise,
+}: {
   searchParams: SearchParams;
 }) {
-  const searchParams = await props.searchParams;
+  const searchParams = await searchParamsPromise;
   const session = await auth();
   if (!session?.user) return null;
 
-  const orgId = session.user.orgId!;
-  
-  // 1. Fetch active jobs (both successfully provisioned and pending/mock/failed workspaces)
   const jobs = await db.chaJob.findMany({
-    where: {
-      orgId
-    },
-    include: {
-      workspaceProfile: true
-    },
-    orderBy: {
-      jobNumber: "desc"
-    }
+    where: { orgId: session.user.orgId! },
+    include: { workspaceProfile: true },
+    orderBy: { jobNumber: "desc" },
   });
 
-  const selectedJobId = searchParams.jobId || "";
-  const selectedFolderId = searchParams.folderId || "";
+  const selectedJobId = searchParams.jobId ?? "";
+  const selectedFolderId = searchParams.folderId ?? "";
+  const currentJob = jobs.find((job) => job.id === selectedJobId);
+  const workspace = currentJob?.workspaceProfile;
+  const isRealFolderCreated =
+    workspace?.provisioningStatus === "success" &&
+    Boolean(workspace.rootFolderId) &&
+    !workspace.rootFolderId?.startsWith("mock-");
 
-  const currentJob = jobs.find((j) => j.id === selectedJobId);
-  const wp = currentJob?.workspaceProfile;
+  let files: DriveFile[] = [];
+  let currentFolderName = "Root workspace";
 
-  const isRealFolderCreated = wp && wp.provisioningStatus === "success" && wp.rootFolderId && !wp.rootFolderId.startsWith("mock-");
-
-  let filesList: any[] = [];
-  let isAtRoot = !selectedFolderId;
-  let currentFolderName = "Root Workspace";
-
-  if (currentJob && wp && isRealFolderCreated) {
-    if (selectedFolderId) {
-      try {
-        filesList = await listFiles(selectedFolderId);
-        
-        // Find folder name if it's one of the categories
-        const categoryFolders = (wp.categoryFolders as Record<string, string>) || {};
-        const match = Object.entries(categoryFolders).find(([_, id]) => id === selectedFolderId);
-        currentFolderName = match ? match[0] : "Files List";
-      } catch (err) {
-        console.error("[JobDrivePortal] Error loading files:", err);
-      }
+  if (currentJob && workspace && isRealFolderCreated && selectedFolderId) {
+    try {
+      files = await listFiles(selectedFolderId);
+      const categoryFolders =
+        (workspace.categoryFolders as Record<string, string>) ?? {};
+      const match = Object.entries(categoryFolders).find(
+        ([, id]) => id === selectedFolderId,
+      );
+      currentFolderName = match?.[0] ?? "Files";
+    } catch (error) {
+      console.error("[JobDrivePortal] Error loading files:", error);
     }
   }
 
-  // Map jobs to clean serializable format for client component
-  const serializableJobs = jobs.map((j) => ({
-    id: j.id,
-    jobNumber: j.jobNumber,
-    title: j.title
+  const serializableJobs = jobs.map((job) => ({
+    id: job.id,
+    jobNumber: job.jobNumber,
+    title: job.title,
   }));
 
   return (
-    <main className="space-y-6 text-left">
-      {/* Header Panel */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between p-6 rounded-2xl border border-mono-border bg-mono-card shadow-sm gap-4">
-        <div>
-          <span className="text-[10px] uppercase font-bold tracking-widest text-[#F9D972]">Document Management</span>
-          <h1 className="text-xl font-bold text-mono-text mt-1">Shared Job Drive</h1>
-          <p className="text-xs text-mono-muted mt-0.5">
-            Browse and inspect active shipping documents stored securely on Google Shared Drive.
-          </p>
+    <>
+      <CommunicationPanel>
+        <CommunicationPanelHeader
+          eyebrow="Document context"
+          title="Select a job workspace"
+          description="Browse the controlled Google Drive hierarchy provisioned for a CHA job."
+          actions={<HardDrive aria-hidden="true" />}
+        />
+        <div className="mnx-communication-panel-body">
+          <CommunicationField label="Job workspace">
+            <JobSelector
+              jobs={serializableJobs}
+              selectedJobId={selectedJobId}
+            />
+          </CommunicationField>
         </div>
+      </CommunicationPanel>
 
-        {/* Job selector dropdown */}
-        <div className="w-full md:max-w-xs">
-          <label className="monolith-label block mb-1">Select Job Workspace</label>
-          <JobSelector jobs={serializableJobs} selectedJobId={selectedJobId} />
-        </div>
-      </div>
-
-      {currentJob ? (
-        isRealFolderCreated ? (
-          <div className="rounded-xl border border-mono-border bg-mono-card shadow-sm overflow-hidden animate-page-enter">
-            {/* File path navigation bar */}
-            <div className="p-4 border-b border-mono-border bg-mono-soft flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-bold text-mono-text uppercase tracking-wide">
-                  Job Workspace: {currentJob.jobNumber}
-                </span>
-                <span className="text-mono-muted/40">/</span>
-                <span className="text-xs font-semibold text-mono-muted uppercase">
-                  {currentFolderName}
-                </span>
-              </div>
-
-              {!isAtRoot && (
+      {!currentJob ? (
+        <WorkspaceState
+          variant="empty"
+          eyebrow="Job drive"
+          title="Choose a job"
+          description="Select a job workspace to browse its category folders and files."
+          icon={<Folder aria-hidden="true" />}
+        />
+      ) : isRealFolderCreated && workspace ? (
+        <CommunicationPanel>
+          <CommunicationPanelHeader
+            eyebrow={`Job ${currentJob.jobNumber}`}
+            title={currentFolderName}
+            description="Google Drive files inherit the access and folder structure configured for this job."
+            actions={
+              selectedFolderId ? (
                 <Link
                   href={`/communication/drive?jobId=${selectedJobId}`}
-                  className="inline-flex items-center space-x-1 text-xs text-[#F9D972] hover:underline font-bold uppercase"
+                  className="mnx-button mnx-button-secondary"
                 >
-                  <ArrowLeft size={14} />
-                  <span>Back to Folders</span>
+                  <ArrowLeft aria-hidden="true" />
+                  Back to folders
                 </Link>
-              )}
+              ) : null
+            }
+          />
+          {!selectedFolderId ? (
+            <div className="mnx-communication-folder-grid">
+              {Object.entries(
+                (workspace.categoryFolders as Record<string, string>) ?? {},
+              ).map(([categoryName, folderId]) => (
+                <Link
+                  key={categoryName}
+                  href={`/communication/drive?jobId=${selectedJobId}&folderId=${folderId}`}
+                  className="mnx-communication-folder"
+                >
+                  <Folder aria-hidden="true" />
+                  <span>
+                    <strong>{categoryName.substring(3)}</strong>
+                    <small>Code: {categoryName.substring(0, 2)}</small>
+                  </span>
+                </Link>
+              ))}
             </div>
-
-            <div className="p-6">
-              {isAtRoot ? (
-                /* Root folders: List Category subfolders */
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                  {wp.categoryFolders &&
-                    Object.entries(wp.categoryFolders as Record<string, string>).map(
-                      ([catName, folderId]) => (
-                        <Link
-                          key={catName}
-                          href={`/communication/drive?jobId=${selectedJobId}&folderId=${folderId}`}
-                          className="flex items-center space-x-3 p-4 rounded-xl border border-mono-border bg-mono-soft hover:bg-mono-soft transition-colors"
-                        >
-                          <span className="text-[#D88700] shrink-0 font-bold text-lg">📁</span>
-                          <div className="truncate">
-                            <span className="text-xs font-bold text-mono-text block truncate">
-                              {catName.substring(3)}
-                            </span>
-                            <span className="text-[9px] text-mono-muted block">
-                              Code: {catName.substring(0, 2)}
-                            </span>
-                          </div>
-                        </Link>
-                      )
-                    )}
-                </div>
-              ) : (
-                /* Subfolder contents: List files */
-                <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card">
-                  <table className="monolith-table">
-                    <thead>
-                      <tr>
-                        <th className="px-6 py-2.5">Name</th>
-                        <th className="px-6 py-2.5">Mime Type</th>
-                        <th className="px-6 py-2.5">Size</th>
-                        <th className="px-6 py-2.5 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filesList.length === 0 ? (
-                        <tr>
-                          <td colSpan={4} className="text-center py-8 text-xs text-mono-muted">
-                            No files found in this folder.
-                          </td>
-                        </tr>
-                      ) : (
-                        filesList.map((file) => (
-                          <tr key={file.id} className="hover:bg-mono-soft transition-colors">
-                            <td className="px-6 py-3 text-xs font-semibold text-mono-text flex items-center space-x-2">
-                              <span className="text-mono-muted">📄</span>
-                              <span className="truncate max-w-[250px]">{file.name}</span>
-                            </td>
-                            <td className="px-6 py-3 text-xs text-mono-muted font-medium">
-                              {file.mimeType.split(".").pop() || "File"}
-                            </td>
-                            <td className="px-6 py-3 text-xs text-mono-text monolith-numeric">
-                              {file.size ? `${Math.round(file.size / 1024)} KB` : "-"}
-                            </td>
-                            <td className="px-6 py-3 text-xs text-right">
-                              {file.webViewLink && (
-                                <a
-                                  href={file.webViewLink}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center space-x-1 text-[#F9D972] hover:underline font-bold uppercase"
-                                >
-                                  <span>View File</span>
-                                  <ExternalLink size={12} />
-                                </a>
-                              )}
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          /* Drive folder is not synced */
-          <div className="flex flex-col md:flex-row items-center justify-between p-6 border border-mono-border bg-mono-card rounded-2xl shadow-sm gap-6 text-left animate-page-enter">
-            <div className="flex items-start space-x-4">
-              <span className="monolith-icon-badge shrink-0" style={{ background: "rgba(251,146,60,0.10)", color: "#D88700" }}>
-                <HardDrive size={22} />
-              </span>
-              <div className="space-y-1 max-w-xl">
-                <h3 className="text-xs font-bold text-mono-text uppercase tracking-wide">
-                  Drive Folder Not Synchronized
-                </h3>
-                <p className="text-[11px] text-mono-muted leading-relaxed">
-                  The Google Shared Drive folder structure for job <strong className="text-mono-text">{currentJob.jobNumber}</strong> has not been created on the Google Shared Drive, or is running on a mock profile. Synchronize now to establish the real folder hierarchy and migrate existing database uploads to the Shared Drive.
-                </p>
-              </div>
-            </div>
-            
-            <div className="shrink-0 w-full md:w-auto">
-              <SyncDriveButton jobId={currentJob.id} />
-            </div>
-          </div>
-        )
+          ) : (
+            <CommunicationTable>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Size</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {files.length === 0 ? (
+                  <CommunicationEmptyTableRow colSpan={4}>
+                    No files found in this folder.
+                  </CommunicationEmptyTableRow>
+                ) : (
+                  files.map((file) => (
+                    <tr key={file.id}>
+                      <td>
+                        <span>
+                          <File aria-hidden="true" />
+                          <strong>{file.name}</strong>
+                        </span>
+                      </td>
+                      <td>{file.mimeType.split(".").pop() ?? "File"}</td>
+                      <td>
+                        {file.size
+                          ? `${Math.round(Number(file.size) / 1024)} KB`
+                          : "—"}
+                      </td>
+                      <td>
+                        {file.webViewLink ? (
+                          <a
+                            href={file.webViewLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mnx-communication-record-link"
+                          >
+                            View file
+                            <ExternalLink aria-hidden="true" />
+                          </a>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </CommunicationTable>
+          )}
+        </CommunicationPanel>
       ) : (
-        /* Empty/prompt state */
-        <div className="flex flex-col items-center justify-center p-12 border border-mono-border bg-mono-card rounded-2xl">
-          <span className="text-3xl mb-2">📂</span>
-          <span className="text-xs text-mono-muted font-semibold">
-            Choose a job workspace from the dropdown list above to explore files.
-          </span>
-        </div>
+        <CommunicationPanel>
+          <CommunicationPanelHeader
+            eyebrow="Drive synchronisation"
+            title="Drive folder not synchronised"
+            description={`The real Google Drive hierarchy for ${currentJob.jobNumber} is missing, pending, failed, or still using a mock profile.`}
+            actions={<HardDrive aria-hidden="true" />}
+          />
+          <div className="mnx-communication-panel-body">
+            <p>
+              Synchronise to establish the category hierarchy and migrate
+              existing database uploads into the shared Drive.
+            </p>
+            <SyncDriveButton jobId={currentJob.id} />
+          </div>
+        </CommunicationPanel>
       )}
-    </main>
+    </>
   );
 }

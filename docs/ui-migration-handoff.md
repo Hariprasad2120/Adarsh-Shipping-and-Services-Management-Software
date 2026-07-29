@@ -5,10 +5,9 @@ Last updated: 2026-07-29
 ## Current state
 
 - Branch: `main`.
-- Merge parents: Accounting commit `179b909` and CRM commit `16bb82c`, both
-  based on `fd1cbe7`.
+- Batch 006 source base: `ed1bf68`.
 - Protected reference: `/dashboard` was not redesigned.
-- Route inventory: 211 total, 1 protected, 174 migrated, 36 pending, and 13
+- Route inventory: 211 total, 1 protected, 193 migrated, 17 pending, and 14
   layouts.
 - The combined migration covers all 32 discovered `/accounting` routes and all
   57 discovered `/crm` routes, including their dynamic record routes.
@@ -22,6 +21,50 @@ Last updated: 2026-07-29
   remain Migrated but not visually Verified because the connected in-app
   Browser service exposes no browser instance. This blocker does not apply to
   Accounting's completed authenticated Playwright matrix.
+- All 10 Communication and 10 Admin routes are migrated; 19 newly replaced
+  route surfaces plus the existing design-system showcase pass source,
+  behavior, archive, type, test, build, and authenticated visual gates.
+- All 15 Recruit routes remain verified and passed the Batch 006 regression
+  matrix.
+
+## Communication, Admin, and Recruit route inventory
+
+Repository discovery—not sidebar links—found:
+
+- Communication: `/communication`, `/communication/calendar`,
+  `/communication/chat`, `/communication/drive`,
+  `/communication/google-chat-live-view`, `/communication/job-spaces`,
+  `/communication/mail`, `/communication/meetings`, `/communication/search`,
+  and `/communication/settings`.
+- Admin: `/admin`, `/admin/data-tools`, `/admin/design-system`,
+  `/admin/google-chat`, `/admin/notifications`, `/admin/passkeys`,
+  `/admin/roles`, `/admin/sessions`, `/admin/settings`, and
+  `/admin/simulation`.
+- Recruit: all 15 routes rooted at `/hrms/recruit`, including audit, career,
+  applications, assistant, jobs, profile, resumes, employer applications,
+  candidates/new, jobs/new, and settings. These were already verified in
+  Batch 002 and were re-tested without source changes.
+
+## Batch 006 implementation record
+
+1. Archived all active legacy Communication/Admin visual source before
+   replacement.
+2. Activated exact Communication/Admin paths in the shared Monolith shell and
+   added centralized workspace frames, metadata, local navigation, semantic
+   controls/tables, and asynchronous states.
+3. Rebuilt the Communication overview, calendar, meetings, Drive, search,
+   job spaces, live-view fallback/diagnostics, settings, Mail, and Chat
+   presentation while preserving connected Google APIs and job workflows.
+4. Rebuilt Admin overview, data import, Google Chat monitoring, notifications,
+   passkeys, roles, sessions, settings, and simulation presentation while
+   preserving RBAC, actions, validation, destructive confirmations, and data
+   operations.
+5. Replaced Mail/Chat route-local overlays with the shared focus-managed dialog
+   layer and removed the obsolete Communication navbar from active source.
+6. Added tablet/mobile behavior for dense Mail/Chat panes and corrected the
+   shared Violet active-tab contrast found during screenshot review.
+7. Regenerated the exhaustive route audit and added repeatable static and
+   authenticated runtime verifiers.
 
 ## Accounting route inventory
 
@@ -125,6 +168,16 @@ Routes were discovered from repository page sources, not sidebar links:
 
 Archives:
 
+`OLD UI code/legacy-ui-before-monolith-communication-admin-ed1bf68.zip`
+
+- Source commit: `ed1bf68`.
+- Original files: 45, with relative paths retained.
+- Size: 130,499 bytes.
+- SHA-256:
+  `65DDD40D29C8FEA5AF6D86A00F71CBD3E1E4927E18DC5944F9AECF74D2303EC8`.
+- Checksum, size, exact file count, and required entries pass through
+  `scripts/verify-monolith-communication-admin-ui.mjs`.
+
 `OLD UI code/legacy-ui-before-monolith-accounting-fd1cbe7.zip`
 
 - Source commit: `fd1cbe7`.
@@ -210,6 +263,30 @@ CHA dialog reference archive:
 
 Passed:
 
+Communication, Admin, and Recruit:
+
+- static route/presentation/archive/protected-behavior verifier for all 20
+  Communication/Admin routes and the 19 newly migrated surfaces;
+- route audit: 211 pages, 14 layouts, 193 migrated, 17 pending;
+- scoped ESLint for all changed production and migration sources;
+- production TypeScript with the required 8 GB heap;
+- 2 focused shared-workspace tests;
+- production build with Prisma generation, Next.js compilation, production
+  TypeScript, and all 315 application routes;
+- 306 authenticated Playwright checks across 34 Communication, Admin, and
+  Recruit routes, all three themes, and desktop/tablet/mobile widths;
+- exact paths, workspace ownership, active semantic theme/tokens, standardized
+  controls/tables, no legacy visual composition, no application/server errors,
+  and no page-level horizontal overflow;
+- 81 representative screenshots plus
+  `artifacts/ui-migration/communication-admin/verification.json`;
+- screenshot review across Light, Night, Violet, desktop, tablet, and mobile;
+- `git diff --check`.
+
+The full repository lint command was also executed. It remains red on the
+documented pre-existing seed, maintenance-script, and unrelated business-module
+backlog; Batch 006 scoped ESLint passes.
+
 Accounting:
 
 - `node scripts/verify-monolith-accounting-ui.mjs`;
@@ -269,9 +346,9 @@ through `next.config.ts` and the customer-portal checklist-file route.
 ## Merge integration validation
 
 The Accounting and CRM branches were reconciled additively on 2026-07-29.
-Both route families are active in the Monolith shell and route audit, and the
-generated inventory now records 211 pages, 13 layouts, 174 migrated routes,
-and 36 pending routes.
+Both route families remain active in the Monolith shell. Batch 006 subsequently
+advanced the generated inventory to 211 pages, 14 layouts, 193 migrated routes,
+and 17 pending routes.
 
 Passed on the combined tree with the required 8 GB Node heap:
 
@@ -295,7 +372,7 @@ filesystem/NFT trace warnings in HRMS, customer-portal, and `next.config.ts`.
 - Do not compile, import, or modify `_design-reference`.
 - Keep Node.js processes at `NODE_OPTIONS=--max-old-space-size=8192`.
 
-## Browser blocker
+## Remaining historical visual blocker
 
 The production application started successfully at
 `http://127.0.0.1:3100` with the required 8 GB Node heap. The Browser skill was
@@ -303,8 +380,10 @@ initialized against that URL. Browser selection reported `No browser is
 available`; after reading the required troubleshooting documentation, the
 one-time availability query `agent.browsers.list()` returned `[]`.
 
-The Browser skill prohibits substituting standalone Playwright or an unrelated
-browser backend. Consequently, none of these claims may be made yet:
+That historical connected-browser blocker applies to the earlier CRM and
+Expense/CHA verification claims only. It does not apply to Batch 006, whose
+local authenticated production Playwright matrix completed successfully.
+The following earlier claims remain outstanding:
 
 - Light, Night, Violet, and Purple visual verification for every CHA modal,
   native/custom select, filter, warning, autocomplete, and success surface;
@@ -316,24 +395,26 @@ browser backend. Consequently, none of these claims may be made yet:
 - dynamic contact/customer/deal/enquiry/invoice/item/lead/quote/ticket state;
 - dialog, popover, menu, overflow, exact-theme, and application-error runtime
   assertions;
-- verified-batch commit.
+- CRM and Expense/CHA visual-verification commits.
 
 ## Next action
 
-Attach an in-app Browser instance, then continue this same batch:
+Continue the remaining migration program:
 
-1. Start the production app with the 8 GB Node heap.
-2. First verify every reachable CHA dialog/dropdown family in Light, Night,
+1. Attach an in-app Browser instance and verify every reachable CHA
+   dialog/dropdown family in Light, Night,
    Violet, and Purple at desktop, tablet, and mobile widths. Include create-job,
    success, permission, warning, filter, native/custom select, autocomplete,
    document, expense, workflow, and destructive-confirmation states.
-3. Use authenticated, read-only fixtures for every dynamic CRM route.
-4. Exercise all 57 CRM routes in Light, Night, and Violet at desktop, tablet, and
+2. Use authenticated, read-only fixtures for every dynamic CRM route.
+3. Exercise all 57 CRM routes in Light, Night, and Violet at desktop, tablet, and
    mobile widths (513 combinations), asserting the exact path, CRM workspace,
    theme, absence of application errors, and no horizontal overflow.
-5. Open every safe CRM dialog and representative dropdown, select, filter,
+4. Open every safe CRM dialog and representative dropdown, select, filter,
    warning, Mona, toast, and shared Batch 004 popup consumer. Verify themed
    glass, focus handling, one bounded content scroller, mobile safe-area
    behavior, and focus restoration without mutating workflow data.
-6. Fix any visual defects, rerun static/type/test/build gates, update this
-   handoff and status to Verified, and only then commit the verified batch.
+5. Fix any visual defects, rerun static/type/test/build gates, and commit those
+   verified earlier batches.
+6. Migrate the 17 remaining discovered routes, led by the 12-route customer
+   portal family, without changing protected `/dashboard`.

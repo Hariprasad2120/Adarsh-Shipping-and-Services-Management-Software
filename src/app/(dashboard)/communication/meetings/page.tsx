@@ -1,195 +1,183 @@
 import { auth } from "@/lib/auth";
 import { createEvent, listUpcomingEvents } from "@/lib/google-calendar-client";
 import { revalidatePath } from "next/cache";
-import { Video, Calendar, Users, ExternalLink, Plus, CheckCircle2 } from "lucide-react";
+import { Calendar, Users, Video } from "lucide-react";
+import {
+  CommunicationButton,
+  CommunicationField,
+  CommunicationInput,
+  CommunicationPanel,
+  CommunicationPanelHeader,
+  CommunicationTextarea,
+  WorkspaceState,
+} from "@/components/monolith";
+
+type Meeting = Awaited<ReturnType<typeof listUpcomingEvents>>[number];
+
+function calendarMoment(value: { dateTime: string }) {
+  return (
+    value.dateTime ||
+    ("date" in value && typeof value.date === "string" ? value.date : "")
+  );
+}
 
 export default async function MeetingsPortal() {
   const session = await auth();
   if (!session?.user) return null;
 
-  // Fetch upcoming meetings (last 10)
-  let meetings: any[] = [];
+  let meetings: Meeting[] = [];
   try {
     meetings = await listUpcomingEvents({
       userId: session.user.id,
-      maxResults: 10
+      maxResults: 10,
     });
-  } catch (err) {
-    console.error("[MeetingsPortal] Error loading events:", err);
+  } catch (error) {
+    console.error("[MeetingsPortal] Error loading events:", error);
   }
 
-  // Server Action to schedule a new meeting
   async function scheduleMeetingAction(formData: FormData) {
     "use server";
-    const session = await auth();
-    if (!session?.user) return;
+    const activeSession = await auth();
+    if (!activeSession?.user) return;
 
     const summary = formData.get("summary") as string;
     const description = formData.get("description") as string;
-    const startStr = formData.get("startAt") as string;
-    const endStr = formData.get("endAt") as string;
-    const attendeesRaw = formData.get("attendeeEmails") as string;
-
-    const attendeeEmails = attendeesRaw
-      ? attendeesRaw.split(",").map(e => e.trim()).filter(Boolean)
+    const startValue = formData.get("startAt") as string;
+    const endValue = formData.get("endAt") as string;
+    const attendeesValue = formData.get("attendeeEmails") as string;
+    const attendeeEmails = attendeesValue
+      ? attendeesValue
+          .split(",")
+          .map((email) => email.trim())
+          .filter(Boolean)
       : [];
 
-    if (!summary || !startStr || !endStr) return;
+    if (!summary || !startValue || !endValue) return;
 
     try {
       await createEvent({
-        userId: session.user.id,
+        userId: activeSession.user.id,
         summary,
         description: description || undefined,
-        startAt: new Date(startStr),
-        endAt: new Date(endStr),
-        attendeeEmails
+        startAt: new Date(startValue),
+        endAt: new Date(endValue),
+        attendeeEmails,
       });
-    } catch (err) {
-      console.error("[MeetingsPortal] Failed to create event:", err);
+    } catch (error) {
+      console.error("[MeetingsPortal] Failed to create event:", error);
     }
 
     revalidatePath("/communication/meetings");
   }
 
   return (
-    <main className="space-y-6 text-left">
-      {/* Header Panel */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between p-6 rounded-2xl border border-mono-border bg-mono-card shadow-sm text-left">
-        <div>
-          <span className="text-[10px] uppercase font-bold tracking-widest text-[#F9D972]">Scheduler & Conference</span>
-          <h1 className="text-xl font-bold text-mono-text mt-1">Meetings Portal</h1>
-          <p className="text-xs text-mono-muted mt-0.5">
-            Schedule custom events and instantly provision Google Meet rooms for client and team operations.
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-left">
-        {/* Left Column: Form Scheduler (Span 2) */}
-        <div className="lg:col-span-2 rounded-xl border border-mono-border bg-mono-card p-6 shadow-sm space-y-4">
-          <h3 className="monolith-h3 text-mono-text flex items-center gap-2">
-            <Plus size={18} className="text-[#F9D972]" />
-            <span>Schedule New Meeting</span>
-          </h3>
-
-          <form action={scheduleMeetingAction} className="space-y-4">
-            <div>
-              <label className="monolith-label block mb-1">Meeting Summary / Title</label>
-              <input
-                type="text"
-                name="summary"
-                placeholder="Shipping status update with Madras Steel"
-                className="w-full text-xs p-2.5 bg-mono-card border border-mono-border rounded-xl focus:outline-none"
+    <div className="mnx-communication-split">
+      <CommunicationPanel>
+        <CommunicationPanelHeader
+          eyebrow="Scheduler"
+          title="Schedule a meeting"
+          description="Create an event and provision a Google Meet room for client or team coordination."
+          actions={<Video aria-hidden="true" />}
+        />
+        <form
+          action={scheduleMeetingAction}
+          className="mnx-communication-form"
+        >
+          <CommunicationField label="Meeting title" required>
+            <CommunicationInput
+              type="text"
+              name="summary"
+              placeholder="Shipping status update with Madras Steel"
+              required
+            />
+          </CommunicationField>
+          <CommunicationField label="Description">
+            <CommunicationTextarea
+              name="description"
+              placeholder="Outline the agenda, shipment details, or document issues."
+              rows={4}
+            />
+          </CommunicationField>
+          <div className="mnx-communication-field-grid">
+            <CommunicationField label="Start time (Asia/Kolkata)" required>
+              <CommunicationInput
+                type="datetime-local"
+                name="startAt"
                 required
               />
-            </div>
-
-            <div>
-              <label className="monolith-label block mb-1">Description</label>
-              <textarea
-                name="description"
-                placeholder="Outline agenda, shipment details, or document issues..."
-                rows={3}
-                className="w-full text-xs p-2.5 bg-mono-card border border-mono-border rounded-xl focus:outline-none"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="monolith-label block mb-1">Start Time (Asia/Kolkata)</label>
-                <input
-                  type="datetime-local"
-                  name="startAt"
-                  className="w-full text-xs p-2.5 bg-mono-card border border-mono-border rounded-xl focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="monolith-label block mb-1">End Time (Asia/Kolkata)</label>
-                <input
-                  type="datetime-local"
-                  name="endAt"
-                  className="w-full text-xs p-2.5 bg-mono-card border border-mono-border rounded-xl focus:outline-none"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="monolith-label block mb-1">Attendees (Comma-separated emails)</label>
-              <input
-                type="text"
-                name="attendeeEmails"
-                placeholder="client@steelworks.in, hr@adarshshipping.in"
-                className="w-full text-xs p-2.5 bg-mono-card border border-mono-border rounded-xl focus:outline-none"
-              />
-              <p className="text-[10px] text-mono-muted mt-1">
-                Attendees will receive calendar invitations containing the auto-generated Google Meet room URL.
-              </p>
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                type="submit"
-                className="inline-flex items-center space-x-1.5 bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-5 py-2.5 rounded-xl text-xs uppercase font-bold tracking-wider transition-all"
-              >
-                <Video size={14} />
-                <span>Schedule & Create Meet</span>
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {/* Right Column: Scheduled Meetings Lists */}
-        <div className="rounded-xl border border-mono-border bg-mono-card p-6 shadow-sm space-y-4">
-          <h3 className="monolith-h3 text-mono-text flex items-center gap-2">
-            <Calendar size={18} className="text-[#F9D972]" />
-            <span>Upcoming Rooms</span>
-          </h3>
-
-          <div className="space-y-3">
-            {meetings.length === 0 ? (
-              <div className="text-center py-8 text-xs text-mono-muted">No upcoming meetings.</div>
-            ) : (
-              meetings.map((meet) => (
-                <div key={meet.id} className="monolith-card monolith-accent p-3.5 rounded-xl border border-mono-border bg-mono-soft space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <h4 className="text-xs font-bold text-mono-text truncate">{meet.summary}</h4>
-                    {meet.meetLink && (
-                      <a
-                        href={meet.meetLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center space-x-0.5 text-[9px] font-bold text-[#F9D972] uppercase hover:underline shrink-0"
-                      >
-                        <Video size={10} />
-                        <span>Join</span>
-                      </a>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-[10px] text-mono-muted">
-                    <span className="monolith-numeric font-semibold">
-                      {new Date(meet.start.dateTime).toLocaleString("en-IN", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        day: "2-digit",
-                        month: "short"
-                      })}
-                    </span>
-                    <span className="flex items-center space-x-1 font-semibold">
-                      <Users size={10} />
-                      <span className="monolith-numeric">{meet.attendees?.length || 0}</span>
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
+            </CommunicationField>
+            <CommunicationField label="End time (Asia/Kolkata)" required>
+              <CommunicationInput type="datetime-local" name="endAt" required />
+            </CommunicationField>
           </div>
-        </div>
-      </div>
-    </main>
+          <CommunicationField
+            label="Attendees"
+            hint="Use comma-separated email addresses. Invitees receive the generated Meet link."
+          >
+            <CommunicationInput
+              type="text"
+              name="attendeeEmails"
+              placeholder="client@example.com, colleague@example.com"
+            />
+          </CommunicationField>
+          <div className="mnx-communication-form-actions">
+            <CommunicationButton type="submit" variant="primary">
+              <Video aria-hidden="true" />
+              Schedule and create Meet
+            </CommunicationButton>
+          </div>
+        </form>
+      </CommunicationPanel>
+
+      <CommunicationPanel>
+        <CommunicationPanelHeader
+          eyebrow="Calendar"
+          title="Upcoming rooms"
+          description="The next ten connected meetings."
+          actions={<Calendar aria-hidden="true" />}
+        />
+        {meetings.length === 0 ? (
+          <WorkspaceState
+            variant="empty"
+            eyebrow="Meetings"
+            title="No upcoming meetings"
+            description="Scheduled rooms will appear here."
+            icon={<Video aria-hidden="true" />}
+          />
+        ) : (
+          <div className="mnx-communication-record-list">
+            {meetings.map((meeting) => (
+              <article key={meeting.id} className="mnx-communication-record">
+                <div>
+                  <strong>{meeting.summary}</strong>
+                  <small>
+                    {new Date(calendarMoment(meeting.start)).toLocaleString("en-IN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      day: "2-digit",
+                      month: "short",
+                    })}
+                  </small>
+                </div>
+                <span>
+                  <Users aria-hidden="true" />
+                  {meeting.attendees?.length ?? 0}
+                </span>
+                {meeting.meetLink ? (
+                  <a
+                    href={meeting.meetLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mnx-communication-record-link"
+                  >
+                    Join
+                  </a>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        )}
+      </CommunicationPanel>
+    </div>
   );
 }

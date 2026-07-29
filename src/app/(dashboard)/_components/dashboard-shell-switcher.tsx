@@ -43,7 +43,11 @@ export function usesMonolithShell(pathname: string | null) {
     normalizedPathname === "/accounting" ||
     normalizedPathname.startsWith("/accounting/") ||
     normalizedPathname === "/crm" ||
-    normalizedPathname.startsWith("/crm/")
+    normalizedPathname.startsWith("/crm/") ||
+    normalizedPathname === "/communication" ||
+    normalizedPathname.startsWith("/communication/") ||
+    normalizedPathname === "/admin" ||
+    normalizedPathname.startsWith("/admin/")
   );
 }
 

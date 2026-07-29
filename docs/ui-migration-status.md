@@ -4,32 +4,32 @@ Last updated: 2026-07-29
 
 ## Current milestone
 
-The production migration foundation plus batches 001 through 003 are
-implemented and verified. Batch 004 (Expense and CHA), its shared popup/glass
-corrections, and the CRM migration are implemented and pass their source,
-archive, type, focused test, and production-build gates; their authenticated
-visual matrices remain blocked because the connected Browser service has no
-available browser instance. The Accounting migration is verified and has
-passed a complete authenticated Playwright matrix covering every discovered
-route in every required theme and viewport.
+The production migration foundation, batches 001 through 003, Accounting, and
+Batch 006 (Communication and Admin) are implemented and verified. Batch 006
+also re-ran the complete Recruit route family to confirm it remains verified.
+Batch 004 (Expense and CHA), its shared popup/glass corrections, and the CRM
+migration pass their source, archive, type, focused test, and production-build
+gates; their authenticated visual matrices remain blocked because the
+connected Browser service has no available browser instance.
 
-- Source audit: 211 page routes and 13 layouts.
+- Source audit: 211 page routes and 14 layouts.
 - Protected visual reference: `/dashboard`.
 - Migrated routes: `/account/security`, `/admin/design-system`,
   `/notifications`, `/product-catalogue`, `/todo`, all 38 `/hrms` routes, all
   7 `/attendance` routes, all 18 `/ams` routes, all 5 `/lms` routes, all 11
-  `/cha` routes, `/expense`, all 32 `/accounting` routes, and all 57 `/crm`
-  routes.
+  `/cha` routes, `/expense`, all 32 `/accounting` routes, all 57 `/crm`
+  routes, all 10 `/communication` routes, and all 10 `/admin` routes.
 - Migrated shared surfaces: authenticated user profile menu plus common
   permission, empty, loading, error, and not-found states; People Operations
   workspace; Performance and Learning workspace; Expense and CHA operations
   workspace; Accounting operations workspace; CRM operations workspace;
-  centralized controls, data tables, dialogs, navigation, and route states.
-- Pending individual route migrations: 36.
+  Communication workspace; Administration workspace; centralized controls,
+  data tables, dialogs, navigation, and route states.
+- Pending individual route migrations: 17.
 - Exhaustive route/layout record: [UI route and layout audit](ui-route-audit.md).
-- Combined Accounting/CRM merge validation passes all three affected static
-  verifiers, targeted ESLint, production TypeScript, 24 focused tests, the
-  315-page production build, and diff hygiene.
+- Batch 006 passes its static/archive/workflow verifier, scoped ESLint,
+  production TypeScript, focused component tests, the 315-page production
+  build, and 306 authenticated route/theme/viewport checks.
 
 ## Status definitions
 
@@ -53,11 +53,11 @@ the route-by-route source of truth.
 | `/`                  |          1 |         0 |        0 |       1 |
 | `/account`           |          1 |         0 |        1 |       0 |
 | `/accounting`        |         32 |         0 |       32 |       0 |
-| `/admin`             |         10 |         0 |        1 |       9 |
+| `/admin`             |         10 |         0 |       10 |       0 |
 | `/ams`               |         18 |         0 |       18 |       0 |
 | `/attendance`        |          7 |         0 |        7 |       0 |
 | `/cha`               |         11 |         0 |       11 |       0 |
-| `/communication`     |         10 |         0 |        0 |      10 |
+| `/communication`     |         10 |         0 |       10 |       0 |
 | `/crm`               |         57 |         0 |       57 |       0 |
 | `/customer-portal`   |         12 |         0 |        0 |      12 |
 | `/dashboard`         |          1 |         1 |        0 |       0 |
@@ -71,7 +71,7 @@ the route-by-route source of truth.
 | `/setup`             |          1 |         0 |        0 |       1 |
 | `/todo`              |          1 |         0 |        1 |       0 |
 | `/verify`            |          1 |         0 |        0 |       1 |
-| **Total**            |    **211** |     **1** |  **174** |  **36** |
+| **Total**            |    **211** |     **1** |  **193** |  **17** |
 
 An import from `@/components/monolith` is not proof of route migration. A route
 remains pending until its rendered presentation and behavior satisfy the
@@ -85,6 +85,7 @@ completion gate.
 | `src/app/(dashboard)/layout.tsx`               |           194 | Authentication, RBAC/module gates, shell selection |
 | `src/app/(dashboard)/attendance/layout.tsx`    |             7 | Attendance People Operations workspace             |
 | `src/app/(dashboard)/accounting/layout.tsx`    |            32 | Accounting operations workspace                     |
+| `src/app/(dashboard)/admin/layout.tsx`         |            10 | Administration workspace and asynchronous states    |
 | `src/app/(dashboard)/ams/layout.tsx`           |            18 | AMS Performance Operations workspace               |
 | `src/app/(dashboard)/cha/layout.tsx`           |            11 | CHA operations workspace                           |
 | `src/app/(dashboard)/communication/layout.tsx` |            10 | Workspace connection gate/providers                |
@@ -219,6 +220,18 @@ Batch 005 archives:
   `E24B74587E9D6FC8F596920BCAE7A69738685385B46E975CE94274A149E973C1`.
 - Archive checksum, size, and exact file-list verification: passed.
 
+Batch 006 archive:
+`OLD UI code/legacy-ui-before-monolith-communication-admin-ed1bf68.zip`
+
+- Source commit: `ed1bf68`.
+- Entries: 45 active Communication/Admin route, view, navigation, and shared
+  legacy presentation files with original relative paths.
+- Size: 130,499 bytes.
+- SHA-256:
+  `65DDD40D29C8FEA5AF6D86A00F71CBD3E1E4927E18DC5944F9AECF74D2303EC8`.
+- Archive checksum, size, exact file count, and required entries pass through
+  `scripts/verify-monolith-communication-admin-ui.mjs`.
+
 ## Quality log: foundation
 
 Passed:
@@ -266,6 +279,55 @@ unrelated to the UI foundation.
 | Batch 004          | All `/cha` routes and `/expense`                | Migrated; visual verification blocked | 12 complete Expense and CHA routes, including the dynamic job workspace, customer editing, workflow configuration, documents, additional data, approvals, filing, bill filing, expenses, reports, settings, and all dialogs/drawers. Source, archive, type, focused test, and build gates pass; the connected Browser service exposes no browser instance for the required authenticated theme/viewport matrix. |
 | Batch 005          | All `/accounting` routes                        | Verified            | 32 complete Accounting routes covering the command centre, chart of accounts, banking, jobs, journals, payments, sales and purchase invoices, commercial orders, quotations and notes, items, financial statements, reports, and settings. All 288 authenticated route/theme/viewport checks pass. |
 | Batch 005          | All `/crm` routes                               | Migrated; visual verification blocked | 57 complete CRM routes covering accounts, contacts, leads, enquiries, deals, activities, campaigns, approvals, products, items, quotes, invoices, tickets, lead sources, forecasting, and supporting sales workspaces. Source, archive, type, focused test, and build gates pass; the connected Browser service exposes no browser instance for the required authenticated theme/viewport matrix. |
+| Batch 006          | All `/communication` and `/admin` routes        | Verified            | 19 newly migrated route surfaces plus the existing design-system showcase. Shared Communication/Admin frames, controls, tables, dialogs, loading/error states, semantic themes, dense Mail/Chat responsiveness, and preserved connected-workspace and administration behavior. All 306 authenticated checks across Communication, Admin, and Recruit pass. |
+
+## Quality log: Communication and Admin batch 006
+
+Passed:
+
+- Discovered all 10 Communication, 10 Admin, and 15 Recruit routes directly
+  from repository page sources. Recruit was already migrated in Batch 002 and
+  was re-verified without presentation changes.
+- Archived the active legacy Communication/Admin presentation before
+  replacement; the repeatable static gate verifies the 45-file archive,
+  checksum, size, and required entries.
+- Added centralized Communication and Administration workspace frames, route
+  metadata, navigation, metrics, panels, controls, tables, permission/loading/
+  error states, settings layouts, role/session registers, and responsive dense
+  Mail/Chat compositions.
+- Replaced route-local overlays in Mail and Chat with the shared focus-managed
+  dialog layer and removed the obsolete active Communication navbar.
+- Preserved OAuth connection gates, Google mail/chat/calendar/Drive/Meet APIs,
+  job-space provisioning and cleanup, notification preferences, role and
+  permission APIs, session revocation/timeouts, passkey reset actions, data
+  import, simulation controls, settings persistence, RBAC, validation, and
+  audit logging.
+- Regenerated the exhaustive audit: 211 pages, 14 layouts, 193 migrated, and
+  17 pending.
+- Static UI/archive/workflow gate:
+  `node scripts/verify-monolith-communication-admin-ui.mjs`.
+- Scoped ESLint for every changed TypeScript/TSX/MJS source: passed.
+- Production TypeScript:
+  `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`.
+- Focused Vitest suite: 2 shared Communication/Admin composition tests.
+- Production build:
+  `NODE_OPTIONS=--max-old-space-size=8192 npm run build`; Prisma generation,
+  Next.js compilation, production TypeScript, and all 315 application routes
+  passed. The six existing broad filesystem/NFT trace warnings remain
+  non-fatal and outside this batch.
+- Authenticated production Playwright gate:
+  `node scripts/verify-monolith-communication-admin-runtime.mjs --use-local-special-account`.
+  It passed all 306 combinations covering 34 Communication, Admin, and Recruit
+  routes in Light, Night, and Violet at 1440×1000 desktop, 1024×900 tablet, and
+  390×844 mobile. Assertions cover exact paths, workspace/theme tokens,
+  centralized controls/tables, application/server errors, legacy composition,
+  and horizontal overflow; 81 representative screenshots and
+  `artifacts/ui-migration/communication-admin/verification.json` were recorded.
+- `git diff --check`.
+
+Repository-wide `npm run lint` was run with the required heap and continues to
+fail on the documented pre-existing lint backlog across seed/maintenance
+scripts and unrelated business modules. The Batch 006 scoped lint passes.
 
 ## Quality log: batch 001
 

@@ -3,7 +3,11 @@
 import { useState, useTransition } from "react";
 import { Upload, FileSpreadsheet, CheckCircle, AlertTriangle } from "lucide-react";
 import { importWorkbookAction } from "./actions";
-import { Button } from "@/components/monolith/button";
+import {
+  AdminButton,
+  AdminInput,
+  WorkspaceAlert,
+} from "@/components/monolith";
 
 export function WorkbookImportForm() {
   const [message, setMessage] = useState<string | null>(null);
@@ -40,28 +44,28 @@ export function WorkbookImportForm() {
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      <label className="flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-mono-border/60 bg-mono-soft/20 hover:bg-[#F9D972]/5 hover:border-[#F9D972]/60 px-4 py-6 text-center transition">
+    <form className="mnx-admin-import-form" onSubmit={handleSubmit}>
+      <label className="mnx-admin-file-drop">
         {fileName ? (
           <>
-            <FileSpreadsheet className="size-8 text-[#F9D972]" />
-            <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+            <FileSpreadsheet aria-hidden="true" />
+            <strong>
               {fileName}
-            </span>
-            <span className="text-xs text-slate-400">Click to change workbook</span>
+            </strong>
+            <small>Click to change workbook</small>
           </>
         ) : (
           <>
-            <Upload className="size-8 text-slate-400" />
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            <Upload aria-hidden="true" />
+            <strong>
               Choose workbook file
-            </span>
-            <span className="text-xs text-slate-400">
+            </strong>
+            <small>
               Upload `.xlsx` with the required Users and Login sheets.
-            </span>
+            </small>
           </>
         )}
-        <input
+        <AdminInput
           name="workbook"
           type="file"
           accept=".xlsx"
@@ -72,22 +76,22 @@ export function WorkbookImportForm() {
       </label>
 
       {message && (
-        <div className="flex items-start gap-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-600">
-          <CheckCircle className="size-4 shrink-0 mt-0.5" />
+        <WorkspaceAlert variant="success">
+          <CheckCircle aria-hidden="true" />
           <span>{message}</span>
-        </div>
+        </WorkspaceAlert>
       )}
 
       {error && (
-        <div className="flex items-start gap-2.5 rounded-lg border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-xs text-rose-600">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+        <WorkspaceAlert variant="danger">
+          <AlertTriangle aria-hidden="true" />
           <span>{error}</span>
-        </div>
+        </WorkspaceAlert>
       )}
 
-      <Button type="submit" disabled={pending || !fileName} className="w-full">
+      <AdminButton type="submit" disabled={pending || !fileName} variant="primary">
         {pending ? "Importing Workbook Data..." : "Import Workbook"}
-      </Button>
+      </AdminButton>
     </form>
   );
 }

@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "@/components/monolith/input";
+import {
+  AdminButton,
+  AdminField,
+  AdminInput,
+  WorkspaceAlert,
+} from "@/components/monolith";
 import type { ReviewerRoleWeights } from "@/modules/ams/settings";
 
 export function SettingsClient({
@@ -19,90 +24,87 @@ export function SettingsClient({
   async function patch(body: object) {
     setSaving(true);
     setSaved(false);
-    const res = await fetch("/api/admin/settings", {
+    const response = await fetch("/api/admin/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
     setSaving(false);
-    if (res.ok) setSaved(true);
+    if (response.ok) setSaved(true);
   }
 
   const roles: (keyof ReviewerRoleWeights)[] = ["HR", "TL", "MANAGER"];
 
   return (
-    <div className="space-y-8">
-      {/* Availability deadline */}
-      <div className="space-y-4 max-w-md">
-        <div className="space-y-1">
-          <label htmlFor="days" className="block text-sm font-medium text-mono-text">
-            Reviewer availability deadline
-          </label>
-          <p className="text-xs text-mono-muted">
-            Business days reviewers have to confirm availability after being assigned.
-          </p>
-          <div className="flex items-center gap-3 mt-2">
-            <Input
+    <div className="mnx-admin-settings-form">
+      <section>
+        <AdminField
+          htmlFor="days"
+          label="Reviewer availability deadline"
+          hint="Business days reviewers have to confirm availability after being assigned."
+        >
+          <div className="mnx-admin-inline-field">
+            <AdminInput
               id="days"
               type="number"
               min={0}
               max={30}
               value={days}
-              onChange={(e) => setDays(Number(e.target.value))}
-              className="w-24"
+              onChange={(event) => setDays(Number(event.target.value))}
             />
-            <span className="text-sm text-mono-muted">business days</span>
+            <span>business days</span>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
+        </AdminField>
+        <div className="mnx-admin-form-actions">
+          <AdminButton
             onClick={() => patch({ availabilityDeadlineDays: days })}
             disabled={saving}
-            className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition"
+            variant="primary"
           >
-            {saving ? "Saving…" : "Save"}
-          </button>
-          {saved && <span className="text-sm text-green-600">Saved.</span>}
+            {saving ? "Saving…" : "Save deadline"}
+          </AdminButton>
+          {saved ? <WorkspaceAlert variant="success">Saved.</WorkspaceAlert> : null}
         </div>
-      </div>
+      </section>
 
-      {/* Reviewer role weights */}
-      <div className="space-y-4 max-w-md pt-6 border-t border-mono-border">
+      <section>
         <div>
-          <h3 className="monolith-h3 text-mono-text">Reviewer role weights</h3>
-          <p className="text-xs text-mono-muted mt-0.5">
-            Relative weights for each reviewer role within the 70% reviewer pool.
-            Higher numbers = more influence. Equal values = equal weight.
+          <h3>Reviewer role weights</h3>
+          <p>
+            Relative weights for each reviewer role within the 70% reviewer
+            pool. Higher numbers have more influence; equal values have equal
+            weight.
           </p>
         </div>
-        <div className="space-y-3">
+        <div className="mnx-admin-weight-grid">
           {roles.map((role) => (
-            <div key={role} className="flex items-center gap-4">
-              <label className="text-sm text-mono-text w-20">{role}</label>
-              <Input
+            <AdminField key={role} label={role}>
+              <AdminInput
                 type="number"
                 min={0}
                 step={0.1}
                 value={weights[role]}
-                onChange={(e) =>
-                  setWeights((w) => ({ ...w, [role]: parseFloat(e.target.value) || 0 }))
+                onChange={(event) =>
+                  setWeights((current) => ({
+                    ...current,
+                    [role]: Number.parseFloat(event.target.value) || 0,
+                  }))
                 }
-                className="w-24"
               />
-            </div>
+            </AdminField>
           ))}
         </div>
-        <div className="flex items-center gap-3">
-          <button
+        <div className="mnx-admin-form-actions">
+          <AdminButton
             onClick={() => patch({ reviewerRoleWeights: weights })}
             disabled={saving}
-            className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition"
+            variant="primary"
           >
             {saving ? "Saving…" : "Save weights"}
-          </button>
-          {saved && <span className="text-sm text-green-600">Saved.</span>}
+          </AdminButton>
+          {saved ? <WorkspaceAlert variant="success">Saved.</WorkspaceAlert> : null}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

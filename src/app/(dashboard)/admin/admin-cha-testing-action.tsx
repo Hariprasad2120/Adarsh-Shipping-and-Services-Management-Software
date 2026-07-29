@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 
-import { Button } from "@/components/monolith/button";
+import { AdminButton } from "@/components/monolith/admin-workspace";
 import { deleteAllChaJobsForTestingAction } from "@/modules/cha/actions";
 
 export function AdminChaTestingAction() {
@@ -36,15 +36,14 @@ export function AdminChaTestingAction() {
   };
 
   return (
-    <Button
+    <AdminButton
       type="button"
-      variant="outline"
+      variant="destructive"
       onClick={handleDeleteAllJobs}
       disabled={isDeleting}
-      className="mt-4 gap-2 border-red-500/45 text-xs uppercase tracking-[0.14em] text-red-500 hover:border-red-500/70 hover:text-red-600 hover:shadow-[0_0_12px_rgba(239,68,68,0.22)]"
     >
-      <Trash2 className="size-4" />
+      <Trash2 aria-hidden="true" />
       {isDeleting ? "Deleting" : "Delete All Jobs"}
-    </Button>
+    </AdminButton>
   );
 }
