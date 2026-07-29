@@ -20,6 +20,25 @@ const nextConfig: NextConfig = {
   // Suppress Prisma from being bundled into Edge/client chunks.
   serverExternalPackages: ["@prisma/client", "bcryptjs"],
 
+  // The reference and legacy backup trees are intentionally retained for the
+  // UI migration, but they are never runtime dependencies. Keep the diagnostic
+  // Webpack fallback from watching those expanded archives.
+  webpack(config, { dev }) {
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: [
+          "**/OLD UI code/**",
+          "**/_design-reference/**",
+          "**/artifacts/**",
+          "**/scrap/**",
+          "**/scratch/**",
+        ],
+      };
+    }
+    return config;
+  },
+
   // Security & cache headers for authenticated API routes.
   // Dashboard page headers are handled by the middleware.
   async headers() {
@@ -43,5 +62,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Force dev server restart: 2026-06-20-v2
 export default nextConfig;

@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
-    "dev:turbopack": "next dev --turbopack",
+    "dev": "next dev",
+    "dev:webpack": "next dev --webpack",
+    "dev:turbopack": "next dev",
     "build": "npm run db:generate && next build",
     "start": "next start",
     "lint": "eslint",
