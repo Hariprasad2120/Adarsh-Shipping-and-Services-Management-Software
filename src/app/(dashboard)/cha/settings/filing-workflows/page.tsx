@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/rbac";
 import { listFilingWorkflows } from "@/modules/cha/service";
@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { WorkflowsClient } from "./workflows-client";
 
 export default async function FilingWorkflowsPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

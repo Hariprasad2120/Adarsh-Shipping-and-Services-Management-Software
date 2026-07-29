@@ -12,7 +12,7 @@ import {
   AccountingTable,
   AccountingToolbar,
 } from "@/components/monolith/accounting-workspace";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getTrialBalance } from "@/modules/accounting/reports";
 
@@ -33,7 +33,7 @@ function money(value: number) {
 export default async function TrialBalanceReportPage({
   searchParams,
 }: TBPageProps) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const params = await searchParams;

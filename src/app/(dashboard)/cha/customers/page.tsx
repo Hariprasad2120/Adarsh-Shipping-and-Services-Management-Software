@@ -2,7 +2,7 @@ import { ChaTable } from "@/components/monolith/cha-workspace";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Prisma } from "@/generated/prisma/client";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { DeleteRecordButton } from "@/app/(dashboard)/crm/_components/delete-record-button";
@@ -43,7 +43,7 @@ export default async function ChaCustomersPage({
   const balanceFilter = params.balance ?? "";
   const hasActiveFilters = Boolean(searchTerm || statusFilter || portalFilter || balanceFilter);
 
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

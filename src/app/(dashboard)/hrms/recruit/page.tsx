@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { loadCaps } from "@/lib/rbac";
 import { Search, UserAvatar, Analytics, Settings } from "@carbon/icons-react";
 
 export default async function RecruitLandingPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const caps = await loadCaps(session.user.id);

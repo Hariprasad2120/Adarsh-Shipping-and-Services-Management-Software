@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requirePermission, loadCaps } from "@/lib/rbac";
 import { getMonthAttendance } from "@/modules/attendance/service";
@@ -90,7 +90,7 @@ export default async function PunchPage({
 }: {
   searchParams: Promise<{ employeeId?: string; year?: string; month?: string }>;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const sp = await searchParams;

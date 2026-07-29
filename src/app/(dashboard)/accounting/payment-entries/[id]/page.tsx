@@ -1,5 +1,5 @@
 import React from "react";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { getPaymentEntry } from "@/modules/accounting/service";
 import { PaymentEntryDetailClient } from "./detail-client";
@@ -13,7 +13,7 @@ interface PaymentEntryDetailPageProps {
 }
 
 export default async function PaymentEntryDetailPage({ params }: PaymentEntryDetailPageProps) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId!;

@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
 import { getAppraisal, getSelfFormTemplate } from "@/modules/ams/service";
@@ -18,7 +18,7 @@ export default async function SelfAssessmentPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const { id } = await params;

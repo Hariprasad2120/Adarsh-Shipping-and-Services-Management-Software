@@ -1,5 +1,5 @@
 import { ClickableRow } from "@/components/clickable-row";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { can, requirePermission } from "@/lib/rbac";
@@ -118,7 +118,7 @@ function getParamList(value: string | string[] | undefined) {
 }
 
 export default async function ChaDashboard({ searchParams }: ChaDashboardProps) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

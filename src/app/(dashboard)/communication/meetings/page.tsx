@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { createEvent, listUpcomingEvents } from "@/lib/google-calendar-client";
 import { revalidatePath } from "next/cache";
 import { Calendar, Users, Video } from "lucide-react";
@@ -22,7 +22,7 @@ function calendarMoment(value: { dateTime: string }) {
 }
 
 export default async function MeetingsPortal() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) return null;
 
   let meetings: Meeting[] = [];
@@ -37,7 +37,7 @@ export default async function MeetingsPortal() {
 
   async function scheduleMeetingAction(formData: FormData) {
     "use server";
-    const activeSession = await auth();
+    const activeSession = await getSession();
     if (!activeSession?.user) return;
 
     const summary = formData.get("summary") as string;

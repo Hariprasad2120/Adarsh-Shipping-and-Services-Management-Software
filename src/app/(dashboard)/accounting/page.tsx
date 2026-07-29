@@ -1,7 +1,7 @@
 import React from "react";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getProfitAndLoss, getBalanceSheet } from "@/modules/accounting/reports";
@@ -10,7 +10,7 @@ import { DashboardClient } from "./dashboard-client";
 import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
 
 export default async function AccountingDashboardPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId!;

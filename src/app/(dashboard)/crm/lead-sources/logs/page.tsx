@@ -2,13 +2,13 @@ import { CrmTable, CrmConfigurationState, CrmPermissionState } from "@/component
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { getImportLogs } from "@/modules/crm/lead-source.service";
 import { ArrowLeft, History, AlertTriangle, CheckCircle, RefreshCw } from "lucide-react";
 
 export default async function CrmLeadSourcesLogsPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

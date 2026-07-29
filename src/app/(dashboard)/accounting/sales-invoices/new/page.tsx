@@ -1,12 +1,12 @@
 import React from "react";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { NewInvoiceClient } from "./new-invoice-client";
 import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
 
 export default async function NewSalesInvoicePage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId!;

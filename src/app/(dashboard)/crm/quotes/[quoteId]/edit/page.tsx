@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { MOCK_ITEMS } from "@/lib/items/mock-data";
 import { NewQuotePage } from "../../_components/NewQuotePage";
@@ -12,7 +12,7 @@ export default async function EditCrmQuotePage({
 }) {
   const { quoteId } = await params;
   
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) redirect("/login");
   const orgId = session.user.orgId;
   if (!orgId) redirect("/login");

@@ -2,7 +2,7 @@ import { CrmTable, CrmConfigurationState } from "@/components/monolith/crm-works
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Prisma } from "@/generated/prisma/client";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { deleteAccountAction } from "@/modules/crm/actions";
 import { DeleteRecordButton } from "../_components/delete-record-button";
@@ -30,7 +30,7 @@ interface SearchParams {
 }
 
 export default async function CrmCustomersPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

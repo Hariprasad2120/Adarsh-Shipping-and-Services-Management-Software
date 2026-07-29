@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import {
@@ -22,7 +22,7 @@ import {
 } from "@/components/monolith";
 
 export default async function CommunicationSettings() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) return null;
 
   const orgId = session.user.orgId!;
@@ -58,7 +58,7 @@ export default async function CommunicationSettings() {
 
   async function saveSettingsAction(formData: FormData) {
     "use server";
-    const activeSession = await auth();
+    const activeSession = await getSession();
     if (!activeSession?.user) throw new Error("Unauthorized");
 
     const extractDriveId = (input: string) => {

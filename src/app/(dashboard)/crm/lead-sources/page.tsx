@@ -2,7 +2,7 @@ import { CrmTable, CrmConfigurationState, CrmPermissionState } from "@/component
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { getJustdialConfig, getImportLogs, setImportingLock } from "@/modules/crm/lead-source.service";
 import { ImportButtons } from "./import-button";
@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 export default async function CrmLeadSourcesPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

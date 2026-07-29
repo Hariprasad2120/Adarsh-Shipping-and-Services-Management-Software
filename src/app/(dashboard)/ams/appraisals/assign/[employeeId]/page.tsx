@@ -1,5 +1,5 @@
 import { redirect, notFound } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { BreadcrumbLabel } from "@/components/breadcrumb-label";
 import { getNow } from "@/lib/clock";
 import { loadCaps, requirePermission } from "@/lib/rbac";
@@ -11,7 +11,7 @@ import { getSalaryRevisionSummaryForUser } from "@/modules/hrms/salary-revisions
 import { StartAppraisalClient } from "./start-appraisal-client";
 
 export default async function AssignAppraisalPage({ params }: { params: Promise<{ employeeId: string }> }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
   await requirePermission(session.user.id, "ams.appraisal.assign_reviewers");
 

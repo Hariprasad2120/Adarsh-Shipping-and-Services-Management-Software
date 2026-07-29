@@ -1,7 +1,6 @@
 import { NotificationProvider } from "@/components/notifications/notification-provider";
-import { TodoReminderAgent } from "@/components/todo/todo-reminder-agent";
 import { SessionSync } from "@/components/session-sync";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { CapsProvider } from "@/lib/caps-context";
 import { loadCaps } from "@/lib/rbac";
 import { getManagedModuleSectionIdForPath } from "@/modules/core/organisation/module-config";
@@ -17,7 +16,7 @@ function normalizePathname(pathname: string | null) {
 }
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const pathname = normalizePathname((await headers()).get("x-current-pathname"));
@@ -35,7 +34,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <CapsProvider value={caps}>
       <NotificationProvider>
-        <TodoReminderAgent />
         <SessionSync />
         <DashboardShellSwitcher
           caps={caps}

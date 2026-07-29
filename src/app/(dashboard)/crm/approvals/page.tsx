@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { can } from "@/lib/rbac";
 import { fetchPendingApprovals, fetchApprovalMetrics } from "@/modules/crm/approval-actions";
@@ -7,7 +7,7 @@ import ApprovalsClient from "./approvals-client";
 export const metadata = { title: "Approval Queue — CRM" };
 
 export default async function ApprovalsPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) redirect("/login");
 
   const userId = session.user.id;

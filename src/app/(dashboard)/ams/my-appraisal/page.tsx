@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
 import { listMyAppraisals } from "@/modules/ams/service";
@@ -41,7 +41,7 @@ export default async function MyAppraisalPage({
 }: {
   searchParams: Promise<{ submitted?: string }>;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const [appraisals, now, params] = await Promise.all([

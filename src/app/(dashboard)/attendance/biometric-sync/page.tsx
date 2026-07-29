@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/rbac";
 import { BiometricSyncClient } from "./biometric-sync-client";
@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 export default async function BiometricSyncPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
   await requirePermission(session.user.id, "attendance.punch.manage");
 

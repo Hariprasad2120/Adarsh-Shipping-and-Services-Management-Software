@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/rbac";
 import { isRecruitEnabled } from "@/lib/recruit-flag";
@@ -15,7 +15,7 @@ import {
 
 export default async function CareerDashboardPage() {
   if (!isRecruitEnabled()) notFound();
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
   await requirePermission(session.user.id, "recruit.jobseeker.use");
 

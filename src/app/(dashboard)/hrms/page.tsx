@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getVisibleSectionById } from "@/lib/navigation";
 import { loadCaps } from "@/lib/rbac";
@@ -27,7 +27,7 @@ import {
 } from "@/components/monolith/people-workspace";
 
 export default async function HrmsDashboardPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const orgId = session.user.orgId!;

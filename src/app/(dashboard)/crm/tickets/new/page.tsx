@@ -1,5 +1,5 @@
 import { CrmButton } from "@/components/monolith/crm-workspace";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import { TicketForm } from "../ticket-form";
@@ -11,7 +11,7 @@ export const metadata = {
 };
 
 export default async function RaiseTicketPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   await requirePermission(session.user.id, "crm.access");

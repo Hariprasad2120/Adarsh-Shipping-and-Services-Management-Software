@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { listThreads } from "@/lib/google-gmail-client";
 import { listUpcomingEvents } from "@/lib/google-calendar-client";
@@ -65,7 +65,7 @@ function parseGoogleApiError(errorMessage: string) {
 }
 
 export default async function CommunicationDashboard() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) return null;
 
   const connection = await db.googleWorkspaceConnection.findUnique({

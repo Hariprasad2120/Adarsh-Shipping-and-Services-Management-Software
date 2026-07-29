@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React from "react";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { getPurchaseInvoice } from "@/modules/accounting/service";
 import { PurchaseInvoiceDetailClient } from "./detail-client";
@@ -15,7 +15,7 @@ interface PurchaseInvoiceDetailPageProps {
 }
 
 export default async function PurchaseInvoiceDetailPage({ params }: PurchaseInvoiceDetailPageProps) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId!;

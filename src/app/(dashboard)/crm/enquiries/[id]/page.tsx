@@ -1,7 +1,7 @@
 import { CrmConfigurationState, CrmPermissionState } from "@/components/monolith/crm-workspace";
 import React from "react";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import {
@@ -18,7 +18,7 @@ interface EnquiryDetailPageProps {
 }
 
 export default async function EnquiryDetailPage({ params }: EnquiryDetailPageProps) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

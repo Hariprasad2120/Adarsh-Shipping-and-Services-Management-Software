@@ -5,7 +5,7 @@ import {
 import { NativeSelect } from "@/components/monolith/native-select";
 import Link from "next/link";
 import { Fragment } from "react";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
 import { Button } from "@/components/monolith/button";
@@ -96,7 +96,7 @@ export default async function OwnershipPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   await requirePermission(session.user.id, "hrms.hierarchy.manage");

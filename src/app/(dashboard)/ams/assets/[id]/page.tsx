@@ -7,7 +7,7 @@ import {
   PerformanceTableRow,
 } from "@/components/monolith/performance-workspace";
 import React from "react";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/navigation";
 import NextLink from "next/link";
@@ -28,7 +28,7 @@ interface AssetDetailPageProps {
 export default async function AssetDetailPage({
   params,
 }: AssetDetailPageProps) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

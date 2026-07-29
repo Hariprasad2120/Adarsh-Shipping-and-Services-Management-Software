@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import { WorkbookImportForm } from "./workbook-import-form";
@@ -14,7 +14,7 @@ export const metadata = {
 };
 
 export default async function DataToolsPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   await requirePermission(session.user.id, "admin.org.manage");

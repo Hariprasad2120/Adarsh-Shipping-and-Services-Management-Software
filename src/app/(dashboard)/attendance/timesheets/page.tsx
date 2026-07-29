@@ -1,10 +1,10 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { PeopleNotice } from "@/components/monolith/people-workspace";
 import { redirect } from "next/navigation";
 import { Clock } from "lucide-react";
 
 export default async function TimesheetsPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   return (

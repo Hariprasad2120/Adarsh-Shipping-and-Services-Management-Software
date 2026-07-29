@@ -1,18 +1,24 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { can, requirePermission } from "@/lib/rbac";
-import { db } from "@/lib/db";
 import {
+  getCreateJobOptions,
+  getJobFilterOptions,
   listJobs,
-  ensureSettingsAndDefaults,
-  getEligibleManagers,
-  listJobTypesForSelection,
+} from "@/modules/cha/jobs/queries";
+import {
+  computeChaDueDateWarnings,
   listFilingQueryEscalationWarnings,
-  listChaDueDateWarnings,
-} from "@/modules/cha/service";
+} from "@/modules/cha/warnings/queries";
 import { JobsClient } from "./jobs-client";
 
-function serializeDueDateWarning(warning: Awaited<ReturnType<typeof listChaDueDateWarnings>>[number]) {
+function normalizeMovementDirection(value: string | null) {
+  return ["IMPORT", "EXPORT", "BOTH", "OTHER"].includes(value ?? "")
+    ? (value as "IMPORT" | "EXPORT" | "BOTH" | "OTHER")
+    : null;
+}
+
+function serializeDueDateWarning(warning: Awaited<ReturnType<typeof computeChaDueDateWarnings>>[number]) {
   return {
     type: warning.type,
     severity: warning.severity,
@@ -32,7 +38,7 @@ export default async function ChaJobsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;
@@ -56,21 +62,7 @@ export default async function ChaJobsPage({
   const showCreateNew = requestedCreateNew && canCreateJob;
 
   // All queries are independent — run in parallel
-  const [
-    activeJobsData,
-    completedJobsData,
-    dueDateWarnings,
-    filingQueryWarnings,
-    ,
-    branches,
-    customers,
-    jobTypes,
-    shipmentTypes,
-    users,
-    eligibleManagers,
-    teamGroups,
-    branchNumberingRules,
-  ] = await Promise.all([
+  const [activeJobsData, completedJobsData, filterOptions] = await Promise.all([
     listJobs(session.user.id, orgId, {
       search,
       stage,
@@ -95,31 +87,19 @@ export default async function ChaJobsPage({
       page: completedPage,
       pageSize: 10,
     }),
-    listChaDueDateWarnings(session.user.id, orgId),
-    listFilingQueryEscalationWarnings(session.user.id, orgId),
-    ensureSettingsAndDefaults(orgId),
-    db.branch.findMany({ where: { orgId }, select: { id: true, name: true, code: true } }),
-    db.crmAccount.findMany({ where: { orgId, type: "Customer" }, select: { id: true, name: true } }),
-    listJobTypesForSelection(orgId),
-    db.chaShipmentType.findMany({ where: { orgId, isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-    db.user.findMany({ where: { orgId, active: true }, select: { id: true, name: true, email: true } }),
-    getEligibleManagers(orgId),
-    db.chaTeamGroup.findMany({ where: { orgId }, select: { id: true, name: true, memberIds: true } }),
-    db.chaBranchNumberingRule.findMany({
-      where: { orgId },
-      select: {
-        branchId: true,
-        prefix: true,
-        suffix: true,
-        startingSequence: true,
-        currentSequence: true,
-        numberPadding: true,
-        useFinancialYear: true,
-        financialYearFormat: true,
-        isActive: true,
-      },
-    }),
+    getJobFilterOptions(orgId),
   ]);
+  const visibleJobIds = [
+    ...activeJobsData.items.map((job) => job.id),
+    ...completedJobsData.items.map((job) => job.id),
+  ];
+  const [dueDateWarnings, filingQueryWarnings] = await Promise.all([
+    computeChaDueDateWarnings(session.user.id, orgId, visibleJobIds),
+    listFilingQueryEscalationWarnings(orgId, visibleJobIds),
+  ]);
+  const initialCreateOptions = showCreateNew
+    ? await getCreateJobOptions(orgId)
+    : null;
 
   const filingQueryWarningMap = new Map(
     filingQueryWarnings.map((warning) => [
@@ -149,7 +129,7 @@ export default async function ChaJobsPage({
           title: j.title,
           customerName: j.customer.name,
           jobTypeName: j.jobType.name,
-          movementDirection: j.jobType.movementDirection,
+          movementDirection: normalizeMovementDirection(j.jobType.movementDirection),
           branchName: j.branch.name,
           stage: j.stage,
           status: j.status,
@@ -176,7 +156,7 @@ export default async function ChaJobsPage({
           title: j.title,
           customerName: j.customer.name,
           jobTypeName: j.jobType.name,
-          movementDirection: j.jobType.movementDirection,
+          movementDirection: normalizeMovementDirection(j.jobType.movementDirection),
           branchName: j.branch.name,
           stage: j.stage,
           status: j.status,
@@ -206,15 +186,16 @@ export default async function ChaJobsPage({
         assignedToMe,
       }}
       options={{
-        branches,
-        customers,
-        jobTypes,
-        shipmentTypes,
-        users,
-        managers: eligibleManagers,
-        teamGroups,
-        branchNumberingRules,
+        branches: filterOptions.branches,
+        customers: [],
+        jobTypes: filterOptions.jobTypes,
+        shipmentTypes: [],
+        users: [],
+        managers: [],
+        teamGroups: [],
+        branchNumberingRules: [],
       }}
+      initialCreateOptions={initialCreateOptions}
       showCreateNew={showCreateNew}
       showCreatePermissionDenied={requestedCreateNew && !canCreateJob}
       canCreateJob={canCreateJob}

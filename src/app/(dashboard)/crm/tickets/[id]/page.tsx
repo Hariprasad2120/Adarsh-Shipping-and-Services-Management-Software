@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
 import { redirect } from "next/navigation";
@@ -27,7 +27,7 @@ async function checkIsAdmin(userId: string): Promise<boolean> {
 }
 
 export default async function TicketDetailPage({ params }: PageProps) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   await requirePermission(session.user.id, "crm.access");

@@ -6,7 +6,7 @@ import {
   PerformanceSummary,
   PerformanceSummaryGrid,
 } from "@/components/monolith/performance-workspace";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { db } from "@/lib/db";
 import { getVisibleSectionById } from "@/lib/navigation";
@@ -33,7 +33,7 @@ function monthBounds(year: number, month: number) {
 }
 
 export default async function AMSPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const now = await getNow();

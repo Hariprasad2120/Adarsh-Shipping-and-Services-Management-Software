@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { can, loadCaps } from "@/lib/rbac";
 import { getVisibleSectionById } from "@/lib/navigation";
 import { getOrg, getRoles } from "@/modules/core/organisation/service";
@@ -24,7 +24,7 @@ import {
 } from "@/components/monolith";
 
 export default async function AdminPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
   if (!(await can(session.user.id, "admin.org.manage"))) {
     return (

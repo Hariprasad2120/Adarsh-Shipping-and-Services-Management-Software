@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 import { Lock } from "lucide-react";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { WorkspaceState } from "@/components/monolith";
 import DesignSystemClient from "./design-system-client";
 
 export default async function AdminDesignSystemPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const allowed = await can(session.user.id, "admin.org.manage");

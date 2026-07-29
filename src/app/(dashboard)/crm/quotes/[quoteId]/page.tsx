@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { MOCK_ITEMS } from "@/lib/items/mock-data";
@@ -15,7 +15,7 @@ export default async function CrmQuoteDetailsPage({
 }) {
   const { quoteId } = await params;
   
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
   const orgId = session.user.orgId;

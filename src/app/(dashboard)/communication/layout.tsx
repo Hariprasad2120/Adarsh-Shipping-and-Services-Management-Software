@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ArrowRight, Link2 } from "lucide-react";
 import {
@@ -15,7 +15,7 @@ export default async function CommunicationLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) {
     return (
       <WorkspaceState

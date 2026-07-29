@@ -1,7 +1,7 @@
 import { FileText, Plus } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { deleteInvoiceAction } from "@/modules/crm/actions";
 import { listInvoices } from "@/modules/crm/service";
@@ -46,7 +46,7 @@ export async function CommercialDocumentsPage({
   showTypeFilter = true,
   searchParams,
 }: CommercialDocumentsPageProps) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
   if (!session.user.orgId) {
     return <AccountingAlert variant="danger">Missing organisation context. Contact an administrator before using commercial documents.</AccountingAlert>;

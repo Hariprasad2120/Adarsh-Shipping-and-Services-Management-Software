@@ -5,7 +5,7 @@ import {
   AdminPanel,
   AdminPanelHeader,
 } from "@/components/monolith";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac";
 import { listAdminNotifications } from "@/modules/notifications/service";
@@ -17,7 +17,7 @@ export default async function AdminNotificationsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
   const allowed = await can(session.user.id, "admin.org.manage");
   if (!allowed) redirect("/dashboard");

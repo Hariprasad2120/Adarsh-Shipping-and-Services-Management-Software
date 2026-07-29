@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
 import { AccountingCommercialDocumentForm } from "@/components/monolith/accounting-commercial-document-form";
@@ -25,7 +25,7 @@ export async function CommercialDocumentFormPage({
   redirectPath,
   allowedTypes,
 }: CommercialDocumentFormPageProps) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

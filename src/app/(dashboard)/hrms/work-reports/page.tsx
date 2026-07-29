@@ -1,11 +1,11 @@
 import React from "react";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { WorkReportsView } from "@/components/hrms/work-reports";
 import { loadCaps } from "@/lib/rbac";
 
 export default async function WorkReportsPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
   const caps = await loadCaps(session.user.id);
 

@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { getAppraisalSettings } from "@/modules/ams/settings";
 import { redirect } from "next/navigation";
@@ -6,7 +6,7 @@ import { SettingsClient } from "./settings-client";
 import { AdminPanel, AdminPanelHeader } from "@/components/monolith";
 
 export default async function AdminSettingsPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
   const allowed = await can(session.user.id, "admin.org.manage");
   if (!allowed) redirect("/dashboard");

@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { can } from "@/lib/rbac";
@@ -27,7 +27,7 @@ export default async function GoogleChatLiveViewPage({
 }: {
   searchParams: Promise<{ jobId?: string }>;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

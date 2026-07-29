@@ -8,7 +8,7 @@ import {
   WorkspacePanel,
   WorkspaceSelect,
 } from "@/components/monolith";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getNotificationPolicy } from "@/modules/notifications/policy";
 import { listUserNotifications } from "@/modules/notifications/service";
 import { redirect } from "next/navigation";
@@ -23,7 +23,7 @@ export default async function NotificationsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const params = await searchParams;

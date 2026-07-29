@@ -13,7 +13,7 @@ import {
   DataTablePrimaryLinkCell,
   DataTableRow,
 } from "@/components/monolith/workspace-data-table";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { requirePermission } from "@/lib/rbac";
 import {
@@ -91,7 +91,7 @@ export default async function AppraisalsPage({
 }: {
   searchParams: Promise<Record<string, string>>;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   await requirePermission(session.user.id, "ams.appraisal.assign_reviewers");

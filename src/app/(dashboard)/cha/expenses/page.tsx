@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { can, requirePermission } from "@/lib/rbac";
 import { listAllExpenses, listExpenseJobOptions } from "@/modules/cha/service";
@@ -9,7 +9,7 @@ export default async function ChaExpensesPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

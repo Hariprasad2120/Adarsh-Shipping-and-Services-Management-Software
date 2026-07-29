@@ -11,7 +11,7 @@ import {
   AccountingSelect,
   AccountingToolbar,
 } from "@/components/monolith/accounting-workspace";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getProfitAndLoss } from "@/modules/accounting/reports";
 
@@ -58,7 +58,7 @@ function ReportLines({
 export default async function ProfitLossReportPage({
   searchParams,
 }: PLPageProps) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const params = await searchParams;

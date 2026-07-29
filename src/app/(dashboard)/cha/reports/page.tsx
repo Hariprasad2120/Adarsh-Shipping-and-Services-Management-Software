@@ -1,7 +1,7 @@
 import { ChaTable } from "@/components/monolith/cha-workspace";
 import { Input } from "@/components/monolith/input";
 import { Button } from "@/components/monolith/button";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { requirePermission } from "@/lib/rbac";
@@ -29,7 +29,7 @@ export default async function ChaReportsPage({
 }: {
   searchParams: Promise<{ q?: string | string[] }>;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

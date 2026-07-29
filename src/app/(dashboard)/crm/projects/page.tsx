@@ -2,7 +2,7 @@ import { CrmButton, CrmInput, CrmTextarea, CrmConfigurationState, CrmPermissionS
 import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { listProjects } from "@/modules/crm/service";
 import { requirePermission } from "@/lib/rbac";
@@ -21,7 +21,7 @@ interface SearchParams {
 }
 
 export default async function CrmProjectsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

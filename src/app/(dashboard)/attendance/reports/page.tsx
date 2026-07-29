@@ -12,7 +12,7 @@ import {
   PeopleTableHeader,
   PeopleTableRow,
 } from "@/components/monolith/people-workspace";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { requirePermission } from "@/lib/rbac";
 import { getMonthlyReport } from "@/modules/attendance/service";
@@ -23,7 +23,7 @@ export default async function AttendanceReportsPage({
 }: {
   searchParams: Promise<Record<string, string>>;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
   await requirePermission(session.user.id, "attendance.reports.view");
 

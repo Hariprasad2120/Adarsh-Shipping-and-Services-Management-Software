@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { loadCaps } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
@@ -23,7 +23,7 @@ function toIsoString(value: Date | string | null | undefined) {
 }
 
 export default async function OvertimePage({ searchParams }: PageProps) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const caps = await loadCaps(session.user.id);

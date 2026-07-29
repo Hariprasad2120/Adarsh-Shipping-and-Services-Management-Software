@@ -3,7 +3,7 @@ import { CrmButton, CrmInput, CrmTable, CrmConfigurationState, CrmPermissionStat
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { listEnquiries } from "@/modules/crm/service";
 import { requirePermission } from "@/lib/rbac";
 import {
@@ -27,7 +27,7 @@ interface SearchParams {
 }
 
 export default async function CrmEnquiriesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

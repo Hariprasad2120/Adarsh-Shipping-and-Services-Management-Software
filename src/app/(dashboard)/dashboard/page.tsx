@@ -1,13 +1,11 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getVisibleSections } from "@/lib/navigation";
 import { loadCaps } from "@/lib/rbac";
-import { getOrg } from "@/modules/core/organisation/service";
 import {
   TOGGLEABLE_MODULE_SECTION_IDS,
   type ToggleableModuleSectionId,
 } from "@/modules/core/organisation/module-config";
 import { getEnabledModuleIds } from "@/modules/core/organisation/module-settings";
-import { listUsersForDashboard } from "@/modules/core/user/service";
 import { getDashboardModuleSnapshot } from "@/modules/dashboard/service";
 import { getDashboardWidgets, getMe, getTeamReportees } from "@/modules/hrms/service";
 import { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
@@ -51,16 +49,14 @@ async function getPermittedModuleSnapshot(userId: string, orgId: string) {
 }
 
 export default async function DashboardPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
   if (isChaEdition()) redirect("/cha");
 
   const orgId = session.user.orgId!;
 
-  const [org, users, profileData, dashboardData, reportees, permittedModuleSnapshot] =
+  const [profileData, dashboardData, reportees, permittedModuleSnapshot] =
     await Promise.all([
-      getOrg(orgId),
-      listUsersForDashboard(orgId, { active: true }),
       getMe(session.user.id),
       getDashboardWidgets(session.user.id, orgId),
       getTeamReportees(session.user.id, orgId),
@@ -82,9 +78,6 @@ export default async function DashboardPage() {
         name: session.user.name,
         email: session.user.email,
       }}
-      departments={org?.departments ?? []}
-      branches={org?.branches ?? []}
-      initialUsers={users}
       initialProfile={initialProfile}
       initialWidgetsData={dashboardData as DashboardWidgetsData}
       initialReportees={reportees}

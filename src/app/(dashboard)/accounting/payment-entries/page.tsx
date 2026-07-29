@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { listPaymentEntries } from "@/modules/accounting/service";
 import {
   AccountingActionLink,
@@ -12,7 +12,7 @@ import {
 } from "@/components/monolith/accounting-workspace";
 
 export default async function PaymentEntriesPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const payments = await listPaymentEntries(session.user.orgId!);

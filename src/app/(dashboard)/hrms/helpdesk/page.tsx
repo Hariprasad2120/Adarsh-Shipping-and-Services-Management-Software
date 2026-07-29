@@ -1,11 +1,11 @@
 import React from "react";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { PeopleNotice } from "@/components/monolith/people-workspace";
 import { redirect } from "next/navigation";
 import { HelpCircle } from "lucide-react";
 
 export default async function HelpDeskPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   return (

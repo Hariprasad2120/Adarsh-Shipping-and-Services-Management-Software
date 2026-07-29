@@ -2,7 +2,7 @@ import { CrmButton, CrmInput, CrmConfigurationState, CrmPermissionState } from "
 import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { listVendors } from "@/modules/crm/service";
 import { requirePermission } from "@/lib/rbac";
@@ -21,7 +21,7 @@ interface SearchParams {
 }
 
 export default async function CrmVendorsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

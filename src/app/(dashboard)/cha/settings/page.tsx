@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/rbac";
 import { ensureSettingsAndDefaults, listJobTypesForSettings } from "@/modules/cha/service";
@@ -7,7 +7,7 @@ import { listUsersSlim } from "@/modules/core/user/service";
 import { SettingsForm } from "./settings-form";
 
 export default async function ChaSettingsPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

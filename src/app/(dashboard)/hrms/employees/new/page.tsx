@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/rbac";
 import { getOrg, getRoles } from "@/modules/core/organisation/service";
@@ -8,7 +8,7 @@ import { OnboardForm } from "./onboard-form";
 type OnboardFormProps = React.ComponentProps<typeof OnboardForm>;
 
 export default async function NewEmployeePage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
   await requirePermission(session.user.id, "hrms.employee.create");
 

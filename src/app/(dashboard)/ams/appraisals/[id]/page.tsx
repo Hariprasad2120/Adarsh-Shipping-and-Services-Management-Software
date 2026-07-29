@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { db } from "@/lib/db";
 import { BreadcrumbLabel } from "@/components/breadcrumb-label";
@@ -16,7 +16,7 @@ import { resolveSelfFormTemplate } from "@/modules/ams/self-form-template";
 type AppraisalDetailProps = React.ComponentProps<typeof AppraisalDetail>;
 
 export default async function AppraisalDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const { id } = await params;

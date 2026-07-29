@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { listUpcomingEvents } from "@/lib/google-calendar-client";
 import {
   Calendar,
@@ -27,7 +27,7 @@ function calendarMoment(value: { dateTime: string }) {
 }
 
 export default async function CalendarSyncView() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) return null;
 
   let events: CalendarEvent[] = [];

@@ -1,11 +1,11 @@
 import React from "react";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { loadCaps } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import { ApprovalsView } from "@/components/hrms/approvals-view";
 
 export default async function ApprovalsPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const caps = await loadCaps(session.user.id);

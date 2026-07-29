@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { listTodoTasks } from "@/modules/todo/service";
 import { TodoClient } from "./todo-client";
@@ -12,7 +12,7 @@ export default async function TodoPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const params = await searchParams;

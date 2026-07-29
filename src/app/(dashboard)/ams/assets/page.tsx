@@ -1,5 +1,5 @@
 import React from "react";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { listAssets, listAccounts } from "@/modules/accounting/service";
@@ -7,7 +7,7 @@ import { AssetsClient } from "./assets-client";
 import { ShieldAlert } from "lucide-react";
 
 export default async function AssetsPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

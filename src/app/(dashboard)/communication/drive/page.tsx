@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { listFiles } from "@/lib/google-drive-client";
 import {
@@ -29,7 +29,7 @@ export default async function JobDrivePortal({
   searchParams: SearchParams;
 }) {
   const searchParams = await searchParamsPromise;
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) return null;
 
   const jobs = await db.chaJob.findMany({

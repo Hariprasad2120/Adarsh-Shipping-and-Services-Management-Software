@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { SessionsDashboard } from "./sessions-dashboard";
@@ -10,7 +10,7 @@ export const metadata = {
 };
 
 export default async function SessionsPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   await requirePermission(session.user.id, "admin.org.manage");

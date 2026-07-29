@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getOrg, getRoles } from "@/modules/core/organisation/service";
 import { getUser, listUsers } from "@/modules/core/user/service";
 import { requirePermission } from "@/lib/rbac";
@@ -14,7 +14,7 @@ export default async function EmployeeDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
   await requirePermission(session.user.id, "hrms.employee.read");
 

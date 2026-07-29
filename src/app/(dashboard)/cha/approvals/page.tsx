@@ -1,5 +1,5 @@
 import { ChaTable } from "@/components/monolith/cha-workspace";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { can } from "@/lib/rbac";
 import { listManagerChecklistApprovals, listManagerJobDeletionRequests } from "@/modules/cha/service";
@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/monolith/badge";
 
 export default async function ChaApprovalsPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

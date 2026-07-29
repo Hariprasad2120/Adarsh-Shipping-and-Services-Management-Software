@@ -1,10 +1,10 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { listMyReviewAppraisals } from "@/modules/ams/service";
 import { MyReviewsClient } from "./my-reviews-client";
 
 export default async function MyReviewsPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const appraisals = await listMyReviewAppraisals(session.user.id);

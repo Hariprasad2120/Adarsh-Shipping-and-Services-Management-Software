@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { can, requirePermission } from "@/lib/rbac";
 import { listAllExpenses, listExpenseJobOptions } from "@/modules/cha/service";
 import { ExpensesClient } from "../cha/expenses/expenses-client";
@@ -9,7 +9,7 @@ export default async function ExpensePage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

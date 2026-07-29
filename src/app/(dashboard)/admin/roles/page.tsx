@@ -1,11 +1,11 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/rbac";
 import { getRoles, getAllPermissions } from "@/modules/core/organisation/service";
 import { RolesManager } from "./roles-manager";
 
 export default async function RolesPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
   await requirePermission(session.user.id, "admin.roles.manage");
 

@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { listJournalEntries } from "@/modules/accounting/service";
 import {
   AccountingActionLink,
@@ -12,7 +12,7 @@ import {
 } from "@/components/monolith/accounting-workspace";
 
 export default async function JournalEntriesPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const jvs = await listJournalEntries(session.user.orgId!);

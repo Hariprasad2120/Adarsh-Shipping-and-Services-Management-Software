@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { getNow } from "@/lib/clock";
 import { getMyReviewView, getSelfFormTemplate } from "@/modules/ams/service";
@@ -15,7 +15,7 @@ import { notFound, redirect } from "next/navigation";
 import { MyReviewDetailClient } from "./_components/my-review-detail-client";
 
 export default async function MyReviewDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const { id } = await params;

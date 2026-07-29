@@ -1,5 +1,5 @@
 import React from "react";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { getJournalEntry } from "@/modules/accounting/service";
 import { JournalEntryDetailClient } from "./detail-client";
@@ -13,7 +13,7 @@ interface JvDetailPageProps {
 }
 
 export default async function JvDetailPage({ params }: JvDetailPageProps) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId!;

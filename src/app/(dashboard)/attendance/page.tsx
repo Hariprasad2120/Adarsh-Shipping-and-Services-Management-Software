@@ -6,7 +6,7 @@ import {
   PeopleSummary,
   PeopleSummaryGrid,
 } from "@/components/monolith/people-workspace";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { getVisibleSectionById } from "@/lib/navigation";
 import { can, loadCaps } from "@/lib/rbac";
@@ -18,7 +18,7 @@ import {
 import { redirect } from "next/navigation";
 
 export default async function AttendancePage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const now = await getNow();

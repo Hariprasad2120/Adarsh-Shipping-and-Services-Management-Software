@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NewQuotePage } from "../_components/NewQuotePage";
 
@@ -8,7 +8,7 @@ interface SearchParams {
 }
 
 export default async function NewCrmQuotePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) redirect("/login");
   const orgId = session.user.orgId;
   if (!orgId) redirect("/login");

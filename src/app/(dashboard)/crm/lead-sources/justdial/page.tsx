@@ -1,13 +1,13 @@
 import { CrmConfigurationState, CrmPermissionState } from "@/components/monolith/crm-workspace";
 import React from "react";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { getJustdialConfig } from "@/modules/crm/lead-source.service";
 import { db } from "@/lib/db";
 import { JustdialForm } from "./justdial-form";
 export default async function JustdialConfigPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requirePermission, can } from "@/lib/rbac";
 import { getLeaveRequests, getLeaveTypes, getLeaveBalances } from "@/modules/attendance/service";
@@ -8,7 +8,7 @@ import { LeavesClient } from "./leaves-client";
 type LeavesClientProps = React.ComponentProps<typeof LeavesClient>;
 
 export default async function LeavesPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
   await requirePermission(session.user.id, "attendance.leave.request");
 

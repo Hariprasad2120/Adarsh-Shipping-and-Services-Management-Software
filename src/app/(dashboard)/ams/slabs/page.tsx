@@ -18,7 +18,7 @@ import { SlabForm } from "./slab-form";
 import { deleteSlabAction, seedSlabsAction } from "./actions";
 import { GRADE_BANDS } from "@/modules/ams/criteria-config";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/monolith/button";
@@ -39,7 +39,7 @@ export const metadata = {
 };
 
 export default async function SlabsPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   await requirePermission(session.user.id, "ams.cycle.manage");

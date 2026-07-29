@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
 import { getAppraisal, getSelfFormTemplate } from "@/modules/ams/service";
@@ -14,7 +14,7 @@ import { notFound, redirect } from "next/navigation";
 import { ManagementReviewClient } from "./management-review-client";
 
 export default async function ManagementReviewPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
   await requirePermission(session.user.id, "ams.appraisal.management_review");
 

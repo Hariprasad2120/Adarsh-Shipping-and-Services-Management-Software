@@ -8,7 +8,7 @@ import {
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { startOfMonth } from "date-fns";
 import {
@@ -31,7 +31,7 @@ import { requirePermission } from "@/lib/rbac";
 import { DemoDataButton } from "./demo-data-button";
 
 export default async function CrmDashboardPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

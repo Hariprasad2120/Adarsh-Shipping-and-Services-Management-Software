@@ -6,7 +6,7 @@ import {
   PerformanceTableHeader,
   PerformanceTableRow,
 } from "@/components/monolith/performance-workspace";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
   Card,
@@ -81,7 +81,7 @@ export default async function HistoryPage({
   }>;
 }) {
   const sp = await searchParams;
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   const currentUser = await db.user.findUnique({

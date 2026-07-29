@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
   AdminBadge,
@@ -32,7 +32,7 @@ export const metadata = {
 };
 
 export default async function AdminPasskeysPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) redirect("/login");
 
   await requirePermission(session.user.id, "admin.org.manage");

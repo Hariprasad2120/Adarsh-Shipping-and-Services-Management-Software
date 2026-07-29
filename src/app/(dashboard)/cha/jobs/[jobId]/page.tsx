@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { getJobDetails, getChecklistInternalApproverIds, getEligibleManagers } from "@/modules/cha/service";
 import { db } from "@/lib/db";
@@ -35,7 +35,7 @@ export default async function ChaJobWorkspacePage({
   params: Promise<{ jobId: string }>;
   searchParams: Promise<{ tab?: string; focus?: string }>;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;

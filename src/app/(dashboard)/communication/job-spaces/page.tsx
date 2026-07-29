@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
   getJobWorkspaceProfileSelect,
@@ -35,7 +35,7 @@ function statusVariant(status?: string | null) {
 }
 
 export default async function JobSpacesDashboard() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) return null;
 
   const orgId = session.user.orgId!;
