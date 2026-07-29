@@ -6,7 +6,10 @@ import { TOGGLEABLE_MODULE_SECTION_IDS } from "@/modules/core/organisation/modul
 const repoRoot = process.cwd();
 
 function readSource(relativePath: string) {
-  return readFileSync(join(repoRoot, relativePath), "utf8");
+  return readFileSync(join(repoRoot, relativePath), "utf8").replaceAll(
+    "\r\n",
+    "\n",
+  );
 }
 
 describe("module-aware main dashboard", () => {

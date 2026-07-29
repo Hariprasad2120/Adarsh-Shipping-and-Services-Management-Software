@@ -16,7 +16,7 @@ export default async function AdminDesignSystemPage() {
         variant="permission"
         eyebrow="Permission required"
         title="Design system"
-        description="You need administrator access to view the Monolith design-system showcase."
+        description="You need administrator access to view the Monolith production component catalogue."
         icon={<Lock size={22} />}
       />
     );

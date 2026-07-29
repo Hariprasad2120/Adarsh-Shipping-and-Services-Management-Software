@@ -12,7 +12,7 @@ export function RootSignOutButton() {
       onClick={() => void performLogout()}
       className="uppercase tracking-[0.12em]"
     >
-      <LogOut className="mr-2 size-4 text-[#F9D972]" />
+      <LogOut className="mr-2 size-4" />
       Sign Out
     </Button>
   );
