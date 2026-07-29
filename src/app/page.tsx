@@ -1,6 +1,6 @@
 import { ArrowUpRight, Boxes, Building2, ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import {
   PublicMonolithShell,
   WorkspaceMetric,
@@ -15,7 +15,7 @@ import { getEnabledModuleIds } from "@/modules/core/organisation/module-settings
 import { isRootControlEmail } from "@/lib/root-access";
 
 export default async function RootPage() {
-  const session = await auth();
+  const session = await getSession();
 
   if (!session) {
     redirect("/login");

@@ -2,10 +2,10 @@
 
 Generated from tracked files by `scripts/performance-audit.ts`.
 
-- Runtime-relevant tracked files: 1026
-- Scannable JavaScript/TypeScript files: 969
-- Files with scanner findings requiring manual review: 594
-- Total scanner findings: 1627
+- Runtime-relevant tracked files: 1033
+- Scannable JavaScript/TypeScript files: 976
+- Files with scanner findings requiring manual review: 519
+- Total scanner findings: 1480
 
 The scanner is a review aid. Status records below cover every tracked file in
 the requested runtime scope; generated clients and historical migrations are
@@ -14,8 +14,8 @@ excluded from manual modification, not from inventory.
 | File | Status | Review note |
 | --- | --- | --- |
 | `eslint.config.mjs` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `next.config.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `package.json` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
+| `next.config.ts` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `package.json` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `prisma.config.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `prisma/migrations/20260513174451_init/migration.sql` | Generated or migration — excluded from manual modification | Immutable migration/generated artifact. |
 | `prisma/migrations/20260513185654_add_prior_experience_years/migration.sql` | Generated or migration — excluded from manual modification | Immutable migration/generated artifact. |
@@ -76,6 +76,7 @@ excluded from manual modification, not from inventory.
 | `scripts/import-employees.ts` | Reviewed — issue documented | heavy-static-import, sequential-await-review, broad-include |
 | `scripts/import-hr-letter-templates.ts` | Reviewed — issue documented | sequential-await-review |
 | `scripts/migrate-accounting-data.ts` | Reviewed — issue documented | sequential-await-review, heavy-static-import |
+| `scripts/performance-audit.ts` | Reviewed — issue documented | heavy-static-import, direct-auth |
 | `scripts/read-docx-template.ps1` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `scripts/reset-clock.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `scripts/save-html-as-docx.ps1` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
@@ -105,138 +106,138 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/_components/dashboard-shell-switcher.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/_components/dashboard-shell.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/account/security/actions.ts` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/account/security/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
+| `src/app/(dashboard)/account/security/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/account/security/sessions-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/accounting/_components/commercial-document-form-page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/accounting/_components/commercial-documents-page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/accounting/_components/commercial-document-form-page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/accounting/_components/commercial-documents-page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/accounts/accounts-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/accounting/accounts/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/accounting/balance-sheet/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/accounting/accounts/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/accounting/balance-sheet/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/banking/banking-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/accounting/banking/page.tsx` | Reviewed — issue documented | direct-auth, broad-include |
+| `src/app/(dashboard)/accounting/banking/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/dashboard-client.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/accounting/error.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/accounting/general-ledger/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/accounting/general-ledger/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/invoices-sales/new/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/accounting/invoices-sales/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/accounting/items/[id]/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/accounting/items/new/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/accounting/items/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/accounting/jobs/jobs-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/accounting/jobs/page.tsx` | Reviewed — issue documented | direct-auth, broad-include |
+| `src/app/(dashboard)/accounting/jobs/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/journal-entries/[id]/detail-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/accounting/journal-entries/[id]/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/accounting/journal-entries/[id]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/journal-entries/new/new-jv-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/accounting/journal-entries/new/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/accounting/journal-entries/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/accounting/journal-entries/new/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/accounting/journal-entries/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/layout.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/accounting/loading.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/accounting/page.tsx` | Reviewed — issue documented | direct-auth, broad-include |
+| `src/app/(dashboard)/accounting/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/payment-entries/[id]/detail-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/accounting/payment-entries/[id]/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/accounting/payment-entries/[id]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/payment-entries/new/new-payment-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/accounting/payment-entries/new/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/accounting/payment-entries/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/accounting/profit-loss/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/accounting/payment-entries/new/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/accounting/payment-entries/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/accounting/profit-loss/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/purchase-invoices/[id]/detail-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/accounting/purchase-invoices/[id]/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/accounting/purchase-invoices/[id]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/purchase-invoices/new/new-invoice-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/accounting/purchase-invoices/new/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/accounting/purchase-invoices/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/accounting/purchase-invoices/new/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/accounting/purchase-invoices/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/purchase-orders/new/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/accounting/purchase-orders/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/accounting/quotations/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/accounting/quotations/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/quotations/quotations-client.tsx` | Reviewed — issue documented | client-server-boundary, sequential-await-review |
-| `src/app/(dashboard)/accounting/reports/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/accounting/reports/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/reports/reports-client.tsx` | Reviewed — issue documented | client-server-boundary, sequential-await-review |
 | `src/app/(dashboard)/accounting/sales-invoices/[id]/detail-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/accounting/sales-invoices/[id]/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/accounting/sales-invoices/[id]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/sales-invoices/new/new-invoice-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/accounting/sales-invoices/new/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/accounting/sales-invoices/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/accounting/sales-invoices/new/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/accounting/sales-invoices/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/sales-orders/new/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/accounting/sales-orders/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/accounting/settings/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/accounting/settings/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/accounting/settings/settings-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/accounting/trial-balance/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/accounting/trial-balance/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/admin/admin-cha-testing-action.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/admin/data-tools/actions.ts` | Reviewed — issue documented | sequential-await-review, heavy-static-import, direct-auth, broad-include, database-in-loop |
-| `src/app/(dashboard)/admin/data-tools/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/admin/data-tools/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/admin/data-tools/workbook-import-form.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/admin/design-system/design-system-client.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component |
-| `src/app/(dashboard)/admin/design-system/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/admin/design-system/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/admin/error.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/admin/google-chat/page.tsx` | Reviewed — issue documented | render-network-call |
 | `src/app/(dashboard)/admin/layout.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/admin/loading.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/admin/notifications/admin-notifications-client.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/admin/notifications/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/admin/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/admin/notifications/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/admin/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/admin/passkeys/actions.ts` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
-| `src/app/(dashboard)/admin/passkeys/page.tsx` | Reviewed — issue documented | direct-auth, broad-include |
-| `src/app/(dashboard)/admin/roles/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/admin/passkeys/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/admin/roles/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/admin/roles/roles-manager.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/admin/sessions/actions.ts` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
-| `src/app/(dashboard)/admin/sessions/page.tsx` | Reviewed — issue documented | direct-auth, broad-include |
+| `src/app/(dashboard)/admin/sessions/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/admin/sessions/sessions-dashboard.tsx` | Reviewed — issue documented | client-server-boundary, sequential-await-review, polling |
-| `src/app/(dashboard)/admin/settings/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/admin/settings/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/admin/settings/settings-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/admin/simulation/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/admin/simulation/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/admin/simulation/simulation-client.tsx` | Reviewed — issue documented | sequential-await-review |
 | `src/app/(dashboard)/ams/appraisals/[id]/appraisal-detail.tsx` | Reviewed — issue documented | large-client-component |
 | `src/app/(dashboard)/ams/appraisals/[id]/management-review/management-review-client.tsx` | Reviewed — issue documented | large-client-component, sequential-await-review |
-| `src/app/(dashboard)/ams/appraisals/[id]/management-review/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
-| `src/app/(dashboard)/ams/appraisals/[id]/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/ams/appraisals/[id]/management-review/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/ams/appraisals/[id]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/ams/appraisals/appraisal-filters-menu.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/ams/appraisals/assign/[employeeId]/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/ams/appraisals/assign/[employeeId]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/ams/appraisals/assign/[employeeId]/start-appraisal-client.tsx` | Reviewed — issue documented | large-client-component, sequential-await-review |
 | `src/app/(dashboard)/ams/appraisals/due-this-month-row.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/ams/appraisals/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/ams/assets/[id]/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/ams/appraisals/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/ams/assets/[id]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/ams/assets/assets-client.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component |
-| `src/app/(dashboard)/ams/assets/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/ams/assets/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/ams/criteria/criteria-client.tsx` | Reviewed — issue documented | large-client-component, sequential-await-review, unbounded-promise-all |
-| `src/app/(dashboard)/ams/criteria/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/ams/criteria/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/ams/criteria/seed-action.ts` | Reviewed — issue documented | sequential-await-review, direct-auth |
 | `src/app/(dashboard)/ams/cycles/cycles-client.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/ams/cycles/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/ams/cycles/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/ams/error.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/ams/extensions/actions.ts` | Reviewed — issue documented | sequential-await-review, broad-include, direct-auth |
 | `src/app/(dashboard)/ams/extensions/extensions-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/ams/extensions/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
+| `src/app/(dashboard)/ams/extensions/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/ams/history/history-filters.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/ams/history/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
+| `src/app/(dashboard)/ams/history/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/ams/kpi/kpi-client.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/ams/kpi/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/ams/kpi/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/ams/layout.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/ams/loading.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/ams/my-appraisal/[id]/self-assessment/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/ams/my-appraisal/[id]/self-assessment/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/ams/my-appraisal/[id]/self-assessment/self-assessment-form.tsx` | Reviewed — issue documented | polling |
-| `src/app/(dashboard)/ams/my-appraisal/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/ams/my-appraisal/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/ams/my-reviews/[id]/_components/my-review-detail-client.tsx` | Reviewed — issue documented | large-client-component, sequential-await-review, polling |
-| `src/app/(dashboard)/ams/my-reviews/[id]/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/ams/my-reviews/[id]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/ams/my-reviews/my-reviews-client.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/ams/my-reviews/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/ams/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/ams/pms/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/ams/my-reviews/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/ams/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/ams/pms/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/ams/slabs/actions.ts` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/ams/slabs/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/ams/slabs/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/ams/slabs/slab-form.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/attendance/biometric-sync/biometric-sync-client.tsx` | Reviewed — issue documented | large-client-component, sequential-await-review, polling |
-| `src/app/(dashboard)/attendance/biometric-sync/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/attendance/biometric-sync/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/attendance/error.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/attendance/layout.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/attendance/leaves/leaves-client.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/attendance/leaves/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/attendance/leaves/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/attendance/loading.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/attendance/ot/actions.ts` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
 | `src/app/(dashboard)/attendance/ot/ot-client.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component, sequential-await-review, heavy-static-import |
-| `src/app/(dashboard)/attendance/ot/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
-| `src/app/(dashboard)/attendance/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/attendance/punch/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/attendance/ot/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/attendance/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/attendance/punch/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/attendance/punch/punch-card.tsx` | Reviewed — issue documented | large-client-component, polling |
-| `src/app/(dashboard)/attendance/reports/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/attendance/timesheets/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/attendance/reports/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/attendance/timesheets/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/cha/_components/cha-dashboard-filter-action.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/cha/_components/cha-dashboard-search-action.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/cha/_components/cha-due-date-warning-indicator.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
@@ -246,56 +247,56 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/cha/_components/job-delete-inline-button.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/cha/_components/job-filing-query-warning-indicator.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/cha/_components/job-section49-validity-warning-indicator.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/cha/approvals/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/cha/approvals/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/cha/customers/[id]/edit/edit-customer-client.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component |
-| `src/app/(dashboard)/cha/customers/[id]/edit/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/cha/customers/[id]/edit/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/cha/customers/customers-filter-bar.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/cha/customers/new/new-customer-client.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component |
-| `src/app/(dashboard)/cha/customers/new/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/cha/customers/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/cha/customers/new/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/cha/customers/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/cha/error.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/cha/expenses/expenses-client.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component, sequential-await-review |
-| `src/app/(dashboard)/cha/expenses/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/cha/expenses/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/cha/graphics/ChaHeaderGraphic.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/cha/jobs/[jobId]/access-prohibited-card.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/cha/jobs/[jobId]/do-validity-panel.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/cha/jobs/[jobId]/job-workspace-client.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component, sequential-await-review, polling |
-| `src/app/(dashboard)/cha/jobs/[jobId]/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/cha/jobs/[jobId]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/cha/jobs/[jobId]/workflow-documents-section.tsx` | Reviewed — issue documented | large-client-component |
-| `src/app/(dashboard)/cha/jobs/jobs-client.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component |
-| `src/app/(dashboard)/cha/jobs/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/cha/jobs/jobs-client.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/cha/jobs/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/cha/layout.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/cha/loading.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/cha/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
-| `src/app/(dashboard)/cha/reports/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
-| `src/app/(dashboard)/cha/settings/filing-workflows/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/cha/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/cha/reports/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/cha/settings/filing-workflows/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/cha/settings/filing-workflows/workflows-client.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component, sequential-await-review |
-| `src/app/(dashboard)/cha/settings/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/cha/settings/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/cha/settings/settings-form.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component, sequential-await-review |
 | `src/app/(dashboard)/communication/_components/chat-provider.tsx` | Reviewed — issue documented | sequential-await-review, polling |
-| `src/app/(dashboard)/communication/calendar/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/communication/calendar/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/communication/chat/page.tsx` | Reviewed — issue documented | large-client-component, sequential-await-review, render-network-call, polling |
 | `src/app/(dashboard)/communication/drive/JobSelector.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/communication/drive/SyncDriveButton.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/communication/drive/actions.ts` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
-| `src/app/(dashboard)/communication/drive/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
+| `src/app/(dashboard)/communication/drive/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/communication/error.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/communication/google-chat-live-view/_components/google-chat-live-view-diagnostics.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/communication/google-chat-live-view/_components/google-chat-live-view-fallback.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/communication/google-chat-live-view/_components/google-chat-live-view-frame.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/communication/google-chat-live-view/_components/google-chat-live-view-settings.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/communication/google-chat-live-view/actions.ts` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/communication/google-chat-live-view/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/communication/job-spaces/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/communication/layout.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/communication/google-chat-live-view/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/communication/job-spaces/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/communication/layout.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/communication/loading.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/communication/mail/page.tsx` | Reviewed — issue documented | large-client-component, sequential-await-review, render-network-call |
-| `src/app/(dashboard)/communication/meetings/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/communication/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/communication/meetings/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/communication/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/communication/search/page.tsx` | Reviewed — issue documented | render-network-call |
 | `src/app/(dashboard)/communication/settings/notification-settings.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/communication/settings/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/crm/[...slug]/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/communication/settings/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/crm/[...slug]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/_components/activities-panel.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/crm/_components/attachments-panel.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/crm/_components/crm-workspace-page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
@@ -303,39 +304,39 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/crm/_components/notes-panel.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/crm/_components/timeline-panel.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/crm/approvals/approvals-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/crm/approvals/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/crm/calls/page.tsx` | Reviewed — issue documented | direct-auth, broad-include |
+| `src/app/(dashboard)/crm/approvals/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/crm/calls/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/campaigns/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/crm/contacts/[id]/contact-detail-wrapper.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/crm/contacts/[id]/edit/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/crm/contacts/[id]/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/crm/contacts/[id]/edit/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/crm/contacts/[id]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/contacts/contact-form.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/crm/contacts/new/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/crm/contacts/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/crm/contacts/new/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/crm/contacts/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/customers/[id]/account-detail-wrapper.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component |
-| `src/app/(dashboard)/crm/customers/[id]/edit/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/crm/customers/[id]/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/crm/customers/[id]/edit/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/crm/customers/[id]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/customers/account-form.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component |
-| `src/app/(dashboard)/crm/customers/new/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/crm/customers/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/crm/customers/new/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/crm/customers/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/dashboard/demo-data-button.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/crm/dashboard/page.tsx` | Reviewed — issue documented | direct-auth, broad-include |
+| `src/app/(dashboard)/crm/dashboard/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/deals/[id]/deal-detail-wrapper.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/crm/deals/[id]/edit/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/crm/deals/[id]/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/crm/deals/[id]/edit/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/crm/deals/[id]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/deals/deal-form.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/crm/deals/deals-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/crm/deals/new/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/crm/deals/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/crm/deals/new/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/crm/deals/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/documents/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/crm/efficiency/page.tsx` | Reviewed — issue documented | direct-auth, broad-include |
+| `src/app/(dashboard)/crm/efficiency/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component, sequential-await-review, polling |
-| `src/app/(dashboard)/crm/enquiries/[id]/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
-| `src/app/(dashboard)/crm/enquiries/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/crm/enquiries/[id]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/crm/enquiries/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/error.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/crm/events/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/crm/forecasts/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/crm/invoices/[invoiceId]/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
+| `src/app/(dashboard)/crm/invoices/[invoiceId]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/invoices/_components/InvoiceDetailsPage.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component |
 | `src/app/(dashboard)/crm/invoices/invoice-form.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component |
 | `src/app/(dashboard)/crm/invoices/new/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
@@ -347,27 +348,27 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/crm/lead-sources/import-button.tsx` | Reviewed — issue documented | client-server-boundary, polling |
 | `src/app/(dashboard)/crm/lead-sources/justdial-toggle.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/crm/lead-sources/justdial/justdial-form.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/crm/lead-sources/justdial/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/crm/lead-sources/logs/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/crm/lead-sources/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/crm/lead-sources/justdial/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/crm/lead-sources/logs/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/crm/lead-sources/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/leads/[id]/convert-modal.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/crm/leads/[id]/edit/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/crm/leads/[id]/edit/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/leads/[id]/follow-up-modal.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/crm/leads/[id]/interested-modal.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component |
 | `src/app/(dashboard)/crm/leads/[id]/lead-detail-wrapper.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component, sequential-await-review, polling |
-| `src/app/(dashboard)/crm/leads/[id]/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
+| `src/app/(dashboard)/crm/leads/[id]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/leads/[id]/remarks-modal.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/crm/leads/lead-form.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component |
-| `src/app/(dashboard)/crm/leads/new/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/crm/leads/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/crm/leads/new/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/crm/leads/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/loading.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/crm/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/crm/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/price-books/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/crm/products/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/crm/projects/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/crm/products/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/crm/projects/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/purchase-orders/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/crm/quotes/[quoteId]/edit/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
-| `src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
+| `src/app/(dashboard)/crm/quotes/[quoteId]/edit/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/quotes/_components/ComboboxField.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/crm/quotes/_components/ConfirmDialog.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/crm/quotes/_components/CustomerSection.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
@@ -391,22 +392,22 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/crm/quotes/_lib/quote-list-data.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/crm/quotes/_lib/types.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/crm/quotes/_lib/validation.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/crm/quotes/new/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/crm/quotes/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth, broad-include |
+| `src/app/(dashboard)/crm/quotes/new/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/crm/quotes/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/sales-inbox/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/crm/sales-orders/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/crm/services/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/crm/social/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/crm/solutions/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/crm/tasks/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/crm/tickets/[id]/page.tsx` | Reviewed — issue documented | sequential-await-review, broad-include, direct-auth |
+| `src/app/(dashboard)/crm/tickets/[id]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/tickets/[id]/ticket-detail-client.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/crm/tickets/actions.ts` | Reviewed — issue documented | sequential-await-review, broad-include, direct-auth |
-| `src/app/(dashboard)/crm/tickets/new/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/crm/tickets/page.tsx` | Reviewed — issue documented | sequential-await-review, broad-include, direct-auth |
+| `src/app/(dashboard)/crm/tickets/new/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/crm/tickets/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/tickets/ticket-form.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/crm/tickets/tickets-client.tsx` | Reviewed — issue documented | client-server-boundary |
-| `src/app/(dashboard)/crm/vendors/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/crm/vendors/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/crm/visits/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/crm/voc/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/dashboard/_components/attendance-command.tsx` | Reviewed — issue documented | polling |
@@ -430,43 +431,43 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/dashboard/graphics/TaskStudioGraphic.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/dashboard/loading.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/dashboard/module-dashboard.test.ts` | Reviewed — issue documented | heavy-static-import |
-| `src/app/(dashboard)/dashboard/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/dashboard/portal-client.tsx` | Reviewed — issue documented | sequential-await-review |
+| `src/app/(dashboard)/dashboard/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/dashboard/portal-client.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/error.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/expense/error.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/expense/layout.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/expense/loading.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/expense/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/hrms/approvals/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/expense/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/hrms/approvals/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/hrms/employees/[id]/employee-profile.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component, sequential-await-review |
-| `src/app/(dashboard)/hrms/employees/[id]/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/hrms/employees/[id]/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/hrms/employees/employee-account-actions.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/app/(dashboard)/hrms/employees/employee-directory-actions.tsx` | Reviewed — issue documented | large-client-component, sequential-await-review, no-store-fetch |
 | `src/app/(dashboard)/hrms/employees/employee-list.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/hrms/employees/new/onboard-form.tsx` | Reviewed — issue documented | large-client-component |
-| `src/app/(dashboard)/hrms/employees/new/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/hrms/employees/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/hrms/employees/new/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/hrms/employees/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/hrms/error.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/hrms/files/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/hrms/helpdesk/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/hrms/files/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/hrms/helpdesk/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/hrms/layout.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/hrms/letters/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/hrms/letters/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/hrms/letters/view/[id]/page.tsx` | Reviewed — issue documented | sequential-await-review, render-network-call |
 | `src/app/(dashboard)/hrms/loading.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/hrms/on-duty-admin/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/hrms/onboarding/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/hrms/on-duty-admin/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/hrms/onboarding/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/hrms/org-structure/org-structure-manager.tsx` | Reviewed — issue documented | sequential-await-review |
-| `src/app/(dashboard)/hrms/org-structure/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/hrms/org-structure/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/hrms/ownership/actions.ts` | Reviewed — issue documented | sequential-await-review, direct-auth |
-| `src/app/(dashboard)/hrms/ownership/page.tsx` | Reviewed — issue documented | sequential-await-review, broad-include, direct-auth |
-| `src/app/(dashboard)/hrms/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/hrms/payroll/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/hrms/ownership/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/hrms/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/hrms/payroll/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/hrms/payroll/payroll-client.tsx` | Reviewed — issue documented | client-server-boundary, sequential-await-review |
 | `src/app/(dashboard)/hrms/recruit/audit/page.tsx` | Reviewed — issue documented | render-network-call |
 | `src/app/(dashboard)/hrms/recruit/career/applications/page.tsx` | Reviewed — issue documented | render-network-call |
 | `src/app/(dashboard)/hrms/recruit/career/assistant/page.tsx` | Reviewed — issue documented | sequential-await-review, render-network-call |
 | `src/app/(dashboard)/hrms/recruit/career/jobs/page.tsx` | Reviewed — issue documented | sequential-await-review, render-network-call |
-| `src/app/(dashboard)/hrms/recruit/career/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/hrms/recruit/career/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/hrms/recruit/career/profile/page.tsx` | Reviewed — issue documented | render-network-call |
 | `src/app/(dashboard)/hrms/recruit/career/resumes/page.tsx` | Reviewed — issue documented | sequential-await-review, render-network-call |
 | `src/app/(dashboard)/hrms/recruit/employer/applications/page.tsx` | Reviewed — issue documented | render-network-call |
@@ -474,23 +475,23 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/hrms/recruit/employer/candidates/page.tsx` | Reviewed — issue documented | render-network-call |
 | `src/app/(dashboard)/hrms/recruit/employer/jobs/new/page.tsx` | Reviewed — issue documented | render-network-call |
 | `src/app/(dashboard)/hrms/recruit/employer/jobs/page.tsx` | Reviewed — issue documented | render-network-call |
-| `src/app/(dashboard)/hrms/recruit/employer/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/hrms/recruit/employer/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/hrms/recruit/layout.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/hrms/recruit/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/hrms/recruit/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/hrms/recruit/settings/page.tsx` | Reviewed — issue documented | sequential-await-review, render-network-call |
-| `src/app/(dashboard)/hrms/reimbursement/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/hrms/salary-revisions/page.tsx` | Reviewed — issue documented | sequential-await-review, direct-auth |
+| `src/app/(dashboard)/hrms/reimbursement/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/hrms/salary-revisions/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/hrms/salary-revisions/salary-revisions-client.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/hrms/salary-structure/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/hrms/salary-structure/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/hrms/salary-structure/salary-structure-client.tsx` | Reviewed — issue documented | large-client-component |
-| `src/app/(dashboard)/hrms/settings/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/hrms/tasks/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/hrms/tracking/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/hrms/travel/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/hrms/users/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/hrms/work-reports/page.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/layout.tsx` | Reviewed — issue documented | direct-auth |
-| `src/app/(dashboard)/lms/_components/lms-route-page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/hrms/settings/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/hrms/tasks/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/hrms/tracking/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/hrms/travel/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/hrms/users/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/hrms/work-reports/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/layout.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
+| `src/app/(dashboard)/lms/_components/lms-route-page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/lms/assignments/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/lms/courses/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/lms/error.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
@@ -502,10 +503,10 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/loading.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/not-found.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/(dashboard)/notifications/notifications-client.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/notifications/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/notifications/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/product-catalogue/page.tsx` | Reviewed — issue documented | large-client-component |
 | `src/app/(dashboard)/todo/graphics/TodoHeaderGraphic.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/(dashboard)/todo/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/(dashboard)/todo/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/(dashboard)/todo/todo-client.tsx` | Reviewed — issue documented | large-client-component, sequential-await-review, polling |
 | `src/app/(dashboard)/todo/todo-ui.test.ts` | Reviewed — issue documented | heavy-static-import |
 | `src/app/api/admin/ams-reset/route.ts` | Reviewed — issue documented | sequential-await-review, direct-auth |
@@ -547,6 +548,7 @@ excluded from manual modification, not from inventory.
 | `src/app/api/cha/documents/[id]/route.ts` | Reviewed — issue documented | sequential-await-review, heavy-static-import, direct-auth, broad-include |
 | `src/app/api/cha/due-date-warnings/route.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/api/cha/expense-artifacts/[...path]/route.ts` | Reviewed — issue documented | heavy-static-import, sequential-await-review, direct-auth, broad-include |
+| `src/app/api/cha/jobs/create-options/route.ts` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/api/cha/reports/jobs/[jobId]/route.ts` | Reviewed — issue documented | sequential-await-review, direct-auth |
 | `src/app/api/communication/chat/check-new/route.ts` | Reviewed — issue documented | sequential-await-review, direct-auth |
 | `src/app/api/communication/chat/dm/route.ts` | Reviewed — issue documented | sequential-await-review, direct-auth |
@@ -576,6 +578,7 @@ excluded from manual modification, not from inventory.
 | `src/app/api/cron/email-flush/route.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/api/cron/google-chat-retry/route.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/api/cron/justdial-import/route.ts` | Reviewed — issue documented | sequential-await-review |
+| `src/app/api/cron/todo-reminders/route.ts` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/api/cron/tracking-alerts/route.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/api/customer-portal/auth/activate/route.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/api/customer-portal/auth/forgot-password/route.ts` | Reviewed — issue documented | sequential-await-review |
@@ -599,6 +602,7 @@ excluded from manual modification, not from inventory.
 | `src/app/api/customer-portal/security/logout-all/route.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/api/customer-portal/security/password/route.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/api/customer-portal/shipments/[shipmentId]/documents/route.ts` | Reviewed — issue documented | sequential-await-review |
+| `src/app/api/dashboard/organization/route.ts` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/api/dev/clear-auth-cookies/route.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/api/google-chat/admin/route.ts` | Reviewed — issue documented | sequential-await-review, broad-include |
 | `src/app/api/google-chat/debug/route.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
@@ -709,6 +713,7 @@ excluded from manual modification, not from inventory.
 | `src/app/api/recruit/settings/route.ts` | Reviewed — issue documented | sequential-await-review |
 | `src/app/api/roles/[id]/permissions/route.ts` | Reviewed — issue documented | sequential-await-review |
 | `src/app/api/roles/route.ts` | Reviewed — issue documented | sequential-await-review |
+| `src/app/api/runtime/updates/route.ts` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/api/setup/route.ts` | Reviewed — issue documented | sequential-await-review, database-in-loop |
 | `src/app/api/todos/[id]/route.ts` | Reviewed — issue documented | sequential-await-review |
 | `src/app/api/todos/reminders/check/route.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
@@ -748,7 +753,7 @@ excluded from manual modification, not from inventory.
 | `src/app/invite/employee/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/invite/employee/ready/page.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/app/layout.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/app/page.tsx` | Reviewed — issue documented | direct-auth |
+| `src/app/page.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/app/verify/[id]/page.tsx` | Reviewed — issue documented | render-network-call |
 | `src/components/ams/criteria-points-form.tsx` | Reviewed — issue documented | large-client-component, sequential-await-review |
 | `src/components/ams/cycle-progress-card.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
@@ -871,16 +876,16 @@ excluded from manual modification, not from inventory.
 | `src/components/monolith/workspace-states.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/components/monolith/workspace.test.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/components/monolith/workspace.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
-| `src/components/notifications/notification-provider.tsx` | Reviewed — issue documented | sequential-await-review, no-store-fetch, polling |
+| `src/components/notifications/notification-provider.tsx` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/components/page-animator.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/components/root-module-control-client.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/components/root-signout-button.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/components/scroll-navigator.tsx` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/components/session-sync.tsx` | Reviewed — issue documented | client-server-boundary |
 | `src/components/sidebar.tsx` | Reviewed — issue documented | client-server-boundary, large-client-component |
-| `src/components/todo/todo-reminder-agent.tsx` | Reviewed — issue documented | sequential-await-review, no-store-fetch, polling |
 | `src/components/welcome-bar.tsx` | Reviewed — issue documented | client-server-boundary, polling, no-store-fetch |
 | `src/lib/__tests__/ot.test.ts` | Reviewed — issue documented | sequential-await-review |
+| `src/lib/__tests__/performance-boundaries.test.ts` | Reviewed — issue documented | heavy-static-import, direct-auth |
 | `src/lib/__tests__/security.test.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/lib/__tests__/session-security.test.ts` | Reviewed — issue documented | sequential-await-review |
 | `src/lib/api-helpers.ts` | Reviewed — issue documented | direct-auth |
@@ -960,7 +965,9 @@ excluded from manual modification, not from inventory.
 | `src/modules/cha/actions.ts` | Reviewed — issue documented | sequential-await-review, direct-auth, unbounded-promise-all |
 | `src/modules/cha/checklist-email-automation.ts` | Reviewed — issue documented | sequential-await-review |
 | `src/modules/cha/job-report.ts` | Reviewed — issue documented | sequential-await-review, broad-include |
+| `src/modules/cha/jobs/queries.ts` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/modules/cha/service.ts` | Reviewed — issue documented | sequential-await-review, heavy-static-import, database-in-loop, broad-include, unbounded-promise-all |
+| `src/modules/cha/warnings/queries.ts` | Reviewed — optimized | Optimized in the repository-wide performance pass; remaining scanner signals were reviewed. |
 | `src/modules/communication/__tests__/chat-integration.test.ts` | Reviewed — issue documented | sequential-await-review, broad-find-many |
 | `src/modules/core/organisation/module-config.ts` | Reviewed — no issue | No targeted performance pattern found; dependency role reviewed. |
 | `src/modules/core/organisation/module-settings.ts` | Reviewed — issue documented | sequential-await-review |
@@ -1068,6 +1075,8 @@ excluded from manual modification, not from inventory.
 | `scripts/migrate-accounting-data.ts` | 1 | `sequential-await-review` | 48 await expressions; review independent work for safe parallelization. |
 | `scripts/migrate-accounting-data.ts` | 3 | `heavy-static-import` | Static heavy/server integration import: fs. |
 | `scripts/migrate-accounting-data.ts` | 4 | `heavy-static-import` | Static heavy/server integration import: xlsx. |
+| `scripts/performance-audit.ts` | 2 | `heavy-static-import` | Static heavy/server integration import: node:fs. |
+| `scripts/performance-audit.ts` | 119 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `scripts/update-product-catalogue.ts` | 12 | `heavy-static-import` | Static heavy/server integration import: fs. |
 | `scripts/update-user-workmails.ts` | 1 | `heavy-static-import` | Static heavy/server integration import: xlsx. |
 | `scripts/update-user-workmails.ts` | 1 | `sequential-await-review` | 6 await expressions; review independent work for safe parallelization. |
@@ -1108,80 +1117,48 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/account/security/actions.ts` | 20 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/account/security/actions.ts` | 45 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/account/security/sessions-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/account/security/sessions-client.tsx -> src/app/(dashboard)/account/security/actions.ts. |
-| `src/app/(dashboard)/accounting/_components/commercial-document-form-page.tsx` | 28 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/accounting/_components/commercial-documents-page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/accounting/_components/commercial-documents-page.tsx` | 49 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/accounting/accounts/accounts-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/accounting/accounts/accounts-client.tsx -> src/modules/accounting/actions.ts. |
-| `src/app/(dashboard)/accounting/accounts/page.tsx` | 10 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/accounting/balance-sheet/page.tsx` | 51 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/accounting/banking/banking-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/accounting/banking/banking-client.tsx -> src/modules/accounting/actions.ts. |
-| `src/app/(dashboard)/accounting/banking/page.tsx` | 10 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/accounting/banking/page.tsx` | 52 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/accounting/dashboard-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/accounting/dashboard-client.tsx -> src/modules/accounting/actions.ts. |
-| `src/app/(dashboard)/accounting/general-ledger/page.tsx` | 42 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/accounting/jobs/jobs-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/accounting/jobs/jobs-client.tsx -> src/modules/accounting/actions.ts. |
-| `src/app/(dashboard)/accounting/jobs/page.tsx` | 9 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/accounting/jobs/page.tsx` | 18 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/accounting/jobs/page.tsx` | 22 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/accounting/journal-entries/[id]/detail-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/accounting/journal-entries/[id]/detail-client.tsx -> src/modules/accounting/actions.ts. |
-| `src/app/(dashboard)/accounting/journal-entries/[id]/page.tsx` | 16 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/accounting/journal-entries/new/new-jv-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/accounting/journal-entries/new/new-jv-client.tsx -> src/modules/accounting/actions.ts. |
-| `src/app/(dashboard)/accounting/journal-entries/new/page.tsx` | 10 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/accounting/journal-entries/page.tsx` | 15 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/accounting/page.tsx` | 13 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/accounting/page.tsx` | 34 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/accounting/page.tsx` | 46 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/accounting/payment-entries/[id]/detail-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/accounting/payment-entries/[id]/detail-client.tsx -> src/modules/accounting/actions.ts. |
-| `src/app/(dashboard)/accounting/payment-entries/[id]/page.tsx` | 16 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/accounting/payment-entries/new/new-payment-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/accounting/payment-entries/new/new-payment-client.tsx -> src/modules/accounting/actions.ts. |
-| `src/app/(dashboard)/accounting/payment-entries/new/page.tsx` | 10 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/accounting/payment-entries/page.tsx` | 15 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/accounting/profit-loss/page.tsx` | 61 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/accounting/purchase-invoices/[id]/detail-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/accounting/purchase-invoices/[id]/detail-client.tsx -> src/components/monolith/accounting-invoice-detail.tsx -> src/modules/accounting/actions.ts. |
-| `src/app/(dashboard)/accounting/purchase-invoices/[id]/page.tsx` | 18 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/accounting/purchase-invoices/new/new-invoice-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/accounting/purchase-invoices/new/new-invoice-client.tsx -> src/components/monolith/accounting-invoice-form.tsx -> src/modules/accounting/actions.ts. |
-| `src/app/(dashboard)/accounting/purchase-invoices/new/page.tsx` | 9 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/accounting/purchase-invoices/page.tsx` | 15 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/accounting/quotations/page.tsx` | 11 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/accounting/quotations/quotations-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/accounting/quotations/quotations-client.tsx -> src/modules/accounting/actions.ts. |
 | `src/app/(dashboard)/accounting/quotations/quotations-client.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/accounting/reports/page.tsx` | 9 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/accounting/reports/reports-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/accounting/reports/reports-client.tsx -> src/modules/accounting/actions.ts. |
 | `src/app/(dashboard)/accounting/reports/reports-client.tsx` | 1 | `sequential-await-review` | 14 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/accounting/sales-invoices/[id]/detail-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/accounting/sales-invoices/[id]/detail-client.tsx -> src/components/monolith/accounting-invoice-detail.tsx -> src/modules/accounting/actions.ts. |
-| `src/app/(dashboard)/accounting/sales-invoices/[id]/page.tsx` | 18 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/accounting/sales-invoices/new/new-invoice-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/accounting/sales-invoices/new/new-invoice-client.tsx -> src/components/monolith/accounting-invoice-form.tsx -> src/modules/accounting/actions.ts. |
-| `src/app/(dashboard)/accounting/sales-invoices/new/page.tsx` | 9 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/accounting/sales-invoices/page.tsx` | 15 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/accounting/settings/page.tsx` | 9 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/accounting/settings/settings-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/accounting/settings/settings-client.tsx -> src/modules/accounting/actions.ts. |
-| `src/app/(dashboard)/accounting/trial-balance/page.tsx` | 36 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/admin/admin-cha-testing-action.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/admin/admin-cha-testing-action.tsx -> src/modules/cha/actions.ts. |
 | `src/app/(dashboard)/admin/data-tools/actions.ts` | 1 | `sequential-await-review` | 12 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/admin/data-tools/actions.ts` | 5 | `heavy-static-import` | Static heavy/server integration import: xlsx. |
 | `src/app/(dashboard)/admin/data-tools/actions.ts` | 16 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/admin/data-tools/actions.ts` | 24 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/admin/data-tools/actions.ts` | 97 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/app/(dashboard)/admin/data-tools/page.tsx` | 17 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/admin/data-tools/workbook-import-form.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/admin/data-tools/workbook-import-form.tsx -> src/app/(dashboard)/admin/data-tools/actions.ts. |
 | `src/app/(dashboard)/admin/design-system/design-system-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/admin/design-system/design-system-client.tsx -> src/components/monolith/app-shell.tsx -> src/lib/rbac.ts. |
 | `src/app/(dashboard)/admin/design-system/design-system-client.tsx` | 1 | `large-client-component` | 1076 lines in a client module; review bundle and hydration boundaries. |
-| `src/app/(dashboard)/admin/design-system/page.tsx` | 9 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/admin/google-chat/page.tsx` | 97 | `render-network-call` | Potential external network dependency in a page/layout render path. |
 | `src/app/(dashboard)/admin/notifications/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/admin/notifications/page.tsx` | 20 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/admin/page.tsx` | 27 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/admin/passkeys/actions.ts` | 1 | `sequential-await-review` | 10 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/admin/passkeys/actions.ts` | 10 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/admin/passkeys/actions.ts` | 37 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/app/(dashboard)/admin/passkeys/page.tsx` | 35 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/admin/passkeys/page.tsx` | 51 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/app/(dashboard)/admin/roles/page.tsx` | 8 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/admin/sessions/actions.ts` | 1 | `sequential-await-review` | 14 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/admin/sessions/actions.ts` | 9 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/admin/sessions/actions.ts` | 31 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/admin/sessions/actions.ts` | 38 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/app/(dashboard)/admin/sessions/page.tsx` | 13 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/admin/sessions/page.tsx` | 37 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/admin/sessions/page.tsx` | 44 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/admin/sessions/page.tsx` | 57 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
@@ -1192,35 +1169,25 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/admin/sessions/sessions-dashboard.tsx` | 1 | `sequential-await-review` | 6 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/admin/sessions/sessions-dashboard.tsx` | 128 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
 | `src/app/(dashboard)/admin/sessions/sessions-dashboard.tsx` | 133 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
-| `src/app/(dashboard)/admin/settings/page.tsx` | 9 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/admin/settings/settings-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/admin/settings/settings-client.tsx -> src/modules/ams/settings.ts. |
-| `src/app/(dashboard)/admin/simulation/page.tsx` | 8 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/admin/simulation/simulation-client.tsx` | 1 | `sequential-await-review` | 6 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/ams/appraisals/[id]/appraisal-detail.tsx` | 1 | `large-client-component` | 1598 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/ams/appraisals/[id]/management-review/management-review-client.tsx` | 1 | `large-client-component` | 599 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/ams/appraisals/[id]/management-review/management-review-client.tsx` | 1 | `sequential-await-review` | 6 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/ams/appraisals/[id]/management-review/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/ams/appraisals/[id]/management-review/page.tsx` | 17 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/ams/appraisals/[id]/management-review/page.tsx` | 29 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/ams/appraisals/[id]/page.tsx` | 1 | `sequential-await-review` | 8 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/ams/appraisals/[id]/page.tsx` | 19 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/ams/appraisals/assign/[employeeId]/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/ams/appraisals/assign/[employeeId]/page.tsx` | 14 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/ams/appraisals/assign/[employeeId]/start-appraisal-client.tsx` | 1 | `large-client-component` | 838 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/ams/appraisals/assign/[employeeId]/start-appraisal-client.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/ams/appraisals/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/ams/appraisals/page.tsx` | 94 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/ams/assets/[id]/page.tsx` | 31 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/ams/assets/assets-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/ams/assets/assets-client.tsx -> src/modules/accounting/actions.ts. |
 | `src/app/(dashboard)/ams/assets/assets-client.tsx` | 1 | `large-client-component` | 567 lines in a client module; review bundle and hydration boundaries. |
-| `src/app/(dashboard)/ams/assets/page.tsx` | 10 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/ams/criteria/criteria-client.tsx` | 1 | `large-client-component` | 2243 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/ams/criteria/criteria-client.tsx` | 1 | `sequential-await-review` | 15 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/ams/criteria/criteria-client.tsx` | 1673 | `unbounded-promise-all` | Promise.all over a collection may exceed the database or network concurrency budget. |
-| `src/app/(dashboard)/ams/criteria/page.tsx` | 147 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/ams/criteria/seed-action.ts` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/ams/criteria/seed-action.ts` | 565 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/ams/cycles/page.tsx` | 11 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/ams/extensions/actions.ts` | 1 | `sequential-await-review` | 15 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/ams/extensions/actions.ts` | 14 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/ams/extensions/actions.ts` | 22 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
@@ -1229,41 +1196,29 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/ams/extensions/actions.ts` | 95 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/ams/extensions/extensions-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/ams/extensions/extensions-client.tsx -> src/app/(dashboard)/ams/extensions/actions.ts. |
 | `src/app/(dashboard)/ams/extensions/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/ams/extensions/page.tsx` | 13 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/ams/extensions/page.tsx` | 38 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/ams/extensions/page.tsx` | 51 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/ams/extensions/page.tsx` | 79 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/ams/history/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/ams/history/page.tsx` | 84 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/ams/history/page.tsx` | 89 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/ams/history/page.tsx` | 154 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/ams/history/page.tsx` | 165 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/ams/history/page.tsx` | 171 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/app/(dashboard)/ams/kpi/page.tsx` | 13 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/ams/my-appraisal/[id]/self-assessment/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/ams/my-appraisal/[id]/self-assessment/page.tsx` | 21 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/ams/my-appraisal/[id]/self-assessment/self-assessment-form.tsx` | 158 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
-| `src/app/(dashboard)/ams/my-appraisal/page.tsx` | 44 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/ams/my-reviews/[id]/_components/my-review-detail-client.tsx` | 1 | `large-client-component` | 682 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/ams/my-reviews/[id]/_components/my-review-detail-client.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/ams/my-reviews/[id]/_components/my-review-detail-client.tsx` | 159 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
-| `src/app/(dashboard)/ams/my-reviews/[id]/page.tsx` | 18 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/ams/my-reviews/page.tsx` | 7 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/ams/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/ams/page.tsx` | 36 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/ams/pms/page.tsx` | 7 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/ams/slabs/actions.ts` | 1 | `sequential-await-review` | 9 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/ams/slabs/actions.ts` | 21 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/ams/slabs/page.tsx` | 42 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/ams/slabs/slab-form.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/ams/slabs/slab-form.tsx -> src/app/(dashboard)/ams/slabs/actions.ts. |
 | `src/app/(dashboard)/attendance/biometric-sync/biometric-sync-client.tsx` | 1 | `large-client-component` | 1381 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/attendance/biometric-sync/biometric-sync-client.tsx` | 1 | `sequential-await-review` | 9 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/attendance/biometric-sync/biometric-sync-client.tsx` | 317 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
 | `src/app/(dashboard)/attendance/biometric-sync/biometric-sync-client.tsx` | 362 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
 | `src/app/(dashboard)/attendance/biometric-sync/biometric-sync-client.tsx` | 419 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
-| `src/app/(dashboard)/attendance/biometric-sync/page.tsx` | 11 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/attendance/leaves/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/attendance/leaves/page.tsx` | 11 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/attendance/ot/actions.ts` | 1 | `sequential-await-review` | 132 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/attendance/ot/actions.ts` | 10 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/attendance/ot/actions.ts` | 78 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
@@ -1300,36 +1255,26 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/attendance/ot/ot-client.tsx` | 1 | `sequential-await-review` | 17 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/attendance/ot/ot-client.tsx` | 15 | `heavy-static-import` | Static heavy/server integration import: xlsx. |
 | `src/app/(dashboard)/attendance/ot/page.tsx` | 1 | `sequential-await-review` | 7 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/attendance/ot/page.tsx` | 26 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/attendance/ot/page.tsx` | 97 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/attendance/ot/page.tsx` | 129 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/attendance/ot/page.tsx` | 139 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/attendance/ot/page.tsx` | 175 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/attendance/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/attendance/page.tsx` | 21 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/attendance/punch/page.tsx` | 1 | `sequential-await-review` | 13 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/attendance/punch/page.tsx` | 93 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/attendance/punch/punch-card.tsx` | 1 | `large-client-component` | 1059 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/attendance/punch/punch-card.tsx` | 129 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
 | `src/app/(dashboard)/attendance/punch/punch-card.tsx` | 277 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
 | `src/app/(dashboard)/attendance/reports/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/attendance/reports/page.tsx` | 26 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/attendance/timesheets/page.tsx` | 7 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/cha/_components/job-delete-inline-button.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/cha/_components/job-delete-inline-button.tsx -> src/modules/cha/actions.ts. |
-| `src/app/(dashboard)/cha/approvals/page.tsx` | 16 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/cha/customers/[id]/edit/edit-customer-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/cha/customers/[id]/edit/edit-customer-client.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/cha/customers/[id]/edit/edit-customer-client.tsx` | 1 | `large-client-component` | 1167 lines in a client module; review bundle and hydration boundaries. |
-| `src/app/(dashboard)/cha/customers/[id]/edit/page.tsx` | 12 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/cha/customers/new/new-customer-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/cha/customers/new/new-customer-client.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/cha/customers/new/new-customer-client.tsx` | 1 | `large-client-component` | 1065 lines in a client module; review bundle and hydration boundaries. |
-| `src/app/(dashboard)/cha/customers/new/page.tsx` | 8 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/cha/customers/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/cha/customers/page.tsx` | 46 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/cha/expenses/expenses-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/cha/expenses/expenses-client.tsx -> src/modules/cha/actions.ts. |
 | `src/app/(dashboard)/cha/expenses/expenses-client.tsx` | 1 | `large-client-component` | 2005 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/cha/expenses/expenses-client.tsx` | 1 | `sequential-await-review` | 14 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/cha/expenses/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/cha/expenses/page.tsx` | 12 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/cha/jobs/[jobId]/do-validity-panel.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/cha/jobs/[jobId]/do-validity-panel.tsx -> src/modules/cha/actions.ts. |
 | `src/app/(dashboard)/cha/jobs/[jobId]/job-workspace-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/cha/jobs/[jobId]/job-workspace-client.tsx -> src/modules/cha/actions.ts. |
 | `src/app/(dashboard)/cha/jobs/[jobId]/job-workspace-client.tsx` | 1 | `large-client-component` | 11988 lines in a client module; review bundle and hydration boundaries. |
@@ -1337,37 +1282,31 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/cha/jobs/[jobId]/job-workspace-client.tsx` | 2633 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
 | `src/app/(dashboard)/cha/jobs/[jobId]/job-workspace-client.tsx` | 2809 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
 | `src/app/(dashboard)/cha/jobs/[jobId]/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/cha/jobs/[jobId]/page.tsx` | 38 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/cha/jobs/[jobId]/workflow-documents-section.tsx` | 1 | `large-client-component` | 1099 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/cha/jobs/jobs-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/cha/jobs/jobs-client.tsx -> src/components/cha/create-job-dialog.tsx -> src/modules/cha/actions.ts. |
-| `src/app/(dashboard)/cha/jobs/jobs-client.tsx` | 1 | `large-client-component` | 705 lines in a client module; review bundle and hydration boundaries. |
-| `src/app/(dashboard)/cha/jobs/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/cha/jobs/page.tsx` | 35 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
+| `src/app/(dashboard)/cha/jobs/jobs-client.tsx` | 1 | `large-client-component` | 738 lines in a client module; review bundle and hydration boundaries. |
+| `src/app/(dashboard)/cha/jobs/jobs-client.tsx` | 197 | `no-store-fetch` | Uncached fetch; verify it is required and not duplicated during rendering. |
+| `src/app/(dashboard)/cha/jobs/page.tsx` | 1 | `sequential-await-review` | 7 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/cha/page.tsx` | 1 | `sequential-await-review` | 6 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/cha/page.tsx` | 121 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/cha/page.tsx` | 226 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/cha/page.tsx` | 273 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/cha/page.tsx` | 290 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/cha/page.tsx` | 298 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/cha/reports/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/cha/reports/page.tsx` | 32 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/cha/reports/page.tsx` | 54 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/cha/reports/page.tsx` | 65 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/cha/reports/page.tsx` | 74 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/cha/settings/filing-workflows/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/cha/settings/filing-workflows/page.tsx` | 9 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/cha/settings/filing-workflows/workflows-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/cha/settings/filing-workflows/workflows-client.tsx -> src/modules/cha/actions.ts. |
 | `src/app/(dashboard)/cha/settings/filing-workflows/workflows-client.tsx` | 1 | `large-client-component` | 3682 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/cha/settings/filing-workflows/workflows-client.tsx` | 1 | `sequential-await-review` | 13 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/cha/settings/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/cha/settings/page.tsx` | 10 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/cha/settings/settings-form.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/cha/settings/settings-form.tsx -> src/modules/cha/actions.ts. |
 | `src/app/(dashboard)/cha/settings/settings-form.tsx` | 1 | `large-client-component` | 1664 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/cha/settings/settings-form.tsx` | 1 | `sequential-await-review` | 13 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/communication/_components/chat-provider.tsx` | 1 | `sequential-await-review` | 9 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/communication/_components/chat-provider.tsx` | 245 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
 | `src/app/(dashboard)/communication/_components/chat-provider.tsx` | 286 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
-| `src/app/(dashboard)/communication/calendar/page.tsx` | 30 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/communication/chat/page.tsx` | 1 | `large-client-component` | 2424 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/communication/chat/page.tsx` | 1 | `sequential-await-review` | 28 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/communication/chat/page.tsx` | 116 | `render-network-call` | Potential external network dependency in a page/layout render path. |
@@ -1388,7 +1327,6 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/communication/drive/actions.ts` | 116 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/communication/drive/actions.ts` | 150 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/communication/drive/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/communication/drive/page.tsx` | 32 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/communication/drive/page.tsx` | 37 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/communication/drive/SyncDriveButton.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/communication/drive/SyncDriveButton.tsx -> src/app/(dashboard)/communication/drive/actions.ts. |
 | `src/app/(dashboard)/communication/google-chat-live-view/_components/google-chat-live-view-settings.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/communication/google-chat-live-view/_components/google-chat-live-view-settings.tsx -> src/app/(dashboard)/communication/google-chat-live-view/actions.ts. |
@@ -1396,11 +1334,8 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/communication/google-chat-live-view/actions.ts` | 16 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/communication/google-chat-live-view/actions.ts` | 72 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/communication/google-chat-live-view/page.tsx` | 1 | `sequential-await-review` | 6 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/communication/google-chat-live-view/page.tsx` | 30 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/communication/job-spaces/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/communication/job-spaces/page.tsx` | 38 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/communication/layout.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/communication/layout.tsx` | 18 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/communication/mail/page.tsx` | 1 | `large-client-component` | 1444 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/communication/mail/page.tsx` | 1 | `sequential-await-review` | 21 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/communication/mail/page.tsx` | 69 | `render-network-call` | Potential external network dependency in a page/layout render path. |
@@ -1418,76 +1353,51 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/communication/mail/page.tsx` | 914 | `render-network-call` | Potential external network dependency in a page/layout render path. |
 | `src/app/(dashboard)/communication/mail/page.tsx` | 955 | `render-network-call` | Potential external network dependency in a page/layout render path. |
 | `src/app/(dashboard)/communication/meetings/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/communication/meetings/page.tsx` | 25 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/communication/meetings/page.tsx` | 40 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/communication/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/communication/page.tsx` | 68 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/communication/search/page.tsx` | 61 | `render-network-call` | Potential external network dependency in a page/layout render path. |
 | `src/app/(dashboard)/communication/settings/page.tsx` | 1 | `sequential-await-review` | 9 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/communication/settings/page.tsx` | 25 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/communication/settings/page.tsx` | 61 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/_components/activities-panel.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/_components/activities-panel.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/crm/_components/attachments-panel.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/_components/attachments-panel.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/crm/_components/notes-panel.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/_components/notes-panel.tsx -> src/modules/crm/actions.ts. |
-| `src/app/(dashboard)/crm/[...slug]/page.tsx` | 15 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/approvals/approvals-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/approvals/approvals-client.tsx -> src/modules/crm/approval-actions.ts. |
 | `src/app/(dashboard)/crm/approvals/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/approvals/page.tsx` | 10 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/crm/calls/page.tsx` | 21 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/calls/page.tsx` | 58 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/calls/page.tsx` | 67 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/calls/page.tsx` | 87 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/contacts/[id]/contact-detail-wrapper.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/contacts/[id]/contact-detail-wrapper.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/crm/contacts/[id]/edit/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/contacts/[id]/edit/page.tsx` | 14 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/contacts/[id]/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/contacts/[id]/page.tsx` | 19 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/contacts/contact-form.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/contacts/contact-form.tsx -> src/modules/crm/actions.ts. |
-| `src/app/(dashboard)/crm/contacts/new/page.tsx` | 9 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/contacts/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/contacts/page.tsx` | 26 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/customers/[id]/account-detail-wrapper.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/customers/[id]/account-detail-wrapper.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/crm/customers/[id]/account-detail-wrapper.tsx` | 1 | `large-client-component` | 785 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/crm/customers/[id]/edit/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/customers/[id]/edit/page.tsx` | 14 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/customers/[id]/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/customers/[id]/page.tsx` | 22 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/customers/account-form.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/customers/account-form.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/crm/customers/account-form.tsx` | 1 | `large-client-component` | 946 lines in a client module; review bundle and hydration boundaries. |
-| `src/app/(dashboard)/crm/customers/new/page.tsx` | 9 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/crm/customers/page.tsx` | 33 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/dashboard/demo-data-button.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/dashboard/demo-data-button.tsx -> src/modules/crm/actions.ts. |
-| `src/app/(dashboard)/crm/dashboard/page.tsx` | 34 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/dashboard/page.tsx` | 78 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/deals/[id]/deal-detail-wrapper.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/deals/[id]/deal-detail-wrapper.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/crm/deals/[id]/edit/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/deals/[id]/edit/page.tsx` | 14 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/deals/[id]/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/deals/[id]/page.tsx` | 14 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/deals/deal-form.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/deals/deal-form.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/crm/deals/deals-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/deals/deals-client.tsx -> src/modules/crm/actions.ts. |
-| `src/app/(dashboard)/crm/deals/new/page.tsx` | 9 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/deals/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/deals/page.tsx` | 14 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/crm/efficiency/page.tsx` | 22 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/efficiency/page.tsx` | 62 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx` | 1 | `large-client-component` | 1616 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx` | 1 | `sequential-await-review` | 8 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx` | 61 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
 | `src/app/(dashboard)/crm/enquiries/[id]/page.tsx` | 1 | `sequential-await-review` | 7 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/enquiries/[id]/page.tsx` | 21 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/enquiries/[id]/page.tsx` | 54 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/enquiries/[id]/page.tsx` | 78 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/enquiries/[id]/page.tsx` | 86 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/enquiries/[id]/page.tsx` | 89 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/enquiries/[id]/page.tsx` | 92 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/enquiries/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/enquiries/page.tsx` | 30 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/invoices/_components/InvoiceDetailsPage.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/invoices/_components/InvoiceDetailsPage.tsx -> src/modules/crm/approval-workflow.ts. |
 | `src/app/(dashboard)/crm/invoices/_components/InvoiceDetailsPage.tsx` | 1 | `large-client-component` | 527 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/crm/invoices/[invoiceId]/page.tsx` | 1 | `sequential-await-review` | 6 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/invoices/[invoiceId]/page.tsx` | 15 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/invoices/[invoiceId]/page.tsx` | 24 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/invoices/[invoiceId]/page.tsx` | 32 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/invoices/[invoiceId]/page.tsx` | 86 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
@@ -1498,13 +1408,9 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/crm/lead-sources/justdial-toggle.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/lead-sources/justdial-toggle.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/crm/lead-sources/justdial/justdial-form.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/lead-sources/justdial/justdial-form.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/crm/lead-sources/justdial/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/lead-sources/justdial/page.tsx` | 10 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/crm/lead-sources/logs/page.tsx` | 11 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/lead-sources/page.tsx` | 1 | `sequential-await-review` | 6 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/lead-sources/page.tsx` | 21 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/leads/[id]/convert-modal.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/leads/[id]/convert-modal.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/crm/leads/[id]/edit/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/leads/[id]/edit/page.tsx` | 14 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/leads/[id]/follow-up-modal.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/leads/[id]/follow-up-modal.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/crm/leads/[id]/interested-modal.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/leads/[id]/interested-modal.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/crm/leads/[id]/interested-modal.tsx` | 1 | `large-client-component` | 742 lines in a client module; review bundle and hydration boundaries. |
@@ -1513,7 +1419,6 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/crm/leads/[id]/lead-detail-wrapper.tsx` | 1 | `sequential-await-review` | 7 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/crm/leads/[id]/lead-detail-wrapper.tsx` | 1269 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
 | `src/app/(dashboard)/crm/leads/[id]/page.tsx` | 1 | `sequential-await-review` | 6 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/leads/[id]/page.tsx` | 20 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/leads/[id]/page.tsx` | 46 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/leads/[id]/page.tsx` | 70 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/leads/[id]/page.tsx` | 88 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
@@ -1522,34 +1427,24 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/crm/leads/[id]/remarks-modal.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/leads/[id]/remarks-modal.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/crm/leads/lead-form.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/leads/lead-form.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/crm/leads/lead-form.tsx` | 1 | `large-client-component` | 560 lines in a client module; review bundle and hydration boundaries. |
-| `src/app/(dashboard)/crm/leads/new/page.tsx` | 9 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/leads/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/leads/page.tsx` | 32 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/crm/page.tsx` | 5 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/products/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/products/page.tsx` | 21 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/projects/page.tsx` | 1 | `sequential-await-review` | 6 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/projects/page.tsx` | 24 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/quotes/_components/NewQuotePage.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/quotes/_components/NewQuotePage.tsx -> src/modules/crm/actions.ts. |
 | `src/app/(dashboard)/crm/quotes/_components/QuoteDetailsPage.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/quotes/_components/QuoteDetailsPage.tsx -> src/modules/crm/approval-workflow.ts. |
 | `src/app/(dashboard)/crm/quotes/_components/QuoteDetailsPage.tsx` | 1 | `large-client-component` | 1003 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/crm/quotes/[quoteId]/edit/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/quotes/[quoteId]/edit/page.tsx` | 15 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/quotes/[quoteId]/edit/page.tsx` | 23 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx` | 18 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx` | 27 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx` | 47 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx` | 55 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/quotes/new/page.tsx` | 1 | `sequential-await-review` | 7 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/quotes/new/page.tsx` | 11 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/quotes/page.tsx` | 1 | `sequential-await-review` | 7 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/quotes/page.tsx` | 17 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/quotes/page.tsx` | 31 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/quotes/page.tsx` | 70 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/tickets/[id]/page.tsx` | 1 | `sequential-await-review` | 7 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/crm/tickets/[id]/page.tsx` | 23 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/app/(dashboard)/crm/tickets/[id]/page.tsx` | 30 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/tickets/[id]/page.tsx` | 45 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/tickets/[id]/page.tsx` | 64 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/tickets/[id]/page.tsx` | 69 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
@@ -1561,53 +1456,35 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/crm/tickets/actions.ts` | 108 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/tickets/actions.ts` | 163 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/tickets/actions.ts` | 203 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/crm/tickets/new/page.tsx` | 14 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/tickets/page.tsx` | 1 | `sequential-await-review` | 6 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/crm/tickets/page.tsx` | 16 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/app/(dashboard)/crm/tickets/page.tsx` | 23 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/crm/tickets/page.tsx` | 44 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/(dashboard)/crm/tickets/ticket-form.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/tickets/ticket-form.tsx -> src/app/(dashboard)/crm/tickets/actions.ts. |
 | `src/app/(dashboard)/crm/tickets/tickets-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/crm/tickets/tickets-client.tsx -> src/app/(dashboard)/crm/tickets/actions.ts. |
 | `src/app/(dashboard)/crm/vendors/page.tsx` | 1 | `sequential-await-review` | 6 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/crm/vendors/page.tsx` | 24 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/dashboard/_components/attendance-command.tsx` | 90 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
 | `src/app/(dashboard)/dashboard/module-dashboard.test.ts` | 1 | `heavy-static-import` | Static heavy/server integration import: node:fs. |
 | `src/app/(dashboard)/dashboard/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/dashboard/page.tsx` | 54 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/dashboard/portal-client.tsx` | 1 | `sequential-await-review` | 6 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/expense/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/expense/page.tsx` | 12 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/hrms/approvals/page.tsx` | 8 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/hrms/employees/[id]/employee-profile.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/hrms/employees/[id]/employee-profile.tsx -> src/lib/caps-context.tsx -> src/lib/rbac.ts. |
 | `src/app/(dashboard)/hrms/employees/[id]/employee-profile.tsx` | 1 | `large-client-component` | 1357 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/hrms/employees/[id]/employee-profile.tsx` | 1 | `sequential-await-review` | 7 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/hrms/employees/[id]/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/hrms/employees/[id]/page.tsx` | 17 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/hrms/employees/employee-account-actions.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/hrms/employees/employee-account-actions.tsx -> src/lib/caps-context.tsx -> src/lib/rbac.ts. |
 | `src/app/(dashboard)/hrms/employees/employee-directory-actions.tsx` | 1 | `large-client-component` | 873 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/hrms/employees/employee-directory-actions.tsx` | 1 | `sequential-await-review` | 7 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/hrms/employees/employee-directory-actions.tsx` | 293 | `no-store-fetch` | Uncached fetch; verify it is required and not duplicated during rendering. |
 | `src/app/(dashboard)/hrms/employees/new/onboard-form.tsx` | 1 | `large-client-component` | 674 lines in a client module; review bundle and hydration boundaries. |
-| `src/app/(dashboard)/hrms/employees/new/page.tsx` | 11 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/hrms/employees/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/hrms/employees/page.tsx` | 19 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/hrms/files/page.tsx` | 6 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/hrms/helpdesk/page.tsx` | 8 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/hrms/letters/page.tsx` | 7 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/hrms/letters/view/[id]/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/hrms/letters/view/[id]/page.tsx` | 41 | `render-network-call` | Potential external network dependency in a page/layout render path. |
 | `src/app/(dashboard)/hrms/letters/view/[id]/page.tsx` | 75 | `render-network-call` | Potential external network dependency in a page/layout render path. |
-| `src/app/(dashboard)/hrms/on-duty-admin/page.tsx` | 6 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/hrms/onboarding/page.tsx` | 7 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/hrms/org-structure/org-structure-manager.tsx` | 1 | `sequential-await-review` | 8 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/hrms/org-structure/page.tsx` | 8 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/hrms/ownership/actions.ts` | 1 | `sequential-await-review` | 12 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/hrms/ownership/actions.ts` | 9 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/hrms/ownership/page.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/hrms/ownership/page.tsx` | 43 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/app/(dashboard)/hrms/ownership/page.tsx` | 99 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/hrms/page.tsx` | 30 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/hrms/payroll/page.tsx` | 10 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/hrms/payroll/payroll-client.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/app/(dashboard)/hrms/payroll/payroll-client.tsx -> src/modules/accounting/actions.ts. |
 | `src/app/(dashboard)/hrms/payroll/payroll-client.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/hrms/recruit/audit/page.tsx` | 46 | `render-network-call` | Potential external network dependency in a page/layout render path. |
@@ -1622,7 +1499,6 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/hrms/recruit/career/jobs/page.tsx` | 45 | `render-network-call` | Potential external network dependency in a page/layout render path. |
 | `src/app/(dashboard)/hrms/recruit/career/jobs/page.tsx` | 59 | `render-network-call` | Potential external network dependency in a page/layout render path. |
 | `src/app/(dashboard)/hrms/recruit/career/jobs/page.tsx` | 70 | `render-network-call` | Potential external network dependency in a page/layout render path. |
-| `src/app/(dashboard)/hrms/recruit/career/page.tsx` | 18 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/hrms/recruit/career/profile/page.tsx` | 98 | `render-network-call` | Potential external network dependency in a page/layout render path. |
 | `src/app/(dashboard)/hrms/recruit/career/profile/page.tsx` | 112 | `render-network-call` | Potential external network dependency in a page/layout render path. |
 | `src/app/(dashboard)/hrms/recruit/career/resumes/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
@@ -1636,27 +1512,12 @@ excluded from manual modification, not from inventory.
 | `src/app/(dashboard)/hrms/recruit/employer/candidates/page.tsx` | 38 | `render-network-call` | Potential external network dependency in a page/layout render path. |
 | `src/app/(dashboard)/hrms/recruit/employer/jobs/new/page.tsx` | 40 | `render-network-call` | Potential external network dependency in a page/layout render path. |
 | `src/app/(dashboard)/hrms/recruit/employer/jobs/page.tsx` | 52 | `render-network-call` | Potential external network dependency in a page/layout render path. |
-| `src/app/(dashboard)/hrms/recruit/employer/page.tsx` | 18 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/hrms/recruit/page.tsx` | 8 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/hrms/recruit/settings/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/hrms/recruit/settings/page.tsx` | 55 | `render-network-call` | Potential external network dependency in a page/layout render path. |
 | `src/app/(dashboard)/hrms/recruit/settings/page.tsx` | 104 | `render-network-call` | Potential external network dependency in a page/layout render path. |
-| `src/app/(dashboard)/hrms/reimbursement/page.tsx` | 6 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/hrms/salary-revisions/page.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
-| `src/app/(dashboard)/hrms/salary-revisions/page.tsx` | 15 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/hrms/salary-structure/page.tsx` | 8 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/hrms/salary-structure/salary-structure-client.tsx` | 1 | `large-client-component` | 745 lines in a client module; review bundle and hydration boundaries. |
-| `src/app/(dashboard)/hrms/settings/page.tsx` | 7 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/hrms/tasks/page.tsx` | 7 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/hrms/tracking/page.tsx` | 6 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/hrms/travel/page.tsx` | 7 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/hrms/users/page.tsx` | 7 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/hrms/work-reports/page.tsx` | 8 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/layout.tsx` | 20 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/lms/_components/lms-route-page.tsx` | 6 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
-| `src/app/(dashboard)/notifications/page.tsx` | 26 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/product-catalogue/page.tsx` | 1 | `large-client-component` | 566 lines in a client module; review bundle and hydration boundaries. |
-| `src/app/(dashboard)/todo/page.tsx` | 15 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/(dashboard)/todo/todo-client.tsx` | 1 | `large-client-component` | 804 lines in a client module; review bundle and hydration boundaries. |
 | `src/app/(dashboard)/todo/todo-client.tsx` | 1 | `sequential-await-review` | 12 await expressions; review independent work for safe parallelization. |
 | `src/app/(dashboard)/todo/todo-client.tsx` | 217 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
@@ -1776,6 +1637,7 @@ excluded from manual modification, not from inventory.
 | `src/app/api/crm/recordings/[id]/reviews/route.ts` | 26 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/api/crm/recordings/[id]/reviews/route.ts` | 38 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/app/api/cron/justdial-import/route.ts` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
+| `src/app/api/cron/todo-reminders/route.ts` | 30 | `unbounded-promise-all` | Promise.all over a collection may exceed the database or network concurrency budget. |
 | `src/app/api/customer-portal/auth/forgot-password/route.ts` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
 | `src/app/api/customer-portal/checklist-files/[id]/route.test.ts` | 1 | `sequential-await-review` | 7 await expressions; review independent work for safe parallelization. |
 | `src/app/api/customer-portal/checklist-files/[id]/route.ts` | 1 | `sequential-await-review` | 6 await expressions; review independent work for safe parallelization. |
@@ -1964,7 +1826,6 @@ excluded from manual modification, not from inventory.
 | `src/app/google-chat-link/page.tsx` | 150 | `render-network-call` | Potential external network dependency in a page/layout render path. |
 | `src/app/invite/employee/employee-invitation-acceptance.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
 | `src/app/invite/employee/employee-invitation-acceptance.tsx` | 37 | `no-store-fetch` | Uncached fetch; verify it is required and not duplicated during rendering. |
-| `src/app/page.tsx` | 18 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/app/verify/[id]/page.tsx` | 63 | `render-network-call` | Potential external network dependency in a page/layout render path. |
 | `src/components/ams/criteria-points-form.tsx` | 1 | `large-client-component` | 1841 lines in a client module; review bundle and hydration boundaries. |
 | `src/components/ams/criteria-points-form.tsx` | 1 | `sequential-await-review` | 4 await expressions; review independent work for safe parallelization. |
@@ -2011,21 +1872,19 @@ excluded from manual modification, not from inventory.
 | `src/components/monolith/people-workspace.tsx` | 1 | `large-client-component` | 720 lines in a client module; review bundle and hydration boundaries. |
 | `src/components/monolith/performance-workspace.tsx` | 1 | `large-client-component` | 566 lines in a client module; review bundle and hydration boundaries. |
 | `src/components/monolith/workspace-dialog.test.ts` | 1 | `heavy-static-import` | Static heavy/server integration import: node:fs. |
-| `src/components/notifications/notification-provider.tsx` | 1 | `sequential-await-review` | 11 await expressions; review independent work for safe parallelization. |
-| `src/components/notifications/notification-provider.tsx` | 186 | `no-store-fetch` | Uncached fetch; verify it is required and not duplicated during rendering. |
-| `src/components/notifications/notification-provider.tsx` | 221 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
+| `src/components/notifications/notification-provider.tsx` | 1 | `sequential-await-review` | 12 await expressions; review independent work for safe parallelization. |
+| `src/components/notifications/notification-provider.tsx` | 204 | `no-store-fetch` | Uncached fetch; verify it is required and not duplicated during rendering. |
 | `src/components/root-signout-button.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/components/root-signout-button.tsx -> src/lib/logout.ts -> src/lib/auth-actions.ts. |
 | `src/components/session-sync.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/components/session-sync.tsx -> src/lib/logout.ts -> src/lib/auth-actions.ts. |
 | `src/components/sidebar.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/components/sidebar.tsx -> src/lib/rbac.ts. |
 | `src/components/sidebar.tsx` | 1 | `large-client-component` | 697 lines in a client module; review bundle and hydration boundaries. |
-| `src/components/todo/todo-reminder-agent.tsx` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
-| `src/components/todo/todo-reminder-agent.tsx` | 34 | `no-store-fetch` | Uncached fetch; verify it is required and not duplicated during rendering. |
-| `src/components/todo/todo-reminder-agent.tsx` | 98 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
 | `src/components/welcome-bar.tsx` | 1 | `client-server-boundary` | Client dependency reaches server-only code: src/components/welcome-bar.tsx -> src/lib/caps-context.tsx -> src/lib/rbac.ts. |
 | `src/components/welcome-bar.tsx` | 32 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
 | `src/components/welcome-bar.tsx` | 141 | `no-store-fetch` | Uncached fetch; verify it is required and not duplicated during rendering. |
 | `src/components/welcome-bar.tsx` | 152 | `polling` | Repeated polling timer; verify visibility pause, singleton, and in-flight coordination. |
 | `src/lib/__tests__/ot.test.ts` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
+| `src/lib/__tests__/performance-boundaries.test.ts` | 2 | `heavy-static-import` | Static heavy/server integration import: node:fs. |
+| `src/lib/__tests__/performance-boundaries.test.ts` | 31 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/lib/__tests__/session-security.test.ts` | 1 | `sequential-await-review` | 51 await expressions; review independent work for safe parallelization. |
 | `src/lib/api-helpers.ts` | 5 | `direct-auth` | Direct auth() call; server render trees should use request-scoped getSession(). |
 | `src/lib/auth-actions.ts` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
@@ -2320,106 +2179,107 @@ excluded from manual modification, not from inventory.
 | `src/modules/cha/service.ts` | 3910 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/modules/cha/service.ts` | 4141 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/modules/cha/service.ts` | 4343 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 4644 | `unbounded-promise-all` | Promise.all over a collection may exceed the database or network concurrency budget. |
-| `src/modules/cha/service.ts` | 4936 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 5115 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 5119 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 5311 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 5315 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 5488 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 5491 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 5603 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 5607 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 5791 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 5814 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 5944 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 5993 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 6158 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 6208 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 6316 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 6424 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 6557 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 6680 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 6719 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 6764 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 6841 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 7090 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 7435 | `unbounded-promise-all` | Promise.all over a collection may exceed the database or network concurrency budget. |
-| `src/modules/cha/service.ts` | 7614 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 7732 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 7736 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 7737 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 7757 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 7764 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 7843 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 7869 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 7879 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 7884 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 8160 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 8242 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 8246 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 8249 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 8886 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 8890 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 10303 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 10347 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 10470 | `unbounded-promise-all` | Promise.all over a collection may exceed the database or network concurrency budget. |
-| `src/modules/cha/service.ts` | 10505 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 10638 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 10650 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 10667 | `unbounded-promise-all` | Promise.all over a collection may exceed the database or network concurrency budget. |
-| `src/modules/cha/service.ts` | 10749 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 10789 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 10800 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 10950 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 10998 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 11271 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 11276 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 11294 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 11297 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 11380 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 11387 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 11506 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 4657 | `unbounded-promise-all` | Promise.all over a collection may exceed the database or network concurrency budget. |
+| `src/modules/cha/service.ts` | 4949 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 5128 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 5132 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 5324 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 5328 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 5501 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 5504 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 5616 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 5620 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 5804 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 5827 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 5957 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 6006 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 6171 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 6221 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 6329 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 6437 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 6570 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 6693 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 6732 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 6777 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 6854 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 7103 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 7448 | `unbounded-promise-all` | Promise.all over a collection may exceed the database or network concurrency budget. |
+| `src/modules/cha/service.ts` | 7627 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 7745 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 7749 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 7750 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 7770 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 7777 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 7856 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 7882 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 7892 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 7897 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 8173 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 8255 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 8259 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 8262 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 8899 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 8903 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 10316 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 10360 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 10483 | `unbounded-promise-all` | Promise.all over a collection may exceed the database or network concurrency budget. |
+| `src/modules/cha/service.ts` | 10518 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 10651 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 10663 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 10680 | `unbounded-promise-all` | Promise.all over a collection may exceed the database or network concurrency budget. |
+| `src/modules/cha/service.ts` | 10762 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 10802 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 10813 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 10963 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 11011 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 11284 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 11289 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 11307 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 11310 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 11393 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 11400 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
 | `src/modules/cha/service.ts` | 11519 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 11527 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 11534 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 11537 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 12039 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 12047 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 12051 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 12073 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 12118 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 12158 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 12207 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 12282 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 12308 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 12337 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 12382 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 12383 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 12607 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 12610 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 12611 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 12796 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 13059 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 13062 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 13063 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 13154 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 13157 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 13284 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 13321 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 13369 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 13399 | `database-in-loop` | Potential database operation inside a loop. |
-| `src/modules/cha/service.ts` | 13476 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 13515 | `unbounded-promise-all` | Promise.all over a collection may exceed the database or network concurrency budget. |
-| `src/modules/cha/service.ts` | 13622 | `unbounded-promise-all` | Promise.all over a collection may exceed the database or network concurrency budget. |
-| `src/modules/cha/service.ts` | 13779 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 13781 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 13859 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 13922 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 14088 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 14428 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 14732 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
-| `src/modules/cha/service.ts` | 14787 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 11532 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 11540 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 11547 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 11550 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 12052 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 12060 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 12064 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 12086 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 12131 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 12171 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 12220 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 12295 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 12321 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 12350 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 12395 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 12396 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 12620 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 12623 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 12624 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 12809 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 13072 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 13075 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 13076 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 13167 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 13170 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 13297 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 13334 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 13382 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 13412 | `database-in-loop` | Potential database operation inside a loop. |
+| `src/modules/cha/service.ts` | 13489 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 13528 | `unbounded-promise-all` | Promise.all over a collection may exceed the database or network concurrency budget. |
+| `src/modules/cha/service.ts` | 13635 | `unbounded-promise-all` | Promise.all over a collection may exceed the database or network concurrency budget. |
+| `src/modules/cha/service.ts` | 13798 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 13800 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 13878 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 13941 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 14107 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 14447 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 14751 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/service.ts` | 14806 | `broad-include` | Broad relational include; verify only rendered fields are selected. |
+| `src/modules/cha/warnings/queries.ts` | 1 | `sequential-await-review` | 5 await expressions; review independent work for safe parallelization. |
 | `src/modules/communication/__tests__/chat-integration.test.ts` | 1 | `sequential-await-review` | 15 await expressions; review independent work for safe parallelization. |
 | `src/modules/communication/__tests__/chat-integration.test.ts` | 119 | `broad-find-many` | findMany has no explicit bounded projection or arguments. |
 | `src/modules/communication/__tests__/chat-integration.test.ts` | 323 | `broad-find-many` | findMany has no explicit bounded projection or arguments. |

@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
 
   // Suppress Prisma from being bundled into Edge/client chunks.
   serverExternalPackages: ["@prisma/client", "bcryptjs"],
+  turbopack: {},
 
   // The reference and legacy backup trees are intentionally retained for the
   // UI migration, but they are never runtime dependencies. Keep the diagnostic
