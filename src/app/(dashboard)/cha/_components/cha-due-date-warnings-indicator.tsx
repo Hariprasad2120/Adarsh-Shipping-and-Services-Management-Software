@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowUpRight, Check } from "lucide-react";
 import { Button } from "@/components/monolith/button";
-import { WarningIndicatorPopover } from "@/components/monolith/warning-indicator-popover";
+import { ChaWarningIndicatorPopover as WarningIndicatorPopover } from "@/components/monolith/cha-workspace";
 import type { DueDateWarningViewModel } from "./cha-due-date-warning-indicator";
 
 type ChaDueDateWarningsIndicatorProps = {

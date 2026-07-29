@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton } from "@/components/monolith/crm-workspace";
+
 import React, { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -35,27 +37,27 @@ export function JustdialToggle({ initialActive }: JustdialToggleProps) {
   };
 
   return (
-    <div className="flex items-center gap-3 bg-[#0a0d12]/40 dark:bg-[#161b22]/30 px-3.5 py-2 rounded-xl border border-[#1c212a]/30 dark:border-[#30363d]/40">
-      <span className="text-xs font-bold text-slate-300 dark:text-slate-400 uppercase tracking-wide select-none">
+    <div className="flex items-center gap-3 bg-[var(--mnx-surface)]/40 dark:bg-[var(--mnx-surface)]/30 px-3.5 py-2 rounded-xl border border-[var(--mnx-border)]/30 dark:border-[var(--mnx-border)]/40">
+      <span className="text-xs font-bold text-mono-muted dark:text-mono-muted uppercase tracking-wide select-none">
         Import Scheduler
       </span>
 
-      <button
+      <CrmButton
         onClick={handleToggle}
         disabled={isPending}
-        className={`relative inline-flex h-5.5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#F9D972]/20 ${
-          isActive ? "bg-[#F9D972]" : "bg-slate-300 dark:bg-slate-700"
+        className={`relative inline-flex h-5.5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--mnx-accent)]/20 ${
+          isActive ? "bg-[var(--mnx-accent)]" : "bg-mono-soft dark:bg-mono-soft"
         } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
         aria-label="Toggle Justdial Importer Scheduler"
       >
         <span
-          className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out flex items-center justify-center ${
+          className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full bg-mono-card shadow ring-0 transition duration-200 ease-in-out flex items-center justify-center ${
             isActive ? "translate-x-4.5" : "translate-x-0"
           }`}
         >
-          {isPending && <Loader2 className="size-2.5 animate-spin text-[#F9D972]" />}
+          {isPending && <Loader2 className="size-2.5 animate-spin text-[var(--mnx-accent)]" />}
         </span>
-      </button>
+      </CrmButton>
     </div>
   );
 }

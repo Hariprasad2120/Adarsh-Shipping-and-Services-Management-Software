@@ -1,3 +1,4 @@
+import { CrmButton, CrmInput, CrmTable, CrmConfigurationState, CrmPermissionState } from "@/components/monolith/crm-workspace";
 // Trigger recompilation: 2026-06-19
 import React from "react";
 import Link from "next/link";
@@ -7,7 +8,6 @@ import { listEnquiries } from "@/modules/crm/service";
 import { requirePermission } from "@/lib/rbac";
 import {
   Search,
-  ShieldAlert,
   ArrowRight,
   Ship,
   Plane,
@@ -32,26 +32,14 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
 
   const orgId = session.user.orgId;
   if (!orgId) {
-    return (
-      <div className="p-8 text-center text-red-400">
-        <ShieldAlert className="size-12 mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Configuration Error</h2>
-        <p className="text-sm mt-1">Missing organisation context.</p>
-      </div>
-    );
+    return <CrmConfigurationState description="Missing organisation context." />;
   }
 
   // Permission Guard
   try {
     await requirePermission(session.user.id, "crm.lead.read");
   } catch (e) {
-    return (
-      <div className="p-8 text-center text-red-400">
-        <ShieldAlert className="size-12 mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-sm mt-1">You do not have permission to view CRM enquiries.</p>
-      </div>
-    );
+    return <CrmPermissionState description="You do not have permission to view CRM enquiries." />;
   }
 
   const awaitedParams = await searchParams;
@@ -76,10 +64,10 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
     <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* Page Title Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1c212a]/30 pb-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--mnx-border)]/30 pb-4">
         <div className="space-y-1">
-          <h1 className="monolith-h1 text-white">Enquiries Management</h1>
-          <p className="text-xs text-slate-400">Manage active shipping enquiries, perishable cargo logs, and customer follow-up actions.</p>
+          <h1 className="mnx-title-1 text-mono-text">Enquiries Management</h1>
+          <p className="text-xs text-mono-muted">Manage active shipping enquiries, perishable cargo logs, and customer follow-up actions.</p>
         </div>
       </div>
 
@@ -89,18 +77,18 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
         {/* Total Active Enquiries */}
         <Link 
           href="?type=all"
-          className={`p-6 rounded-xl bg-[#0f1319] border-2 transition-all duration-200 block cursor-pointer ${
+          className={`p-6 rounded-xl bg-[var(--mnx-surface)] border-2 transition-all duration-200 block cursor-pointer ${
             type === "all"
-              ? "border-[#F9D972] shadow-[4px_4px_0px_0px_rgba(0,206,196,0.2)] translate-y-[2px] translate-x-[2px]"
-              : "border-[#1c212a] hover:border-[#F9D972]/40 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.15)] hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[4px_4px_0px_0px_rgba(0,206,196,0.1)]"
-          } monolith-card monolith-accent`}
+              ? "border-[var(--mnx-accent)] shadow-[4px_4px_0px_0px_var(--mnx-accent-soft)] translate-y-[2px] translate-x-[2px]"
+              : "border-[var(--mnx-border)] hover:border-[var(--mnx-accent)]/40 shadow-[2px_2px_0px_0px_var(--mnx-border)] hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[4px_4px_0px_0px_var(--mnx-accent-soft)]"
+          } mnx-crm-panel-surface `}
         >
           <div className="flex items-start justify-between">
             <div className="space-y-2">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block font-sans">Active Enquiries</span>
-              <span className="text-3xl font-bold text-white block monolith-numeric">{allEnquiriesCount}</span>
+              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-widest block font-sans">Active Enquiries</span>
+              <span className="text-3xl font-bold text-mono-text block mnx-numeric">{allEnquiriesCount}</span>
             </div>
-            <div className="size-10 rounded-lg bg-[#F9D972]/10 text-[#F9D972] flex items-center justify-center font-bold">
+            <div className="size-10 rounded-lg bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] flex items-center justify-center font-bold">
               ALL
             </div>
           </div>
@@ -109,18 +97,18 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
         {/* Perishable Cargo */}
         <Link 
           href="?type=perishable"
-          className={`p-6 rounded-xl bg-[#0f1319] border-2 transition-all duration-200 block cursor-pointer ${
+          className={`p-6 rounded-xl bg-[var(--mnx-surface)] border-2 transition-all duration-200 block cursor-pointer ${
             type === "perishable"
-              ? "border-[#D88700] shadow-[4px_4px_0px_0px_rgba(251,146,60,0.2)] translate-y-[2px] translate-x-[2px]"
-              : "border-[#1c212a] hover:border-[#D88700]/40 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.15)] hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[4px_4px_0px_0px_rgba(251,146,60,0.1)]"
-          } monolith-card monolith-accent-warning`}
+              ? "border-[var(--mnx-accent)] shadow-[4px_4px_0px_0px_var(--mnx-warning-bg)] translate-y-[2px] translate-x-[2px]"
+              : "border-[var(--mnx-border)] hover:border-[var(--mnx-accent)]/40 shadow-[2px_2px_0px_0px_var(--mnx-border)] hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[4px_4px_0px_0px_var(--mnx-warning-bg)]"
+          } mnx-crm-panel-surface mnx-tone-warning`}
         >
           <div className="flex items-start justify-between">
             <div className="space-y-2">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block font-sans">Perishable Cargo</span>
-              <span className="text-3xl font-bold text-white block monolith-numeric">{perishableCount}</span>
+              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-widest block font-sans">Perishable Cargo</span>
+              <span className="text-3xl font-bold text-mono-text block mnx-numeric">{perishableCount}</span>
             </div>
-            <div className="size-10 rounded-lg bg-[#D88700]/10 text-[#D88700] flex items-center justify-center font-bold">
+            <div className="size-10 rounded-lg bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] flex items-center justify-center font-bold">
               ❄️
             </div>
           </div>
@@ -129,18 +117,18 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
         {/* Future Follow Ups */}
         <Link 
           href="?type=future_follow"
-          className={`p-6 rounded-xl bg-[#0f1319] border-2 transition-all duration-200 block cursor-pointer ${
+          className={`p-6 rounded-xl bg-[var(--mnx-surface)] border-2 transition-all duration-200 block cursor-pointer ${
             type === "future_follow"
-              ? "border-[#D88700] shadow-[4px_4px_0px_0px_rgba(251,146,60,0.2)] translate-y-[2px] translate-x-[2px]"
-              : "border-[#1c212a] hover:border-[#D88700]/40 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.15)] hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[4px_4px_0px_0px_rgba(251,146,60,0.1)]"
-          } monolith-card monolith-accent-warning`}
+              ? "border-[var(--mnx-accent)] shadow-[4px_4px_0px_0px_var(--mnx-warning-bg)] translate-y-[2px] translate-x-[2px]"
+              : "border-[var(--mnx-border)] hover:border-[var(--mnx-accent)]/40 shadow-[2px_2px_0px_0px_var(--mnx-border)] hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[4px_4px_0px_0px_var(--mnx-warning-bg)]"
+          } mnx-crm-panel-surface mnx-tone-warning`}
         >
           <div className="flex items-start justify-between">
             <div className="space-y-2">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block font-sans">Future Follow-ups</span>
-              <span className="text-3xl font-bold text-white block monolith-numeric">{futureFollowCount}</span>
+              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-widest block font-sans">Future Follow-ups</span>
+              <span className="text-3xl font-bold text-mono-text block mnx-numeric">{futureFollowCount}</span>
             </div>
-            <div className="size-10 rounded-lg bg-[#D88700]/10 text-[#D88700] flex items-center justify-center">
+            <div className="size-10 rounded-lg bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] flex items-center justify-center">
               <Calendar className="size-5" />
             </div>
           </div>
@@ -149,7 +137,7 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
       </div>
 
       {/* 3D Tab Switchers & Search bar */}
-      <div className="flex flex-col lg:flex-row gap-4 items-center justify-between bg-[#0f1319] p-4 rounded-xl border border-[#1c212a]/50">
+      <div className="flex flex-col lg:flex-row gap-4 items-center justify-between bg-[var(--mnx-surface)] p-4 rounded-xl border border-[var(--mnx-border)]/50">
         
         {/* Type / Tab Buttons with 3D tactile feel */}
         <div className="flex flex-wrap gap-3 w-full lg:w-auto">
@@ -157,8 +145,8 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
             href={`?type=all${search ? `&search=${search}` : ""}`}
             className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
               type === "all"
-                ? "bg-[#F9D972] text-white border-[#F9D972] shadow-none translate-y-[2px] translate-x-[2px]"
-                : "bg-[#161f28] text-[#F9D972] border-[#F9D972]/40 hover:border-[#F9D972] shadow-[2px_2px_0px_0px_rgba(0,206,196,0.15)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(0,206,196,0.25)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
+                ? "bg-[var(--mnx-accent)] text-mono-text border-[var(--mnx-accent)] shadow-none translate-y-[2px] translate-x-[2px]"
+                : "bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border-[var(--mnx-accent)]/40 hover:border-[var(--mnx-accent)] shadow-[2px_2px_0px_0px_var(--mnx-accent-soft)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_var(--mnx-accent-soft)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
             }`}
           >
             All Enquiries
@@ -167,8 +155,8 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
             href={`?type=perishable${search ? `&search=${search}` : ""}`}
             className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
               type === "perishable"
-                ? "bg-[#D88700] text-white border-[#D88700] shadow-none translate-y-[2px] translate-x-[2px]"
-                : "bg-[#161f28] text-[#D88700] border-[#D88700]/40 hover:border-[#D88700]/85 shadow-[2px_2px_0px_0px_rgba(251,146,60,0.15)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(251,146,60,0.25)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
+                ? "bg-[var(--mnx-accent)] text-mono-text border-[var(--mnx-accent)] shadow-none translate-y-[2px] translate-x-[2px]"
+                : "bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border-[var(--mnx-accent)]/40 hover:border-[var(--mnx-accent)]/85 shadow-[2px_2px_0px_0px_var(--mnx-warning-bg)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_var(--mnx-warning-bg)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
             }`}
           >
             Perishables Only
@@ -177,8 +165,8 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
             href={`?type=future_follow${search ? `&search=${search}` : ""}`}
             className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
               type === "future_follow"
-                ? "bg-[#D88700] text-white border-[#D88700] shadow-none translate-y-[2px] translate-x-[2px]"
-                : "bg-[#161f28] text-[#D88700] border-[#D88700]/40 hover:border-[#D88700]/85 shadow-[2px_2px_0px_0px_rgba(251,146,60,0.15)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(251,146,60,0.25)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
+                ? "bg-[var(--mnx-accent)] text-mono-text border-[var(--mnx-accent)] shadow-none translate-y-[2px] translate-x-[2px]"
+                : "bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border-[var(--mnx-accent)]/40 hover:border-[var(--mnx-accent)]/85 shadow-[2px_2px_0px_0px_var(--mnx-warning-bg)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_var(--mnx-warning-bg)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
             }`}
           >
             Future Follow Ups
@@ -187,30 +175,30 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
 
         {/* Search Filter Form */}
         <form method="GET" className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto lg:flex-1 justify-end">
-          <input type="hidden" name="type" value={type} />
+          <CrmInput type="hidden" name="type" value={type} />
           
           <div className="relative flex-1 max-w-md w-full">
-            <Search className="absolute left-3 top-2.5 size-4 text-slate-500" />
-            <input
+            <Search className="absolute left-3 top-2.5 size-4 text-mono-muted" />
+            <CrmInput
               type="text"
               name="search"
               defaultValue={search}
               placeholder="Search enquiries by name, ref, company..."
-              className="w-full pl-9 pr-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#F9D972] text-white"
+              className="w-full pl-9 pr-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm placeholder:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] text-mono-text"
             />
           </div>
 
-          <button
+          <CrmButton
             type="submit"
-            className="px-5 py-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border-2 border-slate-700/40 text-slate-200 rounded-lg text-xs font-bold uppercase tracking-wide cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.15)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all"
+            className="px-5 py-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border-2 border-mono-border text-mono-muted rounded-lg text-xs font-bold uppercase tracking-wide cursor-pointer shadow-[2px_2px_0px_0px_var(--mnx-border)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_var(--mnx-border)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all"
           >
             Apply
-          </button>
+          </CrmButton>
           
           {(search) && (
             <Link
               href={`?type=${type}`}
-              className="px-3 py-1.5 text-slate-400 hover:text-white text-xs font-semibold flex items-center justify-center"
+              className="px-3 py-1.5 text-mono-muted hover:text-mono-text text-xs font-semibold flex items-center justify-center"
             >
               Reset
             </Link>
@@ -237,7 +225,7 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="monolith-table">
+            <CrmTable className="mnx-crm-table">
               <thead>
                 <tr>
                   <th className="px-6 py-3">Reference No</th>
@@ -256,10 +244,10 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
                   const isAir = details.type === "Air";
                   
                   return (
-                    <tr key={enquiry.id} className="monolith-row-link">
+                    <tr key={enquiry.id} className="mnx-row-link">
                       {/* Ref No */}
-                      <td className="px-6 py-4 monolith-numeric font-medium">
-                        <Link href={`/crm/enquiries/${enquiry.id}`} className="hover:text-[#F9D972] transition-colors">
+                      <td className="px-6 py-4 mnx-numeric font-medium">
+                        <Link href={`/crm/enquiries/${enquiry.id}`} className="hover:text-[var(--mnx-accent)] transition-colors">
                           {enquiry.enquiryRef || "GEN-ENQ"}
                         </Link>
                       </td>
@@ -280,7 +268,7 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
                         {isSea ? (
                           <div className="space-y-0.5">
                             <div className="flex items-center gap-1.5 text-xs font-medium">
-                              <Ship className="size-3.5 text-[#F9D972]" />
+                              <Ship className="size-3.5 text-[var(--mnx-accent)]" />
                               <span>{details.pol} ➔ {details.pod}</span>
                             </div>
                             <span className="text-[11px] text-mono-muted block">
@@ -290,7 +278,7 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
                         ) : isAir ? (
                           <div className="space-y-0.5">
                             <div className="flex items-center gap-1.5 text-xs font-medium">
-                              <Plane className="size-3.5 text-[#F9D972]" />
+                              <Plane className="size-3.5 text-[var(--mnx-accent)]" />
                               <span>{details.aol} ➔ {details.aod}</span>
                             </div>
                             <span className="text-[11px] text-mono-muted block">
@@ -314,24 +302,24 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
                       <td className="px-6 py-4 space-y-1">
                         <div className="flex flex-wrap gap-1">
                           {enquiry.isPerishable && (
-                            <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#D88700]/10 text-[#D88700] border border-[#D88700]/20 uppercase">
+                            <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] border border-[var(--mnx-accent)]/20 uppercase">
                               ❄️ Perishable
                             </span>
                           )}
                           {enquiry.isFutureFollowUp && (
-                            <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#D88700]/10 text-[#D88700] border border-[#D88700]/20 uppercase flex items-center gap-1" title={enquiry.followUpReminderDate ? `Remind at: ${new Date(enquiry.followUpReminderDate).toLocaleString("en-IN")}` : ""}>
+                            <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] border border-[var(--mnx-accent)]/20 uppercase flex items-center gap-1" title={enquiry.followUpReminderDate ? `Remind at: ${new Date(enquiry.followUpReminderDate).toLocaleString("en-IN")}` : ""}>
                               <Clock className="size-2.5" />
                               <span>Follow-up</span>
                             </span>
                           )}
                           {!enquiry.isPerishable && !enquiry.isFutureFollowUp && (
-                            <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#F9D972]/10 text-[#F9D972] border border-[#F9D972]/20 uppercase">
+                            <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] border border-[var(--mnx-accent)]/20 uppercase">
                               Standard
                             </span>
                           )}
                         </div>
                         {enquiry.isFutureFollowUp && enquiry.followUpReminderDate && (
-                          <span className="text-[9px] text-[#D88700] font-bold block monolith-numeric">
+                          <span className="text-[9px] text-[var(--mnx-accent)] font-bold block mnx-numeric">
                             ⏰ {new Date(enquiry.followUpReminderDate).toLocaleDateString("en-IN")}
                           </span>
                         )}
@@ -341,8 +329,8 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
                       <td className="px-6 py-4">
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                           enquiry.status === "FOLLOW_UP"
-                            ? "bg-[#D88700]/15 text-[#D88700]"
-                            : "bg-[#F9D972]/15 text-[#F9D972]"
+                            ? "bg-[var(--mnx-accent)]/15 text-[var(--mnx-accent)]"
+                            : "bg-[var(--mnx-accent)]/15 text-[var(--mnx-accent)]"
                         }`}>
                           {enquiry.status === "FOLLOW_UP" ? "Follow Up" : "Interested"}
                         </span>
@@ -362,7 +350,7 @@ export default async function CrmEnquiriesPage({ searchParams }: { searchParams:
                   );
                 })}
               </tbody>
-            </table>
+            </CrmTable>
           </div>
         )}
       </div>

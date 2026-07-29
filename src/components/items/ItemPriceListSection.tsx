@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput, CrmTable } from "@/components/monolith/crm-workspace";
+
 import React, { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { Plus, Check, RefreshCw } from "lucide-react";
@@ -194,48 +196,48 @@ export function ItemPriceListSection({ form }: ItemPriceListSectionProps) {
   };
 
   return (
-    <div className="monolith-form-section space-y-4">
+    <div className="mnx-crm-form-section space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="monolith-h3 font-sans">Price List & Multi-Currency</h3>
-        <button
+        <h3 className="mnx-title-3 font-sans">Price List & Multi-Currency</h3>
+        <CrmButton
           type="button"
           onClick={handleToggleAutoFeed}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors outline-none focus:ring-2 focus:ring-[#F9D972]/20 ${
-            autoFeed ? "bg-[#F9D972]" : "bg-gray-200"
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors outline-none focus:ring-2 focus:ring-[var(--mnx-accent)]/20 ${
+            autoFeed ? "bg-[var(--mnx-accent)]" : "bg-mono-soft"
           }`}
         >
           <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+            className={`inline-block h-4 w-4 transform rounded-full bg-mono-card transition-transform ${
               autoFeed ? "translate-x-6" : "translate-x-1"
             }`}
           />
-        </button>
+        </CrmButton>
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-[#6b7280]">
+      <div className="flex items-center gap-2 text-xs text-[var(--mnx-text-muted)]">
         <span>Automatic exchange rate suggestion from online API is</span>
-        <span className={`font-semibold ${autoFeed ? "text-[#F9D972]" : "text-gray-500"}`}>
+        <span className={`font-semibold ${autoFeed ? "text-[var(--mnx-accent)]" : "text-mono-muted"}`}>
           {autoFeed ? "ON" : "OFF"}
         </span>
         {loadingRates && (
-          <RefreshCw className="size-3 animate-spin text-[#F9D972] ml-1" />
+          <RefreshCw className="size-3 animate-spin text-[var(--mnx-accent)] ml-1" />
         )}
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs text-[#374151]">
+        <CrmTable className="w-full text-left text-xs text-[var(--mnx-text-strong)]">
           <thead>
-            <tr className="border-b border-[#e5e7eb] text-[10px] uppercase tracking-wider text-gray-500 font-semibold">
+            <tr className="border-b border-[var(--mnx-border)] text-[10px] uppercase tracking-wider text-mono-muted font-semibold">
               <th className="pb-2">Currency</th>
               <th className="pb-2">Exchange Rate (1 Foreign Unit = X INR)</th>
               <th className="pb-2 text-right">Selling Price</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#e5e7eb]">
-            <tr className="bg-gray-50/50">
-              <td className="py-2.5 font-semibold text-gray-900">INR (Base)</td>
-              <td className="py-2.5 text-gray-500 font-mono">1.0000 (Fixed)</td>
-              <td className="py-2.5 text-right font-semibold text-gray-900 font-mono">
+          <tbody className="divide-y divide-[var(--mnx-border)]">
+            <tr className="bg-mono-soft">
+              <td className="py-2.5 font-semibold text-mono-muted">INR (Base)</td>
+              <td className="py-2.5 text-mono-muted font-mono">1.0000 (Fixed)</td>
+              <td className="py-2.5 text-right font-semibold text-mono-muted font-mono">
                 ₹ {sellingPrice.toFixed(2)}
               </td>
             </tr>
@@ -243,39 +245,39 @@ export function ItemPriceListSection({ form }: ItemPriceListSectionProps) {
             {formPriceList.map((item, idx) => {
               const suggested = onlineRates[item.currency];
               return (
-                <tr key={item.currency} className="hover:bg-gray-50/50">
-                  <td className="py-2.5 font-medium text-gray-900">{item.currency}</td>
+                <tr key={item.currency} className="hover:bg-mono-soft">
+                  <td className="py-2.5 font-medium text-mono-muted">{item.currency}</td>
                   <td className="py-2.5 space-y-1">
                     <div className="flex items-center gap-2">
-                      <input
+                      <CrmInput
                         type="number"
                         step="0.0001"
                         min="0.0001"
-                        className="h-8 w-28 rounded-xl border bg-white px-2 text-xs font-mono outline-none"
+                        className="h-8 w-28 rounded-xl border bg-mono-card px-2 text-xs font-mono outline-none"
                         value={item.exchangeRate}
                         onChange={(e) => handleRateChange(item.currency, parseFloat(e.target.value) || 1)}
                         disabled={autoFeed && !!suggested}
                       />
                       {autoFeed && suggested && (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[var(--mnx-success-bg)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--mnx-success)]">
                           <Check className="size-3" /> Auto
                         </span>
                       )}
                     </div>
                     {suggested && (
-                      <div className="text-[10px] text-gray-400">
+                      <div className="text-[10px] text-mono-muted">
                         Suggested rate: <span className="font-mono">{suggested.toFixed(4)}</span>
                       </div>
                     )}
                   </td>
                   <td className="py-2.5 text-right">
                     <div className="inline-flex items-center gap-1">
-                      <span className="text-[10px] text-gray-400 font-medium">{item.currency}</span>
-                      <input
+                      <span className="text-[10px] text-mono-muted font-medium">{item.currency}</span>
+                      <CrmInput
                         type="number"
                         step="0.01"
                         min="0"
-                        className="h-8 w-24 rounded-xl border bg-white px-2 text-right text-xs font-mono outline-none font-semibold text-gray-900"
+                        className="h-8 w-24 rounded-xl border bg-mono-card px-2 text-right text-xs font-mono outline-none font-semibold text-mono-muted"
                         value={item.customPrice ?? ""}
                         onChange={(e) => handlePriceChange(item.currency, parseFloat(e.target.value) || 0)}
                       />
@@ -285,41 +287,41 @@ export function ItemPriceListSection({ form }: ItemPriceListSectionProps) {
               );
             })}
           </tbody>
-        </table>
+        </CrmTable>
       </div>
 
-      <div className="border-t border-dashed border-[#e5e7eb] pt-4">
-        <h4 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2">Add New Currency</h4>
+      <div className="border-t border-dashed border-[var(--mnx-border)] pt-4">
+        <h4 className="text-[11px] font-semibold uppercase tracking-wider text-mono-muted mb-2">Add New Currency</h4>
         <form onSubmit={handleAddCurrency} className="flex flex-wrap items-end gap-3">
           <div>
-            <label className="block text-[10px] text-gray-400 mb-1">Code</label>
-            <input
+            <label className="block text-[10px] text-mono-muted mb-1">Code</label>
+            <CrmInput
               type="text"
               placeholder="e.g. USD"
               maxLength={3}
-              className="h-8 w-20 rounded-xl border bg-white px-2 text-xs uppercase outline-none"
+              className="h-8 w-20 rounded-xl border bg-mono-card px-2 text-xs uppercase outline-none"
               value={newCode}
               onChange={(e) => setNewCode(e.target.value)}
             />
           </div>
           <div>
-            <label className="block text-[10px] text-gray-400 mb-1">Exchange Rate (INR)</label>
-            <input
+            <label className="block text-[10px] text-mono-muted mb-1">Exchange Rate (INR)</label>
+            <CrmInput
               type="number"
               step="0.0001"
               min="0.0001"
               placeholder="e.g. 83.5"
-              className="h-8 w-28 rounded-xl border bg-white px-2 text-xs outline-none font-mono"
+              className="h-8 w-28 rounded-xl border bg-mono-card px-2 text-xs outline-none font-mono"
               value={newRate}
               onChange={(e) => setNewRate(e.target.value)}
             />
           </div>
-          <button
+          <CrmButton
             type="submit"
-            className="inline-flex h-8 items-center gap-1 rounded-xl bg-[#F9D972] px-3 text-xs font-semibold text-white transition-all hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)]"
+            className="inline-flex h-8 items-center gap-1 rounded-xl bg-[var(--mnx-accent)] px-3 text-xs font-semibold text-mono-text transition-all hover:bg-[var(--mnx-accent)] hover:shadow-[0_0_0_3px_var(--mnx-accent-soft)]"
           >
             <Plus className="size-3.5" /> Add
-          </button>
+          </CrmButton>
         </form>
       </div>
     </div>

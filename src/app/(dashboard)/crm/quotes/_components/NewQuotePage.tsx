@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton } from "@/components/monolith/crm-workspace";
+
 import { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Resolver } from "react-hook-form";
@@ -252,35 +254,35 @@ export function NewQuotePage({
 
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] text-[#1f2937]">
+    <div className="min-h-screen bg-[var(--mnx-surface)] text-[var(--mnx-text-strong)]">
       <div className="mx-auto flex min-h-screen max-w-[1400px] flex-col">
         <main className="flex-1 overflow-y-auto pb-32">
-          <div className="bg-white">
-            <div className="border-b border-[#dfe6f3] bg-[#f8f9fa] px-6 py-4 flex items-center gap-4">
+          <div className="bg-mono-card">
+            <div className="border-b border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-6 py-4 flex items-center gap-4">
               <Link
                 href="/crm/quotes"
-                className="inline-flex size-10 items-center justify-center rounded-xl border border-[#dbe3f0] bg-white text-[#5d6c86] shadow-sm hover:bg-mono-soft transition-colors"
+                className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)] shadow-sm hover:bg-mono-soft transition-colors"
                 aria-label="Back to quotes"
               >
                 <ArrowLeft className="size-4" />
               </Link>
               <div className="flex-1">
-                <h1 className="text-xl font-bold tracking-tight text-[#0f172a] uppercase font-sans">
+                <h1 className="text-xl font-bold tracking-tight text-[var(--mnx-text-strong)] uppercase font-sans">
                   {initialData ? "Edit Quote" : "New Quote"}
                 </h1>
-                <p className="text-xs text-[#64748b]">
+                <p className="text-xs text-[var(--mnx-text-muted)]">
                   {initialData ? "Modify existing quote details" : "Create a new quotation for a customer"}
                 </p>
               </div>
               {!initialData && (
-                <button
+                <CrmButton
                   type="button"
                   onClick={fillDemo}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-[#F9D972] bg-[rgba(0,206,196,0.06)] px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide text-[#F9D972] transition-colors hover:bg-[rgba(0,206,196,0.12)]"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-[var(--mnx-accent)] bg-[var(--mnx-accent-soft)] px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide text-[var(--mnx-accent)] transition-colors hover:bg-[var(--mnx-accent-soft)]"
                 >
                   <Wand2 className="size-3.5" />
                   Demo Fill
-                </button>
+                </CrmButton>
               )}
             </div>
             <CustomerSection

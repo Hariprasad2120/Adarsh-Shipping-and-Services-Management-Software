@@ -1,3 +1,4 @@
+import { CrmTable, CrmConfigurationState } from "@/components/monolith/crm-workspace";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Prisma } from "@/generated/prisma/client";
@@ -13,7 +14,6 @@ import {
   Mail,
   Pencil,
   Phone,
-  ShieldAlert,
   Users,
 } from "lucide-react";
 import {
@@ -35,13 +35,7 @@ export default async function CrmCustomersPage({ searchParams }: { searchParams:
 
   const orgId = session.user.orgId;
   if (!orgId) {
-    return (
-      <div className="text-center text-red-400">
-        <ShieldAlert className="mx-auto mb-4 size-12" />
-        <h2 className="monolith-h2 text-mono-text">Configuration Error</h2>
-        <p className="mt-1 text-sm text-mono-muted">Missing organisation context.</p>
-      </div>
-    );
+    return <CrmConfigurationState description="Missing organisation context." />;
   }
 
   const params = await searchParams;
@@ -158,7 +152,7 @@ export default async function CrmCustomersPage({ searchParams }: { searchParams:
 
       <div className="overflow-hidden rounded-xl border border-mono-border/60 bg-mono-card shadow-sm">
         <div className="overflow-x-auto">
-          <table className="monolith-table min-w-full">
+          <CrmTable className="mnx-crm-table min-w-full">
             <thead>
               <tr>
                 <th>Customer Name</th>
@@ -211,7 +205,7 @@ export default async function CrmCustomersPage({ searchParams }: { searchParams:
                         )}
                       </td>
                       <td>
-                        <span className="monolith-numeric text-sm text-mono-text">
+                        <span className="mnx-numeric text-sm text-mono-text">
                           {new Intl.NumberFormat("en-IN", {
                             style: "currency",
                             currency: "INR",
@@ -219,7 +213,7 @@ export default async function CrmCustomersPage({ searchParams }: { searchParams:
                           }).format(balance)}
                         </span>
                       </td>
-                      <td className="monolith-numeric text-mono-muted">
+                      <td className="mnx-numeric text-mono-muted">
                         {customer.updatedAt.toLocaleDateString("en-IN", {
                           day: "2-digit",
                           month: "short",
@@ -233,17 +227,17 @@ export default async function CrmCustomersPage({ searchParams }: { searchParams:
                       </td>
                       <td className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Link href={`/crm/customers/${customer.id}`} className="monolith-action-icon monolith-action-icon-view" title="View details">
+                          <Link href={`/crm/customers/${customer.id}`} className="mnx-icon-button mnx-tone-info-text" title="View details">
                             <Eye className="size-4" />
                           </Link>
-                          <Link href={`/crm/customers/${customer.id}/edit`} className="monolith-action-icon monolith-action-icon-edit" title="Edit customer">
+                          <Link href={`/crm/customers/${customer.id}/edit`} className="mnx-icon-button mnx-tone-warning-text" title="Edit customer">
                             <Pencil className="size-4" />
                           </Link>
                           <DeleteRecordButton
                             recordId={customer.id}
                             confirmMessage="Are you sure you want to delete this customer account? All linked contacts, deals, and projects will be affected."
                             deleteAction={deleteAccountAction}
-                            className="monolith-plain monolith-action-icon monolith-action-icon-delete"
+                            className="mnx-plain mnx-icon-button mnx-tone-danger-text"
                           />
                         </div>
                       </td>
@@ -252,7 +246,7 @@ export default async function CrmCustomersPage({ searchParams }: { searchParams:
                 })
               )}
             </tbody>
-          </table>
+          </CrmTable>
         </div>
       </div>
     </div>

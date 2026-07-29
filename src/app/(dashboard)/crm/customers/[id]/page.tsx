@@ -1,3 +1,4 @@
+import { CrmConfigurationState, CrmPermissionState } from "@/components/monolith/crm-workspace";
 import React, { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -12,8 +13,6 @@ import {
   listAccounts,
 } from "@/modules/crm/service";
 import { AccountDetailWrapper } from "./account-detail-wrapper";
-import { ShieldAlert } from "lucide-react";
-
 interface AccountDetailPageProps {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ search?: string }>;
@@ -25,26 +24,14 @@ export default async function AccountDetailPage({ params, searchParams }: Accoun
 
   const orgId = session.user.orgId;
   if (!orgId) {
-    return (
-      <div className="p-8 text-center text-red-400">
-        <ShieldAlert className="size-12 mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Configuration Error</h2>
-        <p className="text-sm mt-1">Missing organisation context.</p>
-      </div>
-    );
+    return <CrmConfigurationState description="Missing organisation context." />;
   }
 
   // Permission check
   try {
     await requirePermission(session.user.id, "crm.contact.manage");
   } catch {
-    return (
-      <div className="p-8 text-center text-red-400">
-        <ShieldAlert className="size-12 mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-sm mt-1">You do not have permission to view CRM accounts.</p>
-      </div>
-    );
+    return <CrmPermissionState description="You do not have permission to view CRM accounts." />;
   }
 
   const { id } = await params;
@@ -65,7 +52,7 @@ export default async function AccountDetailPage({ params, searchParams }: Accoun
   if (!account) notFound();
 
   return (
-    <Suspense fallback={<div className="p-8 text-center text-slate-500 text-xs animate-pulse">Loading Customer Profile...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-mono-muted text-xs animate-pulse">Loading Customer Profile...</div>}>
       <AccountDetailWrapper
         account={account}
         notes={notes}

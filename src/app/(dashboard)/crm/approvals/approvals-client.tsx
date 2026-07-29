@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmTextarea } from "@/components/monolith/crm-workspace";
+
 import React, { useState, useTransition } from "react";
 import {ClipboardList,CheckCircle2,XCircle,RotateCcw,Clock,TrendingUp,FileText,ShoppingCart,Receipt,Loader2,} from "lucide-react";
 import { ApprovalStatusBadge } from "@/components/crm/ApprovalActionBar";
@@ -120,19 +122,19 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
       label: "Pending",
       value: metrics.pending,
       icon: <Clock size={20} />,
-      color: "#f97316",
+      color: "var(--mnx-warning)",
     },
     {
       label: "Approved This Month",
       value: metrics.approvedThisMonth,
       icon: <CheckCircle2 size={20} />,
-      color: "#F9D972",
+      color: "var(--mnx-accent)",
     },
     {
       label: "Declined This Month",
       value: metrics.declinedThisMonth,
       icon: <XCircle size={20} />,
-      color: "#ef4444",
+      color: "var(--mnx-danger)",
     },
     {
       label: "Avg Approval Time",
@@ -143,7 +145,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
             : `${metrics.avgHours.toFixed(1)}h`
           : "—",
       icon: <TrendingUp size={20} />,
-      color: "#818cf8",
+      color: "var(--mnx-accent)",
     },
   ];
 
@@ -151,11 +153,11 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <span className="monolith-icon-badge">
+        <span className="mnx-crm-icon-badge">
           <ClipboardList size={18} />
         </span>
         <div>
-          <h1 className="monolith-h1">Approval Queue</h1>
+          <h1 className="mnx-title-1">Approval Queue</h1>
           <p className="text-sm" style={{ color: "var(--color-on-surface-variant)" }}>
             Review and act on pending submissions
           </p>
@@ -167,9 +169,9 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
         {statCards.map((s) => (
           <div
             key={s.label}
-            className="monolith-card monolith-accent rounded-xl p-4"
+            className="mnx-crm-panel-surface  rounded-xl p-4"
             style={
-              s.color !== "#F9D972"
+              s.color !== "var(--mnx-accent)"
                 ? ({
                     "--card-accent-color": s.color,
                   } as React.CSSProperties)
@@ -178,10 +180,10 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
           >
             <div className="flex items-center gap-2 mb-1">
               <span style={{ color: s.color }}>{s.icon}</span>
-              <span className="monolith-label">{s.label}</span>
+              <span className="mnx-label">{s.label}</span>
             </div>
             <p
-              className="monolith-numeric text-2xl font-bold"
+              className="mnx-numeric text-2xl font-bold"
               style={{ color: "var(--color-on-surface)" }}
             >
               {s.value}
@@ -193,22 +195,22 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
       {/* Filter tabs */}
       <div className="flex items-center gap-2 flex-wrap">
         {["all", "QUOTE", "SALES_ORDER", "INVOICE"].map((t) => (
-          <button
+          <CrmButton
             key={t}
             onClick={() => setFilterType(t)}
             className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl transition-all"
             style={{
               background:
                 filterType === t
-                  ? "rgba(0,206,196,0.15)"
+                  ? "var(--mnx-accent-soft)"
                   : "var(--color-surface-container)",
-              color: filterType === t ? "#F9D972" : "var(--color-on-surface-variant)",
+              color: filterType === t ? "var(--mnx-accent)" : "var(--color-on-surface-variant)",
               border:
-                filterType === t ? "1px solid rgba(0,206,196,0.4)" : "1px solid transparent",
+                filterType === t ? "1px solid var(--mnx-accent-soft)" : "1px solid transparent",
             }}
           >
             {t === "all" ? "All" : TYPE_LABEL[t]}
-          </button>
+          </CrmButton>
         ))}
       </div>
 
@@ -218,7 +220,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
           className="flex flex-col items-center justify-center py-16 rounded-2xl"
           style={{ background: "var(--color-surface)" }}
         >
-          <CheckCircle2 size={40} style={{ color: "#F9D972" }} className="mb-3 opacity-60" />
+          <CheckCircle2 size={40} style={{ color: "var(--mnx-accent)" }} className="mb-3 opacity-60" />
           <p className="text-sm font-medium" style={{ color: "var(--color-on-surface-variant)" }}>
             No pending approvals
           </p>
@@ -233,21 +235,21 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
             return (
               <div
                 key={item.id}
-                className="monolith-card monolith-accent rounded-xl p-4"
+                className="mnx-crm-panel-surface  rounded-xl p-4"
                 style={{ background: "var(--color-surface)" }}
               >
                 <div className="flex items-start justify-between gap-4">
                   {/* Left info */}
                   <div className="flex items-start gap-3 min-w-0">
                     <span
-                      className="monolith-icon-badge mt-0.5 flex-shrink-0"
-                      style={{ color: "#F9D972" }}
+                      className="mnx-crm-icon-badge mt-0.5 flex-shrink-0"
+                      style={{ color: "var(--mnx-accent)" }}
                     >
                       {TYPE_ICON[item.type] ?? <FileText size={14} />}
                     </span>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="monolith-label">{TYPE_LABEL[item.type] ?? item.type}</span>
+                        <span className="mnx-label">{TYPE_LABEL[item.type] ?? item.type}</span>
                         <span
                           className="font-semibold text-sm"
                           style={{ color: "var(--color-on-surface)" }}
@@ -276,7 +278,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
 
                   {/* Amount */}
                   <div className="text-right flex-shrink-0">
-                    <p className="monolith-numeric font-bold" style={{ color: "var(--color-on-surface)" }}>
+                    <p className="mnx-numeric font-bold" style={{ color: "var(--color-on-surface)" }}>
                       ₹{item.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </p>
                   </div>
@@ -285,34 +287,34 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
                 {/* Action buttons */}
                 {canAct && !isReworkOpen && (
                   <div className="flex items-center gap-2 mt-3 flex-wrap">
-                    <button
+                    <CrmButton
                       onClick={() => approve(item.id)}
                       disabled={isActing}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[#F9D972] text-white hover:bg-[#E8C85D] transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[var(--mnx-accent)] text-mono-text hover:bg-[var(--mnx-accent)] transition-colors disabled:opacity-50"
                     >
                       {isActing ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
                       Approve
-                    </button>
-                    <button
+                    </CrmButton>
+                    <CrmButton
                       onClick={() => {
                         setReworkId(item.id);
                         setReworkNote("");
                       }}
                       disabled={isActing}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[#f97316] text-white hover:bg-[#ea580c] transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[var(--mnx-warning)] text-mono-text hover:bg-[var(--mnx-warning)] transition-colors disabled:opacity-50"
                     >
                       <RotateCcw size={12} />
                       Rework
-                    </button>
+                    </CrmButton>
                     {item.type !== "SALES_ORDER" && (
-                      <button
+                      <CrmButton
                         onClick={() => decline(item.id)}
                         disabled={isActing}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[#ef4444] text-white hover:bg-[#dc2626] transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[var(--mnx-danger)] text-mono-text hover:bg-[var(--mnx-danger)] transition-colors disabled:opacity-50"
                       >
                         <XCircle size={12} />
                         Decline
-                      </button>
+                      </CrmButton>
                     )}
                   </div>
                 )}
@@ -320,25 +322,25 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
                 {/* Rework note input */}
                 {isReworkOpen && (
                   <div className="mt-3 space-y-2">
-                    <textarea
+                    <CrmTextarea
                       autoFocus
                       rows={3}
                       placeholder="Describe what needs to be changed..."
                       className="w-full px-3 py-2 text-sm rounded-xl resize-none"
-                      style={{ border: "1px solid rgba(251,146,60,0.55)" }}
+                      style={{ border: "1px solid var(--mnx-warning-bg)" }}
                       value={reworkNote}
                       onChange={(e) => setReworkNote(e.target.value)}
                     />
                     <div className="flex gap-2">
-                      <button
+                      <CrmButton
                         onClick={() => submitRework(item.id)}
                         disabled={isPending || !reworkNote.trim()}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[#f97316] text-white disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl bg-[var(--mnx-warning)] text-mono-text disabled:opacity-50"
                       >
                         {isPending ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
                         Send Back
-                      </button>
-                      <button
+                      </CrmButton>
+                      <CrmButton
                         onClick={() => setReworkId(null)}
                         className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl"
                         style={{
@@ -347,7 +349,7 @@ export default function ApprovalsClient({ pending, metrics, caps }: ApprovalsCli
                         }}
                       >
                         Cancel
-                      </button>
+                      </CrmButton>
                     </div>
                   </div>
                 )}

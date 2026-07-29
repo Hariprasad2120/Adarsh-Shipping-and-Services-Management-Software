@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 type WarningIndicatorTone = "warning" | "destructive";
 
-type WarningIndicatorPopoverProps = {
+export type WarningIndicatorPopoverProps = {
   ariaLabel: string;
   description: string;
   eyebrow: string;
@@ -16,6 +16,7 @@ type WarningIndicatorPopoverProps = {
   children: ReactNode;
   childrenClassName?: string;
   childrenLayout?: "grid" | "stack";
+  surfaceClassName?: string;
 };
 
 export function WarningIndicatorPopover({
@@ -27,6 +28,7 @@ export function WarningIndicatorPopover({
   children,
   childrenClassName,
   childrenLayout = "grid",
+  surfaceClassName,
 }: WarningIndicatorPopoverProps) {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -76,11 +78,38 @@ export function WarningIndicatorPopover({
 
       {isOpen && typeof document !== "undefined"
         ? createPortal(
-            <div ref={panelRef} className="fixed z-[500] w-[22rem] max-w-[calc(100vw-2rem)]" style={panelPosition} onMouseLeave={() => setIsOpen(false)}>
-              <div className="monolith-card p-4">
-                <p className={cn("monolith-label", tone === "destructive" ? "text-red-500" : "text-[var(--warning)]")}>{eyebrow}</p>
-                <p className="mt-2 text-sm leading-relaxed text-[var(--text)]">{description}</p>
-                {meta ? <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">{meta}</p> : null}
+            <div
+              ref={panelRef}
+              className="fixed z-[500] w-[22rem] max-w-[calc(100vw-2rem)]"
+              role="dialog"
+              aria-label={ariaLabel}
+              style={panelPosition}
+              onMouseLeave={() => setIsOpen(false)}
+            >
+              <div
+                className={cn(
+                  "mnx-floating-surface mnx-warning-popover p-4",
+                  surfaceClassName,
+                )}
+              >
+                <p
+                  className={cn(
+                    "mnx-label",
+                    tone === "destructive"
+                      ? "mnx-tone-danger-text"
+                      : "mnx-tone-warning-text",
+                  )}
+                >
+                  {eyebrow}
+                </p>
+                <p className="mnx-text-strong mt-2 text-sm leading-relaxed">
+                  {description}
+                </p>
+                {meta ? (
+                  <p className="mnx-text-muted mt-2 text-xs leading-relaxed">
+                    {meta}
+                  </p>
+                ) : null}
                 <div className={cn(childrenLayout === "stack" ? "mt-3 flex flex-col gap-3" : "mt-3 grid grid-cols-2 gap-2", childrenClassName)}>{children}</div>
               </div>
             </div>,

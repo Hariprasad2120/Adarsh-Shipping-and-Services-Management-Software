@@ -58,6 +58,8 @@ html.theme-light {
   --mn-motion-fast: 320ms;
   --mn-motion-panel: 640ms;
   --mn-ease-standard: cubic-bezier(0.12, 0.86, 0.18, 1);
+  --mn-filter-glass: blur(22px) saturate(1.36);
+  --mn-filter-glass-compact: blur(16px) saturate(1.28);
 
   /* Light theme */
   --mn-color-canvas: #eff0eb;
@@ -68,6 +70,12 @@ html.theme-light {
   --mn-color-text-strong: #050505;
   --mn-color-text-muted: #73746d;
   --mn-color-border: rgba(17, 18, 14, 0.1);
+  --mn-color-glass-surface: rgba(255, 254, 249, 0.84);
+  --mn-color-glass-surface-strong: rgba(255, 254, 249, 0.92);
+  --mn-color-glass-surface-soft: rgba(244, 244, 236, 0.86);
+  --mn-color-glass-fallback: #fffef9;
+  --mn-color-glass-border: rgba(17, 18, 14, 0.16);
+  --mn-color-overlay: rgba(34, 30, 18, 0.42);
   --mn-color-primary: #11120e;
   --mn-color-on-primary: #ffffff;
   --mn-color-accent: #f9d972;
@@ -83,6 +91,9 @@ html.theme-light {
   --mn-color-info-surface: #dfeef4;
   --mn-color-info: #1479b8;
   --mn-shadow-panel: 0 18px 44px rgba(26, 27, 22, 0.08);
+  --mn-shadow-floating:
+    0 30px 90px rgba(26, 27, 22, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
   --mn-shadow-accent: 0 16px 36px rgba(249, 217, 114, 0.34), 0 5px 14px rgba(149, 109, 16, 0.14);
   --mn-shadow-accent-soft: 0 10px 24px rgba(249, 217, 114, 0.24);
   --mn-gradient-canvas:
@@ -99,7 +110,8 @@ html.theme-light {
   --mn-gradient-hero:
     radial-gradient(circle at 83% 16%, rgba(249, 217, 114, 0.5), transparent 34%),
     linear-gradient(125deg, #f7f8f4 0 48%, #fff2aa 100%);
-  --mn-gradient-glass: linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.56));
+  --mn-gradient-glass:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.34), rgba(244, 244, 236, 0.12));
   --mn-gradient-task: linear-gradient(145deg, #34352f 0%, #20211d 100%);
 }
 
@@ -113,10 +125,19 @@ html.theme-night {
   --mn-color-text-strong: #ffffff;
   --mn-color-text-muted: #a3a3a3;
   --mn-color-border: rgba(255, 255, 255, 0.13);
+  --mn-color-glass-surface: rgba(14, 14, 14, 0.84);
+  --mn-color-glass-surface-strong: rgba(8, 8, 8, 0.92);
+  --mn-color-glass-surface-soft: rgba(24, 24, 24, 0.88);
+  --mn-color-glass-fallback: #0b0b0b;
+  --mn-color-glass-border: rgba(255, 255, 255, 0.18);
+  --mn-color-overlay: rgba(0, 0, 0, 0.72);
   --mn-color-primary: #f9d972;
   --mn-color-on-primary: #11120e;
   --mn-color-accent-text: #f9d972;
   --mn-shadow-panel: 0 18px 44px rgba(0, 0, 0, 0.5);
+  --mn-shadow-floating:
+    0 34px 96px rgba(0, 0, 0, 0.72),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   --mn-shadow-accent: 0 0 0 1px rgba(249, 217, 114, 0.18), 0 17px 40px rgba(249, 217, 114, 0.3);
   --mn-shadow-accent-soft: 0 0 0 1px rgba(249, 217, 114, 0.12), 0 11px 28px rgba(249, 217, 114, 0.2);
   --mn-gradient-canvas:
@@ -133,7 +154,8 @@ html.theme-night {
   --mn-gradient-hero:
     radial-gradient(circle at 82% 26%, rgba(249, 217, 114, 0.16), transparent 30%),
     linear-gradient(125deg, #020202 0 48%, #0d0d0d 100%);
-  --mn-gradient-glass: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025));
+  --mn-gradient-glass:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015));
   --mn-gradient-task: linear-gradient(145deg, #171717 0%, #080808 100%);
 }
 
@@ -147,6 +169,12 @@ html.theme-violet {
   --mn-color-text-strong: #ffffff;
   --mn-color-text-muted: #9493a2;
   --mn-color-border: rgba(255, 255, 255, 0.13);
+  --mn-color-glass-surface: rgba(21, 17, 32, 0.86);
+  --mn-color-glass-surface-strong: rgba(12, 9, 20, 0.93);
+  --mn-color-glass-surface-soft: rgba(34, 27, 50, 0.9);
+  --mn-color-glass-fallback: #120f1c;
+  --mn-color-glass-border: rgba(181, 170, 245, 0.24);
+  --mn-color-overlay: rgba(8, 4, 16, 0.74);
   --mn-color-primary: #b5aaf5;
   --mn-color-on-primary: #050505;
   --mn-color-accent: #b5aaf5;
@@ -154,6 +182,10 @@ html.theme-violet {
   --mn-color-accent-text: #cbbde1;
   --mn-color-on-accent: #050505;
   --mn-shadow-panel: 0 18px 44px rgba(0, 0, 0, 0.5);
+  --mn-shadow-floating:
+    0 34px 96px rgba(5, 2, 10, 0.74),
+    0 0 0 1px rgba(181, 170, 245, 0.08),
+    inset 0 1px 0 rgba(203, 189, 225, 0.13);
   --mn-shadow-accent: 0 0 0 1px rgba(181, 170, 245, 0.2), 0 17px 42px rgba(137, 116, 185, 0.4);
   --mn-shadow-accent-soft: 0 0 0 1px rgba(181, 170, 245, 0.14), 0 11px 30px rgba(137, 116, 185, 0.28);
   --mn-gradient-canvas:
@@ -170,7 +202,8 @@ html.theme-violet {
   --mn-gradient-hero:
     radial-gradient(circle at 82% 26%, rgba(181, 170, 245, 0.16), transparent 30%),
     linear-gradient(125deg, #020202 0 48%, #0d0d0d 100%);
-  --mn-gradient-glass: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025));
+  --mn-gradient-glass:
+    linear-gradient(145deg, rgba(181, 170, 245, 0.13), rgba(181, 170, 245, 0.025));
   --mn-gradient-task: linear-gradient(145deg, #171717 0%, #080808 100%);
 }
 
@@ -184,6 +217,12 @@ html.theme-purple {
   --mn-color-text-strong: #07040e;
   --mn-color-text-muted: #70677e;
   --mn-color-border: rgba(57, 36, 87, 0.12);
+  --mn-color-glass-surface: rgba(250, 248, 255, 0.85);
+  --mn-color-glass-surface-strong: rgba(255, 255, 255, 0.92);
+  --mn-color-glass-surface-soft: rgba(238, 232, 251, 0.88);
+  --mn-color-glass-fallback: #faf8ff;
+  --mn-color-glass-border: rgba(91, 45, 191, 0.2);
+  --mn-color-overlay: rgba(25, 15, 45, 0.46);
   --mn-color-primary: #6d3fd6;
   --mn-color-on-primary: #ffffff;
   --mn-color-accent: #8b5cf6;
@@ -191,6 +230,9 @@ html.theme-purple {
   --mn-color-accent-text: #5b2dbf;
   --mn-color-on-accent: #ffffff;
   --mn-shadow-panel: 0 18px 44px rgba(52, 37, 76, 0.09);
+  --mn-shadow-floating:
+    0 30px 92px rgba(52, 37, 76, 0.23),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
   --mn-shadow-accent: 0 16px 38px rgba(139, 92, 246, 0.28), 0 5px 16px rgba(91, 45, 191, 0.13);
   --mn-shadow-accent-soft: 0 10px 26px rgba(139, 92, 246, 0.2);
   --mn-gradient-canvas:
@@ -207,6 +249,7 @@ html.theme-purple {
   --mn-gradient-hero:
     radial-gradient(circle at 83% 16%, rgba(139, 92, 246, 0.26), transparent 34%),
     linear-gradient(125deg, #ffffff 0 48%, #eee7ff 100%);
-  --mn-gradient-glass: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.62));
+  --mn-gradient-glass:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.34), rgba(139, 92, 246, 0.08));
   --mn-gradient-task: linear-gradient(145deg, #392457 0%, #20152f 100%);
 }

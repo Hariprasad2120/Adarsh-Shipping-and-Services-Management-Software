@@ -1,3 +1,4 @@
+import { CrmConfigurationState, CrmPermissionState } from "@/components/monolith/crm-workspace";
 import React from "react";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -11,8 +12,6 @@ import {
   getTimelineEvents,
 } from "@/modules/crm/service";
 import { LeadDetailWrapper } from "./lead-detail-wrapper";
-import { ShieldAlert } from "lucide-react";
-
 interface LeadDetailPageProps {
   params: Promise<{ id: string }>;
 }
@@ -23,26 +22,14 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
 
   const orgId = session.user.orgId;
   if (!orgId) {
-    return (
-      <div className="p-8 text-center text-red-400">
-        <ShieldAlert className="size-12 mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Configuration Error</h2>
-        <p className="text-sm mt-1">Missing organisation context.</p>
-      </div>
-    );
+    return <CrmConfigurationState description="Missing organisation context." />;
   }
 
   // Permission check
   try {
     await requirePermission(session.user.id, "crm.lead.read");
   } catch (e) {
-    return (
-      <div className="p-8 text-center text-red-400">
-        <ShieldAlert className="size-12 mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-sm mt-1">You do not have permission to view CRM leads.</p>
-      </div>
-    );
+    return <CrmPermissionState description="You do not have permission to view CRM leads." />;
   }
 
   const { id } = await params;

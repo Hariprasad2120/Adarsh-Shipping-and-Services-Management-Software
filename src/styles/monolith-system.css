@@ -4,7 +4,10 @@
  * The legacy application remains unaffected while routes are redesigned one by one.
  */
 
-.mnx-dashboard-shell {
+.mnx-dashboard-shell,
+html[data-dashboard-shell="true"],
+.mnx-floating-surface,
+html[data-dashboard-shell="true"] [data-sonner-toast] {
   --mnx-page: var(--mn-color-canvas);
   --mnx-canvas: var(--mn-color-canvas);
   --mnx-card: var(--mn-color-surface);
@@ -15,6 +18,7 @@
   --mnx-surface-muted: var(--mn-color-surface-muted);
   --mnx-text: var(--mn-color-text);
   --mnx-text-strong: var(--mn-color-text-strong);
+  --mnx-ink: var(--mn-color-text-strong);
   --mnx-muted: var(--mn-color-text-muted);
   --mnx-border: var(--mn-color-border);
   --mnx-primary: var(--mn-color-primary);
@@ -45,6 +49,15 @@
   --mnx-primary-gradient: var(--mn-gradient-primary);
   --mnx-hero-gradient: var(--mn-gradient-hero);
   --mnx-glass-gradient: var(--mn-gradient-glass);
+  --mnx-glass-surface: var(--mn-color-glass-surface);
+  --mnx-glass-surface-strong: var(--mn-color-glass-surface-strong);
+  --mnx-glass-surface-soft: var(--mn-color-glass-surface-soft);
+  --mnx-glass-fallback: var(--mn-color-glass-fallback);
+  --mnx-glass-border: var(--mn-color-glass-border);
+  --mnx-overlay: var(--mn-color-overlay);
+  --mnx-floating-shadow: var(--mn-shadow-floating);
+  --mnx-glass-filter: var(--mn-filter-glass);
+  --mnx-glass-filter-compact: var(--mn-filter-glass-compact);
   --mnx-task-gradient: var(--mn-gradient-task);
   --mnx-theme-shadow: var(--mn-shadow-accent);
   --mnx-theme-shadow-soft: var(--mn-shadow-accent-soft);
@@ -58,6 +71,9 @@
   --mnx-hover-duration: var(--mn-motion-fast);
   --mnx-hover-ease: var(--mn-ease-standard);
   --mnx-hover-shadow-duration: var(--mn-motion-panel);
+}
+
+.mnx-dashboard-shell {
   width: 100%;
   min-width: 0;
   height: 100dvh;
@@ -123,6 +139,114 @@ html[data-dashboard-shell="true"] body {
 .mnx-dashboard-shell input:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--mnx-accent) 48%, transparent);
   outline-offset: 2px;
+}
+
+.mnx-floating-surface {
+  box-sizing: border-box;
+  border: 1px solid var(--mnx-glass-border);
+  color: var(--mnx-text);
+  background-color: var(--mnx-glass-surface-strong);
+  background-image: var(--mnx-glass-gradient);
+  box-shadow: var(--mnx-floating-shadow);
+  -webkit-backdrop-filter: var(--mnx-glass-filter);
+  backdrop-filter: var(--mnx-glass-filter);
+  font-family: var(--mn-font-sans);
+}
+
+.mnx-floating-surface *,
+.mnx-floating-surface *::before,
+.mnx-floating-surface *::after {
+  box-sizing: border-box;
+}
+
+.mnx-floating-surface :where(button, input, select, textarea) {
+  font: inherit;
+}
+
+.mnx-floating-surface
+  :where(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--mnx-accent) 48%, transparent);
+  outline-offset: 2px;
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .mnx-floating-surface {
+    background: var(--mnx-glass-fallback);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .mnx-floating-surface,
+  .mnx-profile-popover,
+  .mnx-command-dialog {
+    background: var(--mnx-glass-fallback);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+.mnx-floating-menu {
+  z-index: 150;
+  color: var(--mnx-text);
+}
+
+.mnx-floating-menu-item {
+  color: var(--mnx-text-muted);
+}
+
+.mnx-floating-menu-item:focus,
+.mnx-floating-menu-item[data-highlighted],
+.mnx-floating-menu-item[data-state="open"] {
+  color: var(--mnx-text);
+  background: var(--mnx-glass-surface-soft);
+}
+
+.mnx-floating-menu-label,
+.mnx-floating-menu-shortcut {
+  color: var(--mnx-text-muted);
+}
+
+.mnx-floating-menu-separator {
+  background: var(--mnx-glass-border);
+}
+
+.mnx-warning-popover {
+  border-radius: var(--mnx-radius-md);
+}
+
+.mnx-floating-tooltip {
+  border-radius: var(--mnx-radius-sm);
+}
+
+.mnx-floating-tooltip-arrow {
+  border-color: var(--mnx-glass-border);
+  background: var(--mnx-glass-surface-strong);
+}
+
+.mnx-mona-panel {
+  border-radius: var(--mnx-radius-md);
+}
+
+.mnx-dialog-action-bar {
+  background: var(--mnx-glass-surface-soft);
+  -webkit-backdrop-filter: var(--mnx-glass-filter-compact);
+  backdrop-filter: var(--mnx-glass-filter-compact);
+}
+
+html[data-dashboard-shell="true"] [data-sonner-toast] {
+  border-color: var(--mnx-glass-border) !important;
+  color: var(--mnx-text) !important;
+  background-color: var(--mnx-glass-surface-strong) !important;
+  background-image: var(--mnx-glass-gradient) !important;
+  box-shadow: var(--mnx-floating-shadow) !important;
+  -webkit-backdrop-filter: var(--mnx-glass-filter-compact);
+  backdrop-filter: var(--mnx-glass-filter-compact);
+}
+
+html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
+  border-color: var(--mnx-glass-border);
+  color: var(--mnx-text);
+  background: var(--mnx-glass-surface-soft);
 }
 
 .mnx-sidebar {
@@ -633,11 +757,14 @@ html[data-dashboard-shell="true"] body {
   right: 0;
   width: min(340px, calc(100vw - 28px));
   overflow: hidden;
-  border: 1px solid var(--mnx-border);
+  border: 1px solid var(--mnx-glass-border);
   border-radius: 20px;
   color: var(--mnx-text);
-  background: var(--mnx-surface-gradient);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+  background-color: var(--mnx-glass-surface-strong);
+  background-image: var(--mnx-glass-gradient);
+  box-shadow: var(--mnx-floating-shadow);
+  -webkit-backdrop-filter: var(--mnx-glass-filter);
+  backdrop-filter: var(--mnx-glass-filter);
   animation: mnx-panel-in 180ms ease both;
 }
 
@@ -648,6 +775,9 @@ html[data-dashboard-shell="true"] body {
   gap: 13px;
   padding: 18px;
   border-bottom: 1px solid var(--mnx-border);
+  background: var(--mnx-glass-surface-soft);
+  -webkit-backdrop-filter: var(--mnx-glass-filter-compact);
+  backdrop-filter: var(--mnx-glass-filter-compact);
 }
 
 .mnx-profile-popover > header > span {
@@ -3841,8 +3971,9 @@ html[data-dashboard-shell="true"] body {
   z-index: 0;
   inset: 0;
   border: 0;
-  background: color-mix(in srgb, var(--mnx-canvas) 42%, rgba(0, 0, 0, 0.72));
-  backdrop-filter: blur(8px);
+  background: var(--mn-color-overlay);
+  -webkit-backdrop-filter: var(--mn-filter-glass-compact);
+  backdrop-filter: var(--mn-filter-glass-compact);
 }
 
 .mnx-dialog-surface {
@@ -3855,11 +3986,14 @@ html[data-dashboard-shell="true"] body {
   overflow: hidden;
   overscroll-behavior: contain;
   outline: none;
-  border: 1px solid var(--mnx-border);
+  border: 1px solid var(--mnx-glass-border);
   border-radius: 26px;
   color: var(--mnx-text);
-  background: var(--mnx-surface-gradient);
-  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.36);
+  background-color: var(--mnx-glass-surface-strong);
+  background-image: var(--mnx-glass-gradient);
+  box-shadow: var(--mnx-floating-shadow);
+  -webkit-backdrop-filter: var(--mnx-glass-filter);
+  backdrop-filter: var(--mnx-glass-filter);
   animation: mnx-panel-in 220ms ease both;
 }
 
@@ -3888,6 +4022,9 @@ html[data-dashboard-shell="true"] body {
   justify-content: space-between;
   gap: 20px;
   padding: 22px 24px;
+  background: var(--mnx-glass-surface-soft);
+  -webkit-backdrop-filter: var(--mnx-glass-filter-compact);
+  backdrop-filter: var(--mnx-glass-filter-compact);
 }
 
 .mnx-dialog > header {
@@ -5443,19 +5580,23 @@ html[data-dashboard-shell="true"] body {
   display: grid;
   place-items: start center;
   padding: 12vh 20px 20px;
-  background: rgba(0, 0, 0, 0.46);
-  backdrop-filter: blur(8px);
+  background: var(--mn-color-overlay);
+  -webkit-backdrop-filter: var(--mn-filter-glass-compact);
+  backdrop-filter: var(--mn-filter-glass-compact);
   animation: mnx-fade-in 160ms ease both;
 }
 
 .mnx-command-dialog {
   width: min(620px, 100%);
   overflow: hidden;
-  border: 1px solid var(--mnx-border);
+  border: 1px solid var(--mnx-glass-border);
   border-radius: 22px;
   color: var(--mnx-text);
-  background: var(--mnx-surface-gradient-strong);
-  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.34), var(--mnx-theme-shadow);
+  background-color: var(--mnx-glass-surface-strong);
+  background-image: var(--mnx-glass-gradient);
+  box-shadow: var(--mnx-floating-shadow);
+  -webkit-backdrop-filter: var(--mnx-glass-filter);
+  backdrop-filter: var(--mnx-glass-filter);
   animation: mnx-command-in 220ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
 }
 
@@ -5467,6 +5608,9 @@ html[data-dashboard-shell="true"] body {
   padding: 0 18px;
   border-bottom: 1px solid var(--mnx-border);
   color: var(--mnx-muted);
+  background: var(--mnx-glass-surface-soft);
+  -webkit-backdrop-filter: var(--mnx-glass-filter-compact);
+  backdrop-filter: var(--mnx-glass-filter-compact);
 }
 
 .mnx-command-dialog input {
@@ -5900,6 +6044,12 @@ html[data-dashboard-shell="true"] body {
     inset: 0 auto 0 0;
     height: 100dvh;
     width: min(310px, 86vw);
+    border-color: var(--mnx-glass-border);
+    background-color: var(--mnx-glass-surface-strong);
+    background-image: var(--mnx-glass-gradient);
+    box-shadow: var(--mnx-floating-shadow);
+    -webkit-backdrop-filter: var(--mnx-glass-filter);
+    backdrop-filter: var(--mnx-glass-filter);
     transform: translateX(-105%);
     transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
@@ -5992,8 +6142,9 @@ html[data-dashboard-shell="true"] body {
     z-index: 55;
     inset: 0;
     border: 0;
-    background: rgba(0, 0, 0, 0.48);
-    backdrop-filter: blur(4px);
+    background: var(--mn-color-overlay);
+    -webkit-backdrop-filter: var(--mn-filter-glass-compact);
+    backdrop-filter: var(--mn-filter-glass-compact);
   }
 
   .mnx-topbar {
@@ -6824,10 +6975,180 @@ html[data-dashboard-shell="true"] body {
 
 .mnx-cha-dialog {
   overflow: auto;
+  border-color: var(--mnx-glass-border);
+  border-radius: 26px;
+  color: var(--mnx-text);
+  background-color: var(--mnx-glass-surface-strong);
+  background-image: var(--mnx-glass-gradient);
+  box-shadow: var(--mnx-floating-shadow);
+  -webkit-backdrop-filter: var(--mnx-glass-filter);
+  backdrop-filter: var(--mnx-glass-filter);
 }
 
 .mnx-cha-dialog.mnx-dialog-surface-workspace {
+  width: min(60rem, 100%);
+  height: min(50rem, 88dvh);
   overflow: hidden;
+}
+
+.mnx-cha-dialog .mnx-dialog-content,
+.mnx-cha-create-dialog-content {
+  background: color-mix(
+    in srgb,
+    var(--mnx-surface) 94%,
+    var(--mnx-glass-surface-soft)
+  );
+}
+
+.mnx-cha-create-dialog > header,
+.mnx-cha-create-dialog > footer {
+  background: var(--mnx-glass-surface-soft);
+}
+
+.mnx-cha-create-dialog-content {
+  overscroll-behavior: contain;
+}
+
+.mnx-cha-summary-chip {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  padding: 5px 11px;
+  border: 1px solid var(--mnx-border);
+  border-radius: 999px;
+  color: var(--mnx-text-muted);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-cha-dialog-control {
+  border-color: var(--mnx-border) !important;
+  border-radius: 13px !important;
+  color: var(--mnx-text) !important;
+  background: var(--mnx-control-gradient) !important;
+  box-shadow: none !important;
+}
+
+.mnx-cha-dialog-control::placeholder {
+  color: var(--mnx-text-muted) !important;
+}
+
+.mnx-cha-dialog-control:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--mnx-text) 24%, var(--mnx-border)) !important;
+}
+
+.mnx-cha-dialog-control:focus,
+.mnx-cha-dialog-control:focus-visible {
+  border-color: var(--mnx-accent) !important;
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--mnx-accent) 18%, transparent) !important;
+}
+
+.mnx-cha-native-select {
+  border-color: var(--mnx-border);
+  color: var(--mnx-text);
+  background-color: var(--mnx-surface);
+}
+
+.mnx-cha-native-select option,
+.mnx-cha-native-select optgroup {
+  color: var(--mnx-text);
+  background: var(--mnx-surface);
+}
+
+.mnx-cha-menu,
+.mnx-cha-popover {
+  overflow: hidden;
+  border: 1px solid var(--mnx-glass-border);
+  border-radius: 16px;
+  color: var(--mnx-text);
+  background-color: var(--mnx-glass-surface-strong);
+  background-image: var(--mnx-glass-gradient);
+  box-shadow: var(--mnx-floating-shadow);
+  -webkit-backdrop-filter: var(--mnx-glass-filter-compact);
+  backdrop-filter: var(--mnx-glass-filter-compact);
+}
+
+.mnx-cha-autocomplete {
+  border-radius: 14px;
+}
+
+.mnx-cha-filter-popover {
+  border-radius: 18px;
+}
+
+.mnx-cha-menu-option {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: var(--mnx-text);
+  text-align: left;
+  transition:
+    color var(--mnx-hover-duration) var(--mnx-hover-ease),
+    background-color var(--mnx-hover-duration) var(--mnx-hover-ease);
+}
+
+.mnx-cha-menu-option:hover,
+.mnx-cha-menu-option:focus-visible {
+  color: var(--mnx-text);
+  background: color-mix(
+    in srgb,
+    var(--mnx-accent) 14%,
+    var(--mnx-glass-surface-soft)
+  );
+}
+
+.mnx-cha-success-dialog {
+  min-height: 0;
+}
+
+.mnx-cha-success-route {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--mnx-border);
+  border-radius: 18px;
+  background: var(--mnx-control-gradient);
+}
+
+.mnx-cha-success-icon {
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 999px;
+}
+
+.mnx-cha-success-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.mnx-cha-success-stat {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--mnx-border);
+  border-radius: 16px;
+  background: var(--mnx-surface-soft);
+}
+
+@media (max-width: 42rem) {
+  .mnx-cha-success-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mnx-cha-create-dialog > header {
+    align-items: flex-start;
+  }
+
+  .mnx-cha-create-dialog > header > div:last-child {
+    flex-direction: column-reverse;
+  }
 }
 
 .mnx-cha-workspace,
@@ -7862,11 +8183,14 @@ button.mnx-accounting-record-card {
   max-height: 320px;
   overflow-y: auto;
   padding: 0;
-  border-color: var(--mnx-border);
+  border-color: var(--mnx-glass-border);
   border-radius: 14px;
-  background: var(--mnx-card);
+  background-color: var(--mnx-glass-surface-strong);
+  background-image: var(--mnx-glass-gradient);
   color: var(--mnx-text);
-  box-shadow: 0 22px 44px color-mix(in srgb, var(--mnx-ink) 14%, transparent);
+  box-shadow: var(--mnx-floating-shadow);
+  -webkit-backdrop-filter: var(--mnx-glass-filter-compact);
+  backdrop-filter: var(--mnx-glass-filter-compact);
 }
 
 .mnx-select-content [role="radiogroup"] {
@@ -8639,6 +8963,284 @@ button.mnx-accounting-record-card {
 
   .mnx-performance-page,
   .mnx-performance-content {
+    display: block;
+  }
+}
+
+/* CRM workspace */
+
+.mnx-item-workspace {
+  --mnx-page: var(--mn-color-canvas);
+  --mnx-card: var(--mn-color-surface);
+  --mnx-surface: var(--mn-color-surface);
+  --mnx-surface-soft: var(--mn-color-surface-soft);
+  --mnx-text: var(--mn-color-text);
+  --mnx-text-strong: var(--mn-color-text-strong);
+  --mnx-text-muted: var(--mn-color-text-muted);
+  --mnx-border: var(--mn-color-border);
+  --mnx-accent: var(--mn-color-accent);
+  --mnx-accent-soft: var(--mn-color-accent-soft);
+  --mnx-accent-text: var(--mn-color-accent-text);
+  --mnx-success-bg: var(--mn-color-success-surface);
+  --mnx-success: var(--mn-color-success);
+  --mnx-warning-bg: var(--mn-color-warning-surface);
+  --mnx-warning: var(--mn-color-warning);
+  --mnx-danger-bg: var(--mn-color-danger-surface);
+  --mnx-danger: var(--mn-color-danger);
+  --mnx-info-bg: var(--mn-color-info-surface);
+  --mnx-info: var(--mn-color-info);
+  --mnx-overlay: var(--mn-color-overlay);
+  --mnx-shadow: var(--mn-shadow-panel);
+  color: var(--mnx-text);
+  background: var(--mnx-page);
+}
+
+.mnx-crm-page {
+  gap: var(--mn-space-8);
+}
+
+.mnx-crm-page-header {
+  overflow: hidden;
+}
+
+.mnx-crm-content {
+  display: grid;
+  min-width: 0;
+  gap: var(--mn-space-8);
+}
+
+.mnx-crm-content > * {
+  min-width: 0;
+}
+
+.mnx-crm-content :where(h2, h3, h4) {
+  color: var(--mnx-text-strong);
+}
+
+.mnx-crm-content :where(p, small) {
+  text-wrap: pretty;
+}
+
+.mnx-crm-content :where(a) {
+  text-underline-offset: 0.18em;
+}
+
+.mnx-crm-content :where(.monolith-shell, .monolith-shell-lg) {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mnx-crm-metrics {
+  margin: 0;
+}
+
+.mnx-crm-section,
+.mnx-crm-panel {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.mnx-crm-panel-surface {
+  min-width: 0;
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  color: var(--mnx-text);
+  background: var(--mnx-surface-gradient);
+  box-shadow: var(--mnx-shadow);
+}
+
+.mnx-crm-form-section {
+  min-width: 0;
+}
+
+.mnx-crm-icon-badge {
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 28%, var(--mnx-border));
+  border-radius: var(--mn-radius-control);
+  color: var(--mnx-accent-text);
+  background: var(--mnx-accent-soft);
+}
+
+.mnx-crm-hover {
+  transition:
+    border-color var(--mn-motion-fast),
+    background-color var(--mn-motion-fast),
+    box-shadow var(--mn-motion-fast),
+    transform var(--mn-motion-fast);
+}
+
+.mnx-crm-hover:hover {
+  border-color: color-mix(in srgb, var(--mnx-accent) 42%, var(--mnx-border));
+  box-shadow: var(--mnx-shadow);
+  transform: translateY(-1px);
+}
+
+.mnx-crm-section-header {
+  align-items: flex-start;
+}
+
+.mnx-crm-section-content {
+  min-width: 0;
+  padding: var(--mn-space-5);
+}
+
+.mnx-crm-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+  min-width: 0;
+  padding: var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mnx-surface-gradient);
+}
+
+.mnx-crm-tabs {
+  display: flex;
+  min-width: 0;
+  gap: var(--mn-space-1);
+  overflow-x: auto;
+  padding: var(--mn-space-1);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-control);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-crm-tabs > * {
+  flex: 0 0 auto;
+}
+
+.mnx-crm-button {
+  min-width: 0;
+}
+
+.mnx-crm-table {
+  width: 100%;
+}
+
+.mnx-crm-record-link {
+  color: var(--mnx-text-strong);
+  font-weight: 650;
+  transition: color var(--mn-motion-fast);
+}
+
+.mnx-crm-record-link:hover {
+  color: var(--mnx-accent-text);
+}
+
+.mnx-crm-placeholder {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-5);
+  padding: var(--mn-space-6);
+}
+
+.mnx-crm-placeholder-icon {
+  display: inline-flex;
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 32%, var(--mnx-border));
+  border-radius: var(--mn-radius-control);
+  color: var(--mnx-accent-text);
+  background: var(--mnx-accent-soft);
+}
+
+.mnx-crm-placeholder-icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.mnx-crm-placeholder h3 {
+  margin-top: var(--mn-space-3);
+  font-size: var(--mn-font-size-lg);
+}
+
+.mnx-crm-placeholder p {
+  margin-top: var(--mn-space-2);
+  max-width: 44rem;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-crm-dialog {
+  color: var(--mnx-text);
+}
+
+.mnx-crm-document {
+  --mnx-document-paper: var(--mn-color-document-paper, var(--mnx-surface));
+  --mnx-document-ink: var(--mn-color-document-ink, var(--mnx-text-strong));
+  --mnx-document-muted: var(--mn-color-document-muted, var(--mnx-text-muted));
+  --mnx-document-border: var(--mn-color-document-border, var(--mnx-border));
+  color: var(--mnx-document-ink);
+  background: var(--mnx-document-paper);
+}
+
+@media (max-width: 70rem) {
+  .mnx-crm-content {
+    gap: var(--mn-space-6);
+  }
+
+  .mnx-crm-toolbar {
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 42rem) {
+  .mnx-crm-page {
+    gap: var(--mn-space-6);
+  }
+
+  .mnx-crm-page-header {
+    padding: var(--mn-space-5);
+  }
+
+  .mnx-crm-page-header .mnx-page-header-copy {
+    align-items: flex-start;
+  }
+
+  .mnx-crm-section-content {
+    padding: var(--mn-space-4);
+  }
+
+  .mnx-crm-toolbar,
+  .mnx-crm-placeholder {
+    align-items: stretch;
+  }
+
+  .mnx-crm-placeholder {
+    flex-direction: column;
+  }
+
+  .mnx-crm-toolbar > :where(form, div) {
+    width: 100%;
+  }
+
+  .mnx-crm-tabs {
+    scroll-snap-type: x proximity;
+  }
+
+  .mnx-crm-tabs > * {
+    scroll-snap-align: start;
+  }
+}
+
+@media print {
+  .mnx-crm-page-header {
+    display: none;
+  }
+
+  .mnx-crm-page,
+  .mnx-crm-content {
     display: block;
   }
 }

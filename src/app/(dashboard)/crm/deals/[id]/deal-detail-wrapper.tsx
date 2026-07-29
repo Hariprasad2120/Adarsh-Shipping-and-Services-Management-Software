@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton } from "@/components/monolith/crm-workspace";
+
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -62,50 +64,50 @@ export function DealDetailWrapper({
         <div className="lg:col-span-2 space-y-6">
           
           {/* Main Deal Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-[#161f28]/30 border border-[#1c212a]/55 text-center">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-[var(--mnx-surface)]/30 border border-[var(--mnx-border)]/55 text-center">
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Deal Value</span>
-              <span className="text-white font-bold text-lg">₹{deal.amount.toLocaleString("en-IN")}</span>
+              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">Deal Value</span>
+              <span className="text-mono-text font-bold text-lg">₹{deal.amount.toLocaleString("en-IN")}</span>
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Win Probability</span>
-              <span className="text-[#F9D972] font-bold text-lg">{deal.probability}%</span>
+              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">Win Probability</span>
+              <span className="text-[var(--mnx-accent)] font-bold text-lg">{deal.probability}%</span>
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Close Target</span>
-              <span className="text-white font-bold text-sm leading-8">{formattedCloseDate}</span>
+              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">Close Target</span>
+              <span className="text-mono-text font-bold text-sm leading-8">{formattedCloseDate}</span>
             </div>
           </div>
           <div className="flex items-center justify-end gap-2">
             <Link
               href={`/crm/deals/${deal.id}/edit`}
-              className="flex items-center gap-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-200 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+              className="flex items-center gap-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] text-mono-muted px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
             >
               <Edit2 className="size-3.5" />
               <span>Edit</span>
             </Link>
-            <button
+            <CrmButton
               onClick={handleDelete}
-              className="flex items-center gap-1.5 bg-[#161f28] hover:bg-red-500/10 hover:text-red-400 border border-[#1c212a] text-slate-400 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+              className="flex items-center gap-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-danger-bg)] hover:text-[var(--mnx-danger)] border border-[var(--mnx-border)] text-mono-muted px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
             >
               <Trash2 className="size-3.5" />
               <span>Delete</span>
-            </button>
+            </CrmButton>
           </div>
 
           {/* Deal Details */}
-          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
-            <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
-              <Info className="size-4.5 text-[#F9D972]" />
-              <h3 className="font-bold text-sm text-white uppercase tracking-wider">Deal Details</h3>
+          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4">
+            <div className="flex items-center gap-3 border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
+              <Info className="size-4.5 text-[var(--mnx-accent)]" />
+              <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Deal Details</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Customer Company</span>
-                <span className="text-white font-medium">
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Customer Company</span>
+                <span className="text-mono-text font-medium">
                   {deal.account ? (
-                    <Link href={`/crm/customers/${deal.account.id}`} className="hover:underline text-[#F9D972] font-bold">
+                    <Link href={`/crm/customers/${deal.account.id}`} className="hover:underline text-[var(--mnx-accent)] font-bold">
                       {deal.account.name}
                     </Link>
                   ) : (
@@ -114,10 +116,10 @@ export function DealDetailWrapper({
                 </span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Primary Contact</span>
-                <span className="text-white font-medium">
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Primary Contact</span>
+                <span className="text-mono-text font-medium">
                   {deal.contact ? (
-                    <Link href={`/crm/contacts/${deal.contact.id}`} className="hover:underline text-slate-200">
+                    <Link href={`/crm/contacts/${deal.contact.id}`} className="hover:underline text-mono-muted">
                       {deal.contact.firstName ? `${deal.contact.firstName} ` : ""}{deal.contact.lastName}
                     </Link>
                   ) : (
@@ -126,81 +128,81 @@ export function DealDetailWrapper({
                 </span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Next Follow-Up Date</span>
-                <span className="text-white font-medium">{formattedFollowUp}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Next Follow-Up Date</span>
+                <span className="text-mono-text font-medium">{formattedFollowUp}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Deal Owner</span>
-                <span className="text-white font-medium">{deal.owner.name}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Deal Owner</span>
+                <span className="text-mono-text font-medium">{deal.owner.name}</span>
               </div>
             </div>
           </div>
 
           {/* Logistics Categorization */}
-          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
-            <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
-              <Truck className="size-4.5 text-[#F9D972]" />
-              <h3 className="font-bold text-sm text-white uppercase tracking-wider">Logistics & Service Profile</h3>
+          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4">
+            <div className="flex items-center gap-3 border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
+              <Truck className="size-4.5 text-[var(--mnx-accent)]" />
+              <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Logistics & Service Profile</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6 text-sm">
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Service Category</span>
-                <span className="text-white font-medium">{deal.serviceType || "Freight Forwarding"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Service Category</span>
+                <span className="text-mono-text font-medium">{deal.serviceType || "Freight Forwarding"}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Logistics Type</span>
-                <span className="text-white font-medium">{deal.logisticsCategory || "Import"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Logistics Type</span>
+                <span className="text-mono-text font-medium">{deal.logisticsCategory || "Import"}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Competitor</span>
-                <span className="text-white font-medium">{deal.competitor || "None Tracked"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Competitor</span>
+                <span className="text-mono-text font-medium">{deal.competitor || "None Tracked"}</span>
               </div>
             </div>
           </div>
 
           {/* Description & Lost reason / Invoice details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-2">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block border-b border-[#1c212a]/30 pb-1.5">Description</span>
-              <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
+            <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-2">
+              <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block border-b border-[var(--mnx-border)]/30 pb-1.5">Description</span>
+              <p className="text-sm text-mono-muted whitespace-pre-wrap leading-relaxed">
                 {deal.description || "No deal description details provided."}
               </p>
             </div>
             {deal.stage === "LOST" && (
-              <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-2 border-red-900/30">
-                <span className="text-[11px] font-bold text-red-400 uppercase tracking-wider block border-b border-red-900/30 pb-1.5">Reason for Loss</span>
-                <p className="text-sm text-red-300 whitespace-pre-wrap leading-relaxed">
+              <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-2 border-[var(--mnx-danger)]">
+                <span className="text-[11px] font-bold text-[var(--mnx-danger)] uppercase tracking-wider block border-b border-[var(--mnx-danger)] pb-1.5">Reason for Loss</span>
+                <p className="text-sm text-[var(--mnx-danger)] whitespace-pre-wrap leading-relaxed">
                   {deal.lostReason || "No loss details provided."}
                 </p>
               </div>
             )}
             {deal.stage === "WON" && (
-              <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4 monolith-card monolith-accent">
-                <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
-                  <Receipt className="size-4.5 text-[#F9D972]" />
-                  <h3 className="font-bold text-sm text-white uppercase tracking-wider">Billing & Invoice</h3>
+              <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4 mnx-crm-panel-surface ">
+                <div className="flex items-center gap-3 border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
+                  <Receipt className="size-4.5 text-[var(--mnx-accent)]" />
+                  <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Billing & Invoice</h3>
                 </div>
                 {invoice ? (
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-400">Invoice Number:</span>
-                      <Link href={`/accounting/sales-invoices/${invoice.id}`} className="text-[#F9D972] hover:underline font-mono font-bold">
+                      <span className="text-mono-muted">Invoice Number:</span>
+                      <Link href={`/accounting/sales-invoices/${invoice.id}`} className="text-[var(--mnx-accent)] hover:underline font-mono font-bold">
                         {invoice.invoiceNumber}
                       </Link>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-400">Amount:</span>
-                      <span className="text-white font-bold font-mono">₹{Number(invoice.grandTotal).toLocaleString("en-IN")}</span>
+                      <span className="text-mono-muted">Amount:</span>
+                      <span className="text-mono-text font-bold font-mono">₹{Number(invoice.grandTotal).toLocaleString("en-IN")}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-400">Status:</span>
+                      <span className="text-mono-muted">Status:</span>
                       <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${
                         invoice.status === "PAID"
-                          ? "bg-emerald-500/10 text-emerald-400"
+                          ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]"
                           : invoice.status === "CANCELLED"
-                          ? "bg-red-500/10 text-red-400"
-                          : "bg-amber-500/10 text-amber-400"
+                          ? "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]"
+                          : "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]"
                       }`}>
                         {invoice.status}
                       </span>
@@ -208,7 +210,7 @@ export function DealDetailWrapper({
                     <div className="pt-2">
                       <Link
                         href={`/accounting/sales-invoices/${invoice.id}`}
-                        className="inline-block text-center bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all w-full"
+                        className="inline-block text-center bg-[var(--mnx-accent)] text-mono-text hover:bg-[var(--mnx-accent)] hover:shadow-[0_0_0_3px_var(--mnx-accent-soft)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all w-full"
                       >
                         View Invoice Detail
                       </Link>
@@ -216,10 +218,10 @@ export function DealDetailWrapper({
                   </div>
                 ) : (
                   <div className="space-y-3 text-xs">
-                    <p className="text-slate-400">
+                    <p className="text-mono-muted">
                       This deal is won! You can now generate a Sales Invoice to record accounts receivable and request payment.
                     </p>
-                    <button
+                    <CrmButton
                       disabled={isGeneratingInvoice}
                       onClick={async () => {
                         try {
@@ -237,10 +239,10 @@ export function DealDetailWrapper({
                           setIsGeneratingInvoice(false);
                         }
                       }}
-                      className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide transition-all w-full cursor-pointer disabled:opacity-50"
+                      className="bg-[var(--mnx-accent)] text-mono-text hover:bg-[var(--mnx-accent)] hover:shadow-[0_0_0_3px_var(--mnx-accent-soft)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide transition-all w-full cursor-pointer disabled:opacity-50"
                     >
                       {isGeneratingInvoice ? "Generating Invoice..." : "Generate Sales Invoice"}
-                    </button>
+                    </CrmButton>
                   </div>
                 )}
               </div>
@@ -252,61 +254,61 @@ export function DealDetailWrapper({
         {/* Right Column: Related Lists & Timeline activities */}
         <div className="space-y-6">
           
-          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-6">
+          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-6">
             
-            <div className="flex border-b border-[#1c212a]/50 pb-1 gap-4 overflow-x-auto select-none">
-              <button
+            <div className="flex border-b border-[var(--mnx-border)]/50 pb-1 gap-4 overflow-x-auto select-none">
+              <CrmButton
                 onClick={() => setActiveTab("OVERVIEW")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "OVERVIEW" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "OVERVIEW" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Overview
-              </button>
-              <button
+              </CrmButton>
+              <CrmButton
                 onClick={() => setActiveTab("NOTES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "NOTES" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "NOTES" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Notes ({notes.length})
-              </button>
-              <button
+              </CrmButton>
+              <CrmButton
                 onClick={() => setActiveTab("ACTIVITIES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ACTIVITIES" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "ACTIVITIES" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Activities ({activities.length})
-              </button>
-              <button
+              </CrmButton>
+              <CrmButton
                 onClick={() => setActiveTab("ATTACHMENTS")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ATTACHMENTS" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "ATTACHMENTS" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Files ({attachments.length})
-              </button>
-              <button
+              </CrmButton>
+              <CrmButton
                 onClick={() => setActiveTab("TIMELINE")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "TIMELINE" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "TIMELINE" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Audit
-              </button>
+              </CrmButton>
             </div>
 
             <div className="space-y-4">
               {activeTab === "OVERVIEW" && (
                 <div className="space-y-4 text-xs">
-                  <div className="p-3 bg-[#0a0d12]/60 rounded-lg space-y-2 border border-[#1c212a]/30">
-                    <span className="font-bold text-white block uppercase tracking-wider">Opportunity Stats</span>
-                    <div className="space-y-1 text-slate-400">
-                      <div><strong className="text-white">Service Type: </strong>{deal.serviceType || "Freight Forwarding"}</div>
-                      <div><strong className="text-white">Category: </strong>{deal.logisticsCategory || "Import"}</div>
-                      <div><strong className="text-white">Close Date: </strong>{formattedCloseDate}</div>
-                      <div><strong className="text-white">Probability: </strong>{deal.probability}%</div>
+                  <div className="p-3 bg-[var(--mnx-surface)]/60 rounded-lg space-y-2 border border-[var(--mnx-border)]/30">
+                    <span className="font-bold text-mono-text block uppercase tracking-wider">Opportunity Stats</span>
+                    <div className="space-y-1 text-mono-muted">
+                      <div><strong className="text-mono-text">Service Type: </strong>{deal.serviceType || "Freight Forwarding"}</div>
+                      <div><strong className="text-mono-text">Category: </strong>{deal.logisticsCategory || "Import"}</div>
+                      <div><strong className="text-mono-text">Close Date: </strong>{formattedCloseDate}</div>
+                      <div><strong className="text-mono-text">Probability: </strong>{deal.probability}%</div>
                     </div>
                   </div>
                 </div>

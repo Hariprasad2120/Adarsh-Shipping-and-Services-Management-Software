@@ -12,17 +12,17 @@ type FormRowProps = {
 
 export function FormRow({ label, required, helperText, error, children, className }: FormRowProps) {
   return (
-    <div className={cn("grid gap-2 border-b border-[#e8edf3] py-3 md:grid-cols-[190px_minmax(0,1fr)] md:gap-4", className)}>
+    <div className={cn("grid gap-2 border-b border-[var(--mnx-border)] py-3 md:grid-cols-[190px_minmax(0,1fr)] md:gap-4", className)}>
       <div className="pt-1">
-        <label className="text-[12px] font-medium text-[#374151]">
+        <label className="text-[12px] font-medium text-[var(--mnx-text-strong)]">
           {label}
-          {required ? <span className="ml-1 text-[#fe4242]" aria-hidden="true">*</span> : null}
+          {required ? <span className="ml-1 text-[var(--mnx-danger)]" aria-hidden="true">*</span> : null}
         </label>
       </div>
       <div className="space-y-1.5">
         {children}
-        {error ? <p className="text-[11px] text-[#fe4242]">{error}</p> : null}
-        {!error && helperText ? <p className="text-[11px] text-[#6b7280]">{helperText}</p> : null}
+        {error ? <p className="text-[11px] text-[var(--mnx-danger)]">{error}</p> : null}
+        {!error && helperText ? <p className="text-[11px] text-[var(--mnx-text-muted)]">{helperText}</p> : null}
       </div>
     </div>
   );

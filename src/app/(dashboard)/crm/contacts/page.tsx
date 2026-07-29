@@ -1,3 +1,4 @@
+import { CrmButton, CrmInput, CrmTable, CrmConfigurationState, CrmPermissionState } from "@/components/monolith/crm-workspace";
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -12,7 +13,6 @@ import {
   Mail,
   Eye,
   Building,
-  ShieldAlert,
   ArrowRight
 } from "lucide-react";
 import { deleteContactAction } from "@/modules/crm/actions";
@@ -28,26 +28,14 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
 
   const orgId = session.user.orgId;
   if (!orgId) {
-    return (
-      <div className="p-8 text-center text-red-400">
-        <ShieldAlert className="size-12 mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Configuration Error</h2>
-        <p className="text-sm mt-1">Missing organisation context.</p>
-      </div>
-    );
+    return <CrmConfigurationState description="Missing organisation context." />;
   }
 
   // Permission Guard
   try {
     await requirePermission(session.user.id, "crm.contact.manage");
   } catch (e) {
-    return (
-      <div className="p-8 text-center text-red-400">
-        <ShieldAlert className="size-12 mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-sm mt-1">You do not have permission to view CRM contacts.</p>
-      </div>
-    );
+    return <CrmPermissionState description="You do not have permission to view CRM contacts." />;
   }
 
   const awaitedParams = await searchParams;
@@ -68,7 +56,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
             {/* Search Input */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-2.5 size-4 text-mono-muted" />
-              <input
+              <CrmInput
                 type="text"
                 name="search"
                 defaultValue={search}
@@ -77,12 +65,12 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
               />
             </div>
 
-            <button
+            <CrmButton
               type="submit"
               className="px-4 py-1.5 bg-mono-soft hover:bg-mono-soft border border-mono-border text-mono-text rounded-lg text-xs font-semibold cursor-pointer transition-colors"
             >
               Search
-            </button>
+            </CrmButton>
             
             {search && (
               <Link
@@ -100,7 +88,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
             </div>
             <Link
               href="/crm/contacts/new"
-              className="flex items-center gap-2 bg-[#F9D972] hover:bg-[#E8C85D] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+              className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
             >
               <Plus className="size-3.5" />
               <span>Create Contact</span>
@@ -118,7 +106,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
             <p className="text-xs text-mono-muted max-w-sm mx-auto">Create a fresh contact details record linked to an existing customer account.</p>
             <Link
               href="/crm/contacts/new"
-              className="inline-flex items-center gap-1.5 text-[#F9D972] hover:underline text-xs font-bold"
+              className="inline-flex items-center gap-1.5 text-[var(--mnx-accent)] hover:underline text-xs font-bold"
             >
               <span>Onboard a contact</span>
               <ArrowRight className="size-3.5" />
@@ -126,7 +114,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="monolith-table">
+            <CrmTable className="mnx-crm-table">
               <thead>
                 <tr>
                   <th className="px-6 py-3">Contact Name</th>
@@ -140,20 +128,20 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
               </thead>
               <tbody>
                 {contacts.map((contact) => (
-                  <tr key={contact.id} className="monolith-row-link">
+                  <tr key={contact.id} className="mnx-row-link">
                     <td className="px-6 py-4 font-medium">
-                      <Link href={`/crm/contacts/${contact.id}`} className="hover:text-[#F9D972] transition-colors block">
+                      <Link href={`/crm/contacts/${contact.id}`} className="hover:text-[var(--mnx-accent)] transition-colors block">
                         {contact.firstName ? `${contact.firstName} ` : ""}{contact.lastName}
                       </Link>
                       {contact.designation && (
-                        <span className="monolith-label block mt-0.5 font-normal">{contact.designation}</span>
+                        <span className="mnx-label block mt-0.5 font-normal">{contact.designation}</span>
                       )}
                     </td>
                     <td className="px-6 py-4 p-0">
                       {contact.account ? (
                         <Link
                           href={`/crm/customers/${contact.account.id}`}
-                          className="flex items-center gap-1.5 text-mono-muted hover:text-[#F9D972] transition-colors px-6 py-4 block w-full h-full"
+                          className="flex items-center gap-1.5 text-mono-muted hover:text-[var(--mnx-accent)] transition-colors px-6 py-4 block w-full h-full"
                         >
                           <Building className="size-3.5" />
                           <span>{contact.account.name}</span>
@@ -186,7 +174,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
                     </td>
                     <td className="px-6 py-4">
                       {contact.isDecisionMaker ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#F9D972]/10 text-[#F9D972]">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]">
                           DECISION MAKER
                         </span>
                       ) : (
@@ -209,14 +197,14 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
                           recordId={contact.id}
                           deleteAction={deleteContactAction}
                           confirmMessage="Are you sure you want to delete this contact?"
-                          className="p-1.5 text-mono-muted hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer transition-colors"
+                          className="p-1.5 text-mono-muted hover:text-[var(--mnx-danger)] rounded hover:bg-[var(--mnx-danger-bg)] cursor-pointer transition-colors"
                         />
                       </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </CrmTable>
           </div>
         )}
       </div>

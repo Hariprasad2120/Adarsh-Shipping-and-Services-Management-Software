@@ -1,21 +1,21 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  BookOpen,
   Calendar,
+  CheckSquare,
+  ClipboardList,
+  ConciergeBell,
   DollarSign,
   FileText,
+  HeartHandshake,
   HelpCircle,
   Inbox,
+  MapPin,
   Megaphone,
   Phone,
   Share2,
   Sparkles,
   Truck,
-  ClipboardList,
-  ConciergeBell,
-  HeartHandshake,
-  BookOpen,
-  CheckSquare,
-  MapPin,
 } from "lucide-react";
 import { FolderIcon as Folder } from "@/components/monolith/folder-icon";
 
@@ -23,173 +23,137 @@ type WorkspaceDetails = {
   title?: string;
   description: string;
   badge: string;
-  icon: any;
-  iconClassName: string;
+  icon: LucideIcon;
   summary: string;
 };
 
 const CRM_WORKSPACE_DETAILS: Record<string, WorkspaceDetails> = {
   campaigns: {
-    description: "Direct email and trade-show marketing tracker to acquire new freight accounts.",
-    badge: "Sales Campaigns",
+    description:
+      "Direct email and trade-show marketing tracker for new freight accounts.",
+    badge: "Sales campaigns",
     icon: Megaphone,
-    iconClassName: "text-indigo-400",
-    summary: "Acquisition channels and ROI analytics.",
+    summary: "Acquisition channels and return-on-investment analytics.",
   },
   "sales-inbox": {
-    description: "Integrated email inbox mapping client email threads directly to Lead and Contact owner panels.",
-    badge: "Liaison Inbox",
+    description:
+      "Integrated customer email mapped to lead, contact, and owner records.",
+    badge: "Liaison inbox",
     icon: Inbox,
-    iconClassName: "text-[#F9D972]",
-    summary: "Direct IMAP/SMTP message sync.",
+    summary: "Relationship communication in its operational context.",
   },
   social: {
-    description: "Liaison communication log registry for WhatsApp, WeChat, and shipping notifications.",
-    badge: "Communication Hub",
+    description:
+      "Communication registry for messaging channels and shipping notifications.",
+    badge: "Communication hub",
     icon: Share2,
-    iconClassName: "text-[#34d399]",
-    summary: "Multi-channel logistics notifications.",
+    summary: "Multi-channel logistics communication.",
   },
   solutions: {
-    description: "Knowledge Base registry linking answers, CHA codes, customs policies, and tariff lookup tools.",
-    badge: "Knowledge Base",
+    description:
+      "Knowledge registry for answers, customs guidance, tariffs, and operating policy.",
+    badge: "Knowledge base",
     icon: HelpCircle,
-    iconClassName: "text-amber-400",
-    summary: "Standard operating procedures manual.",
+    summary: "Reusable customer service and operating guidance.",
   },
   forecasts: {
-    description: "Team performance metrics, commission forecasts, and revenue goals based on won deals.",
-    badge: "Quarterly Target",
+    description:
+      "Team targets and revenue forecasts calculated from active opportunities.",
+    badge: "Quarterly target",
     icon: DollarSign,
-    iconClassName: "text-emerald-400",
     summary: "Weighted logistics pipeline analysis.",
   },
   documents: {
-    description: "Shared document vault for freight agreements, quotations, SOP files, and customer paperwork.",
-    badge: "Document Control",
+    description:
+      "Shared document vault for agreements, quotations, procedures, and customer paperwork.",
+    badge: "Document control",
     icon: Folder,
-    iconClassName: "text-sky-400",
-    summary: "Contract packs and operations files in one workspace.",
+    summary: "Relationship and commercial files in one workspace.",
   },
   tasks: {
-    description: "Activity queue for follow-ups, owner assignments, and sales action items across the CRM team.",
-    badge: "Action Queue",
+    description:
+      "Activity queue for follow-ups, owner assignments, and sales action items.",
+    badge: "Action queue",
     icon: CheckSquare,
-    iconClassName: "text-[#F9D972]",
     summary: "Task ownership and completion tracking.",
   },
   events: {
-    description: "Calendar planning for meetings, site visits, client calls, and shipment coordination checkpoints.",
-    badge: "Schedule Board",
+    description:
+      "Calendar planning for meetings, site visits, calls, and coordination checkpoints.",
+    badge: "Schedule board",
     icon: Calendar,
-    iconClassName: "text-[#fbbf24]",
-    summary: "Time-bound CRM coordination and reminders.",
+    summary: "Time-bound customer coordination and reminders.",
   },
   calls: {
-    description: "Call registry for client conversations, follow-up notes, and business development outreach logs.",
-    badge: "Call Register",
+    description:
+      "Call registry for conversations, outcomes, follow-ups, and outreach history.",
+    badge: "Call register",
     icon: Phone,
-    iconClassName: "text-violet-400",
     summary: "Conversation timelines linked to CRM records.",
   },
   "price-books": {
-    title: "Price Books",
-    description: "Pricing library for freight lanes, customer tariffs, bundled services, and negotiated rate cards.",
-    badge: "Pricing Matrix",
+    title: "Price books",
+    description:
+      "Pricing library for freight lanes, tariffs, services, and negotiated schedules.",
+    badge: "Pricing matrix",
     icon: BookOpen,
-    iconClassName: "text-cyan-400",
     summary: "Reusable commercial pricing schedules.",
   },
   quotes: {
-    description: "Quotation workspace for preparing pre-sales offers, service estimates, and customer commercial drafts.",
-    badge: "Commercial Drafts",
+    description:
+      "Quotation workspace for preparing controlled proposals and customer estimates.",
+    badge: "Commercial drafts",
     icon: FileText,
-    iconClassName: "text-orange-400",
-    summary: "Pre-invoice offers and proposal documents.",
+    summary: "Pre-sale offers and proposal documents.",
   },
   "sales-orders": {
-    title: "Sales Orders",
-    description: "Order desk for confirmed customer jobs, commercial approvals, and execution-ready service requests.",
-    badge: "Order Desk",
+    title: "Sales orders",
+    description:
+      "Order desk for approved customer work and execution-ready service requests.",
+    badge: "Order desk",
     icon: ClipboardList,
-    iconClassName: "text-emerald-400",
-    summary: "Confirmed sales workflows moving into fulfillment.",
+    summary: "Commercial commitments moving into fulfilment.",
   },
   "purchase-orders": {
-    title: "Purchase Orders",
-    description: "Supplier order register for outsourced services, carrier allocations, and approved buying requests.",
-    badge: "Vendor Procurement",
+    title: "Purchase orders",
+    description:
+      "Supplier order register for services, carrier allocations, and buying requests.",
+    badge: "Vendor procurement",
     icon: Truck,
-    iconClassName: "text-amber-400",
-    summary: "Procurement flows coordinated with vendors.",
+    summary: "Approved procurement coordinated with partners.",
   },
   visits: {
-    description: "Field visit tracker for customer meetings, warehouse inspections, and on-site relationship touchpoints.",
-    badge: "Field Activity",
+    description:
+      "Field tracker for customer meetings, inspections, and relationship touchpoints.",
+    badge: "Field activity",
     icon: MapPin,
-    iconClassName: "text-rose-400",
-    summary: "Geographic client engagement records.",
+    summary: "On-site customer engagement records.",
   },
   services: {
-    description: "Service catalogue and delivery coordination area for recurring logistics support and managed offerings.",
-    badge: "Service Operations",
+    description:
+      "Service catalogue and delivery coordination for recurring logistics support.",
+    badge: "Service operations",
     icon: ConciergeBell,
-    iconClassName: "text-[#F9D972]",
-    summary: "Operational services mapped to CRM accounts.",
+    summary: "Operational services mapped to customer accounts.",
   },
   voc: {
-    title: "Feedback (VoC)",
-    description: "Voice-of-customer repository for satisfaction inputs, pain points, and service improvement opportunities.",
-    badge: "Customer Insight",
+    title: "Voice of customer",
+    description:
+      "Feedback repository for satisfaction, pain points, and improvement opportunities.",
+    badge: "Customer insight",
     icon: HeartHandshake,
-    iconClassName: "text-pink-400",
     summary: "Feedback loops tied to retention and service quality.",
   },
 };
 
-export function getCrmWorkspaceDetails(slug: string) {
+export function getCrmWorkspaceDetails(slug: string): WorkspaceDetails {
   return (
     CRM_WORKSPACE_DETAILS[slug] ?? {
-      description: "Collaborative tracking workspace configured for your logistics network.",
-      badge: "Integrated Mode",
+      description:
+        "Collaborative customer operations workspace configured for the organisation.",
+      badge: "Integrated mode",
       icon: Sparkles,
-      iconClassName: "text-[#F9D972]",
-      summary: "Workspace running on active monolith channels.",
+      summary: "CRM workspace",
     }
-  );
-}
-
-export function CrmWorkspacePage({ slug }: { slug: string }) {
-  const details = getCrmWorkspaceDetails(slug);
-  const Icon = details.icon;
-
-  return (
-    <div className="mx-auto max-w-5xl animate-in space-y-6 p-8 fade-in duration-200">
-      <div className="flex flex-col items-center justify-center space-y-4 rounded-xl border border-[#1c212a]/55 bg-[#0f1319] p-8 text-center shadow-2xl">
-        <div className="rounded-full bg-slate-800/40 p-4 text-white">
-          <Icon className={`size-8 ${details.iconClassName}`} />
-        </div>
-        <h3 className="text-base font-bold text-white">Active Workspace Interface</h3>
-        <p className="max-w-md text-xs text-slate-500">
-          {details.summary} Data registers are org-scoped and permissions-aware. Links directly to client operations
-          records.
-        </p>
-
-        <div className="w-full max-w-lg divide-y divide-[#1c212a]/30 rounded-lg border border-[#1c212a]/40 bg-[#0a0d12]/60 p-4 text-left">
-          <div className="flex justify-between py-2.5 text-xs">
-            <span className="font-semibold text-slate-400">Workspace Status</span>
-            <span className="font-bold text-emerald-400">Synchronised & Live</span>
-          </div>
-          <div className="flex justify-between py-2.5 text-xs">
-            <span className="font-semibold text-slate-400">Auto-Sync Rate</span>
-            <span className="text-white">Every 5 minutes</span>
-          </div>
-          <div className="flex justify-between py-2.5 text-xs">
-            <span className="font-semibold text-slate-400">Target Environment</span>
-            <span className="text-slate-300">Production monolith cluster</span>
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }

@@ -23,7 +23,7 @@ import {
 
 import { Badge } from "@/components/monolith/badge";
 import { Button } from "@/components/monolith/button";
-import { DropdownSelect } from "@/components/monolith/dropdown-select";
+import { ChaDropdownSelect as DropdownSelect } from "@/components/monolith/cha-workspace";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -422,7 +422,7 @@ export function WorkflowDocumentsSectionHeader({
                 <Filter size={16} />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="mnx-cha-menu w-56">
               <DropdownMenuLabel className="mnx-label">Document Status</DropdownMenuLabel>
               <DropdownMenuRadioGroup value={filterMode} onValueChange={(value) => onFilterChange(value as FilterMode)}>
                 <DropdownMenuRadioItem value="ALL">All Documents</DropdownMenuRadioItem>

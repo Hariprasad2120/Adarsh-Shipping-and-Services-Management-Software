@@ -1,3 +1,4 @@
+import { CrmButton, CrmInput, CrmTable, CrmConfigurationState, CrmPermissionState } from "@/components/monolith/crm-workspace";
 import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import Link from "next/link";
@@ -15,7 +16,6 @@ import {
   Eye,
   Trash2,
   Filter,
-  ShieldAlert,
   ArrowRight,
   Users
 } from "lucide-react";
@@ -34,26 +34,14 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
 
   const orgId = session.user.orgId;
   if (!orgId) {
-    return (
-      <div className="p-8 text-center text-red-400">
-        <ShieldAlert className="size-12 mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Configuration Error</h2>
-        <p className="text-sm mt-1">Missing organisation context.</p>
-      </div>
-    );
+    return <CrmConfigurationState description="Missing organisation context." />;
   }
 
   // Permission Guard
   try {
     await requirePermission(session.user.id, "crm.lead.read");
   } catch (e) {
-    return (
-      <div className="p-8 text-center text-red-400">
-        <ShieldAlert className="size-12 mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-sm mt-1">You do not have permission to view CRM leads.</p>
-      </div>
-    );
+    return <CrmPermissionState description="You do not have permission to view CRM leads." />;
   }
 
   const awaitedParams = await searchParams;
@@ -119,11 +107,11 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
         {/* Toolbar */}
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 border-b border-mono-border">
           <form method="GET" className="flex flex-1 flex-col sm:flex-row gap-3 w-full">
-            <input type="hidden" name="tab" value={tab} />
+            <CrmInput type="hidden" name="tab" value={tab} />
             {/* Search Input */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-2.5 size-4 text-mono-muted" />
-              <input
+              <CrmInput
                 type="text"
                 name="search"
                 defaultValue={search}
@@ -148,12 +136,12 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
               </NativeSelect>
             </div>
 
-            <button
+            <CrmButton
               type="submit"
               className="px-4 py-1.5 bg-mono-soft hover:bg-mono-soft border border-mono-border text-mono-text rounded-lg text-xs font-semibold cursor-pointer transition-colors"
             >
               Apply Filters
-            </button>
+            </CrmButton>
             
             {(search || status) && (
               <Link
@@ -171,7 +159,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
             </div>
             <Link
               href="/crm/leads/new"
-              className="flex items-center gap-2 bg-[#F9D972] hover:bg-[#E8C85D] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+              className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
             >
               <UserPlus className="size-3.5" />
               <span>Create Lead</span>
@@ -185,13 +173,13 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
             href={`/crm/leads?tab=unopened${search ? `&search=${search}` : ""}${status ? `&status=${status}` : ""}`}
             className={`px-4 py-3 text-xs uppercase tracking-wider font-bold transition-all border-b-2 -mb-px flex items-center ${
               tab === "unopened"
-                ? "border-[#F9D972] text-[#F9D972]"
+                ? "border-[var(--mnx-accent)] text-[var(--mnx-accent)]"
                 : "border-transparent text-mono-muted hover:text-mono-text"
             }`}
           >
             <span>Unopened / Due</span>
-            <span className={`ml-2 px-1.5 py-0.5 text-[10px] rounded-full font-mono monolith-numeric ${
-              tab === "unopened" ? "bg-[#F9D972]/10 text-[#F9D972]" : "bg-mono-soft text-mono-muted"
+            <span className={`ml-2 px-1.5 py-0.5 text-[10px] rounded-full font-mono mnx-numeric ${
+              tab === "unopened" ? "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]" : "bg-mono-soft text-mono-muted"
             }`}>
               {unopenedLeads.length}
             </span>
@@ -200,13 +188,13 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
             href={`/crm/leads?tab=not_interested${search ? `&search=${search}` : ""}${status ? `&status=${status}` : ""}`}
             className={`px-4 py-3 text-xs uppercase tracking-wider font-bold transition-all border-b-2 -mb-px flex items-center ${
               tab === "not_interested"
-                ? "border-[#F9D972] text-[#F9D972]"
+                ? "border-[var(--mnx-accent)] text-[var(--mnx-accent)]"
                 : "border-transparent text-mono-muted hover:text-mono-text"
             }`}
           >
             <span>Not Interested</span>
-            <span className={`ml-2 px-1.5 py-0.5 text-[10px] rounded-full font-mono monolith-numeric ${
-              tab === "not_interested" ? "bg-[#F9D972]/10 text-[#F9D972]" : "bg-mono-soft text-mono-muted"
+            <span className={`ml-2 px-1.5 py-0.5 text-[10px] rounded-full font-mono mnx-numeric ${
+              tab === "not_interested" ? "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]" : "bg-mono-soft text-mono-muted"
             }`}>
               {notInterestedLeads.length}
             </span>
@@ -215,13 +203,13 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
             href={`/crm/leads?tab=unreachable${search ? `&search=${search}` : ""}${status ? `&status=${status}` : ""}`}
             className={`px-4 py-3 text-xs uppercase tracking-wider font-bold transition-all border-b-2 -mb-px flex items-center ${
               tab === "unreachable"
-                ? "border-[#F9D972] text-[#F9D972]"
+                ? "border-[var(--mnx-accent)] text-[var(--mnx-accent)]"
                 : "border-transparent text-mono-muted hover:text-mono-text"
             }`}
           >
             <span>Unreachable</span>
-            <span className={`ml-2 px-1.5 py-0.5 text-[10px] rounded-full font-mono monolith-numeric ${
-              tab === "unreachable" ? "bg-[#F9D972]/10 text-[#F9D972]" : "bg-mono-soft text-mono-muted"
+            <span className={`ml-2 px-1.5 py-0.5 text-[10px] rounded-full font-mono mnx-numeric ${
+              tab === "unreachable" ? "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]" : "bg-mono-soft text-mono-muted"
             }`}>
               {unreachableLeads.length}
             </span>
@@ -248,7 +236,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
             {tab === "unopened" && (
               <Link
                 href="/crm/leads/new"
-                className="inline-flex items-center gap-1.5 text-[#F9D972] hover:underline text-xs font-bold"
+                className="inline-flex items-center gap-1.5 text-[var(--mnx-accent)] hover:underline text-xs font-bold"
               >
                 <span>Onboard a new lead</span>
                 <ArrowRight className="size-3.5" />
@@ -257,7 +245,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="monolith-table">
+            <CrmTable className="mnx-crm-table">
               <thead>
                 <tr>
                   <th className="px-6 py-3">Lead Name</th>
@@ -271,13 +259,13 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
               </thead>
               <tbody>
                 {displayedLeads.map((lead) => (
-                  <tr key={lead.id} className="monolith-row-link">
+                  <tr key={lead.id} className="mnx-row-link">
                     <td className="px-6 py-4 font-medium">
-                      <Link href={`/crm/leads/${lead.id}`} className="hover:text-[#F9D972] transition-colors block">
+                      <Link href={`/crm/leads/${lead.id}`} className="hover:text-[var(--mnx-accent)] transition-colors block">
                         {lead.firstName ? `${lead.firstName} ` : ""}{lead.lastName}
                       </Link>
                       {lead.designation && (
-                        <span className="monolith-label block mt-0.5 font-normal">{lead.designation}</span>
+                        <span className="mnx-label block mt-0.5 font-normal">{lead.designation}</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
@@ -306,24 +294,24 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
                     <td className="px-6 py-4">
                       {tab === "unreachable" ? (
                         <div className="space-y-1">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-orange-500/10 text-orange-400">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]">
                             {lead.status.replace("_", " ")}
                           </span>
-                          <span className="block text-[11px] text-orange-400/80 font-mono monolith-numeric">
+                          <span className="block text-[11px] text-[var(--mnx-warning)] font-mono mnx-numeric">
                             {formatTimer(lead.updatedAt)}
                           </span>
                         </div>
                       ) : (
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                           lead.status === "NEW"
-                            ? "bg-blue-500/10 text-blue-400"
+                            ? "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent-text)]"
                             : lead.status === "LOST"
-                            ? "bg-red-500/10 text-red-400"
+                            ? "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]"
                             : lead.status === "QUALIFIED"
-                            ? "bg-emerald-500/10 text-emerald-400"
+                            ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]"
                             : lead.status === "NOT_INTERESTED"
-                            ? "bg-rose-500/10 text-rose-400"
-                            : "bg-amber-500/10 text-amber-400"
+                            ? "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]"
+                            : "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]"
                         }`}>
                           {lead.status.replace("_", " ")}
                         </span>
@@ -351,7 +339,7 @@ export default async function CrmLeadsPage({ searchParams }: { searchParams: Pro
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </CrmTable>
           </div>
         )}
       </div>

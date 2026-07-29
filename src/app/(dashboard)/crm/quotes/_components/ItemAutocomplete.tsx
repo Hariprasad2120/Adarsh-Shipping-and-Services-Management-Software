@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput } from "@/components/monolith/crm-workspace";
+
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { PlusCircle, Package } from "lucide-react";
@@ -21,7 +23,7 @@ function highlight(text: string, query: string) {
   return (
     <span>
       {text.slice(0, idx)}
-      <mark className="bg-[rgba(0,206,196,0.18)] text-inherit rounded px-0">
+      <mark className="bg-[var(--mnx-accent-soft)] text-inherit rounded px-0">
         {text.slice(idx, idx + query.length)}
       </mark>
       {text.slice(idx + query.length)}
@@ -140,7 +142,7 @@ export function ItemAutocomplete({
 
   return (
     <div ref={wrapperRef} className="relative flex-1">
-      <input
+      <CrmInput
         ref={inputRef}
         type="text"
         autoComplete="off"
@@ -165,16 +167,16 @@ export function ItemAutocomplete({
         aria-autocomplete="list"
         aria-expanded={open}
         aria-controls={open ? "item-autocomplete-dropdown" : undefined}
-        className="h-9 w-full rounded-md border border-[#d9dee7] bg-white px-3 text-[12px] text-[#1f2937] outline-none focus:border-[#F9D972] focus:ring-2 focus:ring-[#F9D972]/20"
+        className="h-9 w-full rounded-md border border-[var(--mnx-border)] bg-mono-card px-3 text-[12px] text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/20"
       />
-      {error && <p className="mt-1 text-[11px] text-[#fe4242]">{error}</p>}
+      {error && <p className="mt-1 text-[11px] text-[var(--mnx-danger)]">{error}</p>}
 
       {mounted && open && (suggestions.length > 0 || showAddNew) &&
         createPortal(
           <div
             id="item-autocomplete-dropdown"
             ref={dropdownRef}
-            className="absolute z-50 rounded-xl overflow-hidden shadow-[0_8px_32px_rgba(15,23,42,0.14)]"
+            className="absolute z-50 rounded-xl overflow-hidden shadow-[0_8px_32px_var(--mnx-border)]"
             style={{
               position: "absolute",
               top: `${coords.top}px`,
@@ -182,7 +184,7 @@ export function ItemAutocomplete({
               width: `${coords.width}px`,
               minWidth: "280px",
               background: "var(--color-surface)",
-              border: "1px solid rgba(0,206,196,0.25)",
+              border: "1px solid var(--mnx-accent-soft)",
               maxHeight: "280px",
               overflowY: "auto",
             }}
@@ -197,7 +199,7 @@ export function ItemAutocomplete({
                   Items Master
                 </div>
                 {suggestions.map((item, i) => (
-                  <button
+                  <CrmButton
                     key={item.id}
                     type="button"
                     role="option"
@@ -211,13 +213,13 @@ export function ItemAutocomplete({
                     style={{
                       background:
                         activeIndex === i
-                          ? "rgba(0,206,196,0.08)"
+                          ? "var(--mnx-accent-soft)"
                           : "transparent",
                     }}
                   >
                     <span
                       className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md"
-                      style={{ background: "rgba(0,206,196,0.10)", color: "#F9D972" }}
+                      style={{ background: "var(--mnx-accent-soft)", color: "var(--mnx-accent)" }}
                     >
                       <Package size={12} />
                     </span>
@@ -234,7 +236,7 @@ export function ItemAutocomplete({
                         {item.rate > 0 && (
                           <span
                             className="text-[10px] font-semibold"
-                            style={{ color: "#F9D972" }}
+                            style={{ color: "var(--mnx-accent)" }}
                           >
                             ₹{item.rate.toLocaleString("en-IN")}
                           </span>
@@ -246,7 +248,7 @@ export function ItemAutocomplete({
                         )}
                       </div>
                     </div>
-                  </button>
+                  </CrmButton>
                 ))}
               </>
             )}
@@ -263,9 +265,9 @@ export function ItemAutocomplete({
             {showAddNew && (
               <>
                 {suggestions.length > 0 && (
-                  <div style={{ height: "1px", background: "rgba(0,206,196,0.15)", margin: "0 12px" }} />
+                  <div style={{ height: "1px", background: "var(--mnx-accent-soft)", margin: "0 12px" }} />
                 )}
-                <button
+                <CrmButton
                   type="button"
                   role="option"
                   aria-selected={activeIndex === suggestions.length}
@@ -278,25 +280,25 @@ export function ItemAutocomplete({
                   style={{
                     background:
                       activeIndex === suggestions.length
-                        ? "rgba(0,206,196,0.08)"
+                        ? "var(--mnx-accent-soft)"
                         : "transparent",
                   }}
                 >
                   <span
                     className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md"
-                    style={{ background: "rgba(0,206,196,0.15)", color: "#F9D972" }}
+                    style={{ background: "var(--mnx-accent-soft)", color: "var(--mnx-accent)" }}
                   >
                     <PlusCircle size={12} />
                   </span>
                   <div>
-                    <p className="text-[13px] font-semibold" style={{ color: "#F9D972" }}>
+                    <p className="text-[13px] font-semibold" style={{ color: "var(--mnx-accent)" }}>
                       Add &ldquo;{value.trim()}&rdquo; as new item
                     </p>
                     <p className="text-[10px]" style={{ color: "var(--color-on-surface-variant)" }}>
                       Saves to Items master permanently
                     </p>
                   </div>
-                </button>
+                </CrmButton>
               </>
             )}
           </div>,

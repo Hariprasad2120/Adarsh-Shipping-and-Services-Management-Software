@@ -17,7 +17,7 @@ type DropdownSelectOption = {
   disabled?: boolean;
 };
 
-type DropdownSelectProps = {
+export type DropdownSelectProps = {
   ariaLabel?: string;
   className?: string;
   contentClassName?: string;

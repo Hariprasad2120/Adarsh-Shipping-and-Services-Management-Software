@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput, CrmTextarea } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -39,41 +41,41 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 bg-[#0f1319] border border-[#1c212a]/55 rounded-xl p-6 shadow-2xl max-w-4xl">
-      <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-4">
+    <form onSubmit={handleSubmit} className="space-y-6 bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl p-6 shadow-2xl max-w-4xl">
+      <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-4">
         <div className="flex items-center gap-2">
           <Link
             href="/crm/lead-sources"
-            className="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800/40 cursor-pointer"
+            className="p-1.5 text-mono-muted hover:text-mono-text rounded hover:bg-mono-soft cursor-pointer"
           >
             <ArrowLeft className="size-4" />
           </Link>
-          <h3 className="font-bold text-base text-white">Configure Justdial Lead Importer</h3>
+          <h3 className="font-bold text-base text-mono-text">Configure Justdial Lead Importer</h3>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Dashboard URL */}
         <div className="md:col-span-2 space-y-1.5">
-          <label className="text-xs font-semibold text-slate-300">Justdial Leads Dashboard URL</label>
-          <input
+          <label className="text-xs font-semibold text-mono-muted">Justdial Leads Dashboard URL</label>
+          <CrmInput
             type="url"
             name="dashboardUrl"
             required
             defaultValue={initialConfig?.dashboardUrl || "https://wap.justdial.com/analytics/leadsdashboard?el=0&min=1&docid=044PXX44.XX44.101103084537.I5S5&hide_header=1&old=1&source=77"}
             placeholder="https://wap.justdial.com/analytics/leadsdashboard?el=0&min=1&docid=..."
-            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-[#F9D972]"
+            className="w-full px-3 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text placeholder:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
           />
           <p className="text-[10px] text-mono-muted">Provide the exact mobile leads URL visible when logged into your merchant portal.</p>
         </div>
 
         {/* Import Mode */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-300">Import Trigger Mode</label>
+          <label className="text-xs font-semibold text-mono-muted">Import Trigger Mode</label>
           <NativeSelect
             name="importMode"
             defaultValue={initialConfig?.importMode || "MANUAL"}
-            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+            className="w-full px-3 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
           >
             <option value="MANUAL">Manual Execution Only</option>
             <option value="SCHEDULED">Scheduled Automatic Sync</option>
@@ -82,11 +84,11 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
 
         {/* Schedule Interval */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-300">Sync Interval (If Scheduled)</label>
+          <label className="text-xs font-semibold text-mono-muted">Sync Interval (If Scheduled)</label>
           <NativeSelect
             name="scheduleInterval"
             defaultValue={initialConfig?.scheduleInterval || "1h"}
-            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+            className="w-full px-3 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
           >
             <option value="5m">Every 5 Minutes</option>
             <option value="15m">Every 15 Minutes</option>
@@ -98,24 +100,24 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
 
         {/* Max Leads per Run */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-300">Max Leads Per Scan</label>
-          <input
+          <label className="text-xs font-semibold text-mono-muted">Max Leads Per Scan</label>
+          <CrmInput
             type="number"
             name="maxLeads"
             min={5}
             max={100}
             defaultValue={initialConfig?.maxLeads || 50}
-            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+            className="w-full px-3 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
           />
         </div>
 
         {/* Duplicate Handling */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-300">On Duplicate Found</label>
+          <label className="text-xs font-semibold text-mono-muted">On Duplicate Found</label>
           <NativeSelect
             name="duplicateHandling"
             defaultValue={initialConfig?.duplicateHandling || "UPDATE_EXISTING"}
-            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+            className="w-full px-3 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
           >
             <option value="UPDATE_EXISTING">Update Timeline & Last Seen (Recommended)</option>
             <option value="SKIP">Skip & Ignore</option>
@@ -124,11 +126,11 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
 
         {/* Default Owner */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-300">Default Lead Owner</label>
+          <label className="text-xs font-semibold text-mono-muted">Default Lead Owner</label>
           <NativeSelect
             name="defaultOwnerId"
             defaultValue={initialConfig?.defaultOwnerId || ""}
-            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+            className="w-full px-3 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
           >
             <option value="">Select Assignee...</option>
             {employees.map((e) => (
@@ -141,11 +143,11 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
 
         {/* Default Stage */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-300">Default Pipeline Stage</label>
+          <label className="text-xs font-semibold text-mono-muted">Default Pipeline Stage</label>
           <NativeSelect
             name="defaultStage"
             defaultValue={initialConfig?.defaultStage || "NEW"}
-            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+            className="w-full px-3 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
           >
             <option value="NEW">New Lead</option>
             <option value="CONTACTED">Contacted</option>
@@ -155,28 +157,28 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
 
         {/* Active Toggle */}
         <div className="md:col-span-2 flex items-center gap-2 py-2">
-          <input
+          <CrmInput
             type="checkbox"
             id="isActive"
             name="isActive"
             value="true"
             defaultChecked={initialConfig ? initialConfig.isActive : true}
-            className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-[#F9D972] focus:ring-0 cursor-pointer"
+            className="h-4 w-4 rounded border-mono-border bg-mono-soft text-[var(--mnx-accent)] focus:ring-0 cursor-pointer"
           />
-          <label htmlFor="isActive" className="text-xs font-semibold text-slate-300 select-none cursor-pointer">
+          <label htmlFor="isActive" className="text-xs font-semibold text-mono-muted select-none cursor-pointer">
             Enable importer synchronization processes
           </label>
         </div>
 
         {/* Cookies JSON */}
         <div className="md:col-span-2 space-y-1.5">
-          <label className="text-xs font-semibold text-slate-300">Session Cookies JSON Array</label>
-          <textarea
+          <label className="text-xs font-semibold text-mono-muted">Session Cookies JSON Array</label>
+          <CrmTextarea
             name="cookiesJson"
             rows={8}
             defaultValue={initialConfig?.cookiesJson || ""}
             placeholder='[{"name": "MP_city", "value": "Chennai", "domain": ".justdial.com", "path": "/"}, ...]'
-            className="w-full px-3 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs font-mono text-white placeholder-slate-600 focus:outline-none focus:border-[#F9D972] leading-relaxed"
+            className="w-full px-3 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs font-mono text-mono-text placeholder:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] leading-relaxed"
           />
           <p className="text-[10px] text-mono-muted">
             Paste the cookies array exported from your browser. In development, it defaults to Cookie.txt in the current user&apos;s Downloads folder if left empty.
@@ -184,17 +186,17 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 border-t border-[#1c212a]/30 pt-5 mt-4">
+      <div className="flex justify-end gap-2 border-t border-[var(--mnx-border)]/30 pt-5 mt-4">
         <Link
           href="/crm/lead-sources"
-          className="px-4 py-2 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-200 rounded-lg text-sm font-semibold transition-all cursor-pointer"
+          className="px-4 py-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] text-mono-muted rounded-lg text-sm font-semibold transition-all cursor-pointer"
         >
           Cancel
         </Link>
-        <button
+        <CrmButton
           type="submit"
           disabled={isPending}
-          className="flex items-center gap-2 bg-[#F9D972] hover:bg-[#00b0a3] disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
+          className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text px-5 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
         >
           {isPending ? (
             <Loader2 className="size-4 animate-spin" />
@@ -202,7 +204,7 @@ export function JustdialForm({ initialConfig, employees }: JustdialFormProps) {
             <Save className="size-4" />
           )}
           <span>{isPending ? "Saving..." : "Save Parameters"}</span>
-        </button>
+        </CrmButton>
       </div>
     </form>
   );

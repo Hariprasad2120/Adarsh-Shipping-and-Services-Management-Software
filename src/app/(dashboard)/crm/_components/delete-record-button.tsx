@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton } from "@/components/monolith/crm-workspace";
+
 import React, { useTransition } from "react";
 import { Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -15,7 +17,7 @@ export function DeleteRecordButton({
   recordId,
   confirmMessage = "Are you sure you want to delete this record?",
   deleteAction,
-  className = "p-1.5 text-slate-500 hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer transition-colors",
+  className = "p-1.5 text-mono-muted hover:text-[var(--mnx-danger)] rounded hover:bg-[var(--mnx-danger-bg)] cursor-pointer transition-colors",
 }: DeleteRecordButtonProps) {
   const [isPending, startTransition] = useTransition();
 
@@ -37,17 +39,17 @@ export function DeleteRecordButton({
   };
 
   return (
-    <button
+    <CrmButton
       onClick={handleDelete}
       disabled={isPending}
       className={className}
       title="Delete"
     >
       {isPending ? (
-        <Loader2 className="size-4 animate-spin text-red-500" />
+        <Loader2 className="size-4 animate-spin text-[var(--mnx-danger)]" />
       ) : (
         <Trash2 className="size-4" />
       )}
-    </button>
+    </CrmButton>
   );
 }

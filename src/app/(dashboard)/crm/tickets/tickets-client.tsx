@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import { useState, useTransition } from "react";
 import Link from "next/link";
@@ -30,17 +32,17 @@ type Ticket = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  OPEN: "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-900/30",
-  IN_PROGRESS: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-900/30",
-  RESOLVED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/30",
-  CLOSED: "bg-mono-soft text-mono-muted dark:bg-slate-800/40 dark:text-slate-400 border-mono-border dark:border-slate-700/30",
+  OPEN: "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent-text)] dark:bg-[var(--mnx-accent-soft)] dark:text-[var(--mnx-accent-text)] border-[var(--mnx-accent)] dark:border-[var(--mnx-accent)]",
+  IN_PROGRESS: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] dark:bg-[var(--mnx-warning-bg)] dark:text-[var(--mnx-warning)] border-[var(--mnx-warning)] dark:border-[var(--mnx-warning)]",
+  RESOLVED: "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] dark:bg-[var(--mnx-success-bg)] dark:text-[var(--mnx-success)] border-[var(--mnx-success)] dark:border-[var(--mnx-success)]",
+  CLOSED: "bg-mono-soft text-mono-muted dark:bg-mono-soft dark:text-mono-muted border-mono-border dark:border-mono-border",
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  LOW: "bg-mono-soft text-mono-muted dark:bg-slate-800/40 dark:text-slate-400",
-  MEDIUM: "bg-amber-100 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400",
-  HIGH: "bg-orange-100 text-orange-600 dark:bg-orange-950/30 dark:text-orange-400",
-  URGENT: "bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40",
+  LOW: "bg-mono-soft text-mono-muted dark:bg-mono-soft dark:text-mono-muted",
+  MEDIUM: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] dark:bg-[var(--mnx-warning-bg)] dark:text-[var(--mnx-warning)]",
+  HIGH: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] dark:bg-[var(--mnx-warning-bg)] dark:text-[var(--mnx-warning)]",
+  URGENT: "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)] dark:bg-[var(--mnx-danger-bg)] dark:text-[var(--mnx-danger)] border border-[var(--mnx-danger)] dark:border-[var(--mnx-danger)]",
 };
 
 interface TicketsClientProps {
@@ -126,12 +128,12 @@ export function TicketsClient({
       {/* Search & Filter Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-mono-soft dark:bg-mono-soft/50 p-4 rounded-xl border border-mono-border/40">
         <div className="flex-1 min-w-[280px]">
-          <input
+          <CrmInput
             type="text"
             placeholder="Search tickets by title, category, description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-4 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#F9D972] transition"
+            className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-4 py-2 text-sm text-mono-muted dark:text-mono-text placeholder:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] transition"
           />
         </div>
 
@@ -140,17 +142,17 @@ export function TicketsClient({
             {["ALL", "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"].map((s) => {
               const count = s === "ALL" ? tickets.length : tickets.filter((t) => t.status === s).length;
               return (
-                <button
+                <CrmButton
                   key={s}
                   onClick={() => setStatusFilter(s)}
                   className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase transition ${
                     statusFilter === s
-                      ? "bg-[#F9D972] text-white"
-                      : "text-mono-muted hover:text-slate-900 dark:hover:text-white"
+                      ? "bg-[var(--mnx-accent)] text-mono-text"
+                      : "text-mono-muted hover:text-mono-muted dark:hover:text-mono-text"
                   }`}
                 >
                   {s.replace("_", " ")} ({count})
-                </button>
+                </CrmButton>
               );
             })}
           </div>
@@ -158,7 +160,7 @@ export function TicketsClient({
           <NativeSelect
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:border-[#F9D972] transition"
+            className="rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2 text-xs font-semibold text-mono-muted dark:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] transition"
           >
             <option value="ALL">All Priorities</option>
             <option value="LOW">Low</option>
@@ -172,7 +174,7 @@ export function TicketsClient({
       {/* Ticket Cards List */}
       {filteredTickets.length === 0 ? (
         <Card className="border-0 shadow-sm bg-mono-card">
-          <CardContent className="py-16 text-center text-slate-400/80 text-sm font-medium">
+          <CardContent className="py-16 text-center text-mono-muted text-sm font-medium">
             No support tickets match the current filters.
           </CardContent>
         </Card>
@@ -201,23 +203,23 @@ export function TicketsClient({
                       <span className={`text-[10px] px-2 py-0.5 rounded border font-bold uppercase ${STATUS_COLORS[ticket.status]}`}>
                         {ticket.status.replace("_", " ")}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                      <span className="text-[10px] text-mono-muted font-bold uppercase tracking-wider">
                         {ticket.category}
                       </span>
                     </div>
 
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white truncate">
+                    <h3 className="text-base font-bold text-mono-muted dark:text-mono-text truncate">
                       {ticket.title}
                     </h3>
 
-                    <p className="text-xs text-mono-muted dark:text-slate-400 line-clamp-1">
+                    <p className="text-xs text-mono-muted dark:text-mono-muted line-clamp-1">
                       {ticket.description}
                     </p>
 
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-400 font-semibold">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-mono-muted font-semibold">
                       <span className="flex items-center gap-1">
                         <User className="size-3.5" />
-                        Raised by: <span className="text-mono-muted dark:text-slate-300 font-bold">{ticket.raisedBy.name}</span>
+                        Raised by: <span className="text-mono-muted dark:text-mono-muted font-bold">{ticket.raisedBy.name}</span>
                         {ticket.raisedBy.designation && ` (${ticket.raisedBy.designation})`}
                       </span>
                       <span className="flex items-center gap-1">
@@ -231,7 +233,7 @@ export function TicketsClient({
                         })}</span>
                       </span>
                       {ticket.comments.length > 0 && (
-                        <span className="flex items-center gap-1 text-[#F9D972]">
+                        <span className="flex items-center gap-1 text-[var(--mnx-accent)]">
                           <MessageSquare className="size-3.5" />
                           {ticket.comments.length} reply{ticket.comments.length > 1 ? "ies" : ""}
                         </span>
@@ -245,14 +247,14 @@ export function TicketsClient({
                     {isAdmin ? (
                       <div className="flex flex-col gap-2 min-w-[140px]">
                         <div className="space-y-1">
-                          <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                          <label className="text-[9px] font-bold uppercase tracking-wider text-mono-muted">
                             Assignee
                           </label>
                           <NativeSelect
                             value={ticket.assignee?.id || ""}
                             onChange={(e) => handleAssigneeChange(ticket.id, e.target.value)}
                             disabled={assignPending}
-                            className="w-full rounded border border-mono-border/60 bg-mono-card px-2.5 py-1 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-[#F9D972]"
+                            className="w-full rounded border border-mono-border/60 bg-mono-card px-2.5 py-1 text-xs text-mono-muted dark:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
                           >
                             <option value="">Unassigned</option>
                             {admins.map((u) => (
@@ -264,14 +266,14 @@ export function TicketsClient({
                         </div>
 
                         <div className="space-y-1">
-                          <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                          <label className="text-[9px] font-bold uppercase tracking-wider text-mono-muted">
                             Status
                           </label>
                           <NativeSelect
                             value={ticket.status}
                             onChange={(e) => handleStatusChange(ticket.id, e.target.value)}
                             disabled={statusPending}
-                            className="w-full rounded border border-mono-border/60 bg-mono-card px-2.5 py-1 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-[#F9D972]"
+                            className="w-full rounded border border-mono-border/60 bg-mono-card px-2.5 py-1 text-xs text-mono-muted dark:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
                           >
                             <option value="OPEN">Open</option>
                             <option value="IN_PROGRESS">In Progress</option>
@@ -281,12 +283,12 @@ export function TicketsClient({
                         </div>
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-1 min-w-[130px] text-xs text-slate-400 font-semibold">
+                      <div className="flex flex-col gap-1 min-w-[130px] text-xs text-mono-muted font-semibold">
                         <span className="flex items-center gap-1.5">
-                          <Shield className="size-3.5 text-[#F9D972]" />
+                          <Shield className="size-3.5 text-[var(--mnx-accent)]" />
                           Assignee:
                         </span>
-                        <span className="text-slate-700 dark:text-slate-300 font-bold ml-5">
+                        <span className="text-mono-muted dark:text-mono-muted font-bold ml-5">
                           {ticket.assignee ? ticket.assignee.name : "Unassigned"}
                         </span>
                       </div>

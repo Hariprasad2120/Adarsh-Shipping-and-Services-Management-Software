@@ -28,7 +28,7 @@ const APPLICABLE_FOR = [
 const CONTAINER_TYPES = ["20FT", "40FT", "40HQ", "LCL", "Air Cargo", "Not Applicable"];
 
 const selectCls =
-  "w-full px-3 py-1.5 text-sm border border-[#d9dee7] rounded focus:outline-none focus:border-[#F9D972] text-[#212529] bg-white h-[34px]";
+  "w-full px-3 py-1.5 text-sm border border-[var(--mnx-border)] rounded focus:outline-none focus:border-[var(--mnx-accent)] text-[var(--mnx-text-strong)] bg-mono-card h-[34px]";
 
 function FieldRow({
   label,
@@ -41,7 +41,7 @@ function FieldRow({
 }) {
   return (
     <div className="flex items-center gap-4">
-      <label htmlFor={id} className="w-36 flex-shrink-0 text-xs font-medium text-[#212529]">
+      <label htmlFor={id} className="w-36 flex-shrink-0 text-xs font-medium text-[var(--mnx-text-strong)]">
         {label}
       </label>
       <div className="flex-1 min-w-0">{children}</div>
@@ -58,7 +58,7 @@ export function ItemLogisticsFieldsSection({ form }: ItemLogisticsFieldsSectionP
 
   return (
     <div className="space-y-4">
-      <h3 className="text-xs font-semibold text-[#212529] uppercase tracking-wide border-b border-[#d9dee7] pb-2">
+      <h3 className="text-xs font-semibold text-[var(--mnx-text-strong)] uppercase tracking-wide border-b border-[var(--mnx-border)] pb-2">
         Logistics Classification
       </h3>
 

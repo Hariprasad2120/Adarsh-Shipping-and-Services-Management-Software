@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -28,7 +30,7 @@ export function ItemsPagination({
       <div className="flex items-center gap-2">
         <span>Total Count:</span>
         <span className="font-semibold text-mono-text">{total}</span>
-        <button className="text-[#F9D972] hover:underline ml-2">View</button>
+        <CrmButton className="text-[var(--mnx-accent)] hover:underline ml-2">View</CrmButton>
       </div>
 
       <div className="flex items-center gap-3">
@@ -43,7 +45,7 @@ export function ItemsPagination({
               onPerPageChange(Number(e.target.value));
               onPageChange(1);
             }}
-            className="border border-[var(--color-outline-variant)] rounded-xl px-2 py-1 text-xs text-mono-text bg-mono-card focus:outline-none focus:border-[#F9D972]"
+            className="border border-[var(--color-outline-variant)] rounded-xl px-2 py-1 text-xs text-mono-text bg-mono-card focus:outline-none focus:border-[var(--mnx-accent)]"
           >
             {[10, 25, 50, 100].map((n) => (
               <option key={n} value={n}>
@@ -53,27 +55,27 @@ export function ItemsPagination({
           </NativeSelect>
         </div>
 
-        <button
+        <CrmButton
           onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={page <= 1}
           className="p-1 rounded-lg border border-[var(--color-outline-variant)] hover:bg-mono-soft text-mono-muted disabled:opacity-40 disabled:cursor-not-allowed"
           aria-label="Previous page"
         >
           <ChevronLeft size={14} />
-        </button>
+        </CrmButton>
 
         <span className="min-w-[60px] text-center text-mono-text">
           {total === 0 ? "0" : `${start} - ${end}`}
         </span>
 
-        <button
+        <CrmButton
           onClick={() => onPageChange(Math.min(totalPages, page + 1))}
           disabled={page >= totalPages}
           className="p-1 rounded-lg border border-[var(--color-outline-variant)] hover:bg-mono-soft text-mono-muted disabled:opacity-40 disabled:cursor-not-allowed"
           aria-label="Next page"
         >
           <ChevronRight size={14} />
-        </button>
+        </CrmButton>
       </div>
     </div>
   );

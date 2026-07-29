@@ -1,5 +1,5 @@
-import { CrmWorkspacePage } from "../_components/crm-workspace-page";
+import { CrmRouteOverview } from "@/components/monolith/crm-workspace";
 
 export default function CrmDocumentsPage() {
-  return <CrmWorkspacePage slug="documents" />;
+  return <CrmRouteOverview />;
 }

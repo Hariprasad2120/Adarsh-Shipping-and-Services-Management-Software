@@ -1,10 +1,11 @@
 "use client";
 
+import { CrmDialog } from "@/components/monolith/crm-workspace";
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import type { Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X } from "lucide-react";
 import { toast } from "sonner";
 
 import { itemFormSchema, type ItemFormSchema } from "@/lib/items/validation";
@@ -101,8 +102,6 @@ export function NewItemDialog({ open, onClose, onSaveSuccess, initialName = "", 
     }
   }, [open, form, getInitialValues]);
 
-  if (!open) return null;
-
   const handleSave = form.handleSubmit(async (data) => {
     setIsSubmitting(true);
     try {
@@ -157,75 +156,60 @@ export function NewItemDialog({ open, onClose, onSaveSuccess, initialName = "", 
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f172a]/35 px-4 py-6">
-      <div className="relative w-full max-w-3xl max-h-[90vh] flex flex-col rounded-xl border border-[#d9dee7] bg-white shadow-[0_20px_50px_rgba(15,23,42,0.18)] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#e5e7eb] px-6 py-4">
-          <h2 className="text-[16px] font-semibold text-[#1f2937]">{itemToEdit ? "Edit Item" : "New Item"}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded p-1 text-[#6b7280] hover:bg-[#f3f4f6]"
-            aria-label="Close dialog"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
-
-        {/* Scrollable Form Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-          <InventoryInfoBanner />
-
-          {/* Primary info card */}
-          <div className="bg-white border border-[#d9dee7] rounded p-6">
-            <ItemPrimaryInfoSection form={form} />
-          </div>
-
-          {/* Sales info card */}
-          <div className="bg-white border border-[#d9dee7] rounded p-6">
-            <ItemSalesInfoSection form={form} />
-          </div>
-
-          {/* Price List card */}
-          <div className="bg-white border border-[#d9dee7] rounded p-6">
-            <ItemPriceListSection form={form} />
-          </div>
-
-          {/* Purchase info card */}
-          <div className="bg-white border border-[#d9dee7] rounded p-6">
-            <ItemPurchaseInfoSection form={form} />
-          </div>
-
-          {/* Inventory card */}
-          <div className="bg-white border border-[#d9dee7] rounded p-6">
-            <ItemInventorySection form={form} />
-          </div>
-
-          {/* Logistics card */}
-          <div className="bg-white border border-[#d9dee7] rounded p-6">
-            <ItemLogisticsFieldsSection form={form} />
-          </div>
-        </div>
-
-        {/* Footer Action Bar */}
-        <div className="flex justify-end gap-3 border-t border-[#e5e7eb] px-6 py-4 bg-[#f8fafc]">
+    <CrmDialog
+      open={open}
+      onClose={onClose}
+      title={itemToEdit ? "Edit item" : "New item"}
+      description="Maintain commercial, inventory, purchasing, and logistics settings."
+      size="wide"
+      footer={
+        <div className="flex justify-end gap-3">
           <Button
             variant="outline"
-            className="h-9 border-[#d9dee7] bg-white px-4 text-[12px] text-[#4b5563]"
             onClick={onClose}
             disabled={isSubmitting}
           >
             Cancel
           </Button>
-          <Button
-            className="h-9 bg-[#F9D972] hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] text-white px-4 text-[12px] transition-all"
-            onClick={handleSave}
-            disabled={isSubmitting}
-          >
+          <Button onClick={handleSave} disabled={isSubmitting}>
             {isSubmitting ? "Saving..." : "Save"}
           </Button>
         </div>
-      </div>
-    </div>
+      }
+    >
+        <div className="space-y-6">
+          <InventoryInfoBanner />
+
+          {/* Primary info card */}
+          <div className="bg-mono-card border border-[var(--mnx-border)] rounded p-6">
+            <ItemPrimaryInfoSection form={form} />
+          </div>
+
+          {/* Sales info card */}
+          <div className="bg-mono-card border border-[var(--mnx-border)] rounded p-6">
+            <ItemSalesInfoSection form={form} />
+          </div>
+
+          {/* Price List card */}
+          <div className="bg-mono-card border border-[var(--mnx-border)] rounded p-6">
+            <ItemPriceListSection form={form} />
+          </div>
+
+          {/* Purchase info card */}
+          <div className="bg-mono-card border border-[var(--mnx-border)] rounded p-6">
+            <ItemPurchaseInfoSection form={form} />
+          </div>
+
+          {/* Inventory card */}
+          <div className="bg-mono-card border border-[var(--mnx-border)] rounded p-6">
+            <ItemInventorySection form={form} />
+          </div>
+
+          {/* Logistics card */}
+          <div className="bg-mono-card border border-[var(--mnx-border)] rounded p-6">
+            <ItemLogisticsFieldsSection form={form} />
+          </div>
+        </div>
+    </CrmDialog>
   );
 }

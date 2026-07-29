@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput } from "@/components/monolith/crm-workspace";
+
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -52,8 +54,8 @@ export function ComboboxField({ options, value, onChange, placeholder, disabled,
   return (
     <div ref={wrapperRef} className="relative">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-[#6b7280]" />
-        <input
+        <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-[var(--mnx-text-muted)]" />
+        <CrmInput
           id={id}
           role="combobox"
           aria-label={ariaLabel}
@@ -65,8 +67,8 @@ export function ComboboxField({ options, value, onChange, placeholder, disabled,
           value={inputValue}
           placeholder={placeholder}
           className={cn(
-            "h-9 w-full rounded-xl border bg-white pl-9 pr-9 text-[13px] text-[#1f2937] outline-none transition",
-            "disabled:cursor-not-allowed disabled:bg-[#f3f5f8] disabled:text-[#9ca3af]",
+            "h-9 w-full rounded-xl border bg-mono-card pl-9 pr-9 text-[13px] text-[var(--mnx-text-strong)] outline-none transition",
+            "disabled:cursor-not-allowed disabled:bg-[var(--mnx-surface)] disabled:text-[var(--mnx-text-muted)]",
           )}
           onFocus={() => {
             if (!disabled) {
@@ -109,14 +111,14 @@ export function ComboboxField({ options, value, onChange, placeholder, disabled,
             }
           }}
         />
-        <ChevronDown className="pointer-events-none absolute right-3 top-2.5 size-4 text-[#6b7280]" />
+        <ChevronDown className="pointer-events-none absolute right-3 top-2.5 size-4 text-[var(--mnx-text-muted)]" />
       </div>
 
       {open ? (
         <div
           id={`${id}-listbox`}
           role="listbox"
-          className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-[#d9dee7] bg-white py-1 shadow-[0_8px_20px_rgba(15,23,42,0.08)]"
+          className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-[var(--mnx-border)] bg-mono-card py-1 shadow-[0_8px_20px_var(--mnx-border)]"
         >
           {filteredOptions.length ? (
             filteredOptions.map((option, index) => {
@@ -124,29 +126,29 @@ export function ComboboxField({ options, value, onChange, placeholder, disabled,
               const isActive = highlightedIndex === index;
 
               return (
-                <button
+                <CrmButton
                   key={option.id}
                   type="button"
                   role="option"
                   aria-selected={isSelected}
                   className={cn(
                     "flex w-full items-start justify-between gap-3 px-3 py-2 text-left text-[13px]",
-                    isActive ? "bg-[#F9D972]/10" : "hover:bg-[#f5f7fa]",
+                    isActive ? "bg-[var(--mnx-accent)]/10" : "hover:bg-[var(--mnx-surface)]",
                   )}
                   onMouseEnter={() => setHighlightedIndex(index)}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => handleSelect(option.id)}
                 >
                   <span>
-                    <span className="block text-[#1f2937]">{option.label}</span>
-                    {option.description ? <span className="block text-[11px] text-[#6b7280]">{option.description}</span> : null}
+                    <span className="block text-[var(--mnx-text-strong)]">{option.label}</span>
+                    {option.description ? <span className="block text-[11px] text-[var(--mnx-text-muted)]">{option.description}</span> : null}
                   </span>
-                  {isSelected ? <Check className="mt-0.5 size-4 text-[#F9D972]" /> : null}
-                </button>
+                  {isSelected ? <Check className="mt-0.5 size-4 text-[var(--mnx-accent)]" /> : null}
+                </CrmButton>
               );
             })
           ) : (
-            <div className="px-3 py-2 text-[12px] text-[#6b7280]">No matching records found.</div>
+            <div className="px-3 py-2 text-[12px] text-[var(--mnx-text-muted)]">No matching records found.</div>
           )}
         </div>
       ) : null}

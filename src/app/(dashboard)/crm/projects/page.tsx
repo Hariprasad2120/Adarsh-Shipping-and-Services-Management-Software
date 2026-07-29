@@ -1,3 +1,4 @@
+import { CrmButton, CrmInput, CrmTextarea, CrmConfigurationState, CrmPermissionState } from "@/components/monolith/crm-workspace";
 import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import { redirect } from "next/navigation";
@@ -10,7 +11,6 @@ import {
   Search,
   FolderKanban,
   Calendar,
-  ShieldAlert,
   Save,
 } from "lucide-react";
 import { createProjectAction, deleteProjectAction } from "@/modules/crm/actions";
@@ -26,26 +26,14 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
 
   const orgId = session.user.orgId;
   if (!orgId) {
-    return (
-      <div className="p-8 text-center text-red-400">
-        <ShieldAlert className="size-12 mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Configuration Error</h2>
-        <p className="text-sm mt-1">Missing organisation context.</p>
-      </div>
-    );
+    return <CrmConfigurationState description="Missing organisation context." />;
   }
 
   // Permission Guard
   try {
     await requirePermission(session.user.id, "crm.project.manage");
   } catch (e) {
-    return (
-      <div className="p-8 text-center text-red-400">
-        <ShieldAlert className="size-12 mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-sm mt-1">You do not have permission to view CRM operational projects.</p>
-      </div>
-    );
+    return <CrmPermissionState description="You do not have permission to view CRM operational projects." />;
   }
 
   const awaitedParams = await searchParams;
@@ -72,35 +60,35 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
     <div className="space-y-6 animate-in fade-in duration-200">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Left Column: Projects list table */}
-        <div className="lg:col-span-2 bg-[#0f1319] border border-[#1c212a]/55 rounded-xl overflow-hidden shadow-2xl p-6 space-y-4">
+        <div className="lg:col-span-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl overflow-hidden shadow-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-sm text-white uppercase tracking-wider">Active Operations</h3>
-            <span className="text-xs text-slate-400 font-bold">{projects.length} running projects</span>
+            <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Active Operations</h3>
+            <span className="text-xs text-mono-muted font-bold">{projects.length} running projects</span>
           </div>
 
           <form method="GET" className="relative">
-            <Search className="absolute left-3 top-2.5 size-4 text-slate-500" />
-            <input
+            <Search className="absolute left-3 top-2.5 size-4 text-mono-muted" />
+            <CrmInput
               type="text"
               name="search"
               defaultValue={search}
               placeholder="Search projects by name..."
-              className="w-full pl-9 pr-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#F9D972] text-white"
+              className="w-full pl-9 pr-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm placeholder:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] text-mono-text"
             />
           </form>
 
           {projects.length === 0 ? (
-            <div className="p-8 text-center text-slate-500 text-xs italic">No operational projects tracked.</div>
+            <div className="p-8 text-center text-mono-muted text-xs italic">No operational projects tracked.</div>
           ) : (
-            <div className="divide-y divide-[#1c212a]/30">
+            <div className="divide-y divide-[var(--mnx-border)]/30">
               {projects.map((project) => (
                 <div key={project.id} className="py-4 flex items-center justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <span className="font-bold text-white text-sm block truncate">{project.name}</span>
-                    <span className="text-xs text-slate-400 block mt-0.5">
+                    <span className="font-bold text-mono-text text-sm block truncate">{project.name}</span>
+                    <span className="text-xs text-mono-muted block mt-0.5">
                       Client: {project.account?.name || "No Account"} • Status: {project.status}
                     </span>
-                    <div className="flex gap-4 text-[10px] text-slate-500 mt-1.5">
+                    <div className="flex gap-4 text-[10px] text-mono-muted mt-1.5">
                       {project.startDate && (
                         <span className="flex items-center gap-1">
                           <Calendar className="size-3" />
@@ -118,8 +106,8 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
                   <div className="flex items-center gap-4 shrink-0">
                     <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
                       project.status === "COMPLETED"
-                        ? "bg-emerald-500/10 text-emerald-400"
-                        : "bg-amber-500/10 text-amber-400"
+                        ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]"
+                        : "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]"
                     }`}>
                       {project.status.replace("_", " ")}
                     </span>
@@ -136,10 +124,10 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
         </div>
 
         {/* Right Column: Inline Create Project Form */}
-        <div className="bg-[#0f1319] border border-[#1c212a]/55 rounded-xl p-6 shadow-2xl space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#1c212a]/30 pb-2">
-            <FolderKanban className="size-4.5 text-[#F9D972]" />
-            <h3 className="font-bold text-xs text-white uppercase tracking-wider">Start Operation Project</h3>
+        <div className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl p-6 shadow-2xl space-y-4">
+          <div className="flex items-center gap-2 border-b border-[var(--mnx-border)]/30 pb-2">
+            <FolderKanban className="size-4.5 text-[var(--mnx-accent)]" />
+            <h3 className="font-bold text-xs text-mono-text uppercase tracking-wider">Start Operation Project</h3>
           </div>
 
           <form
@@ -150,20 +138,20 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
             className="space-y-4"
           >
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Project Title *</label>
-              <input
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">Project Title *</label>
+              <CrmInput
                 type="text"
                 name="name"
                 placeholder="e.g. Adarsh Cargo Dispatch setup"
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                 required
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Linked Client Account *</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">Linked Client Account *</label>
               <NativeSelect
                 name="accountId"
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
                 required
               >
                 <option value="">Select Customer</option>
@@ -174,27 +162,27 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Start Date</label>
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">Start Date</label>
                 <DateInput
                   name="startDate"
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#F9D972]"
+                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">End Date</label>
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">End Date</label>
                 <DateInput
                   name="endDate"
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#F9D972]"
+                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
                 />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Status</label>
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">Status</label>
                 <NativeSelect
                   name="status"
                   defaultValue="PLANNING"
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#F9D972]"
+                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
                 >
                   <option value="PLANNING">Planning</option>
                   <option value="IN_PROGRESS">In Progress</option>
@@ -203,10 +191,10 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
                 </NativeSelect>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Project Owner *</label>
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">Project Owner *</label>
                 <NativeSelect
                   name="ownerId"
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-slate-300 focus:outline-none focus:border-[#F9D972]"
+                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
                   required
                 >
                   {employees.map((emp) => (
@@ -216,21 +204,21 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
               </div>
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Description</label>
-              <textarea
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">Description</label>
+              <CrmTextarea
                 name="description"
                 placeholder="Log operational instructions..."
                 rows={3}
-                className="w-full p-2.5 bg-[#0a0d12] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                className="w-full p-2.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
-            <button
+            <CrmButton
               type="submit"
-              className="w-full flex items-center justify-center gap-1.5 py-2 bg-[#F9D972] hover:bg-[#00b0a3] text-white font-bold rounded-lg text-xs transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
+              className="w-full flex items-center justify-center gap-1.5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text font-bold rounded-lg text-xs transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
             >
               <Save className="size-4" />
               <span>Launch Project</span>
-            </button>
+            </CrmButton>
           </form>
         </div>
       </div>

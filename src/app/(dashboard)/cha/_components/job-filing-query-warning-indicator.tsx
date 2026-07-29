@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/monolith/button";
-import { WarningIndicatorPopover } from "@/components/monolith/warning-indicator-popover";
+import { ChaWarningIndicatorPopover as WarningIndicatorPopover } from "@/components/monolith/cha-workspace";
 
 type FilingQueryWarning = {
   queryTitle: string;

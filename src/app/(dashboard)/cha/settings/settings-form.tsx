@@ -1,8 +1,10 @@
 "use client";
 
-import { ChaTable } from "@/components/monolith/cha-workspace";
+import {
+  ChaNativeSelect as NativeSelect,
+  ChaTable,
+} from "@/components/monolith/cha-workspace";
 import { Input } from "@/components/monolith/input";
-import { NativeSelect } from "@/components/monolith/native-select";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";

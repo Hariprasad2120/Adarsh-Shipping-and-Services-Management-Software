@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput } from "@/components/monolith/crm-workspace";
+
 import type { UseFormReturn } from "react-hook-form";
 import { Controller } from "react-hook-form";
 import { Settings } from "lucide-react";
@@ -19,29 +21,29 @@ export function QuoteMetaSection({ form, salespersons, projectOptions, hasCustom
   const errors = form.formState.errors;
 
   return (
-    <section className="monolith-form-section border-b border-[#d9dee7] px-5 py-5">
+    <section className="mnx-crm-form-section border-b border-[var(--mnx-border)] px-5 py-5">
       <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-mono-muted">Quote Metadata</h2>
       <div className="space-y-0">
         <FormRow label="Quote#" required error={errors.quoteNumber?.message}>
           <div className="flex gap-2">
-            <input
+            <CrmInput
               aria-required="true"
-              className="h-9 flex-1 rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
+              className="h-9 flex-1 rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
               {...form.register("quoteNumber")}
             />
-            <button
+            <CrmButton
               type="button"
-              className="inline-flex h-9 items-center justify-center rounded-md border border-[#d9dee7] bg-[#f9fafb] px-3 text-[#6b7280] hover:bg-[#f3f4f6]"
+              className="inline-flex h-9 items-center justify-center rounded-md border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 text-[var(--mnx-text-muted)] hover:bg-[var(--mnx-surface)]"
               aria-label="Quote numbering preferences"
             >
               <Settings className="size-4" />
-            </button>
+            </CrmButton>
           </div>
         </FormRow>
 
         <FormRow label="Reference#" error={errors.referenceNumber?.message}>
-          <input
-            className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
+          <CrmInput
+            className="h-9 w-full rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
             {...form.register("referenceNumber")}
           />
         </FormRow>

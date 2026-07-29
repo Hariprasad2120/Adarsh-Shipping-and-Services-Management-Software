@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput, CrmTextarea } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -265,49 +267,49 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl bg-[var(--color-surface)] border-2 border-[var(--color-outline)] rounded-xl p-6 shadow-[4px_4px_0px_0px_rgba(0,206,196,0.15)] animate-in fade-in duration-200">
+    <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl bg-[var(--color-surface)] border-2 border-[var(--color-outline)] rounded-xl p-6 shadow-[4px_4px_0px_0px_var(--mnx-accent-soft)] animate-in fade-in duration-200">
       
       {/* ─── SECTION 1: CUSTOMER TYPE ───────────────────────────────────── */}
-      <div className="monolith-card monolith-accent bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl p-5 space-y-4">
+      <div className="mnx-crm-panel-surface  bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl p-5 space-y-4">
         <div className="flex items-center justify-between gap-4 border-b border-[var(--color-outline-variant)] pb-2 mb-2">
-          <h3 className="monolith-h3 text-[var(--color-on-surface)] flex items-center gap-2 border-0 pb-0">
-            <User className="size-4.5 text-[#F9D972]" />
+          <h3 className="mnx-title-3 text-[var(--color-on-surface)] flex items-center gap-2 border-0 pb-0">
+            <User className="size-4.5 text-[var(--mnx-accent)]" />
             <span>Customer Profile</span>
           </h3>
           {!isEdit && (
-            <button
+            <CrmButton
               type="button"
               onClick={handleDemoFill}
-              className="px-3 py-1 bg-[#F9D972]/10 text-[#F9D972] hover:bg-[#F9D972]/20 border border-[#F9D972]/40 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-sm hover:shadow-[0_0_8px_rgba(0,206,196,0.15)]"
+              className="px-3 py-1 bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)]/20 border border-[var(--mnx-accent)]/40 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-sm hover:shadow-[0_0_8px_var(--mnx-accent-soft)]"
             >
               Demo Fill
-            </button>
+            </CrmButton>
           )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
           <div>
-            <label className="monolith-label mb-2 block">Customer Type</label>
+            <label className="mnx-label mb-2 block">Customer Type</label>
             <div className="flex gap-4">
               <label className="flex items-center gap-2 text-sm text-[var(--color-on-surface)] cursor-pointer">
-                <input
+                <CrmInput
                   type="radio"
                   name="customerSubType"
                   value="Business"
                   checked={customerSubType === "Business"}
                   onChange={() => setCustomerSubType("Business")}
-                  className="accent-[#F9D972] size-4"
+                  className="accent-[var(--mnx-accent)] size-4"
                 />
                 <span>Business</span>
               </label>
               <label className="flex items-center gap-2 text-sm text-[var(--color-on-surface)] cursor-pointer">
-                <input
+                <CrmInput
                   type="radio"
                   name="customerSubType"
                   value="Individual"
                   checked={customerSubType === "Individual"}
                   onChange={() => setCustomerSubType("Individual")}
-                  className="accent-[#F9D972] size-4"
+                  className="accent-[var(--mnx-accent)] size-4"
                 />
                 <span>Individual</span>
               </label>
@@ -315,13 +317,13 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
           </div>
 
           <div className="md:col-span-2">
-            <label className="monolith-label mb-1.5 block">Primary Contact Name</label>
+            <label className="mnx-label mb-1.5 block">Primary Contact Name</label>
             <div className="grid grid-cols-12 gap-2">
               <div className="col-span-3">
                 <NativeSelect
                   name="salutation"
                   defaultValue={initialData?.salutation || ""}
-                  className="w-full px-3 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+                  className="w-full px-3 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 >
                   <option value="">Salutation</option>
                   <option value="Mr.">Mr.</option>
@@ -332,25 +334,25 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 </NativeSelect>
               </div>
               <div className="col-span-4">
-                <input
+                <CrmInput
                   type="text"
                   name="firstName"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   onBlur={handleNameFieldBlur}
                   placeholder="First Name"
-                  className="w-full px-3 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+                  className="w-full px-3 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 />
               </div>
               <div className="col-span-5">
-                <input
+                <CrmInput
                   type="text"
                   name="lastName"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   onBlur={handleNameFieldBlur}
                   placeholder="Last Name"
-                  className="w-full px-3 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+                  className="w-full px-3 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 />
               </div>
             </div>
@@ -359,26 +361,26 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
           <div>
-            <label className="monolith-label mb-1.5 block">Company Name</label>
-            <input
+            <label className="mnx-label mb-1.5 block">Company Name</label>
+            <CrmInput
               type="text"
               name="companyName"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               onBlur={handleNameFieldBlur}
               placeholder="e.g. Adarsh Shipping Ltd"
-              className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+              className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
             />
           </div>
           <div>
-            <label className="monolith-label mb-1.5 block">Customer Display Name *</label>
-            <input
+            <label className="mnx-label mb-1.5 block">Customer Display Name *</label>
+            <CrmInput
               type="text"
               name="displayName"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Select or type display name"
-              className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)] font-semibold"
+              className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)] font-semibold"
               required
             />
           </div>
@@ -387,61 +389,61 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
       {/* ─── SECTION 2: CONTACT DETAILS ────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="monolith-h3 text-[var(--color-on-surface)] flex items-center gap-2 border-b border-[var(--color-outline-variant)] pb-2">
-          <Mail className="size-4 text-[#F9D972]" />
+        <h3 className="mnx-title-3 text-[var(--color-on-surface)] flex items-center gap-2 border-b border-[var(--color-outline-variant)] pb-2">
+          <Mail className="size-4 text-[var(--mnx-accent)]" />
           <span>Contact Information</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="monolith-label mb-1.5 block">Email Address</label>
-            <input
+            <label className="mnx-label mb-1.5 block">Email Address</label>
+            <CrmInput
               type="email"
               name="email"
               defaultValue={initialData?.email || ""}
               placeholder="e.g. office@domain.com"
-              className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+              className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
             />
           </div>
           <div>
-            <label className="monolith-label mb-1.5 block">Phone Number</label>
-            <input
+            <label className="mnx-label mb-1.5 block">Phone Number</label>
+            <CrmInput
               type="text"
               name="phone"
               defaultValue={initialData?.phone || ""}
               placeholder="e.g. +91 44 2819 1234"
-              className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+              className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
             />
           </div>
           <div>
-            <label className="monolith-label mb-1.5 block">Website</label>
-            <input
+            <label className="mnx-label mb-1.5 block">Website</label>
+            <CrmInput
               type="url"
               name="website"
               defaultValue={initialData?.website || ""}
               placeholder="e.g. https://www.company.com"
-              className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+              className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="monolith-label mb-1.5 block">Industry Segment</label>
-            <input
+            <label className="mnx-label mb-1.5 block">Industry Segment</label>
+            <CrmInput
               type="text"
               name="industry"
               defaultValue={initialData?.industry || ""}
               placeholder="e.g. Shipping / Logistics"
-              className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+              className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
             />
           </div>
           <div>
-            <label className="monolith-label mb-1.5 block">Customer Language</label>
+            <label className="mnx-label mb-1.5 block">Customer Language</label>
             <NativeSelect
               name="language"
               defaultValue={initialData?.language || "English"}
-              className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+              className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
             >
               <option value="English">English</option>
               <option value="Hindi">Hindi</option>
@@ -451,23 +453,23 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             </NativeSelect>
           </div>
           <div>
-            <label className="monolith-label mb-1.5 block">Communication Channels</label>
+            <label className="mnx-label mb-1.5 block">Communication Channels</label>
             <div className="flex gap-4 pt-2.5">
               <label className="flex items-center gap-1.5 text-xs text-[var(--color-on-surface)] cursor-pointer">
-                <input
+                <CrmInput
                   type="checkbox"
                   name="channelEmail"
                   defaultChecked={initialData?.communicationChannels?.includes("EMAIL") ?? true}
-                  className="accent-[#F9D972] rounded"
+                  className="accent-[var(--mnx-accent)] rounded"
                 />
                 <span>Email Notifications</span>
               </label>
               <label className="flex items-center gap-1.5 text-xs text-[var(--color-on-surface)] cursor-pointer">
-                <input
+                <CrmInput
                   type="checkbox"
                   name="channelSms"
                   defaultChecked={initialData?.communicationChannels?.includes("SMS") ?? false}
-                  className="accent-[#F9D972] rounded"
+                  className="accent-[var(--mnx-accent)] rounded"
                 />
                 <span>SMS Alert</span>
               </label>
@@ -480,33 +482,33 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
       <div className="space-y-4">
         {/* Navigation Tabs */}
         <div className="flex border-b-2 border-[var(--color-outline-variant)] select-none">
-          <button
+          <CrmButton
             type="button"
             onClick={() => setActiveTab("OTHER_DETAILS")}
             className={`pb-3 px-5 text-xs font-bold uppercase tracking-wider border-b-3 -mb-[3px] transition-all cursor-pointer ${
-              activeTab === "OTHER_DETAILS" ? "border-[#F9D972] text-[var(--color-on-surface)]" : "border-transparent text-slate-400 hover:text-[var(--color-on-surface)]"
+              activeTab === "OTHER_DETAILS" ? "border-[var(--mnx-accent)] text-[var(--color-on-surface)]" : "border-transparent text-mono-muted hover:text-[var(--color-on-surface)]"
             }`}
           >
             Other Details
-          </button>
-          <button
+          </CrmButton>
+          <CrmButton
             type="button"
             onClick={() => setActiveTab("ADDRESS")}
             className={`pb-3 px-5 text-xs font-bold uppercase tracking-wider border-b-3 -mb-[3px] transition-all cursor-pointer ${
-              activeTab === "ADDRESS" ? "border-[#F9D972] text-[var(--color-on-surface)]" : "border-transparent text-slate-400 hover:text-[var(--color-on-surface)]"
+              activeTab === "ADDRESS" ? "border-[var(--mnx-accent)] text-[var(--color-on-surface)]" : "border-transparent text-mono-muted hover:text-[var(--color-on-surface)]"
             }`}
           >
             Address
-          </button>
-          <button
+          </CrmButton>
+          <CrmButton
             type="button"
             onClick={() => setActiveTab("REMARKS")}
             className={`pb-3 px-5 text-xs font-bold uppercase tracking-wider border-b-3 -mb-[3px] transition-all cursor-pointer ${
-              activeTab === "REMARKS" ? "border-[#F9D972] text-[var(--color-on-surface)]" : "border-transparent text-slate-400 hover:text-[var(--color-on-surface)]"
+              activeTab === "REMARKS" ? "border-[var(--mnx-accent)] text-[var(--color-on-surface)]" : "border-transparent text-mono-muted hover:text-[var(--color-on-surface)]"
             }`}
           >
             Remarks
-          </button>
+          </CrmButton>
         </div>
 
         {/* Tab Panel: Other Details */}
@@ -514,11 +516,11 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
           <div className="p-6 bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl space-y-4 animate-in fade-in duration-150">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="monolith-label mb-1.5 block">GST Treatment *</label>
+                <label className="mnx-label mb-1.5 block">GST Treatment *</label>
                 <NativeSelect
                   name="gstTreatment"
                   defaultValue={initialData?.gstTreatment || "Registered Business - Regular"}
-                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 >
                   {gstTreatments.map((t) => (
                     <option key={t} value={t}>{t}</option>
@@ -526,11 +528,11 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 </NativeSelect>
               </div>
               <div>
-                <label className="monolith-label mb-1.5 block">Place of Supply *</label>
+                <label className="mnx-label mb-1.5 block">Place of Supply *</label>
                 <NativeSelect
                   name="placeOfSupply"
                   defaultValue={initialData?.placeOfSupply || "Tamil Nadu"}
-                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 >
                   {indianStates.map((state) => (
                     <option key={state} value={state}>{state}</option>
@@ -541,45 +543,45 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="monolith-label mb-1.5 block">PAN ID / Tax Number</label>
-                <input
+                <label className="mnx-label mb-1.5 block">PAN ID / Tax Number</label>
+                <CrmInput
                   type="text"
                   name="pan"
                   defaultValue={initialData?.pan || ""}
                   placeholder="e.g. ABCDE1234F"
-                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 />
               </div>
               <div>
-                <label className="monolith-label mb-1.5 block">GSTIN / Tax ID</label>
-                <input
+                <label className="mnx-label mb-1.5 block">GSTIN / Tax ID</label>
+                <CrmInput
                   type="text"
                   name="gstin"
                   defaultValue={initialData?.gstin || ""}
                   placeholder="e.g. 33AABCA1234F1Z1"
-                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 />
               </div>
               <div>
-                <label className="monolith-label mb-1.5 block">Tax Preference</label>
+                <label className="mnx-label mb-1.5 block">Tax Preference</label>
                 <div className="flex gap-4 pt-2">
                   <label className="flex items-center gap-1.5 text-xs text-[var(--color-on-surface)] cursor-pointer">
-                    <input
+                    <CrmInput
                       type="radio"
                       name="taxPreference"
                       value="Taxable"
                       defaultChecked={initialData?.taxPreference !== "Tax Exempt"}
-                      className="accent-[#F9D972] size-4"
+                      className="accent-[var(--mnx-accent)] size-4"
                     />
                     <span>Taxable</span>
                   </label>
                   <label className="flex items-center gap-1.5 text-xs text-[var(--color-on-surface)] cursor-pointer">
-                    <input
+                    <CrmInput
                       type="radio"
                       name="taxPreference"
                       value="Tax Exempt"
                       defaultChecked={initialData?.taxPreference === "Tax Exempt"}
-                      className="accent-[#F9D972] size-4"
+                      className="accent-[var(--mnx-accent)] size-4"
                     />
                     <span>Tax Exempt</span>
                   </label>
@@ -589,11 +591,11 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-[var(--color-outline-variant)]">
               <div>
-                <label className="monolith-label mb-1.5 block">Currency</label>
+                <label className="mnx-label mb-1.5 block">Currency</label>
                 <NativeSelect
                   name="currency"
                   defaultValue={initialData?.currency || "INR- Indian Rupee"}
-                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 >
                   {currencies.map((c) => (
                     <option key={c} value={c}>{c}</option>
@@ -602,11 +604,11 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
               </div>
 
               <div>
-                <label className="monolith-label mb-1.5 block">Opening Balance Branch</label>
+                <label className="mnx-label mb-1.5 block">Opening Balance Branch</label>
                 <NativeSelect
                   name="openingBalanceBranch"
                   defaultValue={initialData?.openingBalanceBranch || "Chennai"}
-                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 >
                   {locations.map((loc) => (
                     <option key={loc} value={loc}>{loc}</option>
@@ -615,34 +617,34 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
               </div>
 
               <div>
-                <label className="monolith-label mb-1.5 block">Opening Balance Amount (INR)</label>
-                <input
+                <label className="mnx-label mb-1.5 block">Opening Balance Amount (INR)</label>
+                <CrmInput
                   type="number"
                   step="0.01"
                   name="openingBalanceAmount"
                   defaultValue={initialData?.openingBalanceAmount || 0}
-                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-[var(--color-outline-variant)]">
               <div>
-                <label className="monolith-label mb-1.5 block">Credit Limit (INR)</label>
-                <input
+                <label className="mnx-label mb-1.5 block">Credit Limit (INR)</label>
+                <CrmInput
                   type="number"
                   name="creditLimit"
                   defaultValue={initialData?.creditLimit || ""}
                   placeholder="e.g. 500000"
-                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 />
               </div>
               <div>
-                <label className="monolith-label mb-1.5 block">Payment Terms</label>
+                <label className="mnx-label mb-1.5 block">Payment Terms</label>
                 <NativeSelect
                   name="paymentTerms"
                   defaultValue={initialData?.paymentTerms || "Net 30"}
-                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 >
                   {paymentTermsList.map((term) => (
                     <option key={term} value={term}>{term}</option>
@@ -650,11 +652,11 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 </NativeSelect>
               </div>
               <div>
-                <label className="monolith-label mb-1.5 block">Account Owner *</label>
+                <label className="mnx-label mb-1.5 block">Account Owner *</label>
                 <NativeSelect
                   name="ownerId"
                   defaultValue={initialData?.ownerId || ""}
-                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+                  className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                   required
                 >
                   <option value="">Select Owner</option>
@@ -672,226 +674,226 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
         {activeTab === "ADDRESS" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-150">
             {/* Billing Address Card */}
-            <div className="monolith-card monolith-accent bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl p-5 space-y-3">
+            <div className="mnx-crm-panel-surface  bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl p-5 space-y-3">
               <div className="flex items-center justify-between border-b border-[var(--color-outline-variant)] pb-2">
-                <h4 className="monolith-h3 text-xs text-[var(--color-on-surface)] flex items-center gap-2">
-                  <MapPin className="size-4 text-[#F9D972]" />
+                <h4 className="mnx-title-3 text-xs text-[var(--color-on-surface)] flex items-center gap-2">
+                  <MapPin className="size-4 text-[var(--mnx-accent)]" />
                   <span>Billing Address</span>
                 </h4>
               </div>
 
               <div className="grid grid-cols-1 gap-3 text-xs">
                 <div>
-                  <label className="monolith-label block mb-1 text-[9px]">Attention</label>
-                  <input
+                  <label className="mnx-label block mb-1 text-[9px]">Attention</label>
+                  <CrmInput
                     type="text"
                     name="billingAttention"
                     value={billingAttention}
                     onChange={(e) => setBillingAttention(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="monolith-label block mb-1 text-[9px]">Country/Region</label>
-                  <input
+                  <label className="mnx-label block mb-1 text-[9px]">Country/Region</label>
+                  <CrmInput
                     type="text"
                     name="billingCountry"
                     value={billingCountry}
                     onChange={(e) => setBillingCountry(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="monolith-label block mb-1 text-[9px]">Address Line 1</label>
-                  <input
+                  <label className="mnx-label block mb-1 text-[9px]">Address Line 1</label>
+                  <CrmInput
                     type="text"
                     name="billingStreet1"
                     value={billingStreet1}
                     onChange={(e) => setBillingStreet1(e.target.value)}
                     placeholder="Street 1"
-                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="monolith-label block mb-1 text-[9px]">Address Line 2</label>
-                  <input
+                  <label className="mnx-label block mb-1 text-[9px]">Address Line 2</label>
+                  <CrmInput
                     type="text"
                     name="billingStreet2"
                     value={billingStreet2}
                     onChange={(e) => setBillingStreet2(e.target.value)}
                     placeholder="Street 2"
-                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="monolith-label block mb-1 text-[9px]">City</label>
-                    <input
+                    <label className="mnx-label block mb-1 text-[9px]">City</label>
+                    <CrmInput
                       type="text"
                       name="billingCity"
                       value={billingCity}
                       onChange={(e) => setBillingCity(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                      className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="monolith-label block mb-1 text-[9px]">State</label>
-                    <input
+                    <label className="mnx-label block mb-1 text-[9px]">State</label>
+                    <CrmInput
                       type="text"
                       name="billingState"
                       value={billingState}
                       onChange={(e) => setBillingState(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                      className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="monolith-label block mb-1 text-[9px]">Pin Code</label>
-                    <input
+                    <label className="mnx-label block mb-1 text-[9px]">Pin Code</label>
+                    <CrmInput
                       type="text"
                       name="billingPincode"
                       value={billingPincode}
                       onChange={(e) => setBillingPincode(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                      className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="monolith-label block mb-1 text-[9px]">Phone</label>
-                    <input
+                    <label className="mnx-label block mb-1 text-[9px]">Phone</label>
+                    <CrmInput
                       type="text"
                       name="billingPhone"
                       value={billingPhone}
                       onChange={(e) => setBillingPhone(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                      className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="monolith-label block mb-1 text-[9px]">Fax Number</label>
-                  <input
+                  <label className="mnx-label block mb-1 text-[9px]">Fax Number</label>
+                  <CrmInput
                     type="text"
                     name="billingFax"
                     value={billingFax}
                     onChange={(e) => setBillingFax(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                   />
                 </div>
               </div>
             </div>
 
             {/* Shipping Address Card */}
-            <div className="monolith-card monolith-accent bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl p-5 space-y-3">
+            <div className="mnx-crm-panel-surface  bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl p-5 space-y-3">
               <div className="flex items-center justify-between border-b border-[var(--color-outline-variant)] pb-2">
-                <h4 className="monolith-h3 text-xs text-[var(--color-on-surface)] flex items-center gap-2">
-                  <MapPin className="size-4 text-[#F9D972]" />
+                <h4 className="mnx-title-3 text-xs text-[var(--color-on-surface)] flex items-center gap-2">
+                  <MapPin className="size-4 text-[var(--mnx-accent)]" />
                   <span>Shipping Address</span>
                 </h4>
-                <button
+                <CrmButton
                   type="button"
                   onClick={handleCopyBillingAddress}
-                  className="flex items-center gap-1 text-[10px] text-[#F9D972] font-bold hover:underline cursor-pointer bg-transparent border-0"
+                  className="flex items-center gap-1 text-[10px] text-[var(--mnx-accent)] font-bold hover:underline cursor-pointer bg-transparent border-0"
                 >
                   <ArrowDown className="size-3" />
                   <span>Copy Billing Address</span>
-                </button>
+                </CrmButton>
               </div>
 
               <div className="grid grid-cols-1 gap-3 text-xs">
                 <div>
-                  <label className="monolith-label block mb-1 text-[9px]">Attention</label>
-                  <input
+                  <label className="mnx-label block mb-1 text-[9px]">Attention</label>
+                  <CrmInput
                     type="text"
                     name="shippingAttention"
                     value={shippingAttention}
                     onChange={(e) => setShippingAttention(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="monolith-label block mb-1 text-[9px]">Country/Region</label>
-                  <input
+                  <label className="mnx-label block mb-1 text-[9px]">Country/Region</label>
+                  <CrmInput
                     type="text"
                     name="shippingCountry"
                     value={shippingCountry}
                     onChange={(e) => setShippingCountry(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="monolith-label block mb-1 text-[9px]">Address Line 1</label>
-                  <input
+                  <label className="mnx-label block mb-1 text-[9px]">Address Line 1</label>
+                  <CrmInput
                     type="text"
                     name="shippingStreet1"
                     value={shippingStreet1}
                     onChange={(e) => setShippingStreet1(e.target.value)}
                     placeholder="Street 1"
-                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="monolith-label block mb-1 text-[9px]">Address Line 2</label>
-                  <input
+                  <label className="mnx-label block mb-1 text-[9px]">Address Line 2</label>
+                  <CrmInput
                     type="text"
                     name="shippingStreet2"
                     value={shippingStreet2}
                     onChange={(e) => setShippingStreet2(e.target.value)}
                     placeholder="Street 2"
-                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="monolith-label block mb-1 text-[9px]">City</label>
-                    <input
+                    <label className="mnx-label block mb-1 text-[9px]">City</label>
+                    <CrmInput
                       type="text"
                       name="shippingCity"
                       value={shippingCity}
                       onChange={(e) => setShippingCity(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                      className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="monolith-label block mb-1 text-[9px]">State</label>
-                    <input
+                    <label className="mnx-label block mb-1 text-[9px]">State</label>
+                    <CrmInput
                       type="text"
                       name="shippingState"
                       value={shippingState}
                       onChange={(e) => setShippingState(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                      className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="monolith-label block mb-1 text-[9px]">Pin Code</label>
-                    <input
+                    <label className="mnx-label block mb-1 text-[9px]">Pin Code</label>
+                    <CrmInput
                       type="text"
                       name="shippingPincode"
                       value={shippingPincode}
                       onChange={(e) => setShippingPincode(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                      className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="monolith-label block mb-1 text-[9px]">Phone</label>
-                    <input
+                    <label className="mnx-label block mb-1 text-[9px]">Phone</label>
+                    <CrmInput
                       type="text"
                       name="shippingPhone"
                       value={shippingPhone}
                       onChange={(e) => setShippingPhone(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                      className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="monolith-label block mb-1 text-[9px]">Fax Number</label>
-                  <input
+                  <label className="mnx-label block mb-1 text-[9px]">Fax Number</label>
+                  <CrmInput
                     type="text"
                     name="shippingFax"
                     value={shippingFax}
                     onChange={(e) => setShippingFax(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none"
                   />
                 </div>
               </div>
@@ -902,18 +904,18 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
         {/* Tab Panel: Remarks */}
         {activeTab === "REMARKS" && (
           <div className="p-6 bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl space-y-4 animate-in fade-in duration-150">
-            <h4 className="monolith-h3 text-xs text-[var(--color-on-surface)] flex items-center gap-2 border-b border-[var(--color-outline-variant)] pb-2">
-              <Notebook className="size-4.5 text-[#F9D972]" />
+            <h4 className="mnx-title-3 text-xs text-[var(--color-on-surface)] flex items-center gap-2 border-b border-[var(--color-outline-variant)] pb-2">
+              <Notebook className="size-4.5 text-[var(--mnx-accent)]" />
               <span>Customer Remarks & Notes</span>
             </h4>
             <div>
-              <label className="monolith-label block mb-1.5">Remarks (For internal CRM use)</label>
-              <textarea
+              <label className="mnx-label block mb-1.5">Remarks (For internal CRM use)</label>
+              <CrmTextarea
                 name="remarks"
                 defaultValue={initialData?.remarks || ""}
                 placeholder="Enter remarks or specific instructions..."
                 rows={5}
-                className="w-full p-3 bg-[var(--color-surface)] border border-[rgba(0,206,196,0.55)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[rgba(14,137,149,0.14)]"
+                className="w-full p-3 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
               />
             </div>
           </div>
@@ -922,21 +924,21 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
       {/* ─── ACTION BUTTONS (Tactile 3D Styling) ────────────────────────── */}
       <div className="flex justify-end gap-4 pt-4 border-t border-[var(--color-outline-variant)]">
-        <button
+        <CrmButton
           type="button"
           onClick={() => router.back()}
-          className="px-5 py-2 bg-[var(--color-surface-container)] hover:bg-[var(--color-surface-container-low)] text-[var(--color-on-surface-variant)] border border-[var(--color-outline-variant)] rounded-xl text-sm font-semibold cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] transition-all hover:-translate-y-0.5 active:translate-y-0 active:shadow-none"
+          className="px-5 py-2 bg-[var(--color-surface-container)] hover:bg-[var(--color-surface-container-low)] text-[var(--color-on-surface-variant)] border border-[var(--color-outline-variant)] rounded-xl text-sm font-semibold cursor-pointer shadow-[2px_2px_0px_0px_var(--mnx-border)] transition-all hover:-translate-y-0.5 active:translate-y-0 active:shadow-none"
         >
           Cancel
-        </button>
-        <button
+        </CrmButton>
+        <CrmButton
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[#F9D972] text-white rounded-xl text-sm font-bold transition-all shadow-[2px_2px_0px_0px_rgba(0,184,175,1)] hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,184,175,1)] hover:bg-[#E8C85D] active:translate-y-0 active:shadow-none disabled:opacity-50 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] text-mono-text rounded-xl text-sm font-bold transition-all shadow-[2px_2px_0px_0px_var(--mnx-accent-soft)] hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_var(--mnx-accent-soft)] hover:bg-[var(--mnx-accent)] active:translate-y-0 active:shadow-none disabled:opacity-50 cursor-pointer"
         >
           <Save className="size-4" />
           <span>{isSubmitting ? "Saving..." : isEdit ? "Update Customer" : "Save Customer"}</span>
-        </button>
+        </CrmButton>
       </div>
     </form>
   );

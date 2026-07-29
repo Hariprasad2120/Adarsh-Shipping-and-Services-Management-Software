@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmDialog, CrmTextarea } from "@/components/monolith/crm-workspace";
+
 import React, { useState, useTransition } from "react";
 import {Send,CheckCircle,RotateCcw,XCircle,Eye,ThumbsUp,FileText,ArchiveRestore,Loader2,ChevronDown,Plus,} from "lucide-react";
 import type { ApprovalStatus, CrmEntityType } from "@/modules/crm/approval-workflow";
@@ -22,18 +24,18 @@ const STATUS_CONFIG: Record<
   string,
   { label: string; bg: string; text: string }
 > = {
-  DRAFT: { label: "Draft", bg: "rgba(100,116,139,0.12)", text: "#475569" },
-  PENDING_APPROVAL: { label: "Pending Approval", bg: "rgba(251,191,36,0.15)", text: "#b45309" },
-  APPROVED: { label: "Approved", bg: "rgba(16,185,129,0.12)", text: "#059669" },
-  REWORK: { label: "Rework Required", bg: "rgba(251,146,60,0.15)", text: "#c2410c" },
-  SENT: { label: "Sent", bg: "rgba(59,130,246,0.12)", text: "#1d4ed8" },
-  CUSTOMER_VIEWED: { label: "Viewed by Customer", bg: "rgba(139,92,246,0.12)", text: "#7c3aed" },
-  ACCEPTED: { label: "Accepted", bg: "rgba(16,185,129,0.15)", text: "#047857" },
-  INVOICED: { label: "Invoiced", bg: "rgba(0,206,196,0.15)", text: "#0e8995" },
-  DECLINED: { label: "Declined", bg: "rgba(239,68,68,0.12)", text: "#b91c1c" },
-  ACTIVE: { label: "Active", bg: "rgba(59,130,246,0.12)", text: "#1d4ed8" },
-  COMPLETED: { label: "Completed", bg: "rgba(16,185,129,0.12)", text: "#059669" },
-  PAID: { label: "Paid", bg: "rgba(16,185,129,0.15)", text: "#047857" },
+  DRAFT: { label: "Draft", bg: "var(--mnx-accent-soft)", text: "var(--mnx-text-muted)" },
+  PENDING_APPROVAL: { label: "Pending Approval", bg: "var(--mnx-warning-bg)", text: "var(--mnx-warning)" },
+  APPROVED: { label: "Approved", bg: "var(--mnx-success-bg)", text: "var(--mnx-success)" },
+  REWORK: { label: "Rework Required", bg: "var(--mnx-warning-bg)", text: "var(--mnx-warning)" },
+  SENT: { label: "Sent", bg: "var(--mnx-accent-soft)", text: "var(--mnx-accent)" },
+  CUSTOMER_VIEWED: { label: "Viewed by Customer", bg: "var(--mnx-accent-soft)", text: "var(--mnx-accent)" },
+  ACCEPTED: { label: "Accepted", bg: "var(--mnx-success-bg)", text: "var(--mnx-success)" },
+  INVOICED: { label: "Invoiced", bg: "var(--mnx-accent-soft)", text: "var(--mnx-accent)" },
+  DECLINED: { label: "Declined", bg: "var(--mnx-danger-bg)", text: "var(--mnx-danger)" },
+  ACTIVE: { label: "Active", bg: "var(--mnx-accent-soft)", text: "var(--mnx-accent)" },
+  COMPLETED: { label: "Completed", bg: "var(--mnx-success-bg)", text: "var(--mnx-success)" },
+  PAID: { label: "Paid", bg: "var(--mnx-success-bg)", text: "var(--mnx-success)" },
 };
 
 export function ApprovalStatusBadge({ status }: { status: string }) {
@@ -70,66 +72,44 @@ function NoteDialog({
   const [note, setNote] = useState("");
   const btnBg =
     confirmVariant === "cyan"
-      ? "#F9D972"
+      ? "var(--mnx-accent)"
       : confirmVariant === "red"
-      ? "#ef4444"
-      : "#f97316";
-  const btnHover =
-    confirmVariant === "cyan"
-      ? "#E8C85D"
-      : confirmVariant === "red"
-      ? "#dc2626"
-      : "#ea580c";
-
+      ? "var(--mnx-danger)"
+      : "var(--mnx-warning)";
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.45)" }}
-    >
-      <div
-        className="rounded-2xl p-6 w-full max-w-md shadow-2xl"
-        style={{ background: "var(--color-surface)" }}
-      >
-        <h3 className="monolith-h3 mb-4">{title}</h3>
-        <textarea
-          autoFocus
-          rows={4}
-          placeholder={placeholder || "Add a note (optional)"}
-          className="w-full px-3 py-2 text-sm rounded-xl resize-none"
-          style={{ border: "1px solid rgba(0,206,196,0.55)" }}
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-        />
-        <div className="flex gap-3 justify-end mt-4">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 text-sm rounded-xl"
-            style={{
-              background: "var(--color-surface-container)",
-              color: "var(--color-on-surface)",
-            }}
-          >
+    <CrmDialog
+      open
+      onClose={onCancel}
+      title={title}
+      size="compact"
+      footer={
+        <div className="flex gap-3 justify-end">
+          <CrmButton onClick={onCancel} variant="secondary">
             Cancel
-          </button>
-          <button
+          </CrmButton>
+          <CrmButton
             onClick={() => {
               if (required && !note.trim()) return;
               onConfirm(note);
             }}
-            className="px-4 py-2 text-sm rounded-xl text-white font-medium transition-colors"
+            variant={confirmVariant === "red" ? "destructive" : "primary"}
             style={{ background: btnBg }}
-            onMouseEnter={(e) =>
-              ((e.target as HTMLElement).style.background = btnHover)
-            }
-            onMouseLeave={(e) =>
-              ((e.target as HTMLElement).style.background = btnBg)
-            }
           >
             {confirmLabel}
-          </button>
+          </CrmButton>
         </div>
-      </div>
-    </div>
+      }
+    >
+        <CrmTextarea
+          autoFocus
+          rows={4}
+          placeholder={placeholder || "Add a note (optional)"}
+          className="w-full px-3 py-2 text-sm rounded-xl resize-none"
+          style={{ border: "1px solid var(--mnx-accent-soft)" }}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+        />
+    </CrmDialog>
   );
 }
 
@@ -326,10 +306,10 @@ export function ApprovalActionBar({
     "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-xl transition-all disabled:opacity-50";
 
   const variantStyles = {
-    cyan: "bg-[#F9D972] text-white hover:bg-[#E8C85D]",
+    cyan: "bg-[var(--mnx-accent)] text-mono-text hover:bg-[var(--mnx-accent)]",
     gray: "bg-[var(--color-surface-container)] text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-low)]",
-    red: "bg-[#ef4444] text-white hover:bg-[#dc2626]",
-    orange: "bg-[#f97316] text-white hover:bg-[#ea580c]",
+    red: "bg-[var(--mnx-danger)] text-mono-text hover:bg-[var(--mnx-danger)]",
+    orange: "bg-[var(--mnx-warning)] text-mono-text hover:bg-[var(--mnx-warning)]",
   };
 
   return (
@@ -338,13 +318,13 @@ export function ApprovalActionBar({
         <div
           className="flex items-start gap-3 px-4 py-3 rounded-xl mb-3"
           style={{
-            background: "rgba(251,146,60,0.1)",
-            border: "1px solid rgba(251,146,60,0.3)",
+            background: "var(--mnx-warning-bg)",
+            border: "1px solid var(--mnx-warning-bg)",
           }}
         >
-          <RotateCcw size={14} className="mt-0.5 flex-shrink-0" style={{ color: "#f97316" }} />
+          <RotateCcw size={14} className="mt-0.5 flex-shrink-0" style={{ color: "var(--mnx-warning)" }} />
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#c2410c" }}>
+            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--mnx-warning)" }}>
               Rework Required
             </p>
             <p className="text-sm mt-0.5" style={{ color: "var(--color-on-surface)" }}>
@@ -355,9 +335,9 @@ export function ApprovalActionBar({
       )}
 
       <div className="flex items-center flex-wrap gap-2">
-        {isPending && <Loader2 size={14} className="animate-spin text-[#F9D972]" />}
+        {isPending && <Loader2 size={14} className="animate-spin text-[var(--mnx-accent)]" />}
         {actions.map((action) => (
-          <button
+          <CrmButton
             key={action.label}
             onClick={action.onClick}
             disabled={isPending}
@@ -365,7 +345,7 @@ export function ApprovalActionBar({
           >
             {action.icon}
             {action.label}
-          </button>
+          </CrmButton>
         ))}
       </div>
 
@@ -456,12 +436,12 @@ export function ApprovalLogList({ logs }: { logs: ApprovalLogEntry[] }) {
   }
 
   return (
-    <ol className="relative border-l-2 ml-2" style={{ borderColor: "rgba(0,206,196,0.25)" }}>
+    <ol className="relative border-l-2 ml-2" style={{ borderColor: "var(--mnx-accent-soft)" }}>
       {logs.map((log) => (
         <li key={log.id} className="mb-4 ml-5">
           <span
             className="absolute flex items-center justify-center w-3 h-3 rounded-full -left-1.5 mt-1"
-            style={{ background: "#F9D972" }}
+            style={{ background: "var(--mnx-accent)" }}
           />
           <div className="flex items-center gap-2 flex-wrap">
             <ApprovalStatusBadge status={log.toStatus} />

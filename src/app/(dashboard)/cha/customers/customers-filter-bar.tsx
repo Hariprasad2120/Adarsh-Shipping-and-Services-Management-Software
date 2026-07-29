@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/monolith/button";
-import { FilterMenu } from "@/components/monolith/filter-menu";
+import { ChaFilterMenu as FilterMenu } from "@/components/monolith/cha-workspace";
 import { cn } from "@/lib/utils";
 
 type CustomerFilterKey = "status" | "portal" | "balance";

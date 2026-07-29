@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/monolith/button";
-import { Modal } from "@/components/monolith/modal";
+import { ChaModal as Modal } from "@/components/monolith/cha-workspace";
 import { submitJobDeletionAction } from "@/modules/cha/actions";
 
 type JobDeleteInlineButtonProps = {

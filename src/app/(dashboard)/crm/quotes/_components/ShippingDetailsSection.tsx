@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmInput } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import type { UseFormReturn } from "react-hook-form";
 import type { QuoteFormValues } from "../_lib/types";
@@ -33,25 +35,25 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
   const errors = form.formState.errors;
 
   return (
-    <section className="monolith-form-section border-b border-[#d9dee7] px-5 py-5">
+    <section className="mnx-crm-form-section border-b border-[var(--mnx-border)] px-5 py-5">
       <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-mono-muted">Logistics / Shipping Details</h2>
       <div className="grid gap-4 md:grid-cols-2">
         {fields.slice(0, 4).map((field) => (
           <div key={field.name}>
-            <label className="mb-1 block text-[12px] font-medium text-[#374151]">{field.label}</label>
-            <input
+            <label className="mb-1 block text-[12px] font-medium text-[var(--mnx-text-strong)]">{field.label}</label>
+            <CrmInput
               type={field.type ?? "text"}
-              className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
+              className="h-9 w-full rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
               {...form.register(field.name, field.type === "number" ? { valueAsNumber: true } : undefined)}
             />
-            {errors[field.name]?.message ? <p className="mt-1 text-[11px] text-[#fe4242]">{errors[field.name]?.message}</p> : null}
+            {errors[field.name]?.message ? <p className="mt-1 text-[11px] text-[var(--mnx-danger)]">{errors[field.name]?.message}</p> : null}
           </div>
         ))}
 
         <div>
-          <label className="mb-1 block text-[12px] font-medium text-[#374151]">INCOTERM</label>
+          <label className="mb-1 block text-[12px] font-medium text-[var(--mnx-text-strong)]">INCOTERM</label>
           <NativeSelect
-            className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
+            className="h-9 w-full rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
             {...form.register("incoterm")}
           >
             <option value="">Select INCOTERM</option>
@@ -64,9 +66,9 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
         </div>
 
         <div>
-          <label className="mb-1 block text-[12px] font-medium text-[#374151]">Container type</label>
+          <label className="mb-1 block text-[12px] font-medium text-[var(--mnx-text-strong)]">Container type</label>
           <NativeSelect
-            className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
+            className="h-9 w-full rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
             {...form.register("containerType")}
           >
             <option value="">Select container type</option>
@@ -80,13 +82,13 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
 
         {fields.slice(4).map((field) => (
           <div key={field.name}>
-            <label className="mb-1 block text-[12px] font-medium text-[#374151]">{field.label}</label>
-            <input
+            <label className="mb-1 block text-[12px] font-medium text-[var(--mnx-text-strong)]">{field.label}</label>
+            <CrmInput
               type={field.type ?? "text"}
-              className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
+              className="h-9 w-full rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
               {...form.register(field.name, field.type === "number" ? { valueAsNumber: true } : undefined)}
             />
-            {errors[field.name]?.message ? <p className="mt-1 text-[11px] text-[#fe4242]">{errors[field.name]?.message}</p> : null}
+            {errors[field.name]?.message ? <p className="mt-1 text-[11px] text-[var(--mnx-danger)]">{errors[field.name]?.message}</p> : null}
           </div>
         ))}
       </div>

@@ -18,7 +18,7 @@ import {
 } from "@/components/monolith/workspace-data-table";
 import { Button } from "@/components/monolith/button";
 import { Badge } from "@/components/monolith/badge";
-import { FilterMenu } from "@/components/monolith/filter-menu";
+import { ChaFilterMenu as FilterMenu } from "@/components/monolith/cha-workspace";
 import { JobFilingQueryWarningIndicator } from "@/app/(dashboard)/cha/_components/job-filing-query-warning-indicator";
 import { ChaDueDateWarningsIndicator } from "@/app/(dashboard)/cha/_components/cha-due-date-warnings-indicator";
 import type { DueDateWarningViewModel } from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
