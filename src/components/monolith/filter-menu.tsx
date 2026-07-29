@@ -1,6 +1,6 @@
 "use client";
 
-import { Filter } from "lucide-react";
+import { ListFilter } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/monolith/dropdown-menu";
 
 export type FilterMenuProps = {
@@ -19,17 +19,19 @@ export function FilterMenu({
   ariaLabel = "Open filters",
   children,
   contentClassName = "w-[360px]",
-  label,
+  label = "Filter",
   onOpenChange,
   open,
 }: FilterMenuProps) {
   return (
     <DropdownMenu modal={false} open={open} onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>
-        <button type="button" className="filter-button relative" aria-label={ariaLabel}>
-          <Filter className="h-4 w-4" />
+        <button type="button" className="mnx-filter-button filter-button" aria-label={ariaLabel}>
+          <ListFilter aria-hidden="true" />
           {label ? <span>{label}</span> : null}
-          {activeCount && activeCount > 0 ? <i>{activeCount}</i> : null}
+          {typeof activeCount === "number" ? (
+            <i aria-label={`${activeCount} active filters`}>{activeCount}</i>
+          ) : null}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className={`${contentClassName} !p-0`}>

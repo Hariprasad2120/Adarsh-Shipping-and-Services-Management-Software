@@ -44,9 +44,9 @@ export default async function ChaApprovalsPage() {
 
       {/* Checklist Queue */}
       <ChaSectionShell
+        index="01"
         title="Pending Approvals"
         description="Pending job checklist audits assigned to you for review and approval."
-        icon={<CheckSquare size={16} />}
         count={approvals.length}
         accent="blue"
       >
@@ -111,9 +111,9 @@ export default async function ChaApprovalsPage() {
 
       {/* Deletion Queue */}
       <ChaSectionShell
+        index="02"
         title="Job Deletion Requests"
         description="Direct manager review queue for destructive CHA job deletion requests."
-        icon={<Trash2 size={16} />}
         count={deletionRequests.length}
         accent="orange"
       >

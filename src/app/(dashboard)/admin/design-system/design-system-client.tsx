@@ -1,22 +1,28 @@
 "use client";
 
+import { useState } from "react";
 import {
+  ArrowDown,
   ArrowUpRight,
+  Check,
   CheckCircle2,
-  Download,
   FileText,
   LayoutGrid,
   PackageCheck,
+  Plus,
   ShieldCheck,
   Sparkles,
   Type,
+  X,
 } from "lucide-react";
 import {
+  MonolithIconAction,
   MonolithSpecLabel,
   WorkspaceAction,
   WorkspaceBadge,
   WorkspaceCheckbox,
   DropdownSelect,
+  FilterMenu,
   WorkspaceField,
   WorkspaceInput,
   WorkspaceMetric,
@@ -146,6 +152,18 @@ function ShowcaseSection({
 }
 
 export default function DesignSystemClient() {
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState(["Sea", "Air"]);
+  const filterOptions = ["Sea", "Air", "Attention"];
+
+  function toggleFilter(option: string) {
+    setSelectedFilters((current) =>
+      current.includes(option)
+        ? current.filter((item) => item !== option)
+        : [...current, option],
+    );
+  }
+
   return (
     <WorkspacePage className="mnx-showcase-page">
       <WorkspacePageHeader
@@ -298,22 +316,104 @@ export default function DesignSystemClient() {
           title="Buttons and badges"
           description="Use shared actions for all command surfaces."
         >
-          <div className="mnx-showcase-action-stack">
-            <WorkspaceAction>
-              Create shipment
-              <ArrowUpRight size={14} />
-            </WorkspaceAction>
-            <WorkspaceAction variant="secondary">
-              <Download size={14} />
-              Export report
-            </WorkspaceAction>
-            <WorkspaceAction variant="destructive">Delete draft</WorkspaceAction>
+          <div className="mnx-showcase-button-board">
+            <div>
+              <MonolithSpecLabel as="p">Button hierarchy</MonolithSpecLabel>
+              <div className="mnx-showcase-action-stack">
+                <WorkspaceAction>
+                  Create shipment
+                  <Plus aria-hidden="true" />
+                </WorkspaceAction>
+                <WorkspaceAction variant="accent">
+                  Approve checklist
+                  <Check aria-hidden="true" />
+                </WorkspaceAction>
+                <WorkspaceAction variant="secondary">Save draft</WorkspaceAction>
+                <WorkspaceAction variant="outline">
+                  Export report
+                  <ArrowDown aria-hidden="true" />
+                </WorkspaceAction>
+                <WorkspaceAction variant="destructive">Delete job</WorkspaceAction>
+                <WorkspaceAction disabled>Unavailable</WorkspaceAction>
+              </div>
+            </div>
+            <div>
+              <MonolithSpecLabel as="p">Text & icon actions</MonolithSpecLabel>
+              <div className="mnx-showcase-link-actions">
+                <a href="#shipments">
+                  View shipment
+                  <ArrowUpRight aria-hidden="true" />
+                </a>
+                <button type="button">Edit details</button>
+                <MonolithIconAction aria-label="Add">
+                  <Plus aria-hidden="true" />
+                </MonolithIconAction>
+                <MonolithIconAction aria-label="Next" disabled>
+                  <ArrowUpRight aria-hidden="true" />
+                </MonolithIconAction>
+                <MonolithIconAction aria-label="Delete" className="mnx-text-danger">
+                  <X aria-hidden="true" />
+                </MonolithIconAction>
+              </div>
+            </div>
           </div>
-          <div className="mnx-showcase-badges">
-            <WorkspaceBadge variant="success">Approved</WorkspaceBadge>
-            <WorkspaceBadge variant="warning">Attention</WorkspaceBadge>
-            <WorkspaceBadge variant="danger">Overdue</WorkspaceBadge>
-            <WorkspaceBadge variant="neutral">Draft</WorkspaceBadge>
+          <div className="mnx-showcase-filter-board">
+            <MonolithSpecLabel as="p">Filter controls</MonolithSpecLabel>
+            <div className="mnx-showcase-filter-row">
+              <div className="mnx-filter-row" role="group" aria-label="Shipment mode filter">
+                <button type="button" className="is-active">All</button>
+                <button type="button">Sea</button>
+                <button type="button">Air</button>
+              </div>
+              <FilterMenu
+                activeCount={selectedFilters.length}
+                ariaLabel="Open shipment filters"
+                contentClassName="mnx-showcase-filter-menu w-[280px]"
+                onOpenChange={setFilterOpen}
+                open={filterOpen}
+              >
+                <div className="mnx-showcase-filter-menu-content">
+                  <div>
+                    <MonolithSpecLabel as="p">Filter by</MonolithSpecLabel>
+                    <p>Refine the shipment register without leaving the table.</p>
+                  </div>
+                  <div className="mnx-showcase-filter-menu-options">
+                    {filterOptions.map((option) => {
+                      const active = selectedFilters.includes(option);
+
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          className={`mnx-plain mnx-menu-option ${active ? "mnx-menu-option-active" : ""}`}
+                          onClick={() => toggleFilter(option)}
+                        >
+                          <span>{option}</span>
+                          {active ? <Check aria-hidden="true" /> : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="mnx-showcase-filter-menu-actions">
+                    <WorkspaceAction
+                      size="compact"
+                      type="button"
+                      variant="outline"
+                      onClick={() => setSelectedFilters([])}
+                    >
+                      Clear
+                    </WorkspaceAction>
+                    <WorkspaceAction
+                      size="compact"
+                      type="button"
+                      onClick={() => setFilterOpen(false)}
+                    >
+                      Apply
+                    </WorkspaceAction>
+                  </div>
+                </div>
+              </FilterMenu>
+            </div>
           </div>
         </ShowcaseSection>
 

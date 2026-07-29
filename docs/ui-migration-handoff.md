@@ -29,6 +29,39 @@ Last updated: 2026-07-29
   composition with neutral controls and one bounded content scroller. Static,
   type, focused test, build, archive, and HTTP smoke gates pass; live visual
   verification is blocked by the same missing Browser instance.
+- The CHA dashboard typography/icon-removal pass is also applied. CHA
+  section/control headings now sit outside the component cards with the
+  explanatory copy and actions aligned to the right on desktop, following the
+  protected `/dashboard` command-center heading pattern. The second refinement
+  uses numeric markers instead of text eyebrows, moves action controls into the
+  card surface below the outside heading, and uses the shared heading type scale
+  for side-by-side sections. The latest correction applies the exact protected
+  dashboard section-heading typography to CHA outside headings:
+  `clamp(32px, 3.15vw, 44px)`, weight `360`, line-height `0.98`, and
+  `-0.055em` tracking, with a narrow-container fallback for lower cards.
+  CHA data tables now follow the attached shipment-register reference across
+  both `DataTable` and `ChaTable`: uppercase 13 px heads, 15 px body type,
+  13 px secondary copy, 96 px row rhythm, 22 px cell padding, quiet dividers,
+  bold primary record cells, and matching footer spacing. The CHA header graphic
+  is tokenized and routed through the shared page-header `graphic` prop. The
+  table label/header band is now reduced to a 44 px rhythm with a theme-tinted
+  background, and the CHA dashboard imports the client-safe, theme-tokenized
+  `src/app/(dashboard)/todo/graphics/TodoHeaderGraphic.tsx` to avoid the
+  `createMotionComponent()` Server Component runtime error. The latest
+  refinement splits the header graphics back to their requested module files:
+  CHA uses `src/app/(dashboard)/cha/graphics/ChaHeaderGraphic.tsx`, To-Do uses
+  `src/app/(dashboard)/todo/graphics/TodoHeaderGraphic.tsx`; both are
+  client-safe and share the same theme-aware glassmorphism token classes. The
+  To-Do `Create task` action now lives in the task ledger panel header beside
+  the filter instead of over the hero graphic. CHA non-editable
+  heading/table-label text also suppresses stray click carets. The CHA metric
+  summary strip now follows the attached connected-card reference with one
+  rounded surface, vertical dividers, uppercase muted labels, large lightweight
+  values, quiet status copy, and responsive divider behavior. The metric-card
+  typography is tuned to the reference with Inter, lighter 12 px uppercase
+  labels, 42-50 px lightweight values, and 13 px regular status copy.
+  Static, type, focused test, verifier, and production-build gates pass; live
+  visual verification is still blocked by the missing Browser instance.
 
 ## Batch 005 implementation
 
@@ -108,9 +141,50 @@ CHA dialog reference archive:
   Monolith-shell activation.
 - `src/styles/monolith-system.css`: CRM semantic and responsive presentation.
 - `src/components/monolith/cha-workspace.tsx`: centralized CHA modal, custom
-  select, native select, filter-menu, warning-popover, and dialog adapters.
+  select, native select, filter-menu, warning-popover, dialog adapters, and
+  outside-card section heading composition.
 - `src/components/cha/create-job-dialog.tsx`: reference-composed create/success
   dialogs and centralized autocomplete surfaces.
+- `src/app/(dashboard)/cha/page.tsx` and
+  `src/app/(dashboard)/cha/_components/cha-operations-shared.tsx`: CHA
+  dashboard presentation using dashboard typography and icon-free headings.
+- `src/styles/monolith-system.css`: CHA metric strip uses the connected-card
+  reference with reduced card height, tighter vertical padding, lightweight
+  labels, and responsive dividers.
+- `src/components/monolith/button.tsx`,
+  `src/components/monolith/workspace.tsx`,
+  `src/components/monolith/foundation.tsx`, and
+  `src/styles/monolith-system.css`: shared Monolith actions now expose the
+  reference button hierarchy, including accent and outline variants plus
+  reference-sized circular icon actions. Backup:
+  `OLD UI code/ui-iteration-backups/monolith-button-reference-20260729/`.
+- `src/components/monolith/filter-menu.tsx` and
+  `src/styles/monolith-system.css`: shared filter controls now use the
+  reference segmented filter row and bordered Filter trigger with list icon and
+  accent count chip; the admin design-system sample opens the live shared
+  filter dropdown with selectable options and Apply/Clear actions. Backup:
+  `OLD UI code/ui-iteration-backups/monolith-filter-reference-20260729/`.
+- `src/app/(dashboard)/admin/design-system/design-system-client.tsx`: the
+  button showcase now mirrors the reference board with Button hierarchy and
+  Text & icon actions groups.
+- `src/app/(dashboard)/cha/page.tsx`,
+  `src/app/(dashboard)/cha/_components/cha-dashboard-filter-action.tsx`,
+  `src/components/cha/dashboard-create-job.tsx`, and
+  `src/styles/monolith-system.css`: CHA dashboard assigned-jobs actions now use
+  shared icon buttons plus a scoped filter menu; table body/status text is
+  normal weight with colored text statuses; success/danger swatches use the
+  light semantic surfaces. Backup:
+  `OLD UI code/ui-iteration-backups/cha-dashboard-actions-status-colors-20260729/`.
+- `src/app/(dashboard)/cha/page.tsx`,
+  `src/app/(dashboard)/cha/_components/cha-dashboard-filter-action.tsx`, and
+  `src/styles/monolith-system.css`: the assigned-jobs command row now includes
+  a shared Monolith search control, a stable open-state Filter trigger, and
+  URL-backed Categories, Job type, and Current stages filter groups with shared
+  Apply/Clear actions and a persistent empty `0` count. The latest refinement
+  keeps search as a compact single field with the icon inside it, nests filter
+  groups in disclosure sections without an internal scrollbar, and removes
+  hover lift from the CHA action/filter cluster to prevent menu-transition
+  nudging.
 - `scripts/verify-monolith-expense-cha-ui.mjs`: exhaustive CHA popup/dropdown,
   behavior, and archive gate.
 
@@ -123,7 +197,11 @@ Passed:
 - static CRM verifier for all 57 routes and every dynamic route family;
 - targeted ESLint for new infrastructure, boundaries, shell, verifier, and
   tests;
+- targeted ESLint for the latest CHA dashboard search/filter files and shared
+  filter component;
 - `npx tsc --noEmit -p tsconfig.ui-migration.json`;
+- `npx tsc --noEmit -p tsconfig.ui-migration.json` after the latest CHA
+  search/filter refinement;
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`;
 - 21 focused tests in 7 suites;
 - `NODE_OPTIONS=--max-old-space-size=8192 npm run build`, including Prisma

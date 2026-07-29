@@ -59,7 +59,8 @@ export function DashboardCreateJob({ options, currentUserId, canCreateJob }: Das
       {canCreateJob ? (
         <>
           <Button size="sm" className="gap-2" onClick={() => setIsOpen(true)}>
-            <Plus size={14} /> New Job
+            <Plus aria-hidden="true" />
+            New Job
           </Button>
           <CreateJobDialog
             open={isOpen}

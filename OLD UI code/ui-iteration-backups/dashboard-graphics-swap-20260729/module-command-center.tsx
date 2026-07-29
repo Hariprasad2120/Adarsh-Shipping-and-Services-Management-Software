@@ -1,0 +1,240 @@
+import {
+  ArrowUpRight,
+  ShieldCheck,
+} from "lucide-react";
+import Link from "next/link";
+import { WorkspaceSectionHeading } from "@/components/monolith/workspace";
+import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
+
+interface ModuleCommandCenterProps {
+  snapshot: DashboardModuleSnapshot;
+}
+
+const MODULE_LAYOUT_SEQUENCE = [
+  "image-left",
+  "image-right",
+  "image-right",
+  "image-left",
+  "image-right",
+  "image-left",
+] as const;
+
+type ModuleVisual = ReturnType<typeof getModuleVisual>;
+
+function formatSnapshotTime(value: string) {
+  return new Intl.DateTimeFormat("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function getModuleVisual(moduleId: string) {
+  if (moduleId === "product-catalogue") return "catalogue";
+  if (moduleId === "hrms") return "people";
+  if (moduleId === "attendance") return "attendance";
+  if (moduleId === "ams") return "performance";
+  if (moduleId === "lms") return "learning";
+  if (moduleId === "crm") return "pipeline";
+  if (moduleId === "communication") return "communication";
+  if (moduleId === "expense") return "expense";
+  if (moduleId === "cha") return "shipment";
+  if (moduleId === "accounting") return "finance";
+  if (moduleId === "recruit") return "recruit";
+
+  return "operations";
+}
+
+function getModuleLayout(moduleId: string, index: number) {
+  if (moduleId === "lms" || moduleId === "communication") {
+    return "image-left";
+  }
+
+  if (moduleId === "attendance" || moduleId === "ams" || moduleId === "expense") {
+    return "image-right";
+  }
+
+  return MODULE_LAYOUT_SEQUENCE[index % MODULE_LAYOUT_SEQUENCE.length];
+}
+
+function ModuleGraphic({ visual }: { visual: ModuleVisual }) {
+  if (visual === "catalogue") {
+    return (
+      <svg className="mnx-module-graphic" viewBox="0 0 240 180" aria-hidden="true" focusable="false">
+        <path className="mnx-module-graphic-surface" d="M70 36h86l22 24v84H70z" />
+        <path className="mnx-module-graphic-faint" d="M156 36v25h22" />
+        <path className="mnx-module-graphic-accent" d="M90 78h66M90 101h78M90 124h46" />
+        <path className="mnx-module-graphic-line" d="M52 58h24v86h92M178 74h18v48h-28" />
+        <circle className="mnx-module-graphic-dot" cx="52" cy="58" r="5" />
+        <circle className="mnx-module-graphic-dot" cx="196" cy="122" r="5" />
+      </svg>
+    );
+  }
+
+  if (visual === "people" || visual === "recruit") {
+    return (
+      <svg className="mnx-module-graphic" viewBox="0 0 240 180" aria-hidden="true" focusable="false">
+        <circle className="mnx-module-graphic-surface" cx="120" cy="70" r="32" />
+        <path className="mnx-module-graphic-accent" d="M88 135c7-27 57-27 64 0" />
+        <circle className="mnx-module-graphic-faint" cx="65" cy="103" r="20" />
+        <circle className="mnx-module-graphic-faint" cx="178" cy="101" r="22" />
+        <path className="mnx-module-graphic-line" d="M85 108l20-19M154 88l24 17M65 123v22h113v-22" />
+        <circle className="mnx-module-graphic-dot" cx="65" cy="145" r="5" />
+        <circle className="mnx-module-graphic-dot" cx="178" cy="145" r="5" />
+      </svg>
+    );
+  }
+
+  if (visual === "attendance") {
+    return (
+      <svg className="mnx-module-graphic" viewBox="0 0 240 180" aria-hidden="true" focusable="false">
+        <circle className="mnx-module-graphic-surface" cx="120" cy="90" r="56" />
+        <path className="mnx-module-graphic-accent" d="M120 52v38l29 19" />
+        <path className="mnx-module-graphic-line" d="M120 34v14M120 132v14M64 90h14M162 90h14" />
+        <circle className="mnx-module-graphic-dot" cx="120" cy="90" r="6" />
+      </svg>
+    );
+  }
+
+  if (visual === "performance" || visual === "finance" || visual === "expense") {
+    return (
+      <svg className="mnx-module-graphic" viewBox="0 0 240 180" aria-hidden="true" focusable="false">
+        <path className="mnx-module-graphic-line" d="M54 132h132" />
+        <path className="mnx-module-graphic-surface" d="M62 92h12v40H62zM98 62h12v70H98zM134 78h12v54h-12zM170 44h12v88h-12z" />
+        <path className="mnx-module-graphic-accent" d="M62 106l37-34 38 22 44-56" />
+        <circle className="mnx-module-graphic-dot" cx="62" cy="106" r="5" />
+        <circle className="mnx-module-graphic-dot" cx="137" cy="94" r="5" />
+        <circle className="mnx-module-graphic-dot" cx="181" cy="38" r="5" />
+      </svg>
+    );
+  }
+
+  if (visual === "learning") {
+    return (
+      <svg className="mnx-module-graphic" viewBox="0 0 240 180" aria-hidden="true" focusable="false">
+        <path className="mnx-module-graphic-surface" d="M52 58c28-10 48-8 68 8v80c-20-16-40-18-68-8z" />
+        <path className="mnx-module-graphic-surface" d="M120 66c20-16 40-18 68-8v80c-28-10-48-8-68 8z" />
+        <path className="mnx-module-graphic-accent" d="M120 66v80M70 86h30M70 108h32M140 86h30M140 108h28" />
+        <path className="mnx-module-graphic-faint" d="M52 138c28-10 48-8 68 8 20-16 40-18 68-8" />
+      </svg>
+    );
+  }
+
+  if (visual === "pipeline" || visual === "communication") {
+    return (
+      <svg className="mnx-module-graphic" viewBox="0 0 240 180" aria-hidden="true" focusable="false">
+        <path className="mnx-module-graphic-line" d="M62 92h38l24-34h52M124 58v64h54M100 92l24 30" />
+        <rect className="mnx-module-graphic-surface" x="42" y="70" width="46" height="44" rx="16" />
+        <rect className="mnx-module-graphic-surface" x="100" y="36" width="48" height="44" rx="16" />
+        <rect className="mnx-module-graphic-surface" x="152" y="100" width="48" height="44" rx="16" />
+        <circle className="mnx-module-graphic-dot" cx="124" cy="58" r="5" />
+        <path className="mnx-module-graphic-accent" d="M56 91h18M114 57h20M166 122h20" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className="mnx-module-graphic" viewBox="0 0 240 180" aria-hidden="true" focusable="false">
+      <path className="mnx-module-graphic-line" d="M54 118c28-42 56-28 78-62 22 34 50 20 78 62" />
+      <path className="mnx-module-graphic-surface" d="M72 82h54v50H72zM132 64h36v68h-36z" />
+      <path className="mnx-module-graphic-accent" d="M84 102h22M144 84h12M144 102h12M144 120h12" />
+      <circle className="mnx-module-graphic-dot" cx="54" cy="118" r="5" />
+      <circle className="mnx-module-graphic-dot" cx="132" cy="56" r="5" />
+      <circle className="mnx-module-graphic-dot" cx="210" cy="118" r="5" />
+    </svg>
+  );
+}
+
+export function ModuleCommandCenter({ snapshot }: ModuleCommandCenterProps) {
+  const availableCount = snapshot.modules.filter((module) => module.available).length;
+
+  return (
+    <section className="mnx-module-command-section" aria-label="Module command center">
+      <header className="mnx-module-command-header">
+        <WorkspaceSectionHeading
+          index="03"
+          title="Module command center"
+          description="A live pulse from the workspaces enabled for your organization and available to your role."
+        />
+        <div className="mnx-module-command-status" title={`Updated at ${formatSnapshotTime(snapshot.generatedAt)}`}>
+          <span><i />{availableCount} live</span>
+          <small>{snapshot.modules.length} enabled</small>
+        </div>
+      </header>
+
+      <div className="mnx-module-command">
+        {snapshot.modules.length > 0 ? (
+          <div className="mnx-module-grid">
+            {snapshot.modules.map((module, index) => {
+              const layout = getModuleLayout(module.id, index);
+              const visual = getModuleVisual(module.id);
+              return (
+                <Link
+                  className="mnx-module-card"
+                  data-layout={layout}
+                  data-visual={visual}
+                  href={module.href}
+                  key={module.id}
+                >
+                  <div className="mnx-module-card-art" aria-hidden="true">
+                    <ModuleGraphic visual={visual} />
+                  </div>
+                  <div className="mnx-module-card-copy">
+                    <header>
+                      <span>{module.eyebrow}</span>
+                      <h3>{module.title}</h3>
+                    </header>
+
+                    <p className="mnx-module-description">{module.description}</p>
+
+                    <div className="mnx-module-primary-stat">
+                      <strong>{String(module.primaryMetric.value).padStart(2, "0")}</strong>
+                      <div>
+                        <span>{module.primaryMetric.label}</span>
+                        <small>{module.primaryMetric.detail}</small>
+                      </div>
+                    </div>
+
+                    {module.supportingMetrics.length > 0 ? (
+                      <dl className="mnx-module-supporting-stats">
+                        {module.supportingMetrics.map((metric) => (
+                          <div key={metric.label}>
+                            <dt>{metric.label}</dt>
+                            <dd>{String(metric.value).padStart(2, "0")}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    ) : (
+                      <div className="mnx-module-unavailable-note">
+                        Live counts could not be loaded. You can still open the workspace.
+                      </div>
+                    )}
+
+                    <footer>
+                      <span className="mnx-module-open-link">
+                        Open module <ArrowUpRight size={14} />
+                      </span>
+                      {module.actions.slice(1, 2).map((action) => (
+                        <span className="mnx-module-secondary-link" key={action.href}>
+                          {action.label}
+                        </span>
+                      ))}
+                    </footer>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="mnx-module-empty">
+            <ShieldCheck size={24} />
+            <h3>Your core workspace is ready</h3>
+            <p>Enable operational modules in Admin settings to add their live dashboard panels.</p>
+            <Link href="/admin/settings">
+              Review module settings <ArrowUpRight size={14} />
+            </Link>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}

@@ -4,24 +4,12 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { can, requirePermission } from "@/lib/rbac";
 import Link from "next/link";
+import type { Prisma } from "@/generated/prisma/client";
+import { ArrowRight, Settings } from "lucide-react";
 import { ensureSettingsAndDefaults, getEligibleManagers, listChaDueDateWarnings, listFilingQueryEscalationWarnings, listJobTypesForSelection, listSection49ValidityWarnings } from "@/modules/cha/service";
 import { DashboardCreateJob } from "@/components/cha/dashboard-create-job";
 import { JobFilingQueryWarningIndicator } from "./_components/job-filing-query-warning-indicator";
 import { JobSection49ValidityWarningIndicator } from "./_components/job-section49-validity-warning-indicator";
-import {
-  FileText,
-  CheckSquare,
-  DollarSign,
-  AlertCircle,
-  Briefcase,
-  UserCheck,
-  Settings,
-  ArrowRight,
-  Sparkles,
-  History,
-} from "lucide-react";
-import { Button } from "@/components/monolith/button";
-import { Badge } from "@/components/monolith/badge";
 import {
   DataTable,
   DataTableBody,
@@ -36,8 +24,38 @@ import {
   getChaStageBadgeVariant,
 } from "@/lib/cha-badges";
 import { ChaControlPanel, ChaMetricCard, ChaMetrics, ChaPageHeader, ChaSectionShell } from "./_components/cha-operations-shared";
+import { ChaDashboardFilterAction } from "./_components/cha-dashboard-filter-action";
+import { ChaDashboardSearchAction } from "./_components/cha-dashboard-search-action";
+import { ChaHeaderGraphic } from "./graphics/ChaHeaderGraphic";
 
-export default async function ChaDashboard() {
+function chaStatusTextClass(variant: ReturnType<typeof getChaStageBadgeVariant>) {
+  switch (variant) {
+    case "success":
+      return "mnx-cha-status-success";
+    case "destructive":
+      return "mnx-cha-status-danger";
+    case "warning":
+      return "mnx-cha-status-warning";
+    case "default":
+      return "mnx-cha-status-info";
+    default:
+      return "mnx-cha-status-muted";
+  }
+}
+
+type ChaDashboardProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function getParamList(value: string | string[] | undefined) {
+  if (Array.isArray(value)) {
+    return value.map((item) => item.trim()).filter(Boolean);
+  }
+
+  return typeof value === "string" && value.trim() ? [value.trim()] : [];
+}
+
+export default async function ChaDashboard({ searchParams }: ChaDashboardProps) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -46,6 +64,60 @@ export default async function ChaDashboard() {
 
   await requirePermission(session.user.id, "cha.access");
   const canCreateJob = await can(session.user.id, "cha.job.create");
+  const params = searchParams ? await searchParams : {};
+  const assignedSearch =
+    typeof params.assignedSearch === "string" ? params.assignedSearch.trim() : "";
+  const selectedJobTypes = getParamList(params.jobType);
+  const selectedStages = getParamList(params.stage);
+  const selectedCategories = getParamList(params.category);
+  const assignedSearchFilter: Prisma.ChaJobWhereInput = assignedSearch
+    ? {
+        OR: [
+          { jobNumber: { contains: assignedSearch, mode: "insensitive" as const } },
+          { title: { contains: assignedSearch, mode: "insensitive" as const } },
+          { customer: { name: { contains: assignedSearch, mode: "insensitive" as const } } },
+          { jobType: { name: { contains: assignedSearch, mode: "insensitive" as const } } },
+          {
+            filing: {
+              is: {
+                billOfEntryNumber: { contains: assignedSearch, mode: "insensitive" as const },
+              },
+            },
+          },
+          {
+            filing: {
+              is: {
+                shippingBillNumber: { contains: assignedSearch, mode: "insensitive" as const },
+              },
+            },
+          },
+        ],
+      }
+    : {};
+  const assignedFilterConditions: Prisma.ChaJobWhereInput[] = [];
+
+  if (selectedJobTypes.length > 0) {
+    assignedFilterConditions.push({
+      jobType: { name: { in: selectedJobTypes, mode: "insensitive" as const } },
+    });
+  }
+
+  if (selectedStages.length > 0) {
+    assignedFilterConditions.push({ stage: { in: selectedStages } });
+  }
+
+  if (selectedCategories.includes("high-priority")) {
+    assignedFilterConditions.push({ priority: { in: ["HIGH", "URGENT"] } });
+  }
+
+  if (selectedCategories.includes("pending-filing")) {
+    assignedFilterConditions.push({ stage: "FILING" });
+  }
+
+  const assignedDashboardFilters: Prisma.ChaJobWhereInput = {
+    ...assignedSearchFilter,
+    ...(assignedFilterConditions.length > 0 ? { AND: assignedFilterConditions } : {}),
+  };
 
   const [
     activeJobsCount,
@@ -87,6 +159,7 @@ export default async function ChaDashboard() {
         orgId,
         status: "ACTIVE",
         assignments: { some: { userId: session.user.id } },
+        ...assignedDashboardFilters,
       },
       include: {
         customer: { select: { name: true } },
@@ -221,35 +294,30 @@ export default async function ChaDashboard() {
       title: "Active Clearance Jobs",
       value: activeJobsCount,
       note: "Jobs currently in operations",
-      icon: <Briefcase size={16} />,
       accent: "blue" as const,
     },
     {
       title: "Checklists Pending",
       value: pendingChecklistsCount,
       note: "Awaiting manager review decision",
-      icon: <CheckSquare size={16} />,
       accent: "orange" as const,
     },
     {
       title: "Pending Filings",
       value: pendingFilingsCount,
       note: "Awaiting customs BOE/SB submissions",
-      icon: <FileText size={16} />,
       accent: "blue" as const,
     },
     {
       title: "Urgent Expenses",
       value: urgentExpensesCount,
       note: "Immediate payouts required",
-      icon: <AlertCircle size={16} />,
       accent: "orange" as const,
     },
     {
       title: "Outstanding Advances",
       value: `\u20B9${totalOutstandingAdvance.toLocaleString("en-IN")}`,
       note: "Expected follow-up collections",
-      icon: <DollarSign size={16} />,
       accent: "orange" as const,
     },
   ];
@@ -294,8 +362,8 @@ export default async function ChaDashboard() {
       <ChaPageHeader
         eyebrow={null}
         title="CHA Dashboard"
+        graphic={<ChaHeaderGraphic />}
         description="A logistics control tower view for customs clearance, live filing queues, due-date risk, and assigned execution."
-        icon={<Sparkles size={20} />}
       />
 
       <ChaMetrics>
@@ -305,19 +373,19 @@ export default async function ChaDashboard() {
             title={metric.title}
             value={metric.value}
             note={metric.note}
-            icon={metric.icon}
             accent={metric.accent}
           />
         ))}
       </ChaMetrics>
 
       <ChaControlPanel
+        index="01"
         title="My Assigned Jobs"
         description="Open or manage the jobs currently assigned to you."
-        icon={<UserCheck size={18} />}
         contentClassName="!p-0"
         actions={
           <>
+            <ChaDashboardSearchAction value={assignedSearch} />
             <DashboardCreateJob
               currentUserId={session.user.id}
               canCreateJob={canCreateJob}
@@ -332,16 +400,20 @@ export default async function ChaDashboard() {
                 branchNumberingRules,
               }}
             />
-            <Link href="/cha/jobs">
-              <Button variant="outline" size="sm" className="gap-1.5 rounded-2xl">
-                View All
-                <ArrowRight className="size-3.5" />
-              </Button>
+            <ChaDashboardFilterAction
+              jobTypes={jobTypes.map((jobType) => jobType.name)}
+              selectedCategories={selectedCategories}
+              selectedJobTypes={selectedJobTypes}
+              selectedStages={selectedStages}
+              stages={["DOCUMENT_COLLECTION", "CHECKLIST_PREPARATION", "CHECKLIST_APPROVAL", "FILING", "FILED"]}
+            />
+            <Link href="/cha/jobs" className="mnx-button mnx-button-outline mnx-button-compact">
+              View All
+              <ArrowRight aria-hidden="true" />
             </Link>
-            <Link href="/cha/settings">
-              <Button variant="outline" size="sm" className="gap-1.5 rounded-2xl">
-                <Settings size={14} /> Settings
-              </Button>
+            <Link href="/cha/settings" className="mnx-button mnx-button-outline mnx-button-compact">
+              <Settings aria-hidden="true" />
+              Settings
             </Link>
           </>
         }
@@ -365,9 +437,6 @@ export default async function ChaDashboard() {
                   colSpan={7}
                   message={
                     <div className="flex flex-col items-center justify-center p-14 text-center">
-                      <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[28px] border mnx-border mnx-bg-soft mnx-shadow-panel">
-                        <Briefcase size={30} className="text-outline-variant" />
-                      </div>
                       <p className="text-sm mnx-text-primary">You don&apos;t have any active job assignments yet.</p>
                       <p className="mt-1 text-xs mnx-text-muted">New work will appear here automatically.</p>
                     </div>
@@ -391,7 +460,7 @@ export default async function ChaDashboard() {
               <DataTableBody>
                 {myJobs.map((job) => (
                   <ClickableRow key={job.id} href={`/cha/jobs/${job.id}`}>
-                    <DataTableCell className="font-medium mnx-text-accent">
+                    <DataTableCell className="mnx-text-accent">
                       <div className="flex items-center gap-2">
                         <Link href={`/cha/jobs/${job.id}`} className="transition-colors mnx-hover-accent">
                           {job.jobNumber}
@@ -411,7 +480,7 @@ export default async function ChaDashboard() {
                       </div>
                     </DataTableCell>
                     <DataTableCell>{job.customer.name}</DataTableCell>
-                    <DataTableCell className="mnx-label">{job.jobType.name}</DataTableCell>
+                    <DataTableCell>{job.jobType.name}</DataTableCell>
                     <DataTableCell className="mnx-numeric mnx-text-muted">
                       {job.jobType.movementDirection === "IMPORT"
                         ? job.filing?.billOfEntryNumber || "Pending"
@@ -427,14 +496,14 @@ export default async function ChaDashboard() {
                       })}
                     </DataTableCell>
                     <DataTableCell>
-                      <Badge variant={getChaStageBadgeVariant(job.stage)} className="uppercase">
+                      <span className={`mnx-cha-status-text ${chaStatusTextClass(getChaStageBadgeVariant(job.stage))}`}>
                         {formatChaBadgeLabel(job.stage)}
-                      </Badge>
+                      </span>
                     </DataTableCell>
                     <DataTableCell>
-                      <Badge variant={getChaPriorityBadgeVariant(job.priority)} className="uppercase">
+                      <span className={`mnx-cha-status-text ${chaStatusTextClass(getChaPriorityBadgeVariant(job.priority))}`}>
                         {job.priority}
-                      </Badge>
+                      </span>
                     </DataTableCell>
                   </ClickableRow>
                 ))}
@@ -446,9 +515,8 @@ export default async function ChaDashboard() {
 
       <div className="grid items-start gap-6 xl:grid-cols-3">
         <ChaSectionShell
+          index="02"
           title="Pending Actions"
-          description="Operational items that still need a decision or next-step action."
-          icon={<AlertCircle size={16} />}
           count={pendingActions.length}
           accent="orange"
         >
@@ -462,13 +530,6 @@ export default async function ChaDashboard() {
                   href={item.href}
                   className="flex items-start gap-3 rounded-xl border mnx-border mnx-bg-soft px-3.5 py-2.5 transition mnx-hover-accent mnx-hover-accent"
                 >
-                  <span
-                    className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
-                      item.tone === "orange" ? "mnx-bg-warning mnx-text-warning" : "mnx-bg-accent-soft mnx-text-accent"
-                    }`}
-                  >
-                    <AlertCircle size={15} />
-                  </span>
                   <div className="min-w-0">
                     <p className="text-xs font-normal uppercase tracking-[0.12em] mnx-text-primary">{item.label}</p>
                     <p className="mt-1 truncate text-xs mnx-text-muted">{item.note}</p>
@@ -480,9 +541,8 @@ export default async function ChaDashboard() {
         </ChaSectionShell>
 
         <ChaSectionShell
+          index="03"
           title="Expiring Soon"
-          description="Current validity and deadline signals across visible CHA jobs."
-          icon={<AlertCircle size={16} />}
           count={expiringItems.length}
           accent="orange"
         >
@@ -515,9 +575,8 @@ export default async function ChaDashboard() {
         </ChaSectionShell>
 
         <ChaSectionShell
+          index="04"
           title="Recent Activity"
-          description="Latest CHA audit events across the jobs visible to your organisation."
-          icon={<History size={16} />}
           count={Math.min(recentActivity.length, 4)}
           accent="violet"
         >

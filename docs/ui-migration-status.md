@@ -704,3 +704,115 @@ Blocked:
   and mobile widths remains pending for all CHA dialog, select, menu, filter,
   autocomplete, warning, success, and permission states. This correction is
   implemented and statically verified but is not declared visually Verified.
+
+## Post-batch 004 CHA typography and heading correction
+
+Implemented on 2026-07-29 using the protected `/dashboard` section-heading
+reference and the attached typography scale.
+
+- Removed decorative icon rendering from the CHA dashboard header, metrics,
+  section headings, table toolbar actions, empty state, pending-action rows,
+  and create-job entry action.
+- Aligned CHA dashboard heading, label, body, table, and card typography with
+  the Monolith type tokens used by the protected dashboard.
+- Moved CHA section/control headings outside their card surfaces. The title
+  remains on the left while the explanatory copy and actions sit to the right
+  at desktop widths, matching the dashboard command-center heading pattern.
+- Refined the outside headings to use dashboard-style numeric markers instead
+  of text eyebrows, moved section/control action buttons into the card surface
+  below the heading, and reduced outside section titles to the shared heading
+  scale so side-by-side cards stay balanced.
+- Re-applied the exact protected dashboard section-heading typography to CHA
+  outside headings: `clamp(32px, 3.15vw, 44px)`, weight `360`, line-height
+  `0.98`, and `-0.055em` tracking, with a narrow-container fallback to prevent
+  lower card overflow.
+- Aligned CHA data tables with the attached shipment-register reference:
+  uppercase 13 px table heads, 15 px body copy, 13 px secondary text, 96 px row
+  rhythm, 22 px cell padding, quiet dividers, bold primary record cells, and
+  matching footer spacing across both `DataTable` and `ChaTable` render paths.
+- Reduced the CHA table label/header band to a 44 px rhythm and applied a
+  theme-tinted background so the header row matches the attached reference more
+  closely.
+- Tokenized the CHA header graphic colors and exposed the `graphic` prop
+  through the CHA header wrappers so production build and static theme gates
+  remain clean.
+- Applied `src/app/(dashboard)/todo/graphics/TodoHeaderGraphic.tsx` to the CHA
+  dashboard header, marked the motion graphic as a client component, and kept
+  the graphic theme-tokenized to avoid the Server Component
+  `createMotionComponent()` runtime error.
+- Split the header graphics back to their requested module sources:
+  `/cha/graphics/ChaHeaderGraphic.tsx` for CHA and
+  `/todo/graphics/TodoHeaderGraphic.tsx` for To-Do. Both motion graphics are
+  client components and share the same theme-aware glassmorphism token classes.
+- Moved the To-Do `Create task` action out of the page header graphic area and
+  into the task ledger panel header beside the filter, so it sits with the
+  table/list controls below the hero graphic.
+- Restyled the CHA metric summary cards to match the attached connected-card
+  reference: one rounded strip, vertical dividers, uppercase muted labels,
+  large lightweight values, quiet status copy, and responsive divider behavior.
+- Tuned CHA metric-card typography to the reference: Inter family, lighter
+  12 px uppercase labels, 42-50 px lightweight values, and 13 px regular status
+  copy instead of the heavier global label styling.
+- Reduced the CHA metric-strip card height to the reference rhythm by tightening
+  the card min-height, vertical padding, and label/value/detail gap while
+  preserving the connected dividers and responsive layout.
+- Suppressed stray text carets/selection on non-editable CHA heading, table
+  header, and label text while leaving real inputs and controls editable.
+- Reworked the shared Monolith button system to match the design-system
+  reference hierarchy: black primary pill, theme-accent filled action,
+  surface secondary, dark-outline action, soft destructive, disabled, and
+  circular icon actions. Updated the admin design-system showcase to display
+  the same button hierarchy and text/icon action composition.
+- Rebuilt the shared filter controls to match the table reference: compact
+  segmented filter rows, theme-accent active tabs, and a bordered Filter trigger
+  with list icon plus accent count chip. The admin design-system showcase now
+  uses the live shared filter menu so clicking the Filter trigger opens a real
+  dropdown with selectable options and Apply/Clear actions.
+- Updated the CHA dashboard assigned-jobs command row with a scoped Filter
+  menu, icon-bearing shared button actions for New Job, View All, and Settings,
+  normal-weight shared button/table text, colored text statuses in place of
+  filled badges, and light success/danger design-system swatches.
+- Stabilized the assigned-jobs Filter trigger while its portaled menu is open,
+  added Categories, Job type, and Current stages filter groups with URL-backed
+  Apply/Clear behavior and a persistent `0` count when empty, and added a
+  shared Monolith search control for assigned jobs by customer, job number,
+  job type, title, and filing reference.
+- Refined the assigned-jobs command row so search is a compact single field
+  with the search icon inside it, the filter menu groups are nested disclosure
+  sections without an internal scrollbar, and CHA action/filter controls opt
+  out of hover lift to avoid menu-transition nudging.
+- Preserved CHA cards, tables, copy, workflows, RBAC, actions, routes, dialogs,
+  and business behavior.
+
+Backup:
+`OLD UI code/ui-iteration-backups/cha-typography-icon-removal-20260729/`
+`OLD UI code/ui-iteration-backups/cha-numbered-heading-actions-20260729/`
+`OLD UI code/ui-iteration-backups/cha-dashboard-section-heading-style-20260729/`
+`OLD UI code/ui-iteration-backups/cha-datatable-reference-style-20260729/`
+`OLD UI code/ui-iteration-backups/cha-todo-graphic-table-label-20260729/`
+`OLD UI code/ui-iteration-backups/cha-todo-graphic-separation-caret-20260729/`
+`OLD UI code/ui-iteration-backups/cha-dashboard-metric-card-reference-20260729/`
+`OLD UI code/ui-iteration-backups/cha-dashboard-metric-typography-reference-20260729/`
+`OLD UI code/ui-iteration-backups/monolith-button-reference-20260729/`
+`OLD UI code/ui-iteration-backups/monolith-filter-reference-20260729/`
+`OLD UI code/ui-iteration-backups/cha-dashboard-actions-status-colors-20260729/`
+
+Passed:
+
+- targeted ESLint for the changed CHA dashboard, shared CHA operations, CHA
+  workspace, and create-job entry files;
+- `npx tsc --noEmit -p tsconfig.ui-migration.json` with the required 8 GB Node
+  heap;
+- `npx vitest run "src/components/monolith/cha-workspace.test.tsx"`;
+- static Expense/CHA verifier:
+  `node scripts/verify-monolith-expense-cha-ui.mjs`;
+- targeted TypeScript, ESLint, and static Expense/CHA verifier after the
+  assigned-jobs search/filter refinement;
+- production build with Prisma generation, Next.js compilation, production
+  TypeScript, and all 315 pages.
+
+Blocked:
+
+- Authenticated browser visual verification remains blocked by the same missing
+  in-app Browser instance, so this correction is implemented and statically
+  verified but not declared visually Verified.

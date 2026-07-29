@@ -6,8 +6,9 @@ const buttonVariants = cva("mnx-button", {
   variants: {
     variant: {
       default: "mnx-button-primary",
+      accent: "mnx-button-accent",
       inverse: "mnx-button-secondary",
-      outline: "mnx-button-secondary",
+      outline: "mnx-button-outline",
       destructive: "mnx-button-destructive",
     },
     size: {
