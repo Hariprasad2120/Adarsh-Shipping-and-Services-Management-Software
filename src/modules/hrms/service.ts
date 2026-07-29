@@ -1,10 +1,17 @@
 import { db } from "@/lib/db";
 import { notify } from "@/lib/notify";
-import { notifyMany, getUsersWithPermission } from "@/modules/notifications/service";
+import {
+  notifyMany,
+  getUsersWithPermission,
+} from "@/modules/notifications/service";
 import { getNow } from "@/lib/clock";
 import { loadUserPermissions } from "@/lib/rbac";
-import { getAttendanceMonthBounds, toAttendanceDate } from "@/lib/attendance-date";
+import {
+  getAttendanceMonthBounds,
+  toAttendanceDate,
+} from "@/lib/attendance-date";
 import { appendAttendancePunchEvent, calculateOtForPunch } from "@/lib/ot";
+import type { Prisma } from "@/generated/prisma/client";
 
 // ─── Core & Dashboard ──────────────────────────────────────────────────────────
 
@@ -14,44 +21,52 @@ export async function getMe(userId: string) {
   const now = await getNow();
   const todayStart = toAttendanceDate(now);
 
-  const [user, punch, pendingLeaves, pendingCases, pendingTasks, pref, permsSet] =
-    await Promise.all([
-      db.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          orgId: true,
-          name: true,
-          email: true,
-          designation: true,
-          employeeNumber: true,
-          branchId: true,
-          departmentId: true,
-          managerId: true,
-          tlId: true,
-          photo: true,
-          manager: { select: { id: true, name: true } },
-          department: { select: { id: true, name: true } },
-          branch: { select: { id: true, name: true } },
-        },
-      }),
-      db.attendancePunch.findUnique({
-        where: { userId_date: { userId, date: todayStart } },
-      }),
-      db.leaveRequest.count({ where: { userId, status: "pending" } }),
-      db.hRCase.count({
-        where: { userId, status: { in: ["OPEN", "ASSIGNED", "IN_PROGRESS"] } },
-      }),
-      db.hrmsTask.count({ where: { assigneeId: userId, status: "PENDING" } }),
-      db.employeePreference.findUnique({ where: { userId } }),
-      // loadUserPermissions is React-cached — zero extra DB round trip when the
-      // calling route already resolved permissions (e.g. requirePermission above).
-      loadUserPermissions(userId),
-    ]);
+  const [
+    user,
+    punch,
+    pendingLeaves,
+    pendingCases,
+    pendingTasks,
+    pref,
+    permsSet,
+  ] = await Promise.all([
+    db.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        orgId: true,
+        name: true,
+        email: true,
+        designation: true,
+        employeeNumber: true,
+        branchId: true,
+        departmentId: true,
+        managerId: true,
+        tlId: true,
+        photo: true,
+        manager: { select: { id: true, name: true } },
+        department: { select: { id: true, name: true } },
+        branch: { select: { id: true, name: true } },
+      },
+    }),
+    db.attendancePunch.findUnique({
+      where: { userId_date: { userId, date: todayStart } },
+    }),
+    db.leaveRequest.count({ where: { userId, status: "pending" } }),
+    db.hRCase.count({
+      where: { userId, status: { in: ["OPEN", "ASSIGNED", "IN_PROGRESS"] } },
+    }),
+    db.hrmsTask.count({ where: { assigneeId: userId, status: "PENDING" } }),
+    db.employeePreference.findUnique({ where: { userId } }),
+    // loadUserPermissions is React-cached — zero extra DB round trip when the
+    // calling route already resolved permissions (e.g. requirePermission above).
+    loadUserPermissions(userId),
+  ]);
 
   if (!user) throw new Error("User not found");
 
-  let attendanceStatus: "YET_TO_CHECK_IN" | "CHECKED_IN" | "ON_BREAK" | "CHECKED_OUT" =
+  let attendanceStatus:
+    "YET_TO_CHECK_IN" | "CHECKED_IN" | "ON_BREAK" | "CHECKED_OUT" =
     "YET_TO_CHECK_IN";
   let totalInTime = "00:00:00";
 
@@ -144,7 +159,10 @@ export async function getDashboardWidgets(userId: string, orgId: string) {
   };
 }
 
-export async function updateDashboardWidgets(userId: string, widgets: any[]) {
+export async function updateDashboardWidgets(
+  userId: string,
+  widgets: unknown[],
+) {
   return db.employeePreference.upsert({
     where: { userId },
     update: { widgets: JSON.stringify(widgets) },
@@ -160,7 +178,7 @@ export async function punchAction(
   action: "CHECK_IN" | "CHECK_OUT" | "START_BREAK" | "RESUME_WORK",
   source: string = "WEB",
   note?: string,
-  deviceId?: string
+  deviceId?: string,
 ) {
   const now = await getNow();
   const todayStart = toAttendanceDate(now);
@@ -238,7 +256,9 @@ export async function punchAction(
       if (!activeBreak) {
         throw new Error("Not currently on break");
       }
-      const diffMins = Math.floor((now.getTime() - activeBreak.breakStart.getTime()) / 60000);
+      const diffMins = Math.floor(
+        (now.getTime() - activeBreak.breakStart.getTime()) / 60000,
+      );
       await db.attendanceBreak.update({
         where: { id: activeBreak.id },
         data: { breakEnd: now, durationMinutes: diffMins },
@@ -269,7 +289,11 @@ export async function punchAction(
   return punch;
 }
 
-export async function getAttendanceCalendar(userId: string, year: number, month: number) {
+export async function getAttendanceCalendar(
+  userId: string,
+  year: number,
+  month: number,
+) {
   const { start: from, end: to } = getAttendanceMonthBounds(year, month);
 
   const punches = await db.attendancePunch.findMany({
@@ -282,7 +306,10 @@ export async function getAttendanceCalendar(userId: string, year: number, month:
 
   return punches.map((p) => {
     const punchBreaks = breaks.filter((b) => b.punchId === p.id);
-    const breakSum = punchBreaks.reduce((sum, b) => sum + (b.durationMinutes ?? 0), 0);
+    const breakSum = punchBreaks.reduce(
+      (sum, b) => sum + (b.durationMinutes ?? 0),
+      0,
+    );
     return {
       date: p.date.toISOString().split("T")[0],
       inAt: p.inAt,
@@ -296,7 +323,8 @@ export async function getAttendanceCalendar(userId: string, year: number, month:
 
 // ─── Leaves Tracker ──────────────────────────────────────────────────────────
 
-export async function getLeaveTrackerSummary(userId: string, orgId: string) {
+export async function getLeaveTrackerSummary(userId: string, _orgId: string) {
+  void _orgId;
   const year = new Date().getFullYear();
   const balances = await db.leaveBalance.findMany({
     where: { userId, year },
@@ -325,7 +353,7 @@ export async function applyLeave(
     reason: string;
     fromHalf: boolean;
     toHalf: boolean;
-  }
+  },
 ) {
   const request = await db.leaveRequest.create({
     data: {
@@ -344,7 +372,10 @@ export async function applyLeave(
   });
 
   // Notify Approvers
-  const approverIds = await getUsersWithPermission(orgId, "attendance.leave.approve");
+  const approverIds = await getUsersWithPermission(
+    orgId,
+    "attendance.leave.approve",
+  );
   const recipients = approverIds.filter((id) => id !== userId);
   if (recipients.length > 0) {
     await notifyMany(recipients, {
@@ -386,7 +417,7 @@ export async function createTimeLog(
     hours: number;
     isBillable: boolean;
     description?: string;
-  }
+  },
 ) {
   return db.timeLog.create({
     data: {
@@ -403,8 +434,12 @@ export async function createTimeLog(
 
 // ─── HR Help Desk ────────────────────────────────────────────────────────────
 
-export async function getHelpDeskCases(orgId: string, userId: string, isAdmin: boolean) {
-  const where: any = { orgId };
+export async function getHelpDeskCases(
+  orgId: string,
+  userId: string,
+  isAdmin: boolean,
+) {
+  const where: Prisma.HRCaseWhereInput = { orgId };
   if (!isAdmin) {
     where.userId = userId;
   }
@@ -437,7 +472,7 @@ export async function createHRCase(
     title: string;
     description: string;
     priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
-  }
+  },
 ) {
   const ticket = await db.hRCase.create({
     data: {
@@ -468,7 +503,11 @@ export async function createHRCase(
   return ticket;
 }
 
-export async function addCaseComment(caseId: string, userId: string, message: string) {
+export async function addCaseComment(
+  caseId: string,
+  userId: string,
+  message: string,
+) {
   return db.hRCaseComment.create({
     data: {
       caseId,
@@ -480,29 +519,46 @@ export async function addCaseComment(caseId: string, userId: string, message: st
 
 // ─── File Manager ────────────────────────────────────────────────────────────
 
-export async function getFiles(orgId: string, userId: string, scope: "personal" | "organization" | "employee") {
+export async function getFiles(
+  orgId: string,
+  userId: string,
+  scope: "personal" | "organization" | "employee",
+) {
   const folders = await db.fileFolder.findMany({
-    where: { orgId, scope, OR: [
-      { scope: "personal", createdById: userId },
-      { scope: "organization" },
-      { scope: "employee" },
-    ]},
+    where: {
+      orgId,
+      scope,
+      OR: [
+        { scope: "personal", createdById: userId },
+        { scope: "organization" },
+        { scope: "employee" },
+      ],
+    },
     orderBy: { name: "asc" },
   });
 
   const files = await db.fileAsset.findMany({
-    where: { orgId, scope, OR: [
-      { scope: "personal", createdById: userId },
-      { scope: "organization" },
-      { scope: "employee" },
-    ]},
+    where: {
+      orgId,
+      scope,
+      OR: [
+        { scope: "personal", createdById: userId },
+        { scope: "organization" },
+        { scope: "employee" },
+      ],
+    },
     orderBy: { name: "asc" },
   });
 
   return { folders, files };
 }
 
-export async function createFolder(orgId: string, name: string, scope: string, userId: string) {
+export async function createFolder(
+  orgId: string,
+  name: string,
+  scope: string,
+  userId: string,
+) {
   return db.fileFolder.create({
     data: {
       orgId,
@@ -521,7 +577,7 @@ export async function uploadFileAsset(
   sizeBytes: number,
   folderId: string | null,
   scope: string,
-  userId: string
+  userId: string,
 ) {
   return db.fileAsset.create({
     data: {
@@ -561,7 +617,7 @@ export async function submitSurveyResponse(
   orgId: string,
   surveyId: string,
   userId: string,
-  answers: any
+  answers: Prisma.InputJsonValue,
 ) {
   const survey = await db.survey.findUnique({
     where: { id: surveyId },
@@ -590,14 +646,34 @@ export async function getServiceDefinitions(orgId: string) {
     // Seed default services for this org on request
     const defaults = [
       { key: "onboarding", name: "Onboarding", icon: "UserPlus", position: 1 },
-      { key: "organization", name: "Employee Information", icon: "Users", position: 2 },
-      { key: "leavetracker", name: "Leave Tracker", icon: "CalendarOff", position: 3 },
-      { key: "attendance", name: "Attendance", icon: "Fingerprint", position: 4 },
+      {
+        key: "organization",
+        name: "Employee Information",
+        icon: "Users",
+        position: 2,
+      },
+      {
+        key: "leavetracker",
+        name: "Leave Tracker",
+        icon: "CalendarOff",
+        position: 3,
+      },
+      {
+        key: "attendance",
+        name: "Attendance",
+        icon: "Fingerprint",
+        position: 4,
+      },
       { key: "timetracker", name: "Time Tracker", icon: "Timer", position: 5 },
       { key: "performance", name: "Performance", icon: "Target", position: 6 },
       { key: "lms", name: "LMS", icon: "BookOpen", position: 7 },
       { key: "files", name: "Files", icon: "FolderOpen", position: 8 },
-      { key: "employeeengagement", name: "Employee Engagement", icon: "HeartHandshake", position: 9 },
+      {
+        key: "employeeengagement",
+        name: "Employee Engagement",
+        icon: "HeartHandshake",
+        position: 9,
+      },
       { key: "hrcase", name: "HR Help Desk", icon: "HelpCircle", position: 10 },
     ];
     await db.serviceDefinition.createMany({
@@ -612,51 +688,253 @@ export async function getServiceDefinitions(orgId: string) {
   return list;
 }
 
-export async function updateServiceSettings(orgId: string, services: any[]) {
+export async function updateServiceSettings(
+  orgId: string,
+  services: Array<{ key: string; enabled: boolean; position: number }>,
+) {
   return db.$transaction(
     services.map((s) =>
       db.serviceDefinition.update({
         where: { key: s.key },
         data: { enabled: s.enabled, position: s.position },
-      })
-    )
+      }),
+    ),
   );
 }
 
 // ─── Work Reports (Daily Update Reports) ──────────────────────────────────────
 
-export async function getWorkReports(userId: string, orgId: string, filter: "my" | "reportees" | "all") {
-  const whereClause: any = { orgId };
+type WorkReportItemInput = {
+  id?: string;
+  jobNoName: string;
+  description: string;
+};
+
+type WorkReportCustomValue = string | number | boolean | null;
+
+type WorkReportFieldInput = {
+  label: string;
+  type: "TEXT" | "TEXTAREA" | "NUMBER" | "DATE" | "SELECT" | "BOOLEAN";
+  required: boolean;
+  options: string[];
+  position: number;
+  active: boolean;
+};
+
+function workReportFieldKey(label: string) {
+  const base = label
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 50);
+  return base || "field";
+}
+
+async function sendWorkReportNotification(
+  params: Parameters<typeof notify>[0],
+) {
+  try {
+    await notify(params);
+  } catch (error) {
+    console.error("[Work reports] Notification delivery failed:", error);
+  }
+}
+
+export async function getWorkReportSettings(orgId: string) {
+  const [settings, fields] = await Promise.all([
+    db.workReportSettings.upsert({
+      where: { orgId },
+      update: {},
+      create: { orgId },
+    }),
+    db.workReportField.findMany({
+      where: { orgId },
+      orderBy: [{ position: "asc" }, { label: "asc" }],
+    }),
+  ]);
+
+  return { settings, fields };
+}
+
+export async function updateWorkReportSettings(
+  orgId: string,
+  input: {
+    approvalLevels: 1 | 2;
+    requireApprovedReportForOt: boolean;
+  },
+) {
+  return db.workReportSettings.upsert({
+    where: { orgId },
+    update: input,
+    create: { orgId, ...input },
+  });
+}
+
+export async function createWorkReportField(
+  orgId: string,
+  input: WorkReportFieldInput,
+) {
+  const stem = workReportFieldKey(input.label);
+  const matches = await db.workReportField.findMany({
+    where: { orgId, key: { startsWith: stem } },
+    select: { key: true },
+  });
+  const existing = new Set(matches.map((field) => field.key));
+  let key = stem;
+  let suffix = 2;
+  while (existing.has(key)) {
+    key = `${stem}_${suffix}`;
+    suffix += 1;
+  }
+
+  return db.workReportField.create({
+    data: {
+      orgId,
+      key,
+      ...input,
+      options: input.type === "SELECT" ? input.options : [],
+    },
+  });
+}
+
+export async function updateWorkReportField(
+  orgId: string,
+  fieldId: string,
+  input: WorkReportFieldInput,
+) {
+  const existing = await db.workReportField.findFirst({
+    where: { id: fieldId, orgId },
+    select: { id: true },
+  });
+  if (!existing) throw new Error("Work report field not found");
+
+  return db.workReportField.update({
+    where: { id: fieldId },
+    data: {
+      ...input,
+      options: input.type === "SELECT" ? input.options : [],
+    },
+  });
+}
+
+export async function deleteWorkReportField(orgId: string, fieldId: string) {
+  const result = await db.workReportField.deleteMany({
+    where: { id: fieldId, orgId },
+  });
+  if (result.count === 0) throw new Error("Work report field not found");
+}
+
+async function validateWorkReportCustomValues(
+  orgId: string,
+  values: Record<string, WorkReportCustomValue>,
+) {
+  const fields = await db.workReportField.findMany({
+    where: { orgId, active: true },
+    orderBy: [{ position: "asc" }, { label: "asc" }],
+  });
+  const allowedKeys = new Set(fields.map((field) => field.key));
+  const normalized = Object.fromEntries(
+    Object.entries(values).filter(([key]) => allowedKeys.has(key)),
+  );
+
+  for (const field of fields) {
+    const value = normalized[field.key];
+    if (
+      field.required &&
+      (value === undefined || value === null || value === "")
+    ) {
+      throw new Error(`${field.label} is required`);
+    }
+    if (value === undefined || value === null || value === "") continue;
+    if (
+      ["TEXT", "TEXTAREA", "DATE", "SELECT"].includes(field.type) &&
+      typeof value !== "string"
+    ) {
+      throw new Error(`${field.label} must be text`);
+    }
+    if (
+      field.type === "DATE" &&
+      typeof value === "string" &&
+      !/^\d{4}-\d{2}-\d{2}$/.test(value)
+    ) {
+      throw new Error(`${field.label} must be a valid date`);
+    }
+    if (field.type === "NUMBER" && typeof value !== "number") {
+      throw new Error(`${field.label} must be a number`);
+    }
+    if (field.type === "BOOLEAN" && typeof value !== "boolean") {
+      throw new Error(`${field.label} must be yes or no`);
+    }
+    if (field.type === "SELECT") {
+      const options = Array.isArray(field.options)
+        ? field.options.filter(
+            (option): option is string => typeof option === "string",
+          )
+        : [];
+      if (typeof value !== "string" || !options.includes(value)) {
+        throw new Error(`${field.label} has an invalid selection`);
+      }
+    }
+  }
+
+  return { fields, values: normalized };
+}
+
+export async function getWorkReports(
+  userId: string,
+  orgId: string,
+  filter: "my" | "reportees" | "all",
+) {
+  const whereClause: Prisma.WorkReportWhereInput = { orgId };
 
   if (filter === "my") {
     whereClause.userId = userId;
   } else if (filter === "reportees") {
-    whereClause.user = { managerId: userId };
-  } else if (filter === "all") {
-    whereClause.OR = [
-      { userId },
-      { user: { managerId: userId } }
-    ];
+    whereClause.approvals = { some: { approverId: userId } };
   }
 
-  return db.workReport.findMany({
-    where: whereClause,
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          employeeNumber: true,
-          photo: true,
-          email: true,
-        }
+  const [reports, fields, settings] = await Promise.all([
+    db.workReport.findMany({
+      where: whereClause,
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            employeeNumber: true,
+            photo: true,
+            email: true,
+          },
+        },
+        approvals: {
+          orderBy: [{ level: "asc" }, { createdAt: "asc" }],
+          include: {
+            approver: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                employeeNumber: true,
+              },
+            },
+          },
+        },
       },
-      approvals: {
-        orderBy: { createdAt: "asc" }
-      }
-    }
-  });
+    }),
+    db.workReportField.findMany({
+      where: { orgId, active: true },
+      orderBy: [{ position: "asc" }, { label: "asc" }],
+    }),
+    db.workReportSettings.upsert({
+      where: { orgId },
+      update: {},
+      create: { orgId },
+    }),
+  ]);
+
+  return { reports, fields, settings };
 }
 
 export async function createWorkReport(
@@ -665,40 +943,121 @@ export async function createWorkReport(
   data: {
     date: Date;
     workedOn: string;
-    jobNoName: string;
-    description: string;
-    addedAddress?: string;
-  }
+    items: WorkReportItemInput[];
+    customValues: Record<string, WorkReportCustomValue>;
+    location: {
+      latitude: number;
+      longitude: number;
+      accuracy?: number;
+      address: string;
+    };
+  },
 ) {
-  // Find employee's manager
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: { managerId: true }
-  });
+  const [user, settings, validatedCustomValues, capturedAt] = await Promise.all(
+    [
+      db.user.findFirst({
+        where: { id: userId, orgId },
+        select: {
+          id: true,
+          name: true,
+          managerId: true,
+          tlId: true,
+        },
+      }),
+      db.workReportSettings.upsert({
+        where: { orgId },
+        update: {},
+        create: { orgId },
+      }),
+      validateWorkReportCustomValues(orgId, data.customValues),
+      getNow(),
+    ],
+  );
 
-  const report = await db.workReport.create({
-    data: {
-      orgId,
-      userId,
-      date: data.date,
-      workedOn: data.workedOn,
-      jobNoName: data.jobNoName,
-      description: data.description,
-      addedAddress: data.addedAddress,
-      modifiedAddress: data.addedAddress,
-      status: user?.managerId ? "PENDING" : "APPROVED",
-    }
-  });
+  if (!user) throw new Error("Employee not found");
+  if (
+    settings.approvalLevels === 2 &&
+    (!user.managerId || !user.tlId)
+  ) {
+    throw new Error(
+      "Two-level work report approval is enabled, but both primary and secondary reporting managers are not configured for your employee profile.",
+    );
+  }
+  if (
+    settings.approvalLevels === 2 &&
+    user.managerId === user.tlId
+  ) {
+    throw new Error(
+      "Two-level work report approval requires different primary and secondary reporting managers.",
+    );
+  }
 
-  // If employee has a manager, create a WorkReportApproval entry
-  if (user?.managerId) {
-    await db.workReportApproval.create({
+  const approverIds = [
+    user.managerId,
+    ...(settings.approvalLevels === 2 ? [user.tlId] : []),
+  ].filter((id): id is string => Boolean(id));
+  const uniqueApproverIds = [...new Set(approverIds)];
+  const items = data.items.map((item, index) => ({
+    id: item.id || `line-${index + 1}`,
+    jobNoName: item.jobNoName,
+    description: item.description,
+  }));
+  const firstItem = items[0]!;
+
+  const report = await db.$transaction(async (tx) => {
+    const created = await tx.workReport.create({
       data: {
-        reportId: report.id,
-        approverId: user.managerId,
-        status: "PENDING",
-      }
+        orgId,
+        userId,
+        date: data.date,
+        workedOn: data.workedOn,
+        jobNoName: firstItem.jobNoName,
+        description: firstItem.description,
+        items,
+        customValues: validatedCustomValues.values,
+        addedAddress: data.location.address,
+        modifiedAddress: data.location.address,
+        latitude: data.location.latitude,
+        longitude: data.location.longitude,
+        locationAccuracy: data.location.accuracy,
+        locationCapturedAt: capturedAt,
+        status: uniqueApproverIds.length > 0 ? "PENDING" : "APPROVED",
+      },
     });
+
+    if (uniqueApproverIds.length > 0) {
+      await tx.workReportApproval.createMany({
+        data: uniqueApproverIds.map((approverId, index) => ({
+          reportId: created.id,
+          approverId,
+          level: index + 1,
+          status: index === 0 ? "PENDING" : "WAITING",
+        })),
+      });
+    }
+
+    return created;
+  });
+
+  const currentApproverId = uniqueApproverIds[0];
+  if (currentApproverId) {
+    await sendWorkReportNotification({
+      userId: currentApproverId,
+      orgId,
+      actorId: userId,
+      kind: "WORK_REPORT_APPROVAL_REQUIRED",
+      title: `Work report awaiting approval: ${user.name}`,
+      body: `${user.name} submitted a daily work report for ${data.date.toLocaleDateString("en-IN")}.`,
+      link: `/hrms/work-reports?report=${report.id}`,
+      source: "HRMS",
+      priority: "important",
+      requiresAck: true,
+      email: true,
+    });
+  }
+
+  if (settings.requireApprovedReportForOt) {
+    await calculateOtForPunch(userId, data.date);
   }
 
   return report;
@@ -709,36 +1068,131 @@ export async function submitWorkReportApproval(
   orgId: string,
   reportId: string,
   status: "APPROVED" | "REJECTED",
-  comments?: string
+  comments?: string,
 ) {
   const approval = await db.workReportApproval.findFirst({
     where: {
       reportId,
       approverId: userId,
       status: "PENDING",
-    }
+      report: { orgId },
+    },
+    include: {
+      report: {
+        include: {
+          user: {
+            select: { id: true, name: true },
+          },
+        },
+      },
+      approver: {
+        select: { name: true },
+      },
+    },
   });
 
   if (!approval) {
-    throw new Error("No pending approval request found for this report and approver.");
+    throw new Error(
+      "No pending approval request found for this report and approver.",
+    );
   }
 
-  await db.workReportApproval.update({
-    where: { id: approval.id },
-    data: {
-      status,
-      comments,
+  const decidedAt = await getNow();
+  const outcome = await db.$transaction(async (tx) => {
+    await tx.workReportApproval.update({
+      where: { id: approval.id },
+      data: {
+        status,
+        comments,
+        decidedAt,
+      },
+    });
+
+    if (status === "REJECTED") {
+      await tx.workReportApproval.updateMany({
+        where: {
+          reportId,
+          level: { gt: approval.level },
+          status: "WAITING",
+        },
+        data: { status: "CANCELLED" },
+      });
+      const report = await tx.workReport.update({
+        where: { id: reportId },
+        data: { status: "REJECTED" },
+      });
+      return { report, nextApproval: null };
     }
+
+    const nextApproval = await tx.workReportApproval.findFirst({
+      where: {
+        reportId,
+        level: { gt: approval.level },
+        status: "WAITING",
+      },
+      orderBy: { level: "asc" },
+    });
+
+    if (nextApproval) {
+      const activated = await tx.workReportApproval.update({
+        where: { id: nextApproval.id },
+        data: { status: "PENDING" },
+      });
+      const report = await tx.workReport.update({
+        where: { id: reportId },
+        data: { status: "PENDING" },
+      });
+      return { report, nextApproval: activated };
+    }
+
+    const report = await tx.workReport.update({
+      where: { id: reportId },
+      data: { status: "APPROVED" },
+    });
+    return { report, nextApproval: null };
   });
 
-  const updatedReport = await db.workReport.update({
-    where: { id: reportId },
-    data: {
-      status,
-    }
-  });
+  if (outcome.nextApproval) {
+    await sendWorkReportNotification({
+      userId: outcome.nextApproval.approverId,
+      orgId,
+      actorId: userId,
+      kind: "WORK_REPORT_APPROVAL_REQUIRED",
+      title: `Work report awaiting level ${outcome.nextApproval.level} approval`,
+      body: `${approval.report.user.name}'s work report was approved by ${approval.approver.name} and now requires your approval.`,
+      link: `/hrms/work-reports?report=${reportId}`,
+      source: "HRMS",
+      priority: "important",
+      requiresAck: true,
+      email: true,
+    });
+  }
 
-  return updatedReport;
+  const finalDecision =
+    outcome.report.status === "APPROVED" ||
+    outcome.report.status === "REJECTED";
+  if (finalDecision) {
+    await Promise.all([
+      sendWorkReportNotification({
+        userId: approval.report.user.id,
+        orgId,
+        actorId: userId,
+        kind: "WORK_REPORT_DECISION",
+        title: `Work report ${outcome.report.status.toLowerCase()}`,
+        body:
+          outcome.report.status === "APPROVED"
+            ? "Your daily work report completed all approval levels."
+            : `Your daily work report was rejected${comments ? `: ${comments}` : "."}`,
+        link: `/hrms/work-reports?report=${reportId}`,
+        source: "HRMS",
+        priority: "normal",
+        email: true,
+      }),
+      calculateOtForPunch(approval.report.user.id, approval.report.date),
+    ]);
+  }
+
+  return outcome.report;
 }
 
 // ─── Team Reportees & Shifts ──────────────────────────────────────────────────
@@ -755,42 +1209,44 @@ export async function getTeamReportees(userId: string, orgId: string) {
       photo: true,
       branch: {
         select: {
-          name: true
-        }
+          name: true,
+        },
       },
       hrmsShiftAssignments: {
         orderBy: { startDate: "desc" },
         take: 1,
         include: {
-          shift: true
-        }
-      }
-    }
+          shift: true,
+        },
+      },
+    },
   });
 
   const now = await getNow();
   const todayStart = toAttendanceDate(now);
 
-  const punches = reportees.length > 0
-    ? await db.attendancePunch.findMany({
-        where: {
-          userId: { in: reportees.map((r) => r.id) },
-          date: todayStart
-        }
-      })
-    : [];
+  const punches =
+    reportees.length > 0
+      ? await db.attendancePunch.findMany({
+          where: {
+            userId: { in: reportees.map((r) => r.id) },
+            date: todayStart,
+          },
+        })
+      : [];
 
   const punchMap = new Map(punches.map((p) => [p.userId, p]));
   const punchIds = punches.map((p) => p.id);
 
-  const activeBreaks = punchIds.length > 0
-    ? await db.attendanceBreak.findMany({
-        where: {
-          punchId: { in: punchIds },
-          breakEnd: null
-        }
-      })
-    : [];
+  const activeBreaks =
+    punchIds.length > 0
+      ? await db.attendanceBreak.findMany({
+          where: {
+            punchId: { in: punchIds },
+            breakEnd: null,
+          },
+        })
+      : [];
 
   const activeBreakPunchIds = new Set(activeBreaks.map((b) => b.punchId));
 
@@ -798,7 +1254,9 @@ export async function getTeamReportees(userId: string, orgId: string) {
   for (const emp of reportees) {
     const punch = punchMap.get(emp.id);
 
-    let punchStatus: "YET_TO_CHECK_IN" | "CHECKED_IN" | "ON_BREAK" | "CHECKED_OUT" = "YET_TO_CHECK_IN";
+    let punchStatus:
+      "YET_TO_CHECK_IN" | "CHECKED_IN" | "ON_BREAK" | "CHECKED_OUT" =
+      "YET_TO_CHECK_IN";
     if (punch) {
       if (punch.outAt) {
         punchStatus = "CHECKED_OUT";
@@ -819,11 +1277,13 @@ export async function getTeamReportees(userId: string, orgId: string) {
       location: emp.branch?.name ?? "Chennai",
       photo: emp.photo,
       punchStatus,
-      shift: currentShift ? {
-        name: currentShift.name,
-        startTime: currentShift.startTime,
-        endTime: currentShift.endTime,
-      } : null
+      shift: currentShift
+        ? {
+            name: currentShift.name,
+            startTime: currentShift.startTime,
+            endTime: currentShift.endTime,
+          }
+        : null,
     });
   }
 
@@ -855,10 +1315,30 @@ export async function getOnboardingStatus(userId: string) {
   if (!user) throw new Error("User not found");
 
   const checklist = [
-    { key: "personal_details", label: "Personal Profile", completed: !!(user.firstName && user.lastName && user.dob && user.gender) },
-    { key: "contact_details", label: "Contact Details", completed: !!(user.personalPhone && user.hrmsContact?.emergencyPhone && user.hrmsContact?.addressLine1) },
-    { key: "financial_details", label: "Bank & Financial Details", completed: !!(user.bankName && user.bankAccount && user.ifsc) },
-    { key: "statutory_ids", label: "Statutory IDs (PAN & Aadhaar)", completed: !!(user.pan && user.aadhaar) },
+    {
+      key: "personal_details",
+      label: "Personal Profile",
+      completed: !!(user.firstName && user.lastName && user.dob && user.gender),
+    },
+    {
+      key: "contact_details",
+      label: "Contact Details",
+      completed: !!(
+        user.personalPhone &&
+        user.hrmsContact?.emergencyPhone &&
+        user.hrmsContact?.addressLine1
+      ),
+    },
+    {
+      key: "financial_details",
+      label: "Bank & Financial Details",
+      completed: !!(user.bankName && user.bankAccount && user.ifsc),
+    },
+    {
+      key: "statutory_ids",
+      label: "Statutory IDs (PAN & Aadhaar)",
+      completed: !!(user.pan && user.aadhaar),
+    },
   ];
 
   const total = checklist.length;
@@ -872,7 +1352,39 @@ export async function getOnboardingStatus(userId: string) {
   };
 }
 
-export async function submitOnboardingDetails(userId: string, data: any) {
+export async function submitOnboardingDetails(
+  userId: string,
+  data: {
+    personal?: {
+      firstName?: string;
+      lastName?: string;
+      dob?: string;
+      gender?: string;
+    };
+    contact?: {
+      personalPhone?: string;
+      personalEmail?: string;
+      emergencyName?: string;
+      emergencyPhone?: string;
+      addressLine1?: string;
+      addressLine2?: string;
+      city?: string;
+      state?: string;
+      country?: string;
+      zipCode?: string;
+    };
+    financial?: {
+      bankName?: string;
+      bankAccount?: string;
+      ifsc?: string;
+    };
+    statutory?: {
+      pan?: string;
+      aadhaar?: string;
+      uan?: string;
+    };
+  },
+) {
   const { personal, contact, financial, statutory } = data;
 
   return db.user.update({
@@ -934,9 +1446,27 @@ export async function getLmsCourses(orgId: string, userId: string) {
   if (courses.length === 0) {
     // Seed default logistics and compliance courses
     const defaults = [
-      { title: "Logistics Operations & Supply Chain", duration: "10 Hours", category: "Operations", description: "Basic concepts of freight management, shipping lines, and supply chain strategies." },
-      { title: "Security and Safety Compliance", duration: "2 Hours", category: "Compliance", description: "Information security, physical warehouse safety rules, and GDPR compliance." },
-      { title: "Customer Relationship Management in Freight", duration: "5 Hours", category: "CRM", description: "How to capture, manage, and coordinate deals and invoices inside the monolith portal." },
+      {
+        title: "Logistics Operations & Supply Chain",
+        duration: "10 Hours",
+        category: "Operations",
+        description:
+          "Basic concepts of freight management, shipping lines, and supply chain strategies.",
+      },
+      {
+        title: "Security and Safety Compliance",
+        duration: "2 Hours",
+        category: "Compliance",
+        description:
+          "Information security, physical warehouse safety rules, and GDPR compliance.",
+      },
+      {
+        title: "Customer Relationship Management in Freight",
+        duration: "5 Hours",
+        category: "CRM",
+        description:
+          "How to capture, manage, and coordinate deals and invoices inside the monolith portal.",
+      },
     ];
     await db.course.createMany({
       data: defaults.map((d) => ({ orgId, ...d })),
@@ -970,7 +1500,11 @@ export async function enrollInCourse(userId: string, courseId: string) {
   });
 }
 
-export async function updateCourseProgress(userId: string, courseId: string, progress: number) {
+export async function updateCourseProgress(
+  userId: string,
+  courseId: string,
+  progress: number,
+) {
   const enrollment = await db.courseEnrollment.findFirst({
     where: { userId, courseId },
   });
@@ -994,7 +1528,8 @@ export async function updateCourseProgress(userId: string, courseId: string, pro
 
 // ─── PMS / Performance Services ──────────────────────────────────────────────
 
-export async function getPerformanceData(userId: string, orgId: string) {
+export async function getPerformanceData(userId: string, _orgId: string) {
+  void _orgId;
   const goals = await db.goal.findMany({
     where: { userId },
     orderBy: { dueDate: "asc" },
@@ -1007,10 +1542,7 @@ export async function getPerformanceData(userId: string, orgId: string) {
 
   const feedbacks = await db.performanceFeedback.findMany({
     where: {
-      OR: [
-        { fromUserId: userId },
-        { toUserId: userId },
-      ],
+      OR: [{ fromUserId: userId }, { toUserId: userId }],
     },
     include: {
       fromUser: { select: { name: true, photo: true } },
@@ -1026,7 +1558,13 @@ export async function getPerformanceData(userId: string, orgId: string) {
   };
 }
 
-export async function createPerformanceGoal(userId: string, orgId: string, title: string, target: string, dueDate: Date) {
+export async function createPerformanceGoal(
+  userId: string,
+  orgId: string,
+  title: string,
+  target: string,
+  dueDate: Date,
+) {
   return db.goal.create({
     data: {
       orgId,
@@ -1041,7 +1579,12 @@ export async function createPerformanceGoal(userId: string, orgId: string, title
 }
 
 export async function updateGoalProgress(goalId: string, progress: number) {
-  const status = progress >= 100 ? "COMPLETED" : progress > 0 ? "IN_PROGRESS" : "NOT_STARTED";
+  const status =
+    progress >= 100
+      ? "COMPLETED"
+      : progress > 0
+        ? "IN_PROGRESS"
+        : "NOT_STARTED";
   return db.goal.update({
     where: { id: goalId },
     data: {
@@ -1051,7 +1594,13 @@ export async function updateGoalProgress(goalId: string, progress: number) {
   });
 }
 
-export async function submitPerformanceFeedback(fromUserId: string, toUserId: string, orgId: string, content: string, feedbackType: string) {
+export async function submitPerformanceFeedback(
+  fromUserId: string,
+  toUserId: string,
+  orgId: string,
+  content: string,
+  feedbackType: string,
+) {
   return db.performanceFeedback.create({
     data: {
       orgId,
@@ -1073,7 +1622,14 @@ export async function getTravelRequests(userId: string, orgId: string) {
   });
 }
 
-export async function createTravelRequest(userId: string, orgId: string, purpose: string, destination: string, fromDate: Date, toDate: Date) {
+export async function createTravelRequest(
+  userId: string,
+  orgId: string,
+  purpose: string,
+  destination: string,
+  fromDate: Date,
+  toDate: Date,
+) {
   return db.travelRequest.create({
     data: {
       orgId,
@@ -1087,7 +1643,12 @@ export async function createTravelRequest(userId: string, orgId: string, purpose
   });
 }
 
-export async function createTravelExpense(travelRequestId: string, amount: number, category: string, billFileKey?: string) {
+export async function createTravelExpense(
+  travelRequestId: string,
+  amount: number,
+  category: string,
+  billFileKey?: string,
+) {
   return db.travelExpense.create({
     data: {
       travelRequestId,
@@ -1099,18 +1660,13 @@ export async function createTravelExpense(travelRequestId: string, amount: numbe
   });
 }
 
-
-
 // ─── Tasks Services ──────────────────────────────────────────────────────────
 
 export async function getHrmsTasks(userId: string, orgId: string) {
   return db.hrmsTask.findMany({
     where: {
       orgId,
-      OR: [
-        { assigneeId: userId },
-        { createdById: userId },
-      ],
+      OR: [{ assigneeId: userId }, { createdById: userId }],
     },
     include: {
       assignee: { select: { name: true, photo: true } },
@@ -1120,7 +1676,15 @@ export async function getHrmsTasks(userId: string, orgId: string) {
   });
 }
 
-export async function createHrmsTask(orgId: string, createdById: string, title: string, description: string | null, dueDate: Date, assigneeId: string, priority: "LOW" | "MEDIUM" | "HIGH") {
+export async function createHrmsTask(
+  orgId: string,
+  createdById: string,
+  title: string,
+  description: string | null,
+  dueDate: Date,
+  assigneeId: string,
+  priority: "LOW" | "MEDIUM" | "HIGH",
+) {
   return db.hrmsTask.create({
     data: {
       orgId,
@@ -1135,7 +1699,10 @@ export async function createHrmsTask(orgId: string, createdById: string, title: 
   });
 }
 
-export async function updateHrmsTaskStatus(taskId: string, status: "PENDING" | "COMPLETED") {
+export async function updateHrmsTaskStatus(
+  taskId: string,
+  status: "PENDING" | "COMPLETED",
+) {
   return db.hrmsTask.update({
     where: { id: taskId },
     data: { status },
@@ -1144,55 +1711,64 @@ export async function updateHrmsTaskStatus(taskId: string, status: "PENDING" | "
 
 // ─── Approvals Inbox Services ───────────────────────────────────────────────
 
-export async function getPendingApprovals(userId: string, orgId: string, isAdmin: boolean) {
+export async function getPendingApprovals(
+  userId: string,
+  orgId: string,
+  isAdmin: boolean,
+) {
   // If admin: load all pending items in the org. Otherwise, load requests where managerId = userId
   const managerFilter = isAdmin ? {} : { user: { managerId: userId } };
-  const otManagerFilter = isAdmin ? {} : { user: { managerId: userId } };
-  const workReportFilter = isAdmin ? {} : { report: { user: { managerId: userId } } };
+  const workReportFilter = { approverId: userId };
 
-  const [leaves, regularizations, ots, travels, timesheets, workreports] = await Promise.all([
-    db.leaveRequest.findMany({
-      where: { ...managerFilter, status: "pending" },
-      include: {
-        user: { select: { name: true, employeeNumber: true, photo: true } },
-        leaveType: true,
-      },
-    }),
-    db.attendanceRegularization.findMany({
-      where: { ...managerFilter, status: "PENDING" },
-      include: {
-        user: { select: { name: true, employeeNumber: true, photo: true } },
-      },
-    }),
-    db.otRecord.findMany({
-      where: { ...managerFilter, approvalStatus: "PENDING" },
-      include: {
-        user: { select: { name: true, employeeNumber: true, photo: true } },
-      },
-    }),
-    db.travelRequest.findMany({
-      where: { ...managerFilter, status: "PENDING" },
-      include: {
-        user: { select: { name: true, employeeNumber: true, photo: true } },
-      },
-    }),
-    db.timesheetSubmission.findMany({
-      where: { ...managerFilter, status: "PENDING" },
-      include: {
-        user: { select: { name: true, employeeNumber: true, photo: true } },
-      },
-    }),
-    db.workReportApproval.findMany({
-      where: { ...workReportFilter, status: "PENDING" },
-      include: {
-        report: {
-          include: {
-            user: { select: { name: true, employeeNumber: true, photo: true } },
+  const [leaves, regularizations, ots, travels, timesheets, workreports] =
+    await Promise.all([
+      db.leaveRequest.findMany({
+        where: { ...managerFilter, status: "pending" },
+        include: {
+          user: { select: { name: true, employeeNumber: true, photo: true } },
+          leaveType: true,
+        },
+      }),
+      db.attendanceRegularization.findMany({
+        where: { ...managerFilter, status: "PENDING" },
+        include: {
+          user: { select: { name: true, employeeNumber: true, photo: true } },
+        },
+      }),
+      db.otRecord.findMany({
+        where: { ...managerFilter, approvalStatus: "PENDING" },
+        include: {
+          user: { select: { name: true, employeeNumber: true, photo: true } },
+        },
+      }),
+      db.travelRequest.findMany({
+        where: { ...managerFilter, status: "PENDING" },
+        include: {
+          user: { select: { name: true, employeeNumber: true, photo: true } },
+        },
+      }),
+      db.timesheetSubmission.findMany({
+        where: { ...managerFilter, status: "PENDING" },
+        include: {
+          user: { select: { name: true, employeeNumber: true, photo: true } },
+        },
+      }),
+      db.workReportApproval.findMany({
+        where: { ...workReportFilter, status: "PENDING" },
+        include: {
+          report: {
+            include: {
+              user: {
+                select: { name: true, employeeNumber: true, photo: true },
+              },
+            },
+          },
+          approver: {
+            select: { id: true, name: true, email: true },
           },
         },
-      },
-    }),
-  ]);
+      }),
+    ]);
 
   return {
     leaves,
@@ -1206,13 +1782,13 @@ export async function getPendingApprovals(userId: string, orgId: string, isAdmin
 
 export async function executeApprovalDecision(
   userId: string,
+  orgId: string,
   requestId: string,
-  type: "LEAVE" | "REGULARIZATION" | "OT" | "TRAVEL" | "TIMESHEET" | "WORKREPORT",
+  type:
+    "LEAVE" | "REGULARIZATION" | "OT" | "TRAVEL" | "TIMESHEET" | "WORKREPORT",
   decision: "APPROVED" | "REJECTED",
-  remarks?: string
+  remarks?: string,
 ) {
-  const now = await getNow();
-
   if (type === "LEAVE") {
     const status = decision === "APPROVED" ? "approved" : "rejected";
     return db.leaveRequest.update({
@@ -1231,7 +1807,11 @@ export async function executeApprovalDecision(
   if (type === "OT") {
     return db.otRecord.update({
       where: { id: requestId },
-      data: { approvalStatus: decision, approvedById: userId, rejectionRemarks: remarks },
+      data: {
+        approvalStatus: decision,
+        approvedById: userId,
+        rejectionRemarks: remarks,
+      },
     });
   }
 
@@ -1250,17 +1830,14 @@ export async function executeApprovalDecision(
   }
 
   if (type === "WORKREPORT") {
-    await db.workReportApproval.updateMany({
-      where: { reportId: requestId, approverId: userId },
-      data: { status: decision, comments: remarks },
-    });
-    return db.workReport.update({
-      where: { id: requestId },
-      data: { status: decision },
-    });
+    return submitWorkReportApproval(
+      userId,
+      orgId,
+      requestId,
+      decision,
+      remarks,
+    );
   }
 
   throw new Error("Unsupported approval type");
 }
-
-

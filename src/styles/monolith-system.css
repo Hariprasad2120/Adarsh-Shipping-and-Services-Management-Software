@@ -163,13 +163,14 @@ html[data-dashboard-shell="true"] body {
   font: inherit;
 }
 
-.mnx-floating-surface
-  :where(button, a, input, select, textarea):focus-visible {
+.mnx-floating-surface :where(button, a, input, select, textarea):focus-visible {
   outline: 3px solid color-mix(in srgb, var(--mnx-accent) 48%, transparent);
   outline-offset: 2px;
 }
 
-@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+@supports not (
+  (-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))
+) {
   .mnx-floating-surface {
     background: var(--mnx-glass-fallback);
   }
@@ -966,8 +967,16 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   border: 1px solid var(--mnx-border);
   border-radius: 28px;
   background:
-    radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--mnx-accent) 34%, transparent), transparent 34%),
-    linear-gradient(112deg, color-mix(in srgb, var(--mnx-card) 97%, transparent) 0 52%, color-mix(in srgb, var(--mnx-accent) 18%, var(--mnx-card)) 100%),
+    radial-gradient(
+      circle at 78% 18%,
+      color-mix(in srgb, var(--mnx-accent) 34%, transparent),
+      transparent 34%
+    ),
+    linear-gradient(
+      112deg,
+      color-mix(in srgb, var(--mnx-card) 97%, transparent) 0 52%,
+      color-mix(in srgb, var(--mnx-accent) 18%, var(--mnx-card)) 100%
+    ),
     var(--mnx-surface-gradient);
   box-shadow: var(--mnx-shadow);
 }
@@ -977,7 +986,11 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   z-index: 0;
   content: "";
   inset: 0;
-  background: linear-gradient(90deg, transparent 0 52%, color-mix(in srgb, var(--mnx-accent) 24%, transparent) 100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0 52%,
+    color-mix(in srgb, var(--mnx-accent) 24%, transparent) 100%
+  );
   opacity: 0.42;
   pointer-events: none;
 }
@@ -1002,7 +1015,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   top: -130px;
   border: 1px solid color-mix(in srgb, var(--mnx-accent) 34%, transparent);
   border-radius: 50%;
-  box-shadow: inset 0 0 0 44px color-mix(in srgb, var(--mnx-accent) 9%, transparent);
+  box-shadow: inset 0 0 0 44px
+    color-mix(in srgb, var(--mnx-accent) 9%, transparent);
 }
 
 .mnx-dashboard-hero-graphic span:nth-child(2) {
@@ -1012,7 +1026,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   bottom: -250px;
   border: 1px solid color-mix(in srgb, var(--mnx-accent) 34%, transparent);
   border-radius: 50%;
-  box-shadow: inset 0 0 0 60px color-mix(in srgb, var(--mnx-accent) 9%, transparent);
+  box-shadow: inset 0 0 0 60px
+    color-mix(in srgb, var(--mnx-accent) 9%, transparent);
 }
 
 .mnx-dashboard-hero-graphic span:nth-child(3) {
@@ -1100,7 +1115,9 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   border-radius: 50%;
   color: var(--mnx-accent-contrast);
   background: var(--mnx-highlight-gradient);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), var(--mnx-theme-shadow-soft);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    var(--mnx-theme-shadow-soft);
   font-family: var(--mn-font-sans);
   font-size: 24px;
   font-weight: 620;
@@ -1174,7 +1191,13 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   height: 82px;
   background: color-mix(in srgb, var(--mnx-card) 34%, transparent);
   backdrop-filter: blur(12px);
-  mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 18%,
+    #000 82%,
+    transparent
+  );
 }
 
 .mnx-dashboard-action-viewport::before,
@@ -1257,7 +1280,11 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   border: 1px solid var(--mnx-border);
   border-radius: 26px;
   background:
-    linear-gradient(155deg, color-mix(in srgb, var(--mnx-card) 96%, transparent), color-mix(in srgb, var(--mnx-accent) 11%, var(--mnx-card))),
+    linear-gradient(
+      155deg,
+      color-mix(in srgb, var(--mnx-card) 96%, transparent),
+      color-mix(in srgb, var(--mnx-accent) 11%, var(--mnx-card))
+    ),
     var(--mnx-card);
   box-shadow: 0 22px 44px rgba(15, 16, 12, 0.14);
   transform: translateY(4px);
@@ -1488,7 +1515,9 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 .mnx-button-primary {
   color: var(--mnx-primary-contrast);
   background: var(--mnx-primary-gradient);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 10px 22px rgba(17, 18, 14, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 10px 22px rgba(17, 18, 14, 0.18);
 }
 
 .theme-night .mnx-button-primary,
@@ -1642,7 +1671,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
 .mnx-dashboard-tabs button:hover {
   background: color-mix(in srgb, var(--mnx-card) 84%, var(--mnx-accent));
-  box-shadow: inset 0 -3px color-mix(in srgb, var(--mnx-accent) 45%, transparent);
+  box-shadow: inset 0 -3px
+    color-mix(in srgb, var(--mnx-accent) 45%, transparent);
 }
 
 .mnx-dashboard-tabs button.is-active {
@@ -1710,7 +1740,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   align-items: center;
   gap: 7px;
   padding: 0 11px;
-  border: 1px solid color-mix(in srgb, var(--mnx-success) 22%, var(--mnx-border));
+  border: 1px solid
+    color-mix(in srgb, var(--mnx-success) 22%, var(--mnx-border));
   border-radius: 999px;
   color: var(--mnx-success);
   background: var(--mnx-success-bg);
@@ -1783,8 +1814,16 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   min-height: 100%;
   overflow: hidden;
   background:
-    radial-gradient(circle at 48% 42%, color-mix(in srgb, var(--mnx-card) 38%, transparent), transparent 38%),
-    linear-gradient(145deg, color-mix(in srgb, var(--mnx-card) 94%, transparent), color-mix(in srgb, var(--mnx-soft) 68%, var(--mnx-card)));
+    radial-gradient(
+      circle at 48% 42%,
+      color-mix(in srgb, var(--mnx-card) 38%, transparent),
+      transparent 38%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--mnx-card) 94%, transparent),
+      color-mix(in srgb, var(--mnx-soft) 68%, var(--mnx-card))
+    );
 }
 
 .mnx-module-card[data-layout="image-right"] .mnx-module-card-art {
@@ -1803,8 +1842,15 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 .mnx-module-card-art::before {
   z-index: 1;
   background:
-    linear-gradient(color-mix(in srgb, var(--mnx-border) 26%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--mnx-border) 26%, transparent) 1px, transparent 1px);
+    linear-gradient(
+      color-mix(in srgb, var(--mnx-border) 26%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--mnx-border) 26%, transparent) 1px,
+      transparent 1px
+    );
   background-position: center;
   background-size: 42px 42px;
   opacity: 0.22;
@@ -1813,16 +1859,40 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 .mnx-module-card-art::after {
   z-index: 1;
   background:
-    radial-gradient(circle at -16% -16%, color-mix(in srgb, var(--mnx-accent) 18%, transparent), transparent 44%),
-    radial-gradient(circle at 116% 116%, color-mix(in srgb, var(--mnx-accent) 18%, transparent), transparent 44%),
-    linear-gradient(90deg, color-mix(in srgb, var(--mnx-card) 0%, transparent) 0 46%, color-mix(in srgb, var(--mnx-card) 72%, transparent) 100%);
+    radial-gradient(
+      circle at -16% -16%,
+      color-mix(in srgb, var(--mnx-accent) 18%, transparent),
+      transparent 44%
+    ),
+    radial-gradient(
+      circle at 116% 116%,
+      color-mix(in srgb, var(--mnx-accent) 18%, transparent),
+      transparent 44%
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--mnx-card) 0%, transparent) 0 46%,
+      color-mix(in srgb, var(--mnx-card) 72%, transparent) 100%
+    );
 }
 
 .mnx-module-card[data-layout="image-right"] .mnx-module-card-art::after {
   background:
-    radial-gradient(circle at -16% -16%, color-mix(in srgb, var(--mnx-accent) 18%, transparent), transparent 44%),
-    radial-gradient(circle at 116% 116%, color-mix(in srgb, var(--mnx-accent) 18%, transparent), transparent 44%),
-    linear-gradient(270deg, color-mix(in srgb, var(--mnx-card) 0%, transparent) 0 46%, color-mix(in srgb, var(--mnx-card) 72%, transparent) 100%);
+    radial-gradient(
+      circle at -16% -16%,
+      color-mix(in srgb, var(--mnx-accent) 18%, transparent),
+      transparent 44%
+    ),
+    radial-gradient(
+      circle at 116% 116%,
+      color-mix(in srgb, var(--mnx-accent) 18%, transparent),
+      transparent 44%
+    ),
+    linear-gradient(
+      270deg,
+      color-mix(in srgb, var(--mnx-card) 0%, transparent) 0 46%,
+      color-mix(in srgb, var(--mnx-card) 72%, transparent) 100%
+    );
 }
 
 .mnx-module-graphic {
@@ -1843,8 +1913,9 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   fill: color-mix(in srgb, var(--mnx-card) 46%, transparent);
   stroke: color-mix(in srgb, var(--mnx-text) 20%, var(--mnx-border));
   stroke-width: 1.2;
-  filter:
-    drop-shadow(0 16px 26px color-mix(in srgb, var(--mnx-text) 9%, transparent))
+  filter: drop-shadow(
+      0 16px 26px color-mix(in srgb, var(--mnx-text) 9%, transparent)
+    )
     drop-shadow(0 0 18px color-mix(in srgb, var(--mnx-card) 44%, transparent));
   transform-box: fill-box;
   transform-origin: center;
@@ -1857,7 +1928,9 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   stroke: color-mix(in srgb, var(--mnx-muted) 32%, transparent);
   stroke-width: 1.05;
   stroke-dasharray: 8 10;
-  filter: drop-shadow(0 10px 20px color-mix(in srgb, var(--mnx-text) 6%, transparent));
+  filter: drop-shadow(
+    0 10px 20px color-mix(in srgb, var(--mnx-text) 6%, transparent)
+  );
   vector-effect: non-scaling-stroke;
   animation: mnx-module-faint-drift 16s linear infinite;
 }
@@ -1876,7 +1949,9 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   stroke-width: 2;
   stroke-dasharray: 260;
   stroke-dashoffset: 260;
-  filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--mnx-accent) 28%, transparent));
+  filter: drop-shadow(
+    0 6px 14px color-mix(in srgb, var(--mnx-accent) 28%, transparent)
+  );
   vector-effect: non-scaling-stroke;
   animation: mnx-module-accent-draw 10s ease-in-out infinite;
 }
@@ -2516,7 +2591,11 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   overflow: hidden;
   color: var(--mnx-text);
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--mnx-card) 94%, transparent), color-mix(in srgb, var(--mnx-card) 78%, var(--mnx-soft))),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--mnx-card) 94%, transparent),
+      color-mix(in srgb, var(--mnx-card) 78%, var(--mnx-soft))
+    ),
     var(--mnx-card);
 }
 
@@ -2554,8 +2633,16 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   padding-block: 12px;
   border-radius: 16px;
   background:
-    radial-gradient(circle at 95% 0%, color-mix(in srgb, var(--mnx-accent) 30%, transparent), transparent 36%),
-    linear-gradient(90deg, color-mix(in srgb, var(--mnx-card) 70%, var(--mnx-accent)), color-mix(in srgb, var(--mnx-card) 82%, var(--mnx-accent)));
+    radial-gradient(
+      circle at 95% 0%,
+      color-mix(in srgb, var(--mnx-accent) 30%, transparent),
+      transparent 36%
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--mnx-card) 70%, var(--mnx-accent)),
+      color-mix(in srgb, var(--mnx-card) 82%, var(--mnx-accent))
+    );
   box-shadow: var(--mnx-theme-shadow-soft);
 }
 
@@ -3013,8 +3100,16 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   inset: -1px;
   pointer-events: none;
   background:
-    radial-gradient(circle at 82% 28%, color-mix(in srgb, var(--mnx-accent) 18%, transparent), transparent 35%),
-    radial-gradient(circle at 102% 88%, color-mix(in srgb, var(--mnx-accent) 14%, transparent), transparent 32%);
+    radial-gradient(
+      circle at 82% 28%,
+      color-mix(in srgb, var(--mnx-accent) 18%, transparent),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at 102% 88%,
+      color-mix(in srgb, var(--mnx-accent) 14%, transparent),
+      transparent 32%
+    );
   opacity: 0;
   transition: opacity var(--mn-motion-panel) var(--mn-ease-standard);
 }
@@ -3112,9 +3207,14 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   border: 1px solid color-mix(in srgb, var(--mnx-border) 78%, transparent);
   border-radius: 22px;
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--mnx-card) 54%, transparent), color-mix(in srgb, var(--mnx-card) 10%, transparent)),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--mnx-card) 54%, transparent),
+      color-mix(in srgb, var(--mnx-card) 10%, transparent)
+    ),
     color-mix(in srgb, var(--mnx-card) 28%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mnx-card) 36%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--mnx-card) 36%, transparent);
   transform: rotate(-4deg);
 }
 
@@ -3161,7 +3261,11 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   border: 1px solid color-mix(in srgb, var(--mnx-accent) 26%, transparent);
   border-radius: 24px;
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--mnx-accent) 12%, transparent), color-mix(in srgb, var(--mnx-card) 20%, transparent)),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--mnx-accent) 12%, transparent),
+      color-mix(in srgb, var(--mnx-card) 20%, transparent)
+    ),
     color-mix(in srgb, var(--mnx-card) 24%, transparent);
   transform: rotate(4deg);
 }
@@ -3193,7 +3297,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   top: -80px;
   border: 1px solid color-mix(in srgb, var(--mnx-accent) 30%, transparent);
   border-radius: 50%;
-  box-shadow: inset 0 0 0 32px color-mix(in srgb, var(--mnx-accent) 8%, transparent);
+  box-shadow: inset 0 0 0 32px
+    color-mix(in srgb, var(--mnx-accent) 8%, transparent);
   opacity: 0.58;
 }
 
@@ -3208,12 +3313,11 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   bottom: -58px;
   border: 1px solid color-mix(in srgb, var(--mnx-border) 78%, transparent);
   border-radius: 50%;
-  background:
-    conic-gradient(
-      from 210deg,
-      color-mix(in srgb, var(--mnx-accent) 58%, transparent) 0 82deg,
-      transparent 82deg 360deg
-    );
+  background: conic-gradient(
+    from 210deg,
+    color-mix(in srgb, var(--mnx-accent) 58%, transparent) 0 82deg,
+    transparent 82deg 360deg
+  );
   opacity: 0.48;
   -webkit-mask: radial-gradient(circle, transparent 0 58%, #000 59%);
   mask: radial-gradient(circle, transparent 0 58%, #000 59%);
@@ -3588,7 +3692,10 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
     calc(100% - 12px) 18px,
     0 0;
   background-repeat: no-repeat;
-  background-size: 5px 5px, 5px 5px, 100% 100%;
+  background-size:
+    5px 5px,
+    5px 5px,
+    100% 100%;
 }
 
 .mnx-select-shell .mnx-field-select,
@@ -3596,7 +3703,11 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   min-height: 54px;
   border-radius: 14px;
   background:
-    linear-gradient(145deg, color-mix(in srgb, var(--mnx-soft) 72%, var(--mnx-card)), color-mix(in srgb, var(--mnx-card) 86%, var(--mnx-soft))),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--mnx-soft) 72%, var(--mnx-card)),
+      color-mix(in srgb, var(--mnx-card) 86%, var(--mnx-soft))
+    ),
     var(--mnx-card);
   color: var(--mnx-text);
   font-family: var(--mn-font-sans);
@@ -3771,7 +3882,10 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
 .mnx-showcase-spacing {
   display: grid;
-  grid-template-columns: 1fr minmax(120px, 0.16fr) minmax(280px, 0.9fr) minmax(120px, 0.16fr) 1fr;
+  grid-template-columns: 1fr minmax(120px, 0.16fr) minmax(280px, 0.9fr) minmax(
+      120px,
+      0.16fr
+    ) 1fr;
   align-items: stretch;
   gap: 8px;
   padding: 16px;
@@ -3829,14 +3943,30 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--mnx-card) 44%, transparent);
 }
 
-.mnx-showcase-swatch-canvas { background: var(--mnx-page); }
-.mnx-showcase-swatch-surface { background: var(--mnx-card); }
-.mnx-showcase-swatch-accent { background: var(--mnx-accent); }
-.mnx-showcase-swatch-accentSoft { background: var(--mnx-accent-soft); }
-.mnx-showcase-swatch-text { background: var(--mnx-text); }
-.mnx-showcase-swatch-muted { background: var(--mnx-muted); }
-.mnx-showcase-swatch-success { background: var(--mnx-success); }
-.mnx-showcase-swatch-danger { background: var(--mnx-danger); }
+.mnx-showcase-swatch-canvas {
+  background: var(--mnx-page);
+}
+.mnx-showcase-swatch-surface {
+  background: var(--mnx-card);
+}
+.mnx-showcase-swatch-accent {
+  background: var(--mnx-accent);
+}
+.mnx-showcase-swatch-accentSoft {
+  background: var(--mnx-accent-soft);
+}
+.mnx-showcase-swatch-text {
+  background: var(--mnx-text);
+}
+.mnx-showcase-swatch-muted {
+  background: var(--mnx-muted);
+}
+.mnx-showcase-swatch-success {
+  background: var(--mnx-success);
+}
+.mnx-showcase-swatch-danger {
+  background: var(--mnx-danger);
+}
 
 .mnx-showcase-two-column {
   display: grid;
@@ -3945,7 +4075,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 .mnx-workspace-state-permission .mnx-workspace-state-icon {
   color: var(--mnx-warning);
   background: var(--mnx-warning-bg);
-  box-shadow: 0 13px 30px color-mix(in srgb, var(--mnx-warning) 20%, transparent);
+  box-shadow: 0 13px 30px
+    color-mix(in srgb, var(--mnx-warning) 20%, transparent);
 }
 
 .mnx-workspace-state-loading .mnx-workspace-state-icon svg {
@@ -3958,10 +4089,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   inset: 0;
   display: grid;
   place-items: center;
-  padding:
-    max(24px, env(safe-area-inset-top))
-    max(24px, env(safe-area-inset-right))
-    max(24px, env(safe-area-inset-bottom))
+  padding: max(24px, env(safe-area-inset-top))
+    max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom))
     max(24px, env(safe-area-inset-left));
   isolation: isolate;
 }
@@ -4276,7 +4405,10 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 .mnx-todo-summary {
   width: 100%;
   display: grid;
-  grid-template-columns: 40px minmax(180px, 1.4fr) minmax(130px, 0.8fr) minmax(130px, 0.7fr) auto 18px;
+  grid-template-columns: 40px minmax(180px, 1.4fr) minmax(130px, 0.8fr) minmax(
+      130px,
+      0.7fr
+    ) auto 18px;
   align-items: center;
   gap: 14px;
   padding: 17px 22px;
@@ -4642,10 +4774,18 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   box-shadow: var(--mnx-shadow);
 }
 
-.mnx-catalogue-engine > b:nth-of-type(1) { top: 20px; }
-.mnx-catalogue-engine > b:nth-of-type(2) { right: 16px; }
-.mnx-catalogue-engine > b:nth-of-type(3) { bottom: 20px; }
-.mnx-catalogue-engine > b:nth-of-type(4) { left: 16px; }
+.mnx-catalogue-engine > b:nth-of-type(1) {
+  top: 20px;
+}
+.mnx-catalogue-engine > b:nth-of-type(2) {
+  right: 16px;
+}
+.mnx-catalogue-engine > b:nth-of-type(3) {
+  bottom: 20px;
+}
+.mnx-catalogue-engine > b:nth-of-type(4) {
+  left: 16px;
+}
 
 .mnx-catalogue-capability strong {
   font-family: var(--mn-font-sans);
@@ -5223,7 +5363,11 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   border: 1px solid var(--mnx-border);
   border-radius: var(--mnx-radius-lg);
   background:
-    radial-gradient(circle at 90% 0%, color-mix(in srgb, var(--mnx-accent) 30%, transparent), transparent 38%),
+    radial-gradient(
+      circle at 90% 0%,
+      color-mix(in srgb, var(--mnx-accent) 30%, transparent),
+      transparent 38%
+    ),
     var(--mnx-control-gradient);
   box-shadow: var(--mnx-shadow);
 }
@@ -5331,8 +5475,11 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   padding: 18px;
   border: 1px solid var(--mnx-border);
   border-radius: var(--mnx-radius-md);
-  background:
-    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--mnx-muted) 24%, transparent) 1px, transparent 0);
+  background: radial-gradient(
+    circle at 1px 1px,
+    color-mix(in srgb, var(--mnx-muted) 24%, transparent) 1px,
+    transparent 0
+  );
   background-size: 18px 18px;
 }
 
@@ -5435,8 +5582,11 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   padding: 22px;
   border: 1px solid var(--mnx-border);
   border-radius: var(--mnx-radius-md);
-  background:
-    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--mnx-muted) 22%, transparent) 1px, transparent 0);
+  background: radial-gradient(
+    circle at 1px 1px,
+    color-mix(in srgb, var(--mnx-muted) 22%, transparent) 1px,
+    transparent 0
+  );
   background-size: 18px 18px;
 }
 
@@ -5753,16 +5903,30 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   overflow: hidden;
   border-radius: 999px;
   background:
-    linear-gradient(90deg, transparent, color-mix(in srgb, var(--mnx-accent) 24%, transparent), transparent),
+    linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--mnx-accent) 24%, transparent),
+      transparent
+    ),
     var(--mnx-soft);
   background-size: 200% 100%;
   animation: mnx-shimmer 1.2s linear infinite;
 }
 
-.mnx-dashboard-skeleton > span:nth-child(1) { width: 28%; }
-.mnx-dashboard-skeleton > span:nth-child(2) { width: 65%; height: 40px; }
-.mnx-dashboard-skeleton > span:nth-child(3) { width: 82%; }
-.mnx-dashboard-skeleton > span:nth-child(4) { width: 54%; }
+.mnx-dashboard-skeleton > span:nth-child(1) {
+  width: 28%;
+}
+.mnx-dashboard-skeleton > span:nth-child(2) {
+  width: 65%;
+  height: 40px;
+}
+.mnx-dashboard-skeleton > span:nth-child(3) {
+  width: 82%;
+}
+.mnx-dashboard-skeleton > span:nth-child(4) {
+  width: 54%;
+}
 
 .mnx-dashboard-skeleton-hero {
   min-height: 430px;
@@ -5791,51 +5955,97 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 }
 
 @keyframes mnx-page-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes mnx-panel-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes mnx-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes mnx-command-in {
-  from { opacity: 0; transform: translateY(-12px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes mnx-pulse-ring {
-  70% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--mnx-accent) 0%, transparent); }
-  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--mnx-accent) 0%, transparent); }
+  70% {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--mnx-accent) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--mnx-accent) 0%, transparent);
+  }
 }
 
 @keyframes mnx-action-stream {
-  from { transform: translateY(-50%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(-50%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 @keyframes mnx-clock-running {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes mnx-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes mnx-celebrate {
-  0% { opacity: 0; transform: translateY(16px) scale(0.8) rotate(-4deg); }
-  18%, 78% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
-  100% { opacity: 0; transform: translateY(-10px) scale(0.96); }
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.8) rotate(-4deg);
+  }
+  18%,
+  78% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.96);
+  }
 }
 
 @keyframes mnx-shimmer {
-  to { background-position: -200% 0; }
+  to {
+    background-position: -200% 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -6026,7 +6236,10 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   }
 
   .mnx-todo-summary {
-    grid-template-columns: 40px minmax(180px, 1fr) minmax(120px, 0.7fr) auto 18px;
+    grid-template-columns: 40px minmax(180px, 1fr) minmax(
+        120px,
+        0.7fr
+      ) auto 18px;
   }
 
   .mnx-todo-date {
@@ -6253,7 +6466,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
   .mnx-dashboard-main {
     min-height: calc(100vh - 64px);
-    padding: var(--mnx-page-gutter-mobile) var(--mnx-page-gutter-mobile) var(--mnx-page-bottom-mobile);
+    padding: var(--mnx-page-gutter-mobile) var(--mnx-page-gutter-mobile)
+      var(--mnx-page-bottom-mobile);
   }
 
   .mnx-dashboard-page {
@@ -6401,11 +6615,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
   .mnx-dialog-layer {
     align-items: end;
-    padding:
-      max(12px, env(safe-area-inset-top))
-      0
-      env(safe-area-inset-bottom)
-      0;
+    padding: max(12px, env(safe-area-inset-top)) 0 env(safe-area-inset-bottom) 0;
   }
 
   .mnx-dialog-surface {
@@ -6861,15 +7071,13 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   bottom: -3.25rem;
   width: 12rem;
   height: 12rem;
-  border: 1px solid
-    color-mix(in srgb, var(--mnx-accent) 18%, var(--mnx-border));
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 18%, var(--mnx-border));
   border-radius: 50%;
-  background:
-    radial-gradient(
-      circle at center,
-      color-mix(in srgb, var(--mnx-accent) 12%, transparent),
-      transparent 67%
-    );
+  background: radial-gradient(
+    circle at center,
+    color-mix(in srgb, var(--mnx-accent) 12%, transparent),
+    transparent 67%
+  );
   pointer-events: none;
 }
 
@@ -6877,11 +7085,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 .mnx-admin-page-header .mnx-page-header-icon {
   color: var(--mnx-accent-text);
   background: var(--mnx-accent-soft);
-  border-color: color-mix(
-    in srgb,
-    var(--mnx-accent) 34%,
-    var(--mnx-border)
-  );
+  border-color: color-mix(in srgb, var(--mnx-accent) 34%, var(--mnx-border));
 }
 
 .mnx-communication-nav,
@@ -6928,11 +7132,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 .mnx-communication-nav a[aria-current="page"],
 .mnx-admin-nav a[aria-current="page"] {
   color: var(--mnx-text-strong);
-  border-color: color-mix(
-    in srgb,
-    var(--mnx-accent) 32%,
-    var(--mnx-border)
-  );
+  border-color: color-mix(in srgb, var(--mnx-accent) 32%, var(--mnx-border));
   background: var(--mnx-accent-soft);
 }
 
@@ -6989,8 +7189,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
 .mnx-communication-page
   :where(.monolith-input, .monolith-select, .monolith-textarea),
-.mnx-admin-page
-  :where(.monolith-input, .monolith-select, .monolith-textarea) {
+.mnx-admin-page :where(.monolith-input, .monolith-select, .monolith-textarea) {
   border-color: var(--mnx-control-border);
   color: var(--mnx-control-text);
   background: var(--mnx-control-bg);
@@ -7046,11 +7245,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
 .mnx-admin-link-card:hover {
   transform: translateY(-2px);
-  border-color: color-mix(
-    in srgb,
-    var(--mnx-accent) 36%,
-    var(--mnx-border)
-  );
+  border-color: color-mix(in srgb, var(--mnx-accent) 36%, var(--mnx-border));
   box-shadow: var(--mnx-shadow-hover);
 }
 
@@ -7183,11 +7378,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 .mnx-admin-role-option.is-selected,
 .mnx-admin-tabs .is-selected {
   color: var(--mnx-accent-text);
-  border-color: color-mix(
-    in srgb,
-    var(--mnx-accent) 36%,
-    var(--mnx-border)
-  );
+  border-color: color-mix(in srgb, var(--mnx-accent) 36%, var(--mnx-border));
   background: var(--mnx-accent-soft);
 }
 
@@ -7282,11 +7473,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 }
 
 .mnx-admin-danger-panel {
-  border-color: color-mix(
-    in srgb,
-    var(--mnx-danger) 42%,
-    var(--mnx-border)
-  );
+  border-color: color-mix(in srgb, var(--mnx-danger) 42%, var(--mnx-border));
 }
 
 .mnx-admin-record {
@@ -8019,14 +8206,17 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 }
 
 .mnx-cha-dialog-control:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--mnx-text) 24%, var(--mnx-border)) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--mnx-text) 24%,
+    var(--mnx-border)
+  ) !important;
 }
 
 .mnx-cha-dialog-control:focus,
 .mnx-cha-dialog-control:focus-visible {
   border-color: var(--mnx-accent) !important;
-  box-shadow: 0 0 0 3px
-    color-mix(in srgb, var(--mnx-accent) 18%, transparent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mnx-accent) 18%, transparent) !important;
 }
 
 .mnx-cha-native-select {
@@ -9229,6 +9419,20 @@ button.mnx-accounting-record-card {
 
 .mnx-people-dialog-compact {
   max-width: 34rem;
+}
+
+.mnx-work-report-dialog {
+  width: min(70rem, 100%);
+  height: min(49rem, 88dvh);
+  border-radius: 18px;
+}
+
+@media (max-width: 640px) {
+  .mnx-work-report-dialog {
+    width: 100%;
+    height: calc(100dvh - max(12px, env(safe-area-inset-top)));
+    border-radius: 24px 24px 0 0;
+  }
 }
 
 .mnx-numeric {

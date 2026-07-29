@@ -1,37 +1,67 @@
 "use client";
 
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Check,
+  CheckCircle2,
+  Clock,
+  LocateFixed,
+  MapPin,
+  Plus,
+  Send,
+  Trash2,
+  X,
+  XCircle,
+} from "lucide-react";
+import { toast } from "sonner";
 import {
   PeopleControlButton as MnxAction,
   PeopleControlInput as MnxInput,
-  PeopleControlTextarea as MnxTextarea,
   PeopleControlTable as MnxTable,
+  PeopleControlTextarea as MnxTextarea,
 } from "@/components/monolith/people-controls";
-
 import { NativeSelect } from "@/components/monolith/native-select";
 import { DateInput } from "@/components/monolith/date-input";
 import { WorkspaceDialog } from "@/components/monolith/workspace-dialog";
-import React, { useState, useEffect } from "react";
-import {
-  Plus,
-  Check,
-  X,
-  Clock,
-  HelpCircle,
-  User,
-  MapPin,
-  Send,
-} from "lucide-react";
-import { toast } from "sonner";
 
-interface WorkReport {
+type WorkReportStatus = "PENDING" | "APPROVED" | "REJECTED";
+type ApprovalStatus =
+  "WAITING" | "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+type FieldType = "TEXT" | "TEXTAREA" | "NUMBER" | "DATE" | "SELECT" | "BOOLEAN";
+type WorkContext = "Office" | "Home" | "Others";
+type ReportFilter = "my" | "reportees" | "all";
+
+type WorkReportItem = {
   id: string;
-  date: string;
-  workedOn: "Office" | "Home" | "Others";
   jobNoName: string;
   description: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+};
+
+type WorkReportField = {
+  id: string;
+  key: string;
+  label: string;
+  type: FieldType;
+  required: boolean;
+  options: unknown;
+  position: number;
+};
+
+type WorkReport = {
+  id: string;
+  date: string;
+  workedOn: WorkContext;
+  jobNoName: string;
+  description: string;
+  items: unknown;
+  customValues: unknown;
+  status: WorkReportStatus;
   addedAddress: string | null;
   modifiedAddress: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  locationAccuracy: number | null;
+  locationCapturedAt: string | null;
   createdAt: string;
   updatedAt: string;
   user: {
@@ -43,621 +73,1217 @@ interface WorkReport {
   };
   approvals: Array<{
     id: string;
-    status: "PENDING" | "APPROVED" | "REJECTED";
+    level: number;
+    status: ApprovalStatus;
     comments: string | null;
     approverId: string;
+    decidedAt: string | null;
     createdAt: string;
+    approver: {
+      id: string;
+      name: string;
+      email: string;
+      employeeNumber: number | null;
+    };
   }>;
+};
+
+type WorkReportForm = {
+  date: string;
+  workedOn: WorkContext;
+  items: WorkReportItem[];
+  customValues: Record<string, string | boolean>;
+};
+
+type CapturedLocation = {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  address: string;
+  previewCapturedAt: Date;
+};
+
+type WorkReportsViewProps = {
+  currentUserId: string;
+  canApprove: boolean;
+  canSubmit: boolean;
+  canViewAll: boolean;
+};
+
+function todayInputValue() {
+  const now = new Date();
+  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 10);
 }
 
-export function WorkReportsView() {
-  const [reports, setReports] = useState<WorkReport[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<"my" | "reportees" | "all">("all");
+function newLineId() {
+  return globalThis.crypto?.randomUUID?.() ?? `line-${Date.now()}`;
+}
 
-  // Selection
+function emptyForm(): WorkReportForm {
+  return {
+    date: todayInputValue(),
+    workedOn: "Office",
+    items: [{ id: "line-1", jobNoName: "", description: "" }],
+    customValues: {},
+  };
+}
+
+function reportItems(report: WorkReport): WorkReportItem[] {
+  if (Array.isArray(report.items)) {
+    const items = report.items
+      .map((item, index) => {
+        if (!item || typeof item !== "object") return null;
+        const row = item as Record<string, unknown>;
+        if (
+          typeof row.jobNoName !== "string" ||
+          typeof row.description !== "string"
+        ) {
+          return null;
+        }
+        return {
+          id: typeof row.id === "string" ? row.id : `line-${index + 1}`,
+          jobNoName: row.jobNoName,
+          description: row.description,
+        };
+      })
+      .filter((item): item is WorkReportItem => item !== null);
+    if (items.length > 0) return items;
+  }
+  return [
+    {
+      id: "legacy-line",
+      jobNoName: report.jobNoName,
+      description: report.description,
+    },
+  ];
+}
+
+function reportCustomValues(report: WorkReport) {
+  if (
+    report.customValues &&
+    typeof report.customValues === "object" &&
+    !Array.isArray(report.customValues)
+  ) {
+    return report.customValues as Record<string, unknown>;
+  }
+  return {};
+}
+
+function formatDateTime(value: string | Date | null) {
+  if (!value) return "—";
+  return new Date(value).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function valueLabel(value: unknown) {
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (value === null || value === undefined || value === "") return "—";
+  return String(value);
+}
+
+function getBrowserLocation() {
+  return new Promise<GeolocationPosition>((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Location services are not supported by this browser."));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0,
+    });
+  });
+}
+
+function responseError(result: unknown, fallback: string) {
+  if (
+    result &&
+    typeof result === "object" &&
+    "error" in result &&
+    result.error &&
+    typeof result.error === "object" &&
+    "message" in result.error &&
+    typeof result.error.message === "string"
+  ) {
+    return result.error.message;
+  }
+  return fallback;
+}
+
+function isGeolocationError(
+  error: unknown,
+): error is { code: number; message: string } {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "number"
+  );
+}
+
+export function WorkReportsView({
+  currentUserId,
+  canApprove,
+  canSubmit,
+  canViewAll,
+}: WorkReportsViewProps) {
+  const initialFilter: ReportFilter = canViewAll
+    ? "all"
+    : canApprove
+      ? "reportees"
+      : "my";
+  const [reports, setReports] = useState<WorkReport[]>([]);
+  const [fields, setFields] = useState<WorkReportField[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<ReportFilter>(initialFilter);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [approvalComment, setApprovalComment] = useState("");
-
-  // Create Form State
+  const [acting, setActing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newReport, setNewReport] = useState({
-    date: new Date().toISOString().split("T")[0],
-    workedOn: "Office" as "Office" | "Home" | "Others",
-    jobNoName: "",
-    description: "",
-    addedAddress: "",
-  });
+  const [newReport, setNewReport] = useState<WorkReportForm>(emptyForm);
+  const [capturedLocation, setCapturedLocation] =
+    useState<CapturedLocation | null>(null);
+  const [locationState, setLocationState] = useState<
+    "idle" | "capturing" | "ready" | "error"
+  >("idle");
+  const [submitting, setSubmitting] = useState(false);
 
-  const loadReports = async () => {
+  const loadReports = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/hrms/work-reports?filter=${filter}`);
-      const json = await res.json();
-      if (json.ok) {
-        setReports(json.data);
-        if (json.data.length > 0 && !selectedReportId) {
-          setSelectedReportId(json.data[0].id);
-        }
+      const response = await fetch(`/api/hrms/work-reports?filter=${filter}`);
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        throw new Error(
+          responseError(result, "Failed to load work reports ledger"),
+        );
       }
-    } catch (e) {
-      toast.error("Failed to load work reports ledger");
+      const nextReports = result.data.reports as WorkReport[];
+      setReports(nextReports);
+      setFields(result.data.fields as WorkReportField[]);
+      setSelectedReportId((current) => {
+        const linkedReportId =
+          typeof window === "undefined"
+            ? null
+            : new URLSearchParams(window.location.search).get("report");
+        if (
+          linkedReportId &&
+          nextReports.some((report) => report.id === linkedReportId)
+        ) {
+          return linkedReportId;
+        }
+        if (current && nextReports.some((report) => report.id === current)) {
+          return current;
+        }
+        return nextReports[0]?.id ?? null;
+      });
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to load work reports ledger",
+      );
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadReports();
   }, [filter]);
 
-  const handleCreateReport = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newReport.jobNoName || !newReport.description) {
-      toast.error("Please fill in all required fields.");
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadReports();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadReports]);
+
+  const captureLocation = useCallback(async () => {
+    setLocationState("capturing");
+    try {
+      const position = await getBrowserLocation();
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      const response = await fetch(
+        `/api/hrms/work-reports/location?latitude=${encodeURIComponent(latitude)}&longitude=${encodeURIComponent(longitude)}`,
+      );
+      const result = await response.json();
+      const fallbackAddress = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+      const address =
+        response.ok &&
+        result.ok &&
+        typeof result.data?.address === "string" &&
+        result.data.address.trim()
+          ? result.data.address.trim()
+          : fallbackAddress;
+      const location: CapturedLocation = {
+        latitude,
+        longitude,
+        accuracy: Number.isFinite(position.coords.accuracy)
+          ? position.coords.accuracy
+          : undefined,
+        address,
+        previewCapturedAt: new Date(),
+      };
+      setCapturedLocation(location);
+      setLocationState("ready");
+      return location;
+    } catch (error) {
+      setCapturedLocation(null);
+      setLocationState("error");
+      const message = isGeolocationError(error)
+        ? error.code === 1
+          ? "Location permission is required to submit a work report."
+          : "Your current location could not be captured. Check GPS and try again."
+        : error instanceof Error
+          ? error.message
+          : "Your current location could not be captured.";
+      toast.error(message);
+      throw error;
+    }
+  }, []);
+
+  function openCreateDialog() {
+    setNewReport(emptyForm());
+    setCapturedLocation(null);
+    setLocationState("idle");
+    setShowAddModal(true);
+    void captureLocation().catch(() => undefined);
+  }
+
+  function updateItem(
+    itemId: string,
+    key: "jobNoName" | "description",
+    value: string,
+  ) {
+    setNewReport((current) => ({
+      ...current,
+      items: current.items.map((item) =>
+        item.id === itemId ? { ...item, [key]: value } : item,
+      ),
+    }));
+  }
+
+  function addItem() {
+    setNewReport((current) => {
+      if (current.items.length >= 25) return current;
+      return {
+        ...current,
+        items: [
+          ...current.items,
+          { id: newLineId(), jobNoName: "", description: "" },
+        ],
+      };
+    });
+  }
+
+  function removeItem(itemId: string) {
+    setNewReport((current) => ({
+      ...current,
+      items: current.items.filter((item) => item.id !== itemId),
+    }));
+  }
+
+  function updateCustomValue(key: string, value: string | boolean) {
+    setNewReport((current) => ({
+      ...current,
+      customValues: { ...current.customValues, [key]: value },
+    }));
+  }
+
+  async function handleCreateReport(event: React.FormEvent) {
+    event.preventDefault();
+    const incompleteItem = newReport.items.find(
+      (item) => !item.jobNoName.trim() || item.description.trim().length < 5,
+    );
+    if (incompleteItem) {
+      toast.error(
+        "Every line item needs a job number/name and a description of at least 5 characters.",
+      );
       return;
     }
 
+    setSubmitting(true);
+    let locationWasCaptured = false;
     try {
-      const res = await fetch("/api/hrms/work-reports", {
+      const location = await captureLocation();
+      locationWasCaptured = true;
+      const customValues = Object.fromEntries(
+        fields.map((field) => {
+          const rawValue = newReport.customValues[field.key];
+          if (field.type === "NUMBER") {
+            return [
+              field.key,
+              rawValue === "" || rawValue === undefined
+                ? null
+                : Number(rawValue),
+            ];
+          }
+          return [
+            field.key,
+            rawValue ?? (field.type === "BOOLEAN" ? false : ""),
+          ];
+        }),
+      );
+
+      const response = await fetch("/api/hrms/work-reports", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newReport),
+        body: JSON.stringify({
+          date: newReport.date,
+          workedOn: newReport.workedOn,
+          items: newReport.items,
+          customValues,
+          location: {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            accuracy: location.accuracy,
+            address: location.address,
+          },
+        }),
       });
-      const json = await res.json();
-      if (json.ok) {
-        toast.success("Daily report submitted successfully.");
-        setShowAddModal(false);
-        setNewReport({
-          date: new Date().toISOString().split("T")[0],
-          workedOn: "Office",
-          jobNoName: "",
-          description: "",
-          addedAddress: "",
-        });
-        loadReports();
-      } else {
-        toast.error(json.error?.message || "Failed to submit report");
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        throw new Error(responseError(result, "Failed to submit report"));
       }
-    } catch (err) {
-      toast.error("Network error while submitting report");
-    }
-  };
 
-  const handleApprovalAction = async (
+      toast.success("Daily report submitted and routed for approval.");
+      setShowAddModal(false);
+      setNewReport(emptyForm());
+      setCapturedLocation(null);
+      if (filter === "my") {
+        await loadReports();
+      } else {
+        setFilter("my");
+      }
+    } catch (error) {
+      if (locationWasCaptured) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Unable to submit the daily report",
+        );
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleApprovalAction(
     reportId: string,
     status: "APPROVED" | "REJECTED",
-  ) => {
+  ) {
+    setActing(true);
     try {
-      const res = await fetch(`/api/hrms/work-reports/${reportId}/approve`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status, comments: approvalComment }),
-      });
-      const json = await res.json();
-      if (json.ok) {
-        toast.success(`Report status updated to ${status}`);
-        setApprovalComment("");
-        loadReports();
-      } else {
-        toast.error(json.error?.message || "Failed to process decision");
+      const response = await fetch(
+        `/api/hrms/work-reports/${reportId}/approve`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status, comments: approvalComment }),
+        },
+      );
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        throw new Error(responseError(result, "Failed to process decision"));
       }
-    } catch (err) {
-      toast.error("Network error while submitting decision");
+      toast.success(
+        result.data.status === "PENDING"
+          ? "Approved and sent to the secondary manager."
+          : `Report ${result.data.status.toLowerCase()}.`,
+      );
+      setApprovalComment("");
+      await loadReports();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to process decision",
+      );
+    } finally {
+      setActing(false);
     }
-  };
+  }
 
-  const selectedReport = reports.find((r) => r.id === selectedReportId) || null;
+  const selectedReport =
+    reports.find((report) => report.id === selectedReportId) ?? null;
+  const selectedItems = useMemo(
+    () => (selectedReport ? reportItems(selectedReport) : []),
+    [selectedReport],
+  );
+  const currentApproval = selectedReport?.approvals.find(
+    (approval) => approval.status === "PENDING",
+  );
+  const completedApprovals =
+    selectedReport?.approvals.filter(
+      (approval) => approval.status === "APPROVED",
+    ).length ?? 0;
+  const approvalLevels = selectedReport?.approvals.length ?? 0;
+  const canActOnSelected =
+    currentApproval?.approverId === currentUserId &&
+    selectedReport?.status === "PENDING";
 
   return (
-    <div className="flex flex-col gap-6 select-none animate-in fade-in duration-200">
-      {/* Subtab Header filters */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--mnx-card)] p-4 border border-[var(--mnx-border)] rounded-xl">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-[var(--mnx-muted)] uppercase">
-            Daily Reports View
+    <div className="flex select-none flex-col gap-6 animate-in fade-in duration-200">
+      <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)] p-4 sm:flex-row sm:items-center">
+        <div>
+          <span className="text-xs font-bold uppercase text-[var(--mnx-muted)]">
+            Daily work reports
           </span>
-          <span className="text-xs font-semibold text-[var(--mnx-muted)]">
-            /
-          </span>
-          <span className="text-xs font-bold text-[var(--mnx-accent)]">
-            Edit
-          </span>
+          <p className="mt-1 text-xs text-[var(--mnx-muted)]">
+            Submit detailed line items and track manager decisions.
+          </p>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex w-full items-center gap-3 sm:w-auto">
           <NativeSelect
             value={filter}
-            onChange={(e) => setFilter(e.target.value as any)}
-            className="text-xs font-bold bg-[var(--mnx-card)] border border-[var(--mnx-border)] rounded-lg p-1.5 outline-none cursor-pointer"
+            onChange={(event) => setFilter(event.target.value as ReportFilter)}
+            className="rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-card)] p-1.5 text-xs font-bold outline-none"
           >
-            <option value="all">Reportees + My Data</option>
-            <option value="my">My Data</option>
-            <option value="reportees">Reportees Only</option>
+            {canViewAll ? (
+              <option value="all">All organisation reports</option>
+            ) : null}
+            <option value="my">My reports</option>
+            {canApprove ? (
+              <option value="reportees">Reports assigned to me</option>
+            ) : null}
           </NativeSelect>
 
-          <MnxAction
-            type="button"
-            onClick={() => setShowAddModal(true)}
-            className="bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent-text)] text-[var(--mnx-text)] text-[11.5px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition-colors cursor-pointer ml-auto sm:ml-0"
-          >
-            <Plus className="size-3.5" />
-            Add Record
-          </MnxAction>
+          {canSubmit ? (
+            <MnxAction
+              type="button"
+              onClick={openCreateDialog}
+              className="ml-auto flex cursor-pointer items-center gap-1 rounded-lg bg-[var(--mnx-accent)] px-3 py-1.5 text-[11.5px] font-bold text-[var(--mnx-text)] shadow-sm transition-colors hover:bg-[var(--mnx-accent-text)] sm:ml-0"
+            >
+              <Plus className="size-3.5" />
+              Add report
+            </MnxAction>
+          ) : null}
         </div>
       </div>
 
-      {/* Main Grid: Split List and Details Bottom Pane */}
       <div className="flex flex-col gap-6">
-        {/* Table List View */}
-        <div className="bg-[var(--mnx-card)] border border-[var(--mnx-border)] rounded-2xl overflow-hidden shadow-sm">
-          <MnxTable className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-[var(--mnx-card)] border-b border-[var(--mnx-border)] text-[var(--mnx-muted)] font-bold uppercase tracking-wider text-[10px]">
-                <th className="px-6 py-3 w-10"></th>
-                <th className="px-6 py-3 w-16">Status</th>
-                <th className="px-6 py-3">Added By</th>
-                <th className="px-6 py-3">Added Time</th>
-                <th className="px-6 py-3">Modified By</th>
-                <th className="px-6 py-3">Modified Time</th>
-                <th className="px-6 py-3">Address</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--mnx-border)]">
-              {loading && reports.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="text-center py-12 text-[var(--mnx-muted)] font-medium"
-                  >
-                    Syncing work report logs...
-                  </td>
+        <div className="overflow-hidden rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-card)] shadow-sm">
+          <div className="overflow-x-auto">
+            <MnxTable className="w-full border-collapse text-left text-xs">
+              <thead>
+                <tr className="border-b border-[var(--mnx-border)] bg-[var(--mnx-card)] text-[10px] font-bold uppercase tracking-wider text-[var(--mnx-muted)]">
+                  <th className="w-12 px-5 py-3" />
+                  <th className="w-20 px-5 py-3">Status</th>
+                  <th className="px-5 py-3">Employee</th>
+                  <th className="px-5 py-3">Report date</th>
+                  <th className="px-5 py-3">Submitted</th>
+                  <th className="px-5 py-3">Line items</th>
+                  <th className="px-5 py-3">Captured location</th>
                 </tr>
-              ) : reports.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="text-center py-12 text-[var(--mnx-muted)] font-medium"
-                  >
-                    No work reports logged.
-                  </td>
-                </tr>
-              ) : (
-                reports.map((report) => {
-                  const isSelected = report.id === selectedReportId;
-                  const addedByStr = `${report.user.name} ${report.user.employeeNumber ?? ""}`;
-                  return (
-                    <tr
-                      key={report.id}
-                      onClick={() => setSelectedReportId(report.id)}
-                      className={`hover:bg-[var(--mnx-card)]/50 transition-colors cursor-pointer ${
-                        isSelected ? "bg-[var(--mnx-accent)]/5" : ""
-                      }`}
+              </thead>
+              <tbody className="divide-y divide-[var(--mnx-border)]">
+                {loading && reports.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="py-12 text-center font-medium text-[var(--mnx-muted)]"
                     >
-                      <td className="px-6 py-4">
-                        <MnxInput
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => setSelectedReportId(report.id)}
-                          className="rounded text-[var(--mnx-accent)] focus:ring-[var(--mnx-accent)]"
-                        />
-                      </td>
-                      <td className="px-6 py-4">
-                        {report.status === "PENDING" ? (
-                          <span title="Pending approval">
-                            <Clock className="size-4 text-[var(--mnx-warning)]" />
+                      Loading work reports…
+                    </td>
+                  </tr>
+                ) : reports.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="py-12 text-center font-medium text-[var(--mnx-muted)]"
+                    >
+                      No work reports found.
+                    </td>
+                  </tr>
+                ) : (
+                  reports.map((report) => {
+                    const isSelected = report.id === selectedReportId;
+                    return (
+                      <tr
+                        key={report.id}
+                        onClick={() => setSelectedReportId(report.id)}
+                        className={`cursor-pointer transition-colors hover:bg-[var(--mnx-card)]/50 ${
+                          isSelected ? "bg-[var(--mnx-accent)]/5" : ""
+                        }`}
+                      >
+                        <td className="px-5 py-4">
+                          <MnxInput
+                            type="radio"
+                            name="selected-work-report"
+                            checked={isSelected}
+                            onChange={() => setSelectedReportId(report.id)}
+                            aria-label={`Select ${report.user.name}'s report`}
+                          />
+                        </td>
+                        <td className="px-5 py-4">
+                          <ReportStatusIcon status={report.status} />
+                        </td>
+                        <td className="px-5 py-4 font-bold text-[var(--mnx-text)]">
+                          {report.user.name}
+                          <span className="mt-0.5 block text-[10px] font-medium text-[var(--mnx-muted)]">
+                            #{report.user.employeeNumber ?? "—"}
                           </span>
-                        ) : report.status === "APPROVED" ? (
-                          <span title="Approved">
-                            <Check className="size-4 text-[var(--mnx-success)]" />
-                          </span>
-                        ) : (
-                          <span title="Rejected">
-                            <X className="size-4 text-[var(--mnx-danger)]" />
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 font-bold text-[var(--mnx-text)]">
-                        {addedByStr}
-                      </td>
-                      <td className="px-6 py-4 text-[var(--mnx-muted)] font-semibold">
-                        {new Date(report.createdAt).toLocaleString("en-US", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true,
-                        })}
-                      </td>
-                      <td className="px-6 py-4 font-bold text-[var(--mnx-text)]">
-                        {addedByStr}
-                      </td>
-                      <td className="px-6 py-4 text-[var(--mnx-muted)] font-semibold">
-                        {new Date(report.updatedAt).toLocaleString("en-US", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true,
-                        })}
-                      </td>
-                      <td className="px-6 py-4 font-semibold text-[var(--mnx-muted)] max-w-xs truncate">
-                        {report.addedAddress || "Office HQ, Chennai"}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </MnxTable>
+                        </td>
+                        <td className="px-5 py-4 font-semibold text-[var(--mnx-text)]">
+                          {new Date(report.date).toLocaleDateString("en-IN")}
+                        </td>
+                        <td className="px-5 py-4 font-semibold text-[var(--mnx-muted)]">
+                          {formatDateTime(report.createdAt)}
+                        </td>
+                        <td className="px-5 py-4 font-semibold text-[var(--mnx-text)]">
+                          {reportItems(report).length}
+                        </td>
+                        <td className="max-w-xs truncate px-5 py-4 font-semibold text-[var(--mnx-muted)]">
+                          {report.addedAddress ?? "Coordinates unavailable"}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </MnxTable>
+          </div>
         </div>
 
-        {/* Bottom Split Layout Pane */}
-        {selectedReport && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-[var(--mnx-card)] border border-[var(--mnx-border)] rounded-2xl p-6 shadow-sm">
-            {/* Left 2 Columns: Report details */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Profile sub-header */}
-              <div className="flex items-center gap-3 pb-4 border-b border-[var(--mnx-border)]">
-                <div className="size-10 rounded-full bg-[var(--mnx-accent)]/10 flex items-center justify-center text-[var(--mnx-accent)] font-bold text-sm shrink-0">
+        {selectedReport ? (
+          <div className="grid grid-cols-1 gap-6 rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-card)] p-6 shadow-sm lg:grid-cols-3">
+            <div className="space-y-6 lg:col-span-2">
+              <div className="flex items-center gap-3 border-b border-[var(--mnx-border)] pb-4">
+                <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--mnx-accent)]/10 text-sm font-bold text-[var(--mnx-accent)]">
                   {selectedReport.user.photo ? (
+                    // User photos may be stored on organisation-configured
+                    // hosts that cannot be enumerated in Next image config.
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={selectedReport.user.photo}
                       alt={selectedReport.user.name}
-                      className="size-full rounded-full object-cover"
+                      className="size-full object-cover"
                     />
                   ) : (
                     selectedReport.user.name.charAt(0)
                   )}
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-[var(--mnx-text)]">
-                    {selectedReport.user.employeeNumber} -{" "}
+                  <h3 className="text-xs font-bold text-[var(--mnx-text)]">
+                    {selectedReport.user.employeeNumber ?? "—"} ·{" "}
                     {selectedReport.user.name}
-                  </h4>
+                  </h3>
                   <span
-                    className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full ${
-                      selectedReport.status === "PENDING"
-                        ? "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] border border-[var(--mnx-warning)]"
-                        : selectedReport.status === "APPROVED"
-                          ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] border border-[var(--mnx-success)]"
-                          : "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)] border border-[var(--mnx-danger)]"
-                    }`}
+                    className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[9.5px] font-bold ${statusClass(selectedReport.status)}`}
                   >
                     {selectedReport.status}
                   </span>
                 </div>
               </div>
 
-              {/* Subtabs inner panel: Daily Update Report / Add Jobs */}
-              <div className="space-y-4">
-                <div className="flex gap-4 border-b border-[var(--mnx-border)] pb-2">
-                  <span className="text-xs font-bold text-[var(--mnx-accent)] pb-2 border-b-2 border-[var(--mnx-accent)]">
-                    Daily Update report
-                  </span>
-                  <span className="text-xs font-semibold text-[var(--mnx-muted)] cursor-not-allowed">
-                    Add Jobs
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-[var(--mnx-text)]">
+                      Work completed
+                    </h4>
+                    <p className="mt-1 text-[10px] text-[var(--mnx-muted)]">
+                      {selectedReport.workedOn} ·{" "}
+                      {new Date(selectedReport.date).toLocaleDateString(
+                        "en-IN",
+                      )}
+                    </p>
+                  </div>
+                  <span className="mnx-badge mnx-badge-neutral">
+                    {selectedItems.length} line
+                    {selectedItems.length === 1 ? "" : "s"}
                   </span>
                 </div>
 
-                {/* Sub-table workedOn logs */}
-                <div className="border border-[var(--mnx-border)] rounded-xl overflow-hidden shadow-inner bg-[var(--mnx-card)]/20">
-                  <MnxTable className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="bg-[var(--mnx-card)]/80 border-b border-[var(--mnx-border)] text-[var(--mnx-muted)] font-bold uppercase tracking-wider text-[9.5px]">
-                        <th className="px-4 py-2">Worked On</th>
-                        <th className="px-4 py-2">Specify Job No/Name</th>
-                        <th className="px-4 py-2">Detailed Description</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--mnx-border)]">
-                      <tr>
-                        <td className="px-4 py-3 text-[var(--mnx-text)] font-bold">
-                          {selectedReport.workedOn}
-                        </td>
-                        <td className="px-4 py-3 text-[var(--mnx-text)] font-bold">
-                          {selectedReport.jobNoName}
-                        </td>
-                        <td className="px-4 py-3 text-[var(--mnx-muted)] font-medium leading-relaxed max-w-sm">
-                          {selectedReport.description}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </MnxTable>
+                <div className="overflow-hidden rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]/20">
+                  <div className="overflow-x-auto">
+                    <MnxTable className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-[var(--mnx-border)] bg-[var(--mnx-card)]/80 text-[9.5px] font-bold uppercase tracking-wider text-[var(--mnx-muted)]">
+                          <th className="w-12 px-4 py-2">#</th>
+                          <th className="px-4 py-2">Job no. / name</th>
+                          <th className="px-4 py-2">Detailed description</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[var(--mnx-border)]">
+                        {selectedItems.map((item, index) => (
+                          <tr key={item.id}>
+                            <td className="px-4 py-3 font-mono text-[var(--mnx-muted)]">
+                              {String(index + 1).padStart(2, "0")}
+                            </td>
+                            <td className="px-4 py-3 font-bold text-[var(--mnx-text)]">
+                              {item.jobNoName}
+                            </td>
+                            <td className="max-w-lg whitespace-pre-wrap px-4 py-3 font-medium leading-relaxed text-[var(--mnx-muted)]">
+                              {item.description}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </MnxTable>
+                  </div>
                 </div>
+              </div>
 
-                {/* Metadata Fields list */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 text-xs bg-[var(--mnx-card)]/30 border border-[var(--mnx-border)] p-4 rounded-xl">
-                  <div>
-                    <span className="text-[10px] text-[var(--mnx-muted)] font-bold uppercase block">
-                      Added By
-                    </span>
-                    <span className="text-[var(--mnx-text)] font-bold mt-1 block">
-                      {selectedReport.user.name}{" "}
-                      {selectedReport.user.employeeNumber}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-[var(--mnx-muted)] font-bold uppercase block">
-                      Modified By
-                    </span>
-                    <span className="text-[var(--mnx-text)] font-bold mt-1 block">
-                      {selectedReport.user.name}{" "}
-                      {selectedReport.user.employeeNumber}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-[var(--mnx-muted)] font-bold uppercase block">
-                      Added Time
-                    </span>
-                    <span className="text-[var(--mnx-muted)] font-semibold mt-1 block">
-                      {new Date(selectedReport.createdAt).toLocaleString(
-                        "en-US",
+              {fields.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]/30 p-4 text-xs md:grid-cols-2">
+                  {fields.map((field) => (
+                    <Metadata
+                      key={field.id}
+                      label={field.label}
+                      value={valueLabel(
+                        reportCustomValues(selectedReport)[field.key],
                       )}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-[var(--mnx-muted)] font-bold uppercase block">
-                      Modified Time
-                    </span>
-                    <span className="text-[var(--mnx-muted)] font-semibold mt-1 block">
-                      {new Date(selectedReport.updatedAt).toLocaleString(
-                        "en-US",
-                      )}
-                    </span>
-                  </div>
-                  <div className="md:col-span-2">
-                    <span className="text-[10px] text-[var(--mnx-muted)] font-bold uppercase block">
-                      Added address
-                    </span>
-                    <span className="text-[var(--mnx-muted)] font-bold mt-1 block leading-normal flex items-start gap-1">
-                      <MapPin className="size-3.5 text-[var(--mnx-accent)] mt-0.5 shrink-0" />
-                      {selectedReport.addedAddress || "Office HQ, Chennai"}
-                    </span>
-                  </div>
-                  <div className="md:col-span-2">
-                    <span className="text-[10px] text-[var(--mnx-muted)] font-bold uppercase block">
-                      Modified address
-                    </span>
-                    <span className="text-[var(--mnx-muted)] font-bold mt-1 block leading-normal flex items-start gap-1">
-                      <MapPin className="size-3.5 text-[var(--mnx-accent)] mt-0.5 shrink-0" />
-                      {selectedReport.modifiedAddress || "Office HQ, Chennai"}
-                    </span>
-                  </div>
+                    />
+                  ))}
                 </div>
+              ) : null}
+
+              <div className="grid grid-cols-1 gap-4 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]/30 p-4 text-xs md:grid-cols-2">
+                <Metadata
+                  label="Submitted by"
+                  value={`${selectedReport.user.name} · ${selectedReport.user.employeeNumber ?? "—"}`}
+                />
+                <Metadata
+                  label="Saved at"
+                  value={formatDateTime(selectedReport.createdAt)}
+                />
+                <div className="md:col-span-2">
+                  <Metadata
+                    label="Automatically captured address"
+                    value={
+                      <span className="flex items-start gap-1">
+                        <MapPin className="mt-0.5 size-3.5 shrink-0 text-[var(--mnx-accent)]" />
+                        {selectedReport.addedAddress ??
+                          "Location was not available on this legacy report."}
+                      </span>
+                    }
+                  />
+                </div>
+                <Metadata
+                  label="Location saved at"
+                  value={formatDateTime(selectedReport.locationCapturedAt)}
+                />
+                <Metadata
+                  label="GPS accuracy"
+                  value={
+                    selectedReport.locationAccuracy === null
+                      ? "—"
+                      : `±${Math.round(selectedReport.locationAccuracy)} m`
+                  }
+                />
               </div>
             </div>
 
-            {/* Right Column: Approval Timeline board */}
-            <div className="border-l border-[var(--mnx-border)] pl-6 space-y-4">
-              <h5 className="text-xs font-bold text-[var(--mnx-text)] uppercase tracking-wider pb-2 border-b border-[var(--mnx-border)]">
-                Approval Timeline
-              </h5>
+            <div className="space-y-4 border-[var(--mnx-border)] lg:border-l lg:pl-6">
+              <h4 className="border-b border-[var(--mnx-border)] pb-2 text-xs font-bold uppercase tracking-wider text-[var(--mnx-text)]">
+                Approval timeline
+              </h4>
 
-              {/* Status Header */}
-              <div className="grid grid-cols-2 gap-4 bg-[var(--mnx-card)]/50 p-3 border border-[var(--mnx-border)] rounded-xl text-center">
-                <div>
-                  <span className="text-[9.5px] font-bold text-[var(--mnx-muted)] uppercase block">
-                    Total Duration
-                  </span>
-                  <span className="text-xs font-bold text-[var(--mnx-text)] block mt-1">
-                    12 Hrs 9 Mins
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[9.5px] font-bold text-[var(--mnx-muted)] uppercase block">
-                    Status
-                  </span>
-                  <span className="text-xs font-bold text-[var(--mnx-warning)] block mt-1">
-                    {selectedReport.status === "PENDING"
-                      ? "Pending 0/1 Levels"
-                      : selectedReport.status}
-                  </span>
-                </div>
+              <div className="grid grid-cols-2 gap-4 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]/50 p-3 text-center">
+                <Metadata
+                  label="Progress"
+                  value={
+                    approvalLevels > 0
+                      ? `${completedApprovals}/${approvalLevels} levels`
+                      : "No approval required"
+                  }
+                  centered
+                />
+                <Metadata
+                  label="Status"
+                  value={selectedReport.status}
+                  centered
+                />
               </div>
 
-              {/* Timeline nodes */}
-              <div className="relative border-l border-[var(--mnx-border)] ml-3 pl-6 space-y-6 text-xs">
-                {/* Node 1: Submitted */}
-                <div className="relative">
-                  <div className="absolute -left-[30px] top-1.5 size-3.5 rounded-full bg-[var(--mnx-card)] border-2 border-[var(--mnx-border)]" />
-                  <p className="font-semibold text-[var(--mnx-text)]">
-                    {selectedReport.user.employeeNumber} -{" "}
-                    {selectedReport.user.name}'s request has been sent for
-                    approval
-                  </p>
-                  <span className="text-[10px] text-[var(--mnx-muted)] font-medium block mt-1">
-                    {new Date(selectedReport.createdAt).toLocaleString("en-US")}
-                  </span>
-                </div>
+              <div className="relative ml-3 space-y-5 border-l border-[var(--mnx-border)] pl-6 text-xs">
+                <TimelineNode
+                  tone="neutral"
+                  title="Report submitted"
+                  detail={`${selectedReport.user.name} sent the report for approval.`}
+                  time={selectedReport.createdAt}
+                />
 
-                {/* Node 2: Pending action */}
-                {selectedReport.status === "PENDING" && (
-                  <div className="relative bg-[var(--mnx-card)] border border-[var(--mnx-border)] rounded-xl p-4 space-y-3">
-                    <div className="absolute -left-[30px] top-4.5 size-3.5 rounded-full bg-[var(--mnx-warning-bg)] border-2 border-[var(--mnx-border)]" />
+                {selectedReport.approvals.map((approval) => (
+                  <TimelineNode
+                    key={approval.id}
+                    tone={
+                      approval.status === "APPROVED"
+                        ? "success"
+                        : approval.status === "REJECTED"
+                          ? "danger"
+                          : approval.status === "PENDING"
+                            ? "warning"
+                            : "neutral"
+                    }
+                    title={`Level ${approval.level} · ${approval.approver.name}`}
+                    detail={
+                      approval.status === "WAITING"
+                        ? "Waiting for the previous approval level."
+                        : approval.status === "PENDING"
+                          ? "Decision required."
+                          : approval.status === "CANCELLED"
+                            ? "Cancelled after an earlier rejection."
+                            : approval.comments ||
+                              `Report ${approval.status.toLowerCase()}.`
+                    }
+                    time={approval.decidedAt ?? approval.createdAt}
+                  />
+                ))}
+              </div>
 
-                    <div className="flex items-center gap-2">
-                      <div className="size-6 rounded-full bg-[var(--mnx-accent)]/10 flex items-center justify-center text-[var(--mnx-accent)] font-bold text-[10px]">
-                        Y
-                      </div>
-                      <div>
-                        <span className="font-bold text-[var(--mnx-text)] block text-[11px]">
-                          Pending Approval
-                        </span>
-                        <span className="text-[9.5px] text-[var(--mnx-muted)] font-medium block">
-                          purushothaman.v@adarshshipping.in
-                        </span>
-                      </div>
-                    </div>
-
-                    <MnxTextarea
-                      placeholder="Write approval comment..."
-                      value={approvalComment}
-                      onChange={(e) => setApprovalComment(e.target.value)}
-                      className="w-full text-xs p-2 border border-[var(--mnx-border)] rounded-lg outline-none focus:border-[var(--mnx-accent)] h-16 resize-none bg-[var(--mnx-card)]"
-                    />
-
-                    <div className="flex items-center gap-2">
-                      <MnxAction
-                        type="button"
-                        onClick={() =>
-                          handleApprovalAction(selectedReport.id, "APPROVED")
-                        }
-                        className="bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent-text)] text-[var(--mnx-text)] text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-sm transition-colors cursor-pointer"
-                      >
-                        Approve
-                      </MnxAction>
-                      <MnxAction
-                        type="button"
-                        onClick={() =>
-                          handleApprovalAction(selectedReport.id, "REJECTED")
-                        }
-                        className="bg-[var(--mnx-card)] border border-[var(--mnx-danger)] text-[var(--mnx-danger)] hover:bg-[var(--mnx-danger-bg)] text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-                      >
-                        Reject
-                      </MnxAction>
-                      <MnxAction
-                        type="button"
-                        onClick={() => toast.info("Forward option placeholder")}
-                        className="bg-[var(--mnx-card)] border border-[var(--mnx-border)] text-[var(--mnx-muted)] hover:bg-[var(--mnx-card)] text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-                      >
-                        Forward
-                      </MnxAction>
-                    </div>
+              {canActOnSelected && currentApproval ? (
+                <div className="space-y-3 rounded-xl border border-[var(--mnx-warning)]/30 bg-[var(--mnx-warning-bg)]/10 p-4">
+                  <div>
+                    <span className="text-[11px] font-bold text-[var(--mnx-text)]">
+                      Your level {currentApproval.level} decision
+                    </span>
+                    <p className="mt-1 text-[10px] text-[var(--mnx-muted)]">
+                      Approve to continue the configured route, or reject to
+                      close it.
+                    </p>
                   </div>
-                )}
-
-                {/* Approvals logs */}
-                {selectedReport.approvals
-                  .filter((a) => a.status !== "PENDING")
-                  .map((app) => (
-                    <div key={app.id} className="relative">
-                      <div
-                        className={`absolute -left-[30px] top-1.5 size-3.5 rounded-full border-2 border-[var(--mnx-border)] ${
-                          app.status === "APPROVED"
-                            ? "bg-[var(--mnx-success-bg)]"
-                            : "bg-[var(--mnx-danger-bg)]"
-                        }`}
-                      />
-                      <p className="font-bold text-[var(--mnx-text)]">
-                        Report {app.status}
-                      </p>
-                      {app.comments && (
-                        <p className="text-[var(--mnx-muted)] italic bg-[var(--mnx-card)] p-2 rounded-lg border border-[var(--mnx-border)] mt-1">
-                          "{app.comments}"
-                        </p>
-                      )}
-                      <span className="text-[10px] text-[var(--mnx-muted)] block mt-1">
-                        {new Date(app.createdAt).toLocaleString("en-US")}
-                      </span>
-                    </div>
-                  ))}
-              </div>
+                  <MnxTextarea
+                    placeholder="Add approval or rejection comments…"
+                    value={approvalComment}
+                    onChange={(event) => setApprovalComment(event.target.value)}
+                    className="h-20 w-full resize-none rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-card)] p-2 text-xs outline-none focus:border-[var(--mnx-accent)]"
+                  />
+                  <div className="flex items-center gap-2">
+                    <MnxAction
+                      type="button"
+                      disabled={acting}
+                      onClick={() =>
+                        handleApprovalAction(selectedReport.id, "APPROVED")
+                      }
+                      className="flex cursor-pointer items-center gap-1 rounded-lg bg-[var(--mnx-accent)] px-3 py-1.5 text-[10px] font-bold text-[var(--mnx-text)] disabled:opacity-50"
+                    >
+                      <CheckCircle2 className="size-3.5" />
+                      Approve
+                    </MnxAction>
+                    <MnxAction
+                      type="button"
+                      disabled={acting}
+                      onClick={() =>
+                        handleApprovalAction(selectedReport.id, "REJECTED")
+                      }
+                      className="flex cursor-pointer items-center gap-1 rounded-lg border border-[var(--mnx-danger)] bg-[var(--mnx-card)] px-3 py-1.5 text-[10px] font-bold text-[var(--mnx-danger)] disabled:opacity-50"
+                    >
+                      <XCircle className="size-3.5" />
+                      Reject
+                    </MnxAction>
+                  </div>
+                </div>
+              ) : selectedReport.status === "PENDING" && currentApproval ? (
+                <div className="rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]/40 p-3 text-[10px] text-[var(--mnx-muted)]">
+                  Awaiting {currentApproval.approver.name} at level{" "}
+                  {currentApproval.level}.
+                </div>
+              ) : null}
             </div>
           </div>
-        )}
+        ) : null}
       </div>
 
       <WorkspaceDialog
         open={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={() => {
+          if (!submitting) setShowAddModal(false);
+        }}
         eyebrow="Work reporting"
         title="Add daily report"
-        description="Record the day, work context, job, activity, and location."
-        className="mnx-people-dialog-compact"
-      >
-        <form onSubmit={handleCreateReport} className="space-y-4 text-xs">
-          <div className="flex flex-col gap-1">
-            <label className="font-bold text-[var(--mnx-muted)]">Date</label>
-            <DateInput
-              value={newReport.date}
-              onChange={(e) =>
-                setNewReport({ ...newReport, date: e.target.value })
-              }
-              className="p-2 bg-[var(--mnx-card)] border border-[var(--mnx-border)] rounded-lg outline-none focus:border-[var(--mnx-accent)]"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="font-bold text-[var(--mnx-muted)]">
-              Worked On
-            </label>
-            <NativeSelect
-              value={newReport.workedOn}
-              onChange={(e) =>
-                setNewReport({ ...newReport, workedOn: e.target.value as any })
-              }
-              className="p-2 bg-[var(--mnx-card)] border border-[var(--mnx-border)] rounded-lg outline-none focus:border-[var(--mnx-accent)]"
-            >
-              <option value="Office">Office</option>
-              <option value="Home">Home</option>
-              <option value="Others">Others</option>
-            </NativeSelect>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="font-bold text-[var(--mnx-muted)]">
-              Specify Job No/Name
-            </label>
-            <MnxInput
-              type="text"
-              placeholder="e.g. Kolkata clearance clearance"
-              value={newReport.jobNoName}
-              onChange={(e) =>
-                setNewReport({ ...newReport, jobNoName: e.target.value })
-              }
-              className="p-2 bg-[var(--mnx-card)] border border-[var(--mnx-border)] rounded-lg outline-none focus:border-[var(--mnx-accent)]"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="font-bold text-[var(--mnx-muted)]">
-              Detailed Description
-            </label>
-            <MnxTextarea
-              placeholder="Explain today's clearances and clearances clearance logs..."
-              value={newReport.description}
-              onChange={(e) =>
-                setNewReport({ ...newReport, description: e.target.value })
-              }
-              className="p-2 bg-[var(--mnx-card)] border border-[var(--mnx-border)] rounded-lg outline-none focus:border-[var(--mnx-accent)] h-20 resize-none"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="font-bold text-[var(--mnx-muted)]">
-              Location Address
-            </label>
-            <MnxInput
-              type="text"
-              placeholder="e.g. Nimu Gossain Lane, Shobha Bazar, Kolkata..."
-              value={newReport.addedAddress}
-              onChange={(e) =>
-                setNewReport({ ...newReport, addedAddress: e.target.value })
-              }
-              className="p-2 bg-[var(--mnx-card)] border border-[var(--mnx-border)] rounded-lg outline-none focus:border-[var(--mnx-accent)]"
-            />
-          </div>
-
-          <div className="flex items-center gap-3 justify-end pt-2">
+        description="Add multiple work items. Your current address and save time are captured automatically on submission."
+        size="workspace"
+        className="mnx-work-report-dialog"
+        footer={
+          <>
             <MnxAction
               type="button"
+              disabled={submitting}
               onClick={() => setShowAddModal(false)}
-              className="bg-[var(--mnx-card)] border border-[var(--mnx-border)] text-[var(--mnx-muted)] hover:bg-[var(--mnx-card)] px-4 py-2 rounded-lg font-bold transition-colors cursor-pointer"
             >
               Cancel
             </MnxAction>
             <MnxAction
               type="submit"
-              className="bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent-text)] text-[var(--mnx-text)] px-4 py-2 rounded-lg font-bold transition-colors cursor-pointer"
+              form="daily-work-report-form"
+              variant="primary"
+              disabled={submitting || locationState === "capturing"}
             >
-              Submit
+              <Send className="size-4" />
+              {submitting ? "Capturing and submitting…" : "Submit report"}
             </MnxAction>
+          </>
+        }
+      >
+        <form
+          id="daily-work-report-form"
+          onSubmit={handleCreateReport}
+          className="space-y-6 text-xs"
+        >
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <FormField label="Date" required>
+              <DateInput
+                value={newReport.date}
+                onChange={(event) =>
+                  setNewReport((current) => ({
+                    ...current,
+                    date: event.target.value,
+                  }))
+                }
+              />
+            </FormField>
+            <FormField label="Worked on" required>
+              <NativeSelect
+                value={newReport.workedOn}
+                onChange={(event) =>
+                  setNewReport((current) => ({
+                    ...current,
+                    workedOn: event.target.value as WorkContext,
+                  }))
+                }
+              >
+                <option value="Office">Office</option>
+                <option value="Home">Home</option>
+                <option value="Others">Others</option>
+              </NativeSelect>
+            </FormField>
           </div>
+
+          <section className="space-y-3">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-bold text-[var(--mnx-text)]">
+                  Work line items
+                </h3>
+                <p className="mt-1 text-[10px] text-[var(--mnx-muted)]">
+                  Record each job or activity as a separate row.
+                </p>
+              </div>
+              <MnxAction
+                type="button"
+                onClick={addItem}
+                disabled={newReport.items.length >= 25}
+              >
+                <Plus className="size-4" />
+                Add line
+              </MnxAction>
+            </div>
+
+            <div className="space-y-3">
+              {newReport.items.map((item, index) => (
+                <div
+                  key={item.id}
+                  className="grid grid-cols-1 gap-3 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]/35 p-4 lg:grid-cols-[36px_minmax(220px,0.8fr)_minmax(320px,1.6fr)_36px]"
+                >
+                  <div className="flex size-8 items-center justify-center rounded-lg bg-[var(--mnx-accent)]/10 font-mono text-[10px] font-bold text-[var(--mnx-accent)]">
+                    {String(index + 1).padStart(2, "0")}
+                  </div>
+                  <FormField label="Job no. / name" required>
+                    <MnxInput
+                      value={item.jobNoName}
+                      onChange={(event) =>
+                        updateItem(item.id, "jobNoName", event.target.value)
+                      }
+                      placeholder="e.g. Kolkata clearance"
+                    />
+                  </FormField>
+                  <FormField label="Detailed description" required>
+                    <MnxTextarea
+                      value={item.description}
+                      onChange={(event) =>
+                        updateItem(item.id, "description", event.target.value)
+                      }
+                      placeholder="Describe the work completed, result, and next action…"
+                      className="min-h-24 resize-y"
+                    />
+                  </FormField>
+                  <MnxAction
+                    type="button"
+                    aria-label={`Remove line ${index + 1}`}
+                    disabled={newReport.items.length === 1}
+                    onClick={() => removeItem(item.id)}
+                    className="self-start"
+                  >
+                    <Trash2 className="size-4" />
+                  </MnxAction>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {fields.length > 0 ? (
+            <section className="space-y-3 border-t border-[var(--mnx-border)] pt-5">
+              <div>
+                <h3 className="text-sm font-bold text-[var(--mnx-text)]">
+                  Additional details
+                </h3>
+                <p className="mt-1 text-[10px] text-[var(--mnx-muted)]">
+                  These fields are configured by your HRMS administrator.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {fields.map((field) => (
+                  <DynamicField
+                    key={field.id}
+                    field={field}
+                    value={newReport.customValues[field.key]}
+                    onChange={(value) => updateCustomValue(field.key, value)}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          <section className="space-y-3 border-t border-[var(--mnx-border)] pt-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-bold text-[var(--mnx-text)]">
+                  Automatic location evidence
+                </h3>
+                <p className="mt-1 text-[10px] text-[var(--mnx-muted)]">
+                  The location is refreshed again when you submit.
+                </p>
+              </div>
+              <MnxAction
+                type="button"
+                onClick={() => void captureLocation().catch(() => undefined)}
+                disabled={locationState === "capturing" || submitting}
+              >
+                <LocateFixed className="size-4" />
+                Refresh
+              </MnxAction>
+            </div>
+            <div
+              className={`rounded-xl border p-4 ${
+                locationState === "error"
+                  ? "border-[var(--mnx-danger)]/40 bg-[var(--mnx-danger-bg)]/10"
+                  : "border-[var(--mnx-border)] bg-[var(--mnx-card)]/35"
+              }`}
+            >
+              {locationState === "capturing" ? (
+                <div className="flex items-center gap-2 text-[var(--mnx-muted)]">
+                  <Clock className="size-4 animate-pulse" />
+                  Capturing precise location and resolving the address…
+                </div>
+              ) : capturedLocation ? (
+                <div className="flex items-start gap-3">
+                  <MapPin className="mt-0.5 size-4 shrink-0 text-[var(--mnx-accent)]" />
+                  <div>
+                    <p className="font-semibold leading-relaxed text-[var(--mnx-text)]">
+                      {capturedLocation.address}
+                    </p>
+                    <p className="mt-1 text-[10px] text-[var(--mnx-muted)]">
+                      Preview captured{" "}
+                      {formatDateTime(capturedLocation.previewCapturedAt)}
+                      {capturedLocation.accuracy !== undefined
+                        ? ` · ±${Math.round(capturedLocation.accuracy)} m`
+                        : ""}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-[var(--mnx-muted)]">
+                  <LocateFixed className="size-4" />
+                  Allow location access to submit this report.
+                </div>
+              )}
+            </div>
+          </section>
         </form>
       </WorkspaceDialog>
+    </div>
+  );
+}
+
+function DynamicField({
+  field,
+  value,
+  onChange,
+}: {
+  field: WorkReportField;
+  value: string | boolean | undefined;
+  onChange: (value: string | boolean) => void;
+}) {
+  if (field.type === "BOOLEAN") {
+    return (
+      <label className="flex items-center gap-2 rounded-xl border border-[var(--mnx-border)] p-3 text-xs text-[var(--mnx-text)]">
+        <MnxInput
+          type="checkbox"
+          checked={value === true}
+          onChange={(event) => onChange(event.target.checked)}
+        />
+        {field.label}
+        {field.required ? <span aria-hidden="true">*</span> : null}
+      </label>
+    );
+  }
+
+  if (field.type === "TEXTAREA") {
+    return (
+      <div className="md:col-span-2">
+        <FormField label={field.label} required={field.required}>
+          <MnxTextarea
+            value={typeof value === "string" ? value : ""}
+            onChange={(event) => onChange(event.target.value)}
+            className="min-h-24 resize-y"
+          />
+        </FormField>
+      </div>
+    );
+  }
+
+  if (field.type === "SELECT") {
+    const options = Array.isArray(field.options)
+      ? field.options.filter(
+          (option): option is string => typeof option === "string",
+        )
+      : [];
+    return (
+      <FormField label={field.label} required={field.required}>
+        <NativeSelect
+          value={typeof value === "string" ? value : ""}
+          onChange={(event) => onChange(event.target.value)}
+        >
+          <option value="">Select…</option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </NativeSelect>
+      </FormField>
+    );
+  }
+
+  if (field.type === "DATE") {
+    return (
+      <FormField label={field.label} required={field.required}>
+        <DateInput
+          value={typeof value === "string" ? value : ""}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </FormField>
+    );
+  }
+
+  return (
+    <FormField label={field.label} required={field.required}>
+      <MnxInput
+        type={field.type === "NUMBER" ? "number" : "text"}
+        value={typeof value === "string" ? value : ""}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </FormField>
+  );
+}
+
+function FormField({
+  label,
+  required = false,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="flex min-w-0 flex-col gap-1 font-bold text-[var(--mnx-muted)]">
+      <span>
+        {label}
+        {required ? <span aria-hidden="true"> *</span> : null}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+function Metadata({
+  label,
+  value,
+  centered = false,
+}: {
+  label: string;
+  value: React.ReactNode;
+  centered?: boolean;
+}) {
+  return (
+    <div className={centered ? "text-center" : ""}>
+      <span className="block text-[9.5px] font-bold uppercase text-[var(--mnx-muted)]">
+        {label}
+      </span>
+      <span className="mt-1 block font-semibold leading-relaxed text-[var(--mnx-text)]">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function ReportStatusIcon({ status }: { status: WorkReportStatus }) {
+  if (status === "APPROVED") {
+    return (
+      <span title="Approved">
+        <Check className="size-4 text-[var(--mnx-success)]" />
+      </span>
+    );
+  }
+  if (status === "REJECTED") {
+    return (
+      <span title="Rejected">
+        <X className="size-4 text-[var(--mnx-danger)]" />
+      </span>
+    );
+  }
+  return (
+    <span title="Pending approval">
+      <Clock className="size-4 text-[var(--mnx-warning)]" />
+    </span>
+  );
+}
+
+function statusClass(status: WorkReportStatus) {
+  if (status === "APPROVED") {
+    return "border-[var(--mnx-success)] text-[var(--mnx-success)] bg-[var(--mnx-success-bg)]";
+  }
+  if (status === "REJECTED") {
+    return "border-[var(--mnx-danger)] text-[var(--mnx-danger)] bg-[var(--mnx-danger-bg)]";
+  }
+  return "border-[var(--mnx-warning)] text-[var(--mnx-warning)] bg-[var(--mnx-warning-bg)]";
+}
+
+function TimelineNode({
+  tone,
+  title,
+  detail,
+  time,
+}: {
+  tone: "neutral" | "success" | "danger" | "warning";
+  title: string;
+  detail: string;
+  time: string;
+}) {
+  const toneClass =
+    tone === "success"
+      ? "bg-[var(--mnx-success-bg)] border-[var(--mnx-success)]"
+      : tone === "danger"
+        ? "bg-[var(--mnx-danger-bg)] border-[var(--mnx-danger)]"
+        : tone === "warning"
+          ? "bg-[var(--mnx-warning-bg)] border-[var(--mnx-warning)]"
+          : "bg-[var(--mnx-card)] border-[var(--mnx-border)]";
+  return (
+    <div className="relative">
+      <div
+        className={`absolute -left-[30px] top-1 size-3.5 rounded-full border-2 ${toneClass}`}
+      />
+      <p className="font-bold text-[var(--mnx-text)]">{title}</p>
+      <p className="mt-1 leading-relaxed text-[var(--mnx-muted)]">{detail}</p>
+      <span className="mt-1 block text-[10px] text-[var(--mnx-muted)]">
+        {formatDateTime(time)}
+      </span>
     </div>
   );
 }

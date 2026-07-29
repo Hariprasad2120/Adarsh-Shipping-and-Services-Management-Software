@@ -24,6 +24,52 @@ async function getDriveAccessToken(): Promise<string> {
   return getValidAccessToken(connection.userId);
 }
 
+const DRIVE_SCOPES = [
+  "https://www.googleapis.com/auth/drive",
+  "https://www.googleapis.com/auth/drive.file",
+];
+
+export async function getDriveAccessTokenForOrg(
+  orgId: string,
+  preferredUserId?: string,
+): Promise<string> {
+  const connections = await db.googleWorkspaceConnection.findMany({
+    where: {
+      orgId,
+      status: "connected",
+    },
+    orderBy: { createdAt: "asc" },
+    select: {
+      userId: true,
+      scopes: true,
+    },
+  });
+
+  const eligible = connections.filter((connection) =>
+    DRIVE_SCOPES.some((scope) => connection.scopes.includes(scope)),
+  );
+  eligible.sort((left, right) => {
+    if (left.userId === preferredUserId) return -1;
+    if (right.userId === preferredUserId) return 1;
+    return 0;
+  });
+
+  for (const connection of eligible) {
+    try {
+      return await getValidAccessToken(connection.userId);
+    } catch (error) {
+      console.warn(
+        `[Drive] Could not use Google Workspace connection for ${connection.userId}:`,
+        error,
+      );
+    }
+  }
+
+  throw new Error(
+    "No connected Google Workspace account with Drive access is available for this organisation.",
+  );
+}
+
 // Create a new folder
 export async function createFolder(params: {
   name: string;
@@ -33,7 +79,11 @@ export async function createFolder(params: {
 }): Promise<string> {
   const token = params.accessToken || (await getDriveAccessToken());
 
-  const body: any = {
+  const body: {
+    name: string;
+    mimeType: string;
+    parents?: string[];
+  } = {
     name: params.name,
     mimeType: "application/vnd.google-apps.folder"
   };
@@ -427,6 +477,13 @@ export async function searchFiles(
     throw new Error(`Drive searchFiles failed: ${err}`);
   }
 
-  const data = (await res.json()) as { files?: any[] };
+  const data = (await res.json()) as {
+    files?: {
+      id: string;
+      name: string;
+      mimeType: string;
+      webViewLink?: string;
+    }[];
+  };
   return data.files || [];
 }

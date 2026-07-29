@@ -12,7 +12,20 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const filter = (searchParams.get("filter") || "my") as "my" | "reportees" | "all";
+    const requestedFilter = searchParams.get("filter") || "my";
+    if (!["my", "reportees", "all"].includes(requestedFilter)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid work report filter",
+          },
+        },
+        { status: 400 },
+      );
+    }
+    const filter = requestedFilter as "my" | "reportees" | "all";
 
     if (filter === "all") {
       await requirePermission(session.user.id, "hrms.workreport.view_all");

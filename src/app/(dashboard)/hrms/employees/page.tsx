@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { requirePermission } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { listUsers } from "@/modules/core/user/service";
 import { getOrg, getRoles } from "@/modules/core/organisation/service";
 import { EmployeeDirectoryActions } from "./employee-directory-actions";
@@ -33,7 +33,7 @@ export default async function EmployeesPage({
       ? sp.employeeStatus
       : undefined;
 
-  const [users, org, roles] = await Promise.all([
+  const [users, org, roles, canCreateEmployee] = await Promise.all([
     listUsers(session.user.orgId!, {
       branchId: sp.branchId,
       departmentId: sp.departmentId,
@@ -47,6 +47,7 @@ export default async function EmployeesPage({
     }),
     getOrg(session.user.orgId!),
     getRoles(session.user.orgId!),
+    can(session.user.id, "hrms.employee.create"),
   ]);
 
   const safeUsers = users.map((user) => {
@@ -59,6 +60,7 @@ export default async function EmployeesPage({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <EmployeeDirectoryActions
+          canCreateEmployee={canCreateEmployee}
           org={org as EmployeeDirectoryActionsProps["org"]}
           roles={roles as EmployeeDirectoryActionsProps["roles"]}
           totalCount={safeUsers.length}

@@ -37,6 +37,8 @@ model Organisation {
   announcements          Announcement[]
   employeeProfileFields  EmployeeProfileField[]
   employeeInvitations    EmployeeInvitation[]
+  workReportSettings     WorkReportSettings?
+  workReportFields       WorkReportField[]
 
   crmApprovalLogs       CrmApprovalLog[]
   crmWorkTimeLogs       CrmWorkTimeLog[]
@@ -221,21 +223,21 @@ model RolePermission {
 // ─── Users ────────────────────────────────────────────────────────────────────
 
 model User {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   orgId           String?
-  email           String   @unique
+  email           String    @unique
   passwordHash    String
   name            String
-  active          Boolean  @default(true)
-  isPlatformAdmin Boolean  @default(false)
+  active          Boolean   @default(true)
+  isPlatformAdmin Boolean   @default(false)
   designation     String?
   branchId        String?
   departmentId    String?
   divisionId      String?
   managerId       String?
   tlId            String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   emailVerifiedAt DateTime?
   activatedAt     DateTime?
 
@@ -264,15 +266,15 @@ model User {
   tl         User?         @relation("TLReports", fields: [tlId], references: [id])
   tlReports  User[]        @relation("TLReports")
 
-  roles                  UserRole[]
-  notifications          Notification[]
-  notificationActivities NotificationActivity[] @relation("NotificationActivityActor")
-  employmentRecord       EmploymentRecord?
-  employeeProfile        EmployeeHrmsProfile?
-  employeeInvitations    EmployeeInvitation[] @relation("EmployeeInvitationTarget")
-  employeeInvitationsSent EmployeeInvitation[] @relation("EmployeeInvitationSender")
-  documents              Document[]
-  todoTasks              TodoTask[]
+  roles                   UserRole[]
+  notifications           Notification[]
+  notificationActivities  NotificationActivity[] @relation("NotificationActivityActor")
+  employmentRecord        EmploymentRecord?
+  employeeProfile         EmployeeHrmsProfile?
+  employeeInvitations     EmployeeInvitation[]   @relation("EmployeeInvitationTarget")
+  employeeInvitationsSent EmployeeInvitation[]   @relation("EmployeeInvitationSender")
+  documents               Document[]
+  todoTasks               TodoTask[]
 
   // Attendance & OT
   punches                 AttendancePunch[]
@@ -360,6 +362,7 @@ model User {
   hrmsTasksCreated                    HrmsTask[]                   @relation("HrmsTasksCreated")
   hrmsAuditLogs                       HrmsAuditLog[]               @relation("HrmsAuditLogs")
   hrmsWorkReports                     WorkReport[]                 @relation("UserWorkReports")
+  workReportApprovals                 WorkReportApproval[]         @relation("WorkReportApprover")
 
   // HRMS Mobile Attendance & Tracking
   mobileDevices            MobileDevice[]            @relation("UserMobileDevices")
@@ -608,18 +611,18 @@ model EmployeeHrmsProfile {
 }
 
 model EmployeeProfileField {
-  id          String   @id @default(cuid())
-  orgId       String
-  key         String
-  label       String
-  type        String   @default("TEXT") // TEXT | TEXTAREA | NUMBER | DATE | SELECT | BOOLEAN
-  section     String   @default("Custom Details")
-  required    Boolean  @default(false)
-  options     Json?
-  position    Int      @default(0)
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  orgId     String
+  key       String
+  label     String
+  type      String   @default("TEXT") // TEXT | TEXTAREA | NUMBER | DATE | SELECT | BOOLEAN
+  section   String   @default("Custom Details")
+  required  Boolean  @default(false)
+  options   Json?
+  position  Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
@@ -2435,6 +2438,53 @@ model FileAsset {
   folder      FileFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
 }
 
+model HrDocumentDriveConfig {
+  id                     String   @id @default(cuid())
+  orgId                  String   @unique
+  sharedDriveId          String
+  rootFolderId           String
+  mySpaceFolderId        String
+  companyFilesFolderId   String
+  employeeSharedFolderId String
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([orgId])
+}
+
+model HrDocumentFolder {
+  id            String   @id @default(cuid())
+  orgId         String
+  ownerId       String
+  category      String
+  driveFolderId String   @unique
+  displayName   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([orgId, ownerId, category])
+  @@index([orgId, category])
+  @@index([ownerId])
+}
+
+model HrDocumentFile {
+  id            String   @id @default(cuid())
+  orgId         String
+  category      String
+  ownerId       String?
+  driveFileId   String   @unique
+  driveFolderId String
+  name          String
+  mimeType      String
+  sizeBytes     Int
+  uploadedById  String
+  createdAt     DateTime @default(now())
+
+  @@index([orgId, category, createdAt])
+  @@index([orgId, ownerId, category])
+  @@index([uploadedById])
+}
+
 model HRCaseCategory {
   id          String  @id @default(cuid())
   orgId       String
@@ -2610,30 +2660,74 @@ model Announcement {
 }
 
 model WorkReport {
-  id              String               @id @default(cuid())
-  orgId           String
-  userId          String
-  date            DateTime             @db.Date
-  workedOn        String // "Office" | "Home" | "Others"
-  jobNoName       String
-  description     String
-  status          String               @default("PENDING") // PENDING | APPROVED | REJECTED
-  addedAddress    String?
-  modifiedAddress String?
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  user            User                 @relation("UserWorkReports", fields: [userId], references: [id], onDelete: Cascade)
-  approvals       WorkReportApproval[]
+  id                 String               @id @default(cuid())
+  orgId              String
+  userId             String
+  date               DateTime             @db.Date
+  workedOn           String // "Office" | "Home" | "Others"
+  jobNoName          String
+  description        String
+  items              Json?
+  customValues       Json?
+  status             String               @default("PENDING") // PENDING | APPROVED | REJECTED
+  addedAddress       String?
+  modifiedAddress    String?
+  latitude           Float?
+  longitude          Float?
+  locationAccuracy   Float?
+  locationCapturedAt DateTime?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  user               User                 @relation("UserWorkReports", fields: [userId], references: [id], onDelete: Cascade)
+  approvals          WorkReportApproval[]
+
+  @@index([orgId, userId, date, status])
 }
 
 model WorkReportApproval {
   id         String     @id @default(cuid())
   reportId   String
   approverId String
-  status     String     @default("PENDING") // PENDING | APPROVED | REJECTED
+  level      Int        @default(1)
+  status     String     @default("PENDING") // WAITING | PENDING | APPROVED | REJECTED | CANCELLED
   comments   String?
+  decidedAt  DateTime?
   createdAt  DateTime   @default(now())
   report     WorkReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  approver   User       @relation("WorkReportApprover", fields: [approverId], references: [id], onDelete: Cascade)
+
+  @@index([reportId, level])
+  @@index([approverId, status])
+}
+
+model WorkReportSettings {
+  id                         String   @id @default(cuid())
+  orgId                      String   @unique
+  approvalLevels             Int      @default(1)
+  requireApprovedReportForOt Boolean  @default(false)
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+model WorkReportField {
+  id        String   @id @default(cuid())
+  orgId     String
+  key       String
+  label     String
+  type      String   @default("TEXT") // TEXT | TEXTAREA | NUMBER | DATE | SELECT | BOOLEAN
+  required  Boolean  @default(false)
+  options   Json?
+  position  Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, key])
+  @@index([orgId, active, position])
 }
 
 // ─── Accounting Module ──────────────────────────────────────────────────────────

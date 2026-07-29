@@ -99,7 +99,8 @@ type OvertimeComputation = {
     | "INSUFFICIENT_PUNCHES"
     | "NEEDS_REVIEW"
     | "NO_OVERTIME"
-    | "MISSING_CONFIGURATION";
+    | "MISSING_CONFIGURATION"
+    | "WORK_REPORT_REQUIRED";
   calculationRemarks: string | null;
   calculationDetails: Record<string, unknown>;
 };
@@ -131,18 +132,24 @@ function parseClock(clock: string): [number, number] {
 
 function startOfShiftOnDate(attendanceDate: Date, clock: string): Date {
   const [hours, minutes] = parseClock(clock);
-  return new Date(Date.UTC(
-    attendanceDate.getUTCFullYear(),
-    attendanceDate.getUTCMonth(),
-    attendanceDate.getUTCDate(),
-    hours,
-    minutes,
-    0,
-    0,
-  ));
+  return new Date(
+    Date.UTC(
+      attendanceDate.getUTCFullYear(),
+      attendanceDate.getUTCMonth(),
+      attendanceDate.getUTCDate(),
+      hours,
+      minutes,
+      0,
+      0,
+    ),
+  );
 }
 
-function endOfShiftOnDate(attendanceDate: Date, startClock: string, endClock: string): Date {
+function endOfShiftOnDate(
+  attendanceDate: Date,
+  startClock: string,
+  endClock: string,
+): Date {
   const start = startOfShiftOnDate(attendanceDate, startClock);
   const end = startOfShiftOnDate(attendanceDate, endClock);
   if (end.getTime() <= start.getTime()) {
@@ -151,13 +158,17 @@ function endOfShiftOnDate(attendanceDate: Date, startClock: string, endClock: st
   return end;
 }
 
-function normalizeBreaks(value: unknown): Array<{ start: string; end: string }> {
+function normalizeBreaks(
+  value: unknown,
+): Array<{ start: string; end: string }> {
   if (!Array.isArray(value)) return [];
   return value
     .map((item) => {
       if (!item || typeof item !== "object") return null;
-      const start = typeof (item as any).start === "string" ? (item as any).start : null;
-      const end = typeof (item as any).end === "string" ? (item as any).end : null;
+      const start =
+        typeof (item as any).start === "string" ? (item as any).start : null;
+      const end =
+        typeof (item as any).end === "string" ? (item as any).end : null;
       return start && end ? { start, end } : null;
     })
     .filter((item): item is { start: string; end: string } => Boolean(item));
@@ -215,7 +226,10 @@ async function getCalendarSettings(orgId: string): Promise<CalendarSettings> {
   };
 }
 
-async function getHolidayDateStrings(orgId: string, attendanceDate: Date): Promise<string[]> {
+async function getHolidayDateStrings(
+  orgId: string,
+  attendanceDate: Date,
+): Promise<string[]> {
   const { start, end } = getAttendanceMonthBounds(
     attendanceDate.getUTCFullYear(),
     attendanceDate.getUTCMonth() + 1,
@@ -230,7 +244,11 @@ async function getHolidayDateStrings(orgId: string, attendanceDate: Date): Promi
   return holidays.map((holiday) => toDateString(holiday.date));
 }
 
-async function resolveShiftForDate(userId: string, orgId: string, attendanceDate: Date): Promise<ShiftSettings | null> {
+async function resolveShiftForDate(
+  userId: string,
+  orgId: string,
+  attendanceDate: Date,
+): Promise<ShiftSettings | null> {
   const assignment = await db.shiftAssignment.findFirst({
     where: {
       userId,
@@ -242,10 +260,12 @@ async function resolveShiftForDate(userId: string, orgId: string, attendanceDate
     orderBy: [{ startDate: "desc" }, { id: "desc" }],
   });
 
-  const shiftRecord = assignment?.shift ?? await db.shift.findFirst({
-    where: { orgId, isActive: true, isDefault: true },
-    orderBy: { createdAt: "asc" },
-  });
+  const shiftRecord =
+    assignment?.shift ??
+    (await db.shift.findFirst({
+      where: { orgId, isActive: true, isDefault: true },
+      orderBy: { createdAt: "asc" },
+    }));
 
   if (!shiftRecord) return null;
   return {
@@ -263,7 +283,10 @@ async function resolveShiftForDate(userId: string, orgId: string, attendanceDate
   };
 }
 
-async function getPersistedApprovalState(userId: string, attendanceDate: Date): Promise<PersistedApprovalState> {
+async function getPersistedApprovalState(
+  userId: string,
+  attendanceDate: Date,
+): Promise<PersistedApprovalState> {
   const record = await db.otRecord.findUnique({
     where: { userId_date: { userId, date: attendanceDate } },
     select: {
@@ -304,21 +327,27 @@ async function getFallbackSummary(userId: string, attendanceDate: Date) {
   return { punch, breaks };
 }
 
-async function getTimelineSummary(userId: string, orgId: string, attendanceDate: Date): Promise<TimelineSummary | null> {
+async function getTimelineSummary(
+  userId: string,
+  orgId: string,
+  attendanceDate: Date,
+): Promise<TimelineSummary | null> {
   const rawEvents = await db.attendancePunchEvent.findMany({
     where: { userId, orgId, attendanceDate },
     orderBy: { punchedAt: "asc" },
   });
 
   if (rawEvents.length > 0) {
-    const events = dedupeEvents(rawEvents.map((event) => ({
-      punchedAt: event.punchedAt,
-      source: event.source,
-      eventType: event.eventType,
-      status: event.status,
-      notes: event.notes,
-      metadata: event.metadata,
-    })));
+    const events = dedupeEvents(
+      rawEvents.map((event) => ({
+        punchedAt: event.punchedAt,
+        source: event.source,
+        eventType: event.eventType,
+        status: event.status,
+        notes: event.notes,
+        metadata: event.metadata,
+      })),
+    );
 
     return summarizeTimeline(events, "raw-events");
   }
@@ -369,18 +398,29 @@ async function getTimelineSummary(userId: string, orgId: string, attendanceDate:
   }
 
   const summary = summarizeTimeline(syntheticEvents, "synthetic-punch");
-  if (summary && summary.workedMinutes === 0 && fallback.punch.workingHours && fallback.punch.workingHours > 0) {
+  if (
+    summary &&
+    summary.workedMinutes === 0 &&
+    fallback.punch.workingHours &&
+    fallback.punch.workingHours > 0
+  ) {
     summary.workedMinutes = Math.round(fallback.punch.workingHours * 60);
   }
   return summary;
 }
 
-function summarizeTimeline(events: TimelineEvent[], source: TimelineSummary["source"]): TimelineSummary | null {
+function summarizeTimeline(
+  events: TimelineEvent[],
+  source: TimelineSummary["source"],
+): TimelineSummary | null {
   if (events.length === 0) return null;
 
-  const orderedEvents = [...events].sort((left, right) => left.punchedAt.getTime() - right.punchedAt.getTime());
+  const orderedEvents = [...events].sort(
+    (left, right) => left.punchedAt.getTime() - right.punchedAt.getTime(),
+  );
   const firstPunchAt = orderedEvents[0]?.punchedAt ?? null;
-  const lastPunchAt = orderedEvents[orderedEvents.length - 1]?.punchedAt ?? null;
+  const lastPunchAt =
+    orderedEvents[orderedEvents.length - 1]?.punchedAt ?? null;
   const reviewNotes: string[] = [];
   let breakMinutes = 0;
   let breakStartedAt: Date | null = null;
@@ -396,11 +436,18 @@ function summarizeTimeline(events: TimelineEvent[], source: TimelineSummary["sou
 
     if (isBreakIn(event.eventType)) {
       if (!breakStartedAt) {
-        reviewNotes.push("Break-in punch detected without a matching break-out.");
+        reviewNotes.push(
+          "Break-in punch detected without a matching break-out.",
+        );
         continue;
       }
 
-      breakMinutes += Math.max(0, Math.round((event.punchedAt.getTime() - breakStartedAt.getTime()) / 60000));
+      breakMinutes += Math.max(
+        0,
+        Math.round(
+          (event.punchedAt.getTime() - breakStartedAt.getTime()) / 60000,
+        ),
+      );
       breakStartedAt = null;
     }
   }
@@ -409,9 +456,13 @@ function summarizeTimeline(events: TimelineEvent[], source: TimelineSummary["sou
     reviewNotes.push("Break-out punch has no matching break-in.");
   }
 
-  const spanMinutes = firstPunchAt && lastPunchAt
-    ? Math.max(0, Math.round((lastPunchAt.getTime() - firstPunchAt.getTime()) / 60000))
-    : 0;
+  const spanMinutes =
+    firstPunchAt && lastPunchAt
+      ? Math.max(
+          0,
+          Math.round((lastPunchAt.getTime() - firstPunchAt.getTime()) / 60000),
+        )
+      : 0;
 
   return {
     events: orderedEvents,
@@ -426,7 +477,11 @@ function summarizeTimeline(events: TimelineEvent[], source: TimelineSummary["sou
   };
 }
 
-function countWorkingDaysInMonth(year: number, month: number, calendarConfig: any): number {
+function countWorkingDaysInMonth(
+  year: number,
+  month: number,
+  calendarConfig: any,
+): number {
   const lastDay = new Date(year, month, 0).getDate();
   let total = 0;
 
@@ -470,12 +525,26 @@ export async function getEmployeeHourlyOtRate(
   settings: typeof DEFAULT_OT_SETTINGS,
   _calendarConfig: any,
 ): Promise<number> {
+  void _calendarConfig;
   const minuteSalary = await getEmployeeMinuteSalary(userId, date, settings);
   return Number((minuteSalary * 60).toFixed(2));
 }
 
-async function computeOvertimeForDate(userId: string, orgId: string, attendanceDate: Date): Promise<OvertimeComputation | null> {
-  const [timeline, calendarSettings, holidayDateStrings, otSettings, shift, regularization] = await Promise.all([
+async function computeOvertimeForDate(
+  userId: string,
+  orgId: string,
+  attendanceDate: Date,
+): Promise<OvertimeComputation | null> {
+  const [
+    timeline,
+    calendarSettings,
+    holidayDateStrings,
+    otSettings,
+    shift,
+    regularization,
+    workReportSettings,
+    approvedWorkReport,
+  ] = await Promise.all([
     getTimelineSummary(userId, orgId, attendanceDate),
     getCalendarSettings(orgId),
     getHolidayDateStrings(orgId, attendanceDate),
@@ -485,12 +554,26 @@ async function computeOvertimeForDate(userId: string, orgId: string, attendanceD
       where: { userId_date: { userId, date: attendanceDate } },
       select: { status: true },
     }),
+    db.workReportSettings.findUnique({
+      where: { orgId },
+      select: { requireApprovedReportForOt: true },
+    }),
+    db.workReport.findFirst({
+      where: {
+        orgId,
+        userId,
+        date: attendanceDate,
+        status: "APPROVED",
+      },
+      select: { id: true },
+    }),
   ]);
 
   if (!timeline) return null;
 
   const settings = {
-    standardHours: otSettings?.standardHours ?? DEFAULT_OT_SETTINGS.standardHours,
+    standardHours:
+      otSettings?.standardHours ?? DEFAULT_OT_SETTINGS.standardHours,
     otRate: otSettings?.otRate ?? DEFAULT_OT_SETTINGS.otRate,
     graceMinutes: otSettings?.graceMinutes ?? DEFAULT_OT_SETTINGS.graceMinutes,
     compOffSlabs: Array.isArray(otSettings?.compOffSlabs)
@@ -521,12 +604,17 @@ async function computeOvertimeForDate(userId: string, orgId: string, attendanceD
   const usedOrgFallback = !activeShift;
   const startTime = activeShift?.startTime ?? calendarSettings.workStart;
   const endTime = activeShift?.endTime ?? calendarSettings.workEnd;
-  const expectedMinutes = dayType === "WORKING_DAY"
-    ? activeShift?.expectedWorkingMinutes ?? calendarSettings.defaultWorkingMinutes
-    : 0;
-  const minOvertimeMinutes = activeShift?.minOvertimeMinutes ?? calendarSettings.minOvertimeMinutes;
-  const graceBeforeStartMins = activeShift?.graceBeforeStartMins ?? calendarSettings.graceBeforeStartMins;
-  const graceAfterEndMins = activeShift?.graceAfterEndMins ?? calendarSettings.graceAfterEndMins;
+  const expectedMinutes =
+    dayType === "WORKING_DAY"
+      ? (activeShift?.expectedWorkingMinutes ??
+        calendarSettings.defaultWorkingMinutes)
+      : 0;
+  const minOvertimeMinutes =
+    activeShift?.minOvertimeMinutes ?? calendarSettings.minOvertimeMinutes;
+  const graceBeforeStartMins =
+    activeShift?.graceBeforeStartMins ?? calendarSettings.graceBeforeStartMins;
+  const graceAfterEndMins =
+    activeShift?.graceAfterEndMins ?? calendarSettings.graceAfterEndMins;
   const scheduledStart = startOfShiftOnDate(attendanceDate, startTime);
   const scheduledEnd = endOfShiftOnDate(attendanceDate, startTime, endTime);
 
@@ -549,7 +637,9 @@ async function computeOvertimeForDate(userId: string, orgId: string, attendanceD
 
   if (dayType === "WORKING_DAY" && expectedMinutes <= 0) {
     calculationStatus = "MISSING_CONFIGURATION";
-    remarks.push("No shift or organisation working-hour configuration is available.");
+    remarks.push(
+      "No shift or organisation working-hour configuration is available.",
+    );
   }
 
   const differenceMinutes = timeline.workedMinutes - expectedMinutes;
@@ -561,16 +651,22 @@ async function computeOvertimeForDate(userId: string, orgId: string, attendanceD
     if (timeline.lastPunchAt) {
       const earlyCutoff = scheduledEnd.getTime() - graceAfterEndMins * 60000;
       if (timeline.lastPunchAt.getTime() < earlyCutoff) {
-        earlyLeavingMins = Math.round((scheduledEnd.getTime() - timeline.lastPunchAt.getTime()) / 60000);
+        earlyLeavingMins = Math.round(
+          (scheduledEnd.getTime() - timeline.lastPunchAt.getTime()) / 60000,
+        );
       }
     }
 
     if (differenceMinutes > 0) {
-      otMinutes = differenceMinutes >= minOvertimeMinutes ? differenceMinutes : 0;
+      otMinutes =
+        differenceMinutes >= minOvertimeMinutes ? differenceMinutes : 0;
     }
   } else if (timeline.workedMinutes > 0) {
     otMinutes = timeline.workedMinutes;
-    compOffDays = pickCompOffDays(roundHours(timeline.workedMinutes), settings.compOffSlabs);
+    compOffDays = pickCompOffDays(
+      roundHours(timeline.workedMinutes),
+      settings.compOffSlabs,
+    );
   }
 
   if (isRegularized) {
@@ -579,19 +675,44 @@ async function computeOvertimeForDate(userId: string, orgId: string, attendanceD
     remarks.push("Regularized attendance applied the 75% OT/comp-off penalty.");
   }
 
-  if (calculationStatus === "VALID" && otMinutes <= 0) {
+  const approvedReportRequired =
+    workReportSettings?.requireApprovedReportForOt === true;
+  const workReportBlocksOt = approvedReportRequired && !approvedWorkReport;
+  if (workReportBlocksOt) {
+    otMinutes = 0;
+    compOffDays = 0;
+    calculationStatus = "WORK_REPORT_REQUIRED";
+    remarks.push(
+      "OT was omitted because an approved work report is required for this date.",
+    );
+  } else if (calculationStatus === "VALID" && otMinutes <= 0) {
     calculationStatus = "NO_OVERTIME";
-    remarks.push("Worked duration does not exceed the expected working duration.");
+    remarks.push(
+      "Worked duration does not exceed the expected working duration.",
+    );
   }
 
-  const minuteSalary = await getEmployeeMinuteSalary(userId, attendanceDate, settings);
-  const otRatePerHour = otMinutes > 0 ? Number((minuteSalary * 60).toFixed(2)) : 0;
-  const otAmount = otMinutes > 0
-    ? Number((otMinutes * minuteSalary * settings.otRate).toFixed(2))
-    : 0;
+  const minuteSalary = await getEmployeeMinuteSalary(
+    userId,
+    attendanceDate,
+    settings,
+  );
+  const otRatePerHour =
+    otMinutes > 0 ? Number((minuteSalary * 60).toFixed(2)) : 0;
+  const otAmount =
+    otMinutes > 0
+      ? Number((otMinutes * minuteSalary * settings.otRate).toFixed(2))
+      : 0;
 
   const lateMinutes = timeline.firstPunchAt
-    ? Math.max(0, Math.round((timeline.firstPunchAt.getTime() - (scheduledStart.getTime() + graceBeforeStartMins * 60000)) / 60000))
+    ? Math.max(
+        0,
+        Math.round(
+          (timeline.firstPunchAt.getTime() -
+            (scheduledStart.getTime() + graceBeforeStartMins * 60000)) /
+            60000,
+        ),
+      )
     : 0;
 
   return {
@@ -642,6 +763,8 @@ async function computeOvertimeForDate(userId: string, orgId: string, attendanceD
       lateMinutes,
       minOvertimeMinutes,
       regularized: isRegularized,
+      approvedWorkReportRequired: approvedReportRequired,
+      approvedWorkReportId: approvedWorkReport?.id ?? null,
     },
   };
 }
@@ -763,7 +886,10 @@ export async function appendAttendancePunchEvent(
   });
 }
 
-export async function calculateOtForPunch(userId: string, date: Date): Promise<boolean> {
+export async function calculateOtForPunch(
+  userId: string,
+  date: Date,
+): Promise<boolean> {
   const attendanceDate = normalizeToISTMidnight(date);
   const user = await db.user.findUnique({
     where: { id: userId },
@@ -774,7 +900,11 @@ export async function calculateOtForPunch(userId: string, date: Date): Promise<b
   const orgId = user.orgId;
   await ensureAttendanceConfiguration(orgId);
 
-  const computation = await computeOvertimeForDate(userId, orgId, attendanceDate);
+  const computation = await computeOvertimeForDate(
+    userId,
+    orgId,
+    attendanceDate,
+  );
   if (!computation) {
     await db.otRecord.deleteMany({
       where: { userId, date: attendanceDate },
@@ -839,7 +969,10 @@ export async function calculateOtForPunch(userId: string, date: Date): Promise<b
   return true;
 }
 
-export async function processMonthOt(orgId: string, monthDate: Date): Promise<{ processed: number }> {
+export async function processMonthOt(
+  orgId: string,
+  monthDate: Date,
+): Promise<{ processed: number }> {
   await ensureAttendanceConfiguration(orgId);
 
   const { start, end } = getAttendanceMonthBounds(
@@ -901,13 +1034,24 @@ export async function processMonthOt(orgId: string, monthDate: Date): Promise<{ 
   for (let index = 0; index < workItems.length; index += chunkSize) {
     const chunk = workItems.slice(index, index + chunkSize);
     await Promise.all(
-      chunk.map((item) => calculateOtForPunch(item.userId, item.attendanceDate)),
+      chunk.map((item) =>
+        calculateOtForPunch(item.userId, item.attendanceDate),
+      ),
     );
   }
 
-  const validKeys = new Set(workItems.map((item) => `${item.userId}:${item.attendanceDate.toISOString()}`));
+  const validKeys = new Set(
+    workItems.map(
+      (item) => `${item.userId}:${item.attendanceDate.toISOString()}`,
+    ),
+  );
   const staleFilters = existingOtKeys
-    .filter((item) => !validKeys.has(`${item.userId}:${normalizeToISTMidnight(item.date).toISOString()}`))
+    .filter(
+      (item) =>
+        !validKeys.has(
+          `${item.userId}:${normalizeToISTMidnight(item.date).toISOString()}`,
+        ),
+    )
     .map((item) => ({
       userId: item.userId,
       date: normalizeToISTMidnight(item.date),

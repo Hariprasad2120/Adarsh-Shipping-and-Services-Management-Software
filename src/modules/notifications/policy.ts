@@ -9,7 +9,8 @@ export type NotificationVariant =
 
 export type NotificationAppearance = "solid" | "outline" | "light" | "stroke";
 export type NotificationPriority = "normal" | "important";
-export type NotificationSource = "AMS" | "Attendance" | "HRMS" | "Admin" | "System" | "To-Do" | "CHA";
+export type NotificationSource =
+  "AMS" | "Attendance" | "HRMS" | "Admin" | "System" | "To-Do" | "CHA";
 
 export type NotificationPolicy = {
   source: NotificationSource;
@@ -211,6 +212,33 @@ export const NOTIFICATION_POLICIES: Record<string, NotificationPolicy> = {
     autoFadeMs: 5000,
     emailByDefault: true,
     labels: { open: "View leave status" },
+  },
+  WORK_REPORT_APPROVAL_REQUIRED: {
+    source: "HRMS",
+    variant: "primary",
+    appearance: "light",
+    priority: "important",
+    requiresAck: true,
+    resendable: true,
+    allowDismiss: true,
+    autoFadeMs: null,
+    emailByDefault: true,
+    labels: {
+      open: "Review work report",
+      acknowledge: "Acknowledge",
+    },
+  },
+  WORK_REPORT_DECISION: {
+    source: "HRMS",
+    variant: "success",
+    appearance: "light",
+    priority: "normal",
+    requiresAck: false,
+    resendable: true,
+    allowDismiss: true,
+    autoFadeMs: 5000,
+    emailByDefault: true,
+    labels: { open: "View work report" },
   },
   TODO_REMINDER: {
     source: "To-Do",

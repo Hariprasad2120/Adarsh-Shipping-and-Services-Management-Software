@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: process.env.DOCKER_BUILD === "true" ? "standalone" : undefined,
+  allowedDevOrigins: ["192.168.1.33"],
 
   experimental: {
     // Tree-shakes icon/motion packages so only the symbols actually imported

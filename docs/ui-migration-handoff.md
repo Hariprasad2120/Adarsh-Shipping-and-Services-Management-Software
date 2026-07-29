@@ -556,3 +556,177 @@ Next visual action:
    Violet.
 3. Confirm keyboard focus, no horizontal overflow, email failure/resend
    messaging, and that HR-only controls never enter edit mode for an employee.
+
+## 2026-07-29 HRMS work report workflow handoff
+
+The daily work report expansion is implemented and deployed to the configured
+database.
+
+Delivered:
+
+- `/hrms/work-reports` uses a wide rectangular shared dialog with up to 25
+  independent job/description line items.
+- The dialog refreshes GPS on submission, resolves the current address with a
+  coordinate fallback, and saves coordinates, accuracy, address, and a
+  server-side timestamp. The address is read-only in the form.
+- `/hrms/settings` now has a third Work Report Setup column for dynamic report
+  fields, one-level versus two-level approval, and the approved-report OT
+  requirement.
+- The employee's existing primary manager is approval level 1 and secondary
+  reporting manager is level 2. Level 2 remains waiting until level 1 approves.
+- Managers receive durable notification-center records and queued email
+  notifications. They can approve/reject from the report timeline or HRMS
+  Approvals inbox. Employees receive the final decision.
+- The Attendance OT engine emits `WORK_REPORT_REQUIRED` with zero OT whenever
+  the setting is enabled and that date has no finally approved report. Final
+  approval triggers recalculation for the report date.
+
+Persistence:
+
+- Migration `20260729233000_upgrade_work_reports` is deployed.
+- `WorkReport` now stores repeatable items, dynamic values, and GPS evidence.
+- `WorkReportApproval` stores level, waiting/pending/final state, decision time,
+  and an enforced approver relation.
+- `WorkReportSettings` and `WorkReportField` are organisation scoped.
+
+Verification:
+
+- targeted ESLint: passed with no findings;
+- production TypeScript: passed;
+- focused work-report and OT tests: 9 passed in 2 suites;
+- People Operations static verifier: all 45 HRMS and Attendance routes passed;
+- production build: 323 pages passed;
+- database migration status: up to date;
+- backup:
+  `OLD UI code/legacy-ui-before-work-report-upgrade-20260729.zip`, 9,674 bytes,
+  SHA-256
+  `C2695E8858C51DFF58A2848C59C541745BD05225144490184E7AE23D2E91D490`;
+- the existing non-fatal customer-portal NFT trace warning remains;
+- browser selection returned no available browser (`[]`).
+
+Next visual action:
+
+1. Attach an in-app Browser instance.
+2. Verify `/hrms/work-reports`, `/hrms/settings`, and `/hrms/approvals` at
+   desktop, tablet, and mobile widths in Light, Night, and Violet.
+3. Exercise add/remove line items, every dynamic field type, location allow/
+   deny/timeout/refresh states, primary approval, secondary handoff, rejection,
+   final decision notification, and OT recalculation.
+4. Confirm focus trapping/restoration, one bounded dialog scroller, no
+   horizontal overflow, and correct semantic-token contrast in every theme.
+
+## 2026-07-29 HRMS document drive handoff
+
+The HR document drive is reworked, backed by the configured organisation Shared
+Drive, and deployed to the configured database.
+
+Delivered:
+
+- `Monolith HR Document Drive` is the managed main folder. It contains
+  `My Space Files`, `Company Files`, and `Employee Shared`.
+- My Space and Employee Shared provision employee folders named
+  `Employee Name - ID {employeeNumber}`, falling back to the internal user ID.
+- My Space is private to its owning employee inside HRMS.
+- Company Files are visible organisation-wide, while only HR document
+  administrators can upload them.
+- Employee Shared is visible only to its employee, current primary/secondary
+  reporting managers, and HR. Managers see only direct reports and cannot upload
+  on a report's behalf; HR can.
+- The API accepts real files up to 25 MB, uploads them to Drive, stores only the
+  secure metadata/index in PostgreSQL, and removes an orphaned Drive file if the
+  metadata transaction fails.
+- No raw Drive ID or link reaches the client. Open/download requests repeat the
+  access decision and proxy the bytes with no-store and nosniff headers. Only
+  PDF and safe raster-image MIME types may render inline.
+- Upload/download audit events are persisted.
+
+Persistence:
+
+- Migration `20260729234500_rework_hr_document_drive` is deployed.
+- `HrDocumentDriveConfig` records the managed root/category folder IDs.
+- `HrDocumentFolder` records the employee-category Drive folder mapping.
+- `HrDocumentFile` records the protected file index and owner/uploader metadata.
+- Final migration status reports the schema is up to date.
+
+Verification:
+
+- targeted ESLint: passed with no findings;
+- production TypeScript: passed;
+- focused document hierarchy/access tests: 7 passed;
+- production build: all 323 pages passed;
+- full suite: 222 passed, with one unrelated protected-dashboard visual
+  expectation and three unrelated existing CHA integration expectations
+  failing;
+- backup:
+  `OLD UI code/legacy-ui-before-hr-document-drive-rework-20260729.zip`, 5,933
+  bytes, SHA-256
+  `25E1C5B3DF3CFA282A1BA8694F697A44FFEEA898F5BFFE5620194F12E630F775`;
+- browser selection returned no available browser (`[]`), so the page is not
+  marked visually Verified.
+
+Next visual action:
+
+1. Attach an in-app Browser instance.
+2. Verify `/hrms/files` at desktop, tablet, and mobile widths in Light, Night,
+   and Violet.
+3. Exercise empty, loading, search, upload, 25 MB validation, disconnected
+   Drive, HR Company Files upload, employee self-upload, HR employee selection,
+   manager direct-report selection, forbidden forged employee IDs, open, and
+   download states.
+4. Confirm table overflow, keyboard focus, no horizontal page overflow, semantic
+   token contrast, and that My Space/Employee Shared controls never appear for
+   an unauthorised user.
+
+## 2026-07-29 HRMS quick add employee handoff
+
+The minimal employee creation path is implemented on `/hrms/employees`.
+
+Delivered:
+
+- HR users with `hrms.employee.create` now see `Add Employee` and `Full
+  Onboarding` as separate choices.
+- `Add Employee` opens the shared Monolith dialog and requires only Employee ID,
+  first name, last name, and email.
+- `Generate` reads the organisation's last Employee ID and proposes an unused
+  numeric ID above the current global maximum. Manual IDs remain supported and
+  are checked again on submission.
+- The quick API assigns the default Employee role, creates an inactive pending
+  user and empty HRMS profile, and sends the existing secure invitation.
+- It deliberately does not create an `EmploymentRecord`. HR supplies the actual
+  joining date and remaining details later from the employee profile, whose
+  existing save flow creates that record and appraisal schedule.
+- Email delivery failure preserves the pending employee and uses the existing
+  resend action. Duplicate email/ID and permission checks are server-side.
+- Full onboarding remains unchanged for cases where HR already has complete
+  employment, organisation, salary, bank, and personal information.
+
+Persistence:
+
+- No schema or database migration was required.
+- The existing User, EmployeeHrmsProfile, EmployeeInvitation, role, security
+  event, and email delivery models are reused.
+
+Verification:
+
+- targeted ESLint: passed;
+- production TypeScript: passed;
+- focused quick-add/invitation/profile/export tests: 22 passed across 5 suites;
+- production build: all 324 pages passed;
+- backup:
+  `OLD UI code/legacy-ui-before-hrms-quick-add-employee-20260729.zip`, 5,951
+  bytes, SHA-256
+  `C7E9AECEFC7886C09FE778959DD42F4F2C91C94E972C523ECCA94706E9EBB841`;
+- the existing non-fatal customer-portal NFT trace warning remains;
+- browser selection returned no available browser, so the quick dialog is not
+  marked visually Verified.
+
+Next visual action:
+
+1. Attach an in-app Browser instance.
+2. Verify `/hrms/employees` in Light, Night, and Violet at desktop, tablet, and
+   mobile widths.
+3. Exercise generated and manual IDs, duplicate email/ID responses, required
+   fields, invalid email, invitation delivery success/failure, cancel, Escape,
+   focus trap/restoration, and navigation to the new pending employee profile.
+4. Confirm non-HR viewers never receive either creation action and forged quick
+   API requests return the permission error.

@@ -990,3 +990,186 @@ Blocked:
   one-time availability query returned `[]`. Live Light, Night, and Violet
   visual verification of invitation acceptance, workspace-ready, HR invite,
   invited-directory, and self-service states remains pending.
+
+## HRMS daily work report workflow upgrade
+
+Implemented on 2026-07-29 for the already migrated `/hrms/work-reports`,
+`/hrms/settings`, and `/hrms/approvals` routes.
+
+- Replaced the compact single-entry daily-report popup with a wide rectangular
+  workspace dialog and repeatable work line items. Each line retains an
+  independent job number/name and detailed description.
+- Added an organisation-scoped Work Report Setup column to HRMS Settings.
+  Administrators can create text, long-text, number, date, select, and yes/no
+  fields, set required/active state and display order, choose one-level or
+  two-level approval, and require a finally approved report for daily OT.
+- Work report submission refreshes browser GPS immediately before save,
+  resolves a readable address with coordinate fallback, and persists latitude,
+  longitude, accuracy, address, and a server-generated capture timestamp.
+- One-level approval routes to the primary reporting manager. Two-level
+  approval holds the secondary reporting manager until the primary manager
+  approves. A rejection closes later levels; final approval completes the
+  report.
+- Active managers receive in-app and email-backed notification records.
+  Approval/rejection is available both on the Work Reports detail timeline and
+  in the HRMS Approvals inbox. Employees receive the final decision.
+- When the administrator enables the OT dependency, missing, pending, or
+  rejected reports produce zero OT with `WORK_REPORT_REQUIRED`. Final approval
+  recalculates the affected attendance date.
+- Applied database migration
+  `20260729233000_upgrade_work_reports` successfully to the configured
+  PostgreSQL database.
+
+Backup:
+`OLD UI code/legacy-ui-before-work-report-upgrade-20260729.zip`
+
+- Five pre-upgrade work-report and HRMS-settings route/component sources with
+  relative paths retained.
+- Size: 9,674 bytes.
+- SHA-256:
+  `C2695E8858C51DFF58A2848C59C541745BD05225144490184E7AE23D2E91D490`.
+
+Passed with the required 8 GB Node heap:
+
+- Prisma format, client generation, migration status, and migration deploy;
+- targeted ESLint for every changed TypeScript/TSX production and test source;
+- production TypeScript with `npx tsc --noEmit`;
+- 9 focused work-report approval and OT tests across 2 suites;
+- People Operations static verifier for all 45 HRMS and Attendance routes,
+  shared controls/dialogs/states, semantic colours, catalogue coverage, and
+  protected behavior signals;
+- production build with Prisma generation, Next.js compilation, production
+  TypeScript, and all 323 generated pages;
+- database migration status reports the schema is up to date.
+
+The build retains the existing non-fatal Turbopack broad-file trace warning
+through `next.config.ts` and the customer-portal checklist-file route.
+
+Blocked:
+
+- Browser selection for `http://localhost:3100/hrms/work-reports` returned no
+  available browser. After the required troubleshooting read, the one-time
+  availability query returned `[]`.
+- Live Light, Night, and Violet verification remains pending for the rectangular
+  dialog, add/remove rows, dynamic fields, GPS permission/refresh/error states,
+  settings column, manager decision controls, approval handoff, and responsive
+  overflow/focus behavior. The upgrade is implemented, migrated, lint/type/test/
+  build clean, but is not declared visually Verified.
+
+## HRMS document drive rework
+
+Implemented on 2026-07-29 for the already migrated `/hrms/files` route.
+
+- Replaced the simulated local file ledger with real multipart uploads to the
+  organisation Shared Drive configured for the existing Google Workspace/CHA
+  integration.
+- Provisioning creates `Monolith HR Document Drive` with managed `My Space
+  Files`, `Company Files`, and `Employee Shared` category folders. My Space and
+  Employee Shared create employee subfolders using
+  `Employee Name - ID {employeeNumber}` with user ID fallback.
+- My Space listing, upload, open, and download are restricted server-side to
+  the owning employee, including against forged API requests.
+- Company Files are readable by every authenticated member of the
+  organisation. Upload is restricted to HR document administrators.
+- Employee Shared files are readable only by the owning employee, their current
+  primary or secondary reporting manager, and HR. Reporting managers can view
+  only their direct reports; only the owner or HR can upload.
+- Google Drive links and IDs are never returned to the browser. Authorised open
+  and download requests are proxied through a protected no-store route, and
+  active-content MIME types are forced to download instead of inline rendering.
+- Upload and download events are written to the existing HRMS audit log. The
+  former arbitrary folder creator and false simulated malware-clean badge were
+  removed.
+- Applied database migration
+  `20260729234500_rework_hr_document_drive` successfully to the configured
+  PostgreSQL database.
+
+Backup:
+`OLD UI code/legacy-ui-before-hr-document-drive-rework-20260729.zip`
+
+- Size: 5,933 bytes.
+- SHA-256:
+  `25E1C5B3DF3CFA282A1BA8694F697A44FFEEA898F5BFFE5620194F12E630F775`.
+
+Passed with the required 8 GB Node heap:
+
+- Prisma format, validation, client generation, migration deployment, and final
+  migration status;
+- targeted ESLint for the Drive service/client, HRMS page/component, API routes,
+  and shared page metadata;
+- production TypeScript through both `npx tsc --noEmit` and the Next.js build;
+- 7 focused hierarchy, read-policy, and upload-policy tests;
+- production build with Prisma generation, Next.js compilation, production
+  TypeScript, the protected file endpoint, and all 323 generated pages;
+- full repository suite: 35 of 37 files and 222 of 226 tests passed. The one
+  protected-dashboard CSS expectation and three existing CHA integration-data
+  expectations are unrelated to the HR document drive.
+
+The build retains the existing non-fatal Turbopack broad-file trace warning
+through `next.config.ts` and the customer-portal checklist-file route.
+
+Blocked:
+
+- Browser selection for `http://localhost:3000/hrms/files` returned no available
+  browser. After the required troubleshooting read, the one-time availability
+  query returned `[]`.
+- Live Light, Night, and Violet verification remains pending for all three tabs,
+  upload/error/empty states, HR and manager employee selectors, responsive table
+  overflow, and keyboard focus. The page is implemented, migrated, lint/type/
+  policy-test/build clean, but is not declared visually Verified.
+
+## HRMS quick add employee
+
+Implemented on 2026-07-29 for the already migrated `/hrms/employees` route.
+
+- Added an HR-only `Add Employee` action alongside the retained `Full
+  Onboarding` flow.
+- The quick dialog asks only for mandatory Employee ID, first name, last name,
+  and email address. It can generate the next globally unused numeric employee
+  ID and displays the organisation's last employee ID.
+- Quick creation reuses the existing hashed, expiring, single-use employee
+  invitation lifecycle and assigns the organisation's default Employee role.
+- The employee is created as an inactive pending account with an empty HRMS
+  profile and `Not started` onboarding status. No joining date, department,
+  reporting line, salary, employment type, or other unknown value is invented.
+- The employment record remains absent until HR edits the employee profile and
+  supplies a real joining date; the existing profile save then upserts the
+  employment record and appraisal schedule.
+- Duplicate email and Employee ID checks remain server-side. Invitation
+  delivery failure keeps the employee record and exposes the existing resend
+  workflow from the profile.
+- Both quick add and full onboarding actions are hidden unless the viewer has
+  `hrms.employee.create`; both API operations independently enforce the same
+  permission.
+- No database migration was required.
+
+Backup:
+`OLD UI code/legacy-ui-before-hrms-quick-add-employee-20260729.zip`
+
+- Size: 5,951 bytes.
+- SHA-256:
+  `C7E9AECEFC7886C09FE778959DD42F4F2C91C94E972C523ECCA94706E9EBB841`.
+
+Passed with the required 8 GB Node heap:
+
+- targeted ESLint for the directory page/action, quick API, invitation service,
+  and focused tests;
+- production TypeScript with `npx tsc --noEmit`;
+- 22 focused invitation lifecycle, quick-add, employee-profile, and
+  employee-export tests across 5 suites;
+- production build with Prisma generation, Next.js compilation, production
+  TypeScript, the new protected API route, and all 324 generated pages;
+- `git diff --check`.
+
+The build retains the existing non-fatal Turbopack broad-file trace warning
+through `next.config.ts` and the customer-portal checklist-file route.
+
+Blocked:
+
+- Browser selection for `http://localhost:3000/hrms/employees` returned no
+  available browser. The previously loaded one-time availability query for this
+  connected session returned `[]`.
+- Live Light, Night, and Violet verification remains pending for the quick
+  dialog, generated/manual Employee ID, validation, invitation success/failure,
+  focus behavior, and desktop/tablet/mobile layouts. The change is implemented
+  and lint/type/test/build clean, but is not declared visually Verified.

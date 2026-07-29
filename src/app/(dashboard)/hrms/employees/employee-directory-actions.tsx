@@ -3,7 +3,15 @@
 import { PeopleControlButton as MnxAction } from "@/components/monolith/people-controls";
 
 import Link from "next/link";
-import { Download, FileSpreadsheet, Plus, Search } from "lucide-react";
+import {
+  Download,
+  FileSpreadsheet,
+  IdCard,
+  MailCheck,
+  Plus,
+  Search,
+  UserRoundPlus,
+} from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -38,6 +46,20 @@ type DirectoryFilterDraft = {
 };
 
 type ExportFormat = "xls" | "xlsx" | "csv" | "tsv";
+
+type BasicEmployeeForm = {
+  employeeNumber: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+};
+
+const EMPTY_BASIC_EMPLOYEE: BasicEmployeeForm = {
+  employeeNumber: "",
+  firstName: "",
+  lastName: "",
+  email: "",
+};
 
 const EXPORT_FORMATS: { value: ExportFormat; label: string }[] = [
   { value: "xls", label: "XLS" },
@@ -80,10 +102,12 @@ function filterCount(draft: DirectoryFilterDraft) {
 }
 
 export function EmployeeDirectoryActions({
+  canCreateEmployee,
   org,
   roles,
   totalCount,
 }: {
+  canCreateEmployee: boolean;
   org: {
     branches: Branch[];
     departments: Department[];
@@ -100,6 +124,16 @@ export function EmployeeDirectoryActions({
   const [exportOpen, setExportOpen] = useState(false);
   const [exportFormat, setExportFormat] = useState<ExportFormat>("xlsx");
   const [exporting, setExporting] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [quickAddForm, setQuickAddForm] = useState<BasicEmployeeForm>(
+    EMPTY_BASIC_EMPLOYEE,
+  );
+  const [lastEmployeeNumber, setLastEmployeeNumber] = useState<number | null>(
+    null,
+  );
+  const [generatingEmployeeNumber, setGeneratingEmployeeNumber] =
+    useState(false);
+  const [creatingEmployee, setCreatingEmployee] = useState(false);
 
   const currentDraft = useMemo(() => currentFilterDraft(sp), [sp]);
   const [draft, setDraft] = useState<DirectoryFilterDraft>(currentDraft);
@@ -243,6 +277,121 @@ export function EmployeeDirectoryActions({
       );
     } finally {
       setExporting(false);
+    }
+  }
+
+  function setQuickAddField<K extends keyof BasicEmployeeForm>(
+    key: K,
+    value: BasicEmployeeForm[K],
+  ) {
+    setQuickAddForm((current) => ({ ...current, [key]: value }));
+  }
+
+  async function generateEmployeeNumber() {
+    setGeneratingEmployeeNumber(true);
+    try {
+      const response = await fetch("/api/hrms/invitations/basic", {
+        cache: "no-store",
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | {
+            data?: {
+              lastEmployeeNumber: number | null;
+              nextEmployeeNumber: number;
+            };
+            error?: string | { message?: string };
+          }
+        | null;
+      if (!response.ok || !payload?.data) {
+        const message =
+          typeof payload?.error === "string"
+            ? payload.error
+            : payload?.error?.message;
+        throw new Error(message || "Unable to generate an employee ID");
+      }
+
+      setLastEmployeeNumber(payload.data.lastEmployeeNumber);
+      setQuickAddField(
+        "employeeNumber",
+        String(payload.data.nextEmployeeNumber),
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to generate an employee ID",
+      );
+    } finally {
+      setGeneratingEmployeeNumber(false);
+    }
+  }
+
+  function openQuickAdd() {
+    setQuickAddForm(EMPTY_BASIC_EMPLOYEE);
+    setLastEmployeeNumber(null);
+    setQuickAddOpen(true);
+    void generateEmployeeNumber();
+  }
+
+  function closeQuickAdd() {
+    if (creatingEmployee) return;
+    setQuickAddOpen(false);
+    setQuickAddForm(EMPTY_BASIC_EMPLOYEE);
+  }
+
+  async function createBasicEmployee(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const employeeNumber = Number(quickAddForm.employeeNumber);
+    if (!Number.isInteger(employeeNumber) || employeeNumber <= 0) {
+      toast.error("Enter a valid positive employee ID.");
+      return;
+    }
+
+    setCreatingEmployee(true);
+    try {
+      const response = await fetch("/api/hrms/invitations/basic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          employeeNumber,
+          firstName: quickAddForm.firstName,
+          lastName: quickAddForm.lastName,
+          email: quickAddForm.email,
+        }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | {
+            data?: {
+              user: { id: string };
+              invitation: { deliveryStatus: string };
+            };
+            error?: string | { message?: string };
+          }
+        | null;
+      if (!response.ok || !payload?.data?.user.id) {
+        const message =
+          typeof payload?.error === "string"
+            ? payload.error
+            : payload?.error?.message;
+        throw new Error(message || "Unable to add the employee");
+      }
+
+      if (payload.data.invitation.deliveryStatus === "FAILED") {
+        toast.warning(
+          "Employee added, but email delivery failed. The invitation can be resent from the employee profile.",
+        );
+      } else {
+        toast.success("Employee added and invitation sent.");
+      }
+      setQuickAddOpen(false);
+      setQuickAddForm(EMPTY_BASIC_EMPLOYEE);
+      router.push(`/hrms/employees/${payload.data.user.id}`);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to add the employee",
+      );
+    } finally {
+      setCreatingEmployee(false);
     }
   }
 
@@ -473,13 +622,26 @@ export function EmployeeDirectoryActions({
           Export
         </MnxAction>
 
-        <Link
-          href="/hrms/employees/new"
-          className="inline-flex items-center gap-2 rounded-lg bg-[var(--mnx-accent)] px-4 py-2 text-sm font-medium text-[var(--mnx-text)] transition hover:bg-[var(--mnx-accent)]"
-        >
-          <Plus className="h-4 w-4" />
-          Onboard Employee
-        </Link>
+        {canCreateEmployee ? (
+          <>
+            <MnxAction
+              onClick={openQuickAdd}
+              size="compact"
+              variant="primary"
+            >
+              <UserRoundPlus className="h-4 w-4" />
+              Add Employee
+            </MnxAction>
+
+            <Link
+              href="/hrms/employees/new"
+              className="mnx-button mnx-button-secondary mnx-button-compact"
+            >
+              <Plus className="h-4 w-4" />
+              Full Onboarding
+            </Link>
+          </>
+        ) : null}
       </div>
 
       <p className="text-sm text-mono-muted">
@@ -563,6 +725,147 @@ export function EmployeeDirectoryActions({
             </p>
           </div>
         </div>
+      </WorkspaceDialog>
+
+      <WorkspaceDialog
+        description="Create the employee with basic identity details. Remaining employment and onboarding information can be completed later from the employee profile."
+        eyebrow="Quick employee creation"
+        footer={
+          <>
+            <MnxAction
+              disabled={creatingEmployee}
+              onClick={closeQuickAdd}
+              variant="secondary"
+            >
+              Cancel
+            </MnxAction>
+            <MnxAction
+              disabled={
+                creatingEmployee ||
+                generatingEmployeeNumber ||
+                !quickAddForm.employeeNumber ||
+                !quickAddForm.firstName.trim() ||
+                !quickAddForm.lastName.trim() ||
+                !quickAddForm.email.trim()
+              }
+              form="quick-add-employee-form"
+              type="submit"
+              variant="primary"
+            >
+              <MailCheck className="h-4 w-4" />
+              {creatingEmployee ? "Adding employee…" : "Add and send invite"}
+            </MnxAction>
+          </>
+        }
+        onClose={closeQuickAdd}
+        open={quickAddOpen}
+        size="default"
+        title="Add employee"
+      >
+        <form
+          className="grid gap-5"
+          id="quick-add-employee-form"
+          onSubmit={createBasicEmployee}
+        >
+          <div className="flex items-start gap-4 rounded-[var(--mn-radius-panel)] border border-[var(--mnx-warning)]/30 bg-[var(--mnx-warning-bg)] p-4">
+            <span className="mnx-icon-badge shrink-0">
+              <MailCheck className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="font-medium text-mono-text">
+                Only the known details are required
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-mono-muted">
+                The employee receives a secure invitation to create their
+                password. Joining date, reporting line, department, salary, and
+                other profile details remain blank until HR adds them.
+              </p>
+            </div>
+          </div>
+
+          <div className="mnx-field">
+            <label htmlFor="quick-employee-number">Employee ID *</label>
+            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <div className="relative">
+                <IdCard className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mono-muted" />
+                <Input
+                  autoComplete="off"
+                  className="pl-9"
+                  id="quick-employee-number"
+                  min="1"
+                  name="employeeNumber"
+                  onChange={(event) =>
+                    setQuickAddField("employeeNumber", event.target.value)
+                  }
+                  required
+                  type="number"
+                  value={quickAddForm.employeeNumber}
+                />
+              </div>
+              <MnxAction
+                disabled={generatingEmployeeNumber || creatingEmployee}
+                onClick={() => void generateEmployeeNumber()}
+                type="button"
+                variant="secondary"
+              >
+                {generatingEmployeeNumber ? "Generating…" : "Generate"}
+              </MnxAction>
+            </div>
+            <small>
+              {lastEmployeeNumber === null
+                ? "Generate the next available employee ID or enter one manually."
+                : `Last employee ID: ${lastEmployeeNumber}`}
+            </small>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="mnx-field">
+              <label htmlFor="quick-employee-first-name">First name *</label>
+              <Input
+                autoComplete="given-name"
+                id="quick-employee-first-name"
+                maxLength={100}
+                name="firstName"
+                onChange={(event) =>
+                  setQuickAddField("firstName", event.target.value)
+                }
+                required
+                value={quickAddForm.firstName}
+              />
+            </div>
+
+            <div className="mnx-field">
+              <label htmlFor="quick-employee-last-name">Last name *</label>
+              <Input
+                autoComplete="family-name"
+                id="quick-employee-last-name"
+                maxLength={100}
+                name="lastName"
+                onChange={(event) =>
+                  setQuickAddField("lastName", event.target.value)
+                }
+                required
+                value={quickAddForm.lastName}
+              />
+            </div>
+          </div>
+
+          <div className="mnx-field">
+            <label htmlFor="quick-employee-email">Email address *</label>
+            <Input
+              autoComplete="email"
+              id="quick-employee-email"
+              maxLength={320}
+              name="email"
+              onChange={(event) =>
+                setQuickAddField("email", event.target.value)
+              }
+              required
+              type="email"
+              value={quickAddForm.email}
+            />
+          </div>
+        </form>
       </WorkspaceDialog>
     </div>
   );

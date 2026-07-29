@@ -50,6 +50,13 @@ export const employeeInvitationInputSchema = z.object({
   paymentMode: optionalShortText,
 });
 
+export const basicEmployeeInvitationInputSchema = z.object({
+  employeeNumber: z.number().int().positive(),
+  firstName: z.string().trim().min(1).max(100),
+  lastName: z.string().trim().min(1).max(100),
+  email: z.string().trim().toLowerCase().pipe(z.email()),
+});
+
 export const employeeInvitationPasswordSchema = z
   .string()
   .min(12, "Password must contain at least 12 characters")
@@ -61,6 +68,16 @@ export const employeeInvitationPasswordSchema = z
 export type EmployeeInvitationInput = z.infer<
   typeof employeeInvitationInputSchema
 >;
+export type BasicEmployeeInvitationInput = z.infer<
+  typeof basicEmployeeInvitationInputSchema
+>;
+
+type InternalEmployeeInvitationInput = Omit<
+  EmployeeInvitationInput,
+  "joinDate"
+> & {
+  joinDate: string | null;
+};
 
 const INVITATION_EXPIRY_HOURS = Math.max(
   1,
@@ -94,7 +111,7 @@ function address(parts: Array<string | undefined>) {
 
 async function validateOrganisationReferences(
   orgId: string,
-  input: EmployeeInvitationInput,
+  input: InternalEmployeeInvitationInput,
 ) {
   const [branch, department, division, manager, teamLead, roles] =
     await Promise.all([
@@ -251,10 +268,10 @@ async function deliverInvitation(params: {
   }
 }
 
-export async function inviteEmployee(params: {
+async function createEmployeeInvitation(params: {
   orgId: string;
   actorId: string;
-  input: EmployeeInvitationInput;
+  input: InternalEmployeeInvitationInput;
 }) {
   const { orgId, actorId, input } = params;
   const [existing, existingEmployeeNumber, organisation, roleIds] =
@@ -323,15 +340,17 @@ export async function inviteEmployee(params: {
     await tx.userRole.createMany({
       data: roleIds.map((roleId) => ({ userId: user.id, roleId })),
     });
-    await tx.employmentRecord.create({
-      data: {
-        userId: user.id,
-        joinDate: new Date(input.joinDate),
-        grade: input.grade || null,
-        ctc: input.ctc,
-        priorExperienceYears: input.priorExperienceYears,
-      },
-    });
+    if (input.joinDate) {
+      await tx.employmentRecord.create({
+        data: {
+          userId: user.id,
+          joinDate: new Date(input.joinDate),
+          grade: input.grade || null,
+          ctc: input.ctc,
+          priorExperienceYears: input.priorExperienceYears,
+        },
+      });
+    }
     await tx.employeeHrmsProfile.create({
       data: {
         userId: user.id,
@@ -408,6 +427,64 @@ export async function inviteEmployee(params: {
       ...result.invitation,
       deliveryStatus,
     },
+  };
+}
+
+export async function inviteEmployee(params: {
+  orgId: string;
+  actorId: string;
+  input: EmployeeInvitationInput;
+}) {
+  return createEmployeeInvitation({
+    ...params,
+    input: {
+      ...params.input,
+      joinDate: params.input.joinDate,
+    },
+  });
+}
+
+export async function inviteBasicEmployee(params: {
+  orgId: string;
+  actorId: string;
+  input: BasicEmployeeInvitationInput;
+}) {
+  return createEmployeeInvitation({
+    orgId: params.orgId,
+    actorId: params.actorId,
+    input: {
+      employeeNumber: params.input.employeeNumber,
+      firstName: params.input.firstName,
+      lastName: params.input.lastName,
+      email: params.input.email,
+      joinDate: null,
+      roleIds: [],
+      ctc: null,
+      priorExperienceYears: 0,
+    },
+  });
+}
+
+export async function getEmployeeNumberSuggestion(orgId: string) {
+  const [organisationMaximum, globalMaximum] = await Promise.all([
+    db.user.aggregate({
+      where: { orgId },
+      _max: { employeeNumber: true },
+    }),
+    db.user.aggregate({
+      _max: { employeeNumber: true },
+    }),
+  ]);
+  const lastEmployeeNumber = organisationMaximum._max.employeeNumber;
+  const nextEmployeeNumber =
+    Math.max(
+      organisationMaximum._max.employeeNumber ?? 0,
+      globalMaximum._max.employeeNumber ?? 0,
+    ) + 1;
+
+  return {
+    lastEmployeeNumber,
+    nextEmployeeNumber,
   };
 }
 
