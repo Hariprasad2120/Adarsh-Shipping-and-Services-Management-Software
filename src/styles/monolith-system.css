@@ -6,6 +6,7 @@
 
 .mnx-dashboard-shell,
 html[data-dashboard-shell="true"],
+.mnx-public-shell,
 .mnx-floating-surface,
 html[data-dashboard-shell="true"] [data-sonner-toast] {
   --mnx-page: var(--mn-color-canvas);
@@ -6838,6 +6839,973 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   .mnx-catalogue-page section {
     break-inside: avoid;
     box-shadow: none;
+  }
+}
+
+/*
+ * Public and root-control surfaces.
+ * These routes live outside the authenticated AppShell but consume the same
+ * semantic tokens and production primitives as every migrated workspace.
+ */
+.mnx-public-shell {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  min-height: 100dvh;
+  padding:
+    clamp(24px, 4vw, 52px)
+    var(--mnx-page-gutter)
+    clamp(24px, 4vw, 52px);
+  overflow-x: hidden;
+  color: var(--mnx-text);
+  background-color: var(--mnx-page);
+  background-image: var(--mnx-page-gradient);
+  font-family: var(--mn-font-sans);
+  font-size: var(--mn-type-body-size);
+  line-height: var(--mn-type-body-line);
+  isolation: isolate;
+}
+
+html:has(.mnx-public-shell),
+body:has(.mnx-public-shell) {
+  background: var(--mn-color-canvas);
+  scrollbar-color:
+    color-mix(in srgb, var(--mn-color-text-muted) 54%, transparent)
+    var(--mn-color-canvas);
+}
+
+html:has(.mnx-public-shell)::-webkit-scrollbar-track,
+body:has(.mnx-public-shell)::-webkit-scrollbar-track {
+  background: var(--mn-color-canvas);
+}
+
+html:has(.mnx-public-shell)::-webkit-scrollbar-thumb,
+body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
+  border-color: var(--mn-color-canvas);
+  background: color-mix(
+    in srgb,
+    var(--mn-color-text-muted) 54%,
+    transparent
+  );
+}
+
+.mnx-public-shell *,
+.mnx-public-shell *::before,
+.mnx-public-shell *::after {
+  box-sizing: border-box;
+}
+
+.mnx-public-shell button,
+.mnx-public-shell input {
+  font: inherit;
+}
+
+.mnx-public-atmosphere {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.mnx-public-atmosphere span,
+.mnx-public-atmosphere i {
+  position: absolute;
+  display: block;
+}
+
+.mnx-public-atmosphere span {
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 24%, transparent);
+  border-radius: 50%;
+}
+
+.mnx-public-atmosphere span:first-child {
+  width: min(48vw, 720px);
+  aspect-ratio: 1;
+  top: -28vw;
+  right: -12vw;
+  box-shadow:
+    inset 0 0 0 7vw color-mix(in srgb, var(--mnx-accent) 4%, transparent),
+    0 0 120px color-mix(in srgb, var(--mnx-accent) 9%, transparent);
+}
+
+.mnx-public-atmosphere span:nth-child(2) {
+  width: min(36vw, 520px);
+  aspect-ratio: 1;
+  bottom: -24vw;
+  left: -12vw;
+  box-shadow: inset 0 0 0 5vw color-mix(in srgb, var(--mnx-accent) 4%, transparent);
+}
+
+.mnx-public-atmosphere i {
+  width: 36vw;
+  height: 1px;
+  top: 28%;
+  left: -9vw;
+  opacity: 0.4;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--mnx-accent) 58%, transparent),
+    transparent
+  );
+  transform: rotate(-28deg);
+}
+
+.mnx-public-frame {
+  position: relative;
+  z-index: 1;
+  width: min(var(--mnx-page-max), 100%);
+  min-width: 0;
+  min-height: calc(100dvh - clamp(48px, 8vw, 104px));
+  margin: 0 auto;
+  display: grid;
+  align-content: center;
+  gap: 24px;
+  animation: mnx-page-in var(--mn-motion-panel) var(--mn-ease-standard) both;
+}
+
+.mnx-public-shell-workspace {
+  padding-block: var(--mnx-page-gutter) var(--mnx-page-bottom);
+}
+
+.mnx-public-shell-workspace .mnx-public-frame {
+  align-content: start;
+}
+
+.mnx-public-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  justify-self: start;
+}
+
+.mnx-public-brand > span:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.mnx-public-brand strong {
+  color: var(--mnx-text-strong);
+  font-size: 14px;
+  font-weight: 780;
+  letter-spacing: 0.16em;
+}
+
+.mnx-public-brand small {
+  color: var(--mnx-muted);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.mnx-public-brand-mark {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 48%, var(--mnx-border));
+  border-radius: 13px;
+  background: var(--mnx-highlight-gradient);
+  box-shadow: var(--mnx-theme-shadow-soft);
+}
+
+.mnx-public-brand-mark i {
+  position: absolute;
+  width: 7px;
+  height: 21px;
+  border-radius: 2px;
+  background: var(--mnx-accent-contrast);
+  transform: skewY(-24deg);
+}
+
+.mnx-public-brand-mark i:first-child {
+  translate: -5px 0;
+}
+
+.mnx-public-brand-mark i:last-child {
+  translate: 5px 0;
+  opacity: 0.62;
+}
+
+.mnx-public-stage {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(430px, 0.7fr);
+  overflow: hidden;
+  border: 1px solid var(--mnx-border);
+  border-radius: clamp(24px, 3vw, 34px);
+  background: var(--mnx-surface-gradient);
+  box-shadow: var(--mnx-shadow);
+}
+
+.mnx-public-stage-compact,
+.mnx-public-stage-narrow {
+  grid-template-columns: 1fr;
+  justify-self: center;
+}
+
+.mnx-public-stage-compact {
+  max-width: 780px;
+}
+
+.mnx-public-stage-narrow {
+  max-width: 720px;
+}
+
+.mnx-public-panel {
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.mnx-public-panel:hover {
+  background-position: 0 0;
+  box-shadow: none;
+  transform: none;
+}
+
+.mnx-public-stage > .mnx-public-panel {
+  padding: clamp(24px, 3.5vw, 46px);
+}
+
+.mnx-public-header {
+  display: grid;
+  gap: 12px;
+}
+
+.mnx-public-header-topline {
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mnx-public-header-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  margin-top: 8px;
+  border-radius: 16px;
+  color: var(--mnx-accent-contrast);
+  background: var(--mnx-highlight-gradient);
+  box-shadow: var(--mnx-theme-shadow-soft);
+}
+
+.mnx-public-header-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mnx-public-header h1 {
+  margin: 4px 0 0;
+  color: var(--mnx-text-strong);
+  font-size: clamp(32px, 4vw, 46px);
+  font-weight: var(--mn-type-heading-weight);
+  line-height: 0.98;
+  letter-spacing: var(--mn-type-heading-tracking);
+  text-wrap: balance;
+}
+
+.mnx-public-header > p {
+  max-width: 600px;
+  margin: 0;
+  color: var(--mnx-muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.mnx-public-panel-content,
+.mnx-public-form {
+  display: grid;
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.mnx-public-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.mnx-public-form-toolbar {
+  min-height: 34px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mnx-public-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.mnx-public-primary-action {
+  width: 100%;
+}
+
+.mnx-public-primary-action svg {
+  width: 17px;
+  height: 17px;
+}
+
+.mnx-public-password-field {
+  position: relative;
+}
+
+.mnx-public-password-field .mnx-field-control {
+  padding-right: 52px;
+}
+
+.mnx-public-password-toggle {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 32px;
+  min-height: 32px;
+  padding: 0;
+}
+
+.mnx-public-password-toggle svg {
+  width: 15px;
+  height: 15px;
+}
+
+.mnx-public-divider {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  color: var(--mnx-muted);
+  font-size: 9px;
+  font-weight: 680;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.mnx-public-divider::before,
+.mnx-public-divider::after {
+  content: "";
+  height: 1px;
+  background: var(--mnx-border);
+}
+
+.mnx-public-text-link {
+  color: var(--mnx-accent-text);
+  font-size: 11px;
+  font-weight: 720;
+  text-decoration: none;
+}
+
+.mnx-public-text-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mnx-public-inset {
+  padding: 16px;
+  border: 1px solid var(--mnx-border);
+  border-radius: 16px;
+  color: var(--mnx-muted);
+  background: var(--mnx-control-gradient);
+}
+
+.mnx-public-footer {
+  justify-self: center;
+  max-width: 760px;
+  color: var(--mnx-muted);
+  font-size: 9px;
+  font-weight: 620;
+  letter-spacing: 0.08em;
+  line-height: 1.6;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.mnx-public-status {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 13px;
+  padding: 15px;
+  border: 1px solid var(--mnx-border);
+  border-radius: 16px;
+}
+
+.mnx-public-status > span:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.mnx-public-status-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+}
+
+.mnx-public-status-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.mnx-public-status strong {
+  color: currentColor;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.mnx-public-status p {
+  margin: 0;
+  color: var(--mnx-muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.mnx-public-status-info {
+  border-color: color-mix(in srgb, var(--mnx-info) 24%, var(--mnx-border));
+  color: var(--mnx-info);
+  background: var(--mnx-info-bg);
+}
+
+.mnx-public-status-success {
+  border-color: color-mix(in srgb, var(--mnx-success) 24%, var(--mnx-border));
+  color: var(--mnx-success);
+  background: var(--mnx-success-bg);
+}
+
+.mnx-public-status-warning {
+  border-color: color-mix(in srgb, var(--mnx-warning) 24%, var(--mnx-border));
+  color: var(--mnx-warning);
+  background: var(--mnx-warning-bg);
+}
+
+.mnx-public-status-danger {
+  border-color: color-mix(in srgb, var(--mnx-danger) 24%, var(--mnx-border));
+  color: var(--mnx-danger);
+  background: var(--mnx-danger-bg);
+}
+
+.mnx-public-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.mnx-public-spinner {
+  animation: mnx-spin 700ms linear infinite;
+}
+
+.mnx-public-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid var(--mnx-border);
+  border-radius: 18px;
+  background: var(--mnx-control-gradient);
+}
+
+.mnx-public-detail {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 17px;
+  border-right: 1px solid var(--mnx-border);
+  border-bottom: 1px solid var(--mnx-border);
+}
+
+.mnx-public-detail:nth-child(even) {
+  border-right: 0;
+}
+
+.mnx-public-detail-wide {
+  grid-column: 1 / -1;
+  border-right: 0;
+}
+
+.mnx-public-detail:last-child {
+  border-bottom: 0;
+}
+
+.mnx-public-detail dt {
+  color: var(--mnx-muted);
+  font-size: 9px;
+  font-weight: 740;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.mnx-public-detail dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--mnx-text-strong);
+  font-size: 12px;
+  font-weight: 640;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.mnx-public-detail code,
+.mnx-public-link-help code {
+  font-family: var(--mn-font-mono);
+}
+
+.mnx-public-registry-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.mnx-public-registry-meta span {
+  display: grid;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mnx-public-registry-meta strong {
+  color: var(--mnx-text);
+  font-family: var(--mn-font-mono);
+  font-size: 10px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.mnx-public-state-panel {
+  min-height: 260px;
+  display: grid;
+  align-content: center;
+}
+
+.mnx-public-security-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.mnx-public-security-note svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  color: var(--mnx-accent-text);
+}
+
+.mnx-public-identity {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.mnx-public-inset-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 13px;
+  color: var(--mnx-accent-contrast);
+  background: var(--mnx-highlight-gradient);
+}
+
+.mnx-public-identity > span:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.mnx-public-identity small {
+  color: var(--mnx-muted);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 720;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.mnx-public-identity strong {
+  overflow: hidden;
+  color: var(--mnx-text-strong);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mnx-public-identity em {
+  overflow: hidden;
+  color: var(--mnx-muted);
+  font-size: 11px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mnx-public-link-help {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 22px clamp(24px, 3.5vw, 46px) 0;
+  font-size: 10px;
+  text-align: center;
+}
+
+.mnx-public-link-help code {
+  color: var(--mnx-accent-text);
+  font-weight: 740;
+}
+
+.mnx-auth-stage {
+  min-height: 650px;
+}
+
+.mnx-auth-introduction {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  align-content: space-between;
+  gap: 28px;
+  padding: clamp(32px, 4vw, 54px);
+  overflow: hidden;
+  color: var(--mnx-text);
+  background:
+    radial-gradient(
+      circle at 76% 34%,
+      color-mix(in srgb, var(--mnx-accent) 24%, transparent),
+      transparent 34%
+    ),
+    var(--mnx-hero-gradient);
+  border-right: 1px solid var(--mnx-border);
+}
+
+.mnx-auth-introduction-copy {
+  position: relative;
+  z-index: 2;
+  max-width: 590px;
+  display: grid;
+  gap: 18px;
+}
+
+.mnx-auth-introduction-copy h1 {
+  margin: 0;
+  color: var(--mnx-text-strong);
+  font-size: clamp(42px, 5vw, 68px);
+  font-weight: 340;
+  line-height: 0.94;
+  letter-spacing: -0.06em;
+  text-wrap: balance;
+}
+
+.mnx-auth-introduction-copy p {
+  max-width: 540px;
+  margin: 0;
+  color: var(--mnx-muted);
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.mnx-auth-graphic {
+  position: relative;
+  z-index: 1;
+  min-height: 220px;
+}
+
+.mnx-auth-graphic > span {
+  position: absolute;
+  top: 44px;
+  left: 50%;
+  width: 116px;
+  height: 116px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 46%, var(--mnx-border));
+  border-radius: 36px;
+  color: var(--mnx-accent-contrast);
+  background: var(--mnx-highlight-gradient);
+  box-shadow:
+    0 0 0 24px color-mix(in srgb, var(--mnx-accent) 6%, transparent),
+    var(--mnx-theme-shadow);
+  transform: translateX(-50%) rotate(-4deg);
+}
+
+.mnx-auth-graphic > span svg {
+  width: 44px;
+  height: 44px;
+}
+
+.mnx-auth-graphic i {
+  position: absolute;
+  height: 1px;
+  background: color-mix(in srgb, var(--mnx-accent) 42%, transparent);
+}
+
+.mnx-auth-graphic i:nth-of-type(1) {
+  width: 70%;
+  top: 101px;
+  left: 15%;
+}
+
+.mnx-auth-graphic i:nth-of-type(2) {
+  width: 46%;
+  top: 74px;
+  left: 4%;
+  transform: rotate(25deg);
+}
+
+.mnx-auth-graphic i:nth-of-type(3) {
+  width: 46%;
+  top: 142px;
+  right: 4%;
+  transform: rotate(-25deg);
+}
+
+.mnx-auth-assurance {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.mnx-auth-assurance span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 11px;
+  border: 1px solid var(--mnx-border);
+  border-radius: 999px;
+  color: var(--mnx-muted);
+  background: color-mix(in srgb, var(--mnx-card) 76%, transparent);
+  font-size: 9px;
+  font-weight: 690;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mnx-auth-assurance svg {
+  width: 14px;
+  height: 14px;
+  color: var(--mnx-accent-text);
+}
+
+.mnx-auth-form-panel {
+  display: grid;
+  align-content: center;
+}
+
+.mnx-auth-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.mnx-auth-sso-mark {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--mnx-border);
+  border-radius: 8px;
+  color: var(--mnx-text-strong);
+  background: var(--mnx-surface);
+  font-family: var(--mn-font-mono);
+  font-size: 11px;
+}
+
+.mnx-auth-request-access {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 10px;
+}
+
+.mnx-root-control-page {
+  width: min(var(--mnx-workspace-max), 100%);
+}
+
+.mnx-root-control-content {
+  display: grid;
+  gap: 18px;
+}
+
+.mnx-root-policy-panel,
+.mnx-root-module-card {
+  padding: 22px;
+  border-radius: var(--mnx-radius-lg);
+}
+
+.mnx-root-policy-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.mnx-root-policy-panel .mnx-table-toolbar {
+  border-bottom: 0;
+}
+
+.mnx-root-policy-panel .mnx-panel-actions {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--mnx-accent-contrast);
+  background: var(--mnx-highlight-gradient);
+}
+
+.mnx-root-module-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.mnx-root-module-card {
+  min-width: 0;
+  display: grid;
+  align-content: space-between;
+  gap: 22px;
+}
+
+.mnx-root-module-card[data-module-enabled="false"] {
+  border-color: color-mix(in srgb, var(--mnx-warning) 22%, var(--mnx-border));
+}
+
+.mnx-root-module-card .mnx-table-toolbar {
+  align-items: flex-start;
+  border-bottom: 0;
+}
+
+.mnx-root-module-card > .mnx-button {
+  width: 100%;
+}
+
+@media (max-width: 70rem) {
+  .mnx-public-stage {
+    grid-template-columns: 1fr;
+  }
+
+  .mnx-auth-introduction {
+    min-height: 420px;
+    border-right: 0;
+    border-bottom: 1px solid var(--mnx-border);
+  }
+
+  .mnx-auth-graphic {
+    min-height: 120px;
+  }
+
+  .mnx-auth-graphic > span {
+    top: 10px;
+  }
+}
+
+@media (max-width: 42rem) {
+  .mnx-public-shell {
+    padding:
+      var(--mnx-page-gutter-mobile)
+      var(--mnx-page-gutter-mobile)
+      var(--mnx-page-bottom-mobile);
+  }
+
+  .mnx-public-frame {
+    min-height: calc(100dvh - 48px);
+    align-content: start;
+    gap: 16px;
+  }
+
+  .mnx-public-brand {
+    margin-block: 4px;
+  }
+
+  .mnx-public-stage {
+    border-radius: 22px;
+  }
+
+  .mnx-public-stage > .mnx-public-panel,
+  .mnx-auth-introduction {
+    padding: 24px 20px;
+  }
+
+  .mnx-auth-introduction {
+    min-height: 390px;
+  }
+
+  .mnx-auth-introduction-copy h1 {
+    font-size: 40px;
+  }
+
+  .mnx-auth-graphic > span {
+    width: 90px;
+    height: 90px;
+    border-radius: 28px;
+  }
+
+  .mnx-auth-graphic > span svg {
+    width: 34px;
+    height: 34px;
+  }
+
+  .mnx-public-header-topline,
+  .mnx-auth-options,
+  .mnx-auth-request-access {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mnx-public-header h1 {
+    font-size: 32px;
+  }
+
+  .mnx-public-form-grid,
+  .mnx-public-detail-grid,
+  .mnx-public-registry-meta,
+  .mnx-root-module-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mnx-public-detail,
+  .mnx-public-detail:nth-child(even) {
+    border-right: 0;
+  }
+
+  .mnx-public-detail-wide {
+    grid-column: auto;
+  }
+
+  .mnx-public-detail:last-child {
+    border-bottom: 0;
+  }
+
+  .mnx-public-link-help {
+    margin-inline: 20px;
+  }
+
+  .mnx-root-policy-panel,
+  .mnx-root-module-card {
+    padding: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mnx-public-frame,
+  .mnx-public-spinner {
+    animation: none;
   }
 }
 

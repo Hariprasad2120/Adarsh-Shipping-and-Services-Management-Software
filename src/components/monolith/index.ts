@@ -28,6 +28,7 @@ export * from "./neon-checkbox";
 export * from "./people-workspace";
 export * from "./people-controls";
 export * from "./performance-workspace";
+export * from "./public-workspace";
 export * from "./warning-indicator-popover";
 export * from "./textarea";
 export * from "./workspace";

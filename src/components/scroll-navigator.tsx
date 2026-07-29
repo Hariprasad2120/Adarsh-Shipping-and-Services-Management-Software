@@ -12,6 +12,12 @@ const BOTTOM_THRESHOLD_PX = 96;
 
 export function ScrollNavigator() {
   const pathname = usePathname();
+  const usesDedicatedPublicWorkspace =
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname === "/setup" ||
+    pathname === "/google-chat-link" ||
+    pathname.startsWith("/verify/");
   const [isScrollable, setIsScrollable] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [scrollState, setScrollState] = useState<ScrollState>("top");
@@ -79,7 +85,7 @@ export function ScrollNavigator() {
     };
   }, [pathname]);
 
-  if (!isScrollable) {
+  if (!isScrollable || usesDedicatedPublicWorkspace) {
     return null;
   }
 

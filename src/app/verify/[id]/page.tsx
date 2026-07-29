@@ -1,130 +1,233 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { CheckCircle, AlertTriangle, ShieldCheck, FileText, Search, Loader2 } from "lucide-react";
-import { use } from "react";
+import { use, useEffect, useState } from "react";
+import {
+  AlertTriangle,
+  FileCheck2,
+  Fingerprint,
+  LoaderCircle,
+  ShieldCheck,
+} from "lucide-react";
+import {
+  PublicBrand,
+  PublicDetail,
+  PublicDetailGrid,
+  PublicFooter,
+  PublicHeader,
+  PublicInset,
+  PublicMonolithShell,
+  PublicPanel,
+  PublicStage,
+  PublicStatus,
+  PublicStatusBadge,
+} from "@/components/monolith";
 
-export default function VerifyPage({ params }: { params: Promise<{ id: string }> }) {
+interface VerifiedDocument {
+  documentHash: string;
+  documentType: string;
+  issueDate: string;
+  letterNumber: string;
+  maskedAadhaar?: string | null;
+  maskedEmail?: string | null;
+  recipientName: string;
+  status: string;
+  validityStatus: string;
+  verificationTimestamp: string;
+}
+
+interface VerificationResponse {
+  data?: VerifiedDocument;
+  error?: { message?: string };
+  ok?: boolean;
+}
+
+export default function VerifyPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const [loading, setLoading] = useState(true);
-  const [doc, setDoc] = useState<any>(null);
+  const [documentRecord, setDocumentRecord] =
+    useState<VerifiedDocument | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchVerification = async () => {
+    const controller = new AbortController();
+
+    async function fetchVerification() {
+      setLoading(true);
+      setError(null);
+
       try {
-        const res = await fetch(`/api/hrms/letters/verify?q=${id}`);
-        const json = await res.json();
-        if (json.ok) {
-          setDoc(json.data);
+        const response = await fetch(
+          `/api/hrms/letters/verify?q=${encodeURIComponent(id)}`,
+          { signal: controller.signal },
+        );
+        const payload = (await response.json()) as VerificationResponse;
+
+        if (payload.ok && payload.data) {
+          setDocumentRecord(payload.data);
         } else {
-          setError(json.error?.message || "Document verification failed");
+          setError(
+            payload.error?.message ?? "Document verification failed.",
+          );
         }
-      } catch (err) {
-        setError("Failed to query the document register");
+      } catch (requestError) {
+        if (
+          requestError instanceof DOMException &&
+          requestError.name === "AbortError"
+        ) {
+          return;
+        }
+        setError("Failed to query the document register.");
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
-    };
-    fetchVerification();
+    }
+
+    void fetchVerification();
+    return () => controller.abort();
   }, [id]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0d1117] text-[#f0f6fc] font-sans">
-        <Loader2 className="size-8 animate-spin text-[#F9D972] mb-3" />
-        <p className="text-xs uppercase tracking-widest font-mono">Verifying document credentials...</p>
-      </div>
+      <PublicMonolithShell data-public-route="verify" aria-busy="true">
+        <PublicBrand subtitle="Secure document registry" />
+        <PublicStage className="mnx-public-stage-narrow">
+          <PublicPanel className="mnx-public-state-panel">
+            <PublicStatus
+              tone="info"
+              eyebrow="Registry lookup"
+              icon={<LoaderCircle className="mnx-public-spinner" />}
+              title="Verifying document credentials"
+              description="The secure ledger is checking the supplied document identifier."
+            />
+          </PublicPanel>
+        </PublicStage>
+      </PublicMonolithShell>
     );
   }
 
-  const isValid = doc && doc.status !== "CANCELLED" && doc.validityStatus === "VALID";
+  if (error || !documentRecord) {
+    return (
+      <PublicMonolithShell data-public-route="verify">
+        <PublicBrand subtitle="Secure document registry" />
+        <PublicStage className="mnx-public-stage-narrow">
+          <PublicPanel className="mnx-public-state-panel">
+            <PublicHeader
+              eyebrow="Public verification"
+              icon={<Fingerprint />}
+              title="Document authenticity registry"
+              description="Adarsh Shipping and Services secure document register."
+            />
+            <PublicStatus
+              tone="danger"
+              eyebrow="Verification rejected"
+              icon={<AlertTriangle />}
+              title={error ?? "No matching document was returned."}
+              description="Check the verification link or request a fresh document from the issuing team."
+            />
+          </PublicPanel>
+        </PublicStage>
+        <PublicFooter>Powered by Monolith Engine Secure Ledger.</PublicFooter>
+      </PublicMonolithShell>
+    );
+  }
+
+  const isValid =
+    documentRecord.status !== "CANCELLED" &&
+    documentRecord.validityStatus === "VALID";
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#0d1117] text-[#f0f6fc] font-sans p-6">
-      <div className="w-full max-w-xl bg-[#161b22] border border-[#30363d] rounded-2xl p-6 shadow-2xl space-y-6 relative overflow-hidden">
-        {/* Accent Top Bar */}
-        <div className={`absolute top-0 left-0 right-0 h-1.5 ${isValid ? "bg-[#F9D972]" : "bg-[#D88700]"}`} />
+    <PublicMonolithShell data-public-route="verify">
+      <PublicBrand subtitle="Secure document registry" />
+      <PublicStage className="mnx-public-stage-narrow">
+        <PublicPanel>
+          <PublicHeader
+            badge={
+              <PublicStatusBadge tone={isValid ? "success" : "warning"}>
+                {isValid ? "Verified authentic" : "Archived record"}
+              </PublicStatusBadge>
+            }
+            eyebrow="Public verification"
+            icon={isValid ? <ShieldCheck /> : <FileCheck2 />}
+            title="Document authenticity registry"
+            description="Adarsh Shipping and Services secure document register."
+          />
 
-        <div className="flex flex-col items-center text-center space-y-2">
-          <div className={`size-14 rounded-full flex items-center justify-center ${isValid ? "bg-[#F9D972]/15 text-[#F9D972]" : "bg-[#D88700]/15 text-[#D88700]"}`}>
-            {isValid ? <ShieldCheck className="size-8" /> : <AlertTriangle className="size-8" />}
+          <div className="mnx-public-panel-content">
+            <PublicStatus
+              tone={isValid ? "success" : "warning"}
+              eyebrow="Registry status"
+              icon={isValid ? <ShieldCheck /> : <AlertTriangle />}
+              title={
+                isValid
+                  ? "This document is authentic"
+                  : "This record is not currently applicable"
+              }
+              description="The document exists in the organisation's protected registry."
+            />
+
+            <PublicDetailGrid>
+              <PublicDetail
+                label="Letter number"
+                value={<code>{documentRecord.letterNumber}</code>}
+              />
+              <PublicDetail
+                label="Document type"
+                value={documentRecord.documentType}
+              />
+              <PublicDetail
+                label="Recipient name"
+                value={documentRecord.recipientName}
+              />
+              <PublicDetail
+                label="Issue date"
+                value={documentRecord.issueDate}
+              />
+              <PublicDetail
+                label="Masked email"
+                value={<code>{documentRecord.maskedEmail || "N/A"}</code>}
+              />
+              <PublicDetail
+                label="Masked Aadhaar"
+                value={<code>{documentRecord.maskedAadhaar || "N/A"}</code>}
+              />
+              <PublicDetail
+                wide
+                label="SHA-256 PDF hash"
+                value={<code>{documentRecord.documentHash}</code>}
+              />
+            </PublicDetailGrid>
+
+            <PublicInset className="mnx-public-registry-meta">
+              <span>
+                Verified timestamp
+                <strong>
+                  {new Date(
+                    documentRecord.verificationTimestamp,
+                  ).toLocaleString()}
+                </strong>
+              </span>
+              <span>
+                LIN / registration
+                <strong>DL-889812-LIN / TN-600112</strong>
+              </span>
+            </PublicInset>
+
+            <PublicStatus
+              tone="warning"
+              eyebrow="Privacy notice"
+              icon={<ShieldCheck />}
+              title="Sensitive document fields remain concealed"
+              description="Salary breakdowns, physical addresses, and contractual clauses are hidden for DPDP Act compliance."
+            />
           </div>
-          <h1 className="text-xl font-bold tracking-widest uppercase text-[#f0f6fc]" style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}>
-            Document Authenticity Registry
-          </h1>
-          <p className="text-xs text-[#8b949e] uppercase font-bold tracking-wider">
-            Public Verification Portal — Adarsh Shipping and Services
-          </p>
-        </div>
+        </PublicPanel>
+      </PublicStage>
 
-        {error ? (
-          <div className="border border-red-500/20 bg-red-500/5 rounded-xl p-4 text-center text-sm text-red-400">
-            <p className="font-bold uppercase tracking-wider mb-1">Verification Rejected</p>
-            <p>{error}</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className={`border rounded-xl p-4 ${isValid ? "border-[#F9D972]/20 bg-[#F9D972]/5 text-[#F9D972]" : "border-[#D88700]/20 bg-[#D88700]/5 text-[#D88700]"} flex items-center gap-3`}>
-              <CheckCircle className="size-5 shrink-0" />
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider">Status: {isValid ? "VERIFIED AUTHENTIC" : "NOT APPLICABLE / ARCHIVED"}</p>
-                <p className="text-[11px] opacity-80">This document exists in the immutable registry of Adarsh Shipping and Services.</p>
-              </div>
-            </div>
-
-            {/* Document Data Grid */}
-            <div className="grid grid-cols-2 gap-4 bg-[#21262d] border border-[#30363d] rounded-xl p-4 text-xs">
-              <div className="space-y-1">
-                <p className="text-[10px] text-[#8b949e] uppercase font-bold tracking-wider">Letter Number</p>
-                <p className="font-bold text-[#f0f6fc] font-mono">{doc.letterNumber}</p>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-[10px] text-[#8b949e] uppercase font-bold tracking-wider">Document Type</p>
-                <p className="font-bold text-[#f0f6fc]">{doc.documentType}</p>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-[10px] text-[#8b949e] uppercase font-bold tracking-wider">Recipient Name</p>
-                <p className="font-bold text-[#f0f6fc]">{doc.recipientName}</p>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-[10px] text-[#8b949e] uppercase font-bold tracking-wider">Issue Date</p>
-                <p className="font-bold text-[#f0f6fc]">{doc.issueDate}</p>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-[10px] text-[#8b949e] uppercase font-bold tracking-wider">Masked Email</p>
-                <p className="font-bold text-[#f0f6fc] font-mono">{doc.maskedEmail || "N/A"}</p>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-[10px] text-[#8b949e] uppercase font-bold tracking-wider">Masked Aadhaar</p>
-                <p className="font-bold text-[#f0f6fc] font-mono">{doc.maskedAadhaar || "N/A"}</p>
-              </div>
-
-              <div className="col-span-2 space-y-1 pt-2 border-t border-[#30363d]">
-                <p className="text-[10px] text-[#8b949e] uppercase font-bold tracking-wider">SHA-256 PDF Hash</p>
-                <p className="font-mono text-[10px] text-[#8b949e] select-all break-all">{doc.documentHash}</p>
-              </div>
-            </div>
-
-            <div className="text-[10px] text-[#8b949e] text-center space-y-1">
-              <p>Verified Timestamp: {new Date(doc.verificationTimestamp).toLocaleString()}</p>
-              <p className="font-mono">LIN / Reg No: DL-889812-LIN / TN-600112</p>
-              <p className="font-semibold text-red-500/80">⚠️ Salary breakdown, physical addresses and contractual clauses are concealed for data privacy (DPDP Act Compliance).</p>
-            </div>
-          </div>
-        )}
-
-        <div className="flex justify-center border-t border-[#30363d] pt-4">
-          <p className="text-[9px] text-[#8b949e] uppercase tracking-widest font-mono">
-            Powered by Monolith Engine Secure Ledger
-          </p>
-        </div>
-      </div>
-    </div>
+      <PublicFooter>Powered by Monolith Engine Secure Ledger.</PublicFooter>
+    </PublicMonolithShell>
   );
 }

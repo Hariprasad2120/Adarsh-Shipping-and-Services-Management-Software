@@ -2,78 +2,60 @@
 
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
+import {
+  ArrowRight,
+  Check,
+  Eye,
+  EyeOff,
+  KeyRound,
+  LoaderCircle,
+  LogIn,
+  PackageCheck,
+  ShieldCheck,
+} from "lucide-react";
 import { signIn } from "next-auth/react";
+import {
+  Button,
+  Input,
+  PublicActions,
+  PublicBrand,
+  PublicFooter,
+  PublicHeader,
+  PublicInset,
+  PublicMonolithShell,
+  PublicPanel,
+  PublicStage,
+  PublicStatus,
+  PublicStatusBadge,
+  WorkspaceCheckbox,
+  WorkspaceField,
+} from "@/components/monolith";
 import { clearStaleSessionData } from "@/lib/logout";
 import { isRootControlEmail } from "@/lib/root-access";
 import { DEFAULT_CALLBACK_URL, SUCCESS_TRANSITION_MS } from "./login-scene.config";
-import styles from "./monolith-logistics-login.module.css";
 
-type Mood = "idle" | "happy" | "charging" | "shy" | "error";
 type SubmitState = "idle" | "loading" | "success";
-
-function MonolithPetGraphic() {
-  return (
-    <span className={styles.petCharacter} aria-hidden="true">
-      <span className={styles.energyRing} />
-      <span className={styles.energyRingSecondary} />
-      <svg className={styles.petSvg} viewBox="0 0 360 300">
-        <g className={styles.petShell}>
-          <path
-            className={styles.outerShell}
-            d="M98 92h164l38 30v70l-38 30H98l-38-30v-70Z"
-          />
-          <path
-            className={styles.faceGlass}
-            d="M116 116h128l24 18v46l-24 18H116l-24-18v-46Z"
-          />
-        </g>
-
-        <g className={styles.leftEar}>
-          <path d="m60 132-22 8v34l22 8Z" />
-          <path className={styles.earSignal} d="M28 135c-9 11-9 34 0 45" />
-        </g>
-        <g className={styles.rightEar}>
-          <path d="m300 132 22 8v34l-22 8Z" />
-          <path className={styles.earSignal} d="M332 135c9 11 9 34 0 45" />
-        </g>
-
-        <g className={styles.antenna}>
-          <path d="m116 94-15-18 12-10-14-18 8-14" />
-          <circle cx="109" cy="30" r="7" />
-          <path className={styles.antennaSignal} d="M91 29c-7 8-7 18 0 26M79 21c-13 14-13 33 0 47" />
-        </g>
-
-        <g className={styles.facePatch}>
-          <rect className={styles.patchBox} x="122" y="136" width="38" height="38" rx="9" />
-          <g className={styles.patchEye}>
-            <rect className={styles.crossArmA} x="128" y="151" width="26" height="8" rx="4" />
-            <rect className={styles.crossArmB} x="128" y="151" width="26" height="8" rx="4" />
-          </g>
-        </g>
-
-        <g className={styles.eyeLook}>
-          <g className={styles.liveEye}>
-            <rect x="221" y="146" width="12" height="20" rx="6" />
-          </g>
-        </g>
-
-        <path className={styles.scanLine} d="M112 185h136" />
-      </svg>
-    </span>
-  );
-}
 
 function wait(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 }
 
 function getSafeCallbackUrl(identifier: string) {
-  const requestedCallbackUrl = new URLSearchParams(window.location.search).get("callbackUrl");
-  const fallbackTarget = isRootControlEmail(identifier) ? "/" : DEFAULT_CALLBACK_URL;
-  return requestedCallbackUrl?.startsWith("/") ? requestedCallbackUrl : fallbackTarget;
+  const requestedCallbackUrl = new URLSearchParams(window.location.search).get(
+    "callbackUrl",
+  );
+  const fallbackTarget = isRootControlEmail(identifier)
+    ? "/"
+    : DEFAULT_CALLBACK_URL;
+  return requestedCallbackUrl?.startsWith("/")
+    ? requestedCallbackUrl
+    : fallbackTarget;
 }
 
-function getSameOriginRedirectUrl(url: string | null | undefined, fallbackUrl: string) {
+function getSameOriginRedirectUrl(
+  url: string | null | undefined,
+  fallbackUrl: string,
+) {
   if (!url) return fallbackUrl;
   if (url.startsWith("/")) return url;
 
@@ -88,24 +70,12 @@ function getSameOriginRedirectUrl(url: string | null | undefined, fallbackUrl: s
 }
 
 export function MonolithLogisticsLogin() {
-  const panelRef = useRef<HTMLElement>(null);
-  const petRef = useRef<HTMLSpanElement>(null);
-  const shadowRef = useRef<HTMLDivElement>(null);
-  const glowRef = useRef<HTMLDivElement>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
-  const target = useRef({ x: 0, y: 0 });
-  const current = useRef({ x: 0, y: 0 });
-  const velocity = useRef({ x: 0, y: 0 });
-  const passwordFocusedRef = useRef(false);
-  const frame = useRef<number | null>(null);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
-  const [mood, setMood] = useState<Mood>("idle");
-  const [petMessage, setPetMessage] = useState("Tap me!");
   const [message, setMessage] = useState("");
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const busy = submitState !== "idle";
@@ -113,96 +83,6 @@ export function MonolithLogisticsLogin() {
   useEffect(() => {
     clearStaleSessionData();
   }, []);
-
-  useEffect(() => {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const motionScale = reduceMotion ? 0.35 : 1;
-
-    const followPointer = (event: PointerEvent) => {
-      if (event.pointerType === "touch") return;
-      if (passwordFocusedRef.current) {
-        target.current = { x: -0.8, y: -0.08 };
-        return;
-      }
-
-      const bounds = panelRef.current?.getBoundingClientRect();
-      if (!bounds) return;
-
-      target.current = {
-        x: Math.max(-1, Math.min(1, ((event.clientX - bounds.left) / bounds.width - 0.5) * 2)),
-        y: Math.max(-1, Math.min(1, ((event.clientY - bounds.top) / bounds.height - 0.5) * 2)),
-      };
-    };
-
-    const resetPointer = (event: PointerEvent) => {
-      if (event.relatedTarget === null && !passwordFocusedRef.current) {
-        target.current = { x: 0, y: 0 };
-      }
-    };
-
-    const animate = () => {
-      velocity.current.x = (velocity.current.x + (target.current.x - current.current.x) * 0.055) * 0.78;
-      velocity.current.y = (velocity.current.y + (target.current.y - current.current.y) * 0.055) * 0.78;
-      current.current.x += velocity.current.x;
-      current.current.y += velocity.current.y;
-
-      const x = current.current.x;
-      const y = current.current.y;
-      const pet = petRef.current;
-      const shadow = shadowRef.current;
-      const glow = glowRef.current;
-
-      if (pet) {
-        pet.style.setProperty("--x", `${x * 76 * motionScale}px`);
-        pet.style.setProperty("--y", `${y * 52 * motionScale}px`);
-        pet.style.setProperty("--turn", `${x * 5.5 * motionScale}deg`);
-        pet.style.setProperty("--skew", `${y * -2.2 * motionScale}deg`);
-        const horizontalStretch = 1 + (Math.abs(x) * 0.11 - Math.abs(y) * 0.055) * motionScale;
-        const verticalStretch = 1 + (Math.abs(y) * 0.1 - Math.abs(x) * 0.05) * motionScale;
-        pet.style.setProperty("--stretch-x", `${horizontalStretch}`);
-        pet.style.setProperty("--stretch-y", `${verticalStretch}`);
-        pet.style.setProperty("--eye-x", `${x * 10 * motionScale}px`);
-        pet.style.setProperty("--eye-y", `${y * 5 * motionScale}px`);
-        pet.style.setProperty("--face-x", `${x * 2.4 * motionScale}px`);
-        pet.style.setProperty("--face-y", `${y * 1.8 * motionScale}px`);
-        pet.style.setProperty("--antenna-turn", `${x * -7 * motionScale}deg`);
-        pet.style.setProperty("--ear-shift", `${y * 2 * motionScale}px`);
-      }
-
-      if (shadow) {
-        shadow.style.transform = `translate(calc(-50% + ${x * -16}px), ${y * -6}px) scaleX(${1 - Math.abs(y) * 0.14})`;
-      }
-
-      if (glow) {
-        glow.style.setProperty("--gx", `${50 + x * 40}%`);
-        glow.style.setProperty("--gy", `${50 + y * 38}%`);
-      }
-
-      frame.current = window.requestAnimationFrame(animate);
-    };
-
-    window.addEventListener("pointermove", followPointer, { passive: true });
-    window.addEventListener("pointerout", resetPointer, { passive: true });
-    frame.current = window.requestAnimationFrame(animate);
-    return () => {
-      window.removeEventListener("pointermove", followPointer);
-      window.removeEventListener("pointerout", resetPointer);
-      if (frame.current) window.cancelAnimationFrame(frame.current);
-    };
-  }, []);
-
-  function interactWithPet() {
-    if (mood === "idle") {
-      setMood("happy");
-      setPetMessage("Beep! Good to see you.");
-    } else if (mood === "happy") {
-      setMood("charging");
-      setPetMessage("Charging… 84%");
-    } else {
-      setMood("idle");
-      setPetMessage("Ready for another route!");
-    }
-  }
 
   function resetSubmitState() {
     setMessage("");
@@ -217,23 +97,17 @@ export function MonolithLogisticsLogin() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       setMessage("Enter a valid work email.");
       emailInputRef.current?.focus({ preventScroll: true });
-      setMood("error");
-      setPetMessage("That route looks incomplete.");
       return;
     }
 
     if (!password) {
       setMessage("Enter your password.");
       passwordInputRef.current?.focus({ preventScroll: true });
-      setMood("error");
-      setPetMessage("The security code is missing.");
       return;
     }
 
     setMessage("");
     setSubmitState("loading");
-    setMood("charging");
-    setPetMessage("Verifying your cargo route…");
 
     const callbackUrl = getSafeCallbackUrl(normalizedEmail);
     let result: Awaited<ReturnType<typeof signIn>> | undefined;
@@ -253,127 +127,84 @@ export function MonolithLogisticsLogin() {
     if (!result || result.error) {
       setSubmitState("idle");
       passwordInputRef.current?.focus({ preventScroll: true });
-      setMood("error");
-      setPetMessage("Access denied. Please try again.");
       setMessage("Sign in failed. Check your credentials and try again.");
       return;
     }
 
     clearStaleSessionData();
     setSubmitState("success");
-    setMood("happy");
-    setPetMessage("You’re in! Let’s get moving.");
     await wait(SUCCESS_TRANSITION_MS);
     window.location.replace(getSameOriginRedirectUrl(result.url, callbackUrl));
   }
 
   return (
-    <main
-      className={`${styles.loginPage} ${submitState === "success" ? styles.success : ""}`}
-      data-monolith-login
-    >
-      <section className={styles.loginCard} aria-label="Monolith secure login">
-        <aside
-          ref={panelRef}
-          className={styles.mascotPanel}
-          aria-label="Interactive Monolith digital pet"
-        >
-          <div ref={glowRef} className={styles.cursorGlow} aria-hidden="true" />
+    <PublicMonolithShell data-public-route="login" data-monolith-login>
+      <PublicBrand subtitle="Intelligent logistics" />
 
-          <div className={`${styles.brand} ${styles.brandLight}`}>
-            <span className={styles.brandMark} aria-hidden="true"><i /><i /></span>
+      <PublicStage className="mnx-auth-stage">
+        <section className="mnx-auth-introduction" aria-label="Platform overview">
+          <div className="mnx-auth-introduction-copy">
+            <PublicStatusBadge tone="accent">Secure operations access</PublicStatusBadge>
+            <h1>One command centre for every moving part.</h1>
+            <p>
+              Sign in to manage shipments, people, finance, communication, and
+              customer operations with your assigned permissions.
+            </p>
+          </div>
+
+          <div className="mnx-auth-graphic" aria-hidden="true">
             <span>
-              <strong>MONOLITH</strong>
-              <small>Intelligent logistics</small>
+              <PackageCheck />
             </span>
-          </div>
-
-          <button
-            type="button"
-            className={`monolith-plain ${styles.petButton} ${styles[`mood-${mood}`]}`}
-            onClick={interactWithPet}
-            aria-label={`Interact with Monolith pet. ${petMessage}`}
-          >
-            <span ref={petRef} className={styles.petFollower}>
-              <span className={styles.speechBubble} aria-live="polite">{petMessage}</span>
-              <span className={styles.petRig}>
-                <MonolithPetGraphic />
-              </span>
-            </span>
-          </button>
-
-          <div ref={shadowRef} className={styles.petShadow} aria-hidden="true" />
-
-          <p className={styles.petStatus}>
             <i />
-            {submitState === "success"
-              ? "Route cleared. Welcome aboard."
-              : password
-                ? "Cargo secured. Ready to dispatch."
-                : email
-                  ? "Route identified. Awaiting clearance."
-                  : "Your cargo command center is listening."}
-          </p>
-        </aside>
-
-        <section className={styles.formPanel} aria-labelledby="login-title">
-          <div className={`${styles.mobileBrand} ${styles.brand}`}>
-            <span className={styles.brandMark} aria-hidden="true"><i /><i /></span>
-            <strong>MONOLITH</strong>
+            <i />
+            <i />
           </div>
 
-          <div className={styles.accountIcon} aria-hidden="true"><span /><i /></div>
+          <div className="mnx-auth-assurance">
+            <span><ShieldCheck /> Role-aware access</span>
+            <span><KeyRound /> Protected sessions</span>
+          </div>
+        </section>
 
-          <header className={styles.heading}>
-            <p>SECURE OPERATIONS ACCESS</p>
-            <h1 id="login-title">Welcome back!</h1>
-            <span>Enter your login details</span>
-          </header>
+        <PublicPanel className="mnx-auth-form-panel">
+          <PublicHeader
+            eyebrow="Account access"
+            icon={submitState === "success" ? <Check /> : <LogIn />}
+            title={submitState === "success" ? "Access granted" : "Welcome back"}
+            description={
+              submitState === "success"
+                ? "Your workspace is ready. Redirecting now."
+                : "Enter your Monolith credentials to continue."
+            }
+          />
 
-          <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
-            <label className={styles.field}>
-              <span>Email</span>
-              <span className={styles.inputWrap}>
-                <input
-                  ref={emailInputRef}
-                  type="email"
-                  name="email"
-                  autoComplete="username"
-                  inputMode="email"
-                  placeholder="name@company.com"
-                  value={email}
-                  disabled={busy}
-                  aria-invalid={Boolean(message && !email.includes("@"))}
-                  aria-describedby={message ? "login-message" : undefined}
-                  onFocus={() => {
-                    target.current = { x: 0.7, y: -0.12 };
-                    setMood("happy");
-                    setPetMessage("I found your route!");
-                  }}
-                  onBlur={() => setMood("idle")}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    setEmail(value);
-                    setMood(value ? "happy" : "idle");
-                    setPetMessage(
-                      value.length > 12
-                        ? "Route almost identified…"
-                        : value
-                          ? "Reading your route…"
-                          : "Tap me!",
-                    );
-                    resetSubmitState();
-                  }}
-                />
-                {email.includes("@") ? <b className={styles.valid} aria-label="Email entered">✓</b> : null}
-              </span>
-            </label>
+          <form className="mnx-public-form" onSubmit={handleSubmit} noValidate>
+            <WorkspaceField htmlFor="login-email" label="Email address" required>
+              <Input
+                ref={emailInputRef}
+                id="login-email"
+                type="email"
+                name="email"
+                autoComplete="username"
+                inputMode="email"
+                placeholder="name@company.com"
+                value={email}
+                disabled={busy}
+                aria-invalid={Boolean(message && !email.includes("@"))}
+                aria-describedby={message ? "login-message" : undefined}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  resetSubmitState();
+                }}
+              />
+            </WorkspaceField>
 
-            <label className={styles.field}>
-              <span>Password</span>
-              <span className={styles.inputWrap}>
-                <input
+            <WorkspaceField htmlFor="login-password" label="Password" required>
+              <div className="mnx-public-password-field">
+                <Input
                   ref={passwordInputRef}
+                  id="login-password"
                   type={showPassword ? "text" : "password"}
                   name="password"
                   autoComplete="current-password"
@@ -382,77 +213,98 @@ export function MonolithLogisticsLogin() {
                   disabled={busy}
                   aria-invalid={Boolean(message && !password)}
                   aria-describedby={message ? "login-message" : undefined}
-                  onFocus={() => {
-                    passwordFocusedRef.current = true;
-                    target.current = { x: -0.8, y: -0.08 };
-                    setMood("shy");
-                    setPetMessage("I won’t peek. Promise.");
-                  }}
-                  onBlur={() => {
-                    passwordFocusedRef.current = false;
-                    target.current = { x: 0, y: 0 };
-                    setMood("idle");
-                  }}
                   onChange={(event) => {
                     setPassword(event.target.value);
                     resetSubmitState();
                   }}
                 />
-                <button
-                  className={styles.visibility}
+                <Button
                   type="button"
+                  variant="outline"
+                  mode="icon"
+                  className="mnx-public-password-toggle"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                   onClick={() => setShowPassword((visible) => !visible)}
                   disabled={busy}
                 >
-                  {showPassword ? "●" : "◉"}
-                </button>
-              </span>
-            </label>
+                  {showPassword ? <EyeOff /> : <Eye />}
+                </Button>
+              </div>
+            </WorkspaceField>
 
-            <div className={styles.options}>
-              <label className={styles.remember}>
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={(event) => setRemember(event.target.checked)}
-                  disabled={busy}
-                />
-                <span>Remember me</span>
-              </label>
-              <a href="/forgot-password" className={styles.textButton}>Forgot password?</a>
+            <div className="mnx-auth-options">
+              <WorkspaceCheckbox
+                checked={remember}
+                onChange={(event) => setRemember(event.target.checked)}
+                disabled={busy}
+                label="Remember me"
+              />
+              <a href="/forgot-password" className="mnx-public-text-link">
+                Forgot password?
+              </a>
             </div>
 
-            <p id="login-message" className={styles.formMessage} role="alert">{message}</p>
+            {message ? (
+              <PublicStatus
+                id="login-message"
+                tone="danger"
+                eyebrow="Sign-in error"
+                icon={<KeyRound />}
+                title={message}
+              />
+            ) : null}
 
-            <button className={styles.loginButton} type="submit" disabled={busy}>
-              {submitState === "loading" ? (
-                <><i className={styles.spinner} /> Verifying route…</>
-              ) : submitState === "success" ? (
-                <>Access granted ✓</>
-              ) : (
-                <>Log in <span>→</span></>
-              )}
-            </button>
+            <PublicActions>
+              <Button type="submit" disabled={busy} className="mnx-public-primary-action">
+                {submitState === "loading" ? (
+                  <>
+                    <LoaderCircle className="mnx-public-spinner" />
+                    Verifying access
+                  </>
+                ) : submitState === "success" ? (
+                  <>
+                    <Check />
+                    Access granted
+                  </>
+                ) : (
+                  <>
+                    Log in
+                    <ArrowRight />
+                  </>
+                )}
+              </Button>
+            </PublicActions>
 
-            <div className={styles.divider}><span>or</span></div>
+            <div className="mnx-public-divider"><span>or continue with</span></div>
 
-            <button
-              className={styles.ssoButton}
+            <Button
+              variant="outline"
+              className="mnx-public-primary-action"
               type="button"
               disabled={busy}
-              onClick={() => void signIn("google", { callbackUrl: getSafeCallbackUrl(email.trim()) })}
+              onClick={() =>
+                void signIn("google", {
+                  callbackUrl: getSafeCallbackUrl(email.trim()),
+                })
+              }
             >
-              <span>◎</span> Log in with SSO
-            </button>
+              <span className="mnx-auth-sso-mark" aria-hidden="true">G</span>
+              Log in with SSO
+            </Button>
 
-            <p className={styles.signup}>
-              Don’t have access?
-              <a href="/request-access" className={styles.textButton}>Request access</a>
-            </p>
+            <PublicInset className="mnx-auth-request-access">
+              <span>Don&apos;t have access?</span>
+              <a href="/request-access" className="mnx-public-text-link">
+                Request access
+              </a>
+            </PublicInset>
           </form>
-        </section>
-      </section>
-    </main>
+        </PublicPanel>
+      </PublicStage>
+
+      <PublicFooter>
+        Protected by Monolith session security and organisation access controls.
+      </PublicFooter>
+    </PublicMonolithShell>
   );
 }

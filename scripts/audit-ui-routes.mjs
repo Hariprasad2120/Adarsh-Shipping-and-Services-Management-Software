@@ -60,6 +60,16 @@ function isAdminRoute(route) {
   return route === "/admin" || route.startsWith("/admin/");
 }
 
+function isAuthenticationMiscRoute(route) {
+  return new Set([
+    "/",
+    "/google-chat-link",
+    "/login",
+    "/setup",
+    "/verify/[id]",
+  ]).has(route);
+}
+
 function isMonolithRoute(route) {
   return (
     knownMonolithRoutes.has(route) ||
@@ -159,6 +169,8 @@ function stateFor(route) {
     return "Migrated in Communication and Admin batch 006";
   if (isAdminRoute(route))
     return "Migrated in Communication and Admin batch 006";
+  if (isAuthenticationMiscRoute(route))
+    return "Migrated in Authentication and Miscellaneous batch 007";
   return "Pending module migration";
 }
 
@@ -315,6 +327,7 @@ const lines = [
   "- All `/cha` and `/expense` routes were migrated in Expense and CHA batch 004.",
   "- All `/accounting` routes were migrated in Accounting batch 005.",
   "- All `/crm` routes were migrated in CRM batch 005.",
+  "- `/`, `/login`, `/setup`, `/verify/[id]`, and `/google-chat-link` were migrated in Authentication and Miscellaneous batch 007.",
   "- Every other route remains pending until its own presentation, behavior, RBAC,",
   "  themes, and responsive layout are verified in a later module batch.",
   "",

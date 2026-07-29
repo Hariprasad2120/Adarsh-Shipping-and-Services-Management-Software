@@ -5,9 +5,9 @@ Last updated: 2026-07-29
 ## Current state
 
 - Branch: `main`.
-- Batch 006 source base: `ed1bf68`.
+- Batch 007 source base: `db4bc60`.
 - Protected reference: `/dashboard` was not redesigned.
-- Route inventory: 211 total, 1 protected, 193 migrated, 17 pending, and 14
+- Route inventory: 211 total, 1 protected, 198 migrated, 12 pending, and 14
   layouts.
 - The combined migration covers all 32 discovered `/accounting` routes and all
   57 discovered `/crm` routes, including their dynamic record routes.
@@ -26,6 +26,74 @@ Last updated: 2026-07-29
   behavior, archive, type, test, build, and authenticated visual gates.
 - All 15 Recruit routes remain verified and passed the Batch 006 regression
   matrix.
+- All five Authentication/Miscellaneous routes are verified in Light, Night,
+  and Violet at desktop, tablet, and mobile widths. The only pending routes
+  are the 12-page `/customer-portal` family.
+
+## Authentication and Miscellaneous route inventory
+
+Repository page discovery, not navigation links, found exactly:
+
+- `/`
+- `/login`
+- `/setup`
+- `/verify/[id]`
+- `/google-chat-link`
+
+## Batch 007 implementation record
+
+1. Archived the complete active legacy presentation before replacement in
+   `OLD UI code/legacy-ui-before-monolith-auth-misc-db4bc60.zip`, then made a
+   supplemental pre-change archive for the shared ScrollNavigator.
+2. Added `src/components/monolith/public-workspace.tsx` as the centralized
+   public shell, brand, stage, panel, header, inset, action, status, detail,
+   and footer composition layer.
+3. Rebuilt credential/Google SSO login, one-time organization setup, public
+   secure-document verification, Google Chat account linking, and root module
+   control from shared Monolith production components.
+4. Preserved all authentication callbacks, remember-me behavior, session
+   cleanup, root-account authorization, module-toggle PATCH operations, setup
+   validation/API handling, verification reads and privacy masking, link-token
+   verification/replacement, redirects, and error behavior.
+5. Removed the obsolete 1,416-line login stylesheet and unused login visual
+   type module. Isolated legacy global form rules from the public shell and
+   suppressed the global ScrollNavigator only on this route family.
+6. Added semantic Light/Night/Violet public styling and responsive behavior at
+   desktop, tablet, and mobile widths without inline fixed-palette colors.
+7. Added repeatable static/archive and production Playwright verifiers and
+   regenerated the exhaustive route audit.
+
+Backup evidence:
+
+- Primary archive: 13 files, 62,758 bytes, SHA-256
+  `7A958A708AA5CBCAC2797E9BA59E2CAE2AC2233573C8310AD9CC6F62C0A05C8B`.
+- Supplemental ScrollNavigator archive: 1 file, 2,339 bytes, SHA-256
+  `90B173D7BB29187683E4C7277D0E83F9B0F09F7FE65F0772FC5B4DD6D67ED84C`.
+- Exact paths, counts, sizes, checksums, and required entries pass through
+  `scripts/verify-monolith-auth-misc-ui.mjs`.
+
+Verification evidence:
+
+- static route/presentation/archive/protected-behavior verifier: passed;
+- scoped ESLint for every changed TypeScript/TSX/MJS source: passed;
+- focused and production TypeScript with the required 8 GB heap: passed;
+- 9 focused public-workspace/foundation/workspace tests: passed;
+- production build with Prisma generation, Next.js compilation, production
+  TypeScript, and all 315 application routes: passed;
+- 45 production route/theme/viewport checks: passed across all five routes,
+  Light/Night/Violet, and 1440x1000 desktop, 1024x900 tablet, and 390x844
+  mobile;
+- safe login validation/password reveal and mocked Google Chat link-success
+  interactions: passed;
+- reversible public verification fixture cleanup: passed;
+- 45 screenshots and
+  `artifacts/ui-migration/auth-misc/verification.json`: reviewed.
+
+The production build retains six existing non-fatal broad filesystem/NFT trace
+warnings in HRMS/customer-portal code and `next.config.ts`. Repository-wide
+`npm run lint -- --quiet` retains the documented pre-existing seed,
+maintenance-script, hook-effect, and unrelated business-module backlog; Batch
+007 scoped lint is clean.
 
 ## Communication, Admin, and Recruit route inventory
 
@@ -346,9 +414,9 @@ through `next.config.ts` and the customer-portal checklist-file route.
 ## Merge integration validation
 
 The Accounting and CRM branches were reconciled additively on 2026-07-29.
-Both route families remain active in the Monolith shell. Batch 006 subsequently
-advanced the generated inventory to 211 pages, 14 layouts, 193 migrated routes,
-and 17 pending routes.
+Both route families remain active in the Monolith shell. Batch 007 subsequently
+advanced the generated inventory to 211 pages, 14 layouts, 198 migrated routes,
+and 12 pending routes.
 
 Passed on the combined tree with the required 8 GB Node heap:
 
@@ -416,5 +484,5 @@ Continue the remaining migration program:
    behavior, and focus restoration without mutating workflow data.
 5. Fix any visual defects, rerun static/type/test/build gates, and commit those
    verified earlier batches.
-6. Migrate the 17 remaining discovered routes, led by the 12-route customer
-   portal family, without changing protected `/dashboard`.
+6. Migrate the 12 remaining discovered routes, all in the customer portal
+   family, without changing protected `/dashboard`.

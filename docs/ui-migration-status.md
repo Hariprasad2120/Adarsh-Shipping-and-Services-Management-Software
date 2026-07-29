@@ -4,9 +4,10 @@ Last updated: 2026-07-29
 
 ## Current milestone
 
-The production migration foundation, batches 001 through 003, Accounting, and
-Batch 006 (Communication and Admin) are implemented and verified. Batch 006
-also re-ran the complete Recruit route family to confirm it remains verified.
+The production migration foundation, batches 001 through 003, Accounting,
+Batch 006 (Communication and Admin), and Batch 007 (Authentication and
+Miscellaneous) are implemented and verified. Batch 006 also re-ran the
+complete Recruit route family to confirm it remains verified.
 Batch 004 (Expense and CHA), its shared popup/glass corrections, and the CRM
 migration pass their source, archive, type, focused test, and production-build
 gates; their authenticated visual matrices remain blocked because the
@@ -18,18 +19,21 @@ connected Browser service has no available browser instance.
   `/notifications`, `/product-catalogue`, `/todo`, all 38 `/hrms` routes, all
   7 `/attendance` routes, all 18 `/ams` routes, all 5 `/lms` routes, all 11
   `/cha` routes, `/expense`, all 32 `/accounting` routes, all 57 `/crm`
-  routes, all 10 `/communication` routes, and all 10 `/admin` routes.
+  routes, all 10 `/communication` routes, all 10 `/admin` routes, `/`,
+  `/login`, `/setup`, `/verify/[id]`, and `/google-chat-link`.
 - Migrated shared surfaces: authenticated user profile menu plus common
   permission, empty, loading, error, and not-found states; People Operations
   workspace; Performance and Learning workspace; Expense and CHA operations
   workspace; Accounting operations workspace; CRM operations workspace;
   Communication workspace; Administration workspace; centralized controls,
-  data tables, dialogs, navigation, and route states.
-- Pending individual route migrations: 17.
+  data tables, dialogs, navigation, and route states; public Authentication,
+  secure-document verification, account-linking, and root module-control
+  surfaces.
+- Pending individual route migrations: 12.
 - Exhaustive route/layout record: [UI route and layout audit](ui-route-audit.md).
-- Batch 006 passes its static/archive/workflow verifier, scoped ESLint,
+- Batch 007 passes its static/archive/workflow verifier, scoped ESLint,
   production TypeScript, focused component tests, the 315-page production
-  build, and 306 authenticated route/theme/viewport checks.
+  build, and all 45 route/theme/viewport checks.
 
 ## Status definitions
 
@@ -50,7 +54,7 @@ the route-by-route source of truth.
 
 | Route family         | Discovered | Protected | Migrated | Pending |
 | -------------------- | ---------: | --------: | -------: | ------: |
-| `/`                  |          1 |         0 |        0 |       1 |
+| `/`                  |          1 |         0 |        1 |       0 |
 | `/account`           |          1 |         0 |        1 |       0 |
 | `/accounting`        |         32 |         0 |       32 |       0 |
 | `/admin`             |         10 |         0 |       10 |       0 |
@@ -62,16 +66,16 @@ the route-by-route source of truth.
 | `/customer-portal`   |         12 |         0 |        0 |      12 |
 | `/dashboard`         |          1 |         1 |        0 |       0 |
 | `/expense`           |          1 |         0 |        1 |       0 |
-| `/google-chat-link`  |          1 |         0 |        0 |       1 |
+| `/google-chat-link`  |          1 |         0 |        1 |       0 |
 | `/hrms`              |         38 |         0 |       38 |       0 |
 | `/lms`               |          5 |         0 |        5 |       0 |
-| `/login`             |          1 |         0 |        0 |       1 |
+| `/login`             |          1 |         0 |        1 |       0 |
 | `/notifications`     |          1 |         0 |        1 |       0 |
 | `/product-catalogue` |          1 |         0 |        1 |       0 |
-| `/setup`             |          1 |         0 |        0 |       1 |
+| `/setup`             |          1 |         0 |        1 |       0 |
 | `/todo`              |          1 |         0 |        1 |       0 |
-| `/verify`            |          1 |         0 |        0 |       1 |
-| **Total**            |    **211** |     **1** |  **193** |  **17** |
+| `/verify`            |          1 |         0 |        1 |       0 |
+| **Total**            |    **211** |     **1** |  **198** |  **12** |
 
 An import from `@/components/monolith` is not proof of route migration. A route
 remains pending until its rendered presentation and behavior satisfy the
@@ -232,6 +236,28 @@ Batch 006 archive:
 - Archive checksum, size, exact file count, and required entries pass through
   `scripts/verify-monolith-communication-admin-ui.mjs`.
 
+Batch 007 archives:
+
+`OLD UI code/legacy-ui-before-monolith-auth-misc-db4bc60.zip`
+
+- Source commit: `db4bc60`.
+- Entries: 13 active Authentication/Miscellaneous route, component,
+  configuration, type, global-style, and shared-style files with original
+  relative paths.
+- Size: 62,758 bytes.
+- SHA-256:
+  `7A958A708AA5CBCAC2797E9BA59E2CAE2AC2233573C8310AD9CC6F62C0A05C8B`.
+
+`OLD UI code/legacy-ui-before-monolith-auth-misc-scroll-navigator-db4bc60.zip`
+
+- Source commit: `db4bc60`.
+- Entry: the active pre-change `src/components/scroll-navigator.tsx`.
+- Size: 2,339 bytes.
+- SHA-256:
+  `90B173D7BB29187683E4C7277D0E83F9B0F09F7FE65F0772FC5B4DD6D67ED84C`.
+- Both archives pass checksum, size, exact-listing, and required-entry
+  verification through `scripts/verify-monolith-auth-misc-ui.mjs`.
+
 ## Quality log: foundation
 
 Passed:
@@ -280,6 +306,7 @@ unrelated to the UI foundation.
 | Batch 005          | All `/accounting` routes                        | Verified            | 32 complete Accounting routes covering the command centre, chart of accounts, banking, jobs, journals, payments, sales and purchase invoices, commercial orders, quotations and notes, items, financial statements, reports, and settings. All 288 authenticated route/theme/viewport checks pass. |
 | Batch 005          | All `/crm` routes                               | Migrated; visual verification blocked | 57 complete CRM routes covering accounts, contacts, leads, enquiries, deals, activities, campaigns, approvals, products, items, quotes, invoices, tickets, lead sources, forecasting, and supporting sales workspaces. Source, archive, type, focused test, and build gates pass; the connected Browser service exposes no browser instance for the required authenticated theme/viewport matrix. |
 | Batch 006          | All `/communication` and `/admin` routes        | Verified            | 19 newly migrated route surfaces plus the existing design-system showcase. Shared Communication/Admin frames, controls, tables, dialogs, loading/error states, semantic themes, dense Mail/Chat responsiveness, and preserved connected-workspace and administration behavior. All 306 authenticated checks across Communication, Admin, and Recruit pass. |
+| Batch 007          | `/`, `/login`, `/setup`, `/verify/[id]`, `/google-chat-link` | Verified | All five repository-discovered Authentication/Miscellaneous routes use centralized public/root Monolith compositions. Credential and Google SSO, setup, document verification, Google Chat linking, root authorization/module controls, validation, redirects, and data operations are preserved. All 45 Light/Night/Violet desktop/tablet/mobile checks pass. |
 
 ## Quality log: Communication and Admin batch 006
 
@@ -328,6 +355,58 @@ Passed:
 Repository-wide `npm run lint` was run with the required heap and continues to
 fail on the documented pre-existing lint backlog across seed/maintenance
 scripts and unrelated business modules. The Batch 006 scoped lint passes.
+
+## Quality log: Authentication and Miscellaneous batch 007
+
+Passed:
+
+- Discovered the complete module directly from all repository page sources:
+  `/`, `/login`, `/setup`, `/verify/[id]`, and `/google-chat-link`.
+- Archived all active legacy presentation before replacement. The repeatable
+  static gate verifies the primary 13-file archive and supplemental
+  ScrollNavigator archive by exact path, size, and SHA-256.
+- Added the centralized public Monolith shell, brand, stage, panel, header,
+  inset, actions, status, detail, and footer compositions, then rebuilt all
+  five routes from those shared primitives.
+- Preserved root-account authorization and module toggles, credential and
+  Google SSO with safe callbacks and remember-me behavior, one-time platform
+  setup, public letter verification, Google Chat identity replacement/linking,
+  API error handling, validation, redirects, and data operations.
+- Removed the obsolete 1,416-line login stylesheet and its unused visual type
+  module. Legacy global controls are isolated from public Monolith routes, and
+  the global ScrollNavigator is suppressed only on the five public/root route
+  families.
+- Regenerated the exhaustive audit: 211 pages, 14 layouts, 198 migrated, and
+  12 pending. Every pending route belongs to `/customer-portal`.
+- Static UI/archive/workflow gate:
+  `node scripts/verify-monolith-auth-misc-ui.mjs`.
+- Scoped ESLint for every changed TypeScript/TSX/MJS source: passed.
+- Focused and production TypeScript with the required 8 GB heap: passed.
+- Focused Vitest suites: 9 tests covering the public workspace, foundation,
+  and shared workspace contracts.
+- Production build:
+  `NODE_OPTIONS=--max-old-space-size=8192 npm run build`; Prisma generation,
+  Next.js compilation, production TypeScript, and all 315 application routes
+  passed. The six existing broad filesystem/NFT trace warnings remain
+  non-fatal and outside this batch.
+- Production Playwright gate:
+  `node scripts/verify-monolith-auth-misc-runtime.mjs --use-local-special-account`.
+  It passed all 45 combinations across the five routes, Light, Night, and
+  Violet, and 1440x1000 desktop, 1024x900 tablet, and 390x844 mobile. Checks
+  cover exact paths, final page animation, semantic themes, standardized
+  controls, loaded verification/link states, protected behavior, browser and
+  server errors, legacy presentation, and horizontal overflow.
+- Safe interaction checks cover login validation/password reveal and the
+  mocked account-link success path. The public verification database fixture
+  is reversible and was removed in `finally`.
+- 45 screenshots plus
+  `artifacts/ui-migration/auth-misc/verification.json` were reviewed across
+  all themes and widths.
+
+Repository-wide `npm run lint -- --quiet` was run with the required heap. It
+continues to fail on the documented pre-existing seed, maintenance-script,
+hook-effect, and unrelated business-module backlog; no Batch 007 file appears
+in that backlog, and the complete Batch 007 scoped lint passes.
 
 ## Quality log: batch 001
 
