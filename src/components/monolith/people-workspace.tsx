@@ -92,7 +92,7 @@ const exactRouteMeta: Record<string, PeopleRouteMeta> = {
     eyebrow: "Documents",
     title: "HR document drive",
     description:
-      "Manage personal, employee, and organisation folders without leaving the people workspace.",
+      "Use private employee folders, controlled reporting folders, and organisation-wide company files backed by the Shared Drive.",
     icon: FolderKanban,
   },
   "/hrms/helpdesk": {

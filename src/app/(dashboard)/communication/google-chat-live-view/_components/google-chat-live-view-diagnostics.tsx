@@ -14,21 +14,17 @@ interface DiagnosticsProps {
   fallbackUsed: string | null;
 }
 
-function DiagRow({ label, value, highlight }: { label: string; value: string; highlight?: "cyan" | "orange" }) {
+function DiagnosticRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
   return (
-    <div className="flex items-center justify-between py-1.5 border-b border-mono-border/30 last:border-0">
-      <span className="text-xs text-mono-muted">{label}</span>
-      <span
-        className={`text-xs monolith-numeric font-medium ${
-          highlight === "cyan"
-            ? "text-[#F9D972]"
-            : highlight === "orange"
-            ? "text-[#D88700]"
-            : "text-mono-text"
-        }`}
-      >
-        {value}
-      </span>
+    <div>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
     </div>
   );
 }
@@ -50,93 +46,59 @@ export function GoogleChatLiveViewDiagnostics({
     iframeLoaded === "yes"
       ? "yes (unexpected)"
       : iframeLoaded === "no"
-      ? "no — error"
-      : iframeLoaded === "blocked"
-      ? "blocked (expected)"
-      : "unknown";
+        ? "no — error"
+        : iframeLoaded === "blocked"
+          ? "blocked (expected)"
+          : "unknown";
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-[10px] uppercase tracking-widest text-mono-muted font-bold">
-          Admin Diagnostics
-        </span>
-        <span className="px-2 py-0.5 rounded text-[10px] bg-mono-soft text-mono-muted border border-mono-border uppercase tracking-wide">
-          Live View
-        </span>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {/* Column 1: Feature state */}
-        <div className="space-y-1">
-          <p className="monolith-label text-mono-muted mb-2">Feature State</p>
-          <DiagRow
-            label="Setting Enabled"
-            value={settingEnabled ? "yes" : "no"}
-            highlight={settingEnabled ? "cyan" : "orange"}
-          />
-          <DiagRow
-            label="Iframe Attempted"
-            value={iframeAttempted ? "yes" : "no"}
-            highlight={iframeAttempted ? "cyan" : undefined}
-          />
-          <DiagRow
-            label="Iframe Loaded"
-            value={iframeLoadedLabel}
-            highlight={
-              iframeLoaded === "yes"
-                ? "cyan"
-                : iframeLoaded === "blocked"
-                ? "orange"
-                : undefined
-            }
-          />
-          <DiagRow label="Selected Chat URL" value={selectedUrl} />
-          <DiagRow
-            label="Fallback Action Used"
-            value={fallbackUsed || "none"}
-            highlight={fallbackUsed ? "cyan" : undefined}
-          />
-        </div>
-
-        {/* Column 2: Connection & context */}
-        <div className="space-y-1">
-          <p className="monolith-label text-mono-muted mb-2">Connection &amp; Context</p>
-          <DiagRow label="Google Account" value={googleEmail} />
-          <DiagRow
-            label="OAuth Status"
-            value={oauthStatus}
-            highlight={oauthStatus === "connected" ? "cyan" : "orange"}
-          />
-          <DiagRow label="Workspace Domain" value={workspaceDomain} />
-          <DiagRow
-            label="Job Context Detected"
-            value={jobContextDetected ? "yes" : "no"}
-            highlight={jobContextDetected ? "cyan" : undefined}
-          />
-          <DiagRow
-            label="Job Google Space Linked"
-            value={jobSpaceLinked ? "yes" : "no"}
-            highlight={jobSpaceLinked ? "cyan" : undefined}
-          />
-        </div>
-      </div>
-
-      {/* Test timestamp & UA */}
-      <div className="space-y-1 pt-2 border-t border-mono-border/30">
-        <DiagRow
-          label="Last Test Timestamp"
-          value={lastTestAt ? new Date(lastTestAt).toLocaleString("en-IN") : "—"}
+    <div className="mnx-communication-diagnostics">
+      <dl>
+        <DiagnosticRow
+          label="Setting enabled"
+          value={settingEnabled ? "yes" : "no"}
         />
-        <DiagRow
-          label="Browser User Agent"
-          value={typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 80) + "…" : "—"}
+        <DiagnosticRow
+          label="Iframe attempted"
+          value={iframeAttempted ? "yes" : "no"}
         />
-      </div>
-
-      <p className="text-[10px] text-mono-muted">
-        ℹ️ This panel is only visible to admins and users with Communication Settings permission.
-        No Google Chat data is logged or stored here.
+        <DiagnosticRow label="Iframe loaded" value={iframeLoadedLabel} />
+        <DiagnosticRow label="Selected Chat URL" value={selectedUrl} />
+        <DiagnosticRow
+          label="Fallback action"
+          value={fallbackUsed ?? "none"}
+        />
+        <DiagnosticRow label="Google account" value={googleEmail} />
+        <DiagnosticRow label="OAuth status" value={oauthStatus} />
+        <DiagnosticRow label="Workspace domain" value={workspaceDomain} />
+        <DiagnosticRow
+          label="Job context"
+          value={jobContextDetected ? "detected" : "not detected"}
+        />
+        <DiagnosticRow
+          label="Job space"
+          value={jobSpaceLinked ? "linked" : "not linked"}
+        />
+        <DiagnosticRow
+          label="Last test"
+          value={
+            lastTestAt
+              ? new Date(lastTestAt).toLocaleString("en-IN")
+              : "—"
+          }
+        />
+        <DiagnosticRow
+          label="Browser user agent"
+          value={
+            typeof navigator !== "undefined"
+              ? `${navigator.userAgent.slice(0, 80)}…`
+              : "—"
+          }
+        />
+      </dl>
+      <p>
+        Visible only to administrators and users with Communication Settings
+        permission. Google Chat message data is not logged here.
       </p>
     </div>
   );

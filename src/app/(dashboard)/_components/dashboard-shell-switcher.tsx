@@ -40,8 +40,14 @@ export function usesMonolithShell(pathname: string | null) {
     normalizedPathname.startsWith("/cha/") ||
     normalizedPathname === "/expense" ||
     normalizedPathname.startsWith("/expense/") ||
+    normalizedPathname === "/accounting" ||
+    normalizedPathname.startsWith("/accounting/") ||
     normalizedPathname === "/crm" ||
-    normalizedPathname.startsWith("/crm/")
+    normalizedPathname.startsWith("/crm/") ||
+    normalizedPathname === "/communication" ||
+    normalizedPathname.startsWith("/communication/") ||
+    normalizedPathname === "/admin" ||
+    normalizedPathname.startsWith("/admin/")
   );
 }
 
@@ -51,6 +57,7 @@ export function DashboardShellSwitcher({
   enabledModuleIds,
   isPlatformAdmin,
   sessionToken,
+  userId,
   userEmail,
   userName,
 }: {
@@ -59,6 +66,7 @@ export function DashboardShellSwitcher({
   enabledModuleIds: string[];
   isPlatformAdmin: boolean;
   sessionToken: string;
+  userId: string;
   userEmail: string;
   userName: string;
 }) {
@@ -71,6 +79,7 @@ export function DashboardShellSwitcher({
         caps={caps}
         enabledModuleIds={enabledModuleIds}
         isPlatformAdmin={isPlatformAdmin}
+        userId={userId}
         userEmail={userEmail}
         userName={userName}
       >

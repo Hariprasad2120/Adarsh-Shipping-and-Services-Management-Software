@@ -5,48 +5,92 @@ import {
   PeopleControlInput as MnxInput,
 } from "@/components/monolith/people-controls";
 
-import React, { useState, useEffect } from "react";
-import {
-  CheckCircle2,
-  XCircle,
-  Clock,
-  Calendar,
-  User,
-  FileText,
-  Loader2,
-  Sparkles,
-  AlertCircle,
-} from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
+import { Calendar, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface ApprovalsViewProps {
   isAdmin: boolean;
 }
 
+type ApprovalEmployee = {
+  name: string;
+  employeeNumber: number | null;
+  photo: string | null;
+};
+
+type LeaveApproval = {
+  id: string;
+  fromDate: string;
+  toDate: string;
+  notes: string | null;
+  user: ApprovalEmployee;
+  leaveType: { name: string };
+};
+
+type RegularizationApproval = {
+  id: string;
+  date: string;
+  reason: string;
+  user: ApprovalEmployee;
+};
+
+type TravelApproval = {
+  id: string;
+  destination: string;
+  purpose: string;
+  user: ApprovalEmployee;
+};
+
+type WorkReportApproval = {
+  id: string;
+  level: number;
+  report: {
+    id: string;
+    date: string;
+    workedOn: string;
+    description: string;
+    items: unknown;
+    user: ApprovalEmployee;
+  };
+};
+
+type ApprovalInbox = {
+  leaves: LeaveApproval[];
+  regularizations: RegularizationApproval[];
+  ots: unknown[];
+  travels: TravelApproval[];
+  timesheets: unknown[];
+  workreports: WorkReportApproval[];
+};
+
 export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<ApprovalInbox | null>(null);
   const [loading, setLoading] = useState(false);
   const [actingId, setActingId] = useState<string | null>(null);
   const [remarks, setRemarks] = useState<Record<string, string>>({});
 
-  const fetchApprovals = async () => {
+  const fetchApprovals = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/hrms/approvals");
       const json = await res.json();
       if (json.ok) {
-        setData(json.data);
+        setData(json.data as ApprovalInbox);
       }
-    } catch (e) {
+    } catch {
       toast.error("Failed to load pending approvals");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchApprovals();
-  }, []);
+    const timer = window.setTimeout(() => {
+      void fetchApprovals();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchApprovals]);
 
   const handleDecision = async (
     requestId: string,
@@ -73,7 +117,7 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
       } else {
         toast.error("Approval action failed");
       }
-    } catch (err) {
+    } catch {
       toast.error("Error submitting approval decision");
     } finally {
       setActingId(null);
@@ -139,7 +183,7 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
                 Pending Leaves ({data.leaves.length})
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                {data.leaves.map((req: any) => (
+                {data.leaves.map((req) => (
                   <div
                     key={req.id}
                     className="rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/40 p-5 space-y-4 transition hover:border-[var(--mnx-border)] flex flex-col justify-between backdrop-blur-sm"
@@ -175,7 +219,7 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
                       </div>
                       {req.notes && (
                         <p className="text-[10.5px] font-bold text-[var(--mnx-muted)] leading-normal italic">
-                          "{req.notes}"
+                          “{req.notes}”
                         </p>
                       )}
                     </div>
@@ -226,7 +270,7 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
                 Pending Regularizations ({data.regularizations.length})
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                {data.regularizations.map((req: any) => (
+                {data.regularizations.map((req) => (
                   <div
                     key={req.id}
                     className="rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/40 p-5 space-y-4 transition hover:border-[var(--mnx-border)] flex flex-col justify-between backdrop-blur-sm"
@@ -253,7 +297,7 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
                           </span>
                         </p>
                         <p className="text-[10.5px] font-bold text-[var(--mnx-muted)] mt-1 leading-normal italic">
-                          Reason: "{req.reason}"
+                          Reason: “{req.reason}”
                         </p>
                       </div>
                     </div>
@@ -304,7 +348,7 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
                 Pending Trips ({data.travels.length})
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                {data.travels.map((req: any) => (
+                {data.travels.map((req) => (
                   <div
                     key={req.id}
                     className="rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/40 p-5 space-y-4 transition hover:border-[var(--mnx-border)] flex flex-col justify-between backdrop-blur-sm"
@@ -331,7 +375,7 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
                           </span>
                         </p>
                         <p className="text-[10.5px] font-bold text-[var(--mnx-muted)] mt-1 leading-normal italic">
-                          Trip details: "{req.purpose}"
+                          Trip details: “{req.purpose}”
                         </p>
                       </div>
                     </div>
@@ -360,6 +404,104 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {data.workreports.length > 0 && (
+            <div className="space-y-3">
+              <div className="px-1 text-[10px] font-black uppercase tracking-widest text-[var(--mnx-muted)]">
+                Pending work reports ({data.workreports.length})
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                {data.workreports.map((approval) => {
+                  const report = approval.report;
+                  const itemCount = Array.isArray(report.items)
+                    ? report.items.length
+                    : 1;
+                  return (
+                    <div
+                      key={approval.id}
+                      className="flex flex-col justify-between space-y-4 rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/40 p-5 backdrop-blur-sm transition hover:border-[var(--mnx-border)]"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex size-8 items-center justify-center rounded-full bg-[var(--mnx-accent)]/10 text-xs font-bold text-[var(--mnx-accent)]">
+                            {report.user.name[0]}
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-black text-[var(--mnx-muted)]">
+                              {report.user.name}
+                            </h4>
+                            <p className="mt-0.5 font-mono text-[8.5px] font-bold uppercase text-[var(--mnx-muted)]">
+                              Employee #{report.user.employeeNumber || "—"} ·
+                              Level {approval.level}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="space-y-1 text-xs text-[var(--mnx-muted)]">
+                          <p className="font-bold">
+                            Report date:{" "}
+                            <span className="font-mono text-[var(--mnx-text)]">
+                              {new Date(report.date).toLocaleDateString(
+                                "en-IN",
+                              )}
+                            </span>
+                          </p>
+                          <p className="text-[10.5px] font-bold leading-normal">
+                            {itemCount} work line
+                            {itemCount === 1 ? "" : "s"} · {report.workedOn}
+                          </p>
+                          <p className="line-clamp-2 text-[10.5px] leading-normal text-[var(--mnx-muted)]">
+                            {report.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 space-y-3 border-t border-[var(--mnx-border)] pt-4">
+                        <MnxInput
+                          type="text"
+                          placeholder="Add review comments..."
+                          value={remarks[report.id] || ""}
+                          onChange={(event) =>
+                            handleRemarkChange(report.id, event.target.value)
+                          }
+                          className="w-full rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-soft)]/60 px-3 py-1.5 text-[10.5px] text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
+                        />
+                        <div className="flex justify-end gap-2.5">
+                          <MnxAction
+                            type="button"
+                            disabled={actingId === report.id}
+                            onClick={() =>
+                              handleDecision(
+                                report.id,
+                                "WORKREPORT",
+                                "REJECTED",
+                              )
+                            }
+                            className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[var(--mnx-danger)]/30 bg-[var(--mnx-danger-bg)]/10 px-3 py-1.5 text-[10px] font-black text-[var(--mnx-danger)] transition-all hover:bg-[var(--mnx-danger-bg)]/20"
+                          >
+                            <XCircle className="size-3.5" /> Reject
+                          </MnxAction>
+                          <MnxAction
+                            type="button"
+                            disabled={actingId === report.id}
+                            onClick={() =>
+                              handleDecision(
+                                report.id,
+                                "WORKREPORT",
+                                "APPROVED",
+                              )
+                            }
+                            className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[var(--mnx-success)]/30 bg-[var(--mnx-success-bg)]/10 px-3 py-1.5 text-[10px] font-black text-[var(--mnx-success)] transition-all hover:bg-[var(--mnx-success-bg)]/20"
+                          >
+                            <CheckCircle2 className="size-3.5" /> Approve
+                          </MnxAction>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

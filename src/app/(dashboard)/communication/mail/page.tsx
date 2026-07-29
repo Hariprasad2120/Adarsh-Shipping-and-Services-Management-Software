@@ -1,6 +1,15 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/immutability, react-hooks/exhaustive-deps, react/no-unescaped-entities */
+
 import { NativeSelect } from "@/components/monolith/native-select";
+import {
+  CommunicationButton,
+  CommunicationInput,
+  CommunicationTable,
+  CommunicationTextarea,
+} from "@/components/monolith/communication-workspace";
+import { WorkspaceDialogLayer } from "@/components/monolith/workspace-dialog";
 import { useState, useEffect } from "react";
 import { Search, Mail, Star, Trash, Inbox, Send, Paperclip, ExternalLink, Link2, Download, RefreshCw, Plus, AlertCircle, MoreVertical, Reply, ReplyAll, Forward, MessageSquare, Trash2, Printer, Languages, FileText, CheckCircle, ShieldAlert, AlertTriangle, Eye, Clock, ChevronDown, ChevronRight, ChevronUp, Bookmark, CalendarRange, AlertOctagon, ShoppingBag, Users, Tag, Settings, Folder, File, HelpCircle, CheckCircle2 } from "lucide-react";
 import DOMPurify from "isomorphic-dompurify";
@@ -164,7 +173,7 @@ export default function MailPortal() {
     const val = countType === "unread" ? lbl.threadsUnread ?? lbl.messagesUnread : lbl.threadsTotal ?? lbl.messagesTotal;
     if (val && val > 0) {
       return (
-        <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F9D972]/15 text-[#F9D972] monolith-numeric">
+        <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--mnx-accent-text)]/15 text-[var(--mnx-accent-text)] mnx-numeric">
           {val}
         </span>
       );
@@ -386,218 +395,218 @@ export default function MailPortal() {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 h-[80vh] border border-mono-border bg-mono-card rounded-2xl overflow-hidden shadow-sm">
+    <div data-communication-mail="true" className="grid grid-cols-1 md:grid-cols-4 gap-6 h-[80vh] border border-mono-border bg-mono-card rounded-2xl overflow-hidden shadow-sm">
       {/* Folder Navigation */}
-      <div className="border-r border-mono-border p-4 space-y-4 bg-mono-soft flex flex-col h-full overflow-y-auto min-w-[220px]">
-        <button
+      <div data-communication-mail-folders="true" className="border-r border-mono-border p-4 space-y-4 bg-mono-soft flex flex-col h-full overflow-y-auto min-w-[220px]">
+        <CommunicationButton
           onClick={() => {
             setComposeTo("");
             setComposeSubject("");
             setComposeBody("");
             setShowCompose(true);
           }}
-          className="w-full flex items-center justify-center space-x-2 bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shrink-0"
+          className="w-full flex items-center justify-center space-x-2 bg-[var(--mnx-accent-text)] text-[var(--mnx-accent-contrast)] hover:bg-[var(--mnx-accent)] hover:shadow-ambient-hover py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shrink-0"
         >
           <Plus className="size-4" />
           <span>Compose</span>
-        </button>
+        </CommunicationButton>
 
         <div className="flex-1 space-y-4 text-left">
           {/* Main folders */}
           <div className="space-y-1">
-            <button
+            <CommunicationButton
               onClick={() => setFolder("INBOX")}
               className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors ${
-                folder === "INBOX" ? "bg-[#F9D972]/15 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+                folder === "INBOX" ? "bg-[var(--mnx-accent-text)]/15 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
               }`}
             >
-              <Inbox className="size-4 text-[#F9D972]" />
+              <Inbox className="size-4 text-[var(--mnx-accent-text)]" />
               <span>Inbox</span>
               {getLabelBadge("INBOX", "unread")}
-            </button>
+            </CommunicationButton>
             
-            <button
+            <CommunicationButton
               onClick={() => setFolder("STARRED")}
               className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors ${
-                folder === "STARRED" ? "bg-[#F9D972]/15 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+                folder === "STARRED" ? "bg-[var(--mnx-accent-text)]/15 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
               }`}
             >
-              <Star className="size-4 text-[#D88700]" />
+              <Star className="size-4 text-[var(--mnx-warning)]" />
               <span>Starred</span>
               {getLabelBadge("STARRED", "unread")}
-            </button>
+            </CommunicationButton>
 
-            <button
+            <CommunicationButton
               onClick={() => setFolder("SNOOZED")}
               className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors ${
-                folder === "SNOOZED" ? "bg-[#F9D972]/15 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+                folder === "SNOOZED" ? "bg-[var(--mnx-accent-text)]/15 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
               }`}
             >
-              <Clock className="size-4 text-[#fbbf24]" />
+              <Clock className="size-4 text-[var(--mnx-warning)]" />
               <span>Snoozed</span>
               {getLabelBadge("SNOOZED", "unread")}
-            </button>
+            </CommunicationButton>
 
-            <button
+            <CommunicationButton
               onClick={() => setFolder("SENT")}
               className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors ${
-                folder === "SENT" ? "bg-[#F9D972]/15 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+                folder === "SENT" ? "bg-[var(--mnx-accent-text)]/15 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
               }`}
             >
-              <Send className="size-4 text-[#818cf8]" />
+              <Send className="size-4 text-[var(--mnx-info)]" />
               <span>Sent</span>
-            </button>
+            </CommunicationButton>
 
-            <button
+            <CommunicationButton
               onClick={() => setFolder("DRAFTS")}
               className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors ${
-                folder === "DRAFTS" ? "bg-[#F9D972]/15 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+                folder === "DRAFTS" ? "bg-[var(--mnx-accent-text)]/15 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
               }`}
             >
-              <File className="size-4 text-[#22c55e]" />
+              <File className="size-4 text-[var(--mnx-success)]" />
               <span>Drafts</span>
               {getLabelBadge("DRAFT", "total")}
-            </button>
+            </CommunicationButton>
           </div>
 
           {/* Categories collapsible */}
           <div className="space-y-1">
-            <button
+            <CommunicationButton
               onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
               className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider text-mono-muted hover:text-mono-text transition-colors"
             >
               <span>Categories</span>
               {isCategoriesExpanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
-            </button>
+            </CommunicationButton>
 
             {isCategoriesExpanded && (
               <div className="pl-2 space-y-0.5 border-l border-mono-border/50 ml-3">
-                <button
+                <CommunicationButton
                   onClick={() => setFolder("CATEGORY_PURCHASES")}
                   className={`w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-colors ${
-                    folder === "CATEGORY_PURCHASES" ? "bg-[#F9D972]/10 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+                    folder === "CATEGORY_PURCHASES" ? "bg-[var(--mnx-accent-text)]/10 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
                   }`}
                 >
-                  <ShoppingBag className="size-3 text-[#c084fc]" />
+                  <ShoppingBag className="size-3 text-[var(--mnx-accent)]" />
                   <span>Purchases</span>
                   {getLabelBadge("CATEGORY_PURCHASES", "unread")}
-                </button>
-                <button
+                </CommunicationButton>
+                <CommunicationButton
                   onClick={() => setFolder("CATEGORY_SOCIAL")}
                   className={`w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-colors ${
-                    folder === "CATEGORY_SOCIAL" ? "bg-[#F9D972]/10 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+                    folder === "CATEGORY_SOCIAL" ? "bg-[var(--mnx-accent-text)]/10 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
                   }`}
                 >
-                  <Users className="size-3 text-[#38bdf8]" />
+                  <Users className="size-3 text-[var(--mnx-info)]" />
                   <span>Social</span>
                   {getLabelBadge("CATEGORY_SOCIAL", "unread")}
-                </button>
-                <button
+                </CommunicationButton>
+                <CommunicationButton
                   onClick={() => setFolder("CATEGORY_UPDATES")}
                   className={`w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-colors ${
-                    folder === "CATEGORY_UPDATES" ? "bg-[#F9D972]/10 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+                    folder === "CATEGORY_UPDATES" ? "bg-[var(--mnx-accent-text)]/10 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
                   }`}
                 >
-                  <AlertCircle className="size-3 text-[#D88700]" />
+                  <AlertCircle className="size-3 text-[var(--mnx-warning)]" />
                   <span>Updates</span>
                   {getLabelBadge("CATEGORY_UPDATES", "unread")}
-                </button>
-                <button
+                </CommunicationButton>
+                <CommunicationButton
                   onClick={() => setFolder("CATEGORY_FORUMS")}
                   className={`w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-colors ${
-                    folder === "CATEGORY_FORUMS" ? "bg-[#F9D972]/10 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+                    folder === "CATEGORY_FORUMS" ? "bg-[var(--mnx-accent-text)]/10 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
                   }`}
                 >
-                  <MessageSquare className="size-3 text-[#8b5cf6]" />
+                  <MessageSquare className="size-3 text-[var(--mnx-accent)]" />
                   <span>Forums</span>
                   {getLabelBadge("CATEGORY_FORUMS", "unread")}
-                </button>
-                <button
+                </CommunicationButton>
+                <CommunicationButton
                   onClick={() => setFolder("CATEGORY_PROMOTIONS")}
                   className={`w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-colors ${
-                    folder === "CATEGORY_PROMOTIONS" ? "bg-[#F9D972]/10 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+                    folder === "CATEGORY_PROMOTIONS" ? "bg-[var(--mnx-accent-text)]/10 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
                   }`}
                 >
-                  <Tag className="size-3 text-[#e879f9]" />
+                  <Tag className="size-3 text-[var(--mnx-accent)]" />
                   <span>Promotions</span>
                   {getLabelBadge("CATEGORY_PROMOTIONS", "unread")}
-                </button>
+                </CommunicationButton>
               </div>
             )}
           </div>
 
           {/* More/Less toggle */}
           <div className="space-y-1">
-            <button
+            <CommunicationButton
               onClick={() => setIsMoreExpanded(!isMoreExpanded)}
               className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider text-mono-muted hover:text-mono-text transition-colors"
             >
               <span>{isMoreExpanded ? "Show Less" : "Show More"}</span>
               {isMoreExpanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
-            </button>
+            </CommunicationButton>
 
             {isMoreExpanded && (
               <div className="space-y-1">
-                <button
+                <CommunicationButton
                   onClick={() => setFolder("IMPORTANT")}
                   className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors ${
-                    folder === "IMPORTANT" ? "bg-[#F9D972]/15 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+                    folder === "IMPORTANT" ? "bg-[var(--mnx-accent-text)]/15 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
                   }`}
                 >
-                  <Bookmark className="size-4 text-[#D88700]" />
+                  <Bookmark className="size-4 text-[var(--mnx-warning)]" />
                   <span>Important</span>
                   {getLabelBadge("IMPORTANT", "unread")}
-                </button>
-                <button
+                </CommunicationButton>
+                <CommunicationButton
                   onClick={() => setFolder("SCHEDULED")}
                   className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors ${
-                    folder === "SCHEDULED" ? "bg-[#F9D972]/15 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+                    folder === "SCHEDULED" ? "bg-[var(--mnx-accent-text)]/15 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
                   }`}
                 >
-                  <CalendarRange className="size-4 text-[#F9D972]" />
+                  <CalendarRange className="size-4 text-[var(--mnx-accent-text)]" />
                   <span>Scheduled</span>
-                </button>
-                <button
+                </CommunicationButton>
+                <CommunicationButton
                   onClick={() => setFolder("ALL_MAIL")}
                   className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors ${
-                    folder === "ALL_MAIL" ? "bg-[#F9D972]/15 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+                    folder === "ALL_MAIL" ? "bg-[var(--mnx-accent-text)]/15 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
                   }`}
                 >
                   <Mail className="size-4 text-mono-muted" />
                   <span>All Mail</span>
-                </button>
-                <button
+                </CommunicationButton>
+                <CommunicationButton
                   onClick={() => setFolder("SPAM")}
                   className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors ${
-                    folder === "SPAM" ? "bg-[#F9D972]/15 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+                    folder === "SPAM" ? "bg-[var(--mnx-accent-text)]/15 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
                   }`}
                 >
-                  <AlertOctagon className="size-4 text-[#ef4444]" />
+                  <AlertOctagon className="size-4 text-[var(--mnx-danger)]" />
                   <span>Spam</span>
                   {getLabelBadge("SPAM", "unread")}
-                </button>
-                <button
+                </CommunicationButton>
+                <CommunicationButton
                   onClick={() => setFolder("TRASH")}
                   className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors ${
-                    folder === "TRASH" ? "bg-[#F9D972]/15 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+                    folder === "TRASH" ? "bg-[var(--mnx-accent-text)]/15 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
                   }`}
                 >
                   <Trash2 className="size-4 text-mono-muted" />
                   <span>Trash</span>
-                </button>
+                </CommunicationButton>
               </div>
             )}
           </div>
 
           {/* User Labels section */}
           <div className="space-y-1">
-            <button
+            <CommunicationButton
               onClick={() => setIsLabelsExpanded(!isLabelsExpanded)}
               className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider text-mono-muted hover:text-mono-text transition-colors"
             >
               <span>Labels</span>
               {isLabelsExpanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
-            </button>
+            </CommunicationButton>
 
             {isLabelsExpanded && (
               <div className="space-y-0.5 max-h-[150px] overflow-y-auto pr-1">
@@ -605,17 +614,17 @@ export default function MailPortal() {
                   <span className="text-[10px] text-mono-muted block px-3 py-1 italic">No custom labels</span>
                 ) : (
                   labels.filter((l: any) => l.type === "user").map((label: any) => (
-                    <button
+                    <CommunicationButton
                       key={label.id}
                       onClick={() => setFolder(`LABEL_${label.name}`)}
                       className={`w-full flex items-center space-x-3 px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide transition-colors ${
-                        folder === `LABEL_${label.name}` ? "bg-[#F9D972]/15 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+                        folder === `LABEL_${label.name}` ? "bg-[var(--mnx-accent-text)]/15 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
                       }`}
                     >
-                      <Folder className="size-3.5 text-[#F9D972] shrink-0" />
+                      <Folder className="size-3.5 text-[var(--mnx-accent-text)] shrink-0" />
                       <span className="truncate max-w-[100px]">{label.name}</span>
                       {getLabelBadge(label.id, "unread")}
-                    </button>
+                    </CommunicationButton>
                   ))
                 )}
               </div>
@@ -625,37 +634,37 @@ export default function MailPortal() {
 
         {/* Action controls footer */}
         <div className="pt-2 border-t border-mono-border/30 space-y-1 shrink-0 text-left">
-          <button
+          <CommunicationButton
             onClick={() => setFolder("SUBSCRIPTIONS")}
             className={`w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
-              folder === "SUBSCRIPTIONS" ? "bg-[#F9D972]/15 text-[#F9D972]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
+              folder === "SUBSCRIPTIONS" ? "bg-[var(--mnx-accent-text)]/15 text-[var(--mnx-accent-text)]" : "text-mono-muted hover:bg-mono-soft hover:text-mono-text"
             }`}
           >
-            <CheckCircle2 className="size-3.5 text-[#F9D972]" />
+            <CheckCircle2 className="size-3.5 text-[var(--mnx-accent-text)]" />
             <span>Subscriptions</span>
-          </button>
-          <button
+          </CommunicationButton>
+          <CommunicationButton
             onClick={() => setShowManageLabels(true)}
             className="w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-mono-muted hover:bg-mono-soft hover:text-mono-text transition-colors"
           >
             <Settings className="size-3.5 text-mono-muted" />
             <span>Manage Labels</span>
-          </button>
-          <button
+          </CommunicationButton>
+          <CommunicationButton
             onClick={() => setShowCreateLabel(true)}
             className="w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-mono-muted hover:bg-mono-soft hover:text-mono-text transition-colors"
           >
             <Plus className="size-3.5 text-mono-muted" />
             <span>Create Label</span>
-          </button>
+          </CommunicationButton>
         </div>
       </div>
 
       {/* Threads List */}
-      <div className="md:col-span-1 border-r border-mono-border flex flex-col h-full bg-mono-card">
+      <div data-communication-mail-list="true" className="md:col-span-1 border-r border-mono-border flex flex-col h-full bg-mono-card">
         <div className="p-3 border-b border-mono-border flex items-center space-x-2">
           <div className="relative flex-1">
-            <input
+            <CommunicationInput
               type="text"
               placeholder="Search mail..."
               value={searchQuery}
@@ -665,9 +674,9 @@ export default function MailPortal() {
             />
             <Search className="absolute left-2.5 top-2.5 size-4 text-mono-muted" />
           </div>
-          <button onClick={fetchThreads} className="p-2 border border-mono-border rounded-xl hover:bg-mono-soft transition-colors">
+          <CommunicationButton onClick={fetchThreads} className="p-2 border border-mono-border rounded-xl hover:bg-mono-soft transition-colors">
             <RefreshCw className="size-4 text-mono-muted" />
-          </button>
+          </CommunicationButton>
         </div>
 
         <div className="flex-1 overflow-y-auto divide-y divide-outline-variant">
@@ -677,7 +686,7 @@ export default function MailPortal() {
               if (url) {
                 return (
                   <div className="p-5 text-center space-y-3">
-                    <span className="monolith-icon-badge mx-auto" style={{ background: "rgba(251,146,60,0.10)", color: "#D88700" }}>
+                    <span className="mnx-communication-icon mx-auto" style={{ background: "var(--mnx-warning-bg)", color: "var(--mnx-warning)" }}>
                       <AlertCircle size={20} />
                     </span>
                     <h4 className="text-xs font-bold text-mono-text uppercase tracking-wider">Gmail API Disabled</h4>
@@ -689,7 +698,7 @@ export default function MailPortal() {
                         href={url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl text-[10px] uppercase font-bold tracking-wider transition-all"
+                        className="inline-flex bg-[var(--mnx-accent-text)] text-[var(--mnx-accent-contrast)] hover:bg-[var(--mnx-accent)] px-4 py-2 rounded-xl text-[10px] uppercase font-bold tracking-wider transition-all"
                       >
                         Enable API
                       </a>
@@ -699,7 +708,7 @@ export default function MailPortal() {
               }
               return (
                 <div className="p-4 text-center space-y-2">
-                  <span className="text-[#D88700] font-bold text-sm">⚠</span>
+                  <span className="text-[var(--mnx-warning)] font-bold text-sm">⚠</span>
                   <p className="text-xs font-semibold text-mono-text">Sync Issue</p>
                   <p className="text-[10px] text-mono-muted leading-relaxed">{error}</p>
                 </div>
@@ -720,7 +729,7 @@ export default function MailPortal() {
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-mono-text truncate max-w-[120px]">{t.from.split(" <")[0]}</span>
-                  <span className="text-[10px] text-mono-muted monolith-numeric">{t.date.split(", ")[1]?.slice(0, 11) || t.date}</span>
+                  <span className="text-[10px] text-mono-muted mnx-numeric">{t.date.split(", ")[1]?.slice(0, 11) || t.date}</span>
                 </div>
                 <h4 className="text-xs font-semibold text-mono-text truncate max-w-[180px]">{t.subject}</h4>
                 <p className="text-[10px] text-mono-muted truncate max-w-[200px]">{t.snippet}</p>
@@ -731,7 +740,7 @@ export default function MailPortal() {
       </div>
 
       {/* Reading & Action Pane */}
-      <div className="md:col-span-2 flex flex-col h-full bg-mono-card">
+      <div data-communication-mail-detail="true" className="md:col-span-2 flex flex-col h-full bg-mono-card">
         {selectedThread ? (
           <div className="flex flex-col h-full overflow-hidden">
             {/* Thread Action Bar */}
@@ -742,7 +751,7 @@ export default function MailPortal() {
                   href={`https://mail.google.com/mail/u/0/#inbox/${selectedThread.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[10px] font-bold text-[#F9D972] hover:underline"
+                  className="inline-flex items-center gap-1 text-[10px] font-bold text-[var(--mnx-accent-text)] hover:underline"
                 >
                   <span>Open Full Gmail</span>
                   <ExternalLink className="size-3" />
@@ -773,14 +782,14 @@ export default function MailPortal() {
                   <option value="06 Invoices and Billing">Billing</option>
                 </NativeSelect>
 
-                <button
+                <CommunicationButton
                   onClick={handleLinkJob}
                   disabled={!selectedJobId}
-                  className="flex items-center space-x-1 bg-[#F9D972] text-white hover:bg-[#E8C85D] disabled:opacity-50 px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all"
+                  className="flex items-center space-x-1 bg-[var(--mnx-accent-text)] text-[var(--mnx-accent-contrast)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all"
                 >
                   <Link2 className="size-3.5" />
                   <span>Link</span>
-                </button>
+                </CommunicationButton>
               </div>
             </div>
 
@@ -795,9 +804,9 @@ export default function MailPortal() {
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      <span className="text-[10px] text-mono-muted monolith-numeric">{msg.date}</span>
+                      <span className="text-[10px] text-mono-muted mnx-numeric">{msg.date}</span>
                       <div className="relative">
-                        <button
+                        <CommunicationButton
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -806,11 +815,11 @@ export default function MailPortal() {
                           className="p-1 hover:bg-mono-soft rounded-lg text-mono-muted hover:text-mono-text transition-colors"
                         >
                           <MoreVertical className="size-4" />
-                        </button>
+                        </CommunicationButton>
                         
                         {activeDropdownMsgId === msg.id && (
                           <div className="absolute right-0 mt-1 w-56 bg-mono-card/95 backdrop-blur-sm border border-mono-border rounded-xl shadow-xl z-50 py-1.5 overflow-hidden animate-page-enter">
-                            <button
+                            <CommunicationButton
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveDropdownMsgId(null);
@@ -821,12 +830,12 @@ export default function MailPortal() {
                                   document.getElementById("quick-reply-input")?.focus();
                                 }, 100);
                               }}
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[#F9D972]/15 hover:text-[#F9D972] text-left transition-colors font-semibold"
+                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[var(--mnx-accent-text)]/15 hover:text-[var(--mnx-accent-text)] text-left transition-colors font-semibold"
                             >
                               <Reply className="size-3.5" />
                               <span>Reply</span>
-                            </button>
-                            <button
+                            </CommunicationButton>
+                            <CommunicationButton
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveDropdownMsgId(null);
@@ -835,12 +844,12 @@ export default function MailPortal() {
                                 setComposeBody("");
                                 setShowCompose(true);
                               }}
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[#F9D972]/15 hover:text-[#F9D972] text-left transition-colors font-semibold"
+                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[var(--mnx-accent-text)]/15 hover:text-[var(--mnx-accent-text)] text-left transition-colors font-semibold"
                             >
                               <ReplyAll className="size-3.5" />
                               <span>Reply all</span>
-                            </button>
-                            <button
+                            </CommunicationButton>
+                            <CommunicationButton
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveDropdownMsgId(null);
@@ -849,26 +858,26 @@ export default function MailPortal() {
                                 setComposeBody(`\n\n---------- Forwarded message ---------\nFrom: ${msg.from}\nDate: ${msg.date}\nSubject: ${selectedThread.subject}\nTo: ${msg.to}\n\n${msg.bodyText || ""}`);
                                 setShowCompose(true);
                               }}
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[#F9D972]/15 hover:text-[#F9D972] text-left transition-colors font-semibold"
+                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[var(--mnx-accent-text)]/15 hover:text-[var(--mnx-accent-text)] text-left transition-colors font-semibold"
                             >
                               <Forward className="size-3.5" />
                               <span>Forward</span>
-                            </button>
-                            <button
+                            </CommunicationButton>
+                            <CommunicationButton
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveDropdownMsgId(null);
                                 triggerShareModal(msg);
                               }}
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[#F9D972]/15 hover:text-[#F9D972] text-left transition-colors font-semibold"
+                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[var(--mnx-accent-text)]/15 hover:text-[var(--mnx-accent-text)] text-left transition-colors font-semibold"
                             >
                               <MessageSquare className="size-3.5" />
                               <span>Share in chat</span>
-                            </button>
+                            </CommunicationButton>
                             
                             <hr className="my-1 border-mono-border/50" />
 
-                            <button
+                            <CommunicationButton
                               onClick={async (e) => {
                                 e.stopPropagation();
                                 setActiveDropdownMsgId(null);
@@ -892,12 +901,12 @@ export default function MailPortal() {
                                   }
                                 }
                               }}
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-red-500 hover:bg-red-500/10 text-left transition-colors font-semibold"
+                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-[var(--mnx-danger)] hover:bg-[var(--mnx-danger-bg)] text-left transition-colors font-semibold"
                             >
                               <Trash2 className="size-3.5" />
                               <span>Delete</span>
-                            </button>
-                            <button
+                            </CommunicationButton>
+                            <CommunicationButton
                               onClick={async (e) => {
                                 e.stopPropagation();
                                 setActiveDropdownMsgId(null);
@@ -918,26 +927,26 @@ export default function MailPortal() {
                                   console.error(err);
                                 }
                               }}
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[#F9D972]/15 hover:text-[#F9D972] text-left transition-colors font-semibold"
+                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[var(--mnx-accent-text)]/15 hover:text-[var(--mnx-accent-text)] text-left transition-colors font-semibold"
                             >
                               <Mail className="size-3.5" />
                               <span>Mark unread from here</span>
-                            </button>
+                            </CommunicationButton>
 
                             <hr className="my-1 border-mono-border/50" />
 
-                            <button
+                            <CommunicationButton
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveDropdownMsgId(null);
                                 alert(`Sender ${msg.from} has been added to block list.`);
                               }}
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[#F9D972]/15 hover:text-[#F9D972] text-left transition-colors font-semibold font-medium"
+                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[var(--mnx-accent-text)]/15 hover:text-[var(--mnx-accent-text)] text-left transition-colors font-semibold font-medium"
                             >
-                              <ShieldAlert className="size-3.5 text-orange-500" />
+                              <ShieldAlert className="size-3.5 text-[var(--mnx-warning)]" />
                               <span>Block "{msg.from.split(" <")[0]}"</span>
-                            </button>
-                            <button
+                            </CommunicationButton>
+                            <CommunicationButton
                               onClick={async (e) => {
                                 e.stopPropagation();
                                 setActiveDropdownMsgId(null);
@@ -961,26 +970,26 @@ export default function MailPortal() {
                                   }
                                 }
                               }}
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[#F9D972]/15 hover:text-[#F9D972] text-left transition-colors font-semibold"
+                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[var(--mnx-accent-text)]/15 hover:text-[var(--mnx-accent-text)] text-left transition-colors font-semibold"
                             >
-                              <AlertTriangle className="size-3.5 text-orange-500" />
+                              <AlertTriangle className="size-3.5 text-[var(--mnx-warning)]" />
                               <span>Report spam</span>
-                            </button>
-                            <button
+                            </CommunicationButton>
+                            <CommunicationButton
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveDropdownMsgId(null);
                                 alert("Reported phishing to Google Workspace security.");
                               }}
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[#F9D972]/15 hover:text-[#F9D972] text-left transition-colors font-semibold"
+                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[var(--mnx-accent-text)]/15 hover:text-[var(--mnx-accent-text)] text-left transition-colors font-semibold"
                             >
-                              <ShieldAlert className="size-3.5 text-red-500" />
+                              <ShieldAlert className="size-3.5 text-[var(--mnx-danger)]" />
                               <span>Report phishing</span>
-                            </button>
+                            </CommunicationButton>
 
                             <hr className="my-1 border-mono-border/50" />
 
-                            <button
+                            <CommunicationButton
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveDropdownMsgId(null);
@@ -989,23 +998,23 @@ export default function MailPortal() {
                                 setSearchQuery(`from:${email}`);
                                 setTimeout(() => fetchThreads(), 50);
                               }}
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[#F9D972]/15 hover:text-[#F9D972] text-left transition-colors font-semibold"
+                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[var(--mnx-accent-text)]/15 hover:text-[var(--mnx-accent-text)] text-left transition-colors font-semibold"
                             >
                               <Search className="size-3.5" />
                               <span>Filter messages like this</span>
-                            </button>
-                            <button
+                            </CommunicationButton>
+                            <CommunicationButton
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveDropdownMsgId(null);
                                 setTranslatedMsgId(translatedMsgId === msg.id ? null : msg.id);
                               }}
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[#F9D972]/15 hover:text-[#F9D972] text-left transition-colors font-semibold"
+                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[var(--mnx-accent-text)]/15 hover:text-[var(--mnx-accent-text)] text-left transition-colors font-semibold"
                             >
                               <Languages className="size-3.5" />
                               <span>{translatedMsgId === msg.id ? "Original Text" : "Translate"}</span>
-                            </button>
-                            <button
+                            </CommunicationButton>
+                            <CommunicationButton
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveDropdownMsgId(null);
@@ -1016,9 +1025,9 @@ export default function MailPortal() {
                                       <head>
                                         <title>Print Email - ${selectedThread.subject}</title>
                                         <style>
-                                          body { font-family: sans-serif; padding: 20px; line-height: 1.5; color: #191c1e; }
-                                          .header { border-bottom: 2px solid #eceef0; padding-bottom: 10px; margin-bottom: 20px; }
-                                          .meta { font-size: 12px; color: #404947; margin-bottom: 5px; }
+                                          body { font-family: sans-serif; padding: 20px; line-height: 1.5; color: CanvasText; }
+                                          .header { border-bottom: 2px solid Canvas; padding-bottom: 10px; margin-bottom: 20px; }
+                                          .meta { font-size: 12px; color: GrayText; margin-bottom: 5px; }
                                           .body { font-size: 14px; white-space: pre-line; }
                                         </style>
                                       </head>
@@ -1038,12 +1047,12 @@ export default function MailPortal() {
                                   printWindow.print();
                                 }
                               }}
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[#F9D972]/15 hover:text-[#F9D972] text-left transition-colors font-semibold"
+                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[var(--mnx-accent-text)]/15 hover:text-[var(--mnx-accent-text)] text-left transition-colors font-semibold"
                             >
                               <Printer className="size-3.5" />
                               <span>Print</span>
-                            </button>
-                            <button
+                            </CommunicationButton>
+                            <CommunicationButton
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveDropdownMsgId(null);
@@ -1058,22 +1067,22 @@ export default function MailPortal() {
                                 document.body.removeChild(a);
                                 URL.revokeObjectURL(url);
                               }}
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[#F9D972]/15 hover:text-[#F9D972] text-left transition-colors font-semibold"
+                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[var(--mnx-accent-text)]/15 hover:text-[var(--mnx-accent-text)] text-left transition-colors font-semibold"
                             >
                               <Download className="size-3.5" />
                               <span>Download message</span>
-                            </button>
-                            <button
+                            </CommunicationButton>
+                            <CommunicationButton
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveDropdownMsgId(null);
                                 setShowOriginalMsg(msg);
                               }}
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[#F9D972]/15 hover:text-[#F9D972] text-left transition-colors font-semibold"
+                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-xs text-mono-text hover:bg-[var(--mnx-accent-text)]/15 hover:text-[var(--mnx-accent-text)] text-left transition-colors font-semibold"
                             >
                               <FileText className="size-3.5" />
                               <span>Show original</span>
-                            </button>
+                            </CommunicationButton>
                           </div>
                         )}
                       </div>
@@ -1081,24 +1090,24 @@ export default function MailPortal() {
                   </div>
 
                   {translatedMsgId === msg.id && (
-                    <div className="p-2 bg-[#F9D972]/10 rounded-lg text-[10px] text-[#F9D972] font-semibold flex items-center space-x-1">
+                    <div className="p-2 bg-[var(--mnx-accent-text)]/10 rounded-lg text-[10px] text-[var(--mnx-accent-text)] font-semibold flex items-center space-x-1">
                       <Languages className="size-3" />
                       <span>Translated to English (Monolith View)</span>
                     </div>
                   )}
 
                   {msg.listUnsubscribe && (
-                    <div className="p-3 mb-3 bg-[#F9D972]/5 border border-mono-border/65 rounded-xl text-xs text-mono-text flex items-center justify-between shadow-sm animate-page-enter">
+                    <div className="p-3 mb-3 bg-[var(--mnx-accent-text)]/5 border border-mono-border/65 rounded-xl text-xs text-mono-text flex items-center justify-between shadow-sm animate-page-enter">
                       <div className="flex items-center space-x-2">
-                        <HelpCircle className="size-4 text-[#F9D972] shrink-0" />
+                        <HelpCircle className="size-4 text-[var(--mnx-accent-text)] shrink-0" />
                         <span className="font-medium text-mono-muted text-[11px]">This message is from a mailing list or newsletter subscription.</span>
                       </div>
-                      <button
+                      <CommunicationButton
                         onClick={() => handleUnsubscribe(msg.listUnsubscribe)}
-                        className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-3.5 py-1.5 rounded-xl text-[10px] uppercase font-bold tracking-wider transition-all shadow-sm"
+                        className="bg-[var(--mnx-accent-text)] text-[var(--mnx-accent-contrast)] hover:bg-[var(--mnx-accent)] px-3.5 py-1.5 rounded-xl text-[10px] uppercase font-bold tracking-wider transition-all shadow-sm"
                       >
                         Unsubscribe
-                      </button>
+                      </CommunicationButton>
                     </div>
                   )}
 
@@ -1118,7 +1127,7 @@ export default function MailPortal() {
             {/* Quick Reply Form */}
             <div className="p-3 border-t border-mono-border bg-mono-card">
               <form onSubmit={handleSendEmail} className="flex items-center space-x-2">
-                <input
+                <CommunicationInput
                   id="quick-reply-input"
                   type="text"
                   placeholder="Type reply..."
@@ -1131,18 +1140,18 @@ export default function MailPortal() {
                   className="flex-1 text-xs bg-mono-card border border-mono-border rounded-xl px-3 py-2 focus:outline-none"
                   required
                 />
-                <button
+                <CommunicationButton
                   type="submit"
-                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all"
+                  className="bg-[var(--mnx-accent-text)] text-[var(--mnx-accent-contrast)] hover:bg-[var(--mnx-accent)] px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all"
                 >
                   Reply
-                </button>
+                </CommunicationButton>
               </form>
             </div>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-mono-muted text-xs">
-            <Mail className="size-12 text-[#F9D972]/40 mb-2 animate-pulse" />
+            <Mail className="size-12 text-[var(--mnx-accent-text)]/40 mb-2 animate-pulse" />
             <span>Select an email thread to read conversation.</span>
           </div>
         )}
@@ -1150,16 +1159,21 @@ export default function MailPortal() {
 
       {/* Compose Modal */}
       {showCompose && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <WorkspaceDialogLayer
+          open
+          onClose={() => setShowCompose(false)}
+          labelledBy="communication-compose-title"
+          className="mnx-communication-legacy-dialog"
+        >
           <div className="w-full max-w-lg bg-mono-card border border-mono-border rounded-xl shadow-xl overflow-hidden animate-page-enter">
             <div className="p-4 border-b border-mono-border bg-mono-soft flex justify-between items-center">
-              <h3 className="monolith-h3 text-mono-text">Compose New Email</h3>
-              <button onClick={() => setShowCompose(false)} className="text-mono-muted hover:text-mono-text font-bold text-sm">✕</button>
+              <h3 id="communication-compose-title" className="mnx-communication-heading text-mono-text">Compose New Email</h3>
+              <CommunicationButton onClick={() => setShowCompose(false)} className="text-mono-muted hover:text-mono-text font-bold text-sm">✕</CommunicationButton>
             </div>
             <form onSubmit={handleSendEmail} className="p-4 space-y-3 text-left">
               <div>
-                <label className="monolith-label text-mono-muted block mb-1">To</label>
-                <input
+                <label className="mnx-communication-label text-mono-muted block mb-1">To</label>
+                <CommunicationInput
                   type="email"
                   value={composeTo}
                   onChange={(e) => setComposeTo(e.target.value)}
@@ -1168,8 +1182,8 @@ export default function MailPortal() {
                 />
               </div>
               <div>
-                <label className="monolith-label text-mono-muted block mb-1">Subject</label>
-                <input
+                <label className="mnx-communication-label text-mono-muted block mb-1">Subject</label>
+                <CommunicationInput
                   type="text"
                   value={composeSubject}
                   onChange={(e) => setComposeSubject(e.target.value)}
@@ -1178,8 +1192,8 @@ export default function MailPortal() {
                 />
               </div>
               <div>
-                <label className="monolith-label text-mono-muted block mb-1">Message</label>
-                <textarea
+                <label className="mnx-communication-label text-mono-muted block mb-1">Message</label>
+                <CommunicationTextarea
                   value={composeBody}
                   onChange={(e) => setComposeBody(e.target.value)}
                   rows={6}
@@ -1188,36 +1202,41 @@ export default function MailPortal() {
                 />
               </div>
               <div className="pt-2 flex justify-end space-x-2">
-                <button
+                <CommunicationButton
                   type="button"
                   onClick={() => setShowCompose(false)}
                   className="px-4 py-2 border border-mono-border rounded-xl text-xs font-semibold uppercase hover:bg-mono-soft text-mono-muted transition-colors"
                 >
                   Cancel
-                </button>
-                <button
+                </CommunicationButton>
+                <CommunicationButton
                   type="submit"
-                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all"
+                  className="bg-[var(--mnx-accent-text)] text-[var(--mnx-accent-contrast)] hover:bg-[var(--mnx-accent)] px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all"
                 >
                   Send Email
-                </button>
+                </CommunicationButton>
               </div>
             </form>
           </div>
-        </div>
+        </WorkspaceDialogLayer>
       )}
 
       {/* Share in Chat Modal */}
       {showShareModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <WorkspaceDialogLayer
+          open
+          onClose={() => setShowShareModal(false)}
+          labelledBy="communication-share-title"
+          className="mnx-communication-legacy-dialog"
+        >
           <div className="w-full max-w-md bg-mono-card border border-mono-border rounded-xl shadow-xl overflow-hidden animate-page-enter">
             <div className="p-4 border-b border-mono-border bg-mono-soft flex justify-between items-center">
-              <h3 className="monolith-h3 text-mono-text">Share Email in Google Chat</h3>
-              <button onClick={() => setShowShareModal(false)} className="text-mono-muted hover:text-mono-text font-bold text-sm">✕</button>
+              <h3 id="communication-share-title" className="mnx-communication-heading text-mono-text">Share Email in Google Chat</h3>
+              <CommunicationButton onClick={() => setShowShareModal(false)} className="text-mono-muted hover:text-mono-text font-bold text-sm">✕</CommunicationButton>
             </div>
             <div className="p-4 space-y-4 text-left">
               <div>
-                <label className="monolith-label text-mono-muted block mb-1">Select Chat Space / Employee</label>
+                <label className="mnx-communication-label text-mono-muted block mb-1">Select Chat Space / Employee</label>
                 {chatSpacesLoading ? (
                   <div className="text-xs text-mono-muted">Loading spaces...</div>
                 ) : (
@@ -1237,8 +1256,8 @@ export default function MailPortal() {
               </div>
 
               <div>
-                <label className="monolith-label text-mono-muted block mb-1">Message Preview</label>
-                <textarea
+                <label className="mnx-communication-label text-mono-muted block mb-1">Message Preview</label>
+                <CommunicationTextarea
                   value={shareMsgText}
                   onChange={(e) => setShareMsgText(e.target.value)}
                   rows={6}
@@ -1248,33 +1267,39 @@ export default function MailPortal() {
               </div>
 
               <div className="pt-2 flex justify-end space-x-2">
-                <button
+                <CommunicationButton
                   type="button"
                   onClick={() => setShowShareModal(false)}
                   className="px-4 py-2 border border-mono-border rounded-xl text-xs font-semibold uppercase hover:bg-mono-soft text-mono-muted transition-colors"
                 >
                   Cancel
-                </button>
-                <button
+                </CommunicationButton>
+                <CommunicationButton
                   onClick={handleShareEmailInChat}
                   disabled={sharing || !selectedSpaceId}
-                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] disabled:opacity-50 px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all"
+                  className="bg-[var(--mnx-accent-text)] text-[var(--mnx-accent-contrast)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all"
                 >
                   {sharing ? "Sharing..." : "Share in Chat"}
-                </button>
+                </CommunicationButton>
               </div>
             </div>
           </div>
-        </div>
+        </WorkspaceDialogLayer>
       )}
 
       {/* Show Original Modal */}
       {showOriginalMsg && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <WorkspaceDialogLayer
+          open
+          onClose={() => setShowOriginalMsg(null)}
+          labelledBy="communication-original-title"
+          size="wide"
+          className="mnx-communication-legacy-dialog"
+        >
           <div className="w-full max-w-2xl bg-mono-card border border-mono-border rounded-xl shadow-xl overflow-hidden animate-page-enter">
             <div className="p-4 border-b border-mono-border bg-mono-soft flex justify-between items-center">
-              <h3 className="monolith-h3 text-mono-text">Original Message Details</h3>
-              <button onClick={() => setShowOriginalMsg(null)} className="text-mono-muted hover:text-mono-text font-bold text-sm">✕</button>
+              <h3 id="communication-original-title" className="mnx-communication-heading text-mono-text">Original Message Details</h3>
+              <CommunicationButton onClick={() => setShowOriginalMsg(null)} className="text-mono-muted hover:text-mono-text font-bold text-sm">✕</CommunicationButton>
             </div>
             <div className="p-4 space-y-4 text-left">
               <div className="bg-mono-soft p-3 rounded-xl border border-mono-border max-h-[300px] overflow-y-auto font-mono text-[10px] text-mono-text space-y-2 whitespace-pre-wrap">
@@ -1291,31 +1316,37 @@ export default function MailPortal() {
                 </div>
               </div>
               <div className="flex justify-end">
-                <button
+                <CommunicationButton
                   type="button"
                   onClick={() => setShowOriginalMsg(null)}
-                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all"
+                  className="bg-[var(--mnx-accent-text)] text-[var(--mnx-accent-contrast)] hover:bg-[var(--mnx-accent)] px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all"
                 >
                   Close
-                </button>
+                </CommunicationButton>
               </div>
             </div>
           </div>
-        </div>
+        </WorkspaceDialogLayer>
       )}
 
       {/* Create Label Modal */}
       {showCreateLabel && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <WorkspaceDialogLayer
+          open
+          onClose={() => setShowCreateLabel(false)}
+          labelledBy="communication-create-label-title"
+          size="compact"
+          className="mnx-communication-legacy-dialog"
+        >
           <div className="w-full max-w-sm bg-mono-card border border-mono-border rounded-xl shadow-xl overflow-hidden animate-page-enter">
             <div className="p-4 border-b border-mono-border bg-mono-soft flex justify-between items-center">
-              <h3 className="monolith-h3 text-mono-text">Create New Label</h3>
-              <button onClick={() => setShowCreateLabel(false)} className="text-mono-muted hover:text-mono-text font-bold text-sm">✕</button>
+              <h3 id="communication-create-label-title" className="mnx-communication-heading text-mono-text">Create New Label</h3>
+              <CommunicationButton onClick={() => setShowCreateLabel(false)} className="text-mono-muted hover:text-mono-text font-bold text-sm">✕</CommunicationButton>
             </div>
             <form onSubmit={handleCreateLabel} className="p-4 space-y-4 text-left">
               <div>
-                <label className="monolith-label text-mono-muted block mb-1">Label Name</label>
-                <input
+                <label className="mnx-communication-label text-mono-muted block mb-1">Label Name</label>
+                <CommunicationInput
                   type="text"
                   value={newLabelName}
                   onChange={(e) => setNewLabelName(e.target.value)}
@@ -1326,32 +1357,37 @@ export default function MailPortal() {
                 />
               </div>
               <div className="pt-2 flex justify-end space-x-2">
-                <button
+                <CommunicationButton
                   type="button"
                   onClick={() => setShowCreateLabel(false)}
                   className="px-4 py-2 border border-mono-border rounded-xl text-xs font-semibold uppercase hover:bg-mono-soft text-mono-muted transition-colors"
                 >
                   Cancel
-                </button>
-                <button
+                </CommunicationButton>
+                <CommunicationButton
                   type="submit"
-                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all"
+                  className="bg-[var(--mnx-accent-text)] text-[var(--mnx-accent-contrast)] hover:bg-[var(--mnx-accent)] px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all"
                 >
                   Create Label
-                </button>
+                </CommunicationButton>
               </div>
             </form>
           </div>
-        </div>
+        </WorkspaceDialogLayer>
       )}
 
       {/* Manage Labels Modal */}
       {showManageLabels && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <WorkspaceDialogLayer
+          open
+          onClose={() => setShowManageLabels(false)}
+          labelledBy="communication-manage-labels-title"
+          className="mnx-communication-legacy-dialog"
+        >
           <div className="w-full max-w-md bg-mono-card border border-mono-border rounded-xl shadow-xl overflow-hidden animate-page-enter">
             <div className="p-4 border-b border-mono-border bg-mono-soft flex justify-between items-center">
-              <h3 className="monolith-h3 text-mono-text">Manage Custom Labels</h3>
-              <button onClick={() => setShowManageLabels(false)} className="text-mono-muted hover:text-mono-text font-bold text-sm">✕</button>
+              <h3 id="communication-manage-labels-title" className="mnx-communication-heading text-mono-text">Manage Custom Labels</h3>
+              <CommunicationButton onClick={() => setShowManageLabels(false)} className="text-mono-muted hover:text-mono-text font-bold text-sm">✕</CommunicationButton>
             </div>
             <div className="p-4 space-y-4 text-left max-h-[400px] overflow-y-auto">
               {labels.filter((l: any) => l.type === "user").length === 0 ? (
@@ -1360,7 +1396,7 @@ export default function MailPortal() {
                 </div>
               ) : (
                 <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
-                  <table className="monolith-table">
+                  <CommunicationTable className="mnx-communication-table">
                     <thead>
                       <tr>
                         <th className="px-4 py-2">Label Name</th>
@@ -1374,33 +1410,33 @@ export default function MailPortal() {
                             {label.name}
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <button
+                            <CommunicationButton
                               onClick={() => handleDeleteLabel(label.id)}
                               disabled={deletingLabelId === label.id}
-                              className="p-1.5 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors disabled:opacity-50 inline-flex items-center"
+                              className="p-1.5 hover:bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)] rounded-lg transition-colors disabled:opacity-50 inline-flex items-center"
                               title="Delete Label"
                             >
                               <Trash2 className="size-3.5" />
-                            </button>
+                            </CommunicationButton>
                           </td>
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </CommunicationTable>
                 </div>
               )}
             </div>
             <div className="p-4 border-t border-mono-border bg-mono-soft flex justify-end">
-              <button
+              <CommunicationButton
                 type="button"
                 onClick={() => setShowManageLabels(false)}
-                className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all"
+                className="bg-[var(--mnx-accent-text)] text-[var(--mnx-accent-contrast)] hover:bg-[var(--mnx-accent)] px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all"
               >
                 Close
-              </button>
+              </CommunicationButton>
             </div>
           </div>
-        </div>
+        </WorkspaceDialogLayer>
       )}
     </div>
   );

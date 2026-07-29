@@ -1,8 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { DataTable, DataTableBody, DataTableCell, DataTableEmpty, DataTableHead, DataTableHeader, DataTableRow } from "@/components/data-table";
-import { Button } from "@/components/monolith/button-1";
+import {
+  AdminButton,
+  AdminEmptyTableRow,
+  AdminPanel,
+  AdminTable,
+} from "@/components/monolith";
 import { useNotifications } from "@/components/notifications/notification-provider";
 
 type AdminNotificationRow = {
@@ -25,76 +29,98 @@ type AdminNotificationRow = {
   }>;
 };
 
-export function AdminNotificationsClient({ notifications }: { notifications: AdminNotificationRow[] }) {
+export function AdminNotificationsClient({
+  notifications,
+}: {
+  notifications: AdminNotificationRow[];
+}) {
   const router = useRouter();
   const { success, error } = useNotifications();
 
   return (
-    <DataTable>
-      <DataTableHeader>
-        <tr>
-          {["Notification", "Recipient", "State", "Created", "History", "Actions"].map((header) => (
-            <DataTableHead key={header}>{header}</DataTableHead>
-          ))}
-        </tr>
-      </DataTableHeader>
-      <DataTableBody>
-        {notifications.length === 0 ? (
-          <DataTableEmpty colSpan={6} message="No notifications matched the current filters." />
-        ) : (
-          notifications.map((notification) => (
-            <DataTableRow key={notification.id}>
-              <DataTableCell>
-                <div className="space-y-1">
-                  <p className="font-medium text-slate-900">{notification.title}</p>
-                  <p className="text-xs text-slate-500">{notification.kind} · {notification.source ?? "System"}</p>
-                </div>
-              </DataTableCell>
-              <DataTableCell>
-                <div className="space-y-1">
-                  <p className="font-medium text-slate-900">{notification.user.name}</p>
-                  <p className="text-xs text-slate-500">{notification.user.email}</p>
-                </div>
-              </DataTableCell>
-              <DataTableCell>
-                <div className="space-y-1 text-xs text-slate-600">
-                  <p>Read: {notification.readAt ? "Yes" : "No"}</p>
-                  <p>Ack: {notification.acknowledgedAt ? "Yes" : "No"}</p>
-                  <p>Dismissed: {notification.dismissedAt ? "Yes" : "No"}</p>
-                  <p>Resent: {notification.resentCount}</p>
-                </div>
-              </DataTableCell>
-              <DataTableCell>{new Date(notification.createdAt).toLocaleString("en-IN")}</DataTableCell>
-              <DataTableCell>
-                <div className="max-h-32 space-y-1 overflow-y-auto text-xs text-slate-500">
-                  {notification.activities.slice(0, 6).map((activity) => (
-                    <p key={activity.id}>
-                      {activity.event} · {activity.actor?.name ?? "System"} · {new Date(activity.createdAt).toLocaleString("en-IN")}
-                    </p>
-                  ))}
-                </div>
-              </DataTableCell>
-              <DataTableCell>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={async () => {
-                    const res = await fetch(`/api/admin/notifications/${notification.id}/resend`, { method: "POST" });
-                    if (!res.ok) {
-                      error("Unable to resend notification");
-                      return;
-                    }
-                    success("Notification resent");
-                    router.refresh();
-                  }}
-                >
-                  Resend
-                </Button>
-              </DataTableCell>
-            </DataTableRow>
-          ))
-        )}
-      </DataTableBody>
-    </DataTable>
+    <AdminPanel>
+      <AdminTable>
+        <thead>
+          <tr>
+            {[
+              "Notification",
+              "Recipient",
+              "State",
+              "Created",
+              "History",
+              "Actions",
+            ].map((header) => (
+              <th key={header}>{header}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {notifications.length === 0 ? (
+            <AdminEmptyTableRow colSpan={6}>
+              No notifications matched the current filters.
+            </AdminEmptyTableRow>
+          ) : (
+            notifications.map((notification) => (
+              <tr key={notification.id}>
+                <td>
+                  <strong>{notification.title}</strong>
+                  <small>
+                    {notification.kind} · {notification.source ?? "System"}
+                  </small>
+                </td>
+                <td>
+                  <strong>{notification.user.name}</strong>
+                  <small>{notification.user.email}</small>
+                </td>
+                <td>
+                  <small>
+                    Read: {notification.readAt ? "Yes" : "No"}
+                    <br />
+                    Acknowledged:{" "}
+                    {notification.acknowledgedAt ? "Yes" : "No"}
+                    <br />
+                    Dismissed: {notification.dismissedAt ? "Yes" : "No"}
+                    <br />
+                    Resent: {notification.resentCount}
+                  </small>
+                </td>
+                <td>
+                  {new Date(notification.createdAt).toLocaleString("en-IN")}
+                </td>
+                <td>
+                  <div className="mnx-admin-activity-list">
+                    {notification.activities.slice(0, 6).map((activity) => (
+                      <small key={activity.id}>
+                        {activity.event} · {activity.actor?.name ?? "System"} ·{" "}
+                        {new Date(activity.createdAt).toLocaleString("en-IN")}
+                      </small>
+                    ))}
+                  </div>
+                </td>
+                <td>
+                  <AdminButton
+                    size="compact"
+                    onClick={async () => {
+                      const response = await fetch(
+                        `/api/admin/notifications/${notification.id}/resend`,
+                        { method: "POST" },
+                      );
+                      if (!response.ok) {
+                        error("Unable to resend notification");
+                        return;
+                      }
+                      success("Notification resent");
+                      router.refresh();
+                    }}
+                  >
+                    Resend
+                  </AdminButton>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </AdminTable>
+    </AdminPanel>
   );
 }

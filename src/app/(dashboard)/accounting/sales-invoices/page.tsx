@@ -1,112 +1,94 @@
-import React from "react";
-import { auth } from "@/lib/auth";
+import { Plus } from "lucide-react";
 import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 import { listSalesInvoices } from "@/modules/accounting/service";
-import NextLink from "next/link";
-import { Plus, Receipt, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
+import {
+  AccountingActionLink,
+  AccountingEmptyTableRow,
+  AccountingRoutePageHeader,
+  AccountingSection,
+  AccountingStatus,
+  AccountingTable,
+} from "@/components/monolith/accounting-workspace";
 
 export default async function SalesInvoicesPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const orgId = session.user.orgId!;
-  const invoices = await listSalesInvoices(orgId);
+  const invoices = await listSalesInvoices(session.user.orgId!);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-mono-border/20 pb-5">
-        <div>
-          <h2 className="monolith-h1 text-white">Sales Invoices</h2>
-          <p className="text-slate-400 text-xs mt-1">
-            Browse customer sales bills, track payment allocations, outstanding balances, and ledger postings.
-          </p>
-        </div>
-        <NextLink
-          href="/accounting/sales-invoices/new"
-          className="flex items-center gap-1.5 bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all cursor-pointer"
-        >
-          <Plus className="size-3.5" />
-          <span>New Sales Invoice</span>
-        </NextLink>
-      </div>
-
-      {/* TABLE */}
-      <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55">
-        {invoices.length === 0 ? (
-          <div className="text-center py-12 text-slate-500 text-sm">
-            No sales invoices created yet. Click "New Sales Invoice" above to draft a invoice.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="monolith-table">
-              <thead>
-                <tr>
-                  <th>Invoice Number</th>
-                  <th>Customer</th>
-                  <th>Posting Date</th>
-                  <th>Grand Total</th>
-                  <th>Outstanding</th>
-                  <th>Status</th>
-                  <th className="text-right">Action</th>
+    <>
+      <AccountingRoutePageHeader
+        actions={
+          <AccountingActionLink
+            href="/accounting/sales-invoices/new"
+            variant="primary"
+          >
+            <Plus aria-hidden="true" size={16} />
+            New sales invoice
+          </AccountingActionLink>
+        }
+      />
+      <AccountingSection
+        eyebrow="Accounts receivable"
+        title="Customer invoice register"
+        description={`${invoices.length} sales ${invoices.length === 1 ? "invoice" : "invoices"} in the current organisation.`}
+      >
+        <AccountingTable>
+          <thead>
+            <tr>
+              <th>Invoice number</th>
+              <th>Customer</th>
+              <th>Posting date</th>
+              <th>Grand total</th>
+              <th>Outstanding</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoices.length === 0 ? (
+              <AccountingEmptyTableRow colSpan={7}>
+                No sales invoices have been created yet.
+              </AccountingEmptyTableRow>
+            ) : (
+              invoices.map((invoice) => (
+                <tr key={invoice.id}>
+                  <td>{invoice.invoiceNumber}</td>
+                  <td>{invoice.customer?.name || "—"}</td>
+                  <td>
+                    {new Date(invoice.postingDate).toLocaleDateString("en-IN")}
+                  </td>
+                  <td className="mnx-accounting-amount">
+                    ₹
+                    {Number(invoice.grandTotal).toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </td>
+                  <td className="mnx-accounting-amount mnx-accounting-amount-warning">
+                    ₹
+                    {Number(invoice.outstandingAmount).toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </td>
+                  <td>
+                    <AccountingStatus status={invoice.status} />
+                  </td>
+                  <td>
+                    <AccountingActionLink
+                      className="mnx-button-compact"
+                      href={`/accounting/sales-invoices/${invoice.id}`}
+                    >
+                      Details
+                    </AccountingActionLink>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-[#161f28]/10 transition-all">
-                    <td>
-                      <NextLink
-                        href={`/accounting/sales-invoices/${inv.id}`}
-                        className="text-white hover:text-[#F9D972] font-mono font-bold hover:underline transition-colors"
-                      >
-                        {inv.invoiceNumber}
-                      </NextLink>
-                    </td>
-                    <td className="text-white font-semibold">
-                      {inv.customer?.name || "—"}
-                    </td>
-                    <td className="text-slate-350 text-xs">
-                      {new Date(inv.postingDate).toLocaleDateString("en-IN")}
-                    </td>
-                    <td className="monolith-numeric font-bold text-white">
-                      ₹{Number(inv.grandTotal).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="monolith-numeric font-bold text-[#F9D972]">
-                      ₹{Number(inv.outstandingAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                    </td>
-                    <td>
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider ${
-                        inv.status === "PAID"
-                          ? "bg-emerald-500/10 text-emerald-400"
-                          : inv.status === "CANCELLED"
-                          ? "bg-red-500/10 text-red-400"
-                          : inv.status === "PARTLY_PAID"
-                          ? "bg-blue-500/10 text-blue-450"
-                          : "bg-amber-500/10 text-amber-400"
-                      }`}>
-                        {inv.status === "PAID" && <CheckCircle2 className="size-3" />}
-                        {inv.status === "CANCELLED" && <XCircle className="size-3" />}
-                        {inv.status === "DRAFT" && <AlertCircle className="size-3" />}
-                        <span>{inv.status}</span>
-                      </span>
-                    </td>
-                    <td className="text-right">
-                      <NextLink
-                        href={`/accounting/sales-invoices/${inv.id}`}
-                        className="inline-block bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-200 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-                      >
-                        Details
-                      </NextLink>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-    </div>
+              ))
+            )}
+          </tbody>
+        </AccountingTable>
+      </AccountingSection>
+    </>
   );
 }

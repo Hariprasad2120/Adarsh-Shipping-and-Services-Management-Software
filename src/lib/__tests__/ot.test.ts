@@ -4,7 +4,12 @@ const { dbMock } = vi.hoisted(() => ({
   dbMock: {
     user: { findUnique: vi.fn() },
     workingCalendar: { upsert: vi.fn(), findUnique: vi.fn() },
-    shift: { findMany: vi.fn(), createMany: vi.fn(), update: vi.fn(), findFirst: vi.fn() },
+    shift: {
+      findMany: vi.fn(),
+      createMany: vi.fn(),
+      update: vi.fn(),
+      findFirst: vi.fn(),
+    },
     shiftAssignment: { findFirst: vi.fn() },
     holiday: { findMany: vi.fn() },
     otSettings: { findUnique: vi.fn() },
@@ -14,6 +19,8 @@ const { dbMock } = vi.hoisted(() => ({
     attendanceBreak: { findMany: vi.fn() },
     employmentRecord: { findUnique: vi.fn() },
     otRecord: { findUnique: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn() },
+    workReportSettings: { findUnique: vi.fn() },
+    workReport: { findFirst: vi.fn() },
   },
 }));
 
@@ -40,7 +47,10 @@ const assignedShift = {
 };
 
 function getUpsertCreatePayload() {
-  return dbMock.otRecord.upsert.mock.calls.at(-1)?.[0]?.create as Record<string, unknown>;
+  return dbMock.otRecord.upsert.mock.calls.at(-1)?.[0]?.create as Record<
+    string,
+    unknown
+  >;
 }
 
 beforeEach(() => {
@@ -92,6 +102,8 @@ beforeEach(() => {
   dbMock.otRecord.findUnique.mockResolvedValue(null);
   dbMock.otRecord.upsert.mockResolvedValue({});
   dbMock.otRecord.deleteMany.mockResolvedValue({ count: 0 });
+  dbMock.workReportSettings.findUnique.mockResolvedValue(null);
+  dbMock.workReport.findFirst.mockResolvedValue(null);
 });
 
 describe("calculateOtForPunch", () => {
@@ -189,5 +201,44 @@ describe("calculateOtForPunch", () => {
     expect(payload.usedOrgFallback).toBe(true);
     expect(payload.expectedMinutes).toBe(480);
     expect(payload.calculationStatus).toBe("NO_OVERTIME");
+  });
+
+  it("omits OT until the daily work report is approved when the gate is enabled", async () => {
+    dbMock.workReportSettings.findUnique.mockResolvedValue({
+      requireApprovedReportForOt: true,
+    });
+    dbMock.attendancePunchEvent.findMany.mockResolvedValue([
+      {
+        punchedAt: new Date(Date.UTC(2026, 6, 1, 3, 30, 0)),
+        source: "biometric",
+        eventType: "CHECK_IN",
+        status: "VALID",
+        notes: null,
+        metadata: null,
+      },
+      {
+        punchedAt: new Date(Date.UTC(2026, 6, 1, 13, 30, 0)),
+        source: "biometric",
+        eventType: "CHECK_OUT",
+        status: "VALID",
+        notes: null,
+        metadata: null,
+      },
+    ]);
+
+    await calculateOtForPunch("user-1", attendanceDate);
+
+    const blockedPayload = getUpsertCreatePayload();
+    expect(blockedPayload.calculationStatus).toBe("WORK_REPORT_REQUIRED");
+    expect(blockedPayload.otHours).toBe(0);
+    expect(blockedPayload.otAmount).toBe(0);
+
+    dbMock.workReport.findFirst.mockResolvedValue({ id: "report-1" });
+    await calculateOtForPunch("user-1", attendanceDate);
+
+    const approvedPayload = getUpsertCreatePayload();
+    expect(approvedPayload.calculationStatus).toBe("VALID");
+    expect(approvedPayload.otHours).toBe(2);
+    expect(approvedPayload.otAmount).toBeGreaterThan(0);
   });
 });

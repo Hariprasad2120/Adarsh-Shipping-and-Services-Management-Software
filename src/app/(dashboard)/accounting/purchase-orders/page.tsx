@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { CommercialDocumentsPage } from "../_components/commercial-documents-page";
+import { AccountingLoadingState } from "@/components/monolith/accounting-workspace";
 
 export default function AccountingPurchaseOrdersPage({
   searchParams,
@@ -7,7 +8,7 @@ export default function AccountingPurchaseOrdersPage({
   searchParams: Promise<{ search?: string }>;
 }) {
   return (
-    <Suspense fallback={<div className="p-8 text-sm text-mono-muted">Loading…</div>}>
+    <Suspense fallback={<AccountingLoadingState />}>
       <CommercialDocumentsPage
         title="Purchase Orders"
         description="Track supplier purchase orders from the Accounting module."

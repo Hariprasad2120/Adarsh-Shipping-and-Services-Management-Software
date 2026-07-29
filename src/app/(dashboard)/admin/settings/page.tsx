@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { getAppraisalSettings } from "@/modules/ams/settings";
 import { redirect } from "next/navigation";
 import { SettingsClient } from "./settings-client";
+import { AdminPanel, AdminPanelHeader } from "@/components/monolith";
 
 export default async function AdminSettingsPage() {
   const session = await auth();
@@ -14,20 +14,18 @@ export default async function AdminSettingsPage() {
   const settings = await getAppraisalSettings(session.user.orgId!);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link href="/admin" className="text-sm text-mono-muted hover:text-mono-muted">
-          ← Admin
-        </Link>
-      </div>
-
-      <div className="rounded-xl border border-mono-border bg-mono-card p-6">
-        <h2 className="monolith-h2 mb-4 text-mono-muted">Reviewer Availability</h2>
+    <AdminPanel>
+      <AdminPanelHeader
+        eyebrow="Review policy"
+        title="Reviewer availability and weighting"
+        description="Set the response deadline and relative influence of each reviewer role."
+      />
+      <div className="mnx-admin-panel-body">
         <SettingsClient
           initialDays={settings.availabilityDeadlineDays}
           initialWeights={settings.reviewerRoleWeights}
         />
       </div>
-    </div>
+    </AdminPanel>
   );
 }

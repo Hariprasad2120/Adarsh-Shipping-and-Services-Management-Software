@@ -1,38 +1,10 @@
-"use client";
-
-import React from "react";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 import { FilesView } from "@/components/hrms/files-view";
 
-export default function FilesPage() {
-  const handleFetchFiles = async (scope: "personal" | "organization" | "employee") => {
-    const res = await fetch(`/api/hrms/files?scope=${scope}`);
-    const json = await res.json();
-    return json.ok ? json.data : { folders: [], files: [] };
-  };
+export default async function FilesPage() {
+  const session = await auth();
+  if (!session?.user?.orgId) redirect("/login");
 
-  const handleCreateFolder = async (name: string, scope: string) => {
-    const res = await fetch("/api/hrms/files", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, scope, type: "folder" }),
-    });
-    return res.json();
-  };
-
-  const handleUploadFile = async (name: string, fileKey: string, mimeType: string, sizeBytes: number, scope: string) => {
-    const res = await fetch("/api/hrms/files", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, fileKey, mimeType, sizeBytes, scope, type: "file" }),
-    });
-    return res.json();
-  };
-
-  return (
-    <FilesView
-      onFetchFiles={handleFetchFiles}
-      onCreateFolder={handleCreateFolder}
-      onUploadFile={handleUploadFile}
-    />
-  );
+  return <FilesView />;
 }

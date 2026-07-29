@@ -1,13 +1,21 @@
-import { NativeSelect } from "@/components/monolith/native-select";
-import React from "react";
-import { auth } from "@/lib/auth";
+import { Filter } from "lucide-react";
 import { redirect } from "next/navigation";
+import { DateInput } from "@/components/monolith/date-input";
+import {
+  AccountingAction,
+  AccountingActionLink,
+  AccountingEmptyTableRow,
+  AccountingField,
+  AccountingRoutePageHeader,
+  AccountingSection,
+  AccountingSelect,
+  AccountingTable,
+  AccountingToolbar,
+} from "@/components/monolith/accounting-workspace";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getGeneralLedger } from "@/modules/accounting/reports";
 import { listAccounts } from "@/modules/accounting/service";
-import NextLink from "next/link";
-import { Filter, Scale } from "lucide-react";
-import { DateInput } from "@/components/monolith/date-input";
 
 interface GLPageProps {
   searchParams: Promise<{
@@ -18,193 +26,178 @@ interface GLPageProps {
   }>;
 }
 
-export default async function GeneralLedgerReportPage({ searchParams }: GLPageProps) {
+function voucherPath(voucherType: string, voucherId: string) {
+  if (voucherType === "SALES_INVOICE")
+    return `/accounting/sales-invoices/${voucherId}`;
+  if (voucherType === "PURCHASE_INVOICE")
+    return `/accounting/purchase-invoices/${voucherId}`;
+  if (voucherType === "PAYMENT_ENTRY")
+    return `/accounting/payment-entries/${voucherId}`;
+  return `/accounting/journal-entries/${voucherId}`;
+}
+
+export default async function GeneralLedgerReportPage({
+  searchParams,
+}: GLPageProps) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const orgId = session.user.orgId!;
   const params = await searchParams;
-
   const accountId = params.accountId || undefined;
   const branchId = params.branchId || undefined;
   const fromDate = params.fromDate ? new Date(params.fromDate) : undefined;
   const toDate = params.toDate ? new Date(params.toDate) : undefined;
-
-  // Fetch accounts, branches, and GL postings
-  const [accounts, branches, glEntries] = await Promise.all([
-    listAccounts(orgId),
-    db.branch.findMany({ where: { orgId } }),
-    getGeneralLedger(orgId, { accountId, branchId, fromDate, toDate }),
+  const [accounts, branches, entries] = await Promise.all([
+    listAccounts(session.user.orgId!),
+    db.branch.findMany({ where: { orgId: session.user.orgId! } }),
+    getGeneralLedger(session.user.orgId!, {
+      accountId,
+      branchId,
+      fromDate,
+      toDate,
+    }),
   ]);
-
-  const leafAccounts = accounts.filter((a) => !a.isGroup && a.isActive);
-
-  // Total debits & credits in the period
-  let periodDebit = 0;
-  let periodCredit = 0;
-  glEntries.forEach((ent) => {
-    if (!ent.isCancelled) {
-      periodDebit += ent.debit;
-      periodCredit += ent.credit;
-    }
-  });
+  const leafAccounts = accounts.filter(
+    (account) => !account.isGroup && account.isActive,
+  );
+  const totals = entries.reduce(
+    (result, entry) =>
+      entry.isCancelled
+        ? result
+        : {
+            debit: result.debit + entry.debit,
+            credit: result.credit + entry.credit,
+          },
+    { debit: 0, credit: 0 },
+  );
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-mono-border/20 pb-5">
-        <div>
-          <h2 className="monolith-h1 text-white">General Ledger</h2>
-          <p className="text-slate-400 text-xs mt-1">
-            Audit comprehensive ledger entries, track running balances, and filter by accounts, dates, and branches.
-          </p>
-        </div>
-      </div>
-
-      {/* FILTER BAR */}
-      <div className="p-4 rounded-xl bg-[#0f1319] border border-[#1c212a]/55">
-        <form method="GET" className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-xs">
-          <div className="space-y-1">
-            <label className="monolith-label block text-slate-400">Ledger Account</label>
-            <NativeSelect
+    <>
+      <AccountingRoutePageHeader />
+      <AccountingToolbar>
+        <form method="GET">
+          <AccountingField label="Ledger account" htmlFor="gl-account">
+            <AccountingSelect
+              id="gl-account"
               name="accountId"
               defaultValue={accountId || ""}
-              className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2"
             >
-              <option value="">All Accounts</option>
-              {leafAccounts.map((a) => (
-                <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
+              <option value="">All accounts</option>
+              {leafAccounts.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.accountCode} — {account.accountName}
+                </option>
               ))}
-            </NativeSelect>
-          </div>
-
-          <div className="space-y-1">
-            <label className="monolith-label block text-slate-400">Branch Dimension</label>
-            <NativeSelect
+            </AccountingSelect>
+          </AccountingField>
+          <AccountingField label="Branch" htmlFor="gl-branch">
+            <AccountingSelect
+              id="gl-branch"
               name="branchId"
               defaultValue={branchId || ""}
-              className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2"
             >
-              <option value="">All Branches</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
+              <option value="">All branches</option>
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </option>
               ))}
-            </NativeSelect>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <label className="monolith-label block text-slate-400">From Date</label>
-              <DateInput
-                name="fromDate"
-                defaultValue={params.fromDate || ""}
-                className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-1.5"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="monolith-label block text-slate-400">To Date</label>
-              <DateInput
-                name="toDate"
-                defaultValue={params.toDate || ""}
-                className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-1.5"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="flex items-center justify-center gap-1.5 bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer w-full h-[38px]"
-          >
-            <Filter className="size-3.5" />
-            <span>Apply Filters</span>
-          </button>
+            </AccountingSelect>
+          </AccountingField>
+          <AccountingField label="From date" htmlFor="gl-from">
+            <DateInput
+              id="gl-from"
+              name="fromDate"
+              defaultValue={params.fromDate || ""}
+            />
+          </AccountingField>
+          <AccountingField label="To date" htmlFor="gl-to">
+            <DateInput
+              id="gl-to"
+              name="toDate"
+              defaultValue={params.toDate || ""}
+            />
+          </AccountingField>
+          <AccountingAction type="submit">
+            <Filter aria-hidden="true" size={16} />
+            Apply filters
+          </AccountingAction>
         </form>
-      </div>
-
-      {/* GL ENTRIES TABLE */}
-      <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
-        <div className="flex justify-between items-center border-b border-[#1c212a]/30 pb-3">
-          <h3 className="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-2">
-            <Scale className="size-4.5 text-[#F9D972]" /> Audit Posting Records
-          </h3>
-        </div>
-
-        {glEntries.length === 0 ? (
-          <div className="text-center py-12 text-slate-500 text-sm">
-            No general ledger postings match the selected filter criteria.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="monolith-table">
-              <thead>
-                <tr>
-                  <th>Posting Date</th>
-                  <th>Account Code / Name</th>
-                  <th>Voucher Ref</th>
-                  <th>Remarks / Narration</th>
-                  <th className="text-right">Debit (₹)</th>
-                  <th className="text-right">Credit (₹)</th>
-                  <th className="text-right">Running Balance (₹)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {glEntries.map((ent) => {
-                  let path = "/accounting/journal-entries";
-                  if (ent.voucherType === "SALES_INVOICE") path = `/accounting/sales-invoices/${ent.voucherId}`;
-                  else if (ent.voucherType === "PURCHASE_INVOICE") path = `/accounting/purchase-invoices/${ent.voucherId}`;
-                  else if (ent.voucherType === "PAYMENT_ENTRY") path = `/accounting/payment-entries/${ent.voucherId}`;
-                  else path = `/accounting/journal-entries/${ent.voucherId}`;
-
-                  return (
-                    <tr
-                      key={ent.id}
-                      className={`hover:bg-[#161f28]/10 transition-all text-xs ${
-                        ent.isCancelled ? "opacity-45 line-through" : ""
-                      }`}
+      </AccountingToolbar>
+      <AccountingSection
+        eyebrow="Posting audit"
+        title="General ledger records"
+        description={`${entries.length} posting ${entries.length === 1 ? "record" : "records"} match the selected scope.`}
+      >
+        <AccountingTable>
+          <thead>
+            <tr>
+              <th>Posting date</th>
+              <th>Account</th>
+              <th>Voucher</th>
+              <th>Remarks</th>
+              <th>Debit</th>
+              <th>Credit</th>
+              <th>Running balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.length === 0 ? (
+              <AccountingEmptyTableRow colSpan={7}>
+                No general ledger postings match the selected filters.
+              </AccountingEmptyTableRow>
+            ) : (
+              entries.map((entry) => (
+                <tr key={entry.id} data-cancelled={entry.isCancelled || undefined}>
+                  <td>{new Date(entry.postingDate).toLocaleDateString("en-IN")}</td>
+                  <td>
+                    <strong>{entry.accountName}</strong>
+                    <small>{entry.accountCode}</small>
+                  </td>
+                  <td>
+                    <AccountingActionLink
+                      className="mnx-button-compact"
+                      href={voucherPath(entry.voucherType, entry.voucherId)}
                     >
-                      <td className="text-slate-350">{new Date(ent.postingDate).toLocaleDateString("en-IN")}</td>
-                      <td>
-                        <div>
-                          <span className="font-semibold text-white block">{ent.accountName}</span>
-                          <span className="text-[10px] font-mono text-slate-400 block tracking-wider mt-0.5">{ent.accountCode}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <NextLink href={path} className="text-[#F9D972] hover:underline font-mono font-bold">
-                          {ent.voucherType.replace("_", " ")}
-                        </NextLink>
-                      </td>
-                      <td className="text-slate-400 max-w-xs truncate">{ent.remarks || "—"}</td>
-                      <td className="monolith-numeric text-white text-right font-semibold">
-                        {ent.debit > 0 ? `₹${ent.debit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
-                      </td>
-                      <td className="monolith-numeric text-white text-right font-semibold">
-                        {ent.credit > 0 ? `₹${ent.credit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "—"}
-                      </td>
-                      <td className="monolith-numeric text-white text-right font-bold text-[#F9D972]">
-                        ₹{ent.runningBalance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot>
-                <tr className="border-t border-[#1c212a]/50 font-bold bg-[#161f28]/10 text-white text-xs">
-                  <td>Period Summary</td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td className="monolith-numeric text-right">₹{periodDebit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                  <td className="monolith-numeric text-right">₹{periodCredit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                  <td></td>
+                      {entry.voucherType.replaceAll("_", " ")}
+                    </AccountingActionLink>
+                  </td>
+                  <td>{entry.remarks || "—"}</td>
+                  <td className="mnx-accounting-amount">
+                    {entry.debit > 0
+                      ? `₹${entry.debit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
+                      : "—"}
+                  </td>
+                  <td className="mnx-accounting-amount">
+                    {entry.credit > 0
+                      ? `₹${entry.credit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
+                      : "—"}
+                  </td>
+                  <td className="mnx-accounting-amount">
+                    ₹
+                    {entry.runningBalance.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </td>
                 </tr>
-              </tfoot>
-            </table>
-          </div>
-        )}
-      </div>
-
-    </div>
+              ))
+            )}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th>Period summary</th>
+              <td colSpan={3} />
+              <td className="mnx-accounting-amount">
+                ₹{totals.debit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              </td>
+              <td className="mnx-accounting-amount">
+                ₹{totals.credit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              </td>
+              <td />
+            </tr>
+          </tfoot>
+        </AccountingTable>
+      </AccountingSection>
+    </>
   );
 }

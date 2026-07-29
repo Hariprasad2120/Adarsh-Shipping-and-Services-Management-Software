@@ -2,8 +2,28 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  ArrowRight,
+  Building2,
+  LoaderCircle,
+  ShieldCheck,
+} from "lucide-react";
 import { DemoFillButton } from "@/components/demo-fill-button";
-import { Input } from "@/components/monolith/input";
+import {
+  Button,
+  Input,
+  PublicActions,
+  PublicBrand,
+  PublicFooter,
+  PublicHeader,
+  PublicInset,
+  PublicMonolithShell,
+  PublicPanel,
+  PublicStage,
+  PublicStatus,
+  PublicStatusBadge,
+  WorkspaceField,
+} from "@/components/monolith";
 import { getSetupDemoValues } from "@/lib/demo-fill";
 
 export default function SetupPage() {
@@ -15,33 +35,40 @@ export default function SetupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setLoading(true);
     setError(null);
 
-    const fd = new FormData(e.currentTarget);
+    const formData = new FormData(event.currentTarget);
     const body = {
-      orgName: fd.get("orgName"),
-      name: fd.get("name"),
-      email: fd.get("email"),
-      password: fd.get("password"),
+      orgName: formData.get("orgName"),
+      name: formData.get("name"),
+      email: formData.get("email"),
+      password: formData.get("password"),
     };
 
-    const res = await fetch("/api/setup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    try {
+      const response = await fetch("/api/setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error ?? "Setup failed.");
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        setError(
+          typeof data.error === "string" ? data.error : "Setup failed.",
+        );
+        setLoading(false);
+        return;
+      }
+
+      router.replace("/login");
+    } catch {
+      setError("Setup could not reach the server. Please try again.");
       setLoading(false);
-      return;
     }
-
-    router.replace("/login");
   }
 
   function fillDemoData() {
@@ -54,45 +81,112 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8 space-y-6">
-        <div>
-          <h1 className="monolith-h1 text-gray-900">Initial Setup</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Create your organisation and first administrator account.
-          </p>
-        </div>
+    <PublicMonolithShell data-public-route="setup">
+      <PublicBrand subtitle="Organisation provisioning" />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex justify-end">
-            <DemoFillButton disabled={loading} onClick={fillDemoData} />
-          </div>
+      <PublicStage className="mnx-public-stage-compact">
+        <PublicPanel className="mnx-public-form-panel">
+          <PublicHeader
+            badge={<PublicStatusBadge tone="warning">One-time setup</PublicStatusBadge>}
+            eyebrow="Platform foundation"
+            icon={<Building2 />}
+            title="Create your organisation"
+            description="Provision the first organisation and its platform administrator account."
+          />
 
-          <Field label="Organisation Name" name="orgName" onChange={setOrgName} placeholder="Adarsh Shipping" required value={orgName} />
-          <Field label="Your Name" name="name" onChange={setName} placeholder="Admin" required value={name} />
-          <Field label="Email" name="email" onChange={setEmail} type="email" placeholder="admin@company.com" required value={email} />
-          <Field label="Password" name="password" onChange={setPassword} type="password" placeholder="Min 8 characters" required value={password} />
+          <form className="mnx-public-form" onSubmit={handleSubmit}>
+            <div className="mnx-public-form-toolbar">
+              <DemoFillButton disabled={loading} onClick={fillDemoData} />
+            </div>
 
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-              {error}
-            </p>
-          )}
+            <div className="mnx-public-form-grid">
+              <SetupField
+                label="Organisation name"
+                name="orgName"
+                onChange={setOrgName}
+                placeholder="Adarsh Shipping"
+                required
+                value={orgName}
+              />
+              <SetupField
+                label="Administrator name"
+                name="name"
+                onChange={setName}
+                placeholder="Admin"
+                required
+                value={name}
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 px-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition"
-          >
-            {loading ? "Creating…" : "Create Account"}
-          </button>
-        </form>
-      </div>
-    </div>
+            <SetupField
+              label="Work email"
+              name="email"
+              onChange={setEmail}
+              type="email"
+              placeholder="admin@company.com"
+              required
+              value={email}
+            />
+            <SetupField
+              label="Password"
+              name="password"
+              onChange={setPassword}
+              type="password"
+              placeholder="Minimum 8 characters"
+              required
+              value={password}
+              hint="Use at least eight characters. The server securely hashes this password before storage."
+            />
+
+            {error ? (
+              <PublicStatus
+                tone="danger"
+                eyebrow="Setup error"
+                icon={<ShieldCheck />}
+                title={error}
+              />
+            ) : null}
+
+            <PublicActions>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="mnx-public-primary-action"
+              >
+                {loading ? (
+                  <>
+                    <LoaderCircle className="mnx-public-spinner" />
+                    Creating organisation
+                  </>
+                ) : (
+                  <>
+                    Create account
+                    <ArrowRight />
+                  </>
+                )}
+              </Button>
+            </PublicActions>
+          </form>
+
+          <PublicInset className="mnx-public-security-note">
+            <ShieldCheck />
+            <span>
+              Setup is blocked after the first platform administrator exists.
+            </span>
+          </PublicInset>
+        </PublicPanel>
+      </PublicStage>
+
+      <PublicFooter>
+        Initial provisioning creates the organisation, system roles, and
+        administrator assignment in one transaction.
+      </PublicFooter>
+    </PublicMonolithShell>
   );
 }
 
-function Field({
+function SetupField({
+  hint,
   label,
   name,
   onChange,
@@ -101,6 +195,7 @@ function Field({
   required,
   value,
 }: {
+  hint?: string;
   label: string;
   name: string;
   onChange: (value: string) => void;
@@ -110,19 +205,21 @@ function Field({
   value: string;
 }) {
   return (
-    <div className="space-y-1">
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700">
-        {label}
-      </label>
+    <WorkspaceField
+      htmlFor={`setup-${name}`}
+      hint={hint}
+      label={label}
+      required={required}
+    >
       <Input
-        id={name}
+        id={`setup-${name}`}
         name={name}
         type={type}
         placeholder={placeholder}
         required={required}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(event) => onChange(event.target.value)}
       />
-    </div>
+    </WorkspaceField>
   );
 }

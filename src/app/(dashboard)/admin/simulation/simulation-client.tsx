@@ -2,16 +2,35 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/monolith/input";
+import {
+  AdminBadge,
+  AdminButton,
+  AdminField,
+  AdminInput,
+  AdminPanel,
+  AdminPanelHeader,
+  WorkspaceAlert,
+} from "@/components/monolith";
 
-export function SimulationClient({ initialFrozenAt }: { initialFrozenAt: string | null }) {
+type DailyJobResult = {
+  created: number;
+  opened: number;
+  selfAdvanced: number;
+  reviewerAdvanced: number;
+};
+
+export function SimulationClient({
+  initialFrozenAt,
+}: {
+  initialFrozenAt: string | null;
+}) {
   const router = useRouter();
   const [frozenAt, setFrozenAt] = useState(initialFrozenAt);
   const [dateInput, setDateInput] = useState(
-    initialFrozenAt ? initialFrozenAt.slice(0, 16) : ""
+    initialFrozenAt ? initialFrozenAt.slice(0, 16) : "",
   );
   const [saving, setSaving] = useState(false);
-  const [jobResult, setJobResult] = useState<{ created: number; opened: number; selfAdvanced: number; reviewerAdvanced: number } | null>(null);
+  const [jobResult, setJobResult] = useState<DailyJobResult | null>(null);
   const [jobRunning, setJobRunning] = useState(false);
   const [resetConfirm, setResetConfirm] = useState("");
   const [resetting, setResetting] = useState(false);
@@ -19,14 +38,14 @@ export function SimulationClient({ initialFrozenAt }: { initialFrozenAt: string 
   async function freezeDate() {
     if (!dateInput) return;
     setSaving(true);
-    const res = await fetch("/api/admin/simulation", {
+    const response = await fetch("/api/admin/simulation", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ frozenAt: new Date(dateInput).toISOString() }),
     });
     setSaving(false);
-    if (res.ok) {
-      const data = await res.json();
+    if (response.ok) {
+      const data = await response.json();
       setFrozenAt(data.frozenAt);
       if (data.job) setJobResult(data.job);
       router.refresh();
@@ -35,13 +54,13 @@ export function SimulationClient({ initialFrozenAt }: { initialFrozenAt: string 
 
   async function clearDate() {
     setSaving(true);
-    const res = await fetch("/api/admin/simulation", {
+    const response = await fetch("/api/admin/simulation", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ frozenAt: null }),
     });
     setSaving(false);
-    if (res.ok) {
+    if (response.ok) {
       setFrozenAt(null);
       setDateInput("");
       router.refresh();
@@ -51,15 +70,14 @@ export function SimulationClient({ initialFrozenAt }: { initialFrozenAt: string 
   async function runDailyJob() {
     setJobRunning(true);
     setJobResult(null);
-    const res = await fetch("/api/admin/simulation", {
+    const response = await fetch("/api/admin/simulation", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "run-daily-job" }),
     });
     setJobRunning(false);
-    if (res.ok) {
-      const data = await res.json();
-      setJobResult(data);
+    if (response.ok) {
+      setJobResult(await response.json());
       router.refresh();
     }
   }
@@ -67,13 +85,13 @@ export function SimulationClient({ initialFrozenAt }: { initialFrozenAt: string 
   async function resetAmsData() {
     if (resetConfirm !== "DELETE") return;
     setResetting(true);
-    const res = await fetch("/api/admin/ams-reset", {
+    const response = await fetch("/api/admin/ams-reset", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ confirm: true }),
     });
     setResetting(false);
-    if (res.ok) {
+    if (response.ok) {
       setFrozenAt(null);
       setDateInput("");
       setResetConfirm("");
@@ -85,106 +103,113 @@ export function SimulationClient({ initialFrozenAt }: { initialFrozenAt: string 
   const effectiveNow = frozenAt ? new Date(frozenAt) : null;
 
   return (
-    <div className="space-y-6 max-w-lg">
-      {/* Current clock status */}
-      <div className="bg-mono-card rounded-xl border border-mono-border p-6 space-y-1">
-        <p className="text-xs font-semibold text-mono-muted uppercase tracking-wide">Current System Time</p>
-        {effectiveNow ? (
-          <div className="flex items-center gap-2 mt-1">
-            <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">FROZEN</span>
-            <p className="text-lg font-bold text-mono-text">{effectiveNow.toLocaleString("en-IN")}</p>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 mt-1">
-            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">LIVE</span>
-            <p className="text-lg font-bold text-mono-text">Real time</p>
-          </div>
-        )}
-      </div>
+    <div className="mnx-admin-simulation">
+      <AdminPanel>
+        <AdminPanelHeader
+          eyebrow="Clock state"
+          title="Current system time"
+          actions={
+            <AdminBadge variant={effectiveNow ? "warning" : "success"}>
+              {effectiveNow ? "Frozen" : "Live"}
+            </AdminBadge>
+          }
+        />
+        <div className="mnx-admin-panel-body">
+          <strong className="mnx-admin-clock">
+            {effectiveNow
+              ? effectiveNow.toLocaleString("en-IN")
+              : "Using real time"}
+          </strong>
+        </div>
+      </AdminPanel>
 
-      {/* Freeze date */}
-      <div className="bg-mono-card rounded-xl border border-mono-border p-6 space-y-4">
-        <h2 className="monolith-h2 text-mono-text">Freeze System Date</h2>
-        <p className="text-xs text-mono-muted">Freezing the date also runs the daily appraisal job automatically — stages advance and self-assessments open without a separate step.</p>
-        <div className="flex gap-3 items-end">
-          <div className="flex-1">
-            <label className="text-xs text-mono-muted">Date &amp; time to freeze to</label>
-            <Input
+      <AdminPanel>
+        <AdminPanelHeader
+          eyebrow="Date control"
+          title="Freeze system date"
+          description="Freezing the date also runs the daily appraisal job so date-driven stages advance consistently."
+        />
+        <div className="mnx-admin-panel-body">
+          <AdminField label="Date and time to freeze to">
+            <AdminInput
               type="datetime-local"
               value={dateInput}
-              onChange={(e) => setDateInput(e.target.value)}
-              className="w-full mt-1"
+              onChange={(event) => setDateInput(event.target.value)}
             />
+          </AdminField>
+          <div className="mnx-admin-form-actions">
+            <AdminButton
+              onClick={freezeDate}
+              disabled={saving || !dateInput}
+              variant="primary"
+            >
+              {saving ? "Saving…" : "Freeze date"}
+            </AdminButton>
+            {frozenAt ? (
+              <AdminButton onClick={clearDate} disabled={saving}>
+                Reset to real time
+              </AdminButton>
+            ) : null}
           </div>
-          <button
-            onClick={freezeDate}
-            disabled={saving || !dateInput}
-            className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition"
-          >
-            {saving ? "Saving…" : "Freeze"}
-          </button>
         </div>
-        {frozenAt && (
-          <button
-            onClick={clearDate}
-            disabled={saving}
-            className="text-sm text-mono-muted hover:text-mono-text underline"
-          >
-            Reset to real time
-          </button>
-        )}
-      </div>
+      </AdminPanel>
 
-      {/* Run daily job */}
-      <div className="bg-mono-card rounded-xl border border-mono-border p-6 space-y-3">
-        <h2 className="monolith-h2 text-mono-text">Daily Appraisal Job</h2>
-        <p className="text-xs text-mono-muted">
-          Runs the same logic as the scheduled cron: creates appraisals due on the current
-          (possibly frozen) date and opens self-assessments whose availability deadline has passed.
-        </p>
-        <button
-          onClick={runDailyJob}
-          disabled={jobRunning}
-          className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition"
-        >
-          {jobRunning ? "Running…" : "Run daily job now"}
-        </button>
-        {jobResult && (
-          <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800 space-y-0.5">
-            <p>Done — <strong>{jobResult.created}</strong> appraisal(s) created, <strong>{jobResult.opened}</strong> self-assessment(s) opened.</p>
-            <p><strong>{jobResult.selfAdvanced}</strong> self-assessment(s) force-advanced to reviewer rating, <strong>{jobResult.reviewerAdvanced}</strong> reviewer rating(s) force-advanced to management review.</p>
+      <AdminPanel>
+        <AdminPanelHeader
+          eyebrow="Scheduled workflow"
+          title="Daily appraisal job"
+          description="Run the scheduled creation and stage-advancement logic against the current effective date."
+          actions={
+            <AdminButton
+              onClick={runDailyJob}
+              disabled={jobRunning}
+              variant="primary"
+            >
+              {jobRunning ? "Running…" : "Run daily job"}
+            </AdminButton>
+          }
+        />
+        {jobResult ? (
+          <div className="mnx-admin-panel-body">
+            <WorkspaceAlert variant="success">
+              <span>
+                {jobResult.created} appraisal(s) created and {jobResult.opened}{" "}
+                self-assessment(s) opened. {jobResult.selfAdvanced} advanced to
+                reviewer rating and {jobResult.reviewerAdvanced} advanced to
+                management review.
+              </span>
+            </WorkspaceAlert>
           </div>
-        )}
-      </div>
+        ) : null}
+      </AdminPanel>
 
-      {/* Danger zone — AMS data reset */}
-      <div className="bg-mono-card rounded-xl border border-red-200 p-6 space-y-4">
-        <h2 className="monolith-h2 text-red-700">Danger Zone</h2>
-        <p className="text-xs text-mono-muted">
-          Delete all appraisal cycles, appraisals, reviewers, ratings, reviews, meetings, minutes,
-          and hike decisions for this organisation. The simulated date is also cleared.
-          <strong className="text-red-600"> This cannot be undone.</strong>
-        </p>
-        <div className="space-y-2">
-          <label className="text-xs text-mono-muted">
-            Type <code className="bg-mono-soft px-1 rounded">DELETE</code> to confirm
-          </label>
-          <Input
-            type="text"
-            value={resetConfirm}
-            onChange={(e) => setResetConfirm(e.target.value)}
-            placeholder="DELETE"
-            className="w-full focus:ring-red-400"
-          />
+      <AdminPanel className="mnx-admin-danger-panel">
+        <AdminPanelHeader
+          eyebrow="Destructive operation"
+          title="Reset appraisal data"
+          description="Delete all appraisal cycles, appraisals, reviewers, ratings, reviews, meetings, minutes, and hike decisions for this organisation. This cannot be undone."
+        />
+        <div className="mnx-admin-panel-body">
+          <AdminField
+            label="Confirmation"
+            hint="Type DELETE to confirm the organisation appraisal reset."
+          >
+            <AdminInput
+              type="text"
+              value={resetConfirm}
+              onChange={(event) => setResetConfirm(event.target.value)}
+              placeholder="DELETE"
+            />
+          </AdminField>
+          <AdminButton
+            onClick={resetAmsData}
+            disabled={resetting || resetConfirm !== "DELETE"}
+            variant="destructive"
+          >
+            {resetting ? "Deleting…" : "Delete all appraisal data"}
+          </AdminButton>
         </div>
-        <button
-          onClick={resetAmsData}
-          disabled={resetting || resetConfirm !== "DELETE"}
-          className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50 transition"
-        >
-          {resetting ? "Deleting…" : "Delete all appraisal data"}
-        </button>
-      </div>
+      </AdminPanel>
     </div>
   );
 }

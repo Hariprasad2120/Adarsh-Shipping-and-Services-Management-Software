@@ -2,8 +2,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { SessionsDashboard } from "./sessions-dashboard";
-import { Monitor } from "lucide-react";
 import { requirePermission } from "@/lib/rbac";
+import { AdminPermissionState } from "@/components/monolith";
 
 export const metadata = {
   title: "Session Monitor | Admin | Adarsh Shipping",
@@ -17,9 +17,7 @@ export default async function SessionsPage() {
   const orgId = session.user.orgId;
   if (!orgId) {
     return (
-      <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">
-        Organisation configuration missing.
-      </div>
+      <AdminPermissionState description="Organisation configuration is required before session activity can be monitored." />
     );
   }
 
@@ -142,13 +140,6 @@ export default async function SessionsPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
-          Real-time active sessions, session history, and security events logs.
-        </p>
-      </div>
-
       <SessionsDashboard
         initialActive={activeSessions.map(mapSession)}
         history={historySessions.map(mapHistory)}
@@ -156,6 +147,5 @@ export default async function SessionsPage() {
         renderedAt={renderNow.toISOString()}
         timeoutMinutes={timeoutMinutes}
       />
-    </div>
   );
 }

@@ -1,9 +1,10 @@
 import { Suspense } from "react";
 import { CommercialDocumentFormPage } from "../../_components/commercial-document-form-page";
+import { AccountingLoadingState } from "@/components/monolith/accounting-workspace";
 
 export default function NewAccountingSalesOrderPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-sm text-mono-muted">Loading…</div>}>
+    <Suspense fallback={<AccountingLoadingState />}>
       <CommercialDocumentFormPage
         title="Create Sales Order"
         description="Generate a confirmed customer sales order inside Accounting."

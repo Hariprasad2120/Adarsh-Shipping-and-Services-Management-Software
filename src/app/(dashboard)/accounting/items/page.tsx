@@ -1,5 +1,5 @@
-import { ItemsListPage } from "@/components/items/ItemsListPage";
+import { AccountingItemsList } from "@/components/monolith/accounting-items";
 
 export default function AccountingItemsPage() {
-  return <ItemsListPage basePath="/accounting/items" />;
+  return <AccountingItemsList />;
 }

@@ -1,10 +1,13 @@
 import React from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getProfitAndLoss, getBalanceSheet } from "@/modules/accounting/reports";
 import { getAccountingSettings } from "@/modules/accounting/service";
 import { DashboardClient } from "./dashboard-client";
+import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
 
 export default async function AccountingDashboardPage() {
   const session = await auth();
@@ -85,22 +88,25 @@ export default async function AccountingDashboardPage() {
   }));
 
   return (
-    <DashboardClient
-      pl={pl}
-      bs={bs}
-      recentVouchers={recentVouchersMapped}
-      recentInvoices={recentInvoicesMapped}
-      recentPayments={recentPaymentsMapped}
-      cashLiquidity={cashLiquidity}
-      initialPeriodLock={
-        periodLock
-          ? {
-              lockDate: periodLock.lockDate,
-              lockType: periodLock.lockType,
-              lockedBy: periodLock.lockedBy,
-            }
-          : null
-      }
-    />
+    <>
+      <AccountingRoutePageHeader />
+      <DashboardClient
+        pl={pl}
+        bs={bs}
+        recentVouchers={recentVouchersMapped}
+        recentInvoices={recentInvoicesMapped}
+        recentPayments={recentPaymentsMapped}
+        cashLiquidity={cashLiquidity}
+        initialPeriodLock={
+          periodLock
+            ? {
+                lockDate: periodLock.lockDate,
+                lockType: periodLock.lockType,
+                lockedBy: periodLock.lockedBy,
+              }
+            : null
+        }
+      />
+    </>
   );
 }

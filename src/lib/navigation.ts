@@ -167,13 +167,6 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/hrms/helpdesk"],
       },
       {
-        href: "/hrms/employees/new",
-        label: "Onboard Employee",
-        icon: DocumentAdd,
-        permission: "hrms.employee.create",
-        matchPaths: ["/hrms/employees/new"],
-      },
-      {
         href: "/hrms/users",
         label: "User Control",
         icon: UserMultiple,

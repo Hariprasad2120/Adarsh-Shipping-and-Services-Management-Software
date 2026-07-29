@@ -1,6 +1,10 @@
-import { Button } from "@/components/monolith/button-1";
 import { DropdownSelect } from "@/components/monolith/dropdown-select";
-import { Input } from "@/components/monolith/input";
+import {
+  AdminButton,
+  AdminInput,
+  AdminPanel,
+  AdminPanelHeader,
+} from "@/components/monolith";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac";
@@ -59,12 +63,14 @@ export default async function AdminNotificationsPage({
   }));
 
   return (
-    <div className="space-y-4">
-      <div>
-        <p className="mt-1 text-sm text-mono-muted">View all user notifications in your organisation, inspect lifecycle activity, and resend notifications.</p>
-      </div>
-
-      <form className="grid gap-3 rounded-2xl border border-mono-border bg-mono-card p-4 sm:grid-cols-2 lg:grid-cols-5">
+    <>
+      <AdminPanel>
+        <AdminPanelHeader
+          eyebrow="Filters"
+          title="Notification register"
+          description="Filter organisation notifications by recipient, lifecycle, source, acknowledgement, and date."
+        />
+      <form className="mnx-admin-filter-grid">
         <AdminNotificationFilters
           activity={typeof params.activity === "string" ? params.activity : "all"}
           link={typeof params.link === "string" ? params.link : "all"}
@@ -75,15 +81,16 @@ export default async function AdminNotificationsPage({
           users={users}
         />
         <div className="flex gap-2">
-          <Input name="kind" defaultValue={typeof params.kind === "string" ? params.kind : ""} placeholder="Notification kind" className="w-full" />
-          <Button type="submit" size="sm">Filter</Button>
+          <AdminInput name="kind" defaultValue={typeof params.kind === "string" ? params.kind : ""} placeholder="Notification kind" />
+          <AdminButton type="submit" size="compact" variant="primary">Filter</AdminButton>
         </div>
-        <Input name="from" type="date" defaultValue={typeof params.from === "string" ? params.from : ""} />
-        <Input name="to" type="date" defaultValue={typeof params.to === "string" ? params.to : ""} />
+        <AdminInput name="from" type="date" defaultValue={typeof params.from === "string" ? params.from : ""} />
+        <AdminInput name="to" type="date" defaultValue={typeof params.to === "string" ? params.to : ""} />
       </form>
+      </AdminPanel>
 
       <AdminNotificationsClient notifications={rows} />
-    </div>
+    </>
   );
 }
 

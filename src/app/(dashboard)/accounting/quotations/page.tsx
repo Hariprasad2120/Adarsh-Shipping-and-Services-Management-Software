@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React from "react";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -28,14 +30,6 @@ export default async function QuotationsPage() {
   ]);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      <div>
-        <h2 className="monolith-h1 text-white">Quotations &amp; Credit/Debit Notes</h2>
-        <p className="text-slate-400 text-xs mt-1">
-          Prepare pre-sales quotations, convert them to sales invoices, and issue customer adjustments.
-        </p>
-      </div>
-
       <QuotationsClient
         initialQuotations={quotations.map((q: any) => ({
           id: q.id,
@@ -69,6 +63,5 @@ export default async function QuotationsPage() {
           postingDate: i.postingDate,
         }))}
       />
-    </div>
   );
 }

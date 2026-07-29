@@ -1,11 +1,24 @@
 "use client";
 
-import { NativeSelect } from "@/components/monolith/native-select";
-import { DateInput } from "@/components/monolith/date-input";
-import React, { useState, useEffect } from "react";
-import { toast } from "sonner";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Plus, Landmark, FileText, Calendar, Wallet, Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { DateInput } from "@/components/monolith/date-input";
+import {
+  AccountingAction,
+  AccountingAlert,
+  AccountingCheckbox,
+  AccountingField,
+  AccountingInput,
+  AccountingMetric,
+  AccountingMetrics,
+  AccountingSection,
+  AccountingSelect,
+  AccountingTable,
+} from "@/components/monolith/accounting-workspace";
 import { createPaymentEntryAction } from "@/modules/accounting/actions";
 
 interface NewPaymentClientProps {
@@ -29,122 +42,94 @@ export function NewPaymentClient({
 }: NewPaymentClientProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
-
-  // Form states
   const [paymentType, setPaymentType] = useState<"RECEIVE" | "PAY">("RECEIVE");
   const [partyType, setPartyType] = useState<"CUSTOMER" | "SUPPLIER">("CUSTOMER");
   const [partyId, setPartyId] = useState("");
   const [postingDate, setPostingDate] = useState(new Date().toISOString().split("T")[0]);
   const [amount, setAmount] = useState(0);
-  const [paidFromAccountId, setPaidFromAccountId] = useState("");
-  const [paidToAccountId, setPaidToAccountId] = useState("");
+  const [paidFromAccountId, setPaidFromAccountId] = useState(
+    otherAccounts.find((account) => account.accountType === "RECEIVABLE")?.id || "",
+  );
+  const [paidToAccountId, setPaidToAccountId] = useState(
+    bankAccounts[0]?.id || "",
+  );
   const [referenceNo, setReferenceNo] = useState("");
   const [remarks, setRemarks] = useState("");
   const [branchId, setBranchId] = useState("");
   const [submitImmediately, setSubmitImmediately] = useState(false);
-
-  // Allocation states
-  const [filteredInvoices, setFilteredInvoices] = useState<any[]>([]);
   const [allocations, setAllocations] = useState<Record<string, number>>({});
 
-  // Auto-switch party types and accounts when payment type changes
-  useEffect(() => {
-    if (paymentType === "RECEIVE") {
+  function updatePaymentType(nextType: "RECEIVE" | "PAY") {
+    setPaymentType(nextType);
+    setPartyId("");
+    setAllocations({});
+    if (nextType === "RECEIVE") {
       setPartyType("CUSTOMER");
-      // Destination (Paid To) should be cash/bank
       if (bankAccounts.length > 0) setPaidToAccountId(bankAccounts[0].id);
-      // Source (Paid From) should be Accounts Receivable
-      const ar = otherAccounts.find((a) => a.accountType === "RECEIVABLE");
-      if (ar) setPaidFromAccountId(ar.id);
+      const receivable = otherAccounts.find(
+        (account) => account.accountType === "RECEIVABLE",
+      );
+      if (receivable) setPaidFromAccountId(receivable.id);
     } else {
       setPartyType("SUPPLIER");
-      // Source (Paid From) should be cash/bank
       if (bankAccounts.length > 0) setPaidFromAccountId(bankAccounts[0].id);
-      // Destination (Paid To) should be Accounts Payable
-      const ap = otherAccounts.find((a) => a.accountType === "PAYABLE");
-      if (ap) setPaidToAccountId(ap.id);
+      const payable = otherAccounts.find(
+        (account) => account.accountType === "PAYABLE",
+      );
+      if (payable) setPaidToAccountId(payable.id);
     }
-    setPartyId("");
-  }, [paymentType]);
+  }
 
-  // Fetch invoices for selected party
-  useEffect(() => {
-    if (!partyId) {
-      setFilteredInvoices([]);
-      setAllocations({});
-      return;
-    }
+  const filteredInvoices = useMemo(
+    () =>
+      !partyId
+        ? []
+        : partyType === "CUSTOMER"
+        ? salesInvoices.filter((invoice) => invoice.customerId === partyId)
+        : purchaseInvoices.filter((invoice) => invoice.supplierId === partyId),
+    [partyId, partyType, purchaseInvoices, salesInvoices],
+  );
 
-    if (partyType === "CUSTOMER") {
-      const filtered = salesInvoices.filter((inv) => inv.customerId === partyId);
-      setFilteredInvoices(filtered);
-    } else {
-      const filtered = purchaseInvoices.filter((inv) => inv.supplierId === partyId);
-      setFilteredInvoices(filtered);
-    }
-    setAllocations({});
-  }, [partyId, partyType]);
+  const totalAllocated = Object.values(allocations).reduce(
+    (sum, value) => sum + value,
+    0,
+  );
+  const activeParties = partyType === "CUSTOMER" ? customers : suppliers;
 
-  const handleAllocationChange = (invoiceId: string, value: string) => {
-    const val = parseFloat(value) || 0;
-    setAllocations((prev) => ({
-      ...prev,
-      [invoiceId]: val,
-    }));
-  };
-
-  const handleAutoAllocate = () => {
+  function autoAllocate() {
     let remaining = amount;
-    const newAllocations: Record<string, number> = {};
-
-    for (const inv of filteredInvoices) {
+    const next: Record<string, number> = {};
+    for (const invoice of filteredInvoices) {
       if (remaining <= 0) break;
-      const allocate = Math.min(remaining, inv.outstandingAmount);
-      newAllocations[inv.id] = parseFloat(allocate.toFixed(2));
-      remaining -= allocate;
+      const allocated = Math.min(remaining, invoice.outstandingAmount);
+      next[invoice.id] = Number(allocated.toFixed(2));
+      remaining -= allocated;
     }
+    setAllocations(next);
+    toast.success("Amount allocated to the oldest outstanding bills");
+  }
 
-    setAllocations(newAllocations);
-    toast.success("Amount allocated automatically to oldest outstanding bills!");
-  };
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!partyId) return toast.error("Please select a customer or supplier");
+    if (!paidFromAccountId || !paidToAccountId)
+      return toast.error("Please select paid from and paid to accounts");
+    if (amount <= 0)
+      return toast.error("Payment amount must be greater than zero");
+    if (totalAllocated > amount + 0.05)
+      return toast.error("Allocated amount cannot exceed the payment amount");
 
-  const totalAllocated = Object.values(allocations).reduce((sum, v) => sum + v, 0);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!partyId) {
-      toast.error("Please select a customer or supplier");
-      return;
-    }
-
-    if (!paidFromAccountId || !paidToAccountId) {
-      toast.error("Please select paid from/to accounts");
-      return;
-    }
-
-    if (amount <= 0) {
-      toast.error("Payment amount must be greater than zero");
-      return;
-    }
-
-    if (totalAllocated > amount + 0.05) {
-      toast.error(`Total allocated amount (₹${totalAllocated.toFixed(2)}) cannot exceed payment amount (₹${amount.toFixed(2)})`);
-      return;
-    }
-
-    // Map allocations array
-    const allocArray = Object.entries(allocations)
-      .filter(([_, val]) => val > 0)
-      .map(([invoiceId, val]) => ({
+    const allocationRows = Object.entries(allocations)
+      .filter(([, value]) => value > 0)
+      .map(([invoiceId, value]) => ({
         salesInvoiceId: partyType === "CUSTOMER" ? invoiceId : null,
         purchaseInvoiceId: partyType === "SUPPLIER" ? invoiceId : null,
-        allocatedAmount: val,
+        allocatedAmount: value,
       }));
 
     setIsSaving(true);
     try {
-      const res = await createPaymentEntryAction({
+      const result = await createPaymentEntryAction({
         paymentType,
         postingDate: new Date(postingDate),
         partyType,
@@ -156,278 +141,239 @@ export function NewPaymentClient({
         remarks: remarks || null,
         branchId: branchId || null,
         submit: submitImmediately,
-        allocations: allocArray,
+        allocations: allocationRows,
       });
-
-      if (res.ok) {
-        toast.success(submitImmediately ? "Payment submitted and ledger cleared!" : "Payment draft saved!");
+      if (result.ok) {
+        toast.success(
+          submitImmediately
+            ? "Payment submitted and ledger posted"
+            : "Payment draft saved",
+        );
         router.push("/accounting/payment-entries");
         router.refresh();
       } else {
-        toast.error(res.error);
+        toast.error(result.error);
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to record payment");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to record payment",
+      );
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const activeParties = partyType === "CUSTOMER" ? customers : suppliers;
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      
-      {/* ─── PROPERTIES CARD ───────────────────────────────────────────── */}
-      <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
-        <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-          <Calendar className="size-4.5 text-[#F9D972]" />
-          <h3 className="font-bold text-xs text-white uppercase tracking-wider">Payment voucher header</h3>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-          
-          <div className="space-y-1">
-            <label className="monolith-label block text-slate-400">Payment Type</label>
-            <NativeSelect
+    <form className="mnx-accounting-form" onSubmit={handleSubmit}>
+      <AccountingSection
+        eyebrow="01"
+        title="Payment voucher"
+        description="Define direction, party, amount, ledger accounts, and organisational dimensions."
+      >
+        <div className="mnx-accounting-form-grid mnx-accounting-form-grid-wide">
+          <AccountingField label="Payment type">
+            <AccountingSelect
               value={paymentType}
-              onChange={(e) => setPaymentType(e.target.value as any)}
-              className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
+              onChange={(event) =>
+                updatePaymentType(event.target.value as "RECEIVE" | "PAY")
+              }
             >
-              <option value="RECEIVE">Receipt (Receive Cash)</option>
-              <option value="PAY">Payment (Disburse Cash)</option>
-            </NativeSelect>
-          </div>
-
-          <div className="space-y-1">
-            <label className="monolith-label block text-slate-400">Party Class</label>
-            <NativeSelect
+              <option value="RECEIVE">Receipt — receive cash</option>
+              <option value="PAY">Payment — disburse cash</option>
+            </AccountingSelect>
+          </AccountingField>
+          <AccountingField label="Party class">
+            <AccountingSelect
               value={partyType}
-              onChange={(e) => setPartyType(e.target.value as any)}
-              className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
+              onChange={(event) =>
+                setPartyType(event.target.value as "CUSTOMER" | "SUPPLIER")
+              }
             >
-              <option value="CUSTOMER">Customer / Client</option>
-              <option value="SUPPLIER">Vendor / Supplier</option>
-            </NativeSelect>
-          </div>
-
-          <div className="space-y-1">
-            <label className="monolith-label block text-slate-400">Select Party *</label>
-            <NativeSelect
+              <option value="CUSTOMER">Customer / client</option>
+              <option value="SUPPLIER">Vendor / supplier</option>
+            </AccountingSelect>
+          </AccountingField>
+          <AccountingField label="Party" required>
+            <AccountingSelect
               required
               value={partyId}
-              onChange={(e) => setPartyId(e.target.value)}
-              className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
+              onChange={(event) => {
+                setPartyId(event.target.value);
+                setAllocations({});
+              }}
             >
-              <option value="">Choose Party...</option>
-              {activeParties.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
+              <option value="">Choose party</option>
+              {activeParties.map((party) => (
+                <option key={party.id} value={party.id}>
+                  {party.name}
+                </option>
               ))}
-            </NativeSelect>
-          </div>
-
-          <div className="space-y-1">
-            <label className="monolith-label block text-slate-400">Posting Date</label>
+            </AccountingSelect>
+          </AccountingField>
+          <AccountingField label="Posting date" required>
             <DateInput
               required
               value={postingDate}
-              onChange={(e) => setPostingDate(e.target.value)}
-              className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
+              onChange={(event) => setPostingDate(event.target.value)}
             />
-          </div>
-
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-          
-          <div className="space-y-1">
-            <label className="monolith-label block text-slate-400">Payment Amount (₹) *</label>
-            <input
-              type="number"
-              step="0.01"
+          </AccountingField>
+          <AccountingField label="Payment amount" required>
+            <AccountingInput
               required
+              type="number"
               min="0.01"
-              placeholder="0.00"
+              step="0.01"
               value={amount || ""}
-              onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-              className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-mono font-bold"
+              onChange={(event) => setAmount(Number(event.target.value) || 0)}
             />
-          </div>
-
-          <div className="space-y-1">
-            <label className="monolith-label block text-slate-400">Paid From Account (Source)</label>
-            <NativeSelect
+          </AccountingField>
+          <AccountingField label="Paid from account" required>
+            <AccountingSelect
               required
               value={paidFromAccountId}
-              onChange={(e) => setPaidFromAccountId(e.target.value)}
-              className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
+              onChange={(event) => setPaidFromAccountId(event.target.value)}
             >
-              <option value="">Select Account...</option>
-              {paymentType === "RECEIVE" ? (
-                otherAccounts.map((a) => (
-                  <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName} ({a.accountType})</option>
-                ))
-              ) : (
-                bankAccounts.map((a) => (
-                  <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
-                ))
+              <option value="">Select source account</option>
+              {(paymentType === "RECEIVE" ? otherAccounts : bankAccounts).map(
+                (account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.accountCode} — {account.accountName}
+                  </option>
+                ),
               )}
-            </NativeSelect>
-          </div>
-
-          <div className="space-y-1">
-            <label className="monolith-label block text-slate-400">Paid To Account (Destination)</label>
-            <NativeSelect
+            </AccountingSelect>
+          </AccountingField>
+          <AccountingField label="Paid to account" required>
+            <AccountingSelect
               required
               value={paidToAccountId}
-              onChange={(e) => setPaidToAccountId(e.target.value)}
-              className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
+              onChange={(event) => setPaidToAccountId(event.target.value)}
             >
-              <option value="">Select Account...</option>
-              {paymentType === "RECEIVE" ? (
-                bankAccounts.map((a) => (
-                  <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
-                ))
-              ) : (
-                otherAccounts.map((a) => (
-                  <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName} ({a.accountType})</option>
-                ))
+              <option value="">Select destination account</option>
+              {(paymentType === "RECEIVE" ? bankAccounts : otherAccounts).map(
+                (account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.accountCode} — {account.accountName}
+                  </option>
+                ),
               )}
-            </NativeSelect>
-          </div>
-
-          <div className="space-y-1">
-            <label className="monolith-label block text-slate-400">Reference No / Chq / TxID</label>
-            <input
-              type="text"
-              placeholder="e.g. CHQ-882310"
+            </AccountingSelect>
+          </AccountingField>
+          <AccountingField label="Reference number">
+            <AccountingInput
               value={referenceNo}
-              onChange={(e) => setRemarks(e.target.value)}
-              className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs"
+              onChange={(event) => setReferenceNo(event.target.value)}
+              placeholder="Cheque or transaction reference"
             />
-          </div>
-
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div className="space-y-1">
-            <label className="monolith-label block text-slate-400">Branch Mapping</label>
-            <NativeSelect
+          </AccountingField>
+          <AccountingField label="Branch">
+            <AccountingSelect
               value={branchId}
-              onChange={(e) => setBranchId(e.target.value)}
-              className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs"
+              onChange={(event) => setBranchId(event.target.value)}
             >
-              <option value="">Global / Head Office</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
+              <option value="">Global / Head office</option>
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </option>
               ))}
-            </NativeSelect>
-          </div>
-          <div className="space-y-1">
-            <label className="monolith-label block text-slate-400">General Remarks</label>
-            <input
-              type="text"
-              placeholder="Voucher details..."
+            </AccountingSelect>
+          </AccountingField>
+          <AccountingField label="Remarks">
+            <AccountingInput
               value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
-              className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs"
+              onChange={(event) => setRemarks(event.target.value)}
             />
-          </div>
+          </AccountingField>
         </div>
-      </div>
+      </AccountingSection>
 
-      {/* ─── ALLOCATIONS SECTION ───────────────────────────────────────── */}
-      {filteredInvoices.length > 0 && (
-        <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
-          <div className="flex justify-between items-center border-b border-[#1c212a]/30 pb-3">
-            <h3 className="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-2">
-              <Wallet className="size-4.5 text-[#F9D972]" /> Outstanding bills for allocation
-            </h3>
-            {amount > 0 && (
-              <button
+      {filteredInvoices.length > 0 ? (
+        <AccountingSection
+          eyebrow="02"
+          title="Invoice allocations"
+          description="Allocate the payment against outstanding sales or purchase documents."
+          actions={
+            amount > 0 ? (
+              <AccountingAction
                 type="button"
-                onClick={handleAutoAllocate}
-                className="flex items-center gap-1 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-200 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                variant="secondary"
+                onClick={autoAllocate}
               >
-                <span>Auto Allocate</span>
-              </button>
-            )}
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="monolith-table">
-              <thead>
-                <tr>
-                  <th>Invoice Number</th>
-                  <th>Grand Total</th>
-                  <th>Outstanding Balance</th>
-                  <th className="text-right w-48">Allocated Amount (₹)</th>
+                Auto allocate
+              </AccountingAction>
+            ) : null
+          }
+        >
+          <AccountingTable>
+            <thead>
+              <tr>
+                <th>Invoice number</th>
+                <th>Grand total</th>
+                <th>Outstanding</th>
+                <th>Allocated amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredInvoices.map((invoice) => (
+                <tr key={invoice.id}>
+                  <td>{invoice.invoiceNumber}</td>
+                  <td className="mnx-accounting-amount">
+                    ₹{invoice.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  </td>
+                  <td className="mnx-accounting-amount">
+                    ₹{invoice.outstandingAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  </td>
+                  <td>
+                    <AccountingInput
+                      aria-label={`Allocation for ${invoice.invoiceNumber}`}
+                      type="number"
+                      min="0"
+                      max={invoice.outstandingAmount}
+                      step="0.01"
+                      value={allocations[invoice.id] || ""}
+                      onChange={(event) =>
+                        setAllocations((current) => ({
+                          ...current,
+                          [invoice.id]: Number(event.target.value) || 0,
+                        }))
+                      }
+                    />
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredInvoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-[#161f28]/10 text-xs">
-                    <td className="font-semibold text-white font-mono">{inv.invoiceNumber}</td>
-                    <td className="monolith-numeric text-slate-350">₹{inv.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                    <td className="monolith-numeric text-white font-bold">₹{inv.outstandingAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                    <td className="text-right">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max={inv.outstandingAmount}
-                        placeholder="0.00"
-                        value={allocations[inv.id] || ""}
-                        onChange={(e) => handleAllocationChange(inv.id, e.target.value)}
-                        className="bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2 text-xs font-mono w-40 text-right font-bold"
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="border-t border-[#1c212a]/50 pt-4 flex justify-between items-center text-xs font-semibold text-white">
-            <span>Total Allocated: ₹{totalAllocated.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
-            <span className={amount - totalAllocated >= 0 ? "text-emerald-400" : "text-[#D88700]"}>
-              Unallocated: ₹{(amount - totalAllocated).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-        </div>
+              ))}
+            </tbody>
+          </AccountingTable>
+        </AccountingSection>
+      ) : (
+        <AccountingAlert>
+          Select a party to review its outstanding invoices. Payments may also
+          remain on account without allocations.
+        </AccountingAlert>
       )}
 
-      {/* ─── FORM ACTIONS ──────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55">
-        <div className="flex items-center gap-2 select-none text-xs">
-          <input
-            type="checkbox"
-            id="submitImmediately"
-            checked={submitImmediately}
-            onChange={(e) => setSubmitImmediately(e.target.checked)}
-            className="size-4 accent-[#F9D972] rounded bg-slate-900 border-[#1c212a] cursor-pointer"
-          />
-          <label htmlFor="submitImmediately" className="monolith-label block text-slate-200 cursor-pointer">
-            Post and finalize payment immediately? (Disburse funds and settle invoices)
-          </label>
-        </div>
-
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-6 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="size-3.5 animate-spin" />
-              <span>Saving...</span>
-            </>
-          ) : (
-            <span>Record Payment</span>
-          )}
-        </button>
+      <AccountingMetrics>
+        <AccountingMetric label="Payment amount" value={`₹${amount.toFixed(2)}`} />
+        <AccountingMetric
+          label="Allocated"
+          value={`₹${totalAllocated.toFixed(2)}`}
+        />
+        <AccountingMetric
+          label="Unallocated"
+          value={`₹${(amount - totalAllocated).toFixed(2)}`}
+        />
+      </AccountingMetrics>
+      <div className="mnx-accounting-form-actions">
+        <AccountingCheckbox
+          checked={submitImmediately}
+          onChange={(event) => setSubmitImmediately(event.target.checked)}
+          label="Post and finalise payment immediately"
+        />
+        <AccountingAction disabled={isSaving} type="submit">
+          {isSaving ? <Loader2 aria-hidden="true" className="animate-spin" size={16} /> : null}
+          {isSaving ? "Saving…" : "Record payment"}
+        </AccountingAction>
       </div>
-
     </form>
   );
 }

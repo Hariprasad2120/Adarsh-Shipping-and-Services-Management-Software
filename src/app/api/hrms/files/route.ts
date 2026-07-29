@@ -1,63 +1,124 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getFiles, createFolder, uploadFileAsset } from "@/modules/hrms/service";
-import { requirePermission, apiError } from "@/lib/rbac";
+import {
+  HrDocumentDriveError,
+  isHrDocumentCategory,
+  listHrDocuments,
+  uploadHrDocument,
+} from "@/modules/hrms/document-drive";
+
+function errorResponse(error: unknown) {
+  if (error instanceof HrDocumentDriveError) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: {
+          code: error.code,
+          message: error.message,
+        },
+      },
+      { status: error.status },
+    );
+  }
+
+  console.error("HR document drive request failed:", error);
+  return NextResponse.json(
+    {
+      ok: false,
+      error: {
+        code: "INTERNAL_ERROR",
+        message:
+          error instanceof Error
+            ? error.message
+            : "The document drive request failed.",
+      },
+    },
+    { status: 500 },
+  );
+}
 
 export async function GET(request: Request) {
   try {
     const session = await auth();
-    if (!session || !session.user || !session.user.orgId) {
-      return NextResponse.json({ ok: false, error: { code: "UNAUTHORIZED", message: "Unauthorized" } }, { status: 401 });
+    if (!session?.user?.orgId) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: { code: "UNAUTHORIZED", message: "Unauthorized" },
+        },
+        { status: 401 },
+      );
     }
 
     const { searchParams } = new URL(request.url);
-    const scope = (searchParams.get("scope") || "personal") as "personal" | "organization" | "employee";
+    const category = searchParams.get("category") || "MY_SPACE";
+    if (!isHrDocumentCategory(category)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid document category.",
+          },
+        },
+        { status: 400 },
+      );
+    }
 
-    await requirePermission(session.user.id, "hrms.documents.read");
-
-    const data = await getFiles(session.user.orgId, session.user.id, scope);
+    const data = await listHrDocuments({
+      orgId: session.user.orgId,
+      actorId: session.user.id,
+      category,
+      ownerId: searchParams.get("employeeId"),
+      search: searchParams.get("search"),
+    });
     return NextResponse.json({ ok: true, data });
   } catch (error) {
-    return apiError(error);
+    return errorResponse(error);
   }
 }
 
 export async function POST(request: Request) {
   try {
     const session = await auth();
-    if (!session || !session.user || !session.user.orgId) {
-      return NextResponse.json({ ok: false, error: { code: "UNAUTHORIZED", message: "Unauthorized" } }, { status: 401 });
-    }
-
-    await requirePermission(session.user.id, "hrms.documents.upload");
-
-    const body = await request.json();
-    const type = body.type || "file"; // file | folder
-
-    if (type === "folder") {
-      if (!body.name) {
-        return NextResponse.json({ ok: false, error: { code: "VALIDATION_ERROR", message: "Folder name is required" } }, { status: 400 });
-      }
-      const data = await createFolder(session.user.orgId, body.name, body.scope || "personal", session.user.id);
-      return NextResponse.json({ ok: true, data });
-    } else {
-      if (!body.name || !body.fileKey) {
-        return NextResponse.json({ ok: false, error: { code: "VALIDATION_ERROR", message: "File name and key are required" } }, { status: 400 });
-      }
-      await requirePermission(session.user.id, "hrms.documents.upload");
-      const data = await uploadFileAsset(
-        session.user.orgId,
-        body.name,
-        body.fileKey,
-        body.mimeType || "application/octet-stream",
-        body.sizeBytes || 0,
-        body.folderId || null,
-        body.scope || "personal",
-        session.user.id
+    if (!session?.user?.orgId) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: { code: "UNAUTHORIZED", message: "Unauthorized" },
+        },
+        { status: 401 },
       );
-      return NextResponse.json({ ok: true, data });
     }
+
+    const formData = await request.formData();
+    const categoryValue = formData.get("category");
+    const category =
+      typeof categoryValue === "string" ? categoryValue : undefined;
+    const file = formData.get("file");
+    if (!isHrDocumentCategory(category) || !(file instanceof File)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "A valid category and file are required.",
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    const ownerId = formData.get("employeeId");
+    const data = await uploadHrDocument({
+      orgId: session.user.orgId,
+      actorId: session.user.id,
+      category,
+      ownerId: typeof ownerId === "string" ? ownerId : null,
+      file,
+    });
+    return NextResponse.json({ ok: true, data }, { status: 201 });
   } catch (error) {
-    return apiError(error);
+    return errorResponse(error);
   }
 }

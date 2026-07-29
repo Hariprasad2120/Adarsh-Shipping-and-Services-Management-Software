@@ -4,6 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw, CheckCircle2, AlertTriangle } from "lucide-react";
 import { syncJobWorkspaceAction } from "./actions";
+import {
+  CommunicationButton,
+  WorkspaceAlert,
+} from "@/components/monolith";
 
 export default function SyncDriveButton({ jobId }: { jobId: string }) {
   const router = useRouter();
@@ -23,36 +27,40 @@ export default function SyncDriveButton({ jobId }: { jobId: string }) {
       } else {
         setError(res.error || "Failed to sync Drive folder");
       }
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred during sync");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred during sync",
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col space-y-2">
-      <button
+    <div className="mnx-communication-inline-action">
+      <CommunicationButton
         onClick={handleSync}
         disabled={loading}
-        className="inline-flex items-center justify-center space-x-2 bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] disabled:opacity-60 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all shadow-sm"
+        variant="primary"
       >
-        <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
+        <RefreshCw className={loading ? "mnx-state-spinner" : undefined} aria-hidden="true" />
         <span>{loading ? "Syncing Workspace..." : "Sync to Google Shared Drive"}</span>
-      </button>
+      </CommunicationButton>
 
       {success && (
-        <div className="flex items-center space-x-1.5 text-xs text-emerald-500 font-semibold mt-1">
-          <CheckCircle2 className="size-4 shrink-0" />
+        <WorkspaceAlert variant="success">
+          <CheckCircle2 aria-hidden="true" />
           <span>Workspace successfully provisioned & synced!</span>
-        </div>
+        </WorkspaceAlert>
       )}
 
       {error && (
-        <div className="flex items-start space-x-1.5 text-xs text-orange-500 font-semibold mt-1">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-          <span className="leading-relaxed">{error}</span>
-        </div>
+        <WorkspaceAlert variant="warning">
+          <AlertTriangle aria-hidden="true" />
+          <span>{error}</span>
+        </WorkspaceAlert>
       )}
     </div>
   );

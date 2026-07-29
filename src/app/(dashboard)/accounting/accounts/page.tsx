@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getChartOfAccounts } from "@/modules/accounting/service";
 import { AccountsClient } from "./accounts-client";
-import { ShieldAlert } from "lucide-react";
+import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
 
 export default async function ChartOfAccountsPage() {
   const session = await auth();
@@ -18,17 +18,9 @@ export default async function ChartOfAccountsPage() {
   ]);
 
   return (
-    <div className="p-8 space-y-6 max-w-[1400px] mx-auto animate-in fade-in duration-200">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-mono-border/20 pb-5">
-        <div>
-          <h2 className="monolith-h1 text-white">Chart of Accounts</h2>
-          <p className="text-slate-400 text-xs mt-1">
-            Browse, group, and register corporate ledger accounts across Asset, Liability, Equity, Income, and Expense classifications.
-          </p>
-        </div>
-      </div>
-
+    <>
+      <AccountingRoutePageHeader />
       <AccountsClient initialCoa={coa} branches={branches} />
-    </div>
+    </>
   );
 }

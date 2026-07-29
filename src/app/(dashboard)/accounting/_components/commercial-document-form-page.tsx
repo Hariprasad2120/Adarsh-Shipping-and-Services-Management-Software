@@ -1,9 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
-import { ShieldAlert } from "lucide-react";
-import { InvoiceForm } from "@/app/(dashboard)/crm/invoices/invoice-form";
+import { AccountingCommercialDocumentForm } from "@/components/monolith/accounting-commercial-document-form";
+import {
+  AccountingAlert,
+  AccountingRoutePageHeader,
+} from "@/components/monolith/accounting-workspace";
 
 interface CommercialDocumentFormPageProps {
   title: string;
@@ -25,25 +30,13 @@ export async function CommercialDocumentFormPage({
 
   const orgId = session.user.orgId;
   if (!orgId) {
-    return (
-      <div className="p-8 text-center text-red-400">
-        <ShieldAlert className="mx-auto mb-4 size-12" />
-        <h2 className="text-xl font-bold">Configuration Error</h2>
-        <p className="mt-1 text-sm">Missing organisation context.</p>
-      </div>
-    );
+    return <AccountingAlert variant="danger">Missing organisation context. Contact an administrator before creating documents.</AccountingAlert>;
   }
 
   try {
     await requirePermission(session.user.id, "crm.invoice.manage");
   } catch {
-    return (
-      <div className="p-8 text-center text-red-400">
-        <ShieldAlert className="mx-auto mb-4 size-12" />
-        <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="mt-1 text-sm">You do not have permission to manage commercial documents.</p>
-      </div>
-    );
+    return <AccountingAlert variant="danger">You do not have permission to manage commercial documents.</AccountingAlert>;
   }
 
   const [accounts, contacts, vendors, employees, products, bankAccounts, quoteCount, invoiceCount, debitNoteCount, salesOrderCount, purchaseOrderCount] =
@@ -100,12 +93,9 @@ export async function CommercialDocumentFormPage({
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <div>
-        <h2 className="monolith-h1 text-white">{title}</h2>
-        <p className="mt-1 text-sm text-slate-400">{description}</p>
-      </div>
-      <InvoiceForm
+    <>
+      <AccountingRoutePageHeader title={title} description={description} />
+      <AccountingCommercialDocumentForm
         accounts={accounts}
         contacts={formattedContacts}
         vendors={vendors}
@@ -117,6 +107,6 @@ export async function CommercialDocumentFormPage({
         redirectPath={redirectPath}
         allowedTypes={allowedTypes}
       />
-    </div>
+    </>
   );
 }

@@ -1,10 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React from "react";
 import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { getPurchaseInvoice } from "@/modules/accounting/service";
 import { PurchaseInvoiceDetailClient } from "./detail-client";
-import { ArrowLeft } from "lucide-react";
-import NextLink from "next/link";
+import {
+  AccountingActionLink,
+  AccountingRoutePageHeader,
+} from "@/components/monolith/accounting-workspace";
 
 interface PurchaseInvoiceDetailPageProps {
   params: Promise<{ id: string }>;
@@ -57,23 +61,16 @@ export default async function PurchaseInvoiceDetailPage({ params }: PurchaseInvo
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      
-      {/* HEADER */}
-      <div className="flex items-center gap-3 border-b border-mono-border/20 pb-5">
-        <NextLink
-          href="/accounting/purchase-invoices"
-          className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800/40 rounded-xl transition-all cursor-pointer border border-[#1c212a]/30"
-          title="Back to Purchase Invoices"
-        >
-          <ArrowLeft className="size-5" />
-        </NextLink>
-        <div>
-          <h2 className="text-xl font-bold text-white uppercase tracking-wider">Invoice: {invoice.invoiceNumber}</h2>
-        </div>
-      </div>
-
+    <>
+      <AccountingRoutePageHeader
+        title={`Invoice ${invoice.invoiceNumber}`}
+        actions={
+          <AccountingActionLink href="/accounting/purchase-invoices">
+            Back to purchase invoices
+          </AccountingActionLink>
+        }
+      />
       <PurchaseInvoiceDetailClient invoice={serializedInvoice} />
-    </div>
+    </>
   );
 }

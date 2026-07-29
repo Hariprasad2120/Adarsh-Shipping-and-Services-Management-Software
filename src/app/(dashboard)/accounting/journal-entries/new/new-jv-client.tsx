@@ -1,299 +1,293 @@
 "use client";
 
-import { NativeSelect } from "@/components/monolith/native-select";
-import { DateInput } from "@/components/monolith/date-input";
-import React, { useState } from "react";
-import { toast } from "sonner";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Calendar, FileText, Landmark, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { DateInput } from "@/components/monolith/date-input";
+import {
+  AccountingAction,
+  AccountingAlert,
+  AccountingCheckbox,
+  AccountingField,
+  AccountingInput,
+  AccountingMetric,
+  AccountingMetrics,
+  AccountingSection,
+  AccountingSelect,
+} from "@/components/monolith/accounting-workspace";
 import { createJournalEntryAction } from "@/modules/accounting/actions";
 
 interface NewJVClientProps {
-  accounts: any[];
-  branches: any[];
+  accounts: Array<{ id: string; accountCode: string; accountName: string }>;
+  branches: Array<{ id: string; name: string }>;
 }
+
+type JournalLine = {
+  accountId: string;
+  debit: number | string;
+  credit: number | string;
+  remarks: string;
+};
+
+const emptyLine = (): JournalLine => ({
+  accountId: "",
+  debit: 0,
+  credit: 0,
+  remarks: "",
+});
 
 export function NewJVClient({ accounts, branches }: NewJVClientProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [branchId, setBranchId] = useState("");
   const [remarks, setRemarks] = useState("");
-  const [postingDate, setPostingDate] = useState(new Date().toISOString().split("T")[0]);
+  const [postingDate, setPostingDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
   const [submitImmediately, setSubmitImmediately] = useState(false);
+  const [lines, setLines] = useState<JournalLine[]>([emptyLine(), emptyLine()]);
 
-  const [lines, setLines] = useState<any[]>([
-    { accountId: "", debit: 0, credit: 0, remarks: "" },
-    { accountId: "", debit: 0, credit: 0, remarks: "" },
-  ]);
+  function updateLine(
+    index: number,
+    field: keyof JournalLine,
+    value: string,
+  ) {
+    setLines((current) =>
+      current.map((line, lineIndex) => {
+        if (lineIndex !== index) return line;
+        const next = { ...line, [field]: value };
+        if (field === "debit" && Number(value) > 0) next.credit = 0;
+        if (field === "credit" && Number(value) > 0) next.debit = 0;
+        return next;
+      }),
+    );
+  }
 
-  const handleAddLine = () => {
-    setLines([...lines, { accountId: "", debit: 0, credit: 0, remarks: "" }]);
-  };
-
-  const handleRemoveLine = (idx: number) => {
-    if (lines.length <= 2) {
-      toast.error("At least two lines are required for a Journal Entry");
-      return;
-    }
-    setLines(lines.filter((_, i) => i !== idx));
-  };
-
-  const handleLineChange = (idx: number, field: string, value: any) => {
-    const newLines = [...lines];
-    newLines[idx][field] = value;
-    
-    // Auto clear credit if debit is entered, and vice versa
-    if (field === "debit" && parseFloat(value) > 0) {
-      newLines[idx]["credit"] = 0;
-    } else if (field === "credit" && parseFloat(value) > 0) {
-      newLines[idx]["debit"] = 0;
-    }
-
-    setLines(newLines);
-  };
-
-  const totalDebit = lines.reduce((sum, l) => sum + (parseFloat(l.debit) || 0), 0);
-  const totalCredit = lines.reduce((sum, l) => sum + (parseFloat(l.credit) || 0), 0);
+  const totalDebit = lines.reduce(
+    (sum, line) => sum + (Number(line.debit) || 0),
+    0,
+  );
+  const totalCredit = lines.reduce(
+    (sum, line) => sum + (Number(line.credit) || 0),
+    0,
+  );
   const difference = Math.abs(totalDebit - totalCredit);
   const isBalanced = difference <= 0.01;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (lines.some((l) => !l.accountId)) {
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (lines.some((line) => !line.accountId)) {
       toast.error("Please select accounts for all lines");
       return;
     }
-
     if (totalDebit <= 0) {
       toast.error("Transaction total amount must be greater than zero");
       return;
     }
-
     if (!isBalanced) {
-      toast.error(`Transaction is unbalanced. Debits must equal credits. Difference: ₹${difference.toFixed(2)}`);
+      toast.error(
+        `Transaction is unbalanced. Difference: ₹${difference.toFixed(2)}`,
+      );
       return;
     }
 
     setIsSaving(true);
     try {
-      const res = await createJournalEntryAction({
+      const result = await createJournalEntryAction({
         postingDate: new Date(postingDate),
         remarks: remarks || null,
         branchId: branchId || null,
         submit: submitImmediately,
-        lines: lines.map((l) => ({
-          accountId: l.accountId,
-          debit: parseFloat(l.debit) || 0,
-          credit: parseFloat(l.credit) || 0,
-          remarks: l.remarks || null,
+        lines: lines.map((line) => ({
+          accountId: line.accountId,
+          debit: Number(line.debit) || 0,
+          credit: Number(line.credit) || 0,
+          remarks: line.remarks || null,
         })),
       });
-
-      if (res.ok) {
-        toast.success(submitImmediately ? "Journal Entry posted successfully!" : "Journal Entry draft saved!");
+      if (result.ok) {
+        toast.success(
+          submitImmediately
+            ? "Journal entry posted successfully"
+            : "Journal entry draft saved",
+        );
         router.push("/accounting/journal-entries");
         router.refresh();
       } else {
-        toast.error(res.error);
+        toast.error(result.error);
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create journal entry");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create journal entry",
+      );
     } finally {
       setIsSaving(false);
     }
-  };
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      
-      {/* ─── VOUCHER PROPERTIES ────────────────────────────────────────── */}
-      <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
-        <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-          <Calendar className="size-4.5 text-[#F9D972]" />
-          <h3 className="font-bold text-xs text-white uppercase tracking-wider">Voucher Header Details</h3>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-1">
-            <label className="monolith-label block text-slate-400">Posting Date</label>
+    <form className="mnx-accounting-form" onSubmit={handleSubmit}>
+      <AccountingSection
+        eyebrow="01"
+        title="Voucher header"
+        description="Set the posting date, organisational dimension, and narration."
+      >
+        <div className="mnx-accounting-form-grid mnx-accounting-form-grid-wide">
+          <AccountingField label="Posting date" htmlFor="jv-date" required>
             <DateInput
+              id="jv-date"
               required
               value={postingDate}
-              onChange={(e) => setPostingDate(e.target.value)}
-              className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
+              onChange={(event) => setPostingDate(event.target.value)}
             />
-          </div>
-
-          <div className="space-y-1">
-            <label className="monolith-label block text-slate-400">Branch Dimension</label>
-            <NativeSelect
+          </AccountingField>
+          <AccountingField label="Branch" htmlFor="jv-branch">
+            <AccountingSelect
+              id="jv-branch"
               value={branchId}
-              onChange={(e) => setBranchId(e.target.value)}
-              className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
+              onChange={(event) => setBranchId(event.target.value)}
             >
-              <option value="">Global / Org-wide</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
+              <option value="">Global / organisation-wide</option>
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </option>
               ))}
-            </NativeSelect>
-          </div>
-
-          <div className="space-y-1">
-            <label className="monolith-label block text-slate-400">General Remarks</label>
-            <input
-              type="text"
-              placeholder="e.g. Month-end depreciation adjustment"
+            </AccountingSelect>
+          </AccountingField>
+          <AccountingField label="General remarks" htmlFor="jv-remarks">
+            <AccountingInput
+              id="jv-remarks"
               value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
-              className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs"
+              placeholder="Month-end depreciation adjustment"
+              onChange={(event) => setRemarks(event.target.value)}
             />
-          </div>
+          </AccountingField>
         </div>
-      </div>
+      </AccountingSection>
 
-      {/* ─── TRANSACTION ROWS ───────────────────────────────────────────── */}
-      <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
-        <div className="flex justify-between items-center border-b border-[#1c212a]/30 pb-3">
-          <h3 className="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-2">
-            <Landmark className="size-4.5 text-[#F9D972]" /> Debit & Credit Distribution Lines
-          </h3>
-          <button
+      <AccountingSection
+        eyebrow="02"
+        title="Debit and credit distribution"
+        description="Every voucher needs at least two lines and equal debit and credit totals."
+        actions={
+          <AccountingAction
             type="button"
-            onClick={handleAddLine}
-            className="flex items-center gap-1 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-200 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+            variant="secondary"
+            onClick={() => setLines((current) => [...current, emptyLine()])}
           >
-            <Plus className="size-3.5 text-[#F9D972]" />
-            <span>Add Row</span>
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          {lines.map((line, idx) => (
-            <div key={idx} className="flex flex-col md:flex-row gap-3 items-end md:items-center text-xs">
-              
-              {/* Account Dropdown */}
-              <div className="flex-1 space-y-1 w-full">
-                <label className="monolith-label text-slate-500 md:hidden">Account</label>
-                <NativeSelect
+            <Plus aria-hidden="true" size={16} />
+            Add line
+          </AccountingAction>
+        }
+      >
+        <div className="mnx-accounting-form">
+          {lines.map((line, index) => (
+            <div
+              className="mnx-accounting-form-grid mnx-accounting-form-grid-wide"
+              key={index}
+            >
+              <AccountingField label={`Account ${index + 1}`}>
+                <AccountingSelect
                   required
                   value={line.accountId}
-                  onChange={(e) => handleLineChange(idx, "accountId", e.target.value)}
-                  className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-semibold"
+                  onChange={(event) =>
+                    updateLine(index, "accountId", event.target.value)
+                  }
                 >
-                  <option value="">Select Account...</option>
-                  {accounts.map((a) => (
-                    <option key={a.id} value={a.id}>{a.accountCode} - {a.accountName}</option>
+                  <option value="">Select account</option>
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.accountCode} — {account.accountName}
+                    </option>
                   ))}
-                </NativeSelect>
-              </div>
-
-              {/* Debit */}
-              <div className="w-full md:w-36 space-y-1">
-                <label className="monolith-label text-slate-500 md:hidden">Debit</label>
-                <input
+                </AccountingSelect>
+              </AccountingField>
+              <AccountingField label="Debit">
+                <AccountingInput
                   type="number"
                   step="0.01"
                   min="0"
-                  placeholder="Debit (₹)"
                   value={line.debit || ""}
-                  onChange={(e) => handleLineChange(idx, "debit", e.target.value)}
-                  className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-mono"
+                  onChange={(event) =>
+                    updateLine(index, "debit", event.target.value)
+                  }
                 />
-              </div>
-
-              {/* Credit */}
-              <div className="w-full md:w-36 space-y-1">
-                <label className="monolith-label text-slate-500 md:hidden">Credit</label>
-                <input
+              </AccountingField>
+              <AccountingField label="Credit">
+                <AccountingInput
                   type="number"
                   step="0.01"
                   min="0"
-                  placeholder="Credit (₹)"
                   value={line.credit || ""}
-                  onChange={(e) => handleLineChange(idx, "credit", e.target.value)}
-                  className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs font-mono"
+                  onChange={(event) =>
+                    updateLine(index, "credit", event.target.value)
+                  }
                 />
-              </div>
-
-              {/* Row Remarks */}
-              <div className="flex-1 space-y-1 w-full">
-                <label className="monolith-label text-slate-500 md:hidden">Description</label>
-                <input
-                  type="text"
-                  placeholder="Line description..."
+              </AccountingField>
+              <AccountingField label="Line description">
+                <AccountingInput
                   value={line.remarks}
-                  onChange={(e) => handleLineChange(idx, "remarks", e.target.value)}
-                  className="w-full bg-[#161f28] border border-[#1c212a] text-white rounded-xl p-2.5 text-xs"
+                  onChange={(event) =>
+                    updateLine(index, "remarks", event.target.value)
+                  }
                 />
-              </div>
-
-              {/* Delete Button */}
-              <button
+              </AccountingField>
+              <AccountingAction
+                aria-label={`Remove line ${index + 1}`}
                 type="button"
-                onClick={() => handleRemoveLine(idx)}
-                className="p-2.5 text-slate-500 hover:text-red-450 hover:bg-red-500/5 rounded-xl transition-all cursor-pointer border border-[#1c212a]/30 mb-[1px]"
+                variant="destructive"
+                onClick={() => {
+                  if (lines.length <= 2) {
+                    toast.error("At least two lines are required");
+                    return;
+                  }
+                  setLines((current) =>
+                    current.filter((_, lineIndex) => lineIndex !== index),
+                  );
+                }}
               >
-                <Trash2 className="size-4" />
-              </button>
+                <Trash2 aria-hidden="true" size={16} />
+                Remove
+              </AccountingAction>
             </div>
           ))}
         </div>
+      </AccountingSection>
 
-        {/* BALANCE SUMMARY BAR */}
-        <div className="border-t border-[#1c212a]/50 pt-4 flex flex-col sm:flex-row sm:justify-between items-center gap-4 text-xs font-semibold text-white">
-          <div className="flex gap-4">
-            <div>
-              <span className="text-slate-400 block mb-0.5">Total Debit:</span>
-              <span className="monolith-numeric text-white text-sm font-bold">₹{totalDebit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 block mb-0.5">Total Credit:</span>
-              <span className="monolith-numeric text-white text-sm font-bold">₹{totalCredit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
-            </div>
-          </div>
+      <AccountingMetrics>
+        <AccountingMetric
+          label="Total debit"
+          value={`₹${totalDebit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+        />
+        <AccountingMetric
+          label="Total credit"
+          value={`₹${totalCredit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+        />
+        <AccountingMetric
+          label="Difference"
+          value={`₹${difference.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+          detail={isBalanced ? "Voucher is balanced" : "Voucher is unbalanced"}
+        />
+      </AccountingMetrics>
 
-          <div className="text-center sm:text-right">
-            <span className="text-slate-400 block mb-0.5">Difference:</span>
-            <span className={`monolith-numeric text-sm font-bold ${isBalanced ? "text-emerald-400" : "text-[#D88700]"}`}>
-              ₹{difference.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-              {isBalanced ? " (Balanced)" : " (Unbalanced)"}
-            </span>
-          </div>
-        </div>
+      <AccountingAlert variant={isBalanced ? "success" : "warning"}>
+        {isBalanced
+          ? "Debit and credit totals are balanced."
+          : "The voucher cannot be saved until debit and credit totals match."}
+      </AccountingAlert>
+      <div className="mnx-accounting-form-actions">
+        <AccountingCheckbox
+          checked={submitImmediately}
+          onChange={(event) => setSubmitImmediately(event.target.checked)}
+          label="Post directly to the general ledger"
+        />
+        <AccountingAction disabled={isSaving} type="submit">
+          {isSaving ? <Loader2 aria-hidden="true" className="animate-spin" size={16} /> : null}
+          {isSaving ? "Saving…" : "Save voucher"}
+        </AccountingAction>
       </div>
-
-      {/* ─── FORM ACTIONS ──────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55">
-        <div className="flex items-center gap-2 select-none text-xs">
-          <input
-            type="checkbox"
-            id="submitImmediately"
-            checked={submitImmediately}
-            onChange={(e) => setSubmitImmediately(e.target.checked)}
-            className="size-4 accent-[#F9D972] rounded bg-slate-900 border-[#1c212a] cursor-pointer"
-          />
-          <label htmlFor="submitImmediately" className="monolith-label block text-slate-200 cursor-pointer">
-            Post directly to General Ledger? (Skip Draft status)
-          </label>
-        </div>
-
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-6 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="size-3.5 animate-spin" />
-              <span>Saving...</span>
-            </>
-          ) : (
-            <span>Save Voucher</span>
-          )}
-        </button>
-      </div>
-
     </form>
   );
 }

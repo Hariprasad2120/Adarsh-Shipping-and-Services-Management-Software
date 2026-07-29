@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { listAccounts } from "@/modules/accounting/service";
 import { BankingClient } from "./banking-client";
+import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
 
 export default async function BankingPage() {
   const session = await auth();
@@ -79,14 +80,8 @@ export default async function BankingPage() {
     }));
 
   return (
-    <div className="p-8 space-y-6 max-w-[1200px] mx-auto animate-in fade-in duration-200">
-      <div>
-        <h2 className="monolith-h1 text-white">Banking &amp; Cash</h2>
-        <p className="text-slate-400 text-xs mt-1">
-          Monitor your liquidity, reconcile bank transactions, and perform internal transfers.
-        </p>
-      </div>
-
+    <>
+      <AccountingRoutePageHeader />
       <BankingClient
         bankAccounts={accountsWithBalances}
         transactions={transactions.map((t) => ({
@@ -102,6 +97,6 @@ export default async function BankingPage() {
         }))}
         leafAccounts={leafAccounts}
       />
-    </div>
+    </>
   );
 }

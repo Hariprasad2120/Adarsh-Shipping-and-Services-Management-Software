@@ -1,188 +1,239 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Mail, Folder, Briefcase, ExternalLink, ArrowRight, RefreshCw } from "lucide-react";
+import {
+  ArrowRight,
+  Briefcase,
+  ExternalLink,
+  Folder,
+  Mail,
+  RefreshCw,
+  Search,
+} from "lucide-react";
 import Link from "next/link";
+import {
+  CommunicationButton,
+  CommunicationInput,
+  CommunicationPanel,
+  CommunicationPanelHeader,
+  WorkspaceState,
+} from "@/components/monolith";
+
+type EmailResult = {
+  id: string;
+  from: string;
+  subject: string;
+  snippet: string;
+};
+
+type FileResult = {
+  id: string;
+  name: string;
+  mimeType: string;
+  webViewLink?: string;
+};
+
+type JobResult = {
+  id: string;
+  jobNumber: string;
+  title: string;
+};
+
+type Results = {
+  emails: EmailResult[];
+  files: FileResult[];
+  jobs: JobResult[];
+};
+
+const emptyResults: Results = { emails: [], files: [], jobs: [] };
 
 export default function UnifiedSearchPortal() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<{ emails: any[]; files: any[]; jobs: any[] }>({
-    emails: [],
-    files: [],
-    jobs: []
-  });
+  const [results, setResults] = useState<Results>(emptyResults);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  async function handleSearch(event: React.FormEvent) {
+    event.preventDefault();
     if (!query.trim()) return;
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/communication/search?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
+      const response = await fetch(
+        `/api/communication/search?q=${encodeURIComponent(query)}`,
+      );
+      const data = await response.json();
       setResults({
-        emails: data.emails || [],
-        files: data.files || [],
-        jobs: data.jobs || []
+        emails: data.emails ?? [],
+        files: data.files ?? [],
+        jobs: data.jobs ?? [],
       });
-    } catch (err) {
-      console.error("Unified search failed:", err);
+    } catch (error) {
+      console.error("Unified search failed:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const totalResults = results.emails.length + results.files.length + results.jobs.length;
+  const totalResults =
+    results.emails.length + results.files.length + results.jobs.length;
 
   return (
-    <div className="space-y-6">
-      {/* Search Bar and Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between p-6 rounded-2xl border border-mono-border bg-mono-card shadow-sm gap-4 text-left">
-        <div className="flex-1">
-          <span className="text-[10px] uppercase font-bold tracking-widest text-[#F9D972]">Hub Search</span>
-          <h1 className="text-xl font-bold text-mono-text mt-1">Unified Search Center</h1>
-          <p className="text-xs text-mono-muted mt-0.5">
-            Query across Gmail threads, Google Shared Drive files, and internal Monolith jobs.
-          </p>
-        </div>
-
-        <form onSubmit={handleSearch} className="flex items-center space-x-2 w-full md:max-w-md">
-          <div className="relative flex-1">
-            <input
-              type="text"
-              placeholder="Search keyword..."
+    <>
+      <CommunicationPanel>
+        <CommunicationPanelHeader
+          eyebrow="Connected index"
+          title="Search mail, files, and jobs"
+          description="Query Gmail threads, Google Drive files, and internal Monolith jobs together."
+        />
+        <form
+          onSubmit={handleSearch}
+          className="mnx-communication-search-form"
+        >
+          <span>
+            <Search aria-hidden="true" />
+            <CommunicationInput
+              type="search"
+              placeholder="Search keyword"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="w-full text-xs bg-mono-card border border-mono-border rounded-xl pl-8 pr-3 py-2.5 focus:outline-none"
+              onChange={(event) => setQuery(event.target.value)}
               required
             />
-            <Search className="absolute left-2.5 top-3.5 size-4 text-mono-muted" />
-          </div>
-          <button
+          </span>
+          <CommunicationButton
             type="submit"
             disabled={loading}
-            className="flex items-center space-x-1.5 bg-[#F9D972] text-white hover:bg-[#E8C85D] disabled:opacity-50 px-4 py-2.5 rounded-xl text-xs font-bold uppercase transition-all shrink-0"
+            variant="primary"
           >
-            {loading ? <RefreshCw className="size-4 animate-spin" /> : <span>Search</span>}
-          </button>
+            {loading ? (
+              <RefreshCw className="mnx-state-spinner" aria-hidden="true" />
+            ) : (
+              <Search aria-hidden="true" />
+            )}
+            Search
+          </CommunicationButton>
         </form>
-      </div>
+      </CommunicationPanel>
 
-      {/* Query statistics */}
-      {query && !loading && (
-        <div className="text-left text-xs text-mono-muted px-2">
-          Found <span className="font-bold text-mono-text monolith-numeric">{totalResults}</span> matches for query "{query}"
-        </div>
-      )}
+      {query && !loading ? (
+        <p className="mnx-communication-result-count">
+          Found <strong>{totalResults}</strong> matches for “{query}”.
+        </p>
+      ) : null}
 
-      {/* Search results panels */}
       {totalResults > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-left">
-          {/* 1. Job Matches */}
-          <div className="rounded-xl border border-mono-border bg-mono-card p-5 shadow-sm space-y-4">
-            <h3 className="monolith-h3 text-mono-text flex items-center gap-2">
-              <Briefcase size={16} className="text-[#F9D972]" />
-              <span>Jobs & Shipments ({results.jobs.length})</span>
-            </h3>
+        <div className="mnx-communication-result-grid">
+          <ResultPanel
+            title="Jobs and shipments"
+            count={results.jobs.length}
+            icon={<Briefcase aria-hidden="true" />}
+            empty="No matching jobs."
+          >
+            {results.jobs.map((job) => (
+              <article key={job.id} className="mnx-communication-record">
+                <div>
+                  <strong>{job.jobNumber}</strong>
+                  <small>{job.title}</small>
+                </div>
+                <Link
+                  href={`/cha/jobs/${job.id}`}
+                  className="mnx-communication-record-link"
+                >
+                  Open <ArrowRight aria-hidden="true" />
+                </Link>
+              </article>
+            ))}
+          </ResultPanel>
 
-            <div className="space-y-3">
-              {results.jobs.length === 0 ? (
-                <div className="text-center py-6 text-mono-muted text-xs">No matching jobs.</div>
-              ) : (
-                results.jobs.map((job) => (
-                  <div key={job.id} className="monolith-card monolith-accent p-3 rounded-xl border border-mono-border bg-mono-soft flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold text-mono-text">{job.jobNumber}</h4>
-                      <p className="text-[10px] text-mono-muted mt-0.5 truncate max-w-[150px]">{job.title}</p>
-                    </div>
-                    <Link
-                      href={`/cha/jobs/${job.id}`}
-                      className="text-[10px] font-bold uppercase text-[#F9D972] hover:underline flex items-center gap-1"
-                    >
-                      <span>Open</span>
-                      <ArrowRight size={10} />
-                    </Link>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          <ResultPanel
+            title="Email"
+            count={results.emails.length}
+            icon={<Mail aria-hidden="true" />}
+            empty="No matching email."
+          >
+            {results.emails.map((email) => (
+              <article key={email.id} className="mnx-communication-record">
+                <div>
+                  <strong>{email.subject}</strong>
+                  <small>
+                    {email.from.split(" <")[0]} · {email.snippet}
+                  </small>
+                </div>
+                <a
+                  href={`https://mail.google.com/mail/u/0/#inbox/${email.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mnx-communication-record-link"
+                >
+                  Open <ExternalLink aria-hidden="true" />
+                </a>
+              </article>
+            ))}
+          </ResultPanel>
 
-          {/* 2. Emails Matches */}
-          <div className="rounded-xl border border-mono-border bg-mono-card p-5 shadow-sm space-y-4">
-            <h3 className="monolith-h3 text-mono-text flex items-center gap-2">
-              <Mail size={16} className="text-[#818cf8]" />
-              <span>Emails ({results.emails.length})</span>
-            </h3>
-
-            <div className="space-y-3">
-              {results.emails.length === 0 ? (
-                <div className="text-center py-6 text-mono-muted text-xs">No matching emails.</div>
-              ) : (
-                results.emails.map((t) => (
-                  <div key={t.id} className="monolith-card monolith-accent p-3 rounded-xl border border-mono-border bg-mono-soft flex flex-col gap-1 text-left" style={{ borderLeftColor: '#818cf8' }}>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-mono-text truncate max-w-[120px]">{t.from.split(" <")[0]}</span>
-                      <a
-                        href={`https://mail.google.com/mail/u/0/#inbox/${t.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[8px] font-bold text-[#F9D972] hover:underline flex items-center gap-0.5"
-                      >
-                        <ExternalLink size={8} />
-                      </a>
-                    </div>
-                    <h4 className="text-xs font-semibold text-mono-text truncate">{t.subject}</h4>
-                    <p className="text-[10px] text-mono-muted truncate">{t.snippet}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* 3. Drive Files Matches */}
-          <div className="rounded-xl border border-mono-border bg-mono-card p-5 shadow-sm space-y-4">
-            <h3 className="monolith-h3 text-mono-text flex items-center gap-2">
-              <Folder size={16} className="text-[#D88700]" />
-              <span>Shared Drive Files ({results.files.length})</span>
-            </h3>
-
-            <div className="space-y-3">
-              {results.files.length === 0 ? (
-                <div className="text-center py-6 text-mono-muted text-xs">No matching files.</div>
-              ) : (
-                results.files.map((file) => (
-                  <div key={file.id} className="monolith-card monolith-accent p-3 rounded-xl border border-mono-border bg-mono-soft flex items-center justify-between" style={{ borderLeftColor: '#D88700' }}>
-                    <div className="truncate max-w-[160px]">
-                      <h4 className="text-xs font-bold text-mono-text truncate">{file.name}</h4>
-                      <p className="text-[8px] text-mono-muted mt-0.5">{file.mimeType.split(".").pop()}</p>
-                    </div>
-                    {file.webViewLink && (
-                      <a
-                        href={file.webViewLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[10px] font-bold uppercase text-[#F9D972] hover:underline flex items-center gap-1"
-                      >
-                        <span>View</span>
-                        <ExternalLink size={10} />
-                      </a>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          <ResultPanel
+            title="Drive files"
+            count={results.files.length}
+            icon={<Folder aria-hidden="true" />}
+            empty="No matching files."
+          >
+            {results.files.map((file) => (
+              <article key={file.id} className="mnx-communication-record">
+                <div>
+                  <strong>{file.name}</strong>
+                  <small>{file.mimeType.split(".").pop()}</small>
+                </div>
+                {file.webViewLink ? (
+                  <a
+                    href={file.webViewLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mnx-communication-record-link"
+                  >
+                    View <ExternalLink aria-hidden="true" />
+                  </a>
+                ) : null}
+              </article>
+            ))}
+          </ResultPanel>
         </div>
+      ) : query && !loading ? (
+        <WorkspaceState
+          variant="empty"
+          eyebrow="Connected search"
+          title="No matches"
+          description="Try a different customer, shipment, subject, or document keyword."
+          icon={<Search aria-hidden="true" />}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function ResultPanel({
+  children,
+  count,
+  empty,
+  icon,
+  title,
+}: {
+  children: React.ReactNode;
+  count: number;
+  empty: string;
+  icon: React.ReactNode;
+  title: string;
+}) {
+  return (
+    <CommunicationPanel>
+      <CommunicationPanelHeader
+        eyebrow={`${count} result${count === 1 ? "" : "s"}`}
+        title={title}
+        actions={icon}
+      />
+      {count === 0 ? (
+        <div className="mnx-empty-state">{empty}</div>
       ) : (
-        query && !loading && (
-          <div className="flex flex-col items-center justify-center p-12 border border-mono-border bg-mono-card rounded-2xl">
-            <Search className="size-12 text-mono-muted/40 mb-2 animate-bounce" />
-            <span className="text-xs text-mono-muted font-semibold">No results found matching your query.</span>
-          </div>
-        )
+        <div className="mnx-communication-record-list">{children}</div>
       )}
-    </div>
+    </CommunicationPanel>
   );
 }

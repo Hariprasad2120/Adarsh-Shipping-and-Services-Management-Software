@@ -127,7 +127,6 @@ export default async function GoogleChatLiveViewPage({
   ];
 
   return (
-    <main className="space-y-6 pb-12">
       <GoogleChatLiveViewFrame
         googleEmail={googleEmail}
         workspaceDomain={workspaceDomain}
@@ -136,6 +135,5 @@ export default async function GoogleChatLiveViewPage({
         embedUrls={embedUrls}
         jobContext={jobContext}
       />
-    </main>
   );
 }
