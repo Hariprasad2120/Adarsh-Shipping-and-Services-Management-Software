@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { listAccounts } from "@/modules/accounting/service";
 import { NewPaymentClient } from "./new-payment-client";
+import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
 
 export default async function NewPaymentEntryPage() {
   const session = await auth();
@@ -52,16 +53,8 @@ export default async function NewPaymentEntryPage() {
   }));
 
   return (
-    <div className="mx-auto max-w-[1200px] space-y-6 animate-in fade-in duration-200">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-mono-border/20 pb-5">
-        <div>
-          <h2 className="monolith-h1 text-white">Record Payment</h2>
-          <p className="text-slate-400 text-xs mt-1">
-            Log custom cash receipt vouchers or vendor payouts, allocating payments directly against outstanding invoices.
-          </p>
-        </div>
-      </div>
-
+    <>
+      <AccountingRoutePageHeader />
       <NewPaymentClient
         bankAccounts={bankAccounts}
         otherAccounts={otherAccounts}
@@ -71,6 +64,6 @@ export default async function NewPaymentEntryPage() {
         salesInvoices={serializedSalesInvoices}
         purchaseInvoices={serializedPurchaseInvoices}
       />
-    </div>
+    </>
   );
 }

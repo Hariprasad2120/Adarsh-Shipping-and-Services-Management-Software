@@ -118,6 +118,12 @@ describe("CHA dashboard shell layout safeguards", () => {
       'normalizedPathname.startsWith("/cha/")',
     );
     expect(dashboardShellSwitcherSource).toContain(
+      'normalizedPathname === "/accounting"',
+    );
+    expect(dashboardShellSwitcherSource).toContain(
+      'normalizedPathname.startsWith("/accounting/")',
+    );
+    expect(dashboardShellSwitcherSource).toContain(
       'normalizedPathname === "/expense"',
     );
     expect(dashboardShellSwitcherSource).toContain("usesMonolithShell");

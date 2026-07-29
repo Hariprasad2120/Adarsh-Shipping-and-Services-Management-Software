@@ -1,204 +1,205 @@
 "use client";
 
-import React, { useState } from "react";
-import { toast } from "sonner";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import {FileText,Calendar,DollarSign,Loader2,CheckCircle,XCircle,Landmark,User,Info} from "lucide-react";
-import { submitPaymentEntryAction, cancelPaymentEntryAction } from "@/modules/accounting/actions";
-import Link from "next/link";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+  AccountingAction,
+  AccountingActionLink,
+  AccountingDetail,
+  AccountingDetailList,
+  AccountingEmptyTableRow,
+  AccountingSection,
+  AccountingStatus,
+  AccountingTable,
+} from "@/components/monolith/accounting-workspace";
+import {
+  cancelPaymentEntryAction,
+  submitPaymentEntryAction,
+} from "@/modules/accounting/actions";
 
-interface PaymentEntryDetailClientProps {
-  payment: any;
-}
-
-export function PaymentEntryDetailClient({ payment }: PaymentEntryDetailClientProps) {
+export function PaymentEntryDetailClient({ payment }: { payment: any }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  const handleSubmit = async () => {
-    if (!confirm("Are you sure you want to submit this payment? This will update invoice outstanding balances and post GL postings.")) return;
+  async function submitPayment() {
+    if (
+      !confirm(
+        "Submit this payment, update invoice balances, and post its ledger entries?",
+      )
+    )
+      return;
     setIsSubmitting(true);
     try {
-      const res = await submitPaymentEntryAction(payment.id);
-      if (res.ok) {
-        toast.success("Payment Entry submitted and ledger posted!");
+      const result = await submitPaymentEntryAction(payment.id);
+      if (result.ok) {
+        toast.success("Payment submitted and posted");
         router.refresh();
-      } else {
-        toast.error(res.error);
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to submit payment");
+      } else toast.error(result.error);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to submit payment",
+      );
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }
 
-  const handleCancel = async () => {
-    if (!confirm("Are you sure you want to cancel this payment? This will revert outstanding balances on allocated invoices.")) return;
+  async function cancelPayment() {
+    if (
+      !confirm(
+        "Cancel this payment and restore the outstanding balances on allocated invoices?",
+      )
+    )
+      return;
     setIsCancelling(true);
     try {
-      const res = await cancelPaymentEntryAction(payment.id);
-      if (res.ok) {
-        toast.success("Payment Entry cancelled and reversed!");
+      const result = await cancelPaymentEntryAction(payment.id);
+      if (result.ok) {
+        toast.success("Payment cancelled and reversed");
         router.refresh();
-      } else {
-        toast.error(res.error);
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to cancel payment");
+      } else toast.error(result.error);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to cancel payment",
+      );
     } finally {
       setIsCancelling(false);
     }
-  };
+  }
 
   return (
-    <div className="space-y-6">
-      
-      {/* ─── SUMMARY CARD ────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* Info panel */}
-        <div className="md:col-span-2 p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
-          <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-            <Landmark className="size-4.5 text-[#F9D972]" />
-            <h3 className="font-bold text-xs text-white uppercase tracking-wider">Payment Transaction Details</h3>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 text-xs text-slate-400">
-            <div>
-              <strong className="text-white block mb-0.5">Payment Type:</strong>
-              <span className="uppercase text-white font-semibold">{payment.paymentType}</span>
-            </div>
-            <div>
-              <strong className="text-white block mb-0.5">Party:</strong>
-              <span className="text-white font-semibold">{payment.partyName} ({payment.partyType})</span>
-            </div>
-            <div>
-              <strong className="text-white block mb-0.5">Source Account (Paid From):</strong>
-              <span className="text-slate-200">{payment.paidFrom?.accountCode} - {payment.paidFrom?.accountName}</span>
-            </div>
-            <div>
-              <strong className="text-white block mb-0.5">Destination Account (Paid To):</strong>
-              <span className="text-slate-200">{payment.paidTo?.accountCode} - {payment.paidTo?.accountName}</span>
-            </div>
-            <div>
-              <strong className="text-white block mb-0.5">Posting Date:</strong>
-              {new Date(payment.postingDate).toLocaleDateString("en-IN")}
-            </div>
-            <div>
-              <strong className="text-white block mb-0.5">Reference No / Chq:</strong>
-              {payment.referenceNo || "—"}
-            </div>
-            <div className="col-span-2">
-              <strong className="text-white block mb-0.5">Remarks / Description:</strong>
-              {payment.remarks || "No description provided."}
-            </div>
-          </div>
-        </div>
-
-        {/* Status panel */}
-        <div className="md:col-span-1 p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 flex flex-col justify-between monolith-card monolith-accent">
-          <div className="space-y-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Status & Control</span>
-            <div className="flex items-center gap-2">
-              <span className={`px-2.5 py-0.5 text-xs font-bold rounded uppercase tracking-wider flex items-center gap-1 ${
-                payment.status === "SUBMITTED"
-                  ? "bg-emerald-500/10 text-emerald-400"
-                  : payment.status === "CANCELLED"
-                  ? "bg-red-500/10 text-red-400"
-                  : "bg-amber-500/10 text-amber-400"
-              }`}>
-                {payment.status}
-              </span>
-            </div>
-
-            <div className="pt-2 text-xs space-y-1 text-slate-400">
-              <div className="flex justify-between font-bold border-t border-[#1c212a]/30 pt-1 text-white text-sm">
-                <span className="text-[#F9D972]">Payment Size:</span>
-                <span className="font-mono text-[#F9D972]">₹{payment.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-4 space-y-2">
-            {payment.status === "DRAFT" && (
-              <button
+    <>
+      <AccountingSection
+        eyebrow="Payment control"
+        title="Transaction summary"
+        description="Party, ledger direction, amount, reference, and posting state."
+        actions={
+          <div className="mnx-accounting-inline-actions">
+            <AccountingStatus status={payment.status} />
+            {payment.status === "DRAFT" ? (
+              <AccountingAction
                 disabled={isSubmitting}
-                onClick={handleSubmit}
-                className="w-full bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                onClick={submitPayment}
               >
-                {isSubmitting ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle className="size-4" />}
-                <span>Submit Payment</span>
-              </button>
-            )}
-
-            {payment.status === "SUBMITTED" && (
-              <button
+                {isSubmitting ? (
+                  <Loader2 aria-hidden="true" className="animate-spin" size={16} />
+                ) : null}
+                Submit payment
+              </AccountingAction>
+            ) : null}
+            {payment.status === "SUBMITTED" ? (
+              <AccountingAction
                 disabled={isCancelling}
-                onClick={handleCancel}
-                className="w-full bg-red-500/10 text-red-450 hover:bg-red-500/20 border border-red-500/30 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                onClick={cancelPayment}
+                variant="destructive"
               >
-                {isCancelling ? <Loader2 className="size-3.5 animate-spin" /> : <XCircle className="size-4" />}
-                <span>Cancel & Reverse Payment</span>
-              </button>
+                {isCancelling ? (
+                  <Loader2 aria-hidden="true" className="animate-spin" size={16} />
+                ) : null}
+                Cancel and reverse
+              </AccountingAction>
+            ) : null}
+          </div>
+        }
+      >
+        <AccountingDetailList>
+          <AccountingDetail label="Payment type" value={payment.paymentType} />
+          <AccountingDetail
+            label="Party"
+            value={`${payment.partyName} (${payment.partyType})`}
+          />
+          <AccountingDetail
+            label="Paid from"
+            value={`${payment.paidFrom?.accountCode} — ${payment.paidFrom?.accountName}`}
+          />
+          <AccountingDetail
+            label="Paid to"
+            value={`${payment.paidTo?.accountCode} — ${payment.paidTo?.accountName}`}
+          />
+          <AccountingDetail
+            label="Posting date"
+            value={new Date(payment.postingDate).toLocaleDateString("en-IN")}
+          />
+          <AccountingDetail
+            label="Reference number"
+            value={payment.referenceNo || "—"}
+          />
+          <AccountingDetail
+            label="Payment amount"
+            value={`₹${payment.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+          />
+          <AccountingDetail
+            label="Remarks"
+            value={payment.remarks || "No description provided"}
+          />
+        </AccountingDetailList>
+      </AccountingSection>
+
+      <AccountingSection
+        eyebrow="Settlement"
+        title="Invoice allocations"
+        description="Documents whose outstanding balances are affected by this payment."
+      >
+        <AccountingTable>
+          <thead>
+            <tr>
+              <th>Invoice number</th>
+              <th>Posting date</th>
+              <th>Grand total</th>
+              <th>Allocated amount</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {payment.allocations.length === 0 ? (
+              <AccountingEmptyTableRow colSpan={5}>
+                This is an on-account payment with no document allocations.
+              </AccountingEmptyTableRow>
+            ) : (
+              payment.allocations.map((allocation: any) => {
+                const invoice =
+                  allocation.salesInvoice || allocation.purchaseInvoice;
+                const href = allocation.salesInvoice
+                  ? `/accounting/sales-invoices/${invoice.id}`
+                  : `/accounting/purchase-invoices/${invoice.id}`;
+                return (
+                  <tr key={allocation.id}>
+                    <td>{invoice.invoiceNumber}</td>
+                    <td>
+                      {new Date(invoice.postingDate).toLocaleDateString("en-IN")}
+                    </td>
+                    <td className="mnx-accounting-amount">
+                      ₹
+                      {invoice.grandTotal.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </td>
+                    <td className="mnx-accounting-amount">
+                      ₹
+                      {allocation.allocatedAmount.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </td>
+                    <td>
+                      <AccountingActionLink
+                        className="mnx-button-compact"
+                        href={href}
+                      >
+                        Invoice details
+                      </AccountingActionLink>
+                    </td>
+                  </tr>
+                );
+              })
             )}
-          </div>
-        </div>
-
-      </div>
-
-      {/* ─── ALLOCATIONS TABLE ────────────────────────────────────────── */}
-      <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/55 space-y-4">
-        <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3">
-          <FileText className="size-4.5 text-[#F9D972]" />
-          <h3 className="font-bold text-xs text-white uppercase tracking-wider">Invoice Allocations Breakdown</h3>
-        </div>
-
-        {payment.allocations.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 text-xs">
-            This payment acts as an on-account payment and is not allocated to any specific sales or purchase invoices.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="monolith-table">
-              <thead>
-                <tr>
-                  <th>Invoice Number</th>
-                  <th>Posting Date</th>
-                  <th>Grand Total</th>
-                  <th className="text-right">Allocated Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payment.allocations.map((al: any) => {
-                  const invoice = al.salesInvoice || al.purchaseInvoice;
-                  const path = al.salesInvoice ? `/accounting/sales-invoices/${invoice.id}` : `/accounting/purchase-invoices/${invoice.id}`;
-                  return (
-                    <tr key={al.id} className="hover:bg-[#161f28]/10 text-xs">
-                      <td>
-                        <Link href={path} className="text-[#F9D972] hover:underline font-mono font-bold">
-                          {invoice.invoiceNumber}
-                        </Link>
-                      </td>
-                      <td className="text-slate-450">
-                        {new Date(invoice.postingDate).toLocaleDateString("en-IN")}
-                      </td>
-                      <td className="monolith-numeric text-slate-300">
-                        ₹{invoice.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="monolith-numeric text-white font-bold text-right">
-                        ₹{al.allocatedAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-    </div>
+          </tbody>
+        </AccountingTable>
+      </AccountingSection>
+    </>
   );
 }

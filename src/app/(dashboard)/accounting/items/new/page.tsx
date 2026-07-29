@@ -1,5 +1,5 @@
-import { NewItemPage } from "@/components/items/NewItemPage";
+import { AccountingNewItemForm } from "@/components/monolith/accounting-items";
 
 export default function AccountingNewItemPage() {
-  return <NewItemPage backPath="/accounting/items" />;
+  return <AccountingNewItemForm />;
 }

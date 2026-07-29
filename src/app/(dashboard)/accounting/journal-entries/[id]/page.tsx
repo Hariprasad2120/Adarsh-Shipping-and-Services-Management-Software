@@ -3,8 +3,10 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { getJournalEntry } from "@/modules/accounting/service";
 import { JournalEntryDetailClient } from "./detail-client";
-import { ArrowLeft } from "lucide-react";
-import NextLink from "next/link";
+import {
+  AccountingActionLink,
+  AccountingRoutePageHeader,
+} from "@/components/monolith/accounting-workspace";
 
 interface JvDetailPageProps {
   params: Promise<{ id: string }>;
@@ -42,23 +44,16 @@ export default async function JvDetailPage({ params }: JvDetailPageProps) {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      
-      {/* HEADER */}
-      <div className="flex items-center gap-3 border-b border-mono-border/20 pb-5">
-        <NextLink
-          href="/accounting/journal-entries"
-          className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800/40 rounded-xl transition-all cursor-pointer border border-[#1c212a]/30"
-          title="Back to Journal Vouchers"
-        >
-          <ArrowLeft className="size-5" />
-        </NextLink>
-        <div>
-          <h2 className="text-xl font-bold text-white uppercase tracking-wider">Voucher: {jv.voucherNo}</h2>
-        </div>
-      </div>
-
+    <>
+      <AccountingRoutePageHeader
+        title={`Voucher ${jv.voucherNo}`}
+        actions={
+          <AccountingActionLink href="/accounting/journal-entries">
+            Back to journal
+          </AccountingActionLink>
+        }
+      />
       <JournalEntryDetailClient jv={serializedJV} />
-    </div>
+    </>
   );
 }

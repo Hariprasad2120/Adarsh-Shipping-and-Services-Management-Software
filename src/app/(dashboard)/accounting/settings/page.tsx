@@ -1,9 +1,9 @@
 import React from "react";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
 import { getAccountingSettings, listAccounts } from "@/modules/accounting/service";
 import { SettingsClient } from "./settings-client";
+import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
 
 export default async function AccountingSettingsPage() {
   const session = await auth();
@@ -27,17 +27,9 @@ export default async function AccountingSettingsPage() {
     }));
 
   return (
-    <div className="mx-auto max-w-[1000px] space-y-6 animate-in fade-in duration-200">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-mono-border/20 pb-5">
-        <div>
-          <h2 className="monolith-h1 text-white">Accounting Configuration</h2>
-          <p className="text-slate-400 text-xs mt-1">
-            Map default ledger accounts for automated invoice posting, tax calculation, payroll batches, and depreciation.
-          </p>
-        </div>
-      </div>
-
+    <>
+      <AccountingRoutePageHeader />
       <SettingsClient initialSettings={settings} accounts={leafAccounts} />
-    </div>
+    </>
   );
 }

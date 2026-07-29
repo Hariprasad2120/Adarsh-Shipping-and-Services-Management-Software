@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { JobsClient } from "./jobs-client";
+import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
 
 export default async function JobsPage() {
   const session = await auth();
@@ -68,18 +69,12 @@ export default async function JobsPage() {
   });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      <div>
-        <h2 className="monolith-h1 text-white">Cargo Job Costing &amp; Register</h2>
-        <p className="text-slate-400 text-xs mt-1">
-          Monitor profitability of freight forwardings and shipping contracts. Track contract value against actual direct expenses.
-        </p>
-      </div>
-
+    <>
+      <AccountingRoutePageHeader />
       <JobsClient
         jobs={jobsWithMetrics}
         customers={customers}
       />
-    </div>
+    </>
   );
 }

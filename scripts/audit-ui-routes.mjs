@@ -44,12 +44,17 @@ function isCustomsExpenseRoute(route) {
   );
 }
 
+function isAccountingRoute(route) {
+  return route === "/accounting" || route.startsWith("/accounting/");
+}
+
 function isMonolithRoute(route) {
   return (
     knownMonolithRoutes.has(route) ||
     isPeopleOperationsRoute(route) ||
     isPerformanceLearningRoute(route) ||
-    isCustomsExpenseRoute(route)
+    isCustomsExpenseRoute(route) ||
+    isAccountingRoute(route)
   );
 }
 
@@ -131,6 +136,8 @@ function stateFor(route) {
     return "Migrated in performance and learning batch 003";
   if (isCustomsExpenseRoute(route))
     return "Migrated in Expense and CHA batch 004";
+  if (isAccountingRoute(route))
+    return "Migrated in Accounting batch 005";
   return "Pending module migration";
 }
 
@@ -184,8 +191,10 @@ const layouts = walk(appRoot, "layout.tsx")
                 ? "CRM scroll/theme container"
                 : source.includes("/cha/layout.tsx")
                   ? "Shared CHA workspace frame and asynchronous states"
-                  : source.includes("/expense/layout.tsx")
+                : source.includes("/expense/layout.tsx")
                     ? "Shared Expense workspace frame and asynchronous states"
+                  : source.includes("/accounting/layout.tsx")
+                    ? "Shared Accounting workspace frame and asynchronous states"
                   : source.includes("/hrms/recruit/layout.tsx")
                     ? "Recruitment feature flag"
                     : source.includes("/hrms/layout.tsx")
@@ -281,6 +290,7 @@ const lines = [
   "- All `/hrms` and `/attendance` routes were migrated in people operations batch 002.",
   "- All `/ams` and `/lms` routes were migrated in performance and learning batch 003.",
   "- All `/cha` and `/expense` routes were migrated in Expense and CHA batch 004.",
+  "- All `/accounting` routes were migrated in Accounting batch 005.",
   "- Every other route remains pending until its own presentation, behavior, RBAC,",
   "  themes, and responsive layout are verified in a later module batch.",
   "",

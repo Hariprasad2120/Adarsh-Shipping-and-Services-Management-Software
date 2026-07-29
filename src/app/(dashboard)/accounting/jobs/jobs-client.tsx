@@ -1,10 +1,29 @@
 "use client";
 
-import { NativeSelect } from "@/components/monolith/native-select";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { Loader2, Plus } from "lucide-react";
+import { useState } from "react";
 import { DateInput } from "@/components/monolith/date-input";
-import React, { useState } from "react";
-import {Ship,Plus,TrendingUp,Percent,Calendar,DollarSign,AlertCircle,FileCheck2,} from "lucide-react";
-import { createJobCostingAction, getJobCostingAction } from "@/modules/accounting/actions";
+import {
+  AccountingAction,
+  AccountingAlert,
+  AccountingDialog,
+  AccountingEmptyTableRow,
+  AccountingField,
+  AccountingInput,
+  AccountingMetric,
+  AccountingMetrics,
+  AccountingRecordCard,
+  AccountingSection,
+  AccountingSelect,
+  AccountingStatus,
+  AccountingTable,
+} from "@/components/monolith/accounting-workspace";
+import {
+  createJobCostingAction,
+  getJobCostingAction,
+} from "@/modules/accounting/actions";
 
 interface Job {
   id: string;
@@ -21,451 +40,340 @@ interface Job {
   status: string;
 }
 
-interface Customer {
-  id: string;
-  name: string;
-}
-
-interface JobsClientProps {
+export function JobsClient({
+  customers,
+  jobs,
+}: {
   jobs: Job[];
-  customers: Customer[];
-}
-
-export function JobsClient({ jobs, customers }: JobsClientProps) {
-  const [showJobModal, setShowJobModal] = useState(false);
+  customers: Array<{ id: string; name: string }>;
+}) {
+  const [showCreate, setShowCreate] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
-
-  // Form states
   const [jobName, setJobName] = useState("");
   const [customer, setCustomer] = useState("");
   const [contractValue, setContractValue] = useState("");
-  const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
+  const [startDate, setStartDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
   const [expectedEndDate, setExpectedEndDate] = useState("");
   const [costCentre, setCostCentre] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const totalContractValue = jobs.reduce(
+    (sum, job) => sum + job.contractValue,
+    0,
+  );
+  const totalNetProfit = jobs.reduce((sum, job) => sum + job.netProfit, 0);
+  const activeJobs = jobs.filter((job) => job.status === "OPEN").length;
+  const averageMargin =
+    jobs.length > 0 ? (totalNetProfit / (totalContractValue || 1)) * 100 : 0;
 
-  const totalContractVal = jobs.reduce((sum, j) => sum + j.contractValue, 0);
-  const totalNetProfit = jobs.reduce((sum, j) => sum + j.netProfit, 0);
-  const activeJobsCount = jobs.filter((j) => j.status === "OPEN").length;
-  const avgProfitMargin = jobs.length > 0 ? (totalNetProfit / (totalContractVal || 1)) * 100 : 0;
-
-  const handleCreateJob = async (e: React.FormEvent) => {
-    e.preventDefault();
+  async function createJob(event: React.FormEvent) {
+    event.preventDefault();
     setError(null);
     setSuccess(null);
-
-    if (!customer) {
-      setError("Please select a customer.");
-      return;
-    }
-    const valNum = parseFloat(contractValue);
-    if (isNaN(valNum) || valNum < 0) {
-      setError("Please enter a valid contract value.");
-      return;
-    }
+    if (!customer) return setError("Please select a customer.");
+    const numericContractValue = Number(contractValue);
+    if (!Number.isFinite(numericContractValue) || numericContractValue < 0)
+      return setError("Please enter a valid contract value.");
 
     setLoading(true);
     try {
-      const res = await createJobCostingAction({
+      const result = await createJobCostingAction({
         jobName,
         customerId: customer,
         startDate,
         expectedEndDate: expectedEndDate || undefined,
-        contractValue: valNum,
+        contractValue: numericContractValue,
         costCentre,
       });
-
-      if (res.ok) {
-        setSuccess("Cargo job created and initialized successfully.");
+      if (result.ok) {
+        setSuccess("Cargo job created and initialised.");
         setJobName("");
         setCustomer("");
         setContractValue("");
         setCostCentre("");
-        setTimeout(() => {
-          setShowJobModal(false);
-          setSuccess(null);
-          // Reload window to fetch updated list
-          window.location.reload();
-        }, 1500);
-      } else {
-        setError(res.error || "Failed to create cargo job.");
-      }
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+        window.setTimeout(() => window.location.reload(), 1200);
+      } else setError(result.error || "Failed to create cargo job.");
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "An unexpected error occurred.",
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const handleViewDetails = async (job: Job) => {
+  async function viewJob(job: Job) {
     setLoadingDetails(true);
     try {
-      const res = await getJobCostingAction(job.id);
-      if (res.ok) {
-        setSelectedJob(res.data);
-      } else {
-        alert(res.error || "Failed to load job details.");
-      }
-    } catch (err: any) {
-      alert(err.message || "An error occurred.");
+      const result = await getJobCostingAction(job.id);
+      if (result.ok) setSelectedJob(result.data);
+      else alert(result.error || "Failed to load job details.");
+    } catch (caught) {
+      alert(caught instanceof Error ? caught.message : "An error occurred.");
     } finally {
       setLoadingDetails(false);
     }
-  };
+  }
 
   return (
-    <div className="space-y-6">
-      {/* ─── Premium Metrics Grid ────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="monolith-card monolith-accent bg-[var(--color-surface)] p-6 rounded-xl relative overflow-hidden shadow-md">
-          <p className="monolith-label text-slate-400">Total Contract Value</p>
-          <h3 className="text-3xl font-bold mt-2 monolith-numeric text-white">
-            ₹{totalContractVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-          </h3>
-          <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-wider">
-            Total active contract pipeline
-          </p>
-        </div>
+    <>
+      <AccountingMetrics>
+        <AccountingMetric
+          label="Contract value"
+          value={`₹${totalContractValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+          detail="Total active contract pipeline"
+        />
+        <AccountingMetric
+          label="Actual net profit"
+          value={`₹${totalNetProfit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+          detail="Posted income less posted expense"
+        />
+        <AccountingMetric
+          label="Average margin"
+          value={`${averageMargin.toFixed(1)}%`}
+          detail="Across the visible cargo register"
+        />
+        <AccountingMetric
+          label="Active jobs"
+          value={activeJobs}
+          detail="Cargo jobs currently open"
+        />
+      </AccountingMetrics>
 
-        <div className="monolith-card monolith-accent bg-[var(--color-surface)] p-6 rounded-xl relative overflow-hidden shadow-md">
-          <p className="monolith-label text-slate-400">Total Actual Profit</p>
-          <h3 className="text-3xl font-bold mt-2 monolith-numeric text-white">
-            ₹{totalNetProfit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-          </h3>
-          <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-wider">
-            Net difference (revenue - expense)
-          </p>
-        </div>
-
-        <div className="monolith-card monolith-accent bg-[var(--color-surface)] p-6 rounded-xl relative overflow-hidden shadow-md">
-          <p className="monolith-label text-slate-400">Avg Profit Margin</p>
-          <h3 className="text-3xl font-bold mt-2 monolith-numeric text-[#F9D972]">
-            {avgProfitMargin.toFixed(1)}%
-          </h3>
-          <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-wider">
-            Calculated across all cargos
-          </p>
-        </div>
-
-        <div className="monolith-card monolith-accent bg-[var(--color-surface)] p-6 rounded-xl relative overflow-hidden shadow-md">
-          <p className="monolith-label text-slate-400">Active Cargo Jobs</p>
-          <h3 className="text-3xl font-bold mt-2 monolith-numeric text-white">
-            {activeJobsCount}
-          </h3>
-          <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-wider">
-            Cargos currently in transit
-          </p>
-        </div>
-      </div>
-
-      {/* ─── Header Action Ribbon ────────────────────────────────────────────── */}
-      <div className="flex justify-between items-center bg-[var(--color-surface-container)] px-6 py-4 rounded-xl shadow-sm border border-mono-border/10">
-        <h4 className="monolith-h3 text-white">Cargo Jobs Costing Register</h4>
-        <button
-          onClick={() => setShowJobModal(true)}
-          className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all flex items-center gap-2"
-        >
-          <Plus size={14} /> New Costing Job
-        </button>
-      </div>
-
-      {/* ─── Jobs Register Board ─────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {jobs.map((job) => {
-          // If profit is negative, apply orange card indicator
-          const isProfitable = job.netProfit >= 0;
-          const cardClass = isProfitable ? "monolith-card monolith-accent" : "monolith-card monolith-accent-warning";
-
-          return (
-            <div
+      <AccountingSection
+        eyebrow="Job accounting"
+        title="Cargo costing register"
+        description="Select a job to inspect its sales, purchases, and linked general-ledger postings."
+        actions={
+          <AccountingAction onClick={() => setShowCreate(true)}>
+            <Plus aria-hidden="true" size={16} />
+            New costing job
+          </AccountingAction>
+        }
+      >
+        <div className="mnx-accounting-card-grid">
+          {jobs.map((job) => (
+            <AccountingRecordCard
+              disabled={loadingDetails}
               key={job.id}
-              onClick={() => handleViewDetails(job)}
-              className={`${cardClass} bg-[var(--color-surface)] p-5 rounded-xl border border-mono-border/10 shadow-sm monolith-hover cursor-pointer transition-all space-y-4`}
+              onClick={() => viewJob(job)}
             >
-              <div className="flex justify-between items-start">
+              <header>
                 <div>
-                  <h4 className="font-bold text-white uppercase tracking-wider text-sm">
-                    {job.jobName}
-                  </h4>
-                  <p className="monolith-label text-[10px] text-slate-400 mt-1">
-                    {job.jobCode} • {job.customerName}
-                  </p>
+                  <h3>{job.jobName}</h3>
+                  <small>
+                    {job.jobCode} · {job.customerName}
+                  </small>
                 </div>
-                <span
-                  className={`px-2 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase ${
-                    job.status === "OPEN"
-                      ? "bg-sky-950/50 text-sky-400 border border-sky-500/20"
-                      : "bg-slate-900/60 text-slate-400 border border-slate-700/30"
-                  }`}
+                <AccountingStatus status={job.status} />
+              </header>
+              <div className="mnx-accounting-detail-list">
+                <div>
+                  <dt>Contract</dt>
+                  <dd>₹{job.contractValue.toLocaleString("en-IN")}</dd>
+                </div>
+                <div>
+                  <dt>Expense</dt>
+                  <dd>₹{job.actualExpense.toLocaleString("en-IN")}</dd>
+                </div>
+                <div>
+                  <dt>Margin</dt>
+                  <dd>{job.marginPercent.toFixed(1)}%</dd>
+                </div>
+              </div>
+              <footer>
+                <span>{new Date(job.startDate).toLocaleDateString("en-IN")}</span>
+                <strong
+                  className={
+                    job.netProfit >= 0
+                      ? "mnx-accounting-amount-success"
+                      : "mnx-accounting-amount-danger"
+                  }
                 >
-                  {job.status}
-                </span>
-              </div>
-
-              {/* Progress margins info */}
-              <div className="grid grid-cols-3 gap-2 text-center py-2 bg-[var(--color-background)] rounded-lg border border-mono-border/5">
-                <div>
-                  <span className="monolith-label text-[8px] text-slate-400 block">Contract</span>
-                  <span className="monolith-numeric text-xs font-semibold text-white">
-                    ₹{job.contractValue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                  </span>
-                </div>
-                <div>
-                  <span className="monolith-label text-[8px] text-slate-400 block">Expense</span>
-                  <span className="monolith-numeric text-xs font-semibold text-rose-400">
-                    ₹{job.actualExpense.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                  </span>
-                </div>
-                <div>
-                  <span className="monolith-label text-[8px] text-slate-400 block">Margin</span>
-                  <span
-                    className={`monolith-numeric text-xs font-bold ${
-                      isProfitable ? "text-emerald-400" : "text-orange-400"
-                    }`}
-                  >
-                    {job.marginPercent.toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center text-[10px] text-slate-500 pt-2 border-t border-mono-border/5">
-                <span className="flex items-center gap-1">
-                  <Calendar size={12} /> {new Date(job.startDate).toLocaleDateString("en-IN")}
-                </span>
-                <span
-                  className={`font-semibold ${isProfitable ? "text-emerald-400" : "text-orange-400"}`}
-                >
-                  ₹{job.netProfit.toLocaleString("en-IN", { maximumFractionDigits: 0 })} net
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* ─── Costing Detail Side Panel (Modal) ─────────────────────────────────── */}
-      {selectedJob && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-end z-50">
-          <div className="bg-[var(--color-surface)] border-l border-mono-border/10 w-full max-w-[650px] h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
-            <div className="px-6 py-4 bg-[var(--color-surface-container)] border-b border-mono-border/10 flex justify-between items-center">
-              <div>
-                <h3 className="monolith-h2 text-white">{selectedJob.jobName} Details</h3>
-                <p className="monolith-label text-[10px] text-slate-400 mt-1">
-                  Code: {selectedJob.jobCode} • Customer: {selectedJob.customer?.name}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedJob(null)}
-                className="text-slate-400 hover:text-white text-lg font-bold"
-              >
-                &times;
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto flex-1 space-y-6">
-              {/* Financial Snapshot */}
-              <div className="grid grid-cols-3 gap-4 bg-[var(--color-background)] p-4 rounded-xl border border-mono-border/10">
-                <div>
-                  <span className="monolith-label text-slate-400 text-[10px] block">Contract Value</span>
-                  <span className="monolith-numeric text-lg font-bold text-white">
-                    ₹{Number(selectedJob.contractValue).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div>
-                  <span className="monolith-label text-slate-400 text-[10px] block">Total Invoiced</span>
-                  <span className="monolith-numeric text-lg font-bold text-emerald-400">
-                    ₹{selectedJob.salesInvoices.reduce((sum: number, i: any) => sum + Number(i.grandTotal), 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div>
-                  <span className="monolith-label text-slate-400 text-[10px] block">Total Purchase Cost</span>
-                  <span className="monolith-numeric text-lg font-bold text-rose-400">
-                    ₹{selectedJob.purchaseInvoices.reduce((sum: number, i: any) => sum + Number(i.grandTotal), 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-              </div>
-
-              {/* Transactions Ledger list */}
-              <div className="space-y-3">
-                <h4 className="monolith-h3 text-white">Linked General Ledger Postings</h4>
-                <div className="border border-mono-border/10 rounded-xl overflow-hidden bg-[var(--color-surface-container-low)]">
-                  <table className="monolith-table">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Account</th>
-                        <th className="text-right">Debit (Dr)</th>
-                        <th className="text-right">Credit (Cr)</th>
-                        <th>Remarks</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedJob.glEntries.length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="text-center text-slate-500 py-8 text-xs uppercase">
-                            No ledger transactions linked to this cargo
-                          </td>
-                        </tr>
-                      ) : (
-                        selectedJob.glEntries.map((t: any) => (
-                          <tr key={t.id} className="hover:bg-slate-800/10">
-                            <td className="monolith-numeric text-[11px]">
-                              {new Date(t.postingDate).toLocaleDateString("en-IN")}
-                            </td>
-                            <td>
-                              <div className="font-semibold text-xs text-white uppercase">
-                                {t.account.accountName}
-                              </div>
-                              <span className="text-[9px] text-slate-500 uppercase tracking-widest">
-                                {t.account.accountCode}
-                              </span>
-                            </td>
-                            <td className="text-right monolith-numeric text-emerald-400 text-xs">
-                              {Number(t.debit) > 0
-                                ? `₹${Number(t.debit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
-                                : "—"}
-                            </td>
-                            <td className="text-right monolith-numeric text-rose-400 text-xs">
-                              {Number(t.credit) > 0
-                                ? `₹${Number(t.credit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
-                                : "—"}
-                            </td>
-                            <td className="text-slate-400 text-xs">{t.remarks || "—"}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
+                  ₹{job.netProfit.toLocaleString("en-IN")} net
+                </strong>
+              </footer>
+            </AccountingRecordCard>
+          ))}
         </div>
-      )}
+      </AccountingSection>
 
-      {/* ─── Initialize Cargo Job Modal ────────────────────────────────────────── */}
-      {showJobModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[var(--color-surface)] border border-mono-border/10 rounded-2xl w-full max-w-[500px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 bg-[var(--color-surface-container)] border-b border-mono-border/10 flex justify-between items-center">
-              <h3 className="monolith-h3 text-white">Initialize New Cargo Job</h3>
-              <button
-                onClick={() => setShowJobModal(false)}
-                className="text-slate-400 hover:text-white text-lg font-bold"
-              >
-                &times;
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateJob} className="p-6 space-y-4">
-              {error && (
-                <div className="p-3 bg-red-950/40 border border-red-500/30 text-red-200 text-xs rounded-xl">
-                  {error}
-                </div>
-              )}
-              {success && (
-                <div className="p-3 bg-emerald-950/40 border border-emerald-500/30 text-emerald-200 text-xs rounded-xl">
-                  {success}
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <label className="monolith-label block">Cargo Job Name</label>
-                <input
-                  type="text"
-                  required
-                  value={jobName}
-                  onChange={(e) => setJobName(e.target.value)}
-                  placeholder="E.g., Mumbai to Hamburg - Steel Freight"
-                  className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="monolith-label block">Customer</label>
-                <NativeSelect
-                  value={customer}
-                  onChange={(e) => setCustomer(e.target.value)}
-                  required
-                  className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs uppercase"
-                >
-                  <option value="">Select Customer</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </div>
-
-              <div className="space-y-2">
-                <label className="monolith-label block">Contract Value (INR)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={contractValue}
-                  onChange={(e) => setContractValue(e.target.value)}
-                  placeholder="0.00"
-                  className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs monolith-numeric"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="monolith-label block">Start Date</label>
-                  <DateInput
-                    required
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs monolith-numeric"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="monolith-label block">Expected End Date</label>
-                  <DateInput
-                    value={expectedEndDate}
-                    onChange={(e) => setExpectedEndDate(e.target.value)}
-                    className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs monolith-numeric"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="monolith-label block">Cost Centre Code / Reference</label>
-                <input
-                  type="text"
-                  value={costCentre}
-                  onChange={(e) => setCostCentre(e.target.value)}
-                  placeholder="E.g., CC-MUM-01"
-                  className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-mono-border/10">
-                <button
-                  type="button"
-                  onClick={() => setShowJobModal(false)}
-                  className="px-4 py-2 border border-slate-600 hover:border-slate-500 text-slate-300 hover:text-white rounded-xl text-xs uppercase tracking-wide transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all disabled:opacity-50"
-                >
-                  {loading ? "Initializing..." : "Initialize Job"}
-                </button>
-              </div>
-            </form>
+      <AccountingDialog
+        open={Boolean(selectedJob)}
+        onClose={() => setSelectedJob(null)}
+        size="wide"
+        title={selectedJob ? `${selectedJob.jobName} details` : "Job details"}
+        description={
+          selectedJob
+            ? `${selectedJob.jobCode} · ${selectedJob.customer?.name || "Customer"}`
+            : undefined
+        }
+      >
+        {selectedJob ? (
+          <div className="mnx-accounting-form">
+            <AccountingMetrics>
+              <AccountingMetric
+                label="Contract value"
+                value={`₹${Number(selectedJob.contractValue).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+              />
+              <AccountingMetric
+                label="Total invoiced"
+                value={`₹${selectedJob.salesInvoices
+                  .reduce(
+                    (sum: number, invoice: any) =>
+                      sum + Number(invoice.grandTotal),
+                    0,
+                  )
+                  .toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+              />
+              <AccountingMetric
+                label="Purchase cost"
+                value={`₹${selectedJob.purchaseInvoices
+                  .reduce(
+                    (sum: number, invoice: any) =>
+                      sum + Number(invoice.grandTotal),
+                    0,
+                  )
+                  .toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+              />
+            </AccountingMetrics>
+            <AccountingTable>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Account</th>
+                  <th>Debit</th>
+                  <th>Credit</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedJob.glEntries.length === 0 ? (
+                  <AccountingEmptyTableRow colSpan={5}>
+                    No ledger transactions are linked to this cargo job.
+                  </AccountingEmptyTableRow>
+                ) : (
+                  selectedJob.glEntries.map((entry: any) => (
+                    <tr key={entry.id}>
+                      <td>
+                        {new Date(entry.postingDate).toLocaleDateString("en-IN")}
+                      </td>
+                      <td>
+                        <strong>{entry.account.accountName}</strong>
+                        <small>{entry.account.accountCode}</small>
+                      </td>
+                      <td className="mnx-accounting-amount">
+                        {Number(entry.debit) > 0
+                          ? `₹${Number(entry.debit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
+                          : "—"}
+                      </td>
+                      <td className="mnx-accounting-amount">
+                        {Number(entry.credit) > 0
+                          ? `₹${Number(entry.credit).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
+                          : "—"}
+                      </td>
+                      <td>{entry.remarks || "—"}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </AccountingTable>
           </div>
-        </div>
-      )}
-    </div>
+        ) : null}
+      </AccountingDialog>
+
+      <AccountingDialog
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        title="Initialise cargo job"
+        description="Create the costing record used to connect contract value, invoices, purchases, and ledger activity."
+        footer={
+          <>
+            <AccountingAction
+              type="button"
+              variant="secondary"
+              onClick={() => setShowCreate(false)}
+            >
+              Cancel
+            </AccountingAction>
+            <AccountingAction
+              disabled={loading}
+              form="accounting-job-form"
+              type="submit"
+            >
+              {loading ? <Loader2 aria-hidden="true" className="animate-spin" size={16} /> : null}
+              Initialise job
+            </AccountingAction>
+          </>
+        }
+      >
+        <form
+          className="mnx-accounting-form"
+          id="accounting-job-form"
+          onSubmit={createJob}
+        >
+          {error ? <AccountingAlert variant="danger">{error}</AccountingAlert> : null}
+          {success ? (
+            <AccountingAlert variant="success">{success}</AccountingAlert>
+          ) : null}
+          <AccountingField label="Cargo job name" required>
+            <AccountingInput
+              required
+              value={jobName}
+              onChange={(event) => setJobName(event.target.value)}
+            />
+          </AccountingField>
+          <AccountingField label="Customer" required>
+            <AccountingSelect
+              required
+              value={customer}
+              onChange={(event) => setCustomer(event.target.value)}
+            >
+              <option value="">Select customer</option>
+              {customers.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </AccountingSelect>
+          </AccountingField>
+          <AccountingField label="Contract value" required>
+            <AccountingInput
+              required
+              type="number"
+              min="0"
+              step="0.01"
+              value={contractValue}
+              onChange={(event) => setContractValue(event.target.value)}
+            />
+          </AccountingField>
+          <div className="mnx-accounting-form-grid">
+            <AccountingField label="Start date" required>
+              <DateInput
+                required
+                value={startDate}
+                onChange={(event) => setStartDate(event.target.value)}
+              />
+            </AccountingField>
+            <AccountingField label="Expected end date">
+              <DateInput
+                value={expectedEndDate}
+                onChange={(event) => setExpectedEndDate(event.target.value)}
+              />
+            </AccountingField>
+          </div>
+          <AccountingField label="Cost centre">
+            <AccountingInput
+              value={costCentre}
+              onChange={(event) => setCostCentre(event.target.value)}
+            />
+          </AccountingField>
+        </form>
+      </AccountingDialog>
+    </>
   );
 }

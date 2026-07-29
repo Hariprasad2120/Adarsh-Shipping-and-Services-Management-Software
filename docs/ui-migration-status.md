@@ -4,27 +4,25 @@ Last updated: 2026-07-29
 
 ## Current milestone
 
-The production migration foundation plus batches 001 through 003 are
-implemented and verified. Batch 004 (Expense and CHA) is implemented and
-passes the source, archive, type, focused test, and production-build gates; its
-authenticated visual matrix is blocked because the connected Browser service
-has no available browser instance. The post-batch shared popup correction is
-implemented across every migrated family and passes its static, type, test, and
-build gates; live theme/viewport verification remains part of the same Browser
-blocker.
+The production migration foundation plus batches 001 through 003 and batch 005
+(Accounting) are implemented and verified. Batch 004 (Expense and CHA) remains
+implemented with its source, archive, type, focused test, and production-build
+gates recorded; its historical connected-Browser visual matrix remains
+unrecorded. Accounting has passed a complete authenticated Playwright matrix
+covering every discovered route in every required theme and viewport.
 
-- Source audit: 211 page routes and 12 layouts.
+- Source audit: 211 page routes and 13 layouts.
 - Protected visual reference: `/dashboard`.
 - Migrated routes: `/account/security`, `/admin/design-system`,
   `/notifications`, `/product-catalogue`, `/todo`, all 38 `/hrms` routes, all
   7 `/attendance` routes, all 18 `/ams` routes, all 5 `/lms` routes, all 11
-  `/cha` routes, and `/expense`.
+  `/cha` routes, `/expense`, and all 32 `/accounting` routes.
 - Migrated shared surfaces: authenticated user profile menu plus common
   permission, empty, loading, error, and not-found states; People Operations
   workspace; Performance and Learning workspace; Expense and CHA operations
-  workspace; centralized controls, data tables, dialogs, navigation, and route
-  states.
-- Pending individual route migrations: 125.
+  workspace; Accounting operations workspace; centralized controls, data
+  tables, dialogs, navigation, and route states.
+- Pending individual route migrations: 93.
 - Exhaustive route/layout record: [UI route and layout audit](ui-route-audit.md).
 
 ## Status definitions
@@ -48,7 +46,7 @@ the route-by-route source of truth.
 | -------------------- | ---------: | --------: | -------: | ------: |
 | `/`                  |          1 |         0 |        0 |       1 |
 | `/account`           |          1 |         0 |        1 |       0 |
-| `/accounting`        |         32 |         0 |        0 |      32 |
+| `/accounting`        |         32 |         0 |       32 |       0 |
 | `/admin`             |         10 |         0 |        1 |       9 |
 | `/ams`               |         18 |         0 |       18 |       0 |
 | `/attendance`        |          7 |         0 |        7 |       0 |
@@ -67,7 +65,7 @@ the route-by-route source of truth.
 | `/setup`             |          1 |         0 |        0 |       1 |
 | `/todo`              |          1 |         0 |        1 |       0 |
 | `/verify`            |          1 |         0 |        0 |       1 |
-| **Total**            |    **211** |     **1** |   **85** | **125** |
+| **Total**            |    **211** |     **1** |  **117** |  **93** |
 
 An import from `@/components/monolith` is not proof of route migration. A route
 remains pending until its rendered presentation and behavior satisfy the
@@ -80,6 +78,7 @@ completion gate.
 | `src/app/layout.tsx`                           |           211 | Fonts, initial theme, metadata, global providers   |
 | `src/app/(dashboard)/layout.tsx`               |           194 | Authentication, RBAC/module gates, shell selection |
 | `src/app/(dashboard)/attendance/layout.tsx`    |             7 | Attendance People Operations workspace             |
+| `src/app/(dashboard)/accounting/layout.tsx`    |            32 | Accounting operations workspace                     |
 | `src/app/(dashboard)/ams/layout.tsx`           |            18 | AMS Performance Operations workspace               |
 | `src/app/(dashboard)/cha/layout.tsx`           |            11 | CHA operations workspace                           |
 | `src/app/(dashboard)/communication/layout.tsx` |            10 | Workspace connection gate/providers                |
@@ -189,6 +188,20 @@ Batch 003 archive:
   `0C851DAB4C38FC0D22004EF27F14CB260C75FF3291BB1111E7D68101D81B0256`
 - Archive checksum, size, and file listing verification: passed.
 
+Batch 005 archive:
+`OLD UI code/legacy-ui-before-monolith-accounting-fd1cbe7.zip`
+
+- Source commit: `fd1cbe7`.
+- Files: 68 active Accounting route/view sources plus the legacy CRM invoice
+  form, delete action, and shared item presentation dependencies, with original
+  relative paths retained.
+- ZIP entries including directories: 102.
+- Size: 147,861 bytes.
+- SHA-256:
+  `B6B7D58BB2A20166829C80B1D395A521B30239159C06AC03ABFA9C1574939DFC`.
+- Archive checksum, size, and file listing verification: passed through
+  `scripts/verify-monolith-accounting-ui.mjs`.
+
 ## Quality log: foundation
 
 Passed:
@@ -234,6 +247,7 @@ unrelated to the UI foundation.
 | Batch 002          | All `/hrms` and `/attendance` routes            | Verified            | 45 complete People Operations routes, shared controls/data/dialog/state compositions, and preserved employee, leave, attendance, overtime, biometric, GPS, shift, approval, payroll, recruitment, letter, report, and settings behavior. |
 | Batch 003          | All `/ams` and `/lms` routes                    | Verified            | 23 complete Performance and Learning routes, shared workspace/control/table/dialog/state compositions, and preserved appraisal, reviewer, criteria, asset, goal, feedback, course, assignment, enrolment, progress, and report behavior. |
 | Batch 004          | All `/cha` routes and `/expense`                | Migrated; visual verification blocked | 12 complete Expense and CHA routes, including the dynamic job workspace, customer editing, workflow configuration, documents, additional data, approvals, filing, bill filing, expenses, reports, settings, and all dialogs/drawers. Source, archive, type, focused test, and build gates pass; the connected Browser service exposes no browser instance for the required authenticated theme/viewport matrix. |
+| Batch 005          | All `/accounting` routes                        | Verified            | 32 complete Accounting routes covering the command centre, chart of accounts, banking, jobs, journals, payments, sales and purchase invoices, commercial orders, quotations and notes, items, financial statements, reports, and settings. All 288 authenticated route/theme/viewport checks pass. |
 
 ## Quality log: batch 001
 
@@ -511,3 +525,60 @@ Blocked:
   verification at desktop, tablet, and mobile widths is therefore still
   pending for representative To-Do, HRMS, Attendance, AMS, Expense, and CHA
   dialogs, including the create-job workspace shown in the defect report.
+
+## Quality log: batch 005
+
+Passed:
+
+- Discovered all 32 Accounting routes directly from
+  `src/app/(dashboard)/accounting/**/page.tsx`, including five dynamic detail
+  patterns and the commercial-document aliases absent from a simple sidebar
+  inventory.
+- Archived the active legacy Accounting presentation and its CRM/item visual
+  dependencies before replacement. The repeatable static gate verifies the
+  archive checksum, size, 68-file listing, and required paths.
+- Added the shared Accounting workspace layout, loading/error boundaries,
+  metadata, route headers, metrics, sections, toolbars, tables, dialogs,
+  record cards, details, statuses, and semantic responsive styles.
+- Centralized specialized invoice form/detail, commercial-document form,
+  item catalogue/form/detail, and delete-action components instead of
+  duplicating route-local visual implementations.
+- Preserved Accounting and CRM server actions, Prisma/service reads, RBAC,
+  validation, ledger posting controls, allocation behavior, CSV/JSON
+  import/export, quotations and note conversion/submission, and commercial
+  document integrations.
+- Removed active Accounting imports from the legacy CRM invoice form, legacy
+  CRM delete button, and legacy shared item presentation.
+- Regenerated the exhaustive audit: 211 pages, 13 layouts, 117 migrated, and
+  93 pending.
+- Static UI/archive/workflow gate:
+  `node scripts/verify-monolith-accounting-ui.mjs`.
+- Targeted ESLint for all Accounting route sources, shared specialized
+  components, shell/audit/runtime verifiers, and focused tests.
+- Production TypeScript:
+  `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`.
+- Five focused Vitest suites: 22 tests covering Accounting services, shared
+  workspace composition, centralized workspace/dialog contracts, and shell
+  routing.
+- Production build:
+  `NODE_OPTIONS=--max-old-space-size=8192 npm run build`.
+  - Prisma Client generated.
+  - Next.js compilation and production TypeScript passed.
+  - 315 static pages generated.
+  - The six existing broad filesystem/NFT trace warnings remain non-fatal and
+    originate outside Accounting.
+- Authenticated Playwright runtime gate:
+  `node scripts/verify-monolith-accounting-runtime.mjs --use-local-special-account`.
+  - all 32 exact routes, including loaded dynamic item, journal, payment,
+    sales-invoice, and purchase-invoice details;
+  - Light, Night, and Violet themes at 1440×1000 desktop, 1024×900 tablet, and
+    390×844 mobile;
+  - 288 route/theme/viewport combinations and 72 representative screenshots;
+  - exact paths, completed route/header state, active theme and semantic
+    tokens, centralized controls/tables, no legacy composition, no browser or
+    server errors, and no page-level horizontal overflow;
+  - mobile quotation-dialog viewport bounds and Escape dismissal;
+  - temporary dynamic-route fixtures were inserted with unique test IDs,
+    removed in the verifier's `finally` cleanup, and independently confirmed
+    absent after the run.
+- `git diff --check`.

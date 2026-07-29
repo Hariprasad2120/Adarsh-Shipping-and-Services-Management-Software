@@ -1,10 +1,31 @@
 "use client";
 
-import { NativeSelect } from "@/components/monolith/native-select";
+import { FileCheck2, Loader2, Plus, Send, Trash2 } from "lucide-react";
+import { type FormEvent, useState } from "react";
+import { toast } from "sonner";
+import {
+  convertQuotationToInvoiceAction,
+  createCustomerNoteAction,
+  createQuotationAction,
+  submitCustomerNoteAction,
+} from "@/modules/accounting/actions";
 import { DateInput } from "@/components/monolith/date-input";
-import React, { useState } from "react";
-import {FileText,Plus,RefreshCw,TrendingUp,FileCheck2,Undo2,Trash2,} from "lucide-react";
-import {createQuotationAction,convertQuotationToInvoiceAction,createCustomerNoteAction,submitCustomerNoteAction,} from "@/modules/accounting/actions";
+import {
+  AccountingAction,
+  AccountingDialog,
+  AccountingEmptyTableRow,
+  AccountingField,
+  AccountingInput,
+  AccountingMetric,
+  AccountingMetrics,
+  AccountingRoutePageHeader,
+  AccountingSection,
+  AccountingSelect,
+  AccountingStatus,
+  AccountingTable,
+  AccountingTextarea,
+  AccountingToolbar,
+} from "@/components/monolith/accounting-workspace";
 
 interface Quotation {
   id: string;
@@ -46,18 +67,49 @@ interface Invoice {
   postingDate: Date;
 }
 
-interface QuotationsClientProps {
-  initialQuotations: Quotation[];
-  initialNotes: CustomerNote[];
-  customers: Customer[];
-  invoices: Invoice[];
-}
+type FormItem = { itemName: string; qty: number; rate: number; taxRate: number };
+const emptyItem = (): FormItem => ({ itemName: "", qty: 1, rate: 0, taxRate: 18 });
+const money = (value: number) => `₹${value.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+const defaultQuotationValidity = (() => {
+  const date = new Date();
+  date.setDate(date.getDate() + 30);
+  return date.toISOString().slice(0, 10);
+})();
 
-interface FormItem {
-  itemName: string;
-  qty: number;
-  rate: number;
-  taxRate: number;
+function LineEditor({
+  items,
+  onChange,
+}: {
+  items: FormItem[];
+  onChange: (items: FormItem[]) => void;
+}) {
+  function update(index: number, field: keyof FormItem, value: string) {
+    onChange(items.map((item, itemIndex) => itemIndex === index ? {
+      ...item,
+      [field]: field === "itemName" ? value : Number(value),
+    } : item));
+  }
+  return (
+    <AccountingSection
+      eyebrow="Lines"
+      title="Services and charges"
+      actions={<AccountingAction type="button" variant="secondary" onClick={() => onChange([...items, emptyItem()])}><Plus aria-hidden="true" /> Add line</AccountingAction>}
+    >
+      <AccountingTable>
+        <thead><tr><th>Description</th><th>Quantity</th><th>Rate</th><th>GST rate</th><th>Total</th><th>Action</th></tr></thead>
+        <tbody>{items.map((item, index) => (
+          <tr key={index}>
+            <td><AccountingInput aria-label={`Description ${index + 1}`} required value={item.itemName} onChange={(event) => update(index, "itemName", event.target.value)} /></td>
+            <td><AccountingInput aria-label={`Quantity ${index + 1}`} type="number" min="0.0001" step="any" required value={item.qty} onChange={(event) => update(index, "qty", event.target.value)} /></td>
+            <td><AccountingInput aria-label={`Rate ${index + 1}`} type="number" min="0" step="0.01" required value={item.rate} onChange={(event) => update(index, "rate", event.target.value)} /></td>
+            <td><AccountingSelect aria-label={`GST ${index + 1}`} value={item.taxRate} onChange={(event) => update(index, "taxRate", event.target.value)}><option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option></AccountingSelect></td>
+            <td className="mnx-accounting-amount">{money(item.qty * item.rate * (1 + item.taxRate / 100))}</td>
+            <td><AccountingAction type="button" variant="destructive" size="compact" aria-label={`Remove line ${index + 1}`} onClick={() => items.length === 1 ? toast.warning("At least one line is required") : onChange(items.filter((_, itemIndex) => itemIndex !== index))}><Trash2 aria-hidden="true" /></AccountingAction></td>
+          </tr>
+        ))}</tbody>
+      </AccountingTable>
+    </AccountingSection>
+  );
 }
 
 export function QuotationsClient({
@@ -65,142 +117,62 @@ export function QuotationsClient({
   initialNotes,
   customers,
   invoices,
-}: QuotationsClientProps) {
-  const [activeTab, setActiveTab] = useState<"quotations" | "notes">("quotations");
-  const [quotations, setQuotations] = useState<Quotation[]>(initialQuotations);
-  const [notes, setNotes] = useState<CustomerNote[]>(initialNotes);
-
-  const [showQuotModal, setShowQuotModal] = useState(false);
-  const [showNoteModal, setShowNoteModal] = useState(false);
-
-  // Form states - Quotation
-  const [quotCustomer, setQuotCustomer] = useState("");
-  const [quotValidUntil, setQuotValidUntil] = useState(
-    new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().split("T")[0]
-  );
-  const [quotRemarks, setQuotRemarks] = useState("");
-  const [quotItems, setQuotItems] = useState<FormItem[]>([
-    { itemName: "", qty: 1, rate: 0, taxRate: 18 },
-  ]);
-
-  // Form states - Customer Note
+}: {
+  initialQuotations: Quotation[];
+  initialNotes: CustomerNote[];
+  customers: Customer[];
+  invoices: Invoice[];
+}) {
+  const [tab, setTab] = useState<"quotations" | "notes">("quotations");
+  const [quotations, setQuotations] = useState(initialQuotations);
+  const [notes, setNotes] = useState(initialNotes);
+  const [quotationOpen, setQuotationOpen] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [quotationCustomer, setQuotationCustomer] = useState("");
+  const [validUntil, setValidUntil] = useState(defaultQuotationValidity);
+  const [quotationRemarks, setQuotationRemarks] = useState("");
+  const [quotationItems, setQuotationItems] = useState<FormItem[]>([emptyItem()]);
   const [noteType, setNoteType] = useState<"CREDIT" | "DEBIT">("CREDIT");
   const [noteCustomer, setNoteCustomer] = useState("");
   const [noteInvoice, setNoteInvoice] = useState("");
   const [noteReason, setNoteReason] = useState("");
   const [noteRemarks, setNoteRemarks] = useState("");
-  const [noteItems, setNoteItems] = useState<FormItem[]>([
-    { itemName: "", qty: 1, rate: 0, taxRate: 18 },
-  ]);
+  const [noteItems, setNoteItems] = useState<FormItem[]>([emptyItem()]);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
-  // Calculate totals - Quotation
-  const quotTaxable = quotItems.reduce((sum, item) => sum + item.qty * item.rate, 0);
-  const quotTax = quotItems.reduce(
-    (sum, item) => sum + item.qty * item.rate * (item.taxRate / 100),
-    0
-  );
-  const quotTotal = quotTaxable + quotTax;
-
-  // Calculate totals - Note
-  const noteTaxable = noteItems.reduce((sum, item) => sum + item.qty * item.rate, 0);
-  const noteTax = noteItems.reduce(
-    (sum, item) => sum + item.qty * item.rate * (item.taxRate / 100),
-    0
-  );
-  const noteTotal = noteTaxable + noteTax;
-
-  const handleAddQuotItem = () => {
-    setQuotItems([...quotItems, { itemName: "", qty: 1, rate: 0, taxRate: 18 }]);
-  };
-
-  const handleRemoveQuotItem = (index: number) => {
-    setQuotItems(quotItems.filter((_, i) => i !== index));
-  };
-
-  const handleQuotItemChange = (index: number, field: keyof FormItem, val: any) => {
-    const next = [...quotItems];
-    next[index] = { ...next[index], [field]: val };
-    setQuotItems(next);
-  };
-
-  const handleAddNoteItem = () => {
-    setNoteItems([...noteItems, { itemName: "", qty: 1, rate: 0, taxRate: 18 }]);
-  };
-
-  const handleRemoveNoteItem = (index: number) => {
-    setNoteItems(noteItems.filter((_, i) => i !== index));
-  };
-
-  const handleNoteItemChange = (index: number, field: keyof FormItem, val: any) => {
-    const next = [...noteItems];
-    next[index] = { ...next[index], [field]: val };
-    setNoteItems(next);
-  };
-
-  const handleCreateQuotation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-
-    if (!quotCustomer) {
-      setError("Please select a customer.");
-      return;
-    }
-    if (quotItems.some((it) => !it.itemName.trim() || it.qty <= 0 || it.rate < 0)) {
-      setError("Please fill all item lines correctly.");
-      return;
-    }
-
-    setLoading(true);
+  async function createQuotation(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!quotationCustomer) return toast.error("Select a customer");
+    if (quotationItems.some((item) => !item.itemName.trim() || item.qty <= 0 || item.rate < 0)) return toast.error("Complete every quotation line");
+    setBusy(true);
     try {
-      const res = await createQuotationAction({
-        customerId: quotCustomer,
-        validUntil: quotValidUntil,
-        remarks: quotRemarks,
-        items: quotItems,
+      const result = await createQuotationAction({
+        customerId: quotationCustomer,
+        validUntil,
+        remarks: quotationRemarks,
+        items: quotationItems,
       });
-
-      if (res.ok) {
-        setSuccess("Quotation prepared successfully.");
-        setQuotCustomer("");
-        setQuotRemarks("");
-        setQuotItems([{ itemName: "", qty: 1, rate: 0, taxRate: 18 }]);
-        setQuotations([res.data, ...quotations]);
-        setTimeout(() => {
-          setShowQuotModal(false);
-          setSuccess(null);
-        }, 1500);
-      } else {
-        setError(res.error || "Failed to create quotation.");
-      }
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+      if (!result.ok) return toast.error(result.error || "Quotation could not be created");
+      setQuotations((current) => [result.data, ...current]);
+      setQuotationCustomer("");
+      setQuotationRemarks("");
+      setQuotationItems([emptyItem()]);
+      setQuotationOpen(false);
+      toast.success("Quotation prepared");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Quotation could not be created");
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
-  };
+  }
 
-  const handleCreateNote = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-
-    if (!noteCustomer) {
-      setError("Please select a customer.");
-      return;
-    }
-    if (noteItems.some((it) => !it.itemName.trim() || it.qty <= 0 || it.rate < 0)) {
-      setError("Please fill all item lines correctly.");
-      return;
-    }
-
-    setLoading(true);
+  async function createNote(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!noteCustomer) return toast.error("Select a customer");
+    if (noteItems.some((item) => !item.itemName.trim() || item.qty <= 0 || item.rate < 0)) return toast.error("Complete every adjustment line");
+    setBusy(true);
     try {
-      const res = await createCustomerNoteAction({
+      const result = await createCustomerNoteAction({
         noteType,
         customerId: noteCustomer,
         originalInvoiceId: noteInvoice || undefined,
@@ -208,710 +180,133 @@ export function QuotationsClient({
         remarks: noteRemarks,
         items: noteItems,
       });
-
-      if (res.ok) {
-        setSuccess(`${noteType} Note created as DRAFT.`);
-        setNoteCustomer("");
-        setNoteInvoice("");
-        setNoteReason("");
-        setNoteRemarks("");
-        setNoteItems([{ itemName: "", qty: 1, rate: 0, taxRate: 18 }]);
-        setNotes([res.data, ...notes]);
-        setTimeout(() => {
-          setShowNoteModal(false);
-          setSuccess(null);
-        }, 1500);
-      } else {
-        setError(res.error || "Failed to create adjustment note.");
-      }
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+      if (!result.ok) return toast.error(result.error || "Adjustment note could not be created");
+      setNotes((current) => [result.data, ...current]);
+      setNoteCustomer("");
+      setNoteInvoice("");
+      setNoteReason("");
+      setNoteRemarks("");
+      setNoteItems([emptyItem()]);
+      setNoteOpen(false);
+      toast.success(`${noteType === "CREDIT" ? "Credit" : "Debit"} note saved as draft`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Adjustment note could not be created");
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
-  };
+  }
 
-  const handleConvertQuotation = async (id: string) => {
-    setError(null);
-    setSuccess(null);
-    if (!confirm("Are you sure you want to convert this Quotation into a Sales Invoice?")) return;
+  async function convert(id: string) {
+    if (!window.confirm("Convert this quotation into a sales invoice?")) return;
+    const result = await convertQuotationToInvoiceAction(id);
+    if (!result.ok) return toast.error(result.error || "Quotation could not be converted");
+    setQuotations((current) => current.map((record) => record.id === id ? { ...record, status: "CONVERTED" } : record));
+    toast.success("Sales invoice created from quotation");
+  }
 
-    try {
-      const res = await convertQuotationToInvoiceAction(id);
-      if (res.ok) {
-        alert("Quotation converted to Sales Invoice successfully!");
-        setQuotations(
-          quotations.map((q) => (q.id === id ? { ...q, status: "CONVERTED" } : q))
-        );
-      } else {
-        alert(res.error || "Failed to convert quotation.");
-      }
-    } catch (err: any) {
-      alert(err.message || "Conversion failed.");
-    }
-  };
+  async function submitNote(id: string) {
+    if (!window.confirm("Submit this note and post its general-ledger entries?")) return;
+    const result = await submitCustomerNoteAction(id);
+    if (!result.ok) return toast.error(result.error || "Adjustment note could not be submitted");
+    setNotes((current) => current.map((record) => record.id === id ? { ...record, status: "SUBMITTED" } : record));
+    toast.success("Adjustment note posted");
+  }
 
-  const handleSubmitNote = async (id: string) => {
-    setError(null);
-    setSuccess(null);
-    if (!confirm("Are you sure you want to SUBMIT this Note? This will lock it and post General Ledger entries.")) return;
-
-    try {
-      const res = await submitCustomerNoteAction(id);
-      if (res.ok) {
-        alert("Credit/Debit note posted successfully!");
-        setNotes(notes.map((n) => (n.id === id ? { ...n, status: "SUBMITTED" } : n)));
-      } else {
-        alert(res.error || "Failed to post adjustment note.");
-      }
-    } catch (err: any) {
-      alert(err.message || "Submission failed.");
-    }
-  };
+  const openQuotationValue = quotations.filter((record) => record.status !== "CONVERTED").reduce((sum, record) => sum + record.grandTotal, 0);
+  const draftNotes = notes.filter((record) => record.status === "DRAFT").length;
 
   return (
-    <div className="space-y-6">
-      {/* ─── Navigation Tabs ──────────────────────────────────────────────────── */}
-      <div className="flex border-b border-mono-border/10 gap-2">
-        <button
-          onClick={() => setActiveTab("quotations")}
-          className={`px-5 py-3 text-xs uppercase tracking-wider font-semibold border-b-2 transition-all flex items-center gap-2 ${
-            activeTab === "quotations"
-              ? "border-[#F9D972] text-[#F9D972]"
-              : "border-transparent text-slate-400 hover:text-white"
-          }`}
-        >
-          <FileText size={14} /> Quotations ({quotations.length})
-        </button>
-        <button
-          onClick={() => setActiveTab("notes")}
-          className={`px-5 py-3 text-xs uppercase tracking-wider font-semibold border-b-2 transition-all flex items-center gap-2 ${
-            activeTab === "notes"
-              ? "border-[#F9D972] text-[#F9D972]"
-              : "border-transparent text-slate-400 hover:text-white"
-          }`}
-        >
-          <Undo2 size={14} /> Credit/Debit Notes ({notes.length})
-        </button>
-      </div>
-
-      {/* ─── Tab 1: Quotations ────────────────────────────────────────────────── */}
-      {activeTab === "quotations" && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center bg-[var(--color-surface-container)] px-6 py-4 rounded-xl shadow-sm border border-mono-border/10">
-            <div>
-              <h4 className="monolith-h3 text-white">Pre-Sales Quotations</h4>
-              <p className="text-[10px] text-slate-400 mt-1">
-                Provide client pricing. Track open and expired configurations.
-              </p>
-            </div>
-            <button
-              onClick={() => setShowQuotModal(true)}
-              className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all flex items-center gap-2"
-            >
-              <Plus size={14} /> New Quotation
-            </button>
-          </div>
-
-          <div className="bg-[var(--color-surface)] rounded-xl border border-mono-border/10 shadow-sm overflow-hidden">
-            <table className="monolith-table">
-              <thead>
-                <tr>
-                  <th>Quotation No</th>
-                  <th>Customer</th>
-                  <th>Date</th>
-                  <th>Valid Until</th>
-                  <th className="text-right">Taxable</th>
-                  <th className="text-right">GST</th>
-                  <th className="text-right">Grand Total</th>
-                  <th>Status</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {quotations.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="text-center text-slate-500 py-8 text-xs uppercase">
-                      No quotations found
-                    </td>
-                  </tr>
-                ) : (
-                  quotations.map((q) => (
-                    <tr key={q.id} className="hover:bg-slate-800/10">
-                      <td className="font-semibold text-xs text-white monolith-numeric">
-                        {q.quotationNumber}
-                      </td>
-                      <td className="text-xs uppercase text-white font-medium">
-                        {q.customerName}
-                      </td>
-                      <td className="monolith-numeric text-xs">
-                        {new Date(q.postingDate).toLocaleDateString("en-IN")}
-                      </td>
-                      <td className="monolith-numeric text-xs">
-                        {new Date(q.validUntil).toLocaleDateString("en-IN")}
-                      </td>
-                      <td className="text-right monolith-numeric text-xs text-slate-300">
-                        ₹{q.taxableAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="text-right monolith-numeric text-xs text-slate-400">
-                        ₹{q.taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="text-right monolith-numeric text-xs font-semibold text-white">
-                        ₹{q.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </td>
-                      <td>
-                        <span
-                          className={`px-2 py-1 rounded-full text-[9px] font-bold tracking-wider uppercase ${
-                            q.status === "OPEN"
-                              ? "bg-sky-950/50 text-sky-400 border border-sky-500/20"
-                              : q.status === "CONVERTED"
-                              ? "bg-emerald-950/50 text-emerald-400 border border-emerald-500/20"
-                              : "bg-red-950/50 text-red-400 border border-red-500/20"
-                          }`}
-                        >
-                          {q.status}
-                        </span>
-                      </td>
-                      <td className="text-right">
-                        {q.status === "OPEN" && (
-                          <button
-                            onClick={() => handleConvertQuotation(q.id)}
-                            className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-3 py-1 rounded-lg text-[10px] uppercase tracking-wide transition-all inline-flex items-center gap-1"
-                          >
-                            <RefreshCw size={10} /> Convert to Invoice
-                          </button>
-                        )}
-                        {q.status !== "OPEN" && (
-                          <span className="text-[10px] text-slate-500 uppercase tracking-widest">
-                            Processed
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+    <>
+      <AccountingRoutePageHeader
+        actions={<AccountingAction type="button" onClick={() => tab === "quotations" ? setQuotationOpen(true) : setNoteOpen(true)}><Plus aria-hidden="true" /> {tab === "quotations" ? "New quotation" : "New note"}</AccountingAction>}
+      />
+      <AccountingMetrics>
+        <AccountingMetric label="Quotations" value={quotations.length} detail="Prepared customer offers" />
+        <AccountingMetric label="Open value" value={money(openQuotationValue)} detail="Not yet converted" />
+        <AccountingMetric label="Customer notes" value={notes.length} detail="Credit and debit notes" />
+        <AccountingMetric label="Draft notes" value={draftNotes} detail="Awaiting ledger posting" />
+      </AccountingMetrics>
+      <AccountingToolbar>
+        <AccountingAction type="button" variant={tab === "quotations" ? "primary" : "secondary"} onClick={() => setTab("quotations")}>Quotations ({quotations.length})</AccountingAction>
+        <AccountingAction type="button" variant={tab === "notes" ? "primary" : "secondary"} onClick={() => setTab("notes")}>Credit / debit notes ({notes.length})</AccountingAction>
+      </AccountingToolbar>
+      {tab === "quotations" ? (
+        <AccountingSection eyebrow="Commercial pipeline" title="Pre-sales quotations" description="Track customer pricing through validity and invoice conversion.">
+          <AccountingTable>
+            <thead><tr><th>Quotation</th><th>Customer</th><th>Posting date</th><th>Valid until</th><th>Taxable</th><th>GST</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>{quotations.length ? quotations.map((record) => (
+              <tr key={record.id}>
+                <td><strong>{record.quotationNumber}</strong><span className="mnx-table-subtext">{record.remarks || "No remarks"}</span></td>
+                <td>{record.customerName}</td>
+                <td>{new Date(record.postingDate).toLocaleDateString("en-IN")}</td>
+                <td>{new Date(record.validUntil).toLocaleDateString("en-IN")}</td>
+                <td className="mnx-accounting-amount">{money(record.taxableAmount)}</td>
+                <td className="mnx-accounting-amount">{money(record.taxAmount)}</td>
+                <td className="mnx-accounting-amount">{money(record.grandTotal)}</td>
+                <td><AccountingStatus status={record.status} /></td>
+                <td>{record.status === "DRAFT" || record.status === "SUBMITTED" ? <AccountingAction type="button" size="compact" onClick={() => void convert(record.id)}><FileCheck2 aria-hidden="true" /> Convert</AccountingAction> : "—"}</td>
+              </tr>
+            )) : <AccountingEmptyTableRow colSpan={9}>No quotations have been prepared.</AccountingEmptyTableRow>}</tbody>
+          </AccountingTable>
+        </AccountingSection>
+      ) : (
+        <AccountingSection eyebrow="Customer adjustments" title="Credit and debit notes" description="Review commercial adjustments and control when they post to the ledger.">
+          <AccountingTable>
+            <thead><tr><th>Note</th><th>Type</th><th>Customer</th><th>Posting date</th><th>Taxable</th><th>GST</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>{notes.length ? notes.map((record) => (
+              <tr key={record.id}>
+                <td><strong>{record.noteNumber}</strong><span className="mnx-table-subtext">{record.reason || "No reason recorded"}</span></td>
+                <td>{record.noteType}</td>
+                <td>{record.customerName}</td>
+                <td>{new Date(record.postingDate).toLocaleDateString("en-IN")}</td>
+                <td className="mnx-accounting-amount">{money(record.taxableAmount)}</td>
+                <td className="mnx-accounting-amount">{money(record.taxAmount)}</td>
+                <td className="mnx-accounting-amount">{money(record.grandTotal)}</td>
+                <td><AccountingStatus status={record.status} /></td>
+                <td>{record.status === "DRAFT" ? <AccountingAction type="button" size="compact" onClick={() => void submitNote(record.id)}><Send aria-hidden="true" /> Submit</AccountingAction> : "—"}</td>
+              </tr>
+            )) : <AccountingEmptyTableRow colSpan={9}>No customer adjustment notes have been created.</AccountingEmptyTableRow>}</tbody>
+          </AccountingTable>
+        </AccountingSection>
       )}
 
-      {/* ─── Tab 2: Credit/Debit Notes ────────────────────────────────────────── */}
-      {activeTab === "notes" && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center bg-[var(--color-surface-container)] px-6 py-4 rounded-xl shadow-sm border border-mono-border/10">
-            <div>
-              <h4 className="monolith-h3 text-white">Credit &amp; Debit Notes</h4>
-              <p className="text-[10px] text-slate-400 mt-1">
-                Post sales returns, write-offs, or additional charges directly against accounts receivable.
-              </p>
-            </div>
-            <button
-              onClick={() => setShowNoteModal(true)}
-              className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all flex items-center gap-2"
-            >
-              <Plus size={14} /> New Credit/Debit Note
-            </button>
+      <AccountingDialog
+        open={quotationOpen}
+        onClose={() => !busy && setQuotationOpen(false)}
+        title="Prepare quotation"
+        description="Create a priced customer offer with a controlled validity date."
+        size="wide"
+        footer={<><AccountingAction type="button" variant="secondary" disabled={busy} onClick={() => setQuotationOpen(false)}>Cancel</AccountingAction><AccountingAction type="submit" form="accounting-quotation-form" disabled={busy}>{busy ? <Loader2 className="mnx-spin" aria-hidden="true" /> : null} Prepare quotation</AccountingAction></>}
+      >
+        <form id="accounting-quotation-form" className="mnx-accounting-form" onSubmit={createQuotation}>
+          <div className="mnx-accounting-form-grid">
+            <AccountingField label="Customer" required><AccountingSelect required value={quotationCustomer} onChange={(event) => setQuotationCustomer(event.target.value)}><option value="">Select customer</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name}{customer.gstin ? ` · ${customer.gstin}` : ""}</option>)}</AccountingSelect></AccountingField>
+            <AccountingField label="Valid until" required><DateInput required value={validUntil} onChange={(event) => setValidUntil(event.target.value)} /></AccountingField>
+            <AccountingField label="Remarks" className="mnx-accounting-field-span"><AccountingTextarea value={quotationRemarks} onChange={(event) => setQuotationRemarks(event.target.value)} /></AccountingField>
           </div>
+          <LineEditor items={quotationItems} onChange={setQuotationItems} />
+        </form>
+      </AccountingDialog>
 
-          <div className="bg-[var(--color-surface)] rounded-xl border border-mono-border/10 shadow-sm overflow-hidden">
-            <table className="monolith-table">
-              <thead>
-                <tr>
-                  <th>Note Number</th>
-                  <th>Type</th>
-                  <th>Customer</th>
-                  <th>Posting Date</th>
-                  <th className="text-right">Taxable</th>
-                  <th className="text-right">GST</th>
-                  <th className="text-right">Adjusted Amt</th>
-                  <th>Reason</th>
-                  <th>Status</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {notes.length === 0 ? (
-                  <tr>
-                    <td colSpan={10} className="text-center text-slate-500 py-8 text-xs uppercase">
-                      No customer notes found
-                    </td>
-                  </tr>
-                ) : (
-                  notes.map((n) => (
-                    <tr key={n.id} className="hover:bg-slate-800/10">
-                      <td className="font-semibold text-xs text-white monolith-numeric">
-                        {n.noteNumber}
-                      </td>
-                      <td>
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            n.noteType === "CREDIT"
-                              ? "bg-rose-950/40 text-rose-400 border border-rose-500/20"
-                              : "bg-emerald-950/40 text-emerald-400 border border-emerald-500/20"
-                          }`}
-                        >
-                          {n.noteType}
-                        </span>
-                      </td>
-                      <td className="text-xs uppercase text-white font-medium">
-                        {n.customerName}
-                      </td>
-                      <td className="monolith-numeric text-xs">
-                        {new Date(n.postingDate).toLocaleDateString("en-IN")}
-                      </td>
-                      <td className="text-right monolith-numeric text-xs text-slate-300">
-                        ₹{n.taxableAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="text-right monolith-numeric text-xs text-slate-400">
-                        ₹{n.taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="text-right monolith-numeric text-xs font-semibold text-white">
-                        ₹{n.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="text-slate-400 text-xs truncate max-w-[150px]">
-                        {n.reason || "—"}
-                      </td>
-                      <td>
-                        <span
-                          className={`px-2 py-1 rounded-full text-[9px] font-bold tracking-wider uppercase ${
-                            n.status === "DRAFT"
-                              ? "bg-slate-900/60 text-slate-400 border border-slate-700/30"
-                              : "bg-emerald-955/50 text-emerald-400 border border-emerald-500/20"
-                          }`}
-                        >
-                          {n.status}
-                        </span>
-                      </td>
-                      <td className="text-right">
-                        {n.status === "DRAFT" && (
-                          <button
-                            onClick={() => handleSubmitNote(n.id)}
-                            className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-3 py-1 rounded-lg text-[10px] uppercase tracking-wide transition-all inline-flex items-center gap-1"
-                          >
-                            <FileCheck2 size={10} /> Submit &amp; Post
-                          </button>
-                        )}
-                        {n.status !== "DRAFT" && (
-                          <span className="text-[10px] text-slate-500 uppercase tracking-widest">
-                            Posted to GL
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+      <AccountingDialog
+        open={noteOpen}
+        onClose={() => !busy && setNoteOpen(false)}
+        title="Create customer adjustment"
+        description="Prepare a credit or debit note and optionally link it to an original invoice."
+        size="wide"
+        footer={<><AccountingAction type="button" variant="secondary" disabled={busy} onClick={() => setNoteOpen(false)}>Cancel</AccountingAction><AccountingAction type="submit" form="accounting-note-form" disabled={busy}>{busy ? <Loader2 className="mnx-spin" aria-hidden="true" /> : null} Save draft note</AccountingAction></>}
+      >
+        <form id="accounting-note-form" className="mnx-accounting-form" onSubmit={createNote}>
+          <div className="mnx-accounting-form-grid">
+            <AccountingField label="Note type" required><AccountingSelect value={noteType} onChange={(event) => setNoteType(event.target.value as "CREDIT" | "DEBIT")}><option value="CREDIT">Credit note</option><option value="DEBIT">Debit note</option></AccountingSelect></AccountingField>
+            <AccountingField label="Customer" required><AccountingSelect required value={noteCustomer} onChange={(event) => setNoteCustomer(event.target.value)}><option value="">Select customer</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name}</option>)}</AccountingSelect></AccountingField>
+            <AccountingField label="Original invoice"><AccountingSelect value={noteInvoice} onChange={(event) => setNoteInvoice(event.target.value)}><option value="">No linked invoice</option>{invoices.map((invoice) => <option key={invoice.id} value={invoice.id}>{invoice.invoiceNumber} · {money(invoice.grandTotal)}</option>)}</AccountingSelect></AccountingField>
+            <AccountingField label="Reason"><AccountingInput value={noteReason} onChange={(event) => setNoteReason(event.target.value)} /></AccountingField>
+            <AccountingField label="Remarks" className="mnx-accounting-field-span"><AccountingTextarea value={noteRemarks} onChange={(event) => setNoteRemarks(event.target.value)} /></AccountingField>
           </div>
-        </div>
-      )}
-
-      {/* ─── Prepare Quotation Modal ────────────────────────────────────────── */}
-      {showQuotModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[var(--color-surface)] border border-mono-border/10 rounded-2xl w-full max-w-[700px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
-            <div className="px-6 py-4 bg-[var(--color-surface-container)] border-b border-mono-border/10 flex justify-between items-center">
-              <h3 className="monolith-h3 text-white">Prepare New Quotation</h3>
-              <button
-                onClick={() => setShowQuotModal(false)}
-                className="text-slate-400 hover:text-white text-lg font-bold"
-              >
-                &times;
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateQuotation} className="p-6 space-y-4 overflow-y-auto flex-1">
-              {error && (
-                <div className="p-3 bg-red-950/40 border border-red-500/30 text-red-200 text-xs rounded-xl">
-                  {error}
-                </div>
-              )}
-              {success && (
-                <div className="p-3 bg-emerald-950/40 border border-emerald-500/30 text-emerald-200 text-xs rounded-xl">
-                  {success}
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="monolith-label block">Customer</label>
-                  <NativeSelect
-                    value={quotCustomer}
-                    onChange={(e) => setQuotCustomer(e.target.value)}
-                    required
-                    className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs uppercase"
-                  >
-                    <option value="">Select Customer</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </div>
-                <div className="space-y-2">
-                  <label className="monolith-label block">Valid Until</label>
-                  <DateInput
-                    value={quotValidUntil}
-                    onChange={(e) => setQuotValidUntil(e.target.value)}
-                    required
-                    className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs monolith-numeric"
-                  />
-                </div>
-              </div>
-
-              {/* Items Section */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="monolith-label">Line Items</label>
-                  <button
-                    type="button"
-                    onClick={handleAddQuotItem}
-                    className="text-[#F9D972] hover:text-[#E8C85D] text-[11px] uppercase tracking-wider font-semibold flex items-center gap-1"
-                  >
-                    <Plus size={12} /> Add Row
-                  </button>
-                </div>
-
-                <div className="space-y-2 bg-[var(--color-background)] p-4 rounded-xl border border-mono-border/10">
-                  {quotItems.map((item, idx) => (
-                    <div key={idx} className="grid grid-cols-12 gap-3 items-center">
-                      <div className="col-span-5">
-                        <input
-                          type="text"
-                          required
-                          value={item.itemName}
-                          onChange={(e) => handleQuotItemChange(idx, "itemName", e.target.value)}
-                          placeholder="Item Name / Description"
-                          className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-xs"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <input
-                          type="number"
-                          required
-                          min="1"
-                          value={item.qty}
-                          onChange={(e) => handleQuotItemChange(idx, "qty", parseInt(e.target.value) || 0)}
-                          placeholder="Qty"
-                          className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-xs monolith-numeric text-center"
-                        />
-                      </div>
-                      <div className="col-span-3">
-                        <input
-                          type="number"
-                          required
-                          step="0.01"
-                          min="0"
-                          value={item.rate}
-                          onChange={(e) => handleQuotItemChange(idx, "rate", parseFloat(e.target.value) || 0)}
-                          placeholder="Rate"
-                          className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-xs monolith-numeric text-right"
-                        />
-                      </div>
-                      <div className="col-span-1">
-                        <NativeSelect
-                          value={item.taxRate}
-                          onChange={(e) => handleQuotItemChange(idx, "taxRate", parseInt(e.target.value) || 0)}
-                          className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-[10px] text-center"
-                        >
-                          <option value="0">0%</option>
-                          <option value="5">5%</option>
-                          <option value="12">12%</option>
-                          <option value="18">18%</option>
-                          <option value="28">28%</option>
-                        </NativeSelect>
-                      </div>
-                      <div className="col-span-1 text-center">
-                        {quotItems.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveQuotItem(idx)}
-                            className="text-rose-500 hover:text-rose-400"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Totals box */}
-              <div className="flex justify-end p-4 bg-[var(--color-surface-container)] rounded-xl border border-mono-border/10">
-                <div className="w-[250px] space-y-2 text-xs">
-                  <div className="flex justify-between text-slate-400">
-                    <span>Taxable Amount:</span>
-                    <span className="monolith-numeric text-white">
-                      ₹{quotTaxable.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>GST (Estimated):</span>
-                    <span className="monolith-numeric text-white">
-                      ₹{quotTax.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  <div className="flex justify-between font-bold border-t border-mono-border/10 pt-2 text-white">
-                    <span>Grand Total:</span>
-                    <span className="monolith-numeric text-[#F9D972]">
-                      ₹{quotTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="monolith-label block">Notes / Terms</label>
-                <textarea
-                  value={quotRemarks}
-                  onChange={(e) => setQuotRemarks(e.target.value)}
-                  placeholder="Payment terms, delivery details, etc."
-                  className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs h-20"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-mono-border/10">
-                <button
-                  type="button"
-                  onClick={() => setShowQuotModal(false)}
-                  className="px-4 py-2 border border-slate-600 hover:border-slate-500 text-slate-300 hover:text-white rounded-xl text-xs uppercase tracking-wide transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all disabled:opacity-50"
-                >
-                  {loading ? "Preparing..." : "Prepare Quotation"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Credit/Debit Note Modal ─────────────────────────────────────────── */}
-      {showNoteModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[var(--color-surface)] border border-mono-border/10 rounded-2xl w-full max-w-[700px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
-            <div className="px-6 py-4 bg-[var(--color-surface-container)] border-b border-mono-border/10 flex justify-between items-center">
-              <h3 className="monolith-h3 text-white">Create Adjustment Note</h3>
-              <button
-                onClick={() => setShowNoteModal(false)}
-                className="text-slate-400 hover:text-white text-lg font-bold"
-              >
-                &times;
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateNote} className="p-6 space-y-4 overflow-y-auto flex-1">
-              {error && (
-                <div className="p-3 bg-red-950/40 border border-red-500/30 text-red-200 text-xs rounded-xl">
-                  {error}
-                </div>
-              )}
-              {success && (
-                <div className="p-3 bg-emerald-950/40 border border-emerald-500/30 text-emerald-200 text-xs rounded-xl">
-                  {success}
-                </div>
-              )}
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label className="monolith-label block">Note Type</label>
-                  <NativeSelect
-                    value={noteType}
-                    onChange={(e) => setNoteType(e.target.value as any)}
-                    required
-                    className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs"
-                  >
-                    <option value="CREDIT">Credit Note (Return/Discount)</option>
-                    <option value="DEBIT">Debit Note (Extra Charge)</option>
-                  </NativeSelect>
-                </div>
-                <div className="space-y-2">
-                  <label className="monolith-label block">Customer</label>
-                  <NativeSelect
-                    value={noteCustomer}
-                    onChange={(e) => setNoteCustomer(e.target.value)}
-                    required
-                    className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs uppercase"
-                  >
-                    <option value="">Select Customer</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </div>
-                <div className="space-y-2">
-                  <label className="monolith-label block">Link Sales Invoice (Optional)</label>
-                  <NativeSelect
-                    value={noteInvoice}
-                    onChange={(e) => setNoteInvoice(e.target.value)}
-                    className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs"
-                  >
-                    <option value="">Select Invoice</option>
-                    {invoices.map((inv) => (
-                      <option key={inv.id} value={inv.id}>
-                        {inv.invoiceNumber} (₹{inv.grandTotal})
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="monolith-label block">Reason for adjustment</label>
-                  <input
-                    type="text"
-                    required
-                    value={noteReason}
-                    onChange={(e) => setNoteReason(e.target.value)}
-                    placeholder="E.g., Item damaged, sales discount correction"
-                    className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="monolith-label block">Remarks</label>
-                  <input
-                    type="text"
-                    value={noteRemarks}
-                    onChange={(e) => setNoteRemarks(e.target.value)}
-                    placeholder="Internal reference details"
-                    className="w-full bg-[var(--color-background)] text-white p-3 rounded-xl text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* Items Section */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="monolith-label">Line Items</label>
-                  <button
-                    type="button"
-                    onClick={handleAddNoteItem}
-                    className="text-[#F9D972] hover:text-[#E8C85D] text-[11px] uppercase tracking-wider font-semibold flex items-center gap-1"
-                  >
-                    <Plus size={12} /> Add Row
-                  </button>
-                </div>
-
-                <div className="space-y-2 bg-[var(--color-background)] p-4 rounded-xl border border-mono-border/10">
-                  {noteItems.map((item, idx) => (
-                    <div key={idx} className="grid grid-cols-12 gap-3 items-center">
-                      <div className="col-span-5">
-                        <input
-                          type="text"
-                          required
-                          value={item.itemName}
-                          onChange={(e) => handleNoteItemChange(idx, "itemName", e.target.value)}
-                          placeholder="Description of adjustment"
-                          className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-xs"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <input
-                          type="number"
-                          required
-                          min="1"
-                          value={item.qty}
-                          onChange={(e) => handleNoteItemChange(idx, "qty", parseInt(e.target.value) || 0)}
-                          placeholder="Qty"
-                          className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-xs monolith-numeric text-center"
-                        />
-                      </div>
-                      <div className="col-span-3">
-                        <input
-                          type="number"
-                          required
-                          step="0.01"
-                          min="0"
-                          value={item.rate}
-                          onChange={(e) => handleNoteItemChange(idx, "rate", parseFloat(e.target.value) || 0)}
-                          placeholder="Amount"
-                          className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-xs monolith-numeric text-right"
-                        />
-                      </div>
-                      <div className="col-span-1">
-                        <NativeSelect
-                          value={item.taxRate}
-                          onChange={(e) => handleNoteItemChange(idx, "taxRate", parseInt(e.target.value) || 0)}
-                          className="w-full bg-[var(--color-surface)] text-white p-2.5 rounded-lg text-[10px] text-center"
-                        >
-                          <option value="0">0%</option>
-                          <option value="5">5%</option>
-                          <option value="12">12%</option>
-                          <option value="18">18%</option>
-                          <option value="28">28%</option>
-                        </NativeSelect>
-                      </div>
-                      <div className="col-span-1 text-center">
-                        {noteItems.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveNoteItem(idx)}
-                            className="text-rose-500 hover:text-rose-400"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Totals box */}
-              <div className="flex justify-end p-4 bg-[var(--color-surface-container)] rounded-xl border border-mono-border/10">
-                <div className="w-[250px] space-y-2 text-xs">
-                  <div className="flex justify-between text-slate-400">
-                    <span>Taxable Value:</span>
-                    <span className="monolith-numeric text-white">
-                      ₹{noteTaxable.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>GST (Estimated):</span>
-                    <span className="monolith-numeric text-white">
-                      ₹{noteTax.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  <div className="flex justify-between font-bold border-t border-mono-border/10 pt-2 text-white">
-                    <span>Adjustment Amount:</span>
-                    <span className="monolith-numeric text-[#F9D972]">
-                      ₹{noteTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-mono-border/10">
-                <button
-                  type="button"
-                  onClick={() => setShowNoteModal(false)}
-                  className="px-4 py-2 border border-slate-600 hover:border-slate-500 text-slate-300 hover:text-white rounded-xl text-xs uppercase tracking-wide transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-[#F9D972] text-white hover:bg-[#E8C85D] px-4 py-2 rounded-xl text-xs uppercase tracking-wide transition-all disabled:opacity-50"
-                >
-                  {loading ? "Creating..." : `Create ${noteType} Note`}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+          <LineEditor items={noteItems} onChange={setNoteItems} />
+        </form>
+      </AccountingDialog>
+    </>
   );
 }

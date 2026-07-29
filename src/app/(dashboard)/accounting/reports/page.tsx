@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { ReportsClient } from "./reports-client";
+import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
 
 export default async function ReportsPage() {
   const session = await auth();
@@ -18,15 +19,9 @@ export default async function ReportsPage() {
   });
 
   return (
-    <div className="p-8 space-y-6 max-w-[1400px] mx-auto animate-in fade-in duration-200">
-      <div>
-        <h2 className="monolith-h1 text-white">Reports Center</h2>
-        <p className="text-slate-400 text-xs mt-1">
-          Access financial statements, tax registers, cargo costing indices, and audit summaries.
-        </p>
-      </div>
-
+    <>
+      <AccountingRoutePageHeader />
       <ReportsClient partners={partners} />
-    </div>
+    </>
   );
 }

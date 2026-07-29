@@ -39,7 +39,9 @@ export function usesMonolithShell(pathname: string | null) {
     normalizedPathname === "/cha" ||
     normalizedPathname.startsWith("/cha/") ||
     normalizedPathname === "/expense" ||
-    normalizedPathname.startsWith("/expense/")
+    normalizedPathname.startsWith("/expense/") ||
+    normalizedPathname === "/accounting" ||
+    normalizedPathname.startsWith("/accounting/")
   );
 }
 
