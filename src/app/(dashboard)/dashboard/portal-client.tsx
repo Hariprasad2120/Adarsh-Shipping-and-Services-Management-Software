@@ -1,8 +1,9 @@
 "use client";
 
 import { Building2, Sparkles, Users2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MonolithPage } from "@/components/monolith/foundation";
+import { WorkspaceLoadingState } from "@/components/monolith/workspace-states";
 import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 import { AttendanceCommand } from "./_components/attendance-command";
@@ -17,9 +18,6 @@ import type {
 
 interface HrmsPortalClientProps {
   sessionUser: { id: string; name: string; email: string };
-  departments: unknown[];
-  branches: unknown[];
-  initialUsers: unknown[];
   initialProfile: UserProfile;
   initialWidgetsData: DashboardWidgetsData;
   initialReportees: ReporteeSummary[];
@@ -35,6 +33,12 @@ type ProfilePayload = {
   attendanceStatus: UserProfile["attendanceStatus"];
   totalInTime: UserProfile["totalInTime"];
   pendingCounts?: UserProfile["pendingCounts"];
+};
+
+type OrganizationPayload = {
+  departments: unknown[];
+  branches: unknown[];
+  employees: unknown[];
 };
 
 const tabs: {
@@ -91,9 +95,6 @@ async function readApiResponse<T>(response: Response) {
 
 export function HrmsPortalClient({
   sessionUser,
-  departments,
-  branches,
-  initialUsers,
   initialProfile,
   initialWidgetsData,
   initialReportees,
@@ -105,6 +106,25 @@ export function HrmsPortalClient({
   const [reportees, setReportees] = useState(initialReportees);
   const [widgets, setWidgets] = useState(initialWidgetsData);
   const [moduleSnapshot, setModuleSnapshot] = useState(initialModuleSnapshot);
+  const [organization, setOrganization] = useState<OrganizationPayload | null>(null);
+  const organizationRequestRef = useRef(false);
+
+  useEffect(() => {
+    if (activeTab !== "organization" || organization || organizationRequestRef.current) return;
+    let active = true;
+    organizationRequestRef.current = true;
+    void fetch("/api/dashboard/organization")
+      .then((response) => readApiResponse<OrganizationPayload>(response))
+      .then((payload) => {
+        if (active) setOrganization(payload);
+      })
+      .finally(() => {
+        organizationRequestRef.current = false;
+      });
+    return () => {
+      active = false;
+    };
+  }, [activeTab, organization]);
 
   async function refreshDashboard() {
     const [profileResponse, widgetsResponse, reporteesResponse] = await Promise.all([
@@ -194,12 +214,18 @@ export function HrmsPortalClient({
           />
         ) : null}
         {activeTab === "team" ? <DashboardTeam reportees={reportees} /> : null}
-        {activeTab === "organization" ? (
+        {activeTab === "organization" && organization ? (
           <DashboardOrganization
             data={widgets}
-            employees={initialUsers}
-            departments={departments}
-            branches={branches}
+            employees={organization.employees}
+            departments={organization.departments}
+            branches={organization.branches}
+          />
+        ) : null}
+        {activeTab === "organization" && !organization ? (
+          <WorkspaceLoadingState
+            title="Loading organization"
+            description="Preparing the employee directory and organization structure."
           />
         ) : null}
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Briefcase, CheckCircle2, Filter, Plus, Search, Users } from "lucide-react";
 import { CreateJobDialog } from "@/components/cha/create-job-dialog";
@@ -24,6 +24,7 @@ import { ChaDueDateWarningsIndicator } from "@/app/(dashboard)/cha/_components/c
 import type { DueDateWarningViewModel } from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
 import { formatChaBadgeLabel, getChaPriorityBadgeVariant } from "@/lib/cha-badges";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import type { BadgeVariant } from "@/components/monolith/badge";
 import {
   ChaMetricCard,
@@ -105,6 +106,7 @@ interface JobsClientProps {
       isActive: boolean;
     }[];
   };
+  initialCreateOptions: JobsClientProps["options"] | null;
   showCreateNew: boolean;
   showCreatePermissionDenied: boolean;
   canCreateJob: boolean;
@@ -162,6 +164,7 @@ export function JobsClient({
   completedJobsData,
   filters,
   options,
+  initialCreateOptions,
   showCreateNew,
   showCreatePermissionDenied,
   canCreateJob,
@@ -178,8 +181,34 @@ export function JobsClient({
   const [jobTypeId, setJobTypeId] = useState(filters.jobTypeId || "");
   const [assignedToMe, setAssignedToMe] = useState(filters.assignedToMe || false);
   const [isModalOpen, setIsModalOpen] = useState(showCreateNew && canCreateJob);
+  const [createOptions, setCreateOptions] =
+    useState<JobsClientProps["options"] | null>(initialCreateOptions);
+  const [createOptionsLoading, setCreateOptionsLoading] = useState(false);
+  const createOptionsRequestRef = useRef(false);
   const [openFilterTable, setOpenFilterTable] = useState<"active" | "completed" | null>(null);
   const [activeFilterType, setActiveFilterType] = useState<FilterPanelKey>("stage");
+
+  const loadCreateOptions = useCallback(async () => {
+    if (createOptions || createOptionsRequestRef.current) return;
+    createOptionsRequestRef.current = true;
+    await Promise.resolve();
+    setCreateOptionsLoading(true);
+    try {
+      const response = await fetch("/api/cha/jobs/create-options", {
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error("Unable to load create-job options.");
+      setCreateOptions((await response.json()) as JobsClientProps["options"]);
+    } catch (error) {
+      setIsModalOpen(false);
+      toast.error(
+        error instanceof Error ? error.message : "Unable to load create-job options.",
+      );
+    } finally {
+      createOptionsRequestRef.current = false;
+      setCreateOptionsLoading(false);
+    }
+  }, [createOptions]);
 
   const activeFilterCount = [
     Boolean(search),
@@ -456,7 +485,11 @@ export function JobsClient({
           {canCreateJob ? (
             <Button
               type="button"
-              onClick={() => setIsModalOpen(true)}
+              disabled={createOptionsLoading}
+              onClick={() => {
+                setIsModalOpen(true);
+                void loadCreateOptions();
+              }}
             >
               <Plus className="size-4" /> New Job
             </Button>
@@ -690,11 +723,11 @@ export function JobsClient({
         tableKey: "completed",
       })}
 
-      {canCreateJob ? (
+      {canCreateJob && createOptions ? (
         <CreateJobDialog
           open={isModalOpen}
           onOpenChange={setIsModalOpen}
-          options={options}
+          options={createOptions}
           currentUserId={currentUserId}
         />
       ) : null}

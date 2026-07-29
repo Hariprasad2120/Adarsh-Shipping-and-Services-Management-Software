@@ -4379,6 +4379,7 @@ export async function listChaDueDateWarnings(
   orgId: string,
   options: {
     jobId?: string;
+    jobIds?: string[];
     limit?: number;
     createNotifications?: boolean;
   } = {},
@@ -4408,7 +4409,11 @@ export async function listChaDueDateWarnings(
     db.chaJob.findMany({
       where: {
         ...getActiveChaJobWhere(orgId),
-        ...(options.jobId ? { id: options.jobId } : {}),
+        ...(options.jobId
+          ? { id: options.jobId }
+          : options.jobIds
+            ? { id: { in: options.jobIds } }
+            : {}),
         status: "ACTIVE",
         stage: { not: "FILED" },
         additionalData: {
@@ -4438,7 +4443,11 @@ export async function listChaDueDateWarnings(
     db.chaJob.findMany({
       where: {
         ...getActiveChaJobWhere(orgId),
-        ...(options.jobId ? { id: options.jobId } : {}),
+        ...(options.jobId
+          ? { id: options.jobId }
+          : options.jobIds
+            ? { id: { in: options.jobIds } }
+            : {}),
         status: "ACTIVE",
         stage: { not: "FILED" },
         filingSection49Flag: {
@@ -4465,7 +4474,11 @@ export async function listChaDueDateWarnings(
         instance: {
           job: {
             ...getActiveChaJobWhere(orgId),
-            ...(options.jobId ? { id: options.jobId } : {}),
+            ...(options.jobId
+              ? { id: options.jobId }
+              : options.jobIds
+                ? { id: { in: options.jobIds } }
+                : {}),
             status: "ACTIVE",
             stage: { not: "FILED" },
             ...accessWhere,
@@ -13643,6 +13656,7 @@ async function buildFilingQueryEscalationWarnings(params: {
   actorId: string;
   orgId: string;
   jobId?: string;
+  jobIds?: string[];
 }): Promise<FilingQueryEscalationWarning[]> {
   const [now, canViewAll] = await Promise.all([
     getNow(),
@@ -13655,7 +13669,11 @@ async function buildFilingQueryEscalationWarnings(params: {
       status: { in: ["OPEN", "REPLIED"] },
       lastReminderAt: { lte: warningThreshold },
       instance: {
-        ...(params.jobId ? { jobId: params.jobId } : {}),
+        ...(params.jobId
+          ? { jobId: params.jobId }
+          : params.jobIds
+            ? { jobId: { in: params.jobIds } }
+            : {}),
         job: {
           ...getActiveChaJobWhere(params.orgId),
           ...(canViewAll
@@ -13759,8 +13777,9 @@ async function buildFilingQueryEscalationWarnings(params: {
 export async function listFilingQueryEscalationWarnings(
   actorId: string,
   orgId: string,
+  jobIds?: string[],
 ): Promise<FilingQueryEscalationWarning[]> {
-  return buildFilingQueryEscalationWarnings({ actorId, orgId });
+  return buildFilingQueryEscalationWarnings({ actorId, orgId, jobIds });
 }
 
 export async function createFilingWorkflowQuery(

@@ -36,6 +36,17 @@ type RemoteToast = {
   };
 };
 
+type UpcomingReminder = {
+  id: string;
+  title: string;
+  alertAt: string | null;
+};
+
+type RuntimeUpdates = {
+  notifications: RemoteToast[];
+  upcomingTodoReminders: UpcomingReminder[];
+};
+
 type NotificationContextValue = {
   pushToast: (toast: Omit<LocalToast, "id">) => void;
   success: (title: string, body?: string) => void;
@@ -46,6 +57,8 @@ type NotificationContextValue = {
 const NotificationContext = createContext<NotificationContextValue | null>(null);
 const REMOTE_TOAST_SHOWN_PREFIX = "remote-toast-shown:";
 const NOTIFICATION_ACTION_CLASS = "!text-sm !font-medium uppercase tracking-[0.14em]";
+const RUNTIME_POLL_INTERVAL_MS = 60_000;
+const RUNTIME_MAX_BACKOFF_MS = 10 * 60_000;
 
 function getRemoteToastShownStorageKey(notificationId: string) {
   return `${REMOTE_TOAST_SHOWN_PREFIX}${notificationId}`;
@@ -176,55 +189,99 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [localToasts, setLocalToasts] = useState<LocalToast[]>([]);
   const [remoteToasts, setRemoteToasts] = useState<RemoteToast[]>([]);
   const refreshInFlightRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const etagRef = useRef<string | null>(null);
+  const failureCountRef = useRef(0);
 
   const refreshRemoteToasts = useCallback(async () => {
-    if (typeof document !== "undefined" && document.hidden) return;
-    if (refreshInFlightRef.current) return;
+    if (typeof document !== "undefined" && document.hidden) return true;
+    if (refreshInFlightRef.current) return true;
 
     refreshInFlightRef.current = true;
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
-      const res = await fetch("/api/notifications/active", { cache: "no-store" });
-      if (!res.ok) return;
-      const data = (await res.json()) as RemoteToast[];
-      const unseenToasts = data.filter((toast) => !hasShownRemoteToast(toast.id));
+      const res = await fetch("/api/runtime/updates", {
+        cache: "no-store",
+        headers: etagRef.current ? { "If-None-Match": etagRef.current } : undefined,
+        signal: controller.signal,
+      });
+      if (res.status === 304) {
+        failureCountRef.current = 0;
+        return true;
+      }
+      if (!res.ok) {
+        failureCountRef.current += 1;
+        return false;
+      }
+
+      etagRef.current = res.headers.get("etag");
+      const data = (await res.json()) as RuntimeUpdates;
+      const unseenToasts = data.notifications.filter(
+        (toast) => !hasShownRemoteToast(toast.id),
+      );
       markRemoteToastsShown(unseenToasts.map((toast) => toast.id));
       setRemoteToasts(unseenToasts);
 
-      if (data.length > 0) {
-        const ids = data.map((n) => n.id);
+      if (data.notifications.length > 0) {
+        const ids = data.notifications.map((notification) => notification.id);
         await fetch("/api/notifications/presented", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ids }),
+          signal: controller.signal,
         }).catch((err) => console.error("Failed to mark notifications presented", err));
       }
+      failureCountRef.current = 0;
+      return true;
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return true;
+      failureCountRef.current += 1;
+      return false;
     } finally {
       refreshInFlightRef.current = false;
+      if (abortRef.current === controller) abortRef.current = null;
     }
   }, []);
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      void refreshRemoteToasts();
-    }, 1800);
+    let timer: number | null = null;
+    let active = true;
+
+    const clearTimer = () => {
+      if (timer !== null) window.clearTimeout(timer);
+      timer = null;
+    };
+
+    const schedule = (delay: number) => {
+      clearTimer();
+      if (!active || document.hidden) return;
+      timer = window.setTimeout(async () => {
+        await refreshRemoteToasts();
+        const backoff = Math.min(
+          RUNTIME_POLL_INTERVAL_MS * 2 ** failureCountRef.current,
+          RUNTIME_MAX_BACKOFF_MS,
+        );
+        schedule(backoff);
+      }, delay);
+    };
 
     const handleVisibilityChange = () => {
-      if (typeof document !== "undefined" && !document.hidden) {
-        void refreshRemoteToasts();
+      if (document.hidden) {
+        clearTimer();
+        abortRef.current?.abort();
+      } else {
+        schedule(0);
       }
     };
 
-    if (typeof document !== "undefined") {
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-    }
-
-    const interval = setInterval(refreshRemoteToasts, 30000); // 30 seconds
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    schedule(1800);
     return () => {
-      window.clearTimeout(timeout);
-      clearInterval(interval);
-      if (typeof document !== "undefined") {
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
-      }
+      active = false;
+      clearTimer();
+      abortRef.current?.abort();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [refreshRemoteToasts]);
 
