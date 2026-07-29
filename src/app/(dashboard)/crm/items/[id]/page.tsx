@@ -20,7 +20,7 @@ export default function CrmItemDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-[#f7f9fb] p-6 text-sm text-[#6b7280]">
+      <div className="flex h-full items-center justify-center bg-[var(--mnx-surface)] p-6 text-sm text-[var(--mnx-text-muted)]">
         Loading...
       </div>
     );

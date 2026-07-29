@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmDialogLayer, CrmInput, CrmTextarea } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
@@ -194,51 +196,56 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
   };
 
   return (
-    <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl bg-[#0f1319] border border-[#1c212a] rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+    <CrmDialogLayer
+      open
+      onClose={onClose}
+      size="wide"
+      labelledBy="interested-enquiry-title"
+    >
+      <div className="w-full max-w-2xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[#1c212a]/50 bg-[#0c0f14]">
+        <div className="flex items-center justify-between p-4 border-b border-[var(--mnx-border)]/50 bg-[var(--mnx-surface)]">
           <div className="flex items-center gap-2">
-            <Info className="size-4.5 text-[#F9D972]" />
-            <span className="font-bold text-sm text-white uppercase tracking-wider">In-Call Enquiry Form</span>
+            <Info className="size-4.5 text-[var(--mnx-accent)]" />
+            <span id="interested-enquiry-title" className="font-bold text-sm text-mono-text uppercase tracking-wider">In-Call Enquiry Form</span>
           </div>
           <div className="flex items-center gap-3">
-            <button
+            <CrmButton
               type="button"
               onClick={handleFillDemo}
-              className="px-2.5 py-1 bg-[#F9D972]/10 hover:bg-[#F9D972]/20 border border-[#F9D972]/35 text-[#F9D972] rounded text-[10px] font-bold uppercase tracking-wider transition-all"
+              className="px-2.5 py-1 bg-[var(--mnx-accent)]/10 hover:bg-[var(--mnx-accent)]/20 border border-[var(--mnx-accent)]/35 text-[var(--mnx-accent)] rounded text-[10px] font-bold uppercase tracking-wider transition-all"
             >
               Fill Demo
-            </button>
-            <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white cursor-pointer">
+            </CrmButton>
+            <CrmButton onClick={onClose} className="p-1 hover:bg-mono-soft rounded text-mono-muted hover:text-mono-text cursor-pointer">
               <X className="size-4" />
-            </button>
+            </CrmButton>
           </div>
         </div>
 
         {/* Modal Navigation Tabs */}
-        <div className="flex bg-[#0c0f14] border-b border-[#1c212a]/40">
-          <button
+        <div className="flex bg-[var(--mnx-surface)] border-b border-[var(--mnx-border)]/40">
+          <CrmButton
             type="button"
             onClick={() => setActiveTab("Sea")}
             className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 transition-all cursor-pointer ${
-              activeTab === "Sea" ? "border-[#F9D972] text-white bg-[#161f28]/30" : "border-transparent text-slate-400 hover:text-white"
+              activeTab === "Sea" ? "border-[var(--mnx-accent)] text-mono-text bg-[var(--mnx-surface)]/30" : "border-transparent text-mono-muted hover:text-mono-text"
             }`}
           >
             <Ship className="size-4" />
             <span>Sea Enquiry</span>
-          </button>
-          <button
+          </CrmButton>
+          <CrmButton
             type="button"
             onClick={() => setActiveTab("Air")}
             className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 transition-all cursor-pointer ${
-              activeTab === "Air" ? "border-[#F9D972] text-white bg-[#161f28]/30" : "border-transparent text-slate-400 hover:text-white"
+              activeTab === "Air" ? "border-[var(--mnx-accent)] text-mono-text bg-[var(--mnx-surface)]/30" : "border-transparent text-mono-muted hover:text-mono-text"
             }`}
           >
             <Plane className="size-4" />
             <span>Air Enquiry</span>
-          </button>
+          </CrmButton>
         </div>
 
         <form onSubmit={handleSave} className="flex-1 flex flex-col min-h-0">
@@ -246,14 +253,14 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
           <div className="flex-1 overflow-y-auto p-6 space-y-4 pr-4">
             
             {/* Toggles Panel */}
-            <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-[#161f28]/35 border border-[#1c212a]/60 mb-2">
+            <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-[var(--mnx-surface)]/35 border border-[var(--mnx-border)]/60 mb-2">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <span className="text-[11px] font-bold text-white uppercase tracking-wider block">Perishable Cargo</span>
-                  <span className="text-[9px] text-slate-500 block">Marks cargo as perishable (remarks mandatory)</span>
+                  <span className="text-[11px] font-bold text-mono-text uppercase tracking-wider block">Perishable Cargo</span>
+                  <span className="text-[9px] text-mono-muted block">Marks cargo as perishable (remarks mandatory)</span>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer select-none">
-                  <input
+                  <CrmInput
                     type="checkbox"
                     checked={isPerishable}
                     onChange={(e) => {
@@ -264,17 +271,17 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     }}
                     className="sr-only peer"
                   />
-                  <div className="w-8 h-4.5 bg-[#161f28] border border-[#1c212a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-[#F9D972] after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#F9D972]/10 peer-checked:border-[#F9D972]/40"></div>
+                  <div className="w-8 h-4.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-mono-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-mono-soft peer-checked:after:bg-[var(--mnx-accent)] after:border-mono-border after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[var(--mnx-accent)]/10 peer-checked:border-[var(--mnx-accent)]/40"></div>
                 </label>
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <span className="text-[11px] font-bold text-white uppercase tracking-wider block">Future Follow Up</span>
-                  <span className="text-[9px] text-slate-500 block">Schedule a call reminder (date required)</span>
+                  <span className="text-[11px] font-bold text-mono-text uppercase tracking-wider block">Future Follow Up</span>
+                  <span className="text-[9px] text-mono-muted block">Schedule a call reminder (date required)</span>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer select-none">
-                  <input
+                  <CrmInput
                     type="checkbox"
                     checked={isFutureFollowUp}
                     onChange={(e) => {
@@ -285,20 +292,20 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                     }}
                     className="sr-only peer"
                   />
-                  <div className="w-8 h-4.5 bg-[#161f28] border border-[#1c212a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-[#F9D972] after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#F9D972]/10 peer-checked:border-[#F9D972]/40"></div>
+                  <div className="w-8 h-4.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-mono-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-mono-soft peer-checked:after:bg-[var(--mnx-accent)] after:border-mono-border after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[var(--mnx-accent)]/10 peer-checked:border-[var(--mnx-accent)]/40"></div>
                 </label>
               </div>
             </div>
 
             {isFutureFollowUp && (
-              <div className="p-4 rounded-xl bg-[#D88700]/5 border border-[#D88700]/20 space-y-2 animate-in fade-in duration-200 mb-2">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide">Reminder Date & Time *</label>
-                <input
+              <div className="p-4 rounded-xl bg-[var(--mnx-accent)]/5 border border-[var(--mnx-accent)]/20 space-y-2 animate-in fade-in duration-200 mb-2">
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide">Reminder Date & Time *</label>
+                <CrmInput
                   type="datetime-local"
                   required
                   value={followUpReminderDate}
                   onChange={(e) => setFollowUpReminderDate(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#D88700]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#D88700]"
+                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                 />
               </div>
             )}
@@ -308,22 +315,22 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Direction</label>
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Direction</label>
                   <NativeSelect
                     value={seaType}
                     onChange={(e) => setSeaType(e.target.value as any)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   >
                     <option value="Import">Import</option>
                     <option value="Export">Export</option>
                   </NativeSelect>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Load Type</label>
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Load Type</label>
                   <NativeSelect
                     value={seaLclFcl}
                     onChange={(e) => setSeaLclFcl(e.target.value as any)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   >
                     <option value="LCL">LCL (Less than Container Load)</option>
                     <option value="FCL">FCL (Full Container Load)</option>
@@ -333,74 +340,74 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">POL (Port of Loading) {!isPerishable && !isFutureFollowUp && "*"}</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">POL (Port of Loading) {!isPerishable && !isFutureFollowUp && "*"}</label>
+                  <CrmInput
                     type="text"
                     required={!isPerishable && !isFutureFollowUp}
                     placeholder="e.g. Shanghai, China"
                     value={pol}
                     onChange={(e) => setPol(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/55 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">POD (Port of Discharge) {!isPerishable && !isFutureFollowUp && "*"}</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">POD (Port of Discharge) {!isPerishable && !isFutureFollowUp && "*"}</label>
+                  <CrmInput
                     type="text"
                     required={!isPerishable && !isFutureFollowUp}
                     placeholder="e.g. Chennai, India"
                     value={pod}
                     onChange={(e) => setPod(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/55 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Commodity {!isPerishable && !isFutureFollowUp && "*"}</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Commodity {!isPerishable && !isFutureFollowUp && "*"}</label>
+                  <CrmInput
                     type="text"
                     required={!isPerishable && !isFutureFollowUp}
                     placeholder="e.g. Auto Parts"
                     value={seaCommodity}
                     onChange={(e) => setSeaCommodity(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/55 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Weight {!isPerishable && !isFutureFollowUp && "*"}</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Weight {!isPerishable && !isFutureFollowUp && "*"}</label>
+                  <CrmInput
                     type="text"
                     required={!isPerishable && !isFutureFollowUp}
                     placeholder="e.g. 1500 KG"
                     value={seaWeight}
                     onChange={(e) => setSeaWeight(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/55 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
                 {seaLclFcl === "LCL" ? (
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">CBM (Volume) {!isPerishable && !isFutureFollowUp && "*"}</label>
-                    <input
+                    <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">CBM (Volume) {!isPerishable && !isFutureFollowUp && "*"}</label>
+                    <CrmInput
                       type="number"
                       step="any"
                       required={!isPerishable && !isFutureFollowUp}
                       placeholder="e.g. 2.5"
                       value={seaCbm}
                       onChange={(e) => setSeaCbm(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/55 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                 ) : (
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Dimensions / Container type</label>
-                    <input
+                    <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Dimensions / Container type</label>
+                    <CrmInput
                       type="text"
                       placeholder="e.g. 20FT General"
                       value={seaDimensions}
                       onChange={(e) => setSeaDimensions(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                     />
                   </div>
                 )}
@@ -408,24 +415,24 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
                     {seaLclFcl === "LCL" ? "No. of Packages" : "No. of Containers"} {!isPerishable && !isFutureFollowUp && "*"}
                   </label>
-                  <input
+                  <CrmInput
                     type="text"
                     required={!isPerishable && !isFutureFollowUp}
                     placeholder={seaLclFcl === "LCL" ? "e.g. 12 boxes" : "e.g. 2 containers"}
                     value={seaPackages}
                     onChange={(e) => setSeaPackages(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/55 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Incoterm</label>
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Incoterm</label>
                   <NativeSelect
                     value={seaIncoterm}
                     onChange={(e) => setSeaIncoterm(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   >
                     {incotermOptions.map((inc) => (
                       <option key={inc} value={inc}>{inc}</option>
@@ -433,45 +440,45 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                   </NativeSelect>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Location / Port of Entry</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Location / Port of Entry</label>
+                  <CrmInput
                     type="text"
                     placeholder="e.g. Chennai Port"
                     value={seaLocation}
                     onChange={(e) => setSeaLocation(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Client Actual Name</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Client Actual Name</label>
+                  <CrmInput
                     type="text"
                     value={seaClientName}
                     onChange={(e) => setSeaClientName(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Business Name</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Business Name</label>
+                  <CrmInput
                     type="text"
                     value={seaBusinessName}
                     onChange={(e) => setSeaBusinessName(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Shipment Planning</label>
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Shipment Planning</label>
                   <NativeSelect
                     value={seaShipmentPlanning}
                     onChange={(e) => setSeaShipmentPlanning(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   >
                     {planningOptions.map((opt) => (
                       <option key={opt} value={opt}>{opt}</option>
@@ -479,23 +486,23 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                   </NativeSelect>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Shipments Done Before?</label>
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Shipments Done Before?</label>
                   <NativeSelect
                     value={seaShipmentsDone}
                     onChange={(e) => setSeaShipmentsDone(e.target.value as any)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   >
                     <option value="Yes">Yes</option>
                     <option value="No">No</option>
                   </NativeSelect>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Purpose of Cargo</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Purpose of Cargo</label>
+                  <CrmInput
                     type="text"
                     value={seaPurpose}
                     onChange={(e) => setSeaPurpose(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
               </div>
@@ -505,56 +512,56 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">AOL (Airport of Loading) {!isPerishable && !isFutureFollowUp && "*"}</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">AOL (Airport of Loading) {!isPerishable && !isFutureFollowUp && "*"}</label>
+                  <CrmInput
                     type="text"
                     required={!isPerishable && !isFutureFollowUp}
                     placeholder="e.g. London Heathrow (LHR)"
                     value={aol}
                     onChange={(e) => setAol(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/55 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">AOD (Airport of Discharge) {!isPerishable && !isFutureFollowUp && "*"}</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">AOD (Airport of Discharge) {!isPerishable && !isFutureFollowUp && "*"}</label>
+                  <CrmInput
                     type="text"
                     required={!isPerishable && !isFutureFollowUp}
                     placeholder="e.g. Chennai International (MAA)"
                     value={aod}
                     onChange={(e) => setAod(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/55 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Commodity {!isPerishable && !isFutureFollowUp && "*"}</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Commodity {!isPerishable && !isFutureFollowUp && "*"}</label>
+                  <CrmInput
                     type="text"
                     required={!isPerishable && !isFutureFollowUp}
                     placeholder="e.g. Electronics"
                     value={airCommodity}
                     onChange={(e) => setAirCommodity(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/55 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Weight {!isPerishable && !isFutureFollowUp && "*"}</label>
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Weight {!isPerishable && !isFutureFollowUp && "*"}</label>
                   <div className="flex gap-1.5">
-                    <input
+                    <CrmInput
                       type="number"
                       required={!isPerishable && !isFutureFollowUp}
                       placeholder="e.g. 250"
                       value={airWeight}
                       onChange={(e) => setAirWeight(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/55 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                     />
                     <NativeSelect
                       value={airWeightUnit}
                       onChange={(e) => setAirWeightUnit(e.target.value)}
-                      className="bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-slate-300 px-1 focus:outline-none"
+                      className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-muted px-1 focus:outline-none"
                     >
                       <option value="KG">KG</option>
                       <option value="Lbs">Lbs</option>
@@ -562,20 +569,20 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Dimensions {!isPerishable && !isFutureFollowUp && "*"}</label>
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Dimensions {!isPerishable && !isFutureFollowUp && "*"}</label>
                   <div className="flex gap-1.5">
-                    <input
+                    <CrmInput
                       type="text"
                       required={!isPerishable && !isFutureFollowUp}
                       placeholder="e.g. 50x50x40"
                       value={airDimensions}
                       onChange={(e) => setAirDimensions(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/55 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                     />
                     <NativeSelect
                       value={airDimensionsUnit}
                       onChange={(e) => setAirDimensionsUnit(e.target.value)}
-                      className="bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-slate-300 px-1 focus:outline-none"
+                      className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-muted px-1 focus:outline-none"
                     >
                       <option value="Cm">Cm</option>
                       <option value="mm">mm</option>
@@ -588,20 +595,20 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">No. of Packages {!isPerishable && !isFutureFollowUp && "*"}</label>
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">No. of Packages {!isPerishable && !isFutureFollowUp && "*"}</label>
                   <div className="flex gap-1.5">
-                    <input
+                    <CrmInput
                       type="number"
                       required={!isPerishable && !isFutureFollowUp}
                       placeholder="e.g. 5"
                       value={airPackages}
                       onChange={(e) => setAirPackages(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/55 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/55 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                     />
                     <NativeSelect
                       value={airPackagesUnit}
                       onChange={(e) => setAirPackagesUnit(e.target.value)}
-                      className="bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-slate-300 px-1 focus:outline-none"
+                      className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-muted px-1 focus:outline-none"
                     >
                       <option value="PKG">PKG</option>
                       <option value="Box">Box</option>
@@ -611,11 +618,11 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Incoterm</label>
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Incoterm</label>
                   <NativeSelect
                     value={airIncoterm}
                     onChange={(e) => setAirIncoterm(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   >
                     {incotermOptions.map((inc) => (
                       <option key={inc} value={inc}>{inc}</option>
@@ -623,45 +630,45 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                   </NativeSelect>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Location</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Location</label>
+                  <CrmInput
                     type="text"
                     placeholder="e.g. Chennai airport"
                     value={airLocation}
                     onChange={(e) => setAirLocation(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Client Actual Name</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Client Actual Name</label>
+                  <CrmInput
                     type="text"
                     value={airClientName}
                     onChange={(e) => setAirClientName(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Business Name</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Business Name</label>
+                  <CrmInput
                     type="text"
                     value={airBusinessName}
                     onChange={(e) => setAirBusinessName(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Shipment Planning</label>
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Shipment Planning</label>
                   <NativeSelect
                     value={airShipmentPlanning}
                     onChange={(e) => setAirShipmentPlanning(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   >
                     {planningOptions.map((opt) => (
                       <option key={opt} value={opt}>{opt}</option>
@@ -669,23 +676,23 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
                   </NativeSelect>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Shipments Done Before?</label>
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Shipments Done Before?</label>
                   <NativeSelect
                     value={airShipmentsDone}
                     onChange={(e) => setAirShipmentsDone(e.target.value as any)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   >
                     <option value="Yes">Yes</option>
                     <option value="No">No</option>
                   </NativeSelect>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Purpose of Cargo</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Purpose of Cargo</label>
+                  <CrmInput
                     type="text"
                     value={airPurpose}
                     onChange={(e) => setAirPurpose(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
               </div>
@@ -693,11 +700,11 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
           )}
 
           {/* Reason for status change field */}
-          <div className="pt-2 border-t border-[#1c212a]/30">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">
+          <div className="pt-2 border-t border-[var(--mnx-border)]/30">
+            <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
               Reason for Status Change / Call Remarks {lead.status === "NOT_PICKED" || lead.status === "NOT_REACHABLE" || isPerishable || isFutureFollowUp ? "(Required) *" : "(Optional)"}
             </label>
-            <textarea
+            <CrmTextarea
               ref={textareaRef}
               rows={2}
               style={{ resize: "none", overflow: "hidden" }}
@@ -705,30 +712,30 @@ export function InterestedModal({ leadId, lead, onClose, onSuccess }: Interested
               placeholder="Provide a brief reason for changing the status of this lead..."
               value={changeRemarks}
               onChange={(e) => setChangeRemarks(e.target.value)}
-              className="w-full p-2.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972] placeholder-slate-600 min-h-[50px]"
+              className="w-full p-2.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)] placeholder:text-mono-muted min-h-[50px]"
             />
           </div>
         </div>
 
           {/* Action Footer */}
-          <div className="flex-shrink-0 flex justify-end gap-3 p-4 bg-[#0c0f14] border-t border-[#1c212a]/30">
-            <button
+          <div className="flex-shrink-0 flex justify-end gap-3 p-4 bg-[var(--mnx-surface)] border-t border-[var(--mnx-border)]/30">
+            <CrmButton
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-300 rounded-lg text-xs font-semibold cursor-pointer"
+              className="px-4 py-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] text-mono-muted rounded-lg text-xs font-semibold cursor-pointer"
             >
               Cancel
-            </button>
-            <button
+            </CrmButton>
+            <CrmButton
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-5 py-2 bg-[#F9D972] hover:bg-[#E8C85D] disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-xs font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
             >
               {isSubmitting ? "Saving..." : "Save Enquiry Details"}
-            </button>
+            </CrmButton>
           </div>
         </form>
       </div>
-    </div>
+    </CrmDialogLayer>
   );
 }

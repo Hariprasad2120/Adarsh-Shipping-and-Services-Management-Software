@@ -19,6 +19,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type {
+  ComponentProps,
   CSSProperties,
   HTMLAttributes,
   ReactNode,
@@ -26,6 +27,17 @@ import type {
 } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "./badge";
+import {
+  DropdownSelect,
+  type DropdownSelectProps,
+} from "./dropdown-select";
+import { FilterMenu, type FilterMenuProps } from "./filter-menu";
+import { Modal, type ModalProps } from "./modal";
+import { NativeSelect } from "./native-select";
+import {
+  WarningIndicatorPopover,
+  type WarningIndicatorPopoverProps,
+} from "./warning-indicator-popover";
 import {
   WorkspaceDialogLayer,
   type WorkspaceDialogSize,
@@ -333,6 +345,64 @@ export function ChaActionLink({
 
 export const ChaAction = WorkspaceAction;
 export const ChaStatus = WorkspaceBadge;
+
+export function ChaModal({ className, eyebrow, ...props }: ModalProps) {
+  return (
+    <Modal
+      {...props}
+      className={cn("mnx-cha-dialog", className)}
+      eyebrow={eyebrow ?? "Customs operations"}
+    />
+  );
+}
+
+export function ChaDropdownSelect({
+  contentClassName,
+  ...props
+}: DropdownSelectProps) {
+  return (
+    <DropdownSelect
+      {...props}
+      contentClassName={cn("mnx-cha-menu", contentClassName)}
+    />
+  );
+}
+
+export function ChaNativeSelect({
+  className,
+  ...props
+}: ComponentProps<typeof NativeSelect>) {
+  return (
+    <NativeSelect
+      {...props}
+      className={cn("mnx-cha-native-select", className)}
+    />
+  );
+}
+
+export function ChaFilterMenu({
+  contentClassName,
+  ...props
+}: FilterMenuProps) {
+  return (
+    <FilterMenu
+      {...props}
+      contentClassName={cn("mnx-cha-menu", contentClassName)}
+    />
+  );
+}
+
+export function ChaWarningIndicatorPopover({
+  surfaceClassName,
+  ...props
+}: WarningIndicatorPopoverProps) {
+  return (
+    <WarningIndicatorPopover
+      {...props}
+      surfaceClassName={cn("mnx-cha-popover", surfaceClassName)}
+    />
+  );
+}
 
 export function ChaDialogLayer({
   children,

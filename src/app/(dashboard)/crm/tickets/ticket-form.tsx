@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput, CrmTextarea } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -21,10 +23,10 @@ const CATEGORIES = [
 ];
 
 const PRIORITIES = [
-  { value: "LOW", label: "Low", color: "text-slate-500" },
-  { value: "MEDIUM", label: "Medium", color: "text-amber-500" },
-  { value: "HIGH", label: "High", color: "text-orange-500" },
-  { value: "URGENT", label: "Urgent", color: "text-red-500" },
+  { value: "LOW", label: "Low", color: "text-mono-muted" },
+  { value: "MEDIUM", label: "Medium", color: "text-[var(--mnx-warning)]" },
+  { value: "HIGH", label: "High", color: "text-[var(--mnx-warning)]" },
+  { value: "URGENT", label: "Urgent", color: "text-[var(--mnx-danger)]" },
 ] as const;
 
 export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
@@ -67,53 +69,53 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
 
   if (!open) {
     return (
-      <button
+      <CrmButton
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#F9D972]/30 bg-[#F9D972]/5 text-[#F9D972] hover:bg-[#F9D972]/10 transition-colors text-sm font-semibold shadow-sm"
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--mnx-accent)]/30 bg-[var(--mnx-accent)]/5 text-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)]/10 transition-colors text-sm font-semibold shadow-sm"
       >
         <Plus className="size-4" /> Raise a support ticket
-      </button>
+      </CrmButton>
     );
   }
 
   return (
-    <Card className="border-0 shadow-sm border-l-4 border-l-[#F9D972] bg-mono-card">
+    <Card className="border-0 shadow-sm border-l-4 border-l-[var(--mnx-accent)] bg-mono-card">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
-        <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">
+        <CardTitle className="text-base font-bold text-mono-muted dark:text-mono-muted">
           New Support Ticket
         </CardTitle>
-        <button
+        <CrmButton
           onClick={() => setOpen(false)}
-          className="text-slate-400 hover:text-slate-600 transition"
+          className="text-mono-muted hover:text-mono-muted transition"
         >
           <ChevronUp className="size-4" />
-        </button>
+        </CrmButton>
       </CardHeader>
       <CardContent>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <label className="text-xs font-bold uppercase tracking-wider text-mono-muted">
               Title
             </label>
-            <input
+            <CrmInput
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Brief summary of the issue..."
               maxLength={200}
-              className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#F9D972] transition"
+              className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2 text-sm text-mono-muted dark:text-mono-text placeholder:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] transition"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <label className="text-xs font-bold uppercase tracking-wider text-mono-muted">
                 Category
               </label>
               <NativeSelect
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#F9D972] transition"
+                className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2.5 text-sm text-mono-muted dark:text-mono-text focus:outline-none focus:border-[var(--mnx-accent)] transition"
               >
                 <option value="">Select category</option>
                 {CATEGORIES.map((c) => (
@@ -123,13 +125,13 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <label className="text-xs font-bold uppercase tracking-wider text-mono-muted">
                 Priority
               </label>
               <NativeSelect
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as any)}
-                className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#F9D972] transition"
+                className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2.5 text-sm text-mono-muted dark:text-mono-text focus:outline-none focus:border-[var(--mnx-accent)] transition"
               >
                 {PRIORITIES.map((p) => (
                   <option key={p.value} value={p.value}>
@@ -141,15 +143,15 @@ export function TicketForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <label className="text-xs font-bold uppercase tracking-wider text-mono-muted">
               Description
             </label>
-            <textarea
+            <CrmTextarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
               placeholder="Describe the issue in detail — what happened, what you expected, and steps to reproduce..."
-              className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#F9D972] transition resize-none"
+              className="w-full rounded-lg border border-mono-border/60 bg-mono-card px-3 py-2 text-sm text-mono-muted dark:text-mono-text placeholder:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] transition resize-none"
             />
           </div>
 

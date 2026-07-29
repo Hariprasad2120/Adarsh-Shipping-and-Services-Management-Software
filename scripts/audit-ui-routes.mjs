@@ -44,12 +44,17 @@ function isCustomsExpenseRoute(route) {
   );
 }
 
+function isCrmRoute(route) {
+  return route === "/crm" || route.startsWith("/crm/");
+}
+
 function isMonolithRoute(route) {
   return (
     knownMonolithRoutes.has(route) ||
     isPeopleOperationsRoute(route) ||
     isPerformanceLearningRoute(route) ||
-    isCustomsExpenseRoute(route)
+    isCustomsExpenseRoute(route) ||
+    isCrmRoute(route)
   );
 }
 
@@ -131,6 +136,8 @@ function stateFor(route) {
     return "Migrated in performance and learning batch 003";
   if (isCustomsExpenseRoute(route))
     return "Migrated in Expense and CHA batch 004";
+  if (isCrmRoute(route))
+    return "Migrated in CRM batch 005";
   return "Pending module migration";
 }
 
@@ -181,7 +188,7 @@ const layouts = walk(appRoot, "layout.tsx")
             : source.includes("/communication/layout.tsx")
               ? "Workspace connection gate and communication providers"
               : source.includes("/crm/layout.tsx")
-                ? "CRM scroll/theme container"
+                ? "Shared CRM workspace frame and asynchronous states"
                 : source.includes("/cha/layout.tsx")
                   ? "Shared CHA workspace frame and asynchronous states"
                   : source.includes("/expense/layout.tsx")
@@ -281,6 +288,7 @@ const lines = [
   "- All `/hrms` and `/attendance` routes were migrated in people operations batch 002.",
   "- All `/ams` and `/lms` routes were migrated in performance and learning batch 003.",
   "- All `/cha` and `/expense` routes were migrated in Expense and CHA batch 004.",
+  "- All `/crm` routes were migrated in CRM batch 005.",
   "- Every other route remains pending until its own presentation, behavior, RBAC,",
   "  themes, and responsive layout are verified in a later module batch.",
   "",

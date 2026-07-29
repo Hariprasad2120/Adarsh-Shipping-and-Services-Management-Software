@@ -3,6 +3,11 @@ import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import { TicketDetailClient } from "./ticket-detail-client";
+import {
+  CrmConfigurationState,
+  CrmEmptyState,
+  CrmPermissionState,
+} from "@/components/monolith/crm-workspace";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -29,11 +34,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
   const orgId = session.user.orgId;
 
   if (!orgId) {
-    return (
-      <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">
-        Organisation configuration missing.
-      </div>
-    );
+    return <CrmConfigurationState description="Organisation configuration is missing." />;
   }
 
   const { id: ticketId } = await params;
@@ -78,9 +79,10 @@ export default async function TicketDetailPage({ params }: PageProps) {
 
   if (!ticket) {
     return (
-      <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">
-        Ticket not found.
-      </div>
+      <CrmEmptyState
+        title="Support case not found"
+        description="The requested support case does not exist or is no longer available."
+      />
     );
   }
 
@@ -89,9 +91,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
   // Security check: must be owner or admin/HR
   if (ticket.raisedById !== session.user.id && !isAdmin) {
     return (
-      <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">
-        Access denied. You do not have permission to view this ticket.
-      </div>
+      <CrmPermissionState description="You do not have permission to view this support case." />
     );
   }
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput, CrmTable } from "@/components/monolith/crm-workspace";
+
 import React from "react";
 import { useRouter } from "next/navigation";
 import { Package, Search } from "lucide-react";
@@ -29,18 +31,18 @@ export function ItemsTable({
 
   return (
     <div className="flex-1 overflow-auto">
-      <table className="monolith-table">
+      <CrmTable className="mnx-crm-table">
         <thead>
           <tr>
             <th className="w-8 px-3 py-2">
-              <input
+              <CrmInput
                 type="checkbox"
                 checked={allSelected}
                 ref={(el) => {
                   if (el) el.indeterminate = someSelected && !allSelected;
                 }}
                 onChange={onToggleAll}
-                className="rounded accent-[#F9D972]"
+                className="rounded accent-[var(--mnx-accent)]"
                 aria-label="Select all items"
               />
             </th>
@@ -69,13 +71,13 @@ export function ItemsTable({
               Usage Unit
             </th>
             <th className="w-10 px-3 py-2 text-center">
-              <button
+              <CrmButton
                 className="text-mono-muted hover:text-mono-text"
                 aria-label="Advanced search"
                 title="Advanced search"
               >
                 <Search size={13} />
-              </button>
+              </CrmButton>
             </th>
           </tr>
         </thead>
@@ -91,16 +93,16 @@ export function ItemsTable({
             items.map((item) => (
               <tr
                 key={item.id}
-                className={`monolith-row-link transition-colors ${
-                  selectedIds.has(item.id) ? "bg-[rgba(0,206,196,0.06)]" : ""
+                className={`mnx-row-link transition-colors ${
+                  selectedIds.has(item.id) ? "bg-[var(--mnx-accent-soft)]" : ""
                 }`}
               >
                 <td className="px-3 py-1.5">
-                  <input
+                  <CrmInput
                     type="checkbox"
                     checked={selectedIds.has(item.id)}
                     onChange={() => onToggleSelect(item.id)}
-                    className="rounded accent-[#F9D972]"
+                    className="rounded accent-[var(--mnx-accent)]"
                     aria-label={`Select ${item.name}`}
                   />
                 </td>
@@ -109,49 +111,49 @@ export function ItemsTable({
                     <span className="flex-shrink-0 w-5 h-5 rounded border border-[var(--color-outline-variant)] bg-mono-soft flex items-center justify-center text-mono-muted">
                       <Package size={10} />
                     </span>
-                    <button
+                    <CrmButton
                       onClick={() => router.push(`${basePath}/${item.id}`)}
-                      className="text-[#F9D972] hover:underline font-medium text-left"
+                      className="text-[var(--mnx-accent)] hover:underline font-medium text-left"
                     >
                       {item.name}
-                    </button>
+                    </CrmButton>
                   </div>
                 </td>
                 <td className="px-3 py-1.5 text-mono-text whitespace-nowrap">{item.sku || "—"}</td>
                 <td className="px-3 py-1.5 text-mono-muted max-w-[160px] truncate">
                   {item.purchaseDescription || "—"}
                 </td>
-                <td className="px-3 py-1.5 text-right monolith-numeric text-mono-text whitespace-nowrap">
+                <td className="px-3 py-1.5 text-right mnx-numeric text-mono-text whitespace-nowrap">
                   {formatINRCompact(item.purchaseRate)}
                 </td>
                 <td className="px-3 py-1.5 text-mono-muted max-w-[160px] truncate">
                   {item.description || "—"}
                 </td>
-                <td className="px-3 py-1.5 text-right monolith-numeric text-mono-text whitespace-nowrap">
+                <td className="px-3 py-1.5 text-right mnx-numeric text-mono-text whitespace-nowrap">
                   {formatINRCompact(item.rate)}
                 </td>
                 <td className="px-3 py-1.5 text-mono-text whitespace-nowrap">{item.hsnSac || "—"}</td>
                 <td className="px-3 py-1.5 text-mono-text whitespace-nowrap">{item.usageUnit || "—"}</td>
                 <td className="px-3 py-1.5 text-center whitespace-nowrap">
                   {onEditItem && (
-                    <button
+                    <CrmButton
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         onEditItem(item);
                       }}
-                      className="text-[#F9D972] hover:text-[#E8C85D] font-medium transition-colors cursor-pointer"
+                      className="text-[var(--mnx-accent)] hover:text-[var(--mnx-accent)] font-medium transition-colors cursor-pointer"
                       title="Edit item"
                     >
                       Edit
-                    </button>
+                    </CrmButton>
                   )}
                 </td>
               </tr>
             ))
           )}
         </tbody>
-      </table>
+      </CrmTable>
     </div>
   );
 }

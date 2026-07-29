@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmTextarea } from "@/components/monolith/crm-workspace";
+
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { createNoteAction, deleteNoteAction } from "@/modules/crm/actions";
@@ -55,57 +57,57 @@ export function NotesPanel({ relatedToType, relatedToId, initialNotes }: NotesPa
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2 border-b border-[#1c212a]/30 pb-3">
-        <MessageSquare className="size-4.5 text-[#F9D972]" />
-        <h3 className="font-bold text-sm text-white uppercase tracking-wider">Notes & Annotations</h3>
+      <div className="flex items-center gap-2 border-b border-[var(--mnx-border)]/30 pb-3">
+        <MessageSquare className="size-4.5 text-[var(--mnx-accent)]" />
+        <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Notes & Annotations</h3>
       </div>
 
       {/* Add Note Form */}
       <form onSubmit={handleAddNote} className="space-y-3">
-        <textarea
+        <CrmTextarea
           placeholder="Add a new note for this record..."
           value={newNoteBody}
           onChange={(e) => setNewNoteBody(e.target.value)}
           rows={3}
-          className="w-full p-3 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#F9D972] text-white"
+          className="w-full p-3 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm placeholder:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] text-mono-text"
         />
         <div className="flex justify-end">
-          <button
+          <CrmButton
             type="submit"
             disabled={isSubmitting || !newNoteBody.trim()}
-            className="px-4 py-1.5 bg-[#F9D972] hover:bg-[#00b0a3] disabled:opacity-50 text-white rounded text-xs font-bold transition-all cursor-pointer"
+            className="px-4 py-1.5 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded text-xs font-bold transition-all cursor-pointer"
           >
             {isSubmitting ? "Adding..." : "Add Note"}
-          </button>
+          </CrmButton>
         </div>
       </form>
 
       {/* Notes List */}
       {notes.length === 0 ? (
-        <div className="p-6 text-center text-slate-500 text-sm border border-dashed border-[#1c212a]/50 rounded-lg">
+        <div className="p-6 text-center text-mono-muted text-sm border border-dashed border-[var(--mnx-border)]/50 rounded-lg">
           No notes logged yet.
         </div>
       ) : (
         <div className="space-y-3">
           {notes.map((note) => (
-            <div key={note.id} className="p-4 bg-[#0f1319] border border-[#1c212a]/40 rounded-lg hover:border-[#1c212a] transition-all space-y-2">
+            <div key={note.id} className="p-4 bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/40 rounded-lg hover:border-[var(--mnx-border)] transition-all space-y-2">
               <div className="flex justify-between items-start gap-2">
-                <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <User className="size-3 text-slate-500" />
-                  <span className="font-semibold text-white">{note.createdBy.name}</span>
+                <div className="flex items-center gap-2 text-xs text-mono-muted">
+                  <User className="size-3 text-mono-muted" />
+                  <span className="font-semibold text-mono-text">{note.createdBy.name}</span>
                   <span>•</span>
-                  <Clock className="size-3 text-slate-500" />
+                  <Clock className="size-3 text-mono-muted" />
                   <span>{new Date(note.createdAt).toLocaleString("en-IN")}</span>
                 </div>
-                <button
+                <CrmButton
                   onClick={() => handleDeleteNote(note.id)}
-                  className="p-1 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded cursor-pointer"
+                  className="p-1 text-mono-muted hover:text-[var(--mnx-danger)] hover:bg-[var(--mnx-danger-bg)] rounded cursor-pointer"
                   title="Delete Note"
                 >
                   <Trash2 className="size-3.5" />
-                </button>
+                </CrmButton>
               </div>
-              <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">{note.body}</p>
+              <p className="text-sm text-mono-muted whitespace-pre-wrap leading-relaxed">{note.body}</p>
             </div>
           ))}
         </div>

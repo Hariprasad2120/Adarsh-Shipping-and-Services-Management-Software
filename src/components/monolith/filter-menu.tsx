@@ -3,15 +3,7 @@
 import { Filter } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/monolith/dropdown-menu";
 
-export function FilterMenu({
-  activeCount,
-  ariaLabel = "Open filters",
-  children,
-  contentClassName = "w-[360px]",
-  label,
-  onOpenChange,
-  open,
-}: {
+export type FilterMenuProps = {
   activeCount?: number;
   ariaLabel?: string;
   children: React.ReactNode;
@@ -20,7 +12,17 @@ export function FilterMenu({
   onOpenChange: (open: boolean) => void;
   open: boolean;
   title?: string;
-}) {
+};
+
+export function FilterMenu({
+  activeCount,
+  ariaLabel = "Open filters",
+  children,
+  contentClassName = "w-[360px]",
+  label,
+  onOpenChange,
+  open,
+}: FilterMenuProps) {
   return (
     <DropdownMenu modal={false} open={open} onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>

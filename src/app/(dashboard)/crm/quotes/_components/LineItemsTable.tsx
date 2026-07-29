@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput, CrmTable } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import Image from "next/image";
 import { useRef, useState } from "react";
@@ -104,39 +106,39 @@ export function LineItemRow({
   return (
     <tr
       className={[
-        "border-b border-[#eef2f6] align-top transition-colors",
-        isDragTarget ? "bg-[#F9D972]/5" : "bg-white",
+        "border-b border-[var(--mnx-border)] align-top transition-colors",
+        isDragTarget ? "bg-[var(--mnx-accent)]/5" : "bg-mono-card",
       ].join(" ")}
       onDragOver={(event) => onDragOver(index, event)}
       onDrop={() => onDrop(index)}
       onDragEnd={onDragEnd}
     >
-      <td className="w-10 px-2 py-3 text-[#9ca3af]">
-        <button
+      <td className="w-10 px-2 py-3 text-[var(--mnx-text-muted)]">
+        <CrmButton
           type="button"
           draggable
           onDragStart={() => onDragStart(index)}
-          className="rounded-md p-1 text-[#94a3b8] transition-colors hover:bg-[#F9D972]/10 hover:text-[#F9D972] cursor-grab active:cursor-grabbing"
+          className="rounded-md p-1 text-[var(--mnx-text-muted)] transition-colors hover:bg-[var(--mnx-accent)]/10 hover:text-[var(--mnx-accent)] cursor-grab active:cursor-grabbing"
           aria-label={`Reorder item ${index + 1}`}
           title="Drag to reorder"
         >
           <GripVertical className="size-4" />
-        </button>
+        </CrmButton>
       </td>
       <td className="min-w-[260px] px-2 py-2">
         <div className="flex items-start gap-2">
           <div className="shrink-0">
-            <input
+            <CrmInput
               ref={fileInputRef}
               type="file"
               accept="image/*"
               className="hidden"
               onChange={(event) => onImageChange(rowKey, event)}
             />
-            <button
+            <CrmButton
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex size-9 overflow-hidden items-center justify-center rounded-md border border-[#d9dee7] bg-[#f8fafc] text-[#9ca3af] transition-colors hover:border-[#F9D972] hover:bg-[#F9D972]/10 hover:text-[#F9D972]"
+              className="flex size-9 overflow-hidden items-center justify-center rounded-md border border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)] transition-colors hover:border-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)]/10 hover:text-[var(--mnx-accent)]"
               aria-label="Upload item image"
               title="Upload item image"
             >
@@ -145,7 +147,7 @@ export function LineItemRow({
               ) : (
                 <ImagePlus className="size-4" />
               )}
-            </button>
+            </CrmButton>
           </div>
           <div className="min-w-0 flex-1">
             <ItemAutocomplete
@@ -195,16 +197,16 @@ export function LineItemRow({
               }}
               error={errors?.description?.message}
             />
-            <input type="hidden" {...form.register(`lineItems.${index}.hsnSac`)} />
-            <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[#6b7280]">
-              HSN/SAC: <span className="font-medium text-[#1f2937]">{effectiveHsn || "—"}</span>
+            <CrmInput type="hidden" {...form.register(`lineItems.${index}.hsnSac`)} />
+            <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
+              HSN/SAC: <span className="font-medium text-[var(--mnx-text-strong)]">{effectiveHsn || "—"}</span>
             </p>
           </div>
         </div>
       </td>
       <td className="min-w-[90px] px-2 py-2">
         <NativeSelect
-          className="h-9 w-full rounded-xl border bg-white px-2 text-[12px] text-[#1f2937] outline-none"
+          className="h-9 w-full rounded-xl border bg-mono-card px-2 text-[12px] text-[var(--mnx-text-strong)] outline-none"
           value={currency}
           onChange={(e) => handleCurrencyChange(e.target.value)}
         >
@@ -216,10 +218,10 @@ export function LineItemRow({
         </NativeSelect>
       </td>
       <td className="min-w-[100px] px-2 py-2">
-        <input
+        <CrmInput
           type="number"
           step="0.0001"
-          className="h-9 w-full rounded-xl border bg-white px-3 text-right text-[12px] text-[#1f2937] outline-none font-mono"
+          className="h-9 w-full rounded-xl border bg-mono-card px-3 text-right text-[12px] text-[var(--mnx-text-strong)] outline-none font-mono"
           disabled={currency === "INR"}
           value={exchangeRate}
           onChange={(e) => {
@@ -233,7 +235,7 @@ export function LineItemRow({
       </td>
       <td className="min-w-[100px] px-2 py-2">
         <NativeSelect
-          className="h-9 w-full rounded-xl border bg-white px-2 text-[12px] text-[#1f2937] outline-none"
+          className="h-9 w-full rounded-xl border bg-mono-card px-2 text-[12px] text-[var(--mnx-text-strong)] outline-none"
           {...form.register(`lineItems.${index}.unit`)}
         >
           {units.map((unit) => (
@@ -244,11 +246,11 @@ export function LineItemRow({
         </NativeSelect>
       </td>
       <td className="min-w-[90px] px-2 py-2">
-        <input
+        <CrmInput
           type="number"
           min="0"
           step="0.01"
-          className="h-9 w-full rounded-xl border bg-white px-3 text-right text-[12px] text-[#1f2937] outline-none font-mono"
+          className="h-9 w-full rounded-xl border bg-mono-card px-3 text-right text-[12px] text-[var(--mnx-text-strong)] outline-none font-mono"
           {...form.register(`lineItems.${index}.quantity`, {
             valueAsNumber: true,
             onChange: (e) => {
@@ -259,14 +261,14 @@ export function LineItemRow({
             },
           })}
         />
-        {errors?.quantity ? <p className="mt-1 text-[11px] text-[#fe4242]">{errors.quantity.message}</p> : null}
+        {errors?.quantity ? <p className="mt-1 text-[11px] text-[var(--mnx-danger)]">{errors.quantity.message}</p> : null}
       </td>
       <td className="min-w-[100px] px-2 py-2">
-        <input
+        <CrmInput
           type="number"
           min="0"
           step="0.01"
-          className="h-9 w-full rounded-xl border bg-white px-3 text-right text-[12px] text-[#1f2937] outline-none font-mono"
+          className="h-9 w-full rounded-xl border bg-mono-card px-3 text-right text-[12px] text-[var(--mnx-text-strong)] outline-none font-mono"
           {...form.register(`lineItems.${index}.rate`, {
             valueAsNumber: true,
             onChange: (e) => {
@@ -277,11 +279,11 @@ export function LineItemRow({
             },
           })}
         />
-        {errors?.rate ? <p className="mt-1 text-[11px] text-[#fe4242]">{errors.rate.message}</p> : null}
+        {errors?.rate ? <p className="mt-1 text-[11px] text-[var(--mnx-danger)]">{errors.rate.message}</p> : null}
       </td>
       <td className="min-w-[110px] px-2 py-2">
         <NativeSelect
-          className="h-9 w-full rounded-xl border bg-white px-2 text-[12px] text-[#1f2937] outline-none"
+          className="h-9 w-full rounded-xl border bg-mono-card px-2 text-[12px] text-[var(--mnx-text-strong)] outline-none"
           {...form.register(`lineItems.${index}.tax`)}
         >
           <option value="">Select a Tax</option>
@@ -294,7 +296,7 @@ export function LineItemRow({
       </td>
       <td className="min-w-[110px] px-2 py-2">
         <NativeSelect
-          className="h-9 w-full rounded-xl border bg-white px-2 text-[12px] text-[#1f2937] outline-none"
+          className="h-9 w-full rounded-xl border bg-mono-card px-2 text-[12px] text-[var(--mnx-text-strong)] outline-none"
           {...form.register(`lineItems.${index}.tds`)}
         >
           {tdsOptions.map((tds) => (
@@ -304,20 +306,20 @@ export function LineItemRow({
           ))}
         </NativeSelect>
       </td>
-      <td className="min-w-[120px] px-2 py-3 text-right text-[13px] font-mono font-medium text-[#1f2937]">
+      <td className="min-w-[120px] px-2 py-3 text-right text-[13px] font-mono font-medium text-[var(--mnx-text-strong)]">
         ₹ {formatMoney(amount ?? 0)}
       </td>
       <td className="min-w-[72px] px-2 py-3">
         <div className="flex items-center justify-end">
-          <button
+          <CrmButton
             type="button"
             onClick={() => remove(index)}
             disabled={!canRemove}
-            className="rounded p-1 text-[#fe4242] hover:bg-[#fff1f1] disabled:cursor-not-allowed disabled:text-[#cbd5e1]"
+            className="rounded p-1 text-[var(--mnx-danger)] hover:bg-[var(--mnx-danger-bg)] disabled:cursor-not-allowed disabled:text-[var(--mnx-border)]"
             aria-label="Remove row"
           >
             <Trash2 className="size-4" />
-          </button>
+          </CrmButton>
         </div>
       </td>
     </tr>
@@ -367,10 +369,10 @@ export function LineItemsTable({ form }: LineItemsTableProps) {
   };
 
   return (
-    <section className="border-b border-[#d9dee7] px-5 py-5">
-      <div className="overflow-x-auto border border-[#d9dee7]">
-        <table className="min-w-[1280px] w-full bg-white">
-          <thead className="bg-[#fbfcfd] text-left text-[11px] uppercase tracking-[0.08em] text-[#6b7280]">
+    <section className="border-b border-[var(--mnx-border)] px-5 py-5">
+      <div className="overflow-x-auto border border-[var(--mnx-border)]">
+        <CrmTable className="min-w-[1280px] w-full bg-mono-card">
+          <thead className="bg-[var(--mnx-surface)] text-left text-[11px] uppercase tracking-[0.08em] text-[var(--mnx-text-muted)]">
             <tr>
               <th className="w-10 px-2 py-3"></th>
               <th className="min-w-[260px] px-2 py-3">Item Details</th>
@@ -417,19 +419,19 @@ export function LineItemsTable({ form }: LineItemsTableProps) {
               />
             ))}
           </tbody>
-        </table>
+        </CrmTable>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
         <Button
-          className="h-9 bg-[#F9D972] px-3 text-[12px] text-white hover:bg-[#E8C85D]"
+          className="h-9 bg-[var(--mnx-accent)] px-3 text-[12px] text-mono-text hover:bg-[var(--mnx-accent)]"
           onClick={() => append(createEmptyLineItem())}
         >
           <Plus className="mr-1 size-4" />
           Add New Row
         </Button>
         <Button
-          className="h-9 bg-[#F9D972] px-3 text-[12px] text-white hover:bg-[#E8C85D]"
+          className="h-9 bg-[var(--mnx-accent)] px-3 text-[12px] text-mono-text hover:bg-[var(--mnx-accent)]"
           onClick={() => append(createEmptyLineItem())}
         >
           <Plus className="mr-1 size-4" />

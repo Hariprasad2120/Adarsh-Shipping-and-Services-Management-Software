@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput } from "@/components/monolith/crm-workspace";
+
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, MoreHorizontal, ChevronDown, Search, X } from "lucide-react";
@@ -69,15 +71,15 @@ export function ItemsToolbar({
         {/* Left: filter dropdown + selected count */}
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative" ref={filterRef}>
-            <button
+            <CrmButton
               onClick={() => setFilterOpen((o) => !o)}
-              className="flex items-center gap-1 font-semibold text-sm text-mono-text hover:text-[#F9D972] transition-colors"
+              className="flex items-center gap-1 font-semibold text-sm text-mono-text hover:text-[var(--mnx-accent)] transition-colors"
               aria-haspopup="listbox"
               aria-expanded={filterOpen}
             >
               {FILTER_LABELS[filter]}
               <ChevronDown size={14} className={`transition-transform ${filterOpen ? "rotate-180" : ""}`} />
-            </button>
+            </CrmButton>
 
             {filterOpen && (
               <div
@@ -85,7 +87,7 @@ export function ItemsToolbar({
                 role="listbox"
               >
                 {FILTER_OPTIONS.map((f) => (
-                  <button
+                  <CrmButton
                     key={f}
                     role="option"
                     aria-selected={filter === f}
@@ -94,18 +96,18 @@ export function ItemsToolbar({
                       setFilterOpen(false);
                     }}
                     className={`w-full text-left px-3 py-1.5 text-xs hover:bg-mono-soft transition-colors ${
-                      filter === f ? "text-[#F9D972] font-semibold" : "text-mono-text"
+                      filter === f ? "text-[var(--mnx-accent)] font-semibold" : "text-mono-text"
                     }`}
                   >
                     {FILTER_LABELS[f]}
-                  </button>
+                  </CrmButton>
                 ))}
               </div>
             )}
           </div>
 
           {selectedCount > 0 && (
-            <span className="text-xs bg-[#F9D972]/10 text-[#F9D972] font-semibold px-2 py-0.5 rounded">
+            <span className="text-xs bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] font-semibold px-2 py-0.5 rounded">
               {selectedCount} selected
             </span>
           )}
@@ -113,17 +115,17 @@ export function ItemsToolbar({
 
         {/* Right: New + More */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          <button
+          <CrmButton
             onClick={() => router.push(newPath)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F9D972] hover:bg-[#E8C85D] text-white text-xs font-semibold rounded-xl transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text text-xs font-semibold rounded-xl transition-colors"
             aria-label="Create new item"
           >
             <Plus size={14} />
             New
-          </button>
+          </CrmButton>
 
           <div className="relative" ref={moreRef}>
-            <button
+            <CrmButton
               onClick={() => setMoreOpen((o) => !o)}
               className="p-1.5 border border-[var(--color-outline-variant)] rounded-xl hover:bg-mono-soft text-mono-muted hover:text-mono-text transition-colors"
               aria-label="More actions"
@@ -131,7 +133,7 @@ export function ItemsToolbar({
               aria-expanded={moreOpen}
             >
               <MoreHorizontal size={16} />
-            </button>
+            </CrmButton>
 
             {moreOpen && (
               <div
@@ -142,7 +144,7 @@ export function ItemsToolbar({
                   action === "---" ? (
                     <hr key={i} className="border-[var(--color-outline-variant)] my-1" />
                   ) : (
-                    <button
+                    <CrmButton
                       key={action}
                       role="menuitem"
                       onClick={() => {
@@ -150,11 +152,11 @@ export function ItemsToolbar({
                         if (onAction) onAction(action);
                       }}
                       className={`w-full text-left px-3 py-1.5 text-xs hover:bg-mono-soft transition-colors ${
-                        action === "Delete Selected" ? "text-[#fe4242]" : "text-mono-text"
+                        action === "Delete Selected" ? "text-[var(--mnx-danger)]" : "text-mono-text"
                       }`}
                     >
                       {action}
-                    </button>
+                    </CrmButton>
                   )
                 )}
               </div>
@@ -167,7 +169,7 @@ export function ItemsToolbar({
       <div className="px-4 pb-2.5 flex items-center gap-2">
         <div className="relative flex-1 max-w-sm">
           <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-mono-muted" />
-          <input
+          <CrmInput
             type="search"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
@@ -176,13 +178,13 @@ export function ItemsToolbar({
             aria-label="Search items"
           />
           {search && (
-            <button
+            <CrmButton
               onClick={() => onSearchChange("")}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-mono-muted hover:text-mono-text"
               aria-label="Clear search"
             >
               <X size={12} />
-            </button>
+            </CrmButton>
           )}
         </div>
       </div>

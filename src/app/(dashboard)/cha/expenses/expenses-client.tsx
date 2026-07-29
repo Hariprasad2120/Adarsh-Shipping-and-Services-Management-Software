@@ -1,9 +1,13 @@
 "use client";
 
-import { ChaTable } from "@/components/monolith/cha-workspace";
+import {
+  ChaModal as Modal,
+  ChaNativeSelect as NativeSelect,
+  ChaTable,
+  ChaWarningIndicatorPopover as WarningIndicatorPopover,
+} from "@/components/monolith/cha-workspace";
 import { Textarea } from "@/components/monolith/textarea";
 import { Input } from "@/components/monolith/input";
-import { NativeSelect } from "@/components/monolith/native-select";
 import { DateInput } from "@/components/monolith/date-input";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -12,8 +16,6 @@ import { CreditCard, Search, Filter, ExternalLink, MessageSquare, ChevronDown, P
 import { Button } from "@/components/monolith/button";
 import { Badge, type BadgeVariant } from "@/components/monolith/badge";
 import { FileUploadField } from "@/components/monolith/file-upload-field";
-import { Modal } from "@/components/monolith/modal";
-import { WarningIndicatorPopover } from "@/components/monolith/warning-indicator-popover";
 import * as actions from "@/modules/cha/actions";
 import Link from "next/link";
 import { formatChaBadgeLabel } from "@/lib/cha-badges";
@@ -275,12 +277,12 @@ function LocationSearchInput({
       {searching ? <p className="text-xs mnx-text-muted">Searching OpenStreetMap...</p> : null}
       {searchError ? <p className="text-xs text-destructive">{searchError}</p> : null}
       {suggestions.length ? (
-        <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-xl border mnx-border mnx-bg-surface p-1 shadow-lg">
+        <div className="mnx-floating-surface mnx-cha-menu mnx-cha-autocomplete absolute left-0 right-0 top-full z-20 mt-2 max-h-56 overflow-y-auto p-1">
           {suggestions.map((suggestion) => (
             <Button
               key={`${suggestion.lat}-${suggestion.lon}-${suggestion.displayName}`}
               type="button"
-              className="w-full rounded-lg px-3 py-2 text-left text-xs mnx-text-primary transition mnx-hover-accent"
+              className="mnx-cha-menu-option text-xs"
               onClick={() => {
                 onPlaceSelected(suggestion);
                 setSuggestions([]);
@@ -1374,7 +1376,7 @@ export function ExpensesClient({
               </Button>
 
               {showQueueFilters ? (
-                <div className="absolute right-0 z-20 mt-2 w-[min(92vw,360px)] space-y-3 rounded-xl border mnx-border mnx-bg-surface p-4 shadow-lg">
+                <div className="mnx-floating-surface mnx-cha-menu mnx-cha-filter-popover absolute right-0 z-20 mt-2 w-[min(92vw,360px)] space-y-3 p-4">
                   <div className="grid gap-3">
                     <NativeSelect value={status} onChange={(e) => setStatus(e.target.value)} className="h-10 w-full text-sm font-sans">
                       <option value="">All Statuses</option>

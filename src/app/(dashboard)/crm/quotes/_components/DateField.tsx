@@ -10,7 +10,7 @@ export function DateField({ className, error, ...props }: DateFieldProps) {
     <DateInput
       className={[
         "h-9 rounded-xl border border-mono-border bg-mono-card px-3 pr-9 text-[13px] text-mono-text outline-none transition",
-        error ? "border-[#fe4242] focus:ring-[#fe4242]/15" : "",
+        error ? "border-[var(--mnx-danger)] focus:ring-[var(--mnx-danger)]/15" : "",
         className,
       ]
         .filter(Boolean)

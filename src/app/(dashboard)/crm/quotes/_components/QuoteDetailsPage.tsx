@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput, CrmTable } from "@/components/monolith/crm-workspace";
+
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -32,15 +34,15 @@ function toApprovalStatus(s: Exclude<QuoteListStatus, "all">): ApprovalStatus {
 }
 
 const statusTone: Record<Exclude<QuoteListStatus, "all">, string> = {
-  draft: "bg-[#f1f3f5] text-[#495057]",
-  "pending-approval": "bg-amber-100 text-amber-700",
-  approved: "bg-sky-100 text-sky-700",
-  sent: "bg-indigo-100 text-indigo-700",
-  "customer-viewed": "bg-violet-100 text-violet-700",
-  accepted: "bg-emerald-100 text-emerald-700",
-  invoiced: "bg-cyan-100 text-cyan-700",
-  declined: "bg-rose-100 text-rose-700",
-  rework: "bg-orange-100 text-orange-700",
+  draft: "bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)]",
+  "pending-approval": "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
+  approved: "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent-text)]",
+  sent: "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent-text)]",
+  "customer-viewed": "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent-text)]",
+  accepted: "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]",
+  invoiced: "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent-text)]",
+  declined: "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]",
+  rework: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
 };
 
 function formatStatus(status: Exclude<QuoteListStatus, "all">) {
@@ -127,61 +129,61 @@ export function QuoteDetailsPage({
   const activeViewLabel = quoteViews.find((view) => view.id === activeView)?.label ?? "All";
 
   return (
-    <div className="min-h-screen bg-[#f5f7fb] text-[#1f2937]">
+    <div className="min-h-screen bg-[var(--mnx-surface)] text-[var(--mnx-text-strong)]">
       <div className="flex min-h-screen flex-col xl:flex-row">
-        <aside className="flex w-full shrink-0 flex-col border-b border-[#dfe6f3] bg-white xl:w-[360px] xl:border-b-0 xl:border-r">
-          <div className="border-b border-[#e8edf5] px-4 py-4">
+        <aside className="flex w-full shrink-0 flex-col border-b border-[var(--mnx-border)] bg-mono-card xl:w-[360px] xl:border-b-0 xl:border-r">
+          <div className="border-b border-[var(--mnx-border)] px-4 py-4">
             <div className="flex items-center justify-between gap-3">
-              <button
+              <CrmButton
                 type="button"
-                className="inline-flex items-center gap-2 rounded-xl border border-[#dbe3f0] bg-white px-4 py-2 text-sm font-semibold text-[#1f2937]"
+                className="inline-flex items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-mono-card px-4 py-2 text-sm font-semibold text-[var(--mnx-text-strong)]"
               >
                 <span>{activeViewLabel} Quotes</span>
-                <ChevronDown className="size-4 text-[#71809a]" />
-              </button>
+                <ChevronDown className="size-4 text-[var(--mnx-text-muted)]" />
+              </CrmButton>
               <div className="flex items-center gap-2">
                 <Link
                   href="/crm/quotes/new"
-                  className="inline-flex size-10 items-center justify-center rounded-xl bg-[#F9D972] text-white transition-colors hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)]"
+                  className="inline-flex size-10 items-center justify-center rounded-xl bg-[var(--mnx-accent)] text-mono-text transition-colors hover:bg-[var(--mnx-accent)] hover:shadow-[0_0_0_3px_var(--mnx-accent-soft)]"
                   aria-label="Create quote"
                 >
                   <Plus className="size-4" />
                 </Link>
-                <button
+                <CrmButton
                   type="button"
-                  className="inline-flex size-10 items-center justify-center rounded-xl border border-[#dbe3f0] bg-white text-[#5d6c86]"
+                  className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)]"
                   aria-label="More actions"
                 >
                   <MoreHorizontal className="size-4" />
-                </button>
+                </CrmButton>
               </div>
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">
               {quoteViews.map((view) => (
-                <button
+                <CrmButton
                   key={view.id}
                   type="button"
                   onClick={() => setActiveView(view.id)}
                   className={cn(
                     "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                    activeView === view.id ? "bg-[#F9D972]/10 text-[#00968f]" : "bg-[#f6f8fc] text-[#66758f] hover:bg-[#edf2f9]",
+                    activeView === view.id ? "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]" : "bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)] hover:bg-[var(--mnx-border)]",
                   )}
                 >
                   {view.label}
-                </button>
+                </CrmButton>
               ))}
             </div>
           </div>
 
-          <div className="border-b border-[#eef2f7] px-4 py-4">
+          <div className="border-b border-[var(--mnx-border)] px-4 py-4">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-[#9aa3b2]" />
-              <input
+              <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-[var(--mnx-text-muted)]" />
+              <CrmInput
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search quotes"
-                className="h-11 w-full rounded-xl border border-[#dbe3f0] bg-white pl-10 pr-3 text-sm text-[#1f2937] outline-none focus:border-[#F9D972] focus:ring-2 focus:ring-[#F9D972]/20"
+                className="h-11 w-full rounded-xl border border-[var(--mnx-border)] bg-mono-card pl-10 pr-3 text-sm text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/20"
               />
             </div>
           </div>
@@ -194,20 +196,20 @@ export function QuoteDetailsPage({
                   key={record.id}
                   href={`/crm/quotes/${record.id}`}
                   className={cn(
-                    "block border-b border-[#eef2f7] px-4 py-4 transition-colors",
-                    active ? "bg-[#F9D972]/5 shadow-[inset_3px_0_0_#F9D972]" : "hover:bg-[#fafcff]",
+                    "block border-b border-[var(--mnx-border)] px-4 py-4 transition-colors",
+                    active ? "bg-[var(--mnx-accent)]/5 shadow-[inset_3px_0_0_var(--mnx-accent)]" : "hover:bg-[var(--mnx-surface)]",
                   )}
                 >
                   <div className="flex items-start gap-3">
-                    <span className="mt-1 block size-4 rounded border border-[#cdd6e3] bg-white" aria-hidden="true" />
+                    <span className="mt-1 block size-4 rounded border border-[var(--mnx-border)] bg-mono-card" aria-hidden="true" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-3">
-                        <p className="truncate text-sm font-semibold text-[#1f2937]">{record.customerName}</p>
-                        <span className="shrink-0 text-sm font-semibold text-[#1f2937]">{formatAmount(record.amount)}</span>
+                        <p className="truncate text-sm font-semibold text-[var(--mnx-text-strong)]">{record.customerName}</p>
+                        <span className="shrink-0 text-sm font-semibold text-[var(--mnx-text-strong)]">{formatAmount(record.amount)}</span>
                       </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#71809a]">
-                        <span className="font-medium text-[#F9D972]">{record.quoteNumber}</span>
-                        <span className="size-1 rounded-full bg-[#cbd5e1]" />
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[var(--mnx-text-muted)]">
+                        <span className="font-medium text-[var(--mnx-accent)]">{record.quoteNumber}</span>
+                        <span className="size-1 rounded-full bg-[var(--mnx-border)]" />
                         <span>{formatDate(record.date)}</span>
                       </div>
                       <div className="mt-3">
@@ -224,66 +226,66 @@ export function QuoteDetailsPage({
         </aside>
 
         <main className="min-w-0 flex-1">
-          <div className="border-b border-[#dfe6f3] bg-white">
-            <div className="border-b border-[#edf1f6] px-4 py-4 sm:px-6">
+          <div className="border-b border-[var(--mnx-border)] bg-mono-card">
+            <div className="border-b border-[var(--mnx-text-muted)] px-4 py-4 sm:px-6">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div className="flex items-start gap-3">
                   <Link
                     href="/crm/quotes"
-                    className="mt-1 inline-flex size-10 items-center justify-center rounded-xl border border-[#dbe3f0] bg-white text-[#5d6c86]"
+                    className="mt-1 inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)]"
                     aria-label="Back to quote list"
                   >
                     <ArrowLeft className="size-4" />
                   </Link>
                   <div>
-                    <p className="text-sm text-[#5c6a82]">Location: {quote.location}</p>
+                    <p className="text-sm text-[var(--mnx-text-muted)]">Location: {quote.location}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-3">
-                      <h1 className="text-[2rem] font-semibold tracking-[-0.03em] text-[#0f172a]">{quote.quoteNumber}</h1>
+                      <h1 className="text-[2rem] font-semibold tracking-[-0.03em] text-[var(--mnx-text-strong)]">{quote.quoteNumber}</h1>
                       <span className={cn("inline-flex rounded-full px-2.5 py-1 text-xs font-semibold", statusTone[quote.status])}>
                         {formatStatus(quote.status)}
                       </span>
                     </div>
                   </div>
                 </div>
-                <p className="text-sm text-[#6b7a90]">Total {formatAmount(quote.total)} for {quote.customerName}</p>
+                <p className="text-sm text-[var(--mnx-text-muted)]">Total {formatAmount(quote.total)} for {quote.customerName}</p>
               </div>
             </div>
 
             <div className="px-4 py-3 sm:px-6">
-              <div className="flex flex-wrap items-center gap-2 text-[#334155]">
+              <div className="flex flex-wrap items-center gap-2 text-[var(--mnx-text-muted)]">
                 { (quote.status === "draft" || quote.status === "rework" || (quote.status === "pending-approval" && effectiveCaps.canApprove)) ? (
                   <Link
                     href={`/crm/quotes/${quote.id}/edit`}
-                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#d7deeb] bg-white px-3.5 text-sm font-medium text-[#334155] shadow-sm hover:bg-[#f8fafc]"
+                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-mono-card px-3.5 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm hover:bg-[var(--mnx-surface)]"
                   >
-                    <Pencil className="size-4 text-[#607089]" />
+                    <Pencil className="size-4 text-[var(--mnx-text-muted)]" />
                     <span>Edit</span>
                   </Link>
                 ) : (
-                  <button
+                  <CrmButton
                     disabled
                     type="button"
-                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#d7deeb] bg-white px-3.5 text-sm font-medium text-[#334155] shadow-sm opacity-50 cursor-not-allowed"
+                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-mono-card px-3.5 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm opacity-50 cursor-not-allowed"
                   >
-                    <Pencil className="size-4 text-[#607089]" />
+                    <Pencil className="size-4 text-[var(--mnx-text-muted)]" />
                     <span>Edit</span>
-                  </button>
+                  </CrmButton>
                 ) }
                 <ToolbarButton icon={Mail} label="Mails" dropdown />
                 <ToolbarButton icon={Share2} label="Share" />
                 <ToolbarButton icon={FileOutput} label="PDF/Print" dropdown />
                 {/* Approval actions replace the static buttons */}
                 <div className="relative">
-                  <button
+                  <CrmButton
                     type="button"
                     onClick={() => setActionsOpen((current) => !current)}
-                    className="inline-flex h-10 items-center justify-center rounded-xl border border-[#d7deeb] bg-white px-3 text-sm font-medium text-[#334155] shadow-sm hover:bg-[#f8fafc]"
+                    className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card px-3 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm hover:bg-[var(--mnx-surface)]"
                     aria-label="More quote actions"
                   >
                     <MoreHorizontal className="size-4" />
-                  </button>
+                  </CrmButton>
                   {actionsOpen ? (
-                    <div className="absolute right-0 top-12 z-30 w-60 overflow-hidden rounded-2xl border border-[#dfe6f3] bg-white shadow-[0_18px_48px_rgba(15,23,42,0.18)]">
+                    <div className="absolute right-0 top-12 z-30 w-60 overflow-hidden rounded-2xl border border-[var(--mnx-border)] bg-mono-card shadow-[0_18px_48px_var(--mnx-border)]">
                       <ActionMenuButton icon={Send} label="Mark As Sent" active />
                       <ActionMenuButton icon={Copy} label="Clone" />
                       {quote.status === "draft" && (
@@ -294,16 +296,16 @@ export function QuoteDetailsPage({
                           onClick={handleDelete}
                         />
                       )}
-                      <div className="border-t border-[#eef2f7] p-2">
-                        <button
+                      <div className="border-t border-[var(--mnx-border)] p-2">
+                        <CrmButton
                           type="button"
-                          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-[#475569] hover:bg-[#f8fafc]"
+                          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-[var(--mnx-text-muted)] hover:bg-[var(--mnx-surface)]"
                         >
-                          <span className="flex size-6 items-center justify-center rounded-full border border-[#dbe3f0] text-[#5b6b83]">
+                          <span className="flex size-6 items-center justify-center rounded-full border border-[var(--mnx-border)] text-[var(--mnx-text-muted)]">
                             <ChevronRight className="size-3" />
                           </span>
                           Quote Preferences
-                        </button>
+                        </CrmButton>
                       </div>
                     </div>
                   ) : null}
@@ -315,7 +317,7 @@ export function QuoteDetailsPage({
           <div className="p-4 sm:p-6">
             <div className="grid gap-6">
               {/* Approval action bar */}
-              <section className="monolith-shell-lg border border-[#dfe6f3] bg-white px-5 py-4 shadow-[0_12px_36px_rgba(15,23,42,0.05)]">
+              <section className=" border border-[var(--mnx-border)] bg-mono-card px-5 py-4 shadow-[0_12px_36px_var(--mnx-border)]">
                 <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--color-on-surface-variant)" }}>
                   Workflow
                 </p>
@@ -328,77 +330,77 @@ export function QuoteDetailsPage({
                 />
               </section>
 
-              <section className="monolith-shell-lg overflow-hidden border border-[#dfe6f3] bg-white shadow-[0_12px_36px_rgba(15,23,42,0.05)]">
-                <div className="border-b border-[#eef2f7] px-5 pt-4">
+              <section className=" overflow-hidden border border-[var(--mnx-border)] bg-mono-card shadow-[0_12px_36px_var(--mnx-border)]">
+                <div className="border-b border-[var(--mnx-border)] px-5 pt-4">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-center gap-8">
-                      <button
+                      <CrmButton
                         type="button"
                         onClick={() => setActiveTab("details")}
                         className={cn(
                           "border-b-[3px] pb-4 text-base font-semibold transition-colors",
-                          activeTab === "details" ? "border-[#F9D972] text-[#0f172a]" : "border-transparent text-[#64748b]",
+                          activeTab === "details" ? "border-[var(--mnx-accent)] text-[var(--mnx-text-strong)]" : "border-transparent text-[var(--mnx-text-muted)]",
                         )}
                       >
                         Quote Details
-                      </button>
-                      <button
+                      </CrmButton>
+                      <CrmButton
                         type="button"
                         onClick={() => setActiveTab("activity")}
                         className={cn(
                           "border-b-[3px] pb-4 text-base font-medium transition-colors",
-                          activeTab === "activity" ? "border-[#F9D972] text-[#0f172a]" : "border-transparent text-[#64748b]",
+                          activeTab === "activity" ? "border-[var(--mnx-accent)] text-[var(--mnx-text-strong)]" : "border-transparent text-[var(--mnx-text-muted)]",
                         )}
                       >
                         Activity Logs
-                      </button>
+                      </CrmButton>
                     </div>
 
                     {activeTab === "details" ? (
                       <div className="mb-3 flex flex-wrap items-center gap-3">
-                        <div className="inline-flex items-center rounded-xl border border-[#dbe3f0] bg-[#f4f6fb] p-1">
-                          <button
+                        <div className="inline-flex items-center rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-1">
+                          <CrmButton
                             type="button"
                             onClick={() => setDisplayCurrency("INR")}
                             className={cn(
                               "rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors",
-                              displayCurrency === "INR" ? "bg-[#F9D972] text-white shadow-sm" : "text-[#64748b]"
+                              displayCurrency === "INR" ? "bg-[var(--mnx-accent)] text-mono-text shadow-sm" : "text-[var(--mnx-text-muted)]"
                             )}
                           >
                             INR
-                          </button>
-                          <button
+                          </CrmButton>
+                          <CrmButton
                             type="button"
                             onClick={() => setDisplayCurrency("foreign")}
                             className={cn(
                               "rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors",
-                              displayCurrency === "foreign" ? "bg-[#F9D972] text-white shadow-sm" : "text-[#64748b]"
+                              displayCurrency === "foreign" ? "bg-[var(--mnx-accent)] text-mono-text shadow-sm" : "text-[var(--mnx-text-muted)]"
                             )}
                           >
                             Foreign
-                          </button>
+                          </CrmButton>
                         </div>
-                        <div className="inline-flex items-center rounded-xl border border-[#dbe3f0] bg-[#f4f6fb] p-1">
-                          <button
+                        <div className="inline-flex items-center rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-1">
+                          <CrmButton
                             type="button"
                             onClick={() => setDetailMode("details")}
                             className={cn(
                               "rounded-lg px-5 py-2 text-sm font-medium transition-colors",
-                              detailMode === "details" ? "bg-white text-[#0f172a] shadow-sm" : "text-[#64748b]",
+                              detailMode === "details" ? "bg-mono-card text-[var(--mnx-text-strong)] shadow-sm" : "text-[var(--mnx-text-muted)]",
                             )}
                           >
                             Details
-                          </button>
-                          <button
+                          </CrmButton>
+                          <CrmButton
                             type="button"
                             onClick={() => setDetailMode("pdf")}
                             className={cn(
                               "rounded-lg px-5 py-2 text-sm font-medium transition-colors",
-                              detailMode === "pdf" ? "bg-white text-[#0f172a] shadow-sm" : "text-[#64748b]",
+                              detailMode === "pdf" ? "bg-mono-card text-[var(--mnx-text-strong)] shadow-sm" : "text-[var(--mnx-text-muted)]",
                             )}
                           >
                             PDF
-                          </button>
+                          </CrmButton>
                         </div>
                       </div>
                     ) : null}
@@ -409,19 +411,19 @@ export function QuoteDetailsPage({
                   detailMode === "details" ? (
                     <div className="space-y-6 p-5">
                       { (quote.status === "sent" || quote.status === "customer-viewed") && quote.slaDeadline && new Date() > new Date(quote.slaDeadline) && (
-                        <div className="flex items-start gap-4 p-4 rounded-2xl bg-orange-50 border border-orange-200 text-orange-800 shadow-sm">
-                          <span className="monolith-icon-badge mt-0.5 flex-shrink-0" style={{ background: "rgba(251,146,60,0.15)", color: "#D88700" }}>
+                        <div className="flex items-start gap-4 p-4 rounded-2xl bg-[var(--mnx-warning-bg)] border border-[var(--mnx-warning)] text-[var(--mnx-warning)] shadow-sm">
+                          <span className="mnx-crm-icon-badge mt-0.5 flex-shrink-0" style={{ background: "var(--mnx-warning-bg)", color: "var(--mnx-accent)" }}>
                             <ShieldAlert size={18} />
                           </span>
                           <div>
-                            <h4 className="monolith-h3 font-semibold text-orange-950">2-Day Response SLA Breached</h4>
-                            <p className="text-sm text-orange-900 mt-1">
+                            <h4 className="mnx-title-3 font-semibold text-[var(--mnx-warning)]">2-Day Response SLA Breached</h4>
+                            <p className="text-sm text-[var(--mnx-warning)] mt-1">
                               No update has been received from the customer on this quote within 2 business days. The owner and accounts department have been notified.
                             </p>
                           </div>
                         </div>
                       ) }
-                      <section className="rounded-2xl border border-[#e7edf5] bg-[#fbfcff] p-4">
+                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-4">
                         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                           <DetailPair label="Quote Number" value={quote.quoteNumber} />
                           <DetailPair label="Quote Date" value={formatDate(quote.date)} />
@@ -432,17 +434,17 @@ export function QuoteDetailsPage({
                         </div>
                       </section>
 
-                      <section className="rounded-2xl border border-[#e7edf5] bg-white p-5">
-                        <div className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-[#7b8798]">Customer Details</div>
+                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-mono-card p-5">
+                        <div className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">Customer Details</div>
                         <div className="grid gap-5 lg:grid-cols-[1.2fr_1fr_1fr]">
                           <div>
                             <div className="flex items-center gap-3">
-                              <div className="flex size-10 items-center justify-center rounded-full bg-[#F9D972]/10 text-sm font-semibold text-[#00968f]">
+                              <div className="flex size-10 items-center justify-center rounded-full bg-[var(--mnx-accent)]/10 text-sm font-semibold text-[var(--mnx-accent)]">
                                 {quote.customerInitial}
                               </div>
                               <div>
-                                <p className="font-semibold text-[#1f2937]">{quote.customerName}</p>
-                                <p className="text-sm text-[#71809a]">{quote.referenceNumber}</p>
+                                <p className="font-semibold text-[var(--mnx-text-strong)]">{quote.customerName}</p>
+                                <p className="text-sm text-[var(--mnx-text-muted)]">{quote.referenceNumber}</p>
                               </div>
                             </div>
                           </div>
@@ -451,21 +453,21 @@ export function QuoteDetailsPage({
                         </div>
                       </section>
 
-                      <section className="rounded-2xl border border-[#e7edf5] bg-white">
-                        <div className="flex items-center justify-between border-b border-[#eef2f7] px-5 py-4">
+                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-mono-card">
+                        <div className="flex items-center justify-between border-b border-[var(--mnx-border)] px-5 py-4">
                           <div className="flex items-center gap-3">
-                            <h2 className="text-lg font-semibold tracking-[-0.02em] text-[#0f172a]">Items</h2>
-                            <span className="rounded-full bg-[#F9D972]/10 px-2.5 py-1 text-xs font-semibold text-[#00968f]">{quote.items.length}</span>
+                            <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--mnx-text-strong)]">Items</h2>
+                            <span className="rounded-full bg-[var(--mnx-accent)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--mnx-accent)]">{quote.items.length}</span>
                           </div>
-                          <div className="inline-flex items-center gap-2 rounded-full bg-[#f5f7fb] px-3 py-1.5 text-xs font-medium text-[#67768e]">
+                          <div className="inline-flex items-center gap-2 rounded-full bg-[var(--mnx-surface)] px-3 py-1.5 text-xs font-medium text-[var(--mnx-text-muted)]">
                             <FileText className="size-4" />
                             Details View
                           </div>
                         </div>
 
                         <div className="overflow-x-auto">
-                          <table className="w-full min-w-[760px]">
-                            <thead className="bg-[#fafbfd] text-left text-[11px] uppercase tracking-[0.12em] text-[#7b8798]">
+                          <CrmTable className="w-full min-w-[760px]">
+                            <thead className="bg-[var(--mnx-surface)] text-left text-[11px] uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
                               <tr>
                                 <th className="px-5 py-3">S.No</th>
                                 <th className="px-5 py-3">Item</th>
@@ -475,7 +477,7 @@ export function QuoteDetailsPage({
                                 <th className="px-5 py-3 text-right">Amount</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-[#eef2f7] text-sm">
+                            <tbody className="divide-y divide-[var(--mnx-border)] text-sm">
                               {quote.items.map((item, index) => {
                                 const showForeign = displayCurrency === "foreign" && item.currency && item.currency !== "INR";
                                 const formattedPrice = showForeign
@@ -508,28 +510,28 @@ export function QuoteDetailsPage({
 
                                 return (
                                   <tr key={item.id}>
-                                    <td className="px-5 py-4 text-[#435066]">{index + 1}</td>
+                                    <td className="px-5 py-4 text-[var(--mnx-text-muted)]">{index + 1}</td>
                                     <td className="px-5 py-4">
-                                      <div className="font-medium text-[#1f2937]">{item.name}</div>
-                                      {item.description ? <div className="mt-1 text-xs text-[#7b8798]">{item.description}</div> : null}
+                                      <div className="font-medium text-[var(--mnx-text-strong)]">{item.name}</div>
+                                      {item.description ? <div className="mt-1 text-xs text-[var(--mnx-text-muted)]">{item.description}</div> : null}
                                       {showForeign && (
-                                        <div className="mt-1 text-[11px] text-[#71809a]">
+                                        <div className="mt-1 text-[11px] text-[var(--mnx-text-muted)]">
                                           Ex. Rate: 1 {item.currency} = ₹{item.exchangeRate ?? 1} INR
                                         </div>
                                       )}
                                     </td>
-                                    <td className="px-5 py-4 text-[#435066]">{item.hsnSac || "—"}</td>
-                                    <td className="px-5 py-4 text-right text-[#435066]">{item.quantity}</td>
-                                    <td className="px-5 py-4 text-right text-[#435066] font-mono">{formattedPrice}</td>
-                                    <td className="px-5 py-4 text-right font-medium text-[#1f2937] font-mono">{formattedAmountVal}</td>
+                                    <td className="px-5 py-4 text-[var(--mnx-text-muted)]">{item.hsnSac || "—"}</td>
+                                    <td className="px-5 py-4 text-right text-[var(--mnx-text-muted)]">{item.quantity}</td>
+                                    <td className="px-5 py-4 text-right text-[var(--mnx-text-muted)] font-mono">{formattedPrice}</td>
+                                    <td className="px-5 py-4 text-right font-medium text-[var(--mnx-text-strong)] font-mono">{formattedAmountVal}</td>
                                   </tr>
                                 );
                               })}
                             </tbody>
-                          </table>
+                          </CrmTable>
                         </div>
 
-                        <div className="border-t border-[#eef2f7] px-5 py-5">
+                        <div className="border-t border-[var(--mnx-border)] px-5 py-5">
                           <div className="ml-auto w-full max-w-[360px] space-y-3 text-sm">
                             <SummaryRow label="Sub Total" value={formatAmount(quote.subtotal)} strong />
                             {quote.taxes.map((tax) => (
@@ -538,7 +540,7 @@ export function QuoteDetailsPage({
                             <SummaryRow label="Discount" value={formatAmount(quote.discount)} />
                             <SummaryRow label="Adjustment" value={String(quote.adjustment)} />
                             <SummaryRow label="Round Off" value={formatAmount(quote.roundOff)} />
-                            <div className="mt-3 flex items-center justify-between border-t border-[#dbe3f0] pt-3 text-base font-semibold text-[#0f172a]">
+                            <div className="mt-3 flex items-center justify-between border-t border-[var(--mnx-border)] pt-3 text-base font-semibold text-[var(--mnx-text-strong)]">
                               <span>Total</span>
                               <span>{formatAmount(quote.total)}</span>
                             </div>
@@ -546,30 +548,30 @@ export function QuoteDetailsPage({
                         </div>
                       </section>
 
-                      <section className="rounded-2xl border border-[#e7edf5] bg-white p-5">
+                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-mono-card p-5">
                         <div className="grid gap-6 xl:grid-cols-2">
                           <div>
-                            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7b8798]">Notes</div>
-                            <p className="text-sm leading-7 text-[#425167]">{quote.notes || "No notes added."}</p>
+                            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">Notes</div>
+                            <p className="text-sm leading-7 text-[var(--mnx-text-muted)]">{quote.notes || "No notes added."}</p>
                           </div>
                           <div>
-                            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7b8798]">Terms and Conditions</div>
-                            <p className="text-sm leading-7 text-[#425167]">{quote.terms || "No Terms and Conditions"}</p>
+                            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">Terms and Conditions</div>
+                            <p className="text-sm leading-7 text-[var(--mnx-text-muted)]">{quote.terms || "No Terms and Conditions"}</p>
                           </div>
                         </div>
                         {(() => {
                           const bank = bankAccounts.find((b) => b.id === quote.bankDetailsId);
                           if (!bank) return null;
                           return (
-                            <div className="mt-5 border-t border-[#e7edf5] pt-5">
-                              <div className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#7b8798]">Bank Details</div>
+                            <div className="mt-5 border-t border-[var(--mnx-border)] pt-5">
+                              <div className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">Bank Details</div>
                               <div className="grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
-                                <div><span className="text-[#7b8798]">Bank: </span><span className="font-medium text-[#1f2937]">{bank.bankName}</span></div>
-                                <div><span className="text-[#7b8798]">Account Name: </span><span className="font-medium text-[#1f2937]">{bank.accountName}</span></div>
-                                <div><span className="text-[#7b8798]">Account No: </span><span className="font-medium text-[#1f2937]">{bank.accountNumber}</span></div>
-                                <div><span className="text-[#7b8798]">IFSC: </span><span className="font-medium text-[#1f2937]">{bank.ifsc}</span></div>
-                                <div><span className="text-[#7b8798]">Branch: </span><span className="font-medium text-[#1f2937]">{bank.branch}</span></div>
-                                {bank.upi && <div><span className="text-[#7b8798]">UPI: </span><span className="font-medium text-[#1f2937]">{bank.upi}</span></div>}
+                                <div><span className="text-[var(--mnx-text-muted)]">Bank: </span><span className="font-medium text-[var(--mnx-text-strong)]">{bank.bankName}</span></div>
+                                <div><span className="text-[var(--mnx-text-muted)]">Account Name: </span><span className="font-medium text-[var(--mnx-text-strong)]">{bank.accountName}</span></div>
+                                <div><span className="text-[var(--mnx-text-muted)]">Account No: </span><span className="font-medium text-[var(--mnx-text-strong)]">{bank.accountNumber}</span></div>
+                                <div><span className="text-[var(--mnx-text-muted)]">IFSC: </span><span className="font-medium text-[var(--mnx-text-strong)]">{bank.ifsc}</span></div>
+                                <div><span className="text-[var(--mnx-text-muted)]">Branch: </span><span className="font-medium text-[var(--mnx-text-strong)]">{bank.branch}</span></div>
+                                {bank.upi && <div><span className="text-[var(--mnx-text-muted)]">UPI: </span><span className="font-medium text-[var(--mnx-text-strong)]">{bank.upi}</span></div>}
                               </div>
                             </div>
                           );
@@ -580,7 +582,7 @@ export function QuoteDetailsPage({
                     <QuotePdfPreview quote={quote} displayCurrency={displayCurrency} />
                   )
                 ) : (
-                  <div className="p-6 bg-white rounded-2xl border border-[#e7edf5]">
+                  <div className="p-6 bg-mono-card rounded-2xl border border-[var(--mnx-border)]">
                     <ApprovalLogList logs={quote.approvalLogs || []} />
                   </div>
                 )}
@@ -603,14 +605,14 @@ function ToolbarButton({
   dropdown?: boolean;
 }) {
   return (
-    <button
+    <CrmButton
       type="button"
-      className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#d7deeb] bg-white px-3.5 text-sm font-medium text-[#334155] shadow-sm hover:bg-[#f8fafc]"
+      className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-mono-card px-3.5 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm hover:bg-[var(--mnx-surface)]"
     >
-      <Icon className="size-4 text-[#607089]" />
+      <Icon className="size-4 text-[var(--mnx-text-muted)]" />
       <span>{label}</span>
-      {dropdown ? <ChevronDown className="size-4 text-[#7a889e]" /> : null}
-    </button>
+      {dropdown ? <ChevronDown className="size-4 text-[var(--mnx-text-muted)]" /> : null}
+    </CrmButton>
   );
 }
 
@@ -628,43 +630,43 @@ function ActionMenuButton({
   disabled?: boolean;
 }) {
   return (
-    <button
+    <CrmButton
       type="button"
       onClick={onClick}
       disabled={disabled}
       className={cn(
         "flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium transition-colors",
-        active ? "bg-[#5f8fff] text-white" : "text-[#475569] hover:bg-[#f8fafc]",
+        active ? "bg-[var(--mnx-accent)] text-mono-text" : "text-[var(--mnx-text-muted)] hover:bg-[var(--mnx-surface)]",
         disabled && "opacity-50 cursor-not-allowed"
       )}
     >
       <Icon className="size-4" />
       {label}
-    </button>
+    </CrmButton>
   );
 }
 
 function DetailPair({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-[#f8fafd] px-4 py-3">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7b8798]">{label}</div>
-      <div className="mt-1 text-sm font-medium text-[#1f2937]">{value}</div>
+    <div className="rounded-2xl bg-[var(--mnx-surface)] px-4 py-3">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">{label}</div>
+      <div className="mt-1 text-sm font-medium text-[var(--mnx-text-strong)]">{value}</div>
     </div>
   );
 }
 
 function AddressBlock({ label, value }: { label: string; value?: string }) {
   return (
-    <div className="rounded-2xl bg-[#f8fafd] px-4 py-3">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7b8798]">{label}</div>
-      <div className="mt-2 text-sm leading-6 text-[#425167]">{value || "-"}</div>
+    <div className="rounded-2xl bg-[var(--mnx-surface)] px-4 py-3">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">{label}</div>
+      <div className="mt-2 text-sm leading-6 text-[var(--mnx-text-muted)]">{value || "-"}</div>
     </div>
   );
 }
 
 function SummaryRow({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className={cn("flex items-center justify-between gap-4", strong ? "font-semibold text-[#1f2937]" : "text-[#425167]")}>
+    <div className={cn("flex items-center justify-between gap-4", strong ? "font-semibold text-[var(--mnx-text-strong)]" : "text-[var(--mnx-text-muted)]")}>
       <span>{label}</span>
       <span>{value}</span>
     </div>
@@ -676,27 +678,27 @@ function QuotePdfPreview({ quote, displayCurrency }: { quote: QuoteDetailRecord;
   const isSameState = supplierStateCode && supplierStateCode === quote.placeOfSupply;
 
   return (
-    <div className="overflow-auto bg-[#fbfcff] p-6 sm:p-8">
-      <div className="monolith-shell-lg mx-auto w-full max-w-[1120px] border border-[#dfe6f3] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-10">
-        <div className="relative mx-auto max-w-[920px] border border-[#d6dde8] bg-white overflow-hidden">
+    <div className="overflow-auto bg-[var(--mnx-surface)] p-6 sm:p-8">
+      <div className=" mx-auto w-full max-w-[1120px] border border-[var(--mnx-border)] bg-mono-card p-6 shadow-[0_20px_60px_var(--mnx-border)] sm:p-10">
+        <div className="relative mx-auto max-w-[920px] border border-[var(--mnx-border)] bg-mono-card overflow-hidden">
           <StatusWatermark status={quote.status} />
 
-          <div className="grid grid-cols-[220px_1fr_200px] border-b border-[#b8c1ce]">
-            <div className="flex items-center justify-center border-r border-[#b8c1ce] px-4 py-6">
+          <div className="grid grid-cols-[220px_1fr_200px] border-b border-[var(--mnx-border)]">
+            <div className="flex items-center justify-center border-r border-[var(--mnx-border)] px-4 py-6">
               <Image src="/Logo.png" alt="Adarsh Shipping & Services" width={220} height={72} className="h-auto w-[180px]" />
             </div>
-            <div className="px-5 py-5 text-[17px] leading-8 text-black">
+            <div className="px-5 py-5 text-[17px] leading-8 text-mono-text">
               <div className="font-semibold">Adarsh shipping and services</div>
               <div>CHOOLAI</div>
               <div>Chennai Tamil Nadu 600112</div>
               <div>India</div>
               <div>GSTIN 33AAAFA4117G1Z5</div>
             </div>
-            <div className="flex items-center justify-center px-5 py-5 text-[34px] tracking-wide text-black">QUOTE</div>
+            <div className="flex items-center justify-center px-5 py-5 text-[34px] tracking-wide text-mono-text">QUOTE</div>
           </div>
 
-          <div className="grid grid-cols-2 border-b border-[#b8c1ce] text-[14px] text-black">
-            <div className="border-r border-[#b8c1ce]">
+          <div className="grid grid-cols-2 border-b border-[var(--mnx-border)] text-[14px] text-mono-text">
+            <div className="border-r border-[var(--mnx-border)]">
               <PdfMetaRow label="#" value={quote.quoteNumber} />
               <PdfMetaRow label="Quote Date" value={formatDate(quote.date)} />
             </div>
@@ -705,13 +707,13 @@ function QuotePdfPreview({ quote, displayCurrency }: { quote: QuoteDetailRecord;
             </div>
           </div>
 
-          <div className="border-b border-[#b8c1ce] px-3 py-2 text-[13px] font-semibold text-black">Bill To</div>
-          <div className="border-b border-[#b8c1ce] px-3 py-2 text-[15px] font-semibold text-[#4c6fff]">{quote.customerName}</div>
+          <div className="border-b border-[var(--mnx-border)] px-3 py-2 text-[13px] font-semibold text-mono-text">Bill To</div>
+          <div className="border-b border-[var(--mnx-border)] px-3 py-2 text-[15px] font-semibold text-[var(--mnx-accent)]">{quote.customerName}</div>
 
           <div className="overflow-x-auto w-full">
-            <table className="w-full border-collapse text-[13px] text-black min-w-[920px]">
+            <CrmTable className="w-full border-collapse text-[13px] text-mono-text min-w-[920px]">
               <thead>
-                <tr className="bg-[#fafbfd]">
+                <tr className="bg-[var(--mnx-surface)]">
                   <PdfCell as="th" className="w-[42px] text-center font-semibold">#</PdfCell>
                   <PdfCell as="th" className="min-w-[200px] text-left font-semibold">Item & Description</PdfCell>
                   <PdfCell as="th" className="w-[90px] text-left font-semibold">Unit</PdfCell>
@@ -775,9 +777,9 @@ function QuotePdfPreview({ quote, displayCurrency }: { quote: QuoteDetailRecord;
                       <PdfCell className="align-top text-center">{index + 1}</PdfCell>
                       <PdfCell className="align-top">
                         <div>{item.name}</div>
-                        {item.description ? <div className="mt-1 text-[12px] text-[#4b5563]">{item.description}</div> : null}
+                        {item.description ? <div className="mt-1 text-[12px] text-[var(--mnx-text-muted)]">{item.description}</div> : null}
                         {showForeign && (
-                          <div className="mt-1 text-[10px] text-[#4b5563]">
+                          <div className="mt-1 text-[10px] text-[var(--mnx-text-muted)]">
                             Ex. Rate: 1 {item.currency} = ₹{item.exchangeRate ?? 1} INR
                           </div>
                         )}
@@ -804,7 +806,7 @@ function QuotePdfPreview({ quote, displayCurrency }: { quote: QuoteDetailRecord;
                   );
                 })}
                 <tr>
-                  <td colSpan={isSameState ? 11 : 9} className="border border-[#b8c1ce] p-0">
+                  <td colSpan={isSameState ? 11 : 9} className="border border-[var(--mnx-border)] p-0">
                     <div className="ml-auto max-w-[360px] space-y-2 px-4 py-4 text-[13px]">
                       <PdfSummaryRow label="Sub Total" value={formatPdfMoney(quote.subtotal)} strong />
                       {quote.taxes.map((tax) => (
@@ -813,7 +815,7 @@ function QuotePdfPreview({ quote, displayCurrency }: { quote: QuoteDetailRecord;
                       <PdfSummaryRow label="Discount" value={formatPdfMoney(quote.discount)} />
                       <PdfSummaryRow label="Adjustment" value={String(quote.adjustment)} />
                       <PdfSummaryRow label="Round Off" value={formatPdfMoney(quote.roundOff)} />
-                      <div className="mt-3 flex items-center justify-between border-t border-[#b8c1ce] pt-3 text-[16px] font-semibold">
+                      <div className="mt-3 flex items-center justify-between border-t border-[var(--mnx-border)] pt-3 text-[16px] font-semibold">
                         <span>Total</span>
                         <span>{formatPdfMoney(quote.total)}</span>
                       </div>
@@ -821,15 +823,15 @@ function QuotePdfPreview({ quote, displayCurrency }: { quote: QuoteDetailRecord;
                   </td>
                 </tr>
               </tbody>
-            </table>
+            </CrmTable>
           </div>
 
-          <div className="border-t border-[#b8c1ce] px-4 py-4 text-[13px] text-black">
+          <div className="border-t border-[var(--mnx-border)] px-4 py-4 text-[13px] text-mono-text">
             <div className="mb-2 font-semibold">Notes</div>
             <div>{quote.notes || "Looking forward for your business."}</div>
           </div>
 
-          <div className="border-t border-[#b8c1ce] px-4 py-4 text-[13px] text-black">
+          <div className="border-t border-[var(--mnx-border)] px-4 py-4 text-[13px] text-mono-text">
             <div className="mb-2 font-semibold">Terms and Conditions</div>
             <div>{quote.terms || "No Terms and Conditions"}</div>
           </div>
@@ -837,15 +839,15 @@ function QuotePdfPreview({ quote, displayCurrency }: { quote: QuoteDetailRecord;
             const bank = bankAccounts.find((b) => b.id === quote.bankDetailsId);
             if (!bank) return null;
             return (
-              <div className="border-t border-[#b8c1ce] px-4 py-4 text-[13px] text-black">
+              <div className="border-t border-[var(--mnx-border)] px-4 py-4 text-[13px] text-mono-text">
                 <div className="mb-2 font-semibold">Bank Details</div>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                  <div><span className="text-[#6b7280]">Bank: </span>{bank.bankName}</div>
-                  <div><span className="text-[#6b7280]">Account Name: </span>{bank.accountName}</div>
-                  <div><span className="text-[#6b7280]">Account No: </span>{bank.accountNumber}</div>
-                  <div><span className="text-[#6b7280]">IFSC: </span>{bank.ifsc}</div>
-                  <div><span className="text-[#6b7280]">Branch: </span>{bank.branch}</div>
-                  {bank.upi && <div><span className="text-[#6b7280]">UPI: </span>{bank.upi}</div>}
+                  <div><span className="text-[var(--mnx-text-muted)]">Bank: </span>{bank.bankName}</div>
+                  <div><span className="text-[var(--mnx-text-muted)]">Account Name: </span>{bank.accountName}</div>
+                  <div><span className="text-[var(--mnx-text-muted)]">Account No: </span>{bank.accountNumber}</div>
+                  <div><span className="text-[var(--mnx-text-muted)]">IFSC: </span>{bank.ifsc}</div>
+                  <div><span className="text-[var(--mnx-text-muted)]">Branch: </span>{bank.branch}</div>
+                  {bank.upi && <div><span className="text-[var(--mnx-text-muted)]">UPI: </span>{bank.upi}</div>}
                 </div>
               </div>
             );
@@ -858,7 +860,7 @@ function QuotePdfPreview({ quote, displayCurrency }: { quote: QuoteDetailRecord;
 
 function PdfMetaRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="grid grid-cols-[170px_1fr] border-b border-[#b8c1ce] last:border-b-0">
+    <div className="grid grid-cols-[170px_1fr] border-b border-[var(--mnx-border)] last:border-b-0">
       <div className="px-3 py-2">{label}</div>
       <div className="px-3 py-2 font-semibold">: {value}</div>
     </div>
@@ -875,7 +877,7 @@ function PdfCell({
   children: React.ReactNode;
 }) {
   const Comp = as;
-  return <Comp className={cn("border border-[#b8c1ce] px-2 py-2", className)}>{children}</Comp>;
+  return <Comp className={cn("border border-[var(--mnx-border)] px-2 py-2", className)}>{children}</Comp>;
 }
 
 function PdfSummaryRow({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
@@ -899,67 +901,67 @@ const watermarkConfig: Record<
   { from: string; via: string; to: string; shadow: string; text: string }
 > = {
   draft: {
-    from: "#94a3b8",
-    via: "#64748b",
-    to: "#475569",
-    shadow: "rgba(71,85,105,0.55)",
-    text: "#f1f5f9",
+    from: "var(--mnx-text-muted)",
+    via: "var(--mnx-text-muted)",
+    to: "var(--mnx-text-muted)",
+    shadow: "var(--mnx-accent-soft)",
+    text: "var(--mnx-text-muted)",
   },
   "pending-approval": {
-    from: "#f59e0b",
-    via: "#d97706",
-    to: "#b45309",
-    shadow: "rgba(180,83,9,0.55)",
-    text: "#fffbeb",
+    from: "var(--mnx-warning)",
+    via: "var(--mnx-warning)",
+    to: "var(--mnx-warning)",
+    shadow: "var(--mnx-warning-bg)",
+    text: "var(--mnx-warning-bg)",
   },
   approved: {
-    from: "#22c55e",
-    via: "#16a34a",
-    to: "#15803d",
-    shadow: "rgba(21,128,61,0.55)",
-    text: "#f0fdf4",
+    from: "var(--mnx-success)",
+    via: "var(--mnx-success)",
+    to: "var(--mnx-success)",
+    shadow: "var(--mnx-success-bg)",
+    text: "var(--mnx-success-bg)",
   },
   sent: {
-    from: "#60a5fa",
-    via: "#3b82f6",
-    to: "#2563eb",
-    shadow: "rgba(37,99,235,0.55)",
-    text: "#eff6ff",
+    from: "var(--mnx-accent)",
+    via: "var(--mnx-accent)",
+    to: "var(--mnx-accent)",
+    shadow: "var(--mnx-accent-soft)",
+    text: "var(--mnx-text-muted)",
   },
   "customer-viewed": {
-    from: "#a78bfa",
-    via: "#7c3aed",
-    to: "#6d28d9",
-    shadow: "rgba(109,40,217,0.55)",
-    text: "#f5f3ff",
+    from: "var(--mnx-accent)",
+    via: "var(--mnx-accent)",
+    to: "var(--mnx-accent)",
+    shadow: "var(--mnx-accent-soft)",
+    text: "var(--mnx-text-muted)",
   },
   accepted: {
-    from: "#34d399",
-    via: "#059669",
-    to: "#047857",
-    shadow: "rgba(4,120,87,0.55)",
-    text: "#ecfdf5",
+    from: "var(--mnx-success)",
+    via: "var(--mnx-success)",
+    to: "var(--mnx-success)",
+    shadow: "var(--mnx-success-bg)",
+    text: "var(--mnx-success-bg)",
   },
   invoiced: {
-    from: "#22d3ee",
-    via: "#0891b2",
-    to: "#0e7490",
-    shadow: "rgba(14,116,144,0.55)",
-    text: "#ecfeff",
+    from: "var(--mnx-accent)",
+    via: "var(--mnx-accent)",
+    to: "var(--mnx-accent)",
+    shadow: "var(--mnx-accent-soft)",
+    text: "var(--mnx-text-muted)",
   },
   declined: {
-    from: "#f87171",
-    via: "#ef4444",
-    to: "#dc2626",
-    shadow: "rgba(220,38,38,0.55)",
-    text: "#fef2f2",
+    from: "var(--mnx-danger)",
+    via: "var(--mnx-danger)",
+    to: "var(--mnx-danger)",
+    shadow: "var(--mnx-danger-bg)",
+    text: "var(--mnx-danger-bg)",
   },
   rework: {
-    from: "#D88700",
-    via: "#f97316",
-    to: "#ea580c",
-    shadow: "rgba(234,88,12,0.55)",
-    text: "#fff7ed",
+    from: "var(--mnx-accent)",
+    via: "var(--mnx-warning)",
+    to: "var(--mnx-warning)",
+    shadow: "var(--mnx-warning-bg)",
+    text: "var(--mnx-warning-bg)",
   },
 };
 
@@ -978,9 +980,9 @@ function StatusWatermark({ status }: { status: Exclude<QuoteListStatus, "all"> }
         background: `linear-gradient(180deg, ${cfg.from} 0%, ${cfg.via} 50%, ${cfg.to} 100%)`,
         boxShadow: [
           `0 4px 12px ${cfg.shadow}`,
-          `0 1px 3px rgba(0,0,0,0.25)`,
-          `inset 0 1px 0 rgba(255,255,255,0.28)`,
-          `inset 0 -1px 0 rgba(0,0,0,0.18)`,
+          `0 1px 3px var(--mnx-border)`,
+          `inset 0 1px 0 var(--mnx-accent-soft)`,
+          `inset 0 -1px 0 var(--mnx-border)`,
         ].join(", "),
         padding: "5px 0 4px",
         textAlign: "center",
@@ -989,9 +991,9 @@ function StatusWatermark({ status }: { status: Exclude<QuoteListStatus, "all"> }
         fontSize: "10px",
         letterSpacing: "0.16em",
         textTransform: "uppercase",
-        textShadow: `0 1px 3px rgba(0,0,0,0.40)`,
-        borderTop: `1px solid rgba(255,255,255,0.20)`,
-        borderBottom: `1px solid rgba(0,0,0,0.15)`,
+        textShadow: `0 1px 3px var(--mnx-border)`,
+        borderTop: `1px solid var(--mnx-accent-soft)`,
+        borderBottom: `1px solid var(--mnx-border)`,
       }}
     >
       {formatStatus(status)}

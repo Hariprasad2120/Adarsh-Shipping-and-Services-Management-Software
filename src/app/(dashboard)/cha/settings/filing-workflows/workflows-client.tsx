@@ -2,7 +2,7 @@
 
 import { Textarea } from "@/components/monolith/textarea";
 import { Input } from "@/components/monolith/input";
-import { NativeSelect } from "@/components/monolith/native-select";
+import { ChaNativeSelect as NativeSelect } from "@/components/monolith/cha-workspace";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {AlertTriangle,CheckCircle2,ChevronDown,ChevronUp,Plus,RefreshCw,Save,Trash2,Workflow,X,PanelLeft,PanelRight,Settings2,ZoomIn,ZoomOut,} from "lucide-react";
@@ -2782,7 +2782,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
         {validationOpen ? (
           <div
             data-canvas-ui="true"
-            className="absolute bottom-4 left-4 z-30 max-h-[45%] w-[min(420px,calc(100%-2rem))] overflow-y-auto rounded-2xl border mnx-border mnx-bg-surface p-4 shadow-2xl backdrop-blur"
+            className="mnx-floating-surface mnx-cha-popover absolute bottom-4 left-4 z-30 max-h-[45%] w-[min(420px,calc(100%-2rem))] overflow-y-auto p-4"
           >
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>

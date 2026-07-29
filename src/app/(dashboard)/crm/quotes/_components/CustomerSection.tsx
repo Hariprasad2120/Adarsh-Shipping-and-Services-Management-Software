@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import type { UseFormReturn } from "react-hook-form";
 import { Controller } from "react-hook-form";
@@ -21,7 +23,7 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
   const errors = form.formState.errors;
 
   return (
-    <section className="monolith-form-section border-b border-[#d9dee7] px-5 py-5">
+    <section className="mnx-crm-form-section border-b border-[var(--mnx-border)] px-5 py-5">
       <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-mono-muted">Customer and Location</h2>
       <div className="space-y-0">
         <FormRow label="Customer Name" required error={errors.customerId?.message}>
@@ -44,19 +46,19 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
                 )}
               />
             </div>
-            <button
+            <CrmButton
               type="button"
-              className="inline-flex h-9 items-center gap-1 rounded-md border border-[rgba(0,206,196,0.4)] bg-[#F9D972]/10 px-3 text-[12px] font-medium text-[#F9D972]"
+              className="inline-flex h-9 items-center gap-1 rounded-md border border-[var(--mnx-accent-soft)] bg-[var(--mnx-accent)]/10 px-3 text-[12px] font-medium text-[var(--mnx-accent)]"
               aria-label="Advanced customer search"
             >
               <Search className="size-3.5" />
               <span className="hidden sm:inline">Search</span>
-            </button>
+            </CrmButton>
           </div>
           {selectedCustomer ? (
-            <div className="rounded-md border border-[#dbe7fb] bg-[#f8fbff] px-3 py-2 text-[12px] text-[#4b5563]">
+            <div className="rounded-md border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 py-2 text-[12px] text-[var(--mnx-text-muted)]">
               <div>{selectedCustomer.billingAddress}</div>
-              <div className="mt-1 text-[#6b7280]">
+              <div className="mt-1 text-[var(--mnx-text-muted)]">
                 {selectedCustomer.contactEmail} {selectedCustomer.phone ? `· ${selectedCustomer.phone}` : ""}
                 {selectedCustomer.gstin ? ` · GSTIN: ${selectedCustomer.gstin}` : ""}
               </div>
@@ -67,7 +69,7 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
         <FormRow label="Place of Supply" error={errors.placeOfSupply?.message}>
           <NativeSelect
             aria-label="Place of Supply"
-            className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
+            className="h-9 w-full rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
             {...form.register("placeOfSupply")}
           >
             <option value="">Select Place of Supply</option>
@@ -82,7 +84,7 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
         <FormRow label="Location" helperText={`Source of Supply: ${sourceOfSupply}`}>
           <NativeSelect
             aria-label="Location"
-            className="h-9 w-full rounded-xl border bg-white px-3 text-[13px] text-[#1f2937] outline-none"
+            className="h-9 w-full rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
             {...form.register("location")}
           >
             {locations.map((location) => (

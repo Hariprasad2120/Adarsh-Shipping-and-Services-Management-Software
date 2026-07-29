@@ -184,7 +184,7 @@ export function ItemsListPage({ basePath = "/crm/items" }: ItemsListPageProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-mono-soft">
+    <div className="mnx-item-workspace flex flex-col h-full bg-mono-soft">
       <ItemsToolbar
         filter={filter}
         onFilterChange={handleFilterChange}

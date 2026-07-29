@@ -1,43 +1,29 @@
 "use client";
 
 import { Textarea } from "@/components/monolith/textarea";
-import { NativeSelect } from "@/components/monolith/native-select";
 import { DateInput } from "@/components/monolith/date-input";
-import { ChaDialogLayer } from "@/components/monolith/cha-workspace";
+import {
+  ChaDialogLayer,
+  ChaDropdownSelect as DropdownSelect,
+  ChaNativeSelect as NativeSelect,
+} from "@/components/monolith/cha-workspace";
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   X,
-  FilePlus,
   Trash2,
   Sparkles,
   ArrowRight,
-  BadgeCheck,
-  Building2,
-  CalendarDays,
   CheckCircle2,
-  ChevronsRight,
-  CircleDot,
-  Clock3,
-  FileText,
-  MapPinned,
-  Package2,
   Plane,
-  Rocket,
-  Route,
-  Search,
   Ship,
   TrainFront,
   Truck,
-  UserRound,
-  Users2,
-  Warehouse,
 } from "lucide-react";
 import { Button } from "@/components/monolith/button";
 import {createJobAction,createJobTypeAction,createShipmentTypeAction,getNextJobNumberPreviewAction,} from "@/modules/cha/actions";
-import { DropdownSelect } from "@/components/monolith/dropdown-select";
 import { Input } from "@/components/monolith/input";
 import { cn } from "@/lib/utils";
 
@@ -47,11 +33,11 @@ const ADD_NEW_JOB_TYPE = "__add_new_job_type__";
 const ADD_NEW_SHIPMENT_TYPE = "__add_new_shipment_type__";
 const ALWAYS_VISIBLE_OWNER_MANAGER_EMAILS = ["hr@adarshshipping.in"];
 const CHA_CREATE_TEXTAREA_CLASS =
-  "min-h-[112px] w-full rounded-[18px] border mnx-border-accent mnx-bg-accent-soft px-4 py-3 text-sm mnx-text-muted mnx-shadow-panel outline-none transition mnx-text-muted mnx-focus-accent focus:ring-4 mnx-focus-accent mnx-shadow-panel";
+  "mnx-cha-dialog-control min-h-[112px] w-full px-4 py-3 text-sm";
 const CHA_CREATE_INPUT_CLASS =
-  "!h-11 !rounded-[18px] mnx-border-accent mnx-bg-accent-soft mnx-text-muted mnx-shadow-panel mnx-text-muted mnx-focus-accent focus:!ring-4 mnx-focus-accent mnx-shadow-panel";
+  "mnx-cha-dialog-control !h-11";
 const CHA_CREATE_SELECT_CLASS =
-  "!h-11 !rounded-[18px] mnx-border-accent mnx-bg-accent-soft mnx-text-muted mnx-shadow-panel mnx-hover-accent mnx-hover-accent mnx-focus-accent focus-visible:!ring-4 mnx-focus-accent mnx-shadow-panel";
+  "mnx-cha-dialog-control !h-11";
 
 type CreatedJobSummary = {
   id: string;
@@ -93,72 +79,6 @@ function getShipmentVisual(shipmentTypeName: string) {
   return { Icon: Ship, label: "Sea shipment" };
 }
 
-function CreateJobBenefit({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: typeof Clock3;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex items-center justify-center gap-3 px-4 py-3 text-left">
-      <span className="flex h-9 w-9 items-center justify-center mnx-text-accent">
-        <Icon size={16} />
-      </span>
-      <div className="min-w-0">
-        <p className="truncate text-sm font-semibold mnx-text-muted">{title}</p>
-        <p className="truncate text-xs mnx-text-muted">{description}</p>
-      </div>
-    </div>
-  );
-}
-
-function CreateJobSection({
-  icon: Icon,
-  title,
-  children,
-}: {
-  icon: typeof Users2;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="space-y-5 border-t mnx-border-accent pt-6 first:border-t-0 first:pt-0">
-      <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-2xl border mnx-border-accent mnx-bg-accent-soft mnx-text-accent">
-          <Icon size={18} />
-        </span>
-        <h3 className="text-base font-semibold uppercase tracking-[0.04em] mnx-text-muted">
-          {title}
-        </h3>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function CreateJobFieldLabel({
-  label,
-  required,
-  helper,
-}: {
-  label: string;
-  required?: boolean;
-  helper?: string;
-}) {
-  return (
-    <div className="mb-2 flex items-center gap-2">
-      <label className="text-sm font-medium mnx-text-muted">
-        {label}
-        {required ? <span className="ml-1 mnx-text-accent">*</span> : null}
-      </label>
-      {helper ? <span className="text-xs mnx-text-muted">{helper}</span> : null}
-    </div>
-  );
-}
-
 function CreateJobSuccessOverlay({
   open,
   summary,
@@ -187,155 +107,87 @@ function CreateJobSuccessOverlay({
     >
       <AnimatePresence>
         <motion.div
-          animate={{ opacity: 1 }}
-          className="contents"
-          exit={{ opacity: 0 }}
-          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          className="mnx-dialog mnx-cha-success-dialog"
+          exit={{ opacity: 0, y: 16, scale: 0.98 }}
+          initial={{ opacity: 0, y: 24, scale: 0.97 }}
+          transition={{ duration: 0.32, ease: "easeOut" }}
         >
-          <motion.div
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="relative mx-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl overflow-y-auto rounded-[24px] border mnx-border-accent bg-[linear-gradient(180deg,color-mix(in srgb, var(--mnx-surface) 72%, transparent),color-mix(in srgb, var(--mnx-surface) 72%, transparent))] p-5 mnx-text-muted mnx-shadow-panel sm:max-h-[calc(100dvh-2rem)] sm:rounded-[28px] sm:p-8"
-            exit={{ opacity: 0, y: 16, scale: 0.98 }}
-            initial={{ opacity: 0, y: 24, scale: 0.97 }}
-            transition={{ duration: 0.32, ease: "easeOut" }}
-          >
-            <div className="pointer-events-none absolute inset-0 opacity-50">
-              <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,color-mix(in srgb, var(--mnx-surface) 72%, transparent),transparent_60%)]" />
-              <div className="absolute right-10 top-8 h-40 w-80 rounded-full bg-[radial-gradient(circle,color-mix(in srgb, var(--mnx-surface) 72%, transparent),transparent_70%)] blur-2xl" />
-              <div
-                className="absolute inset-0 opacity-20"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--mnx-surface) 72%, transparent) 1px, transparent 0)",
-                  backgroundSize: "28px 28px",
-                }}
-              />
+          <header>
+            <div>
+              <p className="mnx-label mnx-text-success">Workflow launched</p>
+              <h2 id="create-job-success-title">
+                Customs clearance job created
+              </h2>
+              <p>
+                The shipment workflow, document requirements, and team
+                assignments are ready.
+              </p>
             </div>
-
-            <div className="relative space-y-5 sm:space-y-8">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="space-y-2">
-                  <div className="inline-flex items-center gap-2 rounded-full border mnx-border-success mnx-bg-success px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] mnx-text-success">
-                    <CircleDot size={12} />
-                    Workflow launched
-                  </div>
-                  <h2 id="create-job-success-title" className="text-2xl font-semibold tracking-tight mnx-text-muted sm:text-3xl">
-                    Customs Clearance Job Created
-                  </h2>
-                  <p className="max-w-2xl text-sm mnx-text-muted">
-                    The shipment workflow has been initialized successfully.
-                  </p>
-                </div>
-                <MotionButton
-                  animate={reducedMotion ? { scale: 1 } : { scale: [1, 1.04, 1] }}
-                  className="flex h-12 w-12 items-center justify-center rounded-full border mnx-border-accent mnx-bg-accent-soft mnx-text-accent mnx-shadow-panel sm:h-14 sm:w-14"
-                  transition={reducedMotion ? { duration: 0 } : { duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-                  type="button"
-                >
-                  <CheckCircle2 size={24} />
-                </MotionButton>
-              </div>
-
-              <div className="rounded-[20px] border mnx-border-accent mnx-bg-accent-soft p-4 sm:rounded-[24px] sm:p-6">
-                <div className="relative overflow-hidden rounded-[20px] border mnx-border-accent bg-[linear-gradient(180deg,color-mix(in srgb, var(--mnx-surface) 72%, transparent),color-mix(in srgb, var(--mnx-surface) 72%, transparent))] px-4 py-5 sm:rounded-[22px] sm:px-5 sm:py-6">
-                  <div className="absolute inset-x-6 top-1/2 h-px -translate-y-1/2 border-t border-dashed mnx-border-accent sm:inset-x-10" />
-                  <div className="absolute left-8 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full mnx-bg-success mnx-shadow-panel sm:left-12" />
-                  <div className="absolute right-8 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full mnx-bg-success mnx-shadow-panel sm:right-12" />
-
-                  {reducedMotion ? (
-                    <div className="relative grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
-                      <div>
-                        <p className="text-[11px] uppercase tracking-[0.18em] mnx-text-muted">Origin</p>
-                        <p className="mt-1 text-sm font-semibold mnx-text-muted">Job Initialized</p>
-                      </div>
-                      <div className="flex items-center justify-center rounded-full border mnx-border-accent mnx-bg-accent-soft p-3 mnx-text-accent">
-                        <TransportIcon size={22} />
-                      </div>
-                      <div className="md:text-right">
-                        <p className="text-[11px] uppercase tracking-[0.18em] mnx-text-muted">Destination</p>
-                        <p className="mt-1 text-sm font-semibold mnx-text-muted">Workflow Active</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="relative h-20 sm:h-24">
-                      <motion.div
-                        animate={{ x: ["0%", "88%"] }}
-                        className="absolute top-1/2 z-10 flex -translate-y-1/2 items-center gap-3 rounded-full border mnx-border-accent mnx-bg-accent-soft px-4 py-2 mnx-text-accent mnx-shadow-panel"
-                        initial={{ x: "0%" }}
-                        transition={{ duration: 1.2, ease: [0.2, 0.8, 0.2, 1] }}
-                      >
-                        <TransportIcon size={20} />
-                        <span className="text-xs font-semibold uppercase tracking-[0.16em]">{transportLabel}</span>
-                      </motion.div>
-                      <div className="absolute inset-x-8 top-1/2 flex -translate-y-1/2 items-center justify-between">
-                        {["Job created", "Documents initialized", "Team assigned", "Workflow launched"].map((label, index) => (
-                          <motion.div
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="flex flex-col items-center gap-2"
-                            initial={{ opacity: 0.25, scale: 0.92 }}
-                            key={label}
-                            transition={{ delay: 0.28 + index * 0.18, duration: 0.24 }}
-                          >
-                            <span className="h-3 w-3 rounded-full mnx-bg-success mnx-shadow-panel" />
-                            <span className="text-[10px] uppercase tracking-[0.14em] mnx-text-muted">{label}</span>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-4">
-                {[
-                  { label: "Job Number", value: summary.jobNumber },
-                  { label: "Customer", value: summary.customerName },
-                  { label: "Shipment Type", value: summary.shipmentTypeName },
-                  { label: "Assigned Manager", value: summary.managerName },
-                ].map((item) => (
-                  <div
-                    className="rounded-2xl border mnx-border-accent mnx-bg-accent-soft px-4 py-3"
-                    key={item.label}
-                  >
-                    <p className="text-[11px] uppercase tracking-[0.16em] mnx-text-muted">{item.label}</p>
-                    <p className="mt-1 text-sm font-semibold mnx-text-muted">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-xs mnx-text-muted">
-                  Redirecting back to CHA shortly.
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <Button
-                    className="mnx-plain rounded-2xl border mnx-border-accent mnx-bg-accent-soft px-5 py-2.5 text-sm mnx-text-muted mnx-hover-accent mnx-hover-accent"
-                    onClick={onCreateAnother}
-                    type="button"
-                  >
-                    Create Another Job
-                  </Button>
-                  <Button
-                    className="mnx-border-accent mnx-bg-accent-soft mnx-text-muted mnx-hover-accent"
-                    onClick={onOpenJob}
-                    type="button"
-                  >
-                    Open Job
-                    <ArrowRight size={15} />
-                  </Button>
-                </div>
-              </div>
-            </div>
-
             <Button
               aria-label="Close success state"
-              className="absolute right-4 top-4 rounded-full border border-transparent p-2 mnx-text-muted transition mnx-hover-accent mnx-hover-accent"
+              variant="outline"
+              mode="icon"
+              size="sm"
               onClick={onAutoFinish}
               type="button"
             >
               <X size={18} />
             </Button>
-          </motion.div>
+          </header>
+          <div className="mnx-dialog-content">
+            <div className="mnx-cha-success-route">
+              <MotionButton
+                animate={
+                  reducedMotion ? { scale: 1 } : { scale: [1, 1.04, 1] }
+                }
+                aria-label={`${transportLabel} workflow active`}
+                className="mnx-cha-success-icon"
+                transition={
+                  reducedMotion
+                    ? { duration: 0 }
+                    : { duration: 1.4, repeat: Infinity, ease: "easeInOut" }
+                }
+                type="button"
+              >
+                <TransportIcon size={24} />
+              </MotionButton>
+              <div>
+                <p className="mnx-label">Workflow status</p>
+                <p className="mt-1 text-sm mnx-text-strong">
+                  Job initialized and active
+                </p>
+              </div>
+              <CheckCircle2 className="ml-auto mnx-text-success" size={24} />
+            </div>
+            <div className="mnx-cha-success-grid">
+              {[
+                { label: "Job number", value: summary.jobNumber },
+                { label: "Customer", value: summary.customerName },
+                { label: "Shipment type", value: summary.shipmentTypeName },
+                { label: "Assigned manager", value: summary.managerName },
+              ].map((item) => (
+                <div className="mnx-cha-success-stat" key={item.label}>
+                  <p className="mnx-label">{item.label}</p>
+                  <p className="mt-2 text-sm font-semibold mnx-text-strong">
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-xs mnx-text-muted">
+              Redirecting back to CHA shortly.
+            </p>
+          </div>
+          <footer>
+            <Button variant="outline" onClick={onCreateAnother} type="button">
+              Create another job
+            </Button>
+            <Button onClick={onOpenJob} type="button">
+              Open job
+              <ArrowRight size={15} />
+            </Button>
+          </footer>
         </motion.div>
       </AnimatePresence>
     </ChaDialogLayer>
@@ -1098,57 +950,56 @@ export function CreateJobDialog({
         size="workspace"
         labelledBy="create-job-title"
       >
-        <div className="flex h-full w-full flex-col overflow-hidden mnx-bg-surface">
-            <div className="relative overflow-hidden border-b mnx-border-accent mnx-bg-accent-soft px-5 py-4 mnx-bg-accent-soft sm:px-6">
-              <div className="pointer-events-none absolute inset-y-0 -right-24 w-[32%] overflow-hidden opacity-75">
-                <svg className="absolute inset-0 h-full w-full" fill="none" viewBox="0 0 540 220">
-                  <path d="M40 152C96 116 156 102 214 108C262 112 314 136 382 126C432 118 472 84 514 48" stroke="color-mix(in srgb, var(--mnx-surface) 72%, transparent)" strokeDasharray="6 8" strokeLinecap="round" strokeWidth="2" />
-                  <path d="M82 176C144 142 214 142 272 158C340 176 400 174 468 136" stroke="color-mix(in srgb, var(--mnx-surface) 72%, transparent)" strokeDasharray="4 10" strokeLinecap="round" strokeWidth="2" />
-                </svg>
-                <div className="absolute right-[20%] top-[22%] mnx-text-accent"><Plane size={18} /></div>
-                <div className="absolute right-[38%] top-[62%] mnx-text-accent"><Ship size={18} /></div>
-                <div className="absolute right-[8%] top-[46%] mnx-text-accent"><Package2 size={18} /></div>
-              </div>
-              <div className="relative z-10 flex items-start justify-between gap-3">
-                <div className="flex max-w-[720px] items-center gap-4 pr-2">
-                  <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border mnx-border-accent mnx-bg-accent-soft mnx-text-accent mnx-shadow-panel">
-                    <FilePlus size={21} />
-                  </div>
-                  <div className="min-w-0 space-y-1.5">
-                    <h2 id="create-job-title" className="max-w-[620px] text-xl font-medium uppercase leading-none tracking-[0.075em] mnx-text-muted sm:text-2xl">
-                      INITIALIZE CUSTOMS CLEARANCE JOB
-                    </h2>
-                    <p className="max-w-[520px] text-[13px] leading-5 mnx-text-muted">
-                      Start a new CHA shipment workflow and capture initial details.
-                    </p>
-                  </div>
-                </div>
-                <div className="relative z-10 flex shrink-0 items-center gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={handleDemoFill} className="rounded-[16px] mnx-border-accent mnx-bg-accent-soft px-3 mnx-text-muted mnx-hover-accent mnx-hover-accent"><Sparkles size={13} className="mr-1.5" />Demo Fill</Button>
-                  <Button onClick={() => onOpenChange(false)} className="flex h-10 w-10 items-center justify-center rounded-[16px] border mnx-border-accent mnx-bg-accent-soft mnx-text-muted transition mnx-hover-accent mnx-hover-accent mnx-hover-accent" type="button" aria-label="Close job creation dialog"><X size={17} /></Button>
-                </div>
-              </div>
-              <div className="relative z-10 mt-4 grid gap-1 p-1.5 md:grid-cols-3">
-                <CreateJobBenefit icon={Route} title="End-to-end visibility" description="Track every milestone" />
-                <CreateJobBenefit icon={BadgeCheck} title="Compliance first" description="Built-in validations and documents" />
-                <CreateJobBenefit icon={Rocket} title="Operational excellence" description="Faster clearance, fewer delays" />
-              </div>
+        <form
+          onSubmit={handleCreateJob}
+          className="mnx-dialog mnx-cha-create-dialog h-full"
+        >
+          <header>
+            <div>
+              <p className="mnx-label">New customs job</p>
+              <h2 id="create-job-title">Initialize customs clearance job</h2>
+              <p>
+                Start a new CHA shipment workflow and capture its operational
+                details.
+              </p>
             </div>
-            <form onSubmit={handleCreateJob} className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 py-5 sm:px-7 sm:py-6">
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
-              <div className="rounded-[22px] bg-transparent p-4 sm:p-5">
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b mnx-border-accent pb-4">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] mnx-text-muted">Job Initialization</p>
-                    <p className="mt-1 text-sm mnx-text-muted">Customer, numbering, shipment, and team configuration.</p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs mnx-text-muted">
-                    <span className="rounded-full border mnx-border-accent mnx-bg-accent-soft px-3 py-1.5">{activeBranch?.name || 'Select branch'}</span>
-                    <span className="rounded-full border mnx-border-accent mnx-bg-accent-soft px-3 py-1.5">{activeCustomer?.name || 'Select customer'}</span>
-                    <span className="rounded-full border mnx-border-accent mnx-bg-accent-soft px-3 py-1.5 flex items-center gap-1.5"><ActiveShipmentIcon size={12} />{activeShipmentTypeName}</span>
-                    <span className={cn('rounded-full border px-3 py-1.5 font-semibold', priorityPresentation.tone)}>{priorityPresentation.badge}</span>
-                  </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleDemoFill}
+                className="gap-2"
+              >
+                <Sparkles size={14} />
+                Demo fill
+              </Button>
+              <Button
+                onClick={() => onOpenChange(false)}
+                variant="outline"
+                mode="icon"
+                size="sm"
+                type="button"
+                aria-label="Close job creation dialog"
+              >
+                <X size={17} />
+              </Button>
+            </div>
+          </header>
+          <div className="mnx-dialog-content mnx-cha-create-dialog-content">
+            <div className="space-y-6">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b mnx-border pb-4">
+                <div>
+                  <p className="mnx-label">Job initialization</p>
+                  <p className="mt-1 text-sm mnx-text-muted">Customer, numbering, shipment, and team configuration.</p>
                 </div>
+                <div className="flex flex-wrap items-center gap-2 text-xs mnx-text-muted">
+                  <span className="mnx-cha-summary-chip">{activeBranch?.name || "Select branch"}</span>
+                  <span className="mnx-cha-summary-chip">{activeCustomer?.name || "Select customer"}</span>
+                  <span className="mnx-cha-summary-chip flex items-center gap-1.5"><ActiveShipmentIcon size={12} />{activeShipmentTypeName}</span>
+                  <span className={cn("rounded-full border px-3 py-1.5 font-semibold", priorityPresentation.tone)}>{priorityPresentation.badge}</span>
+                </div>
+              </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Branch Selection */}
               <div className="space-y-1">
@@ -1239,7 +1090,7 @@ export function CreateJobDialog({
                   className={CHA_CREATE_INPUT_CLASS}
                 />
                 {showCustomerDropdown && (
-                  <div className="absolute left-0 right-0 z-50 mt-2 max-h-60 overflow-y-auto rounded-[20px] border mnx-border-accent mnx-bg-accent-soft p-2 mnx-shadow-panel">
+                  <div className="mnx-floating-surface mnx-cha-menu mnx-cha-autocomplete absolute left-0 right-0 z-50 mt-2 max-h-60 overflow-y-auto p-2">
                     {filteredCustomers.map((c) => (
                       <Button
                         key={c.id}
@@ -1250,7 +1101,7 @@ export function CreateJobDialog({
                           setSelectedCustomerName(c.name);
                           setShowCustomerDropdown(false);
                         }}
-                        className="flex w-full cursor-pointer items-center rounded-md px-2 py-1.5 text-left text-sm mnx-text-primary transition-colors mnx-hover-accent mnx-hover-accent mnx-focus-accent mnx-focus-accent"
+                        className="mnx-cha-menu-option"
                       >
                         {c.name}
                       </Button>
@@ -1476,14 +1327,14 @@ export function CreateJobDialog({
                   className={CHA_CREATE_INPUT_CLASS}
                 />
                 {showOwnerDropdown ? (
-                  <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-56 overflow-y-auto rounded-[20px] border mnx-border-accent mnx-bg-accent-soft p-2 mnx-shadow-panel">
+                  <div className="mnx-floating-surface mnx-cha-menu mnx-cha-autocomplete absolute left-0 right-0 top-full z-50 mt-2 max-h-56 overflow-y-auto p-2">
                     {filteredOwners.length > 0 ? (
                       filteredOwners.map((owner) => (
                         <Button
                           key={owner.id}
                           type="button"
                           onClick={() => selectOwner(owner)}
-                          className="flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-sm mnx-text-primary transition-colors mnx-hover-accent mnx-hover-accent mnx-focus-accent mnx-focus-accent"
+                          className="mnx-cha-menu-option justify-between"
                         >
                           <span>{owner.name}</span>
                           <span className="text-[10px] mnx-text-muted">{owner.email}</span>
@@ -1530,14 +1381,14 @@ export function CreateJobDialog({
                   className={CHA_CREATE_INPUT_CLASS}
                 />
                 {showManagerDropdown ? (
-                  <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-56 overflow-y-auto rounded-[20px] border mnx-border-accent mnx-bg-accent-soft p-2 mnx-shadow-panel">
+                  <div className="mnx-floating-surface mnx-cha-menu mnx-cha-autocomplete absolute left-0 right-0 top-full z-50 mt-2 max-h-56 overflow-y-auto p-2">
                     {filteredManagers.length > 0 ? (
                       filteredManagers.map((manager) => (
                         <Button
                           key={manager.id}
                           type="button"
                           onClick={() => selectManager(manager)}
-                          className="flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-sm mnx-text-primary transition-colors mnx-hover-accent mnx-hover-accent mnx-focus-accent mnx-focus-accent"
+                          className="mnx-cha-menu-option justify-between"
                         >
                           <span>{manager.name}</span>
                           <span className="text-[10px] mnx-text-muted">{manager.email}</span>
@@ -1616,7 +1467,7 @@ export function CreateJobDialog({
                   className={CHA_CREATE_INPUT_CLASS}
                 />
                 {showTeamDropdown && teamSearch.trim() !== "" && (
-                  <div className="absolute left-0 right-0 mt-2 max-h-60 overflow-y-auto rounded-[20px] border mnx-border-accent mnx-bg-accent-soft p-2 mnx-shadow-panel z-50 space-y-2">
+                  <div className="mnx-floating-surface mnx-cha-menu mnx-cha-autocomplete absolute left-0 right-0 z-50 mt-2 max-h-60 space-y-2 overflow-y-auto p-2">
                     {filteredTeamGroups.length > 0 && (
                       <div>
                         <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] mnx-text-muted">Team Groups</div>
@@ -1625,7 +1476,7 @@ export function CreateJobDialog({
                             key={g.id}
                             type="button"
                             onClick={() => handleAddTeamGroup(g)}
-                            className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs font-semibold mnx-text-muted transition mnx-hover-accent mnx-hover-accent"
+                            className="mnx-cha-menu-option justify-between text-xs font-semibold"
                           >
                             <span>{g.name}</span>
                             <span className="rounded-full mnx-bg-accent-soft px-2 py-1 text-[10px] font-semibold mnx-text-muted">
@@ -1645,7 +1496,7 @@ export function CreateJobDialog({
                           key={u.id}
                           type="button"
                           onClick={() => handleAddTeamUser(u)}
-                          className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs mnx-text-muted transition mnx-hover-accent mnx-hover-accent"
+                          className="mnx-cha-menu-option justify-between text-xs"
                         >
                           {u.name} ({u.email})
                         </Button>
@@ -1722,27 +1573,21 @@ export function CreateJobDialog({
               />
             </div>
 
-            {/* Action Buttons */}
-              </div>
-
-            <div className="shrink-0 bg-[linear-gradient(180deg,color-mix(in srgb, var(--mnx-surface) 72%, transparent),color-mix(in srgb, var(--mnx-surface) 72%, transparent))] pt-4 backdrop-blur-md dark:bg-[linear-gradient(180deg,color-mix(in srgb, var(--mnx-surface) 72%, transparent),color-mix(in srgb, var(--mnx-surface) 72%, transparent))]">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => onOpenChange(false)}
-                    className="rounded-2xl mnx-border-accent bg-transparent px-5 mnx-text-muted mnx-hover-accent mnx-hover-accent"
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={creating} className="rounded-2xl mnx-border-accent mnx-bg-accent-soft px-6 mnx-text-muted mnx-shadow-panel mnx-hover-accent">
-                    {creating ? "Launching Job..." : "Create & Launch Job"}
-                  </Button>
-              </div>
             </div>
-            </div>
-          </form>
-        </div>
+          </div>
+          <footer>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={creating}>
+              {creating ? "Launching job..." : "Create & launch job"}
+            </Button>
+          </footer>
+        </form>
       </ChaDialogLayer>
 
       <CreateJobSuccessOverlay

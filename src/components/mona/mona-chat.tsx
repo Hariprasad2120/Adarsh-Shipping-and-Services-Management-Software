@@ -114,15 +114,11 @@ export function MonaChat() {
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 10 }}
-                  className="absolute bottom-full right-0 mb-3 whitespace-nowrap rounded-xl bg-mono-card text-mono-text border border-mono-border px-4 py-2 text-[12px] font-medium"
-                  style={{
-                    boxShadow:
-                      "0 4px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 206, 196, 0.15)",
-                  }}
+                  className="mnx-floating-surface mnx-floating-tooltip absolute bottom-full right-0 mb-3 whitespace-nowrap px-4 py-2 text-[12px] font-medium"
                 >
                   👋 Hi! I&apos;m <strong>Mona</strong>, your AI companion
                   <div
-                    className="absolute -bottom-1.5 right-6 h-3 w-3 rotate-45 bg-mono-card border-r border-b border-mono-border"
+                    className="mnx-floating-tooltip-arrow absolute -bottom-1.5 right-6 h-3 w-3 rotate-45 border-r border-b"
                   />
                 </motion.div>
               )}
@@ -158,14 +154,12 @@ export function MonaChat() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed z-[9999] flex flex-col overflow-hidden rounded-2xl bg-mono-card border border-mono-border"
+            className="mnx-floating-surface mnx-mona-panel fixed z-[9999] flex flex-col overflow-hidden"
             style={{
               bottom: 24,
               right: 24,
               width: 420,
               height: "min(640px, calc(100vh - 48px))",
-              boxShadow:
-                "0 24px 80px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 206, 196, 0.08)",
             }}
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -216,10 +210,7 @@ export function MonaChat() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute left-3 right-3 top-[64px] z-10 overflow-hidden rounded-xl bg-mono-card border border-mono-border"
-                    style={{
-                      boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 206, 196, 0.1)",
-                    }}
+                    className="mnx-floating-surface mnx-floating-menu absolute left-3 right-3 top-[64px] z-10 overflow-hidden rounded-xl"
                   >
                     <div className="px-3 py-2 border-b border-mono-border">
                       <span className="text-[9px] font-medium tracking-[0.12em] text-mono-muted uppercase">

@@ -4,6 +4,7 @@ import { requirePermission } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import { TicketForm } from "./ticket-form";
 import { TicketsClient } from "./tickets-client";
+import { CrmConfigurationState } from "@/components/monolith/crm-workspace";
 
 export const metadata = {
   title: "Support Tickets | CRM | Adarsh Shipping",
@@ -26,11 +27,7 @@ export default async function TicketsPage() {
   const orgId = session.user.orgId;
 
   if (!orgId) {
-    return (
-      <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-sm text-mono-muted">
-        Organisation configuration missing.
-      </div>
-    );
+    return <CrmConfigurationState description="Organisation configuration is missing." />;
   }
 
   const isAdmin = await checkIsAdmin(session.user.id);

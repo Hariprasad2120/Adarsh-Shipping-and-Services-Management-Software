@@ -168,6 +168,7 @@ export function WorkspaceDialogLayer({
       <section
         ref={surfaceRef}
         className={cn(
+          "mnx-floating-surface",
           "mnx-dialog-surface",
           `mnx-dialog-surface-${size}`,
           className,

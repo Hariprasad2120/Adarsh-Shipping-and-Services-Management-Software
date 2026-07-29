@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmDialogLayer, CrmInput, CrmTextarea } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -96,57 +98,57 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
   const ratings = ["Hot", "Warm", "Cold"];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl bg-[#0f1319] border border-[#1c212a]/60 rounded-xl p-6 shadow-2xl">
+    <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/60 rounded-xl p-6 shadow-2xl">
       {/* ─── SECTION: BASIC INFO ────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <Briefcase className="size-4 text-[#F9D972]" />
+        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+          <Briefcase className="size-4 text-[var(--mnx-accent)]" />
           <span>Lead & Company Information</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">First Name</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">First Name</label>
+            <CrmInput
               type="text"
               name="firstName"
               defaultValue={initialData?.firstName || ""}
               placeholder="e.g. Adarsh"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Last Name / Lead Name *</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Last Name / Lead Name *</label>
+            <CrmInput
               type="text"
               name="lastName"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="e.g. Hari"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Company Name *</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Company Name *</label>
+            <CrmInput
               type="text"
               name="company"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               placeholder="e.g. Adarsh Shipping Ltd"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Designation</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Designation</label>
+            <CrmInput
               type="text"
               name="designation"
               defaultValue={initialData?.designation || ""}
               placeholder="e.g. Logistics Director"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
         </div>
@@ -154,60 +156,60 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
 
       {/* ─── SECTION: CONTACT CHANNELS ───────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <Mail className="size-4 text-[#F9D972]" />
+        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+          <Mail className="size-4 text-[var(--mnx-accent)]" />
           <span>Contact Channels</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Email Address</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Email Address</label>
+            <CrmInput
               type="email"
               name="email"
               defaultValue={initialData?.email || ""}
               placeholder="e.g. client@domain.com"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Phone (Office)</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Phone (Office)</label>
+            <CrmInput
               type="text"
               name="phone"
               defaultValue={initialData?.phone || ""}
               placeholder="e.g. +91 44 2819 1234"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Mobile Number</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Mobile Number</label>
+            <CrmInput
               type="text"
               name="mobile"
               defaultValue={initialData?.mobile || ""}
               placeholder="e.g. +91 98840 12345"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Fax Number</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Fax Number</label>
+            <CrmInput
               type="text"
               name="fax"
               defaultValue={initialData?.fax || ""}
               placeholder="e.g. +91 44 2819 5678"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Website URL</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Website URL</label>
+            <CrmInput
               type="url"
               name="website"
               defaultValue={initialData?.website || ""}
               placeholder="e.g. https://www.company.com"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
         </div>
@@ -215,18 +217,18 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
 
       {/* ─── SECTION: CLASSIFICATION ────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <Tag className="size-4 text-[#F9D972]" />
+        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+          <Tag className="size-4 text-[var(--mnx-accent)]" />
           <span>Classification & Scoring</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Lead Source</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Lead Source</label>
             <NativeSelect
               name="source"
               defaultValue={initialData?.source || "Cold Call"}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {sources.map((src) => (
                 <option key={src} value={src}>{src}</option>
@@ -234,11 +236,11 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Lead Status</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Lead Status</label>
             <NativeSelect
               name="status"
               defaultValue={initialData?.status || "NEW"}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {statuses.map((st) => (
                 <option key={st} value={st}>{st.replace("_", " ")}</option>
@@ -246,11 +248,11 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Rating</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Rating</label>
             <NativeSelect
               name="rating"
               defaultValue={initialData?.rating || "Warm"}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {ratings.map((rt) => (
                 <option key={rt} value={rt}>{rt}</option>
@@ -258,31 +260,31 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Industry Segment</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Industry Segment</label>
+            <CrmInput
               type="text"
               name="industry"
               defaultValue={initialData?.industry || ""}
               placeholder="e.g. Shipping / Logistics"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Annual Revenue (INR)</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Annual Revenue (INR)</label>
+            <CrmInput
               type="number"
               name="annualRevenue"
               defaultValue={initialData?.annualRevenue || ""}
               placeholder="e.g. 5000000"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Lead Owner (HRMS Linked) *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Lead Owner (HRMS Linked) *</label>
             <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             >
               <option value="">Select Owner</option>
@@ -295,14 +297,14 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
       </div>
 
       {/* ─── SECTION: PERISHABLE CARGO ───────────────────────────────────── */}
-      <div className="space-y-4 p-5 rounded-xl bg-[#161f28]/45 border border-[#1c212a] monolith-hover transition-all">
+      <div className="space-y-4 p-5 rounded-xl bg-[var(--mnx-surface)]/45 border border-[var(--mnx-border)] mnx-crm-hover transition-all">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Perishable Cargo Handling</h4>
-            <p className="text-[11px] text-slate-400">Specify if this client requires temperature-controlled or perishable cargo shipping</p>
+            <h4 className="text-xs font-bold text-mono-text uppercase tracking-wider">Perishable Cargo Handling</h4>
+            <p className="text-[11px] text-mono-muted">Specify if this client requires temperature-controlled or perishable cargo shipping</p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer select-none">
-            <input
+            <CrmInput
               type="checkbox"
               checked={isPerishable}
               onChange={(e) => {
@@ -314,197 +316,202 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               }}
               className="sr-only peer"
             />
-            <div className="w-9 h-5 bg-[#161f28] border border-[#1c212a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-[#F9D972] after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#F9D972]/10 peer-checked:border-[#F9D972]/40"></div>
+            <div className="w-9 h-5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-mono-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-mono-soft peer-checked:after:bg-[var(--mnx-accent)] after:border-mono-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--mnx-accent)]/10 peer-checked:border-[var(--mnx-accent)]/40"></div>
           </label>
         </div>
 
         {/* Hidden inputs to be caught by FormData */}
-        <input type="hidden" name="isPerishable" value={isPerishable ? "true" : "false"} />
-        <input type="hidden" name="perishableType" value={perishableType} />
-        <input type="hidden" name="tempRequired" value={tempRequired} />
-        <input type="hidden" name="humidityControl" value={humidityControl} />
-        <input type="hidden" name="ventilation" value={ventilation} />
-        <input type="hidden" name="perishableRemarks" value={perishableRemarks} />
+        <CrmInput type="hidden" name="isPerishable" value={isPerishable ? "true" : "false"} />
+        <CrmInput type="hidden" name="perishableType" value={perishableType} />
+        <CrmInput type="hidden" name="tempRequired" value={tempRequired} />
+        <CrmInput type="hidden" name="humidityControl" value={humidityControl} />
+        <CrmInput type="hidden" name="ventilation" value={ventilation} />
+        <CrmInput type="hidden" name="perishableRemarks" value={perishableRemarks} />
 
         {isPerishable && (
-          <div className="p-4 bg-[#0a0d12]/60 rounded-lg border border-[#1c212a]/50 text-xs grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in duration-200">
+          <div className="p-4 bg-[var(--mnx-surface)]/60 rounded-lg border border-[var(--mnx-border)]/50 text-xs grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in duration-200">
             <div>
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-0.5">Cargo Type</span>
-              <span className="text-white font-medium">{perishableType || "Not specified"}</span>
+              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wide block mb-0.5">Cargo Type</span>
+              <span className="text-mono-text font-medium">{perishableType || "Not specified"}</span>
             </div>
             <div>
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-0.5">Temperature Range</span>
-              <span className="text-white font-medium">{tempRequired || "Not specified"}</span>
+              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wide block mb-0.5">Temperature Range</span>
+              <span className="text-mono-text font-medium">{tempRequired || "Not specified"}</span>
             </div>
             <div>
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-0.5">Humidity / Vent</span>
-              <span className="text-white font-medium">H: {humidityControl || "N/A"} / V: {ventilation || "N/A"}</span>
+              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wide block mb-0.5">Humidity / Vent</span>
+              <span className="text-mono-text font-medium">H: {humidityControl || "N/A"} / V: {ventilation || "N/A"}</span>
             </div>
             <div>
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-0.5">Remarks</span>
-              <span className="text-white font-medium block truncate">{perishableRemarks || "None"}</span>
+              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wide block mb-0.5">Remarks</span>
+              <span className="text-mono-text font-medium block truncate">{perishableRemarks || "None"}</span>
             </div>
             <div className="col-span-2 md:col-span-4 flex justify-end pt-1">
-              <button
+              <CrmButton
                 type="button"
                 onClick={() => setShowPerishablesDialog(true)}
-                className="px-3 py-1 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-[#F9D972] rounded text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
+                className="px-3 py-1 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] text-[var(--mnx-accent)] rounded text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
               >
                 Edit Perishable Info
-              </button>
+              </CrmButton>
             </div>
           </div>
         )}
       </div>
 
       {showPerishablesDialog && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-[#0f1319] border border-[#1c212a] rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-[#1c212a]/50 bg-[#0c0f14]">
-              <span className="font-bold text-xs text-white uppercase tracking-wider">Perishable Cargo Specification</span>
-              <button 
-                type="button" 
-                onClick={() => setShowPerishablesDialog(false)} 
-                className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white cursor-pointer"
+        <CrmDialogLayer
+          open={showPerishablesDialog}
+          onClose={() => setShowPerishablesDialog(false)}
+          size="default"
+          labelledBy="perishable-cargo-title"
+        >
+          <div className="w-full max-w-md bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-[var(--mnx-border)]/50 bg-[var(--mnx-surface)]">
+              <span id="perishable-cargo-title" className="font-bold text-xs text-mono-text uppercase tracking-wider">Perishable Cargo Specification</span>
+              <CrmButton
+                type="button"
+                onClick={() => setShowPerishablesDialog(false)}
+                className="p-1 hover:bg-mono-soft rounded text-mono-muted hover:text-mono-text cursor-pointer"
               >
                 <X className="size-4" />
-              </button>
+              </CrmButton>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Cargo Type (e.g. Fresh Fruits, Seafood, Vaccines)</label>
-                <input
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Cargo Type (e.g. Fresh Fruits, Seafood, Vaccines)</label>
+                <CrmInput
                   type="text"
                   placeholder="e.g. Chilled Blueberries"
                   value={perishableType}
                   onChange={(e) => setPerishableType(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                 />
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Required Temp (°C)</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Required Temp (°C)</label>
+                  <CrmInput
                     type="text"
                     placeholder="e.g. 2°C to 4°C"
                     value={tempRequired}
                     onChange={(e) => setTempRequired(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Humidity (%)</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Humidity (%)</label>
+                  <CrmInput
                     type="text"
                     placeholder="e.g. 85%"
                     value={humidityControl}
                     onChange={(e) => setHumidityControl(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Ventilation</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Ventilation</label>
+                  <CrmInput
                     type="text"
                     placeholder="e.g. 25 cbm/h"
                     value={ventilation}
                     onChange={(e) => setVentilation(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#F9D972]/40 rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Special Remarks & Instructions</label>
-                <textarea
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Special Remarks & Instructions</label>
+                <CrmTextarea
                   rows={3}
                   placeholder="Provide remarks regarding temperature logging, reefer power connection, or pre-cooling needs..."
                   value={perishableRemarks}
                   onChange={(e) => setPerishableRemarks(e.target.value)}
-                  className="w-full p-2.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972] placeholder-slate-600 resize-none"
+                  className="w-full p-2.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)] placeholder:text-mono-muted resize-none"
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-2 p-4 bg-[#0c0f14] border-t border-[#1c212a]/30">
-              <button
+            <div className="flex justify-end gap-2 p-4 bg-[var(--mnx-surface)] border-t border-[var(--mnx-border)]/30">
+              <CrmButton
                 type="button"
                 onClick={() => {
                   setShowPerishablesDialog(false);
                 }}
-                className="px-4 py-2 bg-[#F9D972] hover:bg-[#00b0a3] text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                className="px-4 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text rounded-lg text-xs font-bold transition-all cursor-pointer"
               >
                 Save Details
-              </button>
+              </CrmButton>
             </div>
           </div>
-        </div>
+        </CrmDialogLayer>
       )}
 
       {/* ─── SECTION: ADDRESS ───────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <MapPin className="size-4 text-[#F9D972]" />
+        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+          <MapPin className="size-4 text-[var(--mnx-accent)]" />
           <span>Address Details</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-3">
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Street Address</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Street Address</label>
+            <CrmInput
               type="text"
               name="address"
               defaultValue={initialData?.address || ""}
               placeholder="e.g. 14 East Coast Road, Thiruvanmiyur"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">City</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">City</label>
+            <CrmInput
               type="text"
               name="city"
               defaultValue={initialData?.city || ""}
               placeholder="e.g. Chennai"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">State</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">State</label>
+            <CrmInput
               type="text"
               name="state"
               defaultValue={initialData?.state || ""}
               placeholder="e.g. Tamil Nadu"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Pincode</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Pincode</label>
+            <CrmInput
               type="text"
               name="pincode"
               defaultValue={initialData?.pincode || ""}
               placeholder="e.g. 600041"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Country</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Country</label>
+            <CrmInput
               type="text"
               name="country"
               defaultValue={initialData?.country || ""}
               placeholder="e.g. India"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Comma-separated Tags</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Comma-separated Tags</label>
+            <CrmInput
               type="text"
               name="tags"
               defaultValue={initialData?.tags?.join(", ") || ""}
               placeholder="e.g. VIP, Customs Clearance, CHA"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
         </div>
@@ -512,40 +519,40 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
 
       {/* Description */}
       <div>
-        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Enquiry / Description</label>
-        <textarea
+        <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Enquiry / Description</label>
+        <CrmTextarea
           name="description"
           defaultValue={initialData?.description || ""}
           placeholder="Enter details of customer enquiry, freight needs, or meeting notes..."
           rows={4}
-          className="w-full p-3.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+          className="w-full p-3.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
         />
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-3.5 pt-4 border-t border-[#1c212a]/30">
-        <button
+      <div className="flex justify-end gap-3.5 pt-4 border-t border-[var(--mnx-border)]/30">
+        <CrmButton
           type="button"
           onClick={handleFillDemo}
-          className="px-5 py-2 bg-[#F9D972]/10 hover:bg-[#F9D972]/20 border border-[#F9D972]/35 text-[#F9D972] rounded-lg text-sm font-semibold cursor-pointer"
+          className="px-5 py-2 bg-[var(--mnx-accent)]/10 hover:bg-[var(--mnx-accent)]/20 border border-[var(--mnx-accent)]/35 text-[var(--mnx-accent)] rounded-lg text-sm font-semibold cursor-pointer"
         >
           Fill Demo Data
-        </button>
-        <button
+        </CrmButton>
+        <CrmButton
           type="button"
           onClick={() => router.back()}
-          className="px-5 py-2 bg-[#161f28] hover:bg-[#1f2d3a] text-slate-300 border border-[#1c212a]/80 rounded-lg text-sm font-semibold cursor-pointer"
+          className="px-5 py-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] text-mono-muted border border-[var(--mnx-border)]/80 rounded-lg text-sm font-semibold cursor-pointer"
         >
           Cancel
-        </button>
-        <button
+        </CrmButton>
+        <CrmButton
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[#F9D972] hover:bg-[#00b0a3] disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-sm font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
         >
           <Save className="size-4.5" />
           <span>{isSubmitting ? "Saving..." : isEdit ? "Update Lead" : "Save Lead"}</span>
-        </button>
+        </CrmButton>
       </div>
     </form>
   );

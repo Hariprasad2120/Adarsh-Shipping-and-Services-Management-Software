@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput, CrmTable } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
@@ -89,61 +91,61 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Mini Stats Summary Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-[#0f1319]/55 border border-[#1c212a]/55 rounded-xl p-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-[var(--mnx-surface)]/55 border border-[var(--mnx-border)]/55 rounded-xl p-4">
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Open Pipeline</span>
-          <span className="text-white font-bold text-lg">₹{stats.totalPipeline.toLocaleString("en-IN")}</span>
+          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">Open Pipeline</span>
+          <span className="text-mono-text font-bold text-lg">₹{stats.totalPipeline.toLocaleString("en-IN")}</span>
         </div>
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Weighted Forecast</span>
-          <span className="text-[#F9D972] font-bold text-lg">₹{stats.totalForecast.toLocaleString("en-IN")}</span>
+          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">Weighted Forecast</span>
+          <span className="text-[var(--mnx-accent)] font-bold text-lg">₹{stats.totalForecast.toLocaleString("en-IN")}</span>
         </div>
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Active Enquiries</span>
-          <span className="text-white font-bold text-lg">{stats.openCount} Deals</span>
+          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">Active Enquiries</span>
+          <span className="text-mono-text font-bold text-lg">{stats.openCount} Deals</span>
         </div>
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Negotiations Won</span>
-          <span className="text-emerald-400 font-bold text-lg">{stats.wonCount} Closed</span>
+          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">Negotiations Won</span>
+          <span className="text-[var(--mnx-success)] font-bold text-lg">{stats.wonCount} Closed</span>
         </div>
       </div>
 
       {/* Search Filter bar */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="relative w-full max-w-md">
-          <Search className="absolute left-3 top-2.5 size-4 text-slate-500" />
-          <input
+          <Search className="absolute left-3 top-2.5 size-4 text-mono-muted" />
+          <CrmInput
             type="text"
             placeholder="Filter deals by name or account..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:border-[#F9D972] text-white"
+            className="w-full pl-9 pr-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm placeholder:text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)] text-mono-text"
           />
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex border border-[#1c212a] bg-[#0f1319] p-0.5 rounded-lg">
-            <button
+          <div className="flex border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-0.5 rounded-lg">
+            <CrmButton
               onClick={() => setViewMode("KANBAN")}
               className={`p-1.5 rounded-md cursor-pointer ${
-                viewMode === "KANBAN" ? "bg-[#161f28] text-[#F9D972]" : "text-slate-400 hover:text-white"
+                viewMode === "KANBAN" ? "bg-[var(--mnx-surface)] text-[var(--mnx-accent)]" : "text-mono-muted hover:text-mono-text"
               }`}
               title="Pipeline Kanban Grid"
             >
               <Kanban className="size-4" />
-            </button>
-            <button
+            </CrmButton>
+            <CrmButton
               onClick={() => setViewMode("LIST")}
               className={`p-1.5 rounded-md cursor-pointer ${
-                viewMode === "LIST" ? "bg-[#161f28] text-[#F9D972]" : "text-slate-400 hover:text-white"
+                viewMode === "LIST" ? "bg-[var(--mnx-surface)] text-[var(--mnx-accent)]" : "text-mono-muted hover:text-mono-text"
               }`}
               title="Table List View"
             >
               <List className="size-4" />
-            </button>
+            </CrmButton>
           </div>
           <Link
             href="/crm/deals/new"
-            className="flex items-center gap-2 bg-[#F9D972] hover:bg-[#00b0a3] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
+            className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
           >
             <Plus className="size-3.5" />
             <span>Create Deal</span>
@@ -159,55 +161,55 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
             const stageSum = stageDeals.reduce((sum, d) => sum + d.amount, 0);
             
             return (
-              <div key={stage} className="bg-[#0f1319] border border-[#1c212a]/55 rounded-xl p-3 space-y-3 shrink-0 min-w-[240px]">
+              <div key={stage} className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl p-3 space-y-3 shrink-0 min-w-[240px]">
                 {/* Column Header */}
-                <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-2">
-                  <span className="text-xs font-bold text-white uppercase tracking-wider">
+                <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-2">
+                  <span className="text-xs font-bold text-mono-text uppercase tracking-wider">
                     {stage.replace("_", " ")}
                   </span>
-                  <span className="text-[10px] font-bold text-slate-500 bg-[#0c0f14] px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold text-mono-muted bg-[var(--mnx-surface)] px-2 py-0.5 rounded-full">
                     {stageDeals.length}
                   </span>
                 </div>
-                <div className="text-[10px] font-bold text-[#F9D972]">₹{stageSum.toLocaleString("en-IN")}</div>
+                <div className="text-[10px] font-bold text-[var(--mnx-accent)]">₹{stageSum.toLocaleString("en-IN")}</div>
 
                 {/* Cards List */}
                 <div className="space-y-2.5 min-h-[300px] overflow-y-auto max-h-[500px] custom-scrollbar">
                   {stageDeals.length === 0 ? (
-                    <div className="py-8 text-center text-slate-600 text-xs italic">No deals</div>
+                    <div className="py-8 text-center text-mono-muted text-xs italic">No deals</div>
                   ) : (
                     stageDeals.map((deal) => (
                       <div
                         key={deal.id}
-                        className={`p-3 bg-[#0a0d12]/90 border border-[#1c212a]/70 rounded-lg hover:border-[#F9D972]/60 transition-all space-y-2 relative ${
+                        className={`p-3 bg-[var(--mnx-surface)]/90 border border-[var(--mnx-border)]/70 rounded-lg hover:border-[var(--mnx-accent)]/60 transition-all space-y-2 relative ${
                           updatingId === deal.id ? "opacity-50" : ""
                         }`}
                       >
                         {/* Title & Amount */}
                         <div className="space-y-1">
-                          <Link href={`/crm/deals/${deal.id}`} className="font-bold text-white text-xs block hover:underline hover:text-[#F9D972] truncate pr-4">
+                          <Link href={`/crm/deals/${deal.id}`} className="font-bold text-mono-text text-xs block hover:underline hover:text-[var(--mnx-accent)] truncate pr-4">
                             {deal.name}
                           </Link>
                           {deal.account && (
-                            <span className="text-[10px] text-slate-400 block truncate">{deal.account.name}</span>
+                            <span className="text-[10px] text-mono-muted block truncate">{deal.account.name}</span>
                           )}
                         </div>
 
-                        <div className="flex items-center justify-between text-[11px] font-bold text-[#F9D972]">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-[var(--mnx-accent)]">
                           <span>₹{deal.amount.toLocaleString("en-IN")}</span>
-                          <span className="text-[9px] text-slate-500 uppercase tracking-wide bg-slate-800/40 px-1.5 py-0.5 rounded">
+                          <span className="text-[9px] text-mono-muted uppercase tracking-wide bg-mono-soft px-1.5 py-0.5 rounded">
                             {deal.probability}%
                           </span>
                         </div>
 
                         {/* Dropdown to quick shift stage */}
-                        <div className="pt-2 border-t border-[#1c212a]/30 flex items-center justify-between gap-1.5">
-                          <span className="text-[9px] text-slate-500 truncate">Owner: {deal.owner.name.split(" ")[0]}</span>
+                        <div className="pt-2 border-t border-[var(--mnx-border)]/30 flex items-center justify-between gap-1.5">
+                          <span className="text-[9px] text-mono-muted truncate">Owner: {deal.owner.name.split(" ")[0]}</span>
                           <NativeSelect
                             value={deal.stage}
                             onChange={(e) => handleStageChange(deal.id, e.target.value)}
                             disabled={updatingId === deal.id}
-                            className="bg-[#0c0f14] border border-[#1c212a] text-[9.5px] font-semibold text-slate-400 rounded px-1 py-0.5 focus:outline-none focus:border-[#F9D972] cursor-pointer"
+                            className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)] text-[9.5px] font-semibold text-mono-muted rounded px-1 py-0.5 focus:outline-none focus:border-[var(--mnx-accent)] cursor-pointer"
                           >
                             {STAGES.map((st) => (
                               <option key={st} value={st}>{st.replace("_", " ")}</option>
@@ -229,7 +231,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
             <div className="p-8 text-center text-mono-muted">No deals matched search criteria</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="monolith-table">
+              <CrmTable className="mnx-crm-table">
                 <thead>
                   <tr>
                     <th className="px-6 py-3">Deal Name</th>
@@ -243,20 +245,20 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                 </thead>
                 <tbody>
                   {filteredDeals.map((deal) => (
-                    <tr key={deal.id} className="monolith-row-link">
+                    <tr key={deal.id} className="mnx-row-link">
                       <td className="px-6 py-4 font-medium">
-                        <Link href={`/crm/deals/${deal.id}`} className="hover:text-[#F9D972] transition-colors">
+                        <Link href={`/crm/deals/${deal.id}`} className="hover:text-[var(--mnx-accent)] transition-colors">
                           {deal.name}
                         </Link>
                         {deal.serviceType && (
-                          <span className="monolith-label block mt-0.5 font-normal">
+                          <span className="mnx-label block mt-0.5 font-normal">
                             {deal.serviceType} • {deal.logisticsCategory || "CHA"}
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4">
                         {deal.account ? (
-                          <Link href={`/crm/customers/${deal.account.id}`} className="hover:underline text-[#F9D972]">
+                          <Link href={`/crm/customers/${deal.account.id}`} className="hover:underline text-[var(--mnx-accent)]">
                             {deal.account.name}
                           </Link>
                         ) : (
@@ -266,15 +268,15 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                       <td className="px-6 py-4">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                           deal.stage === "WON"
-                            ? "bg-emerald-500/10 text-emerald-400"
+                            ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]"
                             : deal.stage === "LOST"
-                            ? "bg-red-500/10 text-red-400"
-                            : "bg-[#F9D972]/10 text-[#F9D972]"
+                            ? "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]"
+                            : "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]"
                         }`}>
                           {deal.stage.replace("_", " ")}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-medium text-[#F9D972]">
+                      <td className="px-6 py-4 font-medium text-[var(--mnx-accent)]">
                         ₹{deal.amount.toLocaleString("en-IN")}
                       </td>
                       <td className="px-6 py-4 text-mono-muted text-xs">
@@ -288,18 +290,18 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                           <Link href={`/crm/deals/${deal.id}`} className="p-1.5 text-mono-muted hover:text-mono-text rounded hover:bg-mono-soft cursor-pointer">
                             <Eye className="size-4" />
                           </Link>
-                          <button
+                          <CrmButton
                             onClick={() => handleDelete(deal.id)}
-                            className="p-1.5 text-mono-muted hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer"
+                            className="p-1.5 text-mono-muted hover:text-[var(--mnx-danger)] rounded hover:bg-[var(--mnx-danger-bg)] cursor-pointer"
                           >
                             <Trash2 className="size-4" />
-                          </button>
+                          </CrmButton>
                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </CrmTable>
             </div>
           )}
         </div>

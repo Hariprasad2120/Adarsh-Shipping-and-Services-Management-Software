@@ -1,7 +1,6 @@
 "use client";
 
 import { Input } from "@/components/monolith/input";
-import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -21,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/monolith/button";
 import {
+  ChaNativeSelect as NativeSelect,
   ChaPanel,
   ChaRoutePageHeader,
 } from "@/components/monolith/cha-workspace";

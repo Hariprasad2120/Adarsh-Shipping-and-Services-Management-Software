@@ -5,6 +5,7 @@ import { QuotesIndexPage } from "./_components/QuotesIndexPage";
 import { quoteRecords } from "./_lib/quote-list-data";
 import { checkAndTriggerSlaNotifications } from "@/modules/crm/approval-workflow";
 import type { QuoteListStatus, QuoteRecord } from "./_lib/types";
+import { CrmConfigurationState } from "@/components/monolith/crm-workspace";
 
 export const metadata = { title: "Quotations — CRM" };
 
@@ -18,7 +19,7 @@ export default async function CrmQuotesPage() {
 
   const orgId = session.user.orgId;
   if (!orgId) {
-    return <div className="p-8 text-center text-red-500">Missing organisation context.</div>;
+    return <CrmConfigurationState description="Missing organisation context." />;
   }
 
   // Trigger SLA alert checks dynamically on list view load

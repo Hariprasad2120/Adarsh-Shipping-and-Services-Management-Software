@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput, CrmTextarea } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState } from "react";
 import Link from "next/link";
@@ -75,289 +77,289 @@ export function LeadDetailWrapper({
         <div className="lg:col-span-2 space-y-6">
           
           {/* 3D Call Action & Operations Panel */}
-          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a] shadow-[4px_4px_0px_0px_rgba(0,206,196,0.15)] hover:shadow-[6px_6px_0px_0px_rgba(0,206,196,0.22)] transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-6 monolith-card monolith-accent">
+          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] shadow-[4px_4px_0px_0px_var(--mnx-accent-soft)] hover:shadow-[6px_6px_0px_0px_var(--mnx-accent-soft)] transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-6 mnx-crm-panel-surface ">
             <div className="space-y-2 flex-1">
-              <span className="text-[10px] font-bold text-[#F9D972] uppercase tracking-widest block font-sans">Call Action / Lead Status</span>
+              <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-widest block font-sans">Call Action / Lead Status</span>
               <div className="flex flex-wrap gap-3">
-                <button
+                <CrmButton
                   onClick={() => setShowInterestedModal(true)}
                   className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
                     lead.status === "INTERESTED"
-                      ? "bg-[#F9D972] text-white border-[#F9D972] shadow-none translate-y-[2px] translate-x-[2px]"
-                      : "bg-[#161f28] text-[#F9D972] border-[#F9D972]/40 hover:border-[#F9D972] shadow-[2px_2px_0px_0px_rgba(0,206,196,0.15)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(0,206,196,0.25)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
+                      ? "bg-[var(--mnx-accent)] text-mono-text border-[var(--mnx-accent)] shadow-none translate-y-[2px] translate-x-[2px]"
+                      : "bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border-[var(--mnx-accent)]/40 hover:border-[var(--mnx-accent)] shadow-[2px_2px_0px_0px_var(--mnx-accent-soft)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_var(--mnx-accent-soft)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
                   }`}
                 >
                   Interested
-                </button>
-                <button
+                </CrmButton>
+                <CrmButton
                   onClick={() => setShowRemarksModal(true)}
                   className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
                     lead.status === "NOT_INTERESTED"
-                      ? "bg-red-500 text-white border-red-500 shadow-none translate-y-[2px] translate-x-[2px]"
-                      : "bg-[#161f28] text-red-500 border-red-500/40 hover:border-red-500/80 shadow-[2px_2px_0px_0px_rgba(239,68,68,0.15)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(239,68,68,0.25)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
+                      ? "bg-[var(--mnx-danger-bg)] text-mono-text border-[var(--mnx-danger)] shadow-none translate-y-[2px] translate-x-[2px]"
+                      : "bg-[var(--mnx-surface)] text-[var(--mnx-danger)] border-[var(--mnx-danger)] hover:border-[var(--mnx-danger)] shadow-[2px_2px_0px_0px_var(--mnx-danger-bg)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_var(--mnx-danger-bg)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
                   }`}
                 >
                   Not Interested
-                </button>
-                <button
+                </CrmButton>
+                <CrmButton
                   onClick={() => {
                     setFollowUpStatus("NOT_PICKED");
                     setShowFollowUpModal(true);
                   }}
                   className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
                     lead.status === "NOT_PICKED"
-                      ? "bg-[#D88700] text-white border-[#D88700] shadow-none translate-y-[2px] translate-x-[2px]"
-                      : "bg-[#161f28] text-[#D88700] border-[#D88700]/40 hover:border-[#D88700]/80 shadow-[2px_2px_0px_0px_rgba(251,146,60,0.15)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(251,146,60,0.25)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
+                      ? "bg-[var(--mnx-accent)] text-mono-text border-[var(--mnx-accent)] shadow-none translate-y-[2px] translate-x-[2px]"
+                      : "bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border-[var(--mnx-accent)]/40 hover:border-[var(--mnx-accent)]/80 shadow-[2px_2px_0px_0px_var(--mnx-warning-bg)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_var(--mnx-warning-bg)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
                   }`}
                 >
                   Not Picked
-                </button>
-                <button
+                </CrmButton>
+                <CrmButton
                   onClick={() => {
                     setFollowUpStatus("NOT_REACHABLE");
                     setShowFollowUpModal(true);
                   }}
                   className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
                     lead.status === "NOT_REACHABLE"
-                      ? "bg-[#D88700] text-white border-[#D88700] shadow-none translate-y-[2px] translate-x-[2px]"
-                      : "bg-[#161f28] text-[#D88700] border-[#D88700]/40 hover:border-[#D88700]/80 shadow-[2px_2px_0px_0px_rgba(251,146,60,0.15)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(251,146,60,0.25)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
+                      ? "bg-[var(--mnx-accent)] text-mono-text border-[var(--mnx-accent)] shadow-none translate-y-[2px] translate-x-[2px]"
+                      : "bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border-[var(--mnx-accent)]/40 hover:border-[var(--mnx-accent)]/80 shadow-[2px_2px_0px_0px_var(--mnx-warning-bg)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_var(--mnx-warning-bg)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
                   }`}
                 >
                   Not Reachable
-                </button>
+                </CrmButton>
               </div>
             </div>
 
             <div className="space-y-2 flex-shrink-0 md:text-right">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block font-sans">Operations</span>
+              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-widest block font-sans">Operations</span>
               <div className="flex flex-wrap items-center gap-3 justify-start md:justify-end">
-                <button
+                <CrmButton
                   onClick={() => setShowConvertModal(true)}
-                  className="flex items-center gap-2 bg-[#F9D972] hover:bg-[#E8C85D] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[#F9D972] shadow-[2px_2px_0px_0px_#008f88] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_#008f88] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
+                  className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[var(--mnx-accent)] shadow-[2px_2px_0px_0px_var(--mnx-accent)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_var(--mnx-accent)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
                 >
                   <RefreshCcw className="size-3.5" />
                   <span>Convert Lead</span>
-                </button>
+                </CrmButton>
                 <Link
                   href={`/crm/leads/${lead.id}/edit`}
-                  className="flex items-center gap-2 bg-[#161f28] hover:bg-[#1f2d3a] border-2 border-slate-700/35 text-slate-200 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,0.15)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.2)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
+                  className="flex items-center gap-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border-2 border-mono-border text-mono-muted px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-[2px_2px_0px_0px_var(--mnx-border)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_var(--mnx-border)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
                 >
                   <Edit2 className="size-3.5" />
                   <span>Edit</span>
                 </Link>
-                <button
+                <CrmButton
                   onClick={handleDelete}
-                  className="flex items-center gap-2 bg-[#161f28] hover:bg-red-500/10 border-2 border-red-500/20 text-red-400/80 hover:text-red-400 hover:border-red-500/40 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-[2px_2px_0px_0px_rgba(239,68,68,0.05)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(239,68,68,0.15)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
+                  className="flex items-center gap-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-danger-bg)] border-2 border-[var(--mnx-danger)] text-[var(--mnx-danger)] hover:text-[var(--mnx-danger)] hover:border-[var(--mnx-danger)] px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-[2px_2px_0px_0px_var(--mnx-danger-bg)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_var(--mnx-danger-bg)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
                 >
                   <Trash2 className="size-3.5" />
                   <span>Delete</span>
-                </button>
+                </CrmButton>
               </div>
             </div>
           </div>
 
           {/* Business Card Section */}
-          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
-            <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
-              <Info className="size-4.5 text-[#F9D972]" />
-              <h3 className="font-bold text-sm text-white uppercase tracking-wider">Business Card Details</h3>
+          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4">
+            <div className="flex items-center gap-3 border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
+              <Info className="size-4.5 text-[var(--mnx-accent)]" />
+              <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Business Card Details</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Lead Owner</span>
-                <span className="text-white font-medium">{lead.owner.name} ({lead.owner.email})</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Lead Owner</span>
+                <span className="text-mono-text font-medium">{lead.owner.name} ({lead.owner.email})</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Company</span>
-                <span className="text-white font-medium">{lead.company}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Company</span>
+                <span className="text-mono-text font-medium">{lead.company}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Email</span>
-                <span className="text-white font-medium">{lead.email || "Not Specified"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Email</span>
+                <span className="text-mono-text font-medium">{lead.email || "Not Specified"}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Designation</span>
-                <span className="text-white font-medium">{lead.designation || "Not Specified"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Designation</span>
+                <span className="text-mono-text font-medium">{lead.designation || "Not Specified"}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Phone</span>
-                <span className="text-white font-medium">{lead.phone || "Not Specified"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Phone</span>
+                <span className="text-mono-text font-medium">{lead.phone || "Not Specified"}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Mobile</span>
-                <span className="text-white font-medium">{lead.mobile || "Not Specified"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Mobile</span>
+                <span className="text-mono-text font-medium">{lead.mobile || "Not Specified"}</span>
               </div>
             </div>
           </div>
 
           {/* Lead Information Section */}
-          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
-            <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
-              <Building className="size-4.5 text-[#F9D972]" />
-              <h3 className="font-bold text-sm text-white uppercase tracking-wider">Lead Information</h3>
+          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4">
+            <div className="flex items-center gap-3 border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
+              <Building className="size-4.5 text-[var(--mnx-accent)]" />
+              <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Lead Information</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Lead Source</span>
-                <span className="text-white font-medium">{lead.source || "Cold Call"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Lead Source</span>
+                <span className="text-mono-text font-medium">{lead.source || "Cold Call"}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Lead Status</span>
-                <span className="text-white font-medium">{lead.status}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Lead Status</span>
+                <span className="text-mono-text font-medium">{lead.status}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Industry</span>
-                <span className="text-white font-medium">{lead.industry || "Not Specified"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Industry</span>
+                <span className="text-mono-text font-medium">{lead.industry || "Not Specified"}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Rating</span>
-                <span className="text-white font-medium">{lead.rating || "Warm"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Rating</span>
+                <span className="text-mono-text font-medium">{lead.rating || "Warm"}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Annual Revenue</span>
-                <span className="text-white font-medium">{formatRevenue(lead.annualRevenue)}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Annual Revenue</span>
+                <span className="text-mono-text font-medium">{formatRevenue(lead.annualRevenue)}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Employee Count</span>
-                <span className="text-white font-medium">{lead.employeeCount || "Not Specified"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Employee Count</span>
+                <span className="text-mono-text font-medium">{lead.employeeCount || "Not Specified"}</span>
               </div>
             </div>
           </div>
 
           {/* Enquiry & Rates Worksheet Card */}
           {lead.status === "INTERESTED" && lead.enquiryDetails && (
-            <div className="p-6 rounded-xl bg-[#0f1319] border border-[#F9D972]/40 space-y-6">
-              <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3 mb-2">
+            <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 space-y-6">
+              <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
                 <div className="flex items-center gap-3">
-                  <div className="size-8 rounded-lg bg-[#F9D972]/10 text-[#F9D972] flex items-center justify-center font-bold text-sm">
+                  <div className="size-8 rounded-lg bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] flex items-center justify-center font-bold text-sm">
                     {lead.enquiryDetails.type === "Sea" ? <Ship className="size-4.5" /> : <Plane className="size-4.5" />}
                   </div>
-                  <h3 className="font-bold text-sm text-white uppercase tracking-wider">
+                  <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
                     Customer Enquiry Details ({lead.enquiryDetails.type})
                   </h3>
                 </div>
-                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#F9D972]/10 text-[#F9D972] border border-[#F9D972]/10">
+                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] border border-[var(--mnx-accent)]/10">
                   Active Enquiry
                 </span>
               </div>
 
               {lead.enquiryDetails.type === "Sea" ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 text-sm text-slate-300">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 text-sm text-mono-muted">
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Sea Type</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.seaType} ({lead.enquiryDetails.seaLclFcl})</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Sea Type</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.seaType} ({lead.enquiryDetails.seaLclFcl})</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">POL</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.pol}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">POL</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.pol}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">POD</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.pod}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">POD</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.pod}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Commodity</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.commodity}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Commodity</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.commodity}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Weight</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.weight}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Weight</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.weight}</span>
                   </div>
                   {lead.enquiryDetails.seaLclFcl === "LCL" ? (
                     <div className="space-y-1">
-                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Volume</span>
-                      <span className="text-white font-medium">{lead.enquiryDetails.cbm} CBM</span>
+                      <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Volume</span>
+                      <span className="text-mono-text font-medium">{lead.enquiryDetails.cbm} CBM</span>
                     </div>
                   ) : (
                     <div className="space-y-1">
-                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Dimensions / Container</span>
-                      <span className="text-white font-medium">{lead.enquiryDetails.containerType}</span>
+                      <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Dimensions / Container</span>
+                      <span className="text-mono-text font-medium">{lead.enquiryDetails.containerType}</span>
                     </div>
                   )}
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Packages / Containers</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.containerCount}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Packages / Containers</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.containerCount}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Incoterm</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.incoterm}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Incoterm</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.incoterm}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Planning</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.shipmentPlanning}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Planning</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.shipmentPlanning}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Purpose</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.purpose}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Purpose</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.purpose}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Client Name</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.clientName}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Client Name</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.clientName}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Location</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.location}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Location</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.location}</span>
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 text-sm text-slate-300">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 text-sm text-mono-muted">
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">AOL</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.aol}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">AOL</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.aol}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">AOD</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.aod}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">AOD</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.aod}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Commodity</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.commodity}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Commodity</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.commodity}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Weight</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.weight}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Weight</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.weight}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Dimensions</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.dimensions}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Dimensions</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.dimensions}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Packages</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.packages}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Packages</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.packages}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Incoterm</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.incoterm}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Incoterm</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.incoterm}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Planning</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.shipmentPlanning}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Planning</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.shipmentPlanning}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Purpose</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.purpose}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Purpose</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.purpose}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Client Name</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.clientName}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Client Name</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.clientName}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Location</span>
-                    <span className="text-white font-medium">{lead.enquiryDetails.location}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Location</span>
+                    <span className="text-mono-text font-medium">{lead.enquiryDetails.location}</span>
                   </div>
                 </div>
               )}
 
               {/* Rates worksheet section */}
-              <div className="pt-4 border-t border-[#1c212a]/30 space-y-4">
+              <div className="pt-4 border-t border-[var(--mnx-border)]/30 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
                     Rates Worksheet (In-call rates & calculations)
                   </span>
                   {lead.enquiryDetails.seaType === "Import" && lead.enquiryDetails.seaLclFcl === "LCL" && (
-                    <span className="text-[10px] font-bold text-[#F9D972] uppercase tracking-wide bg-[#F9D972]/5 px-2 py-0.5 rounded border border-[#F9D972]/15">
+                    <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-wide bg-[var(--mnx-accent)]/5 px-2 py-0.5 rounded border border-[var(--mnx-accent)]/15">
                       Auto-Calculated Import LCL Rule Active
                     </span>
                   )}
@@ -370,80 +372,80 @@ export function LeadDetailWrapper({
 
           {/* Justdial Original Enquiry Section */}
           {lead.crmExternalLead && (
-            <div className="p-6 rounded-xl bg-gradient-to-br from-[#0f1319] to-[#141b24] border border-orange-500/20 shadow-lg space-y-4">
-              <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3 mb-2">
+            <div className="p-6 rounded-xl bg-gradient-to-br from-[var(--mnx-surface)] to-[var(--mnx-text-muted)] border border-[var(--mnx-warning)] shadow-lg space-y-4">
+              <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
                 <div className="flex items-center gap-3">
-                  <div className="size-8 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center font-black text-sm">
+                  <div className="size-8 rounded-lg bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] flex items-center justify-center font-black text-sm">
                     JD
                   </div>
-                  <h3 className="font-bold text-sm text-white uppercase tracking-wider">Justdial Original Enquiry</h3>
+                  <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Justdial Original Enquiry</h3>
                 </div>
-                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-orange-500/10 text-orange-400 border border-orange-500/10">
+                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] border border-[var(--mnx-warning)]">
                   Imported Inbound
                 </span>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Customer Name</span>
-                  <span className="text-white font-medium">{lead.crmExternalLead.customerName}</span>
+                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Customer Name</span>
+                  <span className="text-mono-text font-medium">{lead.crmExternalLead.customerName}</span>
                 </div>
                 {lead.crmExternalLead.rawPayload && typeof lead.crmExternalLead.rawPayload === "object" && (lead.crmExternalLead.rawPayload as any).intentScore && (
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Intent Score</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Intent Score</span>
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${
                       (lead.crmExternalLead.rawPayload as any).intentScore.toLowerCase().includes("very high")
-                        ? "bg-red-500/10 text-red-400 border border-red-500/20 animate-pulse"
+                        ? "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)] border border-[var(--mnx-danger)] animate-pulse"
                         : (lead.crmExternalLead.rawPayload as any).intentScore.toLowerCase().includes("high")
-                        ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
-                        : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                        ? "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] border border-[var(--mnx-warning)]"
+                        : "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)] border border-[var(--mnx-warning)]"
                     }`}>
                       🔥 {(lead.crmExternalLead.rawPayload as any).intentScore}
                     </span>
                   </div>
                 )}
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Mobile Number</span>
-                  <span className="text-white font-medium">{lead.crmExternalLead.mobileNumber}</span>
+                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Mobile Number</span>
+                  <span className="text-mono-text font-medium">{lead.crmExternalLead.mobileNumber}</span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">City / Location</span>
-                  <span className="text-white font-medium">{lead.crmExternalLead.city || "Not provided"}</span>
+                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">City / Location</span>
+                  <span className="text-mono-text font-medium">{lead.crmExternalLead.city || "Not provided"}</span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Category / Query</span>
-                  <span className="text-white font-medium">{lead.crmExternalLead.category || "Not provided"}</span>
+                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Category / Query</span>
+                  <span className="text-mono-text font-medium">{lead.crmExternalLead.category || "Not provided"}</span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Enquiry Source</span>
-                  <span className="text-white font-medium">{lead.crmExternalLead.enquirySource || "Justdial Web Dashboard"}</span>
+                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Enquiry Source</span>
+                  <span className="text-mono-text font-medium">{lead.crmExternalLead.enquirySource || "Justdial Web Dashboard"}</span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Original Status</span>
-                  <span className="text-white font-medium">{lead.crmExternalLead.enquiryStatus || "N/A"} ({lead.crmExternalLead.jdLeadStatus || "N/A"})</span>
+                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Original Status</span>
+                  <span className="text-mono-text font-medium">{lead.crmExternalLead.enquiryStatus || "N/A"} ({lead.crmExternalLead.jdLeadStatus || "N/A"})</span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Enquiry Time</span>
-                  <span className="text-white font-medium">
+                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Enquiry Time</span>
+                  <span className="text-mono-text font-medium">
                     {lead.crmExternalLead.enquiryDateTime ? new Date(lead.crmExternalLead.enquiryDateTime).toLocaleString("en-IN") : "N/A"}
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Imported At</span>
-                  <span className="text-white font-medium">
+                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Imported At</span>
+                  <span className="text-mono-text font-medium">
                     {new Date(lead.crmExternalLead.importedAt).toLocaleString("en-IN")}
                   </span>
                 </div>
 
                 {/* Collapsible raw data payload */}
                 <div className="md:col-span-2 pt-2">
-                  <details className="group border border-[#1c212a]/30 rounded-lg p-3 bg-[#0a0d12]/40">
-                    <summary className="text-[10px] font-bold uppercase tracking-wider text-slate-400 cursor-pointer list-none flex items-center justify-between select-none">
+                  <details className="group border border-[var(--mnx-border)]/30 rounded-lg p-3 bg-[var(--mnx-surface)]/40">
+                    <summary className="text-[10px] font-bold uppercase tracking-wider text-mono-muted cursor-pointer list-none flex items-center justify-between select-none">
                       <span>View Raw Snapshot Payload</span>
-                      <span className="text-[#F9D972] group-open:hidden">+ Expand</span>
-                      <span className="text-slate-500 hidden group-open:inline">- Collapse</span>
+                      <span className="text-[var(--mnx-accent)] group-open:hidden">+ Expand</span>
+                      <span className="text-mono-muted hidden group-open:inline">- Collapse</span>
                     </summary>
-                    <div className="mt-3 text-[10px] font-mono text-slate-400 bg-black/30 p-2 rounded max-h-48 overflow-y-auto whitespace-pre-wrap leading-relaxed border border-[#1c212a]/20">
+                    <div className="mt-3 text-[10px] font-mono text-mono-muted bg-[var(--mnx-overlay)] p-2 rounded max-h-48 overflow-y-auto whitespace-pre-wrap leading-relaxed border border-[var(--mnx-border)]/20">
                       {JSON.stringify(lead.crmExternalLead.rawPayload, null, 2)}
                     </div>
                   </details>
@@ -453,40 +455,40 @@ export function LeadDetailWrapper({
           )}
 
           {/* Address & Tags Section */}
-          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
-            <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
-              <MapPin className="size-4.5 text-[#F9D972]" />
-              <h3 className="font-bold text-sm text-white uppercase tracking-wider">Address & Tags</h3>
+          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4">
+            <div className="flex items-center gap-3 border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
+              <MapPin className="size-4.5 text-[var(--mnx-accent)]" />
+              <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Address & Tags</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
               <div className="md:col-span-2 space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Street Address</span>
-                <span className="text-white font-medium block">{lead.address || "Not Specified"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Street Address</span>
+                <span className="text-mono-text font-medium block">{lead.address || "Not Specified"}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">City & State</span>
-                <span className="text-white font-medium">
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">City & State</span>
+                <span className="text-mono-text font-medium">
                   {lead.city || ""}{lead.city && lead.state ? ", " : ""}{lead.state || "Not Specified"}
                 </span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Pincode & Country</span>
-                <span className="text-white font-medium">
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Pincode & Country</span>
+                <span className="text-mono-text font-medium">
                   {lead.pincode || ""}{lead.pincode && lead.country ? ", " : ""}{lead.country || "Not Specified"}
                 </span>
               </div>
               <div className="md:col-span-2 space-y-2">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Record Tags</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Record Tags</span>
                 <div className="flex flex-wrap gap-1.5">
                   {lead.tags && lead.tags.length > 0 ? (
                     lead.tags.map((tg: string) => (
-                      <span key={tg} className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#161f28] text-[#F9D972] border border-[#1c212a]">
+                      <span key={tg} className="px-2 py-0.5 rounded text-[10px] font-bold bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border border-[var(--mnx-border)]">
                         {tg}
                       </span>
                     ))
                   ) : (
-                    <span className="text-xs text-slate-500 italic">No tags associated</span>
+                    <span className="text-xs text-mono-muted italic">No tags associated</span>
                   )}
                 </div>
               </div>
@@ -494,9 +496,9 @@ export function LeadDetailWrapper({
           </div>
 
           {/* Description Section */}
-          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-3">
-            <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider border-b border-[#1c212a]/30 pb-2">Description / Enquiry Details</h3>
-            <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-3">
+            <h3 className="font-bold text-xs text-mono-muted uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2">Description / Enquiry Details</h3>
+            <p className="text-sm text-mono-muted whitespace-pre-wrap leading-relaxed">
               {lead.description || "No description logged for this lead."}
             </p>
           </div>
@@ -507,87 +509,87 @@ export function LeadDetailWrapper({
         <div className="space-y-6">
           
           {/* Tabs Navigation Card */}
-          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-6">
+          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-6">
             
             {/* Horizontal Tabs Selection */}
-            <div className="flex border-b border-[#1c212a]/50 pb-1 gap-4 overflow-x-auto select-none">
-              <button
+            <div className="flex border-b border-[var(--mnx-border)]/50 pb-1 gap-4 overflow-x-auto select-none">
+              <CrmButton
                 onClick={() => setActiveTab("OVERVIEW")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "OVERVIEW" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "OVERVIEW" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Overview
-              </button>
-              <button
+              </CrmButton>
+              <CrmButton
                 onClick={() => setActiveTab("NOTES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "NOTES" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "NOTES" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Notes ({notes.length})
-              </button>
-              <button
+              </CrmButton>
+              <CrmButton
                 onClick={() => setActiveTab("ACTIVITIES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ACTIVITIES" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "ACTIVITIES" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Activities ({activities.length})
-              </button>
-              <button
+              </CrmButton>
+              <CrmButton
                 onClick={() => setActiveTab("ATTACHMENTS")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ATTACHMENTS" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "ATTACHMENTS" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Files ({attachments.length})
-              </button>
-              <button
+              </CrmButton>
+              <CrmButton
                 onClick={() => setActiveTab("TIMELINE")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "TIMELINE" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "TIMELINE" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Audit
-              </button>
-              <button
+              </CrmButton>
+              <CrmButton
                 onClick={() => setActiveTab("TIME_TRACKER")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "TIME_TRACKER" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "TIME_TRACKER" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Time Tracker ({workTimeLogs.length})
-              </button>
-              <button
+              </CrmButton>
+              <CrmButton
                 onClick={() => setActiveTab("CALLS")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "CALLS" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "CALLS" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Calls ({calls.length})
-              </button>
+              </CrmButton>
             </div>
 
             {/* Tab Rendering Content */}
             <div className="space-y-4">
               {activeTab === "OVERVIEW" && (
                 <div className="space-y-4 text-xs">
-                  <div className="p-3 bg-[#0a0d12]/60 rounded-lg space-y-2 border border-[#1c212a]/30">
-                    <span className="font-bold text-white block uppercase tracking-wider">Lead Summary</span>
-                    <p className="text-slate-400 leading-relaxed">
+                  <div className="p-3 bg-[var(--mnx-surface)]/60 rounded-lg space-y-2 border border-[var(--mnx-border)]/30">
+                    <span className="font-bold text-mono-text block uppercase tracking-wider">Lead Summary</span>
+                    <p className="text-mono-muted leading-relaxed">
                       This lead was logged on {new Date(lead.createdAt).toLocaleDateString("en-IN")}. If this contact has been fully qualified, convert this record using the Convert Lead button in the top action panel.
                     </p>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-3 text-slate-400">
+                  <div className="grid grid-cols-2 gap-3 text-mono-muted">
                     <div>
-                      <span className="font-semibold text-slate-500 block uppercase text-[10px]">Created By</span>
-                      <span className="text-slate-200">{lead.createdById ? "Site Admin" : "Unknown"}</span>
+                      <span className="font-semibold text-mono-muted block uppercase text-[10px]">Created By</span>
+                      <span className="text-mono-muted">{lead.createdById ? "Site Admin" : "Unknown"}</span>
                     </div>
                     <div>
-                      <span className="font-semibold text-slate-500 block uppercase text-[10px]">Updated At</span>
-                      <span className="text-slate-200">{new Date(lead.updatedAt).toLocaleDateString("en-IN")}</span>
+                      <span className="font-semibold text-mono-muted block uppercase text-[10px]">Updated At</span>
+                      <span className="text-mono-muted">{new Date(lead.updatedAt).toLocaleDateString("en-IN")}</span>
                     </div>
                   </div>
                 </div>
@@ -801,117 +803,117 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-3">
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Ocean Freight (INR)</label>
-              <input
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Ocean Freight (INR)</label>
+              <CrmInput
                 type="number"
                 value={oceanFreight}
                 onChange={(e) => setOceanFreight(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">CFS Charges (INR)</label>
-              <input
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">CFS Charges (INR)</label>
+              <CrmInput
                 type="number"
                 value={cfsCharges}
                 onChange={(e) => setCfsCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Custom Clearance Charges (INR)</label>
-              <input
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Custom Clearance Charges (INR)</label>
+              <CrmInput
                 type="number"
                 value={customsClearance}
                 onChange={(e) => setCustomsClearance(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">BL Charges (INR)</label>
-              <input
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">BL Charges (INR)</label>
+              <CrmInput
                 type="number"
                 value={blCharges}
                 onChange={(e) => setBlCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
           </div>
 
           <div className="space-y-3">
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">VGM Charges (INR)</label>
-              <input
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">VGM Charges (INR)</label>
+              <CrmInput
                 type="number"
                 value={vgmCharges}
                 onChange={(e) => setVgmCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide">
                   LCL Charges (INR)
                 </label>
                 {isImportLcl && (
-                  <span className="text-[9px] text-[#F9D972] font-medium">
+                  <span className="text-[9px] text-[var(--mnx-accent)] font-medium">
                     Calculated: {volume} CBM × {calculatedLclRate}/CBM
                   </span>
                 )}
               </div>
-              <input
+              <CrmInput
                 type="number"
                 value={lclCharges}
                 onChange={(e) => setLclCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide">
                   DO Charges (INR)
                 </label>
                 {isImportLcl && volume >= 3 && (
                   <div className="flex gap-2">
-                    <label className="inline-flex items-center text-[9px] text-slate-400 cursor-pointer">
-                      <input
+                    <label className="inline-flex items-center text-[9px] text-mono-muted cursor-pointer">
+                      <CrmInput
                         type="radio"
                         name="do_option"
                         value="750"
                         checked={lclDoOption === "750"}
                         onChange={() => setLclDoOption("750")}
-                        className="mr-1 size-3 bg-[#0a0d12] text-[#F9D972] border-[#1c212a]"
+                        className="mr-1 size-3 bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border-[var(--mnx-border)]"
                       />
                       750
                     </label>
-                    <label className="inline-flex items-center text-[9px] text-slate-400 cursor-pointer">
-                      <input
+                    <label className="inline-flex items-center text-[9px] text-mono-muted cursor-pointer">
+                      <CrmInput
                         type="radio"
                         name="do_option"
                         value="500"
                         checked={lclDoOption === "500"}
                         onChange={() => setLclDoOption("500")}
-                        className="mr-1 size-3 bg-[#0a0d12] text-[#F9D972] border-[#1c212a]"
+                        className="mr-1 size-3 bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border-[var(--mnx-border)]"
                       />
                       500
                     </label>
                   </div>
                 )}
               </div>
-              <input
+              <CrmInput
                 type="number"
                 value={doCharges}
                 onChange={(e) => setDoCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">CFS Charges (INR)</label>
-              <input
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">CFS Charges (INR)</label>
+              <CrmInput
                 type="number"
                 value={cfsCustoms}
                 onChange={(e) => setCfsCustoms(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
           </div>
@@ -920,51 +922,51 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-3">
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Air Freight (INR)</label>
-              <input
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Air Freight (INR)</label>
+              <CrmInput
                 type="number"
                 value={airFreight}
                 onChange={(e) => setAirFreight(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Handling Charges (INR)</label>
-              <input
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Handling Charges (INR)</label>
+              <CrmInput
                 type="number"
                 value={handlingCharges}
                 onChange={(e) => setHandlingCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Custom Clearance Charges (INR)</label>
-              <input
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Custom Clearance Charges (INR)</label>
+              <CrmInput
                 type="number"
                 value={customsClearance}
                 onChange={(e) => setCustomsClearance(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
           </div>
 
           <div className="space-y-3">
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">AWB Charges (INR)</label>
-              <input
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">AWB Charges (INR)</label>
+              <CrmInput
                 type="number"
                 value={awbCharges}
                 onChange={(e) => setAwbCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Delivery Charges (INR)</label>
-              <input
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Delivery Charges (INR)</label>
+              <CrmInput
                 type="number"
                 value={deliveryCharges}
                 onChange={(e) => setDeliveryCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
           </div>
@@ -972,17 +974,17 @@ function LeadRatesWorksheet({ lead }: { lead: any }) {
       )}
 
       {/* Summary & Save Action */}
-      <div className="flex items-center justify-between pt-3 border-t border-[#1c212a]/30">
-        <div className="text-sm font-semibold text-white">
-          Total Estimated Rates: <span className="text-[#F9D972] font-bold">₹{calculateTotal().toLocaleString("en-IN")}</span>
+      <div className="flex items-center justify-between pt-3 border-t border-[var(--mnx-border)]/30">
+        <div className="text-sm font-semibold text-mono-text">
+          Total Estimated Rates: <span className="text-[var(--mnx-accent)] font-bold">₹{calculateTotal().toLocaleString("en-IN")}</span>
         </div>
-        <button
+        <CrmButton
           type="submit"
           disabled={isSaving}
-          className="px-5 py-2 bg-[#F9D972] hover:bg-[#E8C85D] disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-[#F9D972]/15"
+          className="px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-[var(--mnx-accent)]/15"
         >
           {isSaving ? "Saving Worksheet..." : "Save Worksheet Rates"}
-        </button>
+        </CrmButton>
       </div>
     </form>
   );
@@ -1084,55 +1086,55 @@ function TimeTrackerPanel({ lead, workTimeLogs, quotes, timeline }: { lead: any;
   };
 
   return (
-    <div className="space-y-6 text-slate-300">
+    <div className="space-y-6 text-mono-muted">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 bg-[#0a0d12]/50 border border-[#1c212a]/50 rounded-xl space-y-1.5 monolith-hover transition-all">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
-            <Timer className="size-3.5 text-[#F9D972]" />
+        <div className="p-4 bg-[var(--mnx-surface)]/50 border border-[var(--mnx-border)]/50 rounded-xl space-y-1.5 mnx-crm-hover transition-all">
+          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wide flex items-center gap-1.5">
+            <Timer className="size-3.5 text-[var(--mnx-accent)]" />
             Response Time
           </span>
-          <div className="text-lg font-black text-white">{responseDurationStr}</div>
-          <span className="text-[9px] text-slate-500 block truncate">Capture to first response</span>
+          <div className="text-lg font-black text-mono-text">{responseDurationStr}</div>
+          <span className="text-[9px] text-mono-muted block truncate">Capture to first response</span>
         </div>
-        <div className="p-4 bg-[#0a0d12]/50 border border-[#1c212a]/50 rounded-xl space-y-1.5 monolith-hover transition-all">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
-            <TrendingUp className="size-3.5 text-[#F9D972]" />
+        <div className="p-4 bg-[var(--mnx-surface)]/50 border border-[var(--mnx-border)]/50 rounded-xl space-y-1.5 mnx-crm-hover transition-all">
+          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wide flex items-center gap-1.5">
+            <TrendingUp className="size-3.5 text-[var(--mnx-accent)]" />
             Conversion Time
           </span>
-          <div className="text-lg font-black text-white">{conversionDurationStr}</div>
-          <span className="text-[9px] text-slate-500 block truncate">Capture to account conversion</span>
+          <div className="text-lg font-black text-mono-text">{conversionDurationStr}</div>
+          <span className="text-[9px] text-mono-muted block truncate">Capture to account conversion</span>
         </div>
-        <div className="p-4 bg-[#0a0d12]/50 border border-[#1c212a]/50 rounded-xl space-y-1.5 monolith-hover transition-all">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
-            <Clock className="size-3.5 text-[#F9D972]" />
+        <div className="p-4 bg-[var(--mnx-surface)]/50 border border-[var(--mnx-border)]/50 rounded-xl space-y-1.5 mnx-crm-hover transition-all">
+          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wide flex items-center gap-1.5">
+            <Clock className="size-3.5 text-[var(--mnx-accent)]" />
             Quote Prep Time
           </span>
-          <div className="text-lg font-black text-white">{quotePrepDurationStr}</div>
-          <span className="text-[9px] text-slate-500 block truncate">Conversion to first quote draft</span>
+          <div className="text-lg font-black text-mono-text">{quotePrepDurationStr}</div>
+          <span className="text-[9px] text-mono-muted block truncate">Conversion to first quote draft</span>
         </div>
-        <div className="p-4 bg-[#0a0d12]/50 border border-[#1c212a]/50 rounded-xl space-y-1.5 monolith-hover transition-all">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
-            <Clock className="size-3.5 text-[#F9D972]" />
+        <div className="p-4 bg-[var(--mnx-surface)]/50 border border-[var(--mnx-border)]/50 rounded-xl space-y-1.5 mnx-crm-hover transition-all">
+          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wide flex items-center gap-1.5">
+            <Clock className="size-3.5 text-[var(--mnx-accent)]" />
             Submission SLA
           </span>
-          <div className="text-lg font-black text-white">{submissionDurationStr}</div>
-          <span className="text-[9px] text-slate-500 block truncate">Quote creation to submit approval</span>
+          <div className="text-lg font-black text-mono-text">{submissionDurationStr}</div>
+          <span className="text-[9px] text-mono-muted block truncate">Quote creation to submit approval</span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-1 p-5 bg-[#0a0d12]/30 border border-[#1c212a]/40 rounded-xl space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#1c212a]/30 pb-2.5">
-            <Plus className="size-4 text-[#F9D972]" />
-            <h4 className="text-xs font-bold uppercase tracking-wider text-white">Log Work Hours</h4>
+        <div className="xl:col-span-1 p-5 bg-[var(--mnx-surface)]/30 border border-[var(--mnx-border)]/40 rounded-xl space-y-4">
+          <div className="flex items-center gap-2 border-b border-[var(--mnx-border)]/30 pb-2.5">
+            <Plus className="size-4 text-[var(--mnx-accent)]" />
+            <h4 className="text-xs font-bold uppercase tracking-wider text-mono-text">Log Work Hours</h4>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Activity Type *</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Activity Type *</label>
               <NativeSelect
                 value={activityType}
                 onChange={(e) => setActivityType(e.target.value)}
-                className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-slate-300 focus:outline-none focus:border-[#F9D972]"
+                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
               >
                 {Object.entries(activityLabels).map(([key, value]) => (
                   <option key={key} value={key}>{value}</option>
@@ -1142,92 +1144,92 @@ function TimeTrackerPanel({ lead, workTimeLogs, quotes, timeline }: { lead: any;
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Duration (Hours) *</label>
-                <input
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Duration (Hours) *</label>
+                <CrmInput
                   type="number"
                   step="0.1"
                   min="0.1"
                   value={durationHours}
                   onChange={(e) => setDurationHours(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                   required
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Work Date *</label>
-                <input
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Work Date *</label>
+                <CrmInput
                   type="datetime-local"
                   value={loggedAt}
                   onChange={(e) => setLoggedAt(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-slate-300 focus:outline-none focus:border-[#F9D972]"
+                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Description / Notes</label>
-              <textarea
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Description / Notes</label>
+              <CrmTextarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What details did you gather or process?"
                 rows={3}
-                className="w-full p-2.5 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                className="w-full p-2.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               />
             </div>
 
-            <button
+            <CrmButton
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#F9D972] hover:bg-[#E8C85D] disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-[#F9D972]/15"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-[var(--mnx-accent)]/15"
             >
               <span>{isSubmitting ? "Logging Hours..." : "Log Work Time"}</span>
-            </button>
+            </CrmButton>
           </form>
         </div>
 
-        <div className="xl:col-span-2 p-5 bg-[#0a0d12]/30 border border-[#1c212a]/40 rounded-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-2.5">
+        <div className="xl:col-span-2 p-5 bg-[var(--mnx-surface)]/30 border border-[var(--mnx-border)]/40 rounded-xl space-y-4">
+          <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-2.5">
             <div className="flex items-center gap-2">
-              <History className="size-4 text-[#F9D972]" />
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white">Work Time Logs History</h4>
+              <History className="size-4 text-[var(--mnx-accent)]" />
+              <h4 className="text-xs font-bold uppercase tracking-wider text-mono-text">Work Time Logs History</h4>
             </div>
-            <span className="text-[10px] font-bold text-[#F9D972] uppercase bg-[#F9D972]/10 px-2 py-0.5 rounded border border-[#F9D972]/10">
+            <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase bg-[var(--mnx-accent)]/10 px-2 py-0.5 rounded border border-[var(--mnx-accent)]/10">
               Total: {totalLoggedHours.toFixed(1)} hours
             </span>
           </div>
 
           {workTimeLogs.length === 0 ? (
-            <div className="p-8 text-center text-slate-500 text-xs italic">
+            <div className="p-8 text-center text-mono-muted text-xs italic">
               No time logs recorded for this client yet.
             </div>
           ) : (
-            <div className="max-h-[350px] overflow-y-auto space-y-3 pr-1.5 scrollbar-thin scrollbar-thumb-[#1c212a]">
+            <div className="max-h-[350px] overflow-y-auto space-y-3 pr-1.5 scrollbar-thin scrollbar-thumb-[var(--mnx-border)]">
               {workTimeLogs.map((log) => (
-                <div key={log.id} className="p-3 bg-[#0a0d12]/60 border border-[#1c212a]/30 rounded-lg flex items-start justify-between gap-3 text-xs">
+                <div key={log.id} className="p-3 bg-[var(--mnx-surface)]/60 border border-[var(--mnx-border)]/30 rounded-lg flex items-start justify-between gap-3 text-xs">
                   <div className="space-y-1 min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold text-white uppercase text-[10px] bg-[#161f28] border border-[#1c212a] px-2 py-0.5 rounded">
+                      <span className="font-bold text-mono-text uppercase text-[10px] bg-[var(--mnx-surface)] border border-[var(--mnx-border)] px-2 py-0.5 rounded">
                         {activityLabels[log.activityType] || log.activityType}
                       </span>
-                      <span className="text-[#F9D972] font-black">{log.durationHours} hr{log.durationHours === 1 ? "" : "s"}</span>
-                      <span className="text-slate-500 font-semibold">•</span>
-                      <span className="text-slate-400 font-medium">{log.user.name}</span>
+                      <span className="text-[var(--mnx-accent)] font-black">{log.durationHours} hr{log.durationHours === 1 ? "" : "s"}</span>
+                      <span className="text-mono-muted font-semibold">•</span>
+                      <span className="text-mono-muted font-medium">{log.user.name}</span>
                     </div>
                     {log.description && (
-                      <p className="text-slate-300 leading-normal font-normal pl-0.5">{log.description}</p>
+                      <p className="text-mono-muted leading-normal font-normal pl-0.5">{log.description}</p>
                     )}
-                    <div className="text-[9px] text-slate-500 font-medium pl-0.5">
+                    <div className="text-[9px] text-mono-muted font-medium pl-0.5">
                       Performed: {new Date(log.loggedAt).toLocaleString("en-IN")}
                     </div>
                   </div>
-                  <button
+                  <CrmButton
                     onClick={() => handleDeleteLog(log.id)}
                     disabled={isDeleting === log.id}
-                    className="p-1 bg-[#161f28]/60 hover:bg-red-500/10 hover:text-red-400 border border-[#1c212a] text-slate-500 rounded cursor-pointer transition-colors"
+                    className="p-1 bg-[var(--mnx-surface)]/60 hover:bg-[var(--mnx-danger-bg)] hover:text-[var(--mnx-danger)] border border-[var(--mnx-border)] text-mono-muted rounded cursor-pointer transition-colors"
                   >
                     <Trash2 className="size-3.5" />
-                  </button>
+                  </CrmButton>
                 </div>
               ))}
             </div>
@@ -1330,17 +1332,17 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
 
   if (calls.length === 0) {
     return (
-      <div className="p-8 text-center text-slate-500 text-xs italic">
+      <div className="p-8 text-center text-mono-muted text-xs italic">
         No call attempts tracked for this client yet.
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-slate-300">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-mono-muted">
       {/* Calls List */}
-      <div className="space-y-3 md:col-span-1 border-r border-[#1c212a]/30 pr-0 md:pr-4 max-h-[500px] overflow-y-auto">
-        <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Call Log History</h4>
+      <div className="space-y-3 md:col-span-1 border-r border-[var(--mnx-border)]/30 pr-0 md:pr-4 max-h-[500px] overflow-y-auto">
+        <h4 className="text-[10px] font-bold uppercase tracking-wider text-mono-muted mb-2">Call Log History</h4>
         {localCalls.map((call) => {
           const hasRecording = call.recordings && call.recordings.length > 0;
           const rec = call.recordings?.[0];
@@ -1352,31 +1354,31 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
               onClick={() => setSelectedCallId(call.id)}
               className={`p-3 rounded-lg border cursor-pointer transition-all ${
                 selectedCallId === call.id
-                  ? "bg-[#161f28] border-[#F9D972]/70 shadow-[0_0_0_1px_rgba(0,206,196,0.2)]"
-                  : "bg-[#0a0d12]/50 border-[#1c212a]/55 hover:border-slate-700"
+                  ? "bg-[var(--mnx-surface)] border-[var(--mnx-accent)]/70 shadow-[0_0_0_1px_var(--mnx-accent-soft)]"
+                  : "bg-[var(--mnx-surface)]/50 border-[var(--mnx-border)]/55 hover:border-mono-border"
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-200">{call.salesperson?.name || "Agent"}</span>
+                <span className="font-bold text-mono-muted">{call.salesperson?.name || "Agent"}</span>
                 {hasRecording && quality && (
                   <span className={`px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider ${
-                    quality >= 80 ? "bg-emerald-400/10 text-emerald-400 border border-emerald-400/20" : "bg-[#D88700]/10 text-[#D88700] border border-[#D88700]/20"
+                    quality >= 80 ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] border border-[var(--mnx-success)]" : "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] border border-[var(--mnx-accent)]/20"
                   }`}>
                     AI {quality}%
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-slate-500 mt-1">{new Date(call.callStartedAt).toLocaleString("en-IN")}</p>
-              <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#1c212a]/30">
-                <span className="text-[9px] uppercase tracking-wider font-semibold text-slate-400">
+              <p className="text-[10px] text-mono-muted mt-1">{new Date(call.callStartedAt).toLocaleString("en-IN")}</p>
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-[var(--mnx-border)]/30">
+                <span className="text-[9px] uppercase tracking-wider font-semibold text-mono-muted">
                   {call.durationSeconds ? `${Math.floor(call.durationSeconds / 60)}m ${call.durationSeconds % 60}s` : "Pending"}
                 </span>
                 <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
-                  (call.status === "COMPLETED" || rec?.uploadStatus === "UPLOADED") ? "text-emerald-400" :
-                  rec?.uploadStatus === "UPLOADING" ? "text-[#F9D972]" :
-                  rec?.uploadStatus === "CANCELLED" ? "text-amber-400" :
-                  rec?.uploadStatus === "FAILED" ? "text-red-400" :
-                  "text-amber-400"
+                  (call.status === "COMPLETED" || rec?.uploadStatus === "UPLOADED") ? "text-[var(--mnx-success)]" :
+                  rec?.uploadStatus === "UPLOADING" ? "text-[var(--mnx-accent)]" :
+                  rec?.uploadStatus === "CANCELLED" ? "text-[var(--mnx-warning)]" :
+                  rec?.uploadStatus === "FAILED" ? "text-[var(--mnx-danger)]" :
+                  "text-[var(--mnx-warning)]"
                 }`}>
                   {
                     rec?.uploadStatus === "UPLOADED" ? "COMPLETED" :
@@ -1396,46 +1398,46 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
       <div className="md:col-span-2 space-y-4">
         {selectedCall ? (
           <>
-            <div className="p-4 bg-[#0a0d12]/60 rounded-xl border border-[#1c212a]/55 space-y-3">
+            <div className="p-4 bg-[var(--mnx-surface)]/60 rounded-xl border border-[var(--mnx-border)]/55 space-y-3">
               <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="text-sm font-bold text-white uppercase tracking-wide">Call Details</h4>
-                  <p className="text-slate-500 text-[10px] mt-0.5">
+                  <h4 className="text-sm font-bold text-mono-text uppercase tracking-wide">Call Details</h4>
+                  <p className="text-mono-muted text-[10px] mt-0.5">
                     ID: <span className="font-mono">{selectedCall.id}</span> • Customer Number: <span className="font-mono">{selectedCall.customerPhone}</span>
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] font-bold uppercase block text-slate-400">Duration</span>
-                  <span className="text-slate-200 font-bold">{selectedCall.durationSeconds ? `${selectedCall.durationSeconds} seconds` : "N/A"}</span>
+                  <span className="text-[10px] font-bold uppercase block text-mono-muted">Duration</span>
+                  <span className="text-mono-muted font-bold">{selectedCall.durationSeconds ? `${selectedCall.durationSeconds} seconds` : "N/A"}</span>
                 </div>
               </div>
 
               {/* Audio Playback Section */}
               {recording ? (
-                <div className="p-3 bg-[#11161d] rounded-lg border border-[#1c212a]/40 space-y-2">
+                <div className="p-3 bg-[var(--mnx-surface)] rounded-lg border border-[var(--mnx-border)]/40 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-white uppercase text-[10px] tracking-wide flex items-center gap-1.5">
+                    <span className="font-bold text-mono-text uppercase text-[10px] tracking-wide flex items-center gap-1.5">
                       <span className={`w-1.5 h-1.5 rounded-full ${
-                        recording.uploadStatus === "UPLOADED" ? "bg-emerald-400" :
-                        recording.uploadStatus === "UPLOADING" ? "bg-[#F9D972] animate-pulse" :
-                        recording.uploadStatus === "CANCELLED" ? "bg-amber-400" :
-                        "bg-red-400"
+                        recording.uploadStatus === "UPLOADED" ? "bg-[var(--mnx-success-bg)]" :
+                        recording.uploadStatus === "UPLOADING" ? "bg-[var(--mnx-accent)] animate-pulse" :
+                        recording.uploadStatus === "CANCELLED" ? "bg-[var(--mnx-warning-bg)]" :
+                        "bg-[var(--mnx-danger-bg)]"
                       }`}></span>
                       Audio Call Recording
                     </span>
                     <div className="flex items-center gap-2">
                       <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${
-                        recording.uploadStatus === "UPLOADED" ? "bg-emerald-400/10 text-emerald-400" :
-                        recording.uploadStatus === "UPLOADING" ? "bg-cyan-400/10 text-[#F9D972] animate-pulse" :
-                        recording.uploadStatus === "CANCELLED" ? "bg-amber-400/10 text-amber-400" :
-                        "bg-red-400/10 text-red-400"
+                        recording.uploadStatus === "UPLOADED" ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]" :
+                        recording.uploadStatus === "UPLOADING" ? "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent)] animate-pulse" :
+                        recording.uploadStatus === "CANCELLED" ? "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]" :
+                        "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]"
                       }`}>
                         {recording.uploadStatus === "UPLOADED" ? "UPLOADED SUCCESSFULLY" : recording.uploadStatus}
                       </span>
                       {recording.uploadStatus === "UPLOADED" && (
                         <a
                           href={`/api/crm/recordings/${recording.id}/download`}
-                          className="text-[10px] text-[#F9D972] font-bold uppercase hover:underline transition-all cursor-pointer"
+                          className="text-[10px] text-[var(--mnx-accent)] font-bold uppercase hover:underline transition-all cursor-pointer"
                         >
                           Download MP3
                         </a>
@@ -1451,13 +1453,13 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                     />
                   ) : recording.uploadStatus === "UPLOADING" ? (
                     <div className="space-y-1 py-1">
-                      <div className="w-full bg-[#1c212a] h-1.5 rounded-full overflow-hidden">
+                      <div className="w-full bg-[var(--mnx-border)] h-1.5 rounded-full overflow-hidden">
                         <div
-                          className="bg-[#F9D972] h-1.5 rounded-full transition-all duration-300"
+                          className="bg-[var(--mnx-accent)] h-1.5 rounded-full transition-all duration-300"
                           style={{ width: `${recording.uploadProgress || 0}%` }}
                         />
                       </div>
-                      <div className="flex justify-between text-[9px] text-[#F9D972] font-mono">
+                      <div className="flex justify-between text-[9px] text-[var(--mnx-accent)] font-mono">
                         <span>Uploading from mobile...</span>
                         <span>{recording.uploadProgress || 0}%</span>
                       </div>
@@ -1465,8 +1467,8 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                   ) : (
                     <div className={`text-[10px] p-2 rounded border space-y-1 ${
                       recording.uploadStatus === "CANCELLED"
-                        ? "text-amber-400 bg-amber-400/5 border-amber-400/10"
-                        : "text-red-400 bg-red-400/5 border-red-400/10"
+                        ? "text-[var(--mnx-warning)] bg-[var(--mnx-warning-bg)] border-[var(--mnx-warning)]"
+                        : "text-[var(--mnx-danger)] bg-[var(--mnx-danger-bg)] border-[var(--mnx-danger)]"
                     }`}>
                       <span className="font-bold uppercase text-[9px] block">
                         {recording.uploadStatus === "CANCELLED" ? "Upload Cancelled:" : "Upload Failure:"}
@@ -1475,13 +1477,13 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                     </div>
                   )}
                   
-                  <div className="flex items-center justify-between text-[9px] text-slate-500">
+                  <div className="flex items-center justify-between text-[9px] text-mono-muted">
                     <span>File size: {(recording.fileSize / 1024 / 1024).toFixed(2)} MB</span>
                     <span>Matched by: {recording.matchReason} (Confidence: {recording.matchConfidence}%)</span>
                   </div>
                 </div>
               ) : (
-                <div className="p-4 bg-slate-800/10 rounded-lg border border-dashed border-[#1c212a] text-center text-slate-500 italic">
+                <div className="p-4 bg-mono-soft rounded-lg border border-dashed border-[var(--mnx-border)] text-center text-mono-muted italic">
                   No recording uploaded for this call attempt.
                 </div>
               )}
@@ -1489,33 +1491,33 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
 
             {/* AI Analysis Tab Panel */}
             {recording && (
-              <div className="p-4 bg-[#0a0d12]/60 rounded-xl border border-[#1c212a]/55 space-y-4">
+              <div className="p-4 bg-[var(--mnx-surface)]/60 rounded-xl border border-[var(--mnx-border)]/55 space-y-4">
                 {/* Detail Tabs */}
-                <div className="flex border-b border-[#1c212a]/50 pb-1 gap-4 select-none">
-                  <button
+                <div className="flex border-b border-[var(--mnx-border)]/50 pb-1 gap-4 select-none">
+                  <CrmButton
                     onClick={() => setSubTab("TRANSCRIPT")}
                     className={`pb-1.5 text-[10px] font-bold uppercase tracking-wider border-b transition-all cursor-pointer ${
-                      subTab === "TRANSCRIPT" ? "border-[#F9D972] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
+                      subTab === "TRANSCRIPT" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-muted"
                     }`}
                   >
                     AI Transcript
-                  </button>
-                  <button
+                  </CrmButton>
+                  <CrmButton
                     onClick={() => setSubTab("SUMMARY")}
                     className={`pb-1.5 text-[10px] font-bold uppercase tracking-wider border-b transition-all cursor-pointer ${
-                      subTab === "SUMMARY" ? "border-[#F9D972] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
+                      subTab === "SUMMARY" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-muted"
                     }`}
                   >
                     AI Analysis & Actions
-                  </button>
-                  <button
+                  </CrmButton>
+                  <CrmButton
                     onClick={() => setSubTab("REVIEW")}
                     className={`pb-1.5 text-[10px] font-bold uppercase tracking-wider border-b transition-all cursor-pointer ${
-                      subTab === "REVIEW" ? "border-[#F9D972] text-white" : "border-transparent text-slate-500 hover:text-slate-300"
+                      subTab === "REVIEW" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-muted"
                     }`}
                   >
                     Manager Quality Review ({recording.reviews?.length || 0})
-                  </button>
+                  </CrmButton>
                 </div>
 
                 <div className="pt-1">
@@ -1523,11 +1525,11 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                   {subTab === "TRANSCRIPT" && (
                     <div className="space-y-3">
                       {transcript ? (
-                        <div className="p-3 bg-[#11161d] rounded-lg border border-[#1c212a]/30 max-h-[250px] overflow-y-auto whitespace-pre-line leading-relaxed text-slate-300 animate-in fade-in duration-200">
+                        <div className="p-3 bg-[var(--mnx-surface)] rounded-lg border border-[var(--mnx-border)]/30 max-h-[250px] overflow-y-auto whitespace-pre-line leading-relaxed text-mono-muted animate-in fade-in duration-200">
                           {transcript.transcriptText}
                         </div>
                       ) : (
-                        <div className="p-4 text-center text-slate-500 italic">
+                        <div className="p-4 text-center text-mono-muted italic">
                           AI Transcription is currently {recording.transcriptionStatus.toLowerCase()}...
                         </div>
                       )}
@@ -1541,12 +1543,12 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-3 col-span-1">
                             <div>
-                              <span className="font-bold text-slate-500 uppercase text-[9px] block">AI Summary</span>
-                              <p className="text-slate-200 mt-1 leading-normal font-medium">{transcript.summary}</p>
+                              <span className="font-bold text-mono-muted uppercase text-[9px] block">AI Summary</span>
+                              <p className="text-mono-muted mt-1 leading-normal font-medium">{transcript.summary}</p>
                             </div>
                             <div>
-                              <span className="font-bold text-slate-500 uppercase text-[9px] block">Objections Raised</span>
-                              <p className={`mt-1 font-bold ${transcript.objections === "None" ? "text-emerald-400" : "text-[#D88700]"}`}>
+                              <span className="font-bold text-mono-muted uppercase text-[9px] block">Objections Raised</span>
+                              <p className={`mt-1 font-bold ${transcript.objections === "None" ? "text-[var(--mnx-success)]" : "text-[var(--mnx-accent)]"}`}>
                                 {transcript.objections}
                               </p>
                             </div>
@@ -1554,23 +1556,23 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                           
                           <div className="space-y-3 col-span-1">
                             <div>
-                              <span className="font-bold text-slate-500 uppercase text-[9px] block">Follow-up Actions</span>
-                              <p className="text-slate-200 mt-1 font-medium leading-normal">{transcript.followUpActions}</p>
+                              <span className="font-bold text-mono-muted uppercase text-[9px] block">Follow-up Actions</span>
+                              <p className="text-mono-muted mt-1 font-medium leading-normal">{transcript.followUpActions}</p>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                               <div>
-                                <span className="font-bold text-slate-500 uppercase text-[9px] block">Sentiment</span>
+                                <span className="font-bold text-mono-muted uppercase text-[9px] block">Sentiment</span>
                                 <span className={`inline-block mt-1 font-extrabold uppercase text-[10px] px-2 py-0.5 rounded ${
                                   transcript.sentiment === "POSITIVE"
-                                    ? "bg-emerald-400/10 text-emerald-400 border border-emerald-400/20"
-                                    : "bg-slate-400/10 text-slate-400 border border-slate-400/20"
+                                    ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] border border-[var(--mnx-success)]"
+                                    : "bg-mono-soft text-mono-muted border border-mono-border"
                                 }`}>
                                   {transcript.sentiment}
                                 </span>
                               </div>
                               <div>
-                                <span className="font-bold text-slate-500 uppercase text-[9px] block">Quality Score</span>
-                                <span className="text-white mt-1 font-extrabold text-[13px] block font-mono">
+                                <span className="font-bold text-mono-muted uppercase text-[9px] block">Quality Score</span>
+                                <span className="text-mono-text mt-1 font-extrabold text-[13px] block font-mono">
                                   {transcript.qualityScore}%
                                 </span>
                               </div>
@@ -1578,7 +1580,7 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                           </div>
                         </div>
                       ) : (
-                        <div className="p-4 text-center text-slate-500 italic">
+                        <div className="p-4 text-center text-mono-muted italic">
                           AI Analysis is pending transcription completion.
                         </div>
                       )}
@@ -1590,16 +1592,16 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                     <div className="space-y-4 animate-in fade-in duration-200">
                       {/* Review Submission Form (Only for Managers/Admins) */}
                       {isManagerOrAdmin ? (
-                        <form onSubmit={handleSubmitReview} className="p-3 bg-[#11161d] rounded-lg border border-[#1c212a]/30 space-y-3">
-                          <span className="font-bold text-white uppercase text-[10px] tracking-wide block">Log Quality Review</span>
+                        <form onSubmit={handleSubmitReview} className="p-3 bg-[var(--mnx-surface)] rounded-lg border border-[var(--mnx-border)]/30 space-y-3">
+                          <span className="font-bold text-mono-text uppercase text-[10px] tracking-wide block">Log Quality Review</span>
                           
                           <div className="grid grid-cols-3 items-center gap-3">
                             <div className="col-span-1">
-                              <label className="text-slate-500 font-bold uppercase text-[9px] block mb-1">Quality Rating</label>
+                              <label className="text-mono-muted font-bold uppercase text-[9px] block mb-1">Quality Rating</label>
                               <NativeSelect
                                 value={rating}
                                 onChange={(e) => setRating(parseInt(e.target.value))}
-                                className="w-full bg-[#0a0d12] border border-[#1c212a] text-white px-2 py-1 rounded text-xs focus:outline-none"
+                                className="w-full bg-[var(--mnx-surface)] border border-[var(--mnx-border)] text-mono-text px-2 py-1 rounded text-xs focus:outline-none"
                               >
                                 <option value={5}>⭐⭐⭐⭐⭐ (5/5)</option>
                                 <option value={4}>⭐⭐⭐⭐ (4/5)</option>
@@ -1609,54 +1611,54 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
                               </NativeSelect>
                             </div>
                             <div className="col-span-2">
-                              <label className="text-slate-500 font-bold uppercase text-[9px] block mb-1">Comments / Action items</label>
-                              <input
+                              <label className="text-mono-muted font-bold uppercase text-[9px] block mb-1">Comments / Action items</label>
+                              <CrmInput
                                 type="text"
                                 value={comments}
                                 onChange={(e) => setComments(e.target.value)}
                                 placeholder="Provide audit feedback or training directives..."
-                                className="w-full bg-[#0a0d12] border border-[#1c212a] text-slate-200 px-3 py-1 rounded text-xs focus:outline-none placeholder-slate-600"
+                                className="w-full bg-[var(--mnx-surface)] border border-[var(--mnx-border)] text-mono-muted px-3 py-1 rounded text-xs focus:outline-none placeholder:text-mono-muted"
                                 required
                               />
                             </div>
                           </div>
                           
                           <div className="flex justify-end">
-                            <button
+                            <CrmButton
                               type="submit"
                               disabled={submitting}
-                              className="bg-[#F9D972] text-white hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide cursor-pointer transition-all disabled:opacity-50"
+                              className="bg-[var(--mnx-accent)] text-mono-text hover:bg-[var(--mnx-accent)] hover:shadow-[0_0_0_3px_var(--mnx-accent-soft)] px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide cursor-pointer transition-all disabled:opacity-50"
                             >
                               {submitting ? "Submitting..." : "Submit Call Audit"}
-                            </button>
+                            </CrmButton>
                           </div>
                         </form>
                       ) : (
-                        <div className="p-3 bg-[#11161d] rounded-lg border border-[#1c212a]/30 text-center text-slate-500 italic">
+                        <div className="p-3 bg-[var(--mnx-surface)] rounded-lg border border-[var(--mnx-border)]/30 text-center text-mono-muted italic">
                           Manager call reviews are read-only for representatives.
                         </div>
                       )}
 
                       {/* Logged Reviews list */}
                       <div className="space-y-2">
-                        <span className="font-bold text-slate-400 uppercase text-[9px] block">Audit Log History</span>
+                        <span className="font-bold text-mono-muted uppercase text-[9px] block">Audit Log History</span>
                         {recording.reviews && recording.reviews.length > 0 ? (
                           <div className="space-y-2.5 max-h-[200px] overflow-y-auto">
                             {recording.reviews.map((rev: any) => (
-                              <div key={rev.id} className="p-2.5 bg-[#0a0d12]/40 rounded border border-[#1c212a]/30 flex flex-col gap-1.5">
+                              <div key={rev.id} className="p-2.5 bg-[var(--mnx-surface)]/40 rounded border border-[var(--mnx-border)]/30 flex flex-col gap-1.5">
                                 <div className="flex items-center justify-between">
-                                  <span className="font-bold text-slate-300">{rev.reviewer?.name || "Manager"}</span>
-                                  <span className="text-[#D88700] font-bold">{"⭐".repeat(rev.rating)}</span>
+                                  <span className="font-bold text-mono-muted">{rev.reviewer?.name || "Manager"}</span>
+                                  <span className="text-[var(--mnx-accent)] font-bold">{"⭐".repeat(rev.rating)}</span>
                                 </div>
-                                {rev.comments && <p className="text-slate-400 text-xs font-normal pl-0.5 leading-normal">{rev.comments}</p>}
-                                <span className="text-[8px] text-slate-500 text-right pr-0.5">
+                                {rev.comments && <p className="text-mono-muted text-xs font-normal pl-0.5 leading-normal">{rev.comments}</p>}
+                                <span className="text-[8px] text-mono-muted text-right pr-0.5">
                                   {new Date(rev.createdAt).toLocaleString("en-IN")}
                                 </span>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <div className="p-4 text-center text-slate-600 italic">
+                          <div className="p-4 text-center text-mono-muted italic">
                             No manager audits logged for this call recording.
                           </div>
                         )}
@@ -1668,7 +1670,7 @@ function CallsPanel({ calls = [], isManagerOrAdmin = false, leadId }: { calls: a
             )}
           </>
         ) : (
-          <div className="p-8 text-center bg-[#0a0d12]/30 border border-[#1c212a]/40 rounded-xl text-slate-500 italic">
+          <div className="p-8 text-center bg-[var(--mnx-surface)]/30 border border-[var(--mnx-border)]/40 rounded-xl text-mono-muted italic">
             Select a call attempt from the left to view metrics.
           </div>
         )}

@@ -130,7 +130,7 @@ export function NewItemPage({ backPath = "/crm/items" }: NewItemPageProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#f7f9fb]">
+    <div className="mnx-item-workspace flex flex-col h-full bg-[var(--mnx-surface)]">
       <ItemFormHeader
         title="New Item"
         backPath={backPath}
@@ -143,32 +143,32 @@ export function NewItemPage({ backPath = "/crm/items" }: NewItemPageProps) {
           <InventoryInfoBanner />
 
           {/* Primary info card */}
-          <div className="bg-white border border-[#d9dee7] rounded p-6">
+          <div className="bg-mono-card border border-[var(--mnx-border)] rounded p-6">
             <ItemPrimaryInfoSection form={form} />
           </div>
 
           {/* Sales info card */}
-          <div className="bg-white border border-[#d9dee7] rounded p-6">
+          <div className="bg-mono-card border border-[var(--mnx-border)] rounded p-6">
             <ItemSalesInfoSection form={form} />
           </div>
 
           {/* Price List card */}
-          <div className="bg-white border border-[#d9dee7] rounded p-6">
+          <div className="bg-mono-card border border-[var(--mnx-border)] rounded p-6">
             <ItemPriceListSection form={form} />
           </div>
 
           {/* Purchase info card */}
-          <div className="bg-white border border-[#d9dee7] rounded p-6">
+          <div className="bg-mono-card border border-[var(--mnx-border)] rounded p-6">
             <ItemPurchaseInfoSection form={form} />
           </div>
 
           {/* Inventory card */}
-          <div className="bg-white border border-[#d9dee7] rounded p-6">
+          <div className="bg-mono-card border border-[var(--mnx-border)] rounded p-6">
             <ItemInventorySection form={form} />
           </div>
 
           {/* Logistics card */}
-          <div className="bg-white border border-[#d9dee7] rounded p-6">
+          <div className="bg-mono-card border border-[var(--mnx-border)] rounded p-6">
             <ItemLogisticsFieldsSection form={form} />
           </div>
         </div>

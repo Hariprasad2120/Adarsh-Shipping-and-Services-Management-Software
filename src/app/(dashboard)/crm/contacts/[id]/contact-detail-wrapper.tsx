@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton } from "@/components/monolith/crm-workspace";
+
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -52,38 +54,38 @@ export function ContactDetailWrapper({
         <div className="lg:col-span-2 space-y-6">
           
           {/* Contact Details Card */}
-          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
+          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4">
             <div className="flex items-center justify-end gap-2">
               <Link
                 href={`/crm/contacts/${contact.id}/edit`}
-                className="flex items-center gap-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-200 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                className="flex items-center gap-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] text-mono-muted px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
               >
                 <Edit2 className="size-3.5" />
                 <span>Edit</span>
               </Link>
-              <button
+              <CrmButton
                 onClick={handleDelete}
-                className="flex items-center gap-1.5 bg-[#161f28] hover:bg-red-500/10 hover:text-red-400 border border-[#1c212a] text-slate-400 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                className="flex items-center gap-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-danger-bg)] hover:text-[var(--mnx-danger)] border border-[var(--mnx-border)] text-mono-muted px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
               >
                 <Trash2 className="size-3.5" />
                 <span>Delete</span>
-              </button>
+              </CrmButton>
             </div>
-            <div className="flex items-center gap-3 border-b border-[#1c212a]/30 pb-3 mb-2">
-              <Info className="size-4.5 text-[#F9D972]" />
-              <h3 className="font-bold text-sm text-white uppercase tracking-wider">Contact Profile Details</h3>
+            <div className="flex items-center gap-3 border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
+              <Info className="size-4.5 text-[var(--mnx-accent)]" />
+              <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Contact Profile Details</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Full Name</span>
-                <span className="text-white font-medium">{contactName}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Full Name</span>
+                <span className="text-mono-text font-medium">{contactName}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Linked Company</span>
-                <span className="text-white font-medium">
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Linked Company</span>
+                <span className="text-mono-text font-medium">
                   {contact.account ? (
-                    <Link href={`/crm/customers/${contact.account.id}`} className="hover:underline text-[#F9D972] font-bold">
+                    <Link href={`/crm/customers/${contact.account.id}`} className="hover:underline text-[var(--mnx-accent)] font-bold">
                       {contact.account.name}
                     </Link>
                   ) : (
@@ -92,47 +94,47 @@ export function ContactDetailWrapper({
                 </span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Email</span>
-                <span className="text-white font-medium">{contact.email || "Not Specified"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Email</span>
+                <span className="text-mono-text font-medium">{contact.email || "Not Specified"}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Designation</span>
-                <span className="text-white font-medium">{contact.designation || "Not Specified"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Designation</span>
+                <span className="text-mono-text font-medium">{contact.designation || "Not Specified"}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Department</span>
-                <span className="text-white font-medium">{contact.department || "Not Specified"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Department</span>
+                <span className="text-mono-text font-medium">{contact.department || "Not Specified"}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Direct Line</span>
-                <span className="text-white font-medium">{contact.phone || "Not Specified"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Direct Line</span>
+                <span className="text-mono-text font-medium">{contact.phone || "Not Specified"}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Mobile Number</span>
-                <span className="text-white font-medium">{contact.mobile || "Not Specified"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Mobile Number</span>
+                <span className="text-mono-text font-medium">{contact.mobile || "Not Specified"}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Contact Owner</span>
-                <span className="text-white font-medium">{contact.owner.name}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Contact Owner</span>
+                <span className="text-mono-text font-medium">{contact.owner.name}</span>
               </div>
               <div className="md:col-span-2 space-y-1">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Office Address</span>
-                <span className="text-white font-medium">{contact.address || "Not Specified"}</span>
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Office Address</span>
+                <span className="text-mono-text font-medium">{contact.address || "Not Specified"}</span>
               </div>
             </div>
           </div>
 
           {/* Customer Account Details Card (Combined View) */}
           {contact.account && (
-            <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-4">
-              <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3 mb-2">
+            <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4">
+              <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
                 <div className="flex items-center gap-3">
-                  <Building className="size-4.5 text-[#F9D972]" />
-                  <h3 className="font-bold text-sm text-white uppercase tracking-wider">Customer Account Details</h3>
+                  <Building className="size-4.5 text-[var(--mnx-accent)]" />
+                  <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Customer Account Details</h3>
                 </div>
                 <Link
                   href={`/crm/customers/${contact.account.id}`}
-                  className="text-xs text-[#F9D972] hover:underline font-bold"
+                  className="text-xs text-[var(--mnx-accent)] hover:underline font-bold"
                 >
                   View Full Profile
                 </Link>
@@ -140,41 +142,41 @@ export function ContactDetailWrapper({
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Company Name</span>
-                  <span className="text-white font-medium">{contact.account.name}</span>
+                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Company Name</span>
+                  <span className="text-mono-text font-medium">{contact.account.name}</span>
                 </div>
                 {contact.account.customerSubType && (
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Customer Sub-Type</span>
-                    <span className="text-white font-medium">{contact.account.customerSubType}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Customer Sub-Type</span>
+                    <span className="text-mono-text font-medium">{contact.account.customerSubType}</span>
                   </div>
                 )}
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Account Email</span>
-                  <span className="text-white font-medium">{contact.account.email || "Not Specified"}</span>
+                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Account Email</span>
+                  <span className="text-mono-text font-medium">{contact.account.email || "Not Specified"}</span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Account Phone</span>
-                  <span className="text-white font-medium">{contact.account.phone || "Not Specified"}</span>
+                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Account Phone</span>
+                  <span className="text-mono-text font-medium">{contact.account.phone || "Not Specified"}</span>
                 </div>
                 {contact.account.website && (
                   <div className="space-y-1 md:col-span-2">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Website</span>
-                    <a href={contact.account.website} target="_blank" rel="noopener noreferrer" className="text-[#F9D972] hover:underline font-medium">
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Website</span>
+                    <a href={contact.account.website} target="_blank" rel="noopener noreferrer" className="text-[var(--mnx-accent)] hover:underline font-medium">
                       {contact.account.website}
                     </a>
                   </div>
                 )}
                 {contact.account.billingAddress && (
                   <div className="space-y-1 md:col-span-2">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Billing Address</span>
-                    <span className="text-slate-300 font-medium whitespace-pre-line">{contact.account.billingAddress}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Billing Address</span>
+                    <span className="text-mono-muted font-medium whitespace-pre-line">{contact.account.billingAddress}</span>
                   </div>
                 )}
                 {contact.account.shippingAddress && (
                   <div className="space-y-1 md:col-span-2">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Shipping Address</span>
-                    <span className="text-slate-300 font-medium whitespace-pre-line">{contact.account.shippingAddress}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Shipping Address</span>
+                    <span className="text-mono-muted font-medium whitespace-pre-line">{contact.account.shippingAddress}</span>
                   </div>
                 )}
               </div>
@@ -183,9 +185,9 @@ export function ContactDetailWrapper({
 
           {/* Description Section */}
           {contact.description && (
-            <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-3">
-              <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider border-b border-[#1c212a]/30 pb-2">Internal Profile Notes</h3>
-              <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
+            <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-3">
+              <h3 className="font-bold text-xs text-mono-muted uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2">Internal Profile Notes</h3>
+              <p className="text-sm text-mono-muted whitespace-pre-wrap leading-relaxed">
                 {contact.description}
               </p>
             </div>
@@ -196,57 +198,57 @@ export function ContactDetailWrapper({
         {/* Right Column: Related Lists & Timeline Activities */}
         <div className="space-y-6">
           
-          <div className="p-6 rounded-xl bg-[#0f1319] border border-[#1c212a]/50 space-y-6">
+          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-6">
             
-            <div className="flex border-b border-[#1c212a]/50 pb-1 gap-4 overflow-x-auto select-none">
-              <button
+            <div className="flex border-b border-[var(--mnx-border)]/50 pb-1 gap-4 overflow-x-auto select-none">
+              <CrmButton
                 onClick={() => setActiveTab("OVERVIEW")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "OVERVIEW" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "OVERVIEW" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Overview
-              </button>
-              <button
+              </CrmButton>
+              <CrmButton
                 onClick={() => setActiveTab("NOTES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "NOTES" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "NOTES" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Notes ({notes.length})
-              </button>
-              <button
+              </CrmButton>
+              <CrmButton
                 onClick={() => setActiveTab("ACTIVITIES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ACTIVITIES" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "ACTIVITIES" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Activities ({activities.length})
-              </button>
-              <button
+              </CrmButton>
+              <CrmButton
                 onClick={() => setActiveTab("ATTACHMENTS")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ATTACHMENTS" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "ATTACHMENTS" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Files ({attachments.length})
-              </button>
-              <button
+              </CrmButton>
+              <CrmButton
                 onClick={() => setActiveTab("TIMELINE")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "TIMELINE" ? "border-[#F9D972] text-white" : "border-transparent text-slate-400 hover:text-white"
+                  activeTab === "TIMELINE" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Audit
-              </button>
+              </CrmButton>
             </div>
 
             <div className="space-y-4">
               {activeTab === "OVERVIEW" && (
                 <div className="space-y-4 text-xs">
-                  <div className="p-3 bg-[#0a0d12]/60 rounded-lg space-y-2 border border-[#1c212a]/30">
-                    <span className="font-bold text-white block uppercase tracking-wider">Contact Status</span>
-                    <p className="text-slate-400 leading-relaxed font-medium">
+                  <div className="p-3 bg-[var(--mnx-surface)]/60 rounded-lg space-y-2 border border-[var(--mnx-border)]/30">
+                    <span className="font-bold text-mono-text block uppercase tracking-wider">Contact Status</span>
+                    <p className="text-mono-muted leading-relaxed font-medium">
                       This contact represents the {contact.isDecisionMaker ? "primary decision-making" : "liaison"} authority for {contact.account?.name || "their company"}.
                     </p>
                   </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import { HelpCircle, Search } from "lucide-react";
@@ -35,16 +37,16 @@ function FieldRow({
     <div className="flex items-start gap-4">
       <label
         htmlFor={id}
-        className="w-36 flex-shrink-0 text-xs font-medium text-[#212529] pt-1.5 flex items-center gap-1"
+        className="w-36 flex-shrink-0 text-xs font-medium text-[var(--mnx-text-strong)] pt-1.5 flex items-center gap-1"
       >
         {label}
-        {required && <span className="text-[#fe4242]">*</span>}
-        {help && <HelpCircle size={11} className="text-[#6b7280]" />}
+        {required && <span className="text-[var(--mnx-danger)]">*</span>}
+        {help && <HelpCircle size={11} className="text-[var(--mnx-text-muted)]" />}
       </label>
       <div className="flex-1 min-w-0">
         {children}
         {error && (
-          <p id={`${id}-error`} className="mt-1 text-xs text-[#fe4242]" role="alert">
+          <p id={`${id}-error`} className="mt-1 text-xs text-[var(--mnx-danger)]" role="alert">
             {error}
           </p>
         )}
@@ -54,10 +56,10 @@ function FieldRow({
 }
 
 const inputCls =
-  "w-full px-3 py-1.5 text-sm border border-[#d9dee7] rounded focus:outline-none focus:border-[#F9D972] focus:ring-1 focus:ring-[#F9D972]/20 text-[#212529] placeholder-[#6b7280] h-[34px]";
+  "w-full px-3 py-1.5 text-sm border border-[var(--mnx-border)] rounded focus:outline-none focus:border-[var(--mnx-accent)] focus:ring-1 focus:ring-[var(--mnx-accent)]/20 text-[var(--mnx-text-strong)] placeholder-[var(--mnx-text-muted)] h-[34px]";
 
 const selectCls =
-  "w-full px-3 py-1.5 text-sm border border-[#d9dee7] rounded focus:outline-none focus:border-[#F9D972] text-[#212529] bg-white h-[34px]";
+  "w-full px-3 py-1.5 text-sm border border-[var(--mnx-border)] rounded focus:outline-none focus:border-[var(--mnx-accent)] text-[var(--mnx-text-strong)] bg-mono-card h-[34px]";
 
 export function ItemPrimaryInfoSection({ form }: ItemPrimaryInfoSectionProps) {
   const {
@@ -71,7 +73,7 @@ export function ItemPrimaryInfoSection({ form }: ItemPrimaryInfoSectionProps) {
   return (
     <div className="space-y-4">
       <FieldRow label="Name" required id="item-name" error={errors.name?.message}>
-        <input
+        <CrmInput
           id="item-name"
           type="text"
           autoFocus
@@ -86,11 +88,11 @@ export function ItemPrimaryInfoSection({ form }: ItemPrimaryInfoSectionProps) {
       <FieldRow label="Type" required id="item-type" help error={errors.type?.message}>
         <div id="item-type" role="group" aria-label="Item type" className="flex items-center gap-6 pt-1.5">
           {(["Goods", "Service"] as const).map((t) => (
-            <label key={t} className="flex items-center gap-1.5 cursor-pointer text-sm text-[#212529]">
-              <input
+            <label key={t} className="flex items-center gap-1.5 cursor-pointer text-sm text-[var(--mnx-text-strong)]">
+              <CrmInput
                 type="radio"
                 value={t}
-                className="accent-[#F9D972]"
+                className="accent-[var(--mnx-accent)]"
                 {...register("type")}
               />
               {t}
@@ -111,7 +113,7 @@ export function ItemPrimaryInfoSection({ form }: ItemPrimaryInfoSectionProps) {
       </FieldRow>
 
       <FieldRow label="SKU" id="item-sku" help error={errors.sku?.message}>
-        <input
+        <CrmInput
           id="item-sku"
           type="text"
           placeholder="Enter SKU"
@@ -122,20 +124,20 @@ export function ItemPrimaryInfoSection({ form }: ItemPrimaryInfoSectionProps) {
 
       <FieldRow label="HSN/SAC Code" id="item-hsn" error={errors.hsnSac?.message}>
         <div className="flex gap-2">
-          <input
+          <CrmInput
             id="item-hsn"
             type="text"
             placeholder="Search or enter HSN/SAC"
             className={`${inputCls} flex-1`}
             {...register("hsnSac")}
           />
-          <button
+          <CrmButton
             type="button"
-            className="flex-shrink-0 w-[34px] h-[34px] flex items-center justify-center border border-[#d9dee7] rounded hover:bg-[#f3f5f8] text-[#6b7280] hover:text-[#212529] transition-colors"
+            className="flex-shrink-0 w-[34px] h-[34px] flex items-center justify-center border border-[var(--mnx-border)] rounded hover:bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)] hover:text-[var(--mnx-text-strong)] transition-colors"
             aria-label="Search HSN/SAC codes"
           >
             <Search size={14} />
-          </button>
+          </CrmButton>
         </div>
       </FieldRow>
 
@@ -147,11 +149,11 @@ export function ItemPrimaryInfoSection({ form }: ItemPrimaryInfoSectionProps) {
       >
         <div id="item-tax-pref" role="group" aria-label="Tax preference" className="flex items-center gap-6 pt-1.5">
           {(["Taxable", "Non-Taxable"] as const).map((t) => (
-            <label key={t} className="flex items-center gap-1.5 cursor-pointer text-sm text-[#212529]">
-              <input
+            <label key={t} className="flex items-center gap-1.5 cursor-pointer text-sm text-[var(--mnx-text-strong)]">
+              <CrmInput
                 type="radio"
                 value={t}
-                className="accent-[#F9D972]"
+                className="accent-[var(--mnx-accent)]"
                 {...register("taxPreference")}
               />
               {t}

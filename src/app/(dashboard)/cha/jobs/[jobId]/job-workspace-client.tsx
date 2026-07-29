@@ -1,8 +1,12 @@
 "use client";
 
-import { ChaTable } from "@/components/monolith/cha-workspace";
+import {
+  ChaDropdownSelect as DropdownSelect,
+  ChaModal as Modal,
+  ChaNativeSelect as NativeSelect,
+  ChaTable,
+} from "@/components/monolith/cha-workspace";
 import { Textarea } from "@/components/monolith/textarea";
-import { NativeSelect } from "@/components/monolith/native-select";
 import { DateInput } from "@/components/monolith/date-input";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -10,11 +14,9 @@ import { toast } from "sonner";
 import { FileText, Upload, CheckCircle2, AlertTriangle, FolderOpen, ArrowRight, ShieldCheck, AlertCircle, Plus, Trash2, Check, Database, ExternalLink, Undo2, RotateCcw, Mail, History, ChevronDown, ChevronLeft, ChevronRight, Pencil, Lock, BarChart2, CreditCard, ClipboardList, HelpCircle, Clock3, LoaderCircle, LockKeyhole, Search, Maximize2, Copy, UserRound, CalendarDays, Building2, Package, MapPin, Plane, Ship, Bookmark, RefreshCcw, Zap, Boxes, Moon, X, } from "lucide-react";
 import { Button } from "@/components/monolith/button";
 import { Badge } from "@/components/monolith/badge";
-import { DropdownSelect } from "@/components/monolith/dropdown-select";
 import { FileUploadField } from "@/components/monolith/file-upload-field";
 import { Input } from "@/components/monolith/input";
 import { WorkspaceSectionHeading } from "@/components/monolith/workspace";
-import { Modal } from "@/components/monolith/modal";
 import * as actions from "@/modules/cha/actions";
 import { DoValidityPanel } from "./do-validity-panel";
 import {
@@ -517,7 +519,7 @@ function WarningNoteToggle({
         <AlertTriangle size={14} strokeWidth={2.2} />
       </Button>
       <div
-        className={`mnx-bg-surface mnx-border mnx-border-warning absolute right-0 top-full z-20 mt-2 w-[20rem] max-w-[calc(100vw-2rem)] rounded-xl border mnx-border-warning mnx-bg-surface px-4 py-3 mnx-shadow-panel transition-all duration-200 ${open
+        className={`mnx-floating-surface mnx-cha-popover absolute right-0 top-full z-20 mt-2 w-[20rem] max-w-[calc(100vw-2rem)] px-4 py-3 transition-all duration-200 ${open
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none translate-y-1 opacity-0 group-hover/warning-note:pointer-events-auto group-hover/warning-note:translate-y-0 group-hover/warning-note:opacity-100"
           }`}
@@ -552,7 +554,7 @@ function InfoNoteToggle({
         <AlertCircle size={14} strokeWidth={2.2} />
       </Button>
       <div
-        className={`mnx-bg-surface mnx-border mnx-border-accent absolute right-0 top-full z-20 mt-2 w-[20rem] max-w-[calc(100vw-2rem)] rounded-xl border mnx-border-accent mnx-bg-surface px-4 py-3 mnx-shadow-panel transition-all duration-200 ${open
+        className={`mnx-floating-surface mnx-cha-popover absolute right-0 top-full z-20 mt-2 w-[20rem] max-w-[calc(100vw-2rem)] px-4 py-3 transition-all duration-200 ${open
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none translate-y-1 opacity-0 group-hover/info-note:pointer-events-auto group-hover/info-note:translate-y-0 group-hover/info-note:opacity-100"
           }`}

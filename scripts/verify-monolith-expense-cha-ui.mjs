@@ -117,6 +117,11 @@ for (const component of [
   "ChaToolbar",
   "ChaTabs",
   "ChaTable",
+  "ChaModal",
+  "ChaDropdownSelect",
+  "ChaNativeSelect",
+  "ChaFilterMenu",
+  "ChaWarningIndicatorPopover",
   "ChaDialogLayer",
   "ChaLoadingState",
   "ChaErrorState",
@@ -153,6 +158,11 @@ const forbiddenPatterns = [
   {
     pattern: /@\/components\/(?:data-table|module-home)/,
     label: "legacy shared visual import",
+  },
+  {
+    pattern:
+      /@\/components\/monolith\/(?:modal|dropdown-select|native-select|filter-menu|warning-indicator-popover)/,
+    label: "unscoped popup or dropdown import",
   },
   {
     pattern: /<(?:motion\.)?(?:button|input|select|textarea|table)\b/,
@@ -236,7 +246,10 @@ for (const [sourceName, signals] of Object.entries({
 }
 
 const styles = read("src/styles/monolith-system.css");
+const tokens = read("src/styles/monolith-tokens.css");
 for (const className of [
+  ".mnx-floating-surface",
+  ".mnx-floating-menu",
   ".mnx-dialog-layer",
   ".mnx-dialog-surface",
   ".mnx-dialog-surface-workspace",
@@ -246,6 +259,12 @@ for (const className of [
   ".mnx-cha-section",
   ".mnx-cha-tabs",
   ".mnx-cha-dialog",
+  ".mnx-cha-dialog-control",
+  ".mnx-cha-native-select",
+  ".mnx-cha-menu",
+  ".mnx-cha-popover",
+  ".mnx-cha-autocomplete",
+  ".mnx-cha-success-dialog",
 ]) {
   assert(styles.includes(className), `Missing shared style ${className}.`);
 }
@@ -254,6 +273,33 @@ assert(
     styles.includes("overscroll-behavior: contain"),
   "Shared dialogs are missing the inset viewport height or scroll containment contract.",
 );
+for (const token of [
+  "--mn-color-glass-surface:",
+  "--mn-color-glass-surface-strong:",
+  "--mn-color-glass-border:",
+  "--mn-color-overlay:",
+  "--mn-shadow-floating:",
+  "--mn-gradient-glass:",
+]) {
+  assert(
+    tokens.split(token).length - 1 === 4,
+    `${token} is not defined once for every Monolith theme.`,
+  );
+}
+for (const signal of [
+  'html[data-dashboard-shell="true"]',
+  "background-image: var(--mnx-glass-gradient)",
+  "backdrop-filter: var(--mnx-glass-filter)",
+  "[data-sonner-toast]",
+  ".mnx-profile-popover",
+  ".mnx-command-dialog",
+  ".mnx-select-content",
+]) {
+  assert(
+    styles.includes(signal),
+    `The centralized floating-surface contract is missing ${signal}.`,
+  );
+}
 assert(
   !styles.includes(".mnx-cha-dialog-layer") &&
     !styles.includes(".mnx-cha-dialog-workspace"),
@@ -262,6 +308,11 @@ assert(
 
 const dialogSource = read("src/components/monolith/workspace-dialog.tsx");
 const chaWorkspaceSource = read("src/components/monolith/cha-workspace.tsx");
+const dropdownSource = read("src/components/monolith/dropdown-menu.tsx");
+const warningSource = read(
+  "src/components/monolith/warning-indicator-popover.tsx",
+);
+const monaSource = read("src/components/mona/mona-chat.tsx");
 for (const signal of [
   "export function WorkspaceDialogLayer",
   "FOCUSABLE_SELECTOR",
@@ -277,8 +328,65 @@ for (const signal of [
 }
 assert(
   chaWorkspaceSource.includes("<WorkspaceDialogLayer") &&
+    chaWorkspaceSource.includes("<Modal") &&
+    chaWorkspaceSource.includes("<DropdownSelect") &&
+    chaWorkspaceSource.includes("<FilterMenu") &&
+    chaWorkspaceSource.includes("<WarningIndicatorPopover") &&
     !chaWorkspaceSource.includes("createPortal"),
-  "CHA dialogs are not delegated to the centralized popup layer.",
+  "CHA floating surfaces are not delegated to the centralized popup and menu layers.",
+);
+for (const signal of [
+  "mnx-dialog mnx-cha-create-dialog",
+  "mnx-dialog-content mnx-cha-create-dialog-content",
+  "mnx-floating-surface mnx-cha-menu mnx-cha-autocomplete",
+]) {
+  assert(
+    behaviorSources.createJob.includes(signal),
+    `Create-job dialog is missing the reference composition signal ${signal}.`,
+  );
+}
+assert(
+  !behaviorSources.createJob.includes("CreateJobBenefit") &&
+    !behaviorSources.createJob.includes(
+      "relative overflow-hidden border-b mnx-border-accent",
+    ),
+  "Create-job dialog still contains the obsolete promotional popup treatment.",
+);
+for (const [sourceName, source, signal] of [
+  [
+    "WorkspaceDialog",
+    dialogSource,
+    "mnx-floating-surface",
+  ],
+  [
+    "dropdown menu",
+    dropdownSource,
+    "mnx-floating-surface mnx-floating-menu",
+  ],
+  [
+    "warning popover",
+    warningSource,
+    "mnx-floating-surface mnx-warning-popover",
+  ],
+  [
+    "Mona tooltip",
+    monaSource,
+    "mnx-floating-surface mnx-floating-tooltip",
+  ],
+  [
+    "Mona panel",
+    monaSource,
+    "mnx-floating-surface mnx-mona-panel",
+  ],
+]) {
+  assert(
+    source.includes(signal),
+    `${sourceName} is not using the centralized tinted-glass surface.`,
+  );
+}
+assert(
+  !dropdownSource.includes("bg-[var(--card)]"),
+  "Dropdown menu still references the undefined legacy card token.",
 );
 assert(
   styles.includes("@media (max-width: 70rem)") &&
@@ -393,6 +501,126 @@ for (const requiredEntry of [
   );
 }
 
+const glassArchivePath = path.join(
+  repositoryRoot,
+  "OLD UI code",
+  "legacy-ui-before-monolith-glass-tint-20260729-384cfad.zip",
+);
+const expectedGlassArchiveSize = 51_478;
+const expectedGlassArchiveHash =
+  "9FA4F7F7F253149910A4A61151B57F04CBD8675651D15C50F0C52376195A5BB5";
+
+assert(
+  existsSync(glassArchivePath),
+  `Missing tinted-glass correction archive ${glassArchivePath}.`,
+);
+assert(
+  statSync(glassArchivePath).size === expectedGlassArchiveSize,
+  "Tinted-glass correction archive size does not match.",
+);
+const glassHash = createHash("sha256");
+for await (const chunk of createReadStream(glassArchivePath)) {
+  glassHash.update(chunk);
+}
+assert(
+  glassHash.digest("hex").toUpperCase() === expectedGlassArchiveHash,
+  "Tinted-glass correction archive checksum does not match.",
+);
+
+const glassListing = spawnSync("tar", ["-tf", glassArchivePath], {
+  cwd: repositoryRoot,
+  encoding: "utf8",
+});
+assert(
+  glassListing.status === 0,
+  glassListing.stderr || "Unable to list tinted-glass correction archive.",
+);
+const glassArchiveFiles = glassListing.stdout
+  .split(/\r?\n/)
+  .filter((entry) => entry && !entry.endsWith("/"));
+assert(
+  glassArchiveFiles.length === 7,
+  `Expected 7 tinted-glass correction sources, found ${glassArchiveFiles.length}.`,
+);
+for (const requiredEntry of [
+  "src/styles/monolith-tokens.css",
+  "src/styles/monolith-system.css",
+  "src/components/monolith/workspace-dialog.tsx",
+  "src/components/monolith/dropdown-menu.tsx",
+  "src/components/monolith/warning-indicator-popover.tsx",
+  "src/components/mona/mona-chat.tsx",
+  "src/components/cha/create-job-dialog.tsx",
+]) {
+  assert(
+    glassArchiveFiles.includes(requiredEntry),
+    `Tinted-glass correction archive is missing ${requiredEntry}.`,
+  );
+}
+
+const chaDialogReferenceArchivePath = path.join(
+  repositoryRoot,
+  "OLD UI code",
+  "legacy-ui-before-cha-dialog-reference-20260729-fd1cbe7.zip",
+);
+const expectedChaDialogReferenceArchiveSize = 197_905;
+const expectedChaDialogReferenceArchiveHash =
+  "EBFB1DB5B9C49479391B94549DC047DABAA699AA13FDF4F10B3635CF638E4F0F";
+
+assert(
+  existsSync(chaDialogReferenceArchivePath),
+  `Missing CHA dialog reference archive ${chaDialogReferenceArchivePath}.`,
+);
+assert(
+  statSync(chaDialogReferenceArchivePath).size ===
+    expectedChaDialogReferenceArchiveSize,
+  "CHA dialog reference archive size does not match.",
+);
+const chaDialogReferenceHash = createHash("sha256");
+for await (const chunk of createReadStream(chaDialogReferenceArchivePath)) {
+  chaDialogReferenceHash.update(chunk);
+}
+assert(
+  chaDialogReferenceHash.digest("hex").toUpperCase() ===
+    expectedChaDialogReferenceArchiveHash,
+  "CHA dialog reference archive checksum does not match.",
+);
+
+const chaDialogReferenceListing = spawnSync(
+  "tar",
+  ["-tf", chaDialogReferenceArchivePath],
+  {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+  },
+);
+assert(
+  chaDialogReferenceListing.status === 0,
+  chaDialogReferenceListing.stderr ||
+    "Unable to list CHA dialog reference archive.",
+);
+const chaDialogReferenceArchiveFiles = chaDialogReferenceListing.stdout
+  .split(/\r?\n/)
+  .filter((entry) => entry && !entry.endsWith("/"));
+assert(
+  chaDialogReferenceArchiveFiles.length === 22,
+  `Expected 22 CHA dialog reference sources, found ${chaDialogReferenceArchiveFiles.length}.`,
+);
+for (const requiredEntry of [
+  "src/components/cha/create-job-dialog.tsx",
+  "src/components/monolith/cha-workspace.tsx",
+  "src/components/monolith/dropdown-select.tsx",
+  "src/components/monolith/filter-menu.tsx",
+  "src/components/monolith/modal.tsx",
+  "src/components/monolith/warning-indicator-popover.tsx",
+  "src/styles/monolith-tokens.css",
+  "src/styles/monolith-system.css",
+]) {
+  assert(
+    chaDialogReferenceArchiveFiles.includes(requiredEntry),
+    `CHA dialog reference archive is missing ${requiredEntry}.`,
+  );
+}
+
 console.log(
-  `Verified ${routes.length} Expense/CHA routes (${chaRoutes.length} CHA, ${expenseRoutes.length} Expense), the centralized popup contract, protected workflows, the 37-file legacy archive, and the 5-file popup correction archive.`,
+  `Verified ${routes.length} Expense/CHA routes (${chaRoutes.length} CHA, ${expenseRoutes.length} Expense), the centralized CHA popup/dropdown reference contract, protected workflows, and all four legacy/correction archives.`,
 );

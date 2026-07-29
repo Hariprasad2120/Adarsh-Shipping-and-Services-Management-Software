@@ -1,11 +1,13 @@
 "use client";
 
+import { CrmButton, CrmDialog, CrmInput } from "@/components/monolith/crm-workspace";
+
 import { DateInput } from "@/components/monolith/date-input";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { convertLeadAction } from "@/modules/crm/actions";
-import { X, RefreshCcw, Landmark, AlertCircle } from "lucide-react";
+import { Landmark, AlertCircle } from "lucide-react";
 
 interface ConvertModalProps {
   leadId: string;
@@ -40,29 +42,35 @@ export function ConvertModal({ leadId, leadName, companyName, onClose }: Convert
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-[#0f1319] border border-[#1c212a] rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[#1c212a]/50 bg-[#0c0f14]">
-          <div className="flex items-center gap-2">
-            <RefreshCcw className="size-4.5 text-[#F9D972] animate-spin-slow" />
-            <span className="font-bold text-sm text-white uppercase tracking-wider">Convert Lead</span>
-          </div>
-          <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white cursor-pointer">
-            <X className="size-4" />
-          </button>
+    <CrmDialog
+      open
+      onClose={onClose}
+      title="Convert lead"
+      description="Create the customer, contact, and optional commercial opportunity."
+      size="default"
+      footer={
+        <div className="flex justify-end gap-3">
+          <CrmButton type="button" onClick={onClose} variant="secondary">
+            Cancel
+          </CrmButton>
+          <CrmButton
+            type="submit"
+            form="convert-lead-form"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Converting..." : "Convert lead"}
+          </CrmButton>
         </div>
-
-        {/* Form Body */}
-        <form onSubmit={handleConvert} className="p-6 space-y-5">
-          <div className="p-3 bg-[#161f28]/40 border border-[#1c212a]/50 rounded-lg flex items-start gap-3">
-            <AlertCircle className="size-5 text-[#F9D972] shrink-0 mt-0.5" />
-            <div className="text-xs text-slate-300 leading-relaxed">
-              Converting lead <strong className="text-white">{leadName}</strong> will establish:
+      }
+    >
+        <form id="convert-lead-form" onSubmit={handleConvert} className="space-y-5">
+          <div className="p-3 bg-[var(--mnx-surface)]/40 border border-[var(--mnx-border)]/50 rounded-lg flex items-start gap-3">
+            <AlertCircle className="size-5 text-[var(--mnx-accent)] shrink-0 mt-0.5" />
+            <div className="text-xs text-mono-muted leading-relaxed">
+              Converting lead <strong className="text-mono-text">{leadName}</strong> will establish:
               <ul className="list-disc pl-4 mt-1.5 space-y-1">
-                <li>A new Customer Account named <strong className="text-white">{companyName}</strong></li>
-                <li>A Contact Profile for <strong className="text-white">{leadName}</strong></li>
+                <li>A new Customer Account named <strong className="text-mono-text">{companyName}</strong></li>
+                <li>A Contact Profile for <strong className="text-mono-text">{leadName}</strong></li>
                 <li>Transfer of all notes, file attachments, and pending follow-up activities</li>
               </ul>
             </div>
@@ -70,43 +78,43 @@ export function ConvertModal({ leadId, leadName, companyName, onClose }: Convert
 
           {/* Deal Toggle */}
           <div className="flex items-center gap-2.5 py-1">
-            <input
+            <CrmInput
               type="checkbox"
               id="create-deal-checkbox"
               checked={createDeal}
               onChange={(e) => setCreateDeal(e.target.checked)}
-              className="size-4 rounded border-[#1c212a] bg-[#0a0d12] text-[#F9D972] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+              className="size-4 rounded border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-accent)] focus:ring-0 focus:ring-offset-0 cursor-pointer"
             />
-            <label htmlFor="create-deal-checkbox" className="text-xs font-bold text-white uppercase tracking-wide cursor-pointer select-none">
+            <label htmlFor="create-deal-checkbox" className="text-xs font-bold text-mono-text uppercase tracking-wide cursor-pointer select-none">
               Create a new Deal for this account
             </label>
           </div>
 
           {/* Deal fields if checked */}
           {createDeal && (
-            <div className="p-4 bg-[#0a0d12] border border-[#1c212a] rounded-lg space-y-4 animate-in slide-in-from-top-2 duration-150">
-              <div className="flex items-center gap-2 border-b border-[#1c212a]/30 pb-2 mb-1">
-                <Landmark className="size-4 text-emerald-400" />
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Deal Information</span>
+            <div className="p-4 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg space-y-4 animate-in slide-in-from-top-2 duration-150">
+              <div className="flex items-center gap-2 border-b border-[var(--mnx-border)]/30 pb-2 mb-1">
+                <Landmark className="size-4 text-[var(--mnx-success)]" />
+                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wide">Deal Information</span>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Amount (INR)</label>
-                  <input
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Amount (INR)</label>
+                  <CrmInput
                     type="number"
                     placeholder="e.g. 50000"
                     value={dealAmount}
                     onChange={(e) => setDealAmount(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0f1319] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                     required={createDeal}
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Close Date</label>
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Close Date</label>
                   <DateInput
                     value={dealCloseDate}
                     onChange={(e) => setDealCloseDate(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[#0f1319] border border-[#1c212a] rounded text-xs text-white focus:outline-none focus:border-[#F9D972]"
+                    className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                     required={createDeal}
                   />
                 </div>
@@ -114,26 +122,7 @@ export function ConvertModal({ leadId, leadName, companyName, onClose }: Convert
             </div>
           )}
 
-          {/* Action Footer */}
-          <div className="flex justify-end gap-3 pt-3 border-t border-[#1c212a]/30">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-300 rounded-lg text-xs font-semibold cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex items-center gap-2 px-5 py-2 bg-[#F9D972] hover:bg-[#00b0a3] text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
-            >
-              {isSubmitting ? "Converting..." : "Convert Lead"}
-            </button>
-          </div>
-
         </form>
-      </div>
-    </div>
+    </CrmDialog>
   );
 }

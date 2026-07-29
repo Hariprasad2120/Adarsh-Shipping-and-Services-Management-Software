@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmInput, CrmTextarea } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import type { UseFormReturn } from "react-hook-form";
@@ -14,10 +16,10 @@ const SALES_ACCOUNTS = [
 ];
 
 const inputCls =
-  "w-full px-3 py-1.5 text-sm border border-[#d9dee7] rounded focus:outline-none focus:border-[#F9D972] focus:ring-1 focus:ring-[#F9D972]/20 text-[#212529] placeholder-[#6b7280] h-[34px]";
+  "w-full px-3 py-1.5 text-sm border border-[var(--mnx-border)] rounded focus:outline-none focus:border-[var(--mnx-accent)] focus:ring-1 focus:ring-[var(--mnx-accent)]/20 text-[var(--mnx-text-strong)] placeholder-[var(--mnx-text-muted)] h-[34px]";
 
 const selectCls =
-  "w-full px-3 py-1.5 text-sm border border-[#d9dee7] rounded focus:outline-none focus:border-[#F9D972] text-[#212529] bg-white h-[34px]";
+  "w-full px-3 py-1.5 text-sm border border-[var(--mnx-border)] rounded focus:outline-none focus:border-[var(--mnx-accent)] text-[var(--mnx-text-strong)] bg-mono-card h-[34px]";
 
 interface FieldRowProps {
   label: string;
@@ -30,14 +32,14 @@ interface FieldRowProps {
 function FieldRow({ label, required, id, error, children }: FieldRowProps) {
   return (
     <div className="flex items-start gap-4">
-      <label htmlFor={id} className="w-36 flex-shrink-0 text-xs font-medium text-[#212529] pt-1.5">
+      <label htmlFor={id} className="w-36 flex-shrink-0 text-xs font-medium text-[var(--mnx-text-strong)] pt-1.5">
         {label}
-        {required && <span className="text-[#fe4242]"> *</span>}
+        {required && <span className="text-[var(--mnx-danger)]"> *</span>}
       </label>
       <div className="flex-1 min-w-0">
         {children}
         {error && (
-          <p className="mt-1 text-xs text-[#fe4242]" role="alert">
+          <p className="mt-1 text-xs text-[var(--mnx-danger)]" role="alert">
             {error}
           </p>
         )}
@@ -58,16 +60,16 @@ export function ItemSalesInfoSection({ form }: ItemSalesInfoSectionProps) {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-xs font-semibold text-[#212529] uppercase tracking-wide border-b border-[#d9dee7] pb-2">
+      <h3 className="text-xs font-semibold text-[var(--mnx-text-strong)] uppercase tracking-wide border-b border-[var(--mnx-border)] pb-2">
         Sales Information
       </h3>
 
       <FieldRow label="Selling Price" id="item-selling-price" error={errors.sellingPrice?.message}>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#6b7280] font-medium select-none">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--mnx-text-muted)] font-medium select-none">
             ₹
           </span>
-          <input
+          <CrmInput
             id="item-selling-price"
             type="number"
             step="0.01"
@@ -96,11 +98,11 @@ export function ItemSalesInfoSection({ form }: ItemSalesInfoSectionProps) {
       </FieldRow>
 
       <FieldRow label="Description" id="item-sales-desc" error={errors.salesDescription?.message}>
-        <textarea
+        <CrmTextarea
           id="item-sales-desc"
           rows={3}
           placeholder="Add a description for sales..."
-          className="w-full px-3 py-2 text-sm border border-[#d9dee7] rounded focus:outline-none focus:border-[#F9D972] focus:ring-1 focus:ring-[#F9D972]/20 text-[#212529] placeholder-[#6b7280] resize-none"
+          className="w-full px-3 py-2 text-sm border border-[var(--mnx-border)] rounded focus:outline-none focus:border-[var(--mnx-accent)] focus:ring-1 focus:ring-[var(--mnx-accent)]/20 text-[var(--mnx-text-strong)] placeholder-[var(--mnx-text-muted)] resize-none"
           {...register("salesDescription")}
         />
       </FieldRow>

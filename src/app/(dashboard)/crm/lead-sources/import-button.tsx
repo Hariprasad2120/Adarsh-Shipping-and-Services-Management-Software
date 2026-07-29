@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmDialogLayer } from "@/components/monolith/crm-workspace";
+
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Play, Loader2, Monitor, Terminal } from "lucide-react";
@@ -97,80 +99,85 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
       <div className="flex items-center gap-2">
         {/* Show Viewport if importer is running */}
         {active && (
-          <button
+          <CrmButton
             onClick={() => setShowViewport(true)}
-            className="flex items-center gap-1.5 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-[#F9D972] px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer mr-1 animate-pulse"
+            className="flex items-center gap-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] text-[var(--mnx-accent)] px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer mr-1 animate-pulse"
             title="Show live scraper progress window"
           >
             <Monitor className="size-3.5" />
             <span>Show Viewport</span>
-          </button>
+          </CrmButton>
         )}
 
-        <button
+        <CrmButton
           onClick={handleImport}
           disabled={isPending}
-          className="flex items-center gap-2 bg-[#F9D972] hover:bg-[#00b0a3] disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
+          className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
           title="Trigger manual browser scraper run"
         >
           {runningImport ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (
-            <Play className="size-4 text-white" />
+            <Play className="size-4 text-mono-text" />
           )}
           <span>{runningImport ? "Running Import..." : isImporting ? "Import Active..." : "Run Import Now"}</span>
-        </button>
+        </CrmButton>
       </div>
 
       {/* Embedded Live Browser Viewport Modal */}
       {showViewport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-5xl bg-[#0a0d12] border border-[#1c212a] rounded-xl shadow-2xl shadow-black/80 overflow-hidden flex flex-col max-h-[85vh]">
+        <CrmDialogLayer
+          open={showViewport}
+          onClose={() => setShowViewport(false)}
+          size="workspace"
+          labelledBy="justdial-live-viewport-title"
+        >
+          <div className="relative w-full max-w-5xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-xl shadow-2xl shadow-[var(--mnx-shadow)] overflow-hidden flex flex-col max-h-[85vh]">
             
             {/* Mock Browser Header */}
-            <div className="flex items-center justify-between bg-[#0f1319] border-b border-[#1c212a] px-4 py-3 shrink-0">
+            <div className="flex items-center justify-between bg-[var(--mnx-surface)] border-b border-[var(--mnx-border)] px-4 py-3 shrink-0">
               <div className="flex items-center gap-6 w-full">
                 {/* Window Dots */}
                 <div className="flex gap-1.5 shrink-0">
-                  <span className="size-3 rounded-full bg-red-500/80" />
-                  <span className="size-3 rounded-full bg-yellow-500/80" />
-                  <span className="size-3 rounded-full bg-green-500/80" />
+                  <span className="size-3 rounded-full bg-[var(--mnx-danger-bg)]" />
+                  <span className="size-3 rounded-full bg-[var(--mnx-warning-bg)]" />
+                  <span className="size-3 rounded-full bg-[var(--mnx-success-bg)]" />
                 </div>
                 
                 {/* Mock Address Bar */}
-                <div className="flex items-center gap-2 bg-[#0a0d12] border border-[#1c212a] px-3 py-1 rounded-lg text-xs text-slate-400 w-full max-w-2xl font-mono select-none">
-                  <Loader2 className="size-3 text-[#F9D972] animate-spin shrink-0" />
-                  <span className="truncate">{status?.currentUrl || "https://wap.justdial.com/analytics/enquiries"}</span>
+                <div className="flex items-center gap-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] px-3 py-1 rounded-lg text-xs text-mono-muted w-full max-w-2xl font-mono select-none">
+                  <Loader2 className="size-3 text-[var(--mnx-accent)] animate-spin shrink-0" />
+                  <span id="justdial-live-viewport-title" className="truncate">{status?.currentUrl || "https://wap.justdial.com/analytics/enquiries"}</span>
                 </div>
               </div>
 
               {/* Close/Minimize */}
-              <button
+              <CrmButton
                 onClick={() => setShowViewport(false)}
-                className="ml-4 px-3 py-1 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-200 hover:text-white rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0"
+                className="ml-4 px-3 py-1 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] text-mono-muted hover:text-mono-text rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0"
               >
                 Minimize Viewport
-              </button>
+              </CrmButton>
             </div>
 
             {/* Viewport & Logs Panel Split */}
-            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#1c212a] overflow-hidden grow">
+            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[var(--mnx-border)] overflow-hidden grow">
               
               {/* Left Side: Live Screenshot Viewport (2 cols) */}
-              <div className="md:col-span-2 p-4 flex flex-col justify-between bg-[#07090d] overflow-y-auto">
+              <div className="md:col-span-2 p-4 flex flex-col justify-between bg-[var(--mnx-surface)] overflow-y-auto">
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between text-xs text-slate-400">
+                  <div className="flex items-center justify-between text-xs text-mono-muted">
                     <span className="flex items-center gap-1.5">
-                      <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="size-2 rounded-full bg-[var(--mnx-success-bg)] animate-pulse" />
                       Live Headless Scraper Stream
                     </span>
-                    <span className="font-mono text-slate-500">
+                    <span className="font-mono text-mono-muted">
                       {status?.timestamp ? `Updated: ${new Date(status.timestamp).toLocaleTimeString()}` : "Initializing..."}
                     </span>
                   </div>
 
                   {/* Screenshot Image Frame */}
-                  <div className="border border-[#1c212a] rounded-lg bg-[#0f1319] overflow-hidden aspect-video relative flex items-center justify-center shadow-inner group">
+                  <div className="border border-[var(--mnx-border)] rounded-lg bg-[var(--mnx-surface)] overflow-hidden aspect-video relative flex items-center justify-center shadow-inner group">
                     {screenshotUrl ? (
                       <img
                         src={screenshotUrl}
@@ -184,8 +191,8 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
                         }}
                       />
                     ) : (
-                      <div className="text-center space-y-2 text-slate-500">
-                        <Loader2 className="size-8 animate-spin mx-auto text-[#F9D972]" />
+                      <div className="text-center space-y-2 text-mono-muted">
+                        <Loader2 className="size-8 animate-spin mx-auto text-[var(--mnx-accent)]" />
                         <p className="text-xs">Connecting to headless browser...</p>
                       </div>
                     )}
@@ -193,16 +200,16 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
                 </div>
 
                 {/* Scraper Status details */}
-                <div className="mt-4 p-3 bg-[#0f1319] rounded-lg border border-[#1c212a] space-y-2 shrink-0">
-                  <div className="flex items-center justify-between text-xs font-bold text-white">
+                <div className="mt-4 p-3 bg-[var(--mnx-surface)] rounded-lg border border-[var(--mnx-border)] space-y-2 shrink-0">
+                  <div className="flex items-center justify-between text-xs font-bold text-mono-text">
                     <span>STATUS: {status?.status || "RUNNING"}</span>
                     <span>
                       Ingesting: {status?.processedCount ?? 0} / {status?.totalCount ?? 0}
                     </span>
                   </div>
-                  <div className="w-full bg-[#0a0d12] rounded-full h-2 overflow-hidden border border-[#1c212a]">
+                  <div className="w-full bg-[var(--mnx-surface)] rounded-full h-2 overflow-hidden border border-[var(--mnx-border)]">
                     <div
-                      className="bg-[#F9D972] h-full transition-all duration-500"
+                      className="bg-[var(--mnx-accent)] h-full transition-all duration-500"
                       style={{
                         width: `${
                           status?.totalCount > 0
@@ -212,31 +219,31 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
                       }}
                     />
                   </div>
-                  <p className="text-xs text-slate-300 truncate">
-                    <span className="text-[#F9D972] font-semibold">Active Step:</span> {status?.currentStep || "Booting RPA worker..."}
+                  <p className="text-xs text-mono-muted truncate">
+                    <span className="text-[var(--mnx-accent)] font-semibold">Active Step:</span> {status?.currentStep || "Booting RPA worker..."}
                   </p>
                 </div>
               </div>
 
               {/* Right Side: Log Console (1 col) */}
-              <div className="p-4 bg-[#0a0d12] flex flex-col justify-between overflow-hidden">
+              <div className="p-4 bg-[var(--mnx-surface)] flex flex-col justify-between overflow-hidden">
                 <div className="space-y-3 flex flex-col overflow-hidden h-full">
-                  <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
-                    <Terminal className="size-4 text-[#F9D972]" />
+                  <div className="flex items-center gap-1.5 text-xs text-mono-muted shrink-0">
+                    <Terminal className="size-4 text-[var(--mnx-accent)]" />
                     <span className="font-semibold uppercase tracking-wider">Console Output Logs</span>
                   </div>
 
                   {/* Terminal Box */}
-                  <div className="bg-[#05070a] border border-[#1c212a] p-3 rounded-lg font-mono text-[11px] text-emerald-400 overflow-y-auto space-y-1.5 grow leading-relaxed min-h-[180px] md:max-h-full shadow-inner select-text">
+                  <div className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)] p-3 rounded-lg font-mono text-[11px] text-[var(--mnx-success)] overflow-y-auto space-y-1.5 grow leading-relaxed min-h-[180px] md:max-h-full shadow-inner select-text">
                     {status?.logs && status.logs.length > 0 ? (
                       status.logs.map((log: string, idx: number) => (
                         <div key={idx} className="whitespace-pre-wrap select-text">
-                          <span className="text-slate-600 select-none mr-1.5">&gt;</span>
+                          <span className="text-mono-muted select-none mr-1.5">&gt;</span>
                           {log}
                         </div>
                       ))
                     ) : (
-                      <div className="text-slate-600 italic">Initializing console logs output buffer...</div>
+                      <div className="text-mono-muted italic">Initializing console logs output buffer...</div>
                     )}
                   </div>
                 </div>
@@ -245,7 +252,7 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
             </div>
 
           </div>
-        </div>
+        </CrmDialogLayer>
       )}
     </>
   );

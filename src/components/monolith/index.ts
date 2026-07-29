@@ -4,6 +4,7 @@ export * from "./badge";
 export * from "./button";
 export * from "./card";
 export * from "./cha-workspace";
+export * from "./crm-workspace";
 export * from "./date-input";
 export * from "./dropdown-menu";
 export * from "./dropdown-select";

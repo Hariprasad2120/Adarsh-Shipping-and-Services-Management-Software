@@ -1,12 +1,14 @@
 "use client";
 
+import { CrmButton, CrmInput, CrmTextarea } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import { DateInput } from "@/components/monolith/date-input";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createDealAction, updateDealAction } from "@/modules/crm/actions";
-import { Save, Landmark, Building, User, Calendar, Tag, ShieldAlert } from "lucide-react";
+import { Save, Landmark, Building, User, Calendar, Tag } from "lucide-react";
 
 interface Option {
   id: string;
@@ -76,33 +78,33 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
   const logisticsCategories = ["Import", "Export"];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl bg-[#0f1319] border border-[#1c212a]/60 rounded-xl p-6 shadow-2xl">
+    <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/60 rounded-xl p-6 shadow-2xl">
       {/* ─── SECTION: BASIC INFO ────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <Landmark className="size-4 text-[#F9D972]" />
+        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+          <Landmark className="size-4 text-[var(--mnx-accent)]" />
           <span>Deal Information</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Deal Name *</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Deal Name *</label>
+            <CrmInput
               type="text"
               name="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Adarsh Freight Deal"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Owner *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Owner *</label>
             <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             >
               <option value="">Select Owner</option>
@@ -112,11 +114,11 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Account (Company) *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Account (Company) *</label>
             <NativeSelect
               name="accountId"
               defaultValue={initialData?.accountId || ""}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             >
               <option value="">Link Account</option>
@@ -126,11 +128,11 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Primary Contact</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Primary Contact</label>
             <NativeSelect
               name="contactId"
               defaultValue={initialData?.contactId || ""}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               <option value="">Link Contact</option>
               {contacts.map((c) => (
@@ -143,19 +145,19 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
 
       {/* ─── SECTION: STAGING & METRICS ───────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <Tag className="size-4 text-[#F9D972]" />
+        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+          <Tag className="size-4 text-[var(--mnx-accent)]" />
           <span>Stage & Valuation</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Deal Stage</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Deal Stage</label>
             <NativeSelect
               name="stage"
               value={stage}
               onChange={(e) => handleStageChange(e.target.value)}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {stagesList.map((st) => (
                 <option key={st} value={st}>{st.replace("_", " ")}</option>
@@ -163,39 +165,39 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Deal Value (INR)</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Deal Value (INR)</label>
+            <CrmInput
               type="number"
               name="amount"
               defaultValue={initialData?.amount || ""}
               placeholder="e.g. 150000"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Probability (%)</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Probability (%)</label>
+            <CrmInput
               type="number"
               value={probability}
               onChange={(e) => setProbability(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
               placeholder="e.g. 40"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Expected Close Date</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Expected Close Date</label>
             <DateInput
               name="expectedCloseDate"
               defaultValue={initialData?.expectedCloseDate ? new Date(initialData.expectedCloseDate).toISOString().split("T")[0] : ""}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Next Follow Up Date</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Next Follow Up Date</label>
             <DateInput
               name="nextFollowUpDate"
               defaultValue={initialData?.nextFollowUpDate ? new Date(initialData.nextFollowUpDate).toISOString().split("T")[0] : ""}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
         </div>
@@ -203,18 +205,18 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
 
       {/* ─── SECTION: LOGISTICS & CATEGORIES ────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <Landmark className="size-4 text-[#F9D972]" />
+        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+          <Landmark className="size-4 text-[var(--mnx-accent)]" />
           <span>Logistics & Shipping Details</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Service Type</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Service Type</label>
             <NativeSelect
               name="serviceType"
               defaultValue={initialData?.serviceType || "Freight Forwarding"}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {serviceTypes.map((t) => (
                 <option key={t} value={t}>{t}</option>
@@ -222,11 +224,11 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Logistics Category</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Logistics Category</label>
             <NativeSelect
               name="logisticsCategory"
               defaultValue={initialData?.logisticsCategory || "Import"}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {logisticsCategories.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -234,13 +236,13 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Competitor</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Competitor</label>
+            <CrmInput
               type="text"
               name="competitor"
               defaultValue={initialData?.competitor || ""}
               placeholder="e.g. DHL, FedEx"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
         </div>
@@ -249,44 +251,44 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
       {/* Description / Lost Reason */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Description</label>
-          <textarea
+          <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Description</label>
+          <CrmTextarea
             name="description"
             defaultValue={initialData?.description || ""}
             placeholder="Log key specifications or client demands..."
             rows={3}
-            className="w-full p-3 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+            className="w-full p-3 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Reason for Loss</label>
-          <textarea
+          <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Reason for Loss</label>
+          <CrmTextarea
             name="lostReason"
             defaultValue={initialData?.lostReason || ""}
             placeholder="Specify reason if deal is lost..."
             rows={3}
-            className="w-full p-3 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+            className="w-full p-3 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
           />
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-3.5 pt-4 border-t border-[#1c212a]/30">
-        <button
+      <div className="flex justify-end gap-3.5 pt-4 border-t border-[var(--mnx-border)]/30">
+        <CrmButton
           type="button"
           onClick={() => router.back()}
-          className="px-5 py-2 bg-[#161f28] hover:bg-[#1f2d3a] text-slate-300 border border-[#1c212a]/80 rounded-lg text-sm font-semibold cursor-pointer"
+          className="px-5 py-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] text-mono-muted border border-[var(--mnx-border)]/80 rounded-lg text-sm font-semibold cursor-pointer"
         >
           Cancel
-        </button>
-        <button
+        </CrmButton>
+        <CrmButton
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[#F9D972] hover:bg-[#00b0a3] disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-sm font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
         >
           <Save className="size-4.5" />
           <span>{isSubmitting ? "Saving..." : isEdit ? "Update Deal" : "Save Deal"}</span>
-        </button>
+        </CrmButton>
       </div>
     </form>
   );

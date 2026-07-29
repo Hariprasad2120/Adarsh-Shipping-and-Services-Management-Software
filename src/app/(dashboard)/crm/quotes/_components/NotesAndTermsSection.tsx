@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput, CrmTextarea } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import { useEffect, useRef, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
@@ -95,53 +97,53 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
 
   return (
     <>
-      <section className="border-b border-[#d9dee7] px-5 py-5">
+      <section className="border-b border-[var(--mnx-border)] px-5 py-5">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           {/* Customer Notes with Templates */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-[12px] font-medium text-[#374151]">Customer Notes</label>
+              <label className="text-[12px] font-medium text-[var(--mnx-text-strong)]">Customer Notes</label>
 
               <div className="flex items-center gap-2">
                 {/* Template picker */}
                 <div className="relative" ref={pickerRef}>
-                  <button
+                  <CrmButton
                     type="button"
                     onClick={() => setTemplatePickerOpen((o) => !o)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#d9dee7] bg-white px-2.5 py-1 text-[11px] font-medium text-[#374151] hover:bg-[#f7f9fb] transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--mnx-border)] bg-mono-card px-2.5 py-1 text-[11px] font-medium text-[var(--mnx-text-strong)] hover:bg-[var(--mnx-surface)] transition-colors"
                   >
                     <BookmarkPlus size={12} />
                     Templates
                     <ChevronDown size={11} className={`transition-transform ${templatePickerOpen ? "rotate-180" : ""}`} />
-                  </button>
+                  </CrmButton>
 
                   {templatePickerOpen && (
-                    <div className="absolute right-0 top-full mt-1 z-30 w-64 rounded-xl border border-[#d9dee7] bg-white shadow-lg overflow-hidden">
+                    <div className="absolute right-0 top-full mt-1 z-30 w-64 rounded-xl border border-[var(--mnx-border)] bg-mono-card shadow-lg overflow-hidden">
                       {templates.length === 0 ? (
-                        <p className="px-4 py-6 text-center text-[11px] text-[#6b7280]">
+                        <p className="px-4 py-6 text-center text-[11px] text-[var(--mnx-text-muted)]">
                           No saved templates yet.
                           <br />
                           Write a note and save it as a template.
                         </p>
                       ) : (
-                        <ul className="max-h-52 overflow-y-auto divide-y divide-[#f3f4f6]">
+                        <ul className="max-h-52 overflow-y-auto divide-y divide-[var(--mnx-surface)]">
                           {templates.map((t) => (
-                            <li key={t.id} className="flex items-center justify-between gap-2 px-3 py-2.5 hover:bg-[#f7f9fb]">
-                              <button
+                            <li key={t.id} className="flex items-center justify-between gap-2 px-3 py-2.5 hover:bg-[var(--mnx-surface)]">
+                              <CrmButton
                                 type="button"
                                 onClick={() => applyTemplate(t)}
-                                className="flex-1 text-left text-[12px] text-[#1f2937] truncate"
+                                className="flex-1 text-left text-[12px] text-[var(--mnx-text-strong)] truncate"
                               >
                                 {t.name}
-                              </button>
-                              <button
+                              </CrmButton>
+                              <CrmButton
                                 type="button"
                                 onClick={() => handleDeleteTemplate(t.id)}
-                                className="flex-shrink-0 p-1 rounded text-[#6b7280] hover:text-[#fe4242] hover:bg-red-50 transition-colors"
+                                className="flex-shrink-0 p-1 rounded text-[var(--mnx-text-muted)] hover:text-[var(--mnx-danger)] hover:bg-[var(--mnx-danger-bg)] transition-colors"
                                 aria-label={`Delete template "${t.name}"`}
                               >
                                 <Trash2 size={12} />
-                              </button>
+                              </CrmButton>
                             </li>
                           ))}
                         </ul>
@@ -151,29 +153,29 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
                 </div>
 
                 {/* Save current text as template */}
-                <button
+                <CrmButton
                   type="button"
                   onClick={() => setSaveDialogOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-[#d9dee7] bg-white px-2.5 py-1 text-[11px] font-medium text-[#374151] hover:bg-[#f7f9fb] transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--mnx-border)] bg-mono-card px-2.5 py-1 text-[11px] font-medium text-[var(--mnx-text-strong)] hover:bg-[var(--mnx-surface)] transition-colors"
                   title="Save current note as template"
                 >
                   <Save size={12} />
                   Save as Template
-                </button>
+                </CrmButton>
               </div>
             </div>
 
-            <textarea
+            <CrmTextarea
               rows={6}
               placeholder="Will be displayed on the quote"
-              className="w-full rounded-xl border bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none"
+              className="w-full rounded-xl border bg-mono-card px-3 py-2 text-[13px] text-[var(--mnx-text-strong)] outline-none"
               {...form.register("customerNotes")}
             />
 
             {/* Save template inline dialog */}
             {saveDialogOpen && (
-              <div className="flex items-center gap-2 rounded-lg border border-[#d9dee7] bg-[#f7f9fb] px-3 py-2">
-                <input
+              <div className="flex items-center gap-2 rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 py-2">
+                <CrmInput
                   ref={nameInputRef}
                   type="text"
                   value={newTemplateName}
@@ -183,24 +185,24 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
                     if (e.key === "Escape") setSaveDialogOpen(false);
                   }}
                   placeholder="Template name…"
-                  className="flex-1 min-w-0 bg-white rounded px-2 py-1 text-[12px] text-[#1f2937] outline-none"
+                  className="flex-1 min-w-0 bg-mono-card rounded px-2 py-1 text-[12px] text-[var(--mnx-text-strong)] outline-none"
                 />
-                <button
+                <CrmButton
                   type="button"
                   onClick={handleSaveTemplate}
                   disabled={!newTemplateName.trim()}
-                  className="px-3 py-1 rounded bg-[#F9D972] text-white text-[11px] font-medium hover:bg-[#E8C85D] disabled:opacity-40 transition-colors"
+                  className="px-3 py-1 rounded bg-[var(--mnx-accent)] text-mono-text text-[11px] font-medium hover:bg-[var(--mnx-accent)] disabled:opacity-40 transition-colors"
                 >
                   Save
-                </button>
-                <button
+                </CrmButton>
+                <CrmButton
                   type="button"
                   onClick={() => setSaveDialogOpen(false)}
-                  className="p-1 rounded text-[#6b7280] hover:text-[#1f2937] hover:bg-white transition-colors"
+                  className="p-1 rounded text-[var(--mnx-text-muted)] hover:text-[var(--mnx-text-strong)] hover:bg-mono-card transition-colors"
                   aria-label="Cancel"
                 >
                   <X size={14} />
-                </button>
+                </CrmButton>
               </div>
             )}
           </div>
@@ -212,22 +214,22 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
       </section>
 
       {/* Bank Details for Quote */}
-      <section className="border-b border-[#d9dee7] px-5 py-5">
+      <section className="border-b border-[var(--mnx-border)] px-5 py-5">
         <div className="flex items-center gap-2 mb-3">
-          <CreditCard size={14} className="text-[#F9D972]" />
-          <h3 className="text-[12px] font-semibold text-[#374151] uppercase tracking-wide">
+          <CreditCard size={14} className="text-[var(--mnx-accent)]" />
+          <h3 className="text-[12px] font-semibold text-[var(--mnx-text-strong)] uppercase tracking-wide">
             Bank Details to Display
           </h3>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
           <div>
-            <label htmlFor="bankDetailsId" className="mb-1 block text-[11px] font-medium text-[#6b7280]">
+            <label htmlFor="bankDetailsId" className="mb-1 block text-[11px] font-medium text-[var(--mnx-text-muted)]">
               Select bank account for this document
             </label>
             <NativeSelect
               id="bankDetailsId"
-              className="w-full rounded-xl border bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none"
+              className="w-full rounded-xl border bg-mono-card px-3 py-2 text-[13px] text-[var(--mnx-text-strong)] outline-none"
               {...form.register("bankDetailsId")}
             >
               <option value="">— None (hide bank details) —</option>
@@ -240,20 +242,20 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
           </div>
 
           {selectedBank && (
-            <div className="rounded-lg border border-[#d9dee7] bg-[#f8fafd] px-4 py-3 text-[12px] leading-6 text-[#374151]">
-              <p className="font-semibold text-[#1f2937] mb-1">{selectedBank.bankName}</p>
+            <div className="rounded-lg border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-4 py-3 text-[12px] leading-6 text-[var(--mnx-text-strong)]">
+              <p className="font-semibold text-[var(--mnx-text-strong)] mb-1">{selectedBank.bankName}</p>
               <div className="grid grid-cols-2 gap-x-6 gap-y-0.5 text-[11px]">
-                <span className="text-[#6b7280]">A/C Name</span>
+                <span className="text-[var(--mnx-text-muted)]">A/C Name</span>
                 <span>{selectedBank.accountName}</span>
-                <span className="text-[#6b7280]">A/C Number</span>
+                <span className="text-[var(--mnx-text-muted)]">A/C Number</span>
                 <span className="font-mono">{selectedBank.accountNumber}</span>
-                <span className="text-[#6b7280]">IFSC</span>
+                <span className="text-[var(--mnx-text-muted)]">IFSC</span>
                 <span className="font-mono">{selectedBank.ifsc}</span>
-                <span className="text-[#6b7280]">Branch</span>
+                <span className="text-[var(--mnx-text-muted)]">Branch</span>
                 <span>{selectedBank.branch}</span>
                 {selectedBank.upi && (
                   <>
-                    <span className="text-[#6b7280]">UPI</span>
+                    <span className="text-[var(--mnx-text-muted)]">UPI</span>
                     <span>{selectedBank.upi}</span>
                   </>
                 )}
@@ -263,19 +265,19 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
         </div>
       </section>
 
-      <section className="bg-[#fbfcff] px-5 py-5">
+      <section className="bg-[var(--mnx-surface)] px-5 py-5">
         <div className="grid gap-6 lg:grid-cols-2">
           <div>
-            <label className="mb-1 block text-[12px] font-medium text-[#374151]">Terms &amp; Conditions</label>
-            <textarea
+            <label className="mb-1 block text-[12px] font-medium text-[var(--mnx-text-strong)]">Terms &amp; Conditions</label>
+            <CrmTextarea
               rows={4}
               placeholder="Enter the terms and conditions of your business to be displayed in your transaction"
-              className="w-full rounded-xl border bg-white px-3 py-2 text-[13px] text-[#1f2937] outline-none"
+              className="w-full rounded-xl border bg-mono-card px-3 py-2 text-[13px] text-[var(--mnx-text-strong)] outline-none"
               {...form.register("terms")}
             />
           </div>
           <div>
-            <label className="mb-1 block text-[12px] font-medium text-[#374151]">Attach File(s) to Quote</label>
+            <label className="mb-1 block text-[12px] font-medium text-[var(--mnx-text-strong)]">Attach File(s) to Quote</label>
             <FileUploadBox files={files} onFilesChange={onFilesChange} />
           </div>
         </div>

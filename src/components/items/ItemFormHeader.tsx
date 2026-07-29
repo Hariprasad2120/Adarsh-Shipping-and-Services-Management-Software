@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton } from "@/components/monolith/crm-workspace";
+
 import React from "react";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -26,17 +28,17 @@ export function ItemFormHeader({
   };
 
   return (
-    <div className="bg-white border-b border-[#d9dee7] flex-shrink-0">
+    <div className="bg-mono-card border-b border-[var(--mnx-border)] flex-shrink-0">
       <div className="flex items-center justify-between px-6 py-3">
-        <h1 className="text-sm font-semibold text-[#212529]">{title}</h1>
-        <button
+        <h1 className="text-sm font-semibold text-[var(--mnx-text-strong)]">{title}</h1>
+        <CrmButton
           type="button"
           onClick={handleClose}
-          className="p-1.5 rounded border border-[#d9dee7] hover:bg-[#f3f5f8] text-[#6b7280] hover:text-[#212529] transition-colors"
+          className="p-1.5 rounded border border-[var(--mnx-border)] hover:bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)] hover:text-[var(--mnx-text-strong)] transition-colors"
           aria-label="Close form"
         >
           <X size={15} />
-        </button>
+        </CrmButton>
       </div>
     </div>
   );

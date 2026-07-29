@@ -1,9 +1,11 @@
 "use client";
 
+import { CrmButton, CrmDialog, CrmTextarea } from "@/components/monolith/crm-workspace";
+
 import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { updateLeadStatusAction } from "@/modules/crm/actions";
-import { X, AlertCircle, Clock, Calendar } from "lucide-react";
+import { Clock } from "lucide-react";
 
 interface FollowUpModalProps {
   leadId: string;
@@ -94,29 +96,32 @@ export function FollowUpModal({ leadId, status, onClose, onSuccess }: FollowUpMo
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-[#0f1319] border border-[#1c212a] rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
-        
-        {/* Header */}
-        <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[#1c212a]/50 bg-[#0c0f14]">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="size-4.5 text-[#D88700]" />
-            <span className="font-bold text-sm text-white uppercase tracking-wider">
-              Mark Lead as {statusLabel}
-            </span>
-          </div>
-          <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white cursor-pointer">
-            <X className="size-4" />
-          </button>
+    <CrmDialog
+      open
+      onClose={onClose}
+      title={`Mark lead as ${statusLabel}`}
+      description="Record the call outcome and schedule the controlled follow-up."
+      size="default"
+      footer={
+        <div className="flex justify-end gap-3">
+          <CrmButton type="button" onClick={onClose} variant="secondary">
+            Cancel
+          </CrmButton>
+          <CrmButton
+            type="submit"
+            form="lead-follow-up-form"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Scheduling..." : "Confirm and schedule"}
+          </CrmButton>
         </div>
-
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
-          
-          <div className="flex-1 overflow-y-auto p-6 space-y-5 pr-4">
+      }
+    >
+        <form id="lead-follow-up-form" onSubmit={handleSubmit}>
+          <div className="space-y-5">
             {/* Info/Warning alert matching the design system */}
-            <div className="p-4 bg-[#D88700]/5 border border-[#D88700]/20 rounded-xl space-y-2 text-slate-300">
-              <div className="flex items-center gap-2 text-[#D88700] font-semibold text-xs uppercase tracking-wider">
+            <div className="p-4 bg-[var(--mnx-accent)]/5 border border-[var(--mnx-accent)]/20 rounded-xl space-y-2 text-mono-muted">
+              <div className="flex items-center gap-2 text-[var(--mnx-accent)] font-semibold text-xs uppercase tracking-wider">
                 <Clock className="size-4" />
                 <span>Follow-up Alert Workflow</span>
               </div>
@@ -124,9 +129,9 @@ export function FollowUpModal({ leadId, status, onClose, onSuccess }: FollowUpMo
                 This action will automatically schedule a follow-up alert in 2 hours. If the alert falls outside normal working hours (9:30 AM - 5:30 PM), it will be scheduled for tomorrow morning at 9:30 AM.
               </p>
               {scheduledTime && (
-                <div className="pt-2 flex items-center gap-2 border-t border-[#D88700]/10 text-xs">
-                  <span className="text-slate-400">Scheduled for:</span>
-                  <span className="font-bold text-[#D88700] bg-[#D88700]/10 px-2 py-0.5 rounded">
+                <div className="pt-2 flex items-center gap-2 border-t border-[var(--mnx-accent)]/10 text-xs">
+                  <span className="text-mono-muted">Scheduled for:</span>
+                  <span className="font-bold text-[var(--mnx-accent)] bg-[var(--mnx-accent)]/10 px-2 py-0.5 rounded">
                     {formatScheduledTime(scheduledTime)}
                   </span>
                 </div>
@@ -134,10 +139,10 @@ export function FollowUpModal({ leadId, status, onClose, onSuccess }: FollowUpMo
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+              <label className="block text-[11px] font-bold text-mono-muted uppercase tracking-wider mb-2">
                 Call Remarks / Reason for Status (Required) *
               </label>
-              <textarea
+              <CrmTextarea
                 ref={textareaRef}
                 required
                 rows={2}
@@ -145,34 +150,15 @@ export function FollowUpModal({ leadId, status, onClose, onSuccess }: FollowUpMo
                 placeholder="e.g. Number busy, switched off, customer asked to call back later..."
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                className="w-full p-3 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972] placeholder-slate-600 min-h-[60px]"
+                className="w-full p-3 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)] placeholder:text-mono-muted min-h-[60px]"
               />
-              <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">
+              <p className="text-[10px] text-mono-muted mt-1.5 leading-relaxed">
                 These remarks will be attached to the scheduled follow-up activity task and audit logs.
               </p>
             </div>
           </div>
 
-          {/* Action Footer */}
-          <div className="flex-shrink-0 flex justify-end gap-3 p-4 bg-[#0c0f14] border-t border-[#1c212a]/30">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-[#161f28] hover:bg-[#1f2d3a] border border-[#1c212a] text-slate-300 rounded-lg text-xs font-semibold cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-5 py-2 bg-[#F9D972] hover:bg-[#E8C85D] hover:shadow-[0_0_0_3px_rgba(0,206,196,0.25)] text-white rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer uppercase tracking-wider"
-            >
-              {isSubmitting ? "Scheduling..." : "Confirm & Schedule"}
-            </button>
-          </div>
-
         </form>
-      </div>
-    </div>
+    </CrmDialog>
   );
 }

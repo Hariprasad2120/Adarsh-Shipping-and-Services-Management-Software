@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput } from "@/components/monolith/crm-workspace";
+
 import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -50,43 +52,43 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl bg-[#0f1319] border border-[#1c212a]/60 rounded-xl p-6 shadow-2xl">
+    <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/60 rounded-xl p-6 shadow-2xl">
       {/* ─── SECTION: BASIC INFO ────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <User className="size-4 text-[#F9D972]" />
+        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+          <User className="size-4 text-[var(--mnx-accent)]" />
           <span>Contact Identity</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">First Name</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">First Name</label>
+            <CrmInput
               type="text"
               name="firstName"
               defaultValue={initialData?.firstName || ""}
               placeholder="e.g. Adarsh"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Last Name *</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Last Name *</label>
+            <CrmInput
               type="text"
               name="lastName"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="e.g. Hari"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Linked Account (Company) *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Linked Account (Company) *</label>
             <NativeSelect
               name="accountId"
               defaultValue={initialData?.accountId || ""}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             >
               <option value="">Select Account</option>
@@ -96,35 +98,35 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Designation</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Designation</label>
+            <CrmInput
               type="text"
               name="designation"
               defaultValue={initialData?.designation || ""}
               placeholder="e.g. Purchase Manager"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Department</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Department</label>
+            <CrmInput
               type="text"
               name="department"
               defaultValue={initialData?.department || ""}
               placeholder="e.g. Procurement / Import"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div className="flex items-center gap-2.5 pt-6">
-            <input
+            <CrmInput
               type="checkbox"
               name="isDecisionMaker"
               value="true"
               defaultChecked={initialData?.isDecisionMaker}
               id="is-decision-maker"
-              className="size-4 rounded border-[#1c212a] bg-[#0a0d12] text-[#F9D972] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+              className="size-4 rounded border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-accent)] focus:ring-0 focus:ring-offset-0 cursor-pointer"
             />
-            <label htmlFor="is-decision-maker" className="text-xs font-bold text-white uppercase tracking-wide cursor-pointer select-none">
+            <label htmlFor="is-decision-maker" className="text-xs font-bold text-mono-text uppercase tracking-wide cursor-pointer select-none">
               Key Decision Maker / CHA Liaison
             </label>
           </div>
@@ -133,40 +135,40 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
 
       {/* ─── SECTION: CONTACT CHANNELS ───────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <Mail className="size-4 text-[#F9D972]" />
+        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+          <Mail className="size-4 text-[var(--mnx-accent)]" />
           <span>Contact Channels</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Email Address</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Email Address</label>
+            <CrmInput
               type="email"
               name="email"
               defaultValue={initialData?.email || ""}
               placeholder="e.g. contact@domain.com"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Phone (Direct)</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Phone (Direct)</label>
+            <CrmInput
               type="text"
               name="phone"
               defaultValue={initialData?.phone || ""}
               placeholder="e.g. +91 44 2819 1234"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Mobile Number</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Mobile Number</label>
+            <CrmInput
               type="text"
               name="mobile"
               defaultValue={initialData?.mobile || ""}
               placeholder="e.g. +91 98840 12345"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
         </div>
@@ -174,18 +176,18 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
 
       {/* ─── SECTION: ASSIGNMENT ────────────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#1c212a]/30 pb-2 flex items-center gap-2">
-          <Tag className="size-4 text-[#F9D972]" />
+        <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
+          <Tag className="size-4 text-[var(--mnx-accent)]" />
           <span>Assignment & Ownership</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Contact Owner *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Contact Owner *</label>
             <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-slate-300 focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
               required
             >
               <option value="">Select Owner</option>
@@ -195,35 +197,35 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5">Street Address</label>
-            <input
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Street Address</label>
+            <CrmInput
               type="text"
               name="address"
               defaultValue={initialData?.address || ""}
               placeholder="e.g. Chennai Office details"
-              className="w-full px-3.5 py-2 bg-[#0a0d12] border border-[#1c212a] rounded-lg text-sm text-white focus:outline-none focus:border-[#F9D972]"
+              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-3.5 pt-4 border-t border-[#1c212a]/30">
-        <button
+      <div className="flex justify-end gap-3.5 pt-4 border-t border-[var(--mnx-border)]/30">
+        <CrmButton
           type="button"
           onClick={() => router.back()}
-          className="px-5 py-2 bg-[#161f28] hover:bg-[#1f2d3a] text-slate-300 border border-[#1c212a]/80 rounded-lg text-sm font-semibold cursor-pointer"
+          className="px-5 py-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] text-mono-muted border border-[var(--mnx-border)]/80 rounded-lg text-sm font-semibold cursor-pointer"
         >
           Cancel
-        </button>
-        <button
+        </CrmButton>
+        <CrmButton
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[#F9D972] hover:bg-[#00b0a3] disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-all shadow-md shadow-[#F9D972]/10 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-sm font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
         >
           <Save className="size-4.5" />
           <span>{isSubmitting ? "Saving..." : isEdit ? "Update Contact" : "Save Contact"}</span>
-        </button>
+        </CrmButton>
       </div>
     </form>
   );

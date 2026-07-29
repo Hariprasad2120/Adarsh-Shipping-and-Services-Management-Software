@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton } from "@/components/monolith/crm-workspace";
+
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { Sparkles, Loader2 } from "lucide-react";
@@ -25,18 +27,18 @@ export function DemoDataButton() {
   };
 
   return (
-    <button
+    <CrmButton
       onClick={handleSeed}
       disabled={isPending}
-      className="flex items-center gap-2 bg-[#818cf8] hover:bg-[#6366f1] disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[#818cf8]/10 cursor-pointer"
+      className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
       title="Populate CRM with realistic shipping logistics mock data"
     >
       {isPending ? (
         <Loader2 className="size-4 animate-spin" />
       ) : (
-        <Sparkles className="size-4 text-amber-200" />
+        <Sparkles className="size-4 text-[var(--mnx-warning)]" />
       )}
       <span>{isPending ? "Generating..." : "Seed Demo Data"}</span>
-    </button>
+    </CrmButton>
   );
 }

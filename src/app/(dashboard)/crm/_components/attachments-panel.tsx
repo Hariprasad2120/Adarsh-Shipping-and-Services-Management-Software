@@ -1,5 +1,7 @@
 "use client";
 
+import { CrmButton, CrmInput } from "@/components/monolith/crm-workspace";
+
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { createAttachmentAction, deleteAttachmentAction } from "@/modules/crm/actions";
@@ -75,17 +77,17 @@ export function AttachmentsPanel({ relatedToType, relatedToId, initialAttachment
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between border-b border-[#1c212a]/30 pb-3">
+      <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3">
         <div className="flex items-center gap-2">
-          <Paperclip className="size-4.5 text-[#F9D972]" />
-          <h3 className="font-bold text-sm text-white uppercase tracking-wider">File Attachments</h3>
+          <Paperclip className="size-4.5 text-[var(--mnx-accent)]" />
+          <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">File Attachments</h3>
         </div>
-        <span className="text-xs text-slate-400 font-bold">{attachments.length} files</span>
+        <span className="text-xs text-mono-muted font-bold">{attachments.length} files</span>
       </div>
 
       {/* Upload Zone */}
-      <div className="relative border border-dashed border-[#1c212a] hover:border-[#F9D972]/60 rounded-xl p-6 bg-[#0a0d12]/50 text-center transition-all">
-        <input
+      <div className="relative border border-dashed border-[var(--mnx-border)] hover:border-[var(--mnx-accent)]/60 rounded-xl p-6 bg-[var(--mnx-surface)]/50 text-center transition-all">
+        <CrmInput
           type="file"
           id="crm-file-upload"
           onChange={handleFileUpload}
@@ -93,8 +95,8 @@ export function AttachmentsPanel({ relatedToType, relatedToId, initialAttachment
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
         />
         <div className="flex flex-col items-center gap-2">
-          <UploadCloud className="size-8 text-[#F9D972]" />
-          <span className="text-sm font-semibold text-white">
+          <UploadCloud className="size-8 text-[var(--mnx-accent)]" />
+          <span className="text-sm font-semibold text-mono-text">
             {isUploading ? "Uploading file..." : "Click or drag files to upload"}
           </span>
           <span className="text-[11px] text-mono-muted">Max file size: 10MB</span>
@@ -103,7 +105,7 @@ export function AttachmentsPanel({ relatedToType, relatedToId, initialAttachment
 
       {/* Attachments List */}
       {attachments.length === 0 ? (
-        <div className="p-6 text-center text-mono-muted text-sm border border-dashed border-[#1c212a]/50 rounded-lg">
+        <div className="p-6 text-center text-mono-muted text-sm border border-dashed border-[var(--mnx-border)]/50 rounded-lg">
           No files attached.
         </div>
       ) : (
@@ -111,17 +113,17 @@ export function AttachmentsPanel({ relatedToType, relatedToId, initialAttachment
           {attachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="p-3 bg-[#0f1319] border border-[#1c212a]/40 hover:border-[#1c212a] transition-all rounded-lg flex items-center justify-between gap-4"
+              className="p-3 bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/40 hover:border-[var(--mnx-border)] transition-all rounded-lg flex items-center justify-between gap-4"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="p-2 bg-slate-800 text-slate-400 rounded-lg shrink-0">
+                <div className="p-2 bg-mono-soft text-mono-muted rounded-lg shrink-0">
                   <File className="size-4.5" />
                 </div>
                 <div className="min-w-0">
-                  <span className="font-semibold text-white text-xs block truncate leading-tight">
+                  <span className="font-semibold text-mono-text text-xs block truncate leading-tight">
                     {attachment.fileName}
                   </span>
-                  <span className="text-[10px] text-slate-400 block mt-1 uppercase font-semibold">
+                  <span className="text-[10px] text-mono-muted block mt-1 uppercase font-semibold">
                     {formatBytes(attachment.fileSize)} • By {attachment.createdBy.name}
                   </span>
                 </div>
@@ -133,18 +135,18 @@ export function AttachmentsPanel({ relatedToType, relatedToId, initialAttachment
                     e.preventDefault();
                     toast.success(`Simulating download of: ${attachment.fileName}`);
                   }}
-                  className="p-1.5 text-slate-400 hover:text-[#F9D972] rounded hover:bg-slate-800/40 cursor-pointer"
+                  className="p-1.5 text-mono-muted hover:text-[var(--mnx-accent)] rounded hover:bg-mono-soft cursor-pointer"
                   title="Download File"
                 >
                   <Download className="size-4" />
                 </a>
-                <button
+                <CrmButton
                   onClick={() => handleDeleteAttachment(attachment.id)}
-                  className="p-1.5 text-mono-muted hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer"
+                  className="p-1.5 text-mono-muted hover:text-[var(--mnx-danger)] rounded hover:bg-[var(--mnx-danger-bg)] cursor-pointer"
                   title="Remove Attachment"
                 >
                   <Trash2 className="size-4" />
-                </button>
+                </CrmButton>
               </div>
             </div>
           ))}
