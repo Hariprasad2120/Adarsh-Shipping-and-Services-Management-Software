@@ -420,6 +420,73 @@ existing dynamic filesystem paths in HRMS letter generation, customer-portal
 file routes/service code, and the existing NFT trace through `next.config.ts`.
 They do not affect compilation or the verified runtime routes.
 
+## HRMS employee profile expansion
+
+`/hrms/employees/[id]` and `/hrms/settings` were extended on 2026-07-29
+without changing their migrated Monolith page frame.
+
+- The employee profile now includes editable basic, work, hierarchy, personal,
+  identity, contact, separation, payroll, bank, education, prior-work,
+  dependant, audit, and organisation-defined custom-field sections.
+- Profile sections use compact full-width horizontal cards in a single
+  sequence, with up to four internal information columns at desktop widths.
+  Cards size to their own content instead of stretching beside a taller
+  neighbour.
+- The `/hrms/employees` directory now uses the full inherited workspace width
+  and an explicit fixed desktop table grid, eliminating the collapsed columns
+  and unused space inside each role card. Its aligned columns show photo or
+  initials, employee ID, name, email, joining date, every role, department,
+  location, employment status, login/account status, annual gross, and
+  actions; the toolbar also shows the filtered total count.
+- The directory filter now searches employee ID, name, email, designation,
+  role, branch, department, and division, and filters by role, location,
+  department, employee status, login/account status, and onboarding status.
+- Added a shared Monolith export dialog and an organisation-scoped,
+  `hrms.employee.read`-protected export endpoint. XLS, XLSX, CSV, and TSV
+  downloads use the exact active directory filters, include the directory's
+  employment, organisation, account, onboarding, and annual-gross columns,
+  and neutralize spreadsheet-formula prefixes in employee-controlled text.
+- The row login toggle is a shared People Operations control protected by
+  `hrms.employee.deactivate`, excludes the signed-in user, retains
+  organisation scoping, and uses the established user update path so disabling
+  an account still revokes live sessions.
+- Existing imported payroll metadata remains a fallback for employees that do
+  not yet have a durable expanded profile.
+- HRMS Settings now has a second responsive column for creating, editing,
+  ordering, requiring, disabling, and deleting employee custom fields.
+- Added organisation-scoped custom-field definitions, per-employee profile
+  values, tenant/reference validation, audit metadata, and preservation of
+  deactivation session revocation and appraisal-schedule synchronization.
+- Applied database migration
+  `20260729183000_add_employee_hrms_profiles`.
+- Pre-change visual sources are archived at
+  `OLD UI code/legacy-ui-before-hrms-employee-profile-expansion-20260729.zip`
+  (9,468 bytes; SHA-256
+  `96BB11CA91858C2E76E10D6825CB33CA40B188B4337F85F5465EDF5B77A047BA`).
+- The pre-change employee-directory visual sources are archived at
+  `OLD UI code/legacy-ui-before-hrms-employee-directory-expansion-20260729.zip`
+  (6,845 bytes; SHA-256
+  `438C73350E07CB606053F4767A33E173C302E693584E571CCAC1036D65871C0D`).
+- Targeted ESLint, production TypeScript, three focused Vitest cases, Prisma
+  generation, database migration deploy, `git diff --check`, and the
+  316-page production build pass with the existing non-fatal `next.config.ts`
+  NFT trace warning.
+- The subsequent directory alignment batch passes targeted ESLint, production
+  TypeScript, six focused People Operations/profile tests, the static
+  45-route People Operations verifier, `git diff --check`, and a fresh
+  316-page production build with the same existing non-fatal NFT warning.
+- The filter/export follow-up passes targeted ESLint, production TypeScript,
+  12 focused People Operations/profile/export tests, the same 45-route static
+  verifier, and a fresh 317-page production build. The build includes
+  `/api/hrms/employees/export` and retains the same existing non-fatal
+  `next.config.ts` NFT trace warning.
+- A fresh in-app Browser connection attempt followed the required
+  troubleshooting flow, but no browser instance was exposed. Interactive
+  Light/Night/Violet and responsive verification of the directory filter,
+  export dialog/download, and updated profile/settings routes remains pending;
+  their prior batch-level verification is not being reused as evidence for the
+  new controls.
+
 ## Post-batch 002 shell correction
 
 The Monolith workspace sidebar now renders functional, permission-filtered
@@ -845,3 +912,81 @@ Blocked:
   and mobile widths remains pending for all CHA dialog, select, menu, filter,
   autocomplete, warning, success, and permission states. This correction is
   implemented and statically verified but is not declared visually Verified.
+
+## HRMS employee invitation and self-service lifecycle
+
+Implemented on 2026-07-29.
+
+- Replaced direct temporary-password employee creation with an HR-controlled
+  invitation flow. HR creates the pending employee, employment record, initial
+  HRMS profile, organisation assignments, bank data, and roles before a secure
+  email invitation is issued.
+- Invitation secrets are random 32-byte values; only SHA-256 hashes are stored.
+  Links expire after 72 hours by default, are single-use, and old links are
+  revoked on resend. Acceptance consumes the invitation and activates the user
+  in one database transaction.
+- Added public invitation review, password creation, and workspace-ready pages.
+  Passwords require at least 12 characters with upper- and lower-case letters
+  and a number. Public read/accept endpoints are rate-limited and return
+  no-store responses.
+- Pending employees appear immediately in the Employee directory and profile
+  with Invited, Invite Expired, or Invite Delivery Failed states. HR can resend
+  an invitation, and pending accounts cannot be activated through the generic
+  account toggle.
+- Removed the redundant `Onboard Employee` HRMS sidebar and dashboard
+  quick-action entry. Employee creation and invitation remain contextual to the
+  consolidated Employees directory, which links to the existing protected
+  creation flow.
+- Added employee self-service discovery through the shell profile menu.
+  Employees may edit only the server allowlisted basic/KYC fields, addresses,
+  education, work experience, and dependents. Department, branch, division,
+  joining/exit dates, employment status/type, reporting lines, bank details,
+  salary, roles, system fields, work-contact fields, and custom HR fields remain
+  HR-only even when a request is forged outside the UI.
+- Existing email infrastructure is reused through Resend or SMTP. Delivery
+  failures retain the pending employee record and surface a resend action to HR.
+- Applied database migration
+  `20260729201500_add_employee_invitations` successfully.
+- Updated the test runner exclusions so immutable `_design-reference`, archived
+  `OLD UI code`, generated clients, and build output are never compiled as
+  production tests.
+- Corrected the pre-existing Attendance OT PageProps contract to the Next 16
+  async `searchParams` shape because its stale development declaration blocked
+  the otherwise successful production type phase.
+
+Backup:
+`OLD UI code/legacy-ui-before-hrms-employee-invitations-20260729.zip`
+
+- Size: 24,105 bytes.
+- SHA-256:
+  `7A7B1DF27B5B3BD28CA363909E3920161B7E0A346F95D9652E88A69C1BDBA5CF`.
+
+Passed:
+
+- Prisma client generation and migration deployment;
+- full production TypeScript with the required 8 GB Node heap;
+- targeted ESLint for all invitation, employee profile/directory, shell, API,
+  test, and supporting files;
+- 19 focused invitation, replay-protection, self-service allowlist, employee
+  profile, and export tests;
+- production-source suite: 32 of 33 files and 208 of 211 tests passed; the
+  remaining three failures are pre-existing CHA Drive/filing/audit integration
+  expectations unrelated to HRMS;
+- People Operations static verifier: all 45 routes and protected-behavior
+  signals passed;
+- exhaustive route audit: 213 pages and 14 layouts;
+- production build: Prisma generation, Next compilation, production TypeScript,
+  and all 321 pages;
+- `git diff --check`.
+
+Repository-wide ESLint still reports the known broad legacy backlog. The
+invitation scope passes targeted lint. The build retains one existing non-fatal
+Turbopack broad-file trace warning through `next.config.ts` and the customer
+portal checklist-file route.
+
+Blocked:
+
+- The required browser connection returned no available browser and the
+  one-time availability query returned `[]`. Live Light, Night, and Violet
+  visual verification of invitation acceptance, workspace-ready, HR invite,
+  invited-directory, and self-service states remains pending.

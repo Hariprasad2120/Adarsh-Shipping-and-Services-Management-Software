@@ -3,7 +3,6 @@ import { loadCaps } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { OtClient } from "./ot-client";
-import { Clock } from "lucide-react";
 import { getOTEntries } from "@/modules/attendance/service";
 import { getNow } from "@/lib/clock";
 import { ensureAttendanceConfiguration } from "@/lib/ot";
@@ -13,7 +12,7 @@ export const metadata = {
 };
 
 interface PageProps {
-  searchParams?: Promise<{ month?: string }> | { month?: string };
+  searchParams?: Promise<{ month?: string }>;
 }
 
 type OtClientProps = React.ComponentProps<typeof OtClient>;
@@ -49,7 +48,7 @@ export default async function OvertimePage({ searchParams }: PageProps) {
   }
 
   // Resolve searchParams month
-  const resolvedParams = await (searchParams instanceof Promise ? searchParams : Promise.resolve(searchParams));
+  const resolvedParams = await searchParams;
   const nowIst = await getNow();
   const defaultMonth = `${nowIst.getUTCFullYear()}-${String(nowIst.getUTCMonth() + 1).padStart(2, "0")}`;
   const monthStr = resolvedParams?.month || defaultMonth;

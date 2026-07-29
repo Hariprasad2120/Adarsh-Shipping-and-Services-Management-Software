@@ -9334,6 +9334,45 @@ button.mnx-accounting-record-card {
   box-shadow: none;
 }
 
+.mnx-people-toggle {
+  position: relative;
+  width: 2.75rem;
+  height: 1.5rem;
+  flex: 0 0 auto;
+  padding: 0.2rem;
+  border: 1px solid var(--mnx-border);
+  border-radius: 999px;
+  background: var(--mnx-soft);
+  cursor: pointer;
+  transition:
+    border-color var(--mnx-hover-duration) var(--mnx-hover-ease),
+    background var(--mnx-hover-duration) var(--mnx-hover-ease);
+}
+
+.mnx-people-toggle > span {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--mnx-card);
+  box-shadow: var(--mnx-theme-shadow-soft);
+  transition: transform var(--mnx-hover-duration) var(--mnx-hover-ease);
+}
+
+.mnx-people-toggle.is-active {
+  border-color: color-mix(in srgb, var(--mnx-info) 70%, var(--mnx-border));
+  background: var(--mnx-info);
+}
+
+.mnx-people-toggle.is-active > span {
+  transform: translateX(1.2rem);
+}
+
+.mnx-people-toggle:disabled {
+  cursor: wait;
+  opacity: 0.56;
+}
+
 .mnx-people-table-footer {
   display: flex;
   flex-wrap: wrap;

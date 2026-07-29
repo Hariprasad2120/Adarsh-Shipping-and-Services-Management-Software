@@ -28,30 +28,86 @@ export type CreateUserInput = {
   payrollMeta?: Prisma.InputJsonValue;
 };
 
-export async function listUsers(orgId: string, filters?: {
+export type UserDirectoryFilters = {
   branchId?: string;
   departmentId?: string;
   divisionId?: string;
   roleId?: string;
   search?: string;
   active?: boolean;
+  invitationStatus?: "INVITED";
+  employeeStatus?: "ACTIVE" | "EXITED";
+  onboardingStatus?: string;
   take?: number;
   skip?: number;
-}) {
+};
+
+export async function listUsers(
+  orgId: string,
+  filters?: UserDirectoryFilters,
+) {
   const where: Prisma.UserWhereInput = { orgId };
   if (filters?.active !== undefined) where.active = filters.active;
   if (filters?.branchId) where.branchId = filters.branchId;
   if (filters?.departmentId) where.departmentId = filters.departmentId;
   if (filters?.divisionId) where.divisionId = filters.divisionId;
   if (filters?.search) {
+    const employeeNumber = Number(filters.search);
     where.OR = [
       { name: { contains: filters.search, mode: "insensitive" } },
       { email: { contains: filters.search, mode: "insensitive" } },
       { designation: { contains: filters.search, mode: "insensitive" } },
+      { branch: { is: { name: { contains: filters.search, mode: "insensitive" } } } },
+      {
+        department: {
+          is: { name: { contains: filters.search, mode: "insensitive" } },
+        },
+      },
+      {
+        division: {
+          is: { name: { contains: filters.search, mode: "insensitive" } },
+        },
+      },
+      {
+        roles: {
+          some: {
+            role: {
+              name: { contains: filters.search, mode: "insensitive" },
+            },
+          },
+        },
+      },
+      ...(Number.isInteger(employeeNumber) && employeeNumber > 0
+        ? [{ employeeNumber }]
+        : []),
     ];
   }
   if (filters?.roleId) {
     where.roles = { some: { roleId: filters.roleId } };
+  }
+  if (filters?.invitationStatus === "INVITED") {
+    where.employeeInvitations = {
+      some: {
+        consumedAt: null,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+    };
+  }
+  if (filters?.employeeStatus === "ACTIVE") {
+    where.employmentRecord = { is: { exitDate: null } };
+  } else if (filters?.employeeStatus === "EXITED") {
+    where.employmentRecord = { is: { exitDate: { not: null } } };
+  }
+  if (filters?.onboardingStatus) {
+    where.employeeProfile = {
+      is: {
+        data: {
+          path: ["onboardingStatus"],
+          equals: filters.onboardingStatus,
+        },
+      },
+    };
   }
 
   return db.user.findMany({
@@ -67,6 +123,11 @@ export async function listUsers(orgId: string, filters?: {
       manager: { select: { id: true, name: true } },
       tl: { select: { id: true, name: true } },
       employmentRecord: true,
+      employeeProfile: true,
+      employeeInvitations: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
     },
   });
 }
@@ -124,6 +185,11 @@ export async function getUser(id: string) {
       reports: { select: { id: true, name: true, designation: true } },
       tlReports: { select: { id: true, name: true, designation: true } },
       employmentRecord: true,
+      employeeProfile: true,
+      employeeInvitations: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
       documents: { orderBy: { uploadedAt: "desc" } },
     },
   });
@@ -190,6 +256,25 @@ export async function updateUser(id: string, data: {
   tlId?: string | null;
   active?: boolean;
 }) {
+  if (data.active === true) {
+    const invitationState = await db.user.findUnique({
+      where: { id },
+      select: {
+        activatedAt: true,
+        employeeInvitations: { select: { id: true }, take: 1 },
+      },
+    });
+    if (
+      invitationState &&
+      !invitationState.activatedAt &&
+      invitationState.employeeInvitations.length > 0
+    ) {
+      throw new Error(
+        "Invited employees must accept their invitation before login can be enabled",
+      );
+    }
+  }
+
   const updated = await db.user.update({ where: { id }, data });
 
   // Disabling a user kills every live session immediately.

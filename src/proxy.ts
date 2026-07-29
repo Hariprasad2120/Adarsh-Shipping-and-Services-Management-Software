@@ -28,6 +28,8 @@ const PUBLIC_PATHS = [
   "/api/customer-portal",
   "/google-chat-link",
   "/verify",
+  "/invite",
+  "/api/hrms/invitations/accept",
 ];
 
 // Static asset prefixes — always public

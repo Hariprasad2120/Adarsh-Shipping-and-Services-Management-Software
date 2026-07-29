@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { listUsers } from "@/modules/core/user/service";
+import { listUsers, updateUser } from "@/modules/core/user/service";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
+import { z } from "zod";
 
 export async function GET(request: Request) {
   try {
@@ -25,13 +26,24 @@ export async function GET(request: Request) {
       active,
     });
 
-    const safeUsers = users.map(({ passwordHash, ...u }) => u);
+    const safeUsers = users.map((user) => {
+      const { passwordHash, ...safeUser } = user;
+      void passwordHash;
+      return safeUser;
+    });
 
     return NextResponse.json({ ok: true, data: safeUsers });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: { code: "INTERNAL_ERROR", message: error.message } }, { status: 500 });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "Unable to load employees";
+    return NextResponse.json({ ok: false, error: { code: "INTERNAL_ERROR", message } }, { status: 500 });
   }
 }
+
+const accountStatusSchema = z.object({
+  userIds: z.array(z.string().min(1)).min(1).max(200),
+  status: z.enum(["LOGIN_ENABLED", "LOGIN_DISABLED"]),
+});
 
 export async function PATCH(request: Request) {
   try {
@@ -42,21 +54,35 @@ export async function PATCH(request: Request) {
 
     await requirePermission(session.user.id, "hrms.employee.deactivate");
 
-    const body = await request.json();
-    const { userIds, status } = body; // status: "LOGIN_ENABLED" | "LOGIN_DISABLED"
-
-    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+    const parsed = accountStatusSchema.safeParse(await request.json());
+    if (!parsed.success) {
       return NextResponse.json({ ok: false, error: { code: "VALIDATION_ERROR", message: "User IDs are required" } }, { status: 400 });
     }
 
-    const active = status === "LOGIN_ENABLED";
-    await db.user.updateMany({
-      where: { id: { in: userIds }, orgId: session.user.orgId },
-      data: { active },
+    const users = await db.user.findMany({
+      where: {
+        id: { in: parsed.data.userIds },
+        orgId: session.user.orgId,
+        NOT: { id: session.user.id },
+      },
+      select: { id: true },
     });
+    if (users.length === 0) {
+      return NextResponse.json({ ok: false, error: { code: "VALIDATION_ERROR", message: "No eligible employees found" } }, { status: 400 });
+    }
 
-    return NextResponse.json({ ok: true, data: { success: true } });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: { code: "INTERNAL_ERROR", message: error.message } }, { status: 500 });
+    const active = parsed.data.status === "LOGIN_ENABLED";
+    await Promise.all(
+      users.map((user) => updateUser(user.id, { active })),
+    );
+
+    return NextResponse.json({
+      ok: true,
+      data: { success: true, updated: users.length },
+    });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "Unable to update login access";
+    return NextResponse.json({ ok: false, error: { code: "INTERNAL_ERROR", message } }, { status: 500 });
   }
 }

@@ -42,5 +42,27 @@ export const PeopleControlInput = React.forwardRef<
 
 PeopleControlInput.displayName = "PeopleControlInput";
 
+export const PeopleToggleButton = React.forwardRef<
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement> & { active: boolean }
+>(({ active, className, children, type = "button", ...props }, ref) => (
+  <button
+    ref={ref}
+    aria-pressed={active}
+    className={cn(
+      "mnx-people-toggle",
+      active && "is-active",
+      className,
+    )}
+    type={type}
+    {...props}
+  >
+    <span aria-hidden="true" />
+    {children}
+  </button>
+));
+
+PeopleToggleButton.displayName = "PeopleToggleButton";
+
 export const PeopleControlTextarea = WorkspaceTextarea;
 export const PeopleControlTable = WorkspaceTable;

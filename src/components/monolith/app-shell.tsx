@@ -41,6 +41,7 @@ export interface MonolithAppShellProps {
   caps: Caps;
   enabledModuleIds: string[];
   isPlatformAdmin: boolean;
+  userId: string;
   userEmail: string;
   userName: string;
 }
@@ -84,6 +85,7 @@ function MonolithAppShellBody({
   caps,
   enabledModuleIds,
   isPlatformAdmin,
+  userId,
   userEmail,
   userName,
 }: MonolithAppShellProps) {
@@ -528,6 +530,19 @@ function MonolithAppShellBody({
                     </div>
                   </div>
                   <nav>
+                    {caps["hrms.employee.read"] ? (
+                      <Link
+                        href={`/hrms/employees/${userId}`}
+                        role="menuitem"
+                        onClick={() => setProfileOpen(false)}
+                      >
+                        <UserRound size={16} />
+                        <span>
+                          <b>My employee profile</b>
+                          <small>Complete personal and KYC details</small>
+                        </span>
+                      </Link>
+                    ) : null}
                     <Link
                       href="/account/security"
                       role="menuitem"
