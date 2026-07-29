@@ -72,6 +72,9 @@ pnpm-lock.yaml
 !/docs/ui-route-audit.md
 !/docs/typography.md
 !/docs/design-system-showcase.md
+!/docs/performance-file-audit.md
+!/docs/performance-baseline.md
+!/docs/performance-results.md
 
 # sensitive data output
 /import-output/
