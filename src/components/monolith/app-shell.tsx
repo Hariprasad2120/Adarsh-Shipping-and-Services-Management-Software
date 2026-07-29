@@ -18,7 +18,14 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { Caps } from "@/lib/rbac";
 import { performLogout } from "@/lib/logout";
 import {
@@ -34,7 +41,7 @@ const MonaChat = dynamic(
   { ssr: false },
 );
 
-type MonolithTheme = "night" | "violet" | "light" | "purple";
+export type MonolithTheme = "night" | "violet" | "light" | "purple";
 
 export interface MonolithAppShellProps {
   children: React.ReactNode;
@@ -45,12 +52,57 @@ export interface MonolithAppShellProps {
   userName: string;
 }
 
-const themes: { id: MonolithTheme; label: string; icon: typeof Sun }[] = [
+export const monolithThemes: {
+  id: MonolithTheme;
+  label: string;
+  icon: typeof Sun;
+}[] = [
   { id: "night", label: "Night", icon: Moon },
   { id: "violet", label: "Violet", icon: Sparkles },
   { id: "light", label: "Light", icon: Sun },
   { id: "purple", label: "Purple", icon: Palette },
 ];
+
+const MonolithThemeContext = createContext<{
+  selectTheme: (theme: MonolithTheme) => void;
+  theme: MonolithTheme;
+} | null>(null);
+
+export function MonolithThemePicker({
+  allowedThemes,
+  ariaLabel = "Dashboard theme",
+}: {
+  allowedThemes?: readonly MonolithTheme[];
+  ariaLabel?: string;
+}) {
+  const themeContext = useContext(MonolithThemeContext);
+  if (!themeContext) return null;
+
+  const visibleThemes = allowedThemes
+    ? monolithThemes.filter((item) => allowedThemes.includes(item.id))
+    : monolithThemes;
+
+  return (
+    <div className="mnx-theme-picker" role="group" aria-label={ariaLabel}>
+      {visibleThemes.map((item) => {
+        const Icon = item.icon;
+        return (
+          <button
+            type="button"
+            key={item.id}
+            className={themeContext.theme === item.id ? "is-active" : ""}
+            onClick={() => themeContext.selectTheme(item.id)}
+            aria-pressed={themeContext.theme === item.id}
+            title={`${item.label} theme`}
+          >
+            <Icon size={13} />
+            <span>{item.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function resolveTheme(): MonolithTheme {
   if (typeof window === "undefined") return "night";
@@ -270,12 +322,9 @@ function MonolithAppShellBody({
     return () => window.cancelAnimationFrame(frameId);
   }, [pathname, visibleSections]);
 
-  function selectTheme(nextTheme: MonolithTheme) {
-    setTheme(nextTheme);
-  }
-
   return (
-    <div className="mnx-dashboard-shell" data-theme={theme}>
+    <MonolithThemeContext.Provider value={{ selectTheme: setTheme, theme }}>
+      <div className="mnx-dashboard-shell" data-theme={theme}>
       <aside
         className={`mnx-sidebar ${mobileOpen ? "is-open" : ""}`}
         aria-label="Primary navigation"
@@ -470,28 +519,7 @@ function MonolithAppShellBody({
               <i />
             </Link>
 
-            <div
-              className="mnx-theme-picker"
-              role="group"
-              aria-label="Dashboard theme"
-            >
-              {themes.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    type="button"
-                    key={item.id}
-                    className={theme === item.id ? "is-active" : ""}
-                    onClick={() => selectTheme(item.id)}
-                    aria-pressed={theme === item.id}
-                    title={`${item.label} theme`}
-                  >
-                    <Icon size={13} />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <MonolithThemePicker />
 
             <div className="mnx-profile-menu" ref={profileRef}>
               <button
@@ -614,7 +642,8 @@ function MonolithAppShellBody({
           </section>
         </div>
       ) : null}
-    </div>
+      </div>
+    </MonolithThemeContext.Provider>
   );
 }
 

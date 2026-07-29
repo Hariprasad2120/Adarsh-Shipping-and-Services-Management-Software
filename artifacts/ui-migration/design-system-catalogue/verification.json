@@ -1,0 +1,163 @@
+{
+  "generatedAt": "2026-07-29T10:50:00.476Z",
+  "results": [
+    {
+      "screenshotPath": "artifacts/ui-migration/design-system-catalogue/catalogue-light-desktop.png",
+      "theme": "light",
+      "verification": {
+        "componentCount": 207,
+        "errorText": false,
+        "hasCatalogue": true,
+        "pageOverflows": false,
+        "persistedTheme": "light",
+        "rootClass": true,
+        "semanticAccent": "#f9d972",
+        "theme": "light"
+      },
+      "viewport": "desktop"
+    },
+    {
+      "screenshotPath": "artifacts/ui-migration/design-system-catalogue/catalogue-night-desktop.png",
+      "theme": "night",
+      "verification": {
+        "componentCount": 207,
+        "errorText": false,
+        "hasCatalogue": true,
+        "pageOverflows": false,
+        "persistedTheme": "night",
+        "rootClass": true,
+        "semanticAccent": "#f9d972",
+        "theme": "night"
+      },
+      "viewport": "desktop"
+    },
+    {
+      "screenshotPath": "artifacts/ui-migration/design-system-catalogue/catalogue-violet-desktop.png",
+      "theme": "violet",
+      "verification": {
+        "componentCount": 207,
+        "errorText": false,
+        "hasCatalogue": true,
+        "pageOverflows": false,
+        "persistedTheme": "violet",
+        "rootClass": true,
+        "semanticAccent": "#b5aaf5",
+        "theme": "violet"
+      },
+      "viewport": "desktop"
+    },
+    {
+      "screenshotPath": "artifacts/ui-migration/design-system-catalogue/catalogue-light-tablet.png",
+      "theme": "light",
+      "verification": {
+        "componentCount": 207,
+        "errorText": false,
+        "hasCatalogue": true,
+        "pageOverflows": false,
+        "persistedTheme": "light",
+        "rootClass": true,
+        "semanticAccent": "#f9d972",
+        "theme": "light"
+      },
+      "viewport": "tablet"
+    },
+    {
+      "screenshotPath": "artifacts/ui-migration/design-system-catalogue/catalogue-night-tablet.png",
+      "theme": "night",
+      "verification": {
+        "componentCount": 207,
+        "errorText": false,
+        "hasCatalogue": true,
+        "pageOverflows": false,
+        "persistedTheme": "night",
+        "rootClass": true,
+        "semanticAccent": "#f9d972",
+        "theme": "night"
+      },
+      "viewport": "tablet"
+    },
+    {
+      "screenshotPath": "artifacts/ui-migration/design-system-catalogue/catalogue-violet-tablet.png",
+      "theme": "violet",
+      "verification": {
+        "componentCount": 207,
+        "errorText": false,
+        "hasCatalogue": true,
+        "pageOverflows": false,
+        "persistedTheme": "violet",
+        "rootClass": true,
+        "semanticAccent": "#b5aaf5",
+        "theme": "violet"
+      },
+      "viewport": "tablet"
+    },
+    {
+      "screenshotPath": "artifacts/ui-migration/design-system-catalogue/catalogue-light-mobile.png",
+      "theme": "light",
+      "verification": {
+        "componentCount": 207,
+        "errorText": false,
+        "hasCatalogue": true,
+        "pageOverflows": false,
+        "persistedTheme": "light",
+        "rootClass": true,
+        "semanticAccent": "#f9d972",
+        "theme": "light"
+      },
+      "viewport": "mobile"
+    },
+    {
+      "screenshotPath": "artifacts/ui-migration/design-system-catalogue/catalogue-night-mobile.png",
+      "theme": "night",
+      "verification": {
+        "componentCount": 207,
+        "errorText": false,
+        "hasCatalogue": true,
+        "pageOverflows": false,
+        "persistedTheme": "night",
+        "rootClass": true,
+        "semanticAccent": "#f9d972",
+        "theme": "night"
+      },
+      "viewport": "mobile"
+    },
+    {
+      "screenshotPath": "artifacts/ui-migration/design-system-catalogue/catalogue-violet-mobile.png",
+      "theme": "violet",
+      "verification": {
+        "componentCount": 207,
+        "errorText": false,
+        "hasCatalogue": true,
+        "pageOverflows": false,
+        "persistedTheme": "violet",
+        "rootClass": true,
+        "semanticAccent": "#b5aaf5",
+        "theme": "violet"
+      },
+      "viewport": "mobile"
+    }
+  ],
+  "route": "/admin/design-system",
+  "themes": [
+    "light",
+    "night",
+    "violet"
+  ],
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "name": "tablet",
+      "width": 1024,
+      "height": 900
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844
+    }
+  ]
+}

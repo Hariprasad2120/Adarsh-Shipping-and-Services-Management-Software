@@ -8,6 +8,9 @@ The production migration foundation, batches 001 through 003, Accounting,
 Batch 006 (Communication and Admin), and Batch 007 (Authentication and
 Miscellaneous) are implemented and verified. Batch 006 also re-ran the
 complete Recruit route family to confirm it remains verified.
+The `/admin/design-system` route is now a live catalogue derived from the
+actual production component modules, with 207 unique runtime component names,
+23 interactive route states, and verified Light/Night/Violet testing.
 Batch 004 (Expense and CHA), its shared popup/glass corrections, and the CRM
 migration pass their source, archive, type, focused test, and production-build
 gates; their authenticated visual matrices remain blocked because the
@@ -299,14 +302,75 @@ unrelated to the UI foundation.
 | Pre-foundation 001 | `/account/security`                             | Verified previously | Migration predates this foundation-only session.                                                                                                                                                                                         |
 | Foundation         | No module routes                                | Foundation ready    | Audit, backup, tokens, themes, AppShell, layouts, dashboard normalization.                                                                                                                                                               |
 | Batch 001          | `/product-catalogue`, `/todo`, `/notifications` | Verified            | Full Monolith composition; profile menu and common authenticated states included.                                                                                                                                                        |
-| Showcase           | `/admin/design-system`                          | Verified            | Production design-system showcase with Inter typography, centered spacing, token/component examples, People Operations catalogue entries, and tracked redesign decisions.                                                                 |
+| Catalogue          | `/admin/design-system`                          | Verified            | Live production catalogue for 207 unique runtime component names across 13 global/control/public/module composition groups, 23 interactive route states, shared floating surfaces, and the real persisted Light/Night/Violet theme picker. |
 | Batch 002          | All `/hrms` and `/attendance` routes            | Verified            | 45 complete People Operations routes, shared controls/data/dialog/state compositions, and preserved employee, leave, attendance, overtime, biometric, GPS, shift, approval, payroll, recruitment, letter, report, and settings behavior. |
 | Batch 003          | All `/ams` and `/lms` routes                    | Verified            | 23 complete Performance and Learning routes, shared workspace/control/table/dialog/state compositions, and preserved appraisal, reviewer, criteria, asset, goal, feedback, course, assignment, enrolment, progress, and report behavior. |
 | Batch 004          | All `/cha` routes and `/expense`                | Migrated; visual verification blocked | 12 complete Expense and CHA routes, including the dynamic job workspace, customer editing, workflow configuration, documents, additional data, approvals, filing, bill filing, expenses, reports, settings, and all dialogs/drawers. Source, archive, type, focused test, and build gates pass; the connected Browser service exposes no browser instance for the required authenticated theme/viewport matrix. |
 | Batch 005          | All `/accounting` routes                        | Verified            | 32 complete Accounting routes covering the command centre, chart of accounts, banking, jobs, journals, payments, sales and purchase invoices, commercial orders, quotations and notes, items, financial statements, reports, and settings. All 288 authenticated route/theme/viewport checks pass. |
 | Batch 005          | All `/crm` routes                               | Migrated; visual verification blocked | 57 complete CRM routes covering accounts, contacts, leads, enquiries, deals, activities, campaigns, approvals, products, items, quotes, invoices, tickets, lead sources, forecasting, and supporting sales workspaces. Source, archive, type, focused test, and build gates pass; the connected Browser service exposes no browser instance for the required authenticated theme/viewport matrix. |
-| Batch 006          | All `/communication` and `/admin` routes        | Verified            | 19 newly migrated route surfaces plus the existing design-system showcase. Shared Communication/Admin frames, controls, tables, dialogs, loading/error states, semantic themes, dense Mail/Chat responsiveness, and preserved connected-workspace and administration behavior. All 306 authenticated checks across Communication, Admin, and Recruit pass. |
+| Batch 006          | All `/communication` and `/admin` routes        | Verified            | 19 migrated route surfaces plus the separately verified production component catalogue. Shared Communication/Admin frames, controls, tables, dialogs, loading/error states, semantic themes, dense Mail/Chat responsiveness, and preserved connected-workspace and administration behavior. All 306 authenticated checks across Communication, Admin, and Recruit pass. |
 | Batch 007          | `/`, `/login`, `/setup`, `/verify/[id]`, `/google-chat-link` | Verified | All five repository-discovered Authentication/Miscellaneous routes use centralized public/root Monolith compositions. Credential and Google SSO, setup, document verification, Google Chat linking, root authorization/module controls, validation, redirects, and data operations are preserved. All 45 Light/Night/Violet desktop/tablet/mobile checks pass. |
+
+## Quality log: production component catalogue
+
+Implemented:
+
+- replaced the obsolete decision-log/showcase route with a live catalogue
+  derived from imported runtime modules;
+- covered the authenticated AppShell/theme layer, foundation, workspace,
+  asynchronous states, People, Performance/Learning, CHA, Accounting, CRM,
+  Communication, Admin, and public/authentication compositions;
+- included specialized production Accounting invoice, commercial-document,
+  delete, item-list, item-editor, and item-detail components in the runtime
+  index;
+- rendered real production actions, badges, fields, selects, checkboxes,
+  progress, alerts, menus, filters, warnings, dialogs, tables, uploads,
+  module summaries, details, and public status surfaces;
+- added 23 selectable shared and module-specific permission, configuration,
+  empty, loading, and error states;
+- extracted `MonolithThemePicker` from the AppShell as a shared production
+  component, retaining the existing root classes and persisted preference;
+- removed the obsolete `.mnx-showcase-*` style family and
+  `docs/design-system-showcase.md`;
+- archived the replaced route and shared visual source in
+  `OLD UI code/legacy-ui-before-admin-design-system-catalogue-4f93df4.zip`.
+
+Backup evidence:
+
+- source commit: `4f93df4`;
+- archive size: 38,803 bytes;
+- SHA-256:
+  `643FF25A031F1B8ED7A50F6A04E643564BB77F698A817EF586CD32ACDEC82E34`;
+- required route/client/style entries, size, and checksum pass through
+  `scripts/verify-monolith-design-system-catalogue.mjs`.
+
+Passed:
+
+- regenerated route audit: 211 pages, 14 layouts, 198 migrated, 12 pending;
+- focused production catalogue static/archive verifier;
+- scoped ESLint for the route, shared AppShell, audit, and verification
+  scripts;
+- focused UI-migration TypeScript and full production TypeScript with the
+  required 8 GB heap;
+- 39 focused tests across 12 shared component, workspace, dialog, shell, and
+  dashboard suites;
+- production build with Prisma generation, Next.js compilation, production
+  TypeScript, and all 315 application pages;
+- 9 authenticated catalogue checks across Light, Night, and Violet at
+  1440×1000 desktop, 1024×900 tablet, and 390×844 mobile;
+- shared theme switching/persistence, 207 unique runtime components, module-state
+  selection, dialog open/Escape/focus behavior, semantic tokens, exact route,
+  application-error checks, and horizontal-overflow checks;
+- 9 screenshots plus
+  `artifacts/ui-migration/design-system-catalogue/verification.json`, with
+  representative Light, Violet, and mobile Night captures reviewed;
+- `git diff --check`.
+
+Repository-wide `npm run lint -- --quiet` was executed with the required heap.
+It remains red on the documented pre-existing business/module backlog (1,429
+errors); the catalogue-scoped lint is clean. The production build retains the
+six documented non-fatal broad filesystem/NFT trace warnings in HRMS,
+customer-portal, and `next.config.ts`.
 
 ## Quality log: Communication and Admin batch 006
 

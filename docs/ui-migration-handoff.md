@@ -21,14 +21,69 @@ Last updated: 2026-07-29
   remain Migrated but not visually Verified because the connected in-app
   Browser service exposes no browser instance. This blocker does not apply to
   Accounting's completed authenticated Playwright matrix.
-- All 10 Communication and 10 Admin routes are migrated; 19 newly replaced
-  route surfaces plus the existing design-system showcase pass source,
-  behavior, archive, type, test, build, and authenticated visual gates.
+- All 10 Communication and 10 Admin routes are migrated; 19 Batch 006 route
+  surfaces pass source, behavior, archive, type, test, build, and authenticated
+  visual gates.
+- `/admin/design-system` is now a separately verified live production
+  component catalogue: 207 unique runtime component names across 13 groups, 23
+  interactive route states, and 9 Light/Night/Violet desktop/tablet/mobile
+  checks pass.
 - All 15 Recruit routes remain verified and passed the Batch 006 regression
   matrix.
 - All five Authentication/Miscellaneous routes are verified in Light, Night,
   and Violet at desktop, tablet, and mobile widths. The only pending routes
   are the 12-page `/customer-portal` family.
+
+## Production component catalogue
+
+The obsolete design-decision showcase at `/admin/design-system` was replaced
+from source, not reskinned.
+
+Implementation:
+
+1. The catalogue imports production module namespaces and derives its complete
+   index from their runtime exports.
+2. It covers AppShell/theme, foundation, workspace, shared async state, People,
+   Performance/Learning, CHA, Accounting, CRM, Communication, Admin, and
+   public/authentication composition groups.
+3. It renders real production primitives and representative module
+   compositions, including menus, filters, warnings, dialogs, tables, uploads,
+   summaries, details, status, public surfaces, and all 23 shared/module state
+   variants.
+4. `MonolithThemePicker` is now shared by the AppShell and catalogue. The
+   catalogue intentionally exposes Light, Night, and Violet while using the
+   shell's existing root classes and `localStorage.theme` persistence.
+5. The obsolete `.mnx-showcase-*` CSS and
+   `docs/design-system-showcase.md` were removed.
+
+Backup:
+
+- `OLD UI code/legacy-ui-before-admin-design-system-catalogue-4f93df4.zip`;
+- source commit `4f93df4`;
+- 38,803 bytes;
+- SHA-256
+  `643FF25A031F1B8ED7A50F6A04E643564BB77F698A817EF586CD32ACDEC82E34`;
+- checksum, size, and required entries pass through
+  `scripts/verify-monolith-design-system-catalogue.mjs`.
+
+Verification:
+
+- static catalogue/import/state/theme/archive gate: passed;
+- route audit: 211 pages, 14 layouts, 198 migrated, 12 pending;
+- scoped ESLint: passed;
+- focused and full production TypeScript with the required heap: passed;
+- 39 focused tests across 12 suites: passed;
+- production build and all 315 application pages: passed;
+- 9 authenticated Light/Night/Violet × desktop/tablet/mobile checks: passed;
+- shared theme selection and persistence, 207 unique runtime components,
+  module state selection, dialog open/Escape behavior, semantic theme tokens,
+  application errors, and horizontal overflow: passed;
+- 9 screenshots and
+  `artifacts/ui-migration/design-system-catalogue/verification.json`: reviewed;
+- full repository lint remains red on the existing 1,429-error business/module
+  backlog; no catalogue-scoped lint finding remains;
+- the build retains the six existing non-fatal broad filesystem/NFT trace
+  warnings.
 
 ## Authentication and Miscellaneous route inventory
 

@@ -153,7 +153,7 @@ function stateFor(route) {
   if (route === "/account/security")
     return "Migrated before this foundation session";
   if (route === "/admin/design-system")
-    return "Migrated design-system showcase";
+    return "Migrated and verified production component catalogue";
   if (knownMonolithRoutes.has(route)) return "Migrated in batch 001";
   if (isPeopleOperationsRoute(route))
     return "Migrated in people operations batch 002";
@@ -321,7 +321,7 @@ const lines = [
   "- `/dashboard` remains the protected visual reference and is not redesigned.",
   "- `/account/security` was migrated before the foundation session.",
   "- `/notifications`, `/product-catalogue`, and `/todo` were migrated in batch 001.",
-  "- `/admin/design-system` is the production showcase for reusable migration decisions.",
+  "- `/admin/design-system` is the live catalogue of production layouts, components, states, and module compositions.",
   "- All `/hrms` and `/attendance` routes were migrated in people operations batch 002.",
   "- All `/ams` and `/lms` routes were migrated in performance and learning batch 003.",
   "- All `/cha` and `/expense` routes were migrated in Expense and CHA batch 004.",
