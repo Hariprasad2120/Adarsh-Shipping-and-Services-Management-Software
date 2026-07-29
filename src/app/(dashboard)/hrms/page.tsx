@@ -70,7 +70,6 @@ export default async function HrmsDashboardPage() {
     "HR Letters": "Generate and manage employee letters.",
     "Document Drive": "Open employee files and shared HR documents.",
     "Help Desk": "Handle internal support and HR help requests.",
-    "Onboard Employee": "Add a new hire and complete their onboarding record.",
     "User Control":
       "Enable or disable employee login access from one HRMS control panel.",
     "Organisation Structure":

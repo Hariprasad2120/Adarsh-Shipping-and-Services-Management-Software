@@ -70,6 +70,10 @@ function isAuthenticationMiscRoute(route) {
   ]).has(route);
 }
 
+function isEmployeeInvitationRoute(route) {
+  return new Set(["/invite/employee", "/invite/employee/ready"]).has(route);
+}
+
 function isMonolithRoute(route) {
   return (
     knownMonolithRoutes.has(route) ||
@@ -171,6 +175,8 @@ function stateFor(route) {
     return "Migrated in Communication and Admin batch 006";
   if (isAuthenticationMiscRoute(route))
     return "Migrated in Authentication and Miscellaneous batch 007";
+  if (isEmployeeInvitationRoute(route))
+    return "Migrated in HRMS employee invitation extension";
   return "Pending module migration";
 }
 
@@ -328,6 +334,7 @@ const lines = [
   "- All `/accounting` routes were migrated in Accounting batch 005.",
   "- All `/crm` routes were migrated in CRM batch 005.",
   "- `/`, `/login`, `/setup`, `/verify/[id]`, and `/google-chat-link` were migrated in Authentication and Miscellaneous batch 007.",
+  "- `/invite/employee` and `/invite/employee/ready` were migrated in the HRMS employee invitation extension.",
   "- Every other route remains pending until its own presentation, behavior, RBAC,",
   "  themes, and responsive layout are verified in a later module batch.",
   "",

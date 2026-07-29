@@ -5,6 +5,7 @@ import {
   PeopleControlInput,
   PeopleControlTable,
   PeopleControlTextarea,
+  PeopleToggleButton,
 } from "./people-controls";
 import {
   getPeopleRouteMeta,
@@ -63,6 +64,7 @@ describe("People operations production components", () => {
         <PeopleControlInput aria-label="Employee" />
         <PeopleControlInput type="checkbox" aria-label="Select employee" />
         <PeopleControlTextarea aria-label="Notes" />
+        <PeopleToggleButton active aria-label="Login enabled" />
         <PeopleControlTable>
           <tbody>
             <tr>
@@ -77,6 +79,8 @@ describe("People operations production components", () => {
     expect(markup).toContain("mnx-field-control");
     expect(markup).toContain("mnx-choice-control");
     expect(markup).toContain("mnx-field-textarea");
+    expect(markup).toContain("mnx-people-toggle is-active");
+    expect(markup).toContain('aria-pressed="true"');
     expect(markup).toContain("mnx-workspace-table");
   });
 });

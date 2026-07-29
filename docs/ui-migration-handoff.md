@@ -189,6 +189,77 @@ Repository discovery—not sidebar links—found:
 7. Regenerated the exhaustive route audit and added repeatable static and
    authenticated runtime verifiers.
 
+- The expanded HRMS employee profile and its HRMS Settings custom-field
+  builder are implemented, migrated to the database, and pass targeted lint,
+  production TypeScript, focused tests, and the production build. A new
+  interactive visual pass remains pending because the same Browser service
+  currently exposes no browser instance.
+
+## HRMS employee profile expansion
+
+Implemented on 2026-07-29:
+
+- `/hrms/employees/[id]` now presents the full editable employee record:
+  basic and work information, reporting hierarchy, personal and identity
+  details, contacts and addresses, separation, payroll, bank details, work
+  experience, education, dependants, system audit fields, roles, and account
+  actions.
+- Its information sections are compact full-width horizontal cards stacked in
+  sequence, using up to four value columns on desktop so short cards no longer
+  inherit unused height from larger neighbouring sections.
+- `/hrms/employees` now fills the inherited workspace width. Each role card
+  uses an explicit nine-column desktop grid for combined employee identity,
+  joining date, roles, department, location, employment status, login status,
+  annual gross, and actions, with horizontal overflow retained for narrower
+  viewports. The toolbar reports the current filtered total.
+- Its centralized filter now covers broad employee search, role, branch,
+  department, employee status, account status, and onboarding status. The
+  broad search includes employee number, designation, organisation assignment,
+  and role as well as name and email.
+- The adjacent export action opens a shared Monolith dialog for XLS, XLSX,
+  CSV, or TSV. The permission-checked server route exports up to 10,000 records
+  from the exact current filter query, never includes password data, and
+  guards employee-controlled cells against spreadsheet formula execution.
+- A shared People Operations account toggle was added for authorised HR users.
+  It prevents self-lockout, preserves organisation scoping, and routes account
+  disablement through the existing session-revoking user update logic.
+- Imported payroll JSON is retained as a non-destructive fallback while new
+  edits persist to `EmployeeHrmsProfile` and the established `User` and
+  `EmploymentRecord` fields.
+- `/hrms/settings` now uses a two-column responsive composition; the new
+  employee-profile column manages organisation-scoped text, long-text, number,
+  date, select, and yes/no fields.
+- Profile update validation enforces tenant-scoped organisation/reporting
+  references, custom-field required/type/select contracts, and self-reporting
+  prevention. Existing session revocation and appraisal synchronization remain
+  active.
+- Migration `20260729183000_add_employee_hrms_profiles` was applied
+  successfully to the configured database.
+- Archive:
+  `OLD UI code/legacy-ui-before-hrms-employee-profile-expansion-20260729.zip`,
+  9,468 bytes, SHA-256
+  `96BB11CA91858C2E76E10D6825CB33CA40B188B4337F85F5465EDF5B77A047BA`.
+- Directory archive:
+  `OLD UI code/legacy-ui-before-hrms-employee-directory-expansion-20260729.zip`,
+  6,845 bytes, SHA-256
+  `438C73350E07CB606053F4767A33E173C302E693584E571CCAC1036D65871C0D`.
+- Passed with the required 8 GB Node heap: Prisma generation, targeted ESLint,
+  `npx tsc --noEmit`, three focused Vitest cases, and `npm run build` (316
+  static pages). The build retains the existing non-fatal `next.config.ts` NFT
+  trace warning.
+- The directory alignment follow-up also passes targeted ESLint, production
+  TypeScript, six focused People Operations/profile tests, the static 45-route
+  verifier, diff hygiene, and a fresh 316-page production build.
+- The filter/export follow-up passes targeted ESLint, production TypeScript,
+  12 focused People Operations/profile/export tests, the 45-route verifier,
+  and a 317-page production build that includes
+  `/api/hrms/employees/export`.
+- Browser setup and the one permitted availability query returned no browser
+  instance, so interactive save/add-row/custom-field and
+  Light/Night/Violet desktop/tablet/mobile checks, including the filter menu,
+  export dialog, and a safe test download, must be run when a browser is
+  attached.
+
 ## Accounting route inventory
 
 Routes were discovered from repository page sources, not sidebar links:
@@ -541,3 +612,70 @@ Continue the remaining migration program:
    verified earlier batches.
 6. Migrate the 12 remaining discovered routes, all in the customer portal
    family, without changing protected `/dashboard`.
+
+## 2026-07-29 HRMS employee invitation handoff
+
+The employee invitation and self-service lifecycle is implemented, migrated,
+and production-build clean.
+
+Delivered:
+
+- HR creates an inactive pending employee and sends a secure organisation
+  invitation instead of assigning a temporary password.
+- Invitation tokens are hashed at rest, expire after 72 hours by default, are
+  revoked on resend, and are consumed exactly once in the same transaction that
+  activates the employee and stores the bcrypt password hash.
+- The public employee invite page validates the link, shows the organisation
+  context, enforces a strong password, and redirects to a workspace-ready thank
+  you page.
+- Pending employees are visible in the Employee directory/profile immediately,
+  including delivery, expiry, and resend states.
+- The redundant `Onboard Employee` sidebar/dashboard entry was removed;
+  invitation creation remains available only from the Employees directory.
+- Employee self-service can update only the explicit server-side basic/KYC
+  allowlist. Critical employment, organisation, bank, joining, reporting,
+  salary, role, work-contact, custom, and system data remains HR-only.
+- Generic user updates cannot bypass invitation acceptance by activating a
+  pending invited user.
+- The shell exposes `My employee profile` to employees who have employee-read
+  capability.
+
+Persistence:
+
+- `EmployeeInvitation`, `User.emailVerifiedAt`, and `User.activatedAt` were
+  added by `20260729201500_add_employee_invitations`.
+- The migration was deployed successfully to the configured PostgreSQL
+  database.
+- Email delivery uses the existing Resend/SMTP provider configuration.
+
+Verification:
+
+- targeted ESLint: passed;
+- production TypeScript: passed;
+- focused HRMS invitation/profile/export tests: 19 passed;
+- People Operations static verifier: 45 routes passed;
+- route audit: 213 pages, 14 layouts;
+- production build: 321 pages passed;
+- full production-source tests: 208 passed and 3 unrelated CHA integration
+  expectations failed;
+- repository-wide ESLint remains blocked by the documented legacy backlog;
+- browser selection returned no available browser (`[]`), so live Light, Night,
+  and Violet visual/responsive checks remain pending.
+
+Backup:
+
+- `OLD UI code/legacy-ui-before-hrms-employee-invitations-20260729.zip`
+- 24,105 bytes
+- SHA-256
+  `7A7B1DF27B5B3BD28CA363909E3920161B7E0A346F95D9652E88A69C1BDBA5CF`
+
+Next visual action:
+
+1. Attach an in-app Browser instance.
+2. Verify `/hrms/employees/new`, invited Employee directory/profile states,
+   `/invite/employee` with valid/invalid/expired/used tokens, the password
+   requirement/error states, `/invite/employee/ready`, and employee
+   self-service at desktop, tablet, and mobile widths in Light, Night, and
+   Violet.
+3. Confirm keyboard focus, no horizontal overflow, email failure/resend
+   messaging, and that HR-only controls never enter edit mode for an employee.

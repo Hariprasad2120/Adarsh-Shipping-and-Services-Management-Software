@@ -57,6 +57,7 @@ export function DashboardShellSwitcher({
   enabledModuleIds,
   isPlatformAdmin,
   sessionToken,
+  userId,
   userEmail,
   userName,
 }: {
@@ -65,6 +66,7 @@ export function DashboardShellSwitcher({
   enabledModuleIds: string[];
   isPlatformAdmin: boolean;
   sessionToken: string;
+  userId: string;
   userEmail: string;
   userName: string;
 }) {
@@ -77,6 +79,7 @@ export function DashboardShellSwitcher({
         caps={caps}
         enabledModuleIds={enabledModuleIds}
         isPlatformAdmin={isPlatformAdmin}
+        userId={userId}
         userEmail={userEmail}
         userName={userName}
       >

@@ -43,6 +43,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           userEmail={session.user.email}
           userName={session.user.name}
           sessionToken={session.user.sessionNonce}
+          userId={session.user.id}
           enabledModuleIds={enabledModuleIds}
         >
           {children}

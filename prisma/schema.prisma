@@ -35,6 +35,8 @@ model Organisation {
   notificationActivities NotificationActivity[]
   todoTasks              TodoTask[]
   announcements          Announcement[]
+  employeeProfileFields  EmployeeProfileField[]
+  employeeInvitations    EmployeeInvitation[]
 
   crmApprovalLogs       CrmApprovalLog[]
   crmWorkTimeLogs       CrmWorkTimeLog[]
@@ -234,6 +236,8 @@ model User {
   tlId            String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  emailVerifiedAt DateTime?
+  activatedAt     DateTime?
 
   // Personal & Biometric mapping
   employeeNumber Int?      @unique
@@ -264,6 +268,9 @@ model User {
   notifications          Notification[]
   notificationActivities NotificationActivity[] @relation("NotificationActivityActor")
   employmentRecord       EmploymentRecord?
+  employeeProfile        EmployeeHrmsProfile?
+  employeeInvitations    EmployeeInvitation[] @relation("EmployeeInvitationTarget")
+  employeeInvitationsSent EmployeeInvitation[] @relation("EmployeeInvitationSender")
   documents              Document[]
   todoTasks              TodoTask[]
 
@@ -583,6 +590,66 @@ model EmploymentRecord {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EmployeeHrmsProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  data         Json
+  customValues Json?
+  createdById  String?
+  modifiedById String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([updatedAt])
+}
+
+model EmployeeProfileField {
+  id          String   @id @default(cuid())
+  orgId       String
+  key         String
+  label       String
+  type        String   @default("TEXT") // TEXT | TEXTAREA | NUMBER | DATE | SELECT | BOOLEAN
+  section     String   @default("Custom Details")
+  required    Boolean  @default(false)
+  options     Json?
+  position    Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, key])
+  @@index([orgId, active, position])
+}
+
+model EmployeeInvitation {
+  id             String    @id @default(cuid())
+  orgId          String
+  userId         String
+  email          String
+  tokenHash      String    @unique
+  expiresAt      DateTime
+  consumedAt     DateTime?
+  revokedAt      DateTime?
+  sentById       String?
+  sentAt         DateTime?
+  deliveryStatus String    @default("PENDING") // PENDING | SENT | FAILED
+  deliveryError  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  org    Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user   User         @relation("EmployeeInvitationTarget", fields: [userId], references: [id], onDelete: Cascade)
+  sentBy User?        @relation("EmployeeInvitationSender", fields: [sentById], references: [id], onDelete: SetNull)
+
+  @@index([userId, consumedAt, revokedAt, expiresAt])
+  @@index([orgId, deliveryStatus, createdAt])
+  @@index([sentById])
 }
 
 model Document {

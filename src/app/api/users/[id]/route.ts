@@ -11,7 +11,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   const user = await getUser(id);
-  if (!user) return err("Not found", 404);
+  if (!user || user.orgId !== session!.user.orgId) return err("Not found", 404);
 
   const safe = Object.fromEntries(
     Object.entries(user).filter(([key]) => key !== "passwordHash"),
@@ -42,6 +42,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
   const parsed = updateSchema.safeParse(await req.json());
   if (!parsed.success) return err("Invalid input");
+  const target = await getUser(id);
+  if (!target || target.orgId !== session!.user.orgId) {
+    return err("Not found", 404);
+  }
+  if (parsed.data.active !== undefined) {
+    await requirePermission(session!.user.id, "hrms.employee.deactivate");
+  }
 
   const { joinDate, grade, ctc, priorExperienceYears, ...userFields } = parsed.data;
 

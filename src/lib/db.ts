@@ -1,5 +1,5 @@
 // Bump this when Prisma schema changes need a fresh dev-time singleton.
-const PRISMA_CLIENT_SCHEMA_VERSION = "2026-07-14-customer-portal-phase1";
+const PRISMA_CLIENT_SCHEMA_VERSION = "2026-07-29-employee-hrms-profile";
 
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -37,6 +37,8 @@ type PrismaClientWithDelegates = PrismaClient & {
   chaTeamGroup?: unknown;
   chaJobDeletionRequest?: unknown;
   googleChatInteractionEvent?: unknown;
+  employeeHrmsProfile?: unknown;
+  employeeProfileField?: unknown;
 };
 
 function hasRequiredDelegates(client: PrismaClient) {
@@ -52,7 +54,9 @@ function hasRequiredDelegates(client: PrismaClient) {
     typeof delegateClient.crmWorkTimeLog !== "undefined" &&
     typeof delegateClient.chaTeamGroup !== "undefined" &&
     typeof delegateClient.chaJobDeletionRequest !== "undefined" &&
-    typeof delegateClient.googleChatInteractionEvent !== "undefined"
+    typeof delegateClient.googleChatInteractionEvent !== "undefined" &&
+    typeof delegateClient.employeeHrmsProfile !== "undefined" &&
+    typeof delegateClient.employeeProfileField !== "undefined"
   );
 }
 
@@ -134,7 +138,7 @@ if (shouldStartJustdialScheduler && !globalForScheduler.justdialSchedulerStarted
               const log = await createImportLog(config.orgId);
               logId = log.id;
               await runJustdialImport(config.orgId, config.defaultOwnerId, logId);
-            } catch (err: any) {
+            } catch (err: unknown) {
               console.error(`[Justdial Scheduler] Background import failed for org ${config.orgId}:`, err);
             } finally {
               await setImportingLock(config.orgId, false);

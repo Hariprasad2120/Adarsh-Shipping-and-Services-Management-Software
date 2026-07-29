@@ -9,12 +9,15 @@ import {
   BriefcaseBusiness,
   CircleUserRound,
   Landmark,
+  MailCheck,
   MapPinned,
+  Send,
   ShieldCheck,
   Users,
 } from "lucide-react";
 import { DropdownSelect } from "@/components/monolith/dropdown-select";
 import { Input } from "@/components/monolith/input";
+import { toast } from "sonner";
 
 type Division = { id: string; name: string };
 type Department = {
@@ -30,6 +33,28 @@ type Manager = { id: string; name: string; designation: string | null };
 function optionalString(value: FormDataEntryValue | null) {
   const text = typeof value === "string" ? value.trim() : "";
   return text || undefined;
+}
+
+function responseError(value: unknown, fallback: string) {
+  if (typeof value === "string") return value;
+  if (
+    value &&
+    typeof value === "object" &&
+    "message" in value &&
+    typeof value.message === "string"
+  ) {
+    return value.message;
+  }
+  return fallback;
+}
+
+function joinedAddress(
+  ...values: Array<FormDataEntryValue | null>
+) {
+  return values
+    .map(optionalString)
+    .filter((value): value is string => Boolean(value))
+    .join(", ");
 }
 
 function sectionCardClass(extra = "") {
@@ -74,10 +99,14 @@ export function OnboardForm({
 
     const fd = new FormData(e.currentTarget);
     const body = {
-      name: fd.get("name"),
-      email: fd.get("email"),
-      password: fd.get("password"),
+      firstName: optionalString(fd.get("firstName")),
+      lastName: optionalString(fd.get("lastName")) ?? "",
+      email: optionalString(fd.get("email")),
+      employeeNumber: fd.get("employeeNumber")
+        ? Number(fd.get("employeeNumber"))
+        : null,
       designation: optionalString(fd.get("designation")),
+      employmentType: optionalString(fd.get("employmentType")),
       branchId: optionalString(fd.get("branchId")),
       departmentId: optionalString(fd.get("departmentId")),
       divisionId: optionalString(fd.get("divisionId")),
@@ -91,64 +120,82 @@ export function OnboardForm({
           ? Number(fd.get("priorExperienceYears"))
           : 0,
       roleIds: selectedRoles,
-      payrollMeta: {
-        employeeNumber: optionalString(fd.get("employeeNumber")),
-        personalDetails: {
-          personalEmail: optionalString(fd.get("personalEmail")),
-          fatherName: optionalString(fd.get("fatherName")),
-          mobileNumber: optionalString(fd.get("mobileNumber")),
-          dateOfBirth: optionalString(fd.get("dateOfBirth")),
-          gender: optionalString(fd.get("gender")),
-          maritalStatus: optionalString(fd.get("maritalStatus")),
-          panNumber: optionalString(fd.get("panNumber")),
-          aadhaar: optionalString(fd.get("aadhaar")),
-        },
-        bankDetails: {
-          holderName: optionalString(fd.get("bankHolderName")),
-          bankName: optionalString(fd.get("bankName")),
-          accountNumber: optionalString(fd.get("bankAccountNumber")),
-          ifscCode: optionalString(fd.get("ifscCode")),
-          accountType: optionalString(fd.get("accountType")),
-          paymentMode: optionalString(fd.get("paymentMode")),
-          stateCode: optionalString(fd.get("bankStateCode")),
-        },
-        personalAddress: {
-          addressLine1: optionalString(fd.get("presentAddressLine1")),
-          addressLine2: optionalString(fd.get("presentAddressLine2")),
-          city: optionalString(fd.get("presentCity")),
-          stateCode: optionalString(fd.get("presentStateCode")),
-          postalCode: optionalString(fd.get("presentPostalCode")),
-          country: optionalString(fd.get("presentCountry")),
-        },
-        workLocation: {
-          addressLine1: optionalString(fd.get("permanentAddressLine1")),
-          addressLine2: optionalString(fd.get("permanentAddressLine2")),
-          city: optionalString(fd.get("permanentCity")),
-          stateCode: optionalString(fd.get("permanentStateCode")),
-          postalCode: optionalString(fd.get("permanentPostalCode")),
-          country: optionalString(fd.get("permanentCountry")),
-        },
-      },
+      personalEmail: optionalString(fd.get("personalEmail")),
+      fatherName: optionalString(fd.get("fatherName")),
+      personalPhone: optionalString(fd.get("mobileNumber")),
+      dob: optionalString(fd.get("dateOfBirth")),
+      gender: optionalString(fd.get("gender")),
+      maritalStatus: optionalString(fd.get("maritalStatus")),
+      pan: optionalString(fd.get("panNumber")),
+      aadhaar: optionalString(fd.get("aadhaar")),
+      bankHolderName: optionalString(fd.get("bankHolderName")),
+      bankName: optionalString(fd.get("bankName")),
+      bankAccount: optionalString(fd.get("bankAccountNumber")),
+      ifsc: optionalString(fd.get("ifscCode")),
+      accountType: optionalString(fd.get("accountType")),
+      paymentMode: optionalString(fd.get("paymentMode")),
+      presentAddress: joinedAddress(
+        fd.get("presentAddressLine1"),
+        fd.get("presentAddressLine2"),
+        fd.get("presentCity"),
+        fd.get("presentStateCode"),
+        fd.get("presentPostalCode"),
+        fd.get("presentCountry"),
+      ),
+      presentStateCode: optionalString(fd.get("presentStateCode")),
+      permanentAddress: joinedAddress(
+        fd.get("permanentAddressLine1"),
+        fd.get("permanentAddressLine2"),
+        fd.get("permanentCity"),
+        fd.get("permanentStateCode"),
+        fd.get("permanentPostalCode"),
+        fd.get("permanentCountry"),
+      ),
     };
 
-    const res = await fetch("/api/users", {
+    const res = await fetch("/api/hrms/invitations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
 
+    const data = await res.json();
     if (!res.ok) {
-      const data = await res.json();
-      setError(data.error ?? "Failed to create employee.");
+      setError(
+        responseError(data.error, "Failed to create employee invitation."),
+      );
       setLoading(false);
       return;
     }
 
-    router.push("/hrms/employees");
+    if (data.invitation?.deliveryStatus === "FAILED") {
+      toast.warning(
+        "Employee created, but email delivery failed. You can resend the invitation from the employee profile.",
+      );
+    } else {
+      toast.success("Employee invitation sent.");
+    }
+    router.push(`/hrms/employees/${data.user.id}`);
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <section className="mnx-panel mnx-accent-edge mnx-content-wide flex flex-col gap-4 border border-mono-border/40 bg-mono-card p-5 shadow-sm sm:flex-row sm:items-center sm:p-6">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[var(--mnx-accent)]/15 text-[var(--mnx-accent-text)]">
+          <MailCheck className="size-5" aria-hidden="true" />
+        </span>
+        <div>
+          <h2 className="text-base font-semibold text-mono-text">
+            Invite an employee
+          </h2>
+          <p className="mt-1 text-sm leading-relaxed text-mono-muted">
+            Create the pending employee record and send a secure, single-use
+            invitation. The employee chooses their own password before login is
+            enabled.
+          </p>
+        </div>
+      </section>
+
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <div className="space-y-6">
           <InfoCard
@@ -157,15 +204,9 @@ export function OnboardForm({
             description="Basic identity and contact information for the employee record."
           >
             <FormGrid>
-              <Field label="Full Name" name="name" required />
+              <Field label="First Name" name="firstName" required />
+              <Field label="Last Name" name="lastName" />
               <Field label="Work Email" name="email" type="email" required />
-              <Field
-                label="Password (temporary)"
-                name="password"
-                type="password"
-                required
-                placeholder="Min 8 chars"
-              />
               <Field
                 label="Designation"
                 name="designation"
@@ -174,7 +215,8 @@ export function OnboardForm({
               <Field
                 label="Employee ID"
                 name="employeeNumber"
-                placeholder="e.g. EMP-1024"
+                type="number"
+                placeholder="e.g. 194"
               />
               <Field
                 label="Personal Email"
@@ -225,6 +267,15 @@ export function OnboardForm({
           >
             <FormGrid>
               <Field label="Join Date" name="joinDate" type="date" required />
+              <SelectField label="Employment Type" name="employmentType">
+                <option value="">- Select -</option>
+                <option value="Permanent">Permanent</option>
+                <option value="Temporary">Temporary</option>
+                <option value="Contract">Contract</option>
+                <option value="Intern">Intern</option>
+                <option value="Trainee">Trainee</option>
+                <option value="Probation">Probation</option>
+              </SelectField>
               <Field label="Grade" name="grade" placeholder="e.g. L3" />
               <Field
                 label="CTC (annual)"
@@ -479,10 +530,11 @@ export function OnboardForm({
       >
         <div>
           <h2 className="text-base font-semibold text-mono-text">
-            Create Employee
+            Send employee invitation
           </h2>
           <p className="mt-1 text-sm text-mono-muted">
-            Review the sections above and save the onboarding record.
+            The employee will appear immediately with an Invited status and can
+            activate login from the email link.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -491,7 +543,8 @@ export function OnboardForm({
             disabled={loading}
             className="rounded-lg bg-[var(--mnx-accent)] px-5 py-2 font-medium text-[var(--mnx-text)] transition hover:bg-[var(--mnx-accent)] disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Create Employee"}
+            <Send className="size-4" aria-hidden="true" />
+            {loading ? "Sending invitation…" : "Create and send invitation"}
           </MnxAction>
           <Link
             href="/hrms/employees"
