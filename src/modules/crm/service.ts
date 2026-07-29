@@ -163,6 +163,7 @@ export async function listLeads(orgId: string, filters?: { status?: string; sear
 
   return db.crmLead.findMany({
     where,
+    take: 200,
     orderBy: { createdAt: "desc" },
     include: {
       owner: { select: { id: true, name: true } },
@@ -195,6 +196,7 @@ export async function listEnquiries(orgId: string, filters?: { search?: string; 
 
   return db.crmLead.findMany({
     where,
+    take: 200,
     orderBy: { createdAt: "desc" },
     include: {
       owner: { select: { id: true, name: true, email: true } },
@@ -273,6 +275,7 @@ export async function listContacts(orgId: string, filters?: { search?: string })
 
   return db.crmContact.findMany({
     where,
+    take: 200,
     orderBy: { lastName: "asc" },
     include: {
       account: { select: { id: true, name: true } },
@@ -345,6 +348,7 @@ export async function listAccounts(orgId: string, filters?: { search?: string })
 
   return db.crmAccount.findMany({
     where,
+    take: 200,
     orderBy: { name: "asc" },
     include: {
       owner: { select: { id: true, name: true } },
@@ -417,6 +421,7 @@ export async function listDeals(orgId: string, filters?: { search?: string; stag
 
   return db.crmDeal.findMany({
     where,
+    take: 200,
     orderBy: { createdAt: "desc" },
     include: {
       account: { select: { id: true, name: true } },

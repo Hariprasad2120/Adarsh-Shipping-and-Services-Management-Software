@@ -185,6 +185,31 @@ CHA dialog reference archive:
   groups in disclosure sections without an internal scrollbar, and removes
   hover lift from the CHA action/filter cluster to prevent menu-transition
   nudging.
+- `src/components/monolith/operations-overview.tsx`,
+  `src/app/(dashboard)/cha/page.tsx`, and `src/styles/monolith-system.css`:
+  the lower CHA dashboard is now a reusable Operations Overview with an
+  asymmetric pending/deadline grid and full-width activity timeline. It keeps
+  the existing live pending-checklist, pending-filing, filing-query,
+  due-date-warning, audit-log, actor, and job navigation data while replacing
+  the prior three oversized cards. Backup:
+  `OLD UI code/ui-iteration-backups/cha-operations-overview-redesign-20260729/`.
+- `src/components/monolith/operations-overview.tsx` and
+  `src/styles/monolith-system.css`: Pending Actions quick actions are now
+  compact command cards with marker tiles, structured metadata, priority
+  badges, and compact CTA affordances instead of stretched alert rows. Backup:
+  `OLD UI code/ui-iteration-backups/cha-quick-actions-redesign-20260729/`.
+- `src/app/(dashboard)/cha/jobs/jobs-client.tsx` and
+  `src/styles/monolith-system.css`: CHA Jobs now uses the shared CHA header
+  graphic, removes the standalone Job Command Center section, places the
+  search/filter/create controls inside each datatable panel, and removes the
+  Job Title column from both Active and Completed Jobs. Backup:
+  `OLD UI code/ui-iteration-backups/cha-jobs-header-actions-table-20260729/`.
+- `src/app/(dashboard)/cha/jobs/jobs-client.tsx` and
+  `src/styles/monolith-system.css`: CHA Jobs datatable controls now match the
+  shared table reference with a left-aligned Monolith search field, right
+  aligned New Job and Filter controls, and no extra Apply Search button.
+  Backup:
+  `OLD UI code/ui-iteration-backups/cha-jobs-datatable-controls-reference-20260729/`.
 - `scripts/verify-monolith-expense-cha-ui.mjs`: exhaustive CHA popup/dropdown,
   behavior, and archive gate.
 
@@ -199,9 +224,24 @@ Passed:
   tests;
 - targeted ESLint for the latest CHA dashboard search/filter files and shared
   filter component;
+- targeted ESLint for the Operations Overview component and CHA dashboard
+  usage;
+- targeted ESLint for the Pending Actions quick-action card refinement;
+- targeted ESLint for the CHA Jobs register header/action/table refinement;
+- targeted ESLint for the CHA Jobs datatable toolbar reference refinement;
 - `npx tsc --noEmit -p tsconfig.ui-migration.json`;
 - `npx tsc --noEmit -p tsconfig.ui-migration.json` after the latest CHA
   search/filter refinement;
+- `npx tsc --noEmit -p tsconfig.ui-migration.json` after the lower dashboard
+  Operations Overview redesign;
+- `npx tsc --noEmit -p tsconfig.ui-migration.json` after the Pending Actions
+  quick-action card refinement;
+- `npx tsc --noEmit -p tsconfig.ui-migration.json` after the CHA Jobs register
+  header/action/table refinement;
+- `npx tsc --noEmit -p tsconfig.ui-migration.json` after the CHA Jobs
+  datatable toolbar reference refinement;
+- static Expense/CHA verifier after the CHA Jobs datatable toolbar reference
+  refinement;
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`;
 - 21 focused tests in 7 suites;
 - `NODE_OPTIONS=--max-old-space-size=8192 npm run build`, including Prisma

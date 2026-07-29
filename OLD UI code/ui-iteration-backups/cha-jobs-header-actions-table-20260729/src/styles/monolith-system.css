@@ -7426,32 +7426,6 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   background: color-mix(in srgb, var(--mnx-card) 62%, transparent);
 }
 
-.mnx-cha-jobs-table-controls {
-  display: grid;
-  gap: var(--mn-space-3);
-  padding: var(--mn-space-4) var(--mn-space-5);
-  border-bottom: 1px solid var(--mnx-border);
-  background: color-mix(in srgb, var(--mnx-card) 72%, transparent);
-}
-
-.mnx-cha-jobs-toolbar {
-  width: 100%;
-  padding: 0;
-  border-bottom: 0;
-}
-
-.mnx-cha-jobs-toolbar .mnx-search-field {
-  flex-basis: min(330px, 100%);
-}
-
-.mnx-cha-jobs-toolbar-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
 .mnx-cha-actions-search {
   position: relative;
   width: min(100%, 300px);

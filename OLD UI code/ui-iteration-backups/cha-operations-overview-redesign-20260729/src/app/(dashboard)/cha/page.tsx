@@ -23,18 +23,7 @@ import {
   getChaPriorityBadgeVariant,
   getChaStageBadgeVariant,
 } from "@/lib/cha-badges";
-import {
-  ActivityTimeline,
-  ActivityTimelineItem,
-  ExpiryRow,
-  OperationsEmptyState,
-  OperationsOverview,
-  OperationsOverviewGrid,
-  OperationsOverviewHeader,
-  OperationsPanel,
-  PendingActionRow,
-} from "@/components/monolith/operations-overview";
-import { ChaControlPanel, ChaMetricCard, ChaMetrics, ChaPageHeader } from "./_components/cha-operations-shared";
+import { ChaControlPanel, ChaMetricCard, ChaMetrics, ChaPageHeader, ChaSectionShell } from "./_components/cha-operations-shared";
 import { ChaDashboardFilterAction } from "./_components/cha-dashboard-filter-action";
 import { ChaDashboardSearchAction } from "./_components/cha-dashboard-search-action";
 import { ChaHeaderGraphic } from "./graphics/ChaHeaderGraphic";
@@ -53,56 +42,6 @@ function chaStatusTextClass(variant: ReturnType<typeof getChaStageBadgeVariant>)
     default:
       return "mnx-cha-status-muted";
   }
-}
-
-function formatRelativeTime(date: Date) {
-  const diffMs = Date.now() - date.getTime();
-  const minute = 60 * 1000;
-  const hour = 60 * minute;
-  const day = 24 * hour;
-
-  if (diffMs < minute) return "Just now";
-  if (diffMs < hour) return `${Math.max(1, Math.floor(diffMs / minute))} min ago`;
-  if (diffMs < day) return `${Math.floor(diffMs / hour)} hr ago`;
-  if (diffMs < 2 * day) return "Yesterday";
-  if (diffMs < 7 * day) return `${Math.floor(diffMs / day)} days ago`;
-
-  return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
-}
-
-function formatExpiryRemaining(message: string, tone: "destructive" | "warning") {
-  const daysMatch = message.match(/in (\d+) day/);
-
-  if (tone === "destructive") return "Expired";
-  if (daysMatch?.[1] === "0") return "Expires today";
-  if (daysMatch?.[1]) return `${daysMatch[1]} days remaining`;
-
-  return "Review deadline";
-}
-
-function formatActivityTitle(event: string) {
-  return event
-    .replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function activityPresentation(event: string) {
-  const normalized = event.toLowerCase();
-
-  if (normalized.includes("draft")) return { icon: "draft" as const, tone: "accent" as const };
-  if (normalized.includes("approval")) return { icon: "approval" as const, tone: "warning" as const };
-  if (normalized.includes("document") || normalized.includes("upload")) {
-    return { icon: "document" as const, tone: "accent" as const };
-  }
-  if (normalized.includes("query")) return { icon: "clock" as const, tone: "warning" as const };
-  if (normalized.includes("expense")) return { icon: "calendar" as const, tone: "danger" as const };
-  if (normalized.includes("complete") || normalized.includes("filed")) {
-    return { icon: "check" as const, tone: "success" as const };
-  }
-  if (normalized.includes("job")) return { icon: "document" as const, tone: "neutral" as const };
-
-  return { icon: "activity" as const, tone: "neutral" as const };
 }
 
 type ChaDashboardProps = {
@@ -387,33 +326,24 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
   const pendingActions = [
     ...pendingChecklistItems.map((item) => ({
       id: `checklist-${item.id}`,
-      actionLabel: "Review",
-      jobNumber: item.job.jobNumber,
-      meta: `${item.job.title || "Checklist"} - Assigned to you`,
-      status: "Due soon",
-      title: "Checklist approval pending",
+      label: "Checklist approval pending",
+      note: item.job.title || item.job.jobNumber,
       href: `/cha/jobs/${item.job.id}?tab=checklist`,
-      tone: "warning" as const,
+      tone: "orange" as const,
     })),
     ...pendingFilingItems.map((item) => ({
       id: `filing-${item.id}`,
-      actionLabel: "Continue",
-      jobNumber: item.job.jobNumber,
-      meta: "Filing workspace - Assigned to you",
-      status: "High priority",
-      title: "Filing submission required",
+      label: "Pending filing submission",
+      note: item.job.jobNumber,
       href: `/cha/jobs/${item.job.id}?tab=filing`,
-      tone: "accent" as const,
+      tone: "blue" as const,
     })),
     ...filingQueryWarnings.slice(0, 3).map((warning) => ({
       id: `query-${warning.jobId}`,
-      actionLabel: "Open",
-      jobNumber: warning.jobNumber,
-      meta: `${warning.queryTitle} - Customs query`,
-      status: "Attention",
-      title: "Open customs query",
+      label: "Open customs query",
+      note: `${warning.jobNumber} · ${warning.queryTitle}`,
       href: `/cha/jobs/${warning.jobId}?tab=filing`,
-      tone: "warning" as const,
+      tone: "orange" as const,
     })),
   ].slice(0, 4);
 
@@ -422,14 +352,10 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
     .map((warning) => ({
       id: warning.notificationId,
       label: warning.type.replace(/_/g, " "),
-      jobNumber: warning.jobNumber,
+      note: warning.jobNumber,
       message: warning.message,
-      remaining: formatExpiryRemaining(
-        warning.message,
-        warning.severity === "expired" ? "destructive" : "warning",
-      ),
       href: warning.link,
-      tone: warning.severity === "expired" ? "danger" as const : "warning" as const,
+      tone: warning.severity === "expired" ? "destructive" as const : "warning" as const,
     }));
 
   return (
@@ -588,106 +514,103 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
         </DataTable>
       </ChaControlPanel>
 
-      <OperationsOverview>
-        <OperationsOverviewHeader refreshHref="/cha" />
-        <OperationsOverviewGrid>
-          <OperationsPanel
-            count={pendingActions.length}
-            label="Work queue"
-            title="Pending Actions"
-          >
+      <div className="grid items-start gap-6 xl:grid-cols-3">
+        <ChaSectionShell
+          index="02"
+          title="Pending Actions"
+          count={pendingActions.length}
+          accent="orange"
+        >
+          <div className="space-y-2.5 p-4">
             {pendingActions.length === 0 ? (
-              <OperationsEmptyState
-                icon="check"
-                text="No immediate CHA action is required from your workspace."
-                title="You're all caught up"
-              />
+              <p className="text-sm mnx-text-muted">No pending actions are waiting right now.</p>
             ) : (
-              <div className="mnx-pending-action-list">
-                {pendingActions.map((item) => (
-                  <PendingActionRow
-                    key={item.id}
-                    actionLabel={item.actionLabel}
-                    href={item.href}
-                    jobNumber={item.jobNumber}
-                    meta={item.meta}
-                    status={item.status}
-                    title={item.title}
-                    tone={item.tone}
-                  />
-                ))}
-              </div>
+              pendingActions.map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="flex items-start gap-3 rounded-xl border mnx-border mnx-bg-soft px-3.5 py-2.5 transition mnx-hover-accent mnx-hover-accent"
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-normal uppercase tracking-[0.12em] mnx-text-primary">{item.label}</p>
+                    <p className="mt-1 truncate text-xs mnx-text-muted">{item.note}</p>
+                  </div>
+                </Link>
+              ))
             )}
-          </OperationsPanel>
+          </div>
+        </ChaSectionShell>
 
-          <OperationsPanel
-            count={expiringItems.length}
-            label="Validity monitor"
-            title="Expiring Soon"
-          >
+        <ChaSectionShell
+          index="03"
+          title="Expiring Soon"
+          count={expiringItems.length}
+          accent="orange"
+        >
+          <div className="space-y-2.5 p-4">
             {expiringItems.length === 0 ? (
-              <OperationsEmptyState
-                icon="shield"
-                label="Checked just now"
-                text="No document validity or workflow deadlines require attention right now."
-                title="No upcoming expiries"
-              />
+              <p className="text-sm mnx-text-muted">No immediate expiry or deadline warnings were found.</p>
             ) : (
-              <div className="mnx-expiry-list">
-                {expiringItems.map((item) => (
-                  <ExpiryRow
-                    key={item.id}
-                    href={item.href}
-                    jobNumber={item.jobNumber}
-                    label={formatChaBadgeLabel(item.label)}
-                    message={item.message}
-                    remaining={item.remaining}
-                    tone={item.tone}
-                  />
-                ))}
-              </div>
+              expiringItems.map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="flex items-start justify-between gap-3 rounded-xl border mnx-border mnx-bg-soft px-3.5 py-2.5 transition mnx-hover-accent mnx-hover-accent"
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-normal uppercase tracking-[0.12em] mnx-text-primary">{item.label}</p>
+                    <p className="mt-1 text-xs mnx-text-muted">{item.note}</p>
+                    <p className="mt-1 text-xs mnx-text-muted">{item.message}</p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                      item.tone === "destructive" ? "mnx-bg-danger mnx-text-danger" : "mnx-bg-warning mnx-text-warning"
+                    }`}
+                  >
+                    {item.tone === "destructive" ? "Expired" : "Attention"}
+                  </span>
+                </Link>
+              ))
             )}
-          </OperationsPanel>
+          </div>
+        </ChaSectionShell>
 
-          <OperationsPanel
-            className="mnx-operations-panel-full"
-            count={Math.min(recentActivity.length, 6)}
-            label="Operational feed"
-            title="Recent Activity"
-          >
+        <ChaSectionShell
+          index="04"
+          title="Recent Activity"
+          count={Math.min(recentActivity.length, 4)}
+          accent="violet"
+        >
+          <div className="space-y-2.5 p-4">
             {recentActivity.length === 0 ? (
-              <OperationsEmptyState
-                icon="activity"
-                text="System and job updates will appear here as work moves forward."
-                title="No recent activity"
-              />
+              <p className="text-sm mnx-text-muted">No recent activity has been recorded yet.</p>
             ) : (
-              <ActivityTimeline>
-                {recentActivity.slice(0, 6).map((log) => {
-                  const presentation = activityPresentation(log.event);
-                  const jobHref = log.job ? `/cha/jobs/${log.job.id}` : undefined;
-
-                  return (
-                    <ActivityTimelineItem
-                      key={log.id}
-                      actor={recentActorMap.get(log.actorId) || "System"}
-                      description={log.remarks || "Operational event logged."}
-                      exactTime={log.timestamp.toISOString()}
-                      href={jobHref}
-                      icon={presentation.icon}
-                      jobHref={jobHref}
-                      jobNumber={log.job?.jobNumber}
-                      relativeTime={formatRelativeTime(log.timestamp)}
-                      title={formatActivityTitle(log.event)}
-                      tone={presentation.tone}
-                    />
-                  );
-                })}
-              </ActivityTimeline>
+              recentActivity.slice(0, 4).map((log) => (
+                <div
+                  key={log.id}
+                  className="rounded-xl border mnx-border mnx-bg-soft px-3.5 py-2.5"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-normal uppercase tracking-[0.12em] mnx-text-primary">{log.event.replace(/_/g, " ")}</p>
+                    <span className="text-xs mnx-text-muted mnx-numeric">
+                      {log.timestamp.toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs mnx-text-muted">{log.remarks || "Operational event logged."}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] mnx-text-muted">
+                    {log.job ? (
+                      <Link href={`/cha/jobs/${log.job.id}`} className="mnx-text-accent mnx-hover-accent hover:underline">
+                        {log.job.jobNumber}
+                      </Link>
+                    ) : null}
+                    <span>{recentActorMap.get(log.actorId) || "System"}</span>
+                  </div>
+                </div>
+              ))
             )}
-          </OperationsPanel>
-        </OperationsOverviewGrid>
-      </OperationsOverview>
+          </div>
+        </ChaSectionShell>
+      </div>
     </div>
   );
 }

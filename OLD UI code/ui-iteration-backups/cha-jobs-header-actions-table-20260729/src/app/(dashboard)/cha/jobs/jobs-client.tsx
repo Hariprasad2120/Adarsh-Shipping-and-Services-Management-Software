@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@/components/monolith/input";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Briefcase, CheckCircle2, Filter, Plus, Search, Users } from "lucide-react";
@@ -18,7 +19,6 @@ import {
 import { Button } from "@/components/monolith/button";
 import { Badge } from "@/components/monolith/badge";
 import { ChaFilterMenu as FilterMenu } from "@/components/monolith/cha-workspace";
-import { WorkspaceInput } from "@/components/monolith/workspace";
 import { JobFilingQueryWarningIndicator } from "@/app/(dashboard)/cha/_components/job-filing-query-warning-indicator";
 import { ChaDueDateWarningsIndicator } from "@/app/(dashboard)/cha/_components/cha-due-date-warnings-indicator";
 import type { DueDateWarningViewModel } from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
@@ -26,13 +26,13 @@ import { formatChaBadgeLabel, getChaPriorityBadgeVariant } from "@/lib/cha-badge
 import { cn } from "@/lib/utils";
 import type { BadgeVariant } from "@/components/monolith/badge";
 import {
+  ChaControlPanel,
   ChaMetricCard,
   ChaMetrics,
   ChaPageHeader,
   ChaSectionShell,
   ChaVisibleRecords,
 } from "../_components/cha-operations-shared";
-import { ChaHeaderGraphic } from "../graphics/ChaHeaderGraphic";
 
 type MovementDirection = "IMPORT" | "EXPORT" | "BOTH" | "OTHER" | null;
 type FilterPanelKey = "stage" | "status" | "priority" | "branchId" | "jobTypeId" | "assignedToMe";
@@ -178,7 +178,7 @@ export function JobsClient({
   const [jobTypeId, setJobTypeId] = useState(filters.jobTypeId || "");
   const [assignedToMe, setAssignedToMe] = useState(filters.assignedToMe || false);
   const [isModalOpen, setIsModalOpen] = useState(showCreateNew && canCreateJob);
-  const [openFilterTable, setOpenFilterTable] = useState<"active" | "completed" | null>(null);
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [activeFilterType, setActiveFilterType] = useState<FilterPanelKey>("stage");
 
   const activeFilterCount = [
@@ -228,7 +228,7 @@ export function JobsClient({
   const applyFilters = () => {
     const params = buildParams();
     router.push(`/cha/jobs?${params.toString()}`);
-    setOpenFilterTable(null);
+    setIsFilterPanelOpen(false);
   };
 
   const handlePageChange = (table: "active" | "completed", page: number) => {
@@ -246,7 +246,7 @@ export function JobsClient({
     setJobTypeId("");
     setAssignedToMe(false);
     router.push("/cha/jobs");
-    setOpenFilterTable(null);
+    setIsFilterPanelOpen(false);
   };
 
   const removeFilter = (filterKey: "search" | "stage" | "status" | "priority" | "branchId" | "jobTypeId" | "assignedToMe") => {
@@ -431,103 +431,6 @@ export function JobsClient({
     ];
   };
 
-  const renderTableControls = (tableKey: "active" | "completed") => (
-    <div className="mnx-cha-jobs-table-controls">
-      <form
-        className="mnx-table-toolbar mnx-table-toolbar-search mnx-cha-jobs-toolbar"
-        role="search"
-        onSubmit={(event) => {
-          event.preventDefault();
-          applyFilters();
-        }}
-      >
-        <label className="mnx-search-field">
-          <Search size={16} aria-hidden="true" />
-          <WorkspaceInput
-            aria-label="Search jobs"
-            type="search"
-            placeholder="Search customers, job numbers..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </label>
-
-        <div className="mnx-cha-jobs-toolbar-actions">
-          {canCreateJob ? (
-            <Button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-            >
-              <Plus className="size-4" /> New Job
-            </Button>
-          ) : null}
-          <FilterMenu
-            open={openFilterTable === tableKey}
-            onOpenChange={(open) => setOpenFilterTable(open ? tableKey : null)}
-            activeCount={activeFilterCount}
-            title="Filters"
-            ariaLabel="Open filters"
-            contentClassName="w-[min(460px,calc(100vw-2rem))] max-h-[62vh] overflow-y-auto"
-          >
-            <div className="overflow-hidden mnx-bg-surface">
-              <div className="grid min-h-[240px] grid-cols-1 sm:grid-cols-[156px_minmax(0,1fr)]">
-                <div className="border-b mnx-border mnx-bg-soft sm:border-b-0 sm:border-r">
-                  {filterTypes.map((item) => (
-                    <Button
-                      key={item.key}
-                      type="button"
-                      onClick={() => setActiveFilterType(item.key)}
-                      className={cn(
-                        "mnx-plain mnx-menu-option gap-2",
-                        activeFilterType === item.key && "mnx-menu-option-active",
-                      )}
-                    >
-                      <span className="min-w-0">
-                        <span className="mnx-label block truncate mnx-text-primary">{item.label}</span>
-                        <span className="mt-1 block truncate text-xs mnx-text-muted">{item.value}</span>
-                      </span>
-                      {item.active ? <span className="mnx-state-dot" /> : null}
-                    </Button>
-                  ))}
-                </div>
-                <div className="space-y-0 p-0">
-                  {renderFilterOptions()}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between gap-2 border-t mnx-border mnx-bg-surface p-3">
-              <Button variant="outline" onClick={resetFilters} className="flex-1">
-                Reset
-              </Button>
-              <Button onClick={applyFilters} className="flex-1">
-                Apply Filters
-              </Button>
-            </div>
-          </FilterMenu>
-        </div>
-      </form>
-
-      {activePills.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2">
-          {activePills.map((pill) => (
-            <Button
-              key={pill.key}
-              type="button"
-              onClick={() => removeFilter(pill.key)}
-              className="mnx-plain mnx-badge"
-            >
-              {pill.label} x
-            </Button>
-          ))}
-          <Button type="button" variant="outline" size="sm" onClick={resetFilters} className="h-7 text-[10px] rounded-full">
-            Clear All
-          </Button>
-        </div>
-      ) : null}
-    </div>
-  );
-
   const renderTable = ({
     title,
     description,
@@ -554,11 +457,11 @@ export function JobsClient({
           actions={<ChaVisibleRecords visible={data.items.length} total={data.total} tone={isActiveSection ? "blue" : "green"} />}
         >
           <div className="overflow-hidden">
-            {renderTableControls(tableKey)}
             <DataTable className="rounded-t-none border-x-0 border-b-0 border-t-0 shadow-none">
               <DataTableHeader>
                 <tr>
                   <DataTableHead className="py-4">Job Number</DataTableHead>
+                  <DataTableHead className="py-4">Job Title</DataTableHead>
                   <DataTableHead className="py-4">Customer</DataTableHead>
                   <DataTableHead className="py-4">Job Type</DataTableHead>
                   <DataTableHead className="py-4">BOE / SB Number</DataTableHead>
@@ -571,7 +474,7 @@ export function JobsClient({
               <DataTableBody>
                 {data.items.length === 0 ? (
                   <DataTableEmpty
-                    colSpan={8}
+                    colSpan={9}
                     message={
                       <div className="flex flex-col items-center justify-center p-14 text-center mnx-text-muted">
                         <div className="mnx-icon-badge mb-4">
@@ -592,6 +495,12 @@ export function JobsClient({
                           {job.filingQueryWarning ? (
                             <JobFilingQueryWarningIndicator jobId={job.id} warning={job.filingQueryWarning} />
                           ) : null}
+                        </div>
+                      </DataTableCell>
+                      <DataTableCell className="py-5">
+                        <div className="min-w-0">
+                          <p className="truncate mnx-text-primary">{job.title}</p>
+                          <p className="mt-1 truncate text-xs mnx-text-muted">{job.branchName}</p>
                         </div>
                       </DataTableCell>
                       <DataTableCell className="py-5">{job.customerName}</DataTableCell>
@@ -656,7 +565,7 @@ export function JobsClient({
         eyebrow={null}
         title="Jobs"
         description="Run the CHA operations queue from one place with faster search, filter, and handoff control."
-        graphic={<ChaHeaderGraphic />}
+        icon={<Briefcase size={20} />}
       />
 
       <ChaMetrics>
@@ -671,6 +580,115 @@ export function JobsClient({
           />
         ))}
       </ChaMetrics>
+
+      <ChaControlPanel
+        index="01"
+        title="Job Command Center"
+        description="Search, narrow, and launch the next customs job without losing context."
+        actions={
+          <div className="flex w-full flex-col gap-3 lg:w-auto lg:flex-row lg:items-center lg:justify-end">
+            <div className="relative w-full lg:w-[360px]">
+              <span className="absolute inset-y-0 left-4 flex items-center mnx-text-muted">
+                <Search size={16} />
+              </span>
+              <Input
+                type="text"
+                placeholder="Search job #, customer, reference, or title..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    applyFilters();
+                  }
+                }}
+                className="h-11 w-full pl-11 pr-4 text-sm"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <FilterMenu
+                open={isFilterPanelOpen}
+                onOpenChange={setIsFilterPanelOpen}
+                activeCount={activeFilterCount}
+                title="Filters"
+                ariaLabel="Open filters"
+                contentClassName="w-[min(460px,calc(100vw-2rem))] max-h-[62vh] overflow-y-auto"
+              >
+                <div className="overflow-hidden mnx-bg-surface">
+                  <div className="grid min-h-[240px] grid-cols-1 sm:grid-cols-[156px_minmax(0,1fr)]">
+                    <div className="border-b mnx-border mnx-bg-soft sm:border-b-0 sm:border-r">
+                      {filterTypes.map((item) => (
+                        <Button
+                          key={item.key}
+                          type="button"
+                          onClick={() => setActiveFilterType(item.key)}
+                          className={cn(
+                            "mnx-plain mnx-menu-option gap-2",
+                            activeFilterType === item.key && "mnx-menu-option-active",
+                          )}
+                        >
+                          <span className="min-w-0">
+                            <span className="mnx-label block truncate mnx-text-primary">{item.label}</span>
+                            <span className="mt-1 block truncate text-xs mnx-text-muted">{item.value}</span>
+                          </span>
+                          {item.active ? <span className="mnx-state-dot" /> : null}
+                        </Button>
+                      ))}
+                    </div>
+                    <div className="space-y-0 p-0">
+                      {renderFilterOptions()}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 border-t mnx-border mnx-bg-surface p-3">
+                  <Button variant="outline" onClick={resetFilters} className="flex-1">
+                    Reset
+                  </Button>
+                  <Button onClick={applyFilters} className="flex-1">
+                    Apply Filters
+                  </Button>
+                </div>
+              </FilterMenu>
+
+              <Button
+                onClick={applyFilters}
+                variant="outline"
+                className="h-11 px-5"
+              >
+                Apply Search
+              </Button>
+              {canCreateJob ? (
+                <Button
+                  type="button"
+                  onClick={() => setIsModalOpen(true)}
+                  className="h-11 px-5"
+                >
+                  <Plus className="size-4" /> Create Job
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        }
+      >
+        {activePills.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {activePills.map((pill) => (
+              <Button
+                key={pill.key}
+                type="button"
+                onClick={() => removeFilter(pill.key)}
+                className="mnx-plain mnx-badge"
+              >
+                {pill.label} x
+              </Button>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={resetFilters} className="h-7 text-[10px] rounded-full">
+              Clear All
+            </Button>
+          </div>
+        ) : null}
+      </ChaControlPanel>
 
       {renderTable({
         title: "Active Jobs",

@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@/components/monolith/input";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Briefcase, CheckCircle2, Filter, Plus, Search, Users } from "lucide-react";
@@ -18,7 +19,6 @@ import {
 import { Button } from "@/components/monolith/button";
 import { Badge } from "@/components/monolith/badge";
 import { ChaFilterMenu as FilterMenu } from "@/components/monolith/cha-workspace";
-import { WorkspaceInput } from "@/components/monolith/workspace";
 import { JobFilingQueryWarningIndicator } from "@/app/(dashboard)/cha/_components/job-filing-query-warning-indicator";
 import { ChaDueDateWarningsIndicator } from "@/app/(dashboard)/cha/_components/cha-due-date-warnings-indicator";
 import type { DueDateWarningViewModel } from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
@@ -433,34 +433,26 @@ export function JobsClient({
 
   const renderTableControls = (tableKey: "active" | "completed") => (
     <div className="mnx-cha-jobs-table-controls">
-      <form
-        className="mnx-table-toolbar mnx-table-toolbar-search mnx-cha-jobs-toolbar"
-        role="search"
-        onSubmit={(event) => {
-          event.preventDefault();
-          applyFilters();
-        }}
-      >
-        <label className="mnx-search-field">
-          <Search size={16} aria-hidden="true" />
-          <WorkspaceInput
-            aria-label="Search jobs"
-            type="search"
-            placeholder="Search customers, job numbers..."
+      <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
+        <div className="relative w-full lg:w-[360px]">
+          <span className="absolute inset-y-0 left-4 flex items-center mnx-text-muted">
+            <Search size={16} />
+          </span>
+          <Input
+            type="text"
+            placeholder="Search job #, customer, reference, or title..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                applyFilters();
+              }
+            }}
+            className="h-11 w-full pl-11 pr-4 text-sm"
           />
-        </label>
+        </div>
 
-        <div className="mnx-cha-jobs-toolbar-actions">
-          {canCreateJob ? (
-            <Button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-            >
-              <Plus className="size-4" /> New Job
-            </Button>
-          ) : null}
+        <div className="flex flex-wrap items-center gap-2">
           <FilterMenu
             open={openFilterTable === tableKey}
             onOpenChange={(open) => setOpenFilterTable(open ? tableKey : null)}
@@ -505,8 +497,25 @@ export function JobsClient({
               </Button>
             </div>
           </FilterMenu>
+
+          <Button
+            onClick={applyFilters}
+            variant="outline"
+            className="h-11 px-5"
+          >
+            Apply Search
+          </Button>
+          {canCreateJob ? (
+            <Button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="h-11 px-5"
+            >
+              <Plus className="size-4" /> Create Job
+            </Button>
+          ) : null}
         </div>
-      </form>
+      </div>
 
       {activePills.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2">

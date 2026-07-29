@@ -4,6 +4,7 @@ import { getNow } from "@/lib/clock";
 import { notifyMany, getUsersWithPermission } from "@/modules/notifications/service";
 import { appendAttendancePunchEvent, calculateOtForPunch } from "@/lib/ot";
 import { getAttendanceMonthBounds, toAttendanceDate } from "@/lib/attendance-date";
+import { getCachedLeaveTypes } from "@/lib/cache";
 
 // ─── Punch ────────────────────────────────────────────────────────────────────
 
@@ -66,7 +67,7 @@ export async function getMonthAttendance(userId: string, year: number, month: nu
 // ─── Leave types ──────────────────────────────────────────────────────────────
 
 export async function getLeaveTypes(orgId: string) {
-  return db.leaveType.findMany({ where: { orgId }, orderBy: { name: "asc" } });
+  return getCachedLeaveTypes(orgId);
 }
 
 export async function createLeaveType(orgId: string, data: {

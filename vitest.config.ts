@@ -8,7 +8,7 @@ dotenv.config({ path: path.resolve(__dirname, ".env") });
 export default defineConfig({
   test: {
     environment: "node",
-    exclude: ["**/node_modules/**", "**/scrap/**", "**/dist/**"],
+    exclude: ["**/node_modules/**", "**/scrap/**", "**/dist/**", "**/OLD UI code/**", "**/_design-reference/**"],
     testTimeout: 30000,
   },
   resolve: {

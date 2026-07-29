@@ -1027,8 +1027,15 @@ async function ensureChaShipmentTypes(orgId: string) {
   }
 }
 
+const ensuredChaSettingsOrgs = new Set<string>();
+
 // Ensure settings and defaults are created for the organisation
 export async function ensureSettingsAndDefaults(orgId: string) {
+  if (ensuredChaSettingsOrgs.has(orgId)) {
+    const cachedSettings = await db.chaSettings.findUnique({ where: { orgId } });
+    if (cachedSettings) return cachedSettings;
+  }
+
   const manifestSchema = await getChaManifestSchemaState();
   let settings = await db.chaSettings.findUnique({
     where: { orgId },
@@ -1178,6 +1185,7 @@ export async function ensureSettingsAndDefaults(orgId: string) {
     });
   }
 
+  ensuredChaSettingsOrgs.add(orgId);
   return settings;
 }
 

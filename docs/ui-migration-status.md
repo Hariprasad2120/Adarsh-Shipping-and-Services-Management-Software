@@ -781,6 +781,24 @@ reference and the attached typography scale.
   with the search icon inside it, the filter menu groups are nested disclosure
   sections without an internal scrollbar, and CHA action/filter controls opt
   out of hover lift to avoid menu-transition nudging.
+- Rebuilt the lower CHA dashboard cards as a compact Operations Overview:
+  asymmetric Pending Actions and Expiring Soon panels above a full-width Recent
+  Activity timeline, using live CHA action, warning, audit, actor, and job data
+  with reusable Monolith operations components, semantic status rails, compact
+  empty states, and responsive stacking.
+- Rebuilt the Pending Actions quick-action rows as compact command cards with
+  marker tiles, structured title/meta, job chips, priority badges, and compact
+  CTA affordances, preserving the existing live action links and responsive
+  behavior.
+- Refined the CHA Jobs register page by adding the shared CHA header graphic,
+  removing the standalone Job Command Center section, moving search/filter/
+  create controls into each jobs datatable panel, and removing the Job Title
+  column from both Active and Completed Jobs tables while preserving filters,
+  pagination, creation, and navigation.
+- Matched the CHA Jobs datatable toolbar to the shared Monolith table reference:
+  left-aligned icon search, right-aligned primary New Job action and Filter
+  trigger, no extra Apply Search button, and shared toolbar/search-control
+  sizing across Active and Completed Jobs.
 - Preserved CHA cards, tables, copy, workflows, RBAC, actions, routes, dialogs,
   and business behavior.
 
@@ -796,6 +814,10 @@ Backup:
 `OLD UI code/ui-iteration-backups/monolith-button-reference-20260729/`
 `OLD UI code/ui-iteration-backups/monolith-filter-reference-20260729/`
 `OLD UI code/ui-iteration-backups/cha-dashboard-actions-status-colors-20260729/`
+`OLD UI code/ui-iteration-backups/cha-operations-overview-redesign-20260729/`
+`OLD UI code/ui-iteration-backups/cha-quick-actions-redesign-20260729/`
+`OLD UI code/ui-iteration-backups/cha-jobs-header-actions-table-20260729/`
+`OLD UI code/ui-iteration-backups/cha-jobs-datatable-controls-reference-20260729/`
 
 Passed:
 
@@ -808,6 +830,14 @@ Passed:
   `node scripts/verify-monolith-expense-cha-ui.mjs`;
 - targeted TypeScript, ESLint, and static Expense/CHA verifier after the
   assigned-jobs search/filter refinement;
+- targeted TypeScript, ESLint, and static Expense/CHA verifier after the
+  Operations Overview redesign;
+- targeted TypeScript, ESLint, and static Expense/CHA verifier after the
+  Pending Actions quick-action redesign;
+- targeted TypeScript, ESLint, and static Expense/CHA verifier after the CHA
+  Jobs register header/action/table refinement;
+- targeted TypeScript, targeted ESLint, and static Expense/CHA verifier after
+  the CHA Jobs datatable toolbar reference refinement;
 - production build with Prisma generation, Next.js compilation, production
   TypeScript, and all 315 pages.
 
