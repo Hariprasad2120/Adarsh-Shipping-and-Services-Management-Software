@@ -5,6 +5,16 @@ import {
   assertExactStagingEnvironment,
   verifyExactStagingDatabaseIdentity,
 } from "../scripts/staging-target";
+import {
+  assertStagingLoginEmailOwner,
+  STAGING_CHECKER_PERMISSION_KEYS,
+  STAGING_CHECKER_ROLE_ID,
+  STAGING_CHECKER_ROLE_NAME,
+  STAGING_LOGIN_IDENTITY,
+  STAGING_MAKER_PERMISSION_KEYS,
+  STAGING_MAKER_ROLE_ID,
+  STAGING_MAKER_ROLE_NAME,
+} from "../scripts/staging-login-policy";
 
 const STAGING_ORG_ID = "stg_org_monolith_accounting";
 const STAGING_ORG_SLUG = "staging-monolith-accounting";
@@ -25,9 +35,9 @@ const db = new PrismaClient({
 
 const ids = {
   branch: "stg_branch_demo",
-  makerRole: "stg_role_accounting_maker",
-  checkerRole: "stg_role_accounting_checker",
-  makerUser: "stg_user_accounting_maker",
+  makerRole: STAGING_MAKER_ROLE_ID,
+  checkerRole: STAGING_CHECKER_ROLE_ID,
+  makerUser: STAGING_LOGIN_IDENTITY.id,
   checkerUser: "stg_user_accounting_checker",
   employeeUser: "stg_user_employee",
   customer: "stg_crm_customer",
@@ -132,6 +142,12 @@ async function seed() {
 
   await db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT set_config('monolith.accounting_seed_fixture', 'on', true)`;
+    const stagingLoginOwner = await tx.user.findUnique({
+      where: { email: STAGING_LOGIN_IDENTITY.email },
+      select: { id: true },
+    });
+    assertStagingLoginEmailOwner(stagingLoginOwner?.id ?? null);
+
     await tx.organisation.upsert({
       where: { slug: STAGING_ORG_SLUG },
       update: {
@@ -212,6 +228,25 @@ async function seed() {
       { key: "accounting.integration.manual-review", label: "Review Accounting integration failures", group: "Accounting" },
       { key: "accounting.ledger.read", label: "Read Accounting ledger", group: "Accounting" },
       { key: "accounting.audit.read", label: "Read Accounting audit", group: "Accounting" },
+      { key: "accounting.document.read", label: "Read canonical Accounting documents", group: "Accounting" },
+      { key: "accounting.document.approve", label: "Approve canonical Accounting documents", group: "Accounting" },
+      { key: "accounting.payment.read", label: "Read canonical Accounting payments", group: "Accounting" },
+      { key: "accounting.sales-invoice.prepare", label: "Prepare sales invoices", group: "Accounting" },
+      { key: "accounting.sales-invoice.approve", label: "Approve sales invoices", group: "Accounting" },
+      { key: "accounting.purchase-invoice.prepare", label: "Prepare purchase invoices", group: "Accounting" },
+      { key: "accounting.purchase-invoice.approve", label: "Approve purchase invoices", group: "Accounting" },
+      { key: "accounting.receipt.prepare", label: "Prepare customer receipts", group: "Accounting" },
+      { key: "accounting.payment.prepare", label: "Prepare Accounting payments", group: "Accounting" },
+      { key: "accounting.payment.approve", label: "Approve Accounting payments", group: "Accounting" },
+      { key: "accounting.payment.post", label: "Post approved Accounting payments", group: "Accounting" },
+      { key: "accounting.payment.allocate", label: "Allocate Accounting payments", group: "Accounting" },
+      { key: "accounting.payment.reverse", label: "Reverse posted Accounting payments", group: "Accounting" },
+      { key: "accounting.credit-note.prepare", label: "Prepare Accounting credit notes", group: "Accounting" },
+      { key: "accounting.debit-note.prepare", label: "Prepare Accounting debit notes", group: "Accounting" },
+      { key: "accounting.correction.approve", label: "Approve Accounting corrections", group: "Accounting" },
+      { key: "accounting.recurring-occurrence.process", label: "Process recurring Accounting occurrences", group: "Accounting" },
+      { key: "accounting.outbox.retry", label: "Retry Accounting outbox publication", group: "Accounting" },
+      { key: "accounting.outbox.manual-review", label: "Review Accounting outbox publication", group: "Accounting" },
       { key: "crm.invoice.manage", label: "Manage CRM invoice requests", group: "CRM" },
     ];
     for (const permission of permissions) {
@@ -226,64 +261,69 @@ async function seed() {
       where: {
         orgId_name: {
           orgId: STAGING_ORG_ID,
-          name: "STAGING Accounting Maker",
+          name: STAGING_MAKER_ROLE_NAME,
         },
       },
       update: { isSystem: false },
       create: {
         id: ids.makerRole,
         orgId: STAGING_ORG_ID,
-        name: "STAGING Accounting Maker",
+        name: STAGING_MAKER_ROLE_NAME,
       },
     });
     const checkerRole = await tx.role.upsert({
       where: {
         orgId_name: {
           orgId: STAGING_ORG_ID,
-          name: "STAGING Accounting Checker",
+          name: STAGING_CHECKER_ROLE_NAME,
         },
       },
       update: { isSystem: false },
       create: {
         id: ids.checkerRole,
         orgId: STAGING_ORG_ID,
-        name: "STAGING Accounting Checker",
+        name: STAGING_CHECKER_ROLE_NAME,
       },
     });
     const storedPermissions = await tx.permission.findMany({
       where: { key: { in: permissions.map(({ key }) => key) } },
     });
+    await tx.rolePermission.deleteMany({
+      where: {
+        roleId: makerRole.id,
+        permission: { key: { notIn: [...STAGING_MAKER_PERMISSION_KEYS] } },
+      },
+    });
+    await tx.rolePermission.deleteMany({
+      where: {
+        roleId: checkerRole.id,
+        permission: { key: { notIn: [...STAGING_CHECKER_PERMISSION_KEYS] } },
+      },
+    });
+    const makerPermissionKeys = new Set<string>(
+      STAGING_MAKER_PERMISSION_KEYS,
+    );
+    const checkerPermissionKeys = new Set<string>(
+      STAGING_CHECKER_PERMISSION_KEYS,
+    );
     for (const permission of storedPermissions) {
-      await tx.rolePermission.upsert({
-        where: {
-          roleId_permissionId: {
-          roleId:
-              ["accounting.approve", "accounting.journal.approve", "accounting.post", "accounting.reverse", "accounting.replace", "accounting.period_lock.approve", "accounting.exchange_rate.maintain", "accounting.rounding_policy.admin", "accounting.approval_policy.admin", "accounting.number_series.admin", "accounting.integration.post", "accounting.integration.retry", "accounting.integration.manual-review"].includes(permission.key)
-                ? checkerRole.id
-                : makerRole.id,
-            permissionId: permission.id,
-          },
-        },
-        update: {},
-        create: {
-          roleId:
-            ["accounting.approve", "accounting.journal.approve", "accounting.post", "accounting.reverse", "accounting.replace", "accounting.period_lock.approve", "accounting.exchange_rate.maintain", "accounting.rounding_policy.admin", "accounting.approval_policy.admin", "accounting.number_series.admin", "accounting.integration.post", "accounting.integration.retry", "accounting.integration.manual-review"].includes(permission.key)
-              ? checkerRole.id
-              : makerRole.id,
-          permissionId: permission.id,
-        },
-      });
-      if (["accounting.read", "accounting.ledger.read", "accounting.audit.read"].includes(permission.key)) {
+      for (const [roleId, permissionKeys] of [
+        [makerRole.id, makerPermissionKeys],
+        [checkerRole.id, checkerPermissionKeys],
+      ] as const) {
+        if (!permissionKeys.has(permission.key)) {
+          continue;
+        }
         await tx.rolePermission.upsert({
           where: {
             roleId_permissionId: {
-              roleId: checkerRole.id,
+              roleId,
               permissionId: permission.id,
             },
           },
           update: {},
           create: {
-            roleId: checkerRole.id,
+            roleId,
             permissionId: permission.id,
           },
         });
@@ -293,7 +333,7 @@ async function seed() {
     const users = [
       {
         id: ids.makerUser,
-        email: "accounting-maker@staging.example.com",
+        email: STAGING_LOGIN_IDENTITY.email,
         name: "STAGING Accounting Maker",
         designation: "TEST Maker",
         employeeNumber: 990001,
@@ -315,12 +355,14 @@ async function seed() {
     ];
     for (const user of users) {
       await tx.user.upsert({
-        where: { email: user.email },
+        where: { id: user.id },
         update: {
+          email: user.email,
           name: user.name,
           designation: user.designation,
           passwordHash,
           active: true,
+          isPlatformAdmin: false,
           orgId: STAGING_ORG_ID,
           branchId: ids.branch,
         },
@@ -328,6 +370,7 @@ async function seed() {
           ...user,
           passwordHash,
           active: true,
+          isPlatformAdmin: false,
           activatedAt: new Date("2027-04-01T00:00:00.000Z"),
           orgId: STAGING_ORG_ID,
           branchId: ids.branch,
@@ -347,6 +390,18 @@ async function seed() {
       },
       update: {},
       create: { userId: ids.checkerUser, roleId: checkerRole.id },
+    });
+    await tx.userRole.deleteMany({
+      where: {
+        userId: ids.makerUser,
+        roleId: { not: makerRole.id },
+      },
+    });
+    await tx.userRole.deleteMany({
+      where: {
+        userId: ids.checkerUser,
+        roleId: { not: checkerRole.id },
+      },
     });
     await tx.employmentRecord.upsert({
       where: { userId: ids.employeeUser },

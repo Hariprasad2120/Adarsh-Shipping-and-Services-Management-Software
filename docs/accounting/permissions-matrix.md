@@ -77,3 +77,9 @@ Definitions added without assuming production role assignment:
 - `accounting.outbox.retry`, `accounting.outbox.manual-review`, `accounting.payment.read`.
 
 Preparation permission never substitutes for approval/posting. Sales and purchase approval require both canonical document approval and the type-specific approval key. Corrections require correction approval. Payments require payment approval/post plus canonical posting authority. Trusted payroll identities remain narrowly scoped and do not gain payroll calculation authority. Outbox retry/review and scheduled occurrence transitions are audited.
+
+## Guarded staging maker identity
+
+The credential-login fixture `stg_user_accounting_maker` / `hr@adarshshipping.in` is restricted to the exact `STAGING Accounting Maker` role. The guarded seed resets `isPlatformAdmin` to false and removes any additional user-role assignment for that fixture. Its role-permission rows are reduced to the explicit staging-maker allowlist before the expected preparation/read permissions are restored. Admin and HR roles, canonical approval/posting permissions and platform-wide administration are therefore absent.
+
+`stg_user_accounting_checker` remains a distinct identity with the exact `STAGING Accounting Checker` role. Database and service controls continue to reject maker self-approval. The real-domain email is also explicitly included in existing CHA manager-selection results and remains visible across the create-job branch filter; this is email-based eligibility/visibility and does not substitute for CHA server authorization.

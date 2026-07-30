@@ -47,17 +47,24 @@ const childEnvironment = {
 };
 delete childEnvironment.STAGING_DATABASE_ADMIN_PASSWORD;
 delete childEnvironment.STAGING_DATABASE_PASSWORD;
-if (
-  command !== "tsx" ||
-  !commandArgs.some((argument) => argument.endsWith("prisma/seed.staging.ts"))
-) {
+const mayUseStagingTestPassword =
+  command === "tsx" &&
+  commandArgs.some(
+    (argument) =>
+      argument.endsWith("prisma/seed.staging.ts") ||
+      argument.endsWith("scripts/verify-staging-login.ts"),
+  );
+if (!mayUseStagingTestPassword) {
   delete childEnvironment.STAGING_TEST_PASSWORD;
 }
 
 const isApplicationCheck =
   command === "tsx" &&
   commandArgs.some((argument) =>
-    argument.endsWith("scripts/verify-staging-app-start.ts"),
+    [
+      "scripts/verify-staging-app-start.ts",
+      "scripts/verify-staging-login.ts",
+    ].some((entrypointPath) => argument.endsWith(entrypointPath)),
   );
 const tsconfigPath = resolve(root, "tsconfig.json");
 const tsconfigBefore =

@@ -129,7 +129,7 @@ The wrapper refuses any target other than `127.0.0.1:56432/monolith_accounting_s
 - Clean database: all 47 migrations applied.
 - Prisma datasource-to-schema diff: no difference.
 - Seed executed twice without count growth.
-- Verifier: 3 fictional users, 2 balanced journals, 12 non-overlapping periods, 1 profile, 1 fictional legal entity, 2 currencies/1 functional, no configured GSTIN and populated legacy `fileKey`.
+- Verifier: 3 guarded staging fixture users, 2 balanced journals, 12 non-overlapping periods, 1 profile, 1 fictional legal entity, 2 currencies/1 functional, no configured GSTIN and populated legacy `fileKey`.
 - 12 targeted tests passed, including cross-tenant, maker-checker, FX, uniqueness and six-worker atomic numbering invariants.
 - Full guarded Vitest run: 242/245 tests passed. The three remaining failures are confined to the existing CHA integration suite (mock Google Drive checklist attachment, absent estimated filing date and missing direct-delete audit event); Accounting fixtures still passed verification afterward.
 
@@ -158,7 +158,7 @@ Required populated-environment work remains unchanged: authorized restore, sourc
 
 - Clean-chain recreation applied all 54 migrations.
 - Migration status is current and datasource-to-schema diff reports no difference.
-- Synthetic seed ran twice without count growth; verifier reports three fictional users, two balanced journals, 12 non-overlapping periods and preserved legacy `fileKey`.
+- Synthetic seed ran twice without count growth; verifier reports three guarded staging fixture users, two balanced journals, 12 non-overlapping periods and preserved legacy `fileKey`.
 - Hardened Decimal/architecture/canonical/legacy/Phase 2 target suite: 57/57 passed, including registered rule/source enforcement, tenant/legal-entity adversarial writes, actual duplicate, numbering, period-lock and reversal concurrency, immutable payroll correction rejection and stale-claim recovery.
 - Phase 2 Accounting/isolation/security regression selection: 41/41 passed.
 - Full guarded suite: 279/282 passed. The only failures are the same three accepted pre-existing CHA cases: mock Google Drive checklist attachment, absent estimated filing date and absent `JOB_DELETED_DIRECT` audit event.
@@ -187,3 +187,15 @@ Phase 4 validation evidence:
 - TypeScript and the production build passed; Next generated 328 pages. The unchanged non-fatal customer-portal trace warning remains.
 - All Phase 4-created TypeScript files pass focused ESLint. The touched `actions.ts` retains the same 80 pre-existing `no-explicit-any` errors as committed HEAD. The previously documented `service.ts`/`seed.ts` debt remains exactly 36 errors and 23 warnings; no Phase 4 lint failure is hidden in it.
 - Product catalogue generation/check passed with 0 errors and 0 warnings.
+
+## Guarded staging credential-login exception
+
+The staging-login compatibility checkpoint retains one exact non-synthetic login identifier: user ID `stg_user_accounting_maker` and email `hr@adarshshipping.in`. The verifier accepts only that exact ID-and-email conjunction. The email under another ID, the ID with another non-synthetic email, other `adarshshipping.in` identities, uncontrolled case/whitespace variants and all other identities outside `staging.example.com` fail closed.
+
+This account remains a staging fixture. It is not a platform administrator, has only the explicit `STAGING Accounting Maker` role/permission allowlist, has no Admin or HR role, and remains separate from `stg_user_accounting_checker`. The database maker-checker constraint continues to reject self-approval.
+
+Outbound delivery must remain disabled. Guarded verification requires `EMAIL_PROVIDER=disabled`, rejects configured Resend, SMTP, Google OAuth and Google Chat service-account delivery variables by safe variable name only, and rejects stored Google Workspace connections for the staging organization. No provider value is logged. The generic email abstraction therefore does not deliver, while Gmail/Google Chat remain unavailable because credentials and stored connections are prohibited.
+
+`STAGING_TEST_PASSWORD` is the randomized ignored-environment secret hashed by the staging seed. UI automation must pass that same value through `UI_TEST_PASSWORD`; the older `--use-local-special-account` fallback password is not the guarded staging credential.
+
+The email is also directly allowlisted by existing CHA manager-selection queries and the create-job branch filter. That behavior adds manager visibility/eligibility only; it does not grant CHA action permission, an Admin/HR role or platform-administrator authority. This checkpoint documents but does not change that existing behavior.

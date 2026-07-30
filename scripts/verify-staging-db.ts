@@ -9,11 +9,20 @@ import {
   STAGING_DATABASE_PORT,
   STAGING_DATABASE_USER,
 } from "./staging-target";
+import {
+  assertAllowedStagingFixtureIdentities,
+  assertStagingMakerAuthorization,
+  assertStagingOutboundDeliveryDisabled,
+  STAGING_CHECKER_USER_ID,
+  STAGING_LOGIN_IDENTITY,
+} from "./staging-login-policy";
 
 const expectedOrgSlug = "staging-monolith-accounting";
 
 function assertEnvironment() {
-  return assertExactStagingEnvironment("Staging verification").connectionString;
+  const target = assertExactStagingEnvironment("Staging verification");
+  assertStagingOutboundDeliveryDisabled(process.env);
+  return target.connectionString;
 }
 
 async function verify() {
@@ -90,10 +99,125 @@ async function verify() {
       );
     }
 
+    const fixtureIdentities = await client.query<{
+      id: string;
+      email: string;
+    }>(
+      `
+        SELECT id, email
+        FROM "User"
+        WHERE "orgId" = (
+          SELECT id FROM "Organisation" WHERE slug = $1
+        )
+        ORDER BY id
+      `,
+      [expectedOrgSlug],
+    );
+    assertAllowedStagingFixtureIdentities(fixtureIdentities.rows);
+
+    const makerAuthorization = await client.query<{
+      id: string;
+      email: string;
+      is_platform_admin: boolean;
+      role_ids: string[];
+      role_names: string[];
+      permission_keys: string[];
+      checker_user_id: string | null;
+      checker_role_ids: string[];
+    }>(
+      `
+        SELECT
+          maker.id,
+          maker.email,
+          maker."isPlatformAdmin" AS is_platform_admin,
+          COALESCE(
+            array_agg(DISTINCT maker_role.id)
+              FILTER (WHERE maker_role.id IS NOT NULL),
+            ARRAY[]::text[]
+          ) AS role_ids,
+          COALESCE(
+            array_agg(DISTINCT maker_role.name)
+              FILTER (WHERE maker_role.name IS NOT NULL),
+            ARRAY[]::text[]
+          ) AS role_names,
+          COALESCE(
+            array_agg(DISTINCT maker_permission.key)
+              FILTER (WHERE maker_permission.key IS NOT NULL),
+            ARRAY[]::text[]
+          ) AS permission_keys,
+          (
+            SELECT checker.id
+            FROM "User" checker
+            WHERE checker.id = $3
+              AND checker."orgId" = maker."orgId"
+          ) AS checker_user_id,
+          COALESCE(
+            (
+              SELECT array_agg(checker_role.id ORDER BY checker_role.id)
+              FROM "UserRole" checker_user_role
+              JOIN "Role" checker_role
+                ON checker_role.id = checker_user_role."roleId"
+              WHERE checker_user_role."userId" = $3
+            ),
+            ARRAY[]::text[]
+          ) AS checker_role_ids
+        FROM "User" maker
+        LEFT JOIN "UserRole" maker_user_role
+          ON maker_user_role."userId" = maker.id
+        LEFT JOIN "Role" maker_role
+          ON maker_role.id = maker_user_role."roleId"
+        LEFT JOIN "RolePermission" maker_role_permission
+          ON maker_role_permission."roleId" = maker_role.id
+        LEFT JOIN "Permission" maker_permission
+          ON maker_permission.id = maker_role_permission."permissionId"
+        WHERE maker.id = $2
+          AND maker."orgId" = (
+            SELECT id FROM "Organisation" WHERE slug = $1
+          )
+        GROUP BY maker.id, maker.email, maker."isPlatformAdmin", maker."orgId"
+      `,
+      [
+        expectedOrgSlug,
+        STAGING_LOGIN_IDENTITY.id,
+        STAGING_CHECKER_USER_ID,
+      ],
+    );
+    if (makerAuthorization.rows.length !== 1) {
+      throw new Error("[STAGING_MAKER_FIXTURE_MISSING]");
+    }
+    const maker = makerAuthorization.rows[0];
+    assertStagingMakerAuthorization({
+      id: maker.id,
+      email: maker.email,
+      isPlatformAdmin: maker.is_platform_admin,
+      roleIds: maker.role_ids,
+      roleNames: maker.role_names,
+      permissionKeys: maker.permission_keys,
+      checkerUserId: maker.checker_user_id,
+      checkerRoleIds: maker.checker_role_ids,
+    });
+
+    const externalConnections = await client.query<{
+      google_workspace_connections: string;
+    }>(
+      `
+        SELECT COUNT(*)::text AS google_workspace_connections
+        FROM "GoogleWorkspaceConnection"
+        WHERE "orgId" = (
+          SELECT id FROM "Organisation" WHERE slug = $1
+        )
+      `,
+      [expectedOrgSlug],
+    );
+    if (
+      externalConnections.rows[0]?.google_workspace_connections !== "0"
+    ) {
+      throw new Error("[STAGING_EXTERNAL_CONNECTION_PRESENT]");
+    }
+
     const synthetic = await client.query<{
       organisations: string;
       users: string;
-      non_example_users: string;
       journals: string;
       unbalanced_journals: string;
       accounting_profiles: string;
@@ -115,14 +239,6 @@ async function verify() {
             SELECT id FROM "Organisation" WHERE slug = $1
           )
         ) AS users,
-        (
-          SELECT COUNT(*)::text
-          FROM "User"
-          WHERE "orgId" = (
-            SELECT id FROM "Organisation" WHERE slug = $1
-          )
-          AND email NOT LIKE '%@staging.example.com'
-        ) AS non_example_users,
         (
           SELECT COUNT(*)::text
           FROM "JournalEntry"
@@ -201,7 +317,6 @@ async function verify() {
     if (
       fixture.organisations !== "1" ||
       Number(fixture.users) < 3 ||
-      fixture.non_example_users !== "0" ||
       Number(fixture.journals) < 2 ||
       fixture.unbalanced_journals !== "0" ||
       fixture.accounting_profiles !== "1" ||
@@ -218,7 +333,7 @@ async function verify() {
     }
 
     console.log(
-      `Verified local staging: ${migrationDirectories.length} migrations, ${fixture.users} fictional users, ${fixture.journals} balanced journals, ${fixture.periods} non-overlapping periods, and preserved legacy fileKey data.`,
+      `Verified local staging: ${migrationDirectories.length} migrations, ${fixture.users} guarded staging fixture users, ${fixture.journals} balanced journals, ${fixture.periods} non-overlapping periods, and preserved legacy fileKey data.`,
     );
   } finally {
     await client.end();

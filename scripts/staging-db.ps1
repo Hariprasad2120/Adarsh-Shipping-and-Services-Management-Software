@@ -142,7 +142,9 @@ function New-StagingEnvironment {
     "GOOGLE_CHAT_WEBHOOK_URL=",
     "GOOGLE_CHAT_LINK_SECRET=",
     "AUTH_GOOGLE_ID=",
-    "AUTH_GOOGLE_SECRET="
+    "AUTH_GOOGLE_SECRET=",
+    "GOOGLE_CLIENT_ID=",
+    "GOOGLE_CLIENT_SECRET="
   )
   [IO.File]::WriteAllLines($envPath, $lines, [Text.UTF8Encoding]::new($false))
 }
@@ -190,6 +192,8 @@ function Add-StagingSafeDefaults {
     "GOOGLE_CHAT_LINK_SECRET" = ""
     "AUTH_GOOGLE_ID" = ""
     "AUTH_GOOGLE_SECRET" = ""
+    "GOOGLE_CLIENT_ID" = ""
+    "GOOGLE_CLIENT_SECRET" = ""
   }
   $additionalLines = @()
   foreach ($entry in $defaults.GetEnumerator()) {

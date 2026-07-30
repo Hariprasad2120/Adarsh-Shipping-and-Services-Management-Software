@@ -24,6 +24,7 @@
     "staging:db:seed": "tsx scripts/run-with-staging-env.ts tsx prisma/seed.staging.ts",
     "staging:db:verify": "tsx scripts/run-with-staging-env.ts tsx scripts/verify-staging-db.ts",
     "staging:app:check": "tsx scripts/run-with-staging-env.ts tsx scripts/verify-staging-app-start.ts",
+    "staging:login:verify": "tsx scripts/run-with-staging-env.ts tsx scripts/verify-staging-login.ts",
     "staging:dev": "tsx scripts/run-with-staging-env.ts next dev --webpack -p 3100",
     "staging:test": "tsx scripts/run-with-staging-env.ts vitest run",
     "db:bootstrap:cha-admin": "npx tsx scripts/bootstrap-cha-test-admin.ts",
