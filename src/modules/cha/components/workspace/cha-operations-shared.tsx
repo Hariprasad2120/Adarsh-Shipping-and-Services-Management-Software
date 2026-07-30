@@ -8,6 +8,7 @@ import {
 } from "@/modules/cha/components/workspace/cha-workspace";
 import { cn } from "@/lib/utils";
 import { WorkspaceSectionHeading } from "@/components/layout/workspace";
+import { OperationalVisibleRecords } from "@/components/monolith";
 
 export type AccentTone = "cyan" | "orange" | "green" | "violet" | "blue";
 export { ChaMetrics };
@@ -130,14 +131,6 @@ export function ChaVisibleRecords({
   tone?: AccentTone;
 }) {
   return (
-    <div className="mnx-cha-visible-records">
-      <strong>{visible}</strong>
-      <span>
-        Visible records
-        <small>
-          {visible} / {total}
-        </small>
-      </span>
-    </div>
+    <OperationalVisibleRecords visible={visible} total={total} />
   );
 }

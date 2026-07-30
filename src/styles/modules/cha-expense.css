@@ -94,18 +94,26 @@
 }
 
 .mnx-cha-jobs-toolbar {
-  width: 100%;
+  width: auto;
+  min-width: 0;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--mn-space-2);
   padding: 0;
   border-bottom: 0;
 }
 
 .mnx-cha-jobs-toolbar .mnx-search-field {
-  flex-basis: min(330px, 100%);
+  width: clamp(15rem, 24vw, 26rem);
+  flex: 0 1 26rem;
 }
 
 .mnx-cha-jobs-toolbar-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
@@ -119,38 +127,6 @@
   border: 1px solid var(--mnx-border);
   border-radius: var(--mnx-radius-sm);
   background: var(--mnx-control-gradient);
-}
-
-.mnx-cha-visible-records {
-  display: flex;
-  align-items: center;
-  gap: var(--mn-space-3);
-}
-
-.mnx-cha-visible-records > strong {
-  display: grid;
-  width: 2.25rem;
-  height: 2.25rem;
-  place-items: center;
-  border: 1px solid var(--mnx-border);
-  border-radius: var(--mnx-radius-sm);
-  color: var(--mnx-accent-text);
-  background: var(--mnx-surface-soft);
-}
-
-.mnx-cha-visible-records > span,
-.mnx-cha-visible-records small {
-  display: block;
-  color: var(--mnx-text-muted);
-  font-size: var(--mn-type-label-size);
-  letter-spacing: var(--mn-type-label-tracking);
-  text-transform: uppercase;
-}
-
-.mnx-cha-visible-records small {
-  margin-top: 0.2rem;
-  color: var(--mnx-text);
-  letter-spacing: 0;
 }
 
 .mnx-cha-page-workflow-builder {
@@ -1349,6 +1325,7 @@
 
 .mnx-operational-table-actions .mnx-cha-jobs-toolbar {
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .mnx-operational-table-actions .mnx-cha-actions-search .mnx-field-control,
@@ -1357,8 +1334,9 @@
 }
 
 @media (max-width: 760px) {
-.mnx-operational-table-actions .mnx-cha-actions-search,
+  .mnx-operational-table-actions .mnx-cha-actions-search,
   .mnx-operational-table-actions .mnx-cha-jobs-toolbar {
     width: 100%;
+    flex-wrap: wrap;
   }
 }

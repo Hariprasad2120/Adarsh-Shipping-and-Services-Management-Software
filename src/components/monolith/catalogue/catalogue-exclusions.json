@@ -18,6 +18,12 @@
     "owner": "Monolith design system"
   },
   {
+    "component": "OperationalVisibleRecords",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Composite subcomponent rendered visibly in the registered OperationalDataTable toolbar specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
     "component": "OperationalDataTableWrap",
     "source": "src/components/data-display/operational-data-table.tsx",
     "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",

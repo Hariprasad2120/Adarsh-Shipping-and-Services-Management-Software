@@ -2,6 +2,18 @@
 
 Last updated: 2026-07-30
 
+## 2026-07-30 operational table toolbar handoff
+
+`OperationalDataTableHeader` is the canonical owner for the one-row desktop
+combination of visible records, search, filters, and create actions. Active and
+Completed CHA Jobs plus the CHA dashboard use that composition. Filter and
+compact action sizing is centralized, and the Design System live specimen now
+shows the required arrangement.
+
+The post-merge rules are documented in
+`docs/design-system-main-merge-governance.md`. Preserve that policy, the live
+registry, and the coverage gate when resolving this branch into `main`.
+
 ## 2026-07-30 production design-system ownership handoff
 
 Work is active on `codex/unify-production-design-system`, created from the

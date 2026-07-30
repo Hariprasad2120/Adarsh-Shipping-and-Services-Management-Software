@@ -1578,18 +1578,18 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
 .mnx-filter-button,
 .filter-button {
-  height: 35px;
+  min-height: 39px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0;
-  padding: 0 11px;
+  gap: var(--mn-space-2);
+  padding: 0 16px;
   border: 1px solid var(--mnx-border);
-  border-radius: 10px;
+  border-radius: 999px;
   color: var(--mnx-text);
   background: var(--mnx-surface-gradient);
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 700;
   line-height: 1;
   cursor: pointer;
   transition:
@@ -1605,15 +1605,13 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
 .mnx-filter-button > svg,
 .filter-button > svg {
-  width: 11px;
-  height: 11px;
+  width: 15px;
+  height: 15px;
   flex: 0 0 auto;
-  margin-right: 5px;
 }
 
 .mnx-filter-button > i,
 .filter-button > i {
-  margin-left: 5px;
   padding: 2px 5px;
   border-radius: 99px;
   color: var(--mnx-accent-contrast);
@@ -3045,8 +3043,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   border-bottom: 1px solid var(--mnx-border);
 }
 
-.mnx-operational-table-header > div > span,
-.mnx-table-card > header > div > span {
+.mnx-operational-table-header > div:first-child > span,
+.mnx-table-card > header > div:first-child > span {
   color: var(--mnx-muted);
   font-size: 9px;
   font-weight: 720;
@@ -3065,10 +3063,47 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
 .mnx-operational-table-actions {
   display: flex;
-  flex-wrap: wrap;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.mnx-operational-visible-records {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--mn-space-2);
+  white-space: nowrap;
+}
+
+.mnx-operational-visible-records > strong {
+  display: grid;
+  width: 2.4375rem;
+  height: 2.4375rem;
+  place-items: center;
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-sm);
+  color: var(--mnx-accent-text);
+  background: var(--mnx-surface-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.mnx-operational-visible-records > span,
+.mnx-operational-visible-records small {
+  display: block;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  letter-spacing: var(--mn-type-label-tracking);
+  text-transform: uppercase;
+}
+
+.mnx-operational-visible-records small {
+  margin-top: var(--mn-space-1);
+  color: var(--mnx-text);
+  letter-spacing: 0;
 }
 
 .mnx-operational-filter-group {
@@ -3455,6 +3490,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
   .mnx-operational-table-actions {
     width: 100%;
+    flex-wrap: wrap;
     justify-content: flex-start;
   }
 
@@ -3819,6 +3855,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 .mnx-button-compact {
   min-width: auto;
   min-height: 39px;
+  justify-content: center;
+  gap: var(--mn-space-2);
   padding-inline: 16px;
   font-size: 12px;
 }

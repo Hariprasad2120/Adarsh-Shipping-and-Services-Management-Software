@@ -2,6 +2,20 @@
 
 Last updated: 2026-07-30
 
+## 2026-07-30 operational table toolbar correction
+
+The shared operational data-table header now owns its visible-record count,
+search, filter, and create actions in one desktop row. Compact primary and
+filter controls share a 39px control height, centered icon/text composition,
+and consistent spacing. The CHA dashboard and Active/Completed Jobs registers
+inherit the correction, and the live Design System table specimen demonstrates
+the same production toolbar. Responsive wrapping remains available on narrow
+viewports.
+
+Added `docs/design-system-main-merge-governance.md` to make catalogue reuse,
+unique-component registration, stylesheet ownership, merge conflict handling,
+and verification gates mandatory after this branch merges into `main`.
+
 ## 2026-07-30 production design-system ownership correction
 
 The administrator design-system route now renders a typed registry of actual

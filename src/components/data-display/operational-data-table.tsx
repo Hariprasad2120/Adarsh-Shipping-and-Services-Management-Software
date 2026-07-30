@@ -77,8 +77,38 @@ export function OperationalFilterButton({
   return (
     <button type="button" className={cn("mnx-filter-button", className)} {...props}>
       {children}
-      {activeCount ? <i>{activeCount}</i> : null}
+      {typeof activeCount === "number" ? (
+        <i aria-label={`${activeCount} active filters`}>{activeCount}</i>
+      ) : null}
     </button>
+  );
+}
+
+export function OperationalVisibleRecords({
+  className,
+  label = "Visible records",
+  total,
+  visible,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & {
+  label?: string;
+  total: number;
+  visible: number;
+}) {
+  return (
+    <div
+      className={cn("mnx-operational-visible-records", className)}
+      aria-label={`${label}: ${visible} of ${total}`}
+      {...props}
+    >
+      <strong>{visible}</strong>
+      <span>
+        {label}
+        <small>
+          {visible} / {total}
+        </small>
+      </span>
+    </div>
   );
 }
 

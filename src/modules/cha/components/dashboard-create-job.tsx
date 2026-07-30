@@ -70,7 +70,6 @@ export function DashboardCreateJob({ currentUserId, canCreateJob }: DashboardCre
         <>
           <Button
             size="sm"
-            className="gap-2"
             onClick={() => {
               setIsOpen(true);
               void loadOptions();

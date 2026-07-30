@@ -41,7 +41,12 @@ import {
   OperationsPanel,
   PendingActionRow,
 } from "@/components/data-display/operations-overview/operations-overview";
-import { ChaMetricCard, ChaMetrics, ChaPageHeader } from "@/modules/cha/components/workspace/cha-operations-shared";
+import {
+  ChaMetricCard,
+  ChaMetrics,
+  ChaPageHeader,
+  ChaVisibleRecords,
+} from "@/modules/cha/components/workspace/cha-operations-shared";
 import { ChaDashboardFilterAction } from "@/modules/cha/components/dashboard/cha-dashboard-filter-action";
 import { ChaDashboardSearchAction } from "@/modules/cha/components/dashboard/cha-dashboard-search-action";
 import { ChaHeaderGraphic } from "./graphics/ChaHeaderGraphic";
@@ -383,6 +388,7 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
             title="Active clearance jobs"
             actions={
               <>
+                <ChaVisibleRecords visible={myJobs.length} total={myJobs.length} />
                 <ChaDashboardSearchAction value={assignedSearch} />
                 <DashboardCreateJob
                   currentUserId={session.user.id}

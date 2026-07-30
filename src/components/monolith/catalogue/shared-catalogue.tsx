@@ -4,8 +4,10 @@ import {
   ArrowRight,
   Check,
   Info,
+  ListFilter,
   MoreHorizontal,
   PackageSearch,
+  Plus,
   Search,
   Ship,
 } from "lucide-react";
@@ -24,6 +26,7 @@ import {
   OperationalDataTableFooter,
   OperationalDataTableHeader,
   OperationalDataTableWrap,
+  OperationalFilterButton,
   OperationalMode,
   OperationalPrimaryCell,
   OperationalRowAction,
@@ -31,6 +34,7 @@ import {
   OperationalTable,
   OperationalTableCell,
   OperationalTableHead,
+  OperationalVisibleRecords,
   Textarea,
   WorkspaceAction,
   WorkspaceAlert,
@@ -334,7 +338,23 @@ export const sharedCatalogue: CatalogueEntry[] = [
         <OperationalDataTableHeader
           eyebrow="Shipment register"
           title="Active clearance jobs"
-          actions={<Button size="sm"><Search aria-hidden="true" /> Search</Button>}
+          actions={
+            <>
+              <OperationalVisibleRecords visible={3} total={3} />
+              <label className="mnx-search-field">
+                <Search aria-hidden="true" />
+                <Input aria-label="Search jobs" placeholder="Search customers, job numbers..." />
+              </label>
+              <OperationalFilterButton activeCount={0}>
+                <ListFilter aria-hidden="true" />
+                Filter
+              </OperationalFilterButton>
+              <Button size="sm">
+                <Plus aria-hidden="true" />
+                New Job
+              </Button>
+            </>
+          }
         />
         <OperationalDataTableWrap>
           <OperationalTable>

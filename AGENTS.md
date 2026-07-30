@@ -6,6 +6,7 @@ Read these files before changing UI code:
 2. docs/full-ui-migration-prompt.md
 3. docs/ui-migration-status.md
 4. docs/ui-migration-handoff.md
+5. docs/design-system-main-merge-governance.md
 
 The authoritative visual references are, in order:
 

@@ -536,6 +536,7 @@ export function JobsClient({
         {canCreateJob ? (
           <Button
             type="button"
+            size="sm"
             disabled={createOptionsLoading}
             onClick={() => {
               setIsModalOpen(true);
@@ -595,19 +596,21 @@ export function JobsClient({
           index={isActiveSection ? "02" : "03"}
           title={title}
           description={description}
-          actions={
-            <ChaVisibleRecords
-              visible={data.items.length}
-              total={data.total}
-              tone={isActiveSection ? "blue" : "green"}
-            />
-          }
         />
         <OperationalDataTable>
           <OperationalDataTableHeader
             eyebrow="Shipment register"
             title={title}
-            actions={renderTableControls(tableKey)}
+            actions={
+              <>
+                <ChaVisibleRecords
+                  visible={data.items.length}
+                  total={data.total}
+                  tone={isActiveSection ? "blue" : "green"}
+                />
+                {renderTableControls(tableKey)}
+              </>
+            }
           />
           {renderActivePills()}
           <OperationalDataTableWrap>
