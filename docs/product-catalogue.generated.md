@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-29T18:55:55.843Z
+> Generated at: 2026-07-30T05:50:48.635Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -601,12 +601,12 @@
 | WorkReportSettings | hrms | 7 | Organisation |
 | WorkReportField | hrms | 12 | Organisation |
 | AccountingOrganisationProfile | accounting | 16 | AccountingInventoryMode, AccountingRoundingMode, Organisation |
-| AccountingLegalEntity | accounting | 16 | AccountingLegalEntityStatus, Organisation, AccountingTaxRegistration, AccountingSourceSnapshot, AccountingIntegrationInbox, JournalEntry |
+| AccountingLegalEntity | accounting | 17 | AccountingLegalEntityStatus, Organisation, AccountingTaxRegistration, AccountingSourceSnapshot, AccountingIntegrationInbox, JournalEntry, Account |
 | AccountingTaxRegistration | accounting | 18 | Organisation, AccountingLegalEntity, AccountingNumberSeries |
 | AccountingPeriod | accounting | 15 | AccountingPeriodStatus, Organisation, FiscalYear, AccountingPeriodLockRequest, JournalEntry |
 | AccountingPeriodLockRequest | accounting | 18 | AccountingPeriodLockRequestStatus, Organisation, AccountingPeriod, User |
 | AccountingCurrency | accounting | 14 | Organisation, AccountingExchangeRate, AccountingAccountControl |
-| AccountingExchangeRate | accounting | 16 | AccountingExchangeRateStatus, Organisation, AccountingCurrency, User |
+| AccountingExchangeRate | accounting | 17 | AccountingExchangeRateStatus, Organisation, AccountingCurrency, User, JournalEntry |
 | AccountingAccountControl | accounting | 17 | Organisation, Account, AccountingCurrency |
 | AccountingDimensionDefinition | accounting | 12 | Organisation, AccountingDimensionValue, AccountingJournalLineDimension |
 | AccountingDimensionValue | accounting | 15 | Organisation, AccountingDimensionDefinition, AccountingJournalLineDimension |
@@ -619,9 +619,9 @@
 | AccountingSourceSnapshot | accounting | 20 | Organisation, AccountingLegalEntity, AccountingIntegrationInbox, JournalEntry, AccountingPayrollRunSnapshot, PayrollBatch |
 | AccountingPostingAttempt | accounting | 15 | AccountingPostingAttemptStatus, Organisation, AccountingIntegrationInbox, JournalEntry |
 | AccountingPayrollRunSnapshot | accounting | 16 | Organisation, AccountingSourceSnapshot |
-| Account | accounting | 29 | Organisation, Branch, Account, JournalEntryLine, GeneralLedgerEntry, PaymentEntry, TaxLine, RecurringExpense, RecurringJournal, PartnerAccount, AccountingAccountControl |
+| Account | accounting | 31 | Organisation, AccountingLegalEntity, Branch, Account, JournalEntryLine, GeneralLedgerEntry, PaymentEntry, TaxLine, RecurringExpense, RecurringJournal, PartnerAccount, AccountingAccountControl |
 | FiscalYear | accounting | 10 | Organisation, AccountingPeriod |
-| JournalEntry | accounting | 62 | Organisation, AccountingLegalEntity, Branch, JournalEntryLine, GeneralLedgerEntry, PayrollBatch, AssetDepreciationEntry, AccountingPeriod, AccountingSourceSnapshot, AccountingApprovalPolicy, AccountingNumberSeries, AccountingRoundingPolicy, JournalEntry, AccountingPostingAttempt |
+| JournalEntry | accounting | 64 | Organisation, AccountingLegalEntity, Branch, JournalEntryLine, GeneralLedgerEntry, PayrollBatch, AssetDepreciationEntry, AccountingPeriod, AccountingSourceSnapshot, AccountingExchangeRate, AccountingApprovalPolicy, AccountingNumberSeries, AccountingRoundingPolicy, JournalEntry, AccountingPostingAttempt |
 | JournalEntryLine | accounting | 15 | JournalEntry, Account, AccountingJournalLineDimension |
 | GeneralLedgerEntry | accounting | 22 | JobCosting, Organisation, Branch, Account, JournalEntry |
 | SalesInvoice | accounting | 30 | JobCosting, Organisation, Branch, CrmAccount, CrmDeal, SalesInvoiceItem, TaxLine, PaymentAllocation, CustomerNote |
@@ -780,9 +780,9 @@
 
 ### accounting
 - **actions.ts**: createAccountAction, updateAccountAction, createJournalEntryAction, submitJournalEntryAction, cancelJournalEntryAction, createSalesInvoiceAction, submitSalesInvoiceAction, cancelSalesInvoiceAction, createPurchaseInvoiceAction, submitPurchaseInvoiceAction, cancelPurchaseInvoiceAction, createPaymentEntryAction, submitPaymentEntryAction, cancelPaymentEntryAction, updateAccountingSettingsAction, initializeCOAAction, generateInvoiceFromDealAction, getPayrollBatchesAction, compilePayrollBatchAction, createPayrollBatchAction, finalizePayrollBatchAction, payPayrollBatchAction, listAssetsAction, getAssetAction, createAssetAction, runDepreciationAction, listQuotationsAction, getQuotationAction, createQuotationAction, convertQuotationToInvoiceAction, listCustomerNotesAction, getCustomerNoteAction, createCustomerNoteAction, submitCustomerNoteAction, getTransactionLockAction, updateTransactionLockAction, listJobCostingsAction, getJobCostingAction, createJobCostingAction, updateJobCostingAction, getARAgeingAction, getAPAgeingAction, getSalesRegisterAction, getPurchaseRegisterAction, getGSTR1SummaryAction, getGSTR2BSummaryAction, getConsolidatedGSTLedgerAction, getDayBookAction, getJournalRegisterAction, getJobProfitabilityAction, getCashAndBankLedgerAction, recordBankTransferAction, approveBankTransferRequestAction, getProfitAndLossAction, getBalanceSheetAction, getTrialBalanceAction
-- **integration-adapters.ts**: resolveCanonicalPostingConfiguration, prepareBankTransferRequest, approveAndPostPreparedRequest, prepareCrmDealInvoiceRequest, acceptApprovedPayrollRun, postApprovedPayrollRun
-- **money.ts**: decimal, add, subtract, multiply, divide, compare, quantize, serialize, isZero, isPositive, debitCreditTotals, assertBalanced
-- **posting-engine.ts**: canonicalPostingPayload, postCanonicalAccountingRequest, reverseCanonicalJournal
+- **integration-adapters.ts**: resolveCanonicalPostingConfiguration, recoverStaleAccountingRequest, moveAccountingRequestToManualReview, prepareBankTransferRequest, approveAndPostPreparedRequest, prepareCrmDealInvoiceRequest, acceptApprovedPayrollRun, postApprovedPayrollRun
+- **money.ts**: decimal, add, subtract, multiply, absolute, divide, compare, quantize, validateCurrencyPrecision, convertToBaseCurrency, allocateEqual, serialize, isZero, isPositive, isNegative, debitCreditTotals, assertBalanced
+- **posting-engine.ts**: canonicalPostingPayload, postCanonicalAccountingRequest, reverseCanonicalJournal, replaceCanonicalJournal
 - **reports.ts**: getGeneralLedger, getTrialBalance, getProfitAndLoss, getBalanceSheet, getARAgeing, getAPAgeing, getSalesRegister, getPurchaseRegister, getGSTR1Summary, getGSTR2BSummary, getConsolidatedGSTLedger, getDayBook, getJournalRegister, getJobProfitability, getCashAndBankLedger
 - **request-integrity.ts**: canonicalPayload, payloadHash, newAccountingRequestId
 - **service.ts**: seedChartOfAccounts, createAuditLog, listAccounts, getChartOfAccounts, createAccount, updateAccount, validateBalancedEntry, validateAccountPostingAllowed, postGLTransactions, reverseGLTransactions, listJournalEntries, getJournalEntry, createJournalEntry, submitJournalEntry, cancelJournalEntry, listSalesInvoices, getSalesInvoice, createSalesInvoice, submitSalesInvoice, cancelSalesInvoice, listPurchaseInvoices, getPurchaseInvoice, createPurchaseInvoice, submitPurchaseInvoice, cancelPurchaseInvoice, listPaymentEntries, getPaymentEntry, createPaymentEntry, submitPaymentEntry, cancelPaymentEntry, getAccountingSettings, updateAccountingSettings, compilePayrollBatch, getPayrollBatches, createPayrollBatch, finalizePayrollBatch, payPayrollBatch, listAssets, getAsset, createAsset, runDepreciationForAsset, getTransactionLock, updateTransactionLock, validatePostingDateNotLocked, listQuotations, getQuotation, createQuotation, convertQuotationToInvoice, listCustomerNotes, getCustomerNote, createCustomerNote, submitCustomerNote, listVendorNotes, getVendorNote, createVendorNote, submitVendorNote, processRecurringExpenses, processRecurringJournals, listPartnerAccounts, createPartnerAccount, updatePartnerAccount, recordPartnerTransaction, listJobCostings, getJobCosting, createJobCosting, updateJobCosting
@@ -994,6 +994,11 @@
 | Chart of Accounts | accounting | ✅ Implemented |
 | Journal Entries | accounting | ✅ Implemented |
 | General Ledger | accounting | ✅ Implemented |
+| Canonical Accounting Posting Engine | accounting | ✅ Implemented |
+| Immutable Journal Reversal and Replacement | accounting | ✅ Implemented |
+| Accounting Integration Inbox and Outbox | accounting | 🟡 Partial |
+| CRM Invoice Request Adapter | accounting | 🟡 Partial |
+| Approved HRMS Payroll Run Adapter | accounting | 🟡 Partial |
 | Payroll Batches | accounting | 🟡 Partial |
 | To-Do Task CRUD | todo | ✅ Implemented |
 | Subtask Management | todo | ✅ Implemented |

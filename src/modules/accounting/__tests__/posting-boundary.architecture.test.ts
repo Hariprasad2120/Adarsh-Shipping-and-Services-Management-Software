@@ -34,9 +34,33 @@ describe("canonical Accounting posting boundary", () => {
       const directJournalCreates = source.match(/\bjournalEntry\.create\s*\(/g)?.length ?? 0;
       const directLineCreates = source.match(/\bjournalEntryLine\.create(?:Many)?\s*\(/g)?.length ?? 0;
       const directLedgerCreates = source.match(/\bgeneralLedgerEntry\.create(?:Many)?\s*\(/g)?.length ?? 0;
+      const directJournalMutations =
+        source.match(/\bjournalEntry\.(?:update|updateMany|delete|deleteMany|upsert)\s*\(/g)?.length ??
+        0;
+      const directLineMutations =
+        source.match(/\bjournalEntryLine\.(?:update|updateMany|delete|deleteMany|upsert)\s*\(/g)
+          ?.length ?? 0;
+      const directLedgerMutations =
+        source.match(/\bgeneralLedgerEntry\.(?:update|updateMany|delete|deleteMany|upsert)\s*\(/g)
+          ?.length ?? 0;
+      const rawLedgerMutation =
+        /(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+["'`]*(?:JournalEntry|JournalEntryLine|GeneralLedgerEntry)\b/i.test(
+          source,
+        );
+      const canonicalSwitches =
+        source.match(/monolith\.accounting_canonical_posting/g)?.length ?? 0;
 
       if (file === "src/modules/accounting/posting-engine.ts") {
-        if (directJournalCreates !== 1 || directLineCreates !== 0 || directLedgerCreates !== 1) {
+        if (
+          directJournalCreates !== 1 ||
+          directLineCreates !== 0 ||
+          directLedgerCreates !== 1 ||
+          directJournalMutations !== 0 ||
+          directLineMutations !== 0 ||
+          directLedgerMutations !== 0 ||
+          rawLedgerMutation ||
+          canonicalSwitches !== 1
+        ) {
           violations.push(`${file}: canonical writer shape changed`);
         }
         continue;
@@ -47,13 +71,36 @@ describe("canonical Accounting posting boundary", () => {
         if (directJournalCreates !== 1 || !draftCreate) {
           violations.push(`${file}: only one explicit DRAFT journal create is allowed`);
         }
-        if (directLineCreates !== 0 || directLedgerCreates !== 0) {
+        const draftSupersede =
+          /journalEntry\.updateMany\s*\([\s\S]*?status:\s*"DRAFT"[\s\S]*?status:\s*"SUPERSEDED"/.test(
+            source,
+          );
+        if (directJournalMutations !== 1 || !draftSupersede) {
+          violations.push(`${file}: only the DRAFT-to-SUPERSEDED compatibility update is allowed`);
+        }
+        if (
+          directLineCreates !== 0 ||
+          directLedgerCreates !== 0 ||
+          directLineMutations !== 0 ||
+          directLedgerMutations !== 0 ||
+          rawLedgerMutation ||
+          canonicalSwitches !== 0
+        ) {
           violations.push(`${file}: legacy direct journal-line or ledger writer is active`);
         }
         continue;
       }
 
-      if (directJournalCreates || directLineCreates || directLedgerCreates) {
+      if (
+        directJournalCreates ||
+        directLineCreates ||
+        directLedgerCreates ||
+        directJournalMutations ||
+        directLineMutations ||
+        directLedgerMutations ||
+        rawLedgerMutation ||
+        canonicalSwitches
+      ) {
         violations.push(`${file}: unauthorized direct financial writer`);
       }
     }

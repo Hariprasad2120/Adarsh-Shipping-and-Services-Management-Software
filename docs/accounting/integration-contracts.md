@@ -1,6 +1,6 @@
 # Accounting Integration Contracts
 
-Status: Phase 2 versioned contract design. No external provider connection or production event flow is authorized.
+Status: Phase 3 versioned envelope and selected adapters implemented on synthetic staging. No external provider connection or production event flow is authorized.
 
 ## Transport-independent envelope
 
@@ -101,4 +101,10 @@ Envelope v1 contains organization/legal entity, source system/type/id/version, r
 - CRM won-deal conversion now creates only an idempotent immutable Accounting invoice request. CRM permission does not grant Accounting draft/post authority, and the adapter does not inject tax, account, due-date or statutory-number examples.
 - HRMS payroll acceptance stores an immutable approved run/version and allocation detail. Accounting checks exact balance, accounts, dimensions, period, approval and authorization but does not calculate salary. Accrual posting uses a distinct deterministic request ID while retaining the HRMS event as causation.
 
+The payroll compatibility row is created once for an accepted organization/month. A later HRMS version for that period is rejected as `PAYROLL_CORRECTION_WORKFLOW_REQUIRED`; it cannot overwrite the original run, source snapshot or journal link. The producer must use the explicit correction plus Accounting reversal/replacement contract.
+
 Inbox outcomes are `PENDING`, `PROCESSING`, `PROCESSED`, `REJECTED`, `RETRYABLE`, or `MANUAL_REVIEW`; attempt number and safe classification are retained. The transactional outbox is sufficient for this phase and no external broker/provider is connected.
+
+Terminal deterministic rejections are replay-stable and do not create unbounded attempts. `recoverStaleAccountingRequest` converts only an expired `PROCESSING` claim to `RETRYABLE` under the integration-retry permission and an audited row lock. `moveAccountingRequestToManualReview` records a stable non-sensitive reason code under the manual-review permission. Foreign-currency postings bind the approved exchange-rate row as immutable journal evidence. A reused source version must retain the same organization, legal entity and payload hash.
+
+Canonical rule IDs are not caller-defined extension points. Phase 3 registers exact journal/source contracts for manual/synthetic staging journals, bank transfers, approved HRMS payroll accruals and reversals; unknown or mismatched combinations fail closed.

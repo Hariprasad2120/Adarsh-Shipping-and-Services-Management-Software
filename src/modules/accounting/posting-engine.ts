@@ -5,6 +5,7 @@ import { Prisma } from "@/generated/prisma/client";
 import {
   AccountingMoneyError,
   assertBalanced,
+  convertToBaseCurrency,
   decimal,
   quantize,
   serialize,
@@ -16,6 +17,54 @@ type PostingActor = {
   kind: "USER" | "TRUSTED_INTEGRATION";
   actorId: string;
   authenticatedOrgId: string;
+};
+
+type CanonicalRuleContract = {
+  journalType: string;
+  sourceSystem: string;
+  sourceType: string;
+  requiresSourceApproval: boolean;
+};
+
+const CANONICAL_RULE_CONTRACTS: Record<string, CanonicalRuleContract[]> = {
+  "GL-MANUAL-JOURNAL-v1": [
+    {
+      journalType: "JOURNAL_ENTRY",
+      sourceSystem: "ACCOUNTING",
+      sourceType: "MANUAL_JOURNAL_DRAFT",
+      requiresSourceApproval: false,
+    },
+    {
+      journalType: "JOURNAL_ENTRY",
+      sourceSystem: "P3_TEST",
+      sourceType: "SYNTHETIC_POSTING",
+      requiresSourceApproval: false,
+    },
+  ],
+  "BANK-TRANSFER-v1": [
+    {
+      journalType: "JOURNAL_ENTRY",
+      sourceSystem: "ACCOUNTING",
+      sourceType: "BANK_TRANSFER",
+      requiresSourceApproval: false,
+    },
+  ],
+  "PAYROLL-ACCRUAL-v1": [
+    {
+      journalType: "JOURNAL_ENTRY",
+      sourceSystem: "HRMS",
+      sourceType: "APPROVED_PAYROLL_RUN",
+      requiresSourceApproval: true,
+    },
+  ],
+  "GL-REVERSAL-v1": [
+    {
+      journalType: "JOURNAL_ENTRY",
+      sourceSystem: "ACCOUNTING",
+      sourceType: "JOURNAL_REVERSAL",
+      requiresSourceApproval: true,
+    },
+  ],
 };
 
 export type CanonicalPostingLine = {
@@ -117,6 +166,46 @@ function safePayload(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(canonicalPayload(value)) as Prisma.InputJsonValue;
 }
 
+function resolveRuleContract(request: CanonicalPostingRequest): CanonicalRuleContract {
+  const contract = CANONICAL_RULE_CONTRACTS[request.ruleId]?.find(
+    (candidate) =>
+      candidate.journalType === request.journalType &&
+      candidate.sourceSystem === request.source.system &&
+      candidate.sourceType === request.source.type,
+  );
+  if (!contract) {
+    throw new AccountingPostingError(
+      "POSTING_RULE_UNSUPPORTED",
+      "The posting rule is not registered for this journal and source contract",
+    );
+  }
+  return contract;
+}
+
+async function assertSyntheticPolicyTarget(tx: Prisma.TransactionClient) {
+  const rows = await tx.$queryRaw<Array<{ allowed: boolean }>>`
+    SELECT (
+      current_database() = 'monolith_accounting_staging'
+      AND current_user = 'monolith_staging'
+      AND COALESCE(host(inet_server_addr()), '') = '127.0.0.1'
+      AND inet_server_port() = 56432
+      AND COALESCE(
+        shobj_description(
+          (SELECT oid FROM pg_database WHERE datname = current_database()),
+          'pg_database'
+        ),
+        ''
+      ) = 'MONOLITH_ACCOUNTING_STAGING_ONLY'
+    ) AS allowed
+  `;
+  if (rows[0]?.allowed !== true) {
+    throw new AccountingPostingError(
+      "SYNTHETIC_ROUNDING_POLICY_FORBIDDEN",
+      "Synthetic non-statutory rounding policies are restricted to the exact approved staging database",
+    );
+  }
+}
+
 export function canonicalPostingPayload(request: CanonicalPostingRequest) {
   return {
     requestId: request.requestId,
@@ -165,6 +254,8 @@ async function authorizeActor(
       ? "accounting.integration.post"
       : request.reversalOfId
         ? "accounting.reverse"
+        : request.replacementOfId
+          ? "accounting.replace"
         : "accounting.post";
   const rows = await tx.$queryRaw<Array<{ allowed: boolean }>>`
     SELECT TRUE AS allowed
@@ -188,6 +279,7 @@ async function resolveContext(
   tx: Prisma.TransactionClient,
   request: CanonicalPostingRequest,
 ) {
+  const ruleContract = resolveRuleContract(request);
   const date = postingDate(request.postingDate, "postingDate");
   const document = request.documentDate ? postingDate(request.documentDate, "documentDate") : null;
   const entity = await tx.accountingLegalEntity.findFirst({
@@ -195,6 +287,18 @@ async function resolveContext(
   });
   if (!entity) {
     throw new AccountingPostingError("LEGAL_ENTITY_INVALID", "Legal entity is not active in this organization");
+  }
+  if (request.branchId) {
+    const branch = await tx.branch.findFirst({
+      where: { id: request.branchId, orgId: request.orgId },
+      select: { id: true },
+    });
+    if (!branch) {
+      throw new AccountingPostingError(
+        "BRANCH_INVALID",
+        "Branch does not belong to the request organization",
+      );
+    }
   }
 
   const lockedPeriods = await tx.$queryRaw<Array<{ id: string; status: string }>>`
@@ -227,6 +331,7 @@ async function resolveContext(
   }
 
   let rate = decimal("1");
+  let rateId: string | null = null;
   let rateSource = "FUNCTIONAL_CURRENCY";
   let rateDate = date;
   if (transactionCurrency.code !== baseCurrency.code) {
@@ -248,7 +353,14 @@ async function resolveContext(
     if (!master || !master.rate.eq(decimal(request.exchangeRate.rate, "exchangeRate.rate"))) {
       throw new AccountingPostingError("EXCHANGE_RATE_INVALID", "Exchange-rate evidence does not match an approved rate");
     }
+    if (master.rateDate > date) {
+      throw new AccountingPostingError(
+        "EXCHANGE_RATE_DATE_INVALID",
+        "Exchange-rate evidence cannot be effective after the posting date",
+      );
+    }
     rate = master.rate;
+    rateId = master.id;
     rateSource = master.source;
     rateDate = master.rateDate;
   }
@@ -261,7 +373,13 @@ async function resolveContext(
       isActive: true,
       effectiveFrom: { lte: date },
       AND: [
-        { OR: [{ currencyCode: null }, { currencyCode: transactionCurrency.code }] },
+        {
+          OR: [
+            { currencyCode: null },
+            { currencyCode: transactionCurrency.code },
+            { currencyCode: baseCurrency.code },
+          ],
+        },
         { OR: [{ effectiveTo: null }, { effectiveTo: { gte: date } }] },
       ],
     },
@@ -277,6 +395,15 @@ async function resolveContext(
     throw new AccountingPostingError(
       "STATUTORY_ROUNDING_NOT_VALIDATED",
       "This posting is gated until the rounding policy is validated or explicitly marked synthetic non-statutory",
+    );
+  }
+  if (roundingConfiguration.syntheticNonStatutory) {
+    await assertSyntheticPolicyTarget(tx);
+  }
+  if (roundingPolicy.roundingMode !== "HALF_UP") {
+    throw new AccountingPostingError(
+      "ROUNDING_MODE_UNSUPPORTED",
+      "The configured rounding mode is not implemented by the canonical decimal boundary",
     );
   }
 
@@ -296,6 +423,28 @@ async function resolveContext(
   }
   if (request.makerId === request.approval.approvedById) {
     throw new AccountingPostingError("MAKER_CHECKER_VIOLATION", "Maker cannot approve their own controlled posting");
+  }
+  const approvalConfiguration = (approvalPolicy.configuration ?? {}) as {
+    separatePosterRequired?: boolean;
+    requireSupportingDocuments?: boolean;
+  };
+  if (
+    approvalConfiguration.separatePosterRequired === true &&
+    request.actor.actorId === request.approval.approvedById
+  ) {
+    throw new AccountingPostingError(
+      "APPROVER_POSTER_SEPARATION_REQUIRED",
+      "This approval policy requires a poster who is different from the approver",
+    );
+  }
+  if (
+    approvalConfiguration.requireSupportingDocuments === true &&
+    (request.supportingDocumentRefs?.filter((reference) => reference.trim()).length ?? 0) === 0
+  ) {
+    throw new AccountingPostingError(
+      "SUPPORTING_DOCUMENT_REQUIRED",
+      "This approval policy requires at least one supporting-document reference",
+    );
   }
 
   const [approverPermission, maker] = await Promise.all([
@@ -334,11 +483,13 @@ async function resolveContext(
     transactionCurrency,
     baseCurrency,
     rate,
+    rateId,
     rateSource,
     rateDate,
     roundingPolicy,
     roundingConfiguration,
     approvalPolicy,
+    ruleContract,
   };
 }
 
@@ -357,15 +508,30 @@ async function validateAndNormalizeLines(
   const normalized = [];
 
   for (const [index, line] of request.lines.entries()) {
+    let normalizedPartyType = line.partyType ?? null;
     const account = await tx.account.findFirst({
-      where: { id: line.accountId, orgId: request.orgId, isActive: true, isGroup: false },
+      where: {
+        id: line.accountId,
+        orgId: request.orgId,
+        legalEntityId: request.legalEntityId,
+        isActive: true,
+        isGroup: false,
+      },
       include: { accountingControl: true },
     });
     if (!account) {
-      throw new AccountingPostingError("ACCOUNT_NOT_POSTABLE", `Line ${index + 1} account is inactive, grouped, or outside the organization`);
+      throw new AccountingPostingError(
+        "ACCOUNT_NOT_POSTABLE",
+        `Line ${index + 1} account is inactive, grouped, or outside the organization/legal entity`,
+      );
+    }
+    if (!account.accountingControl) {
+      throw new AccountingPostingError(
+        "ACCOUNT_CONTROL_REQUIRED",
+        `Line ${index + 1} account requires explicit Accounting control configuration`,
+      );
     }
     if (
-      account.accountingControl &&
       !account.accountingControl.allowDirectPosting &&
       request.ruleId === "GL-MANUAL-JOURNAL-v1"
     ) {
@@ -381,6 +547,39 @@ async function validateAndNormalizeLines(
     }
     if (account.accountingControl?.requiresParty && (!line.partyType || !line.partyId)) {
       throw new AccountingPostingError("CONTROL_ACCOUNT_PARTY_REQUIRED", `Line ${index + 1} requires a party reference`);
+    }
+    if ((line.partyType && !line.partyId) || (!line.partyType && line.partyId)) {
+      throw new AccountingPostingError(
+        "PARTY_REFERENCE_INCOMPLETE",
+        `Line ${index + 1} must supply partyType and partyId together`,
+      );
+    }
+    if (line.partyType && line.partyId) {
+      const partyType = line.partyType.toUpperCase();
+      const party =
+        partyType === "CUSTOMER"
+          ? await tx.crmAccount.findFirst({
+              where: { id: line.partyId, orgId: request.orgId, status: "ACTIVE" },
+              select: { id: true },
+            })
+          : partyType === "SUPPLIER"
+            ? await tx.crmVendor.findFirst({
+                where: { id: line.partyId, orgId: request.orgId, status: "ACTIVE" },
+                select: { id: true },
+              })
+            : partyType === "EMPLOYEE"
+              ? await tx.user.findFirst({
+                  where: { id: line.partyId, orgId: request.orgId, active: true },
+                  select: { id: true },
+                })
+              : null;
+      if (!party) {
+        throw new AccountingPostingError(
+          "PARTY_REFERENCE_INVALID",
+          `Line ${index + 1} contains an unsupported or cross-tenant party reference`,
+        );
+      }
+      normalizedPartyType = partyType;
     }
     if (
       account.accountingControl?.requiresChaJob &&
@@ -402,10 +601,22 @@ async function validateAndNormalizeLines(
           definitionId: dimension.definitionId,
           isActive: true,
         },
-        select: { id: true },
+        select: { id: true, canonicalType: true, canonicalId: true },
       });
       if (!valid) {
         throw new AccountingPostingError("DIMENSION_INVALID", `Line ${index + 1} contains an invalid dimension`);
+      }
+      if (valid.canonicalType === "CHA_JOB" && valid.canonicalId) {
+        const job = await tx.chaJob.findFirst({
+          where: { id: valid.canonicalId, orgId: request.orgId },
+          select: { id: true },
+        });
+        if (!job) {
+          throw new AccountingPostingError(
+            "DIMENSION_CANONICAL_REFERENCE_INVALID",
+            `Line ${index + 1} contains a CHA job dimension outside the organization`,
+          );
+        }
       }
     }
 
@@ -420,8 +631,17 @@ async function validateAndNormalizeLines(
       allowRounding,
       label: `lines[${index}].credit`,
     });
+    if (
+      !context.rate.eq(1) &&
+      (line.transactionDebit === undefined || line.transactionCredit === undefined)
+    ) {
+      throw new AccountingPostingError(
+        "TRANSACTION_AMOUNTS_REQUIRED",
+        `Line ${index + 1} must supply explicit transaction-currency debit and credit amounts`,
+      );
+    }
     const transactionDebit = quantize(
-      line.transactionDebit ?? (context.rate.eq(1) ? line.debit : decimal(line.debit).div(context.rate)),
+      line.transactionDebit ?? line.debit,
       {
         scale: context.transactionCurrency.decimalPlaces,
         allowRounding,
@@ -429,16 +649,33 @@ async function validateAndNormalizeLines(
       },
     );
     const transactionCredit = quantize(
-      line.transactionCredit ?? (context.rate.eq(1) ? line.credit : decimal(line.credit).div(context.rate)),
+      line.transactionCredit ?? line.credit,
       {
         scale: context.transactionCurrency.decimalPlaces,
         allowRounding,
         label: `lines[${index}].transactionCredit`,
       },
     );
+    const expectedDebit = convertToBaseCurrency(transactionDebit, context.rate, {
+      scale: context.baseCurrency.decimalPlaces,
+      allowRounding,
+      label: `lines[${index}].convertedDebit`,
+    });
+    const expectedCredit = convertToBaseCurrency(transactionCredit, context.rate, {
+      scale: context.baseCurrency.decimalPlaces,
+      allowRounding,
+      label: `lines[${index}].convertedCredit`,
+    });
+    if (!debit.eq(expectedDebit) || !credit.eq(expectedCredit)) {
+      throw new AccountingPostingError(
+        "BASE_CURRENCY_CONVERSION_MISMATCH",
+        `Line ${index + 1} base amount does not equal transaction amount multiplied by the approved exchange rate`,
+      );
+    }
 
     normalized.push({
       ...line,
+      partyType: normalizedPartyType,
       debit,
       credit,
       transactionDebit,
@@ -534,6 +771,15 @@ async function existingResult(
   if (existing.status === "PROCESSING") {
     throw new AccountingPostingError("REQUEST_IN_PROGRESS", "The same request is already processing", "RETRYABLE");
   }
+  if (["REJECTED", "FAILED", "DEAD_LETTER", "MANUAL_REVIEW"].includes(existing.status)) {
+    throw new AccountingPostingError(
+      existing.lastErrorCode ?? "REQUEST_PREVIOUSLY_REJECTED",
+      "This deterministic Accounting request has already reached a terminal failure state",
+      existing.retryClassification === "IDEMPOTENCY_CONFLICT"
+        ? "IDEMPOTENCY_CONFLICT"
+        : "BUSINESS_REJECTION",
+    );
+  }
   return null;
 }
 
@@ -547,6 +793,36 @@ async function executePosting(
 
   await authorizeActor(tx, request);
   const context = await resolveContext(tx, request);
+  const sourceApprovalIsPartial =
+    Boolean(request.source.approvedById) !== Boolean(request.source.approvedAt);
+  if (sourceApprovalIsPartial) {
+    throw new AccountingPostingError(
+      "SOURCE_APPROVAL_EVIDENCE_INCOMPLETE",
+      "Source approval identity and timestamp must be supplied together",
+    );
+  }
+  if (context.ruleContract.requiresSourceApproval && !request.source.approvedById) {
+    throw new AccountingPostingError(
+      "SOURCE_APPROVAL_EVIDENCE_REQUIRED",
+      "This posting rule requires immutable source approval evidence",
+    );
+  }
+  if (request.source.approvedById) {
+    const sourceApprover = await tx.user.findFirst({
+      where: {
+        id: request.source.approvedById,
+        orgId: request.orgId,
+        active: true,
+      },
+      select: { id: true },
+    });
+    if (!sourceApprover) {
+      throw new AccountingPostingError(
+        "SOURCE_APPROVER_INVALID",
+        "Source approval evidence does not identify an active user in this organization",
+      );
+    }
+  }
   const sourceHash = payloadHash(request.source.payload);
 
   const existingSnapshot = await tx.accountingSourceSnapshot.findUnique({
@@ -566,6 +842,47 @@ async function executePosting(
       "The immutable source version is already bound to a different snapshot",
       "IDEMPOTENCY_CONFLICT",
     );
+  }
+  if (existingSnapshot && existingSnapshot.legalEntityId !== request.legalEntityId) {
+    throw new AccountingPostingError(
+      "SOURCE_LEGAL_ENTITY_CONFLICT",
+      "The immutable source version is already assigned to a different legal entity",
+      "IDEMPOTENCY_CONFLICT",
+    );
+  }
+  if (existingSnapshot) {
+    const priorPosting = await tx.accountingIntegrationInbox.findFirst({
+      where: {
+        orgId: request.orgId,
+        sourceSnapshotId: existingSnapshot.id,
+        status: "PROCESSED",
+        processedRecordType: "JournalEntry",
+        processedRecordId: { not: null },
+      },
+      orderBy: { processedAt: "asc" },
+    });
+    if (priorPosting?.processedRecordId) {
+      if (priorPosting.payloadHash !== hash) {
+        throw new AccountingPostingError(
+          "SOURCE_VERSION_POSTING_CONFLICT",
+          "The immutable source version is already posted under a different canonical request",
+          "IDEMPOTENCY_CONFLICT",
+        );
+      }
+      const journal = await tx.journalEntry.findFirst({
+        where: { id: priorPosting.processedRecordId, orgId: request.orgId },
+        select: { id: true, voucherNo: true },
+      });
+      if (journal) {
+        return {
+          replayed: true,
+          journalEntryId: journal.id,
+          voucherNo: journal.voucherNo,
+          requestId: request.requestId,
+          idempotencyKey: request.idempotencyKey,
+        };
+      }
+    }
   }
   const snapshot =
     existingSnapshot ??
@@ -658,6 +975,71 @@ async function executePosting(
       throw new AccountingPostingError("REVERSAL_REASON_REQUIRED", "Reversal reason is required");
     }
   }
+  if (request.reversalOfId && request.replacementOfId) {
+    throw new AccountingPostingError(
+      "CORRECTION_LINEAGE_INVALID",
+      "A journal cannot be both a reversal and a replacement",
+    );
+  }
+  if (request.replacementOfId) {
+    const originalRows = await tx.$queryRaw<
+      Array<{ id: string; status: string; postingDate: Date }>
+    >`
+      SELECT id, status, "postingDate"
+      FROM "JournalEntry"
+      WHERE id = ${request.replacementOfId}
+        AND "orgId" = ${request.orgId}
+        AND "legalEntityId" = ${request.legalEntityId}
+      FOR UPDATE
+    `;
+    const original = originalRows[0];
+    if (!original || !["POSTED", "SUBMITTED"].includes(original.status)) {
+      throw new AccountingPostingError(
+        "REPLACEMENT_ORIGINAL_INVALID",
+        "A replacement requires an immutable posted original journal",
+      );
+    }
+    const [reversal, priorReplacement] = await Promise.all([
+      tx.journalEntry.findFirst({
+        where: {
+          orgId: request.orgId,
+          reversalOfId: original.id,
+          status: { in: ["POSTED", "SUBMITTED"] },
+        },
+        select: { id: true },
+      }),
+      tx.journalEntry.findFirst({
+        where: {
+          orgId: request.orgId,
+          replacementOfId: original.id,
+          status: { in: ["POSTED", "SUBMITTED"] },
+        },
+        select: { id: true },
+      }),
+    ]);
+    if (!reversal) {
+      throw new AccountingPostingError(
+        "REPLACEMENT_REQUIRES_REVERSAL",
+        "The original journal must be reversed before a replacement can post",
+      );
+    }
+    if (priorReplacement) {
+      throw new AccountingPostingError(
+        "DUPLICATE_REPLACEMENT",
+        "This journal already has an active replacement",
+      );
+    }
+    if (
+      !request.originalEffectiveDate ||
+      postingDate(request.originalEffectiveDate, "originalEffectiveDate").getTime() !==
+        new Date(original.postingDate).getTime()
+    ) {
+      throw new AccountingPostingError(
+        "ORIGINAL_EFFECTIVE_DATE_REQUIRED",
+        "Replacement lineage must preserve the original journal effective date",
+      );
+    }
+  }
 
   const normalized = await validateAndNormalizeLines(tx, request, context);
   const voucherNo = await allocateVoucherNumber(tx, request, context.date);
@@ -688,6 +1070,7 @@ async function executePosting(
       functionalCurrencyCode: context.baseCurrency.code,
       transactionCurrencyCode: context.transactionCurrency.code,
       baseCurrencyCode: context.baseCurrency.code,
+      exchangeRateId: context.rateId,
       exchangeRateSource: context.rateSource,
       exchangeRateEffectiveDate: context.rateDate,
       accountingApprovalPolicyId: context.approvalPolicy.id,
@@ -886,6 +1269,13 @@ async function recordFailure(
         },
       });
       if (existing && existing.payloadHash !== hash) return;
+      if (
+        existing &&
+        ["REJECTED", "FAILED", "DEAD_LETTER", "MANUAL_REVIEW"].includes(existing.status) &&
+        existing.lastErrorCode === error.code
+      ) {
+        return;
+      }
       const now = await getNow();
       const inbox = await tx.accountingIntegrationInbox.upsert({
         where: {
@@ -953,6 +1343,19 @@ export async function postCanonicalAccountingRequest(
   if (!Number.isInteger(request.requestVersion) || request.requestVersion !== 1) {
     throw new AccountingPostingError("REQUEST_VERSION_UNSUPPORTED", "Only canonical posting request version 1 is supported");
   }
+  if (
+    !request.source.system ||
+    !request.source.type ||
+    !request.source.id ||
+    !Number.isInteger(request.source.version) ||
+    request.source.version < 1
+  ) {
+    throw new AccountingPostingError(
+      "SOURCE_IDENTITY_INVALID",
+      "Source system, type, ID, and a positive integer source version are required",
+    );
+  }
+  resolveRuleContract(request);
 
   const hash = payloadHash(canonicalPostingPayload(request));
   try {
@@ -964,11 +1367,7 @@ export async function postCanonicalAccountingRequest(
     if (isUniqueConflict(error)) {
       try {
         return await db.$transaction(
-          async (tx) => {
-            const replay = await existingResult(tx, request, hash);
-            if (replay) return replay;
-            throw new AccountingPostingError("CONCURRENT_POSTING_RETRY", "Concurrent request must be retried", "RETRYABLE");
-          },
+          (tx) => executePosting(tx, request, hash),
           { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
         );
       } catch (replayError) {
@@ -1005,7 +1404,10 @@ export async function reverseCanonicalJournal(input: {
       legalEntityId: input.legalEntityId,
       status: { in: ["POSTED", "SUBMITTED"] },
     },
-    include: { lines: true, accountingPeriod: true },
+    include: {
+      lines: { include: { accountingDimensions: true } },
+      accountingPeriod: true,
+    },
   });
   if (!original) {
     throw new AccountingPostingError("REVERSAL_ORIGINAL_INVALID", "Posted journal was not found");
@@ -1043,6 +1445,44 @@ export async function reverseCanonicalJournal(input: {
     }
     reversalDate = nextOpen.startDate;
   }
+  const transactionCurrencyCode =
+    original.transactionCurrencyCode ?? original.functionalCurrencyCode;
+  const baseCurrencyCode =
+    original.baseCurrencyCode ?? original.functionalCurrencyCode;
+  if (!transactionCurrencyCode || !baseCurrencyCode) {
+    throw new AccountingPostingError(
+      "REVERSAL_CURRENCY_EVIDENCE_REQUIRED",
+      "Legacy journals without immutable currency evidence require an approved migration or correction workflow",
+    );
+  }
+  let reversalExchangeRate: CanonicalPostingRequest["exchangeRate"] = null;
+  if (transactionCurrencyCode !== baseCurrencyCode) {
+    if (!original.exchangeRateId) {
+      throw new AccountingPostingError(
+        "REVERSAL_EXCHANGE_RATE_EVIDENCE_REQUIRED",
+        "Foreign-currency reversal requires the original approved exchange-rate evidence",
+      );
+    }
+    const rate = await db.accountingExchangeRate.findFirst({
+      where: {
+        id: original.exchangeRateId,
+        orgId: input.orgId,
+        status: "APPROVED",
+      },
+    });
+    if (!rate) {
+      throw new AccountingPostingError(
+        "REVERSAL_EXCHANGE_RATE_EVIDENCE_INVALID",
+        "The original approved exchange-rate evidence is unavailable",
+      );
+    }
+    reversalExchangeRate = {
+      id: rate.id,
+      rate: rate.rate,
+      source: rate.source,
+      effectiveDate: rate.rateDate,
+    };
+  }
 
   return postCanonicalAccountingRequest({
     requestId: input.requestId,
@@ -1073,9 +1513,9 @@ export async function reverseCanonicalJournal(input: {
     ruleId: "GL-REVERSAL-v1",
     narration: `Reversal of ${original.voucherNo}: ${input.reason}`,
     branchId: original.branchId,
-    transactionCurrencyCode: original.transactionCurrencyCode ?? original.functionalCurrencyCode ?? "INR",
-    baseCurrencyCode: original.baseCurrencyCode ?? original.functionalCurrencyCode ?? "INR",
-    exchangeRate: null,
+    transactionCurrencyCode,
+    baseCurrencyCode,
+    exchangeRate: reversalExchangeRate,
     approval: input.approval,
     numberSeriesId: input.numberSeriesId,
     roundingPolicy: input.roundingPolicy,
@@ -1088,11 +1528,47 @@ export async function reverseCanonicalJournal(input: {
       partyType: line.partyType,
       partyId: line.partyId,
       remarks: `Reversal of ${original.voucherNo}`,
+      dimensions: line.accountingDimensions.map((dimension) => ({
+        definitionId: dimension.definitionId,
+        dimensionValueId: dimension.dimensionValueId,
+      })),
     })),
     correlationId: input.correlationId,
     causationId: original.requestId ?? original.id,
     reversalOfId: original.id,
     reversalReason: input.reason,
     originalEffectiveDate: original.postingDate,
+  });
+}
+
+export async function replaceCanonicalJournal(input: {
+  originalJournalEntryId: string;
+  request: CanonicalPostingRequest;
+}) {
+  const original = await db.journalEntry.findFirst({
+    where: {
+      id: input.originalJournalEntryId,
+      orgId: input.request.orgId,
+      legalEntityId: input.request.legalEntityId,
+      status: { in: ["POSTED", "SUBMITTED"] },
+    },
+    select: {
+      id: true,
+      postingDate: true,
+      requestId: true,
+    },
+  });
+  if (!original) {
+    throw new AccountingPostingError(
+      "REPLACEMENT_ORIGINAL_INVALID",
+      "Posted journal was not found for replacement",
+    );
+  }
+  return postCanonicalAccountingRequest({
+    ...input.request,
+    replacementOfId: original.id,
+    reversalOfId: null,
+    originalEffectiveDate: original.postingDate,
+    causationId: input.request.causationId ?? original.requestId ?? original.id,
   });
 }

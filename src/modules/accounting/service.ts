@@ -2358,6 +2358,12 @@ function calculateNextDueDate(current: Date, frequency: string): Date {
 }
 
 export async function processRecurringExpenses(orgId: string, userId: string) {
+  void orgId;
+  void userId;
+  throw new Error(
+    "RECURRING_EXPENSE_POSTING_GATED: emit an approved immutable canonical Accounting request before generating financial effects",
+  );
+  /*
   const now = new Date();
   const templates = await db.recurringExpense.findMany({
     where: { orgId, isActive: true, nextDueDate: { lte: now } }
@@ -2457,6 +2463,7 @@ export async function processRecurringExpenses(orgId: string, userId: string) {
       });
     });
   }
+  */
 }
 
 export async function processRecurringJournals(orgId: string, userId: string) {

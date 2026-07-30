@@ -8,6 +8,12 @@ export type QuantizeOptions = {
   label?: string;
 };
 
+export type AllocationOptions = {
+  scale: number;
+  parts: number;
+  label?: string;
+};
+
 const DECIMAL_TEXT = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/;
 
 function assertScale(scale: number) {
@@ -46,7 +52,13 @@ export function decimal(value: AccountingDecimalInput, label = "value"): Prisma.
     return value;
   }
 
-  const text = typeof value === "bigint" ? value.toString() : value.trim();
+  const text = typeof value === "bigint" ? value.toString() : value;
+  if (typeof value === "string" && value !== value.trim()) {
+    throw new AccountingMoneyError(
+      "INVALID_NUMERIC_INPUT",
+      `${label} must not contain leading or trailing whitespace`,
+    );
+  }
   if (!DECIMAL_TEXT.test(text)) {
     throw new AccountingMoneyError("INVALID_NUMERIC_INPUT", `${label} is not a valid decimal value`);
   }
@@ -83,6 +95,10 @@ export function multiply(
   return decimal(multiplicand, "multiplicand").mul(decimal(multiplier, "multiplier"));
 }
 
+export function absolute(value: AccountingDecimalInput): Prisma.Decimal {
+  return decimal(value).abs();
+}
+
 export function divide(
   dividend: AccountingDecimalInput,
   divisor: AccountingDecimalInput,
@@ -114,6 +130,67 @@ export function quantize(value: AccountingDecimalInput, options: QuantizeOptions
   return parsed.toDecimalPlaces(options.scale, Prisma.Decimal.ROUND_HALF_UP);
 }
 
+export function validateCurrencyPrecision(
+  value: AccountingDecimalInput,
+  decimalPlaces: number,
+  label = "amount",
+): Prisma.Decimal {
+  return quantize(value, {
+    scale: decimalPlaces,
+    allowRounding: false,
+    label,
+  });
+}
+
+export function convertToBaseCurrency(
+  transactionAmount: AccountingDecimalInput,
+  exchangeRate: AccountingDecimalInput,
+  options: QuantizeOptions,
+): Prisma.Decimal {
+  const rate = decimal(exchangeRate, "exchangeRate");
+  if (!rate.isPositive() || rate.isZero()) {
+    throw new AccountingMoneyError(
+      "INVALID_NUMERIC_INPUT",
+      "exchangeRate must be positive",
+    );
+  }
+  return quantize(multiply(transactionAmount, rate), options);
+}
+
+export function allocateEqual(
+  total: AccountingDecimalInput,
+  options: AllocationOptions,
+): Prisma.Decimal[] {
+  assertScale(options.scale);
+  if (!Number.isSafeInteger(options.parts) || options.parts < 1) {
+    throw new AccountingMoneyError(
+      "INVALID_NUMERIC_INPUT",
+      "Allocation parts must be a positive safe integer",
+    );
+  }
+
+  const exactTotal = validateCurrencyPrecision(total, options.scale, options.label ?? "allocation total");
+  const partCount = new Prisma.Decimal(options.parts);
+  const base = exactTotal.div(partCount).toDecimalPlaces(options.scale, Prisma.Decimal.ROUND_DOWN);
+  const allocations = Array.from({ length: options.parts }, () => base);
+  const unit = new Prisma.Decimal(1).div(new Prisma.Decimal(10).pow(options.scale));
+  let remainder = exactTotal.sub(base.mul(partCount));
+
+  for (let index = 0; !remainder.isZero() && index < allocations.length; index += 1) {
+    const adjustment = remainder.isPositive() ? unit : unit.neg();
+    allocations[index] = allocations[index].add(adjustment);
+    remainder = remainder.sub(adjustment);
+  }
+
+  if (!remainder.isZero()) {
+    throw new AccountingMoneyError(
+      "INVALID_NUMERIC_INPUT",
+      "Allocation remainder could not be distributed exactly",
+    );
+  }
+  return allocations;
+}
+
 export function serialize(value: AccountingDecimalInput, scale?: number): string {
   const parsed = decimal(value);
   if (scale == null) {
@@ -128,7 +205,12 @@ export function isZero(value: AccountingDecimalInput): boolean {
 }
 
 export function isPositive(value: AccountingDecimalInput): boolean {
-  return decimal(value).isPositive() && !decimal(value).isZero();
+  const parsed = decimal(value);
+  return parsed.isPositive() && !parsed.isZero();
+}
+
+export function isNegative(value: AccountingDecimalInput): boolean {
+  return decimal(value).isNegative();
 }
 
 export type BalancedLine = {
@@ -170,4 +252,3 @@ export function assertBalanced(lines: BalancedLine[]) {
   }
   return totals;
 }
-

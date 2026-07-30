@@ -185,6 +185,11 @@ async function seed() {
         group: "Accounting",
       },
       {
+        key: "accounting.replace",
+        label: "Replace reversed accounting journals",
+        group: "Accounting",
+      },
+      {
         key: "accounting.integration.post",
         label: "Post through a trusted accounting integration",
         group: "Accounting",
@@ -198,11 +203,12 @@ async function seed() {
       { key: "accounting.journal.prepare", label: "Prepare journal entries", group: "Accounting" },
       { key: "accounting.journal.approve", label: "Approve journal entries", group: "Accounting" },
       { key: "accounting.invoice.create", label: "Create Accounting invoice requests", group: "Accounting" },
-      { key: "accounting.period-lock.request", label: "Request Accounting period locks", group: "Accounting" },
-      { key: "accounting.period-lock.approve", label: "Approve Accounting period locks", group: "Accounting" },
-      { key: "accounting.exchange-rate.maintain", label: "Maintain Accounting exchange rates", group: "Accounting" },
-      { key: "accounting.approval-policy.admin", label: "Administer Accounting approval policies", group: "Accounting" },
-      { key: "accounting.number-series.admin", label: "Administer Accounting number series", group: "Accounting" },
+      { key: "accounting.period_lock.request", label: "Request Accounting period locks", group: "Accounting" },
+      { key: "accounting.period_lock.approve", label: "Approve Accounting period locks", group: "Accounting" },
+      { key: "accounting.exchange_rate.maintain", label: "Maintain Accounting exchange rates", group: "Accounting" },
+      { key: "accounting.rounding_policy.admin", label: "Administer Accounting rounding policies", group: "Accounting" },
+      { key: "accounting.approval_policy.admin", label: "Administer Accounting approval policies", group: "Accounting" },
+      { key: "accounting.number_series.admin", label: "Administer Accounting number series", group: "Accounting" },
       { key: "accounting.integration.manual-review", label: "Review Accounting integration failures", group: "Accounting" },
       { key: "accounting.ledger.read", label: "Read Accounting ledger", group: "Accounting" },
       { key: "accounting.audit.read", label: "Read Accounting audit", group: "Accounting" },
@@ -252,7 +258,7 @@ async function seed() {
         where: {
           roleId_permissionId: {
           roleId:
-              ["accounting.approve", "accounting.journal.approve", "accounting.post", "accounting.reverse", "accounting.period-lock.approve", "accounting.exchange-rate.maintain", "accounting.approval-policy.admin", "accounting.number-series.admin", "accounting.integration.post", "accounting.integration.retry", "accounting.integration.manual-review"].includes(permission.key)
+              ["accounting.approve", "accounting.journal.approve", "accounting.post", "accounting.reverse", "accounting.replace", "accounting.period_lock.approve", "accounting.exchange_rate.maintain", "accounting.rounding_policy.admin", "accounting.approval_policy.admin", "accounting.number_series.admin", "accounting.integration.post", "accounting.integration.retry", "accounting.integration.manual-review"].includes(permission.key)
                 ? checkerRole.id
                 : makerRole.id,
             permissionId: permission.id,
@@ -261,7 +267,7 @@ async function seed() {
         update: {},
         create: {
           roleId:
-            ["accounting.approve", "accounting.journal.approve", "accounting.post", "accounting.reverse", "accounting.period-lock.approve", "accounting.exchange-rate.maintain", "accounting.approval-policy.admin", "accounting.number-series.admin", "accounting.integration.post", "accounting.integration.retry", "accounting.integration.manual-review"].includes(permission.key)
+            ["accounting.approve", "accounting.journal.approve", "accounting.post", "accounting.reverse", "accounting.replace", "accounting.period_lock.approve", "accounting.exchange_rate.maintain", "accounting.rounding_policy.admin", "accounting.approval_policy.admin", "accounting.number_series.admin", "accounting.integration.post", "accounting.integration.retry", "accounting.integration.manual-review"].includes(permission.key)
               ? checkerRole.id
               : makerRole.id,
           permissionId: permission.id,
@@ -583,6 +589,13 @@ async function seed() {
         isDefault: true,
         effectiveFrom: new Date("2027-04-01T00:00:00.000Z"),
       },
+    });
+    await tx.account.updateMany({
+      where: {
+        orgId: STAGING_ORG_ID,
+        id: { in: accounts.map((account) => account.id) },
+      },
+      data: { legalEntityId: ids.legalEntity },
     });
     await tx.accountingTaxRegistration.upsert({
       where: { id: ids.taxRegistration },

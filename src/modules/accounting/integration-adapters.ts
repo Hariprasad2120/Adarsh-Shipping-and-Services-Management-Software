@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
 import { Prisma } from "@/generated/prisma/client";
 
-import { decimal, serialize } from "./money";
+import { assertBalanced, decimal, serialize } from "./money";
 import {
   canonicalPostingPayload,
   postCanonicalAccountingRequest,
@@ -103,6 +103,112 @@ export async function resolveCanonicalPostingConfiguration(
     roundingPolicy,
     profile,
   };
+}
+
+export async function recoverStaleAccountingRequest(input: {
+  orgId: string;
+  inboxId: string;
+  actorId: string;
+  staleBefore: Date | string;
+}) {
+  await assertUserPermissions(input.orgId, input.actorId, ["accounting.integration.retry"]);
+  const staleBefore = validDate(input.staleBefore, "staleBefore");
+  const now = await getNow();
+  return db.$transaction(async (tx) => {
+    const rows = await tx.$queryRaw<
+      Array<{ id: string; status: string; processingAt: Date | null }>
+    >`
+      SELECT id, status::text, "processingAt"
+      FROM "AccountingIntegrationInbox"
+      WHERE id = ${input.inboxId}
+        AND "orgId" = ${input.orgId}
+      FOR UPDATE
+    `;
+    const inbox = rows[0];
+    if (!inbox) throw new Error("Accounting integration request not found");
+    if (
+      inbox.status !== "PROCESSING" ||
+      !inbox.processingAt ||
+      inbox.processingAt >= staleBefore
+    ) {
+      throw new Error("Accounting integration request does not have a stale processing claim");
+    }
+    const recovered = await tx.accountingIntegrationInbox.update({
+      where: { id: inbox.id },
+      data: {
+        status: "RETRYABLE",
+        processingAt: null,
+        availableAt: now,
+        lastErrorCode: "STALE_PROCESSING_CLAIM_RECOVERED",
+        retryClassification: "RETRYABLE",
+        rowVersion: { increment: 1 },
+      },
+    });
+    await tx.accountingAuditLog.create({
+      data: {
+        orgId: input.orgId,
+        userId: input.actorId,
+        action: "RECOVER_ACCOUNTING_INTEGRATION_REQUEST",
+        entityType: "AccountingIntegrationInbox",
+        entityId: inbox.id,
+        afterValues: {
+          status: "RETRYABLE",
+          errorCode: "STALE_PROCESSING_CLAIM_RECOVERED",
+        },
+      },
+    });
+    return recovered;
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+}
+
+export async function moveAccountingRequestToManualReview(input: {
+  orgId: string;
+  inboxId: string;
+  actorId: string;
+  reasonCode: string;
+}) {
+  await assertUserPermissions(input.orgId, input.actorId, [
+    "accounting.integration.manual-review",
+  ]);
+  if (!/^[A-Z][A-Z0-9_]{2,63}$/.test(input.reasonCode)) {
+    throw new Error("Manual-review reasonCode must be a stable non-sensitive code");
+  }
+  const now = await getNow();
+  return db.$transaction(async (tx) => {
+    const inbox = await tx.accountingIntegrationInbox.findFirst({
+      where: {
+        id: input.inboxId,
+        orgId: input.orgId,
+        status: { not: "PROCESSED" },
+      },
+    });
+    if (!inbox) throw new Error("Eligible Accounting integration request not found");
+    const reviewed = await tx.accountingIntegrationInbox.update({
+      where: { id: inbox.id },
+      data: {
+        status: "MANUAL_REVIEW",
+        processingAt: null,
+        manualReviewAt: now,
+        lastErrorCode: input.reasonCode,
+        retryClassification: "MANUAL_REVIEW",
+        rowVersion: { increment: 1 },
+      },
+    });
+    await tx.accountingAuditLog.create({
+      data: {
+        orgId: input.orgId,
+        userId: input.actorId,
+        action: "MOVE_ACCOUNTING_REQUEST_TO_MANUAL_REVIEW",
+        entityType: "AccountingIntegrationInbox",
+        entityId: inbox.id,
+        afterValues: {
+          status: "MANUAL_REVIEW",
+          reasonCode: input.reasonCode,
+        },
+      },
+    });
+    return reviewed;
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
 
 export async function prepareBankTransferRequest(input: {
@@ -447,7 +553,19 @@ export async function acceptApprovedPayrollRun(input: ApprovedPayrollRunInput) {
   const start = validDate(input.payPeriodStart, "payPeriodStart");
   const end = validDate(input.payPeriodEnd, "payPeriodEnd");
   if (end < start) throw new Error("Payroll pay period is invalid");
+  if (!input.runId.trim() || !input.eventId.trim() || !input.correlationId.trim()) {
+    throw new Error("Payroll run, event, and correlation identities are required");
+  }
+  if (input.lines.length < 2) {
+    throw new Error("Approved HRMS payroll run requires at least two allocation lines");
+  }
+  for (const [index, line] of input.lines.entries()) {
+    if (!line.accountId || !line.componentCode.trim()) {
+      throw new Error(`Payroll allocation line ${index + 1} requires an account and component code`);
+    }
+  }
   const configuration = await resolveCanonicalPostingConfiguration(input.orgId, end);
+  const exactTotals = assertBalanced(input.lines);
   const totals = input.lines.reduce(
     (current, line) => ({
       debit: current.debit.add(decimal(line.debit, "payroll debit")),
@@ -457,6 +575,9 @@ export async function acceptApprovedPayrollRun(input: ApprovedPayrollRunInput) {
   );
   if (!totals.debit.eq(totals.credit) || totals.debit.isZero()) {
     throw new Error("Approved HRMS payroll run must contain positive balanced totals");
+  }
+  if (!totals.debit.eq(exactTotals.debit) || !totals.credit.eq(exactTotals.credit)) {
+    throw new Error("Approved HRMS payroll totals could not be validated exactly");
   }
 
   const sourcePayload = {
@@ -477,6 +598,17 @@ export async function acceptApprovedPayrollRun(input: ApprovedPayrollRunInput) {
   const idempotencyKey = `HRMS:PAYROLL_RUN:${input.runId}:${input.runVersion}:RECEIVED`;
 
   return db.$transaction(async (tx) => {
+    const approver = await tx.user.findFirst({
+      where: {
+        id: input.approvedById,
+        orgId: input.orgId,
+        active: true,
+      },
+      select: { id: true },
+    });
+    if (!approver) {
+      throw new Error("Payroll approval evidence does not identify an active user in this organization");
+    }
     const existing = await tx.accountingPayrollRunSnapshot.findUnique({
       where: {
         orgId_runId_runVersion: {
@@ -490,6 +622,20 @@ export async function acceptApprovedPayrollRun(input: ApprovedPayrollRunInput) {
     if (existing) {
       if (existing.sourceSnapshot.payloadHash !== hash) throw new Error("Payroll run version payload conflict");
       return existing;
+    }
+    const existingCompatibilityBatch = await tx.payrollBatch.findUnique({
+      where: { orgId_month: { orgId: input.orgId, month: start } },
+      select: {
+        id: true,
+        status: true,
+        sourceRunId: true,
+        sourceRunVersion: true,
+      },
+    });
+    if (existingCompatibilityBatch) {
+      throw new Error(
+        "PAYROLL_CORRECTION_WORKFLOW_REQUIRED: an accepted payroll run already exists for this period; submit a correction event and reverse/replace its Accounting journal",
+      );
     }
     const snapshot = await tx.accountingSourceSnapshot.create({
       data: {
@@ -523,16 +669,8 @@ export async function acceptApprovedPayrollRun(input: ApprovedPayrollRunInput) {
         approvedAt: validDate(input.approvedAt, "approvedAt"),
       },
     });
-    await tx.payrollBatch.upsert({
-      where: { orgId_month: { orgId: input.orgId, month: start } },
-      update: {
-        status: "APPROVED_HRMS",
-        totalAmount: totals.debit,
-        sourceSnapshotId: snapshot.id,
-        sourceRunId: input.runId,
-        sourceRunVersion: input.runVersion,
-      },
-      create: {
+    await tx.payrollBatch.create({
+      data: {
         orgId: input.orgId,
         month: start,
         status: "APPROVED_HRMS",

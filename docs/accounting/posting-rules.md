@@ -1,6 +1,6 @@
 # Accounting Posting-Rule Catalogue
 
-Status: Phase 2 design only. No rule in this document authorizes direct journal writes or represents an approved production account mapping.
+Status: Phase 3 canonical kernel implemented on synthetic staging. No rule in this document authorizes direct writes outside the canonical engine or represents an approved production account mapping.
 
 ## Universal posting contract
 
@@ -83,8 +83,12 @@ Tax rules are versioned/effective-dated and resolved from registration, place of
 
 `postCanonicalAccountingRequest` is the sole runtime creator of posted journal and GL effects. It accepts request envelope v1, authenticates the user or narrow integration identity from database RBAC, locks the resolved period and number-series row, validates legal entity/currencies/rate evidence/rounding and approval versions/accounts/control rules/dimensions, and requires exact Decimal balance. Snapshot, inbox claim, attempt, number, journal, lines, dimensions, GL projection, audit, processed inbox and outbox are committed in one serializable transaction.
 
+Rule selection fails closed. Each rule ID is registered against an exact journal type and source system/type contract; positive source versions and source approval are mandatory where the registered rule requires them. Callers cannot invent rule identifiers or pair a valid rule with a different source contract.
+
+Canonical accounts must be assigned to the request legal entity and have explicit `AccountingAccountControl`. Foreign-currency lines supply both transaction and base amounts; the engine proves each base amount from the immutable approved rate. Party references resolve to same-organization customer, supplier or employee identities.
+
 Replay of the same idempotency key and canonical payload returns the existing journal. A different payload conflicts. Serializable/unique races are classified for safe retry and cannot create a second journal. No balancing tolerance or silent round-off is applied.
 
-`reverseCanonicalJournal` creates exact opposite lines and retains original request/effective-date lineage. A row lock plus unique reversal invariant prevents double reversal. Closed-period reversal requires the configured next-open-period correction policy. Replacement remains a separately approved canonical request referencing the original and reversal; no posted fact is mutated.
+`reverseCanonicalJournal` creates exact opposite lines and retains original request/effective-date, approved FX and dimension lineage. A row lock plus unique reversal invariant prevents double reversal. Closed-period reversal requires the configured next-open-period correction policy. `replaceCanonicalJournal` accepts a separately approved canonical request only after reversal and preserves the original effective date; a partial unique invariant prevents multiple posted replacements.
 
-The legacy `postGLTransactions` and `reverseGLTransactions` functions are fail-closed compatibility sentinels. The architecture test rejects any new runtime journal/line/GL writer outside the canonical engine, while permitting only the Accounting draft creator.
+The legacy `postGLTransactions` and `reverseGLTransactions` functions are fail-closed compatibility sentinels. The architecture test rejects new runtime journal/line/GL writers outside the canonical engine, while permitting only the Accounting draft creator. Database triggers also reject direct draft-to-posted promotion, non-canonical GL inserts and inserted/updated/deleted children or dimensions on posted journals.

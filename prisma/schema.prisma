@@ -2854,6 +2854,7 @@ model AccountingLegalEntity {
   sourceSnapshots  AccountingSourceSnapshot[]
   integrationInbox AccountingIntegrationInbox[]
   journalEntries   JournalEntry[]
+  accounts         Account[]
 
   @@unique([orgId, code])
   @@index([orgId, status])
@@ -2964,7 +2965,7 @@ model AccountingExchangeRate {
   fromCurrencyId String
   toCurrencyId   String
   rateDate       DateTime                     @db.Date
-  rate           Decimal                      @db.Decimal(20, 10)
+  rate           Decimal                      @db.Decimal(30, 12)
   source         String
   status         AccountingExchangeRateStatus @default(DRAFT)
   approvedById   String?
@@ -2976,6 +2977,7 @@ model AccountingExchangeRate {
   fromCurrency AccountingCurrency @relation("AccountingExchangeRateFrom", fields: [fromCurrencyId], references: [id], onDelete: Restrict)
   toCurrency   AccountingCurrency @relation("AccountingExchangeRateTo", fields: [toCurrencyId], references: [id], onDelete: Restrict)
   approvedBy   User?              @relation("AccountingExchangeRateApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+  journals     JournalEntry[]
 
   @@unique([orgId, fromCurrencyId, toCurrencyId, rateDate, source])
   @@index([orgId, rateDate, status])
@@ -3265,8 +3267,8 @@ model AccountingPayrollRunSnapshot {
   payPeriodStart   DateTime @db.Date
   payPeriodEnd     DateTime @db.Date
   currencyCode     String   @db.VarChar(3)
-  totalDebit       Decimal  @db.Decimal(20, 4)
-  totalCredit      Decimal  @db.Decimal(20, 4)
+  totalDebit       Decimal  @db.Decimal(28, 8)
+  totalCredit      Decimal  @db.Decimal(28, 8)
   allocationDetail Json
   approvedById     String
   approvedAt       DateTime
@@ -3282,6 +3284,7 @@ model AccountingPayrollRunSnapshot {
 model Account {
   id              String   @id @default(cuid())
   orgId           String
+  legalEntityId   String?
   branchId        String?
   accountCode     String
   accountName     String
@@ -3295,10 +3298,11 @@ model Account {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  org      Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  branch   Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  parent   Account?     @relation("AccountHierarchy", fields: [parentAccountId], references: [id], onDelete: Cascade)
-  children Account[]    @relation("AccountHierarchy")
+  org         Organisation           @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  legalEntity AccountingLegalEntity? @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  branch      Branch?                @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  parent      Account?               @relation("AccountHierarchy", fields: [parentAccountId], references: [id], onDelete: Cascade)
+  children    Account[]              @relation("AccountHierarchy")
 
   journalEntryLines JournalEntryLine[]
   glEntries         GeneralLedgerEntry[]
@@ -3316,6 +3320,7 @@ model Account {
 
   @@unique([orgId, accountCode])
   @@index([orgId])
+  @@index([legalEntityId])
   @@index([branchId])
 }
 
@@ -3347,8 +3352,8 @@ model JournalEntry {
   documentDate               DateTime? @db.Date
   remarks                    String?
   status                     String    @default("DRAFT") // DRAFT | SUBMITTED | POSTED | CANCELLED
-  totalDebit                 Decimal   @default(0.0) @db.Decimal(18, 4)
-  totalCredit                Decimal   @default(0.0) @db.Decimal(18, 4)
+  totalDebit                 Decimal   @default(0.0) @db.Decimal(28, 8)
+  totalCredit                Decimal   @default(0.0) @db.Decimal(28, 8)
   createdById                String
   createdAt                  DateTime  @default(now())
   updatedAt                  DateTime  @updatedAt
@@ -3363,6 +3368,7 @@ model JournalEntry {
   functionalCurrencyCode     String?   @db.VarChar(3)
   transactionCurrencyCode    String?   @db.VarChar(3)
   baseCurrencyCode           String?   @db.VarChar(3)
+  exchangeRateId             String?
   exchangeRateSource         String?
   exchangeRateEffectiveDate  DateTime? @db.Date
   accountingApprovalPolicyId String?
@@ -3392,6 +3398,7 @@ model JournalEntry {
   assetDepreciations AssetDepreciationEntry[]
   accountingPeriod   AccountingPeriod?          @relation(fields: [accountingPeriodId], references: [id], onDelete: Restrict)
   sourceSnapshot     AccountingSourceSnapshot?  @relation(fields: [sourceSnapshotId], references: [id], onDelete: Restrict)
+  exchangeRate       AccountingExchangeRate?    @relation(fields: [exchangeRateId], references: [id], onDelete: Restrict)
   approvalPolicy     AccountingApprovalPolicy?  @relation(fields: [accountingApprovalPolicyId], references: [id], onDelete: Restrict)
   numberSeries       AccountingNumberSeries?    @relation(fields: [numberSeriesId], references: [id], onDelete: Restrict)
   roundingPolicy     AccountingRoundingPolicy?  @relation(fields: [roundingPolicyId], references: [id], onDelete: Restrict)
@@ -3411,6 +3418,7 @@ model JournalEntry {
   @@index([reversalOfId])
   @@index([replacementOfId])
   @@index([sourceSnapshotId])
+  @@index([exchangeRateId])
   @@index([legalEntityId, postingDate])
 }
 
@@ -3418,15 +3426,15 @@ model JournalEntryLine {
   id                      String   @id @default(cuid())
   journalEntryId          String
   accountId               String
-  debit                   Decimal  @default(0.0) @db.Decimal(18, 4)
-  credit                  Decimal  @default(0.0) @db.Decimal(18, 4)
+  debit                   Decimal  @default(0.0) @db.Decimal(28, 8)
+  credit                  Decimal  @default(0.0) @db.Decimal(28, 8)
   partyType               String? // CUSTOMER | SUPPLIER | EMPLOYEE
   partyId                 String?
   remarks                 String?
   transactionCurrencyCode String?  @db.VarChar(3)
-  transactionDebit        Decimal? @db.Decimal(20, 4)
-  transactionCredit       Decimal? @db.Decimal(20, 4)
-  exchangeRate            Decimal? @db.Decimal(20, 10)
+  transactionDebit        Decimal? @db.Decimal(28, 8)
+  transactionCredit       Decimal? @db.Decimal(28, 8)
+  exchangeRate            Decimal? @db.Decimal(30, 12)
 
   journalEntry         JournalEntry                     @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
   account              Account                          @relation(fields: [accountId], references: [id], onDelete: Cascade)
@@ -3446,8 +3454,8 @@ model GeneralLedgerEntry {
   partyId     String?
   voucherType String // JOURNAL_ENTRY | SALES_INVOICE | PURCHASE_INVOICE | PAYMENT_ENTRY
   voucherId   String
-  debit       Decimal  @default(0.0) @db.Decimal(18, 4)
-  credit      Decimal  @default(0.0) @db.Decimal(18, 4)
+  debit       Decimal  @default(0.0) @db.Decimal(28, 8)
+  credit      Decimal  @default(0.0) @db.Decimal(28, 8)
   remarks     String?
   isCancelled Boolean  @default(false)
   createdById String

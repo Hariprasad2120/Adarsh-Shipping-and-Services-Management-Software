@@ -21,6 +21,9 @@ Rollback after a migration has been deployed uses a forward fix unless the addit
 | 42 original migrations | Historical checksums remain unchanged |
 | Four repair baselines/reconciliation migrations | Required for clean-chain history; clean databases execute them, matching populated databases may baseline only after exact read-only evidence |
 | `20260730010000_accounting_phase2_foundations` | Additive tables/enums/indexes/checks/tenant triggers and nullable journal lineage |
+| Phase 3 canonical sequence through `20260730051500_accounting_phase3_restore_gl_fk` | Canonical request/source/attempt/payroll evidence, immutable posting guards and schema/FK alignment |
+| `20260730110000_accounting_phase3_hardening` | Additive legal-entity account ownership, wider canonical precision, immutable FX evidence, raw-write guards and unique correction lineage |
+| `20260730123000_accounting_phase3_contract_guards` | Exact-staging-only fixture policy, independent tenant/legal-entity reference checks, payroll-run tenant guard and canonical child ownership enforcement |
 
 The Phase 2 migration contains no `DROP`, destructive type conversion or required no-default column on a populated legacy table. `JournalEntry.rowVersion` is the only required legacy-table addition and has default `1`.
 
@@ -145,7 +148,7 @@ Before any populated deployment:
 
 ## Phase 3 rollout and rollback
 
-Phase 3 is expand-only. The two new migrations add canonical posting evidence/state and database guards, followed by an additive correction to the polymorphic tenant trigger. They do not drop or reinterpret legacy columns. Rollback is operational: disable new request preparation, retain canonical journals/read models, and forward-fix schema or application defects; posted facts are never rolled back by deletion.
+Phase 3 is expand-only. Its migration sequence adds canonical posting evidence/state, database guards, schema/FK alignment and hardening without removing legacy facts. The hardening migration widens canonical Decimal capacity, adds nullable account/FX evidence links and replaces trigger definitions only to close direct-write gaps. Rollback is operational: disable new request preparation, retain canonical journals/read models, and forward-fix schema or application defects; posted facts are never rolled back by deletion.
 
 Synthetic staging enables canonical bank transfer, manual journal, CRM request and approved HRMS payroll paths. Legacy direct GL/reversal helpers are blocked, while legacy reads and draft data remain. Depreciation, recurring journals, partner postings and other document-specific legacy postings remain gated until their configured canonical adapters pass parity tests; no production bypass flag exists.
 
@@ -153,10 +156,11 @@ Required populated-environment work remains unchanged: authorized restore, sourc
 
 ## Phase 3 synthetic evidence
 
-- Clean-chain recreation applied all 52 migrations.
+- Clean-chain recreation applied all 54 migrations.
 - Migration status is current and datasource-to-schema diff reports no difference.
 - Synthetic seed ran twice without count growth; verifier reports three fictional users, two balanced journals, 12 non-overlapping periods and preserved legacy `fileKey`.
-- Phase 3 Decimal/architecture/database suite: 29/29 passed.
+- Hardened Decimal/architecture/canonical/legacy/Phase 2 target suite: 57/57 passed, including registered rule/source enforcement, tenant/legal-entity adversarial writes, actual duplicate, numbering, period-lock and reversal concurrency, immutable payroll correction rejection and stale-claim recovery.
 - Phase 2 Accounting/isolation/security regression selection: 41/41 passed.
-- Full guarded suite: 269/272 passed. The only failures are the same three accepted pre-existing CHA cases: mock Google Drive checklist attachment, absent estimated filing date and absent `JOB_DELETED_DIRECT` audit event.
+- Full guarded suite: 279/282 passed. The only failures are the same three accepted pre-existing CHA cases: mock Google Drive checklist attachment, absent estimated filing date and absent `JOB_DELETED_DIRECT` audit event.
+- Production build passed Prisma generation, compilation, TypeScript and all 324 static pages; the existing non-fatal broad customer-portal file-trace warning remains.
 - Staging application check returned HTTP 307 from `127.0.0.1:3100`.

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-29T18:55:55.843Z",
+  "generatedAt": "2026-07-30T05:50:48.635Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -6590,7 +6590,8 @@
         "taxRegistrations",
         "sourceSnapshots",
         "integrationInbox",
-        "journalEntries"
+        "journalEntries",
+        "accounts"
       ],
       "relations": [
         "AccountingLegalEntityStatus",
@@ -6598,7 +6599,8 @@
         "AccountingTaxRegistration",
         "AccountingSourceSnapshot",
         "AccountingIntegrationInbox",
-        "JournalEntry"
+        "JournalEntry",
+        "Account"
       ],
       "module": "accounting"
     },
@@ -6732,13 +6734,15 @@
         "org",
         "fromCurrency",
         "toCurrency",
-        "approvedBy"
+        "approvedBy",
+        "journals"
       ],
       "relations": [
         "AccountingExchangeRateStatus",
         "Organisation",
         "AccountingCurrency",
-        "User"
+        "User",
+        "JournalEntry"
       ],
       "module": "accounting"
     },
@@ -7086,6 +7090,7 @@
       "fields": [
         "id",
         "orgId",
+        "legalEntityId",
         "branchId",
         "accountCode",
         "accountName",
@@ -7099,6 +7104,7 @@
         "createdAt",
         "updatedAt",
         "org",
+        "legalEntity",
         "branch",
         "parent",
         "children",
@@ -7116,6 +7122,7 @@
       ],
       "relations": [
         "Organisation",
+        "AccountingLegalEntity",
         "Branch",
         "Account",
         "JournalEntryLine",
@@ -7178,6 +7185,7 @@
         "functionalCurrencyCode",
         "transactionCurrencyCode",
         "baseCurrencyCode",
+        "exchangeRateId",
         "exchangeRateSource",
         "exchangeRateEffectiveDate",
         "accountingApprovalPolicyId",
@@ -7206,6 +7214,7 @@
         "assetDepreciations",
         "accountingPeriod",
         "sourceSnapshot",
+        "exchangeRate",
         "approvalPolicy",
         "numberSeries",
         "roundingPolicy",
@@ -7225,6 +7234,7 @@
         "AssetDepreciationEntry",
         "AccountingPeriod",
         "AccountingSourceSnapshot",
+        "AccountingExchangeRate",
         "AccountingApprovalPolicy",
         "AccountingNumberSeries",
         "AccountingRoundingPolicy",
@@ -11198,6 +11208,8 @@
       "filePath": "src/modules/accounting/integration-adapters.ts",
       "exportedFunctions": [
         "resolveCanonicalPostingConfiguration",
+        "recoverStaleAccountingRequest",
+        "moveAccountingRequestToManualReview",
         "prepareBankTransferRequest",
         "approveAndPostPreparedRequest",
         "prepareCrmDealInvoiceRequest",
@@ -11214,12 +11226,17 @@
         "add",
         "subtract",
         "multiply",
+        "absolute",
         "divide",
         "compare",
         "quantize",
+        "validateCurrencyPrecision",
+        "convertToBaseCurrency",
+        "allocateEqual",
         "serialize",
         "isZero",
         "isPositive",
+        "isNegative",
         "debitCreditTotals",
         "assertBalanced"
       ]
@@ -11231,7 +11248,8 @@
       "exportedFunctions": [
         "canonicalPostingPayload",
         "postCanonicalAccountingRequest",
-        "reverseCanonicalJournal"
+        "reverseCanonicalJournal",
+        "replaceCanonicalJournal"
       ]
     },
     {
@@ -14127,6 +14145,31 @@
         "name": "General Ledger",
         "module": "accounting",
         "status": "Implemented"
+      },
+      {
+        "name": "Canonical Accounting Posting Engine",
+        "module": "accounting",
+        "status": "Implemented"
+      },
+      {
+        "name": "Immutable Journal Reversal and Replacement",
+        "module": "accounting",
+        "status": "Implemented"
+      },
+      {
+        "name": "Accounting Integration Inbox and Outbox",
+        "module": "accounting",
+        "status": "Partial"
+      },
+      {
+        "name": "CRM Invoice Request Adapter",
+        "module": "accounting",
+        "status": "Partial"
+      },
+      {
+        "name": "Approved HRMS Payroll Run Adapter",
+        "module": "accounting",
+        "status": "Partial"
       },
       {
         "name": "Payroll Batches",

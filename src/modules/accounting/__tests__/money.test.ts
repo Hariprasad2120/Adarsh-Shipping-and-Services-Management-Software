@@ -2,16 +2,20 @@ import { describe, expect, it } from "vitest";
 
 import {
   AccountingMoneyError,
+  absolute,
   add,
+  allocateEqual,
   assertBalanced,
   compare,
+  convertToBaseCurrency,
   decimal,
   divide,
+  isNegative,
   isZero,
-  multiply,
   quantize,
   serialize,
   subtract,
+  validateCurrencyPrecision,
 } from "../money";
 
 describe("Accounting decimal contract", () => {
@@ -26,6 +30,8 @@ describe("Accounting decimal contract", () => {
   it("supports negative values and exact comparison", () => {
     expect(serialize(subtract("1", "2.5"))).toBe("-1.5");
     expect(compare("-1.5", "-1.50")).toBe(0);
+    expect(serialize(absolute("-1.50"))).toBe("1.5");
+    expect(isNegative("-0.01")).toBe(true);
   });
 
   it("recognizes exact zero", () => {
@@ -45,9 +51,32 @@ describe("Accounting decimal contract", () => {
   });
 
   it("converts an exchange rate using decimal multiplication", () => {
-    expect(serialize(quantize(multiply("12.34", "83.5000000000"), { scale: 2, allowRounding: true }), 2)).toBe(
-      "1030.39",
+    expect(
+      serialize(
+        convertToBaseCurrency("12.34", "83.5000000000", {
+          scale: 2,
+          allowRounding: true,
+        }),
+        2,
+      ),
+    ).toBe("1030.39");
+  });
+
+  it("validates configured currency precision without silent quantization", () => {
+    expect(serialize(validateCurrencyPrecision("12.3400", 2), 2)).toBe("12.34");
+    expect(() => validateCurrencyPrecision("12.345", 2)).toThrowError(
+      expect.objectContaining({ code: "EXCESS_PRECISION" }),
     );
+  });
+
+  it("allocates equal shares and distributes the smallest-unit remainder deterministically", () => {
+    const positive = allocateEqual("10.00", { parts: 3, scale: 2 });
+    expect(positive.map((value) => serialize(value, 2))).toEqual(["3.34", "3.33", "3.33"]);
+    expect(serialize(add(...positive), 2)).toBe("10.00");
+
+    const negative = allocateEqual("-1.00", { parts: 3, scale: 2 });
+    expect(negative.map((value) => serialize(value, 2))).toEqual(["-0.34", "-0.33", "-0.33"]);
+    expect(serialize(add(...negative), 2)).toBe("-1.00");
   });
 
   it("does not hide cumulative line rounding imbalance", () => {
@@ -72,6 +101,7 @@ describe("Accounting decimal contract", () => {
   it("rejects invalid input and JavaScript number input", () => {
     expect(() => decimal("NaN")).toThrow(AccountingMoneyError);
     expect(() => decimal("1e3")).toThrow(AccountingMoneyError);
+    expect(() => decimal(" 1.00")).toThrow(AccountingMoneyError);
     expect(() => decimal(0.1 as never)).toThrowError(
       expect.objectContaining({ code: "INVALID_NUMERIC_INPUT" }),
     );
@@ -82,4 +112,3 @@ describe("Accounting decimal contract", () => {
     expect(serialize(decimal("12.34"), 4)).toBe("12.3400");
   });
 });
-

@@ -1,13 +1,14 @@
-# Accounting Phase 2 Domain Model
+# Accounting Phase 2 Foundation and Phase 3 Canonical Kernel
 
-Status: implemented foundation and approved design, 2026-07-29  
-Scope: Phase 2 only; no production migration or Phase 3 posting engine is authorized.
+Status: Phase 2 foundation and Phase 3 canonical kernel implemented on synthetic staging, updated 2026-07-30
+
+Scope: additive development and synthetic staging only; no production migration or external Accounting integration is authorized.
 
 ## Design boundaries
 
 - `Organisation.id` is the tenant key. Every accounting aggregate is owned by one organization.
 - CRM owns customer and commercial request identity; HRMS owns employee and approved payroll identity; CHA owns `ChaJob`; AMS owns the operational asset. Accounting stores finance-owned extensions and canonical IDs, never duplicate masters.
-- Only the future canonical Accounting posting service may create journal lines. Browser actions and CRM, HRMS, CHA, AMS services submit versioned commands through the Accounting boundary.
+- Only the canonical Accounting posting service may create posted journal and GL facts. Browser actions and CRM, HRMS, CHA, AMS services submit versioned commands through the Accounting boundary.
 - Posted facts are immutable. Corrections are linked reversals or later-period adjustments.
 - Phase 2 adds structure and constraints but does not replace the existing Accounting service or claim that its legacy posting paths are safe.
 
@@ -95,7 +96,7 @@ erDiagram
 - maker, checker/poster, timestamps and immutable audit lineage;
 - an optional `reversalOfId`, never a self-reference and never multiple active reversals for the same correction intent.
 
-The Phase 2 schema stores lineage and Decimal fields. Balance enforcement, immutable-posted triggers and the transactional posting service are Phase 3 work and are not represented as complete.
+The Phase 3 schema and service enforce exact balance, immutable-posted triggers, legal-entity account ownership, approved FX evidence, source/request uniqueness and transactional inbox/journal/GL/audit/outbox creation.
 
 ## Planned logical schema catalogue
 
@@ -136,9 +137,9 @@ Storage types selected for the foundation are:
 
 | Value | Storage | Organization scale |
 |---|---|---|
-| Functional/transaction money | `Decimal(20,4)` for new journal transaction fields; legacy facts remain `Decimal(18,4)` | `moneyScale`, permitted 0–8 |
+| Canonical functional/transaction money | `Decimal(28,8)` for journal, journal-line, GL projection and payroll snapshot totals; legacy document facts remain unchanged | configured currency precision, permitted 0–8 |
 | Quantity | Planned `Decimal(20,6)` | `quantityScale`, permitted 0–10 |
-| Exchange rate | `Decimal(20,10)` | `exchangeRateScale`, permitted 4–12 |
+| Canonical exchange rate | `Decimal(30,12)` on approved rate evidence and journal lines | `exchangeRateScale`, permitted 4–12 |
 | Percentage | Planned `Decimal(12,6)` | `percentageScale`, permitted 2–8 |
 
 The columns provide storage capacity, not an invented statutory rounding policy. `HALF_UP` is the approved default. Component/document rules and final scales remain subject to DEC-0022 technical/CA validation. JavaScript `number` must not be used by new accounting calculations.
@@ -162,12 +163,11 @@ The columns provide storage capacity, not an invented statutory rounding policy.
 
 No production GSTIN, state, address, tax rate, threshold, bank format, partner value, approver assignment, FX provider or statutory applicability was inserted. Organization profile rows require explicit fiscal/inventory/precision input. Synthetic fixtures are clearly `STAGING`-named and are not policy templates.
 
-## Phase 2 limitations
+## Remaining legacy and later-phase limitations
 
 - Existing Accounting services still use legacy statuses and some JavaScript `number`/Prisma `Float` fields.
-- Existing journal/GL write paths are not yet routed through a canonical posting engine.
-- `recordBankTransferAction` still creates a submitted journal/lines from a browser-triggered server action, so the “no browser action writes journal lines directly” Phase 2 gate is not yet satisfied.
-- `generateInvoiceFromDealAction` still lets a CRM permission create an Accounting invoice with embedded due-date/tax examples, and Accounting still contains payroll compilation. These legacy paths conflict with DEC-0005/0006 and must be replaced by versioned inbox contracts rather than treated as reusable posting behavior.
+- Legacy sales/purchase/payment/note/recurring document writers are fail-closed at the old GL helper and require document-specific canonical adapters in their later authorized phases.
+- Bank transfer, manual journal, CRM invoice-request preparation and approved immutable HRMS payroll accrual use the Phase 3 boundary. Legacy Accounting payroll compilation and direct payroll-payment effects remain blocked pending the HRMS producer/payment contract.
 - Customer/vendor finance profiles, tax rule components, bank reconciliation, assets, budgets, recurring schedules and explicit document approval instances are designed but await their authorized implementation phases.
 - Production migration and real-data reconciliation remain separately gated by DEC-0014 and the real-data portion of DEC-0016.
 
@@ -177,6 +177,8 @@ No production GSTIN, state, address, tax rate, threshold, bank format, partner v
 
 Every canonical `JournalEntry` records legal entity, period, source snapshot, request/idempotency identity, rule, currencies, approved exchange-rate evidence, approval-policy version, number series, rounding-policy version, document references, correlation/causation, and reversal/replacement lineage. Transaction and base amounts are Decimal. Posted headers, lines, GL projections and source snapshots are database-protected from update/delete.
 
+The engine accepts only registered journal/rule/source triples and positive source versions. A source version that already produced a journal cannot be reused with a changed canonical request. Tenant guards independently validate every linked legal entity, source snapshot, approver, exchange rate, policy and number series; journal children must use accounts owned by the journal organization and legal entity.
+
 The canonical runtime state model is `RECEIVED/PENDING → PROCESSING → PROCESSED`, with `REJECTED`, `RETRYABLE`, and `MANUAL_REVIEW` outcomes. Legacy document reads and draft creation remain compatible, but the old GL helper and reversal helper fail closed. Depreciation, recurring auto-journal, and partner posting stay gated until their versioned policy evidence and adapters exist.
 
-DEC-0022 is only partially implemented: the exact internal Decimal boundary, configured currency scale, explicit quantization and a versioned rounding-policy reference are implemented. Synthetic non-statutory tests use an explicitly marked policy. Statutory component/document rounding, tax edge cases, depreciation policies and production round-off treatment remain gated pending Finance/legal/CA validation.
+DEC-0022 is only partially implemented: the exact internal Decimal boundary, configured currency scale up to eight places, twelve-place FX evidence, explicit quantization, base conversion, deterministic allocation/remainder handling and a versioned rounding-policy reference are implemented. Synthetic non-statutory tests use an explicitly marked policy. Statutory component/document rounding, tax edge cases, depreciation policies and production round-off treatment remain gated pending Finance/legal/CA validation.
