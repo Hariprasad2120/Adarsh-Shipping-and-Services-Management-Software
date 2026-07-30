@@ -2,6 +2,27 @@
 
 Last updated: 2026-07-29
 
+## 2026-07-30 structural cleanup
+
+The production presentation was not redesigned. Fifteen loose shared
+components were moved with history into explicit layout, navigation, feedback,
+shared, provider, and core-module ownership folders. Three Accounting
+feature-aware form/detail components were moved from the canonical Monolith
+folder into `src/modules/accounting/components`. Imports, catalogue imports,
+static verifiers, and source-path tests were updated without changing exports,
+props, markup, styling, tokens, routes, actions, or behavior.
+
+The unused legacy `ModuleHome` composition and confirmed generated/prototype
+repository clutter were removed. `_design-reference` remains read-only and the
+`OLD UI code` migration evidence remains retained because active migration gates
+still verify it.
+
+Passed: production TypeScript, the code-organization guard, Accounting and
+Communication/Admin static gates, production build, public `/login`
+agent-browser smoke, and native credential-leak Playwright. Repository-wide
+lint and staging-backed Vitest retain the baseline failures documented in
+`docs/refactor/codebase-cleanup-baseline.md`.
+
 ## Current milestone
 
 The production migration foundation, batches 001 through 003, Accounting,

@@ -987,3 +987,42 @@ Do not mark this phase complete yet:
 - production per-query/pool telemetry still needs a representative run.
 
 No commit, push, reset, stash, clean or discard operation was performed.
+
+## 2026-07-30 production-safe structural cleanup
+
+Cleanup work is isolated on
+`codex/production-safe-structural-cleanup-20260730`, starting from clean
+`main` commit `88fe383dcf43e4042a79ca058aadfa746904e389`.
+
+Delivered:
+
+- explicit ownership folders for the former loose shared components;
+- Accounting feature-aware forms moved out of the canonical design-system
+  directory;
+- 359 confirmed generated, copied, logged, inspection, or dead files removed;
+- generated/clutter paths ignored;
+- structural/import boundary guard, unused-symbol audit command, quality
+  command, repository organization documentation, and PR checklist;
+- no route, contract, permission, action, database, theme, token, markup, or
+  business behavior change.
+
+Retained deliberately:
+
+- `_design-reference`, unchanged;
+- `OLD UI code`, because active migration archive gates still use it;
+- Prisma migration history and all uncertain/manual operational scripts;
+- active compatibility CSS pending the outstanding visual matrices.
+
+Validation:
+
+- production TypeScript passed;
+- `npm run audit:structure` passed;
+- Accounting and Communication/Admin static verifiers passed;
+- the Auth/Misc verifier retains its documented stale `await auth()` failure;
+- public `/login` browser smoke passed with content and no error overlay;
+- native login URL-leak Playwright passed; authenticated motion verification
+  was skipped because safe credentials were not provided;
+- staging-backed Vitest remains blocked by the baseline offline
+  `127.0.0.1:56432` database;
+- final lint/build results are recorded in
+  `docs/refactor/codebase-cleanup-report.md`.
