@@ -1,59 +1,50 @@
-import React from "react";
-import { getSession } from "@/lib/auth";
-import { redirect, notFound } from "next/navigation";
-import { getJournalEntry } from "@/modules/accounting/service";
-import { JournalEntryDetailClient } from "./detail-client";
+import { notFound } from "next/navigation";
+
+import { CanonicalJournalDetailView } from "@/components/monolith/accounting-operational-views";
+import { AccountingJournalApprovalAction } from "@/components/monolith/accounting-operational-actions";
 import {
   AccountingActionLink,
   AccountingRoutePageHeader,
 } from "@/components/monolith/accounting-workspace";
+import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
+import { getCanonicalJournalDetail } from "@/modules/accounting/operational-queries";
 
-interface JvDetailPageProps {
+export default async function JournalEntryDetailPage({
+  params,
+}: {
   params: Promise<{ id: string }>;
-}
-
-export default async function JvDetailPage({ params }: JvDetailPageProps) {
-  const session = await getSession();
-  if (!session?.user) redirect("/login");
-
-  const orgId = session.user.orgId!;
+}) {
   const { id } = await params;
-
-  const jv = await getJournalEntry(orgId, id);
-  if (!jv) notFound();
-
-  // Serialize Prisma Decimals and Dates for serialization safety
-  const serializedJV = {
-    ...jv,
-    totalDebit: Number(jv.totalDebit),
-    totalCredit: Number(jv.totalCredit),
-    postingDate: jv.postingDate.toISOString(),
-    createdAt: jv.createdAt.toISOString(),
-    updatedAt: jv.updatedAt.toISOString(),
-    lines: jv.lines.map(l => ({
-      ...l,
-      debit: Number(l.debit),
-      credit: Number(l.credit),
-    })),
-    glEntries: jv.glEntries.map(gl => ({
-      ...gl,
-      debit: Number(gl.debit),
-      credit: Number(gl.credit),
-      postingDate: gl.postingDate.toISOString(),
-    })),
-  };
-
+  const { caps, orgId, userId } = await requireAccountingRouteAccess(
+    `/accounting/journal-entries/${id}`,
+  );
+  const journal = await getCanonicalJournalDetail(orgId, id);
+  if (!journal) notFound();
+  const canApprove =
+    journal.status === "DRAFT" &&
+    journal.createdById !== userId &&
+    caps["accounting.journal.approve"] === true &&
+    caps["accounting.post"] === true;
   return (
     <>
       <AccountingRoutePageHeader
-        title={`Voucher ${jv.voucherNo}`}
+        title={`Journal ${journal.voucherNo}`}
+        description={`${journal.journalType ?? "Journal entry"} · ${journal.status}`}
         actions={
-          <AccountingActionLink href="/accounting/journal-entries">
-            Back to journal
-          </AccountingActionLink>
+          <div className="mnx-accounting-inline-actions">
+            {canApprove ? (
+              <AccountingJournalApprovalAction
+                expectedVersion={journal.rowVersion}
+                id={journal.id}
+              />
+            ) : null}
+            <AccountingActionLink href="/accounting/journal-entries">
+              Back to journal register
+            </AccountingActionLink>
+          </div>
         }
       />
-      <JournalEntryDetailClient jv={serializedJV} />
+      <CanonicalJournalDetailView journal={journal} />
     </>
   );
 }

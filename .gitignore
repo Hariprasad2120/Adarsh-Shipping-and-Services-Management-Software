@@ -86,6 +86,7 @@ pnpm-lock.yaml
 !/docs/accounting/integration-contracts.md
 !/docs/accounting/migration-and-reconciliation.md
 !/docs/accounting/phase-3-transition-matrix.md
+!/docs/accounting/phase-5-operational-ui.md
 
 # sensitive data output
 /import-output/

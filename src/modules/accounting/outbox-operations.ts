@@ -212,6 +212,7 @@ export async function retryAccountingOutbox(input: {
   outboxId: string;
   actorId: string;
   reasonCode: string;
+  expectedVersion?: number;
 }) {
   await assertPermission(input.orgId, input.actorId, "accounting.outbox.retry");
   const reasonCode = safeCode(input.reasonCode, "reasonCode");
@@ -222,11 +223,19 @@ export async function retryAccountingOutbox(input: {
         id: input.outboxId,
         orgId: input.orgId,
         status: { in: ["MANUAL_REVIEW", "DEAD_LETTER", "FAILED"] },
+        ...(input.expectedVersion == null
+          ? {}
+          : { rowVersion: input.expectedVersion }),
       },
     });
     if (!event) throw new Error("Eligible Accounting outbox event not found");
-    const updated = await tx.accountingIntegrationOutbox.update({
-      where: { id: event.id },
+    const updated = await tx.accountingIntegrationOutbox.updateMany({
+      where: {
+        id: event.id,
+        orgId: input.orgId,
+        status: event.status,
+        rowVersion: event.rowVersion,
+      },
       data: {
         status: "RETRYABLE",
         availableAt: now,
@@ -237,6 +246,9 @@ export async function retryAccountingOutbox(input: {
         rowVersion: { increment: 1 },
       },
     });
+    if (updated.count !== 1) {
+      throw new Error("Eligible Accounting outbox event version changed");
+    }
     await tx.accountingAuditLog.create({
       data: {
         orgId: input.orgId,
@@ -247,7 +259,9 @@ export async function retryAccountingOutbox(input: {
         afterValues: { status: "RETRYABLE", reasonCode },
       },
     });
-    return updated;
+    return tx.accountingIntegrationOutbox.findUniqueOrThrow({
+      where: { id: event.id },
+    });
   });
 }
 
@@ -256,6 +270,7 @@ export async function moveAccountingOutboxToManualReview(input: {
   outboxId: string;
   actorId: string;
   reasonCode: string;
+  expectedVersion?: number;
 }) {
   await assertPermission(
     input.orgId,
@@ -270,11 +285,19 @@ export async function moveAccountingOutboxToManualReview(input: {
         id: input.outboxId,
         orgId: input.orgId,
         status: { not: "PROCESSED" },
+        ...(input.expectedVersion == null
+          ? {}
+          : { rowVersion: input.expectedVersion }),
       },
     });
     if (!event) throw new Error("Eligible Accounting outbox event not found");
-    const updated = await tx.accountingIntegrationOutbox.update({
-      where: { id: event.id },
+    const updated = await tx.accountingIntegrationOutbox.updateMany({
+      where: {
+        id: event.id,
+        orgId: input.orgId,
+        status: event.status,
+        rowVersion: event.rowVersion,
+      },
       data: {
         status: "MANUAL_REVIEW",
         manualReviewAt: now,
@@ -286,6 +309,9 @@ export async function moveAccountingOutboxToManualReview(input: {
         rowVersion: { increment: 1 },
       },
     });
+    if (updated.count !== 1) {
+      throw new Error("Eligible Accounting outbox event version changed");
+    }
     await tx.accountingAuditLog.create({
       data: {
         orgId: input.orgId,
@@ -296,7 +322,9 @@ export async function moveAccountingOutboxToManualReview(input: {
         afterValues: { status: "MANUAL_REVIEW", reasonCode },
       },
     });
-    return updated;
+    return tx.accountingIntegrationOutbox.findUniqueOrThrow({
+      where: { id: event.id },
+    });
   });
 }
 

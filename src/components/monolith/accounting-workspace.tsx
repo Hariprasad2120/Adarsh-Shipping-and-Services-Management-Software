@@ -8,6 +8,9 @@ import {
   Boxes,
   BriefcaseBusiness,
   Calculator,
+  CircleDollarSign,
+  ClipboardCheck,
+  CreditCard,
   FileBarChart,
   FileCheck2,
   FilePlus2,
@@ -17,10 +20,14 @@ import {
   LoaderCircle,
   NotebookTabs,
   ReceiptText,
+  RefreshCcw,
+  Repeat2,
   Settings2,
   ShieldAlert,
   ShoppingCart,
+  UsersRound,
   WalletCards,
+  Workflow,
   type LucideIcon,
 } from "lucide-react";
 import type {
@@ -52,6 +59,7 @@ import {
   WorkspaceDialog,
   type WorkspaceDialogSize,
 } from "./workspace-dialog";
+import { formatAccountingMoney } from "@/modules/accounting/operational-helpers";
 
 type AccountingRouteMeta = {
   eyebrow: string;
@@ -67,6 +75,97 @@ const exactRouteMeta: Record<string, AccountingRouteMeta> = {
     description:
       "Monitor double-entry ledgers, liquidity, receivables, payables, financial controls, and period performance.",
     icon: LayoutDashboard,
+  },
+  "/accounting/approvals": {
+    eyebrow: "Maker-checker control",
+    title: "Approval inbox",
+    description:
+      "Review prepared canonical documents and payments before independent approval and posting.",
+    icon: ClipboardCheck,
+  },
+  "/accounting/customer-receipts": {
+    eyebrow: "Accounts receivable",
+    title: "Customer receipts",
+    description:
+      "Review canonical customer receipts, applied amounts, unapplied balances, and posting lineage.",
+    icon: CircleDollarSign,
+  },
+  "/accounting/vendor-payments": {
+    eyebrow: "Accounts payable",
+    title: "Vendor payments",
+    description:
+      "Review canonical supplier disbursements, allocations, unapplied balances, and posting lineage.",
+    icon: CreditCard,
+  },
+  "/accounting/payments": {
+    eyebrow: "Banking and payments",
+    title: "Payments",
+    description:
+      "Monitor every canonical receipt and payment without implying external fund execution.",
+    icon: WalletCards,
+  },
+  "/accounting/allocations": {
+    eyebrow: "Settlement operations",
+    title: "Payment allocations",
+    description:
+      "Trace active, reversed, partial, and multi-document allocations through canonical payment lineage.",
+    icon: Workflow,
+  },
+  "/accounting/credit-notes": {
+    eyebrow: "Accounts receivable",
+    title: "Customer credit notes",
+    description:
+      "Review correction documents linked to posted customer invoices and their immutable ledger effect.",
+    icon: RefreshCcw,
+  },
+  "/accounting/debit-notes": {
+    eyebrow: "Accounts payable",
+    title: "Vendor debit notes",
+    description:
+      "Review correction documents linked to posted supplier bills and their immutable ledger effect.",
+    icon: RefreshCcw,
+  },
+  "/accounting/recurring": {
+    eyebrow: "Scheduled operations",
+    title: "Recurring transactions",
+    description:
+      "Monitor deterministic scheduled occurrences and their generated records without direct ledger writes.",
+    icon: Repeat2,
+  },
+  "/accounting/depreciation": {
+    eyebrow: "Asset accounting",
+    title: "Depreciation runs",
+    description:
+      "Review source readiness and the Finance/CA policy gate before any depreciation effect is permitted.",
+    icon: Calculator,
+  },
+  "/accounting/partners": {
+    eyebrow: "Partnership accounting",
+    title: "Partner transactions",
+    description:
+      "Review partner-account readiness while deed terms and approved posting policy remain fail-closed.",
+    icon: UsersRound,
+  },
+  "/accounting/outbox": {
+    eyebrow: "Integration operations",
+    title: "Accounting outbox",
+    description:
+      "Monitor durable Accounting events, attempts, retry eligibility, and safe publication outcomes.",
+    icon: Workflow,
+  },
+  "/accounting/manual-review": {
+    eyebrow: "Integration operations",
+    title: "Manual review",
+    description:
+      "Resolve failed and dead-letter Accounting events with permissioned, reasoned canonical operations.",
+    icon: ShieldAlert,
+  },
+  "/accounting/configuration": {
+    eyebrow: "Accounting administration",
+    title: "Accounting configuration",
+    description:
+      "Inspect legal entities, periods, currencies, policies, number series, mappings, and explicit policy gates.",
+    icon: Settings2,
   },
   "/accounting/accounts": {
     eyebrow: "Ledger administration",
@@ -292,6 +391,26 @@ export function getAccountingRouteMeta(
       description:
         "Review payment direction, party, allocations, ledger accounts, and posting state.",
       icon: WalletCards,
+    };
+  }
+
+  if (/^\/accounting\/payments\/[^/]+$/.test(path)) {
+    return {
+      eyebrow: "Canonical Accounting payment",
+      title: "Payment details",
+      description:
+        "Review immutable payment identity, allocations, approval, journal effect, reversal lineage, and audit history.",
+      icon: WalletCards,
+    };
+  }
+
+  if (/^\/accounting\/documents\/[^/]+$/.test(path)) {
+    return {
+      eyebrow: "Canonical Accounting document",
+      title: "Document review",
+      description:
+        "Review immutable source identity, totals, approval state, journal effect, allocations, corrections, and audit history.",
+      icon: ClipboardCheck,
     };
   }
 
@@ -568,6 +687,22 @@ export function AccountingStatus({
   return <WorkspaceBadge variant={variant}>{normalized.replaceAll("_", " ")}</WorkspaceBadge>;
 }
 
+export function AccountingMoney({
+  amount,
+  currencyCode,
+  className,
+}: {
+  amount: string;
+  currencyCode: string;
+  className?: string;
+}) {
+  return (
+    <span className={cn("mnx-accounting-amount", className)}>
+      {formatAccountingMoney(amount, currencyCode)}
+    </span>
+  );
+}
+
 export function AccountingLoadingState() {
   return (
     <WorkspaceState
@@ -608,3 +743,4 @@ export const AccountingField = WorkspaceField;
 export const AccountingInput = WorkspaceInput;
 export const AccountingSelect = WorkspaceSelect;
 export const AccountingTextarea = WorkspaceTextarea;
+export const AccountingState = WorkspaceState;

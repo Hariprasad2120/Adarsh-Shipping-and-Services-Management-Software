@@ -1204,9 +1204,17 @@ export async function approveAndPostAccountingDocument(input: {
   orgId: string;
   documentId: string;
   approverId: string;
+  expectedVersion?: number;
 }) {
   const document = await db.accountingDocument.findFirst({
-    where: { id: input.documentId, orgId: input.orgId, status: "PENDING_APPROVAL" },
+    where: {
+      id: input.documentId,
+      orgId: input.orgId,
+      status: "PENDING_APPROVAL",
+      ...(input.expectedVersion == null
+        ? {}
+        : { rowVersion: input.expectedVersion }),
+    },
   });
   if (!document) throw new Error("Pending Accounting document not found");
   const typePermission =
@@ -1255,13 +1263,21 @@ export async function approveAndPostAccountingPayment(input: {
   orgId: string;
   paymentId: string;
   approverId: string;
+  expectedVersion?: number;
 }) {
   await assertPermissions(input.orgId, input.approverId, [
     "accounting.payment.approve",
     "accounting.payment.post",
   ]);
   const payment = await db.accountingPayment.findFirst({
-    where: { id: input.paymentId, orgId: input.orgId, status: "PENDING_APPROVAL" },
+    where: {
+      id: input.paymentId,
+      orgId: input.orgId,
+      status: "PENDING_APPROVAL",
+      ...(input.expectedVersion == null
+        ? {}
+        : { rowVersion: input.expectedVersion }),
+    },
   });
   if (!payment) throw new Error("Pending Accounting payment not found");
   if (payment.makerId === input.approverId) {
@@ -1291,6 +1307,173 @@ export async function approveAndPostAccountingPayment(input: {
       approvedAt: now,
     },
   });
+}
+
+function rejectionReason(reason: string) {
+  const normalized = reason.trim();
+  if (normalized.length < 8 || normalized.length > 500) {
+    throw new Error("Rejection reason must contain 8 to 500 characters");
+  }
+  return normalized;
+}
+
+export async function rejectAccountingDocument(input: {
+  orgId: string;
+  documentId: string;
+  approverId: string;
+  expectedVersion: number;
+  reason: string;
+}) {
+  const reason = rejectionReason(input.reason);
+  return db.$transaction(
+    async (tx) => {
+      const document = await tx.accountingDocument.findFirst({
+        where: {
+          id: input.documentId,
+          orgId: input.orgId,
+          status: "PENDING_APPROVAL",
+          rowVersion: input.expectedVersion,
+        },
+      });
+      if (!document) {
+        throw new Error("Pending Accounting document not found or version changed");
+      }
+      const typePermission =
+        document.documentType === "SALES_INVOICE"
+          ? "accounting.sales-invoice.approve"
+          : document.documentType === "PURCHASE_INVOICE"
+            ? "accounting.purchase-invoice.approve"
+            : document.correctionOfId
+              ? "accounting.correction.approve"
+              : "accounting.document.approve";
+      await assertPermissions(input.orgId, input.approverId, [
+        "accounting.document.approve",
+        typePermission,
+      ]);
+      if (document.makerId === input.approverId) {
+        throw new Error("Maker cannot approve or reject their own Accounting document");
+      }
+      const updated = await tx.accountingDocument.updateMany({
+        where: {
+          id: document.id,
+          orgId: input.orgId,
+          status: "PENDING_APPROVAL",
+          rowVersion: input.expectedVersion,
+        },
+        data: { status: "REJECTED", rowVersion: { increment: 1 } },
+      });
+      if (updated.count !== 1) {
+        throw new Error("Pending Accounting document version changed");
+      }
+      await tx.accountingIntegrationInbox.updateMany({
+        where: {
+          orgId: input.orgId,
+          requestId: document.requestId,
+          status: { in: ["PENDING", "RETRYABLE"] },
+        },
+        data: {
+          status: "REJECTED",
+          lastErrorCode: "REJECTED_BY_CHECKER",
+          rejectedAt: await getNow(),
+          rowVersion: { increment: 1 },
+        },
+      });
+      await tx.accountingAuditLog.create({
+        data: {
+          orgId: input.orgId,
+          userId: input.approverId,
+          action: "REJECT_ACCOUNTING_DOCUMENT",
+          entityType: "AccountingDocument",
+          entityId: document.id,
+          beforeValues: { status: document.status, rowVersion: document.rowVersion },
+          afterValues: {
+            status: "REJECTED",
+            rowVersion: document.rowVersion + 1,
+            reason,
+          },
+        },
+      });
+      return tx.accountingDocument.findUniqueOrThrow({
+        where: { id: document.id },
+      });
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
+}
+
+export async function rejectAccountingPayment(input: {
+  orgId: string;
+  paymentId: string;
+  approverId: string;
+  expectedVersion: number;
+  reason: string;
+}) {
+  const reason = rejectionReason(input.reason);
+  await assertPermissions(input.orgId, input.approverId, [
+    "accounting.payment.approve",
+  ]);
+  return db.$transaction(
+    async (tx) => {
+      const payment = await tx.accountingPayment.findFirst({
+        where: {
+          id: input.paymentId,
+          orgId: input.orgId,
+          status: "PENDING_APPROVAL",
+          rowVersion: input.expectedVersion,
+        },
+      });
+      if (!payment) {
+        throw new Error("Pending Accounting payment not found or version changed");
+      }
+      if (payment.makerId === input.approverId) {
+        throw new Error("Maker cannot approve or reject their own Accounting payment");
+      }
+      const updated = await tx.accountingPayment.updateMany({
+        where: {
+          id: payment.id,
+          orgId: input.orgId,
+          status: "PENDING_APPROVAL",
+          rowVersion: input.expectedVersion,
+        },
+        data: { status: "REJECTED", rowVersion: { increment: 1 } },
+      });
+      if (updated.count !== 1) {
+        throw new Error("Pending Accounting payment version changed");
+      }
+      await tx.accountingIntegrationInbox.updateMany({
+        where: {
+          orgId: input.orgId,
+          requestId: payment.requestId,
+          status: { in: ["PENDING", "RETRYABLE"] },
+        },
+        data: {
+          status: "REJECTED",
+          lastErrorCode: "REJECTED_BY_CHECKER",
+          rejectedAt: await getNow(),
+          rowVersion: { increment: 1 },
+        },
+      });
+      await tx.accountingAuditLog.create({
+        data: {
+          orgId: input.orgId,
+          userId: input.approverId,
+          action: "REJECT_ACCOUNTING_PAYMENT",
+          entityType: "AccountingPayment",
+          entityId: payment.id,
+          beforeValues: { status: payment.status, rowVersion: payment.rowVersion },
+          afterValues: {
+            status: "REJECTED",
+            rowVersion: payment.rowVersion + 1,
+            reason,
+          },
+        },
+      });
+      return tx.accountingPayment.findUniqueOrThrow({
+        where: { id: payment.id },
+      });
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
 }
 
 export async function prepareApprovedPayrollPayment(input: {
@@ -1534,6 +1717,7 @@ export async function cancelCanonicalDocumentByLegacyRecord(input: {
   legacyRecordId: string;
   actorId: string;
   reason: string;
+  expectedVersion?: number;
 }) {
   await assertPermissions(input.orgId, input.actorId, [
     "accounting.correction.approve",
@@ -1546,6 +1730,9 @@ export async function cancelCanonicalDocumentByLegacyRecord(input: {
       legacyRecordId: input.legacyRecordId,
       status: "POSTED",
       journalEntryId: { not: null },
+      ...(input.expectedVersion == null
+        ? {}
+        : { rowVersion: input.expectedVersion }),
     },
   });
   if (!document?.journalEntryId) throw new Error("Canonical posted document not found");
@@ -1595,6 +1782,7 @@ export async function reverseCanonicalPaymentByLegacyRecord(input: {
   legacyPaymentEntryId: string;
   actorId: string;
   reason: string;
+  expectedVersion?: number;
 }) {
   await assertPermissions(input.orgId, input.actorId, [
     "accounting.payment.reverse",
@@ -1606,6 +1794,9 @@ export async function reverseCanonicalPaymentByLegacyRecord(input: {
       legacyPaymentEntryId: input.legacyPaymentEntryId,
       status: "POSTED",
       journalEntryId: { not: null },
+      ...(input.expectedVersion == null
+        ? {}
+        : { rowVersion: input.expectedVersion }),
     },
   });
   if (!payment?.journalEntryId) throw new Error("Canonical posted payment not found");

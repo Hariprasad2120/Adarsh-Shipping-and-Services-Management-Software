@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-07-30T09:15:46.784Z",
+  "generatedAt": "2026-07-30T12:41:19.203Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
     "version": "0.1.0"
   },
   "stats": {
-    "totalAppRoutes": 232,
+    "totalAppRoutes": 248,
     "totalApiRoutes": 212,
     "totalPrismaModels": 311,
-    "totalModuleServices": 114,
-    "totalComponents": 124
+    "totalModuleServices": 122,
+    "totalComponents": 126
   },
   "appRoutes": [
     {
@@ -20,8 +20,26 @@
       "type": "page"
     },
     {
+      "route": "/accounting/access-denied",
+      "filePath": "src/app/(dashboard)/accounting/access-denied/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
       "route": "/accounting/accounts",
       "filePath": "src/app/(dashboard)/accounting/accounts/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
+      "route": "/accounting/allocations",
+      "filePath": "src/app/(dashboard)/accounting/allocations/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
+      "route": "/accounting/approvals",
+      "filePath": "src/app/(dashboard)/accounting/approvals/page.tsx",
       "module": "accounting",
       "type": "page"
     },
@@ -34,6 +52,42 @@
     {
       "route": "/accounting/banking",
       "filePath": "src/app/(dashboard)/accounting/banking/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
+      "route": "/accounting/configuration",
+      "filePath": "src/app/(dashboard)/accounting/configuration/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
+      "route": "/accounting/credit-notes",
+      "filePath": "src/app/(dashboard)/accounting/credit-notes/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
+      "route": "/accounting/customer-receipts",
+      "filePath": "src/app/(dashboard)/accounting/customer-receipts/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
+      "route": "/accounting/debit-notes",
+      "filePath": "src/app/(dashboard)/accounting/debit-notes/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
+      "route": "/accounting/depreciation",
+      "filePath": "src/app/(dashboard)/accounting/depreciation/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
+      "route": "/accounting/documents/[id]",
+      "filePath": "src/app/(dashboard)/accounting/documents/[id]/page.tsx",
       "module": "accounting",
       "type": "page"
     },
@@ -116,8 +170,26 @@
       "type": "loading"
     },
     {
+      "route": "/accounting/manual-review",
+      "filePath": "src/app/(dashboard)/accounting/manual-review/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
+      "route": "/accounting/outbox",
+      "filePath": "src/app/(dashboard)/accounting/outbox/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
       "route": "/accounting",
       "filePath": "src/app/(dashboard)/accounting/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
+      "route": "/accounting/partners",
+      "filePath": "src/app/(dashboard)/accounting/partners/page.tsx",
       "module": "accounting",
       "type": "page"
     },
@@ -136,6 +208,18 @@
     {
       "route": "/accounting/payment-entries/[id]",
       "filePath": "src/app/(dashboard)/accounting/payment-entries/[id]/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
+      "route": "/accounting/payments",
+      "filePath": "src/app/(dashboard)/accounting/payments/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
+      "route": "/accounting/payments/[id]",
+      "filePath": "src/app/(dashboard)/accounting/payments/[id]/page.tsx",
       "module": "accounting",
       "type": "page"
     },
@@ -178,6 +262,12 @@
     {
       "route": "/accounting/quotations",
       "filePath": "src/app/(dashboard)/accounting/quotations/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
+      "route": "/accounting/recurring",
+      "filePath": "src/app/(dashboard)/accounting/recurring/page.tsx",
       "module": "accounting",
       "type": "page"
     },
@@ -226,6 +316,12 @@
     {
       "route": "/accounting/trial-balance",
       "filePath": "src/app/(dashboard)/accounting/trial-balance/page.tsx",
+      "module": "accounting",
+      "type": "page"
+    },
+    {
+      "route": "/accounting/vendor-payments",
+      "filePath": "src/app/(dashboard)/accounting/vendor-payments/page.tsx",
       "module": "accounting",
       "type": "page"
     },
@@ -11592,6 +11688,8 @@
         "prepareLegacyPayment",
         "approveAndPostAccountingDocument",
         "approveAndPostAccountingPayment",
+        "rejectAccountingDocument",
+        "rejectAccountingPayment",
         "prepareApprovedPayrollPayment",
         "postApprovedPayrollCorrection",
         "cancelCanonicalDocumentByLegacyRecord",
@@ -11649,6 +11747,79 @@
         "isNegative",
         "debitCreditTotals",
         "assertBalanced"
+      ]
+    },
+    {
+      "module": "accounting",
+      "fileName": "operational-access.ts",
+      "filePath": "src/modules/accounting/operational-access.ts",
+      "exportedFunctions": [
+        "normalizeAccountingPath",
+        "getAccountingRouteAccess",
+        "hasAnyAccountingPermission",
+        "canAccessAccountingRoute"
+      ]
+    },
+    {
+      "module": "accounting",
+      "fileName": "operational-actions.ts",
+      "filePath": "src/modules/accounting/operational-actions.ts",
+      "exportedFunctions": [
+        "approveOperationalDocumentAction",
+        "rejectOperationalDocumentAction",
+        "approveOperationalPaymentAction",
+        "rejectOperationalPaymentAction",
+        "approveOperationalJournalAction",
+        "reverseOperationalDocumentAction",
+        "reverseOperationalPaymentAction",
+        "retryOperationalOutboxAction",
+        "moveOperationalOutboxToReviewAction"
+      ]
+    },
+    {
+      "module": "accounting",
+      "fileName": "operational-auth.ts",
+      "filePath": "src/modules/accounting/operational-auth.ts",
+      "exportedFunctions": [
+        "requireAccountingRouteAccess"
+      ]
+    },
+    {
+      "module": "accounting",
+      "fileName": "operational-helpers.ts",
+      "filePath": "src/modules/accounting/operational-helpers.ts",
+      "exportedFunctions": [
+        "normalizeDecimalString",
+        "formatDecimalString",
+        "formatAccountingMoney",
+        "addDecimalStrings",
+        "subtractDecimalStrings",
+        "multiplyDecimalStrings",
+        "divideDecimalStrings",
+        "compareDecimalStrings",
+        "minimumDecimalString",
+        "deriveAccountingActionState",
+        "mapAccountingError"
+      ]
+    },
+    {
+      "module": "accounting",
+      "fileName": "operational-queries.ts",
+      "filePath": "src/modules/accounting/operational-queries.ts",
+      "exportedFunctions": [
+        "getAccountingOperationalDashboard",
+        "listLegacyAccountingDrafts",
+        "listCanonicalAccountingDocuments",
+        "getCanonicalAccountingDocument",
+        "listCanonicalAccountingPayments",
+        "getCanonicalAccountingPayment",
+        "listAccountingAllocations",
+        "listCanonicalJournals",
+        "getCanonicalJournalDetail",
+        "getGeneralLedgerOperationalView",
+        "listAccountingScheduledOperations",
+        "listAccountingOutbox",
+        "getAccountingConfigurationOverview"
       ]
     },
     {
@@ -11818,6 +11989,24 @@
       "module": "accounting",
       "fileName": "money.test.ts",
       "filePath": "src/modules/accounting/__tests__/money.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "accounting",
+      "fileName": "operational-access.test.ts",
+      "filePath": "src/modules/accounting/__tests__/operational-access.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "accounting",
+      "fileName": "operational-helpers.test.ts",
+      "filePath": "src/modules/accounting/__tests__/operational-helpers.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "accounting",
+      "fileName": "operational-ui.architecture.test.ts",
+      "filePath": "src/modules/accounting/__tests__/operational-ui.architecture.test.ts",
       "exportedFunctions": []
     },
     {
@@ -13633,6 +13822,16 @@
     },
     {
       "module": "monolith",
+      "fileName": "accounting-operational-actions.tsx",
+      "filePath": "src/components/monolith/accounting-operational-actions.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "accounting-operational-views.tsx",
+      "filePath": "src/components/monolith/accounting-operational-views.tsx"
+    },
+    {
+      "module": "monolith",
       "fileName": "accounting-workspace.test.tsx",
       "filePath": "src/components/monolith/accounting-workspace.test.tsx"
     },
@@ -13901,10 +14100,10 @@
       "components": 0
     },
     "accounting": {
-      "appRoutes": 35,
+      "appRoutes": 51,
       "apiRoutes": 0,
       "prismaModels": 44,
-      "serviceFiles": 18,
+      "serviceFiles": 26,
       "components": 0
     },
     "admin": {
@@ -14066,7 +14265,7 @@
       "apiRoutes": 0,
       "prismaModels": 0,
       "serviceFiles": 0,
-      "components": 49
+      "components": 51
     },
     "notifications": {
       "appRoutes": 1,

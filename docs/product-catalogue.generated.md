@@ -1,24 +1,24 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-30T09:15:46.784Z
+> Generated at: 2026-07-30T12:41:19.203Z
 > Version: 0.1.0
 
 ## Codebase Statistics
 
 | Metric | Count |
 |---|---|
-| App Routes (Pages) | 232 |
+| App Routes (Pages) | 248 |
 | API Routes | 212 |
 | Prisma Models | 311 |
-| Module Service Files | 114 |
-| UI Components | 124 |
+| Module Service Files | 122 |
+| UI Components | 126 |
 
 ## Modules Overview
 
 | Module | Pages | APIs | Models | Services | Components |
 |---|---|---|---|---|---|
 | account | 1 | 0 | 0 | 0 | 0 |
-| accounting | 35 | 0 | 44 | 18 | 0 |
+| accounting | 51 | 0 | 44 | 26 | 0 |
 | admin | 13 | 6 | 0 | 0 | 0 |
 | ams | 21 | 17 | 17 | 11 | 3 |
 | attendance | 10 | 10 | 9 | 1 | 0 |
@@ -41,7 +41,7 @@
 | login | 1 | 0 | 0 | 0 | 0 |
 | mobile | 0 | 18 | 0 | 0 | 0 |
 | mona | 0 | 2 | 0 | 7 | 5 |
-| monolith | 0 | 0 | 0 | 0 | 49 |
+| monolith | 0 | 0 | 0 | 0 | 51 |
 | notifications | 1 | 9 | 4 | 2 | 1 |
 | org | 0 | 7 | 0 | 0 | 0 |
 | product-catalogue | 1 | 0 | 0 | 0 | 0 |
@@ -276,9 +276,18 @@
 | Route | Module | Type |
 |---|---|---|
 | `/account/security` | account | page |
+| `/accounting/access-denied` | accounting | page |
 | `/accounting/accounts` | accounting | page |
+| `/accounting/allocations` | accounting | page |
+| `/accounting/approvals` | accounting | page |
 | `/accounting/balance-sheet` | accounting | page |
 | `/accounting/banking` | accounting | page |
+| `/accounting/configuration` | accounting | page |
+| `/accounting/credit-notes` | accounting | page |
+| `/accounting/customer-receipts` | accounting | page |
+| `/accounting/debit-notes` | accounting | page |
+| `/accounting/depreciation` | accounting | page |
+| `/accounting/documents/[id]` | accounting | page |
 | `/accounting/general-ledger` | accounting | page |
 | `/accounting/invoices-sales/new` | accounting | page |
 | `/accounting/invoices-sales` | accounting | page |
@@ -289,10 +298,15 @@
 | `/accounting/journal-entries/new` | accounting | page |
 | `/accounting/journal-entries` | accounting | page |
 | `/accounting/journal-entries/[id]` | accounting | page |
+| `/accounting/manual-review` | accounting | page |
+| `/accounting/outbox` | accounting | page |
 | `/accounting` | accounting | page |
+| `/accounting/partners` | accounting | page |
 | `/accounting/payment-entries/new` | accounting | page |
 | `/accounting/payment-entries` | accounting | page |
 | `/accounting/payment-entries/[id]` | accounting | page |
+| `/accounting/payments` | accounting | page |
+| `/accounting/payments/[id]` | accounting | page |
 | `/accounting/profit-loss` | accounting | page |
 | `/accounting/purchase-invoices/new` | accounting | page |
 | `/accounting/purchase-invoices` | accounting | page |
@@ -300,6 +314,7 @@
 | `/accounting/purchase-orders/new` | accounting | page |
 | `/accounting/purchase-orders` | accounting | page |
 | `/accounting/quotations` | accounting | page |
+| `/accounting/recurring` | accounting | page |
 | `/accounting/reports` | accounting | page |
 | `/accounting/sales-invoices/new` | accounting | page |
 | `/accounting/sales-invoices` | accounting | page |
@@ -308,6 +323,7 @@
 | `/accounting/sales-orders` | accounting | page |
 | `/accounting/settings` | accounting | page |
 | `/accounting/trial-balance` | accounting | page |
+| `/accounting/vendor-payments` | accounting | page |
 | `/admin/data-tools` | admin | page |
 | `/admin/design-system` | admin | page |
 | `/admin/google-chat` | admin | page |
@@ -792,10 +808,15 @@
 
 ### accounting
 - **actions.ts**: createAccountAction, updateAccountAction, createJournalEntryAction, submitJournalEntryAction, cancelJournalEntryAction, createSalesInvoiceAction, submitSalesInvoiceAction, cancelSalesInvoiceAction, createPurchaseInvoiceAction, submitPurchaseInvoiceAction, cancelPurchaseInvoiceAction, createPaymentEntryAction, submitPaymentEntryAction, approveAccountingDocumentAction, approveAccountingPaymentAction, cancelPaymentEntryAction, updateAccountingSettingsAction, initializeCOAAction, generateInvoiceFromDealAction, getPayrollBatchesAction, compilePayrollBatchAction, createPayrollBatchAction, finalizePayrollBatchAction, payPayrollBatchAction, listAssetsAction, getAssetAction, createAssetAction, runDepreciationAction, listQuotationsAction, getQuotationAction, createQuotationAction, convertQuotationToInvoiceAction, listCustomerNotesAction, getCustomerNoteAction, createCustomerNoteAction, submitCustomerNoteAction, getTransactionLockAction, updateTransactionLockAction, listJobCostingsAction, getJobCostingAction, createJobCostingAction, updateJobCostingAction, getARAgeingAction, getAPAgeingAction, getSalesRegisterAction, getPurchaseRegisterAction, getGSTR1SummaryAction, getGSTR2BSummaryAction, getConsolidatedGSTLedgerAction, getDayBookAction, getJournalRegisterAction, getJobProfitabilityAction, getCashAndBankLedgerAction, recordBankTransferAction, approveBankTransferRequestAction, getProfitAndLossAction, getBalanceSheetAction, getTrialBalanceAction
-- **document-adapters.ts**: prepareLegacyCustomerNote, prepareLegacyVendorNote, prepareLegacySalesInvoice, prepareLegacyPurchaseInvoice, prepareLegacyPayment, approveAndPostAccountingDocument, approveAndPostAccountingPayment, prepareApprovedPayrollPayment, postApprovedPayrollCorrection, cancelCanonicalDocumentByLegacyRecord, reverseCanonicalPaymentByLegacyRecord
+- **document-adapters.ts**: prepareLegacyCustomerNote, prepareLegacyVendorNote, prepareLegacySalesInvoice, prepareLegacyPurchaseInvoice, prepareLegacyPayment, approveAndPostAccountingDocument, approveAndPostAccountingPayment, rejectAccountingDocument, rejectAccountingPayment, prepareApprovedPayrollPayment, postApprovedPayrollCorrection, cancelCanonicalDocumentByLegacyRecord, reverseCanonicalPaymentByLegacyRecord
 - **document-contracts.ts**: normalizeAccountingDocumentContract, normalizeAccountingPaymentContract, payrollPaymentIdentity, normalizePayrollCorrection, recurringOccurrenceIdentity, depreciationRunIdentity, asDecimalJson
 - **integration-adapters.ts**: resolveCanonicalPostingConfiguration, recoverStaleAccountingRequest, moveAccountingRequestToManualReview, prepareBankTransferRequest, approveAndPostPreparedRequest, prepareCrmDealInvoiceRequest, acceptApprovedPayrollRun, postApprovedPayrollRun
 - **money.ts**: decimal, add, subtract, multiply, absolute, divide, compare, quantize, validateCurrencyPrecision, convertToBaseCurrency, allocateEqual, serialize, isZero, isPositive, isNegative, debitCreditTotals, assertBalanced
+- **operational-access.ts**: normalizeAccountingPath, getAccountingRouteAccess, hasAnyAccountingPermission, canAccessAccountingRoute
+- **operational-actions.ts**: approveOperationalDocumentAction, rejectOperationalDocumentAction, approveOperationalPaymentAction, rejectOperationalPaymentAction, approveOperationalJournalAction, reverseOperationalDocumentAction, reverseOperationalPaymentAction, retryOperationalOutboxAction, moveOperationalOutboxToReviewAction
+- **operational-auth.ts**: requireAccountingRouteAccess
+- **operational-helpers.ts**: normalizeDecimalString, formatDecimalString, formatAccountingMoney, addDecimalStrings, subtractDecimalStrings, multiplyDecimalStrings, divideDecimalStrings, compareDecimalStrings, minimumDecimalString, deriveAccountingActionState, mapAccountingError
+- **operational-queries.ts**: getAccountingOperationalDashboard, listLegacyAccountingDrafts, listCanonicalAccountingDocuments, getCanonicalAccountingDocument, listCanonicalAccountingPayments, getCanonicalAccountingPayment, listAccountingAllocations, listCanonicalJournals, getCanonicalJournalDetail, getGeneralLedgerOperationalView, listAccountingScheduledOperations, listAccountingOutbox, getAccountingConfigurationOverview
 - **outbox-operations.ts**: accountingOutboxRetryDelayMs, claimAccountingOutbox, settleAccountingOutboxClaim, retryAccountingOutbox, moveAccountingOutboxToManualReview, publishClaimedSyntheticOutbox
 - **posting-engine.ts**: canonicalPostingPayload, postCanonicalAccountingRequest, reverseCanonicalJournal, replaceCanonicalJournal
 - **reports.ts**: getGeneralLedger, getTrialBalance, getProfitAndLoss, getBalanceSheet, getARAgeing, getAPAgeing, getSalesRegister, getPurchaseRegister, getGSTR1Summary, getGSTR2BSummary, getConsolidatedGSTLedger, getDayBook, getJournalRegister, getJobProfitability, getCashAndBankLedger
@@ -807,6 +828,9 @@
 - **accounting.test.ts**: no exports detected
 - **document-contracts.test.ts**: no exports detected
 - **money.test.ts**: no exports detected
+- **operational-access.test.ts**: no exports detected
+- **operational-helpers.test.ts**: no exports detected
+- **operational-ui.architecture.test.ts**: no exports detected
 - **outbox-operations.test.ts**: no exports detected
 - **posting-boundary.architecture.test.ts**: no exports detected
 

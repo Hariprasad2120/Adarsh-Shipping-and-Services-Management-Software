@@ -609,11 +609,11 @@ export const modules: CatalogueModule[] = [
           mutations: ["db.assetMaintenance.create"]
         },
         {
-          name: "computeDepreciation",
-          signature: "computeDepreciation(assetId: string, method: 'STRAIGHT_LINE')",
-          behavior: "Calculates depreciation based on initial cost, salvage value, and lifespan.",
-          usage: "Triggered by Finance. Updates book values on the general ledger.",
-          mutations: ["db.asset.update", "db.depreciationLog.create"]
+          name: "prepareDepreciationCandidate",
+          signature: "prepareDepreciationCandidate(assetId: string, assetVersion: number)",
+          behavior: "Supplies immutable AMS asset evidence to Accounting without inventing a statutory book policy.",
+          usage: "Available only after Finance/CA approves book, method, useful-life, residual-value, account-mapping, and correction policy.",
+          mutations: ["Policy gated — no Accounting financial mutation"]
         }
       ]
     }
@@ -622,18 +622,19 @@ export const modules: CatalogueModule[] = [
     id: "accounting",
     name: "ACCOUNTING MODULE",
     iconName: "Shield",
-    shortDescription: "Chart of Accounts, journal entry logs, general ledger, and real-time trial balance reporting.",
-    detailedDescription: "The Accounting module integrates operations directly with finance. It records financial events—like invoices generated, salary payments, and asset depreciations—into a standard Chart of Accounts.",
+    shortDescription: "Permission-aware Accounting operations for controlled documents, payments, approvals, journals, ledger inquiry, and integration review.",
+    detailedDescription: "The Accounting module prepares immutable, versioned financial requests and posts them only through the canonical double-entry engine after independent approval. It preserves source ownership, legal-entity scope, exact Decimal values, audit lineage, reversals, and guarded integration state.",
     keyFeatures: [
-      "Customizable Double-Entry Chart of Accounts",
-      "Sales Invoice & Payment Entry Matching Engine",
-      "Auto-Generated Cash Flow, Trial Balance, & Profit/Loss Sheets",
-      "Automated General Ledger Journal Postings"
+      "Maker-checker Approval Inbox and Reasoned Rejections",
+      "Canonical Sales, Purchase, Receipt, Payment, and Allocation Registers",
+      "Immutable Journal and General Ledger Drill-Down",
+      "Guarded Outbox Retry, Manual Review, and Policy-Gated Operations"
     ],
     howItWorks: [
-      "Operational events (e.g., invoices created or assets depreciated) trigger double-entry journal logs.",
-      "Finance team reviews, posts, and reconciles entries with bank statement records.",
-      "Financial reports are compiled dynamically, showing real-time balance positions."
+      "Authorized users prepare tenant-scoped drafts or submit approved, immutable source contracts.",
+      "A different authorized checker reviews the frozen version and approves or rejects it.",
+      "The canonical posting engine validates policy, period, currency, accounts, dimensions, idempotency, and exact balance before writing journal and ledger facts.",
+      "Posted facts remain immutable; corrections use linked reversals, while integrations use audited retry and manual-review controls."
     ],
     users: ["Chief Accountants", "Finance Controllers", "Auditors"],
     businessBenefits: [
@@ -641,40 +642,40 @@ export const modules: CatalogueModule[] = [
       "Connects operations with finance teams instantly.",
       "Improves receivable/payable collections and tracks margins."
     ],
-    exampleWorkflow: "Approved invoice generated -> system posts receivable and revenue journal records -> payment entry closes invoice balance.",
-    integrations: ["CRM Invoices", "Asset Depreciation Logs", "Payroll Batches"],
-    ctaLabel: "Open Chart of Accounts",
+    exampleWorkflow: "Invoice draft prepared → immutable canonical version submitted → independent checker approves → canonical journal posts → receipt allocation settles the posted document → any correction creates linked reversal lineage.",
+    integrations: ["CRM Approved Invoice Requests", "HRMS Approved Payroll Runs", "AMS Asset Candidates", "CHA Job Dimensions", "Communication Outbox"],
+    ctaLabel: "Open Accounting Workspace",
     status: "Partial",
     lifecycleGuide: {
-      summary: "General ledger tracker, transaction analyzer, and financial reporter.",
-      fullProcessExplanation: "The Accounting Module records operational activities. Transactions are posted to the general ledger, balances are reconciled, and real-time financial statements (trial balance, cash flow, P&L) are generated.",
+      summary: "Controlled preparation, independent approval, canonical posting, immutable inquiry, and auditable correction.",
+      fullProcessExplanation: "Accounting accepts only authorized, versioned inputs. Preparation creates no ledger effect. A separate checker approves a frozen version, and the canonical engine alone creates balanced journal and General Ledger facts. Payment execution is distinct from Accounting posting, and unapproved statutory or organization policy remains fail-closed.",
       steps: [
-        { stepNumber: "Step 1", title: "Chart of Accounts", description: "Establishes ledger accounts (asset, liability, equity, income, expense) for the organization." },
-        { stepNumber: "Step 2", title: "Automated Journal Posting", description: "Operational events (such as invoice approvals or asset depreciations) post double-entry items automatically." },
-        { stepNumber: "Step 3", title: "Payment Reconciliation", description: "Matches payments with invoices, updating the general ledger and resolving balances." },
-        { stepNumber: "Step 4", title: "Financial Reporting", description: "Compiles trial balance and profit/loss statements, showing the company's financial position." }
+        { stepNumber: "Step 1", title: "Configure and Prepare", description: "Validates legal entity, period, currency, policy, account mappings, counterparty scope, and exact Decimal inputs before freezing a version." },
+        { stepNumber: "Step 2", title: "Independent Approval", description: "A checker with document-type and posting permission reviews lines, source evidence, allocations, and journal preview; self-approval fails closed." },
+        { stepNumber: "Step 3", title: "Canonical Posting", description: "The sole posting engine writes the immutable balanced journal, General Ledger projection, audit evidence, and transactional outbox event idempotently." },
+        { stepNumber: "Step 4", title: "Inquiry and Correction", description: "Read-only registers expose lineage and running balances; posted facts change only through linked, reasoned reversals and separately approved replacements." }
       ],
       functions: [
         {
-          name: "createChartOfAccounts",
-          signature: "createChartOfAccounts(orgId: string, template: any)",
-          behavior: "Generates the Chart of Accounts from pre-defined templates.",
-          usage: "Triggered during company setup. Creates the structure for financial transactions.",
-          mutations: ["db.accountingAccount.createMany"]
+          name: "prepareAccountingDocument",
+          signature: "prepareAccountingDocument(contract: VersionedDocumentContract)",
+          behavior: "Validates source identity, policy evidence, legal entity, counterparty, currency, exact totals, and immutable request identity.",
+          usage: "Triggered by an authorized preparer or accepted source adapter; creates no journal or ledger effect.",
+          mutations: ["AccountingDocument PENDING_APPROVAL", "AccountingIntegrationInbox PENDING"]
         },
         {
-          name: "postJournalEntry",
-          signature: "postJournalEntry(orgId: string, entries: any[])",
-          behavior: "Validates and records balanced debit and credit items in the general ledger.",
-          usage: "Triggered by system events. Posts transaction details to the ledger.",
-          mutations: ["db.journalEntry.create", "db.accountBalance.update"]
+          name: "postCanonicalAccountingRequest",
+          signature: "postCanonicalAccountingRequest(request: CanonicalPostingRequest)",
+          behavior: "Revalidates authorization, maker-checker separation, policy versions, period, dimensions, currency, idempotency, and exact debit-credit balance.",
+          usage: "Invoked only by an accepted approval adapter; it is the sole runtime writer of posted journal and General Ledger facts.",
+          mutations: ["Immutable JournalEntry", "JournalEntryLine", "GeneralLedgerEntry projection", "AccountingAuditLog", "AccountingIntegrationOutbox"]
         },
         {
-          name: "matchInvoicesAndPayments",
-          signature: "matchInvoicesAndPayments(invoiceId: string, paymentId: string)",
-          behavior: "Matches invoice records with payment entries, updating ledger accounts.",
-          usage: "Triggered by Accountants. Closes invoice balances and matches bank transactions.",
-          mutations: ["db.crmInvoice.update", "db.paymentMatching.create"]
+          name: "prepareAccountingPayment",
+          signature: "prepareAccountingPayment(contract: VersionedPaymentContract)",
+          behavior: "Freezes receipt or payment identity, exact allocated and unapplied amounts, eligible posted targets, method, reference, and approval evidence.",
+          usage: "Accounting posting records financial recognition only; external bank transfer execution is a separate unsupported state unless evidence exists.",
+          mutations: ["AccountingPayment PENDING_APPROVAL", "AccountingPaymentAllocation", "AccountingIntegrationInbox PENDING"]
         }
       ]
     }
@@ -1687,21 +1688,21 @@ export const detailedWorkflowStages: DetailedWorkflowStage[] = [
     durationLabel: "Step 01",
     barWidth: "w-[33%]",
     iconName: "Shield",
-    summary: "Configure double-entry Chart of Accounts.",
-    description: "Accounts configures the Chart of Accounts, mapping accounts to support general ledger records.",
+    summary: "Verify the canonical Accounting control foundation.",
+    description: "Accounting exposes legal entities, periods, currencies, account controls, approval policies, number series, and policy readiness without inferring missing statutory values.",
     backendFunctions: [
       {
-        name: "createChartOfAccounts",
-        signature: "createChartOfAccounts(orgId: string, template: any)",
-        description: "Initializes accounts and configurations.",
-        mutations: ["db.accountingAccount.createMany"]
+        name: "resolveCanonicalPostingConfiguration",
+        signature: "resolveCanonicalPostingConfiguration(orgId: string, postingDate: Date, documentType?: string)",
+        description: "Resolves active, effective-dated control evidence and fails closed when required configuration is absent.",
+        mutations: ["Read-only configuration resolution"]
       }
     ],
     userActions: [
       {
         role: "Chief Accountant",
         permission: "accounting.account.read",
-        description: "Sets up company accounts and ledger rules."
+        description: "Reviews company controls and maintains them only through separately permissioned configuration workflows."
       }
     ],
     integrations: ["Asset Registers"]
@@ -1713,21 +1714,21 @@ export const detailedWorkflowStages: DetailedWorkflowStage[] = [
     durationLabel: "Step 02",
     barWidth: "w-[66%]",
     iconName: "GitMerge",
-    summary: "Post operational journals automatically.",
-    description: "Operational events (sales, payroll runs) post double-entry items, keeping ledger accounts up to date.",
+    summary: "Prepare and independently approve immutable posting requests.",
+    description: "Invoices, payments, manual journals, and accepted source contracts create no ledger effect until a different authorized checker approves the frozen version.",
     backendFunctions: [
       {
-        name: "postJournalEntry",
-        signature: "postJournalEntry(orgId: string, entries: any[])",
-        description: "Logs balanced debit and credit entries to the general ledger.",
-        mutations: ["db.journalEntry.create", "db.accountBalance.update"]
+        name: "postCanonicalAccountingRequest",
+        signature: "postCanonicalAccountingRequest(request: CanonicalPostingRequest)",
+        description: "Idempotently creates immutable balanced journal and General Ledger facts after all controls pass.",
+        mutations: ["Canonical posted journal, ledger projection, audit, outbox"]
       }
     ],
     userActions: [
       {
-        role: "Accountant / Manager",
-        permission: "accounting.journal.read",
-        description: "Reviews journal entries and posts items to the ledger."
+        role: "Independent Accounting Approver",
+        permission: "accounting.document.approve + accounting.post",
+        description: "Reviews source evidence, exact totals, policy versions, and journal effect; makers cannot approve their own records."
       }
     ],
     integrations: ["CRM Invoices", "Payroll Batches"]
@@ -1739,21 +1740,21 @@ export const detailedWorkflowStages: DetailedWorkflowStage[] = [
     durationLabel: "Step 03",
     barWidth: "w-full",
     iconName: "CheckCircle2",
-    summary: "Reconcile payment logs and general ledger items.",
-    description: "Reconciles payments with invoice items, closing outstanding balances and updating financial statements.",
+    summary: "Allocate canonical payments and inspect settlement lineage.",
+    description: "Receipts and payments freeze exact allocations against eligible posted targets; unapplied balances and external-transfer state remain explicit.",
     backendFunctions: [
       {
-        name: "matchInvoicesAndPayments",
-        signature: "matchInvoicesAndPayments(invoiceId: string, paymentId: string)",
-        description: "Matches payments with invoices, updating accounting entries.",
-        mutations: ["db.crmInvoice.update", "db.paymentMatching.create"]
+        name: "prepareLegacyPayment",
+        signature: "prepareLegacyPayment({ orgId, paymentEntryId, makerId })",
+        description: "Creates a versioned canonical payment and allocation request from a validated draft without directly updating posted balances.",
+        mutations: ["AccountingPayment PENDING_APPROVAL", "AccountingPaymentAllocation"]
       }
     ],
     userActions: [
       {
         role: "Accountant",
-        permission: "accounting.payment.read",
-        description: "Matches payment records to invoice balances."
+        permission: "accounting.payment.allocate",
+        description: "Prepares exact allocations; a separate payment approver posts the financial recognition."
       }
     ],
     integrations: ["Billing Engine"]
@@ -1761,11 +1762,11 @@ export const detailedWorkflowStages: DetailedWorkflowStage[] = [
 ];
 
 export const moduleInteractions: ModuleInteraction[] = [
-  { fromModule: "CRM Module", toModule: "Accounting Module", description: "Approved sales invoices automatically post receivables and revenues to the general ledger." },
+  { fromModule: "CRM Module", toModule: "Accounting Module", description: "CRM emits an approved immutable invoice request; Accounting owns validation, numbering, approval, tax evidence, and canonical posting." },
   { fromModule: "HRMS Module", toModule: "Attendance Module", description: "CTC rates feed directly into biometric overtime calculators." },
-  { fromModule: "Attendance Module", toModule: "Accounting Module", description: "Approved monthly worktimes compile payroll journals directly for ledger posting." },
+  { fromModule: "Attendance Module", toModule: "Accounting Module", description: "HRMS supplies an approved immutable payroll run/version; Accounting never recalculates salary and posts only through the canonical approval boundary." },
   { fromModule: "AMS Asset Module", toModule: "HRMS Module", description: "Hardware asset registers link directly to employee folders for asset tracking." },
-  { fromModule: "AMS Asset Module", toModule: "Accounting Module", description: "Monthly depreciation calculations post straight-line depreciation expenses to ledger entries." }
+  { fromModule: "AMS Asset Module", toModule: "Accounting Module", description: "AMS supplies versioned operational asset evidence; depreciation remains fail-closed until Finance/CA-approved book policy and mappings are configured." }
 ];
 
 export const benefits: ClientBenefit[] = [

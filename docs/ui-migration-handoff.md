@@ -963,3 +963,46 @@ the current root authentication source and stops on its unrelated literal
 
 Backup:
 `OLD UI code/ui-iteration-backups/login-native-submit-credential-leak-fix-20260730/`
+
+## 2026-07-30 Accounting Phase 5 handoff
+
+Phase 5 operational Accounting UI and application integration is implemented
+locally from required starting HEAD `2f37936b07cfea8b9f7b1c993d342811278b7af6`.
+No commit, push, deployment, production/Neon/Zoho/provider connection, real-data
+migration, or Phase 6 cutover was performed.
+
+Primary implementation:
+
+- centralized route access, exact-money helpers, bounded tenant read models,
+  stable error mapping, and canonical server actions under
+  `src/modules/accounting/operational-*`;
+- shared operational registers, details, dialogs, policy gates, and exact money
+  display under `src/components/monolith/accounting-operational-*`;
+- operational routes listed in
+  `docs/accounting/phase-5-operational-ui.md`;
+- permission-aware navigation with existing functional Accounting routes
+  retained;
+- compatibility draft creation remains additive, while submit converges on the
+  canonical Phase 4 adapters and canonical detail routes;
+- manual journals use draft → independent checker → canonical engine;
+- no Phase 5 schema or migration files.
+
+Safety:
+
+- all new operational reads are organization-scoped and bounded;
+- all mutation actions reauthorize server-side;
+- expected row versions protect approval, rejection, reversal, and outbox
+  controls;
+- exact decimal strings are preserved across UI boundaries;
+- immediate-post controls and unreachable direct invoice/payment writer
+  branches were removed;
+- email and external publication remain disabled/not configured.
+
+Backup:
+`OLD UI code/legacy-ui-before-accounting-phase5-2f37936.zip`, SHA-256
+`3260DD7EE1DAC71D3FB4AAE3AA149668A450EF9F944D817C2461679DD8D1C8A8`.
+
+The verification table in `docs/accounting/phase-5-operational-ui.md` records
+the final static, test, build, guarded staging, catalogue, and browser
+availability results. Authenticated visual verification remains the only
+environmental evidence gap because no in-app or attached browser was available.

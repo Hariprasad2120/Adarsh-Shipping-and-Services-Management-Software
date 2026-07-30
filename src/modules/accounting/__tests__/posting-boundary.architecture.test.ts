@@ -161,11 +161,26 @@ describe("canonical Accounting posting boundary", () => {
         );
       if (
         (canonicalStatusMutation || allocationMutation) &&
-        file !== "src/modules/accounting/posting-engine.ts"
+        file !== "src/modules/accounting/posting-engine.ts" &&
+        file !== "src/modules/accounting/document-adapters.ts"
       ) {
         violations.push(`${file}: canonical document/payment state mutated outside posting engine`);
       }
     }
     expect(violations).toEqual([]);
+
+    const adapters = withoutComments(
+      readFileSync(join(sourceRoot, "modules/accounting/document-adapters.ts"), "utf8"),
+    );
+    expect(
+      adapters.match(/\baccountingDocument\.updateMany\s*\(/g)?.length ?? 0,
+    ).toBe(1);
+    expect(
+      adapters.match(/\baccountingPayment\.updateMany\s*\(/g)?.length ?? 0,
+    ).toBe(1);
+    expect(adapters).toContain('data: { status: "REJECTED", rowVersion: { increment: 1 } }');
+    expect(adapters).not.toMatch(
+      /\b(?:journalEntry|journalEntryLine|generalLedgerEntry)\.(?:create|createMany|update|updateMany|delete|deleteMany)\s*\(/,
+    );
   });
 });

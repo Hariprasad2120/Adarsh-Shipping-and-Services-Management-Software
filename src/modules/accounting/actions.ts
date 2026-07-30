@@ -20,8 +20,13 @@ import {
   prepareLegacyCustomerNote,
   reverseCanonicalPaymentByLegacyRecord,
 } from "./document-adapters";
+import { mapAccountingError } from "./operational-helpers";
 
 type ActionResponse = { ok: true; data?: any } | { ok: false; error: string };
+
+function safeAccountingActionError(error: unknown) {
+  return mapAccountingError(error).message;
+}
 
 // ─── Account Actions ─────────────────────────────────────────────────────────
 
@@ -76,12 +81,15 @@ export async function createJournalEntryAction(data: any): Promise<ActionRespons
     const journal = await accService.createJournalEntry(orgId, session.user.id, data);
     revalidatePath("/accounting/journal-entries");
     return { ok: true, data: journal };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Failed to create journal entry" };
+  } catch (error: unknown) {
+    return { ok: false, error: safeAccountingActionError(error) };
   }
 }
 
-export async function submitJournalEntryAction(id: string): Promise<ActionResponse> {
+export async function submitJournalEntryAction(
+  id: string,
+  expectedVersion?: number,
+): Promise<ActionResponse> {
   try {
     const session = await auth();
     if (!session?.user) return { ok: false, error: "Unauthorized" };
@@ -89,14 +97,20 @@ export async function submitJournalEntryAction(id: string): Promise<ActionRespon
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
+    await requirePermission(session.user.id, "accounting.journal.approve");
     await requirePermission(session.user.id, "accounting.post");
 
-    const journal = await accService.submitJournalEntry(orgId, id, session.user.id);
+    const journal = await accService.submitJournalEntry(
+      orgId,
+      id,
+      session.user.id,
+      expectedVersion,
+    );
     revalidatePath("/accounting/journal-entries");
     revalidatePath(`/accounting/journal-entries/${id}`);
     return { ok: true, data: journal };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Failed to submit journal entry" };
+  } catch (error: unknown) {
+    return { ok: false, error: safeAccountingActionError(error) };
   }
 }
 
@@ -134,8 +148,8 @@ export async function createSalesInvoiceAction(data: any): Promise<ActionRespons
     const invoice = await accService.createSalesInvoice(orgId, session.user.id, data);
     revalidatePath("/accounting/sales-invoices");
     return { ok: true, data: invoice };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Failed to create sales invoice" };
+  } catch (error: unknown) {
+    return { ok: false, error: safeAccountingActionError(error) };
   }
 }
 
@@ -157,8 +171,8 @@ export async function submitSalesInvoiceAction(id: string): Promise<ActionRespon
     revalidatePath("/accounting/sales-invoices");
     revalidatePath(`/accounting/sales-invoices/${id}`);
     return { ok: true, data: invoice };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Failed to submit sales invoice" };
+  } catch (error: unknown) {
+    return { ok: false, error: safeAccountingActionError(error) };
   }
 }
 
@@ -202,8 +216,8 @@ export async function createPurchaseInvoiceAction(data: any): Promise<ActionResp
     const invoice = await accService.createPurchaseInvoice(orgId, session.user.id, data);
     revalidatePath("/accounting/purchase-invoices");
     return { ok: true, data: invoice };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Failed to create purchase invoice" };
+  } catch (error: unknown) {
+    return { ok: false, error: safeAccountingActionError(error) };
   }
 }
 
@@ -225,8 +239,8 @@ export async function submitPurchaseInvoiceAction(id: string): Promise<ActionRes
     revalidatePath("/accounting/purchase-invoices");
     revalidatePath(`/accounting/purchase-invoices/${id}`);
     return { ok: true, data: invoice };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Failed to submit purchase invoice" };
+  } catch (error: unknown) {
+    return { ok: false, error: safeAccountingActionError(error) };
   }
 }
 
@@ -270,8 +284,8 @@ export async function createPaymentEntryAction(data: any): Promise<ActionRespons
     const payment = await accService.createPaymentEntry(orgId, session.user.id, data);
     revalidatePath("/accounting/payment-entries");
     return { ok: true, data: payment };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Failed to create payment entry" };
+  } catch (error: unknown) {
+    return { ok: false, error: safeAccountingActionError(error) };
   }
 }
 
@@ -293,8 +307,8 @@ export async function submitPaymentEntryAction(id: string): Promise<ActionRespon
     revalidatePath("/accounting/payment-entries");
     revalidatePath(`/accounting/payment-entries/${id}`);
     return { ok: true, data: payment };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Failed to submit payment entry" };
+  } catch (error: unknown) {
+    return { ok: false, error: safeAccountingActionError(error) };
   }
 }
 

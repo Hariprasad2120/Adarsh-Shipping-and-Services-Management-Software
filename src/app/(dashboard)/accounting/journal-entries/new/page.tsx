@@ -1,21 +1,24 @@
 import React from "react";
-import { getSession } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { listAccounts } from "@/modules/accounting/service";
 import { NewJVClient } from "./new-jv-client";
 import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 
 export default async function NewJournalEntryPage() {
-  const session = await getSession();
-  if (!session?.user) redirect("/login");
-
-  const orgId = session.user.orgId!;
+  const { orgId } = await requireAccountingRouteAccess(
+    "/accounting/journal-entries/new",
+    ["accounting.journal.prepare"],
+  );
 
   // Fetch leaf accounts and branches
   const [accounts, branches] = await Promise.all([
     listAccounts(orgId),
-    db.branch.findMany({ where: { orgId } }),
+    db.branch.findMany({
+      where: { orgId },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
   const leafAccounts = accounts

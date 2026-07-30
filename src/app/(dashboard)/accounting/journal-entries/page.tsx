@@ -1,93 +1,47 @@
 import { Plus } from "lucide-react";
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
-import { listJournalEntries } from "@/modules/accounting/service";
+
+import { CanonicalJournalRegister } from "@/components/monolith/accounting-operational-views";
 import {
   AccountingActionLink,
-  AccountingEmptyTableRow,
   AccountingRoutePageHeader,
   AccountingSection,
-  AccountingStatus,
-  AccountingTable,
 } from "@/components/monolith/accounting-workspace";
+import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
+import { listCanonicalJournals } from "@/modules/accounting/operational-queries";
 
-export default async function JournalEntriesPage() {
-  const session = await getSession();
-  if (!session?.user) redirect("/login");
-
-  const jvs = await listJournalEntries(session.user.orgId!);
-
+export default async function JournalEntriesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { caps, orgId } = await requireAccountingRouteAccess(
+    "/accounting/journal-entries",
+  );
+  const { page } = await searchParams;
+  const journals = await listCanonicalJournals(orgId, {
+    page: Number(page) || 1,
+  });
   return (
     <>
       <AccountingRoutePageHeader
         actions={
-          <AccountingActionLink
-            href="/accounting/journal-entries/new"
-            variant="primary"
-          >
-            <Plus aria-hidden="true" size={16} />
-            New voucher
-          </AccountingActionLink>
+          caps["accounting.journal.prepare"] ? (
+            <AccountingActionLink
+              href="/accounting/journal-entries/new"
+              variant="primary"
+            >
+              <Plus aria-hidden="true" size={16} />
+              New journal draft
+            </AccountingActionLink>
+          ) : undefined
         }
       />
       <AccountingSection
-        eyebrow="General journal"
-        title="Voucher register"
-        description={`${jvs.length} journal ${jvs.length === 1 ? "entry" : "entries"} in the current organisation.`}
+        eyebrow="Immutable journal"
+        title="Journal-entry register"
+        description="Canonical and legacy-compatible journals with source, legal entity, exact totals, and correction lineage."
       >
-        <AccountingTable>
-          <thead>
-            <tr>
-              <th>Voucher no.</th>
-              <th>Posting date</th>
-              <th>Remarks</th>
-              <th>Branch</th>
-              <th>Total amount</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {jvs.length === 0 ? (
-              <AccountingEmptyTableRow colSpan={7}>
-                No journal entries have been created yet.
-              </AccountingEmptyTableRow>
-            ) : (
-              jvs.map((jv) => (
-                <tr key={jv.id}>
-                  <td>
-                    <AccountingActionLink
-                      className="mnx-button-compact"
-                      href={`/accounting/journal-entries/${jv.id}`}
-                    >
-                      {jv.voucherNo}
-                    </AccountingActionLink>
-                  </td>
-                  <td>{new Date(jv.postingDate).toLocaleDateString("en-IN")}</td>
-                  <td>{jv.remarks || "—"}</td>
-                  <td>{jv.branch?.name || "Global / Head office"}</td>
-                  <td className="mnx-accounting-amount">
-                    ₹
-                    {Number(jv.totalDebit).toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td>
-                    <AccountingStatus status={jv.status} />
-                  </td>
-                  <td>
-                    <AccountingActionLink
-                      className="mnx-button-compact"
-                      href={`/accounting/journal-entries/${jv.id}`}
-                    >
-                      Details
-                    </AccountingActionLink>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </AccountingTable>
+        <CanonicalJournalRegister data={journals} />
       </AccountingSection>
     </>
   );

@@ -1456,3 +1456,48 @@ Verification:
 - the historical Batch 007 static verifier still stops on its unrelated root
   source assertion requiring the literal `await auth()`; the current root
   authentication implementation predates this fix and was not changed.
+
+## 2026-07-30 Accounting Phase 5 operational workspace
+
+Implemented the complete safe additive Accounting operational UI on the
+accepted Phase 2–4 kernel.
+
+Migrated and integrated:
+
+- `/accounting` operational overview;
+- `/accounting/approvals`;
+- sales and purchase draft/register/detail convergence;
+- customer receipts, vendor payments, canonical payments and allocations;
+- customer credit-note and vendor debit-note registers;
+- canonical document and payment detail/action pages;
+- manual-journal draft, checker inbox, immutable detail, and canonical post;
+- journal register and deterministic paginated General Ledger;
+- recurring occurrence, depreciation, partner, outbox, manual-review, and
+  configuration readiness views;
+- centralized permission-aware Accounting navigation and access-denied state.
+
+The routes use shared Monolith components and semantic tokens only, with no
+dashboard redesign or reference-project modification. Monetary values are
+serialized and calculated as exact decimal strings. Immediate-post controls
+were removed; posted facts remain immutable; reasoned rejection, reversal,
+retry, and manual-review controls use row versions and server authorization.
+
+Existing Chart of Accounts, Items, Trial Balance, Profit & Loss, Balance Sheet,
+CRM commercial invoice/order, and legacy Settings navigation was preserved.
+Policy-gated workflows remain visible and fail closed without invented
+financial or statutory policy.
+
+Backup:
+`OLD UI code/legacy-ui-before-accounting-phase5-2f37936.zip` (SHA-256
+`3260DD7EE1DAC71D3FB4AAE3AA149668A450EF9F944D817C2461679DD8D1C8A8`).
+
+Detailed route, permission, lifecycle, convergence, policy, and verification
+evidence is in `docs/accounting/phase-5-operational-ui.md`.
+
+Verification passed for production TypeScript, scoped Phase 5 ESLint, 52/52
+Accounting tests, the 48-route Accounting static verifier, guarded staging
+identity/schema/data/application checks, product-catalogue validation, and the
+342-page production build. The full repository suite remains 342/345 because
+of the same three documented pre-existing CHA failures. No browser was
+available, so authenticated Light/Night/Violet and viewport visual verification
+is not marked complete.

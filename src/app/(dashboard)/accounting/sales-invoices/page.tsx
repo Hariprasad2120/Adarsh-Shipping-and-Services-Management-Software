@@ -1,93 +1,65 @@
 import { Plus } from "lucide-react";
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
-import { listSalesInvoices } from "@/modules/accounting/service";
+
+import {
+  CanonicalDocumentRegister,
+  LegacyAccountingDraftRegister,
+} from "@/components/monolith/accounting-operational-views";
 import {
   AccountingActionLink,
-  AccountingEmptyTableRow,
   AccountingRoutePageHeader,
   AccountingSection,
-  AccountingStatus,
-  AccountingTable,
 } from "@/components/monolith/accounting-workspace";
+import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
+import {
+  listCanonicalAccountingDocuments,
+  listLegacyAccountingDrafts,
+} from "@/modules/accounting/operational-queries";
 
 export default async function SalesInvoicesPage() {
-  const session = await getSession();
-  if (!session?.user) redirect("/login");
-
-  const invoices = await listSalesInvoices(session.user.orgId!);
-
+  const { caps, orgId } = await requireAccountingRouteAccess(
+    "/accounting/sales-invoices",
+  );
+  const [drafts, documents] = await Promise.all([
+    listLegacyAccountingDrafts(orgId, "SALES_INVOICE", { pageSize: 50 }),
+    listCanonicalAccountingDocuments(orgId, {
+      documentTypes: ["SALES_INVOICE"],
+      pageSize: 50,
+    }),
+  ]);
   return (
     <>
       <AccountingRoutePageHeader
         actions={
-          <AccountingActionLink
-            href="/accounting/sales-invoices/new"
-            variant="primary"
-          >
-            <Plus aria-hidden="true" size={16} />
-            New sales invoice
-          </AccountingActionLink>
+          caps["accounting.invoice.create"] ? (
+            <AccountingActionLink
+              href="/accounting/sales-invoices/new"
+              variant="primary"
+            >
+              <Plus aria-hidden="true" size={16} />
+              New draft
+            </AccountingActionLink>
+          ) : undefined
         }
       />
       <AccountingSection
-        eyebrow="Accounts receivable"
-        title="Customer invoice register"
-        description={`${invoices.length} sales ${invoices.length === 1 ? "invoice" : "invoices"} in the current organisation.`}
+        eyebrow="Preparation"
+        title="Editable sales-invoice drafts"
+        description="Compatibility drafts remain editable only until canonical preparation freezes a version."
       >
-        <AccountingTable>
-          <thead>
-            <tr>
-              <th>Invoice number</th>
-              <th>Customer</th>
-              <th>Posting date</th>
-              <th>Grand total</th>
-              <th>Outstanding</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoices.length === 0 ? (
-              <AccountingEmptyTableRow colSpan={7}>
-                No sales invoices have been created yet.
-              </AccountingEmptyTableRow>
-            ) : (
-              invoices.map((invoice) => (
-                <tr key={invoice.id}>
-                  <td>{invoice.invoiceNumber}</td>
-                  <td>{invoice.customer?.name || "—"}</td>
-                  <td>
-                    {new Date(invoice.postingDate).toLocaleDateString("en-IN")}
-                  </td>
-                  <td className="mnx-accounting-amount">
-                    ₹
-                    {Number(invoice.grandTotal).toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td className="mnx-accounting-amount mnx-accounting-amount-warning">
-                    ₹
-                    {Number(invoice.outstandingAmount).toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td>
-                    <AccountingStatus status={invoice.status} />
-                  </td>
-                  <td>
-                    <AccountingActionLink
-                      className="mnx-button-compact"
-                      href={`/accounting/sales-invoices/${invoice.id}`}
-                    >
-                      Details
-                    </AccountingActionLink>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </AccountingTable>
+        <LegacyAccountingDraftRegister
+          data={drafts}
+          detailPath="/accounting/sales-invoices"
+        />
+      </AccountingSection>
+      <AccountingSection
+        eyebrow="Canonical lifecycle"
+        title="Prepared and posted sales invoices"
+        description="Server-authoritative totals, approval state, journal link, allocation history, and corrections."
+      >
+        <CanonicalDocumentRegister
+          basePath="/accounting/sales-invoices"
+          data={documents}
+        />
       </AccountingSection>
     </>
   );

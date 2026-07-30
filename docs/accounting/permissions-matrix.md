@@ -83,3 +83,24 @@ Preparation permission never substitutes for approval/posting. Sales and purchas
 The credential-login fixture `stg_user_accounting_maker` / `hr@adarshshipping.in` is restricted to the exact `STAGING Accounting Maker` role. The guarded seed resets `isPlatformAdmin` to false and removes any additional user-role assignment for that fixture. Its role-permission rows are reduced to the explicit staging-maker allowlist before the expected preparation/read permissions are restored. Admin and HR roles, canonical approval/posting permissions and platform-wide administration are therefore absent.
 
 `stg_user_accounting_checker` remains a distinct identity with the exact `STAGING Accounting Checker` role. Database and service controls continue to reject maker self-approval. The real-domain email is also explicitly included in existing CHA manager-selection results and remains visible across the create-job branch filter; this is email-based eligibility/visibility and does not substitute for CHA server authorization.
+
+## Phase 5 operational route enforcement
+
+The Phase 5 Accounting layout resolves the current path through the centralized
+`operational-access.ts` map, and each new operational page repeats its
+server-side gate before data access. Dynamic document, payment, and journal
+detail routes use tenant-scoped queries after authorization. Create routes
+require their exact preparation key rather than inheriting read access.
+
+The Approval Inbox filters each record family by the caller's relevant approval
+permission. Record actions recheck permissions on the server and use the
+current `rowVersion`. Document approval also requires its type-specific
+sales/purchase/correction key; payment approval requires payment post; manual
+journal approval requires journal approve plus canonical post. In all cases,
+the maker identity remains in the frozen record and self-approval fails.
+
+Navigation visibility uses the same permission vocabulary but remains
+presentation only. Direct unauthorized URLs redirect to a non-disclosing
+Accounting access-denied state before operational queries run. Unrelated
+platform-admin, HR, CRM, or CHA permission does not imply ledger, approval, or
+posting authority.

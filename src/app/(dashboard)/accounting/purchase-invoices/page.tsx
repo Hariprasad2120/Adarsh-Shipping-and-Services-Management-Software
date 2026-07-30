@@ -1,93 +1,65 @@
 import { Plus } from "lucide-react";
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
-import { listPurchaseInvoices } from "@/modules/accounting/service";
+
+import {
+  CanonicalDocumentRegister,
+  LegacyAccountingDraftRegister,
+} from "@/components/monolith/accounting-operational-views";
 import {
   AccountingActionLink,
-  AccountingEmptyTableRow,
   AccountingRoutePageHeader,
   AccountingSection,
-  AccountingStatus,
-  AccountingTable,
 } from "@/components/monolith/accounting-workspace";
+import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
+import {
+  listCanonicalAccountingDocuments,
+  listLegacyAccountingDrafts,
+} from "@/modules/accounting/operational-queries";
 
 export default async function PurchaseInvoicesPage() {
-  const session = await getSession();
-  if (!session?.user) redirect("/login");
-
-  const invoices = await listPurchaseInvoices(session.user.orgId!);
-
+  const { caps, orgId } = await requireAccountingRouteAccess(
+    "/accounting/purchase-invoices",
+  );
+  const [drafts, documents] = await Promise.all([
+    listLegacyAccountingDrafts(orgId, "PURCHASE_INVOICE", { pageSize: 50 }),
+    listCanonicalAccountingDocuments(orgId, {
+      documentTypes: ["PURCHASE_INVOICE"],
+      pageSize: 50,
+    }),
+  ]);
   return (
     <>
       <AccountingRoutePageHeader
         actions={
-          <AccountingActionLink
-            href="/accounting/purchase-invoices/new"
-            variant="primary"
-          >
-            <Plus aria-hidden="true" size={16} />
-            New purchase invoice
-          </AccountingActionLink>
+          caps["accounting.invoice.create"] ? (
+            <AccountingActionLink
+              href="/accounting/purchase-invoices/new"
+              variant="primary"
+            >
+              <Plus aria-hidden="true" size={16} />
+              New draft
+            </AccountingActionLink>
+          ) : undefined
         }
       />
       <AccountingSection
-        eyebrow="Accounts payable"
-        title="Supplier invoice register"
-        description={`${invoices.length} purchase ${invoices.length === 1 ? "invoice" : "invoices"} in the current organisation.`}
+        eyebrow="Preparation"
+        title="Editable purchase-invoice drafts"
+        description="Compatibility drafts remain editable only until canonical preparation freezes a version."
       >
-        <AccountingTable>
-          <thead>
-            <tr>
-              <th>Invoice number</th>
-              <th>Supplier</th>
-              <th>Posting date</th>
-              <th>Grand total</th>
-              <th>Outstanding</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoices.length === 0 ? (
-              <AccountingEmptyTableRow colSpan={7}>
-                No purchase invoices have been created yet.
-              </AccountingEmptyTableRow>
-            ) : (
-              invoices.map((invoice) => (
-                <tr key={invoice.id}>
-                  <td>{invoice.invoiceNumber}</td>
-                  <td>{invoice.supplier?.name || "—"}</td>
-                  <td>
-                    {new Date(invoice.postingDate).toLocaleDateString("en-IN")}
-                  </td>
-                  <td className="mnx-accounting-amount">
-                    ₹
-                    {Number(invoice.grandTotal).toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td className="mnx-accounting-amount mnx-accounting-amount-warning">
-                    ₹
-                    {Number(invoice.outstandingAmount).toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td>
-                    <AccountingStatus status={invoice.status} />
-                  </td>
-                  <td>
-                    <AccountingActionLink
-                      className="mnx-button-compact"
-                      href={`/accounting/purchase-invoices/${invoice.id}`}
-                    >
-                      Details
-                    </AccountingActionLink>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </AccountingTable>
+        <LegacyAccountingDraftRegister
+          data={drafts}
+          detailPath="/accounting/purchase-invoices"
+        />
+      </AccountingSection>
+      <AccountingSection
+        eyebrow="Canonical lifecycle"
+        title="Prepared and posted purchase invoices"
+        description="Statutory purchase tax and discounts remain policy-gated unless approved line-level evidence exists."
+      >
+        <CanonicalDocumentRegister
+          basePath="/accounting/purchase-invoices"
+          data={documents}
+        />
       </AccountingSection>
     </>
   );

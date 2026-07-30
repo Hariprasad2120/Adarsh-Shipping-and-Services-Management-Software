@@ -6,7 +6,13 @@ import {
   postApprovedPayrollRun,
   resolveCanonicalPostingConfiguration,
 } from "./integration-adapters";
-import { add, decimal, serialize } from "./money";
+import {
+  add,
+  assertBalanced,
+  decimal,
+  serialize,
+  validateCurrencyPrecision,
+} from "./money";
 import {
   postCanonicalAccountingRequest,
   reverseCanonicalJournal,
@@ -439,6 +445,7 @@ export async function createJournalEntry(orgId: string, createdById: string, dat
   });
   const totalDebit = parsedLines.reduce((total: Prisma.Decimal, line: any) => add(total, line.debit), add());
   const totalCredit = parsedLines.reduce((total: Prisma.Decimal, line: any) => add(total, line.credit), add());
+  assertBalanced(parsedLines);
 
   const postingDate = data.postingDate ? new Date(data.postingDate) : await getNow();
   if (Number.isNaN(postingDate.getTime())) throw new Error("Posting date is invalid");
@@ -446,6 +453,33 @@ export async function createJournalEntry(orgId: string, createdById: string, dat
   const voucherNo = `DRAFT-${globalThis.crypto.randomUUID()}`;
 
   const entry = await db.$transaction(async (tx) => {
+    const accountIds = [
+      ...new Set<string>(
+        parsedLines.map((line: any) => String(line.accountId || "")),
+      ),
+    ];
+    const [accountCount, branch] = await Promise.all([
+      tx.account.count({
+        where: {
+          orgId,
+          id: { in: accountIds },
+          isActive: true,
+          isGroup: false,
+        },
+      }),
+      data.branchId
+        ? tx.branch.findFirst({
+            where: { orgId, id: data.branchId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
+    if (accountIds.some((id) => !id) || accountCount !== accountIds.length) {
+      throw new Error("Every journal line must use an active posting account");
+    }
+    if (data.branchId && !branch) {
+      throw new Error("The selected branch is not available");
+    }
     const journal = await tx.journalEntry.create({
       data: {
         orgId,
@@ -476,13 +510,26 @@ export async function createJournalEntry(orgId: string, createdById: string, dat
   return entry;
 }
 
-export async function submitJournalEntry(orgId: string, id: string, userId: string) {
+export async function submitJournalEntry(
+  orgId: string,
+  id: string,
+  userId: string,
+  expectedVersion?: number,
+) {
   const journal = await db.journalEntry.findFirst({
-    where: { id, orgId, status: "DRAFT" },
+    where: {
+      id,
+      orgId,
+      status: "DRAFT",
+      ...(expectedVersion == null ? {} : { rowVersion: expectedVersion }),
+    },
     include: { lines: true },
   });
 
   if (!journal) throw new Error("Draft Journal Entry not found");
+  if (journal.createdById === userId) {
+    throw new Error("The maker cannot approve their own journal draft");
+  }
   const configuration = await resolveCanonicalPostingConfiguration(orgId, journal.postingDate);
   const now = await getNow();
   const requestId = `ACCOUNTING:MANUAL_JOURNAL:${journal.id}:${journal.rowVersion}`;
@@ -546,8 +593,13 @@ export async function submitJournalEntry(orgId: string, id: string, userId: stri
     correlationId: requestId,
   });
   await db.journalEntry.updateMany({
-    where: { id: journal.id, orgId, status: "DRAFT" },
-    data: { status: "SUPERSEDED" },
+    where: {
+      id: journal.id,
+      orgId,
+      status: "DRAFT",
+      rowVersion: journal.rowVersion,
+    },
+    data: { status: "SUPERSEDED", rowVersion: { increment: 1 } },
   });
   const posted = await db.journalEntry.findUniqueOrThrow({ where: { id: result.journalEntryId } });
   await createAuditLog(orgId, userId, "POST_MANUAL_JOURNAL", "JournalEntry", posted.id, journal, posted);
@@ -649,26 +701,69 @@ export async function createSalesInvoice(orgId: string, createdById: string, dat
   if (data.taxRate == null) throw new Error("A configured tax rate or explicit zero-tax treatment is required");
   if (!data.dueDate) throw new Error("A configured invoice due date is required");
   const items = data.items || [];
-  let subtotal = 0;
-  for (const it of items) {
-    subtotal += parseFloat(it.qty) * parseFloat(it.rate) * parseFloat(it.exchangeRate || 1);
-  }
-
-  const discountAmount = data.discountAmount || 0;
-  const taxableAmount = Math.max(0, subtotal - discountAmount);
-
-  const taxRate = data.taxRate;
-  const taxAmount = taxableAmount * (taxRate / 100);
-  const grandTotal = taxableAmount + taxAmount;
+  if (items.length === 0) throw new Error("At least one invoice line is required");
+  const calculatedItems = items.map((item: any, index: number) => {
+    const quantity = decimal(String(item.qty), `items[${index}].qty`);
+    const rate = decimal(String(item.rate), `items[${index}].rate`);
+    const exchangeRate = decimal(
+      String(item.exchangeRate || "1"),
+      `items[${index}].exchangeRate`,
+    );
+    if (!quantity.isPositive() || !rate.isPositive() || !exchangeRate.isPositive()) {
+      throw new Error("Invoice quantity, rate and exchange rate must be positive");
+    }
+    return {
+      ...item,
+      quantity,
+      rate,
+      exchangeRate,
+      amount: quantity.mul(rate).mul(exchangeRate),
+    };
+  });
+  const subtotal = add(...calculatedItems.map((item: any) => item.amount));
+  const discountAmount = decimal(
+    String(data.discountAmount || "0"),
+    "discountAmount",
+  );
+  if (discountAmount.isNegative()) throw new Error("Discount cannot be negative");
+  const discounted = subtotal.sub(discountAmount);
+  const taxableAmount = discounted.isNegative() ? decimal("0") : discounted;
+  const taxRate = decimal(String(data.taxRate), "taxRate");
+  if (taxRate.isNegative()) throw new Error("Tax rate cannot be negative");
+  const taxAmount = taxableAmount.mul(taxRate).div("100");
+  const grandTotal = taxableAmount.add(taxAmount);
 
   const count = await db.salesInvoice.count({ where: { orgId } });
   const invoiceNumber = `SINV-${1001 + count}`;
 
   const postingDate = data.postingDate ? new Date(data.postingDate) : await getNow();
   const dueDate = new Date(data.dueDate);
+  if (
+    Number.isNaN(postingDate.getTime()) ||
+    Number.isNaN(dueDate.getTime()) ||
+    dueDate < postingDate
+  ) {
+    throw new Error("Invoice dates are invalid");
+  }
 
   const invoice = await db.$transaction(async (tx) => {
-    const settings = await tx.accountingSettings.findUnique({ where: { orgId } });
+    const [settings, customer, branch] = await Promise.all([
+      tx.accountingSettings.findUnique({ where: { orgId } }),
+      tx.crmAccount.findFirst({
+        where: { orgId, id: data.customerId },
+        select: { id: true },
+      }),
+      data.branchId
+        ? tx.branch.findFirst({
+            where: { orgId, id: data.branchId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
+    if (!customer) throw new Error("The selected customer is not available");
+    if (data.branchId && !branch) {
+      throw new Error("The selected branch is not available");
+    }
     if (!settings?.defaultSalesAccountId || !settings?.defaultTaxAccountId) {
       throw new Error("Default Sales or Tax accounts not configured in Accounting Settings");
     }
@@ -682,94 +777,36 @@ export async function createSalesInvoice(orgId: string, createdById: string, dat
         crmDealId: data.crmDealId || null,
         postingDate,
         dueDate,
-        status: data.submit ? "UNPAID" : "DRAFT",
-        grandTotal: new Prisma.Decimal(grandTotal),
-        outstandingAmount: new Prisma.Decimal(grandTotal),
-        discountAmount: new Prisma.Decimal(discountAmount),
-        taxAmount: new Prisma.Decimal(taxAmount),
+        status: "DRAFT",
+        grandTotal,
+        outstandingAmount: grandTotal,
+        discountAmount,
+        taxAmount,
         remarks: data.remarks || null,
         bankDetails: data.bankDetails || null,
         manualNotes: data.manualNotes || null,
         createdById,
         items: {
-          create: items.map((it: any) => ({
+          create: calculatedItems.map((it: any) => ({
             itemName: it.itemName,
-            qty: parseFloat(it.qty),
-            rate: new Prisma.Decimal(it.rate),
-            amount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate) * parseFloat(it.exchangeRate || 1)),
+            qty: Number(it.quantity.toString()),
+            rate: it.rate,
+            amount: it.amount,
             currency: it.currency || "INR",
-            exchangeRate: parseFloat(it.exchangeRate || 1),
+            exchangeRate: Number(it.exchangeRate.toString()),
           })),
         },
-        taxLines: taxRate > 0 ? {
+        taxLines: taxRate.isPositive() ? {
           create: [
             {
               accountId: settings.defaultTaxAccountId!,
-              taxRate: parseFloat(taxRate),
-              taxAmount: new Prisma.Decimal(taxAmount),
+              taxRate: Number(taxRate.toString()),
+              taxAmount,
             },
           ],
         } : undefined,
       },
     });
-
-    if (data.submit) {
-      // Create postings
-      const glLines = [
-        // DEBIT Accounts Receivable
-        {
-          accountId: settings.defaultReceivableAccountId!,
-          debit: grandTotal,
-          credit: 0,
-          partyType: "CUSTOMER",
-          partyId: data.customerId,
-          remarks: `Sales Invoice ${invoiceNumber}`,
-        },
-        // CREDIT Sales Revenue
-        {
-          accountId: settings.defaultSalesAccountId!,
-          debit: 0,
-          credit: taxableAmount,
-          remarks: `Sales Income from ${invoiceNumber}`,
-        },
-      ];
-
-      if (taxAmount > 0) {
-        // CREDIT Output Tax
-        glLines.push({
-          accountId: settings.defaultTaxAccountId!,
-          debit: 0,
-          credit: taxAmount,
-          remarks: `Output GST for ${invoiceNumber}`,
-        });
-      }
-
-      await postGLTransactions(
-        tx,
-        orgId,
-        "SALES_INVOICE",
-        inv.id,
-        postingDate,
-        glLines,
-        data.branchId,
-        createdById
-      );
-
-      // Post to Customer Ledger
-      await tx.customerLedgerEntry.create({
-        data: {
-          orgId,
-          branchId: data.branchId || null,
-          customerId: data.customerId,
-          postingDate,
-          voucherType: "SALES_INVOICE",
-          voucherId: inv.id,
-          debit: new Prisma.Decimal(grandTotal),
-          credit: new Prisma.Decimal(0),
-          remarks: `Outstanding Invoice ${invoiceNumber}`,
-        },
-      });
-    }
 
     return inv;
   });
@@ -964,25 +1001,59 @@ export async function createPurchaseInvoice(orgId: string, createdById: string, 
   if (data.taxRate == null) throw new Error("A configured tax rate or explicit zero-tax treatment is required");
   if (!data.dueDate) throw new Error("A configured bill due date is required");
   const items = data.items || [];
-  let subtotal = 0;
-  for (const it of items) {
-    subtotal += parseFloat(it.qty) * parseFloat(it.rate);
-  }
-
-  const discountAmount = data.discountAmount || 0;
-  const taxableAmount = Math.max(0, subtotal - discountAmount);
-  const taxRate = data.taxRate;
-  const taxAmount = taxableAmount * (taxRate / 100);
-  const grandTotal = taxableAmount + taxAmount;
+  if (items.length === 0) throw new Error("At least one invoice line is required");
+  const calculatedItems = items.map((item: any, index: number) => {
+    const quantity = decimal(String(item.qty), `items[${index}].qty`);
+    const rate = decimal(String(item.rate), `items[${index}].rate`);
+    if (!quantity.isPositive() || !rate.isPositive()) {
+      throw new Error("Invoice quantity and rate must be positive");
+    }
+    return { ...item, quantity, rate, amount: quantity.mul(rate) };
+  });
+  const subtotal = add(...calculatedItems.map((item: any) => item.amount));
+  const discountAmount = decimal(
+    String(data.discountAmount || "0"),
+    "discountAmount",
+  );
+  if (discountAmount.isNegative()) throw new Error("Discount cannot be negative");
+  const discounted = subtotal.sub(discountAmount);
+  const taxableAmount = discounted.isNegative() ? decimal("0") : discounted;
+  const taxRate = decimal(String(data.taxRate), "taxRate");
+  if (taxRate.isNegative()) throw new Error("Tax rate cannot be negative");
+  const taxAmount = taxableAmount.mul(taxRate).div("100");
+  const grandTotal = taxableAmount.add(taxAmount);
 
   const count = await db.purchaseInvoice.count({ where: { orgId } });
   const invoiceNumber = `PINV-${1001 + count}`;
 
   const postingDate = data.postingDate ? new Date(data.postingDate) : await getNow();
   const dueDate = new Date(data.dueDate);
+  if (
+    Number.isNaN(postingDate.getTime()) ||
+    Number.isNaN(dueDate.getTime()) ||
+    dueDate < postingDate
+  ) {
+    throw new Error("Bill dates are invalid");
+  }
 
   const invoice = await db.$transaction(async (tx) => {
-    const settings = await tx.accountingSettings.findUnique({ where: { orgId } });
+    const [settings, supplier, branch] = await Promise.all([
+      tx.accountingSettings.findUnique({ where: { orgId } }),
+      tx.crmVendor.findFirst({
+        where: { orgId, id: data.supplierId },
+        select: { id: true },
+      }),
+      data.branchId
+        ? tx.branch.findFirst({
+            where: { orgId, id: data.branchId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
+    if (!supplier) throw new Error("The selected supplier is not available");
+    if (data.branchId && !branch) {
+      throw new Error("The selected branch is not available");
+    }
     if (!settings?.defaultPurchaseAccountId || !settings?.defaultPayableAccountId || !settings?.defaultTaxAccountId) {
       throw new Error("Default Accounts Payable, Expense or Tax accounts not configured in Accounting Settings");
     }
@@ -995,90 +1066,32 @@ export async function createPurchaseInvoice(orgId: string, createdById: string, 
         supplierId: data.supplierId,
         postingDate,
         dueDate,
-        status: data.submit ? "UNPAID" : "DRAFT",
-        grandTotal: new Prisma.Decimal(grandTotal),
-        outstandingAmount: new Prisma.Decimal(grandTotal),
-        discountAmount: new Prisma.Decimal(discountAmount),
-        taxAmount: new Prisma.Decimal(taxAmount),
+        status: "DRAFT",
+        grandTotal,
+        outstandingAmount: grandTotal,
+        discountAmount,
+        taxAmount,
         remarks: data.remarks || null,
         createdById,
         items: {
-          create: items.map((it: any) => ({
+          create: calculatedItems.map((it: any) => ({
             itemName: it.itemName,
-            qty: parseFloat(it.qty),
-            rate: new Prisma.Decimal(it.rate),
-            amount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate)),
+            qty: Number(it.quantity.toString()),
+            rate: it.rate,
+            amount: it.amount,
           })),
         },
-        taxLines: taxRate > 0 ? {
+        taxLines: taxRate.isPositive() ? {
           create: [
             {
               accountId: settings.defaultTaxAccountId!,
-              taxRate: parseFloat(taxRate),
-              taxAmount: new Prisma.Decimal(taxAmount),
+              taxRate: Number(taxRate.toString()),
+              taxAmount,
             },
           ],
         } : undefined,
       },
     });
-
-    if (data.submit) {
-      // Create postings
-      const glLines = [
-        // DEBIT Expense
-        {
-          accountId: settings.defaultPurchaseAccountId!,
-          debit: taxableAmount,
-          credit: 0,
-          remarks: `Purchase Expense ${invoiceNumber}`,
-        },
-        // CREDIT Accounts Payable
-        {
-          accountId: settings.defaultPayableAccountId!,
-          debit: 0,
-          credit: grandTotal,
-          partyType: "SUPPLIER",
-          partyId: data.supplierId,
-          remarks: `Purchase invoice ${invoiceNumber}`,
-        },
-      ];
-
-      if (taxAmount > 0) {
-        // DEBIT Input Tax
-        glLines.push({
-          accountId: settings.defaultTaxAccountId!, // fallback output tax is fine, or input tax if defined
-          debit: taxAmount,
-          credit: 0,
-          remarks: `Input GST for ${invoiceNumber}`,
-        });
-      }
-
-      await postGLTransactions(
-        tx,
-        orgId,
-        "PURCHASE_INVOICE",
-        inv.id,
-        postingDate,
-        glLines,
-        data.branchId,
-        createdById
-      );
-
-      // Post Supplier Ledger
-      await tx.supplierLedgerEntry.create({
-        data: {
-          orgId,
-          branchId: data.branchId || null,
-          supplierId: data.supplierId,
-          postingDate,
-          voucherType: "PURCHASE_INVOICE",
-          voucherId: inv.id,
-          debit: new Prisma.Decimal(0),
-          credit: new Prisma.Decimal(grandTotal),
-          remarks: `Outstanding Invoice ${invoiceNumber}`,
-        },
-      });
-    }
 
     return inv;
   });
@@ -1264,12 +1277,148 @@ export async function createPaymentEntry(orgId: string, createdById: string, dat
       "LEGACY_PAYMENT_POSTING_BLOCKED: create a draft, then use the canonical approval workflow",
     );
   }
-  const amount = parseFloat(data.amount);
-  const allocations = data.allocations || [];
+  if (!["RECEIVE", "PAY"].includes(data.paymentType)) {
+    throw new Error("Payment type must be RECEIVE or PAY");
+  }
+  if (!["CUSTOMER", "SUPPLIER"].includes(data.partyType)) {
+    throw new Error("Party type must be CUSTOMER or SUPPLIER");
+  }
+  const amount = validateCurrencyPrecision(
+    String(data.amount),
+    4,
+    "payment amount",
+  );
+  if (!amount.isPositive()) throw new Error("Payment amount must be positive");
+  const allocations = (data.allocations || []).map(
+    (allocation: any, index: number) => ({
+      salesInvoiceId: allocation.salesInvoiceId || null,
+      purchaseInvoiceId: allocation.purchaseInvoiceId || null,
+      allocatedAmount: validateCurrencyPrecision(
+        String(allocation.allocatedAmount),
+        4,
+        `allocations[${index}].allocatedAmount`,
+      ),
+    }),
+  );
+  if (allocations.some((allocation: any) => !allocation.allocatedAmount.isPositive())) {
+    throw new Error("Allocation amounts must be positive");
+  }
+  const allocationTotal = add(
+    ...allocations.map((allocation: any) => allocation.allocatedAmount),
+  );
+  if (allocationTotal.gt(amount)) {
+    throw new Error("Allocated amount cannot exceed the payment amount");
+  }
 
   const postingDate = data.postingDate ? new Date(data.postingDate) : await getNow();
+  if (Number.isNaN(postingDate.getTime())) throw new Error("Posting date is invalid");
 
   const payment = await db.$transaction(async (tx) => {
+    const [accounts, party, branch] = await Promise.all([
+      tx.account.findMany({
+        where: {
+          orgId,
+          id: { in: [data.paidFromAccountId, data.paidToAccountId] },
+          isActive: true,
+          isGroup: false,
+        },
+        select: { id: true },
+      }),
+      data.partyType === "CUSTOMER"
+        ? tx.crmAccount.findFirst({
+            where: { orgId, id: data.partyId },
+            select: { id: true },
+          })
+        : tx.crmVendor.findFirst({
+            where: { orgId, id: data.partyId },
+            select: { id: true },
+          }),
+      data.branchId
+        ? tx.branch.findFirst({
+            where: { orgId, id: data.branchId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
+    if (
+      data.paidFromAccountId === data.paidToAccountId ||
+      accounts.length !== 2
+    ) {
+      throw new Error("Select two distinct active posting accounts");
+    }
+    if (!party) throw new Error("The selected party is not available");
+    if (data.branchId && !branch) {
+      throw new Error("The selected branch is not available");
+    }
+
+    if (allocations.length > 0) {
+      const targetIds = allocations.map((allocation: any) =>
+        data.partyType === "CUSTOMER"
+          ? allocation.salesInvoiceId
+          : allocation.purchaseInvoiceId,
+      );
+      if (
+        targetIds.some((id: string | null) => !id) ||
+        new Set(targetIds).size !== targetIds.length ||
+        allocations.some((allocation: any) =>
+          data.partyType === "CUSTOMER"
+            ? allocation.purchaseInvoiceId
+            : allocation.salesInvoiceId,
+        )
+      ) {
+        throw new Error("Each allocation must target one unique eligible invoice");
+      }
+      const eligibleInvoices = await tx.accountingDocument.findMany({
+        where: {
+          orgId,
+          status: "POSTED",
+          documentType:
+            data.partyType === "CUSTOMER"
+              ? "SALES_INVOICE"
+              : "PURCHASE_INVOICE",
+          legacyRecordType:
+            data.partyType === "CUSTOMER"
+              ? "SalesInvoice"
+              : "PurchaseInvoice",
+          legacyRecordId: { in: targetIds as string[] },
+          counterpartyType: data.partyType,
+          counterpartyId: data.partyId,
+        },
+        select: {
+          legacyRecordId: true,
+          totalAmount: true,
+          paymentTargets: {
+            where: { status: "ACTIVE" },
+            select: { amount: true },
+          },
+        },
+      });
+      const eligibleById = new Map(
+        eligibleInvoices.flatMap((invoice) =>
+          invoice.legacyRecordId
+            ? [
+                [
+                  invoice.legacyRecordId,
+                  invoice.paymentTargets.reduce(
+                    (remaining, allocation) =>
+                      remaining.sub(allocation.amount),
+                    invoice.totalAmount,
+                  ),
+                ] as const,
+              ]
+            : [],
+        ),
+      );
+      for (const allocation of allocations) {
+        const targetId =
+          allocation.salesInvoiceId || allocation.purchaseInvoiceId;
+        const outstanding = eligibleById.get(targetId);
+        if (!outstanding || allocation.allocatedAmount.gt(outstanding)) {
+          throw new Error("Allocation exceeds the eligible outstanding amount");
+        }
+      }
+    }
+
     const pe = await tx.paymentEntry.create({
       data: {
         orgId,
@@ -1280,132 +1429,20 @@ export async function createPaymentEntry(orgId: string, createdById: string, dat
         partyId: data.partyId,
         paidFromAccountId: data.paidFromAccountId,
         paidToAccountId: data.paidToAccountId,
-        amount: new Prisma.Decimal(amount),
+        amount,
         referenceNo: data.referenceNo || null,
         remarks: data.remarks || null,
-        status: data.submit ? "SUBMITTED" : "DRAFT",
+        status: "DRAFT",
         createdById,
         allocations: {
           create: allocations.map((al: any) => ({
             salesInvoiceId: al.salesInvoiceId || null,
             purchaseInvoiceId: al.purchaseInvoiceId || null,
-            allocatedAmount: new Prisma.Decimal(al.allocatedAmount),
+            allocatedAmount: al.allocatedAmount,
           })),
         },
       },
     });
-
-    if (data.submit) {
-      // Create postings
-      const glLines = [
-        // DEBIT Destination Account
-        {
-          accountId: data.paidToAccountId,
-          debit: amount,
-          credit: 0,
-          partyType: data.partyType === "CUSTOMER" ? null : "SUPPLIER",
-          partyId: data.partyType === "CUSTOMER" ? null : data.partyId,
-          remarks: `Payment entry ref ${data.referenceNo || pe.id}`,
-        },
-        // CREDIT Source Account
-        {
-          accountId: data.paidFromAccountId,
-          debit: 0,
-          credit: amount,
-          partyType: data.partyType === "CUSTOMER" ? "CUSTOMER" : null,
-          partyId: data.partyType === "CUSTOMER" ? data.partyId : null,
-          remarks: `Payment entry ref ${data.referenceNo || pe.id}`,
-        },
-      ];
-
-      await postGLTransactions(
-        tx,
-        orgId,
-        "PAYMENT_ENTRY",
-        pe.id,
-        postingDate,
-        glLines,
-        data.branchId,
-        createdById
-      );
-
-      // Customer Ledger or Supplier Ledger entry
-      if (data.partyType === "CUSTOMER") {
-        await tx.customerLedgerEntry.create({
-          data: {
-            orgId,
-            branchId: data.branchId || null,
-            customerId: data.partyId,
-            postingDate,
-            voucherType: "PAYMENT_ENTRY",
-            voucherId: pe.id,
-            debit: new Prisma.Decimal(0),
-            credit: new Prisma.Decimal(amount), // CREDIT client ledger
-            remarks: `Payment received: Ref ${data.referenceNo || pe.id}`,
-          },
-        });
-
-        // Apply allocations to update sales invoices outstanding balance
-        for (const al of allocations) {
-          if (!al.salesInvoiceId) continue;
-          const invoice = await tx.salesInvoice.findUnique({
-            where: { id: al.salesInvoiceId },
-          });
-          if (invoice) {
-            const newPaid = Number(invoice.paidAmount) + al.allocatedAmount;
-            const newOutstanding = Math.max(0, Number(invoice.grandTotal) - newPaid);
-            let status = "PARTLY_PAID";
-            if (newOutstanding <= 0.01) status = "PAID";
-
-            await tx.salesInvoice.update({
-              where: { id: al.salesInvoiceId },
-              data: {
-                paidAmount: new Prisma.Decimal(newPaid),
-                outstandingAmount: new Prisma.Decimal(newOutstanding),
-                status,
-              },
-            });
-          }
-        }
-      } else {
-        await tx.supplierLedgerEntry.create({
-          data: {
-            orgId,
-            branchId: data.branchId || null,
-            supplierId: data.partyId,
-            postingDate,
-            voucherType: "PAYMENT_ENTRY",
-            voucherId: pe.id,
-            debit: new Prisma.Decimal(amount), // DEBIT vendor ledger to reduce payables
-            credit: new Prisma.Decimal(0),
-            remarks: `Payment paid: Ref ${data.referenceNo || pe.id}`,
-          },
-        });
-
-        // Apply allocations to update purchase invoices outstanding balance
-        for (const al of allocations) {
-          if (!al.purchaseInvoiceId) continue;
-          const invoice = await tx.purchaseInvoice.findUnique({
-            where: { id: al.purchaseInvoiceId },
-          });
-          if (invoice) {
-            const newPaid = Number(invoice.paidAmount) + al.allocatedAmount;
-            const newOutstanding = Math.max(0, Number(invoice.grandTotal) - newPaid);
-            let status = "PARTLY_PAID";
-            if (newOutstanding <= 0.01) status = "PAID";
-
-            await tx.purchaseInvoice.update({
-              where: { id: al.purchaseInvoiceId },
-              data: {
-                paidAmount: new Prisma.Decimal(newPaid),
-                outstandingAmount: new Prisma.Decimal(newOutstanding),
-                status,
-              },
-            });
-          }
-        }
-      }
-    }
 
     return pe;
   });

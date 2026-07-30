@@ -10,7 +10,6 @@ import { DateInput } from "@/components/monolith/date-input";
 import {
   AccountingAction,
   AccountingAlert,
-  AccountingCheckbox,
   AccountingField,
   AccountingInput,
   AccountingMetric,
@@ -20,6 +19,14 @@ import {
   AccountingTable,
 } from "@/components/monolith/accounting-workspace";
 import { createPaymentEntryAction } from "@/modules/accounting/actions";
+import {
+  addDecimalStrings,
+  compareDecimalStrings,
+  formatAccountingMoney,
+  minimumDecimalString,
+  normalizeDecimalString,
+  subtractDecimalStrings,
+} from "@/modules/accounting/operational-helpers";
 
 interface NewPaymentClientProps {
   bankAccounts: any[];
@@ -29,6 +36,7 @@ interface NewPaymentClientProps {
   branches: any[];
   salesInvoices: any[];
   purchaseInvoices: any[];
+  initialPaymentType?: "RECEIVE" | "PAY";
 }
 
 export function NewPaymentClient({
@@ -39,25 +47,34 @@ export function NewPaymentClient({
   branches,
   salesInvoices,
   purchaseInvoices,
+  initialPaymentType = "RECEIVE",
 }: NewPaymentClientProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
-  const [paymentType, setPaymentType] = useState<"RECEIVE" | "PAY">("RECEIVE");
-  const [partyType, setPartyType] = useState<"CUSTOMER" | "SUPPLIER">("CUSTOMER");
+  const [paymentType, setPaymentType] =
+    useState<"RECEIVE" | "PAY">(initialPaymentType);
+  const [partyType, setPartyType] = useState<"CUSTOMER" | "SUPPLIER">(
+    initialPaymentType === "PAY" ? "SUPPLIER" : "CUSTOMER",
+  );
   const [partyId, setPartyId] = useState("");
   const [postingDate, setPostingDate] = useState(new Date().toISOString().split("T")[0]);
-  const [amount, setAmount] = useState(0);
+  const [amount, setAmount] = useState("");
   const [paidFromAccountId, setPaidFromAccountId] = useState(
-    otherAccounts.find((account) => account.accountType === "RECEIVABLE")?.id || "",
+    initialPaymentType === "PAY"
+      ? bankAccounts[0]?.id || ""
+      : otherAccounts.find((account) => account.accountType === "RECEIVABLE")
+          ?.id || "",
   );
   const [paidToAccountId, setPaidToAccountId] = useState(
-    bankAccounts[0]?.id || "",
+    initialPaymentType === "PAY"
+      ? otherAccounts.find((account) => account.accountType === "PAYABLE")?.id ||
+          ""
+      : bankAccounts[0]?.id || "",
   );
   const [referenceNo, setReferenceNo] = useState("");
   const [remarks, setRemarks] = useState("");
   const [branchId, setBranchId] = useState("");
-  const [submitImmediately, setSubmitImmediately] = useState(false);
-  const [allocations, setAllocations] = useState<Record<string, number>>({});
+  const [allocations, setAllocations] = useState<Record<string, string>>({});
 
   function updatePaymentType(nextType: "RECEIVE" | "PAY") {
     setPaymentType(nextType);
@@ -90,20 +107,30 @@ export function NewPaymentClient({
     [partyId, partyType, purchaseInvoices, salesInvoices],
   );
 
-  const totalAllocated = Object.values(allocations).reduce(
-    (sum, value) => sum + value,
-    0,
+  function decimalOrZero(value: string) {
+    try {
+      return normalizeDecimalString(value || "0", { maxScale: 4 });
+    } catch {
+      return "0";
+    }
+  }
+
+  const totalAllocated = addDecimalStrings(
+    ...Object.values(allocations).map(decimalOrZero),
   );
   const activeParties = partyType === "CUSTOMER" ? customers : suppliers;
 
   function autoAllocate() {
-    let remaining = amount;
-    const next: Record<string, number> = {};
+    let remaining = decimalOrZero(amount);
+    const next: Record<string, string> = {};
     for (const invoice of filteredInvoices) {
-      if (remaining <= 0) break;
-      const allocated = Math.min(remaining, invoice.outstandingAmount);
-      next[invoice.id] = Number(allocated.toFixed(2));
-      remaining -= allocated;
+      if (compareDecimalStrings(remaining, "0") <= 0) break;
+      const allocated = minimumDecimalString(
+        remaining,
+        invoice.outstandingAmount,
+      );
+      next[invoice.id] = allocated;
+      remaining = subtractDecimalStrings(remaining, allocated);
     }
     setAllocations(next);
     toast.success("Amount allocated to the oldest outstanding bills");
@@ -114,17 +141,25 @@ export function NewPaymentClient({
     if (!partyId) return toast.error("Please select a customer or supplier");
     if (!paidFromAccountId || !paidToAccountId)
       return toast.error("Please select paid from and paid to accounts");
-    if (amount <= 0)
+    let normalizedAmount: string;
+    try {
+      normalizedAmount = normalizeDecimalString(amount, { maxScale: 4 });
+    } catch (error) {
+      return toast.error(
+        error instanceof Error ? error.message : "Enter a valid payment amount",
+      );
+    }
+    if (compareDecimalStrings(normalizedAmount, "0") <= 0)
       return toast.error("Payment amount must be greater than zero");
-    if (totalAllocated > amount + 0.05)
+    if (compareDecimalStrings(totalAllocated, normalizedAmount) > 0)
       return toast.error("Allocated amount cannot exceed the payment amount");
 
     const allocationRows = Object.entries(allocations)
-      .filter(([, value]) => value > 0)
+      .filter(([, value]) => compareDecimalStrings(decimalOrZero(value), "0") > 0)
       .map(([invoiceId, value]) => ({
         salesInvoiceId: partyType === "CUSTOMER" ? invoiceId : null,
         purchaseInvoiceId: partyType === "SUPPLIER" ? invoiceId : null,
-        allocatedAmount: value,
+        allocatedAmount: decimalOrZero(value),
       }));
 
     setIsSaving(true);
@@ -136,18 +171,16 @@ export function NewPaymentClient({
         partyId,
         paidFromAccountId,
         paidToAccountId,
-        amount,
+        amount: normalizedAmount,
         referenceNo: referenceNo || null,
         remarks: remarks || null,
         branchId: branchId || null,
-        submit: submitImmediately,
+        submit: false,
         allocations: allocationRows,
       });
       if (result.ok) {
         toast.success(
-          submitImmediately
-            ? "Payment submitted and ledger posted"
-            : "Payment draft saved",
+          "Payment draft saved",
         );
         router.push("/accounting/payment-entries");
         router.refresh();
@@ -223,8 +256,8 @@ export function NewPaymentClient({
               type="number"
               min="0.01"
               step="0.01"
-              value={amount || ""}
-              onChange={(event) => setAmount(Number(event.target.value) || 0)}
+              value={amount}
+              onChange={(event) => setAmount(event.target.value)}
             />
           </AccountingField>
           <AccountingField label="Paid from account" required>
@@ -294,7 +327,7 @@ export function NewPaymentClient({
           title="Invoice allocations"
           description="Allocate the payment against outstanding sales or purchase documents."
           actions={
-            amount > 0 ? (
+            compareDecimalStrings(decimalOrZero(amount), "0") > 0 ? (
               <AccountingAction
                 type="button"
                 variant="secondary"
@@ -319,10 +352,10 @@ export function NewPaymentClient({
                 <tr key={invoice.id}>
                   <td>{invoice.invoiceNumber}</td>
                   <td className="mnx-accounting-amount">
-                    ₹{invoice.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    {formatAccountingMoney(invoice.grandTotal, "INR", 4)}
                   </td>
                   <td className="mnx-accounting-amount">
-                    ₹{invoice.outstandingAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    {formatAccountingMoney(invoice.outstandingAmount, "INR", 4)}
                   </td>
                   <td>
                     <AccountingInput
@@ -331,11 +364,11 @@ export function NewPaymentClient({
                       min="0"
                       max={invoice.outstandingAmount}
                       step="0.01"
-                      value={allocations[invoice.id] || ""}
+                      value={allocations[invoice.id] ?? ""}
                       onChange={(event) =>
                         setAllocations((current) => ({
                           ...current,
-                          [invoice.id]: Number(event.target.value) || 0,
+                          [invoice.id]: event.target.value,
                         }))
                       }
                     />
@@ -353,22 +386,24 @@ export function NewPaymentClient({
       )}
 
       <AccountingMetrics>
-        <AccountingMetric label="Payment amount" value={`₹${amount.toFixed(2)}`} />
+        <AccountingMetric
+          label="Payment amount"
+          value={formatAccountingMoney(decimalOrZero(amount), "INR", 4)}
+        />
         <AccountingMetric
           label="Allocated"
-          value={`₹${totalAllocated.toFixed(2)}`}
+          value={formatAccountingMoney(totalAllocated, "INR", 4)}
         />
         <AccountingMetric
           label="Unallocated"
-          value={`₹${(amount - totalAllocated).toFixed(2)}`}
+          value={formatAccountingMoney(
+            subtractDecimalStrings(decimalOrZero(amount), totalAllocated),
+            "INR",
+            4,
+          )}
         />
       </AccountingMetrics>
       <div className="mnx-accounting-form-actions">
-        <AccountingCheckbox
-          checked={submitImmediately}
-          onChange={(event) => setSubmitImmediately(event.target.checked)}
-          label="Post and finalise payment immediately"
-        />
         <AccountingAction disabled={isSaving} type="submit">
           {isSaving ? <Loader2 aria-hidden="true" className="animate-spin" size={16} /> : null}
           {isSaving ? "Saving…" : "Record payment"}

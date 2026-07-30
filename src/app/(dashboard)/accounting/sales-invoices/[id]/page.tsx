@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React from "react";
-import { getSession } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
+import { db } from "@/lib/db";
 import { getSalesInvoice } from "@/modules/accounting/service";
+import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { SalesInvoiceDetailClient } from "./detail-client";
 import {
   AccountingActionLink,
@@ -15,11 +16,25 @@ interface SalesInvoiceDetailPageProps {
 }
 
 export default async function SalesInvoiceDetailPage({ params }: SalesInvoiceDetailPageProps) {
-  const session = await getSession();
-  if (!session?.user) redirect("/login");
-
-  const orgId = session.user.orgId!;
   const { id } = await params;
+  const { orgId } = await requireAccountingRouteAccess(
+    `/accounting/sales-invoices/${id}`,
+    [
+      "accounting.document.read",
+      "accounting.invoice.read",
+      "accounting.sales-invoice.prepare",
+    ],
+  );
+  const canonical = await db.accountingDocument.findFirst({
+    where: {
+      orgId,
+      legacyRecordType: "SalesInvoice",
+      legacyRecordId: id,
+    },
+    orderBy: { sourceVersion: "desc" },
+    select: { id: true },
+  });
+  if (canonical) redirect(`/accounting/documents/${canonical.id}`);
 
   const invoice = (await getSalesInvoice(orgId, id)) as any;
   if (!invoice) notFound();
@@ -27,27 +42,27 @@ export default async function SalesInvoiceDetailPage({ params }: SalesInvoiceDet
   // Serialize values
   const serializedInvoice = {
     ...invoice,
-    grandTotal: Number(invoice.grandTotal),
-    paidAmount: Number(invoice.paidAmount),
-    outstandingAmount: Number(invoice.outstandingAmount),
-    discountAmount: Number(invoice.discountAmount),
-    taxAmount: Number(invoice.taxAmount),
+    grandTotal: invoice.grandTotal.toString(),
+    paidAmount: invoice.paidAmount.toString(),
+    outstandingAmount: invoice.outstandingAmount.toString(),
+    discountAmount: invoice.discountAmount.toString(),
+    taxAmount: invoice.taxAmount.toString(),
     postingDate: invoice.postingDate.toISOString(),
     dueDate: invoice.dueDate.toISOString(),
     createdAt: invoice.createdAt.toISOString(),
     updatedAt: invoice.updatedAt.toISOString(),
     items: invoice.items.map((it: any) => ({
       ...it,
-      rate: Number(it.rate),
-      amount: Number(it.amount),
+      rate: it.rate.toString(),
+      amount: it.amount.toString(),
     })),
     taxLines: invoice.taxLines.map((t: any) => ({
       ...t,
-      taxAmount: Number(t.taxAmount),
+      taxAmount: t.taxAmount.toString(),
     })),
     payments: invoice.payments.map((p: any) => ({
       ...p,
-      allocatedAmount: Number(p.allocatedAmount),
+      allocatedAmount: p.allocatedAmount.toString(),
       paymentEntry: {
         ...p.paymentEntry,
         postingDate: p.paymentEntry.postingDate.toISOString(),
@@ -55,8 +70,8 @@ export default async function SalesInvoiceDetailPage({ params }: SalesInvoiceDet
     })),
     glEntries: invoice.glEntries.map((gl: any) => ({
       ...gl,
-      debit: Number(gl.debit),
-      credit: Number(gl.credit),
+      debit: gl.debit.toString(),
+      credit: gl.credit.toString(),
       postingDate: gl.postingDate.toISOString(),
     })),
   };

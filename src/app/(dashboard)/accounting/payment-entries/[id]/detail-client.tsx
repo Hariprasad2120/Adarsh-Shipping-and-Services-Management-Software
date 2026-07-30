@@ -17,19 +17,18 @@ import {
   AccountingTable,
 } from "@/components/monolith/accounting-workspace";
 import {
-  cancelPaymentEntryAction,
   submitPaymentEntryAction,
 } from "@/modules/accounting/actions";
+import { formatAccountingMoney } from "@/modules/accounting/operational-helpers";
 
 export function PaymentEntryDetailClient({ payment }: { payment: any }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
 
   async function submitPayment() {
     if (
       !confirm(
-        "Submit this payment, update invoice balances, and post its ledger entries?",
+        "Submit this payment for independent approval? The draft will become immutable.",
       )
     )
       return;
@@ -37,7 +36,8 @@ export function PaymentEntryDetailClient({ payment }: { payment: any }) {
     try {
       const result = await submitPaymentEntryAction(payment.id);
       if (result.ok) {
-        toast.success("Payment submitted and posted");
+        toast.success("Payment submitted for approval");
+        router.push(`/accounting/payments/${result.data.id}`);
         router.refresh();
       } else toast.error(result.error);
     } catch (error) {
@@ -46,29 +46,6 @@ export function PaymentEntryDetailClient({ payment }: { payment: any }) {
       );
     } finally {
       setIsSubmitting(false);
-    }
-  }
-
-  async function cancelPayment() {
-    if (
-      !confirm(
-        "Cancel this payment and restore the outstanding balances on allocated invoices?",
-      )
-    )
-      return;
-    setIsCancelling(true);
-    try {
-      const result = await cancelPaymentEntryAction(payment.id);
-      if (result.ok) {
-        toast.success("Payment cancelled and reversed");
-        router.refresh();
-      } else toast.error(result.error);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to cancel payment",
-      );
-    } finally {
-      setIsCancelling(false);
     }
   }
 
@@ -89,19 +66,7 @@ export function PaymentEntryDetailClient({ payment }: { payment: any }) {
                 {isSubmitting ? (
                   <Loader2 aria-hidden="true" className="animate-spin" size={16} />
                 ) : null}
-                Submit payment
-              </AccountingAction>
-            ) : null}
-            {payment.status === "SUBMITTED" ? (
-              <AccountingAction
-                disabled={isCancelling}
-                onClick={cancelPayment}
-                variant="destructive"
-              >
-                {isCancelling ? (
-                  <Loader2 aria-hidden="true" className="animate-spin" size={16} />
-                ) : null}
-                Cancel and reverse
+                Submit for approval
               </AccountingAction>
             ) : null}
           </div>
@@ -131,7 +96,7 @@ export function PaymentEntryDetailClient({ payment }: { payment: any }) {
           />
           <AccountingDetail
             label="Payment amount"
-            value={`₹${payment.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+            value={formatAccountingMoney(payment.amount, "INR", 4)}
           />
           <AccountingDetail
             label="Remarks"
@@ -174,16 +139,14 @@ export function PaymentEntryDetailClient({ payment }: { payment: any }) {
                       {new Date(invoice.postingDate).toLocaleDateString("en-IN")}
                     </td>
                     <td className="mnx-accounting-amount">
-                      ₹
-                      {invoice.grandTotal.toLocaleString("en-IN", {
-                        minimumFractionDigits: 2,
-                      })}
+                      {formatAccountingMoney(invoice.grandTotal, "INR", 4)}
                     </td>
                     <td className="mnx-accounting-amount">
-                      ₹
-                      {allocation.allocatedAmount.toLocaleString("en-IN", {
-                        minimumFractionDigits: 2,
-                      })}
+                      {formatAccountingMoney(
+                        allocation.allocatedAmount,
+                        "INR",
+                        4,
+                      )}
                     </td>
                     <td>
                       <AccountingActionLink

@@ -1,20 +1,23 @@
 import React from "react";
-import { getSession } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { NewInvoiceClient } from "./new-invoice-client";
 import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 
 export default async function NewSalesInvoicePage() {
-  const session = await getSession();
-  if (!session?.user) redirect("/login");
-
-  const orgId = session.user.orgId!;
+  const { orgId } = await requireAccountingRouteAccess(
+    "/accounting/sales-invoices/new",
+    ["accounting.invoice.create"],
+  );
 
   // Fetch customers (CRM accounts), branches, products, and bank accounts
   const [customers, branches, products, bankAccounts] = await Promise.all([
     db.crmAccount.findMany({ where: { orgId } }),
-    db.branch.findMany({ where: { orgId } }),
+    db.branch.findMany({
+      where: { orgId },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
     db.crmProduct.findMany({
       where: { orgId, active: true },
       select: { id: true, name: true, price: true, taxPercent: true },
@@ -31,6 +34,11 @@ export default async function NewSalesInvoicePage() {
     id: c.id,
     name: c.name,
   }));
+  const productList = products.map((product) => ({
+    ...product,
+    price: product.price.toString(),
+    taxPercent: product.taxPercent.toString(),
+  }));
 
   return (
     <>
@@ -38,7 +46,7 @@ export default async function NewSalesInvoicePage() {
       <NewInvoiceClient
         customers={customerList}
         branches={branches}
-        products={products}
+        products={productList}
         bankAccounts={bankAccounts}
       />
     </>

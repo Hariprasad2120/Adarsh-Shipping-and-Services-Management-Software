@@ -10,10 +10,18 @@ import {
   AccountingAlert,
   AccountingField,
   AccountingInput,
+  AccountingMetric,
+  AccountingMetrics,
   AccountingSection,
   AccountingSelect,
 } from "@/components/monolith/accounting-workspace";
 import { createJournalEntryAction } from "@/modules/accounting/actions";
+import {
+  addDecimalStrings,
+  compareDecimalStrings,
+  formatAccountingMoney,
+  normalizeDecimalString,
+} from "@/modules/accounting/operational-helpers";
 
 interface NewJVClientProps {
   accounts: Array<{ id: string; accountCode: string; accountName: string }>;
@@ -22,15 +30,15 @@ interface NewJVClientProps {
 
 type JournalLine = {
   accountId: string;
-  debit: number | string;
-  credit: number | string;
+  debit: string;
+  credit: string;
   remarks: string;
 };
 
 const emptyLine = (): JournalLine => ({
   accountId: "",
-  debit: 0,
-  credit: 0,
+  debit: "0",
+  credit: "0",
   remarks: "",
 });
 
@@ -43,6 +51,21 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
     new Date().toISOString().split("T")[0],
   );
   const [lines, setLines] = useState<JournalLine[]>([emptyLine(), emptyLine()]);
+
+  function decimalOrZero(value: string) {
+    try {
+      return normalizeDecimalString(value || "0", { maxScale: 8 });
+    } catch {
+      return "0";
+    }
+  }
+
+  const debitTotal = addDecimalStrings(
+    ...lines.map((line) => decimalOrZero(line.debit)),
+  );
+  const creditTotal = addDecimalStrings(
+    ...lines.map((line) => decimalOrZero(line.credit)),
+  );
 
   function updateLine(
     index: number,
@@ -66,13 +89,33 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
       toast.error("Please select accounts for all lines");
       return;
     }
+    let normalizedLines: JournalLine[];
+    try {
+      normalizedLines = lines.map((line) => ({
+        ...line,
+        debit: normalizeDecimalString(line.debit || "0", { maxScale: 8 }),
+        credit: normalizeDecimalString(line.credit || "0", { maxScale: 8 }),
+      }));
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Enter valid journal amounts",
+      );
+      return;
+    }
+    if (
+      compareDecimalStrings(debitTotal, "0") <= 0 ||
+      compareDecimalStrings(debitTotal, creditTotal) !== 0
+    ) {
+      toast.error("Debit and credit totals must be equal and greater than zero");
+      return;
+    }
     setIsSaving(true);
     try {
       const result = await createJournalEntryAction({
         postingDate: new Date(postingDate),
         remarks: remarks || null,
         branchId: branchId || null,
-        lines: lines.map((line) => ({
+        lines: normalizedLines.map((line) => ({
           accountId: line.accountId,
           debit: String(line.debit || "0"),
           credit: String(line.credit || "0"),
@@ -225,6 +268,24 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
         </div>
       </AccountingSection>
 
+      <AccountingMetrics>
+        <AccountingMetric
+          label="Debit total"
+          value={formatAccountingMoney(debitTotal, "INR")}
+        />
+        <AccountingMetric
+          label="Credit total"
+          value={formatAccountingMoney(creditTotal, "INR")}
+        />
+        <AccountingMetric
+          label="Balance check"
+          value={
+            compareDecimalStrings(debitTotal, creditTotal) === 0
+              ? "Balanced"
+              : "Out of balance"
+          }
+        />
+      </AccountingMetrics>
       <AccountingAlert>
         Amounts are stored as exact decimal strings. Accounting validates exact
         debit and credit equality when a separate approver posts the draft.

@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { DateInput } from "./date-input";
 import {
   AccountingAction,
-  AccountingCheckbox,
   AccountingField,
   AccountingInput,
   AccountingMetric,
@@ -20,15 +19,24 @@ import {
   createPurchaseInvoiceAction,
   createSalesInvoiceAction,
 } from "@/modules/accounting/actions";
+import {
+  addDecimalStrings,
+  compareDecimalStrings,
+  divideDecimalStrings,
+  formatAccountingMoney,
+  multiplyDecimalStrings,
+  normalizeDecimalString,
+  subtractDecimalStrings,
+} from "@/modules/accounting/operational-helpers";
 
 type InvoiceKind = "sales" | "purchase";
 
 type InvoiceLine = {
   itemName: string;
-  qty: number;
-  rate: number;
+  qty: string;
+  rate: string;
   currency: string;
-  exchangeRate: number;
+  exchangeRate: string;
 };
 
 interface AccountingInvoiceFormProps {
@@ -38,8 +46,8 @@ interface AccountingInvoiceFormProps {
   products?: Array<{
     id: string;
     name: string;
-    price: number;
-    taxPercent: number;
+    price: string;
+    taxPercent: string;
   }>;
   bankAccounts?: Array<{
     id: string;
@@ -50,10 +58,10 @@ interface AccountingInvoiceFormProps {
 
 const emptyLine = (): InvoiceLine => ({
   itemName: "",
-  qty: 1,
-  rate: 0,
+  qty: "1",
+  rate: "",
   currency: "INR",
-  exchangeRate: 1,
+  exchangeRate: "1",
 });
 
 const defaultPostingDate = new Date().toISOString().split("T")[0];
@@ -77,9 +85,8 @@ export function AccountingInvoiceForm({
   const [postingDate, setPostingDate] = useState(defaultPostingDate);
   const [dueDate, setDueDate] = useState(defaultDueDate);
   const [remarks, setRemarks] = useState("");
-  const [submitImmediately, setSubmitImmediately] = useState(false);
-  const [discountAmount, setDiscountAmount] = useState(0);
-  const [taxRate, setTaxRate] = useState(18);
+  const [discountAmount, setDiscountAmount] = useState("0");
+  const [taxRate, setTaxRate] = useState("18");
   const [bankDetails, setBankDetails] = useState("");
   const [manualNotes, setManualNotes] = useState("Thanks for your business.");
   const [items, setItems] = useState<InvoiceLine[]>([emptyLine()]);
@@ -102,12 +109,9 @@ export function AccountingInvoiceForm({
         if (itemIndex !== index) return item;
         const next = {
           ...item,
-          [field]:
-            field === "itemName" || field === "currency"
-              ? value
-              : Number(value) || 0,
+          [field]: value,
         };
-        if (field === "currency" && value === "INR") next.exchangeRate = 1;
+        if (field === "currency" && value === "INR") next.exchangeRate = "1";
         if (field === "itemName") {
           const product = products.find(
             (candidate) =>
@@ -123,14 +127,35 @@ export function AccountingInvoiceForm({
     );
   }
 
-  const subtotal = items.reduce(
-    (sum, item) =>
-      sum + item.qty * item.rate * (kind === "sales" ? item.exchangeRate : 1),
-    0,
+  function decimalOrZero(value: string) {
+    try {
+      return normalizeDecimalString(value || "0", { maxScale: 8 });
+    } catch {
+      return "0";
+    }
+  }
+
+  function lineTotal(item: InvoiceLine) {
+    return multiplyDecimalStrings(
+      decimalOrZero(item.qty),
+      decimalOrZero(item.rate),
+      kind === "sales" ? decimalOrZero(item.exchangeRate) : "1",
+    );
+  }
+
+  const subtotal = addDecimalStrings(...items.map(lineTotal));
+  const discounted = subtractDecimalStrings(
+    subtotal,
+    decimalOrZero(discountAmount),
   );
-  const taxableAmount = Math.max(0, subtotal - discountAmount);
-  const taxAmount = taxableAmount * (taxRate / 100);
-  const grandTotal = taxableAmount + taxAmount;
+  const taxableAmount =
+    compareDecimalStrings(discounted, "0") < 0 ? "0" : discounted;
+  const taxAmount = divideDecimalStrings(
+    multiplyDecimalStrings(taxableAmount, decimalOrZero(taxRate)),
+    "100",
+    8,
+  );
+  const grandTotal = addDecimalStrings(taxableAmount, taxAmount);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -140,7 +165,12 @@ export function AccountingInvoiceForm({
     }
     if (
       items.some(
-        (item) => !item.itemName || item.qty <= 0 || item.rate <= 0,
+        (item) =>
+          !item.itemName ||
+          compareDecimalStrings(decimalOrZero(item.qty), "0") <= 0 ||
+          compareDecimalStrings(decimalOrZero(item.rate), "0") <= 0 ||
+          (kind === "sales" &&
+            compareDecimalStrings(decimalOrZero(item.exchangeRate), "0") <= 0),
       )
     ) {
       toast.error("Please complete each line with a positive quantity and rate");
@@ -156,7 +186,7 @@ export function AccountingInvoiceForm({
         discountAmount,
         taxRate,
         remarks: remarks || null,
-        submit: submitImmediately,
+        submit: false,
       };
       const result =
         kind === "sales"
@@ -185,9 +215,7 @@ export function AccountingInvoiceForm({
 
       if (result.ok) {
         toast.success(
-          submitImmediately
-            ? `${kind === "sales" ? "Sales" : "Purchase"} invoice created and posted`
-            : `${kind === "sales" ? "Sales" : "Purchase"} invoice draft saved`,
+          `${kind === "sales" ? "Sales" : "Purchase"} invoice draft saved`,
         );
         router.push(`/accounting/${kind}-invoices`);
         router.refresh();
@@ -334,7 +362,7 @@ export function AccountingInvoiceForm({
                       type="number"
                       min="0.0001"
                       step="any"
-                      value={item.exchangeRate || ""}
+                  value={item.exchangeRate}
                       onChange={(event) =>
                         updateItem(index, "exchangeRate", event.target.value)
                       }
@@ -360,7 +388,7 @@ export function AccountingInvoiceForm({
                   type="number"
                   min="0.01"
                   step="0.01"
-                  value={item.rate || ""}
+                  value={item.rate}
                   onChange={(event) =>
                     updateItem(index, "rate", event.target.value)
                   }
@@ -369,11 +397,7 @@ export function AccountingInvoiceForm({
               <AccountingField label="Line total">
                 <AccountingInput
                   readOnly
-                  value={`₹${(
-                    item.qty *
-                    item.rate *
-                    (kind === "sales" ? item.exchangeRate : 1)
-                  ).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+                  value={formatAccountingMoney(lineTotal(item), "INR")}
                 />
               </AccountingField>
               <AccountingAction
@@ -409,16 +433,14 @@ export function AccountingInvoiceForm({
               type="number"
               min="0"
               step="0.01"
-              value={discountAmount || ""}
-              onChange={(event) =>
-                setDiscountAmount(Number(event.target.value) || 0)
-              }
+              value={discountAmount}
+              onChange={(event) => setDiscountAmount(event.target.value)}
             />
           </AccountingField>
           <AccountingField label="Tax rate">
             <AccountingSelect
               value={taxRate}
-              onChange={(event) => setTaxRate(Number(event.target.value) || 0)}
+              onChange={(event) => setTaxRate(event.target.value)}
             >
               {[0, 5, 12, 18, 28].map((rate) => (
                 <option key={rate} value={rate}>
@@ -442,27 +464,22 @@ export function AccountingInvoiceForm({
       <AccountingMetrics>
         <AccountingMetric
           label="Subtotal"
-          value={`₹${subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+          value={formatAccountingMoney(subtotal, "INR")}
         />
         <AccountingMetric
           label="Taxable amount"
-          value={`₹${taxableAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+          value={formatAccountingMoney(taxableAmount, "INR")}
         />
         <AccountingMetric
           label={`GST ${taxRate}%`}
-          value={`₹${taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+          value={formatAccountingMoney(taxAmount, "INR")}
         />
         <AccountingMetric
           label="Grand total"
-          value={`₹${grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+          value={formatAccountingMoney(grandTotal, "INR")}
         />
       </AccountingMetrics>
       <div className="mnx-accounting-form-actions">
-        <AccountingCheckbox
-          checked={submitImmediately}
-          onChange={(event) => setSubmitImmediately(event.target.checked)}
-          label="Post and finalise invoice immediately"
-        />
         <AccountingAction disabled={isSaving} type="submit">
           {isSaving ? <Loader2 aria-hidden="true" className="animate-spin" size={16} /> : null}
           {isSaving

@@ -39,9 +39,18 @@ const routes = walk(accountingRoot, (file) => file.endsWith(`${path.sep}page.tsx
 
 const requiredRoutes = [
   "/accounting",
+  "/accounting/access-denied",
   "/accounting/accounts",
+  "/accounting/allocations",
+  "/accounting/approvals",
   "/accounting/balance-sheet",
   "/accounting/banking",
+  "/accounting/configuration",
+  "/accounting/credit-notes",
+  "/accounting/customer-receipts",
+  "/accounting/debit-notes",
+  "/accounting/depreciation",
+  "/accounting/documents/[id]",
   "/accounting/general-ledger",
   "/accounting/invoices-sales",
   "/accounting/invoices-sales/new",
@@ -52,9 +61,14 @@ const requiredRoutes = [
   "/accounting/journal-entries",
   "/accounting/journal-entries/[id]",
   "/accounting/journal-entries/new",
+  "/accounting/manual-review",
+  "/accounting/outbox",
+  "/accounting/partners",
   "/accounting/payment-entries",
   "/accounting/payment-entries/[id]",
   "/accounting/payment-entries/new",
+  "/accounting/payments",
+  "/accounting/payments/[id]",
   "/accounting/profit-loss",
   "/accounting/purchase-invoices",
   "/accounting/purchase-invoices/[id]",
@@ -62,6 +76,7 @@ const requiredRoutes = [
   "/accounting/purchase-orders",
   "/accounting/purchase-orders/new",
   "/accounting/quotations",
+  "/accounting/recurring",
   "/accounting/reports",
   "/accounting/sales-invoices",
   "/accounting/sales-invoices/[id]",
@@ -70,9 +85,10 @@ const requiredRoutes = [
   "/accounting/sales-orders/new",
   "/accounting/settings",
   "/accounting/trial-balance",
+  "/accounting/vendor-payments",
 ];
 
-assert(routes.length === 32, `Expected 32 Accounting routes, found ${routes.length}.`);
+assert(routes.length === 48, `Expected 48 Accounting routes, found ${routes.length}.`);
 for (const route of requiredRoutes) assert(routes.includes(route), `Missing discovered route ${route}.`);
 
 for (const requiredFile of [
@@ -85,6 +101,8 @@ for (const requiredFile of [
   "src/components/monolith/accounting-items.tsx",
   "src/components/monolith/accounting-commercial-document-form.tsx",
   "src/components/monolith/accounting-delete-action.tsx",
+  "src/components/monolith/accounting-operational-actions.tsx",
+  "src/components/monolith/accounting-operational-views.tsx",
 ]) {
   assert(existsSync(path.join(repositoryRoot, requiredFile)), `Missing ${requiredFile}.`);
 }
@@ -117,6 +135,8 @@ const scopedSources = [
     "src/components/monolith/accounting-items.tsx",
     "src/components/monolith/accounting-commercial-document-form.tsx",
     "src/components/monolith/accounting-delete-action.tsx",
+    "src/components/monolith/accounting-operational-actions.tsx",
+    "src/components/monolith/accounting-operational-views.tsx",
   ].map((relativePath) => path.join(repositoryRoot, relativePath)),
 ];
 const forbiddenPatterns = [
@@ -153,6 +173,8 @@ const behaviorSources = {
   paymentNew: read("src/app/(dashboard)/accounting/payment-entries/new/new-payment-client.tsx"),
   paymentDetail: read("src/app/(dashboard)/accounting/payment-entries/[id]/detail-client.tsx"),
   invoices: read("src/components/monolith/accounting-invoice-form.tsx"),
+  operationalActions: read("src/modules/accounting/operational-actions.ts"),
+  operationalViews: read("src/components/monolith/accounting-operational-views.tsx"),
   quotations: read("src/app/(dashboard)/accounting/quotations/quotations-client.tsx"),
   reports: read("src/app/(dashboard)/accounting/reports/reports-client.tsx"),
   settings: read("src/app/(dashboard)/accounting/settings/settings-client.tsx"),
@@ -162,10 +184,25 @@ for (const [sourceName, signals] of Object.entries({
   banking: ["recordBankTransferAction"],
   jobs: ["createJobCostingAction", "getJobCostingAction"],
   journalNew: ["createJournalEntryAction"],
-  journalDetail: ["submitJournalEntryAction", "cancelJournalEntryAction"],
+  journalDetail: ["submitJournalEntryAction"],
   paymentNew: ["createPaymentEntryAction"],
-  paymentDetail: ["submitPaymentEntryAction", "cancelPaymentEntryAction"],
+  paymentDetail: ["submitPaymentEntryAction"],
   invoices: ["createSalesInvoiceAction", "createPurchaseInvoiceAction"],
+  operationalActions: [
+    "approveAndPostAccountingDocument",
+    "approveAndPostAccountingPayment",
+    "rejectAccountingDocument",
+    "rejectAccountingPayment",
+    "submitJournalEntry",
+    "retryAccountingOutbox",
+  ],
+  operationalViews: [
+    "CanonicalDocumentRegister",
+    "CanonicalPaymentRegister",
+    "CanonicalJournalRegister",
+    "OperationalLedgerTable",
+    "AccountingPolicyGate",
+  ],
   quotations: ["createQuotationAction", "convertQuotationToInvoiceAction", "createCustomerNoteAction", "submitCustomerNoteAction"],
   reports: ["getProfitAndLossAction", "getBalanceSheetAction", "getTrialBalanceAction", "getDayBookAction", "getARAgeingAction", "getAPAgeingAction", "getGSTR1SummaryAction", "getJobProfitabilityAction"],
   settings: ["updateAccountingSettingsAction"],
@@ -209,4 +246,24 @@ for (const entry of [
   "src/components/items/ItemsListPage.tsx",
 ]) assert(archiveFiles.includes(entry), `Backup archive is missing ${entry}.`);
 
-console.log(`Verified ${routes.length} Accounting routes, shared controls and responsive styles, protected workflow signals, and the ${archiveFiles.length}-file legacy archive.`);
+const phase5ArchivePath = path.join(
+  repositoryRoot,
+  "OLD UI code",
+  "legacy-ui-before-accounting-phase5-2f37936.zip",
+);
+assert(existsSync(phase5ArchivePath), "Missing Phase 5 Accounting backup archive.");
+assert(
+  statSync(phase5ArchivePath).size === 117_178,
+  "Phase 5 Accounting backup archive size does not match.",
+);
+const phase5Hash = createHash("sha256");
+for await (const chunk of createReadStream(phase5ArchivePath)) {
+  phase5Hash.update(chunk);
+}
+assert(
+  phase5Hash.digest("hex").toUpperCase() ===
+    "3260DD7EE1DAC71D3FB4AAE3AA149668A450EF9F944D817C2461679DD8D1C8A8",
+  "Phase 5 Accounting backup archive checksum does not match.",
+);
+
+console.log(`Verified ${routes.length} Accounting routes, shared controls and responsive styles, protected workflow signals, and both legacy archives.`);

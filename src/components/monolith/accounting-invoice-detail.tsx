@@ -7,11 +7,14 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
-  cancelPurchaseInvoiceAction,
-  cancelSalesInvoiceAction,
   submitPurchaseInvoiceAction,
   submitSalesInvoiceAction,
 } from "@/modules/accounting/actions";
+import {
+  addDecimalStrings,
+  compareDecimalStrings,
+  formatAccountingMoney,
+} from "@/modules/accounting/operational-helpers";
 import {
   AccountingAction,
   AccountingActionLink,
@@ -33,17 +36,15 @@ export function AccountingInvoiceDetail({
 }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
   const party = kind === "sales" ? invoice.customer : invoice.supplier;
-  const subtotal = invoice.items.reduce(
-    (sum: number, item: any) => sum + item.amount,
-    0,
+  const subtotal = addDecimalStrings(
+    ...invoice.items.map((item: any) => item.amount),
   );
 
   async function submitInvoice() {
     if (
       !confirm(
-        `Submit this ${kind} invoice and post its ledger entries?`,
+        `Submit this ${kind} invoice for independent approval? The draft will become immutable.`,
       )
     )
       return;
@@ -54,7 +55,8 @@ export function AccountingInvoiceDetail({
           ? await submitSalesInvoiceAction(invoice.id)
           : await submitPurchaseInvoiceAction(invoice.id);
       if (result.ok) {
-        toast.success("Invoice submitted and posted");
+        toast.success("Invoice submitted for approval");
+        router.push(`/accounting/documents/${result.data.id}`);
         router.refresh();
       } else toast.error(result.error);
     } catch (error) {
@@ -63,33 +65,6 @@ export function AccountingInvoiceDetail({
       );
     } finally {
       setIsSubmitting(false);
-    }
-  }
-
-  async function cancelInvoice() {
-    if (invoice.payments?.length > 0) {
-      toast.error(
-        "Cannot cancel an invoice with active payment allocations. Revert payment entries first.",
-      );
-      return;
-    }
-    if (!confirm("Cancel this invoice and post reversal ledger entries?")) return;
-    setIsCancelling(true);
-    try {
-      const result =
-        kind === "sales"
-          ? await cancelSalesInvoiceAction(invoice.id)
-          : await cancelPurchaseInvoiceAction(invoice.id);
-      if (result.ok) {
-        toast.success("Invoice cancelled and reversed");
-        router.refresh();
-      } else toast.error(result.error);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to cancel invoice",
-      );
-    } finally {
-      setIsCancelling(false);
     }
   }
 
@@ -110,20 +85,7 @@ export function AccountingInvoiceDetail({
                 {isSubmitting ? (
                   <Loader2 aria-hidden="true" className="animate-spin" size={16} />
                 ) : null}
-                Submit and post
-              </AccountingAction>
-            ) : null}
-            {invoice.status === "UNPAID" ||
-            invoice.status === "PARTLY_PAID" ? (
-              <AccountingAction
-                disabled={isCancelling}
-                onClick={cancelInvoice}
-                variant="destructive"
-              >
-                {isCancelling ? (
-                  <Loader2 aria-hidden="true" className="animate-spin" size={16} />
-                ) : null}
-                Cancel and reverse
+                Submit for approval
               </AccountingAction>
             ) : null}
           </div>
@@ -173,15 +135,15 @@ export function AccountingInvoiceDetail({
       <AccountingMetrics>
         <AccountingMetric
           label="Grand total"
-          value={`₹${invoice.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+          value={formatAccountingMoney(invoice.grandTotal, "INR", 4)}
         />
         <AccountingMetric
           label="Paid amount"
-          value={`₹${invoice.paidAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+          value={formatAccountingMoney(invoice.paidAmount, "INR", 4)}
         />
         <AccountingMetric
           label="Outstanding"
-          value={`₹${invoice.outstandingAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+          value={formatAccountingMoney(invoice.outstandingAmount, "INR", 4)}
         />
       </AccountingMetrics>
 
@@ -205,10 +167,10 @@ export function AccountingInvoiceDetail({
                 <td>{item.itemName}</td>
                 <td className="mnx-accounting-amount">{item.qty}</td>
                 <td className="mnx-accounting-amount">
-                  ₹{item.rate.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  {formatAccountingMoney(item.rate, "INR", 4)}
                 </td>
                 <td className="mnx-accounting-amount">
-                  ₹{item.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  {formatAccountingMoney(item.amount, "INR", 4)}
                 </td>
               </tr>
             ))}
@@ -218,28 +180,28 @@ export function AccountingInvoiceDetail({
               <th>Subtotal</th>
               <td colSpan={2} />
               <td className="mnx-accounting-amount">
-                ₹{subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                {formatAccountingMoney(subtotal, "INR", 4)}
               </td>
             </tr>
             <tr>
               <th>Discount</th>
               <td colSpan={2} />
               <td className="mnx-accounting-amount">
-                ₹{invoice.discountAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                {formatAccountingMoney(invoice.discountAmount, "INR", 4)}
               </td>
             </tr>
             <tr>
               <th>Tax</th>
               <td colSpan={2} />
               <td className="mnx-accounting-amount">
-                ₹{invoice.taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                {formatAccountingMoney(invoice.taxAmount, "INR", 4)}
               </td>
             </tr>
             <tr>
               <th>Grand total</th>
               <td colSpan={2} />
               <td className="mnx-accounting-amount">
-                ₹{invoice.grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                {formatAccountingMoney(invoice.grandTotal, "INR", 4)}
               </td>
             </tr>
           </tfoot>
@@ -274,10 +236,11 @@ export function AccountingInvoiceDetail({
                     ).toLocaleDateString("en-IN")}
                   </td>
                   <td className="mnx-accounting-amount">
-                    ₹
-                    {payment.allocatedAmount.toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                    })}
+                    {formatAccountingMoney(
+                      payment.allocatedAmount,
+                      "INR",
+                      4,
+                    )}
                   </td>
                   <td>
                     <AccountingActionLink
@@ -318,13 +281,13 @@ export function AccountingInvoiceDetail({
                     <small>{entry.account.accountCode}</small>
                   </td>
                   <td className="mnx-accounting-amount">
-                    {entry.debit > 0
-                      ? `₹${entry.debit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
+                    {compareDecimalStrings(entry.debit, "0") > 0
+                      ? formatAccountingMoney(entry.debit, "INR", 4)
                       : "—"}
                   </td>
                   <td className="mnx-accounting-amount">
-                    {entry.credit > 0
-                      ? `₹${entry.credit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
+                    {compareDecimalStrings(entry.credit, "0") > 0
+                      ? formatAccountingMoney(entry.credit, "INR", 4)
                       : "—"}
                   </td>
                   <td>{entry.remarks || "—"}</td>
