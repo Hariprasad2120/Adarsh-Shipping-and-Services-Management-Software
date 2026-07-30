@@ -4,6 +4,8 @@ import { getSession } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { WorkspaceState } from "@/components/monolith";
 import DesignSystemClient from "./design-system-client";
+import "./design-system-reference.css";
+import "./design-system-production.css";
 
 export default async function AdminDesignSystemPage() {
   const session = await getSession();
