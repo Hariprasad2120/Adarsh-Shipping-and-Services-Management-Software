@@ -13,6 +13,18 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:seed": "npx tsx prisma/seed.ts",
+    "staging:db:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/staging-db.ps1 setup",
+    "staging:db:start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/staging-db.ps1 start",
+    "staging:db:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/staging-db.ps1 stop",
+    "staging:db:health": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/staging-db.ps1 health",
+    "staging:db:recreate": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/staging-db.ps1 recreate",
+    "staging:db:migrate": "tsx scripts/run-with-staging-env.ts prisma migrate deploy",
+    "staging:db:status": "tsx scripts/run-with-staging-env.ts prisma migrate status",
+    "staging:db:seed": "tsx scripts/run-with-staging-env.ts tsx prisma/seed.staging.ts",
+    "staging:db:verify": "tsx scripts/run-with-staging-env.ts tsx scripts/verify-staging-db.ts",
+    "staging:app:check": "tsx scripts/run-with-staging-env.ts tsx scripts/verify-staging-app-start.ts",
+    "staging:dev": "tsx scripts/run-with-staging-env.ts next dev --webpack -p 3100",
+    "staging:test": "tsx scripts/run-with-staging-env.ts vitest run",
     "db:bootstrap:cha-admin": "npx tsx scripts/bootstrap-cha-test-admin.ts",
     "db:bootstrap:special-accounts": "npx tsx scripts/bootstrap-special-accounts.ts",
     "db:studio": "prisma studio",
@@ -22,7 +34,7 @@
     "seed:comm-panels": "npx tsx scripts/seed-communication-panels.ts",
     "catalogue:update": "npx tsx scripts/update-product-catalogue.ts",
     "catalogue:check": "npx tsx scripts/check-product-catalogue.ts",
-    "test": "vitest run"
+    "test": "tsx scripts/run-with-staging-env.ts vitest run"
   },
   "dependencies": {
     "@carbon/icons-react": "^11.80.0",

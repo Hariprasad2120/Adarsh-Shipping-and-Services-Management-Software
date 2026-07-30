@@ -1,6 +1,36 @@
-# Phase 0 Integration Ownership Matrix
+# Accounting Integration Ownership Matrix
 
 This is an initial discovery matrix, not approved architecture. `Proposed SoR` must be ratified through `decisions.md`. CRM, HRMS, CHA, AMS, browser actions, and integrations must never write accounting journal tables directly (BASE-INT-001/002, BASE-ACC-003, BASE-DB-011/012/013).
+
+## Phase 2 approved ownership overlay
+
+The following approved decisions supersede “Decision required” entries in the discovery matrix:
+
+| Domain | System of record | Permitted Accounting interaction | Prohibited interaction | Reconciliation key |
+|---|---|---|---|---|
+| Customer | CRM `CrmAccount` | Finance-owned extension, AR documents/status | Duplicate customer master or CRM journal write | `orgId + CrmAccount.id` |
+| Vendor | Procurement/Accounting-owned shared `CrmVendor` | Finance extension, AP/payment status | Duplicate vendor or source-module journal | `orgId + CrmVendor.id` |
+| Employee/payroll | HRMS | Consume approved immutable payroll run/version; return financial status | Accounting payroll recalculation or HRMS journal write | `orgId + payrollRunId + version` |
+| Branch | Organization Administration | Use canonical branch as dimension | Accounting branch duplicate | `orgId + Branch.id` |
+| Cost centre | Accounting | Validated effective-dated dimension | Free-text posting dimension | `orgId + dimensionValueId` |
+| Project | Project-owning module | Canonical ID mapped to Accounting dimension | Duplicate Accounting project master | `orgId + sourceType + sourceId` |
+| CHA job | CHA `ChaJob` | Direct canonical dimension/reference and financial read model | Future `JobCosting` duplicate master or CHA journal write | `orgId + ChaJob.id` |
+| Service/item | Shared `CrmProduct`, Accounting finance/tax mapping | Snapshot approved mapping/version | Duplicate item or inventory post for service item | `orgId + CrmProduct.id + mappingVersion` |
+| Quotation/order | CRM | Approved immutable invoice request | Create Accounting draft/statutory invoice/journal | `orgId + requestId + version` |
+| Accounting invoice/bill/note/payment | Accounting | Publish immutable status/balance outcomes | Source module edits/accounting-number assignment | Accounting document ID/version |
+| Claim | HRMS or CHA approval; Accounting payable/payment | Consume approved claim/version and return settlement | Source financial settlement or direct journal | `orgId + owner + claimId + version` |
+| Asset | AMS operational; Accounting financial books | Consume lifecycle candidate/version, return NBV/status | Shared mutable depreciation values | `orgId + AMS asset ID + book` |
+| Communication/portal | Communication/party-facing delivery | Deliver immutable hash/version; receive controlled requests | Financial mutation or journal posting | document/version/hash + party ID |
+
+All commands cross the versioned inbox boundary. All Accounting results use the transactional outbox. Direct imports of Prisma journal delegates by CRM, HRMS, CHA, AMS, portal or browser code are prohibited and are enforced by the Phase 3 architecture test and database guards.
+
+## Phase 3 implemented ownership transitions
+
+- Bank transfer preparation creates an immutable Accounting request; only a separate authorized Accounting approver can invoke canonical posting.
+- CRM won-deal conversion produces an immutable invoice request only and requires both CRM and Accounting draft authority. It cannot create or post an Accounting invoice.
+- HRMS owns payroll calculation and approval. Accounting accepts an immutable approved run/version and can post its supplied allocations without recalculation.
+- Manual journal drafts remain Accounting-owned; submitted/posted effects and reversal are canonical-engine-only.
+- AMS depreciation, recurring journal and partner financial posting are fail-closed until their versioned policy and canonical adapters exist.
 
 | Domain / fields | Existing model(s) | Proposed system of record | Allowed writers | Consumers / direction | Sensitive fields / stable IDs | Required reconciliation |
 |---|---|---|---|---|---|---|
@@ -31,10 +61,9 @@ This is an initial discovery matrix, not approved architecture. `Proposed SoR` m
 | Fixed asset candidate | `Asset` shared by AMS/Accounting | AMS operational candidate; Accounts financial register, pending `DEC-0007` | AMS lifecycle; Finance capitalization | AMS → Accounts; Accounts → AMS NBV/disposal status | serial/cost/location; asset/version ID | Capitalized cost ↔ AP/GL; depreciation/disposal ↔ asset register/GL |
 | Communications / document versions | email queues, customer-portal document versions, storage | Communication/storage for delivery; Accounts for immutable financial rendering | Accounts renders/version-locks; Communication delivers | Accounts → Communication/portal | financial PDFs, email, attachments | Sent version hash/template/source state retained and access-controlled |
 
-## Current violations and gaps
+## Remaining gaps
 
-- CRM-backed accounting commercial pages directly mutate `CrmInvoice` under `crm.invoice.manage`, including deletion.
-- Accounting compiles payroll instead of consuming an immutable HRMS-owned payroll run.
-- CHA operational expense payment and HRMS reimbursement payment have no durable bidirectional Accounts contract.
-- No accounting outbox/inbox, source-version uniqueness, replay protection, dead-letter handling, or automated cross-module reconciliation was found.
-- `JobCosting`, quotation/note records, `CrmInvoice`, and accounting invoice records overlap without approved ownership.
+- Document-specific canonical adapters are still required for sales/purchase invoices, payments, notes, quotation conversion, recurring expenses, depreciation, partner transactions and payroll payment.
+- CHA operational expense payment and HRMS reimbursement payment still need durable bidirectional Accounting contracts.
+- Inbox/outbox persistence and safe classifications are implemented, but publication/retry/manual-review workers and operational metrics remain later work.
+- `JobCosting`, quotation/note records, `CrmInvoice`, and Accounting invoice records still overlap and require controlled source-adapter rollout and reconciliation.

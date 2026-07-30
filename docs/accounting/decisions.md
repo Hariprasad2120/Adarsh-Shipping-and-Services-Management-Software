@@ -9,6 +9,7 @@ This register distinguishes platform capability from organization configuration.
 
 - `APPROVED`: policy and scope are sufficiently decided.
 - `APPROVED — CONFIGURATION PENDING`: architecture/feature scope is approved, but named organization data or operating parameters are still required.
+- `SATISFIED — SYNTHETIC ONLY`: the architecture/development staging gate has passed with fictional data; real-data profiling and migration-rehearsal authorization remain separate.
 - `DEFERRED`: explicitly outside the initial implementation slice but the platform must remain capable of supporting it.
 - `BLOCKED`: required owner evidence is missing and the item blocks Phase 2 design or completion.
 - `OPEN`: no business answer has yet been supplied.
@@ -31,15 +32,15 @@ This register distinguishes platform capability from organization configuration.
 | DEC-0011 | APPROVED — CONFIGURATION PENDING | Initial functional currency is INR; USD is required. Revalue eligible open monetary balances at every period close, post unrealized FX separately, reverse on the next period's first day and recognize realized FX on settlement. Preserve posted historical rates. Provider/fallback hierarchy remains pending. | Adarsh management, 2026-07-29 | Currency and revaluation architecture is approved; provider selection is deferred. |
 | DEC-0012 | APPROVED — CONFIGURATION PENDING | Each GST registration has independent invoice, credit-note and debit-note sequences. Broader voucher sequence scope, formats, annual reset, gap/cancellation rules and imported-number treatment remain pending. | Adarsh management; Finance/Product pending, 2026-07-29 | Generic sequence model may proceed; full numbering policy remains open. |
 | DEC-0013 | APPROVED — CONFIGURATION PENDING | Provisional minimum: accounting records/source documents/attachments for eight financial years; audit/posting lineage permanently; portal documents follow the related accounting document. Legal hold suspends deletion; archives are encrypted/searchable/tenant-scoped; posted journals and audit lineage are never physically deleted. CA/legal confirmation remains pending. | Adarsh management; CA/Legal pending, 2026-07-29 | Retention/FK/archive architecture is approved; legal periods remain configuration. |
-| DEC-0014 | APPROVED — CONFIGURATION PENDING | Perform transaction-level Zoho Books migration wherever evidence permits; preserve source IDs, numbers, dates, rates, statuses, attachments and lineage; retain a controlled read-only archive; quarantine all unmapped records; prove counts and financial reconciliations. Historical start date and export/API coverage remain pending. | Adarsh management; Finance/Ops details pending, 2026-07-29 | Scope is approved; dates, source coverage and a rehearsal database block Phase 2 migration-plan completion. |
+| DEC-0014 | APPROVED — CONFIGURATION PENDING | Detailed Zoho transaction migration is planned from 1 April 2025 through 31 March 2027. Establish and reconcile opening balances at 1 April 2025; preserve source IDs/numbers/references and the controlled Zoho archive. Actual export/API coverage for the full required dataset remains unverified. | Adarsh management; Zoho/Finance verification pending, 2026-07-29 | Migration dates are resolved; Zoho coverage assessment and the authorized restore still block Phase 2 migration planning. |
 | DEC-0015 | APPROVED — CONFIGURATION PENDING | Accounts Manager approves invoices, expenses, payments and manual journals but cannot approve anything personally created or materially modified. Mandatory independent approval applies to journals, bank-detail changes, write-offs, period reopening and high-risk payments. Thresholds and alternate approvers remain pending. | Adarsh management; Finance/Security details pending, 2026-07-29 | Configurable approval model may proceed; rollout parameters remain pending. |
-| DEC-0016 | BLOCKED | Provide a corrected disposable/anonymized validation database, backup/restore evidence and migration history. Never place credentials in this file. | Operations, pending | Blocks Phase 2 data profiling and migration rehearsal. |
+| DEC-0016 | SATISFIED — SYNTHETIC ONLY | The separate synthetic-only PostgreSQL 18 cluster and `monolith_accounting_staging` database are identity-guarded on `127.0.0.1:56432`. A clean recreation applied all 42 original migrations plus four additive history-repair migrations, Prisma reported no schema difference, the fictional seed was repeatable, the verifier passed, and the staging application responded from its isolated build directory. No production or Zoho data was imported. | Adarsh management; synthetic staging validation completed 2026-07-29; Operations restore preparation pending | Architecture, development and synthetic testing staging is satisfied, subject to phase authorization. Real-data profiling and Zoho migration rehearsal remain blocked pending a separately authorized anonymized restore or representative dataset and verified Zoho coverage. |
 | DEC-0017 | APPROVED — CONFIGURATION PENDING | Initial legal entity is one partnership with four GST registrations. Each legal entity has completely separate books; consolidated reporting is separate. Exact GSTINs, registered names, states, addresses and branch mappings are pending. | Adarsh management, 2026-07-29 | Generic organization model may proceed; exact registration migration/configuration remains pending. |
-| DEC-0018 | APPROVED — CONFIGURATION PENDING | Cut over only at the beginning of a financial year; no mid-year cutover. Initial recommendation is configurable April–March. Exact first financial year/cutover date remains pending, and cutover requires complete reconciliation. | Adarsh management, 2026-07-29 | Period model may proceed; migration plan cannot be finalized without the date. |
+| DEC-0018 | APPROVED | Standard Indian financial year is 1 April–31 March. Company accounting history begins in April 1992. Final planned legacy date is 31 March 2027; first Monolith operational date is 1 April 2027 and first live year is FY 2027–28. Production cutover remains contingent on rehearsal, reconciliation, Finance acceptance and explicit go-live authorization. | Adarsh management, 2026-07-29 | Planning dates are resolved; this does not authorize migration execution or go-live. |
 | DEC-0019 | APPROVED — CONFIGURATION PENDING | Accrual accounting is the default. Support point-in-time, service-completion, milestone, time-period, deferred/unearned and accrued/unbilled recognition. CRM non-financial documents never recognize revenue. Service-category policies need Finance/CA approval. | Adarsh management; Finance/CA details pending, 2026-07-29 | Generic recognition model may proceed; service-category posting rules remain pending. |
 | DEC-0020 | APPROVED | Customer—CRM; Vendor—Procurement/Accounting; Employee—HRMS; Branch—Organization Administration; Department—HRMS/Organization Administration; Project—project-owning module; Cost Centre—Accounting; Item/Service—shared with Accounting-owned finance/tax mappings; Salesperson—CRM linked to Employee; bank-reference masters—Accounting. All modules use canonical IDs and never duplicate masters. | Adarsh management, 2026-07-29 | Shared-master ownership is approved for Phase 2. |
 | DEC-0021 | APPROVED | Initial Adarsh rollout uses service items only; inventory is modular and disabled. Service items require income/expense accounts, tax codes, units, SAC and pricing. Platform architecture must support future service-only, inventory-only and mixed organizations. | Adarsh management, 2026-07-29 | Phase 2 must keep inventory modular; no initial Adarsh stock opening or valuation migration. |
-| DEC-0022 | APPROVED — CONFIGURATION PENDING | Tax-inclusive/exclusive pricing is configurable by organization/document defaults. Use Decimal/Numeric only and higher internal precision; calculate base, discount, taxable value and tax components before totals; default rounding is half-up; statutory components/document totals follow Indian rules; round-off posts to a configured ledger. Exact scales and edge cases require technical/CA validation. | Adarsh management; CA/technical validation pending, 2026-07-29 | Money/calculation architecture is approved; exact scales remain a Phase 2 validation item. |
+| DEC-0022 | PARTIALLY IMPLEMENTED — STATUTORY VALIDATION PENDING | Tax-inclusive/exclusive pricing is configurable by organization/document defaults. The canonical posting path now uses Decimal only, configured currency scale, explicit quantization and versioned rounding evidence; it never silently balances. Synthetic non-statutory posting requires an explicitly marked policy. Statutory components/document totals, exact production scales, edge cases and round-off treatment still require Finance/legal/CA validation. | Adarsh management; CA/technical validation pending, updated 2026-07-29 | Canonical Decimal handling is implemented; tax, depreciation, partner and other statutory-policy-dependent posting remains gated. |
 | DEC-0023 | APPROVED — CONFIGURATION PENDING | Configurable GST capability and registration-specific tax configuration are required. Detailed CGST/SGST/IGST/UTGST/cess/reverse-charge/place-of-supply/HSN-SAC rules require CA validation. | Adarsh management; CA pending, 2026-07-29 | Effective-dated model may proceed; production tax matrix remains blocked. |
 | DEC-0024 | APPROVED / DEFERRED SPLIT | GSTR-1, GSTR-3B and GSTR-2B with ITC matching are required. Initial release produces validated reconciled exports and working papers only. Direct filing is deferred until provider, credentials, authorization, sandbox validation and CA approval exist. | Adarsh management, 2026-07-29 | Reporting/reconciliation scope is approved; direct filing integration is later scope. |
 | DEC-0025 | APPROVED — CONFIGURATION PENDING | E-invoice and e-way-bill are configurable capabilities, disabled for the initial organization pending CA applicability, credentials, provider and mappings. No production transmission before approval. | Adarsh management; CA/provider pending, 2026-07-29 | Provider integration may be deferred; effective-dated applicability model is required. |
@@ -54,6 +55,7 @@ This register distinguishes platform capability from organization configuration.
 | DEC-0034 | APPROVED — CONFIGURATION PENDING | Partnership accounting is applicable. Support separate partner capital/current, drawings, interest, remuneration, appropriation, loans and tax adjustments with effective-dated terms. Deed values and CA-approved treatment are pending. | Adarsh management; partnership deed/CA pending, 2026-07-29 | Generic partner model may proceed; no balances or ratios may be invented. |
 | DEC-0035 | OPEN | Approve report definitions, ageing buckets, cash-flow method, comparisons, job margin definitions and the duplicate Ledger Statement interpretation. | Finance/CA/Operations, pending | Does not block core domain model; blocks report/UAT acceptance definitions. |
 | DEC-0036 | APPROVED | Build a configurable multi-organization, multi-industry platform supporting partnerships, LLPs, companies, proprietorships, nonprofits, service/trading/logistics entities, optional inventory and multiple GST registrations. Never hard-code Adarsh or logistics-specific rules globally. | Adarsh management, 2026-07-29 | Controlling product-direction decision for all Phase 2 design. |
+| DEC-0037 | APPROVED | Continue Phase 2 Accounting development against the existing marker-verified synthetic staging database. Do not connect to Neon, production, Zoho Books or port 5432; do not migrate real data; do not commit/push without separate authorization. Continue safe slices without waiting unless destructive, production-facing or materially ambiguous. | Adarsh management, 2026-07-29 | Authorizes Phase 2 schema/design rehearsal and synthetic tests only; Phase 3 and all real-data/production actions remain separately gated by the implementation plan. |
 
 ## Approved policy detail
 
@@ -111,14 +113,23 @@ This register distinguishes platform capability from organization configuration.
 
 ### DEC-0018 and DEC-0014 — Cutover and history
 
-- Cut over at the beginning of a financial year, not mid-year.
+- Company historical accounting availability begins in April 1992; this is not the first Monolith financial year.
+- Detailed Zoho transaction migration begins on 1 April 2025 and ends on the planned final legacy date of 31 March 2027.
+- Establish and reconcile opening balances as of 1 April 2025 so the migrated period is financially complete.
+- Final legacy accounting date: 31 March 2027.
+- First Monolith operational accounting date: 1 April 2027.
+- First Monolith live financial year: FY 2027–28.
+- Cut over at the beginning of the financial year, not mid-year.
 - Support configurable opening, closing, adjustment and locked periods.
 - Zoho Books is the principal historical source.
 - Migrate transaction-level history where source evidence permits, including masters, invoices/bills, notes, receipts/payments/allocations, expenses, journals, bank/reconciliation data, tax references, balances, attachments, numbers, dates, currencies/rates, statuses and lineage.
+- Complete transaction-level migration before 1 April 2025 is not required unless separately approved; earlier records remain available through the controlled legacy/archive arrangement where retention, audit, legal or operations require them.
 - Preserve original Zoho IDs and original document numbers.
 - Never silently discard or duplicate a source record; unmatched data enters a Finance-reviewed exception queue.
 - Keep Zoho information available as a controlled read-only archive through migration acceptance and retention.
 - Prove migration completeness using record counts, control totals, trial balance, GL, AR/AP ageing, bank, tax, document and retained-earnings reconciliations.
+- For 1 April 2025–31 March 2027, the export/API assessment must verify chart of accounts; customers and vendors; service items; invoices and bills; credit and debit notes; receipts and payments; payment allocations; expenses; journals; bank transactions and reconciliations; GST and other tax details; currencies and historical exchange rates; attachments; document statuses; and audit/source identifiers.
+- Do not mark any of this Zoho coverage verified until an actual export/API capability assessment confirms it.
 
 ### DEC-0011 and DEC-0022 — Multicurrency, pricing and rounding
 
@@ -133,6 +144,9 @@ This register distinguishes platform capability from organization configuration.
 - Calculate line base, discount, taxable value and tax components before document totals.
 - Round statutory components/document totals under approved Indian rules using half-up by default; post differences to a configured round-off ledger.
 - Exact Decimal scales and statutory edge cases remain subject to technical and CA validation.
+- Phase 3 implements the technical Decimal boundary in `src/modules/accounting/money.ts` and persists the selected currency, rate and rounding-policy evidence on posted journals.
+- `statutoryValidated=false` policies are rejected unless their configuration explicitly marks them as synthetic and non-statutory. This exception is staging-test evidence, not a production policy.
+- Tax calculation, depreciation, partner appropriation and any other statutory-policy-dependent function remain gated; DEC-0022 is not finalized.
 
 ### DEC-0021 — Items
 
@@ -215,16 +229,22 @@ This register distinguishes platform capability from organization configuration.
 Do not invent or default the following as Adarsh production data:
 
 - the four GSTINs, names, states, addresses or branch mappings;
-- the first financial year or cutover date;
-- historical migration start date or available Zoho export/API coverage;
+- unverified Zoho export/API coverage beyond what an actual capability assessment proves;
 - exchange-rate provider/fallback hierarchy or final Decimal scales;
 - partner names, balances, ratios, remuneration or interest rates;
 - statutory applicability, thresholds, sections or rates;
 - approval amounts or alternate approvers.
 
-## Explicit Phase 2 environment block
+## DEC-0016 staging status and source-coverage block
 
-No authorized validation database exists. Phase 2 remains blocked until Operations provides an access-controlled anonymized production restore or representative staging restore with secure connection delivery, backup date/source, anonymization confirmation, migration history, restore validation and read/write authorization boundaries. Credentials must never be written in repository documentation or chat.
+Two distinct staging gates apply:
+
+1. **Architecture, development and synthetic testing — satisfied.** The isolated synthetic-only PostgreSQL 18 cluster and `monolith_accounting_staging` database are marked and identity-checked on `127.0.0.1:56432`. Repository history proved that three required baselines and numerous later current-schema changes had been introduced without corresponding migrations. Four additive history-repair migrations now make a clean database reproducible: all 42 original migrations and four repair migrations applied from empty, `prisma migrate status` is clean, and Prisma reported no difference from `prisma/schema.prisma`. The fixed-ID/upsert seed passed twice with unchanged counts, the verifier passed with 46 migrations, three fictional users and two balanced journals, and the staging-only application-start check returned HTTP 307 on `127.0.0.1:3100` before releasing the port. No production or Zoho data was imported.
+2. **Real-data profiling and Zoho migration rehearsal.** Operations must provide a separate authorized anonymized restore or separately approved representative dataset. It must use the current production schema and complete migration history, be anonymized, restored and validated locally, be explicitly identified as the authorized profiling/rehearsal database, receive credentials only through an approved ignored local environment file, and have explicit read-only authorization boundaries.
+
+The absence of the real-data restore does not by itself block architecture, schema design, product development or synthetic testing. Those activities still require their phase authorization. Once the real-data gate and phase authorization are cleared, Codex's restore access is read-only and limited to schema verification, safe data profiling, relationship/integrity analysis, migration mapping/planning, and volume/edge-case analysis.
+
+Zoho export/API coverage must also be inspected sufficiently to confirm migration-planning evidence for the required period. The synthetic staging authorization does not authorize production access, Zoho import, real-data profiling, migration rehearsal or Phase 2. Writes to a later anonymized restore require separate written authorization.
 
 ## Approval rule
 

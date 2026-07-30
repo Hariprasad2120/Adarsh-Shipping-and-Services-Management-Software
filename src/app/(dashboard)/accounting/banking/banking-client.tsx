@@ -84,8 +84,7 @@ export function BankingClient({
       return setError("Select both source and destination accounts.");
     if (fromAccount === toAccount)
       return setError("Source and destination accounts must be different.");
-    const numericAmount = Number(amount);
-    if (!Number.isFinite(numericAmount) || numericAmount <= 0)
+    if (!/^(?:0*[1-9]\d*)(?:\.\d+)?$/.test(amount.trim()))
       return setError("Enter a valid transfer amount.");
 
     setLoading(true);
@@ -93,12 +92,12 @@ export function BankingClient({
       const result = await recordBankTransferAction({
         fromAccountId: fromAccount,
         toAccountId: toAccount,
-        amount: numericAmount,
+        amount: amount.trim(),
         postingDate,
         remarks,
       });
       if (result.ok) {
-        setSuccess("Bank transfer recorded successfully.");
+        setSuccess("Bank transfer submitted for Accounting approval.");
         setAmount("");
         setRemarks("");
         window.setTimeout(() => {

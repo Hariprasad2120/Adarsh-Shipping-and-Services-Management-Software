@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-07-28T06:25:02.949Z",
+  "generatedAt": "2026-07-29T18:55:55.843Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
     "version": "0.1.0"
   },
   "stats": {
-    "totalAppRoutes": 205,
-    "totalApiRoutes": 196,
-    "totalPrismaModels": 277,
-    "totalModuleServices": 89,
-    "totalComponents": 92
+    "totalAppRoutes": 232,
+    "totalApiRoutes": 208,
+    "totalPrismaModels": 304,
+    "totalModuleServices": 106,
+    "totalComponents": 124
   },
   "appRoutes": [
     {
@@ -36,6 +36,12 @@
       "filePath": "src/app/(dashboard)/accounting/banking/page.tsx",
       "module": "accounting",
       "type": "page"
+    },
+    {
+      "route": "/accounting",
+      "filePath": "src/app/(dashboard)/accounting/error.tsx",
+      "module": "accounting",
+      "type": "error"
     },
     {
       "route": "/accounting/general-ledger",
@@ -96,6 +102,18 @@
       "filePath": "src/app/(dashboard)/accounting/journal-entries/[id]/page.tsx",
       "module": "accounting",
       "type": "page"
+    },
+    {
+      "route": "/accounting",
+      "filePath": "src/app/(dashboard)/accounting/layout.tsx",
+      "module": "accounting",
+      "type": "layout"
+    },
+    {
+      "route": "/accounting",
+      "filePath": "src/app/(dashboard)/accounting/loading.tsx",
+      "module": "accounting",
+      "type": "loading"
     },
     {
       "route": "/accounting",
@@ -224,10 +242,28 @@
       "type": "page"
     },
     {
+      "route": "/admin",
+      "filePath": "src/app/(dashboard)/admin/error.tsx",
+      "module": "admin",
+      "type": "error"
+    },
+    {
       "route": "/admin/google-chat",
       "filePath": "src/app/(dashboard)/admin/google-chat/page.tsx",
       "module": "admin",
       "type": "page"
+    },
+    {
+      "route": "/admin",
+      "filePath": "src/app/(dashboard)/admin/layout.tsx",
+      "module": "admin",
+      "type": "layout"
+    },
+    {
+      "route": "/admin",
+      "filePath": "src/app/(dashboard)/admin/loading.tsx",
+      "module": "admin",
+      "type": "loading"
     },
     {
       "route": "/admin/notifications",
@@ -320,6 +356,12 @@
       "type": "page"
     },
     {
+      "route": "/ams",
+      "filePath": "src/app/(dashboard)/ams/error.tsx",
+      "module": "ams",
+      "type": "error"
+    },
+    {
       "route": "/ams/extensions",
       "filePath": "src/app/(dashboard)/ams/extensions/page.tsx",
       "module": "ams",
@@ -336,6 +378,18 @@
       "filePath": "src/app/(dashboard)/ams/kpi/page.tsx",
       "module": "ams",
       "type": "page"
+    },
+    {
+      "route": "/ams",
+      "filePath": "src/app/(dashboard)/ams/layout.tsx",
+      "module": "ams",
+      "type": "layout"
+    },
+    {
+      "route": "/ams",
+      "filePath": "src/app/(dashboard)/ams/loading.tsx",
+      "module": "ams",
+      "type": "loading"
     },
     {
       "route": "/ams/my-appraisal",
@@ -386,10 +440,28 @@
       "type": "page"
     },
     {
+      "route": "/attendance",
+      "filePath": "src/app/(dashboard)/attendance/error.tsx",
+      "module": "attendance",
+      "type": "error"
+    },
+    {
+      "route": "/attendance",
+      "filePath": "src/app/(dashboard)/attendance/layout.tsx",
+      "module": "attendance",
+      "type": "layout"
+    },
+    {
       "route": "/attendance/leaves",
       "filePath": "src/app/(dashboard)/attendance/leaves/page.tsx",
       "module": "attendance",
       "type": "page"
+    },
+    {
+      "route": "/attendance",
+      "filePath": "src/app/(dashboard)/attendance/loading.tsx",
+      "module": "attendance",
+      "type": "loading"
     },
     {
       "route": "/attendance/ot",
@@ -446,6 +518,12 @@
       "type": "page"
     },
     {
+      "route": "/cha",
+      "filePath": "src/app/(dashboard)/cha/error.tsx",
+      "module": "cha",
+      "type": "error"
+    },
+    {
       "route": "/cha/expenses",
       "filePath": "src/app/(dashboard)/cha/expenses/page.tsx",
       "module": "cha",
@@ -468,6 +546,12 @@
       "filePath": "src/app/(dashboard)/cha/layout.tsx",
       "module": "cha",
       "type": "layout"
+    },
+    {
+      "route": "/cha",
+      "filePath": "src/app/(dashboard)/cha/loading.tsx",
+      "module": "cha",
+      "type": "loading"
     },
     {
       "route": "/cha",
@@ -512,6 +596,12 @@
       "type": "page"
     },
     {
+      "route": "/communication",
+      "filePath": "src/app/(dashboard)/communication/error.tsx",
+      "module": "communication",
+      "type": "error"
+    },
+    {
       "route": "/communication/google-chat-live-view",
       "filePath": "src/app/(dashboard)/communication/google-chat-live-view/page.tsx",
       "module": "communication",
@@ -528,6 +618,12 @@
       "filePath": "src/app/(dashboard)/communication/layout.tsx",
       "module": "communication",
       "type": "layout"
+    },
+    {
+      "route": "/communication",
+      "filePath": "src/app/(dashboard)/communication/loading.tsx",
+      "module": "communication",
+      "type": "loading"
     },
     {
       "route": "/communication/mail",
@@ -678,6 +774,12 @@
       "filePath": "src/app/(dashboard)/crm/enquiries/[id]/page.tsx",
       "module": "crm",
       "type": "page"
+    },
+    {
+      "route": "/crm",
+      "filePath": "src/app/(dashboard)/crm/error.tsx",
+      "module": "crm",
+      "type": "error"
     },
     {
       "route": "/crm/events",
@@ -932,6 +1034,30 @@
       "type": "page"
     },
     {
+      "route": "/",
+      "filePath": "src/app/(dashboard)/error.tsx",
+      "module": "core",
+      "type": "error"
+    },
+    {
+      "route": "/expense",
+      "filePath": "src/app/(dashboard)/expense/error.tsx",
+      "module": "expense",
+      "type": "error"
+    },
+    {
+      "route": "/expense",
+      "filePath": "src/app/(dashboard)/expense/layout.tsx",
+      "module": "expense",
+      "type": "layout"
+    },
+    {
+      "route": "/expense",
+      "filePath": "src/app/(dashboard)/expense/loading.tsx",
+      "module": "expense",
+      "type": "loading"
+    },
+    {
       "route": "/expense",
       "filePath": "src/app/(dashboard)/expense/page.tsx",
       "module": "expense",
@@ -962,6 +1088,12 @@
       "type": "page"
     },
     {
+      "route": "/hrms",
+      "filePath": "src/app/(dashboard)/hrms/error.tsx",
+      "module": "hrms",
+      "type": "error"
+    },
+    {
       "route": "/hrms/files",
       "filePath": "src/app/(dashboard)/hrms/files/page.tsx",
       "module": "hrms",
@@ -974,6 +1106,12 @@
       "type": "page"
     },
     {
+      "route": "/hrms",
+      "filePath": "src/app/(dashboard)/hrms/layout.tsx",
+      "module": "hrms",
+      "type": "layout"
+    },
+    {
       "route": "/hrms/letters",
       "filePath": "src/app/(dashboard)/hrms/letters/page.tsx",
       "module": "hrms",
@@ -984,6 +1122,12 @@
       "filePath": "src/app/(dashboard)/hrms/letters/view/[id]/page.tsx",
       "module": "hrms",
       "type": "page"
+    },
+    {
+      "route": "/hrms",
+      "filePath": "src/app/(dashboard)/hrms/loading.tsx",
+      "module": "hrms",
+      "type": "loading"
     },
     {
       "route": "/hrms/on-duty-admin",
@@ -1188,6 +1332,24 @@
       "filePath": "src/app/(dashboard)/lms/courses/page.tsx",
       "module": "lms",
       "type": "page"
+    },
+    {
+      "route": "/lms",
+      "filePath": "src/app/(dashboard)/lms/error.tsx",
+      "module": "lms",
+      "type": "error"
+    },
+    {
+      "route": "/lms",
+      "filePath": "src/app/(dashboard)/lms/layout.tsx",
+      "module": "lms",
+      "type": "layout"
+    },
+    {
+      "route": "/lms",
+      "filePath": "src/app/(dashboard)/lms/loading.tsx",
+      "module": "lms",
+      "type": "loading"
     },
     {
       "route": "/lms/my-learning",
@@ -2071,11 +2233,35 @@
       ]
     },
     {
+      "path": "/api/hrms/employees/export",
+      "filePath": "src/app/api/hrms/employees/export/route.ts",
+      "module": "hrms",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
       "path": "/api/hrms/employees",
       "filePath": "src/app/api/hrms/employees/route.ts",
       "module": "hrms",
       "methods": [
         "GET",
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/hrms/employees/[id]/invitation",
+      "filePath": "src/app/api/hrms/employees/[id]/invitation/route.ts",
+      "module": "hrms",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/hrms/employees/[id]/profile",
+      "filePath": "src/app/api/hrms/employees/[id]/profile/route.ts",
+      "module": "hrms",
+      "methods": [
         "PATCH"
       ]
     },
@@ -2097,6 +2283,14 @@
       ]
     },
     {
+      "path": "/api/hrms/files/[id]/download",
+      "filePath": "src/app/api/hrms/files/[id]/download/route.ts",
+      "module": "hrms",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
       "path": "/api/hrms/hr-cases",
       "filePath": "src/app/api/hrms/hr-cases/route.ts",
       "module": "hrms",
@@ -2108,6 +2302,32 @@
     {
       "path": "/api/hrms/hr-cases/[id]/comments",
       "filePath": "src/app/api/hrms/hr-cases/[id]/comments/route.ts",
+      "module": "hrms",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/hrms/invitations/accept",
+      "filePath": "src/app/api/hrms/invitations/accept/route.ts",
+      "module": "hrms",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/hrms/invitations/basic",
+      "filePath": "src/app/api/hrms/invitations/basic/route.ts",
+      "module": "hrms",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/hrms/invitations",
+      "filePath": "src/app/api/hrms/invitations/route.ts",
       "module": "hrms",
       "methods": [
         "POST"
@@ -2261,12 +2481,49 @@
       ]
     },
     {
+      "path": "/api/hrms/settings/employee-fields",
+      "filePath": "src/app/api/hrms/settings/employee-fields/route.ts",
+      "module": "hrms",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/hrms/settings/employee-fields/[id]",
+      "filePath": "src/app/api/hrms/settings/employee-fields/[id]/route.ts",
+      "module": "hrms",
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
       "path": "/api/hrms/settings/services",
       "filePath": "src/app/api/hrms/settings/services/route.ts",
       "module": "hrms",
       "methods": [
         "GET",
         "PATCH"
+      ]
+    },
+    {
+      "path": "/api/hrms/settings/work-reports",
+      "filePath": "src/app/api/hrms/settings/work-reports/route.ts",
+      "module": "hrms",
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/hrms/settings/work-reports/[id]",
+      "filePath": "src/app/api/hrms/settings/work-reports/[id]/route.ts",
+      "module": "hrms",
+      "methods": [
+        "PATCH",
+        "DELETE"
       ]
     },
     {
@@ -2310,6 +2567,14 @@
       "methods": [
         "GET",
         "POST"
+      ]
+    },
+    {
+      "path": "/api/hrms/work-reports/location",
+      "filePath": "src/app/api/hrms/work-reports/location/route.ts",
+      "module": "hrms",
+      "methods": [
+        "GET"
       ]
     },
     {
@@ -2930,6 +3195,10 @@
         "notificationActivities",
         "todoTasks",
         "announcements",
+        "employeeProfileFields",
+        "employeeInvitations",
+        "workReportSettings",
+        "workReportFields",
         "crmApprovalLogs",
         "crmWorkTimeLogs",
         "biometricSyncLogs",
@@ -2959,6 +3228,25 @@
         "recurringJournals",
         "transactionLock",
         "partnerAccounts",
+        "accountingProfile",
+        "accountingLegalEntities",
+        "accountingTaxRegistrations",
+        "accountingPeriods",
+        "accountingPeriodLockRequests",
+        "accountingCurrencies",
+        "accountingExchangeRates",
+        "accountingAccountControls",
+        "accountingDimensionDefinitions",
+        "accountingDimensionValues",
+        "accountingJournalLineDimensions",
+        "accountingApprovalPolicies",
+        "accountingNumberSeries",
+        "accountingIntegrationInbox",
+        "accountingIntegrationOutbox",
+        "accountingRoundingPolicies",
+        "accountingSourceSnapshots",
+        "accountingPostingAttempts",
+        "accountingPayrollRunSnapshots",
         "chaSettings",
         "chaJobs",
         "chaJobDeletionRequests",
@@ -3013,6 +3301,10 @@
         "NotificationActivity",
         "TodoTask",
         "Announcement",
+        "EmployeeProfileField",
+        "EmployeeInvitation",
+        "WorkReportSettings",
+        "WorkReportField",
         "CrmApprovalLog",
         "CrmWorkTimeLog",
         "BiometricSyncLog",
@@ -3042,6 +3334,25 @@
         "RecurringJournal",
         "TransactionLock",
         "PartnerAccount",
+        "AccountingOrganisationProfile",
+        "AccountingLegalEntity",
+        "AccountingTaxRegistration",
+        "AccountingPeriod",
+        "AccountingPeriodLockRequest",
+        "AccountingCurrency",
+        "AccountingExchangeRate",
+        "AccountingAccountControl",
+        "AccountingDimensionDefinition",
+        "AccountingDimensionValue",
+        "AccountingJournalLineDimension",
+        "AccountingApprovalPolicy",
+        "AccountingNumberSeries",
+        "AccountingIntegrationInbox",
+        "AccountingIntegrationOutbox",
+        "AccountingRoundingPolicy",
+        "AccountingSourceSnapshot",
+        "AccountingPostingAttempt",
+        "AccountingPayrollRunSnapshot",
         "ChaSettings",
         "ChaJob",
         "ChaJobDeletionRequest",
@@ -3235,6 +3546,8 @@
         "tlId",
         "createdAt",
         "updatedAt",
+        "emailVerifiedAt",
+        "activatedAt",
         "employeeNumber",
         "firstName",
         "lastName",
@@ -3261,6 +3574,9 @@
         "notifications",
         "notificationActivities",
         "employmentRecord",
+        "employeeProfile",
+        "employeeInvitations",
+        "employeeInvitationsSent",
         "documents",
         "todoTasks",
         "punches",
@@ -3307,6 +3623,9 @@
         "crmProjectsOwned",
         "crmNotesCreated",
         "crmAttachmentsCreated",
+        "accountingPeriodLocksRequested",
+        "accountingPeriodLocksDecided",
+        "accountingExchangeRatesApproved",
         "crmTimelineCreated",
         "crmJdConfigs",
         "crmExternalLeadsAssigned",
@@ -3338,6 +3657,7 @@
         "hrmsTasksCreated",
         "hrmsAuditLogs",
         "hrmsWorkReports",
+        "workReportApprovals",
         "mobileDevices",
         "faceEnrollment",
         "attendanceSessions",
@@ -3400,6 +3720,8 @@
         "Notification",
         "NotificationActivity",
         "EmploymentRecord",
+        "EmployeeHrmsProfile",
+        "EmployeeInvitation",
         "Document",
         "TodoTask",
         "AttendancePunch",
@@ -3436,6 +3758,8 @@
         "CrmProject",
         "CrmNote",
         "CrmAttachment",
+        "AccountingPeriodLockRequest",
+        "AccountingExchangeRate",
         "CrmTimelineEvent",
         "CrmLeadSourceJustdialConfig",
         "CrmExternalLeadSnapshot",
@@ -3464,6 +3788,7 @@
         "HrmsTask",
         "HrmsAuditLog",
         "WorkReport",
+        "WorkReportApproval",
         "MobileDevice",
         "EmployeeFaceEnrollment",
         "AttendanceSession",
@@ -3673,6 +3998,73 @@
         "user"
       ],
       "relations": [
+        "User"
+      ],
+      "module": "hrms"
+    },
+    {
+      "name": "EmployeeHrmsProfile",
+      "fields": [
+        "id",
+        "userId",
+        "data",
+        "customValues",
+        "createdById",
+        "modifiedById",
+        "createdAt",
+        "updatedAt",
+        "user"
+      ],
+      "relations": [
+        "User"
+      ],
+      "module": "hrms"
+    },
+    {
+      "name": "EmployeeProfileField",
+      "fields": [
+        "id",
+        "orgId",
+        "key",
+        "label",
+        "type",
+        "section",
+        "required",
+        "options",
+        "position",
+        "active",
+        "createdAt",
+        "updatedAt",
+        "org"
+      ],
+      "relations": [
+        "Organisation"
+      ],
+      "module": "hrms"
+    },
+    {
+      "name": "EmployeeInvitation",
+      "fields": [
+        "id",
+        "orgId",
+        "userId",
+        "email",
+        "tokenHash",
+        "expiresAt",
+        "consumedAt",
+        "revokedAt",
+        "sentById",
+        "sentAt",
+        "deliveryStatus",
+        "deliveryError",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "user",
+        "sentBy"
+      ],
+      "relations": [
+        "Organisation",
         "User"
       ],
       "module": "hrms"
@@ -5798,6 +6190,55 @@
       "module": "ams"
     },
     {
+      "name": "HrDocumentDriveConfig",
+      "fields": [
+        "id",
+        "orgId",
+        "sharedDriveId",
+        "rootFolderId",
+        "mySpaceFolderId",
+        "companyFilesFolderId",
+        "employeeSharedFolderId",
+        "createdAt",
+        "updatedAt"
+      ],
+      "relations": [],
+      "module": "core"
+    },
+    {
+      "name": "HrDocumentFolder",
+      "fields": [
+        "id",
+        "orgId",
+        "ownerId",
+        "category",
+        "driveFolderId",
+        "displayName",
+        "createdAt",
+        "updatedAt"
+      ],
+      "relations": [],
+      "module": "core"
+    },
+    {
+      "name": "HrDocumentFile",
+      "fields": [
+        "id",
+        "orgId",
+        "category",
+        "ownerId",
+        "driveFileId",
+        "driveFolderId",
+        "name",
+        "mimeType",
+        "sizeBytes",
+        "uploadedById",
+        "createdAt"
+      ],
+      "relations": [],
+      "module": "core"
+    },
+    {
       "name": "HRCaseCategory",
       "fields": [
         "id",
@@ -5900,6 +6341,7 @@
         "letterNumber",
         "status",
         "details",
+        "legacyFileKey",
         "pdfPath",
         "docxPath",
         "documentHash",
@@ -6026,9 +6468,15 @@
         "workedOn",
         "jobNoName",
         "description",
+        "items",
+        "customValues",
         "status",
         "addedAddress",
         "modifiedAddress",
+        "latitude",
+        "longitude",
+        "locationAccuracy",
+        "locationCapturedAt",
         "createdAt",
         "updatedAt",
         "user",
@@ -6046,15 +6494,592 @@
         "id",
         "reportId",
         "approverId",
+        "level",
         "status",
         "comments",
+        "decidedAt",
         "createdAt",
-        "report"
+        "report",
+        "approver"
       ],
       "relations": [
-        "WorkReport"
+        "WorkReport",
+        "User"
       ],
       "module": "hrms"
+    },
+    {
+      "name": "WorkReportSettings",
+      "fields": [
+        "id",
+        "orgId",
+        "approvalLevels",
+        "requireApprovedReportForOt",
+        "createdAt",
+        "updatedAt",
+        "org"
+      ],
+      "relations": [
+        "Organisation"
+      ],
+      "module": "hrms"
+    },
+    {
+      "name": "WorkReportField",
+      "fields": [
+        "id",
+        "orgId",
+        "key",
+        "label",
+        "type",
+        "required",
+        "options",
+        "position",
+        "active",
+        "createdAt",
+        "updatedAt",
+        "org"
+      ],
+      "relations": [
+        "Organisation"
+      ],
+      "module": "hrms"
+    },
+    {
+      "name": "AccountingOrganisationProfile",
+      "fields": [
+        "id",
+        "orgId",
+        "functionalCurrencyCode",
+        "fiscalYearStartMonth",
+        "fiscalYearStartDay",
+        "inventoryMode",
+        "moneyScale",
+        "quantityScale",
+        "exchangeRateScale",
+        "percentageScale",
+        "roundingMode",
+        "correctionPolicy",
+        "correctionPolicyVersion",
+        "createdAt",
+        "updatedAt",
+        "org"
+      ],
+      "relations": [
+        "AccountingInventoryMode",
+        "AccountingRoundingMode",
+        "Organisation"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingLegalEntity",
+      "fields": [
+        "id",
+        "orgId",
+        "code",
+        "legalName",
+        "entityType",
+        "status",
+        "isDefault",
+        "effectiveFrom",
+        "effectiveTo",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "taxRegistrations",
+        "sourceSnapshots",
+        "integrationInbox",
+        "journalEntries"
+      ],
+      "relations": [
+        "AccountingLegalEntityStatus",
+        "Organisation",
+        "AccountingTaxRegistration",
+        "AccountingSourceSnapshot",
+        "AccountingIntegrationInbox",
+        "JournalEntry"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingTaxRegistration",
+      "fields": [
+        "id",
+        "orgId",
+        "legalEntityId",
+        "registrationCode",
+        "registrationType",
+        "gstin",
+        "stateCode",
+        "legalName",
+        "tradeName",
+        "effectiveFrom",
+        "effectiveTo",
+        "isActive",
+        "configuration",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "legalEntity",
+        "numberSeries"
+      ],
+      "relations": [
+        "Organisation",
+        "AccountingLegalEntity",
+        "AccountingNumberSeries"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingPeriod",
+      "fields": [
+        "id",
+        "orgId",
+        "fiscalYearId",
+        "periodNumber",
+        "name",
+        "startDate",
+        "endDate",
+        "status",
+        "hardLockedAt",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "fiscalYear",
+        "lockRequests",
+        "journalEntries"
+      ],
+      "relations": [
+        "AccountingPeriodStatus",
+        "Organisation",
+        "FiscalYear",
+        "AccountingPeriodLockRequest",
+        "JournalEntry"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingPeriodLockRequest",
+      "fields": [
+        "id",
+        "orgId",
+        "periodId",
+        "requestedById",
+        "decidedById",
+        "reason",
+        "status",
+        "requestedAt",
+        "decidedAt",
+        "reopenFrom",
+        "reopenUntil",
+        "appliedAt",
+        "relockedAt",
+        "rowVersion",
+        "org",
+        "period",
+        "requestedBy",
+        "decidedBy"
+      ],
+      "relations": [
+        "AccountingPeriodLockRequestStatus",
+        "Organisation",
+        "AccountingPeriod",
+        "User"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingCurrency",
+      "fields": [
+        "id",
+        "orgId",
+        "code",
+        "name",
+        "symbol",
+        "decimalPlaces",
+        "isFunctional",
+        "isEnabled",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "baseRates",
+        "quoteRates",
+        "accountControls"
+      ],
+      "relations": [
+        "Organisation",
+        "AccountingExchangeRate",
+        "AccountingAccountControl"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingExchangeRate",
+      "fields": [
+        "id",
+        "orgId",
+        "fromCurrencyId",
+        "toCurrencyId",
+        "rateDate",
+        "rate",
+        "source",
+        "status",
+        "approvedById",
+        "approvedAt",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "fromCurrency",
+        "toCurrency",
+        "approvedBy"
+      ],
+      "relations": [
+        "AccountingExchangeRateStatus",
+        "Organisation",
+        "AccountingCurrency",
+        "User"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingAccountControl",
+      "fields": [
+        "id",
+        "orgId",
+        "accountId",
+        "defaultCurrencyId",
+        "systemRole",
+        "isSystemLocked",
+        "allowDirectPosting",
+        "requiresParty",
+        "requiresChaJob",
+        "requiresCostCentre",
+        "effectiveFrom",
+        "rowVersion",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "account",
+        "defaultCurrency"
+      ],
+      "relations": [
+        "Organisation",
+        "Account",
+        "AccountingCurrency"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingDimensionDefinition",
+      "fields": [
+        "id",
+        "orgId",
+        "code",
+        "name",
+        "valueSource",
+        "isRequired",
+        "isActive",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "values",
+        "assignments"
+      ],
+      "relations": [
+        "Organisation",
+        "AccountingDimensionValue",
+        "AccountingJournalLineDimension"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingDimensionValue",
+      "fields": [
+        "id",
+        "orgId",
+        "definitionId",
+        "code",
+        "name",
+        "canonicalType",
+        "canonicalId",
+        "effectiveFrom",
+        "effectiveTo",
+        "isActive",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "definition",
+        "assignments"
+      ],
+      "relations": [
+        "Organisation",
+        "AccountingDimensionDefinition",
+        "AccountingJournalLineDimension"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingJournalLineDimension",
+      "fields": [
+        "id",
+        "orgId",
+        "journalEntryLineId",
+        "definitionId",
+        "dimensionValueId",
+        "createdAt",
+        "org",
+        "journalEntryLine",
+        "definition",
+        "dimensionValue"
+      ],
+      "relations": [
+        "Organisation",
+        "JournalEntryLine",
+        "AccountingDimensionDefinition",
+        "AccountingDimensionValue"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingApprovalPolicy",
+      "fields": [
+        "id",
+        "orgId",
+        "code",
+        "documentType",
+        "version",
+        "configuration",
+        "isActive",
+        "effectiveFrom",
+        "effectiveTo",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "journals"
+      ],
+      "relations": [
+        "Organisation",
+        "JournalEntry"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingNumberSeries",
+      "fields": [
+        "id",
+        "orgId",
+        "taxRegistrationId",
+        "documentType",
+        "prefixTemplate",
+        "nextNumber",
+        "padding",
+        "effectiveFrom",
+        "effectiveTo",
+        "isActive",
+        "rowVersion",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "taxRegistration",
+        "journals"
+      ],
+      "relations": [
+        "Organisation",
+        "AccountingTaxRegistration",
+        "JournalEntry"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingIntegrationInbox",
+      "fields": [
+        "id",
+        "orgId",
+        "legalEntityId",
+        "sourceSystem",
+        "messageType",
+        "messageVersion",
+        "requestId",
+        "idempotencyKey",
+        "payload",
+        "payloadHash",
+        "sourceSnapshotId",
+        "correlationId",
+        "causationId",
+        "status",
+        "attemptCount",
+        "availableAt",
+        "receivedAt",
+        "processingAt",
+        "processedAt",
+        "processedRecordType",
+        "processedRecordId",
+        "lastErrorCode",
+        "retryClassification",
+        "rejectedAt",
+        "manualReviewAt",
+        "rowVersion",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "legalEntity",
+        "sourceSnapshot",
+        "postingAttempts"
+      ],
+      "relations": [
+        "AccountingIntegrationMessageStatus",
+        "Organisation",
+        "AccountingLegalEntity",
+        "AccountingSourceSnapshot",
+        "AccountingPostingAttempt"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingIntegrationOutbox",
+      "fields": [
+        "id",
+        "orgId",
+        "destination",
+        "eventType",
+        "eventVersion",
+        "aggregateType",
+        "aggregateId",
+        "correlationId",
+        "causationId",
+        "idempotencyKey",
+        "payloadHash",
+        "payload",
+        "status",
+        "attemptCount",
+        "availableAt",
+        "publishedAt",
+        "lastErrorCode",
+        "createdAt",
+        "updatedAt",
+        "org"
+      ],
+      "relations": [
+        "AccountingIntegrationMessageStatus",
+        "Organisation"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingRoundingPolicy",
+      "fields": [
+        "id",
+        "orgId",
+        "code",
+        "version",
+        "purpose",
+        "currencyCode",
+        "scale",
+        "roundingMode",
+        "statutoryValidated",
+        "configuration",
+        "effectiveFrom",
+        "effectiveTo",
+        "isActive",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "journals"
+      ],
+      "relations": [
+        "AccountingRoundingMode",
+        "Organisation",
+        "JournalEntry"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingSourceSnapshot",
+      "fields": [
+        "id",
+        "orgId",
+        "legalEntityId",
+        "sourceSystem",
+        "sourceType",
+        "sourceId",
+        "sourceVersion",
+        "requestId",
+        "payload",
+        "payloadHash",
+        "approvedById",
+        "approvedAt",
+        "occurredAt",
+        "createdAt",
+        "org",
+        "legalEntity",
+        "integrationInbox",
+        "journals",
+        "payrollRun",
+        "legacyPayrollBatches"
+      ],
+      "relations": [
+        "Organisation",
+        "AccountingLegalEntity",
+        "AccountingIntegrationInbox",
+        "JournalEntry",
+        "AccountingPayrollRunSnapshot",
+        "PayrollBatch"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingPostingAttempt",
+      "fields": [
+        "id",
+        "orgId",
+        "inboxId",
+        "requestId",
+        "attemptNumber",
+        "status",
+        "journalEntryId",
+        "actorId",
+        "errorCode",
+        "errorClassification",
+        "startedAt",
+        "completedAt",
+        "org",
+        "inbox",
+        "journalEntry"
+      ],
+      "relations": [
+        "AccountingPostingAttemptStatus",
+        "Organisation",
+        "AccountingIntegrationInbox",
+        "JournalEntry"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingPayrollRunSnapshot",
+      "fields": [
+        "id",
+        "orgId",
+        "sourceSnapshotId",
+        "runId",
+        "runVersion",
+        "payPeriodStart",
+        "payPeriodEnd",
+        "currencyCode",
+        "totalDebit",
+        "totalCredit",
+        "allocationDetail",
+        "approvedById",
+        "approvedAt",
+        "createdAt",
+        "org",
+        "sourceSnapshot"
+      ],
+      "relations": [
+        "Organisation",
+        "AccountingSourceSnapshot"
+      ],
+      "module": "accounting"
     },
     {
       "name": "Account",
@@ -6086,7 +7111,8 @@
         "recurringJournalsDebit",
         "recurringJournalsCredit",
         "partnerCapitalAccounts",
-        "partnerCurrentAccounts"
+        "partnerCurrentAccounts",
+        "accountingControl"
       ],
       "relations": [
         "Organisation",
@@ -6098,7 +7124,8 @@
         "TaxLine",
         "RecurringExpense",
         "RecurringJournal",
-        "PartnerAccount"
+        "PartnerAccount",
+        "AccountingAccountControl"
       ],
       "module": "accounting"
     },
@@ -6113,10 +7140,12 @@
         "closed",
         "createdAt",
         "updatedAt",
-        "org"
+        "org",
+        "accountingPeriods"
       ],
       "relations": [
-        "Organisation"
+        "Organisation",
+        "AccountingPeriod"
       ],
       "module": "accounting"
     },
@@ -6125,9 +7154,12 @@
       "fields": [
         "id",
         "orgId",
+        "legalEntityId",
         "branchId",
         "voucherNo",
+        "journalType",
         "postingDate",
+        "documentDate",
         "remarks",
         "status",
         "totalDebit",
@@ -6135,20 +7167,69 @@
         "createdById",
         "createdAt",
         "updatedAt",
+        "accountingPeriodId",
+        "sourceSystem",
+        "sourceType",
+        "sourceId",
+        "sourceVersion",
+        "requestId",
+        "idempotencyKey",
+        "sourceSnapshotId",
+        "functionalCurrencyCode",
+        "transactionCurrencyCode",
+        "baseCurrencyCode",
+        "exchangeRateSource",
+        "exchangeRateEffectiveDate",
+        "accountingApprovalPolicyId",
+        "approvalPolicyVersion",
+        "approvedById",
+        "approvedAt",
+        "numberSeriesId",
+        "roundingPolicyId",
+        "roundingPolicyVersion",
+        "supportingDocumentRefs",
+        "correlationId",
+        "causationId",
+        "postedAt",
+        "postedById",
+        "reversalOfId",
+        "replacementOfId",
+        "reversalReason",
+        "originalEffectiveDate",
+        "rowVersion",
         "org",
+        "legalEntity",
         "branch",
         "lines",
         "glEntries",
         "payrollBatches",
-        "assetDepreciations"
+        "assetDepreciations",
+        "accountingPeriod",
+        "sourceSnapshot",
+        "approvalPolicy",
+        "numberSeries",
+        "roundingPolicy",
+        "reversalOf",
+        "reversals",
+        "replacementOf",
+        "replacements",
+        "postingAttempts"
       ],
       "relations": [
         "Organisation",
+        "AccountingLegalEntity",
         "Branch",
         "JournalEntryLine",
         "GeneralLedgerEntry",
         "PayrollBatch",
-        "AssetDepreciationEntry"
+        "AssetDepreciationEntry",
+        "AccountingPeriod",
+        "AccountingSourceSnapshot",
+        "AccountingApprovalPolicy",
+        "AccountingNumberSeries",
+        "AccountingRoundingPolicy",
+        "JournalEntry",
+        "AccountingPostingAttempt"
       ],
       "module": "accounting"
     },
@@ -6163,12 +7244,18 @@
         "partyType",
         "partyId",
         "remarks",
+        "transactionCurrencyCode",
+        "transactionDebit",
+        "transactionCredit",
+        "exchangeRate",
         "journalEntry",
-        "account"
+        "account",
+        "accountingDimensions"
       ],
       "relations": [
         "JournalEntry",
-        "Account"
+        "Account",
+        "AccountingJournalLineDimension"
       ],
       "module": "accounting"
     },
@@ -6506,14 +7593,19 @@
         "status",
         "totalAmount",
         "journalEntryId",
+        "sourceSnapshotId",
+        "sourceRunId",
+        "sourceRunVersion",
         "createdAt",
         "updatedAt",
         "org",
-        "journalEntry"
+        "journalEntry",
+        "sourceSnapshot"
       ],
       "relations": [
         "Organisation",
-        "JournalEntry"
+        "JournalEntry",
+        "AccountingSourceSnapshot"
       ],
       "module": "core"
     },
@@ -10094,9 +11186,52 @@
         "getJobProfitabilityAction",
         "getCashAndBankLedgerAction",
         "recordBankTransferAction",
+        "approveBankTransferRequestAction",
         "getProfitAndLossAction",
         "getBalanceSheetAction",
         "getTrialBalanceAction"
+      ]
+    },
+    {
+      "module": "accounting",
+      "fileName": "integration-adapters.ts",
+      "filePath": "src/modules/accounting/integration-adapters.ts",
+      "exportedFunctions": [
+        "resolveCanonicalPostingConfiguration",
+        "prepareBankTransferRequest",
+        "approveAndPostPreparedRequest",
+        "prepareCrmDealInvoiceRequest",
+        "acceptApprovedPayrollRun",
+        "postApprovedPayrollRun"
+      ]
+    },
+    {
+      "module": "accounting",
+      "fileName": "money.ts",
+      "filePath": "src/modules/accounting/money.ts",
+      "exportedFunctions": [
+        "decimal",
+        "add",
+        "subtract",
+        "multiply",
+        "divide",
+        "compare",
+        "quantize",
+        "serialize",
+        "isZero",
+        "isPositive",
+        "debitCreditTotals",
+        "assertBalanced"
+      ]
+    },
+    {
+      "module": "accounting",
+      "fileName": "posting-engine.ts",
+      "filePath": "src/modules/accounting/posting-engine.ts",
+      "exportedFunctions": [
+        "canonicalPostingPayload",
+        "postCanonicalAccountingRequest",
+        "reverseCanonicalJournal"
       ]
     },
     {
@@ -10119,6 +11254,16 @@
         "getJournalRegister",
         "getJobProfitability",
         "getCashAndBankLedger"
+      ]
+    },
+    {
+      "module": "accounting",
+      "fileName": "request-integrity.ts",
+      "filePath": "src/modules/accounting/request-integrity.ts",
+      "exportedFunctions": [
+        "canonicalPayload",
+        "payloadHash",
+        "newAccountingRequestId"
       ]
     },
     {
@@ -10210,6 +11355,18 @@
       "module": "accounting",
       "fileName": "accounting.test.ts",
       "filePath": "src/modules/accounting/__tests__/accounting.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "accounting",
+      "fileName": "money.test.ts",
+      "filePath": "src/modules/accounting/__tests__/money.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "accounting",
+      "fileName": "posting-boundary.architecture.test.ts",
+      "filePath": "src/modules/accounting/__tests__/posting-boundary.architecture.test.ts",
       "exportedFunctions": []
     },
     {
@@ -11146,6 +12303,56 @@
     },
     {
       "module": "hrms",
+      "fileName": "document-drive.ts",
+      "filePath": "src/modules/hrms/document-drive.ts",
+      "exportedFunctions": [
+        "isHrDocumentCategory",
+        "buildEmployeeDriveFolderName",
+        "canReadHrDocument",
+        "canUploadHrDocument",
+        "listHrDocuments",
+        "uploadHrDocument",
+        "downloadHrDocument"
+      ]
+    },
+    {
+      "module": "hrms",
+      "fileName": "employee-directory-export.ts",
+      "filePath": "src/modules/hrms/employee-directory-export.ts",
+      "exportedFunctions": [
+        "buildEmployeeDirectoryExportRows",
+        "createEmployeeDirectoryExport"
+      ]
+    },
+    {
+      "module": "hrms",
+      "fileName": "employee-invitation.ts",
+      "filePath": "src/modules/hrms/employee-invitation.ts",
+      "exportedFunctions": [
+        "inviteEmployee",
+        "inviteBasicEmployee",
+        "getEmployeeNumberSuggestion",
+        "resendEmployeeInvitation",
+        "getEmployeeInvitation",
+        "acceptEmployeeInvitation",
+        "buildAddressFromParts"
+      ]
+    },
+    {
+      "module": "hrms",
+      "fileName": "employee-profile.ts",
+      "filePath": "src/modules/hrms/employee-profile.ts",
+      "exportedFunctions": [
+        "listEmployeeProfileFields",
+        "createEmployeeProfileField",
+        "updateEmployeeProfileField",
+        "deleteEmployeeProfileField",
+        "updateEmployeeHrmsProfile",
+        "updateEmployeeSelfProfile"
+      ]
+    },
+    {
+      "module": "hrms",
       "fileName": "face-enrollment.ts",
       "filePath": "src/modules/hrms/face-enrollment.ts",
       "exportedFunctions": [
@@ -11299,6 +12506,11 @@
         "submitSurveyResponse",
         "getServiceDefinitions",
         "updateServiceSettings",
+        "getWorkReportSettings",
+        "updateWorkReportSettings",
+        "createWorkReportField",
+        "updateWorkReportField",
+        "deleteWorkReportField",
         "getWorkReports",
         "createWorkReport",
         "submitWorkReportApproval",
@@ -11350,8 +12562,50 @@
     },
     {
       "module": "hrms",
+      "fileName": "document-drive.test.ts",
+      "filePath": "src/modules/hrms/__tests__/document-drive.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "hrms",
+      "fileName": "employee-basic-invitation.test.ts",
+      "filePath": "src/modules/hrms/__tests__/employee-basic-invitation.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "hrms",
+      "fileName": "employee-directory-export.test.ts",
+      "filePath": "src/modules/hrms/__tests__/employee-directory-export.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "hrms",
+      "fileName": "employee-invitation-lifecycle.test.ts",
+      "filePath": "src/modules/hrms/__tests__/employee-invitation-lifecycle.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "hrms",
+      "fileName": "employee-invitation.test.ts",
+      "filePath": "src/modules/hrms/__tests__/employee-invitation.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "hrms",
+      "fileName": "employee-profile.test.ts",
+      "filePath": "src/modules/hrms/__tests__/employee-profile.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "hrms",
       "fileName": "letters.test.ts",
       "filePath": "src/modules/hrms/__tests__/letters.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "hrms",
+      "fileName": "work-report.test.ts",
+      "filePath": "src/modules/hrms/__tests__/work-report.test.ts",
       "exportedFunctions": []
     },
     {
@@ -11632,6 +12886,11 @@
     },
     {
       "module": "hrms",
+      "fileName": "employee-profile-fields.tsx",
+      "filePath": "src/components/hrms/employee-profile-fields.tsx"
+    },
+    {
+      "module": "hrms",
       "fileName": "files-view.tsx",
       "filePath": "src/components/hrms/files-view.tsx"
     },
@@ -11709,6 +12968,11 @@
       "module": "hrms",
       "fileName": "users-table.tsx",
       "filePath": "src/components/hrms/users-table.tsx"
+    },
+    {
+      "module": "hrms",
+      "fileName": "work-report-settings.tsx",
+      "filePath": "src/components/hrms/work-report-settings.tsx"
     },
     {
       "module": "hrms",
@@ -11862,8 +13126,53 @@
     },
     {
       "module": "monolith",
+      "fileName": "accounting-commercial-document-form.tsx",
+      "filePath": "src/components/monolith/accounting-commercial-document-form.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "accounting-delete-action.tsx",
+      "filePath": "src/components/monolith/accounting-delete-action.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "accounting-invoice-detail.tsx",
+      "filePath": "src/components/monolith/accounting-invoice-detail.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "accounting-invoice-form.tsx",
+      "filePath": "src/components/monolith/accounting-invoice-form.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "accounting-items.tsx",
+      "filePath": "src/components/monolith/accounting-items.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "accounting-workspace.test.tsx",
+      "filePath": "src/components/monolith/accounting-workspace.test.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "accounting-workspace.tsx",
+      "filePath": "src/components/monolith/accounting-workspace.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "admin-workspace.tsx",
+      "filePath": "src/components/monolith/admin-workspace.tsx"
+    },
+    {
+      "module": "monolith",
       "fileName": "alert.tsx",
       "filePath": "src/components/monolith/alert.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "app-shell.tsx",
+      "filePath": "src/components/monolith/app-shell.tsx"
     },
     {
       "module": "monolith",
@@ -11884,6 +13193,36 @@
       "module": "monolith",
       "fileName": "card.tsx",
       "filePath": "src/components/monolith/card.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "cha-workspace.test.tsx",
+      "filePath": "src/components/monolith/cha-workspace.test.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "cha-workspace.tsx",
+      "filePath": "src/components/monolith/cha-workspace.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "communication-admin-workspace.test.tsx",
+      "filePath": "src/components/monolith/communication-admin-workspace.test.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "communication-workspace.tsx",
+      "filePath": "src/components/monolith/communication-workspace.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "crm-workspace.test.tsx",
+      "filePath": "src/components/monolith/crm-workspace.test.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "crm-workspace.tsx",
+      "filePath": "src/components/monolith/crm-workspace.tsx"
     },
     {
       "module": "monolith",
@@ -11917,6 +13256,16 @@
     },
     {
       "module": "monolith",
+      "fileName": "foundation.test.tsx",
+      "filePath": "src/components/monolith/foundation.test.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "foundation.tsx",
+      "filePath": "src/components/monolith/foundation.tsx"
+    },
+    {
+      "module": "monolith",
       "fileName": "input.tsx",
       "filePath": "src/components/monolith/input.tsx"
     },
@@ -11932,11 +13281,6 @@
     },
     {
       "module": "monolith",
-      "fileName": "monolith-dashboard-shell.tsx",
-      "filePath": "src/components/monolith/monolith-dashboard-shell.tsx"
-    },
-    {
-      "module": "monolith",
       "fileName": "native-select.tsx",
       "filePath": "src/components/monolith/native-select.tsx"
     },
@@ -11947,8 +13291,78 @@
     },
     {
       "module": "monolith",
+      "fileName": "people-controls.tsx",
+      "filePath": "src/components/monolith/people-controls.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "people-data-table.tsx",
+      "filePath": "src/components/monolith/people-data-table.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "people-workspace.test.tsx",
+      "filePath": "src/components/monolith/people-workspace.test.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "people-workspace.tsx",
+      "filePath": "src/components/monolith/people-workspace.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "performance-workspace.test.tsx",
+      "filePath": "src/components/monolith/performance-workspace.test.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "performance-workspace.tsx",
+      "filePath": "src/components/monolith/performance-workspace.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "public-workspace.test.tsx",
+      "filePath": "src/components/monolith/public-workspace.test.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "public-workspace.tsx",
+      "filePath": "src/components/monolith/public-workspace.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "textarea.tsx",
+      "filePath": "src/components/monolith/textarea.tsx"
+    },
+    {
+      "module": "monolith",
       "fileName": "warning-indicator-popover.tsx",
       "filePath": "src/components/monolith/warning-indicator-popover.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "workspace-data-table.tsx",
+      "filePath": "src/components/monolith/workspace-data-table.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "workspace-dialog.tsx",
+      "filePath": "src/components/monolith/workspace-dialog.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "workspace-states.tsx",
+      "filePath": "src/components/monolith/workspace-states.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "workspace.test.tsx",
+      "filePath": "src/components/monolith/workspace.test.tsx"
+    },
+    {
+      "module": "monolith",
+      "fileName": "workspace.tsx",
+      "filePath": "src/components/monolith/workspace.tsx"
     },
     {
       "module": "notifications",
@@ -12005,28 +13419,28 @@
       "components": 0
     },
     "accounting": {
-      "appRoutes": 32,
+      "appRoutes": 35,
       "apiRoutes": 0,
-      "prismaModels": 18,
-      "serviceFiles": 6,
+      "prismaModels": 37,
+      "serviceFiles": 12,
       "components": 0
     },
     "admin": {
-      "appRoutes": 10,
+      "appRoutes": 13,
       "apiRoutes": 6,
       "prismaModels": 0,
       "serviceFiles": 0,
       "components": 0
     },
     "ams": {
-      "appRoutes": 18,
+      "appRoutes": 21,
       "apiRoutes": 17,
       "prismaModels": 17,
       "serviceFiles": 11,
       "components": 3
     },
     "attendance": {
-      "appRoutes": 7,
+      "appRoutes": 10,
       "apiRoutes": 10,
       "prismaModels": 9,
       "serviceFiles": 1,
@@ -12040,28 +13454,28 @@
       "components": 1
     },
     "cha": {
-      "appRoutes": 12,
+      "appRoutes": 14,
       "apiRoutes": 6,
       "prismaModels": 35,
       "serviceFiles": 7,
       "components": 3
     },
     "communication": {
-      "appRoutes": 11,
+      "appRoutes": 13,
       "apiRoutes": 18,
       "prismaModels": 2,
       "serviceFiles": 1,
       "components": 0
     },
     "core": {
-      "appRoutes": 2,
+      "appRoutes": 3,
       "apiRoutes": 0,
-      "prismaModels": 72,
+      "prismaModels": 75,
       "serviceFiles": 5,
       "components": 0
     },
     "crm": {
-      "appRoutes": 59,
+      "appRoutes": 60,
       "apiRoutes": 4,
       "prismaModels": 26,
       "serviceFiles": 8,
@@ -12096,7 +13510,7 @@
       "components": 0
     },
     "expense": {
-      "appRoutes": 1,
+      "appRoutes": 4,
       "apiRoutes": 0,
       "prismaModels": 0,
       "serviceFiles": 0,
@@ -12117,11 +13531,11 @@
       "components": 0
     },
     "hrms": {
-      "appRoutes": 39,
-      "apiRoutes": 34,
-      "prismaModels": 38,
-      "serviceFiles": 14,
-      "components": 21
+      "appRoutes": 42,
+      "apiRoutes": 46,
+      "prismaModels": 43,
+      "serviceFiles": 25,
+      "components": 23
     },
     "items": {
       "appRoutes": 0,
@@ -12138,7 +13552,7 @@
       "components": 5
     },
     "lms": {
-      "appRoutes": 5,
+      "appRoutes": 8,
       "apiRoutes": 0,
       "prismaModels": 5,
       "serviceFiles": 0,
@@ -12170,7 +13584,7 @@
       "apiRoutes": 0,
       "prismaModels": 0,
       "serviceFiles": 0,
-      "components": 18
+      "components": 48
     },
     "notifications": {
       "appRoutes": 1,

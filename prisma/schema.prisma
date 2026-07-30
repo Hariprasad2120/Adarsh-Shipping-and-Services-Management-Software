@@ -49,28 +49,47 @@ model Organisation {
   shifts                Shift[]
 
   // Accounting Module Relations
-  accounts            Account[]
-  fiscalYears         FiscalYear[]
-  journalEntries      JournalEntry[]
-  generalLedgers      GeneralLedgerEntry[]
-  salesInvoices       SalesInvoice[]
-  purchaseInvoices    PurchaseInvoice[]
-  paymentEntries      PaymentEntry[]
-  customerLedgers     CustomerLedgerEntry[]
-  supplierLedgers     SupplierLedgerEntry[]
-  accountingSettings  AccountingSettings?
-  accountingAuditLogs AccountingAuditLog[]
-  payrollBatches      PayrollBatch[]
-  assets              Asset[]
-  assetDepreciations  AssetDepreciationEntry[]
-  jobCostings         JobCosting[]
-  quotations          Quotation[]
-  customerNotes       CustomerNote[]
-  vendorNotes         VendorNote[]
-  recurringExpenses   RecurringExpense[]
-  recurringJournals   RecurringJournal[]
-  transactionLock     TransactionLock?
-  partnerAccounts     PartnerAccount[]
+  accounts                        Account[]
+  fiscalYears                     FiscalYear[]
+  journalEntries                  JournalEntry[]
+  generalLedgers                  GeneralLedgerEntry[]
+  salesInvoices                   SalesInvoice[]
+  purchaseInvoices                PurchaseInvoice[]
+  paymentEntries                  PaymentEntry[]
+  customerLedgers                 CustomerLedgerEntry[]
+  supplierLedgers                 SupplierLedgerEntry[]
+  accountingSettings              AccountingSettings?
+  accountingAuditLogs             AccountingAuditLog[]
+  payrollBatches                  PayrollBatch[]
+  assets                          Asset[]
+  assetDepreciations              AssetDepreciationEntry[]
+  jobCostings                     JobCosting[]
+  quotations                      Quotation[]
+  customerNotes                   CustomerNote[]
+  vendorNotes                     VendorNote[]
+  recurringExpenses               RecurringExpense[]
+  recurringJournals               RecurringJournal[]
+  transactionLock                 TransactionLock?
+  partnerAccounts                 PartnerAccount[]
+  accountingProfile               AccountingOrganisationProfile?
+  accountingLegalEntities         AccountingLegalEntity[]
+  accountingTaxRegistrations      AccountingTaxRegistration[]
+  accountingPeriods               AccountingPeriod[]
+  accountingPeriodLockRequests    AccountingPeriodLockRequest[]
+  accountingCurrencies            AccountingCurrency[]
+  accountingExchangeRates         AccountingExchangeRate[]
+  accountingAccountControls       AccountingAccountControl[]
+  accountingDimensionDefinitions  AccountingDimensionDefinition[]
+  accountingDimensionValues       AccountingDimensionValue[]
+  accountingJournalLineDimensions AccountingJournalLineDimension[]
+  accountingApprovalPolicies      AccountingApprovalPolicy[]
+  accountingNumberSeries          AccountingNumberSeries[]
+  accountingIntegrationInbox      AccountingIntegrationInbox[]
+  accountingIntegrationOutbox     AccountingIntegrationOutbox[]
+  accountingRoundingPolicies      AccountingRoundingPolicy[]
+  accountingSourceSnapshots       AccountingSourceSnapshot[]
+  accountingPostingAttempts       AccountingPostingAttempt[]
+  accountingPayrollRunSnapshots   AccountingPayrollRunSnapshot[]
 
   chaSettings                      ChaSettings?
   chaJobs                          ChaJob[]
@@ -316,23 +335,26 @@ model User {
   passkeySetupRequired  Boolean?              @default(false)
 
   // CRM Module Back-Relations
-  crmInvoicesApproved      CrmInvoice[]                  @relation("CrmInvoiceApprover")
-  crmApprovalLogsActed     CrmApprovalLog[]              @relation("CrmApprovalLogActor")
-  crmLeadsOwned            CrmLead[]                     @relation("CrmLeadOwner")
-  crmContactsOwned         CrmContact[]                  @relation("CrmContactOwner")
-  crmAccountsOwned         CrmAccount[]                  @relation("CrmAccountOwner")
-  crmDealsOwned            CrmDeal[]                     @relation("CrmDealOwner")
-  crmActivitiesOwned       CrmActivity[]                 @relation("CrmActivityOwner")
-  crmInvoicesOwned         CrmInvoice[]                  @relation("CrmInvoiceOwner")
-  crmVendorsOwned          CrmVendor[]                   @relation("CrmVendorOwner")
-  crmProjectsOwned         CrmProject[]                  @relation("CrmProjectOwner")
-  crmNotesCreated          CrmNote[]                     @relation("CrmNoteCreator")
-  crmAttachmentsCreated    CrmAttachment[]               @relation("CrmAttachmentCreator")
-  crmTimelineCreated       CrmTimelineEvent[]            @relation("CrmTimelineCreator")
-  crmJdConfigs             CrmLeadSourceJustdialConfig[] @relation("CrmJdConfigOwner")
-  crmExternalLeadsAssigned CrmExternalLeadSnapshot[]     @relation("CrmExternalLeadAssignee")
-  crmLeadReminders         CrmLeadReminder[]             @relation("CrmLeadReminderUser")
-  crmWorkTimeLogs          CrmWorkTimeLog[]              @relation("CrmWorkTimeLogUser")
+  crmInvoicesApproved             CrmInvoice[]                  @relation("CrmInvoiceApprover")
+  crmApprovalLogsActed            CrmApprovalLog[]              @relation("CrmApprovalLogActor")
+  crmLeadsOwned                   CrmLead[]                     @relation("CrmLeadOwner")
+  crmContactsOwned                CrmContact[]                  @relation("CrmContactOwner")
+  crmAccountsOwned                CrmAccount[]                  @relation("CrmAccountOwner")
+  crmDealsOwned                   CrmDeal[]                     @relation("CrmDealOwner")
+  crmActivitiesOwned              CrmActivity[]                 @relation("CrmActivityOwner")
+  crmInvoicesOwned                CrmInvoice[]                  @relation("CrmInvoiceOwner")
+  crmVendorsOwned                 CrmVendor[]                   @relation("CrmVendorOwner")
+  crmProjectsOwned                CrmProject[]                  @relation("CrmProjectOwner")
+  crmNotesCreated                 CrmNote[]                     @relation("CrmNoteCreator")
+  crmAttachmentsCreated           CrmAttachment[]               @relation("CrmAttachmentCreator")
+  accountingPeriodLocksRequested  AccountingPeriodLockRequest[] @relation("AccountingPeriodLockRequester")
+  accountingPeriodLocksDecided    AccountingPeriodLockRequest[] @relation("AccountingPeriodLockDecider")
+  accountingExchangeRatesApproved AccountingExchangeRate[]      @relation("AccountingExchangeRateApprover")
+  crmTimelineCreated              CrmTimelineEvent[]            @relation("CrmTimelineCreator")
+  crmJdConfigs                    CrmLeadSourceJustdialConfig[] @relation("CrmJdConfigOwner")
+  crmExternalLeadsAssigned        CrmExternalLeadSnapshot[]     @relation("CrmExternalLeadAssignee")
+  crmLeadReminders                CrmLeadReminder[]             @relation("CrmLeadReminderUser")
+  crmWorkTimeLogs                 CrmWorkTimeLog[]              @relation("CrmWorkTimeLogUser")
 
   // PeoplePlus HRMS Relations
   hrmsPreferences          EmployeePreference?
@@ -2557,6 +2579,7 @@ model HRLetterRequest {
   letterNumber        String    @unique
   status              String    @default("DRAFT") // DRAFT, HR_REVIEW, LEGAL_REVIEW, MGMT_APPROVAL, READY_TO_ISSUE, ISSUED, VIEWED, ACCEPTED, DECLINED, CANCELLED, SUPERSEDED
   details             Json? // Field values collected for the request
+  legacyFileKey       String?   @map("fileKey") // Preserved legacy artifact reference; do not write for new letters.
   pdfPath             String?
   docxPath            String?
   documentHash        String? // SHA-256 of the generated PDF
@@ -2732,6 +2755,530 @@ model WorkReportField {
 
 // ─── Accounting Module ──────────────────────────────────────────────────────────
 
+enum AccountingInventoryMode {
+  DISABLED
+  SERVICE_ONLY
+  INVENTORY_ONLY
+  MIXED
+}
+
+enum AccountingRoundingMode {
+  HALF_UP
+}
+
+enum AccountingLegalEntityStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+}
+
+enum AccountingPeriodStatus {
+  OPEN
+  SOFT_LOCKED
+  HARD_LOCKED
+  CLOSED
+}
+
+enum AccountingPeriodLockRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+  APPLIED
+  CANCELLED
+}
+
+enum AccountingExchangeRateStatus {
+  DRAFT
+  APPROVED
+  REJECTED
+}
+
+enum AccountingIntegrationMessageStatus {
+  RECEIVED
+  PENDING
+  PROCESSING
+  PROCESSED
+  REJECTED
+  RETRYABLE
+  FAILED
+  DEAD_LETTER
+  MANUAL_REVIEW
+}
+
+enum AccountingPostingAttemptStatus {
+  PROCESSING
+  POSTED
+  REJECTED
+  RETRYABLE
+  FAILED
+}
+
+model AccountingOrganisationProfile {
+  id                      String                  @id @default(cuid())
+  orgId                   String                  @unique
+  functionalCurrencyCode  String                  @db.VarChar(3)
+  fiscalYearStartMonth    Int
+  fiscalYearStartDay      Int
+  inventoryMode           AccountingInventoryMode
+  moneyScale              Int
+  quantityScale           Int
+  exchangeRateScale       Int
+  percentageScale         Int
+  roundingMode            AccountingRoundingMode  @default(HALF_UP)
+  correctionPolicy        Json?
+  correctionPolicyVersion Int?
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Restrict)
+
+  @@index([orgId])
+}
+
+model AccountingLegalEntity {
+  id            String                      @id @default(cuid())
+  orgId         String
+  code          String
+  legalName     String
+  entityType    String
+  status        AccountingLegalEntityStatus @default(DRAFT)
+  isDefault     Boolean                     @default(false)
+  effectiveFrom DateTime?                   @db.Date
+  effectiveTo   DateTime?                   @db.Date
+  createdAt     DateTime                    @default(now())
+  updatedAt     DateTime                    @updatedAt
+
+  org              Organisation                 @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  taxRegistrations AccountingTaxRegistration[]
+  sourceSnapshots  AccountingSourceSnapshot[]
+  integrationInbox AccountingIntegrationInbox[]
+  journalEntries   JournalEntry[]
+
+  @@unique([orgId, code])
+  @@index([orgId, status])
+}
+
+model AccountingTaxRegistration {
+  id               String    @id @default(cuid())
+  orgId            String
+  legalEntityId    String
+  registrationCode String
+  registrationType String
+  gstin            String?
+  stateCode        String?
+  legalName        String?
+  tradeName        String?
+  effectiveFrom    DateTime? @db.Date
+  effectiveTo      DateTime? @db.Date
+  isActive         Boolean   @default(false)
+  configuration    Json?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  org          Organisation             @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity  AccountingLegalEntity    @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  numberSeries AccountingNumberSeries[]
+
+  @@unique([orgId, registrationCode])
+  @@unique([orgId, gstin])
+  @@index([orgId, legalEntityId, isActive])
+  @@index([orgId, stateCode])
+}
+
+model AccountingPeriod {
+  id           String                 @id @default(cuid())
+  orgId        String
+  fiscalYearId String
+  periodNumber Int
+  name         String
+  startDate    DateTime               @db.Date
+  endDate      DateTime               @db.Date
+  status       AccountingPeriodStatus @default(OPEN)
+  hardLockedAt DateTime?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  org            Organisation                  @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  fiscalYear     FiscalYear                    @relation(fields: [fiscalYearId], references: [id], onDelete: Restrict)
+  lockRequests   AccountingPeriodLockRequest[]
+  journalEntries JournalEntry[]
+
+  @@unique([fiscalYearId, periodNumber])
+  @@unique([orgId, startDate, endDate])
+  @@index([orgId, status, startDate, endDate])
+  @@index([orgId, fiscalYearId])
+}
+
+model AccountingPeriodLockRequest {
+  id            String                            @id @default(cuid())
+  orgId         String
+  periodId      String
+  requestedById String
+  decidedById   String?
+  reason        String
+  status        AccountingPeriodLockRequestStatus @default(PENDING)
+  requestedAt   DateTime                          @default(now())
+  decidedAt     DateTime?
+  reopenFrom    DateTime?
+  reopenUntil   DateTime?
+  appliedAt     DateTime?
+  relockedAt    DateTime?
+  rowVersion    Int                               @default(1)
+
+  org         Organisation     @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  period      AccountingPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  requestedBy User             @relation("AccountingPeriodLockRequester", fields: [requestedById], references: [id], onDelete: Restrict)
+  decidedBy   User?            @relation("AccountingPeriodLockDecider", fields: [decidedById], references: [id], onDelete: Restrict)
+
+  @@index([orgId, status, requestedAt])
+  @@index([periodId, status])
+  @@index([requestedById])
+  @@index([decidedById])
+}
+
+model AccountingCurrency {
+  id            String   @id @default(cuid())
+  orgId         String
+  code          String   @db.VarChar(3)
+  name          String
+  symbol        String?
+  decimalPlaces Int
+  isFunctional  Boolean  @default(false)
+  isEnabled     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  org             Organisation               @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  baseRates       AccountingExchangeRate[]   @relation("AccountingExchangeRateFrom")
+  quoteRates      AccountingExchangeRate[]   @relation("AccountingExchangeRateTo")
+  accountControls AccountingAccountControl[]
+
+  @@unique([orgId, code])
+  @@index([orgId, isEnabled])
+}
+
+model AccountingExchangeRate {
+  id             String                       @id @default(cuid())
+  orgId          String
+  fromCurrencyId String
+  toCurrencyId   String
+  rateDate       DateTime                     @db.Date
+  rate           Decimal                      @db.Decimal(20, 10)
+  source         String
+  status         AccountingExchangeRateStatus @default(DRAFT)
+  approvedById   String?
+  approvedAt     DateTime?
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+
+  org          Organisation       @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  fromCurrency AccountingCurrency @relation("AccountingExchangeRateFrom", fields: [fromCurrencyId], references: [id], onDelete: Restrict)
+  toCurrency   AccountingCurrency @relation("AccountingExchangeRateTo", fields: [toCurrencyId], references: [id], onDelete: Restrict)
+  approvedBy   User?              @relation("AccountingExchangeRateApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, fromCurrencyId, toCurrencyId, rateDate, source])
+  @@index([orgId, rateDate, status])
+  @@index([fromCurrencyId, toCurrencyId, rateDate])
+}
+
+model AccountingAccountControl {
+  id                 String   @id @default(cuid())
+  orgId              String
+  accountId          String   @unique
+  defaultCurrencyId  String?
+  systemRole         String?
+  isSystemLocked     Boolean  @default(false)
+  allowDirectPosting Boolean  @default(true)
+  requiresParty      Boolean  @default(false)
+  requiresChaJob     Boolean  @default(false)
+  requiresCostCentre Boolean  @default(false)
+  effectiveFrom      DateTime @default(now()) @db.Date
+  rowVersion         Int      @default(1)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  org             Organisation        @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  account         Account             @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  defaultCurrency AccountingCurrency? @relation(fields: [defaultCurrencyId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, systemRole])
+  @@index([orgId, isSystemLocked])
+  @@index([defaultCurrencyId])
+}
+
+model AccountingDimensionDefinition {
+  id          String   @id @default(cuid())
+  orgId       String
+  code        String
+  name        String
+  valueSource String
+  isRequired  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  org         Organisation                     @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  values      AccountingDimensionValue[]
+  assignments AccountingJournalLineDimension[]
+
+  @@unique([orgId, code])
+  @@index([orgId, isActive])
+}
+
+model AccountingDimensionValue {
+  id            String    @id @default(cuid())
+  orgId         String
+  definitionId  String
+  code          String
+  name          String
+  canonicalType String?
+  canonicalId   String?
+  effectiveFrom DateTime? @db.Date
+  effectiveTo   DateTime? @db.Date
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  org         Organisation                     @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  definition  AccountingDimensionDefinition    @relation(fields: [definitionId], references: [id], onDelete: Restrict)
+  assignments AccountingJournalLineDimension[]
+
+  @@unique([definitionId, code])
+  @@unique([orgId, definitionId, canonicalType, canonicalId])
+  @@index([orgId, isActive])
+  @@index([orgId, canonicalType, canonicalId])
+}
+
+model AccountingJournalLineDimension {
+  id                 String   @id @default(cuid())
+  orgId              String
+  journalEntryLineId String
+  definitionId       String
+  dimensionValueId   String
+  createdAt          DateTime @default(now())
+
+  org              Organisation                  @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  journalEntryLine JournalEntryLine              @relation(fields: [journalEntryLineId], references: [id], onDelete: Cascade)
+  definition       AccountingDimensionDefinition @relation(fields: [definitionId], references: [id], onDelete: Restrict)
+  dimensionValue   AccountingDimensionValue      @relation(fields: [dimensionValueId], references: [id], onDelete: Restrict)
+
+  @@unique([journalEntryLineId, definitionId])
+  @@index([orgId, definitionId, dimensionValueId])
+  @@index([dimensionValueId])
+}
+
+model AccountingApprovalPolicy {
+  id            String    @id @default(cuid())
+  orgId         String
+  code          String
+  documentType  String
+  version       Int
+  configuration Json
+  isActive      Boolean   @default(false)
+  effectiveFrom DateTime? @db.Date
+  effectiveTo   DateTime? @db.Date
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  org      Organisation   @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  journals JournalEntry[]
+
+  @@unique([orgId, code, version])
+  @@index([orgId, documentType, isActive])
+}
+
+model AccountingNumberSeries {
+  id                String    @id @default(cuid())
+  orgId             String
+  taxRegistrationId String?
+  documentType      String
+  prefixTemplate    String
+  nextNumber        BigInt    @default(1)
+  padding           Int       @default(1)
+  effectiveFrom     DateTime  @db.Date
+  effectiveTo       DateTime? @db.Date
+  isActive          Boolean   @default(true)
+  rowVersion        Int       @default(1)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  org             Organisation               @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  taxRegistration AccountingTaxRegistration? @relation(fields: [taxRegistrationId], references: [id], onDelete: Restrict)
+  journals        JournalEntry[]
+
+  @@unique([orgId, taxRegistrationId, documentType, effectiveFrom])
+  @@index([orgId, documentType, isActive])
+}
+
+model AccountingIntegrationInbox {
+  id                  String                             @id @default(cuid())
+  orgId               String
+  legalEntityId       String?
+  sourceSystem        String
+  messageType         String
+  messageVersion      Int
+  requestId           String?
+  idempotencyKey      String
+  payload             Json
+  payloadHash         String
+  sourceSnapshotId    String?
+  correlationId       String?
+  causationId         String?
+  status              AccountingIntegrationMessageStatus @default(RECEIVED)
+  attemptCount        Int                                @default(0)
+  availableAt         DateTime                           @default(now())
+  receivedAt          DateTime                           @default(now())
+  processingAt        DateTime?
+  processedAt         DateTime?
+  processedRecordType String?
+  processedRecordId   String?
+  lastErrorCode       String?
+  retryClassification String?
+  rejectedAt          DateTime?
+  manualReviewAt      DateTime?
+  rowVersion          Int                                @default(1)
+  createdAt           DateTime                           @default(now())
+  updatedAt           DateTime                           @updatedAt
+
+  org             Organisation               @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity     AccountingLegalEntity?     @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  sourceSnapshot  AccountingSourceSnapshot?  @relation(fields: [sourceSnapshotId], references: [id], onDelete: Restrict)
+  postingAttempts AccountingPostingAttempt[]
+
+  @@unique([orgId, sourceSystem, idempotencyKey])
+  @@unique([orgId, sourceSystem, requestId])
+  @@index([orgId, status, availableAt])
+  @@index([orgId, messageType, createdAt])
+  @@index([sourceSnapshotId])
+}
+
+model AccountingIntegrationOutbox {
+  id             String                             @id @default(cuid())
+  orgId          String
+  destination    String
+  eventType      String
+  eventVersion   Int
+  aggregateType  String
+  aggregateId    String
+  correlationId  String?
+  causationId    String?
+  idempotencyKey String
+  payloadHash    String?
+  payload        Json
+  status         AccountingIntegrationMessageStatus @default(PENDING)
+  attemptCount   Int                                @default(0)
+  availableAt    DateTime                           @default(now())
+  publishedAt    DateTime?
+  lastErrorCode  String?
+  createdAt      DateTime                           @default(now())
+  updatedAt      DateTime                           @updatedAt
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, destination, idempotencyKey])
+  @@index([orgId, status, availableAt])
+  @@index([orgId, aggregateType, aggregateId])
+}
+
+model AccountingRoundingPolicy {
+  id                 String                 @id @default(cuid())
+  orgId              String
+  code               String
+  version            Int
+  purpose            String
+  currencyCode       String?                @db.VarChar(3)
+  scale              Int
+  roundingMode       AccountingRoundingMode @default(HALF_UP)
+  statutoryValidated Boolean                @default(false)
+  configuration      Json?
+  effectiveFrom      DateTime               @db.Date
+  effectiveTo        DateTime?              @db.Date
+  isActive           Boolean                @default(false)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  org      Organisation   @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  journals JournalEntry[]
+
+  @@unique([orgId, code, version])
+  @@index([orgId, purpose, currencyCode, isActive])
+}
+
+model AccountingSourceSnapshot {
+  id            String    @id @default(cuid())
+  orgId         String
+  legalEntityId String
+  sourceSystem  String
+  sourceType    String
+  sourceId      String
+  sourceVersion Int
+  requestId     String
+  payload       Json
+  payloadHash   String
+  approvedById  String?
+  approvedAt    DateTime?
+  occurredAt    DateTime
+  createdAt     DateTime  @default(now())
+
+  org                  Organisation                  @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity          AccountingLegalEntity         @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  integrationInbox     AccountingIntegrationInbox[]
+  journals             JournalEntry[]
+  payrollRun           AccountingPayrollRunSnapshot?
+  legacyPayrollBatches PayrollBatch[]
+
+  @@unique([orgId, sourceSystem, sourceType, sourceId, sourceVersion])
+  @@unique([orgId, sourceSystem, requestId])
+  @@index([orgId, legalEntityId, occurredAt])
+}
+
+model AccountingPostingAttempt {
+  id                  String                         @id @default(cuid())
+  orgId               String
+  inboxId             String
+  requestId           String
+  attemptNumber       Int
+  status              AccountingPostingAttemptStatus
+  journalEntryId      String?
+  actorId             String
+  errorCode           String?
+  errorClassification String?
+  startedAt           DateTime                       @default(now())
+  completedAt         DateTime?
+
+  org          Organisation               @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  inbox        AccountingIntegrationInbox @relation(fields: [inboxId], references: [id], onDelete: Restrict)
+  journalEntry JournalEntry?              @relation(fields: [journalEntryId], references: [id], onDelete: Restrict)
+
+  @@unique([inboxId, attemptNumber])
+  @@index([orgId, status, startedAt])
+  @@index([journalEntryId])
+}
+
+model AccountingPayrollRunSnapshot {
+  id               String   @id @default(cuid())
+  orgId            String
+  sourceSnapshotId String   @unique
+  runId            String
+  runVersion       Int
+  payPeriodStart   DateTime @db.Date
+  payPeriodEnd     DateTime @db.Date
+  currencyCode     String   @db.VarChar(3)
+  totalDebit       Decimal  @db.Decimal(20, 4)
+  totalCredit      Decimal  @db.Decimal(20, 4)
+  allocationDetail Json
+  approvedById     String
+  approvedAt       DateTime
+  createdAt        DateTime @default(now())
+
+  org            Organisation             @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  sourceSnapshot AccountingSourceSnapshot @relation(fields: [sourceSnapshotId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, runId, runVersion])
+  @@index([orgId, payPeriodStart, payPeriodEnd])
+}
+
 model Account {
   id              String   @id @default(cuid())
   orgId           String
@@ -2761,10 +3308,11 @@ model Account {
 
   // New accounting relations
   recurringExpenses       RecurringExpense[]
-  recurringJournalsDebit  RecurringJournal[] @relation("RecurringDebit")
-  recurringJournalsCredit RecurringJournal[] @relation("RecurringCredit")
-  partnerCapitalAccounts  PartnerAccount[]   @relation("PartnerCapital")
-  partnerCurrentAccounts  PartnerAccount[]   @relation("PartnerCurrent")
+  recurringJournalsDebit  RecurringJournal[]        @relation("RecurringDebit")
+  recurringJournalsCredit RecurringJournal[]        @relation("RecurringCredit")
+  partnerCapitalAccounts  PartnerAccount[]          @relation("PartnerCapital")
+  partnerCurrentAccounts  PartnerAccount[]          @relation("PartnerCurrent")
+  accountingControl       AccountingAccountControl?
 
   @@unique([orgId, accountCode])
   @@index([orgId])
@@ -2781,50 +3329,108 @@ model FiscalYear {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  org               Organisation       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  accountingPeriods AccountingPeriod[]
 
   @@unique([orgId, name])
   @@index([orgId])
 }
 
 model JournalEntry {
-  id          String   @id @default(cuid())
-  orgId       String
-  branchId    String?
-  voucherNo   String
-  postingDate DateTime @db.Date
-  remarks     String?
-  status      String   @default("DRAFT") // DRAFT | SUBMITTED | CANCELLED
-  totalDebit  Decimal  @default(0.0) @db.Decimal(18, 4)
-  totalCredit Decimal  @default(0.0) @db.Decimal(18, 4)
-  createdById String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                         String    @id @default(cuid())
+  orgId                      String
+  legalEntityId              String?
+  branchId                   String?
+  voucherNo                  String
+  journalType                String?
+  postingDate                DateTime  @db.Date
+  documentDate               DateTime? @db.Date
+  remarks                    String?
+  status                     String    @default("DRAFT") // DRAFT | SUBMITTED | POSTED | CANCELLED
+  totalDebit                 Decimal   @default(0.0) @db.Decimal(18, 4)
+  totalCredit                Decimal   @default(0.0) @db.Decimal(18, 4)
+  createdById                String
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
+  accountingPeriodId         String?
+  sourceSystem               String?
+  sourceType                 String?
+  sourceId                   String?
+  sourceVersion              Int?
+  requestId                  String?
+  idempotencyKey             String?
+  sourceSnapshotId           String?
+  functionalCurrencyCode     String?   @db.VarChar(3)
+  transactionCurrencyCode    String?   @db.VarChar(3)
+  baseCurrencyCode           String?   @db.VarChar(3)
+  exchangeRateSource         String?
+  exchangeRateEffectiveDate  DateTime? @db.Date
+  accountingApprovalPolicyId String?
+  approvalPolicyVersion      Int?
+  approvedById               String?
+  approvedAt                 DateTime?
+  numberSeriesId             String?
+  roundingPolicyId           String?
+  roundingPolicyVersion      Int?
+  supportingDocumentRefs     Json?
+  correlationId              String?
+  causationId                String?
+  postedAt                   DateTime?
+  postedById                 String?
+  reversalOfId               String?
+  replacementOfId            String?
+  reversalReason             String?
+  originalEffectiveDate      DateTime? @db.Date
+  rowVersion                 Int       @default(1)
 
-  org                Organisation             @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  branch             Branch?                  @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  org                Organisation               @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  legalEntity        AccountingLegalEntity?     @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  branch             Branch?                    @relation(fields: [branchId], references: [id], onDelete: SetNull)
   lines              JournalEntryLine[]
   glEntries          GeneralLedgerEntry[]
   payrollBatches     PayrollBatch[]
   assetDepreciations AssetDepreciationEntry[]
+  accountingPeriod   AccountingPeriod?          @relation(fields: [accountingPeriodId], references: [id], onDelete: Restrict)
+  sourceSnapshot     AccountingSourceSnapshot?  @relation(fields: [sourceSnapshotId], references: [id], onDelete: Restrict)
+  approvalPolicy     AccountingApprovalPolicy?  @relation(fields: [accountingApprovalPolicyId], references: [id], onDelete: Restrict)
+  numberSeries       AccountingNumberSeries?    @relation(fields: [numberSeriesId], references: [id], onDelete: Restrict)
+  roundingPolicy     AccountingRoundingPolicy?  @relation(fields: [roundingPolicyId], references: [id], onDelete: Restrict)
+  reversalOf         JournalEntry?              @relation("JournalEntryReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversals          JournalEntry[]             @relation("JournalEntryReversal")
+  replacementOf      JournalEntry?              @relation("JournalEntryReplacement", fields: [replacementOfId], references: [id], onDelete: Restrict)
+  replacements       JournalEntry[]             @relation("JournalEntryReplacement")
+  postingAttempts    AccountingPostingAttempt[]
 
   @@unique([orgId, voucherNo])
+  @@unique([orgId, idempotencyKey])
+  @@unique([orgId, requestId])
+  @@unique([orgId, sourceSystem, sourceType, sourceId, sourceVersion])
   @@index([orgId])
   @@index([branchId])
+  @@index([orgId, accountingPeriodId, postingDate, status])
+  @@index([reversalOfId])
+  @@index([replacementOfId])
+  @@index([sourceSnapshotId])
+  @@index([legalEntityId, postingDate])
 }
 
 model JournalEntryLine {
-  id             String  @id @default(cuid())
-  journalEntryId String
-  accountId      String
-  debit          Decimal @default(0.0) @db.Decimal(18, 4)
-  credit         Decimal @default(0.0) @db.Decimal(18, 4)
-  partyType      String? // CUSTOMER | SUPPLIER | EMPLOYEE
-  partyId        String?
-  remarks        String?
+  id                      String   @id @default(cuid())
+  journalEntryId          String
+  accountId               String
+  debit                   Decimal  @default(0.0) @db.Decimal(18, 4)
+  credit                  Decimal  @default(0.0) @db.Decimal(18, 4)
+  partyType               String? // CUSTOMER | SUPPLIER | EMPLOYEE
+  partyId                 String?
+  remarks                 String?
+  transactionCurrencyCode String?  @db.VarChar(3)
+  transactionDebit        Decimal? @db.Decimal(20, 4)
+  transactionCredit       Decimal? @db.Decimal(20, 4)
+  exchangeRate            Decimal? @db.Decimal(20, 10)
 
-  journalEntry JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
-  account      Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  journalEntry         JournalEntry                     @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  account              Account                          @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountingDimensions AccountingJournalLineDimension[]
 
   @@index([journalEntryId])
   @@index([accountId])
@@ -3119,20 +3725,26 @@ model AccountingAuditLog {
 }
 
 model PayrollBatch {
-  id             String   @id @default(cuid())
-  orgId          String
-  month          DateTime @db.Date
-  status         String   @default("DRAFT") // DRAFT | FINALIZED | PAID
-  totalAmount    Decimal  @default(0.0) @db.Decimal(18, 4)
-  journalEntryId String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id               String   @id @default(cuid())
+  orgId            String
+  month            DateTime @db.Date
+  status           String   @default("DRAFT") // DRAFT | FINALIZED | PAID
+  totalAmount      Decimal  @default(0.0) @db.Decimal(18, 4)
+  journalEntryId   String?
+  sourceSnapshotId String?
+  sourceRunId      String?
+  sourceRunVersion Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  org          Organisation  @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  journalEntry JournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+  org            Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  journalEntry   JournalEntry?             @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+  sourceSnapshot AccountingSourceSnapshot? @relation(fields: [sourceSnapshotId], references: [id], onDelete: Restrict)
 
   @@unique([orgId, month])
+  @@unique([orgId, sourceRunId, sourceRunVersion])
   @@index([orgId])
+  @@index([sourceSnapshotId])
 }
 
 model Asset {
