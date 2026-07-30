@@ -27,7 +27,7 @@
   background:
     radial-gradient(circle at 10% 20%, rgb(208 217 26 / 11%), transparent 25%),
     linear-gradient(135deg, #e8e9e1, #f7f7f3 52%, #e4e5dd);
-  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-family: var(--mn-font-sans);
 }
 
 .loginPage,
@@ -71,7 +71,10 @@
     linear-gradient(rgb(255 255 255 / 1.8%) 1px, transparent 1px),
     linear-gradient(90deg, rgb(255 255 255 / 1.8%) 1px, transparent 1px),
     radial-gradient(circle at 50% 55%, #171713 0, #080908 36%, #020302 72%);
-  background-size: 72px 72px, 72px 72px, auto;
+  background-size:
+    72px 72px,
+    72px 72px,
+    auto;
   touch-action: none;
 }
 
@@ -172,7 +175,8 @@
   display: block;
   width: 230px;
   height: 230px;
-  transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--turn));
+  transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y)))
+    rotate(var(--turn));
   transform-origin: center;
   will-change: transform;
 }
@@ -212,7 +216,8 @@
 }
 
 .petButton:active .petRig {
-  transform: scale(0.94) skewY(var(--skew)) scale(var(--stretch-x), var(--stretch-y));
+  transform: scale(0.94) skewY(var(--skew))
+    scale(var(--stretch-x), var(--stretch-y));
   transition: transform 80ms ease;
 }
 
@@ -885,29 +890,49 @@
 
 @keyframes shellBreathe {
   0%,
-  100% { transform: scale(1, 1); }
-  50% { transform: scale(1.018, 0.985); }
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.018, 0.985);
+  }
 }
 
 @keyframes leftEarListen {
   0%,
   88%,
-  100% { transform: translateY(var(--ear-shift)) rotate(0); }
-  92% { transform: translateY(var(--ear-shift)) rotate(-7deg); }
-  96% { transform: translateY(var(--ear-shift)) rotate(3deg); }
+  100% {
+    transform: translateY(var(--ear-shift)) rotate(0);
+  }
+  92% {
+    transform: translateY(var(--ear-shift)) rotate(-7deg);
+  }
+  96% {
+    transform: translateY(var(--ear-shift)) rotate(3deg);
+  }
 }
 
 @keyframes rightEarListen {
   0%,
   88%,
-  100% { transform: translateY(var(--ear-shift)) rotate(0); }
-  92% { transform: translateY(var(--ear-shift)) rotate(7deg); }
-  96% { transform: translateY(var(--ear-shift)) rotate(-3deg); }
+  100% {
+    transform: translateY(var(--ear-shift)) rotate(0);
+  }
+  92% {
+    transform: translateY(var(--ear-shift)) rotate(7deg);
+  }
+  96% {
+    transform: translateY(var(--ear-shift)) rotate(-3deg);
+  }
 }
 
 @keyframes antennaIdle {
-  from { transform: rotate(calc(var(--antenna-turn) - 2deg)); }
-  to { transform: rotate(calc(var(--antenna-turn) + 2deg)); }
+  from {
+    transform: rotate(calc(var(--antenna-turn) - 2deg));
+  }
+  to {
+    transform: rotate(calc(var(--antenna-turn) + 2deg));
+  }
 }
 
 @keyframes crossArmA {
@@ -916,11 +941,15 @@
   48%,
   76%,
   81%,
-  100% { transform: rotate(45deg) scaleX(1); }
+  100% {
+    transform: rotate(45deg) scaleX(1);
+  }
   45%,
   46%,
   78%,
-  79% { transform: rotate(0) scaleX(0.72); }
+  79% {
+    transform: rotate(0) scaleX(0.72);
+  }
 }
 
 @keyframes crossArmB {
@@ -929,11 +958,15 @@
   48%,
   76%,
   81%,
-  100% { transform: rotate(-45deg) scaleX(1); }
+  100% {
+    transform: rotate(-45deg) scaleX(1);
+  }
   45%,
   46%,
   78%,
-  79% { transform: rotate(0) scaleX(0.72); }
+  79% {
+    transform: rotate(0) scaleX(0.72);
+  }
 }
 
 @keyframes eyeBlink {
@@ -942,66 +975,112 @@
   48%,
   76%,
   81%,
-  100% { transform: scaleY(1); }
+  100% {
+    transform: scaleY(1);
+  }
   45%,
   46%,
   78%,
-  79% { transform: scaleY(0.08); }
+  79% {
+    transform: scaleY(0.08);
+  }
 }
 
 @keyframes happyEarLeft {
   0%,
-  100% { transform: rotate(0) translateX(0); }
-  50% { transform: rotate(-11deg) translateX(-3px); }
+  100% {
+    transform: rotate(0) translateX(0);
+  }
+  50% {
+    transform: rotate(-11deg) translateX(-3px);
+  }
 }
 
 @keyframes happyCrossA {
   0%,
-  100% { transform: rotate(45deg) scaleX(1); }
-  50% { transform: rotate(35deg) scale(1.12, 1.08); }
+  100% {
+    transform: rotate(45deg) scaleX(1);
+  }
+  50% {
+    transform: rotate(35deg) scale(1.12, 1.08);
+  }
 }
 
 @keyframes happyCrossB {
   0%,
-  100% { transform: rotate(-45deg) scaleX(1); }
-  50% { transform: rotate(-35deg) scale(1.12, 1.08); }
+  100% {
+    transform: rotate(-45deg) scaleX(1);
+  }
+  50% {
+    transform: rotate(-35deg) scale(1.12, 1.08);
+  }
 }
 
 @keyframes happyEarRight {
   0%,
-  100% { transform: rotate(0) translateX(0); }
-  50% { transform: rotate(11deg) translateX(3px); }
+  100% {
+    transform: rotate(0) translateX(0);
+  }
+  50% {
+    transform: rotate(11deg) translateX(3px);
+  }
 }
 
 @keyframes antennaHappy {
   0%,
-  100% { transform: rotate(var(--antenna-turn)); }
-  50% { transform: rotate(calc(var(--antenna-turn) + 10deg)); }
+  100% {
+    transform: rotate(var(--antenna-turn));
+  }
+  50% {
+    transform: rotate(calc(var(--antenna-turn) + 10deg));
+  }
 }
 
 @keyframes energyPulse {
-  0% { opacity: 0.65; transform: translate(-50%, -50%) scale(0.62); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.55); }
+  0% {
+    opacity: 0.65;
+    transform: translate(-50%, -50%) scale(0.62);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.55);
+  }
 }
 
 @keyframes scan {
-  to { stroke-dashoffset: -144; }
+  to {
+    stroke-dashoffset: -144;
+  }
 }
 
 @keyframes signalPulse {
-  from { opacity: 0.2; }
-  to { opacity: 0.82; }
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 0.82;
+  }
 }
 
 @keyframes chargeEye {
-  from { transform: scaleY(0.72); filter: drop-shadow(0 0 0 var(--acid)); }
-  to { transform: scaleY(1.12); filter: drop-shadow(0 0 8px var(--acid)); }
+  from {
+    transform: scaleY(0.72);
+    filter: drop-shadow(0 0 0 var(--acid));
+  }
+  to {
+    transform: scaleY(1.12);
+    filter: drop-shadow(0 0 8px var(--acid));
+  }
 }
 
 @keyframes shyEye {
   0%,
-  100% { transform: scaleY(0.18) scaleX(1.12); }
-  50% { transform: scaleY(0.08) scaleX(0.92); }
+  100% {
+    transform: scaleY(0.18) scaleX(1.12);
+  }
+  50% {
+    transform: scaleY(0.08) scaleX(0.92);
+  }
 }
 
 @keyframes grantedEyeBlink {
@@ -1037,19 +1116,33 @@
 }
 
 @keyframes errorEye {
-  from { opacity: 1; transform: translateX(-2px); }
-  to { opacity: 0.25; transform: translateX(2px); }
+  from {
+    opacity: 1;
+    transform: translateX(-2px);
+  }
+  to {
+    opacity: 0.25;
+    transform: translateX(2px);
+  }
 }
 
 @keyframes antennaError {
-  from { transform: rotate(calc(var(--antenna-turn) - 8deg)); }
-  to { transform: rotate(calc(var(--antenna-turn) + 8deg)); }
+  from {
+    transform: rotate(calc(var(--antenna-turn) - 8deg));
+  }
+  to {
+    transform: rotate(calc(var(--antenna-turn) + 8deg));
+  }
 }
 
 @keyframes petIdle {
   0%,
-  100% { transform: translateY(0) rotate(-0.8deg); }
-  50% { transform: translateY(-7px) rotate(0.8deg); }
+  100% {
+    transform: translateY(0) rotate(-0.8deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(0.8deg);
+  }
 }
 
 @keyframes shadowIdle {
@@ -1066,8 +1159,12 @@
 
 @keyframes petHop {
   0%,
-  100% { transform: translateY(0) scale(1); }
-  45% { transform: translateY(-22px) rotate(3deg) scale(1.035); }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  45% {
+    transform: translateY(-22px) rotate(3deg) scale(1.035);
+  }
 }
 
 @keyframes petCharge {
@@ -1084,21 +1181,37 @@
 
 @keyframes petError {
   0%,
-  100% { transform: translateX(0); }
-  25% { transform: translateX(-10px) rotate(-2deg); }
-  55% { transform: translateX(9px) rotate(2deg); }
-  80% { transform: translateX(-4px); }
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px) rotate(-2deg);
+  }
+  55% {
+    transform: translateX(9px) rotate(2deg);
+  }
+  80% {
+    transform: translateX(-4px);
+  }
 }
 
 @keyframes petCelebrate {
   0%,
-  100% { transform: translateY(0) rotate(0) scale(1); }
-  35% { transform: translateY(-24px) rotate(-6deg) scale(1.05, 0.96); }
-  65% { transform: translateY(-13px) rotate(6deg) scale(0.97, 1.04); }
+  100% {
+    transform: translateY(0) rotate(0) scale(1);
+  }
+  35% {
+    transform: translateY(-24px) rotate(-6deg) scale(1.05, 0.96);
+  }
+  65% {
+    transform: translateY(-13px) rotate(6deg) scale(0.97, 1.04);
+  }
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 900px) {
@@ -1412,5 +1525,4 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-
 }

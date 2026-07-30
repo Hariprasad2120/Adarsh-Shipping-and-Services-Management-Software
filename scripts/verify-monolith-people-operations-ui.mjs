@@ -93,17 +93,14 @@ for (const relativePath of [
 const shellSwitcher = read(
   "src/app/(dashboard)/_components/dashboard-shell-switcher.tsx",
 );
-for (const signal of [
-  'normalizedPathname === "/hrms"',
-  'normalizedPathname.startsWith("/hrms/")',
-  'normalizedPathname === "/attendance"',
-  'normalizedPathname.startsWith("/attendance/")',
-]) {
-  assert(
-    shellSwitcher.includes(signal),
-    `Shell activation is missing ${signal}.`,
-  );
-}
+assert(
+  shellSwitcher.includes("<MonolithAppShell"),
+  "The authenticated shell must always render MonolithAppShell.",
+);
+assert(
+  !shellSwitcher.includes("usePathname"),
+  "The authenticated shell must not retain route-specific legacy switching.",
+);
 
 const peopleWorkspace = read("src/components/monolith/people-workspace.tsx");
 for (const route of routes.filter((route) => !route.includes("["))) {
@@ -218,10 +215,10 @@ const catalogue = read(
   "src/app/(dashboard)/admin/design-system/design-system-client.tsx",
 );
 for (const catalogueEntry of [
-  '["people", "People ops", "HR"]',
-  "PeopleWorkspaceFrame",
-  "PeopleControlButton",
-  "PeopleDataTable",
+  'import * as PeopleComponents from "@/components/monolith/people-workspace"',
+  'import * as PeopleDataComponents from "@/components/monolith/people-data-table"',
+  'name: "People operations"',
+  "<PeopleSummaryGrid>",
   "WorkspaceDialog",
   "PeopleLoadingState",
 ]) {

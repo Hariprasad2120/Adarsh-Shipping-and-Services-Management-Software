@@ -1,62 +1,13 @@
 "use client";
 
-import { DashboardChromeProvider } from "@/components/dashboard-chrome";
-import { MainShell } from "@/components/main-shell";
 import { MonolithAppShell } from "@/components/monolith/app-shell";
-import { PageAnimator } from "@/components/page-animator";
-import { Sidebar } from "@/components/sidebar";
-import { usePathname } from "next/navigation";
 import type { Caps } from "@/lib/rbac";
-import { DashboardShell } from "./dashboard-shell";
-
-function normalizePathname(pathname: string | null) {
-  if (!pathname) return "/";
-  const normalized = pathname.replace(/\/+$/, "");
-  return normalized || "/";
-}
-
-const MONOLITH_MIGRATED_ROUTES = new Set([
-  "/dashboard",
-  "/account/security",
-  "/admin/design-system",
-  "/notifications",
-  "/product-catalogue",
-  "/todo",
-]);
-
-export function usesMonolithShell(pathname: string | null) {
-  const normalizedPathname = normalizePathname(pathname);
-  return (
-    MONOLITH_MIGRATED_ROUTES.has(normalizedPathname) ||
-    normalizedPathname === "/hrms" ||
-    normalizedPathname.startsWith("/hrms/") ||
-    normalizedPathname === "/attendance" ||
-    normalizedPathname.startsWith("/attendance/") ||
-    normalizedPathname === "/ams" ||
-    normalizedPathname.startsWith("/ams/") ||
-    normalizedPathname === "/lms" ||
-    normalizedPathname.startsWith("/lms/") ||
-    normalizedPathname === "/cha" ||
-    normalizedPathname.startsWith("/cha/") ||
-    normalizedPathname === "/expense" ||
-    normalizedPathname.startsWith("/expense/") ||
-    normalizedPathname === "/accounting" ||
-    normalizedPathname.startsWith("/accounting/") ||
-    normalizedPathname === "/crm" ||
-    normalizedPathname.startsWith("/crm/") ||
-    normalizedPathname === "/communication" ||
-    normalizedPathname.startsWith("/communication/") ||
-    normalizedPathname === "/admin" ||
-    normalizedPathname.startsWith("/admin/")
-  );
-}
 
 export function DashboardShellSwitcher({
   children,
   caps,
   enabledModuleIds,
   isPlatformAdmin,
-  sessionToken,
   userId,
   userEmail,
   userName,
@@ -65,49 +16,20 @@ export function DashboardShellSwitcher({
   caps: Caps;
   enabledModuleIds: string[];
   isPlatformAdmin: boolean;
-  sessionToken: string;
   userId: string;
   userEmail: string;
   userName: string;
 }) {
-  const pathname = normalizePathname(usePathname());
-  const isMonolithRoute = usesMonolithShell(pathname);
-
-  if (isMonolithRoute) {
-    return (
-      <MonolithAppShell
-        caps={caps}
-        enabledModuleIds={enabledModuleIds}
-        isPlatformAdmin={isPlatformAdmin}
-        userId={userId}
-        userEmail={userEmail}
-        userName={userName}
-      >
-        {children}
-      </MonolithAppShell>
-    );
-  }
-
   return (
-    <DashboardChromeProvider>
-      <div className="flex h-screen overflow-hidden bg-background text-foreground">
-        <Sidebar
-          caps={caps}
-          userName={userName}
-          enabledModuleIds={enabledModuleIds}
-        />
-        <MainShell>
-          <PageAnimator>
-            <DashboardShell
-              userName={userName}
-              sessionToken={sessionToken}
-              enabledModuleIds={enabledModuleIds}
-            >
-              {children}
-            </DashboardShell>
-          </PageAnimator>
-        </MainShell>
-      </div>
-    </DashboardChromeProvider>
+    <MonolithAppShell
+      caps={caps}
+      enabledModuleIds={enabledModuleIds}
+      isPlatformAdmin={isPlatformAdmin}
+      userId={userId}
+      userEmail={userEmail}
+      userName={userName}
+    >
+      {children}
+    </MonolithAppShell>
   );
 }

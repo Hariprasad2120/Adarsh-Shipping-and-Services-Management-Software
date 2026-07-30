@@ -1,13 +1,17 @@
 "use client";
 
-import { CrmButton, CrmInput, CrmTable } from "@/components/monolith/crm-workspace";
+import {
+  CrmButton,
+  CrmInput,
+  CrmTable,
+} from "@/components/monolith/crm-workspace";
 
 import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { updateDealStageAction, deleteDealAction } from "@/modules/crm/actions";
-import {List,Kanban,Search,Plus,Eye,Trash2,} from "lucide-react";
+import { List, Kanban, Search, Plus, Eye, Trash2 } from "lucide-react";
 
 interface Deal {
   id: string;
@@ -26,7 +30,14 @@ interface DealsClientProps {
   initialDeals: Deal[];
 }
 
-const STAGES = ["PROSPECTING", "QUALIFICATION", "PROPOSAL", "NEGOTIATION", "WON", "LOST"];
+const STAGES = [
+  "PROSPECTING",
+  "QUALIFICATION",
+  "PROPOSAL",
+  "NEGOTIATION",
+  "WON",
+  "LOST",
+];
 const STAGE_PROBABILITIES: Record<string, number> = {
   PROSPECTING: 10,
   QUALIFICATION: 20,
@@ -45,19 +56,32 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
   // Filter deals based on search
   const filteredDeals = useMemo(() => {
     return deals.filter((d) => {
-      const matchesSearch = d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (d.account?.name || "").toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch =
+        d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (d.account?.name || "")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
   }, [deals, searchQuery]);
 
   // Aggregate stats
   const stats = useMemo(() => {
-    const openDeals = deals.filter(d => d.stage !== "WON" && d.stage !== "LOST");
+    const openDeals = deals.filter(
+      (d) => d.stage !== "WON" && d.stage !== "LOST",
+    );
     const totalPipeline = openDeals.reduce((sum, d) => sum + d.amount, 0);
-    const totalForecast = openDeals.reduce((sum, d) => sum + (d.amount * (d.probability / 100)), 0);
-    const wonCount = deals.filter(d => d.stage === "WON").length;
-    return { totalPipeline, totalForecast, openCount: openDeals.length, wonCount };
+    const totalForecast = openDeals.reduce(
+      (sum, d) => sum + d.amount * (d.probability / 100),
+      0,
+    );
+    const wonCount = deals.filter((d) => d.stage === "WON").length;
+    return {
+      totalPipeline,
+      totalForecast,
+      openCount: openDeals.length,
+      wonCount,
+    };
   }, [deals]);
 
   const handleStageChange = async (dealId: string, newStage: string) => {
@@ -69,7 +93,9 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
     if (res.ok) {
       toast.success(`Deal stage updated to ${newStage.replace("_", " ")}`);
       setDeals((prev) =>
-        prev.map((d) => (d.id === dealId ? { ...d, stage: newStage, probability: prob } : d))
+        prev.map((d) =>
+          d.id === dealId ? { ...d, stage: newStage, probability: prob } : d,
+        ),
       );
     } else {
       toast.error(res.error);
@@ -93,20 +119,36 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
       {/* Mini Stats Summary Bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-[var(--mnx-surface)]/55 border border-[var(--mnx-border)]/55 rounded-xl p-4">
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">Open Pipeline</span>
-          <span className="text-mono-text font-bold text-lg">₹{stats.totalPipeline.toLocaleString("en-IN")}</span>
+          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">
+            Open Pipeline
+          </span>
+          <span className="text-mono-text font-bold text-lg">
+            ₹{stats.totalPipeline.toLocaleString("en-IN")}
+          </span>
         </div>
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">Weighted Forecast</span>
-          <span className="text-[var(--mnx-accent)] font-bold text-lg">₹{stats.totalForecast.toLocaleString("en-IN")}</span>
+          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">
+            Weighted Forecast
+          </span>
+          <span className="text-[var(--mnx-accent)] font-bold text-lg">
+            ₹{stats.totalForecast.toLocaleString("en-IN")}
+          </span>
         </div>
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">Active Enquiries</span>
-          <span className="text-mono-text font-bold text-lg">{stats.openCount} Deals</span>
+          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">
+            Active Enquiries
+          </span>
+          <span className="text-mono-text font-bold text-lg">
+            {stats.openCount} Deals
+          </span>
         </div>
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">Negotiations Won</span>
-          <span className="text-[var(--mnx-success)] font-bold text-lg">{stats.wonCount} Closed</span>
+          <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider block">
+            Negotiations Won
+          </span>
+          <span className="text-[var(--mnx-success)] font-bold text-lg">
+            {stats.wonCount} Closed
+          </span>
         </div>
       </div>
 
@@ -127,7 +169,9 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
             <CrmButton
               onClick={() => setViewMode("KANBAN")}
               className={`p-1.5 rounded-md cursor-pointer ${
-                viewMode === "KANBAN" ? "bg-[var(--mnx-surface)] text-[var(--mnx-accent)]" : "text-mono-muted hover:text-mono-text"
+                viewMode === "KANBAN"
+                  ? "bg-[var(--mnx-surface)] text-[var(--mnx-accent)]"
+                  : "text-mono-muted hover:text-mono-text"
               }`}
               title="Pipeline Kanban Grid"
             >
@@ -136,7 +180,9 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
             <CrmButton
               onClick={() => setViewMode("LIST")}
               className={`p-1.5 rounded-md cursor-pointer ${
-                viewMode === "LIST" ? "bg-[var(--mnx-surface)] text-[var(--mnx-accent)]" : "text-mono-muted hover:text-mono-text"
+                viewMode === "LIST"
+                  ? "bg-[var(--mnx-surface)] text-[var(--mnx-accent)]"
+                  : "text-mono-muted hover:text-mono-text"
               }`}
               title="Table List View"
             >
@@ -145,7 +191,7 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
           </div>
           <Link
             href="/crm/deals/new"
-            className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
+            className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text px-3 py-1.5 rounded-lg text-xs font-bold transition-all mnx-shadow-panel cursor-pointer"
           >
             <Plus className="size-3.5" />
             <span>Create Deal</span>
@@ -159,9 +205,12 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
           {STAGES.map((stage) => {
             const stageDeals = filteredDeals.filter((d) => d.stage === stage);
             const stageSum = stageDeals.reduce((sum, d) => sum + d.amount, 0);
-            
+
             return (
-              <div key={stage} className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl p-3 space-y-3 shrink-0 min-w-[240px]">
+              <div
+                key={stage}
+                className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl p-3 space-y-3 shrink-0 min-w-[240px]"
+              >
                 {/* Column Header */}
                 <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-2">
                   <span className="text-xs font-bold text-mono-text uppercase tracking-wider">
@@ -171,12 +220,16 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                     {stageDeals.length}
                   </span>
                 </div>
-                <div className="text-[10px] font-bold text-[var(--mnx-accent)]">₹{stageSum.toLocaleString("en-IN")}</div>
+                <div className="text-[10px] font-bold text-[var(--mnx-accent)]">
+                  ₹{stageSum.toLocaleString("en-IN")}
+                </div>
 
                 {/* Cards List */}
                 <div className="space-y-2.5 min-h-[300px] overflow-y-auto max-h-[500px] custom-scrollbar">
                   {stageDeals.length === 0 ? (
-                    <div className="py-8 text-center text-mono-muted text-xs italic">No deals</div>
+                    <div className="py-8 text-center text-mono-muted text-xs italic">
+                      No deals
+                    </div>
                   ) : (
                     stageDeals.map((deal) => (
                       <div
@@ -187,11 +240,16 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                       >
                         {/* Title & Amount */}
                         <div className="space-y-1">
-                          <Link href={`/crm/deals/${deal.id}`} className="font-bold text-mono-text text-xs block hover:underline hover:text-[var(--mnx-accent)] truncate pr-4">
+                          <Link
+                            href={`/crm/deals/${deal.id}`}
+                            className="font-bold text-mono-text text-xs block hover:underline hover:text-[var(--mnx-accent)] truncate pr-4"
+                          >
                             {deal.name}
                           </Link>
                           {deal.account && (
-                            <span className="text-[10px] text-mono-muted block truncate">{deal.account.name}</span>
+                            <span className="text-[10px] text-mono-muted block truncate">
+                              {deal.account.name}
+                            </span>
                           )}
                         </div>
 
@@ -204,15 +262,21 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
 
                         {/* Dropdown to quick shift stage */}
                         <div className="pt-2 border-t border-[var(--mnx-border)]/30 flex items-center justify-between gap-1.5">
-                          <span className="text-[9px] text-mono-muted truncate">Owner: {deal.owner.name.split(" ")[0]}</span>
+                          <span className="text-[9px] text-mono-muted truncate">
+                            Owner: {deal.owner.name.split(" ")[0]}
+                          </span>
                           <NativeSelect
                             value={deal.stage}
-                            onChange={(e) => handleStageChange(deal.id, e.target.value)}
+                            onChange={(e) =>
+                              handleStageChange(deal.id, e.target.value)
+                            }
                             disabled={updatingId === deal.id}
                             className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)] text-[9.5px] font-semibold text-mono-muted rounded px-1 py-0.5 focus:outline-none focus:border-[var(--mnx-accent)] cursor-pointer"
                           >
                             {STAGES.map((st) => (
-                              <option key={st} value={st}>{st.replace("_", " ")}</option>
+                              <option key={st} value={st}>
+                                {st.replace("_", " ")}
+                              </option>
                             ))}
                           </NativeSelect>
                         </div>
@@ -228,7 +292,9 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
         /* ─── LIST VIEW ─── */
         <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
           {filteredDeals.length === 0 ? (
-            <div className="p-8 text-center text-mono-muted">No deals matched search criteria</div>
+            <div className="p-8 text-center text-mono-muted">
+              No deals matched search criteria
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <CrmTable className="mnx-crm-table">
@@ -247,32 +313,43 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                   {filteredDeals.map((deal) => (
                     <tr key={deal.id} className="mnx-row-link">
                       <td className="px-6 py-4 font-medium">
-                        <Link href={`/crm/deals/${deal.id}`} className="hover:text-[var(--mnx-accent)] transition-colors">
+                        <Link
+                          href={`/crm/deals/${deal.id}`}
+                          className="hover:text-[var(--mnx-accent)] transition-colors"
+                        >
                           {deal.name}
                         </Link>
                         {deal.serviceType && (
                           <span className="mnx-label block mt-0.5 font-normal">
-                            {deal.serviceType} • {deal.logisticsCategory || "CHA"}
+                            {deal.serviceType} •{" "}
+                            {deal.logisticsCategory || "CHA"}
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4">
                         {deal.account ? (
-                          <Link href={`/crm/customers/${deal.account.id}`} className="hover:underline text-[var(--mnx-accent)]">
+                          <Link
+                            href={`/crm/customers/${deal.account.id}`}
+                            className="hover:underline text-[var(--mnx-accent)]"
+                          >
                             {deal.account.name}
                           </Link>
                         ) : (
-                          <span className="text-mono-muted italic">No account</span>
+                          <span className="text-mono-muted italic">
+                            No account
+                          </span>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                          deal.stage === "WON"
-                            ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]"
-                            : deal.stage === "LOST"
-                            ? "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]"
-                            : "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]"
-                        }`}>
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                            deal.stage === "WON"
+                              ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]"
+                              : deal.stage === "LOST"
+                                ? "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]"
+                                : "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]"
+                          }`}
+                        >
                           {deal.stage.replace("_", " ")}
                         </span>
                       </td>
@@ -280,14 +357,19 @@ export function DealsClient({ initialDeals }: DealsClientProps) {
                         ₹{deal.amount.toLocaleString("en-IN")}
                       </td>
                       <td className="px-6 py-4 text-mono-muted text-xs">
-                        {deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString("en-IN") : "No Close Date"}
+                        {deal.expectedCloseDate
+                          ? new Date(deal.expectedCloseDate).toLocaleDateString(
+                              "en-IN",
+                            )
+                          : "No Close Date"}
                       </td>
-                      <td className="px-6 py-4 text-xs">
-                        {deal.owner.name}
-                      </td>
+                      <td className="px-6 py-4 text-xs">{deal.owner.name}</td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Link href={`/crm/deals/${deal.id}`} className="p-1.5 text-mono-muted hover:text-mono-text rounded hover:bg-mono-soft cursor-pointer">
+                          <Link
+                            href={`/crm/deals/${deal.id}`}
+                            className="p-1.5 text-mono-muted hover:text-mono-text rounded hover:bg-mono-soft cursor-pointer"
+                          >
                             <Eye className="size-4" />
                           </Link>
                           <CrmButton

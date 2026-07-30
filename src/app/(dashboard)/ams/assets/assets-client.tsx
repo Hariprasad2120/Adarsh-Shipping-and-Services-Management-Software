@@ -552,7 +552,7 @@ export function AssetsClient({
                 <PerformanceControlButton
                   type="submit"
                   disabled={isSaving}
-                  className="bg-mono-accent/10 text-mono-text hover:bg-mono-accent/10 hover:shadow-[var(--mn-shadow-panel)] px-6 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50"
+                  className="bg-mono-accent/10 text-mono-text hover:bg-mono-accent/10  px-6 py-2.5 rounded-xl text-xs uppercase tracking-wide font-bold transition-all cursor-pointer disabled:opacity-50"
                 >
                   {isSaving ? "Onboarding..." : "Register Fixed Asset"}
                 </PerformanceControlButton>

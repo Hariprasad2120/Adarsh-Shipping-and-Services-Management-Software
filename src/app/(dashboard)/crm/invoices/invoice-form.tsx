@@ -1,14 +1,32 @@
 "use client";
 
-import { CrmButton, CrmInput, CrmTextarea, CrmTable } from "@/components/monolith/crm-workspace";
+import {
+  CrmButton,
+  CrmInput,
+  CrmTextarea,
+  CrmTable,
+} from "@/components/monolith/crm-workspace";
 
 import { NativeSelect } from "@/components/monolith/native-select";
 import { DateInput } from "@/components/monolith/date-input";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createInvoiceAction, updateInvoiceAction } from "@/modules/crm/actions";
-import { Save, Plus, Trash2, FileText, Building, User, Calendar, Percent, DollarSign } from "lucide-react";
+import {
+  createInvoiceAction,
+  updateInvoiceAction,
+} from "@/modules/crm/actions";
+import {
+  Save,
+  Plus,
+  Trash2,
+  FileText,
+  Building,
+  User,
+  Calendar,
+  Percent,
+  DollarSign,
+} from "lucide-react";
 import { MOCK_ITEMS } from "@/lib/items/mock-data";
 
 interface Option {
@@ -56,16 +74,22 @@ export function InvoiceForm({
   const isEdit = !!initialData;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [invoiceNumber, setInvoiceNumber] = useState(initialData?.invoiceNumber || "");
+  const [invoiceNumber, setInvoiceNumber] = useState(
+    initialData?.invoiceNumber || "",
+  );
   const [type, setType] = useState(initialData?.type || defaultType);
   const [discount, setDiscount] = useState<number>(initialData?.discount || 0);
 
   const [accountId, setAccountId] = useState(initialData?.accountId || "");
   const [issueDate, setIssueDate] = useState(
-    initialData?.date ? new Date(initialData.date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0]
+    initialData?.date
+      ? new Date(initialData.date).toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0],
   );
   const [dueDateState, setDueDateState] = useState(
-    initialData?.dueDate ? new Date(initialData.dueDate).toISOString().split("T")[0] : ""
+    initialData?.dueDate
+      ? new Date(initialData.dueDate).toISOString().split("T")[0]
+      : "",
   );
 
   // Line items state
@@ -77,7 +101,16 @@ export function InvoiceForm({
       taxPercent: item.taxPercent || 18,
       currency: item.currency || "INR",
       exchangeRate: item.exchangeRate || 1,
-    })) || [{ productName: "", qty: 1, rate: 0, taxPercent: 18, currency: "INR", exchangeRate: 1 }]
+    })) || [
+      {
+        productName: "",
+        qty: 1,
+        rate: 0,
+        taxPercent: 18,
+        currency: "INR",
+        exchangeRate: 1,
+      },
+    ],
   );
 
   useEffect(() => {
@@ -87,7 +120,17 @@ export function InvoiceForm({
   }, [type, isEdit, nextNumbers]);
 
   const handleAddItem = () => {
-    setItems((prev) => [...prev, { productName: "", qty: 1, rate: 0, taxPercent: 18, currency: "INR", exchangeRate: 1 }]);
+    setItems((prev) => [
+      ...prev,
+      {
+        productName: "",
+        qty: 1,
+        rate: 0,
+        taxPercent: 18,
+        currency: "INR",
+        exchangeRate: 1,
+      },
+    ]);
   };
 
   const handleRemoveItem = (index: number) => {
@@ -98,7 +141,11 @@ export function InvoiceForm({
     setItems((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleItemChange = (index: number, field: keyof InvoiceItem, value: any) => {
+  const handleItemChange = (
+    index: number,
+    field: keyof InvoiceItem,
+    value: any,
+  ) => {
     if (field === "productName" && value === "__ADD_NEW__") {
       router.push("/crm/items/new");
       return;
@@ -109,7 +156,10 @@ export function InvoiceForm({
         if (i !== index) return item;
         let updated = {
           ...item,
-          [field]: field === "productName" || field === "currency" ? value : parseFloat(value) || 0,
+          [field]:
+            field === "productName" || field === "currency"
+              ? value
+              : parseFloat(value) || 0,
         };
 
         if (field === "currency" && value === "INR") {
@@ -118,26 +168,36 @@ export function InvoiceForm({
 
         if (field === "productName") {
           const q = value.trim().toLowerCase();
-          const prodMatch = products.find(p => p.name.toLowerCase() === q);
+          const prodMatch = products.find((p) => p.name.toLowerCase() === q);
           if (prodMatch) {
             updated.rate = prodMatch.price;
             updated.taxPercent = prodMatch.taxPercent;
           } else {
-            const itemMatch = MOCK_ITEMS.find(i => i.name.toLowerCase() === q);
+            const itemMatch = MOCK_ITEMS.find(
+              (i) => i.name.toLowerCase() === q,
+            );
             if (itemMatch) {
               updated.rate = itemMatch.rate;
             }
           }
         }
         return updated;
-      })
+      }),
     );
   };
 
   // Real-time calculations
   const totals = React.useMemo(() => {
-    const subtotal = items.reduce((sum, item) => sum + (item.qty * item.rate * item.exchangeRate), 0);
-    const tax = items.reduce((sum, item) => sum + (item.qty * item.rate * item.exchangeRate * (item.taxPercent / 100)), 0);
+    const subtotal = items.reduce(
+      (sum, item) => sum + item.qty * item.rate * item.exchangeRate,
+      0,
+    );
+    const tax = items.reduce(
+      (sum, item) =>
+        sum +
+        item.qty * item.rate * item.exchangeRate * (item.taxPercent / 100),
+      0,
+    );
     const total = subtotal + tax - discount;
     return { subtotal, tax, total };
   }, [items, discount]);
@@ -170,19 +230,25 @@ export function InvoiceForm({
     setIsSubmitting(false);
 
     if (res.ok) {
-      toast.success(isEdit ? "Record updated successfully" : "Record created successfully");
+      toast.success(
+        isEdit ? "Record updated successfully" : "Record created successfully",
+      );
       router.push(redirectPath);
     } else {
       toast.error(res.error);
     }
   };
 
-  const invoiceTypes = allowedTypes && allowedTypes.length > 0
-    ? allowedTypes
-    : ["QUOTE", "INVOICE", "DEBIT_NOTE", "SALES_ORDER", "PURCHASE_ORDER"];
+  const invoiceTypes =
+    allowedTypes && allowedTypes.length > 0
+      ? allowedTypes
+      : ["QUOTE", "INVOICE", "DEBIT_NOTE", "SALES_ORDER", "PURCHASE_ORDER"];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/60 rounded-xl p-6 shadow-2xl">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-8 max-w-5xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/60 rounded-xl p-6 shadow-2xl"
+    >
       {/* ─── SECTION: BASIC INFO ────────────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
@@ -192,7 +258,9 @@ export function InvoiceForm({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Document Type *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Document Type *
+            </label>
             <NativeSelect
               value={type}
               onChange={(e) => setType(e.target.value)}
@@ -200,12 +268,16 @@ export function InvoiceForm({
               className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {invoiceTypes.map((t) => (
-                <option key={t} value={t}>{t.replace("_", " ")}</option>
+                <option key={t} value={t}>
+                  {t.replace("_", " ")}
+                </option>
               ))}
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Document Number *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Document Number *
+            </label>
             <CrmInput
               type="text"
               name="invoiceNumber"
@@ -218,7 +290,9 @@ export function InvoiceForm({
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Issue Date *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Issue Date *
+            </label>
             <DateInput
               name="date"
               value={issueDate}
@@ -228,7 +302,9 @@ export function InvoiceForm({
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Bank Details</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Bank Details
+            </label>
             <NativeSelect
               name="bankDetails"
               defaultValue={initialData?.bankDetails || ""}
@@ -236,21 +312,32 @@ export function InvoiceForm({
             >
               <option value="">Select Bank Account...</option>
               {bankAccounts.map((acc) => (
-                <option key={acc.id} value={`${acc.accountName} (A/C: ${acc.accountCode})`}>
+                <option
+                  key={acc.id}
+                  value={`${acc.accountName} (A/C: ${acc.accountCode})`}
+                >
                   {acc.accountName} ({acc.accountCode})
                 </option>
               ))}
             </NativeSelect>
           </div>
-          {(type === "INVOICE" || type === "DEBIT_NOTE") ? (
+          {type === "INVOICE" || type === "DEBIT_NOTE" ? (
             <CrmInput
               type="hidden"
               name="dueDate"
-              value={new Date(new Date(issueDate).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}
+              value={
+                new Date(
+                  new Date(issueDate).getTime() + 30 * 24 * 60 * 60 * 1000,
+                )
+                  .toISOString()
+                  .split("T")[0]
+              }
             />
           ) : (
             <div>
-              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Due Date</label>
+              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+                Due Date
+              </label>
               <DateInput
                 name="dueDate"
                 value={dueDateState}
@@ -271,7 +358,9 @@ export function InvoiceForm({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Customer (Account)</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Customer (Account)
+            </label>
             <NativeSelect
               name="accountId"
               value={accountId}
@@ -280,12 +369,16 @@ export function InvoiceForm({
             >
               <option value="">Link Account</option>
               {accounts.map((acc) => (
-                <option key={acc.id} value={acc.id}>{acc.name}</option>
+                <option key={acc.id} value={acc.id}>
+                  {acc.name}
+                </option>
               ))}
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Contact Person</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Contact Person
+            </label>
             <NativeSelect
               name="contactId"
               defaultValue={initialData?.contactId || ""}
@@ -295,13 +388,17 @@ export function InvoiceForm({
               {contacts
                 .filter((c) => !accountId || c.accountId === accountId)
                 .map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
             </NativeSelect>
           </div>
           {type === "PURCHASE_ORDER" && (
             <div>
-              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Vendor (Suppliers)</label>
+              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+                Vendor (Suppliers)
+              </label>
               <NativeSelect
                 name="vendorId"
                 defaultValue={initialData?.vendorId || ""}
@@ -309,14 +406,22 @@ export function InvoiceForm({
               >
                 <option value="">Link Vendor</option>
                 {vendors.map((v) => (
-                  <option key={v.id} value={v.id}>{v.name}</option>
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
                 ))}
               </NativeSelect>
             </div>
           )}
-          <CrmInput type="hidden" name="status" value={initialData?.status || "DRAFT"} />
+          <CrmInput
+            type="hidden"
+            name="status"
+            value={initialData?.status || "DRAFT"}
+          />
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Document Owner *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Document Owner *
+            </label>
             <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
@@ -325,7 +430,9 @@ export function InvoiceForm({
             >
               <option value="">Select Owner</option>
               {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>{emp.name}</option>
+                <option key={emp.id} value={emp.id}>
+                  {emp.name}
+                </option>
               ))}
             </NativeSelect>
           </div>
@@ -352,7 +459,9 @@ export function InvoiceForm({
           <CrmTable className="w-full text-left text-xs text-mono-muted border-collapse">
             <thead>
               <tr className="bg-[var(--mnx-surface)] border-b border-[var(--mnx-border)] font-bold text-mono-muted">
-                <th className="px-4 py-3 min-w-[200px]">Product / Service Name *</th>
+                <th className="px-4 py-3 min-w-[200px]">
+                  Product / Service Name *
+                </th>
                 <th className="px-4 py-3 w-24">Currency</th>
                 <th className="px-4 py-3 w-28">EXCH Rate</th>
                 <th className="px-4 py-3 w-20">Qty</th>
@@ -364,7 +473,11 @@ export function InvoiceForm({
             </thead>
             <tbody className="divide-y divide-[var(--mnx-border)]/30">
               {items.map((item, index) => {
-                const itemAmount = item.qty * item.rate * item.exchangeRate * (1 + (item.taxPercent / 100));
+                const itemAmount =
+                  item.qty *
+                  item.rate *
+                  item.exchangeRate *
+                  (1 + item.taxPercent / 100);
 
                 return (
                   <tr key={index} className="hover:bg-[var(--mnx-surface)]/15">
@@ -373,7 +486,9 @@ export function InvoiceForm({
                         type="text"
                         value={item.productName}
                         list="products-datalist"
-                        onChange={(e) => handleItemChange(index, "productName", e.target.value)}
+                        onChange={(e) =>
+                          handleItemChange(index, "productName", e.target.value)
+                        }
                         placeholder="e.g. Customs CHA filing, Local transport..."
                         className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                         required
@@ -382,7 +497,9 @@ export function InvoiceForm({
                     <td className="px-4 py-2">
                       <NativeSelect
                         value={item.currency}
-                        onChange={(e) => handleItemChange(index, "currency", e.target.value)}
+                        onChange={(e) =>
+                          handleItemChange(index, "currency", e.target.value)
+                        }
                         className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                       >
                         <option value="INR">INR</option>
@@ -398,7 +515,13 @@ export function InvoiceForm({
                         step="any"
                         value={item.exchangeRate}
                         disabled={item.currency === "INR"}
-                        onChange={(e) => handleItemChange(index, "exchangeRate", e.target.value)}
+                        onChange={(e) =>
+                          handleItemChange(
+                            index,
+                            "exchangeRate",
+                            e.target.value,
+                          )
+                        }
                         className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-mono-text focus:outline-none focus:border-[var(--mnx-accent)] disabled:opacity-50"
                         required
                       />
@@ -409,7 +532,9 @@ export function InvoiceForm({
                         min="1"
                         step="any"
                         value={item.qty}
-                        onChange={(e) => handleItemChange(index, "qty", e.target.value)}
+                        onChange={(e) =>
+                          handleItemChange(index, "qty", e.target.value)
+                        }
                         className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                         required
                       />
@@ -420,7 +545,9 @@ export function InvoiceForm({
                         min="0"
                         step="any"
                         value={item.rate}
-                        onChange={(e) => handleItemChange(index, "rate", e.target.value)}
+                        onChange={(e) =>
+                          handleItemChange(index, "rate", e.target.value)
+                        }
                         className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                         required
                       />
@@ -428,7 +555,9 @@ export function InvoiceForm({
                     <td className="px-4 py-2">
                       <NativeSelect
                         value={item.taxPercent}
-                        onChange={(e) => handleItemChange(index, "taxPercent", e.target.value)}
+                        onChange={(e) =>
+                          handleItemChange(index, "taxPercent", e.target.value)
+                        }
                         className="w-full px-2 py-1 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                       >
                         <option value="0">0% Exemption</option>
@@ -439,7 +568,11 @@ export function InvoiceForm({
                       </NativeSelect>
                     </td>
                     <td className="px-4 py-2 text-right font-bold text-mono-text text-sm">
-                      ₹{itemAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      ₹
+                      {itemAmount.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </td>
                     <td className="px-4 py-2 text-center">
                       <CrmButton
@@ -464,10 +597,14 @@ export function InvoiceForm({
         {/* Left side: Notes & Discount */}
         <div className="w-full md:w-1/2 space-y-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide">Customer Notes</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide">
+              Customer Notes
+            </label>
             <CrmTextarea
               name="manualNotes"
-              defaultValue={initialData?.manualNotes || "Thanks for your business."}
+              defaultValue={
+                initialData?.manualNotes || "Thanks for your business."
+              }
               placeholder="Type any manual notes here..."
               rows={3}
               className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
@@ -475,14 +612,20 @@ export function InvoiceForm({
           </div>
 
           <div className="w-64 space-y-1.5">
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide">Applied Flat Discount (INR)</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide">
+              Applied Flat Discount (INR)
+            </label>
             <div className="relative">
-              <div className="absolute left-3 top-1.5 text-mono-muted font-bold text-sm">₹</div>
+              <div className="absolute left-3 top-1.5 text-mono-muted font-bold text-sm">
+                ₹
+              </div>
               <CrmInput
                 type="number"
                 min="0"
                 value={discount}
-                onChange={(e) => setDiscount(Math.max(0, parseFloat(e.target.value) || 0))}
+                onChange={(e) =>
+                  setDiscount(Math.max(0, parseFloat(e.target.value) || 0))
+                }
                 placeholder="e.g. 500"
                 className="w-full pl-8 pr-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
               />
@@ -494,19 +637,35 @@ export function InvoiceForm({
         <div className="w-full md:w-80 bg-[var(--mnx-surface)] p-4 rounded-xl border border-[var(--mnx-border)]/80 space-y-2.5 text-mono-muted">
           <div className="flex justify-between text-xs font-semibold">
             <span>Subtotal</span>
-            <span>₹{totals.subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            <span>
+              ₹
+              {totals.subtotal.toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+              })}
+            </span>
           </div>
           <div className="flex justify-between text-xs font-semibold text-mono-muted">
             <span>Estimated GST Tax</span>
-            <span>+ ₹{totals.tax.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            <span>
+              + ₹
+              {totals.tax.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            </span>
           </div>
           <div className="flex justify-between text-xs font-semibold text-mono-muted border-b border-[var(--mnx-border)] pb-2">
             <span>Discount</span>
-            <span>- ₹{discount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            <span>
+              - ₹
+              {discount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            </span>
           </div>
           <div className="flex justify-between text-base font-black text-mono-text pt-1">
             <span>Grand Total</span>
-            <span className="text-[var(--mnx-accent)]">₹{totals.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            <span className="text-[var(--mnx-accent)]">
+              ₹
+              {totals.total.toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+              })}
+            </span>
           </div>
         </div>
       </div>
@@ -523,10 +682,16 @@ export function InvoiceForm({
         <CrmButton
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-sm font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-sm font-bold transition-all mnx-shadow-panel cursor-pointer"
         >
           <Save className="size-4.5" />
-          <span>{isSubmitting ? "Generating Sheet..." : isEdit ? "Update Document" : "Save Document"}</span>
+          <span>
+            {isSubmitting
+              ? "Generating Sheet..."
+              : isEdit
+                ? "Update Document"
+                : "Save Document"}
+          </span>
         </CrmButton>
       </div>
 
@@ -535,11 +700,14 @@ export function InvoiceForm({
         {products.map((p) => (
           <option key={`prod-${p.id}`} value={p.name} />
         ))}
-        {MOCK_ITEMS
-          .filter((mi) => !products.some((p) => p.name.toLowerCase() === mi.name.toLowerCase()))
-          .map((mi) => (
-            <option key={`item-${mi.id}`} value={mi.name} />
-          ))}
+        {MOCK_ITEMS.filter(
+          (mi) =>
+            !products.some(
+              (p) => p.name.toLowerCase() === mi.name.toLowerCase(),
+            ),
+        ).map((mi) => (
+          <option key={`item-${mi.id}`} value={mi.name} />
+        ))}
         <option value="__ADD_NEW__">+ Add New Item...</option>
       </datalist>
     </form>

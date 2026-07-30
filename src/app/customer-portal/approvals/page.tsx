@@ -3,6 +3,10 @@ import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { getCustomerPortalApprovalQueue } from "@/modules/customer-portal/shipments";
 import { Badge } from "@/components/monolith/badge";
 import { Button } from "@/components/monolith/button";
+import {
+  CustomerPortalPage,
+  CustomerPortalPageHeader,
+} from "@/components/monolith/customer-portal-workspace";
 import { CheckSquare, ArrowRight } from "lucide-react";
 
 export default async function CustomerPortalApprovalsPage() {
@@ -10,48 +14,48 @@ export default async function CustomerPortalApprovalsPage() {
   const pendingApprovals = await getCustomerPortalApprovalQueue(session);
 
   return (
-    <div className="space-y-6 font-sans">
-      {/* Header */}
-      <div className="rounded-xl border border-mono-border/60 bg-mono-card p-5 shadow-sm">
-        <h2 className="monolith-h2">Actionable Approvals</h2>
-        <p className="mt-2 text-sm text-mono-muted">
-          Review and approve draft customs checklists before filing submissions are sent to customs house agents.
-        </p>
-      </div>
+    <CustomerPortalPage>
+      <CustomerPortalPageHeader
+        eyebrow="Customer decisions"
+        title="Actionable Approvals"
+        description="Review and approve draft customs checklists before filing submissions are sent to customs house agents."
+        icon={<CheckSquare size={22} />}
+      />
 
-      {/* Grid List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {pendingApprovals.length === 0 ? (
           <div className="col-span-2 rounded-xl border border-mono-border/40 bg-mono-card p-12 text-center space-y-3">
-            <CheckSquare className="size-10 text-[#F9D972] mx-auto opacity-50" />
-            <h3 className="monolith-h3 text-mono-text">
+            <CheckSquare className="size-10 mnx-portal-accent-text mx-auto opacity-50" />
+            <h3 className="mnx-portal-title-3 text-mono-text">
               No Pending Approvals
             </h3>
             <p className="text-xs text-mono-muted max-w-sm mx-auto">
-              You are all caught up! There are no draft checklists awaiting your confirmation right now.
+              You are all caught up! There are no draft checklists awaiting your
+              confirmation right now.
             </p>
           </div>
         ) : (
           pendingApprovals.map((approval) => (
             <div
               key={approval.id}
-              className="monolith-card monolith-accent-warning flex flex-col justify-between rounded-xl border border-mono-border/60 bg-mono-card p-5 shadow-sm relative overflow-hidden"
+              className="mnx-portal-panel mnx-portal-panel-warning flex flex-col justify-between rounded-xl border border-mono-border/60 bg-mono-card p-5 shadow-sm relative overflow-hidden"
             >
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="monolith-label text-xs tracking-wider">{approval.jobNumber}</span>
-                  <Badge
-                    variant="warning"
-                  >
-                    Checklist Pending
-                  </Badge>
+                  <span className="mnx-portal-eyebrow text-xs tracking-wider">
+                    {approval.jobNumber}
+                  </span>
+                  <Badge variant="warning">Checklist Pending</Badge>
                 </div>
 
-                <h3 className="monolith-h3 text-mono-text">
-                  {approval.customerRef || approval.jobTitle || approval.checklistLabel}
+                <h3 className="mnx-portal-title-3 text-mono-text">
+                  {approval.customerRef ||
+                    approval.jobTitle ||
+                    approval.checklistLabel}
                 </h3>
                 <p className="text-xs text-mono-muted font-medium">
-                  Stage: {approval.stageLabel} · Updated: {formatDate(approval.updatedAt)}
+                  Stage: {approval.stageLabel} · Updated:{" "}
+                  {formatDate(approval.updatedAt)}
                 </p>
                 {approval.fileName ? (
                   <p className="text-xs text-mono-muted">{approval.fileName}</p>
@@ -59,9 +63,7 @@ export default async function CustomerPortalApprovalsPage() {
               </div>
 
               <div className="border-t border-mono-border/20 mt-4 pt-4 flex justify-end">
-                <Link
-                  href={approval.href}
-                >
+                <Link href={approval.href}>
                   <Button size="sm" className="gap-2">
                     <span>Review And Approve</span>
                     <ArrowRight size={14} />
@@ -72,7 +74,7 @@ export default async function CustomerPortalApprovalsPage() {
           ))
         )}
       </div>
-    </div>
+    </CustomerPortalPage>
   );
 }
 

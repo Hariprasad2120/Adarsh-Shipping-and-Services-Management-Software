@@ -62,7 +62,12 @@ export function FileUploadField({
   uploadingLabel = "Uploading document...",
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const previewFiles = selectedFiles && selectedFiles.length > 0 ? selectedFiles : selectedFile ? [selectedFile] : [];
+  const previewFiles =
+    selectedFiles && selectedFiles.length > 0
+      ? selectedFiles
+      : selectedFile
+        ? [selectedFile]
+        : [];
 
   function applyFiles(files: FileList | null) {
     const input = inputRef.current;
@@ -70,7 +75,10 @@ export function FileUploadField({
     const transfer = new DataTransfer();
     Array.from(files).forEach((file) => transfer.items.add(file));
     (input as HTMLInputElement & { files: FileList }).files = transfer.files;
-    onInputChange({ target: input, currentTarget: input } as ChangeEvent<HTMLInputElement>);
+    onInputChange({
+      target: input,
+      currentTarget: input,
+    } as ChangeEvent<HTMLInputElement>);
   }
 
   function handleDrop(event: DragEvent<HTMLLabelElement>) {
@@ -88,24 +96,61 @@ export function FileUploadField({
       {label ? <Label>{label}</Label> : null}
       <label
         htmlFor={id}
-        className={cn("dropzone", compact && "!p-4", disabled && "pointer-events-none opacity-50")}
+        className={cn(
+          "dropzone",
+          compact && "!p-4",
+          disabled && "pointer-events-none opacity-50",
+        )}
         onDragOver={(event) => event.preventDefault()}
         onDrop={handleDrop}
       >
-        <div className="upload-icon">{uploading ? "..." : <Upload className="h-5 w-5" />}</div>
+        <div className="upload-icon">
+          {uploading ? "..." : <Upload className="h-5 w-5" />}
+        </div>
         <b>{uploading ? uploadingLabel : triggerText}</b>
         {helperText ? <p>{helperText}</p> : null}
-        <input ref={inputRef} id={id} name={id} type="file" accept={accept} multiple={multiple} className="sr-only" disabled={disabled} onChange={onInputChange} />
+        <input
+          ref={inputRef}
+          id={id}
+          name={id}
+          type="file"
+          accept={accept}
+          multiple={multiple}
+          className="sr-only"
+          disabled={disabled}
+          onChange={onInputChange}
+        />
       </label>
       {showSelectedPreview && previewFiles.length > 0 ? (
         <div className="grid gap-2">
           {previewFiles.map((file, index) => (
-            <div key={`${file.name}-${index}`} className="monolith-file-row">
+            <div key={`${file.name}-${index}`} className="mnx-file-row">
               <FileText className="h-4 w-4" />
-              <span className="min-w-0 flex-1 truncate">{file.href ? <a href={file.href} target="_blank" rel="noreferrer">{file.name}</a> : file.name}</span>
-              <small>{file.statusLabel ?? formatFileSize(file.sizeBytes) ?? "Ready"}</small>
+              <span className="min-w-0 flex-1 truncate">
+                {file.href ? (
+                  <a href={file.href} target="_blank" rel="noreferrer">
+                    {file.name}
+                  </a>
+                ) : (
+                  file.name
+                )}
+              </span>
+              <small>
+                {file.statusLabel ?? formatFileSize(file.sizeBytes) ?? "Ready"}
+              </small>
               {onRemoveSelectedFile || onClear ? (
-                <Button type="button" variant="outline" mode="icon" size="sm" aria-label="Remove file" onClick={() => (onRemoveSelectedFile ? onRemoveSelectedFile(file, index) : clearInput())}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  mode="icon"
+                  size="sm"
+                  aria-label="Remove file"
+                  onClick={() =>
+                    onRemoveSelectedFile
+                      ? onRemoveSelectedFile(file, index)
+                      : clearInput()
+                  }
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               ) : null}

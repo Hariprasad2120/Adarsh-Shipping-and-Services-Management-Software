@@ -1,13 +1,28 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/monolith/button-1";
+import { Button } from "@/components/monolith/button";
 import { cn } from "@/lib/utils";
 
-type ToastVariant = "secondary" | "primary" | "destructive" | "success" | "info" | "mono" | "warning";
+type ToastVariant =
+  | "secondary"
+  | "primary"
+  | "destructive"
+  | "success"
+  | "info"
+  | "mono"
+  | "warning";
 type ToastAppearance = "solid" | "outline" | "light" | "stroke";
 
 type LocalToast = {
@@ -54,9 +69,12 @@ type NotificationContextValue = {
   info: (title: string, body?: string) => void;
 };
 
-const NotificationContext = createContext<NotificationContextValue | null>(null);
+const NotificationContext = createContext<NotificationContextValue | null>(
+  null,
+);
 const REMOTE_TOAST_SHOWN_PREFIX = "remote-toast-shown:";
-const NOTIFICATION_ACTION_CLASS = "!text-sm !font-medium uppercase tracking-[0.14em]";
+const NOTIFICATION_ACTION_CLASS =
+  "!text-sm !font-medium uppercase tracking-[0.14em]";
 const RUNTIME_POLL_INTERVAL_MS = 60_000;
 const RUNTIME_MAX_BACKOFF_MS = 10 * 60_000;
 
@@ -70,7 +88,11 @@ function hasShownRemoteToast(notificationId: string) {
   }
 
   try {
-    return window.sessionStorage.getItem(getRemoteToastShownStorageKey(notificationId)) === "shown";
+    return (
+      window.sessionStorage.getItem(
+        getRemoteToastShownStorageKey(notificationId),
+      ) === "shown"
+    );
   } catch {
     return false;
   }
@@ -83,7 +105,10 @@ function markRemoteToastsShown(notificationIds: string[]) {
 
   try {
     for (const notificationId of notificationIds) {
-      window.sessionStorage.setItem(getRemoteToastShownStorageKey(notificationId), "shown");
+      window.sessionStorage.setItem(
+        getRemoteToastShownStorageKey(notificationId),
+        "shown",
+      );
     }
   } catch {
     // sessionStorage unavailable
@@ -93,34 +118,30 @@ function markRemoteToastsShown(notificationIds: string[]) {
 function getNotificationCardTone(variant: ToastVariant | undefined) {
   if (variant === "warning") {
     return {
-      border: "border-[#D88700]/40 hover:border-[#D88700]/70",
-      glow: "hover:shadow-[0_18px_36px_-28px_rgba(251,146,60,0.34)]",
-      closeBorder: "border-[#D88700]/30 hover:border-[#D88700]/65",
-      closeText: "text-[#D88700] hover:text-[#ea580c]",
+      border: "mnx-notification-tone-warning",
+      closeBorder: "mnx-notification-action-warning",
+      closeText: "",
     };
   }
   if (variant === "destructive") {
     return {
-      border: "border-rose-400/40 hover:border-rose-500/70",
-      glow: "hover:shadow-[0_18px_36px_-28px_rgba(244,63,94,0.28)]",
-      closeBorder: "border-rose-400/30 hover:border-rose-500/65",
-      closeText: "text-rose-500 hover:text-rose-600",
+      border: "mnx-notification-tone-danger",
+      closeBorder: "mnx-notification-action-danger",
+      closeText: "",
     };
   }
   if (variant === "success") {
     return {
-      border: "border-emerald-400/40 hover:border-emerald-500/70",
-      glow: "hover:shadow-[0_18px_36px_-28px_rgba(16,185,129,0.26)]",
-      closeBorder: "border-emerald-400/30 hover:border-emerald-500/65",
-      closeText: "text-emerald-500 hover:text-emerald-600",
+      border: "mnx-notification-tone-success",
+      closeBorder: "mnx-notification-action-success",
+      closeText: "",
     };
   }
 
   return {
-    border: "border-[#F9D972]/35 hover:border-[#F9D972]/65",
-    glow: "hover:shadow-[0_18px_36px_-28px_rgba(0,206,196,0.28)]",
-    closeBorder: "border-[#F9D972]/30 hover:border-[#F9D972]/60",
-    closeText: "text-[#00a99f] hover:text-[#00857e]",
+    border: "mnx-notification-tone-info",
+    closeBorder: "mnx-notification-action-info",
+    closeText: "",
   };
 }
 
@@ -145,9 +166,8 @@ function NotificationToastCard({
     <div
       className={cn(
         "group relative overflow-hidden rounded-xl border bg-mono-card/95 p-5 backdrop-blur-xl transition-all duration-200",
-        "shadow-[var(--shadow-ambient)] hover:-translate-y-px hover:shadow-[var(--shadow-ambient-hover)]",
+        "mnx-shadow-panel hover:-translate-y-px",
         tone.border,
-        tone.glow,
       )}
     >
       <div className="relative flex gap-4">
@@ -157,7 +177,9 @@ function NotificationToastCard({
               <h3 className="text-sm font-medium uppercase leading-5 tracking-[0.08em] text-mono-text">
                 {title}
               </h3>
-              {body ? <p className="text-sm leading-6 text-mono-muted">{body}</p> : null}
+              {body ? (
+                <p className="text-sm leading-6 text-mono-muted">{body}</p>
+              ) : null}
             </div>
 
             {dismissible ? (
@@ -177,14 +199,20 @@ function NotificationToastCard({
             ) : null}
           </div>
 
-          {actions ? <div className="flex flex-wrap gap-2 pt-1">{actions}</div> : null}
+          {actions ? (
+            <div className="flex flex-wrap gap-2 pt-1">{actions}</div>
+          ) : null}
         </div>
       </div>
     </div>
   );
 }
 
-export function NotificationProvider({ children }: { children: React.ReactNode }) {
+export function NotificationProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
   const [localToasts, setLocalToasts] = useState<LocalToast[]>([]);
   const [remoteToasts, setRemoteToasts] = useState<RemoteToast[]>([]);
@@ -203,7 +231,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     try {
       const res = await fetch("/api/runtime/updates", {
         cache: "no-store",
-        headers: etagRef.current ? { "If-None-Match": etagRef.current } : undefined,
+        headers: etagRef.current
+          ? { "If-None-Match": etagRef.current }
+          : undefined,
         signal: controller.signal,
       });
       if (res.status === 304) {
@@ -230,12 +260,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ids }),
           signal: controller.signal,
-        }).catch((err) => console.error("Failed to mark notifications presented", err));
+        }).catch((err) =>
+          console.error("Failed to mark notifications presented", err),
+        );
       }
       failureCountRef.current = 0;
       return true;
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return true;
+      if (error instanceof DOMException && error.name === "AbortError")
+        return true;
       failureCountRef.current += 1;
       return false;
     } finally {
@@ -290,8 +323,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       .filter((toast) => !toast.blocking)
       .map((toast) =>
         window.setTimeout(() => {
-          setLocalToasts((current) => current.filter((entry) => entry.id !== toast.id));
-        }, 5000)
+          setLocalToasts((current) =>
+            current.filter((entry) => entry.id !== toast.id),
+          );
+        }, 5000),
       );
 
     return () => timers.forEach((timer) => window.clearTimeout(timer));
@@ -302,15 +337,20 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       .filter((toast) => toast.priority !== "important")
       .map((toast) =>
         window.setTimeout(() => {
-          setRemoteToasts((current) => current.filter((entry) => entry.id !== toast.id));
-        }, 5000)
+          setRemoteToasts((current) =>
+            current.filter((entry) => entry.id !== toast.id),
+          );
+        }, 5000),
       );
 
     return () => timers.forEach((timer) => window.clearTimeout(timer));
   }, [remoteToasts]);
 
   function pushToast(toast: Omit<LocalToast, "id">) {
-    setLocalToasts((current) => [...current, { ...toast, id: crypto.randomUUID() }]);
+    setLocalToasts((current) => [
+      ...current,
+      { ...toast, id: crypto.randomUUID() },
+    ]);
   }
 
   async function postAction(url: string) {
@@ -332,10 +372,18 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         }
         pushToast({ title, body, variant: "success", appearance: "light" });
       },
-      error: (title, body) => pushToast({ title, body, variant: "destructive", appearance: "light", blocking: true }),
-      info: (title, body) => pushToast({ title, body, variant: "info", appearance: "light" }),
+      error: (title, body) =>
+        pushToast({
+          title,
+          body,
+          variant: "destructive",
+          appearance: "light",
+          blocking: true,
+        }),
+      info: (title, body) =>
+        pushToast({ title, body, variant: "info", appearance: "light" }),
     }),
-    []
+    [],
   );
 
   const totalVisible = localToasts.length + remoteToasts.length;
@@ -350,7 +398,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             <Button
               size="sm"
               variant="outline"
-              className={cn(NOTIFICATION_ACTION_CLASS, "shadow-[var(--shadow-ambient)] backdrop-blur-xl")}
+              className={cn(
+                NOTIFICATION_ACTION_CLASS,
+                "mnx-shadow-panel backdrop-blur-xl",
+              )}
               onClick={async () => {
                 setLocalToasts([]);
                 await postAction("/api/notifications/dismiss-all");
@@ -371,7 +422,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 dismissible={toast.policy.allowDismiss}
                 onClose={async () => {
                   await postAction(`/api/notifications/${toast.id}/dismiss`);
-                  setRemoteToasts((current) => current.filter((entry) => entry.id !== toast.id));
+                  setRemoteToasts((current) =>
+                    current.filter((entry) => entry.id !== toast.id),
+                  );
                 }}
                 actions={
                   <>
@@ -381,8 +434,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                         variant="outline"
                         className={NOTIFICATION_ACTION_CLASS}
                         onClick={async () => {
-                          const res = await fetch(`/api/notifications/${toast.id}/open`, { method: "POST" });
-                          const data = (await res.json()) as { link?: string | null };
+                          const res = await fetch(
+                            `/api/notifications/${toast.id}/open`,
+                            { method: "POST" },
+                          );
+                          const data = (await res.json()) as {
+                            link?: string | null;
+                          };
                           if (data.link) router.push(data.link);
                           await refreshRemoteToasts();
                         }}
@@ -396,8 +454,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                         variant="default"
                         className={NOTIFICATION_ACTION_CLASS}
                         onClick={async () => {
-                          await postAction(`/api/notifications/${toast.id}/ack`);
-                          setRemoteToasts((current) => current.filter((entry) => entry.id !== toast.id));
+                          await postAction(
+                            `/api/notifications/${toast.id}/ack`,
+                          );
+                          setRemoteToasts((current) =>
+                            current.filter((entry) => entry.id !== toast.id),
+                          );
                         }}
                       >
                         {toast.policy.labels?.acknowledge ?? "Acknowledge"}
@@ -418,12 +480,20 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 body={toast.body}
                 variant={toast.variant}
                 dismissible={true}
-                onClose={() => setLocalToasts((current) => current.filter((entry) => entry.id !== toast.id))}
+                onClose={() =>
+                  setLocalToasts((current) =>
+                    current.filter((entry) => entry.id !== toast.id),
+                  )
+                }
                 actions={
                   toast.actionLabel && toast.onAction ? (
-                      <Button size="sm" className={NOTIFICATION_ACTION_CLASS} onClick={() => void toast.onAction?.()}>
-                        {toast.actionLabel}
-                      </Button>
+                    <Button
+                      size="sm"
+                      className={NOTIFICATION_ACTION_CLASS}
+                      onClick={() => void toast.onAction?.()}
+                    >
+                      {toast.actionLabel}
+                    </Button>
                   ) : null
                 }
               />
@@ -438,7 +508,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 export function useNotifications() {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error("useNotifications must be used within NotificationProvider");
+    throw new Error(
+      "useNotifications must be used within NotificationProvider",
+    );
   }
   return context;
 }

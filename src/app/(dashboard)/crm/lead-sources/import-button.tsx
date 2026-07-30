@@ -7,7 +7,13 @@ import { toast } from "sonner";
 import { Play, Loader2, Monitor, Terminal } from "lucide-react";
 import { runJustdialImportAction } from "@/modules/crm/actions";
 
-export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; orgId: string }) {
+export function ImportButtons({
+  isImporting,
+  orgId,
+}: {
+  isImporting: boolean;
+  orgId: string;
+}) {
   const [runningImport, setRunningImport] = useState(false);
   const [wasTriggeredByUser, setWasTriggeredByUser] = useState(false);
 
@@ -47,15 +53,21 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
     if (active) {
       const poll = async () => {
         try {
-          const res = await fetch(`/api/crm/justdial-live?orgId=${orgId}&t=${Date.now()}`);
+          const res = await fetch(
+            `/api/crm/justdial-live?orgId=${orgId}&t=${Date.now()}`,
+          );
           if (res.ok) {
             const data = await res.json();
             setStatus(data.status);
             setScreenshotUrl(data.screenshot);
             const currentStatus = data.status?.status;
-            
+
             // Auto-open viewport if running and triggered by user
-            if (currentStatus === "RUNNING" && wasTriggeredByUser && !showViewport) {
+            if (
+              currentStatus === "RUNNING" &&
+              wasTriggeredByUser &&
+              !showViewport
+            ) {
               setShowViewport(true);
             }
 
@@ -63,7 +75,10 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
             if (currentStatus === "SUCCESS" || currentStatus === "FAILED") {
               if (wasTriggeredByUser) {
                 if (currentStatus === "SUCCESS") {
-                  toast.success(data.status?.currentStep || "Justdial leads imported successfully!");
+                  toast.success(
+                    data.status?.currentStep ||
+                      "Justdial leads imported successfully!",
+                  );
                 } else {
                   toast.error(data.status?.currentStep || "Import run failed.");
                 }
@@ -112,7 +127,7 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
         <CrmButton
           onClick={handleImport}
           disabled={isPending}
-          className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
+          className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text px-4 py-2 rounded-lg text-sm font-bold transition-all mnx-shadow-panel cursor-pointer"
           title="Trigger manual browser scraper run"
         >
           {runningImport ? (
@@ -120,7 +135,13 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
           ) : (
             <Play className="size-4 text-mono-text" />
           )}
-          <span>{runningImport ? "Running Import..." : isImporting ? "Import Active..." : "Run Import Now"}</span>
+          <span>
+            {runningImport
+              ? "Running Import..."
+              : isImporting
+                ? "Import Active..."
+                : "Run Import Now"}
+          </span>
         </CrmButton>
       </div>
 
@@ -132,8 +153,7 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
           size="workspace"
           labelledBy="justdial-live-viewport-title"
         >
-          <div className="relative w-full max-w-5xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-xl shadow-2xl shadow-[var(--mnx-shadow)] overflow-hidden flex flex-col max-h-[85vh]">
-            
+          <div className="relative w-full max-w-5xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-xl shadow-2xl mnx-shadow-panel overflow-hidden flex flex-col max-h-[85vh]">
             {/* Mock Browser Header */}
             <div className="flex items-center justify-between bg-[var(--mnx-surface)] border-b border-[var(--mnx-border)] px-4 py-3 shrink-0">
               <div className="flex items-center gap-6 w-full">
@@ -143,11 +163,14 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
                   <span className="size-3 rounded-full bg-[var(--mnx-warning-bg)]" />
                   <span className="size-3 rounded-full bg-[var(--mnx-success-bg)]" />
                 </div>
-                
+
                 {/* Mock Address Bar */}
                 <div className="flex items-center gap-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] px-3 py-1 rounded-lg text-xs text-mono-muted w-full max-w-2xl font-mono select-none">
                   <Loader2 className="size-3 text-[var(--mnx-accent)] animate-spin shrink-0" />
-                  <span id="justdial-live-viewport-title" className="truncate">{status?.currentUrl || "https://wap.justdial.com/analytics/enquiries"}</span>
+                  <span id="justdial-live-viewport-title" className="truncate">
+                    {status?.currentUrl ||
+                      "https://wap.justdial.com/analytics/enquiries"}
+                  </span>
                 </div>
               </div>
 
@@ -162,7 +185,6 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
 
             {/* Viewport & Logs Panel Split */}
             <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[var(--mnx-border)] overflow-hidden grow">
-              
               {/* Left Side: Live Screenshot Viewport (2 cols) */}
               <div className="md:col-span-2 p-4 flex flex-col justify-between bg-[var(--mnx-surface)] overflow-y-auto">
                 <div className="space-y-3">
@@ -172,7 +194,9 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
                       Live Headless Scraper Stream
                     </span>
                     <span className="font-mono text-mono-muted">
-                      {status?.timestamp ? `Updated: ${new Date(status.timestamp).toLocaleTimeString()}` : "Initializing..."}
+                      {status?.timestamp
+                        ? `Updated: ${new Date(status.timestamp).toLocaleTimeString()}`
+                        : "Initializing..."}
                     </span>
                   </div>
 
@@ -193,7 +217,9 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
                     ) : (
                       <div className="text-center space-y-2 text-mono-muted">
                         <Loader2 className="size-8 animate-spin mx-auto text-[var(--mnx-accent)]" />
-                        <p className="text-xs">Connecting to headless browser...</p>
+                        <p className="text-xs">
+                          Connecting to headless browser...
+                        </p>
                       </div>
                     )}
                   </div>
@@ -204,7 +230,8 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
                   <div className="flex items-center justify-between text-xs font-bold text-mono-text">
                     <span>STATUS: {status?.status || "RUNNING"}</span>
                     <span>
-                      Ingesting: {status?.processedCount ?? 0} / {status?.totalCount ?? 0}
+                      Ingesting: {status?.processedCount ?? 0} /{" "}
+                      {status?.totalCount ?? 0}
                     </span>
                   </div>
                   <div className="w-full bg-[var(--mnx-surface)] rounded-full h-2 overflow-hidden border border-[var(--mnx-border)]">
@@ -213,14 +240,22 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
                       style={{
                         width: `${
                           status?.totalCount > 0
-                            ? Math.min(100, ((status.processedCount || 0) / status.totalCount) * 100)
+                            ? Math.min(
+                                100,
+                                ((status.processedCount || 0) /
+                                  status.totalCount) *
+                                  100,
+                              )
                             : 0
                         }%`,
                       }}
                     />
                   </div>
                   <p className="text-xs text-mono-muted truncate">
-                    <span className="text-[var(--mnx-accent)] font-semibold">Active Step:</span> {status?.currentStep || "Booting RPA worker..."}
+                    <span className="text-[var(--mnx-accent)] font-semibold">
+                      Active Step:
+                    </span>{" "}
+                    {status?.currentStep || "Booting RPA worker..."}
                   </p>
                 </div>
               </div>
@@ -230,27 +265,34 @@ export function ImportButtons({ isImporting, orgId }: { isImporting: boolean; or
                 <div className="space-y-3 flex flex-col overflow-hidden h-full">
                   <div className="flex items-center gap-1.5 text-xs text-mono-muted shrink-0">
                     <Terminal className="size-4 text-[var(--mnx-accent)]" />
-                    <span className="font-semibold uppercase tracking-wider">Console Output Logs</span>
+                    <span className="font-semibold uppercase tracking-wider">
+                      Console Output Logs
+                    </span>
                   </div>
 
                   {/* Terminal Box */}
                   <div className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)] p-3 rounded-lg font-mono text-[11px] text-[var(--mnx-success)] overflow-y-auto space-y-1.5 grow leading-relaxed min-h-[180px] md:max-h-full shadow-inner select-text">
                     {status?.logs && status.logs.length > 0 ? (
                       status.logs.map((log: string, idx: number) => (
-                        <div key={idx} className="whitespace-pre-wrap select-text">
-                          <span className="text-mono-muted select-none mr-1.5">&gt;</span>
+                        <div
+                          key={idx}
+                          className="whitespace-pre-wrap select-text"
+                        >
+                          <span className="text-mono-muted select-none mr-1.5">
+                            &gt;
+                          </span>
                           {log}
                         </div>
                       ))
                     ) : (
-                      <div className="text-mono-muted italic">Initializing console logs output buffer...</div>
+                      <div className="text-mono-muted italic">
+                        Initializing console logs output buffer...
+                      </div>
                     )}
                   </div>
                 </div>
               </div>
-
             </div>
-
           </div>
         </CrmDialogLayer>
       )}

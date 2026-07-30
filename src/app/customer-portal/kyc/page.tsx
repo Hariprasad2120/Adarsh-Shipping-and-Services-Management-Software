@@ -1,6 +1,7 @@
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { listPortalShipments } from "@/modules/customer-portal/service";
 import { getPortalFeatureFlag } from "@/modules/customer-portal/feature-flags";
+import type { PortalShipmentSummary } from "@/modules/customer-portal/types";
 import { PortalKycWorkspace } from "../_components/portal-kyc-workspace";
 
 export default async function CustomerPortalKycPage() {
@@ -11,6 +12,9 @@ export default async function CustomerPortalKycPage() {
   ]);
 
   return (
-    <PortalKycWorkspace shipments={shipments as any} kycUploadsAllowed={kycUploadsAllowed} />
+    <PortalKycWorkspace
+      shipments={shipments as unknown as PortalShipmentSummary[]}
+      kycUploadsAllowed={kycUploadsAllowed}
+    />
   );
 }

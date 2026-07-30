@@ -36,7 +36,9 @@ const entrypoints: Record<string, string> = {
 };
 const entrypoint = entrypoints[command];
 if (!existsSync(entrypoint)) {
-  throw new Error(`Local ${command} executable is unavailable. Run npm install.`);
+  throw new Error(
+    `Local ${command} executable is unavailable. Run npm install.`,
+  );
 }
 
 const childEnvironment = {
@@ -45,6 +47,27 @@ const childEnvironment = {
   MONOLITH_ENV: "staging",
   PGAPPNAME: "monolith-accounting-staging",
 };
+const isFinalUiAuditPreparation =
+  command === "tsx" &&
+  commandArgs.some((argument) =>
+    argument.endsWith("scripts/prepare-final-ui-audit.ts"),
+  );
+const isFinalUiRuntime =
+  command === "tsx" &&
+  commandArgs.some((argument) =>
+    argument.endsWith("scripts/verify-monolith-final-runtime.mjs"),
+  );
+
+if (isFinalUiAuditPreparation) {
+  childEnvironment.UI_AUDIT_PASSWORD = process.env.STAGING_TEST_PASSWORD;
+}
+if (isFinalUiRuntime) {
+  childEnvironment.UI_TEST_BASE_URL = "http://localhost:3100";
+  childEnvironment.UI_TEST_EMAIL = "final-ui-audit@staging.example.com";
+  childEnvironment.UI_TEST_PASSWORD = process.env.STAGING_TEST_PASSWORD;
+  childEnvironment.PORTAL_TEST_EMAIL = "portal-customer@staging.example.com";
+  childEnvironment.PORTAL_TEST_PASSWORD = process.env.STAGING_TEST_PASSWORD;
+}
 delete childEnvironment.STAGING_DATABASE_ADMIN_PASSWORD;
 delete childEnvironment.STAGING_DATABASE_PASSWORD;
 const mayUseStagingTestPassword =

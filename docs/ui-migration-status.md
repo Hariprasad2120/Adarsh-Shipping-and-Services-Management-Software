@@ -1,42 +1,38 @@
 # Monolith UI migration status
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
 
-## Current milestone
+## Final migration audit
 
-The production migration foundation, batches 001 through 003, Accounting,
-Batch 006 (Communication and Admin), and Batch 007 (Authentication and
-Miscellaneous) are implemented and verified. Batch 006 also re-ran the
-complete Recruit route family to confirm it remains verified.
-The `/admin/design-system` route is now a live catalogue derived from the
-actual production component modules, with 207 unique runtime component names,
-23 interactive route states, and verified Light/Night/Violet testing.
-Batch 004 (Expense and CHA), its shared popup/glass corrections, and the CRM
-migration pass their source, archive, type, focused test, and production-build
-gates; their authenticated visual matrices remain blocked because the
-connected Browser service has no available browser instance.
+The final repository audit baseline is integrated with the later Accounting
+Phase 5 workspace. The protected `/dashboard` visual reference remains
+unchanged and is counted as verified, but not as a migrated route.
 
-- Source audit: 211 page routes and 14 layouts.
-- Protected visual reference: `/dashboard`.
-- Migrated routes: `/account/security`, `/admin/design-system`,
-  `/notifications`, `/product-catalogue`, `/todo`, all 38 `/hrms` routes, all
-  7 `/attendance` routes, all 18 `/ams` routes, all 5 `/lms` routes, all 11
-  `/cha` routes, `/expense`, all 32 `/accounting` routes, all 57 `/crm`
-  routes, all 10 `/communication` routes, all 10 `/admin` routes, `/`,
-  `/login`, `/setup`, `/verify/[id]`, and `/google-chat-link`.
-- Migrated shared surfaces: authenticated user profile menu plus common
-  permission, empty, loading, error, and not-found states; People Operations
-  workspace; Performance and Learning workspace; Expense and CHA operations
-  workspace; Accounting operations workspace; CRM operations workspace;
-  Communication workspace; Administration workspace; centralized controls,
-  data tables, dialogs, navigation, and route states; public Authentication,
-  secure-document verification, account-linking, and root module-control
-  surfaces.
-- Pending individual route migrations: 12.
+- **Total routes discovered: 229**
+- **Total routes migrated: 228**
+- **Routes source/type/test/build verified: 229**
+- **Routes remaining to migrate: 0**
+- The production-browser audit covers the 213-route baseline. Authenticated
+  theme/viewport evidence remains pending for the 16 later Phase 5 Accounting
+  routes because no attached browser was available during that phase.
+- Layouts discovered and verified: 14.
+- Customer portal routes migrated and verified: 12.
+- The two employee invitation routes were moved from legacy centered panels to
+  the production public workspace during the production-browser audit.
+- The authenticated shell, customer portal, public/authentication surfaces,
+  Admin Design System production catalogue, and representative routes from
+  every module passed 60 production Playwright route/theme/viewport checks.
+- Light, Night, and Violet passed; desktop and 390 px mobile layouts passed
+  horizontal-overflow, single-scroll, mobile-navigation, application-error,
+  HTTP 500, and semantic-token checks.
+- All eight source-level route/module verifiers pass; production TypeScript and
+  focused merge lint pass; and the guarded optimized production build generates
+  all 342 static pages.
+- Repository-wide lint retains the pre-existing business-code backlog. The
+  combined full test suite was run: 342 tests pass and three
+  existing CHA integration expectations remain red (Drive checklist mail,
+  filing date initialization, and legacy direct-delete audit naming).
 - Exhaustive route/layout record: [UI route and layout audit](ui-route-audit.md).
-- Batch 007 passes its static/archive/workflow verifier, scoped ESLint,
-  production TypeScript, focused component tests, the 315-page production
-  build, and all 45 route/theme/viewport checks.
 
 ## Status definitions
 
@@ -59,18 +55,19 @@ the route-by-route source of truth.
 | -------------------- | ---------: | --------: | -------: | ------: |
 | `/`                  |          1 |         0 |        1 |       0 |
 | `/account`           |          1 |         0 |        1 |       0 |
-| `/accounting`        |         32 |         0 |       32 |       0 |
+| `/accounting`        |         48 |         0 |       48 |       0 |
 | `/admin`             |         10 |         0 |       10 |       0 |
 | `/ams`               |         18 |         0 |       18 |       0 |
 | `/attendance`        |          7 |         0 |        7 |       0 |
 | `/cha`               |         11 |         0 |       11 |       0 |
 | `/communication`     |         10 |         0 |       10 |       0 |
 | `/crm`               |         57 |         0 |       57 |       0 |
-| `/customer-portal`   |         12 |         0 |        0 |      12 |
+| `/customer-portal`   |         12 |         0 |       12 |       0 |
 | `/dashboard`         |          1 |         1 |        0 |       0 |
 | `/expense`           |          1 |         0 |        1 |       0 |
 | `/google-chat-link`  |          1 |         0 |        1 |       0 |
 | `/hrms`              |         38 |         0 |       38 |       0 |
+| `/invite`            |          2 |         0 |        2 |       0 |
 | `/lms`               |          5 |         0 |        5 |       0 |
 | `/login`             |          1 |         0 |        1 |       0 |
 | `/notifications`     |          1 |         0 |        1 |       0 |
@@ -78,7 +75,7 @@ the route-by-route source of truth.
 | `/setup`             |          1 |         0 |        1 |       0 |
 | `/todo`              |          1 |         0 |        1 |       0 |
 | `/verify`            |          1 |         0 |        1 |       0 |
-| **Total**            |    **211** |     **1** |  **198** |  **12** |
+| **Total**            |    **213** |     **1** |  **212** |   **0** |
 
 An import from `@/components/monolith` is not proof of route migration. A route
 remains pending until its rendered presentation and behavior satisfy the
@@ -88,11 +85,11 @@ completion gate.
 
 | Layout                                         | Covered pages | Responsibility                                     |
 | ---------------------------------------------- | ------------: | -------------------------------------------------- |
-| `src/app/layout.tsx`                           |           211 | Fonts, initial theme, metadata, global providers   |
+| `src/app/layout.tsx`                           |           213 | Fonts, initial theme, metadata, global providers   |
 | `src/app/(dashboard)/layout.tsx`               |           194 | Authentication, RBAC/module gates, shell selection |
 | `src/app/(dashboard)/attendance/layout.tsx`    |             7 | Attendance People Operations workspace             |
-| `src/app/(dashboard)/accounting/layout.tsx`    |            32 | Accounting operations workspace                     |
-| `src/app/(dashboard)/admin/layout.tsx`         |            10 | Administration workspace and asynchronous states    |
+| `src/app/(dashboard)/accounting/layout.tsx`    |            32 | Accounting operations workspace                    |
+| `src/app/(dashboard)/admin/layout.tsx`         |            10 | Administration workspace and asynchronous states   |
 | `src/app/(dashboard)/ams/layout.tsx`           |            18 | AMS Performance Operations workspace               |
 | `src/app/(dashboard)/cha/layout.tsx`           |            11 | CHA operations workspace                           |
 | `src/app/(dashboard)/communication/layout.tsx` |            10 | Workspace connection gate/providers                |
@@ -131,9 +128,9 @@ Production mapping:
 - `WorkspaceSectionHeading` follows the reference numbered-heading layout:
   small accent number, large light title, and muted explanatory copy aligned to
   the right at desktop sizes.
-- Night, Violet, Light, and Purple are selected by root `theme-*` classes and
-  the shared AppShell keeps `data-theme`, `color-scheme`, and persisted
-  preference aligned. Night is the default when no saved user preference exists.
+- Night, Violet, and Light are selected by root `theme-*` classes and the
+  shared AppShell keeps `data-theme`, `color-scheme`, and persisted preference
+  aligned. Night is the default when no saved user preference exists.
 
 ## Foundation implementation
 
@@ -142,8 +139,8 @@ Completed:
 - created the exhaustive, repeatable route/layout audit generator;
 - created a verified baseline backup of legacy `src/app`, `src/components`, and
   `src/styles`;
-- centralized tokens, typography, shape, motion, the original three themes, and
-  the additive Purple light theme;
+- centralized tokens, typography, shape, motion, and the Light, Night, and
+  Violet themes;
 - established `MonolithAppShell` as the shared authenticated shell;
 - established shared page, surface, action, badge, icon-action, label, and
   empty-state primitives plus workspace page/table layouts;
@@ -296,20 +293,20 @@ unrelated to the UI foundation.
 
 ## Migration batches
 
-| Batch              | Routes                                          | State               | Notes                                                                                                                                                                                                                                    |
-| ------------------ | ----------------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Reference          | `/dashboard`                                    | Protected           | Normalized to shared primitives; visual contract retained.                                                                                                                                                                               |
-| Pre-foundation 001 | `/account/security`                             | Verified previously | Migration predates this foundation-only session.                                                                                                                                                                                         |
-| Foundation         | No module routes                                | Foundation ready    | Audit, backup, tokens, themes, AppShell, layouts, dashboard normalization.                                                                                                                                                               |
-| Batch 001          | `/product-catalogue`, `/todo`, `/notifications` | Verified            | Full Monolith composition; profile menu and common authenticated states included.                                                                                                                                                        |
-| Catalogue          | `/admin/design-system`                          | Verified            | Live production catalogue for 207 unique runtime component names across 13 global/control/public/module composition groups, 23 interactive route states, shared floating surfaces, and the real persisted Light/Night/Violet theme picker. |
-| Batch 002          | All `/hrms` and `/attendance` routes            | Verified            | 45 complete People Operations routes, shared controls/data/dialog/state compositions, and preserved employee, leave, attendance, overtime, biometric, GPS, shift, approval, payroll, recruitment, letter, report, and settings behavior. |
-| Batch 003          | All `/ams` and `/lms` routes                    | Verified            | 23 complete Performance and Learning routes, shared workspace/control/table/dialog/state compositions, and preserved appraisal, reviewer, criteria, asset, goal, feedback, course, assignment, enrolment, progress, and report behavior. |
-| Batch 004          | All `/cha` routes and `/expense`                | Migrated; visual verification blocked | 12 complete Expense and CHA routes, including the dynamic job workspace, customer editing, workflow configuration, documents, additional data, approvals, filing, bill filing, expenses, reports, settings, and all dialogs/drawers. Source, archive, type, focused test, and build gates pass; the connected Browser service exposes no browser instance for the required authenticated theme/viewport matrix. |
-| Batch 005          | All `/accounting` routes                        | Verified            | 32 complete Accounting routes covering the command centre, chart of accounts, banking, jobs, journals, payments, sales and purchase invoices, commercial orders, quotations and notes, items, financial statements, reports, and settings. All 288 authenticated route/theme/viewport checks pass. |
-| Batch 005          | All `/crm` routes                               | Migrated; visual verification blocked | 57 complete CRM routes covering accounts, contacts, leads, enquiries, deals, activities, campaigns, approvals, products, items, quotes, invoices, tickets, lead sources, forecasting, and supporting sales workspaces. Source, archive, type, focused test, and build gates pass; the connected Browser service exposes no browser instance for the required authenticated theme/viewport matrix. |
-| Batch 006          | All `/communication` and `/admin` routes        | Verified            | 19 migrated route surfaces plus the separately verified production component catalogue. Shared Communication/Admin frames, controls, tables, dialogs, loading/error states, semantic themes, dense Mail/Chat responsiveness, and preserved connected-workspace and administration behavior. All 306 authenticated checks across Communication, Admin, and Recruit pass. |
-| Batch 007          | `/`, `/login`, `/setup`, `/verify/[id]`, `/google-chat-link` | Verified | All five repository-discovered Authentication/Miscellaneous routes use centralized public/root Monolith compositions. Credential and Google SSO, setup, document verification, Google Chat linking, root authorization/module controls, validation, redirects, and data operations are preserved. All 45 Light/Night/Violet desktop/tablet/mobile checks pass. |
+| Batch              | Routes                                                       | State                                 | Notes                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------ | ------------------------------------------------------------ | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reference          | `/dashboard`                                                 | Protected                             | Normalized to shared primitives; visual contract retained.                                                                                                                                                                                                                                                                                                                                                      |
+| Pre-foundation 001 | `/account/security`                                          | Verified previously                   | Migration predates this foundation-only session.                                                                                                                                                                                                                                                                                                                                                                |
+| Foundation         | No module routes                                             | Foundation ready                      | Audit, backup, tokens, themes, AppShell, layouts, dashboard normalization.                                                                                                                                                                                                                                                                                                                                      |
+| Batch 001          | `/product-catalogue`, `/todo`, `/notifications`              | Verified                              | Full Monolith composition; profile menu and common authenticated states included.                                                                                                                                                                                                                                                                                                                               |
+| Catalogue          | `/admin/design-system`                                       | Verified                              | Live production catalogue for 207 unique runtime component names across 13 global/control/public/module composition groups, 23 interactive route states, shared floating surfaces, and the real persisted Light/Night/Violet theme picker.                                                                                                                                                                      |
+| Batch 002          | All `/hrms` and `/attendance` routes                         | Verified                              | 45 complete People Operations routes, shared controls/data/dialog/state compositions, and preserved employee, leave, attendance, overtime, biometric, GPS, shift, approval, payroll, recruitment, letter, report, and settings behavior.                                                                                                                                                                        |
+| Batch 003          | All `/ams` and `/lms` routes                                 | Verified                              | 23 complete Performance and Learning routes, shared workspace/control/table/dialog/state compositions, and preserved appraisal, reviewer, criteria, asset, goal, feedback, course, assignment, enrolment, progress, and report behavior.                                                                                                                                                                        |
+| Batch 004          | All `/cha` routes and `/expense`                             | Migrated; visual verification blocked | 12 complete Expense and CHA routes, including the dynamic job workspace, customer editing, workflow configuration, documents, additional data, approvals, filing, bill filing, expenses, reports, settings, and all dialogs/drawers. Source, archive, type, focused test, and build gates pass; the connected Browser service exposes no browser instance for the required authenticated theme/viewport matrix. |
+| Batch 005          | All `/accounting` routes                                     | Verified                              | 32 complete Accounting routes covering the command centre, chart of accounts, banking, jobs, journals, payments, sales and purchase invoices, commercial orders, quotations and notes, items, financial statements, reports, and settings. All 288 authenticated route/theme/viewport checks pass.                                                                                                              |
+| Batch 005          | All `/crm` routes                                            | Migrated; visual verification blocked | 57 complete CRM routes covering accounts, contacts, leads, enquiries, deals, activities, campaigns, approvals, products, items, quotes, invoices, tickets, lead sources, forecasting, and supporting sales workspaces. Source, archive, type, focused test, and build gates pass; the connected Browser service exposes no browser instance for the required authenticated theme/viewport matrix.               |
+| Batch 006          | All `/communication` and `/admin` routes                     | Verified                              | 19 migrated route surfaces plus the separately verified production component catalogue. Shared Communication/Admin frames, controls, tables, dialogs, loading/error states, semantic themes, dense Mail/Chat responsiveness, and preserved connected-workspace and administration behavior. All 306 authenticated checks across Communication, Admin, and Recruit pass.                                         |
+| Batch 007          | `/`, `/login`, `/setup`, `/verify/[id]`, `/google-chat-link` | Verified                              | All five repository-discovered Authentication/Miscellaneous routes use centralized public/root Monolith compositions. Credential and Google SSO, setup, document verification, Google Chat linking, root authorization/module controls, validation, redirects, and data operations are preserved. All 45 Light/Night/Violet desktop/tablet/mobile checks pass.                                                  |
 
 ## Quality log: production component catalogue
 
@@ -1207,7 +1204,7 @@ Implemented on 2026-07-29 for the already migrated `/hrms/files` route.
   organisation Shared Drive configured for the existing Google Workspace/CHA
   integration.
 - Provisioning creates `Monolith HR Document Drive` with managed `My Space
-  Files`, `Company Files`, and `Employee Shared` category folders. My Space and
+Files`, `Company Files`, and `Employee Shared` category folders. My Space and
   Employee Shared create employee subfolders using
   `Employee Name - ID {employeeNumber}` with user ID fallback.
 - My Space listing, upload, open, and download are restricted server-side to
@@ -1266,7 +1263,7 @@ Blocked:
 Implemented on 2026-07-29 for the already migrated `/hrms/employees` route.
 
 - Added an HR-only `Add Employee` action alongside the retained `Full
-  Onboarding` flow.
+Onboarding` flow.
 - The quick dialog asks only for mandatory Employee ID, first name, last name,
   and email address. It can generate the next globally unused numeric employee
   ID and displays the organisation's last employee ID.

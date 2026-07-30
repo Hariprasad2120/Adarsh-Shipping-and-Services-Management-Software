@@ -1,4 +1,8 @@
-import { CrmTable, CrmConfigurationState, CrmPermissionState } from "@/components/monolith/crm-workspace";
+import {
+  CrmTable,
+  CrmConfigurationState,
+  CrmPermissionState,
+} from "@/components/monolith/crm-workspace";
 import React from "react";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
@@ -23,14 +27,18 @@ export default async function CrmCallsPage() {
 
   const orgId = session.user.orgId;
   if (!orgId) {
-    return <CrmConfigurationState description="Missing organisation context." />;
+    return (
+      <CrmConfigurationState description="Missing organisation context." />
+    );
   }
 
   // Gated access check
   try {
     await requirePermission(session.user.id, "crm.lead.read");
   } catch (e) {
-    return <CrmPermissionState description="You do not have permission to view call logs." />;
+    return (
+      <CrmPermissionState description="You do not have permission to view call logs." />
+    );
   }
 
   // Parallelize all independent queries
@@ -67,7 +75,9 @@ export default async function CrmCallsPage() {
       include: {
         callAttempt: {
           include: {
-            lead: { select: { firstName: true, lastName: true, company: true } },
+            lead: {
+              select: { firstName: true, lastName: true, company: true },
+            },
             salesperson: { select: { name: true } },
           },
         },
@@ -87,7 +97,9 @@ export default async function CrmCallsPage() {
       include: {
         callAttempt: {
           include: {
-            lead: { select: { firstName: true, lastName: true, company: true } },
+            lead: {
+              select: { firstName: true, lastName: true, company: true },
+            },
             salesperson: { select: { name: true } },
           },
         },
@@ -114,17 +126,26 @@ export default async function CrmCallsPage() {
     }),
   ]);
 
-  const avgQuality = transcriptAggregate._avg.qualityScore ? Math.round(transcriptAggregate._avg.qualityScore) : 0;
+  const avgQuality = transcriptAggregate._avg.qualityScore
+    ? Math.round(transcriptAggregate._avg.qualityScore)
+    : 0;
 
   const salespersonRankings = activeSalespeople
     .map((sp) => {
       const calls = sp.crmCallAttempts.length;
-      const completedCalls = sp.crmCallAttempts.filter((c) => c.status === "COMPLETED").length;
-      const convertedCount = sp.crmCallAttempts.filter((c) => c.lead.isConverted).length;
-      
+      const completedCalls = sp.crmCallAttempts.filter(
+        (c) => c.status === "COMPLETED",
+      ).length;
+      const convertedCount = sp.crmCallAttempts.filter(
+        (c) => c.lead.isConverted,
+      ).length;
+
       const ratingSum = sp.crmCallReviews.reduce((sum, r) => sum + r.rating, 0);
-      const avgReviewRating = sp.crmCallReviews.length ? (ratingSum / sp.crmCallReviews.length).toFixed(1) : "N/A";
-      const conversionRate = calls > 0 ? Math.round((convertedCount / calls) * 100) : 0;
+      const avgReviewRating = sp.crmCallReviews.length
+        ? (ratingSum / sp.crmCallReviews.length).toFixed(1)
+        : "N/A";
+      const conversionRate =
+        calls > 0 ? Math.round((convertedCount / calls) * 100) : 0;
 
       return {
         id: sp.id,
@@ -145,7 +166,8 @@ export default async function CrmCallsPage() {
         <div>
           <h2 className="mnx-title-1 text-mono-text">Call Quality Center</h2>
           <p className="text-xs text-mono-muted mt-1 uppercase tracking-wider">
-            Monitor calling activity, listen to voice uploads, and review AI transcription audits
+            Monitor calling activity, listen to voice uploads, and review AI
+            transcription audits
           </p>
         </div>
       </div>
@@ -157,8 +179,12 @@ export default async function CrmCallsPage() {
             <span>Call Attempts</span>
             <Phone className="size-4 text-[var(--mnx-accent)]" />
           </div>
-          <p className="mnx-numeric text-mono-text text-3xl font-black">{attemptsCount}</p>
-          <div className="text-[10px] text-mono-muted">Initiated via mobile client</div>
+          <p className="mnx-numeric text-mono-text text-3xl font-black">
+            {attemptsCount}
+          </p>
+          <div className="text-[10px] text-mono-muted">
+            Initiated via mobile client
+          </div>
         </div>
 
         <div className="mnx-crm-panel-surface  rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 p-5 space-y-2">
@@ -166,9 +192,14 @@ export default async function CrmCallsPage() {
             <span>Audio Synced</span>
             <Play className="size-4 text-[var(--mnx-accent)]" />
           </div>
-          <p className="mnx-numeric text-mono-text text-3xl font-black">{recordingsCount}</p>
+          <p className="mnx-numeric text-mono-text text-3xl font-black">
+            {recordingsCount}
+          </p>
           <div className="text-[10px] text-mono-muted">
-            {attemptsCount > 0 ? Math.round((recordingsCount / attemptsCount) * 100) : 0}% sync rate from phone storage
+            {attemptsCount > 0
+              ? Math.round((recordingsCount / attemptsCount) * 100)
+              : 0}
+            % sync rate from phone storage
           </div>
         </div>
 
@@ -177,17 +208,29 @@ export default async function CrmCallsPage() {
             <span>AI Quality Score</span>
             <Sparkles className="size-4 text-[var(--mnx-accent)]" />
           </div>
-          <p className="mnx-numeric text-mono-text text-3xl font-black">{avgQuality}%</p>
-          <div className="text-[10px] text-mono-muted">Average based on Whisper audits</div>
+          <p className="mnx-numeric text-mono-text text-3xl font-black">
+            {avgQuality}%
+          </p>
+          <div className="text-[10px] text-mono-muted">
+            Average based on Whisper audits
+          </div>
         </div>
 
-        <div className={`mnx-crm-panel-surface ${pendingReviewsCount > 0 ? "mnx-tone-warning" : ""} rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 p-5 space-y-2`}>
+        <div
+          className={`mnx-crm-panel-surface ${pendingReviewsCount > 0 ? "mnx-tone-warning" : ""} rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 p-5 space-y-2`}
+        >
           <div className="flex items-center justify-between text-mono-muted uppercase tracking-widest text-[9px] font-extrabold">
             <span>Pending Audit</span>
-            <AlertTriangle className={`size-4 ${pendingReviewsCount > 0 ? "text-[var(--mnx-accent)]" : "text-mono-muted"}`} />
+            <AlertTriangle
+              className={`size-4 ${pendingReviewsCount > 0 ? "text-[var(--mnx-accent)]" : "text-mono-muted"}`}
+            />
           </div>
-          <p className="mnx-numeric text-mono-text text-3xl font-black">{pendingReviewsCount}</p>
-          <div className="text-[10px] text-mono-muted">Recordings requiring manager review</div>
+          <p className="mnx-numeric text-mono-text text-3xl font-black">
+            {pendingReviewsCount}
+          </p>
+          <div className="text-[10px] text-mono-muted">
+            Recordings requiring manager review
+          </div>
         </div>
       </div>
 
@@ -212,7 +255,10 @@ export default async function CrmCallsPage() {
               <tbody>
                 {salespersonRankings.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-6 text-mono-muted italic">
+                    <td
+                      colSpan={5}
+                      className="text-center py-6 text-mono-muted italic"
+                    >
                       No call records logged for active representatives.
                     </td>
                   </tr>
@@ -224,15 +270,21 @@ export default async function CrmCallsPage() {
                         {sp.name}
                       </td>
                       <td className="mnx-numeric font-medium">{sp.calls}</td>
-                      <td className="mnx-numeric font-medium">{sp.completedCalls}</td>
+                      <td className="mnx-numeric font-medium">
+                        {sp.completedCalls}
+                      </td>
                       <td className="mnx-numeric text-mono-muted">
                         {sp.avgReviewRating === "N/A" ? (
                           <span className="text-mono-muted">-</span>
                         ) : (
-                          <span className="text-[var(--mnx-accent)] font-black">{sp.avgReviewRating} / 5.0</span>
+                          <span className="text-[var(--mnx-accent)] font-black">
+                            {sp.avgReviewRating} / 5.0
+                          </span>
                         )}
                       </td>
-                      <td className="mnx-numeric text-mono-text font-bold">{sp.conversionRate}%</td>
+                      <td className="mnx-numeric text-mono-text font-bold">
+                        {sp.conversionRate}%
+                      </td>
                     </tr>
                   ))
                 )}
@@ -254,19 +306,24 @@ export default async function CrmCallsPage() {
               </div>
             ) : (
               lowQualityList.map((rec) => {
-                const leadName = `${rec.callAttempt.lead?.firstName || ""} ${rec.callAttempt.lead?.lastName || ""}`.trim();
+                const leadName =
+                  `${rec.callAttempt.lead?.firstName || ""} ${rec.callAttempt.lead?.lastName || ""}`.trim();
                 return (
                   <div
                     key={rec.id}
                     className="p-3 bg-[var(--mnx-surface)]/50 border border-[var(--mnx-danger)] hover:border-[var(--mnx-danger)] rounded-lg space-y-2 transition-colors"
                   >
                     <div className="flex justify-between items-center text-[10px]">
-                      <span className="font-bold text-mono-muted uppercase">{rec.callAttempt.salesperson.name}</span>
+                      <span className="font-bold text-mono-muted uppercase">
+                        {rec.callAttempt.salesperson.name}
+                      </span>
                       <span className="font-black text-[var(--mnx-danger)] uppercase tracking-widest font-mono">
                         Score {rec.transcript?.qualityScore || 0}%
                       </span>
                     </div>
-                    <p className="font-semibold text-mono-muted text-xs">Call with: {leadName}</p>
+                    <p className="font-semibold text-mono-muted text-xs">
+                      Call with: {leadName}
+                    </p>
                     {rec.transcript?.summary && (
                       <p className="text-[10px] text-mono-muted line-clamp-2 italic">
                         "{rec.transcript.summary}"
@@ -302,16 +359,24 @@ export default async function CrmCallsPage() {
               </div>
             ) : (
               pendingReviewList.map((rec) => {
-                const leadName = `${rec.callAttempt.lead?.firstName || ""} ${rec.callAttempt.lead?.lastName || ""}`.trim();
+                const leadName =
+                  `${rec.callAttempt.lead?.firstName || ""} ${rec.callAttempt.lead?.lastName || ""}`.trim();
                 return (
                   <div
                     key={rec.id}
                     className="p-3 bg-[var(--mnx-surface)]/50 border border-[var(--mnx-border)]/40 rounded-lg flex items-center justify-between gap-4"
                   >
                     <div className="space-y-1 min-w-0 flex-1">
-                      <p className="font-bold text-mono-text text-xs truncate">Call: {leadName}</p>
+                      <p className="font-bold text-mono-text text-xs truncate">
+                        Call: {leadName}
+                      </p>
                       <div className="text-[10px] text-mono-muted">
-                        Agent: <span className="text-mono-muted font-semibold">{rec.callAttempt.salesperson.name}</span> • Synced: {new Date(rec.recordedAt).toLocaleDateString("en-IN")}
+                        Agent:{" "}
+                        <span className="text-mono-muted font-semibold">
+                          {rec.callAttempt.salesperson.name}
+                        </span>{" "}
+                        • Synced:{" "}
+                        {new Date(rec.recordedAt).toLocaleDateString("en-IN")}
                       </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
@@ -320,7 +385,7 @@ export default async function CrmCallsPage() {
                       </span>
                       <Link
                         href={`/crm/leads/${rec.leadId}`}
-                        className="bg-[var(--mnx-accent)] text-mono-text hover:bg-[var(--mnx-accent)] hover:shadow-[0_0_0_3px_var(--mnx-accent-soft)] px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer"
+                        className="bg-[var(--mnx-accent)] text-mono-text hover:bg-[var(--mnx-accent)]  px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer"
                       >
                         Audit
                       </Link>
@@ -345,16 +410,26 @@ export default async function CrmCallsPage() {
               </div>
             ) : (
               callsWithoutRecording.map((call) => {
-                const leadName = `${call.lead?.firstName || ""} ${call.lead?.lastName || ""}`.trim();
+                const leadName =
+                  `${call.lead?.firstName || ""} ${call.lead?.lastName || ""}`.trim();
                 return (
                   <div
                     key={call.id}
                     className="p-3 bg-[var(--mnx-surface)]/50 border border-[var(--mnx-border)]/40 rounded-lg flex items-center justify-between gap-4"
                   >
                     <div className="space-y-1 min-w-0 flex-1">
-                      <p className="font-bold text-mono-text text-xs truncate">Call: {leadName}</p>
+                      <p className="font-bold text-mono-text text-xs truncate">
+                        Call: {leadName}
+                      </p>
                       <div className="text-[10px] text-mono-muted">
-                        Agent: <span className="text-mono-muted font-semibold">{call.salesperson.name}</span> • Number: <span className="font-mono text-mono-muted">{call.customerPhone}</span>
+                        Agent:{" "}
+                        <span className="text-mono-muted font-semibold">
+                          {call.salesperson.name}
+                        </span>{" "}
+                        • Number:{" "}
+                        <span className="font-mono text-mono-muted">
+                          {call.customerPhone}
+                        </span>
                       </div>
                     </div>
                     <div className="text-right shrink-0">

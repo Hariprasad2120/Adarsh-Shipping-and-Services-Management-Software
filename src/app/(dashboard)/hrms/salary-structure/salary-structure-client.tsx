@@ -105,7 +105,7 @@ function SummaryCard({
   tone: string;
 }) {
   return (
-    <Card className="rounded-[22px] border-mono-border/40 shadow-ambient">
+    <Card className="rounded-[var(--mn-radius-panel)] border-mono-border/40 shadow-ambient">
       <CardContent className="p-5">
         <p className={`text-xs font-medium ${tone}`}>{label}</p>
         <p className="mnx-numeric mt-1 text-3xl font-semibold tracking-tight text-mono-text">
@@ -135,7 +135,7 @@ function TableCard({
   }>;
 }) {
   return (
-    <Card className="overflow-hidden rounded-[24px] border-mono-border/40 shadow-ambient">
+    <Card className="overflow-hidden rounded-[var(--mn-radius-panel)] border-mono-border/40 shadow-ambient">
       <CardHeader className="border-b border-mono-border/20 pb-4">
         <CardTitle className="flex items-center gap-2 text-base">
           {icon}
@@ -631,7 +631,7 @@ export function SalaryStructureClient({
               rows={offerRows}
             />
 
-            <Card className="rounded-[24px] border-mono-border/40 shadow-ambient">
+            <Card className="rounded-[var(--mn-radius-panel)] border-mono-border/40 shadow-ambient">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Salary Notes</CardTitle>
               </CardHeader>
@@ -691,7 +691,7 @@ export function SalaryStructureClient({
               </CardContent>
             </Card>
 
-            <Card className="rounded-[24px] border-mono-border/40 shadow-ambient print:hidden">
+            <Card className="rounded-[var(--mn-radius-panel)] border-mono-border/40 shadow-ambient print:hidden">
               <CardContent className="flex flex-wrap items-center justify-between gap-3 p-5">
                 <div>
                   <p className="text-sm font-medium text-mono-text">Actions</p>

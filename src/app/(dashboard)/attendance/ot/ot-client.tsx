@@ -1409,7 +1409,7 @@ export function OtClient({
 
                       <span
                         className={cn(
-                          "inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] border transition duration-300 group-hover:scale-105",
+                          "inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-[var(--mn-radius-panel)] border transition duration-300 group-hover:scale-105",
                           item.iconClassName,
                         )}
                       >
@@ -1543,7 +1543,7 @@ export function OtClient({
               ].map((flow, i) => (
                 <div
                   key={i}
-                  className="mnx-panel mnx-accent-edge relative flex flex-col justify-between space-y-3 rounded-[24px] border border-mono-border/30 bg-mono-card p-5 shadow-ambient"
+                  className="mnx-panel mnx-accent-edge relative flex flex-col justify-between space-y-3 rounded-[var(--mn-radius-panel)] border border-mono-border/30 bg-mono-card p-5 shadow-ambient"
                 >
                   <div className="space-y-1">
                     <span className="inline-flex rounded-full bg-[var(--mnx-accent)]/10 px-2 py-0.5 text-[11px] font-semibold tracking-[0.14em] text-[var(--mnx-accent-text)]">

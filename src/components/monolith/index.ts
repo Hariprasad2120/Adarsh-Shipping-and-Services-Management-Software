@@ -13,6 +13,7 @@ export * from "./card";
 export * from "./cha-workspace";
 export * from "./communication-workspace";
 export * from "./crm-workspace";
+export * from "./customer-portal-workspace";
 export * from "./date-input";
 export * from "./dropdown-menu";
 export * from "./dropdown-select";

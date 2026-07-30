@@ -104,7 +104,7 @@ export default async function SelfAssessmentPage({
           }}
         />
 
-        <div className="mnx-performance-surface mnx-accent-edge rounded-[24px] border border-mono-border/35 bg-mono-card p-6">
+        <div className="mnx-performance-surface mnx-accent-edge rounded-[var(--mn-radius-panel)] border border-mono-border/35 bg-mono-card p-6">
           <h2 className="mnx-title-2 text-mono-text">
             Self-Assessment Summary
           </h2>

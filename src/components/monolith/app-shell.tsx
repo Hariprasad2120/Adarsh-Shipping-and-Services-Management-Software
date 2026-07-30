@@ -10,7 +10,6 @@ import {
   LogOut,
   Menu,
   Moon,
-  Palette,
   Search,
   ShieldCheck,
   Sparkles,
@@ -41,7 +40,7 @@ const MonaChat = dynamic(
   { ssr: false },
 );
 
-export type MonolithTheme = "night" | "violet" | "light" | "purple";
+export type MonolithTheme = "night" | "violet" | "light";
 
 export interface MonolithAppShellProps {
   children: React.ReactNode;
@@ -61,7 +60,6 @@ export const monolithThemes: {
   { id: "night", label: "Night", icon: Moon },
   { id: "violet", label: "Violet", icon: Sparkles },
   { id: "light", label: "Light", icon: Sun },
-  { id: "purple", label: "Purple", icon: Palette },
 ];
 
 const MonolithThemeContext = createContext<{
@@ -108,9 +106,116 @@ export function MonolithThemePicker({
 function resolveTheme(): MonolithTheme {
   if (typeof window === "undefined") return "night";
   const saved = window.localStorage.getItem("theme");
-  return saved === "night" || saved === "violet" || saved === "light" || saved === "purple"
+  return saved === "night" || saved === "violet" || saved === "light"
     ? saved
     : "night";
+}
+
+export function MonolithThemeProvider({
+  children,
+  dashboardShell = false,
+}: {
+  children: React.ReactNode;
+  dashboardShell?: boolean;
+}) {
+  const [theme, setTheme] = useState<MonolithTheme>("night");
+  const [themeLoaded, setThemeLoaded] = useState(false);
+  const documentStateRef = useRef<{
+    colorScheme: string;
+    dashboardShell?: string;
+    dashboardTheme?: string;
+    themeClasses: string[];
+  } | null>(null);
+
+  useEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      setTheme(resolveTheme());
+      setThemeLoaded(true);
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, []);
+
+  useEffect(() => {
+    if (!themeLoaded) return;
+    window.localStorage.setItem("theme", theme);
+    window.dispatchEvent(new Event("themechange"));
+  }, [theme, themeLoaded]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    documentStateRef.current = {
+      colorScheme: root.style.colorScheme,
+      dashboardShell: root.dataset.dashboardShell,
+      dashboardTheme: root.dataset.dashboardTheme,
+      themeClasses: [
+        "theme-light",
+        "theme-night",
+        "theme-violet",
+        "light",
+        "night",
+        "violet",
+        "dark",
+      ].filter((className) => root.classList.contains(className)),
+    };
+
+    return () => {
+      const previousState = documentStateRef.current;
+      if (!previousState) return;
+
+      if (previousState.dashboardShell) {
+        root.dataset.dashboardShell = previousState.dashboardShell;
+      } else {
+        delete root.dataset.dashboardShell;
+      }
+      if (previousState.dashboardTheme) {
+        root.dataset.dashboardTheme = previousState.dashboardTheme;
+      } else {
+        delete root.dataset.dashboardTheme;
+      }
+
+      root.classList.remove(
+        "theme-light",
+        "theme-night",
+        "theme-violet",
+        "light",
+        "night",
+        "violet",
+        "dark",
+      );
+      if (previousState.themeClasses.length > 0) {
+        root.classList.add(...previousState.themeClasses);
+      }
+      root.style.colorScheme = previousState.colorScheme;
+      documentStateRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (dashboardShell) {
+      root.dataset.dashboardShell = "true";
+    } else {
+      delete root.dataset.dashboardShell;
+    }
+    root.dataset.dashboardTheme = theme;
+    root.classList.remove(
+      "theme-light",
+      "theme-night",
+      "theme-violet",
+      "light",
+      "night",
+      "violet",
+      "dark",
+    );
+    root.classList.add(`theme-${theme}`, theme);
+    root.style.colorScheme = theme === "light" ? "light" : "dark";
+  }, [dashboardShell, theme]);
+
+  return (
+    <MonolithThemeContext.Provider value={{ selectTheme: setTheme, theme }}>
+      {children}
+    </MonolithThemeContext.Provider>
+  );
 }
 
 function initials(name: string) {
@@ -126,7 +231,9 @@ function initials(name: string) {
 export function MonolithAppShell(props: MonolithAppShellProps) {
   return (
     <MonaProvider>
-      <MonolithAppShellBody {...props} />
+      <MonolithThemeProvider dashboardShell>
+        <MonolithAppShellBody {...props} />
+      </MonolithThemeProvider>
       <MonaChat />
     </MonaProvider>
   );
@@ -146,8 +253,11 @@ function MonolithAppShellBody({
     getPathLabel(pathname) ??
     segmentToLabel(pathname.split("/").filter(Boolean).at(-1) ?? "dashboard");
   const { toggleChat } = useMonaChat();
-  const [theme, setTheme] = useState<MonolithTheme>("night");
-  const [themeLoaded, setThemeLoaded] = useState(false);
+  const themeContext = useContext(MonolithThemeContext);
+  if (!themeContext) {
+    throw new Error("MonolithAppShellBody requires MonolithThemeProvider.");
+  }
+  const { theme } = themeContext;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -155,12 +265,6 @@ function MonolithAppShellBody({
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({});
-  const documentStateRef = useRef<{
-    colorScheme: string;
-    dashboardShell?: string;
-    dashboardTheme?: string;
-    themeClasses: string[];
-  } | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const profileRef = useRef<HTMLDivElement | null>(null);
   const visibleSections = useMemo(
@@ -181,93 +285,6 @@ function MonolithAppShellBody({
       )
       .slice(0, 8);
   }, [query, visibleSections]);
-
-  useEffect(() => {
-    const frameId = window.requestAnimationFrame(() => {
-      setTheme(resolveTheme());
-      setThemeLoaded(true);
-    });
-    return () => window.cancelAnimationFrame(frameId);
-  }, []);
-
-  useEffect(() => {
-    if (!themeLoaded) return;
-    window.localStorage.setItem("theme", theme);
-  }, [theme, themeLoaded]);
-
-  useEffect(() => {
-    const root = document.documentElement;
-
-    documentStateRef.current = {
-      colorScheme: root.style.colorScheme,
-      dashboardShell: root.dataset.dashboardShell,
-      dashboardTheme: root.dataset.dashboardTheme,
-      themeClasses: [
-        "theme-light",
-        "theme-night",
-        "theme-violet",
-        "theme-purple",
-        "light",
-        "night",
-        "violet",
-        "purple",
-        "dark",
-      ].filter((className) => root.classList.contains(className)),
-    };
-
-    return () => {
-      const previousState = documentStateRef.current;
-      if (!previousState) return;
-
-      if (previousState.dashboardShell) {
-        root.dataset.dashboardShell = previousState.dashboardShell;
-      } else {
-        delete root.dataset.dashboardShell;
-      }
-
-      if (previousState.dashboardTheme) {
-        root.dataset.dashboardTheme = previousState.dashboardTheme;
-      } else {
-        delete root.dataset.dashboardTheme;
-      }
-
-      root.classList.remove(
-        "theme-light",
-        "theme-night",
-        "theme-violet",
-        "theme-purple",
-        "light",
-        "night",
-        "violet",
-        "purple",
-        "dark",
-      );
-      if (previousState.themeClasses.length > 0) {
-        root.classList.add(...previousState.themeClasses);
-      }
-      root.style.colorScheme = previousState.colorScheme;
-      documentStateRef.current = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    root.dataset.dashboardShell = "true";
-    root.dataset.dashboardTheme = theme;
-    root.classList.remove(
-      "theme-light",
-      "theme-night",
-      "theme-violet",
-      "theme-purple",
-      "light",
-      "night",
-      "violet",
-      "purple",
-      "dark",
-    );
-    root.classList.add(`theme-${theme}`, theme);
-    root.style.colorScheme = theme === "light" || theme === "purple" ? "light" : "dark";
-  }, [theme]);
 
   useEffect(() => {
     function handleKeyboard(event: KeyboardEvent) {
@@ -325,8 +342,7 @@ function MonolithAppShellBody({
   }, [pathname, visibleSections]);
 
   return (
-    <MonolithThemeContext.Provider value={{ selectTheme: setTheme, theme }}>
-      <div className="mnx-dashboard-shell" data-theme={theme}>
+    <div className="mnx-dashboard-shell" data-theme={theme}>
       <aside
         className={`mnx-sidebar ${mobileOpen ? "is-open" : ""}`}
         aria-label="Primary navigation"
@@ -657,8 +673,7 @@ function MonolithAppShellBody({
           </section>
         </div>
       ) : null}
-      </div>
-    </MonolithThemeContext.Provider>
+    </div>
   );
 }
 

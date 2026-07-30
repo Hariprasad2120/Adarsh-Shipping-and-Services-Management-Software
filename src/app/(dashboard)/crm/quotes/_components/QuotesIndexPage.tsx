@@ -1,11 +1,22 @@
 "use client";
 
-import { CrmButton, CrmInput, CrmTable } from "@/components/monolith/crm-workspace";
+import {
+  CrmButton,
+  CrmInput,
+  CrmTable,
+} from "@/components/monolith/crm-workspace";
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {ChevronDown,ChevronRight,MoreHorizontal,Plus,Search,SlidersHorizontal,} from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  MoreHorizontal,
+  Plus,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { quoteViews } from "../_lib/quote-list-data";
 import type { QuoteListStatus, QuoteRecord } from "../_lib/types";
@@ -15,7 +26,8 @@ const statusTone: Record<Exclude<QuoteListStatus, "all">, string> = {
   "pending-approval": "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
   approved: "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]",
   sent: "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent-text)]",
-  "customer-viewed": "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent-text)]",
+  "customer-viewed":
+    "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent-text)]",
   accepted: "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]",
   invoiced: "bg-[var(--mnx-accent)]/20 text-[var(--mnx-accent)]",
   declined: "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]",
@@ -54,7 +66,11 @@ function matchesSearch(record: QuoteRecord, query: string) {
   ].some((value) => value.toLowerCase().includes(normalized));
 }
 
-export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[] }) {
+export function QuotesIndexPage({
+  initialQuotes,
+}: {
+  initialQuotes: QuoteRecord[];
+}) {
   const router = useRouter();
   const [quotes, setQuotes] = useState<QuoteRecord[]>(initialQuotes);
   const [activeView, setActiveView] = useState<QuoteListStatus>("all");
@@ -79,12 +95,14 @@ export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[
 
   const filteredRecords = useMemo(() => {
     return quotes.filter((record) => {
-      const matchesView = activeView === "all" ? true : record.status === activeView;
+      const matchesView =
+        activeView === "all" ? true : record.status === activeView;
       return matchesView && matchesSearch(record, search);
     });
   }, [activeView, search, quotes]);
 
-  const activeViewLabel = quoteViews.find((view) => view.id === activeView)?.label ?? "All";
+  const activeViewLabel =
+    quoteViews.find((view) => view.id === activeView)?.label ?? "All";
 
   return (
     <div className="min-h-screen bg-[var(--mnx-surface)] text-[var(--mnx-text-strong)]">
@@ -112,14 +130,18 @@ export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[
                   <ChevronDown className="size-4 text-[var(--mnx-text-muted)]" />
                 </CrmButton>
                 {filterOpen ? (
-                  <div className="absolute right-0 top-12 z-20 w-[280px] rounded-2xl border border-[var(--mnx-border)] bg-mono-card p-3 shadow-[0_16px_48px_var(--mnx-border)]">
+                  <div className="absolute right-0 top-12 z-20 w-[280px] rounded-2xl border border-[var(--mnx-border)] bg-mono-card p-3 mnx-shadow-panel">
                     <div className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
                       Quote Views
                     </div>
                     <div className="max-h-[360px] space-y-1 overflow-y-auto">
                       {quoteViews.map((view) => {
                         const count =
-                          view.id === "all" ? quotes.length : quotes.filter((record) => record.status === view.id).length;
+                          view.id === "all"
+                            ? quotes.length
+                            : quotes.filter(
+                                (record) => record.status === view.id,
+                              ).length;
 
                         return (
                           <CrmButton
@@ -131,11 +153,15 @@ export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[
                             }}
                             className={cn(
                               "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
-                              activeView === view.id ? "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]" : "text-[var(--mnx-text-muted)] hover:bg-[var(--mnx-surface)]",
+                              activeView === view.id
+                                ? "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]"
+                                : "text-[var(--mnx-text-muted)] hover:bg-[var(--mnx-surface)]",
                             )}
                           >
                             <span>{view.label}</span>
-                            <span className="text-xs text-[var(--mnx-text-muted)]">{count}</span>
+                            <span className="text-xs text-[var(--mnx-text-muted)]">
+                              {count}
+                            </span>
                           </CrmButton>
                         );
                       })}
@@ -145,7 +171,7 @@ export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[
               </div>
               <Link
                 href="/crm/quotes/new"
-                className="inline-flex h-10 items-center rounded-xl bg-[var(--mnx-accent)] px-4 text-sm font-medium text-mono-text transition-colors hover:bg-[var(--mnx-accent)] hover:shadow-[0_0_0_3px_var(--mnx-accent-soft)]"
+                className="inline-flex h-10 items-center rounded-xl bg-[var(--mnx-accent)] px-4 text-sm font-medium text-mono-text transition-colors hover:bg-[var(--mnx-accent)] "
               >
                 <Plus className="mr-1 size-4" />
                 New
@@ -187,13 +213,15 @@ export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[
         </div>
 
         <div className="flex-1 overflow-auto p-4 pt-5 sm:p-6 sm:pt-5">
-          <div className="overflow-hidden rounded-2xl border border-[var(--mnx-border)] bg-mono-card shadow-[0_12px_36px_var(--mnx-border)]">
+          <div className="overflow-hidden rounded-2xl border border-[var(--mnx-border)] bg-mono-card mnx-shadow-panel">
             <div className="flex items-center justify-between border-b border-[var(--mnx-text-muted)] px-4 py-3">
               <div className="flex items-center gap-2 text-sm font-medium text-[var(--mnx-text-muted)]">
                 <SlidersHorizontal className="size-4" />
                 <span>{filteredRecords.length} quotes</span>
               </div>
-              <div className="text-xs text-[var(--mnx-text-muted)]">Sorted by created time</div>
+              <div className="text-xs text-[var(--mnx-text-muted)]">
+                Sorted by created time
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -201,7 +229,10 @@ export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[
                 <thead className="bg-[var(--mnx-surface)] text-left text-[11px] uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
                   <tr>
                     <th className="px-4 py-3">
-                      <CrmInput type="checkbox" aria-label="Select all quotes" />
+                      <CrmInput
+                        type="checkbox"
+                        aria-label="Select all quotes"
+                      />
                     </th>
                     <th className="px-4 py-3">Date</th>
                     <th className="px-4 py-3">Location</th>
@@ -217,25 +248,50 @@ export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[
                 </thead>
                 <tbody className="text-sm">
                   {filteredRecords.map((record) => (
-                    <tr key={record.id} className="mnx-row-link" onClick={() => router.push(`/crm/quotes/${record.id}`)}>
+                    <tr
+                      key={record.id}
+                      className="mnx-row-link"
+                      onClick={() => router.push(`/crm/quotes/${record.id}`)}
+                    >
                       <td className="px-4 py-3">
-                        <CrmInput type="checkbox" aria-label={`Select ${record.quoteNumber}`} />
+                        <CrmInput
+                          type="checkbox"
+                          aria-label={`Select ${record.quoteNumber}`}
+                        />
                       </td>
-                      <td className="px-4 py-3 text-[var(--mnx-text-muted)]">{formatDate(record.date)}</td>
-                      <td className="px-4 py-3 text-[var(--mnx-text-muted)]">{record.location}</td>
+                      <td className="px-4 py-3 text-[var(--mnx-text-muted)]">
+                        {formatDate(record.date)}
+                      </td>
+                      <td className="px-4 py-3 text-[var(--mnx-text-muted)]">
+                        {record.location}
+                      </td>
                       <td className="px-4 py-3">
-                        <Link href={`/crm/quotes/${record.id}`} className="font-semibold text-[var(--mnx-accent)] hover:underline">
+                        <Link
+                          href={`/crm/quotes/${record.id}`}
+                          className="font-semibold text-[var(--mnx-accent)] hover:underline"
+                        >
                           {record.quoteNumber}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-[var(--mnx-text-muted)]">{record.referenceNumber ?? "-"}</td>
-                      <td className="px-4 py-3 font-medium text-[var(--mnx-text-strong)]">{record.customerName}</td>
+                      <td className="px-4 py-3 text-[var(--mnx-text-muted)]">
+                        {record.referenceNumber ?? "-"}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-[var(--mnx-text-strong)]">
+                        {record.customerName}
+                      </td>
                       <td className="px-4 py-3">
-                        <span className={cn("inline-flex rounded-full px-2.5 py-1 text-xs font-semibold", statusTone[record.status])}>
+                        <span
+                          className={cn(
+                            "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold",
+                            statusTone[record.status],
+                          )}
+                        >
                           {formatStatus(record.status)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right font-medium text-[var(--mnx-text-strong)]">{formatAmount(record.amount)}</td>
+                      <td className="px-4 py-3 text-right font-medium text-[var(--mnx-text-strong)]">
+                        {formatAmount(record.amount)}
+                      </td>
                       <td className="px-4 py-3 text-right">
                         <Link
                           href={`/crm/quotes/${record.id}`}
@@ -249,7 +305,10 @@ export function QuotesIndexPage({ initialQuotes }: { initialQuotes: QuoteRecord[
                   ))}
                   {filteredRecords.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-6 py-16 text-center text-sm text-[var(--mnx-text-muted)]">
+                      <td
+                        colSpan={9}
+                        className="px-6 py-16 text-center text-sm text-[var(--mnx-text-muted)]"
+                      >
                         No quotes found for this view.
                       </td>
                     </tr>

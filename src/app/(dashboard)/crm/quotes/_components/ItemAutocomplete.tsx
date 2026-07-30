@@ -50,7 +50,7 @@ export function ItemAutocomplete({
   const suggestions = value.trim().length > 0 ? searchItems(value) : [];
 
   const hasExactMatch = suggestions.some(
-    (s) => s.name.toLowerCase() === value.trim().toLowerCase()
+    (s) => s.name.toLowerCase() === value.trim().toLowerCase(),
   );
   const showAddNew = value.trim().length > 0 && !hasExactMatch;
 
@@ -119,7 +119,11 @@ export function ItemAutocomplete({
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (!open) {
-      if ((e.key === "ArrowDown" || e.key === "Enter") && value.trim().length > 0) setOpen(true);
+      if (
+        (e.key === "ArrowDown" || e.key === "Enter") &&
+        value.trim().length > 0
+      )
+        setOpen(true);
       return;
     }
     if (e.key === "ArrowDown") {
@@ -169,14 +173,18 @@ export function ItemAutocomplete({
         aria-controls={open ? "item-autocomplete-dropdown" : undefined}
         className="h-9 w-full rounded-md border border-[var(--mnx-border)] bg-mono-card px-3 text-[12px] text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/20"
       />
-      {error && <p className="mt-1 text-[11px] text-[var(--mnx-danger)]">{error}</p>}
+      {error && (
+        <p className="mt-1 text-[11px] text-[var(--mnx-danger)]">{error}</p>
+      )}
 
-      {mounted && open && (suggestions.length > 0 || showAddNew) &&
+      {mounted &&
+        open &&
+        (suggestions.length > 0 || showAddNew) &&
         createPortal(
           <div
             id="item-autocomplete-dropdown"
             ref={dropdownRef}
-            className="absolute z-50 rounded-xl overflow-hidden shadow-[0_8px_32px_var(--mnx-border)]"
+            className="absolute z-50 rounded-xl overflow-hidden mnx-shadow-panel"
             style={{
               position: "absolute",
               top: `${coords.top}px`,
@@ -194,7 +202,10 @@ export function ItemAutocomplete({
               <>
                 <div
                   className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest"
-                  style={{ color: "var(--color-on-surface-variant)", background: "var(--color-surface-container-low)" }}
+                  style={{
+                    color: "var(--color-on-surface-variant)",
+                    background: "var(--color-surface-container-low)",
+                  }}
                 >
                   Items Master
                 </div>
@@ -219,17 +230,26 @@ export function ItemAutocomplete({
                   >
                     <span
                       className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md"
-                      style={{ background: "var(--mnx-accent-soft)", color: "var(--mnx-accent)" }}
+                      style={{
+                        background: "var(--mnx-accent-soft)",
+                        color: "var(--mnx-accent)",
+                      }}
                     >
                       <Package size={12} />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-medium" style={{ color: "var(--color-on-surface)" }}>
+                      <p
+                        className="text-[13px] font-medium"
+                        style={{ color: "var(--color-on-surface)" }}
+                      >
                         {highlight(item.name, value)}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                         {item.hsnSac && (
-                          <span className="text-[10px]" style={{ color: "var(--color-on-surface-variant)" }}>
+                          <span
+                            className="text-[10px]"
+                            style={{ color: "var(--color-on-surface-variant)" }}
+                          >
                             HSN: {item.hsnSac}
                           </span>
                         )}
@@ -242,7 +262,10 @@ export function ItemAutocomplete({
                           </span>
                         )}
                         {item.usageUnit && (
-                          <span className="text-[10px]" style={{ color: "var(--color-on-surface-variant)" }}>
+                          <span
+                            className="text-[10px]"
+                            style={{ color: "var(--color-on-surface-variant)" }}
+                          >
                             / {item.usageUnit}
                           </span>
                         )}
@@ -265,7 +288,13 @@ export function ItemAutocomplete({
             {showAddNew && (
               <>
                 {suggestions.length > 0 && (
-                  <div style={{ height: "1px", background: "var(--mnx-accent-soft)", margin: "0 12px" }} />
+                  <div
+                    style={{
+                      height: "1px",
+                      background: "var(--mnx-accent-soft)",
+                      margin: "0 12px",
+                    }}
+                  />
                 )}
                 <CrmButton
                   type="button"
@@ -286,15 +315,24 @@ export function ItemAutocomplete({
                 >
                   <span
                     className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md"
-                    style={{ background: "var(--mnx-accent-soft)", color: "var(--mnx-accent)" }}
+                    style={{
+                      background: "var(--mnx-accent-soft)",
+                      color: "var(--mnx-accent)",
+                    }}
                   >
                     <PlusCircle size={12} />
                   </span>
                   <div>
-                    <p className="text-[13px] font-semibold" style={{ color: "var(--mnx-accent)" }}>
+                    <p
+                      className="text-[13px] font-semibold"
+                      style={{ color: "var(--mnx-accent)" }}
+                    >
                       Add &ldquo;{value.trim()}&rdquo; as new item
                     </p>
-                    <p className="text-[10px]" style={{ color: "var(--color-on-surface-variant)" }}>
+                    <p
+                      className="text-[10px]"
+                      style={{ color: "var(--color-on-surface-variant)" }}
+                    >
                       Saves to Items master permanently
                     </p>
                   </div>
@@ -302,7 +340,7 @@ export function ItemAutocomplete({
               </>
             )}
           </div>,
-          document.body
+          document.body,
         )}
 
       <NewItemDialog

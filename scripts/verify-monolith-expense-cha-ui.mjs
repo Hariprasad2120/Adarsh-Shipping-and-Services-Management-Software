@@ -49,15 +49,17 @@ function routeFromPage(pagePath, familyRoot, family) {
 const chaRoutes = walk(chaRoot, (file) => file.endsWith(`${path.sep}page.tsx`))
   .map((file) => routeFromPage(file, chaRoot, "cha"))
   .sort();
-const expenseRoutes = walk(
-  expenseRoot,
-  (file) => file.endsWith(`${path.sep}page.tsx`),
+const expenseRoutes = walk(expenseRoot, (file) =>
+  file.endsWith(`${path.sep}page.tsx`),
 )
   .map((file) => routeFromPage(file, expenseRoot, "expense"))
   .sort();
 const routes = [...chaRoutes, ...expenseRoutes];
 
-assert(chaRoutes.length === 11, `Expected 11 CHA routes, found ${chaRoutes.length}.`);
+assert(
+  chaRoutes.length === 11,
+  `Expected 11 CHA routes, found ${chaRoutes.length}.`,
+);
 assert(
   expenseRoutes.length === 1,
   `Expected 1 Expense route, found ${expenseRoutes.length}.`,
@@ -77,7 +79,10 @@ for (const requiredRoute of [
   "/cha/settings/filing-workflows",
   "/expense",
 ]) {
-  assert(routes.includes(requiredRoute), `Missing discovered route ${requiredRoute}.`);
+  assert(
+    routes.includes(requiredRoute),
+    `Missing discovered route ${requiredRoute}.`,
+  );
 }
 
 for (const requiredFile of [
@@ -97,14 +102,14 @@ for (const requiredFile of [
 const shellSwitcher = read(
   "src/app/(dashboard)/_components/dashboard-shell-switcher.tsx",
 );
-for (const signal of [
-  'normalizedPathname === "/cha"',
-  'normalizedPathname.startsWith("/cha/")',
-  'normalizedPathname === "/expense"',
-  'normalizedPathname.startsWith("/expense/")',
-]) {
-  assert(shellSwitcher.includes(signal), `Shell switcher is missing ${signal}.`);
-}
+assert(
+  shellSwitcher.includes("<MonolithAppShell"),
+  "The authenticated shell must always render MonolithAppShell.",
+);
+assert(
+  !shellSwitcher.includes("usePathname"),
+  "The authenticated shell must not retain route-specific legacy switching.",
+);
 
 const workspace = read("src/components/monolith/cha-workspace.tsx");
 for (const component of [
@@ -185,12 +190,8 @@ for (const sourcePath of scopedSources) {
 }
 
 const behaviorSources = {
-  job: read(
-    "src/app/(dashboard)/cha/jobs/[jobId]/job-workspace-client.tsx",
-  ),
-  expenses: read(
-    "src/app/(dashboard)/cha/expenses/expenses-client.tsx",
-  ),
+  job: read("src/app/(dashboard)/cha/jobs/[jobId]/job-workspace-client.tsx"),
+  expenses: read("src/app/(dashboard)/cha/expenses/expenses-client.tsx"),
   workflow: read(
     "src/app/(dashboard)/cha/settings/filing-workflows/workflows-client.tsx",
   ),
@@ -282,7 +283,7 @@ for (const token of [
   "--mn-gradient-glass:",
 ]) {
   assert(
-    tokens.split(token).length - 1 === 4,
+    tokens.split(token).length - 1 === 3,
     `${token} is not defined once for every Monolith theme.`,
   );
 }
@@ -353,31 +354,15 @@ assert(
   "Create-job dialog still contains the obsolete promotional popup treatment.",
 );
 for (const [sourceName, source, signal] of [
-  [
-    "WorkspaceDialog",
-    dialogSource,
-    "mnx-floating-surface",
-  ],
-  [
-    "dropdown menu",
-    dropdownSource,
-    "mnx-floating-surface mnx-floating-menu",
-  ],
+  ["WorkspaceDialog", dialogSource, "mnx-floating-surface"],
+  ["dropdown menu", dropdownSource, "mnx-floating-surface mnx-floating-menu"],
   [
     "warning popover",
     warningSource,
     "mnx-floating-surface mnx-warning-popover",
   ],
-  [
-    "Mona tooltip",
-    monaSource,
-    "mnx-floating-surface mnx-floating-tooltip",
-  ],
-  [
-    "Mona panel",
-    monaSource,
-    "mnx-floating-surface mnx-mona-panel",
-  ],
+  ["Mona tooltip", monaSource, "mnx-floating-surface mnx-floating-tooltip"],
+  ["Mona panel", monaSource, "mnx-floating-surface mnx-mona-panel"],
 ]) {
   assert(
     source.includes(signal),
@@ -395,7 +380,12 @@ assert(
 );
 
 const globals = read("src/app/globals.css");
-for (const legacy of [".cha-module", ".cha-btn-neon", "--cha-primary", "button.cha-link"]) {
+for (const legacy of [
+  ".cha-module",
+  ".cha-btn-neon",
+  "--cha-primary",
+  "button.cha-link",
+]) {
   assert(!globals.includes(legacy), `globals.css still contains ${legacy}.`);
 }
 
@@ -424,7 +414,10 @@ const listing = spawnSync("tar", ["-tf", archivePath], {
   cwd: repositoryRoot,
   encoding: "utf8",
 });
-assert(listing.status === 0, listing.stderr || "Unable to list backup archive.");
+assert(
+  listing.status === 0,
+  listing.stderr || "Unable to list backup archive.",
+);
 const archiveFiles = listing.stdout
   .split(/\r?\n/)
   .filter((entry) => entry && !entry.endsWith("/"));

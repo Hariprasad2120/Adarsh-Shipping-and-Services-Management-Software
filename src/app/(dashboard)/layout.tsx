@@ -13,12 +13,18 @@ function normalizePathname(pathname: string | null) {
   return normalized || "/";
 }
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const context = await getDashboardContext();
   if (!context) redirect("/login");
   if (!context.orgId) redirect("/setup");
 
-  const pathname = normalizePathname((await headers()).get("x-current-pathname"));
+  const pathname = normalizePathname(
+    (await headers()).get("x-current-pathname"),
+  );
   const { session, caps, enabledModuleIds } = context;
   const managedSectionId = getManagedModuleSectionIdForPath(pathname);
   const enabledModuleSet = new Set(enabledModuleIds);
@@ -36,7 +42,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
           isPlatformAdmin={session.user.isPlatformAdmin}
           userEmail={session.user.email}
           userName={session.user.name}
-          sessionToken={session.user.sessionNonce}
           userId={session.user.id}
           enabledModuleIds={enabledModuleIds}
         >

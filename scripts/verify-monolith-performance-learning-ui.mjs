@@ -103,17 +103,14 @@ for (const requiredFile of [
 const shellSwitcher = read(
   "src/app/(dashboard)/_components/dashboard-shell-switcher.tsx",
 );
-for (const signal of [
-  'normalizedPathname === "/ams"',
-  'normalizedPathname.startsWith("/ams/")',
-  'normalizedPathname === "/lms"',
-  'normalizedPathname.startsWith("/lms/")',
-]) {
-  assert(
-    shellSwitcher.includes(signal),
-    `Shell switcher is missing ${signal}.`,
-  );
-}
+assert(
+  shellSwitcher.includes("<MonolithAppShell"),
+  "The authenticated shell must always render MonolithAppShell.",
+);
+assert(
+  !shellSwitcher.includes("usePathname"),
+  "The authenticated shell must not retain route-specific legacy switching.",
+);
 
 const performanceWorkspace = read(
   "src/components/monolith/performance-workspace.tsx",

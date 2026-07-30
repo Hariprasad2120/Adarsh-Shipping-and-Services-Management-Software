@@ -1,18 +1,49 @@
 "use client";
 
-import { CrmButton, CrmInput, CrmTextarea } from "@/components/monolith/crm-workspace";
+import {
+  CrmButton,
+  CrmInput,
+  CrmTextarea,
+} from "@/components/monolith/crm-workspace";
 
 import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {assignLeadOwnerAction,updateLeadStatusAction,updatePerishableDetailsAction,saveEnquiryRatesAction,simulateInboundEmailAction,updateLeadAction,getCallAttemptsAction} from "@/modules/crm/actions";
+import {
+  assignLeadOwnerAction,
+  updateLeadStatusAction,
+  updatePerishableDetailsAction,
+  saveEnquiryRatesAction,
+  simulateInboundEmailAction,
+  updateLeadAction,
+  getCallAttemptsAction,
+} from "@/modules/crm/actions";
 import { NotesPanel } from "../../_components/notes-panel";
 import { AttachmentsPanel } from "../../_components/attachments-panel";
 import { ActivitiesPanel } from "../../_components/activities-panel";
 import { TimelinePanel } from "../../_components/timeline-panel";
-import {ArrowLeft,Ship,Plane,Calendar,AlertTriangle,Clock,Sparkles,Eye,Briefcase,User,Info,RefreshCcw,Edit2,Trash2,Save,Mail,X,Plus} from "lucide-react";
+import {
+  ArrowLeft,
+  Ship,
+  Plane,
+  Calendar,
+  AlertTriangle,
+  Clock,
+  Sparkles,
+  Eye,
+  Briefcase,
+  User,
+  Info,
+  RefreshCcw,
+  Edit2,
+  Trash2,
+  Save,
+  Mail,
+  X,
+  Plus,
+} from "lucide-react";
 
 interface EnquiryDetailClientProps {
   lead: any;
@@ -35,13 +66,25 @@ export function EnquiryDetailClient({
   timeline,
   workTimeLogs,
   calls,
-  isManager
+  isManager,
 }: EnquiryDetailClientProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState<"OVERVIEW" | "NOTES" | "ACTIVITIES" | "ATTACHMENTS" | "TIMELINE" | "TIME_TRACKER" | "CALLS">("OVERVIEW");
-  const [selectedCallIndex, setSelectedCallIndex] = useState<number | null>(null);
-  const [callSubTab, setCallSubTab] = useState<"TRANSCRIPT" | "SUMMARY" | "REVIEW">("TRANSCRIPT");
+  const [activeTab, setActiveTab] = useState<
+    | "OVERVIEW"
+    | "NOTES"
+    | "ACTIVITIES"
+    | "ATTACHMENTS"
+    | "TIMELINE"
+    | "TIME_TRACKER"
+    | "CALLS"
+  >("OVERVIEW");
+  const [selectedCallIndex, setSelectedCallIndex] = useState<number | null>(
+    null,
+  );
+  const [callSubTab, setCallSubTab] = useState<
+    "TRANSCRIPT" | "SUMMARY" | "REVIEW"
+  >("TRANSCRIPT");
 
   const [localCalls, setLocalCalls] = useState(calls);
 
@@ -50,11 +93,15 @@ export function EnquiryDetailClient({
   }, [calls]);
 
   useEffect(() => {
-    const hasUploading = localCalls.some((c: any) => 
-      c.recordings?.some((r: any) => r.uploadStatus === "UPLOADING")
+    const hasUploading = localCalls.some((c: any) =>
+      c.recordings?.some((r: any) => r.uploadStatus === "UPLOADING"),
     );
 
-    const intervalTime = hasUploading ? 3000 : activeTab === "CALLS" ? 10000 : null;
+    const intervalTime = hasUploading
+      ? 3000
+      : activeTab === "CALLS"
+        ? 10000
+        : null;
 
     if (!intervalTime) return;
 
@@ -80,21 +127,34 @@ export function EnquiryDetailClient({
   // Perishable Cargo Edit state
   const [isEditingPerishables, setIsEditingPerishables] = useState(false);
   const perishableDetails = (lead.perishableDetails as any) || {};
-  const [perishableType, setPerishableType] = useState(perishableDetails.cargoType || "Fruit/Vegetables");
-  const [temperature, setTemperature] = useState(perishableDetails.tempCelsius || "");
-  const [humidity, setHumidity] = useState(perishableDetails.humidityPercent || "");
-  const [perishableRemarks, setPerishableRemarks] = useState(perishableDetails.specialRemarks || "");
+  const [perishableType, setPerishableType] = useState(
+    perishableDetails.cargoType || "Fruit/Vegetables",
+  );
+  const [temperature, setTemperature] = useState(
+    perishableDetails.tempCelsius || "",
+  );
+  const [humidity, setHumidity] = useState(
+    perishableDetails.humidityPercent || "",
+  );
+  const [perishableRemarks, setPerishableRemarks] = useState(
+    perishableDetails.specialRemarks || "",
+  );
 
   // Contact & Enquiry Details Edit state
   const [isEditingCargoDetails, setIsEditingCargoDetails] = useState(false);
   const enquiryDetails = (lead.enquiryDetails as any) || {};
-  const [clientName, setClientName] = useState(enquiryDetails.clientName || `${lead.firstName || ""} ${lead.lastName || ""}`.trim());
+  const [clientName, setClientName] = useState(
+    enquiryDetails.clientName ||
+      `${lead.firstName || ""} ${lead.lastName || ""}`.trim(),
+  );
   const [company, setCompany] = useState(lead.company || "");
   const [email, setEmail] = useState(lead.email || "");
   const [phone, setPhone] = useState(lead.phone || "");
   const [mobile, setMobile] = useState(lead.mobile || "");
-  
-  const [enquiryType, setEnquiryType] = useState<"Sea" | "Air">(enquiryDetails.type || "Sea");
+
+  const [enquiryType, setEnquiryType] = useState<"Sea" | "Air">(
+    enquiryDetails.type || "Sea",
+  );
   const [pol, setPol] = useState(enquiryDetails.pol || "");
   const [pod, setPod] = useState(enquiryDetails.pod || "");
   const [aol, setAol] = useState(enquiryDetails.aol || "");
@@ -102,14 +162,22 @@ export function EnquiryDetailClient({
   const [commodity, setCommodity] = useState(enquiryDetails.commodity || "");
   const [weight, setWeight] = useState(enquiryDetails.weight || "");
   const [incoterm, setIncoterm] = useState(enquiryDetails.incoterm || "FOB");
-  const [planning, setPlanning] = useState(enquiryDetails.shipmentPlanning || "30 days");
-  const [purpose, setPurpose] = useState(enquiryDetails.purpose || "Commercial");
+  const [planning, setPlanning] = useState(
+    enquiryDetails.shipmentPlanning || "30 days",
+  );
+  const [purpose, setPurpose] = useState(
+    enquiryDetails.purpose || "Commercial",
+  );
 
   // Email simulation states
-  const [simSubject, setSimSubject] = useState(`Re: Rates request [${lead.enquiryRef || "GEN-ENQ"}]`);
-  const [simFromEmail, setSimFromEmail] = useState("agent.pricing@freightpartner.com");
+  const [simSubject, setSimSubject] = useState(
+    `Re: Rates request [${lead.enquiryRef || "GEN-ENQ"}]`,
+  );
+  const [simFromEmail, setSimFromEmail] = useState(
+    "agent.pricing@freightpartner.com",
+  );
   const [simBody, setSimBody] = useState(
-    `Hello Team,\n\nHere are the rates matching your request ${lead.enquiryRef || "ADR-ENQ-XXXXX"}:\n\nOcean Freight charges is USD 1,200\nCFS Charges is Rs. 4,500\nCustoms Clearance rate is Rs. 3,500\nDO Charges is Rs. 1,800\n\nRegards,\nAgent Team`
+    `Hello Team,\n\nHere are the rates matching your request ${lead.enquiryRef || "ADR-ENQ-XXXXX"}:\n\nOcean Freight charges is USD 1,200\nCFS Charges is Rs. 4,500\nCustoms Clearance rate is Rs. 3,500\nDO Charges is Rs. 1,800\n\nRegards,\nAgent Team`,
   );
   const [isSimulatingEmail, setIsSimulatingEmail] = useState(false);
 
@@ -135,7 +203,7 @@ export function EnquiryDetailClient({
       isFutureFollowUp: true,
       followUpReminderDate: followUpDate,
       isPerishable: lead.isPerishable,
-      enquiry: lead.enquiryDetails
+      enquiry: lead.enquiryDetails,
     });
     setIsSubmitting(false);
 
@@ -170,7 +238,7 @@ export function EnquiryDetailClient({
       cargoType: perishableType,
       tempCelsius: temperature,
       humidityPercent: humidity,
-      specialRemarks: perishableRemarks
+      specialRemarks: perishableRemarks,
     });
     setIsSubmitting(false);
 
@@ -216,14 +284,14 @@ export function EnquiryDetailClient({
     // The updateLeadAction in actions expects standard form fields, and can parse extra fields or we can pass additional parameters.
     // Let's pass the updated lead details
     const res = await updateLeadAction(lead.id, formData);
-    
+
     if (res.ok) {
       // Save details to lead status as well to sync the enquiry json block
       const syncRes = await updateLeadStatusAction(lead.id, lead.status, {
         enquiry: updatedEnquiry,
         isPerishable: lead.isPerishable,
         isFutureFollowUp: lead.isFutureFollowUp,
-        followUpReminderDate: lead.followUpReminderDate
+        followUpReminderDate: lead.followUpReminderDate,
       });
 
       if (syncRes.ok) {
@@ -243,7 +311,11 @@ export function EnquiryDetailClient({
   const handleSimulateEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSimulatingEmail(true);
-    const res = await simulateInboundEmailAction(simSubject, simBody, simFromEmail);
+    const res = await simulateInboundEmailAction(
+      simSubject,
+      simBody,
+      simFromEmail,
+    );
     setIsSimulatingEmail(false);
 
     if (res.ok) {
@@ -261,7 +333,7 @@ export function EnquiryDetailClient({
   // Client side regex rate parsing test
   const handleParsePasteText = () => {
     setIsParsingPaste(true);
-    
+
     // Regular expressions matching pricing rates
     const regexRules = [
       { key: "oceanFreight", keywords: ["ocean", "freight", "sea"] },
@@ -278,7 +350,7 @@ export function EnquiryDetailClient({
       for (const keyword of rule.keywords) {
         const pattern = new RegExp(
           `${keyword}\\s*(?:charges|freight)?\\s*(?:[:=-]|\\bis\\b)\\s*(?:rs\\.?|inr|usd|\\$)?\\s*([\\d,]+(?:\\.\\d+)?)`,
-          "i"
+          "i",
         );
         const match = pasteText.match(pattern);
         if (match && match[1]) {
@@ -291,34 +363,39 @@ export function EnquiryDetailClient({
 
     setIsParsingPaste(false);
     if (Object.keys(results).length > 0) {
-      toast.success(`Successfully parsed ${Object.keys(results).length} rates!`);
+      toast.success(
+        `Successfully parsed ${Object.keys(results).length} rates!`,
+      );
       // Update local rates states if saved in lead rates sheet or prompt save
       const displayParsed = Object.entries(results)
         .map(([k, v]) => `${k}: ₹${v}`)
         .join("\n");
-      alert(`Parsed Rates Results:\n\n${displayParsed}\n\nYou can input these below or trigger the simulated email to update the database.`);
+      alert(
+        `Parsed Rates Results:\n\n${displayParsed}\n\nYou can input these below or trigger the simulated email to update the database.`,
+      );
     } else {
-      toast.error("Could not parse any charges. Make sure the text matches patterns like 'Ocean Freight: 1200' or 'cfs charges is Rs. 3500'");
+      toast.error(
+        "Could not parse any charges. Make sure the text matches patterns like 'Ocean Freight: 1200' or 'cfs charges is Rs. 3500'",
+      );
     }
   };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      
       {/* Back button and page link bar */}
       <div className="flex items-center justify-between">
         <Link
           href="/crm/enquiries"
-          className="flex items-center gap-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border-2 border-mono-border text-mono-muted px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-[2px_2px_0px_0px_var(--mnx-border)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_var(--mnx-border)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
+          className="flex items-center gap-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border-2 border-mono-border text-mono-muted px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
         >
           <ArrowLeft className="size-4" />
           <span>Back to Enquiries</span>
         </Link>
-        
+
         {/* Conversion to Quote Button */}
         <Link
           href={`/crm/quotes/new?leadId=${lead.id}`}
-          className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[var(--mnx-accent)] shadow-[2px_2px_0px_0px_var(--mnx-accent)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_var(--mnx-accent)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
+          className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[var(--mnx-accent)] mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
         >
           <RefreshCcw className="size-4" />
           <span>Convert as Quote</span>
@@ -326,27 +403,35 @@ export function EnquiryDetailClient({
       </div>
 
       {/* ─── STATUS CONTROL & ASSIGNMENT PANEL ─── */}
-      <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] shadow-[4px_4px_0px_0px_var(--mnx-accent-soft)] hover:shadow-[6px_6px_0px_0px_var(--mnx-accent-soft)] transition-all duration-200 flex flex-col xl:flex-row xl:items-center justify-between gap-6 mnx-crm-panel-surface ">
-        
+      <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] mnx-shadow-panel  transition-all duration-200 flex flex-col xl:flex-row xl:items-center justify-between gap-6 mnx-crm-panel-surface ">
         {/* Left Side: status info */}
         <div className="space-y-2 flex-1">
           <div className="flex items-center gap-3">
             <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] border border-[var(--mnx-accent)]/20 font-mono">
               Ref: {lead.enquiryRef || "GEN-ENQ"}
             </span>
-            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-              lead.status === "FOLLOW_UP"
-                ? "bg-[var(--mnx-accent)]/15 text-[var(--mnx-accent)] border border-[var(--mnx-accent)]/20"
-                : "bg-[var(--mnx-accent)]/15 text-[var(--mnx-accent)] border border-[var(--mnx-accent)]/20"
-            }`}>
-              {lead.status === "FOLLOW_UP" ? "Follow Up Active" : "Interested Enquiry"}
+            <span
+              className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                lead.status === "FOLLOW_UP"
+                  ? "bg-[var(--mnx-accent)]/15 text-[var(--mnx-accent)] border border-[var(--mnx-accent)]/20"
+                  : "bg-[var(--mnx-accent)]/15 text-[var(--mnx-accent)] border border-[var(--mnx-accent)]/20"
+              }`}
+            >
+              {lead.status === "FOLLOW_UP"
+                ? "Follow Up Active"
+                : "Interested Enquiry"}
             </span>
           </div>
           <h2 className="text-xl font-bold uppercase text-mono-text font-sans tracking-wide">
-            {lead.firstName ? `${lead.firstName} ` : ""}{lead.lastName}
+            {lead.firstName ? `${lead.firstName} ` : ""}
+            {lead.lastName}
           </h2>
           <p className="text-xs text-mono-muted">
-            Current Owner: <span className="text-mono-text font-medium">{lead.owner?.name || "Unassigned"}</span> ({lead.owner?.email || "N/A"})
+            Current Owner:{" "}
+            <span className="text-mono-text font-medium">
+              {lead.owner?.name || "Unassigned"}
+            </span>{" "}
+            ({lead.owner?.email || "N/A"})
           </p>
         </div>
 
@@ -356,7 +441,7 @@ export function EnquiryDetailClient({
           {lead.status === "INTERESTED" && (
             <CrmButton
               onClick={() => setIsMarkingFollowUp(true)}
-              className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-warning)] text-mono-text px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[var(--mnx-accent)] shadow-[2px_2px_0px_0px_var(--mnx-warning)] hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[3px_3px_0px_0px_var(--mnx-warning)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
+              className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-warning)] text-mono-text px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[var(--mnx-accent)] mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
             >
               <Clock className="size-4" />
               <span>Schedule Follow Up</span>
@@ -365,8 +450,10 @@ export function EnquiryDetailClient({
 
           {/* Manager Reassignment Dropdown */}
           {lead.status === "FOLLOW_UP" && isManager && (
-            <div className="flex items-center gap-2 p-2 bg-[var(--mnx-surface)] rounded-xl border border-[var(--mnx-border)] shadow-[2px_2px_0px_0px_var(--mnx-border)]">
-              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider pl-2">Assign Owner:</span>
+            <div className="flex items-center gap-2 p-2 bg-[var(--mnx-surface)] rounded-xl border border-[var(--mnx-border)] mnx-shadow-panel">
+              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider pl-2">
+                Assign Owner:
+              </span>
               <NativeSelect
                 value={selectedOwnerId}
                 onChange={(e) => setSelectedOwnerId(e.target.value)}
@@ -393,19 +480,28 @@ export function EnquiryDetailClient({
 
       {/* Mark as Follow Up Popup / Expandable Area */}
       {isMarkingFollowUp && (
-        <form onSubmit={handleMarkAsFollowUp} className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 space-y-4 animate-in slide-in-from-top-4 duration-200 mnx-crm-panel-surface mnx-tone-warning">
+        <form
+          onSubmit={handleMarkAsFollowUp}
+          className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 space-y-4 animate-in slide-in-from-top-4 duration-200 mnx-crm-panel-surface mnx-tone-warning"
+        >
           <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-2">
             <h3 className="font-bold text-xs text-[var(--mnx-accent)] uppercase tracking-wider flex items-center gap-2">
               <Clock className="size-4" />
               <span>Schedule Sales Follow Up</span>
             </h3>
-            <CrmButton type="button" onClick={() => setIsMarkingFollowUp(false)} className="text-mono-muted hover:text-mono-text p-1">
+            <CrmButton
+              type="button"
+              onClick={() => setIsMarkingFollowUp(false)}
+              className="text-mono-muted hover:text-mono-text p-1"
+            >
               <X className="size-4" />
             </CrmButton>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Follow up Reminder Date & Time *</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                Follow up Reminder Date & Time *
+              </label>
               <CrmInput
                 type="datetime-local"
                 required
@@ -415,7 +511,9 @@ export function EnquiryDetailClient({
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Follow up Call Remarks / Directives *</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                Follow up Call Remarks / Directives *
+              </label>
               <CrmTextarea
                 rows={2}
                 required
@@ -437,7 +535,7 @@ export function EnquiryDetailClient({
             <CrmButton
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-warning)] text-mono-text rounded-lg text-xs font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/15"
+              className="px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-warning)] text-mono-text rounded-lg text-xs font-bold transition-all mnx-shadow-panel"
             >
               {isSubmitting ? "Scheduling..." : "Confirm Schedule & Save"}
             </CrmButton>
@@ -447,35 +545,42 @@ export function EnquiryDetailClient({
 
       {/* Split detail grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
         {/* Left column details (Cargo, Rates, Simulation) */}
         <div className="lg:col-span-2 space-y-6">
-          
           {/* General Cargo & Client details card */}
-          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] shadow-[4px_4px_0px_0px_var(--mnx-accent-soft)] space-y-4">
+          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] mnx-shadow-panel space-y-4">
             <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
               <div className="flex items-center gap-3">
                 <Info className="size-4.5 text-[var(--mnx-accent)]" />
-                <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Enquiry & Cargo Details</h3>
+                <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
+                  Enquiry & Cargo Details
+                </h3>
               </div>
               <CrmButton
                 onClick={() => setIsEditingCargoDetails(!isEditingCargoDetails)}
                 className="flex items-center gap-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] hover:border-[var(--mnx-accent)]/50 text-mono-muted px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
               >
-                {isEditingCargoDetails ? <X className="size-3.5" /> : <Edit2 className="size-3.5" />}
+                {isEditingCargoDetails ? (
+                  <X className="size-3.5" />
+                ) : (
+                  <Edit2 className="size-3.5" />
+                )}
                 <span>{isEditingCargoDetails ? "Cancel" : "Edit Details"}</span>
               </CrmButton>
             </div>
 
             {isEditingCargoDetails ? (
               <form onSubmit={handleSaveCargoDetails} className="space-y-4">
-                
                 {/* Contact Sub-Grid */}
                 <div className="space-y-3">
-                  <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-wide block font-sans border-b border-[var(--mnx-border)]/20 pb-1">Client Contact Info</span>
+                  <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-wide block font-sans border-b border-[var(--mnx-border)]/20 pb-1">
+                    Client Contact Info
+                  </span>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Client Name</label>
+                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        Client Name
+                      </label>
                       <CrmInput
                         type="text"
                         required
@@ -485,7 +590,9 @@ export function EnquiryDetailClient({
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Company</label>
+                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        Company
+                      </label>
                       <CrmInput
                         type="text"
                         value={company}
@@ -494,7 +601,9 @@ export function EnquiryDetailClient({
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Email</label>
+                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        Email
+                      </label>
                       <CrmInput
                         type="email"
                         value={email}
@@ -504,7 +613,9 @@ export function EnquiryDetailClient({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Phone</label>
+                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                          Phone
+                        </label>
                         <CrmInput
                           type="text"
                           value={phone}
@@ -513,7 +624,9 @@ export function EnquiryDetailClient({
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Mobile</label>
+                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                          Mobile
+                        </label>
                         <CrmInput
                           type="text"
                           value={mobile}
@@ -527,10 +640,14 @@ export function EnquiryDetailClient({
 
                 {/* Cargo Details Sub-Grid */}
                 <div className="space-y-3 pt-2">
-                  <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-wide block font-sans border-b border-[var(--mnx-border)]/20 pb-1">Cargo Details & Route</span>
+                  <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-wide block font-sans border-b border-[var(--mnx-border)]/20 pb-1">
+                    Cargo Details & Route
+                  </span>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Cargo Mode</label>
+                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        Cargo Mode
+                      </label>
                       <NativeSelect
                         value={enquiryType}
                         onChange={(e) => setEnquiryType(e.target.value as any)}
@@ -541,7 +658,9 @@ export function EnquiryDetailClient({
                       </NativeSelect>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Commodity</label>
+                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        Commodity
+                      </label>
                       <CrmInput
                         type="text"
                         value={commodity}
@@ -550,7 +669,9 @@ export function EnquiryDetailClient({
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Weight / Packages</label>
+                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        Weight / Packages
+                      </label>
                       <CrmInput
                         type="text"
                         value={weight}
@@ -559,11 +680,13 @@ export function EnquiryDetailClient({
                       />
                     </div>
                   </div>
-                  
+
                   {enquiryType === "Sea" ? (
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">POL (Port of Loading)</label>
+                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                          POL (Port of Loading)
+                        </label>
                         <CrmInput
                           type="text"
                           value={pol}
@@ -572,7 +695,9 @@ export function EnquiryDetailClient({
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">POD (Port of Discharge)</label>
+                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                          POD (Port of Discharge)
+                        </label>
                         <CrmInput
                           type="text"
                           value={pod}
@@ -584,7 +709,9 @@ export function EnquiryDetailClient({
                   ) : (
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">AOL (Airport of Loading)</label>
+                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                          AOL (Airport of Loading)
+                        </label>
                         <CrmInput
                           type="text"
                           value={aol}
@@ -593,7 +720,9 @@ export function EnquiryDetailClient({
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">AOD (Airport of Discharge)</label>
+                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                          AOD (Airport of Discharge)
+                        </label>
                         <CrmInput
                           type="text"
                           value={aod}
@@ -606,7 +735,9 @@ export function EnquiryDetailClient({
 
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Incoterm</label>
+                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        Incoterm
+                      </label>
                       <CrmInput
                         type="text"
                         value={incoterm}
@@ -615,7 +746,9 @@ export function EnquiryDetailClient({
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Shipment Planning</label>
+                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        Shipment Planning
+                      </label>
                       <CrmInput
                         type="text"
                         value={planning}
@@ -624,7 +757,9 @@ export function EnquiryDetailClient({
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Purpose of Cargo</label>
+                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        Purpose of Cargo
+                      </label>
                       <CrmInput
                         type="text"
                         value={purpose}
@@ -646,7 +781,7 @@ export function EnquiryDetailClient({
                   <CrmButton
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex items-center gap-1.5 px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text rounded-lg text-xs font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/15"
+                    className="flex items-center gap-1.5 px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text rounded-lg text-xs font-bold transition-all mnx-shadow-panel"
                   >
                     <Save className="size-3.5" />
                     <span>{isSubmitting ? "Saving..." : "Save Details"}</span>
@@ -656,53 +791,95 @@ export function EnquiryDetailClient({
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Client Actual Name</span>
-                  <span className="text-mono-text font-medium">{clientName}</span>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Business Name</span>
-                  <span className="text-mono-text font-medium">{company || "Direct Client"}</span>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Email Address</span>
-                  <span className="text-mono-text font-medium">{email || "Not Specified"}</span>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Phone & Mobile</span>
+                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                    Client Actual Name
+                  </span>
                   <span className="text-mono-text font-medium">
-                    {phone && `Phone: ${phone}`}{phone && mobile && " | "}{mobile && `Mobile: ${mobile}`}{!phone && !mobile && "Not Specified"}
+                    {clientName}
                   </span>
                 </div>
-                
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                    Business Name
+                  </span>
+                  <span className="text-mono-text font-medium">
+                    {company || "Direct Client"}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                    Email Address
+                  </span>
+                  <span className="text-mono-text font-medium">
+                    {email || "Not Specified"}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                    Phone & Mobile
+                  </span>
+                  <span className="text-mono-text font-medium">
+                    {phone && `Phone: ${phone}`}
+                    {phone && mobile && " | "}
+                    {mobile && `Mobile: ${mobile}`}
+                    {!phone && !mobile && "Not Specified"}
+                  </span>
+                </div>
+
                 <div className="md:col-span-2 border-t border-[var(--mnx-border)]/30 pt-3 mt-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Cargo Mode & Incoterm</span>
-                    <span className="text-mono-text font-medium uppercase">{enquiryType} ({incoterm})</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                      Cargo Mode & Incoterm
+                    </span>
+                    <span className="text-mono-text font-medium uppercase">
+                      {enquiryType} ({incoterm})
+                    </span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Commodity & Weight</span>
-                    <span className="text-mono-text font-medium">{commodity || "Not Specified"} • {weight || "Not Specified"}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                      Commodity & Weight
+                    </span>
+                    <span className="text-mono-text font-medium">
+                      {commodity || "Not Specified"} •{" "}
+                      {weight || "Not Specified"}
+                    </span>
                   </div>
-                  
+
                   {enquiryType === "Sea" ? (
                     <div className="md:col-span-2 space-y-1">
-                      <span className="text-[11px] font-bold text-[var(--mnx-accent)] uppercase tracking-wider block font-mono">Routing (Sea POL ➔ POD)</span>
-                      <span className="text-mono-text font-bold text-sm">{pol || "N/A"} ➔ {pod || "N/A"}</span>
+                      <span className="text-[11px] font-bold text-[var(--mnx-accent)] uppercase tracking-wider block font-mono">
+                        Routing (Sea POL ➔ POD)
+                      </span>
+                      <span className="text-mono-text font-bold text-sm">
+                        {pol || "N/A"} ➔ {pod || "N/A"}
+                      </span>
                     </div>
                   ) : (
                     <div className="md:col-span-2 space-y-1">
-                      <span className="text-[11px] font-bold text-[var(--mnx-accent)] uppercase tracking-wider block font-mono">Routing (Air AOL ➔ AOD)</span>
-                      <span className="text-mono-text font-bold text-sm">{aol || "N/A"} ➔ {aod || "N/A"}</span>
+                      <span className="text-[11px] font-bold text-[var(--mnx-accent)] uppercase tracking-wider block font-mono">
+                        Routing (Air AOL ➔ AOD)
+                      </span>
+                      <span className="text-mono-text font-bold text-sm">
+                        {aol || "N/A"} ➔ {aod || "N/A"}
+                      </span>
                     </div>
                   )}
 
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Shipment Planning Window</span>
-                    <span className="text-mono-text font-medium">{planning}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                      Shipment Planning Window
+                    </span>
+                    <span className="text-mono-text font-medium">
+                      {planning}
+                    </span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Purpose of Shipment</span>
-                    <span className="text-mono-text font-medium">{purpose}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                      Purpose of Shipment
+                    </span>
+                    <span className="text-mono-text font-medium">
+                      {purpose}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -711,20 +888,28 @@ export function EnquiryDetailClient({
 
           {/* Perishable Cargo Card (displays always if lead.isPerishable is true, or provides toggle) */}
           {lead.isPerishable && (
-            <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 shadow-[4px_4px_0px_0px_var(--mnx-warning-bg)] space-y-4 mnx-crm-panel-surface mnx-tone-warning">
+            <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 mnx-shadow-panel space-y-4 mnx-crm-panel-surface mnx-tone-warning">
               <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
                 <div className="flex items-center gap-3">
                   <span className="size-8 rounded-lg bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] flex items-center justify-center text-base">
                     ❄️
                   </span>
-                  <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Perishable Cargo Parameters</h3>
+                  <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
+                    Perishable Cargo Parameters
+                  </h3>
                 </div>
                 <CrmButton
                   onClick={() => setIsEditingPerishables(!isEditingPerishables)}
                   className="flex items-center gap-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] hover:border-[var(--mnx-accent)]/50 text-mono-muted px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                 >
-                  {isEditingPerishables ? <X className="size-3.5" /> : <Edit2 className="size-3.5" />}
-                  <span>{isEditingPerishables ? "Cancel" : "Edit Parameters"}</span>
+                  {isEditingPerishables ? (
+                    <X className="size-3.5" />
+                  ) : (
+                    <Edit2 className="size-3.5" />
+                  )}
+                  <span>
+                    {isEditingPerishables ? "Cancel" : "Edit Parameters"}
+                  </span>
                 </CrmButton>
               </div>
 
@@ -732,22 +917,32 @@ export function EnquiryDetailClient({
                 <form onSubmit={handleSavePerishables} className="space-y-4">
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Cargo Category</label>
+                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        Cargo Category
+                      </label>
                       <NativeSelect
                         value={perishableType}
                         onChange={(e) => setPerishableType(e.target.value)}
                         className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
                       >
-                        <option value="Fruit/Vegetables">Fruit & Vegetables</option>
+                        <option value="Fruit/Vegetables">
+                          Fruit & Vegetables
+                        </option>
                         <option value="Meat/Poultry">Meat & Poultry</option>
                         <option value="Seafood">Fresh Seafood</option>
-                        <option value="Pharmaceuticals">Pharmaceuticals / Medicine</option>
-                        <option value="Chemicals">Temperature-sensitive Chemicals</option>
+                        <option value="Pharmaceuticals">
+                          Pharmaceuticals / Medicine
+                        </option>
+                        <option value="Chemicals">
+                          Temperature-sensitive Chemicals
+                        </option>
                         <option value="Dairy">Dairy Products</option>
                       </NativeSelect>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Required Temp (°C)</label>
+                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        Required Temp (°C)
+                      </label>
                       <CrmInput
                         type="text"
                         value={temperature}
@@ -757,7 +952,9 @@ export function EnquiryDetailClient({
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Humidity Control (%)</label>
+                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        Humidity Control (%)
+                      </label>
                       <CrmInput
                         type="text"
                         value={humidity}
@@ -768,7 +965,9 @@ export function EnquiryDetailClient({
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Special Handling Remarks / Ventilation</label>
+                    <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                      Special Handling Remarks / Ventilation
+                    </label>
                     <CrmTextarea
                       rows={2}
                       value={perishableRemarks}
@@ -788,31 +987,48 @@ export function EnquiryDetailClient({
                     <CrmButton
                       type="submit"
                       disabled={isSubmitting}
-                      className="flex items-center gap-1.5 px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-warning)] text-mono-text rounded-lg text-xs font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/15"
+                      className="flex items-center gap-1.5 px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-warning)] text-mono-text rounded-lg text-xs font-bold transition-all mnx-shadow-panel"
                     >
                       <Save className="size-3.5" />
-                      <span>{isSubmitting ? "Saving..." : "Save Parameters"}</span>
+                      <span>
+                        {isSubmitting ? "Saving..." : "Save Parameters"}
+                      </span>
                     </CrmButton>
                   </div>
                 </form>
               ) : (
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Cargo Category</span>
-                    <span className="text-mono-text font-semibold">{perishableType}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                      Cargo Category
+                    </span>
+                    <span className="text-mono-text font-semibold">
+                      {perishableType}
+                    </span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Operating Temp</span>
-                    <span className="text-[var(--mnx-accent)] font-bold block mnx-numeric">{temperature || "Ambient"} °C</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                      Operating Temp
+                    </span>
+                    <span className="text-[var(--mnx-accent)] font-bold block mnx-numeric">
+                      {temperature || "Ambient"} °C
+                    </span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Humidity Target</span>
-                    <span className="text-mono-text font-medium block mnx-numeric">{humidity || "N/A"}</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                      Humidity Target
+                    </span>
+                    <span className="text-mono-text font-medium block mnx-numeric">
+                      {humidity || "N/A"}
+                    </span>
                   </div>
                   <div className="col-span-3 border-t border-[var(--mnx-border)]/30 pt-3 mt-1 space-y-1">
-                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">Ventilation & Airflow Remarks</span>
+                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                      Ventilation & Airflow Remarks
+                    </span>
                     <p className="text-xs text-mono-muted bg-[var(--mnx-surface)]/40 p-2.5 rounded-lg border border-[var(--mnx-border)]/20 leading-relaxed italic">
-                      {perishableRemarks || "No special handling instructions logged."}
+                      {perishableRemarks ||
+                        "No special handling instructions logged."}
                     </p>
                   </div>
                 </div>
@@ -821,7 +1037,7 @@ export function EnquiryDetailClient({
           )}
 
           {/* Pricing Worksheet Card */}
-          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] shadow-[4px_4px_0px_0px_var(--mnx-accent-soft)] space-y-4">
+          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] mnx-shadow-panel space-y-4">
             <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
               <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
                 Rates & Costing Worksheet
@@ -835,19 +1051,24 @@ export function EnquiryDetailClient({
           </div>
 
           {/* Email Parsing & Simulation Panel */}
-          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] shadow-[4px_4px_0px_0px_var(--mnx-accent-soft)] space-y-6">
-            
+          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] mnx-shadow-panel space-y-6">
             {/* Headers */}
             <div className="border-b border-[var(--mnx-border)]/30 pb-3">
-              <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Inbound Email Rate Parser & Simulator</h3>
+              <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
+                Inbound Email Rate Parser & Simulator
+              </h3>
               <p className="text-xs text-mono-muted mt-1">
-                Verify automatic pricing extraction by pasting pricing feedback or simulating agent inbound email threads containing reference code.
+                Verify automatic pricing extraction by pasting pricing feedback
+                or simulating agent inbound email threads containing reference
+                code.
               </p>
             </div>
 
             {/* Paste box tool */}
             <div className="space-y-3">
-              <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-wide block font-mono">1. Direct Text Paste Parser (Test Regex)</span>
+              <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-wide block font-mono">
+                1. Direct Text Paste Parser (Test Regex)
+              </span>
               <div className="space-y-2">
                 <CrmTextarea
                   rows={3}
@@ -869,11 +1090,18 @@ export function EnquiryDetailClient({
 
             {/* Simulation form */}
             <div className="space-y-3 pt-3 border-t border-[var(--mnx-border)]/30">
-              <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-wide block font-mono">2. Simulate Inbound Agent Reply Email (Database Update)</span>
-              <form onSubmit={handleSimulateEmail} className="space-y-3 bg-[var(--mnx-surface)]/40 p-4 rounded-xl border border-[var(--mnx-border)]/40">
+              <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-wide block font-mono">
+                2. Simulate Inbound Agent Reply Email (Database Update)
+              </span>
+              <form
+                onSubmit={handleSimulateEmail}
+                className="space-y-3 bg-[var(--mnx-surface)]/40 p-4 rounded-xl border border-[var(--mnx-border)]/40"
+              >
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[9px] font-bold text-mono-muted uppercase tracking-wide mb-1">From Address</label>
+                    <label className="block text-[9px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                      From Address
+                    </label>
                     <CrmInput
                       type="text"
                       required
@@ -883,7 +1111,9 @@ export function EnquiryDetailClient({
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-bold text-mono-muted uppercase tracking-wide mb-1">Email Subject Line (Ref Required)</label>
+                    <label className="block text-[9px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                      Email Subject Line (Ref Required)
+                    </label>
                     <CrmInput
                       type="text"
                       required
@@ -894,7 +1124,9 @@ export function EnquiryDetailClient({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[9px] font-bold text-mono-muted uppercase tracking-wide mb-1">Email Body Content</label>
+                  <label className="block text-[9px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                    Email Body Content
+                  </label>
                   <CrmTextarea
                     rows={4}
                     required
@@ -910,23 +1142,26 @@ export function EnquiryDetailClient({
                     className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-warning)] text-mono-text px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50"
                   >
                     <Mail className="size-3.5" />
-                    <span>{isSimulatingEmail ? "Processing Simulation..." : "Trigger Simulation"}</span>
+                    <span>
+                      {isSimulatingEmail
+                        ? "Processing Simulation..."
+                        : "Trigger Simulation"}
+                    </span>
                   </CrmButton>
                 </div>
               </form>
             </div>
-
           </div>
-
         </div>
 
         {/* Right column details (Timeline, Activities, Notes) */}
         <div className="space-y-6 col-span-1">
-          
           {/* Follow-up Reminder Details Card */}
           {lead.isFutureFollowUp && lead.followUpReminderDate && (
-            <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 shadow-[4px_4px_0px_0px_var(--mnx-warning-bg)] space-y-3 mnx-crm-panel-surface mnx-tone-warning">
-              <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-widest block font-sans">Follow-up Alarm</span>
+            <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 mnx-shadow-panel space-y-3 mnx-crm-panel-surface mnx-tone-warning">
+              <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-widest block font-sans">
+                Follow-up Alarm
+              </span>
               <div className="flex items-center gap-2 text-mono-text">
                 <Clock className="size-4.5 text-[var(--mnx-accent)] shrink-0" />
                 <span className="font-bold text-sm mnx-numeric">
@@ -934,20 +1169,22 @@ export function EnquiryDetailClient({
                 </span>
               </div>
               <p className="text-[11px] text-mono-muted italic">
-                A sales reminder is active. Mark the lead interested or converted to clear active follow-up directives.
+                A sales reminder is active. Mark the lead interested or
+                converted to clear active follow-up directives.
               </p>
             </div>
           )}
 
           {/* Related lists tabs container */}
-          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] shadow-[4px_4px_0px_0px_var(--mnx-accent-soft)] space-y-6">
-            
+          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] mnx-shadow-panel space-y-6">
             {/* Nav pills */}
             <div className="flex border-b border-[var(--mnx-border)]/40 pb-1 gap-4 overflow-x-auto select-none">
               <CrmButton
                 onClick={() => setActiveTab("OVERVIEW")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "OVERVIEW" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
+                  activeTab === "OVERVIEW"
+                    ? "border-[var(--mnx-accent)] text-mono-text"
+                    : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Summary
@@ -955,7 +1192,9 @@ export function EnquiryDetailClient({
               <CrmButton
                 onClick={() => setActiveTab("NOTES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "NOTES" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
+                  activeTab === "NOTES"
+                    ? "border-[var(--mnx-accent)] text-mono-text"
+                    : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Notes ({notes.length})
@@ -963,7 +1202,9 @@ export function EnquiryDetailClient({
               <CrmButton
                 onClick={() => setActiveTab("ACTIVITIES")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ACTIVITIES" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
+                  activeTab === "ACTIVITIES"
+                    ? "border-[var(--mnx-accent)] text-mono-text"
+                    : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Tasks ({activities.length})
@@ -971,7 +1212,9 @@ export function EnquiryDetailClient({
               <CrmButton
                 onClick={() => setActiveTab("TIMELINE")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "TIMELINE" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
+                  activeTab === "TIMELINE"
+                    ? "border-[var(--mnx-accent)] text-mono-text"
+                    : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Audit
@@ -979,7 +1222,9 @@ export function EnquiryDetailClient({
               <CrmButton
                 onClick={() => setActiveTab("TIME_TRACKER")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "TIME_TRACKER" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
+                  activeTab === "TIME_TRACKER"
+                    ? "border-[var(--mnx-accent)] text-mono-text"
+                    : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Time Tracker ({workTimeLogs.length})
@@ -987,7 +1232,9 @@ export function EnquiryDetailClient({
               <CrmButton
                 onClick={() => setActiveTab("CALLS")}
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "CALLS" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-text"
+                  activeTab === "CALLS"
+                    ? "border-[var(--mnx-accent)] text-mono-text"
+                    : "border-transparent text-mono-muted hover:text-mono-text"
                 }`}
               >
                 Calls ({calls.length})
@@ -999,65 +1246,107 @@ export function EnquiryDetailClient({
               {activeTab === "OVERVIEW" && (
                 <div className="space-y-4">
                   <div className="p-3.5 bg-[var(--mnx-surface)]/50 rounded-xl space-y-2 border border-[var(--mnx-border)]/30">
-                    <span className="font-bold text-mono-text block uppercase tracking-wider">Enquiry Logging Details</span>
+                    <span className="font-bold text-mono-text block uppercase tracking-wider">
+                      Enquiry Logging Details
+                    </span>
                     <p className="text-mono-muted leading-relaxed">
-                      This enquiry record was qualified on {new Date(lead.updatedAt).toLocaleDateString("en-IN")}. Standard validation rules apply before quoting.
+                      This enquiry record was qualified on{" "}
+                      {new Date(lead.updatedAt).toLocaleDateString("en-IN")}.
+                      Standard validation rules apply before quoting.
                     </p>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-3 text-mono-muted">
                     <div>
-                      <span className="font-semibold text-mono-muted block uppercase text-[9px]">Source</span>
-                      <span className="text-mono-muted">{lead.source || "Direct"}</span>
+                      <span className="font-semibold text-mono-muted block uppercase text-[9px]">
+                        Source
+                      </span>
+                      <span className="text-mono-muted">
+                        {lead.source || "Direct"}
+                      </span>
                     </div>
                     <div>
-                      <span className="font-semibold text-mono-muted block uppercase text-[9px]">Qualified At</span>
-                      <span className="text-mono-muted">{new Date(lead.updatedAt).toLocaleDateString("en-IN")}</span>
+                      <span className="font-semibold text-mono-muted block uppercase text-[9px]">
+                        Qualified At
+                      </span>
+                      <span className="text-mono-muted">
+                        {new Date(lead.updatedAt).toLocaleDateString("en-IN")}
+                      </span>
                     </div>
                   </div>
                 </div>
               )}
 
               {activeTab === "NOTES" && (
-                <NotesPanel relatedToType="LEAD" relatedToId={lead.id} initialNotes={notes} />
+                <NotesPanel
+                  relatedToType="LEAD"
+                  relatedToId={lead.id}
+                  initialNotes={notes}
+                />
               )}
 
               {activeTab === "ACTIVITIES" && (
-                <ActivitiesPanel relatedToType="LEAD" relatedToId={lead.id} initialActivities={activities} />
+                <ActivitiesPanel
+                  relatedToType="LEAD"
+                  relatedToId={lead.id}
+                  initialActivities={activities}
+                />
               )}
 
-              {activeTab === "TIMELINE" && (
-                <TimelinePanel events={timeline} />
-              )}
+              {activeTab === "TIMELINE" && <TimelinePanel events={timeline} />}
 
               {/* ── TIME TRACKER TAB ── */}
               {activeTab === "TIME_TRACKER" && (
                 <div className="space-y-3">
                   {workTimeLogs.length === 0 ? (
-                    <p className="text-mono-muted italic py-4 text-center">No time logs recorded for this enquiry yet.</p>
+                    <p className="text-mono-muted italic py-4 text-center">
+                      No time logs recorded for this enquiry yet.
+                    </p>
                   ) : (
                     <div className="space-y-2">
                       {workTimeLogs.map((log: any, i: number) => (
-                        <div key={log.id || i} className="p-3 bg-[var(--mnx-surface)]/50 rounded-lg border border-[var(--mnx-border)]/30 flex items-start justify-between">
+                        <div
+                          key={log.id || i}
+                          className="p-3 bg-[var(--mnx-surface)]/50 rounded-lg border border-[var(--mnx-border)]/30 flex items-start justify-between"
+                        >
                           <div>
-                            <span className="text-mono-text font-bold text-xs">{log.user?.name || "Unknown"}</span>
-                            <span className="text-mono-muted text-[10px] ml-2">{log.activityType || "General"}</span>
+                            <span className="text-mono-text font-bold text-xs">
+                              {log.user?.name || "Unknown"}
+                            </span>
+                            <span className="text-mono-muted text-[10px] ml-2">
+                              {log.activityType || "General"}
+                            </span>
                             {log.description && (
-                              <p className="text-mono-muted text-[11px] mt-1">{log.description}</p>
+                              <p className="text-mono-muted text-[11px] mt-1">
+                                {log.description}
+                              </p>
                             )}
                           </div>
                           <div className="text-right shrink-0">
-                            <span className="text-[var(--mnx-accent)] font-bold font-mono text-sm">{log.durationHours}h</span>
+                            <span className="text-[var(--mnx-accent)] font-bold font-mono text-sm">
+                              {log.durationHours}h
+                            </span>
                             <span className="text-mono-muted text-[10px] block">
-                              {new Date(log.loggedAt).toLocaleDateString("en-IN")}
+                              {new Date(log.loggedAt).toLocaleDateString(
+                                "en-IN",
+                              )}
                             </span>
                           </div>
                         </div>
                       ))}
                       <div className="text-right pt-2 border-t border-[var(--mnx-border)]/30">
-                        <span className="text-mono-muted text-[10px] uppercase font-bold">Total: </span>
+                        <span className="text-mono-muted text-[10px] uppercase font-bold">
+                          Total:{" "}
+                        </span>
                         <span className="text-mono-text font-bold font-mono">
-                          {workTimeLogs.reduce((sum: number, l: any) => sum + (l.durationHours || 0), 0).toFixed(1)}h
+                          {workTimeLogs
+                            .reduce(
+                              (sum: number, l: any) =>
+                                sum + (l.durationHours || 0),
+                              0,
+                            )
+                            .toFixed(1)}
+                          h
                         </span>
                       </div>
                     </div>
@@ -1069,7 +1358,9 @@ export function EnquiryDetailClient({
               {activeTab === "CALLS" && (
                 <div className="space-y-3">
                   {localCalls.length === 0 ? (
-                    <p className="text-mono-muted italic py-4 text-center">No call recordings for this enquiry yet.</p>
+                    <p className="text-mono-muted italic py-4 text-center">
+                      No call recordings for this enquiry yet.
+                    </p>
                   ) : (
                     <div className="space-y-3">
                       {/* Call attempt list */}
@@ -1079,46 +1370,73 @@ export function EnquiryDetailClient({
                         const isExpanded = selectedCallIndex === idx;
 
                         return (
-                          <div key={call.id} className="rounded-lg border border-[var(--mnx-border)]/40 overflow-hidden">
+                          <div
+                            key={call.id}
+                            className="rounded-lg border border-[var(--mnx-border)]/40 overflow-hidden"
+                          >
                             {/* Call header */}
                             <CrmButton
-                              onClick={() => setSelectedCallIndex(isExpanded ? null : idx)}
+                              onClick={() =>
+                                setSelectedCallIndex(isExpanded ? null : idx)
+                              }
                               className="w-full p-3 bg-[var(--mnx-surface)]/50 flex items-center justify-between text-left hover:bg-[var(--mnx-surface)] transition-all cursor-pointer"
                             >
                               <div className="flex items-center gap-3">
-                                <span className="size-8 rounded-lg bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] flex items-center justify-center text-xs">📞</span>
+                                <span className="size-8 rounded-lg bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] flex items-center justify-center text-xs">
+                                  📞
+                                </span>
                                 <div>
                                   <span className="text-mono-text font-bold text-xs block">
                                     {call.salesperson?.name || "Salesperson"}
                                   </span>
                                   <span className="text-mono-muted text-[10px]">
-                                    {call.customerPhone} • {new Date(call.callStartedAt).toLocaleString("en-IN")}
+                                    {call.customerPhone} •{" "}
+                                    {new Date(
+                                      call.callStartedAt,
+                                    ).toLocaleString("en-IN")}
                                   </span>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
                                 {call.durationSeconds && (
                                   <span className="text-[var(--mnx-accent)] font-mono font-bold text-xs">
-                                    {Math.floor(call.durationSeconds / 60)}:{String(call.durationSeconds % 60).padStart(2, "0")}
+                                    {Math.floor(call.durationSeconds / 60)}:
+                                    {String(call.durationSeconds % 60).padStart(
+                                      2,
+                                      "0",
+                                    )}
                                   </span>
                                 )}
-                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
-                                  (call.status === "COMPLETED" || recording?.uploadStatus === "UPLOADED") ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]" :
-                                  recording?.uploadStatus === "UPLOADING" ? "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent)]" :
-                                  recording?.uploadStatus === "CANCELLED" ? "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]" :
-                                  recording?.uploadStatus === "FAILED" ? "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]" :
-                                  call.status === "PENDING" ? "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]" :
-                                  "bg-mono-soft text-mono-muted"
-                                }`}>
-                                  {
-                                    recording?.uploadStatus === "UPLOADED" ? "COMPLETED" :
-                                    recording?.uploadStatus === "UPLOADING" ? "UPLOADING" :
-                                    recording?.uploadStatus === "CANCELLED" ? "CANCELLED" :
-                                    recording?.uploadStatus === "FAILED" ? "FAILED" :
-                                    call.status
-                                  }
+                                <span
+                                  className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+                                    call.status === "COMPLETED" ||
+                                    recording?.uploadStatus === "UPLOADED"
+                                      ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]"
+                                      : recording?.uploadStatus === "UPLOADING"
+                                        ? "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent)]"
+                                        : recording?.uploadStatus ===
+                                            "CANCELLED"
+                                          ? "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]"
+                                          : recording?.uploadStatus === "FAILED"
+                                            ? "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]"
+                                            : call.status === "PENDING"
+                                              ? "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]"
+                                              : "bg-mono-soft text-mono-muted"
+                                  }`}
+                                >
+                                  {recording?.uploadStatus === "UPLOADED"
+                                    ? "COMPLETED"
+                                    : recording?.uploadStatus === "UPLOADING"
+                                      ? "UPLOADING"
+                                      : recording?.uploadStatus === "CANCELLED"
+                                        ? "CANCELLED"
+                                        : recording?.uploadStatus === "FAILED"
+                                          ? "FAILED"
+                                          : call.status}
                                 </span>
-                                <span className="text-mono-muted">{isExpanded ? "▲" : "▼"}</span>
+                                <span className="text-mono-muted">
+                                  {isExpanded ? "▲" : "▼"}
+                                </span>
                               </div>
                             </CrmButton>
 
@@ -1131,21 +1449,38 @@ export function EnquiryDetailClient({
                                     <div className="space-y-2 p-2 bg-mono-soft rounded-lg border border-mono-border/40">
                                       <div className="flex items-center justify-between gap-3 min-w-0">
                                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                                          <span className="text-[9px] font-bold text-mono-muted uppercase shrink-0">Recording:</span>
-                                          <span className="text-mono-muted text-[11px] truncate" title={recording.fileName}>
+                                          <span className="text-[9px] font-bold text-mono-muted uppercase shrink-0">
+                                            Recording:
+                                          </span>
+                                          <span
+                                            className="text-mono-muted text-[11px] truncate"
+                                            title={recording.fileName}
+                                          >
                                             {recording.fileName}
                                           </span>
                                         </div>
                                         <div className="flex items-center gap-2 shrink-0">
-                                          <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${
-                                            recording.uploadStatus === "UPLOADED" ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]" :
-                                            recording.uploadStatus === "UPLOADING" ? "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent)] animate-pulse" :
-                                            recording.uploadStatus === "CANCELLED" ? "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]" :
-                                            "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]"
-                                          }`}>
-                                            {recording.uploadStatus === "UPLOADED" ? "UPLOADED SUCCESSFULLY" : recording.uploadStatus}
+                                          <span
+                                            className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${
+                                              recording.uploadStatus ===
+                                              "UPLOADED"
+                                                ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]"
+                                                : recording.uploadStatus ===
+                                                    "UPLOADING"
+                                                  ? "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent)] animate-pulse"
+                                                  : recording.uploadStatus ===
+                                                      "CANCELLED"
+                                                    ? "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]"
+                                                    : "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]"
+                                            }`}
+                                          >
+                                            {recording.uploadStatus ===
+                                            "UPLOADED"
+                                              ? "UPLOADED SUCCESSFULLY"
+                                              : recording.uploadStatus}
                                           </span>
-                                          {recording.uploadStatus === "UPLOADED" && (
+                                          {recording.uploadStatus ===
+                                            "UPLOADED" && (
                                             <a
                                               href={`/api/crm/recordings/${recording.id}/download`}
                                               className="text-[10px] text-[var(--mnx-accent)] font-bold uppercase hover:underline transition-all cursor-pointer"
@@ -1158,7 +1493,8 @@ export function EnquiryDetailClient({
                                       </div>
 
                                       {/* Audio playback component */}
-                                      {recording.uploadStatus === "UPLOADED" && (
+                                      {recording.uploadStatus ===
+                                        "UPLOADED" && (
                                         <audio
                                           src={`/api/crm/recordings/${recording.id}/playback`}
                                           controls
@@ -1167,32 +1503,53 @@ export function EnquiryDetailClient({
                                       )}
 
                                       {/* Live Upload Progress Bar */}
-                                      {recording.uploadStatus === "UPLOADING" && (
+                                      {recording.uploadStatus ===
+                                        "UPLOADING" && (
                                         <div className="space-y-1">
                                           <div className="w-full bg-[var(--mnx-border)] h-1.5 rounded-full overflow-hidden">
                                             <div
                                               className="bg-[var(--mnx-accent)] h-1.5 rounded-full transition-all duration-300"
-                                              style={{ width: `${recording.uploadProgress || 0}%` }}
+                                              style={{
+                                                width: `${recording.uploadProgress || 0}%`,
+                                              }}
                                             />
                                           </div>
                                           <div className="flex justify-between text-[9px] text-[var(--mnx-accent)] font-mono">
-                                            <span>Uploading from mobile...</span>
-                                            <span>{recording.uploadProgress || 0}%</span>
+                                            <span>
+                                              Uploading from mobile...
+                                            </span>
+                                            <span>
+                                              {recording.uploadProgress || 0}%
+                                            </span>
                                           </div>
                                         </div>
                                       )}
 
                                       {/* Error or Cancelled Notice */}
-                                      {(recording.uploadStatus === "FAILED" || recording.uploadStatus === "CANCELLED") && (
-                                        <div className={`text-[10px] p-2 rounded border space-y-1 ${
-                                          recording.uploadStatus === "CANCELLED"
-                                            ? "text-[var(--mnx-warning)] bg-[var(--mnx-warning-bg)] border-[var(--mnx-warning)]"
-                                            : "text-[var(--mnx-danger)] bg-[var(--mnx-danger-bg)] border-[var(--mnx-danger)]"
-                                        }`}>
+                                      {(recording.uploadStatus === "FAILED" ||
+                                        recording.uploadStatus ===
+                                          "CANCELLED") && (
+                                        <div
+                                          className={`text-[10px] p-2 rounded border space-y-1 ${
+                                            recording.uploadStatus ===
+                                            "CANCELLED"
+                                              ? "text-[var(--mnx-warning)] bg-[var(--mnx-warning-bg)] border-[var(--mnx-warning)]"
+                                              : "text-[var(--mnx-danger)] bg-[var(--mnx-danger-bg)] border-[var(--mnx-danger)]"
+                                          }`}
+                                        >
                                           <span className="font-bold uppercase text-[9px] block">
-                                            {recording.uploadStatus === "CANCELLED" ? "Upload Cancelled:" : "Upload Failure:"}
+                                            {recording.uploadStatus ===
+                                            "CANCELLED"
+                                              ? "Upload Cancelled:"
+                                              : "Upload Failure:"}
                                           </span>
-                                          <p>{recording.errorMessage || (recording.uploadStatus === "CANCELLED" ? "The upload was cancelled by the user." : "The upload has failed.")}</p>
+                                          <p>
+                                            {recording.errorMessage ||
+                                              (recording.uploadStatus ===
+                                              "CANCELLED"
+                                                ? "The upload was cancelled by the user."
+                                                : "The upload has failed.")}
+                                          </p>
                                         </div>
                                       )}
                                     </div>
@@ -1200,9 +1557,13 @@ export function EnquiryDetailClient({
                                     {/* Transcript sub-tabs */}
                                     <div className="flex gap-3 border-b border-[var(--mnx-border)]/30 pb-1">
                                       <CrmButton
-                                        onClick={() => setCallSubTab("TRANSCRIPT")}
+                                        onClick={() =>
+                                          setCallSubTab("TRANSCRIPT")
+                                        }
                                         className={`text-[10px] font-bold uppercase tracking-wider pb-1 border-b-2 cursor-pointer ${
-                                          callSubTab === "TRANSCRIPT" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-muted"
+                                          callSubTab === "TRANSCRIPT"
+                                            ? "border-[var(--mnx-accent)] text-mono-text"
+                                            : "border-transparent text-mono-muted hover:text-mono-muted"
                                         }`}
                                       >
                                         AI Transcript
@@ -1210,7 +1571,9 @@ export function EnquiryDetailClient({
                                       <CrmButton
                                         onClick={() => setCallSubTab("SUMMARY")}
                                         className={`text-[10px] font-bold uppercase tracking-wider pb-1 border-b-2 cursor-pointer ${
-                                          callSubTab === "SUMMARY" ? "border-[var(--mnx-accent)] text-mono-text" : "border-transparent text-mono-muted hover:text-mono-muted"
+                                          callSubTab === "SUMMARY"
+                                            ? "border-[var(--mnx-accent)] text-mono-text"
+                                            : "border-transparent text-mono-muted hover:text-mono-muted"
                                         }`}
                                       >
                                         AI Summary
@@ -1224,7 +1587,12 @@ export function EnquiryDetailClient({
                                             {transcript.transcriptText}
                                           </div>
                                         ) : (
-                                          <p className="text-mono-muted italic text-[11px]">Transcription {recording.transcriptionStatus?.toLowerCase() || "pending"}...</p>
+                                          <p className="text-mono-muted italic text-[11px]">
+                                            Transcription{" "}
+                                            {recording.transcriptionStatus?.toLowerCase() ||
+                                              "pending"}
+                                            ...
+                                          </p>
                                         )}
                                       </div>
                                     )}
@@ -1234,34 +1602,54 @@ export function EnquiryDetailClient({
                                         {transcript ? (
                                           <div className="space-y-2">
                                             <div>
-                                              <span className="font-bold text-mono-muted uppercase text-[9px] block">AI Summary</span>
-                                              <p className="text-mono-muted text-[11px] mt-1 leading-normal">{transcript.summary}</p>
+                                              <span className="font-bold text-mono-muted uppercase text-[9px] block">
+                                                AI Summary
+                                              </span>
+                                              <p className="text-mono-muted text-[11px] mt-1 leading-normal">
+                                                {transcript.summary}
+                                              </p>
                                             </div>
                                             <div>
-                                              <span className="font-bold text-mono-muted uppercase text-[9px] block">Objections</span>
-                                              <p className={`text-[11px] mt-1 font-bold ${transcript.objections === "None" ? "text-[var(--mnx-success)]" : "text-[var(--mnx-accent)]"}`}>
+                                              <span className="font-bold text-mono-muted uppercase text-[9px] block">
+                                                Objections
+                                              </span>
+                                              <p
+                                                className={`text-[11px] mt-1 font-bold ${transcript.objections === "None" ? "text-[var(--mnx-success)]" : "text-[var(--mnx-accent)]"}`}
+                                              >
                                                 {transcript.objections}
                                               </p>
                                             </div>
                                             <div>
-                                              <span className="font-bold text-mono-muted uppercase text-[9px] block">Follow-up Actions</span>
-                                              <p className="text-mono-muted text-[11px] mt-1">{transcript.followUpActions}</p>
+                                              <span className="font-bold text-mono-muted uppercase text-[9px] block">
+                                                Follow-up Actions
+                                              </span>
+                                              <p className="text-mono-muted text-[11px] mt-1">
+                                                {transcript.followUpActions}
+                                              </p>
                                             </div>
                                             <div className="flex gap-4">
                                               <div>
-                                                <span className="font-bold text-mono-muted uppercase text-[9px] block">Sentiment</span>
-                                                <span className={`inline-block mt-1 font-extrabold uppercase text-[10px] px-2 py-0.5 rounded ${
-                                                  transcript.sentiment === "POSITIVE"
-                                                    ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] border border-[var(--mnx-success)]"
-                                                    : transcript.sentiment === "NEGATIVE"
-                                                    ? "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)] border border-[var(--mnx-danger)]"
-                                                    : "bg-mono-soft text-mono-muted border border-mono-border"
-                                                }`}>
+                                                <span className="font-bold text-mono-muted uppercase text-[9px] block">
+                                                  Sentiment
+                                                </span>
+                                                <span
+                                                  className={`inline-block mt-1 font-extrabold uppercase text-[10px] px-2 py-0.5 rounded ${
+                                                    transcript.sentiment ===
+                                                    "POSITIVE"
+                                                      ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)] border border-[var(--mnx-success)]"
+                                                      : transcript.sentiment ===
+                                                          "NEGATIVE"
+                                                        ? "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)] border border-[var(--mnx-danger)]"
+                                                        : "bg-mono-soft text-mono-muted border border-mono-border"
+                                                  }`}
+                                                >
                                                   {transcript.sentiment}
                                                 </span>
                                               </div>
                                               <div>
-                                                <span className="font-bold text-mono-muted uppercase text-[9px] block">Quality Score</span>
+                                                <span className="font-bold text-mono-muted uppercase text-[9px] block">
+                                                  Quality Score
+                                                </span>
                                                 <span className="text-mono-text mt-1 font-extrabold text-[13px] block font-mono">
                                                   {transcript.qualityScore}%
                                                 </span>
@@ -1269,13 +1657,17 @@ export function EnquiryDetailClient({
                                             </div>
                                           </div>
                                         ) : (
-                                          <p className="text-mono-muted italic text-[11px]">AI analysis pending transcription.</p>
+                                          <p className="text-mono-muted italic text-[11px]">
+                                            AI analysis pending transcription.
+                                          </p>
                                         )}
                                       </div>
                                     )}
                                   </>
                                 ) : (
-                                  <p className="text-mono-muted italic text-[11px]">No recording uploaded for this call attempt.</p>
+                                  <p className="text-mono-muted italic text-[11px]">
+                                    No recording uploaded for this call attempt.
+                                  </p>
                                 )}
                               </div>
                             )}
@@ -1288,11 +1680,8 @@ export function EnquiryDetailClient({
               )}
             </div>
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 }
@@ -1301,32 +1690,47 @@ export function EnquiryDetailClient({
 function LocalRatesWorksheet({ lead }: { lead: any }) {
   const router = useRouter();
   const isSea = lead.enquiryDetails.type === "Sea";
-  const isImportLcl = isSea && lead.enquiryDetails.seaType === "Import" && lead.enquiryDetails.seaLclFcl === "LCL";
+  const isImportLcl =
+    isSea &&
+    lead.enquiryDetails.seaType === "Import" &&
+    lead.enquiryDetails.seaLclFcl === "LCL";
   const volume = parseFloat(lead.enquiryDetails.cbm) || 0;
 
   const calculatedLclRate = volume < 3 ? 300 : 150;
   const calculatedLclAmount = volume * calculatedLclRate;
-  
+
   const [lclDoOption, setLclDoOption] = useState<"750" | "500">("750");
   const calculatedDoAmount = volume < 3 ? 1000 : parseInt(lclDoOption);
 
   const initialRates = lead.enquiryDetails.rates || {};
 
   // Form states
-  const [oceanFreight, setOceanFreight] = useState(initialRates.oceanFreight ?? 0);
+  const [oceanFreight, setOceanFreight] = useState(
+    initialRates.oceanFreight ?? 0,
+  );
   const [cfsCharges, setCfsCharges] = useState(initialRates.cfsCharges ?? 0);
-  const [customsClearance, setCustomsClearance] = useState(initialRates.customsClearance ?? 0);
+  const [customsClearance, setCustomsClearance] = useState(
+    initialRates.customsClearance ?? 0,
+  );
   const [blCharges, setBlCharges] = useState(initialRates.blCharges ?? 0);
   const [vgmCharges, setVgmCharges] = useState(initialRates.vgmCharges ?? 0);
-  const [lclCharges, setLclCharges] = useState(initialRates.lclCharges ?? (isImportLcl ? calculatedLclAmount : 0));
-  const [doCharges, setDoCharges] = useState(initialRates.doCharges ?? (isImportLcl ? calculatedDoAmount : 0));
+  const [lclCharges, setLclCharges] = useState(
+    initialRates.lclCharges ?? (isImportLcl ? calculatedLclAmount : 0),
+  );
+  const [doCharges, setDoCharges] = useState(
+    initialRates.doCharges ?? (isImportLcl ? calculatedDoAmount : 0),
+  );
   const [cfsCustoms, setCfsCustoms] = useState(initialRates.cfsCustoms ?? 0);
 
   // Air states
   const [airFreight, setAirFreight] = useState(initialRates.airFreight ?? 0);
-  const [handlingCharges, setHandlingCharges] = useState(initialRates.handlingCharges ?? 0);
+  const [handlingCharges, setHandlingCharges] = useState(
+    initialRates.handlingCharges ?? 0,
+  );
   const [awbCharges, setAwbCharges] = useState(initialRates.awbCharges ?? 0);
-  const [deliveryCharges, setDeliveryCharges] = useState(initialRates.deliveryCharges ?? 0);
+  const [deliveryCharges, setDeliveryCharges] = useState(
+    initialRates.deliveryCharges ?? 0,
+  );
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -1351,8 +1755,12 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
       setCustomsClearance(initialRates.customsClearance ?? 0);
       setBlCharges(initialRates.blCharges ?? 0);
       setVgmCharges(initialRates.vgmCharges ?? 0);
-      setLclCharges(initialRates.lclCharges ?? (isImportLcl ? calculatedLclAmount : 0));
-      setDoCharges(initialRates.doCharges ?? (isImportLcl ? calculatedDoAmount : 0));
+      setLclCharges(
+        initialRates.lclCharges ?? (isImportLcl ? calculatedLclAmount : 0),
+      );
+      setDoCharges(
+        initialRates.doCharges ?? (isImportLcl ? calculatedDoAmount : 0),
+      );
       setCfsCustoms(initialRates.cfsCustoms ?? 0);
       setAirFreight(initialRates.airFreight ?? 0);
       setHandlingCharges(initialRates.handlingCharges ?? 0);
@@ -1401,22 +1809,22 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
   const calculateTotal = () => {
     if (isSea) {
       return (
-        parseFloat(oceanFreight as any || 0) +
-        parseFloat(cfsCharges as any || 0) +
-        parseFloat(customsClearance as any || 0) +
-        parseFloat(blCharges as any || 0) +
-        parseFloat(vgmCharges as any || 0) +
-        parseFloat(lclCharges as any || 0) +
-        parseFloat(doCharges as any || 0) +
-        parseFloat(cfsCustoms as any || 0)
+        parseFloat((oceanFreight as any) || 0) +
+        parseFloat((cfsCharges as any) || 0) +
+        parseFloat((customsClearance as any) || 0) +
+        parseFloat((blCharges as any) || 0) +
+        parseFloat((vgmCharges as any) || 0) +
+        parseFloat((lclCharges as any) || 0) +
+        parseFloat((doCharges as any) || 0) +
+        parseFloat((cfsCustoms as any) || 0)
       );
     } else {
       return (
-        parseFloat(airFreight as any || 0) +
-        parseFloat(handlingCharges as any || 0) +
-        parseFloat(customsClearance as any || 0) +
-        parseFloat(awbCharges as any || 0) +
-        parseFloat(deliveryCharges as any || 0)
+        parseFloat((airFreight as any) || 0) +
+        parseFloat((handlingCharges as any) || 0) +
+        parseFloat((customsClearance as any) || 0) +
+        parseFloat((awbCharges as any) || 0) +
+        parseFloat((deliveryCharges as any) || 0)
       );
     }
   };
@@ -1427,7 +1835,9 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-3">
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Ocean Freight (INR)</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                Ocean Freight (INR)
+              </label>
               <CrmInput
                 type="number"
                 value={oceanFreight}
@@ -1436,7 +1846,9 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">CFS Charges (INR)</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                CFS Charges (INR)
+              </label>
               <CrmInput
                 type="number"
                 value={cfsCharges}
@@ -1445,7 +1857,9 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Custom Clearance Charges (INR)</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                Custom Clearance Charges (INR)
+              </label>
               <CrmInput
                 type="number"
                 value={customsClearance}
@@ -1454,7 +1868,9 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">BL Charges (INR)</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                BL Charges (INR)
+              </label>
               <CrmInput
                 type="number"
                 value={blCharges}
@@ -1466,7 +1882,9 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
 
           <div className="space-y-3">
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">VGM Charges (INR)</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                VGM Charges (INR)
+              </label>
               <CrmInput
                 type="number"
                 value={vgmCharges}
@@ -1532,7 +1950,9 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">CFS Customs (INR)</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                CFS Customs (INR)
+              </label>
               <CrmInput
                 type="number"
                 value={cfsCustoms}
@@ -1546,7 +1966,9 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-3">
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Air Freight (INR)</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                Air Freight (INR)
+              </label>
               <CrmInput
                 type="number"
                 value={airFreight}
@@ -1555,7 +1977,9 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Handling Charges (INR)</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                Handling Charges (INR)
+              </label>
               <CrmInput
                 type="number"
                 value={handlingCharges}
@@ -1564,7 +1988,9 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Custom Clearance Charges (INR)</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                Custom Clearance Charges (INR)
+              </label>
               <CrmInput
                 type="number"
                 value={customsClearance}
@@ -1576,7 +2002,9 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
 
           <div className="space-y-3">
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">AWB Charges (INR)</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                AWB Charges (INR)
+              </label>
               <CrmInput
                 type="number"
                 value={awbCharges}
@@ -1585,7 +2013,9 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Delivery Charges (INR)</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                Delivery Charges (INR)
+              </label>
               <CrmInput
                 type="number"
                 value={deliveryCharges}
@@ -1600,12 +2030,15 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
       {/* Summary & Save Action */}
       <div className="flex items-center justify-between pt-3 border-t border-[var(--mnx-border)]/30">
         <div className="text-sm font-semibold text-mono-text">
-          Total Estimated Rates: <span className="text-[var(--mnx-accent)] font-bold mnx-numeric">₹{calculateTotal().toLocaleString("en-IN")}</span>
+          Total Estimated Rates:{" "}
+          <span className="text-[var(--mnx-accent)] font-bold mnx-numeric">
+            ₹{calculateTotal().toLocaleString("en-IN")}
+          </span>
         </div>
         <CrmButton
           type="submit"
           disabled={isSaving}
-          className="px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-xs font-bold uppercase tracking-wide transition-all cursor-pointer shadow-md shadow-[var(--mnx-accent)]/15 hover:shadow-[0_0_0_3px_var(--mnx-accent-soft)]"
+          className="px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-xs font-bold uppercase tracking-wide transition-all cursor-pointer mnx-shadow-panel "
         >
           {isSaving ? "Saving Worksheet..." : "Save Worksheet Rates"}
         </CrmButton>

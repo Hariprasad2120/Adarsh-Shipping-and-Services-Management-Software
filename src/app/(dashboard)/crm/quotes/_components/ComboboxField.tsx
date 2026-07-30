@@ -16,14 +16,24 @@ type ComboboxFieldProps = {
   ariaLabel: string;
 };
 
-export function ComboboxField({ options, value, onChange, placeholder, disabled, ariaLabel }: ComboboxFieldProps) {
+export function ComboboxField({
+  options,
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  ariaLabel,
+}: ComboboxFieldProps) {
   const id = useId();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
   const [draftQuery, setDraftQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(0);
 
-  const selectedOption = useMemo(() => options.find((option) => option.id === value) ?? null, [options, value]);
+  const selectedOption = useMemo(
+    () => options.find((option) => option.id === value) ?? null,
+    [options, value],
+  );
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -39,7 +49,11 @@ export function ComboboxField({ options, value, onChange, placeholder, disabled,
   const filteredOptions = useMemo(() => {
     const normalized = draftQuery.trim().toLowerCase();
     if (!normalized) return options;
-    return options.filter((option) => `${option.label} ${option.description ?? ""}`.toLowerCase().includes(normalized));
+    return options.filter((option) =>
+      `${option.label} ${option.description ?? ""}`
+        .toLowerCase()
+        .includes(normalized),
+    );
   }, [options, draftQuery]);
 
   const handleSelect = (optionId: string) => {
@@ -49,7 +63,7 @@ export function ComboboxField({ options, value, onChange, placeholder, disabled,
     setOpen(false);
   };
 
-  const inputValue = open ? draftQuery : selectedOption?.label ?? "";
+  const inputValue = open ? draftQuery : (selectedOption?.label ?? "");
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -93,7 +107,9 @@ export function ComboboxField({ options, value, onChange, placeholder, disabled,
 
             if (event.key === "ArrowDown") {
               event.preventDefault();
-              setHighlightedIndex((current) => Math.min(current + 1, filteredOptions.length - 1));
+              setHighlightedIndex((current) =>
+                Math.min(current + 1, filteredOptions.length - 1),
+              );
             }
 
             if (event.key === "ArrowUp") {
@@ -118,7 +134,7 @@ export function ComboboxField({ options, value, onChange, placeholder, disabled,
         <div
           id={`${id}-listbox`}
           role="listbox"
-          className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-[var(--mnx-border)] bg-mono-card py-1 shadow-[0_8px_20px_var(--mnx-border)]"
+          className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-[var(--mnx-border)] bg-mono-card py-1 mnx-shadow-panel"
         >
           {filteredOptions.length ? (
             filteredOptions.map((option, index) => {
@@ -133,22 +149,34 @@ export function ComboboxField({ options, value, onChange, placeholder, disabled,
                   aria-selected={isSelected}
                   className={cn(
                     "flex w-full items-start justify-between gap-3 px-3 py-2 text-left text-[13px]",
-                    isActive ? "bg-[var(--mnx-accent)]/10" : "hover:bg-[var(--mnx-surface)]",
+                    isActive
+                      ? "bg-[var(--mnx-accent)]/10"
+                      : "hover:bg-[var(--mnx-surface)]",
                   )}
                   onMouseEnter={() => setHighlightedIndex(index)}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => handleSelect(option.id)}
                 >
                   <span>
-                    <span className="block text-[var(--mnx-text-strong)]">{option.label}</span>
-                    {option.description ? <span className="block text-[11px] text-[var(--mnx-text-muted)]">{option.description}</span> : null}
+                    <span className="block text-[var(--mnx-text-strong)]">
+                      {option.label}
+                    </span>
+                    {option.description ? (
+                      <span className="block text-[11px] text-[var(--mnx-text-muted)]">
+                        {option.description}
+                      </span>
+                    ) : null}
                   </span>
-                  {isSelected ? <Check className="mt-0.5 size-4 text-[var(--mnx-accent)]" /> : null}
+                  {isSelected ? (
+                    <Check className="mt-0.5 size-4 text-[var(--mnx-accent)]" />
+                  ) : null}
                 </CrmButton>
               );
             })
           ) : (
-            <div className="px-3 py-2 text-[12px] text-[var(--mnx-text-muted)]">No matching records found.</div>
+            <div className="px-3 py-2 text-[12px] text-[var(--mnx-text-muted)]">
+              No matching records found.
+            </div>
           )}
         </div>
       ) : null}

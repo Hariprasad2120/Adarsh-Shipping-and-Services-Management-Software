@@ -2,13 +2,18 @@
 
 import { useRouter } from "next/navigation";
 import React, { ComponentProps } from "react";
-import { DataTableRow } from "./data-table";
+import { DataTableRow } from "./monolith/workspace-data-table";
 
 type ClickableRowProps = ComponentProps<typeof DataTableRow> & {
   href: string;
 };
 
-export function ClickableRow({ href, children, className, ...props }: ClickableRowProps) {
+export function ClickableRow({
+  href,
+  children,
+  className,
+  ...props
+}: ClickableRowProps) {
   const router = useRouter();
 
   const handleNavigate = (e: React.MouseEvent<HTMLTableRowElement>) => {
@@ -55,7 +60,7 @@ export function ClickableRow({ href, children, className, ...props }: ClickableR
       role="link"
       onClick={handleNavigate}
       onKeyDown={handleKeyDown}
-      className={`monolith-row-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F9D972] focus-visible:ring-inset ${className || ""}`}
+      className={`mnx-row-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mnx-accent)] focus-visible:ring-inset ${className || ""}`}
     >
       {children}
     </DataTableRow>

@@ -11,23 +11,6 @@ const geistSans = localFont({
   display: "swap",
 });
 
-const kionaSans = localFont({
-  src: [
-    {
-      path: "../../public/Kiona-Regular.ttf",
-      style: "normal",
-      weight: "100 900",
-    },
-    {
-      path: "../../public/Kiona-Itallic.ttf",
-      style: "italic",
-      weight: "100 900",
-    },
-  ],
-  variable: "--font-kiona-sans",
-  display: "swap",
-});
-
 const geistMono = localFont({
   src: "../../node_modules/next/dist/next-devtools/server/font/geist-mono-latin.woff2",
   variable: "--font-geist-mono",
@@ -49,7 +32,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${kionaSans.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
         <script
@@ -59,18 +42,18 @@ export default function RootLayout({
                 var root = document.documentElement;
                 var savedTheme = localStorage.getItem('theme');
                 var resolvedTheme =
-                  savedTheme === 'night' || savedTheme === 'violet' || savedTheme === 'light' || savedTheme === 'purple'
+                  savedTheme === 'night' || savedTheme === 'violet' || savedTheme === 'light'
                     ? savedTheme
                     : 'night';
-                root.classList.remove('dark', 'light', 'night', 'violet', 'purple', 'theme-light', 'theme-night', 'theme-violet', 'theme-purple');
+                root.classList.remove('dark', 'light', 'night', 'violet', 'theme-light', 'theme-night', 'theme-violet');
                 root.classList.add(resolvedTheme, 'theme-' + resolvedTheme);
-                root.style.colorScheme = resolvedTheme === 'light' || resolvedTheme === 'purple' ? 'light' : 'dark';
+                root.style.colorScheme = resolvedTheme === 'light' ? 'light' : 'dark';
               } catch (_) {}
             `,
           }}
         />
       </head>
-      <body className="monolith-app min-h-full flex flex-col">
+      <body className="mnx-root min-h-full flex flex-col">
         {children}
         <ScrollNavigator />
         <Toaster

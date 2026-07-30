@@ -16,8 +16,8 @@ import { MonaInput } from "./mona-input";
  * - bg-mono-card, bg-mono-soft for panels
  * - border-mono-border for borders
  * - text-mono-text, text-mono-muted for text
- * - #F9D972 accent for interactive elements
- * - Kiona font for header title
+ * - Semantic Monolith accent tokens for interactive elements
+ * - Shared Monolith display typography for the header title
  * - var(--radius-2xl) = 16px for panel radius
  * - var(--shadow-ambient) for shadows
  * - Works in both light and dark themes
@@ -88,7 +88,7 @@ export function MonaChat() {
 
   const handleSend = useCallback(
     (text: string) => sendMessage(text),
-    [sendMessage]
+    [sendMessage],
   );
 
   // Don't render until mounted (SSR safety for portal)
@@ -117,9 +117,7 @@ export function MonaChat() {
                   className="mnx-floating-surface mnx-floating-tooltip absolute bottom-full right-0 mb-3 whitespace-nowrap px-4 py-2 text-[12px] font-medium"
                 >
                   👋 Hi! I&apos;m <strong>Mona</strong>, your AI companion
-                  <div
-                    className="mnx-floating-tooltip-arrow absolute -bottom-1.5 right-6 h-3 w-3 rotate-45 border-r border-b"
-                  />
+                  <div className="mnx-floating-tooltip-arrow absolute -bottom-1.5 right-6 h-3 w-3 rotate-45 border-r border-b" />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -127,11 +125,12 @@ export function MonaChat() {
             <button
               type="button"
               onClick={toggleChat}
-              className="group relative flex items-center justify-center rounded-full bg-mono-soft shadow-2xl transition-shadow hover:shadow-[0_0_0_4px_rgba(0,206,196,0.2)]"
+              className="group mnx-shadow-panel relative flex items-center justify-center rounded-full bg-mono-soft transition-shadow"
               style={{
                 width: 56,
                 height: 56,
-                border: "2px solid rgba(0, 206, 196, 0.4)",
+                border:
+                  "2px solid color-mix(in srgb, var(--mnx-accent) 40%, transparent)",
               }}
               title="Chat with Mona (Ctrl+M)"
               id="mona-fab"
@@ -141,7 +140,10 @@ export function MonaChat() {
               {/* Pulse ring */}
               <motion.div
                 className="absolute inset-0 rounded-full"
-                style={{ border: "2px solid rgba(0, 206, 196, 0.25)" }}
+                style={{
+                  border:
+                    "2px solid color-mix(in srgb, var(--mnx-accent) 25%, transparent)",
+                }}
                 animate={{ scale: [1, 1.3], opacity: [0.6, 0] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
               />
@@ -170,15 +172,14 @@ export function MonaChat() {
             <div
               className="relative flex shrink-0 items-center gap-3 border-b border-mono-border px-4 py-3"
               style={{
-                background:
-                  "linear-gradient(135deg, rgba(0, 206, 196, 0.04), rgba(56, 189, 248, 0.02))",
+                background: "var(--mn-gradient-glass)",
               }}
             >
               <MonaAvatar size={36} isActive={isLoading} showRing={false} />
               <div className="flex flex-1 flex-col">
                 <span
                   className="text-[14px] font-bold tracking-wide text-mono-text"
-                  style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
+                  style={{ fontFamily: "var(--mn-font-sans)" }}
                 >
                   MONA
                 </span>
@@ -187,7 +188,7 @@ export function MonaChat() {
                   type="button"
                   onClick={() => setShowModelPicker((v) => !v)}
                   className="flex items-center gap-1 text-[10px] tracking-wider transition-colors hover:opacity-80"
-                  style={{ color: "#F9D972" }}
+                  style={{ color: "var(--mnx-accent)" }}
                   title="Switch AI model"
                 >
                   {isLoading ? (
@@ -195,8 +196,13 @@ export function MonaChat() {
                   ) : (
                     <>
                       <Cpu size={10} />
-                      {models.find((m) => m.id === currentModel)?.name?.toUpperCase() || "MONOLITH COMPANION"}
-                      <ChevronDown size={10} className={`transition-transform ${showModelPicker ? "rotate-180" : ""}`} />
+                      {models
+                        .find((m) => m.id === currentModel)
+                        ?.name?.toUpperCase() || "MONOLITH COMPANION"}
+                      <ChevronDown
+                        size={10}
+                        className={`transition-transform ${showModelPicker ? "rotate-180" : ""}`}
+                      />
                     </>
                   )}
                 </button>
@@ -227,21 +233,27 @@ export function MonaChat() {
                         }}
                         className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors ${
                           m.id === currentModel
-                            ? "bg-[rgba(0,206,196,0.08)]"
+                            ? "mnx-bg-accent-soft"
                             : "hover:bg-mono-soft"
                         }`}
                       >
                         <Cpu
                           size={14}
                           style={{
-                            color: m.id === currentModel ? "#F9D972" : "var(--color-on-surface-variant)",
+                            color:
+                              m.id === currentModel
+                                ? "var(--mnx-accent)"
+                                : "var(--mnx-text-muted)",
                           }}
                         />
                         <div className="flex flex-col">
                           <span
                             className="text-[12px] font-medium"
                             style={{
-                              color: m.id === currentModel ? "#F9D972" : "var(--color-on-surface)",
+                              color:
+                                m.id === currentModel
+                                  ? "var(--mnx-accent)"
+                                  : "var(--mnx-text)",
                             }}
                           >
                             {m.name}
@@ -251,7 +263,7 @@ export function MonaChat() {
                           </span>
                         </div>
                         {m.id === currentModel && (
-                          <span className="ml-auto text-[9px] font-medium tracking-wider" style={{ color: "#F9D972" }}>
+                          <span className="mnx-text-accent ml-auto text-[9px] font-medium tracking-wider">
                             ACTIVE
                           </span>
                         )}
@@ -265,8 +277,8 @@ export function MonaChat() {
               <button
                 type="button"
                 onClick={() => setTtsEnabled((v) => !v)}
-                className="rounded-lg p-1.5 text-mono-muted transition-colors hover:bg-[rgba(0,206,196,0.08)]"
-                style={ttsEnabled ? { color: "#F9D972" } : undefined}
+                className="rounded-lg p-1.5 text-mono-muted transition-colors hover:bg-mono-soft"
+                style={ttsEnabled ? { color: "var(--mnx-accent)" } : undefined}
                 title={ttsEnabled ? "Disable voice" : "Enable voice"}
               >
                 {ttsEnabled ? <Volume2 size={16} /> : <VolumeOff size={16} />}
@@ -276,7 +288,7 @@ export function MonaChat() {
               <button
                 type="button"
                 onClick={clearChat}
-                className="rounded-lg p-1.5 text-mono-muted transition-colors hover:bg-[rgba(0,206,196,0.08)]"
+                className="rounded-lg p-1.5 text-mono-muted transition-colors hover:bg-mono-soft"
                 title="Clear conversation"
               >
                 <Trash2 size={16} />
@@ -286,7 +298,7 @@ export function MonaChat() {
               <button
                 type="button"
                 onClick={closeChat}
-                className="rounded-lg p-1.5 text-mono-muted transition-colors hover:bg-[rgba(0,206,196,0.08)]"
+                className="rounded-lg p-1.5 text-mono-muted transition-colors hover:bg-mono-soft"
                 title="Close (Ctrl+M)"
               >
                 <X size={16} />
@@ -302,14 +314,7 @@ export function MonaChat() {
               {/* Error state */}
               {error && (
                 <div className="px-4 py-2">
-                  <div
-                    className="rounded-xl px-3 py-2 text-[12px]"
-                    style={{
-                      background: "rgba(239, 68, 68, 0.08)",
-                      color: "#ef4444",
-                      border: "1px solid rgba(239, 68, 68, 0.2)",
-                    }}
-                  >
+                  <div className="mnx-tone-danger rounded-xl px-3 py-2 text-[12px]">
                     {error}
                   </div>
                 </div>
@@ -331,6 +336,6 @@ export function MonaChat() {
         )}
       </AnimatePresence>
     </>,
-    document.body
+    document.body,
   );
 }
