@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/monolith/badge";
 import { Button } from "@/components/monolith/button";
 import { Card, CardContent } from "@/components/monolith/card";
-import { DemoFillButton } from "@/components/demo-fill-button";
+import { DemoFillButton } from "@/components/shared/demo-fill-button";
 import { Input } from "@/components/monolith/input";
 import { Label } from "@/components/monolith/label";
 import {

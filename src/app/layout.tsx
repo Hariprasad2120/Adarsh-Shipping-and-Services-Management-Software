@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Toaster } from "sonner";
-import { ScrollNavigator } from "@/components/scroll-navigator";
+import { ScrollNavigator } from "@/components/navigation/scroll-navigator";
 import "./globals.css";
 
 const geistSans = localFont({

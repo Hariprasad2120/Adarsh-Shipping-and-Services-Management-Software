@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
-import { AccountingCommercialDocumentForm } from "@/components/monolith/accounting-commercial-document-form";
+import { AccountingCommercialDocumentForm } from "@/modules/accounting/components/accounting-commercial-document-form";
 import {
   AccountingAlert,
   AccountingRoutePageHeader,

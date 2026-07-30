@@ -21,7 +21,7 @@ import {
   DataTableHead,
   DataTableHeader,
   DataTableToolbar,
-} from "@/components/data-table";
+} from "@/components/shared/data-table";
 import { getChaJobStatusBadgeVariant, getChaPriorityBadgeVariant, getChaStageBadgeVariant } from "@/lib/cha-badges";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import {

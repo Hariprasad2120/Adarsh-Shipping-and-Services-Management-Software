@@ -21,7 +21,7 @@ import {
   DataTableHead,
   DataTableHeader,
   DataTableToolbar,
-} from "@/components/data-table";
+} from "@/components/shared/data-table";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { getCustomerPortalDashboardData } from "@/modules/customer-portal/dashboard";
 

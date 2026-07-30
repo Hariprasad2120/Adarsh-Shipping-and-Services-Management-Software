@@ -8,8 +8,8 @@ import {
   WorkspacePageHeader,
   WorkspaceSectionHeading,
 } from "@/components/monolith";
-import { RootModuleControlClient } from "@/components/root-module-control-client";
-import { RootSignOutButton } from "@/components/root-signout-button";
+import { RootModuleControlClient } from "@/modules/core/components/root-module-control-client";
+import { RootSignOutButton } from "@/modules/core/components/root-signout-button";
 import { MODULE_CONTROL_ITEMS } from "@/modules/core/organisation/module-config";
 import { getEnabledModuleIds } from "@/modules/core/organisation/module-settings";
 import { isRootControlEmail } from "@/lib/root-access";

@@ -5,7 +5,7 @@ import { PeopleControlTable as MnxTable } from "@/components/monolith/people-con
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { FileSpreadsheet, IndianRupee, TrendingUp } from "lucide-react";
-import { DemoFillButton } from "@/components/demo-fill-button";
+import { DemoFillButton } from "@/components/shared/demo-fill-button";
 import {
   Card,
   CardContent,

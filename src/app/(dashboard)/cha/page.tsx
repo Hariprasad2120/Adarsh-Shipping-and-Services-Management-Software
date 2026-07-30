@@ -1,4 +1,4 @@
-import { ClickableRow } from "@/components/clickable-row";
+import { ClickableRow } from "@/components/shared/clickable-row";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";

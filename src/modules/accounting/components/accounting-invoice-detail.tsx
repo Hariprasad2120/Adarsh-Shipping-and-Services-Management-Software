@@ -22,7 +22,7 @@ import {
   AccountingSection,
   AccountingStatus,
   AccountingTable,
-} from "./accounting-workspace";
+} from "@/components/monolith/accounting-workspace";
 
 export function AccountingInvoiceDetail({
   invoice,

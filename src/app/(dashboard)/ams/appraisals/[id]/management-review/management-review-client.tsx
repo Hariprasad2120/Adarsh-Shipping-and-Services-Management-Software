@@ -10,7 +10,7 @@ import {
   CriteriaPointsForm,
   CriteriaPointsView,
 } from "@/components/ams/criteria-points-form";
-import { DemoFillButton } from "@/components/demo-fill-button";
+import { DemoFillButton } from "@/components/shared/demo-fill-button";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { Button } from "@/components/monolith/button";
 import { Input } from "@/components/monolith/input";

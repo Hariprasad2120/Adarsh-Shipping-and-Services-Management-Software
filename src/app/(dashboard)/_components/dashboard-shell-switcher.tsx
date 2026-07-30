@@ -1,10 +1,10 @@
 "use client";
 
-import { DashboardChromeProvider } from "@/components/dashboard-chrome";
-import { MainShell } from "@/components/main-shell";
+import { DashboardChromeProvider } from "@/components/layout/dashboard-chrome";
+import { MainShell } from "@/components/layout/main-shell";
 import { MonolithAppShell } from "@/components/monolith/app-shell";
-import { PageAnimator } from "@/components/page-animator";
-import { Sidebar } from "@/components/sidebar";
+import { PageAnimator } from "@/components/feedback/page-animator";
+import { Sidebar } from "@/components/layout/sidebar";
 import { usePathname } from "next/navigation";
 import type { Caps } from "@/lib/rbac";
 import { DashboardShell } from "./dashboard-shell";

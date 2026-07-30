@@ -7,7 +7,7 @@ import {
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { DemoFillButton } from "@/components/demo-fill-button";
+import { DemoFillButton } from "@/components/shared/demo-fill-button";
 import {
   Badge,
   DataTable,

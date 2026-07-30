@@ -10,7 +10,7 @@ const CreateJobDialog = dynamic(
   () => import("@/components/cha/create-job-dialog").then((module) => module.CreateJobDialog),
   { ssr: false },
 );
-import { ClickableRow } from "@/components/clickable-row";
+import { ClickableRow } from "@/components/shared/clickable-row";
 import {
   DataTable,
   DataTableBody,

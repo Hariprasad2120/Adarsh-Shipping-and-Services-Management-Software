@@ -1,5 +1,5 @@
 import { NotificationProvider } from "@/components/notifications/notification-provider";
-import { SessionSync } from "@/components/session-sync";
+import { SessionSync } from "@/components/providers/session-sync";
 import { CapsProvider } from "@/lib/caps-context";
 import { getDashboardContext } from "@/lib/dashboard-context";
 import { getManagedModuleSectionIdForPath } from "@/modules/core/organisation/module-config";

@@ -147,14 +147,14 @@ import {
   WorkspaceTextarea,
 } from "@/components/monolith";
 import {
-  AccountingCommercialDocumentForm,
   AccountingDeleteAction,
-  AccountingInvoiceDetail,
-  AccountingInvoiceForm,
   AccountingItemDetail,
   AccountingItemsList,
   AccountingNewItemForm,
 } from "@/components/monolith";
+import { AccountingCommercialDocumentForm } from "@/modules/accounting/components/accounting-commercial-document-form";
+import { AccountingInvoiceDetail } from "@/modules/accounting/components/accounting-invoice-detail";
+import { AccountingInvoiceForm } from "@/modules/accounting/components/accounting-invoice-form";
 
 type RuntimeModule = Record<string, unknown>;
 

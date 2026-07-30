@@ -5,7 +5,7 @@ import { useEffect, useMemo, memo, useState, useSyncExternalStore } from "react"
 import {CalendarDays,Clock3,LayoutGrid,Bell,Menu,Settings,Search,} from "lucide-react";
 import { createPortal } from "react-dom";
 import { useCaps } from "@/lib/caps-context";
-import { useDashboardChrome } from "@/components/dashboard-chrome";
+import { useDashboardChrome } from "@/components/layout/dashboard-chrome";
 import { getActiveItemHref, getVisibleSections, matchesPath } from "@/lib/navigation";
 import { getBreadcrumbLabels, subscribeBreadcrumb } from "@/lib/breadcrumb-store";
 import { getPathLabel } from "@/lib/route-labels";

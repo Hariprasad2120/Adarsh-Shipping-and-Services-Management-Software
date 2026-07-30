@@ -8,7 +8,7 @@ import {
   LoaderCircle,
   ShieldCheck,
 } from "lucide-react";
-import { DemoFillButton } from "@/components/demo-fill-button";
+import { DemoFillButton } from "@/components/shared/demo-fill-button";
 import {
   Button,
   Input,

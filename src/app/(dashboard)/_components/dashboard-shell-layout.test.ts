@@ -24,7 +24,7 @@ describe("CHA dashboard shell layout safeguards", () => {
       "utf8",
     );
     const pageAnimatorSource = readFileSync(
-      join(repoRoot, "src/components/page-animator.tsx"),
+      join(repoRoot, "src/components/feedback/page-animator.tsx"),
       "utf8",
     );
 
@@ -47,15 +47,15 @@ describe("CHA dashboard shell layout safeguards", () => {
       "utf8",
     );
     const mainShellSource = readFileSync(
-      join(repoRoot, "src/components/main-shell.tsx"),
+      join(repoRoot, "src/components/layout/main-shell.tsx"),
       "utf8",
     );
     const sidebarSource = readFileSync(
-      join(repoRoot, "src/components/sidebar.tsx"),
+      join(repoRoot, "src/components/layout/sidebar.tsx"),
       "utf8",
     );
     const welcomeBarSource = readFileSync(
-      join(repoRoot, "src/components/welcome-bar.tsx"),
+      join(repoRoot, "src/components/layout/welcome-bar.tsx"),
       "utf8",
     );
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { WelcomeBar } from "@/components/welcome-bar";
-import { AutoBreadcrumb } from "@/components/auto-breadcrumb";
+import { WelcomeBar } from "@/components/layout/welcome-bar";
+import { AutoBreadcrumb } from "@/components/navigation/auto-breadcrumb";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";

@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { performLogout } from "@/lib/logout";
 import { useMemo, useState, useEffect, useRef } from "react";
 import type { Caps } from "@/lib/rbac";
-import { useDashboardChrome } from "@/components/dashboard-chrome";
+import { useDashboardChrome } from "@/components/layout/dashboard-chrome";
 import { cn } from "@/lib/utils";
 import { getActiveItemHref, getVisibleSections, matchesPath } from "@/lib/navigation";
 import {Sun,Moon,LogOut,ShieldCheck,ChevronDown,ChevronRight,ChevronLeft,X,Palette,Sparkles,} from "lucide-react";

@@ -18,7 +18,7 @@ import {
   DataTableHead,
   DataTableHeader,
   DataTableToolbar,
-} from "@/components/data-table";
+} from "@/components/shared/data-table";
 import {
   getChaJobStatusBadgeVariant,
   getChaPriorityBadgeVariant,

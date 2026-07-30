@@ -71,8 +71,8 @@ const routeSources = [
   "src/app/google-chat-link/page.tsx",
   "src/app/verify/[id]/page.tsx",
   "src/components/auth/monolith-logistics-login.tsx",
-  "src/components/root-module-control-client.tsx",
-  "src/components/root-signout-button.tsx",
+  "src/modules/core/components/root-module-control-client.tsx",
+  "src/modules/core/components/root-signout-button.tsx",
 ];
 
 for (const relativePath of routeSources) {
@@ -198,7 +198,7 @@ assert(
   read("src/app/globals.css").includes("main:not(.mnx-public-shell)"),
   "Legacy global form rules are not scoped away from public Monolith pages.",
 );
-const scrollNavigator = read("src/components/scroll-navigator.tsx");
+const scrollNavigator = read("src/components/navigation/scroll-navigator.tsx");
 for (const routeSignal of [
   'pathname === "/"',
   'pathname === "/login"',
@@ -214,7 +214,7 @@ for (const routeSignal of [
 
 const behaviorSources = {
   root: read("src/app/page.tsx"),
-  rootControl: read("src/components/root-module-control-client.tsx"),
+  rootControl: read("src/modules/core/components/root-module-control-client.tsx"),
   login: read("src/components/auth/monolith-logistics-login.tsx"),
   setup: read("src/app/(auth)/setup/page.tsx"),
   verify: read("src/app/verify/[id]/page.tsx"),

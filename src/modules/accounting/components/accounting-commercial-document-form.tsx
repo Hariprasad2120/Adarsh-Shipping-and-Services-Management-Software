@@ -6,7 +6,7 @@ import { type FormEvent, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { MOCK_ITEMS } from "@/lib/items/mock-data";
 import { createInvoiceAction } from "@/modules/crm/actions";
-import { DateInput } from "./date-input";
+import { DateInput } from "@/components/monolith/date-input";
 import {
   AccountingAction,
   AccountingDetail,
@@ -17,7 +17,7 @@ import {
   AccountingSelect,
   AccountingTable,
   AccountingTextarea,
-} from "./accounting-workspace";
+} from "@/components/monolith/accounting-workspace";
 
 type Option = { id: string; name: string };
 type ContactOption = Option & { accountId?: string | null };

@@ -13,7 +13,7 @@ import {
   DataTableHead,
   DataTableHeader,
   DataTableToolbar,
-} from "@/components/data-table";
+} from "@/components/shared/data-table";
 import type { getCustomerPortalShipmentDetailData } from "@/modules/customer-portal/shipments";
 
 type ChecklistItem = NonNullable<Awaited<ReturnType<typeof getCustomerPortalShipmentDetailData>>>["checklists"][number];

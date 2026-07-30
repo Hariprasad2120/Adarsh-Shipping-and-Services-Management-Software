@@ -80,10 +80,10 @@ for (const requiredFile of [
   "src/app/(dashboard)/accounting/loading.tsx",
   "src/app/(dashboard)/accounting/error.tsx",
   "src/components/monolith/accounting-workspace.tsx",
-  "src/components/monolith/accounting-invoice-form.tsx",
-  "src/components/monolith/accounting-invoice-detail.tsx",
+  "src/modules/accounting/components/accounting-invoice-form.tsx",
+  "src/modules/accounting/components/accounting-invoice-detail.tsx",
   "src/components/monolith/accounting-items.tsx",
-  "src/components/monolith/accounting-commercial-document-form.tsx",
+  "src/modules/accounting/components/accounting-commercial-document-form.tsx",
   "src/components/monolith/accounting-delete-action.tsx",
 ]) {
   assert(existsSync(path.join(repositoryRoot, requiredFile)), `Missing ${requiredFile}.`);
@@ -112,10 +112,10 @@ for (const component of [
 const scopedSources = [
   ...walk(accountingRoot, (file) => /\.(?:ts|tsx)$/.test(file)),
   ...[
-    "src/components/monolith/accounting-invoice-form.tsx",
-    "src/components/monolith/accounting-invoice-detail.tsx",
+    "src/modules/accounting/components/accounting-invoice-form.tsx",
+    "src/modules/accounting/components/accounting-invoice-detail.tsx",
     "src/components/monolith/accounting-items.tsx",
-    "src/components/monolith/accounting-commercial-document-form.tsx",
+    "src/modules/accounting/components/accounting-commercial-document-form.tsx",
     "src/components/monolith/accounting-delete-action.tsx",
   ].map((relativePath) => path.join(repositoryRoot, relativePath)),
 ];
@@ -152,7 +152,7 @@ const behaviorSources = {
   journalDetail: read("src/app/(dashboard)/accounting/journal-entries/[id]/detail-client.tsx"),
   paymentNew: read("src/app/(dashboard)/accounting/payment-entries/new/new-payment-client.tsx"),
   paymentDetail: read("src/app/(dashboard)/accounting/payment-entries/[id]/detail-client.tsx"),
-  invoices: read("src/components/monolith/accounting-invoice-form.tsx"),
+  invoices: read("src/modules/accounting/components/accounting-invoice-form.tsx"),
   quotations: read("src/app/(dashboard)/accounting/quotations/quotations-client.tsx"),
   reports: read("src/app/(dashboard)/accounting/reports/reports-client.tsx"),
   settings: read("src/app/(dashboard)/accounting/settings/settings-client.tsx"),
