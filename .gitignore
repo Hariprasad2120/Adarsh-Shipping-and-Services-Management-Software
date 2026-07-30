@@ -89,6 +89,9 @@ pnpm-lock.yaml
 !/docs/accounting/phase-5-operational-ui.md
 !/docs/accounting/phase-6-production-readiness.md
 !/docs/accounting/phase-6-cutover-runbook.md
+!/docs/accounting/phase-7-rollout-readiness.md
+!/docs/accounting/phase-7-operational-runbook.md
+!/docs/accounting/phase-7-traceability.md
 !/docs/accounting/contracts/
 
 # sensitive data output
@@ -103,6 +106,8 @@ pnpm-lock.yaml
 !tsconfig.ui-migration.json
 !next.config*.json
 !/docs/accounting/contracts/accounting-import-v1.schema.json
+!/docs/accounting/contracts/accounting-phase7-policy-register.v1.json
+!/docs/accounting/contracts/accounting-phase7-manifest.synthetic.v1.json
 !scripts/fixtures/accounting-phase6/contract.synthetic.json
 !scripts/fixtures/accounting-phase6/mappings.synthetic.json
 !scripts/fixtures/accounting-phase6/readiness.synthetic.json

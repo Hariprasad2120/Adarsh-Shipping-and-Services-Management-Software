@@ -1,0 +1,44 @@
+{
+  "manifestVersion": "accounting-rollout-manifest/v1",
+  "sourceContractVersion": "accounting-import/v1",
+  "mappingVersion": "synthetic-mapping/v1",
+  "sourceRecordCounts": {
+    "ALLOCATION": 4,
+    "CREDIT_NOTE": 2,
+    "DEBIT_NOTE": 2,
+    "PAYMENT": 3,
+    "PURCHASE_INVOICE": 6,
+    "RECEIPT": 3,
+    "SALES_INVOICE": 8
+  },
+  "sourceChecksums": [
+    {
+      "artifactId": "phase7-small-functional-contract",
+      "sha256": "4afbfb699bbde274d73fefb12b1606f30bf205ade460535138e4ca9f3f08eba2"
+    }
+  ],
+  "extractionTimestamp": "2026-07-30T00:00:00.000Z",
+  "organizationId": "stg_org_monolith_accounting",
+  "legalEntityIds": ["stg_accounting_legal_entity"],
+  "dependencyGraphHash": "6a843b6a7bf9bc718ca0f95ccd3790d42f2973084bf29ea82d5c2e00e924f873",
+  "attachmentInventory": {
+    "count": 0,
+    "totalBytes": 0,
+    "inventoryHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "verificationStatus": "NOT_APPLICABLE"
+  },
+  "policyDecisionVersion": "accounting-rollout-policy-register/v1",
+  "policyDecisionHash": "40ebe78c74a56babf4757b7b76a12226660f79e04c8870e7d025a618aee2f5c5",
+  "dryRun": {
+    "status": "PASSED",
+    "manifestHash": "de487b63fa8ee06079d167e08d0fdeb4a58e6f4c733195814d268e2701d4199c",
+    "outcomeHash": "e6a2ff6e01ca04b5d923346e44cacbc78b3dc1150ce52d6c717902e9aa37ff01"
+  },
+  "reconciliation": {
+    "status": "PASSED",
+    "evidenceHash": "95ad778763afc26dd60e5bf8a364984dd0c74c50f70f5356a94f40ef20d0a4fb",
+    "exceptionCount": 0
+  },
+  "executionToolVersion": "accounting-phase7-rehearsal/v1",
+  "targetApplicationVersion": "498eb8364858da2c45e2b4c86d09098ae05f2443"
+}
