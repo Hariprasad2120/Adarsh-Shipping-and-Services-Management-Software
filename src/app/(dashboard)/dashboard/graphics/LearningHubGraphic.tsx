@@ -46,7 +46,7 @@ export const LearningHubGraphic: React.FC<{ isHovered?: boolean }> = ({ isHovere
             <div className="mnx-dg-line-faint h-1.5 w-2/3 rounded-full" />
           </div>
           <div className="flex justify-end">
-            <motion.div 
+            <motion.div
               className="mnx-dg-dot w-3.5 h-3.5 rounded-full"
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 2, repeat: Infinity }}

@@ -50,7 +50,7 @@ export const PeopleOperationsGraphic: React.FC<{ isHovered?: boolean }> = ({ isH
         </motion.div>
 
         {/* Floating glowing glass dot node */}
-        <motion.div 
+        <motion.div
           className="mnx-dg-dot absolute z-30 w-3 h-3 rounded-full border-2"
           style={{ top: '24%', left: '16%' }}
           animate={{

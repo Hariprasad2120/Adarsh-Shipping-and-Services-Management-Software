@@ -219,7 +219,7 @@ export function DealDetailWrapper({
                 ) : (
                   <div className="space-y-3 text-xs">
                     <p className="text-mono-muted">
-                      This deal is won! You can now generate a Sales Invoice to record accounts receivable and request payment.
+                      This deal is won. Prepare an immutable invoice request for Accounting to validate, approve, and number.
                     </p>
                     <CrmButton
                       disabled={isGeneratingInvoice}
@@ -228,20 +228,20 @@ export function DealDetailWrapper({
                           setIsGeneratingInvoice(true);
                           const res = await generateInvoiceFromDealAction(deal.id);
                           if (res.ok) {
-                            toast.success("Sales Invoice generated successfully!");
+                            toast.success("Accounting invoice request prepared.");
                             router.refresh();
                           } else {
                             toast.error(res.error);
                           }
                         } catch (err: any) {
-                          toast.error(err.message || "Failed to generate invoice");
+                          toast.error(err.message || "Failed to prepare invoice request");
                         } finally {
                           setIsGeneratingInvoice(false);
                         }
                       }}
                       className="bg-[var(--mnx-accent)] text-mono-text hover:bg-[var(--mnx-accent)] hover:shadow-[0_0_0_3px_var(--mnx-accent-soft)] px-4 py-2.5 rounded-xl text-xs uppercase tracking-wide transition-all w-full cursor-pointer disabled:opacity-50"
                     >
-                      {isGeneratingInvoice ? "Generating Invoice..." : "Generate Sales Invoice"}
+                      {isGeneratingInvoice ? "Preparing Request..." : "Prepare Invoice Request"}
                     </CrmButton>
                   </div>
                 )}

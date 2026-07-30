@@ -11,7 +11,7 @@ export const CustomerPipelineGraphic: React.FC<{ isHovered?: boolean }> = ({ isH
         {/* SVG wires connecting nodes */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 192 160">
           <path d="M 96 45 L 96 85 M 96 85 L 50 120 M 96 85 L 142 120" fill="none" stroke="#d6bd83" strokeWidth="2" strokeDasharray="3 3" />
-          
+
           <motion.circle
             r="3.5"
             fill="#e5b33a"

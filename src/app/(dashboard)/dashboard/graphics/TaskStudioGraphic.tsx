@@ -25,7 +25,7 @@ export const TaskStudioGraphic: React.FC<TaskStudioGraphicProps> = ({
 
       {/* Container for the stacked tilted task cards (Exact structure of Image 2) */}
       <div className="relative z-10 w-full max-w-sm h-44 flex items-center justify-center">
-        
+
         {/* CARD 1 (TOP TILTED CARD - Image 2) */}
         <motion.div
           className="absolute z-10 w-64 sm:w-72 rounded-2xl bg-white/85 backdrop-blur-md border border-[#e4d7b5] p-4 shadow-[0_14px_32px_-8px_rgba(190,150,70,0.22)] flex items-center gap-3.5"
@@ -54,7 +54,7 @@ export const TaskStudioGraphic: React.FC<TaskStudioGraphicProps> = ({
           </div>
 
           {/* Golden glowing dot node near edge */}
-          <motion.div 
+          <motion.div
             className="w-3 h-3 rounded-full bg-[#e8b535] border-2 border-white shadow-[0_0_10px_rgba(232,181,53,0.9)] flex-shrink-0"
             animate={{ scale: [1, 1.25, 1] }}
             transition={{ duration: 2, repeat: Infinity }}

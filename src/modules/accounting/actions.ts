@@ -5,9 +5,11 @@ import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import * as accService from "./service";
 import * as accReports from "./reports";
-import { db } from "@/lib/db";
-import { getNow } from "@/lib/clock";
-import { Prisma } from "@/generated/prisma/client";
+import {
+  approveAndPostPreparedRequest,
+  prepareBankTransferRequest,
+  prepareCrmDealInvoiceRequest,
+} from "./integration-adapters";
 
 type ActionResponse = { ok: true; data?: any } | { ok: false; error: string };
 
@@ -59,7 +61,7 @@ export async function createJournalEntryAction(data: any): Promise<ActionRespons
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "accounting.journal.create");
+    await requirePermission(session.user.id, "accounting.journal.prepare");
 
     const journal = await accService.createJournalEntry(orgId, session.user.id, data);
     revalidatePath("/accounting/journal-entries");
@@ -77,7 +79,7 @@ export async function submitJournalEntryAction(id: string): Promise<ActionRespon
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "accounting.journal.submit");
+    await requirePermission(session.user.id, "accounting.post");
 
     const journal = await accService.submitJournalEntry(orgId, id, session.user.id);
     revalidatePath("/accounting/journal-entries");
@@ -96,7 +98,7 @@ export async function cancelJournalEntryAction(id: string): Promise<ActionRespon
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "accounting.journal.cancel");
+    await requirePermission(session.user.id, "accounting.reverse");
 
     const journal = await accService.cancelJournalEntry(orgId, id, session.user.id);
     revalidatePath("/accounting/journal-entries");
@@ -330,57 +332,20 @@ export async function generateInvoiceFromDealAction(dealId: string): Promise<Act
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    // CRM users who have permissions to manage invoices can generate this
+    // CRM authority permits preparation of CRM data, but never substitutes for
+    // Accounting authority.
     await requirePermission(session.user.id, "crm.invoice.manage");
+    await requirePermission(session.user.id, "accounting.invoice.create");
 
-    // Fetch the deal
-    const deal = await db.crmDeal.findFirst({
-      where: { id: dealId, orgId },
-      include: {
-        owner: true,
-      },
+    const request = await prepareCrmDealInvoiceRequest({
+      orgId,
+      actorId: session.user.id,
+      dealId,
     });
-
-    if (!deal) return { ok: false, error: "Deal not found" };
-    if (deal.stage !== "WON") return { ok: false, error: "Only WON deals can generate sales invoices" };
-    if (!deal.accountId) return { ok: false, error: "Deal must have an Account linked to generate an invoice" };
-
-    // Verify if an invoice is already generated for this deal
-    const existingInvoice = await db.salesInvoice.findFirst({
-      where: { orgId, crmDealId: dealId },
-    });
-    if (existingInvoice) return { ok: false, error: "An invoice has already been generated for this deal" };
-
-    const settings = await db.accountingSettings.findUnique({ where: { orgId } });
-    if (!settings?.defaultReceivableAccountId || !settings?.defaultSalesAccountId) {
-      return { ok: false, error: "Receivables or Sales accounts are not configured. Go to Accounting Settings first." };
-    }
-
-    const sysDate = await getNow();
-
-    const invoiceData = {
-      customerId: deal.accountId,
-      crmDealId: deal.id,
-      postingDate: sysDate,
-      dueDate: new Date(sysDate.getTime() + 15 * 24 * 60 * 60 * 1000), // 15 days due
-      branchId: deal.owner?.branchId || null,
-      discountAmount: 0,
-      taxRate: 18, // default 18% tax rate
-      remarks: `Generated from CRM Won Deal: ${deal.name}`,
-      items: [
-        {
-          itemName: `Logistics Service: ${deal.serviceType || "Freight Forwarding"} - ${deal.name}`,
-          qty: 1,
-          rate: deal.amount,
-        },
-      ],
-    };
-
-    const invoice = await accService.createSalesInvoice(orgId, session.user.id, invoiceData);
 
     revalidatePath(`/crm/deals/${dealId}`);
     revalidatePath("/crm/deals");
-    return { ok: true, data: invoice };
+    return { ok: true, data: request };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to generate sales invoice" };
   }
@@ -413,7 +378,7 @@ export async function compilePayrollBatchAction(monthDate: Date): Promise<Action
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "accounting.journal.create");
+    await requirePermission(session.user.id, "accounting.journal.prepare");
 
     const compilation = await accService.compilePayrollBatch(orgId, monthDate);
     return { ok: true, data: compilation };
@@ -448,7 +413,7 @@ export async function finalizePayrollBatchAction(batchId: string): Promise<Actio
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "accounting.journal.submit");
+    await requirePermission(session.user.id, "accounting.post");
 
     const batch = await accService.finalizePayrollBatch(orgId, batchId, session.user.id);
     revalidatePath("/hrms/payroll");
@@ -467,7 +432,7 @@ export async function payPayrollBatchAction(batchId: string): Promise<ActionResp
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "accounting.journal.submit");
+    await requirePermission(session.user.id, "accounting.post");
 
     const batch = await accService.payPayrollBatch(orgId, batchId, session.user.id);
     revalidatePath("/hrms/payroll");
@@ -540,7 +505,7 @@ export async function runDepreciationAction(assetId: string, monthDate: Date): P
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "accounting.journal.submit");
+    await requirePermission(session.user.id, "accounting.post");
 
     const entry = await accService.runDepreciationForAsset(orgId, assetId, monthDate, session.user.id);
     revalidatePath("/ams/assets");
@@ -925,9 +890,11 @@ export async function getCashAndBankLedgerAction(filters: any = {}): Promise<Act
 export async function recordBankTransferAction(data: {
   fromAccountId: string;
   toAccountId: string;
-  amount: number;
+  amount: string;
   postingDate: string;
   remarks: string;
+  requestId?: string;
+  idempotencyKey?: string;
 }): Promise<ActionResponse> {
   try {
     const session = await auth();
@@ -935,69 +902,45 @@ export async function recordBankTransferAction(data: {
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "accounting.journal.create");
+    await requirePermission(session.user.id, "accounting.journal.prepare");
 
-    // Validate period lock
-    await accService.validatePostingDateNotLocked(orgId, data.postingDate);
-
-    // Create a Journal Entry for the transfer
-    const jv = await db.$transaction(async (tx) => {
-      const count = await tx.journalEntry.count({ where: { orgId } });
-      const voucherNo = `BT-${1001 + count}`;
-      const postingDate = new Date(data.postingDate);
-
-      const entry = await tx.journalEntry.create({
-        data: {
-          orgId,
-          voucherNo,
-          postingDate,
-          remarks: data.remarks || "Bank Transfer",
-          status: "SUBMITTED",
-          totalDebit: new Prisma.Decimal(data.amount),
-          totalCredit: new Prisma.Decimal(data.amount),
-          createdById: session.user.id,
-          lines: {
-            create: [
-              {
-                accountId: data.toAccountId,
-                debit: new Prisma.Decimal(data.amount),
-                credit: new Prisma.Decimal(0),
-                remarks: data.remarks || "Transfer In",
-              },
-              {
-                accountId: data.fromAccountId,
-                debit: new Prisma.Decimal(0),
-                credit: new Prisma.Decimal(data.amount),
-                remarks: data.remarks || "Transfer Out",
-              }
-            ]
-          }
-        }
-      });
-
-      const glLines = [
-        {
-          accountId: data.toAccountId,
-          debit: data.amount,
-          credit: 0,
-          remarks: data.remarks || "Transfer In",
-        },
-        {
-          accountId: data.fromAccountId,
-          debit: 0,
-          credit: data.amount,
-          remarks: data.remarks || "Transfer Out",
-        }
-      ];
-
-      await accService.postGLTransactions(tx, orgId, "JOURNAL_ENTRY", entry.id, postingDate, glLines, null, session.user.id);
-      return entry;
+    const request = await prepareBankTransferRequest({
+      orgId,
+      makerId: session.user.id,
+      fromAccountId: data.fromAccountId,
+      toAccountId: data.toAccountId,
+      amount: data.amount,
+      postingDate: data.postingDate,
+      remarks: data.remarks,
+      requestId: data.requestId,
+      idempotencyKey: data.idempotencyKey,
     });
 
     revalidatePath("/accounting/banking");
-    return { ok: true, data: jv };
+    return { ok: true, data: request };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to record bank transfer" };
+  }
+}
+
+export async function approveBankTransferRequestAction(inboxId: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "accounting.post");
+    const result = await approveAndPostPreparedRequest({
+      orgId,
+      inboxId,
+      approverId: session.user.id,
+    });
+    revalidatePath("/accounting/banking");
+    revalidatePath("/accounting/journal-entries");
+    return { ok: true, data: result };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to approve bank transfer" };
   }
 }
 

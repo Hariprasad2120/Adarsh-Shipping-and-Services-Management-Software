@@ -2,6 +2,15 @@ import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
 import { Prisma } from "@/generated/prisma/client";
 import { RootType, AccountType } from "./types";
+import {
+  postApprovedPayrollRun,
+  resolveCanonicalPostingConfiguration,
+} from "./integration-adapters";
+import { add, decimal, serialize } from "./money";
+import {
+  postCanonicalAccountingRequest,
+  reverseCanonicalJournal,
+} from "./posting-engine";
 
 // ─── Chart of Accounts Seeding ──────────────────────────────────────────────────
 
@@ -349,35 +358,17 @@ export async function postGLTransactions(
   branchId?: string | null,
   createdById?: string
 ) {
-  // Balanced check
-  validateBalancedEntry(lines);
-
-  const entries = [];
-  for (const line of lines) {
-    // Validate account posting rules
-    const account = await validateAccountPostingAllowed(tx, orgId, line.accountId);
-
-    const glEntry = await tx.generalLedgerEntry.create({
-      data: {
-        orgId,
-        branchId: branchId || account.branchId || null,
-        postingDate,
-        accountId: line.accountId,
-        partyType: line.partyType || null,
-        partyId: line.partyId || null,
-        voucherType,
-        voucherId,
-        journalEntryId: voucherType === "JOURNAL_ENTRY" ? voucherId : null,
-        debit: new Prisma.Decimal(line.debit),
-        credit: new Prisma.Decimal(line.credit),
-        remarks: line.remarks || null,
-        createdById: createdById || "system",
-      },
-    });
-
-    entries.push(glEntry);
-  }
-  return entries;
+  void tx;
+  void orgId;
+  void voucherType;
+  void voucherId;
+  void postingDate;
+  void lines;
+  void branchId;
+  void createdById;
+  throw new Error(
+    "LEGACY_DIRECT_LEDGER_WRITE_BLOCKED: prepare an immutable Accounting request and use the canonical posting engine",
+  );
 }
 
 export async function reverseGLTransactions(
@@ -388,41 +379,15 @@ export async function reverseGLTransactions(
   reversalRemarks: string,
   createdById: string
 ) {
-  // Find all existing GL Entries for this voucher
-  const existingEntries = await tx.generalLedgerEntry.findMany({
-    where: { orgId, voucherType, voucherId, isCancelled: false },
-  });
-
-  if (existingEntries.length === 0) return;
-
-  const postingDate = await getNow();
-
-  // Create reversal entries (swapping debit and credit)
-  for (const entry of existingEntries) {
-    // Mark old as cancelled (or keep ledger clean and write reversal lines)
-    await tx.generalLedgerEntry.update({
-      where: { id: entry.id },
-      data: { isCancelled: true },
-    });
-
-    await tx.generalLedgerEntry.create({
-      data: {
-        orgId,
-        branchId: entry.branchId,
-        postingDate,
-        accountId: entry.accountId,
-        partyType: entry.partyType,
-        partyId: entry.partyId,
-        voucherType,
-        voucherId,
-        journalEntryId: voucherType === "JOURNAL_ENTRY" ? voucherId : null,
-        debit: entry.credit, // SWAP DEBIT
-        credit: entry.debit, // SWAP CREDIT
-        remarks: `Reversal of entry: ${reversalRemarks}`,
-        createdById,
-      },
-    });
-  }
+  void tx;
+  void orgId;
+  void voucherType;
+  void voucherId;
+  void reversalRemarks;
+  void createdById;
+  throw new Error(
+    "LEGACY_DIRECT_LEDGER_REVERSAL_BLOCKED: use the canonical journal reversal workflow",
+  );
 }
 
 // ─── Journal Entries ──────────────────────────────────────────────────────────
@@ -460,24 +425,25 @@ export async function getJournalEntry(orgId: string, id: string) {
 
 export async function createJournalEntry(orgId: string, createdById: string, data: any) {
   const lines = data.lines || [];
-  let totalDebit = 0;
-  let totalCredit = 0;
-
-  for (const l of lines) {
-    totalDebit += Number(l.debit || 0);
-    totalCredit += Number(l.credit || 0);
-  }
-
-  // Enforce balance check before saving draft if submitted, but for draft we allow
-  if (data.submit) {
-    validateBalancedEntry(lines);
-  }
+  if (lines.length < 2) throw new Error("A journal draft requires at least two lines");
+  const parsedLines = lines.map((line: any, index: number) => {
+    const debit = decimal(line.debit ?? "0", `line ${index + 1} debit`);
+    const credit = decimal(line.credit ?? "0", `line ${index + 1} credit`);
+    if (debit.isNegative() || credit.isNegative()) {
+      throw new Error("Journal draft amounts cannot be negative");
+    }
+    if ((!debit.isZero() && !credit.isZero()) || (debit.isZero() && credit.isZero())) {
+      throw new Error("Each journal draft line must contain exactly one positive debit or credit");
+    }
+    return { ...line, debit, credit };
+  });
+  const totalDebit = parsedLines.reduce((total: Prisma.Decimal, line: any) => add(total, line.debit), add());
+  const totalCredit = parsedLines.reduce((total: Prisma.Decimal, line: any) => add(total, line.credit), add());
 
   const postingDate = data.postingDate ? new Date(data.postingDate) : await getNow();
+  if (Number.isNaN(postingDate.getTime())) throw new Error("Posting date is invalid");
 
-  // Auto-generate voucher number
-  const count = await db.journalEntry.count({ where: { orgId } });
-  const voucherNo = `JV-${1001 + count}`;
+  const voucherNo = `DRAFT-${globalThis.crypto.randomUUID()}`;
 
   const entry = await db.$transaction(async (tx) => {
     const journal = await tx.journalEntry.create({
@@ -487,15 +453,15 @@ export async function createJournalEntry(orgId: string, createdById: string, dat
         voucherNo,
         postingDate,
         remarks: data.remarks || null,
-        status: data.submit ? "SUBMITTED" : "DRAFT",
-        totalDebit: new Prisma.Decimal(totalDebit),
-        totalCredit: new Prisma.Decimal(totalCredit),
+        status: "DRAFT",
+        totalDebit,
+        totalCredit,
         createdById,
         lines: {
-          create: lines.map((l: any) => ({
+          create: parsedLines.map((l: any) => ({
             accountId: l.accountId,
-            debit: new Prisma.Decimal(l.debit || 0),
-            credit: new Prisma.Decimal(l.credit || 0),
+            debit: l.debit,
+            credit: l.credit,
             partyType: l.partyType || null,
             partyId: l.partyId || null,
             remarks: l.remarks || null,
@@ -503,20 +469,6 @@ export async function createJournalEntry(orgId: string, createdById: string, dat
         },
       },
     });
-
-    if (data.submit) {
-      await postGLTransactions(
-        tx,
-        orgId,
-        "JOURNAL_ENTRY",
-        journal.id,
-        postingDate,
-        lines,
-        data.branchId,
-        createdById
-      );
-    }
-
     return journal;
   });
 
@@ -531,59 +483,108 @@ export async function submitJournalEntry(orgId: string, id: string, userId: stri
   });
 
   if (!journal) throw new Error("Draft Journal Entry not found");
-
-  const lines = journal.lines.map((l) => ({
-    accountId: l.accountId,
-    debit: Number(l.debit),
-    credit: Number(l.credit),
-    partyType: l.partyType,
-    partyId: l.partyId,
-    remarks: l.remarks,
-  }));
-
-  const entry = await db.$transaction(async (tx) => {
-    // Post to GL
-    await postGLTransactions(
-      tx,
-      orgId,
-      "JOURNAL_ENTRY",
-      journal.id,
-      journal.postingDate,
-      lines,
-      journal.branchId,
-      userId
-    );
-
-    // Update status
-    return tx.journalEntry.update({
-      where: { id },
-      data: { status: "SUBMITTED" },
-    });
+  const configuration = await resolveCanonicalPostingConfiguration(orgId, journal.postingDate);
+  const now = await getNow();
+  const requestId = `ACCOUNTING:MANUAL_JOURNAL:${journal.id}:${journal.rowVersion}`;
+  const result = await postCanonicalAccountingRequest({
+    requestId,
+    requestVersion: 1,
+    idempotencyKey: requestId,
+    orgId,
+    legalEntityId: configuration.legalEntity.id,
+    source: {
+      system: "ACCOUNTING",
+      type: "MANUAL_JOURNAL_DRAFT",
+      id: journal.id,
+      version: journal.rowVersion,
+      occurredAt: journal.createdAt,
+      payload: {
+        draftId: journal.id,
+        draftVoucherNo: journal.voucherNo,
+        postingDate: journal.postingDate,
+        remarks: journal.remarks,
+        lines: journal.lines.map((line) => ({
+          accountId: line.accountId,
+          debit: serialize(line.debit),
+          credit: serialize(line.credit),
+          partyType: line.partyType,
+          partyId: line.partyId,
+          remarks: line.remarks,
+        })),
+      },
+    },
+    actor: { kind: "USER", actorId: userId, authenticatedOrgId: orgId },
+    makerId: journal.createdById,
+    postingDate: journal.postingDate,
+    documentDate: journal.postingDate,
+    journalType: "JOURNAL_ENTRY",
+    ruleId: "GL-MANUAL-JOURNAL-v1",
+    narration: journal.remarks || `Manual journal draft ${journal.voucherNo}`,
+    branchId: journal.branchId,
+    transactionCurrencyCode: configuration.profile.functionalCurrencyCode,
+    baseCurrencyCode: configuration.profile.functionalCurrencyCode,
+    exchangeRate: null,
+    approval: {
+      policyId: configuration.approvalPolicy.id,
+      policyVersion: configuration.approvalPolicy.version,
+      approvedById: userId,
+      approvedAt: now,
+    },
+    numberSeriesId: configuration.numberSeries.id,
+    roundingPolicy: {
+      id: configuration.roundingPolicy.id,
+      version: configuration.roundingPolicy.version,
+    },
+    lines: journal.lines.map((line) => ({
+      accountId: line.accountId,
+      debit: line.debit,
+      credit: line.credit,
+      partyType: line.partyType,
+      partyId: line.partyId,
+      remarks: line.remarks,
+    })),
+    correlationId: requestId,
   });
-
-  await createAuditLog(orgId, userId, "SUBMIT_JOURNAL", "JournalEntry", id, journal, entry);
-  return entry;
+  await db.journalEntry.updateMany({
+    where: { id: journal.id, orgId, status: "DRAFT" },
+    data: { status: "SUPERSEDED" },
+  });
+  const posted = await db.journalEntry.findUniqueOrThrow({ where: { id: result.journalEntryId } });
+  await createAuditLog(orgId, userId, "POST_MANUAL_JOURNAL", "JournalEntry", posted.id, journal, posted);
+  return posted;
 }
 
 export async function cancelJournalEntry(orgId: string, id: string, userId: string) {
   const journal = await db.journalEntry.findFirst({
-    where: { id, orgId, status: "SUBMITTED" },
+    where: { id, orgId, status: { in: ["POSTED", "SUBMITTED"] } },
   });
 
-  if (!journal) throw new Error("Submitted Journal Entry not found");
-
-  const entry = await db.$transaction(async (tx) => {
-    // Create reversal entries
-    await reverseGLTransactions(tx, orgId, "JOURNAL_ENTRY", journal.id, `Cancellation of JV No: ${journal.voucherNo}`, userId);
-
-    return tx.journalEntry.update({
-      where: { id },
-      data: { status: "CANCELLED" },
-    });
+  if (!journal) throw new Error("Posted Journal Entry not found");
+  const configuration = await resolveCanonicalPostingConfiguration(orgId, await getNow());
+  const requestId = `ACCOUNTING:JOURNAL_REVERSAL:${journal.id}`;
+  const result = await reverseCanonicalJournal({
+    orgId,
+    legalEntityId: journal.legalEntityId ?? configuration.legalEntity.id,
+    journalEntryId: journal.id,
+    reason: `Cancellation requested for ${journal.voucherNo}`,
+    requestId,
+    idempotencyKey: requestId,
+    actor: { kind: "USER", actorId: userId, authenticatedOrgId: orgId },
+    makerId: journal.createdById,
+    approval: {
+      policyId: configuration.approvalPolicy.id,
+      policyVersion: configuration.approvalPolicy.version,
+      approvedById: userId,
+      approvedAt: await getNow(),
+    },
+    numberSeriesId: configuration.numberSeries.id,
+    roundingPolicy: {
+      id: configuration.roundingPolicy.id,
+      version: configuration.roundingPolicy.version,
+    },
+    correlationId: journal.correlationId ?? journal.requestId ?? journal.id,
   });
-
-  await createAuditLog(orgId, userId, "CANCEL_JOURNAL", "JournalEntry", id, journal, entry);
-  return entry;
+  return db.journalEntry.findUniqueOrThrow({ where: { id: result.journalEntryId } });
 }
 
 // ─── Sales Invoices ──────────────────────────────────────────────────────────
@@ -640,6 +641,8 @@ export async function getSalesInvoice(orgId: string, id: string) {
 }
 
 export async function createSalesInvoice(orgId: string, createdById: string, data: any) {
+  if (data.taxRate == null) throw new Error("A configured tax rate or explicit zero-tax treatment is required");
+  if (!data.dueDate) throw new Error("A configured invoice due date is required");
   const items = data.items || [];
   let subtotal = 0;
   for (const it of items) {
@@ -649,8 +652,7 @@ export async function createSalesInvoice(orgId: string, createdById: string, dat
   const discountAmount = data.discountAmount || 0;
   const taxableAmount = Math.max(0, subtotal - discountAmount);
 
-  // Default Tax rate (e.g. 18%)
-  const taxRate = data.taxRate ?? 18;
+  const taxRate = data.taxRate;
   const taxAmount = taxableAmount * (taxRate / 100);
   const grandTotal = taxableAmount + taxAmount;
 
@@ -658,7 +660,7 @@ export async function createSalesInvoice(orgId: string, createdById: string, dat
   const invoiceNumber = `SINV-${1001 + count}`;
 
   const postingDate = data.postingDate ? new Date(data.postingDate) : await getNow();
-  const dueDate = data.dueDate ? new Date(data.dueDate) : new Date(postingDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const dueDate = new Date(data.dueDate);
 
   const invoice = await db.$transaction(async (tx) => {
     const settings = await tx.accountingSettings.findUnique({ where: { orgId } });
@@ -949,6 +951,8 @@ export async function getPurchaseInvoice(orgId: string, id: string) {
 }
 
 export async function createPurchaseInvoice(orgId: string, createdById: string, data: any) {
+  if (data.taxRate == null) throw new Error("A configured tax rate or explicit zero-tax treatment is required");
+  if (!data.dueDate) throw new Error("A configured bill due date is required");
   const items = data.items || [];
   let subtotal = 0;
   for (const it of items) {
@@ -957,7 +961,7 @@ export async function createPurchaseInvoice(orgId: string, createdById: string, 
 
   const discountAmount = data.discountAmount || 0;
   const taxableAmount = Math.max(0, subtotal - discountAmount);
-  const taxRate = data.taxRate ?? 18;
+  const taxRate = data.taxRate;
   const taxAmount = taxableAmount * (taxRate / 100);
   const grandTotal = taxableAmount + taxAmount;
 
@@ -965,7 +969,7 @@ export async function createPurchaseInvoice(orgId: string, createdById: string, 
   const invoiceNumber = `PINV-${1001 + count}`;
 
   const postingDate = data.postingDate ? new Date(data.postingDate) : await getNow();
-  const dueDate = data.dueDate ? new Date(data.dueDate) : new Date(postingDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const dueDate = new Date(data.dueDate);
 
   const invoice = await db.$transaction(async (tx) => {
     const settings = await tx.accountingSettings.findUnique({ where: { orgId } });
@@ -1646,84 +1650,12 @@ export async function updateAccountingSettings(orgId: string, userId: string, da
 
 // ─── HRMS Payroll Integration ──────────────────────────────────────────────────
 
-import { computeSalary } from "../hrms/salary-structure";
-
 export async function compilePayrollBatch(orgId: string, monthDate: Date) {
-  const startOfMonth = new Date(Date.UTC(monthDate.getFullYear(), monthDate.getMonth(), 1));
-
-  // Find all active users with employment records
-  const employees = await db.user.findMany({
-    where: {
-      orgId,
-      active: true,
-      employmentRecord: { isNot: null },
-    },
-    include: {
-      employmentRecord: true,
-    },
-  });
-
-  const salarySheets = employees.map((emp) => {
-    const record = emp.employmentRecord!;
-    let basic = Number(record.basic || 0);
-    let hra = Number(record.hra || 0);
-    let allowances =
-      Number(record.conveyance || 0) +
-      Number(record.transport || 0) +
-      Number(record.travelling || 0) +
-      Number(record.fixedAllowance || 0) +
-      Number(record.stipend || 0);
-
-    let gross = basic + hra + allowances;
-    let inHand = gross;
-
-    // If components are zero but ctc exists, auto compute
-    if (gross === 0 && record.ctc && Number(record.ctc) > 0) {
-      try {
-        const computed = computeSalary({
-          annualCTC: Number(record.ctc),
-          pfType: "CAPPED",
-          city: "CHENNAI",
-          monthlyIncentive: 0,
-          insurance: "NIL",
-          taxRegime: "NEW",
-        });
-        basic = computed.basic;
-        hra = computed.hra;
-        allowances = computed.travelAllowance + computed.specialAllowance;
-        gross = computed.monthlyGross;
-        inHand = computed.finalTakeHome;
-      } catch (e) {
-        // fallback to ctc/12
-        gross = Math.round(Number(record.ctc) / 12);
-        basic = Math.round(gross * 0.5);
-        hra = Math.round(basic * 0.4);
-        allowances = gross - (basic + hra);
-        inHand = gross;
-      }
-    }
-
-    return {
-      userId: emp.id,
-      employeeNumber: emp.employeeNumber,
-      name: emp.name,
-      designation: emp.designation,
-      ctc: Number(record.ctc || 0),
-      basic,
-      hra,
-      allowances,
-      gross,
-      inHand,
-    };
-  });
-
-  const totalAmount = salarySheets.reduce((sum, sheet) => sum + sheet.gross, 0);
-
-  return {
-    month: startOfMonth,
-    salarySheets,
-    totalAmount,
-  };
+  void orgId;
+  void monthDate;
+  throw new Error(
+    "Accounting no longer compiles payroll. HRMS must submit an immutable approved payroll-run snapshot.",
+  );
 }
 
 export async function getPayrollBatches(orgId: string) {
@@ -1737,217 +1669,39 @@ export async function getPayrollBatches(orgId: string) {
 }
 
 export async function createPayrollBatch(orgId: string, userId: string, monthDate: Date) {
-  const startOfMonth = new Date(Date.UTC(monthDate.getFullYear(), monthDate.getMonth(), 1));
-  const existing = await db.payrollBatch.findUnique({
-    where: {
-      orgId_month: { orgId, month: startOfMonth },
-    },
-  });
-
-  if (existing) {
-    throw new Error(`A payroll batch already exists for ${monthDate.toLocaleString('en-IN', { month: 'long', year: 'numeric' })}`);
-  }
-
-  // Compile to get total amount
-  const { totalAmount } = await compilePayrollBatch(orgId, startOfMonth);
-
-  if (totalAmount === 0) {
-    throw new Error("Cannot create a payroll batch with ₹0.00 total salary. Check active employee records.");
-  }
-
-  const batch = await db.payrollBatch.create({
-    data: {
-      orgId,
-      month: startOfMonth,
-      status: "DRAFT",
-      totalAmount: new Prisma.Decimal(totalAmount),
-    },
-  });
-
-  await createAuditLog(orgId, userId, "CREATE_PAYROLL_BATCH", "PayrollBatch", batch.id, null, batch);
-  return batch;
+  void orgId;
+  void userId;
+  void monthDate;
+  throw new Error(
+    "Accounting cannot originate payroll batches. Accept an approved immutable HRMS payroll-run event instead.",
+  );
 }
 
 export async function finalizePayrollBatch(orgId: string, batchId: string, userId: string) {
   const batch = await db.payrollBatch.findFirst({
-    where: { id: batchId, orgId, status: "DRAFT" },
+    where: { id: batchId, orgId, status: "APPROVED_HRMS" },
   });
 
-  if (!batch) {
-    throw new Error("Draft payroll batch not found");
+  if (!batch?.sourceRunId || !batch.sourceRunVersion) {
+    throw new Error("Approved immutable HRMS payroll batch not found");
   }
-
-  const settings = await db.accountingSettings.findUnique({ where: { orgId } });
-  if (!settings?.defaultSalaryExpenseAccountId || !settings?.defaultSalaryPayableAccountId) {
-    throw new Error("Default Salary Expense or Salary Payable accounts not configured in Accounting Settings");
-  }
-
-  const amount = Number(batch.totalAmount);
-  const postingDate = await getNow();
-
-  const monthStr = new Date(batch.month).toLocaleString('en-IN', { month: 'long', year: 'numeric' });
-
-  // Create JV
-  const finalBatch = await db.$transaction(async (tx) => {
-    const count = await tx.journalEntry.count({ where: { orgId } });
-    const voucherNo = `JV-${1001 + count}`;
-
-    const jv = await tx.journalEntry.create({
-      data: {
-        orgId,
-        voucherNo,
-        postingDate,
-        remarks: `Payroll accrual for month: ${monthStr}`,
-        status: "SUBMITTED",
-        totalDebit: new Prisma.Decimal(amount),
-        totalCredit: new Prisma.Decimal(amount),
-        createdById: userId,
-        lines: {
-          create: [
-            {
-              accountId: settings.defaultSalaryExpenseAccountId!,
-              debit: new Prisma.Decimal(amount),
-              credit: new Prisma.Decimal(0),
-              remarks: `Salary Expense for ${monthStr}`,
-            },
-            {
-              accountId: settings.defaultSalaryPayableAccountId!,
-              debit: new Prisma.Decimal(0),
-              credit: new Prisma.Decimal(amount),
-              remarks: `Salary Payable for ${monthStr}`,
-            },
-          ],
-        },
-      },
-    });
-
-    const glLines = [
-      {
-        accountId: settings.defaultSalaryExpenseAccountId!,
-        debit: amount,
-        credit: 0,
-        remarks: `Salary Expense for ${monthStr}`,
-      },
-      {
-        accountId: settings.defaultSalaryPayableAccountId!,
-        debit: 0,
-        credit: amount,
-        remarks: `Salary Payable for ${monthStr}`,
-      },
-    ];
-
-    await postGLTransactions(
-      tx,
-      orgId,
-      "JOURNAL_ENTRY",
-      jv.id,
-      postingDate,
-      glLines,
-      null,
-      userId
-    );
-
-    return tx.payrollBatch.update({
-      where: { id: batchId },
-      data: {
-        status: "FINALIZED",
-        journalEntryId: jv.id,
-      },
-    });
+  await postApprovedPayrollRun({
+    orgId,
+    runId: batch.sourceRunId,
+    runVersion: batch.sourceRunVersion,
+    posterId: userId,
+    approval: { approvedById: userId, approvedAt: await getNow() },
   });
-
-  await createAuditLog(orgId, userId, "FINALIZE_PAYROLL_BATCH", "PayrollBatch", batchId, batch, finalBatch);
-  return finalBatch;
+  return db.payrollBatch.findUniqueOrThrow({ where: { id: batchId } });
 }
 
 export async function payPayrollBatch(orgId: string, batchId: string, userId: string) {
-  const batch = await db.payrollBatch.findFirst({
-    where: { id: batchId, orgId, status: "FINALIZED" },
-  });
-
-  if (!batch) {
-    throw new Error("Finalized payroll batch not found");
-  }
-
-  const settings = await db.accountingSettings.findUnique({ where: { orgId } });
-  if (!settings?.defaultSalaryPayableAccountId || !settings?.defaultBankAccountId) {
-    throw new Error("Default Salary Payable or Bank accounts not configured in Accounting Settings");
-  }
-
-  const amount = Number(batch.totalAmount);
-  const postingDate = await getNow();
-
-  const monthStr = new Date(batch.month).toLocaleString('en-IN', { month: 'long', year: 'numeric' });
-
-  const paidBatch = await db.$transaction(async (tx) => {
-    const count = await tx.journalEntry.count({ where: { orgId } });
-    const voucherNo = `JV-${1001 + count}`;
-
-    const jv = await tx.journalEntry.create({
-      data: {
-        orgId,
-        voucherNo,
-        postingDate,
-        remarks: `Payroll payout for month: ${monthStr}`,
-        status: "SUBMITTED",
-        totalDebit: new Prisma.Decimal(amount),
-        totalCredit: new Prisma.Decimal(amount),
-        createdById: userId,
-        lines: {
-          create: [
-            {
-              accountId: settings.defaultSalaryPayableAccountId!,
-              debit: new Prisma.Decimal(amount),
-              credit: new Prisma.Decimal(0),
-              remarks: `Salary Payable payout for ${monthStr}`,
-            },
-            {
-              accountId: settings.defaultBankAccountId!,
-              debit: new Prisma.Decimal(0),
-              credit: new Prisma.Decimal(amount),
-              remarks: `Bank credit for salary payout ${monthStr}`,
-            },
-          ],
-        },
-      },
-    });
-
-    const glLines = [
-      {
-        accountId: settings.defaultSalaryPayableAccountId!,
-        debit: amount,
-        credit: 0,
-        remarks: `Salary Payable payout for ${monthStr}`,
-      },
-      {
-        accountId: settings.defaultBankAccountId!,
-        debit: 0,
-        credit: amount,
-        remarks: `Bank credit for salary payout ${monthStr}`,
-      },
-    ];
-
-    await postGLTransactions(
-      tx,
-      orgId,
-      "JOURNAL_ENTRY",
-      jv.id,
-      postingDate,
-      glLines,
-      null,
-      userId
-    );
-
-    return tx.payrollBatch.update({
-      where: { id: batchId },
-      data: {
-        status: "PAID",
-      },
-    });
-  });
-
-  await createAuditLog(orgId, userId, "PAY_PAYROLL_BATCH", "PayrollBatch", batchId, batch, paidBatch);
-  return paidBatch;
+  void orgId;
+  void batchId;
+  void userId;
+  throw new Error(
+    "Payroll payment requires a separately approved immutable HRMS payment event and canonical Accounting posting request.",
+  );
 }
 
 // ─── AMS Asset Management Integration ──────────────────────────────────────────
@@ -2012,6 +1766,14 @@ export async function createAsset(orgId: string, createdById: string, data: any)
 }
 
 export async function runDepreciationForAsset(orgId: string, assetId: string, monthDate: Date, userId: string) {
+  void orgId;
+  void assetId;
+  void monthDate;
+  void userId;
+  throw new Error(
+    "DEPRECIATION_POSTING_GATED: configure and validate the versioned depreciation and statutory rounding policy before canonical posting",
+  );
+  /*
   const asset = await db.asset.findFirst({
     where: { id: assetId, orgId, status: "ACTIVE" },
   });
@@ -2144,6 +1906,7 @@ export async function runDepreciationForAsset(orgId: string, assetId: string, mo
 
   await createAuditLog(orgId, userId, "RUN_DEPRECIATION", "Asset", assetId, null, resultEntry);
   return resultEntry;
+  */
 }
 
 // ─── Rebuild & Expanded Accounting Module Services ──────────────────────────────────
@@ -2202,19 +1965,21 @@ export async function getQuotation(orgId: string, id: string) {
 }
 
 export async function createQuotation(orgId: string, createdById: string, data: any) {
+  if (!data.validUntil) throw new Error("A configured quotation validity date is required");
   const count = await db.quotation.count({ where: { orgId } });
   const quotationNumber = `QUOT-${1001 + count}`;
   const postingDate = data.postingDate ? new Date(data.postingDate) : new Date();
-  const validUntil = data.validUntil ? new Date(data.validUntil) : new Date(postingDate.getTime() + 15 * 24 * 3600000);
+  const validUntil = new Date(data.validUntil);
 
   const items = data.items || [];
   let subTotal = 0;
   let taxAmount = 0;
   for (const it of items) {
+    if (it.taxRate == null) throw new Error("Every quotation line requires configured tax treatment");
     const qty = parseFloat(it.qty || 1);
     const rate = parseFloat(it.rate || 0);
     const disc = parseFloat(it.discount || 0);
-    const taxRate = parseFloat(it.taxRate || 18);
+    const taxRate = parseFloat(it.taxRate);
     const amt = qty * rate - disc;
     subTotal += amt;
     taxAmount += amt * (taxRate / 100);
@@ -2245,8 +2010,8 @@ export async function createQuotation(orgId: string, createdById: string, data: 
           uom: it.uom || "Nos",
           rate: new Prisma.Decimal(parseFloat(it.rate || 0)),
           discount: new Prisma.Decimal(parseFloat(it.discount || 0)),
-          taxRate: parseFloat(it.taxRate || 18),
-          taxAmount: new Prisma.Decimal(parseFloat(it.qty || 1) * parseFloat(it.rate || 0) * (parseFloat(it.taxRate || 18) / 100)),
+          taxRate: parseFloat(it.taxRate),
+          taxAmount: new Prisma.Decimal(parseFloat(it.qty || 1) * parseFloat(it.rate || 0) * (parseFloat(it.taxRate) / 100)),
           amount: new Prisma.Decimal((parseFloat(it.qty || 1) * parseFloat(it.rate || 0)) - parseFloat(it.discount || 0)),
         }))
       }
@@ -2255,94 +2020,12 @@ export async function createQuotation(orgId: string, createdById: string, data: 
 }
 
 export async function convertQuotationToInvoice(orgId: string, quotationId: string, createdById: string) {
-  const quot = await db.quotation.findFirst({
-    where: { id: quotationId, orgId, status: "OPEN" },
-    include: { items: true }
-  });
-  if (!quot) throw new Error("Quotation not found or already converted.");
-
-  const count = await db.salesInvoice.count({ where: { orgId } });
-  const invoiceNumber = `SINV-${1001 + count}`;
-  const postingDate = new Date();
-  const dueDate = new Date(postingDate.getTime() + 30 * 24 * 3600000);
-
-  const settings = await db.accountingSettings.findUnique({ where: { orgId } });
-  if (!settings?.defaultSalesAccountId || !settings?.defaultTaxAccountId || !settings?.defaultReceivableAccountId) {
-    throw new Error("Accounting settings default accounts are not set up.");
-  }
-
-  return db.$transaction(async (tx) => {
-    const inv = await tx.salesInvoice.create({
-      data: {
-        orgId,
-        branchId: quot.branchId,
-        invoiceNumber,
-        customerId: quot.customerId,
-        postingDate,
-        dueDate,
-        status: "UNPAID",
-        grandTotal: quot.grandTotal,
-        paidAmount: new Prisma.Decimal(0),
-        outstandingAmount: quot.grandTotal,
-        discountAmount: quot.discountAmount,
-        taxAmount: quot.taxAmount,
-        remarks: `Converted from Quotation ${quot.quotationNumber}. ${quot.remarks || ""}`,
-        createdById,
-        items: {
-          create: quot.items.map(it => ({
-            itemName: it.itemName,
-            qty: it.qty,
-            rate: it.rate,
-            amount: it.amount
-          }))
-        },
-        taxLines: Number(quot.taxAmount) > 0 ? {
-          create: [
-            {
-              accountId: settings.defaultTaxAccountId!,
-              taxRate: 18.0,
-              taxAmount: quot.taxAmount
-            }
-          ]
-        } : undefined
-      }
-    });
-
-    const glLines = [
-      {
-        accountId: settings.defaultReceivableAccountId!,
-        debit: Number(quot.grandTotal),
-        credit: 0,
-        partyType: "CUSTOMER",
-        partyId: quot.customerId,
-        remarks: `Sales Invoice ${invoiceNumber} (Converted)`,
-      },
-      {
-        accountId: settings.defaultSalesAccountId!,
-        debit: 0,
-        credit: Number(quot.subTotal),
-        remarks: `Sales Revenue from ${invoiceNumber}`,
-      }
-    ];
-
-    if (Number(quot.taxAmount) > 0) {
-      glLines.push({
-        accountId: settings.defaultTaxAccountId!,
-        debit: 0,
-        credit: Number(quot.taxAmount),
-        remarks: `Output GST for ${invoiceNumber}`,
-      });
-    }
-
-    await postGLTransactions(tx, orgId, "SALES_INVOICE", inv.id, postingDate, glLines, quot.branchId, createdById);
-
-    await tx.quotation.update({
-      where: { id: quotationId },
-      data: { status: "CONVERTED" }
-    });
-
-    return inv;
-  });
+  void orgId;
+  void quotationId;
+  void createdById;
+  throw new Error(
+    "QUOTATION_CONVERSION_GATED: prepare a versioned invoice request and resolve configured due-date, tax, account, numbering and approval policies",
+  );
 }
 
 // 3. Debit & Credit Notes (Customer)
@@ -2370,8 +2053,9 @@ export async function createCustomerNote(orgId: string, createdById: string, dat
   let taxableAmount = 0;
   let taxAmount = 0;
   for (const it of items) {
+    if (it.taxRate == null) throw new Error("Every customer note line requires configured tax treatment");
     taxableAmount += parseFloat(it.qty) * parseFloat(it.rate);
-    taxAmount += parseFloat(it.qty) * parseFloat(it.rate) * (parseFloat(it.taxRate || 18) / 100);
+    taxAmount += parseFloat(it.qty) * parseFloat(it.rate) * (parseFloat(it.taxRate) / 100);
   }
   const grandTotal = taxableAmount + taxAmount;
 
@@ -2397,8 +2081,8 @@ export async function createCustomerNote(orgId: string, createdById: string, dat
           qty: parseFloat(it.qty),
           rate: new Prisma.Decimal(parseFloat(it.rate)),
           amount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate)),
-          taxRate: parseFloat(it.taxRate || 18),
-          taxAmount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate) * (parseFloat(it.taxRate || 18) / 100)),
+          taxRate: parseFloat(it.taxRate),
+          taxAmount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate) * (parseFloat(it.taxRate) / 100)),
         }))
       }
     }
@@ -2521,8 +2205,9 @@ export async function createVendorNote(orgId: string, createdById: string, data:
   let taxableAmount = 0;
   let taxAmount = 0;
   for (const it of items) {
+    if (it.taxRate == null) throw new Error("Every vendor note line requires configured tax treatment");
     taxableAmount += parseFloat(it.qty) * parseFloat(it.rate);
-    taxAmount += parseFloat(it.qty) * parseFloat(it.rate) * (parseFloat(it.taxRate || 18) / 100);
+    taxAmount += parseFloat(it.qty) * parseFloat(it.rate) * (parseFloat(it.taxRate) / 100);
   }
   const grandTotal = taxableAmount + taxAmount;
 
@@ -2548,8 +2233,8 @@ export async function createVendorNote(orgId: string, createdById: string, data:
           qty: parseFloat(it.qty),
           rate: new Prisma.Decimal(parseFloat(it.rate)),
           amount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate)),
-          taxRate: parseFloat(it.taxRate || 18),
-          taxAmount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate) * (parseFloat(it.taxRate || 18) / 100)),
+          taxRate: parseFloat(it.taxRate),
+          taxAmount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate) * (parseFloat(it.taxRate) / 100)),
         }))
       }
     }
@@ -2673,6 +2358,12 @@ function calculateNextDueDate(current: Date, frequency: string): Date {
 }
 
 export async function processRecurringExpenses(orgId: string, userId: string) {
+  void orgId;
+  void userId;
+  throw new Error(
+    "RECURRING_EXPENSE_POSTING_GATED: emit an approved immutable canonical Accounting request before generating financial effects",
+  );
+  /*
   const now = new Date();
   const templates = await db.recurringExpense.findMany({
     where: { orgId, isActive: true, nextDueDate: { lte: now } }
@@ -2772,9 +2463,16 @@ export async function processRecurringExpenses(orgId: string, userId: string) {
       });
     });
   }
+  */
 }
 
 export async function processRecurringJournals(orgId: string, userId: string) {
+  void orgId;
+  void userId;
+  throw new Error(
+    "RECURRING_JOURNAL_POSTING_GATED: legacy auto-posting is blocked until the template emits an approved canonical Accounting request",
+  );
+  /*
   const now = new Date();
   const templates = await db.recurringJournal.findMany({
     where: { orgId, isActive: true, nextDueDate: { lte: now } }
@@ -2846,6 +2544,7 @@ export async function processRecurringJournals(orgId: string, userId: string) {
       });
     });
   }
+  */
 }
 
 // 6. Partner Accounts Services
@@ -2933,6 +2632,15 @@ async function getOrCreateAccount(tx: any, orgId: string, name: string, code: st
 }
 
 export async function recordPartnerTransaction(orgId: string, partnerId: string, type: "DRAWINGS" | "CAPITAL_INTRODUCED" | "SALARY" | "INTEREST_ON_CAPITAL" | "INTEREST_ON_DRAWINGS", amount: number, userId: string) {
+  void orgId;
+  void partnerId;
+  void type;
+  void amount;
+  void userId;
+  throw new Error(
+    "PARTNER_POSTING_GATED: configure versioned partner-account and approval policies before canonical posting",
+  );
+  /*
   const partner = await db.partnerAccount.findUnique({
     where: { id: partnerId },
     include: { capitalAccount: true, currentAccount: true }
@@ -3017,6 +2725,7 @@ export async function recordPartnerTransaction(orgId: string, partnerId: string,
     await postGLTransactions(tx, orgId, "JOURNAL_ENTRY", jv.id, postingDate, glLines, null, userId);
     return jv;
   });
+  */
 }
 
 // 7. Job Costing & Register Services

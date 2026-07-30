@@ -3,6 +3,11 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import pg from "pg";
 import { chromium } from "playwright";
+import { assertExactStagingEnvironment } from "./staging-target-runtime.mjs";
+
+const { connectionString } = assertExactStagingEnvironment(
+  "Accounting runtime verification",
+);
 
 const useLocalSpecialAccount = process.argv.includes("--use-local-special-account");
 const baseUrl =
@@ -18,10 +23,6 @@ const password =
 if (!baseUrl || !email || !password) {
   throw new Error("UI_TEST_BASE_URL, UI_TEST_EMAIL, and UI_TEST_PASSWORD are required.");
 }
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is required to create reversible dynamic-route fixtures.");
-}
-
 const outputDirectory = "artifacts/ui-migration/accounting";
 const staticRoutes = [
   "/accounting",
@@ -70,7 +71,7 @@ const screenshotRoutes = new Set([
 ]);
 
 await mkdir(outputDirectory, { recursive: true });
-const fixtureClient = new pg.Client({ connectionString: process.env.DATABASE_URL });
+const fixtureClient = new pg.Client({ connectionString });
 await fixtureClient.connect();
 const fixture = await createFixtures(fixtureClient, email);
 const routes = [

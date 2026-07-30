@@ -25,7 +25,7 @@ export const ProductCatalogueGraphic: React.FC<{ isHovered?: boolean }> = ({ isH
         {/* Top fold icon & glowing dot */}
         <div className="flex items-center justify-between border-b border-[#ebdcb8]/50 pb-2">
           <div className="flex items-center gap-1.5">
-            <motion.div 
+            <motion.div
               className="w-4 h-4 rounded-md bg-[#f6e9c9]/90 border border-[#d6be85] flex items-center justify-center text-xs font-bold text-[#b5882b] flex-shrink-0 shadow-2xs"
               animate={{ scale: isHovered ? [1, 1.15, 1] : 1 }}
               transition={{ duration: 0.8, repeat: isHovered ? Infinity : 0 }}
@@ -38,7 +38,7 @@ export const ProductCatalogueGraphic: React.FC<{ isHovered?: boolean }> = ({ isH
           </div>
 
           {/* Glowing dot */}
-          <motion.div 
+          <motion.div
             className="w-2.5 h-2.5 rounded-full bg-[#e8b535] shadow-[0_0_10px_rgba(232,181,53,0.9)]"
             animate={{ scale: [1, 1.3, 1], opacity: [0.7, 1, 0.7] }}
             transition={{ duration: 2, repeat: Infinity }}
@@ -47,17 +47,17 @@ export const ProductCatalogueGraphic: React.FC<{ isHovered?: boolean }> = ({ isH
 
         {/* Golden lines */}
         <div className="space-y-2.5 my-auto">
-          <motion.div 
+          <motion.div
             className="h-1.5 rounded-full bg-gradient-to-r from-[#cfa951] to-[#e5c26b]"
             animate={{ width: isHovered ? '90%' : '75%' }}
             transition={{ duration: 0.3 }}
           />
-          <motion.div 
+          <motion.div
             className="h-1.5 rounded-full bg-[#e8dcb8]"
             animate={{ width: isHovered ? '100%' : '90%' }}
             transition={{ duration: 0.3, delay: 0.05 }}
           />
-          <motion.div 
+          <motion.div
             className="h-1.5 rounded-full bg-[#efe5c9]"
             animate={{ width: isHovered ? '80%' : '60%' }}
             transition={{ duration: 0.3, delay: 0.1 }}

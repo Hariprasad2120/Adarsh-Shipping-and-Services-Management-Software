@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.staging.example
+
+# isolated local staging database runtime
+/.monolith-staging/
 
 # vercel
 .vercel
@@ -75,6 +79,13 @@ pnpm-lock.yaml
 !/docs/performance-file-audit.md
 !/docs/performance-baseline.md
 !/docs/performance-results.md
+!/docs/accounting/
+/docs/accounting/*
+!/docs/accounting/domain-model.md
+!/docs/accounting/posting-rules.md
+!/docs/accounting/integration-contracts.md
+!/docs/accounting/migration-and-reconciliation.md
+!/docs/accounting/phase-3-transition-matrix.md
 
 # sensitive data output
 /import-output/

@@ -614,4 +614,3 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
     </div>
   );
 }
-

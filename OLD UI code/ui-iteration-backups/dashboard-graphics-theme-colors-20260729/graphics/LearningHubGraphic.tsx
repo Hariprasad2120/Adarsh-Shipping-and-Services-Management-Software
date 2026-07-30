@@ -46,7 +46,7 @@ export const LearningHubGraphic: React.FC<{ isHovered?: boolean }> = ({ isHovere
             <div className="h-1.5 w-2/3 rounded-full bg-[#f2e8cb]" />
           </div>
           <div className="flex justify-end">
-            <motion.div 
+            <motion.div
               className="w-3.5 h-3.5 rounded-full bg-[#e5b33a] shadow-[0_0_8px_rgba(229,179,58,0.8)]"
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 2, repeat: Infinity }}

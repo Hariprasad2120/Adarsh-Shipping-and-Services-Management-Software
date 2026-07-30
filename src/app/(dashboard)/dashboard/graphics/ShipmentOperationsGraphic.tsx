@@ -25,7 +25,7 @@ export const ShipmentOperationsGraphic: React.FC<{ isHovered?: boolean }> = ({ i
 
           {/* Node dots on trajectory */}
           <motion.circle cx="25" cy="105" r="4" fill="var(--mnx-graphic-accent-strong)" stroke="var(--mnx-card)" strokeWidth="1.5" />
-          <motion.circle cx="96" cy="48" r="4.5" fill="var(--mnx-graphic-accent)" stroke="var(--mnx-card)" strokeWidth="1.5" 
+          <motion.circle cx="96" cy="48" r="4.5" fill="var(--mnx-graphic-accent)" stroke="var(--mnx-card)" strokeWidth="1.5"
             animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 2, repeat: Infinity }}
           />
           <motion.circle cx="167" cy="105" r="4" fill="var(--mnx-graphic-accent-strong)" stroke="var(--mnx-card)" strokeWidth="1.5" />

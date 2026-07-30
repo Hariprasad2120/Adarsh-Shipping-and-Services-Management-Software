@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: process.env.DOCKER_BUILD === "true" ? "standalone" : undefined,
+  distDir: process.env.MONOLITH_NEXT_DIST_DIR || ".next",
   allowedDevOrigins: ["192.168.1.33"],
 
   experimental: {

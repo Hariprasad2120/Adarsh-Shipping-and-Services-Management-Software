@@ -68,7 +68,7 @@ interface Invoice {
 }
 
 type FormItem = { itemName: string; qty: number; rate: number; taxRate: number };
-const emptyItem = (): FormItem => ({ itemName: "", qty: 1, rate: 0, taxRate: 18 });
+const emptyItem = (): FormItem => ({ itemName: "", qty: 1, rate: 0, taxRate: 0 });
 const money = (value: number) => `₹${value.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
 const defaultQuotationValidity = (() => {
   const date = new Date();

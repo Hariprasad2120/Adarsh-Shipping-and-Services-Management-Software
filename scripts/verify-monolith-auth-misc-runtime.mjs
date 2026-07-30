@@ -3,6 +3,11 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import pg from "pg";
 import { chromium } from "playwright";
+import { assertExactStagingEnvironment } from "./staging-target-runtime.mjs";
+
+const { connectionString } = assertExactStagingEnvironment(
+  "Authentication runtime verification",
+);
 
 const useLocalSpecialAccount = process.argv.includes(
   "--use-local-special-account",
@@ -22,12 +27,6 @@ if (!baseUrl || !email || !password) {
     "UI_TEST_BASE_URL, UI_TEST_EMAIL, and UI_TEST_PASSWORD are required.",
   );
 }
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL is required to create the reversible document fixture.",
-  );
-}
-
 const outputDirectory = "artifacts/ui-migration/auth-misc";
 const themes = ["light", "night", "violet"];
 const viewports = [
@@ -36,7 +35,7 @@ const viewports = [
   { name: "mobile", width: 390, height: 844 },
 ];
 const fixtureClient = new pg.Client({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
 });
 const results = [];
 const runtimeErrors = [];

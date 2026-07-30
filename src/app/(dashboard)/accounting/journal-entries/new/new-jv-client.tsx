@@ -8,11 +8,8 @@ import { DateInput } from "@/components/monolith/date-input";
 import {
   AccountingAction,
   AccountingAlert,
-  AccountingCheckbox,
   AccountingField,
   AccountingInput,
-  AccountingMetric,
-  AccountingMetrics,
   AccountingSection,
   AccountingSelect,
 } from "@/components/monolith/accounting-workspace";
@@ -45,7 +42,6 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
   const [postingDate, setPostingDate] = useState(
     new Date().toISOString().split("T")[0],
   );
-  const [submitImmediately, setSubmitImmediately] = useState(false);
   const [lines, setLines] = useState<JournalLine[]>([emptyLine(), emptyLine()]);
 
   function updateLine(
@@ -57,23 +53,12 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
       current.map((line, lineIndex) => {
         if (lineIndex !== index) return line;
         const next = { ...line, [field]: value };
-        if (field === "debit" && Number(value) > 0) next.credit = 0;
-        if (field === "credit" && Number(value) > 0) next.debit = 0;
+        if (field === "debit" && value !== "" && value !== "0") next.credit = "0";
+        if (field === "credit" && value !== "" && value !== "0") next.debit = "0";
         return next;
       }),
     );
   }
-
-  const totalDebit = lines.reduce(
-    (sum, line) => sum + (Number(line.debit) || 0),
-    0,
-  );
-  const totalCredit = lines.reduce(
-    (sum, line) => sum + (Number(line.credit) || 0),
-    0,
-  );
-  const difference = Math.abs(totalDebit - totalCredit);
-  const isBalanced = difference <= 0.01;
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -81,37 +66,21 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
       toast.error("Please select accounts for all lines");
       return;
     }
-    if (totalDebit <= 0) {
-      toast.error("Transaction total amount must be greater than zero");
-      return;
-    }
-    if (!isBalanced) {
-      toast.error(
-        `Transaction is unbalanced. Difference: ₹${difference.toFixed(2)}`,
-      );
-      return;
-    }
-
     setIsSaving(true);
     try {
       const result = await createJournalEntryAction({
         postingDate: new Date(postingDate),
         remarks: remarks || null,
         branchId: branchId || null,
-        submit: submitImmediately,
         lines: lines.map((line) => ({
           accountId: line.accountId,
-          debit: Number(line.debit) || 0,
-          credit: Number(line.credit) || 0,
+          debit: String(line.debit || "0"),
+          credit: String(line.credit || "0"),
           remarks: line.remarks || null,
         })),
       });
       if (result.ok) {
-        toast.success(
-          submitImmediately
-            ? "Journal entry posted successfully"
-            : "Journal entry draft saved",
-        );
+        toast.success("Journal entry draft saved for separate approval");
         router.push("/accounting/journal-entries");
         router.refresh();
       } else {
@@ -256,33 +225,11 @@ export function NewJVClient({ accounts, branches }: NewJVClientProps) {
         </div>
       </AccountingSection>
 
-      <AccountingMetrics>
-        <AccountingMetric
-          label="Total debit"
-          value={`₹${totalDebit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
-        />
-        <AccountingMetric
-          label="Total credit"
-          value={`₹${totalCredit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
-        />
-        <AccountingMetric
-          label="Difference"
-          value={`₹${difference.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
-          detail={isBalanced ? "Voucher is balanced" : "Voucher is unbalanced"}
-        />
-      </AccountingMetrics>
-
-      <AccountingAlert variant={isBalanced ? "success" : "warning"}>
-        {isBalanced
-          ? "Debit and credit totals are balanced."
-          : "The voucher cannot be saved until debit and credit totals match."}
+      <AccountingAlert>
+        Amounts are stored as exact decimal strings. Accounting validates exact
+        debit and credit equality when a separate approver posts the draft.
       </AccountingAlert>
       <div className="mnx-accounting-form-actions">
-        <AccountingCheckbox
-          checked={submitImmediately}
-          onChange={(event) => setSubmitImmediately(event.target.checked)}
-          label="Post directly to the general ledger"
-        />
         <AccountingAction disabled={isSaving} type="submit">
           {isSaving ? <Loader2 aria-hidden="true" className="animate-spin" size={16} /> : null}
           {isSaving ? "Saving…" : "Save voucher"}
