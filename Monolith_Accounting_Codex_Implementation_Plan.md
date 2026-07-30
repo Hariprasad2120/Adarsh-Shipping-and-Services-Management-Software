@@ -1,8 +1,8 @@
 # Monolith Accounting Module — Codex Step-by-Step Implementation Plan
 
-**Source specifications:** `docs/accounting/sources/Accounting_Software_Build_Specification.md` and `docs/accounting/sources/Zoho Books Workings.md`  
-**Target:** Existing Monolith Engine accounting module  
-**Execution model:** One phase at a time, with inspection, implementation, tests, review, and an explicit approval gate before the next phase  
+**Source specifications:** `docs/accounting/sources/Accounting_Software_Build_Specification.md` and `docs/accounting/sources/Zoho Books Workings.md`
+**Target:** Existing Monolith Engine accounting module
+**Execution model:** One phase at a time, with inspection, implementation, tests, review, and an explicit approval gate before the next phase
 **Primary stack assumption:** Existing Monolith stack (Next.js, TypeScript, PostgreSQL, Prisma, existing authentication and RBAC). Codex must confirm the real repository stack during Phase 0 and must not replace it based on this assumption.
 
 ---

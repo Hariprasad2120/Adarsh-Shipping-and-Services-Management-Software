@@ -310,7 +310,9 @@ const workspaceActionVariants = cva("mnx-button", {
   variants: {
     variant: {
       primary: "mnx-button-primary",
+      accent: "mnx-button-accent",
       secondary: "mnx-button-secondary",
+      outline: "mnx-button-outline",
       destructive: "mnx-button-destructive",
     },
     size: {

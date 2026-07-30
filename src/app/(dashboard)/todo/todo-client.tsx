@@ -36,6 +36,7 @@ import {
   WorkspaceTextarea,
 } from "@/components/monolith";
 import { useNotifications } from "@/components/notifications/notification-provider";
+import { TodoHeaderGraphic } from "./graphics/TodoHeaderGraphic";
 
 type TodoStatus = "PENDING" | "COMPLETED";
 type TodoFilter = "ALL" | "PENDING" | "COMPLETED" | "UPCOMING_ALERTS";
@@ -97,20 +98,6 @@ const FILTER_OPTIONS: { value: TodoFilter; label: string }[] = [
   { value: "COMPLETED", label: "Completed tasks" },
   { value: "UPCOMING_ALERTS", label: "Upcoming alerts" },
 ];
-
-function TodoHeaderGraphic() {
-  return (
-    <div className="mnx-todo-header-graphic" aria-hidden="true">
-      <span />
-      <span />
-      <span />
-      <i />
-      <i />
-      <b />
-      <b />
-    </div>
-  );
-}
 
 function createDraftSubtask(
   partial?: Partial<TodoDraftSubtask>,
@@ -440,12 +427,6 @@ export function TodoClient({
         title="To-Do"
         graphic={<TodoHeaderGraphic />}
         description={`Plan follow-ups, reminders, and nested checklists for ${currentUserName}.`}
-        actions={
-          <WorkspaceAction onClick={openCreateTask}>
-            <Plus size={15} aria-hidden="true" />
-            Create task
-          </WorkspaceAction>
-        }
       />
 
       <section className="mnx-workspace-metrics" aria-label="Task summary">
@@ -481,17 +462,23 @@ export function TodoClient({
           title="Your tasks"
           description="Expand a task to review its checklist, reminder, and actions."
           actions={
-            <WorkspaceSelect
-              aria-label="Task filter"
-              value={filter}
-              onChange={(event) => setFilter(event.target.value as TodoFilter)}
-            >
-              {FILTER_OPTIONS.map((option) => (
-                <option value={option.value} key={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </WorkspaceSelect>
+            <>
+              <WorkspaceSelect
+                aria-label="Task filter"
+                value={filter}
+                onChange={(event) => setFilter(event.target.value as TodoFilter)}
+              >
+                {FILTER_OPTIONS.map((option) => (
+                  <option value={option.value} key={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </WorkspaceSelect>
+              <WorkspaceAction onClick={openCreateTask}>
+                <Plus size={15} aria-hidden="true" />
+                Create task
+              </WorkspaceAction>
+            </>
           }
         />
 

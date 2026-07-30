@@ -1521,8 +1521,23 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
     0 10px 22px rgba(17, 18, 14, 0.18);
 }
 
+.mnx-button-primary > svg,
+.mnx-button-primary > span > svg,
+.mnx-button-primary > span:not(.mnx-button-spinner) {
+  color: var(--mnx-accent);
+}
+
 .theme-night .mnx-button-primary,
 .theme-violet .mnx-button-primary {
+  color: var(--mnx-accent-contrast);
+}
+
+.theme-night .mnx-button-primary > svg,
+.theme-night .mnx-button-primary > span > svg,
+.theme-night .mnx-button-primary > span:not(.mnx-button-spinner),
+.theme-violet .mnx-button-primary > svg,
+.theme-violet .mnx-button-primary > span > svg,
+.theme-violet .mnx-button-primary > span:not(.mnx-button-spinner) {
   color: var(--mnx-accent-contrast);
 }
 
@@ -8994,6 +9009,32 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
   border: 1px solid var(--mnx-border);
   border-radius: var(--mnx-radius-md);
   background: var(--mnx-control-gradient);
+}
+
+.mnx-cha-jobs-table-controls {
+  display: grid;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-4) var(--mn-space-5);
+  border-bottom: 1px solid var(--mnx-border);
+  background: color-mix(in srgb, var(--mnx-card) 72%, transparent);
+}
+
+.mnx-cha-jobs-toolbar {
+  width: 100%;
+  padding: 0;
+  border-bottom: 0;
+}
+
+.mnx-cha-jobs-toolbar .mnx-search-field {
+  flex-basis: min(330px, 100%);
+}
+
+.mnx-cha-jobs-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .mnx-cha-tabs {

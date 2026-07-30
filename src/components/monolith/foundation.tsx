@@ -49,7 +49,12 @@ export function MonolithBadge({
   );
 }
 
-export type MonolithActionVariant = "primary" | "secondary";
+export type MonolithActionVariant =
+  | "primary"
+  | "accent"
+  | "secondary"
+  | "outline"
+  | "destructive";
 
 export interface MonolithActionProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {

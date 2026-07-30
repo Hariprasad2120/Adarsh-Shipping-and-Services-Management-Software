@@ -105,8 +105,8 @@ describe("module-aware main dashboard", () => {
   });
 
   it("maps dashboard aliases to centralized semantic theme tokens", () => {
-    const tokens = readSource("src/styles/monolith-tokens.css");
-    const styles = readSource("src/styles/monolith-system.css");
+    const tokens = readSource("src/styles/monolith-tokens.css").replace(/\r\n/g, "\n");
+    const styles = readSource("src/styles/monolith-system.css").replace(/\r\n/g, "\n");
 
     expect(tokens).toContain("html.theme-light");
     expect(tokens).toContain("html.theme-night");

@@ -49,7 +49,6 @@ import {
   WorkspacePage,
   WorkspacePageHeader,
   WorkspacePanel,
-  WorkspacePanelHeader,
   WorkspaceState,
   WorkspaceTable,
 } from "./workspace";
@@ -193,19 +192,19 @@ export function ChaRoutePageHeader({
   className,
   description,
   eyebrow,
-  icon,
+  graphic,
   title,
 }: {
   actions?: ReactNode;
   className?: string;
   description?: ReactNode;
   eyebrow?: ReactNode;
+  graphic?: ReactNode;
   icon?: ReactNode;
   title?: ReactNode;
 }) {
   const pathname = usePathname();
   const meta = getChaRouteMeta(pathname);
-  const MetaIcon = meta.icon;
 
   return (
     <WorkspacePageHeader
@@ -213,7 +212,7 @@ export function ChaRoutePageHeader({
       eyebrow={typeof eyebrow === "string" ? eyebrow : meta.eyebrow}
       title={title ?? meta.title}
       description={description ?? meta.description}
-      icon={icon ?? <MetaIcon aria-hidden="true" />}
+      graphic={graphic}
       actions={actions}
     />
   );
@@ -234,7 +233,6 @@ export function ChaMetrics({
 export function ChaMetric({
   detail,
   href,
-  icon,
   label,
   value,
 }: {
@@ -246,10 +244,9 @@ export function ChaMetric({
 }) {
   return (
     <WorkspaceMetric
-      label={label}
+      label={<span className="mnx-cha-metric-label">{label}</span>}
       value={value}
       detail={detail}
-      icon={icon}
       href={href}
     />
   );
@@ -261,7 +258,7 @@ export function ChaSection({
   children,
   className,
   description,
-  eyebrow,
+  index,
   title,
 }: {
   actions?: ReactNode;
@@ -269,25 +266,28 @@ export function ChaSection({
   children: ReactNode;
   className?: string;
   description?: ReactNode;
-  eyebrow?: string;
+  index?: ReactNode;
   title: ReactNode;
 }) {
   return (
-    <WorkspacePanel className={cn("mnx-cha-section", className)}>
-      <WorkspacePanelHeader
-        className="mnx-cha-section-header"
-        eyebrow={eyebrow}
-        title={
-          <span className="mnx-cha-section-title">
+    <section className="mnx-cha-section-block">
+      <header className="mnx-cha-outside-heading">
+        <div className="mnx-cha-heading-title">
+          {index ? <span className="mnx-cha-heading-index">{index}</span> : null}
+          <h2>
             {title}
             {badge ? <Badge variant="secondary">{badge}</Badge> : null}
-          </span>
-        }
-        description={description}
-        actions={actions}
-      />
-      <div className="mnx-cha-section-content">{children}</div>
-    </WorkspacePanel>
+          </h2>
+        </div>
+        <div className="mnx-cha-heading-aside">
+          {description ? <p>{description}</p> : null}
+        </div>
+      </header>
+      <WorkspacePanel className={cn("mnx-cha-section", className)}>
+        {actions ? <div className="mnx-cha-panel-actions-row">{actions}</div> : null}
+        <div className="mnx-cha-section-content">{children}</div>
+      </WorkspacePanel>
+    </section>
   );
 }
 

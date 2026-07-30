@@ -5,6 +5,17 @@ import {
 import Link from "next/link";
 import { WorkspaceSectionHeading } from "@/components/monolith/workspace";
 import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
+import { AttendanceGraphic } from "../graphics/AttendanceGraphic";
+import { CommunicationGraphic } from "../graphics/CommunicationGraphic";
+import { CustomerPipelineGraphic } from "../graphics/CustomerPipelineGraphic";
+import { ExpenseDeskGraphic } from "../graphics/ExpenseDeskGraphic";
+import { FinancialControlGraphic } from "../graphics/FinancialControlGraphic";
+import { LearningHubGraphic } from "../graphics/LearningHubGraphic";
+import { PeopleOperationsGraphic } from "../graphics/PeopleOperationsGraphic";
+import { PerformanceGraphic } from "../graphics/PerformanceGraphic";
+import { ProductCatalogueGraphic } from "../graphics/ProductCatalogueGraphic";
+import { ShipmentOperationsGraphic } from "../graphics/ShipmentOperationsGraphic";
+import { TalentPipelineGraphic } from "../graphics/TalentPipelineGraphic";
 
 interface ModuleCommandCenterProps {
   snapshot: DashboardModuleSnapshot;
@@ -58,78 +69,47 @@ function getModuleLayout(moduleId: string, index: number) {
 
 function ModuleGraphic({ visual }: { visual: ModuleVisual }) {
   if (visual === "catalogue") {
-    return (
-      <svg className="mnx-module-graphic" viewBox="0 0 240 180" aria-hidden="true" focusable="false">
-        <path className="mnx-module-graphic-surface" d="M70 36h86l22 24v84H70z" />
-        <path className="mnx-module-graphic-faint" d="M156 36v25h22" />
-        <path className="mnx-module-graphic-accent" d="M90 78h66M90 101h78M90 124h46" />
-        <path className="mnx-module-graphic-line" d="M52 58h24v86h92M178 74h18v48h-28" />
-        <circle className="mnx-module-graphic-dot" cx="52" cy="58" r="5" />
-        <circle className="mnx-module-graphic-dot" cx="196" cy="122" r="5" />
-      </svg>
-    );
+    return <ProductCatalogueGraphic />;
   }
 
-  if (visual === "people" || visual === "recruit") {
-    return (
-      <svg className="mnx-module-graphic" viewBox="0 0 240 180" aria-hidden="true" focusable="false">
-        <circle className="mnx-module-graphic-surface" cx="120" cy="70" r="32" />
-        <path className="mnx-module-graphic-accent" d="M88 135c7-27 57-27 64 0" />
-        <circle className="mnx-module-graphic-faint" cx="65" cy="103" r="20" />
-        <circle className="mnx-module-graphic-faint" cx="178" cy="101" r="22" />
-        <path className="mnx-module-graphic-line" d="M85 108l20-19M154 88l24 17M65 123v22h113v-22" />
-        <circle className="mnx-module-graphic-dot" cx="65" cy="145" r="5" />
-        <circle className="mnx-module-graphic-dot" cx="178" cy="145" r="5" />
-      </svg>
-    );
+  if (visual === "people") {
+    return <PeopleOperationsGraphic />;
+  }
+
+  if (visual === "recruit") {
+    return <TalentPipelineGraphic />;
   }
 
   if (visual === "attendance") {
-    return (
-      <svg className="mnx-module-graphic" viewBox="0 0 240 180" aria-hidden="true" focusable="false">
-        <circle className="mnx-module-graphic-surface" cx="120" cy="90" r="56" />
-        <path className="mnx-module-graphic-accent" d="M120 52v38l29 19" />
-        <path className="mnx-module-graphic-line" d="M120 34v14M120 132v14M64 90h14M162 90h14" />
-        <circle className="mnx-module-graphic-dot" cx="120" cy="90" r="6" />
-      </svg>
-    );
+    return <AttendanceGraphic />;
   }
 
-  if (visual === "performance" || visual === "finance" || visual === "expense") {
-    return (
-      <svg className="mnx-module-graphic" viewBox="0 0 240 180" aria-hidden="true" focusable="false">
-        <path className="mnx-module-graphic-line" d="M54 132h132" />
-        <path className="mnx-module-graphic-surface" d="M62 92h12v40H62zM98 62h12v70H98zM134 78h12v54h-12zM170 44h12v88h-12z" />
-        <path className="mnx-module-graphic-accent" d="M62 106l37-34 38 22 44-56" />
-        <circle className="mnx-module-graphic-dot" cx="62" cy="106" r="5" />
-        <circle className="mnx-module-graphic-dot" cx="137" cy="94" r="5" />
-        <circle className="mnx-module-graphic-dot" cx="181" cy="38" r="5" />
-      </svg>
-    );
+  if (visual === "performance") {
+    return <PerformanceGraphic />;
+  }
+
+  if (visual === "finance") {
+    return <FinancialControlGraphic />;
+  }
+
+  if (visual === "expense") {
+    return <ExpenseDeskGraphic />;
   }
 
   if (visual === "learning") {
-    return (
-      <svg className="mnx-module-graphic" viewBox="0 0 240 180" aria-hidden="true" focusable="false">
-        <path className="mnx-module-graphic-surface" d="M52 58c28-10 48-8 68 8v80c-20-16-40-18-68-8z" />
-        <path className="mnx-module-graphic-surface" d="M120 66c20-16 40-18 68-8v80c-28-10-48-8-68 8z" />
-        <path className="mnx-module-graphic-accent" d="M120 66v80M70 86h30M70 108h32M140 86h30M140 108h28" />
-        <path className="mnx-module-graphic-faint" d="M52 138c28-10 48-8 68 8 20-16 40-18 68-8" />
-      </svg>
-    );
+    return <LearningHubGraphic />;
   }
 
-  if (visual === "pipeline" || visual === "communication") {
-    return (
-      <svg className="mnx-module-graphic" viewBox="0 0 240 180" aria-hidden="true" focusable="false">
-        <path className="mnx-module-graphic-line" d="M62 92h38l24-34h52M124 58v64h54M100 92l24 30" />
-        <rect className="mnx-module-graphic-surface" x="42" y="70" width="46" height="44" rx="16" />
-        <rect className="mnx-module-graphic-surface" x="100" y="36" width="48" height="44" rx="16" />
-        <rect className="mnx-module-graphic-surface" x="152" y="100" width="48" height="44" rx="16" />
-        <circle className="mnx-module-graphic-dot" cx="124" cy="58" r="5" />
-        <path className="mnx-module-graphic-accent" d="M56 91h18M114 57h20M166 122h20" />
-      </svg>
-    );
+  if (visual === "pipeline") {
+    return <CustomerPipelineGraphic />;
+  }
+
+  if (visual === "communication") {
+    return <CommunicationGraphic />;
+  }
+
+  if (visual === "shipment") {
+    return <ShipmentOperationsGraphic />;
   }
 
   return (

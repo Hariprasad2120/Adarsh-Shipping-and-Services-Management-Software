@@ -1316,3 +1316,29 @@ Blocked:
   dialog, generated/manual Employee ID, validation, invitation success/failure,
   focus behavior, and desktop/tablet/mobile layouts. The change is implemented
   and lint/type/test/build clean, but is not declared visually Verified.
+
+## Post-batch 004 CHA Jobs datatable controls
+
+Implemented on 2026-07-29 after merge resolution.
+
+- Matched the `/cha/jobs` Active and Completed Jobs datatable toolbars to the
+  shared Monolith table reference: left-aligned icon search, right-aligned New
+  Job and Filter controls, no extra Apply Search button, and shared search/
+  control sizing.
+- Preserved existing search, filter, pagination, creation, permission, and row
+  navigation behavior.
+
+Backup:
+`OLD UI code/ui-iteration-backups/cha-jobs-datatable-controls-reference-20260729/`
+
+Passed:
+
+- targeted ESLint for `src/app/(dashboard)/cha/jobs/jobs-client.tsx`;
+- `npx tsc --noEmit -p tsconfig.ui-migration.json`;
+- static Expense/CHA verifier:
+  `node scripts/verify-monolith-expense-cha-ui.mjs`.
+
+Blocked:
+
+- Authenticated visual verification remains covered by the existing missing
+  browser-instance blocker for CHA.

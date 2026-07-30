@@ -853,3 +853,21 @@ Next visual action:
    focus trap/restoration, and navigation to the new pending employee profile.
 4. Confirm non-HR viewers never receive either creation action and forged quick
    API requests return the permission error.
+
+## 2026-07-29 CHA Jobs datatable controls
+
+The `/cha/jobs` Active and Completed Jobs datatable toolbars now match the
+shared Monolith table reference: left-aligned icon search, right-aligned New Job
+and Filter controls, no extra Apply Search button, and shared search/control
+sizing.
+
+Backup:
+`OLD UI code/ui-iteration-backups/cha-jobs-datatable-controls-reference-20260729/`
+
+Verification:
+
+- targeted ESLint for `src/app/(dashboard)/cha/jobs/jobs-client.tsx`: passed;
+- `npx tsc --noEmit -p tsconfig.ui-migration.json`: passed;
+- `node scripts/verify-monolith-expense-cha-ui.mjs`: passed;
+- visual verification remains covered by the existing CHA browser-instance
+  blocker.
