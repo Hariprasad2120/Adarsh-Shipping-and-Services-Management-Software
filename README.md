@@ -63,6 +63,9 @@ npm run build
 npm run start
 npm run lint
 npm run test
+npm run audit:structure
+npm run audit:unused
+npm run quality
 npm run db:generate
 npm run db:migrate
 npm run db:seed
@@ -73,7 +76,10 @@ npm run catalogue:check
 ## Project structure
 
 ```text
-src/        Application routes, modules, UI, and server logic
+src/app/    Next.js routes and route composition
+src/components/monolith/  Canonical Monolith design system
+src/components/{layout,navigation,feedback,shared,providers}/  Shared UI ownership
+src/modules/ Feature-owned business logic and components
 prisma/     Database schema, migrations, and seed data
 public/     Static assets
 mobile/     Android client source
@@ -101,6 +107,7 @@ Related docs: [CHA_PRODUCTION_SCOPE.md](CHA_PRODUCTION_SCOPE.md), [DEPLOYMENT.md
 
 - This repository should contain source code, docs, and intentionally versioned assets only.
 - Local recordings, generated analysis output, scratch files, and Codex artifacts are ignored.
+- See `docs/refactor/code-organization.md` before adding shared components or scripts.
 
 ## Checklist Main email automation
 

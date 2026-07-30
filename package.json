@@ -37,7 +37,10 @@
     "catalogue:update": "npx tsx scripts/update-product-catalogue.ts",
     "catalogue:check": "npx tsx scripts/check-product-catalogue.ts",
     "test": "tsx scripts/run-with-staging-env.ts vitest run",
-    "test:playwright:performance": "node scripts/playwright-performance-security.mjs"
+    "test:playwright:performance": "node scripts/playwright-performance-security.mjs",
+    "audit:structure": "node scripts/verify-code-organization.mjs",
+    "audit:unused": "npx tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "quality": "npm run audit:structure && npm run lint && npm test && npm run build"
   },
   "dependencies": {
     "@carbon/icons-react": "^11.80.0",
