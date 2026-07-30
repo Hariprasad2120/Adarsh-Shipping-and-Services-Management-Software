@@ -182,3 +182,15 @@ The engine accepts only registered journal/rule/source triples and positive sour
 The canonical runtime state model is `RECEIVED/PENDING → PROCESSING → PROCESSED`, with `REJECTED`, `RETRYABLE`, and `MANUAL_REVIEW` outcomes. Legacy document reads and draft creation remain compatible, but the old GL helper and reversal helper fail closed. Depreciation, recurring auto-journal, and partner posting stay gated until their versioned policy evidence and adapters exist.
 
 DEC-0022 is only partially implemented: the exact internal Decimal boundary, configured currency scale up to eight places, twelve-place FX evidence, explicit quantization, base conversion, deterministic allocation/remainder handling and a versioned rounding-policy reference are implemented. Synthetic non-statutory tests use an explicitly marked policy. Statutory component/document rounding, tax edge cases, depreciation policies and production round-off treatment remain gated pending Finance/legal/CA validation.
+
+## Phase 4 canonical documents and payments
+
+`AccountingDocumentPolicy` is an effective-dated, legal-entity-scoped, hash-verified configuration snapshot. `AccountingDocument` and `AccountingDocumentLine` freeze the source identity/version, party, dates, currency/FX evidence, configuration versions, Decimal line/totals, approval lineage, request identity, payload hash, original-correction relationship, and eventual journal link. The lifecycle is `PENDING_APPROVAL → POSTED`, with explicit rejected/cancelled outcomes; preparation never implies posting.
+
+`AccountingCounterpartyEntityScope` is the approved effective-dated bridge from an organization customer/vendor master to a legal entity. Sales, purchase, receipt and vendor-payment preparation fails closed without an active mapping; a database trigger independently proves both the legal-entity and party organization.
+
+`AccountingPayment` freezes payment identity, payer/payee, bank/cash and control accounts, dates, currency/FX, method/reference, declared allocated/unapplied totals, approval evidence, immutable payload, reversal and journal lineage. `AccountingPaymentAllocation` points to either a posted canonical document/version or an approved payroll source snapshot/version. Partial unique indexes, target-row locks and capacity triggers protect concurrent allocations. The canonical engine rechecks that active allocation totals plus unapplied amount equal the payment exactly before posting.
+
+`AccountingScheduledOccurrence` separates template/version/date identity from claim, generated record, approval and journal evidence. `PENDING`, `CLAIMED`, `GENERATED`, `SKIPPED`, and `FAILED` are explicit. Claims use row locks with `SKIP LOCKED`; stale leases are recoverable, while generated/skipped occurrences are immutable.
+
+The Phase 4 document, payment and occurrence tables are expand-only and retain legacy draft/read models. See `phase-4-transition-matrix.md` for the precise compatibility and policy-gated status of each source path.

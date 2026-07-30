@@ -124,7 +124,7 @@ describe("Accounting legacy compatibility after canonical posting cutover", () =
         items: [{ itemName: "Synthetic service", qty: 1, rate: 100 }],
         taxRate: 0,
       }),
-    ).rejects.toThrow(/LEGACY_DIRECT_LEDGER_WRITE_BLOCKED/);
+    ).rejects.toThrow(/LEGACY_SALES_INVOICE_POSTING_BLOCKED/);
     expect(await db.salesInvoice.count({ where: { orgId } })).toBe(0);
     expect(await db.generalLedgerEntry.count({ where: { orgId } })).toBe(0);
   });

@@ -62,3 +62,18 @@ The canonical Phase 3 runtime uses `accounting.draft.create`, `accounting.invoic
 - platform-admin-only identity cannot post;
 - protected system accounts and posted facts reject direct changes;
 - audit records contain actor, effective scope, policy version and reason.
+
+## Phase 4 server-enforced permissions
+
+Definitions added without assuming production role assignment:
+
+- `accounting.document.read`, `accounting.document.approve`;
+- `accounting.sales-invoice.prepare`, `accounting.sales-invoice.approve`;
+- `accounting.purchase-invoice.prepare`, `accounting.purchase-invoice.approve`;
+- `accounting.receipt.prepare`, `accounting.payment.prepare`, `accounting.payment.approve`, `accounting.payment.post`, `accounting.payment.allocate`, `accounting.payment.reverse`;
+- `accounting.credit-note.prepare`, `accounting.debit-note.prepare`, `accounting.correction.approve`;
+- `accounting.payroll-payment.integrate`, `accounting.payroll-correction.integrate`, `accounting.payroll-payment.sensitive.read`;
+- `accounting.depreciation-run.integrate`, `accounting.recurring-template.admin`, `accounting.recurring-occurrence.process`, `accounting.partner-transaction.prepare`;
+- `accounting.outbox.retry`, `accounting.outbox.manual-review`, `accounting.payment.read`.
+
+Preparation permission never substitutes for approval/posting. Sales and purchase approval require both canonical document approval and the type-specific approval key. Corrections require correction approval. Payments require payment approval/post plus canonical posting authority. Trusted payroll identities remain narrowly scoped and do not gain payroll calculation authority. Outbox retry/review and scheduled occurrence transitions are audited.

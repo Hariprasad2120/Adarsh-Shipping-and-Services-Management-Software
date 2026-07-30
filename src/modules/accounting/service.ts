@@ -641,6 +641,11 @@ export async function getSalesInvoice(orgId: string, id: string) {
 }
 
 export async function createSalesInvoice(orgId: string, createdById: string, data: any) {
+  if (data.submit) {
+    throw new Error(
+      "LEGACY_SALES_INVOICE_POSTING_BLOCKED: create a draft, then use the canonical approval workflow",
+    );
+  }
   if (data.taxRate == null) throw new Error("A configured tax rate or explicit zero-tax treatment is required");
   if (!data.dueDate) throw new Error("A configured invoice due date is required");
   const items = data.items || [];
@@ -951,6 +956,11 @@ export async function getPurchaseInvoice(orgId: string, id: string) {
 }
 
 export async function createPurchaseInvoice(orgId: string, createdById: string, data: any) {
+  if (data.submit) {
+    throw new Error(
+      "LEGACY_PURCHASE_INVOICE_POSTING_BLOCKED: create a draft, then use the canonical approval workflow",
+    );
+  }
   if (data.taxRate == null) throw new Error("A configured tax rate or explicit zero-tax treatment is required");
   if (!data.dueDate) throw new Error("A configured bill due date is required");
   const items = data.items || [];
@@ -1249,6 +1259,11 @@ export async function getPaymentEntry(orgId: string, id: string) {
 }
 
 export async function createPaymentEntry(orgId: string, createdById: string, data: any) {
+  if (data.submit) {
+    throw new Error(
+      "LEGACY_PAYMENT_POSTING_BLOCKED: create a draft, then use the canonical approval workflow",
+    );
+  }
   const amount = parseFloat(data.amount);
   const allocations = data.allocations || [];
 
@@ -2090,6 +2105,13 @@ export async function createCustomerNote(orgId: string, createdById: string, dat
 }
 
 export async function submitCustomerNote(orgId: string, id: string, userId: string) {
+  void orgId;
+  void id;
+  void userId;
+  throw new Error(
+    "LEGACY_CUSTOMER_NOTE_POSTING_BLOCKED: use the canonical correction-document adapter",
+  );
+  /*
   const note = await db.customerNote.findFirst({
     where: { id, orgId, status: "DRAFT" },
     include: { items: true }
@@ -2178,6 +2200,7 @@ export async function submitCustomerNote(orgId: string, id: string, userId: stri
       data: { status: "SUBMITTED" }
     });
   });
+  */
 }
 
 // 4. Debit & Credit Notes (Vendor)
@@ -2242,6 +2265,13 @@ export async function createVendorNote(orgId: string, createdById: string, data:
 }
 
 export async function submitVendorNote(orgId: string, id: string, userId: string) {
+  void orgId;
+  void id;
+  void userId;
+  throw new Error(
+    "LEGACY_VENDOR_NOTE_POSTING_BLOCKED: use the canonical correction-document adapter",
+  );
+  /*
   const note = await db.vendorNote.findFirst({
     where: { id, orgId, status: "DRAFT" },
     include: { items: true }
@@ -2330,6 +2360,7 @@ export async function submitVendorNote(orgId: string, id: string, userId: string
       data: { status: "SUBMITTED" }
     });
   });
+  */
 }
 
 // 5. Recurring Entries Processing

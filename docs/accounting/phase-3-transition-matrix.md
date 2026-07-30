@@ -2,6 +2,8 @@
 
 Status: evidence-backed transition inventory, updated 2026-07-30
 
+Phase 4 supersedes the document/payment/scheduler rollout columns in this file. See `phase-4-transition-matrix.md`; the Phase 3 canonical posting boundary remains authoritative and unchanged.
+
 Scope: synthetic staging only. This document does not authorize production, Neon, Zoho Books, port 5432, real-data migration, external publication, deployment, commit, or push.
 
 ## Boundary

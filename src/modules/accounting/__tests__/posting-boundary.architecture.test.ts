@@ -114,5 +114,58 @@ describe("canonical Accounting posting boundary", () => {
     );
     expect(service).toContain("LEGACY_DIRECT_LEDGER_WRITE_BLOCKED");
     expect(service).toContain("LEGACY_DIRECT_LEDGER_REVERSAL_BLOCKED");
+    expect(service).toContain("LEGACY_SALES_INVOICE_POSTING_BLOCKED");
+    expect(service).toContain("LEGACY_PURCHASE_INVOICE_POSTING_BLOCKED");
+    expect(service).toContain("LEGACY_PAYMENT_POSTING_BLOCKED");
+    expect(service).toContain("LEGACY_CUSTOMER_NOTE_POSTING_BLOCKED");
+    expect(service).toContain("LEGACY_VENDOR_NOTE_POSTING_BLOCKED");
+    expect(service).toContain("QUOTATION_CONVERSION_GATED");
+    expect(service).toContain("DEPRECIATION_POSTING_GATED");
+    expect(service).toContain("RECURRING_EXPENSE_POSTING_GATED");
+    expect(service).toContain("RECURRING_JOURNAL_POSTING_GATED");
+    expect(service).toContain("PARTNER_POSTING_GATED");
+  });
+
+  it("routes invoice, payment, correction, and cancellation actions through Phase 4 adapters", () => {
+    const actions = withoutComments(
+      readFileSync(join(sourceRoot, "modules/accounting/actions.ts"), "utf8"),
+    );
+    expect(actions).toContain("prepareLegacySalesInvoice");
+    expect(actions).toContain("prepareLegacyPurchaseInvoice");
+    expect(actions).toContain("prepareLegacyPayment");
+    expect(actions).toContain("prepareLegacyCustomerNote");
+    expect(actions).toContain("cancelCanonicalDocumentByLegacyRecord");
+    expect(actions).toContain("reverseCanonicalPaymentByLegacyRecord");
+    expect(actions).not.toContain("accService.submitSalesInvoice(");
+    expect(actions).not.toContain("accService.submitPurchaseInvoice(");
+    expect(actions).not.toContain("accService.submitPaymentEntry(");
+    expect(actions).not.toContain("accService.cancelSalesInvoice(");
+    expect(actions).not.toContain("accService.cancelPurchaseInvoice(");
+    expect(actions).not.toContain("accService.cancelPaymentEntry(");
+    expect(actions).not.toContain("accService.submitCustomerNote(");
+  });
+
+  it("keeps canonical Phase 4 status promotion inside the posting engine", () => {
+    const violations: string[] = [];
+    for (const path of sourceFiles(sourceRoot)) {
+      const file = relative(root, path).replaceAll("\\", "/");
+      if (file.includes("/__tests__/") || file.startsWith("src/generated/")) continue;
+      const source = withoutComments(readFileSync(path, "utf8"));
+      const canonicalStatusMutation =
+        /\baccounting(?:Document|Payment)\.(?:update|updateMany|delete|deleteMany)\s*\(/.test(
+          source,
+        );
+      const allocationMutation =
+        /\baccountingPaymentAllocation\.(?:update|updateMany|delete|deleteMany)\s*\(/.test(
+          source,
+        );
+      if (
+        (canonicalStatusMutation || allocationMutation) &&
+        file !== "src/modules/accounting/posting-engine.ts"
+      ) {
+        violations.push(`${file}: canonical document/payment state mutated outside posting engine`);
+      }
+    }
+    expect(violations).toEqual([]);
   });
 });

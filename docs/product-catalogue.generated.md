@@ -1,6 +1,6 @@
 # Monolith Engine — Product Catalogue (Auto-Generated)
 
-> Generated at: 2026-07-30T05:50:48.635Z
+> Generated at: 2026-07-30T09:15:46.784Z
 > Version: 0.1.0
 
 ## Codebase Statistics
@@ -8,9 +8,9 @@
 | Metric | Count |
 |---|---|
 | App Routes (Pages) | 232 |
-| API Routes | 208 |
-| Prisma Models | 304 |
-| Module Service Files | 106 |
+| API Routes | 212 |
+| Prisma Models | 311 |
+| Module Service Files | 114 |
 | UI Components | 124 |
 
 ## Modules Overview
@@ -18,18 +18,18 @@
 | Module | Pages | APIs | Models | Services | Components |
 |---|---|---|---|---|---|
 | account | 1 | 0 | 0 | 0 | 0 |
-| accounting | 35 | 0 | 37 | 12 | 0 |
+| accounting | 35 | 0 | 44 | 18 | 0 |
 | admin | 13 | 6 | 0 | 0 | 0 |
 | ams | 21 | 17 | 17 | 11 | 3 |
 | attendance | 10 | 10 | 9 | 1 | 0 |
 | auth | 0 | 1 | 0 | 0 | 1 |
-| cha | 14 | 6 | 35 | 7 | 3 |
+| cha | 14 | 7 | 35 | 9 | 3 |
 | communication | 13 | 18 | 2 | 1 | 0 |
 | core | 3 | 0 | 75 | 5 | 0 |
 | crm | 60 | 4 | 26 | 8 | 1 |
-| cron | 0 | 7 | 0 | 0 | 0 |
+| cron | 0 | 8 | 0 | 0 | 0 |
 | customer-portal | 0 | 19 | 0 | 12 | 0 |
-| dashboard | 3 | 0 | 0 | 2 | 0 |
+| dashboard | 3 | 1 | 0 | 2 | 0 |
 | dev | 0 | 1 | 0 | 0 | 0 |
 | expense | 4 | 0 | 0 | 0 | 0 |
 | google-chat | 0 | 6 | 6 | 8 | 0 |
@@ -41,15 +41,16 @@
 | login | 1 | 0 | 0 | 0 | 0 |
 | mobile | 0 | 18 | 0 | 0 | 0 |
 | mona | 0 | 2 | 0 | 7 | 5 |
-| monolith | 0 | 0 | 0 | 0 | 48 |
+| monolith | 0 | 0 | 0 | 0 | 49 |
 | notifications | 1 | 9 | 4 | 2 | 1 |
 | org | 0 | 7 | 0 | 0 | 0 |
 | product-catalogue | 1 | 0 | 0 | 0 | 0 |
 | recruit | 0 | 18 | 43 | 4 | 0 |
 | roles | 0 | 2 | 0 | 0 | 0 |
+| runtime | 0 | 1 | 0 | 0 | 0 |
 | setup | 1 | 1 | 0 | 0 | 0 |
 | shared | 0 | 0 | 0 | 0 | 16 |
-| todo | 1 | 0 | 2 | 1 | 1 |
+| todo | 1 | 0 | 2 | 1 | 0 |
 | todos | 0 | 5 | 0 | 0 | 0 |
 | users | 0 | 4 | 0 | 0 | 0 |
 
@@ -96,6 +97,7 @@
 | GET | `/api/cha/documents/[id]` | cha |
 | GET | `/api/cha/due-date-warnings` | cha |
 | GET | `/api/cha/expense-artifacts/[...path]` | cha |
+| GET | `/api/cha/jobs/create-options` | cha |
 | GET | `/api/cha/reports/jobs/[jobId]` | cha |
 | GET | `/api/communication/chat/check-new` | communication |
 | POST | `/api/communication/chat/dm` | communication |
@@ -125,6 +127,7 @@
 | GET | `/api/cron/email-flush` | cron |
 | GET | `/api/cron/google-chat-retry` | cron |
 | GET | `/api/cron/justdial-import` | cron |
+| GET | `/api/cron/todo-reminders` | cron |
 | GET | `/api/cron/tracking-alerts` | cron |
 | POST | `/api/customer-portal/auth/activate` | customer-portal |
 | POST, PATCH | `/api/customer-portal/auth/forgot-password` | customer-portal |
@@ -145,6 +148,7 @@
 | POST | `/api/customer-portal/security/logout-all` | customer-portal |
 | PATCH | `/api/customer-portal/security/password` | customer-portal |
 | POST | `/api/customer-portal/shipments/[shipmentId]/documents` | customer-portal |
+| GET | `/api/dashboard/organization` | dashboard |
 | GET | `/api/dev/clear-auth-cookies` | dev |
 | GET | `/api/google-chat/admin` | google-chat |
 | POST | `/api/google-chat/debug` | google-chat |
@@ -255,6 +259,7 @@
 | GET, PATCH | `/api/recruit/settings` | recruit |
 | GET, POST | `/api/roles` | roles |
 | PUT | `/api/roles/[id]/permissions` | roles |
+| GET | `/api/runtime/updates` | runtime |
 | GET, POST | `/api/setup` | setup |
 | POST | `/api/todos/reminders/check` | todos |
 | GET | `/api/todos/reminders/upcoming` | todos |
@@ -471,7 +476,7 @@
 
 | Model | Module | Fields | Relations |
 |---|---|---|---|
-| Organisation | core | 111 | Branch, Department, Division, Role, User, AppraisalCycle, AppraisalSchedule, AppraisalCriterion, AppraisalSelfTemplate, OrgAppraisalSettings, LeaveType, Holiday, Notification, NotificationActivity, TodoTask, Announcement, EmployeeProfileField, EmployeeInvitation, WorkReportSettings, WorkReportField, CrmApprovalLog, CrmWorkTimeLog, BiometricSyncLog, WorkingCalendar, OtSettings, AttendancePunchEvent, Shift, Account, FiscalYear, JournalEntry, GeneralLedgerEntry, SalesInvoice, PurchaseInvoice, PaymentEntry, CustomerLedgerEntry, SupplierLedgerEntry, AccountingSettings, AccountingAuditLog, PayrollBatch, Asset, AssetDepreciationEntry, JobCosting, Quotation, CustomerNote, VendorNote, RecurringExpense, RecurringJournal, TransactionLock, PartnerAccount, AccountingOrganisationProfile, AccountingLegalEntity, AccountingTaxRegistration, AccountingPeriod, AccountingPeriodLockRequest, AccountingCurrency, AccountingExchangeRate, AccountingAccountControl, AccountingDimensionDefinition, AccountingDimensionValue, AccountingJournalLineDimension, AccountingApprovalPolicy, AccountingNumberSeries, AccountingIntegrationInbox, AccountingIntegrationOutbox, AccountingRoundingPolicy, AccountingSourceSnapshot, AccountingPostingAttempt, AccountingPayrollRunSnapshot, ChaSettings, ChaJob, ChaJobDeletionRequest, ChaExpenseRequest, ChaAuditLog, ChaTeamGroup, ChaBranchNumberingRule, ChaShipmentType, ChaDocumentRequirementCategory, FilingWorkflowTemplate, GoogleChatSpace, GoogleChatSubscription, GoogleChatDelivery, GoogleWorkspaceConnection, GoogleWorkspaceSetting, JobWorkspaceProfile, CommunicationAuditEvent, RecruitJobOpening, RecruitCandidate, RecruitApplication, RecruitAuditEvent, RecruitSetting, RecruitAutomationRun, CustomerPortalUser, CustomerPortalInvitation, CustomerPortalSession, CustomerPortalAuditLog, CustomerPortalNotification, CustomerPortalNotificationPreference, CustomerVisibleStageMapping, CustomerDocumentSubmission, CustomerQueryThread, CustomerQueryMessage, ShipmentServiceRating, ShipmentRatingCategory, CustomerChecklistResponse |
+| Organisation | core | 118 | Branch, Department, Division, Role, User, AppraisalCycle, AppraisalSchedule, AppraisalCriterion, AppraisalSelfTemplate, OrgAppraisalSettings, LeaveType, Holiday, Notification, NotificationActivity, TodoTask, Announcement, EmployeeProfileField, EmployeeInvitation, WorkReportSettings, WorkReportField, CrmApprovalLog, CrmWorkTimeLog, BiometricSyncLog, WorkingCalendar, OtSettings, AttendancePunchEvent, Shift, Account, FiscalYear, JournalEntry, GeneralLedgerEntry, SalesInvoice, PurchaseInvoice, PaymentEntry, CustomerLedgerEntry, SupplierLedgerEntry, AccountingSettings, AccountingAuditLog, PayrollBatch, Asset, AssetDepreciationEntry, JobCosting, Quotation, CustomerNote, VendorNote, RecurringExpense, RecurringJournal, TransactionLock, PartnerAccount, AccountingOrganisationProfile, AccountingLegalEntity, AccountingTaxRegistration, AccountingPeriod, AccountingPeriodLockRequest, AccountingCurrency, AccountingExchangeRate, AccountingAccountControl, AccountingDimensionDefinition, AccountingDimensionValue, AccountingJournalLineDimension, AccountingApprovalPolicy, AccountingNumberSeries, AccountingIntegrationInbox, AccountingIntegrationOutbox, AccountingRoundingPolicy, AccountingSourceSnapshot, AccountingPostingAttempt, AccountingPayrollRunSnapshot, AccountingDocumentPolicy, AccountingDocument, AccountingDocumentLine, AccountingPayment, AccountingPaymentAllocation, AccountingScheduledOccurrence, AccountingCounterpartyEntityScope, ChaSettings, ChaJob, ChaJobDeletionRequest, ChaExpenseRequest, ChaAuditLog, ChaTeamGroup, ChaBranchNumberingRule, ChaShipmentType, ChaDocumentRequirementCategory, FilingWorkflowTemplate, GoogleChatSpace, GoogleChatSubscription, GoogleChatDelivery, GoogleWorkspaceConnection, GoogleWorkspaceSetting, JobWorkspaceProfile, CommunicationAuditEvent, RecruitJobOpening, RecruitCandidate, RecruitApplication, RecruitAuditEvent, RecruitSetting, RecruitAutomationRun, CustomerPortalUser, CustomerPortalInvitation, CustomerPortalSession, CustomerPortalAuditLog, CustomerPortalNotification, CustomerPortalNotificationPreference, CustomerVisibleStageMapping, CustomerDocumentSubmission, CustomerQueryThread, CustomerQueryMessage, ShipmentServiceRating, ShipmentRatingCategory, CustomerChecklistResponse |
 | Branch | core | 24 | Organisation, User, Holiday, Account, JournalEntry, GeneralLedgerEntry, SalesInvoice, PurchaseInvoice, PaymentEntry, CustomerLedgerEntry, SupplierLedgerEntry, Asset, JobCosting, Quotation, CustomerNote, VendorNote, RecurringExpense, RecurringJournal, ChaJob, ChaBranchNumberingRule |
 | Department | core | 7 | Organisation, Division, User |
 | Division | core | 7 | Organisation, Department, User |
@@ -601,7 +606,7 @@
 | WorkReportSettings | hrms | 7 | Organisation |
 | WorkReportField | hrms | 12 | Organisation |
 | AccountingOrganisationProfile | accounting | 16 | AccountingInventoryMode, AccountingRoundingMode, Organisation |
-| AccountingLegalEntity | accounting | 17 | AccountingLegalEntityStatus, Organisation, AccountingTaxRegistration, AccountingSourceSnapshot, AccountingIntegrationInbox, JournalEntry, Account |
+| AccountingLegalEntity | accounting | 23 | AccountingLegalEntityStatus, Organisation, AccountingTaxRegistration, AccountingSourceSnapshot, AccountingIntegrationInbox, AccountingIntegrationOutbox, JournalEntry, Account, AccountingDocumentPolicy, AccountingDocument, AccountingPayment, AccountingScheduledOccurrence, AccountingCounterpartyEntityScope |
 | AccountingTaxRegistration | accounting | 18 | Organisation, AccountingLegalEntity, AccountingNumberSeries |
 | AccountingPeriod | accounting | 15 | AccountingPeriodStatus, Organisation, FiscalYear, AccountingPeriodLockRequest, JournalEntry |
 | AccountingPeriodLockRequest | accounting | 18 | AccountingPeriodLockRequestStatus, Organisation, AccountingPeriod, User |
@@ -614,14 +619,21 @@
 | AccountingApprovalPolicy | accounting | 13 | Organisation, JournalEntry |
 | AccountingNumberSeries | accounting | 16 | Organisation, AccountingTaxRegistration, JournalEntry |
 | AccountingIntegrationInbox | accounting | 32 | AccountingIntegrationMessageStatus, Organisation, AccountingLegalEntity, AccountingSourceSnapshot, AccountingPostingAttempt |
-| AccountingIntegrationOutbox | accounting | 20 | AccountingIntegrationMessageStatus, Organisation |
+| AccountingIntegrationOutbox | accounting | 30 | AccountingIntegrationMessageStatus, Organisation, AccountingLegalEntity |
 | AccountingRoundingPolicy | accounting | 17 | AccountingRoundingMode, Organisation, JournalEntry |
-| AccountingSourceSnapshot | accounting | 20 | Organisation, AccountingLegalEntity, AccountingIntegrationInbox, JournalEntry, AccountingPayrollRunSnapshot, PayrollBatch |
+| AccountingSourceSnapshot | accounting | 24 | Organisation, AccountingLegalEntity, AccountingIntegrationInbox, JournalEntry, AccountingPayrollRunSnapshot, PayrollBatch, AccountingDocument, AccountingPayment, AccountingScheduledOccurrence, AccountingPaymentAllocation |
 | AccountingPostingAttempt | accounting | 15 | AccountingPostingAttemptStatus, Organisation, AccountingIntegrationInbox, JournalEntry |
 | AccountingPayrollRunSnapshot | accounting | 16 | Organisation, AccountingSourceSnapshot |
+| AccountingDocumentPolicy | accounting | 19 | Organisation, AccountingLegalEntity, AccountingDocument, AccountingPayment |
+| AccountingCounterpartyEntityScope | accounting | 15 | Organisation, AccountingLegalEntity |
+| AccountingDocument | accounting | 59 | Organisation, AccountingLegalEntity, AccountingDocumentPolicy, AccountingSourceSnapshot, JournalEntry, AccountingDocument, AccountingDocumentLine, AccountingPaymentAllocation |
+| AccountingDocumentLine | accounting | 18 | Organisation, AccountingDocument |
+| AccountingPayment | accounting | 53 | Organisation, AccountingLegalEntity, AccountingDocumentPolicy, AccountingSourceSnapshot, JournalEntry, AccountingPayment, AccountingPaymentAllocation |
+| AccountingPaymentAllocation | accounting | 18 | Organisation, AccountingPayment, AccountingDocument, AccountingSourceSnapshot, AccountingPaymentAllocation |
+| AccountingScheduledOccurrence | accounting | 23 | Organisation, AccountingLegalEntity, AccountingSourceSnapshot, JournalEntry |
 | Account | accounting | 31 | Organisation, AccountingLegalEntity, Branch, Account, JournalEntryLine, GeneralLedgerEntry, PaymentEntry, TaxLine, RecurringExpense, RecurringJournal, PartnerAccount, AccountingAccountControl |
 | FiscalYear | accounting | 10 | Organisation, AccountingPeriod |
-| JournalEntry | accounting | 64 | Organisation, AccountingLegalEntity, Branch, JournalEntryLine, GeneralLedgerEntry, PayrollBatch, AssetDepreciationEntry, AccountingPeriod, AccountingSourceSnapshot, AccountingExchangeRate, AccountingApprovalPolicy, AccountingNumberSeries, AccountingRoundingPolicy, JournalEntry, AccountingPostingAttempt |
+| JournalEntry | accounting | 67 | Organisation, AccountingLegalEntity, Branch, JournalEntryLine, GeneralLedgerEntry, PayrollBatch, AssetDepreciationEntry, AccountingPeriod, AccountingSourceSnapshot, AccountingExchangeRate, AccountingApprovalPolicy, AccountingNumberSeries, AccountingRoundingPolicy, JournalEntry, AccountingPostingAttempt, AccountingDocument, AccountingPayment, AccountingScheduledOccurrence |
 | JournalEntryLine | accounting | 15 | JournalEntry, Account, AccountingJournalLineDimension |
 | GeneralLedgerEntry | accounting | 22 | JobCosting, Organisation, Branch, Account, JournalEntry |
 | SalesInvoice | accounting | 30 | JobCosting, Organisation, Branch, CrmAccount, CrmDeal, SalesInvoiceItem, TaxLine, PaymentAllocation, CustomerNote |
@@ -779,17 +791,23 @@
 ## Module Service Files
 
 ### accounting
-- **actions.ts**: createAccountAction, updateAccountAction, createJournalEntryAction, submitJournalEntryAction, cancelJournalEntryAction, createSalesInvoiceAction, submitSalesInvoiceAction, cancelSalesInvoiceAction, createPurchaseInvoiceAction, submitPurchaseInvoiceAction, cancelPurchaseInvoiceAction, createPaymentEntryAction, submitPaymentEntryAction, cancelPaymentEntryAction, updateAccountingSettingsAction, initializeCOAAction, generateInvoiceFromDealAction, getPayrollBatchesAction, compilePayrollBatchAction, createPayrollBatchAction, finalizePayrollBatchAction, payPayrollBatchAction, listAssetsAction, getAssetAction, createAssetAction, runDepreciationAction, listQuotationsAction, getQuotationAction, createQuotationAction, convertQuotationToInvoiceAction, listCustomerNotesAction, getCustomerNoteAction, createCustomerNoteAction, submitCustomerNoteAction, getTransactionLockAction, updateTransactionLockAction, listJobCostingsAction, getJobCostingAction, createJobCostingAction, updateJobCostingAction, getARAgeingAction, getAPAgeingAction, getSalesRegisterAction, getPurchaseRegisterAction, getGSTR1SummaryAction, getGSTR2BSummaryAction, getConsolidatedGSTLedgerAction, getDayBookAction, getJournalRegisterAction, getJobProfitabilityAction, getCashAndBankLedgerAction, recordBankTransferAction, approveBankTransferRequestAction, getProfitAndLossAction, getBalanceSheetAction, getTrialBalanceAction
+- **actions.ts**: createAccountAction, updateAccountAction, createJournalEntryAction, submitJournalEntryAction, cancelJournalEntryAction, createSalesInvoiceAction, submitSalesInvoiceAction, cancelSalesInvoiceAction, createPurchaseInvoiceAction, submitPurchaseInvoiceAction, cancelPurchaseInvoiceAction, createPaymentEntryAction, submitPaymentEntryAction, approveAccountingDocumentAction, approveAccountingPaymentAction, cancelPaymentEntryAction, updateAccountingSettingsAction, initializeCOAAction, generateInvoiceFromDealAction, getPayrollBatchesAction, compilePayrollBatchAction, createPayrollBatchAction, finalizePayrollBatchAction, payPayrollBatchAction, listAssetsAction, getAssetAction, createAssetAction, runDepreciationAction, listQuotationsAction, getQuotationAction, createQuotationAction, convertQuotationToInvoiceAction, listCustomerNotesAction, getCustomerNoteAction, createCustomerNoteAction, submitCustomerNoteAction, getTransactionLockAction, updateTransactionLockAction, listJobCostingsAction, getJobCostingAction, createJobCostingAction, updateJobCostingAction, getARAgeingAction, getAPAgeingAction, getSalesRegisterAction, getPurchaseRegisterAction, getGSTR1SummaryAction, getGSTR2BSummaryAction, getConsolidatedGSTLedgerAction, getDayBookAction, getJournalRegisterAction, getJobProfitabilityAction, getCashAndBankLedgerAction, recordBankTransferAction, approveBankTransferRequestAction, getProfitAndLossAction, getBalanceSheetAction, getTrialBalanceAction
+- **document-adapters.ts**: prepareLegacyCustomerNote, prepareLegacyVendorNote, prepareLegacySalesInvoice, prepareLegacyPurchaseInvoice, prepareLegacyPayment, approveAndPostAccountingDocument, approveAndPostAccountingPayment, prepareApprovedPayrollPayment, postApprovedPayrollCorrection, cancelCanonicalDocumentByLegacyRecord, reverseCanonicalPaymentByLegacyRecord
+- **document-contracts.ts**: normalizeAccountingDocumentContract, normalizeAccountingPaymentContract, payrollPaymentIdentity, normalizePayrollCorrection, recurringOccurrenceIdentity, depreciationRunIdentity, asDecimalJson
 - **integration-adapters.ts**: resolveCanonicalPostingConfiguration, recoverStaleAccountingRequest, moveAccountingRequestToManualReview, prepareBankTransferRequest, approveAndPostPreparedRequest, prepareCrmDealInvoiceRequest, acceptApprovedPayrollRun, postApprovedPayrollRun
 - **money.ts**: decimal, add, subtract, multiply, absolute, divide, compare, quantize, validateCurrencyPrecision, convertToBaseCurrency, allocateEqual, serialize, isZero, isPositive, isNegative, debitCreditTotals, assertBalanced
+- **outbox-operations.ts**: accountingOutboxRetryDelayMs, claimAccountingOutbox, settleAccountingOutboxClaim, retryAccountingOutbox, moveAccountingOutboxToManualReview, publishClaimedSyntheticOutbox
 - **posting-engine.ts**: canonicalPostingPayload, postCanonicalAccountingRequest, reverseCanonicalJournal, replaceCanonicalJournal
 - **reports.ts**: getGeneralLedger, getTrialBalance, getProfitAndLoss, getBalanceSheet, getARAgeing, getAPAgeing, getSalesRegister, getPurchaseRegister, getGSTR1Summary, getGSTR2BSummary, getConsolidatedGSTLedger, getDayBook, getJournalRegister, getJobProfitability, getCashAndBankLedger
 - **request-integrity.ts**: canonicalPayload, payloadHash, newAccountingRequestId
+- **scheduled-operations.ts**: registerAccountingScheduledOccurrence, claimAccountingScheduledOccurrences, settleAccountingScheduledOccurrence
 - **service.ts**: seedChartOfAccounts, createAuditLog, listAccounts, getChartOfAccounts, createAccount, updateAccount, validateBalancedEntry, validateAccountPostingAllowed, postGLTransactions, reverseGLTransactions, listJournalEntries, getJournalEntry, createJournalEntry, submitJournalEntry, cancelJournalEntry, listSalesInvoices, getSalesInvoice, createSalesInvoice, submitSalesInvoice, cancelSalesInvoice, listPurchaseInvoices, getPurchaseInvoice, createPurchaseInvoice, submitPurchaseInvoice, cancelPurchaseInvoice, listPaymentEntries, getPaymentEntry, createPaymentEntry, submitPaymentEntry, cancelPaymentEntry, getAccountingSettings, updateAccountingSettings, compilePayrollBatch, getPayrollBatches, createPayrollBatch, finalizePayrollBatch, payPayrollBatch, listAssets, getAsset, createAsset, runDepreciationForAsset, getTransactionLock, updateTransactionLock, validatePostingDateNotLocked, listQuotations, getQuotation, createQuotation, convertQuotationToInvoice, listCustomerNotes, getCustomerNote, createCustomerNote, submitCustomerNote, listVendorNotes, getVendorNote, createVendorNote, submitVendorNote, processRecurringExpenses, processRecurringJournals, listPartnerAccounts, createPartnerAccount, updatePartnerAccount, recordPartnerTransaction, listJobCostings, getJobCosting, createJobCosting, updateJobCosting
 - **types.ts**: no exports detected
 - **validators.ts**: no exports detected
 - **accounting.test.ts**: no exports detected
+- **document-contracts.test.ts**: no exports detected
 - **money.test.ts**: no exports detected
+- **outbox-operations.test.ts**: no exports detected
 - **posting-boundary.architecture.test.ts**: no exports detected
 
 ### ams
@@ -812,7 +830,9 @@
 - **actions.ts**: ensureSettingsAndDefaultsAction, updateSettingsAction, createJobAction, getNextJobNumberPreviewAction, submitJobDeletionAction, decideJobDeletionRequestAction, retryJobChatCleanupAction, deleteAllChaJobsForTestingAction, createJobTypeAction, updateJobTypeManifestConfigAction, createShipmentTypeAction, deleteShipmentTypeAction, deleteJobTypeAction, updateJobTypeFilingFlowCategoryAction, createTeamGroupAction, deleteTeamGroupAction, getJobDetailsAction, listJobsAction, uploadDocumentVersionAction, createJobCustomDocumentUploadAction, deleteDocumentVersionAction, declareDocumentExceptionAction, markDocumentNotAvailableAction, importChecklistExcelAction, uploadChecklistFileAction, upsertAdditionalDataAction, setDoExtensionDateAction, submitChecklistInternalDecisionAction, submitChecklistCustomerDecisionAction, sendChecklistCustomerMailAction, proceedAdditionalDataAction, submitChecklistForApprovalAction, checklistManagerActionAction, selfApproveChecklistAction, adjustEstimatedFilingDateAction, markAsFiledAction, updateCustomerAdvanceExpectedAction, recordCustomerAdvanceReceiptAction, declareAdvanceNotRequiredAction, createExpenseRequestAction, createExpenseRequestWithAttachmentAction, createDirectExpenseRequestAction, createDirectExpenseRequestWithAttachmentAction, triggerUrgentExpenseEscalationAction, reviewExpenseRequestAction, approveAccountsExpenseRequestAction, routeExpenseRequestToManagerAction, submitExpenseClarificationAction, markExpenseReadyForDisbursementAction, setExpenseStatusAction, postExpensePaymentAction, acknowledgeExpenseReceiptAction, raisePaymentQueryAction, resolvePaymentQueryAction, listAllExpensesAction, listManagerChecklistApprovalsAction, upsertDocumentCategoryAction, deleteDocumentCategoryAction, upsertDocumentItemAction, deleteDocumentItemAction, removeDocumentExceptionAction, proceedDocumentStageAction, setDoUploadToggleAction, setDoExtensionToggleAction, uploadDeliveryOrderDocumentAction, deleteDeliveryOrderDocumentAction, updateSection49ValidityAction, applySection49ExtensionAction, updateJobDetailsAction, submitChecklistOwnerDecisionAction, saveFilingWorkflowDraftAction, loadStarterFilingWorkflowAction, publishFilingWorkflowAction, getFilingWorkflowDetailsAction, deleteFilingWorkflowTemplateAction, getFilingWorkflowInstanceAction, startFilingWorkflowAction, completeFilingNodeAction, saveFilingNodeDraftAction, revertFilingStageAction, redirectBlockedFilingStageAction, resumeBlockedFilingStageAction, toggleFilingSection49Action, getFilingSection49Action, createFilingWorkflowQueryAction, updateFilingWorkflowQueryStatusAction, addFilingWorkflowQueryCommentAction, upsertFilingWorkflowToggleStateAction, uploadFilingAttachmentAction, upsertFilingShipmentDetailsAction, deleteFilingAttachmentAction, acceptCustomerDocumentSubmissionAction, updateFilingAttachmentValidityAction
 - **checklist-email-automation.ts**: queueChecklistMainCustomerEmail, finalizeChecklistMainCustomerEmail
 - **job-report.ts**: listCompletedChaJobsForReports, generateCompletedChaJobReport
+- **queries.ts**: listJobs, getJobFilterOptions, getCreateJobOptions
 - **service.ts**: ensureDefaultDocumentRequirements, getNextChaJobNumberPreview, ensureSettingsAndDefaults, logChaAudit, getChecklistInternalApproverIds, createJob, createJobType, updateJobTypeManifestConfig, updateJobTypeFilingFlowCategory, deleteJobType, upsertBranchNumberingRules, createShipmentType, deleteShipmentType, createTeamGroup, deleteTeamGroup, listJobTypesForSelection, listJobTypesForSettings, getJobDetails, listJobs, resolveDriveFolderForCategory, uploadDocumentVersion, acceptCustomerDocumentSubmission, createJobCustomDocumentRequirementAndUpload, deleteDocumentVersion, declareDocumentException, markDocumentNotAvailable, verifyDocumentGate, upsertAdditionalData, proceedAdditionalDataStage, setDeliveryOrderUploadToggle, setDeliveryOrderExtensionToggle, setDeliveryOrderExtensionDate, listSection49ValidityWarnings, listChaDueDateWarnings, uploadDeliveryOrderDocument, applyDeliveryOrderExtension, listDeliveryOrderExtensions, uploadChecklistFile, submitChecklistInternalDecision, sendChecklistCustomerMail, submitChecklistCustomerDecision, submitPortalCustomerChecklistDecision, importChecklistExcel, submitChecklistForApproval, checklistManagerAction, selfApproveChecklist, adjustEstimatedFilingDate, markAsFiled, updateCustomerAdvanceExpected, recordCustomerAdvanceReceipt, declareAdvanceNotRequired, createExpenseRequest, triggerUrgentExpenseEscalation, reviewExpenseRequest, listExpenseJobOptions, createDirectExpenseRequest, approveAccountsExpenseRequest, routeExpenseRequestToManager, submitExpenseClarification, markExpenseReadyForDisbursement, setExpenseStatus, postExpensePayment, acknowledgeExpenseReceipt, raisePaymentQuery, resolvePaymentQuery, listAllExpenses, listManagerChecklistApprovals, listManagerJobDeletionRequests, submitJobDeletion, decideJobDeletionRequest, retryJobChatCleanup, upsertDocumentCategory, deleteDocumentCategory, upsertDocumentItem, deleteDocumentItem, removeDocumentException, proceedDocumentStage, getEligibleManagers, updateJobDetails, submitChecklistOwnerDecision, ensureDefaultFilingWorkflows, calculateSlaDueDate, listFilingWorkflows, getFilingWorkflowDetails, loadStarterFilingWorkflowDraft, saveFilingWorkflowDraft, publishFilingWorkflow, deleteFilingWorkflowTemplate, getFilingWorkflowInstance, startFilingWorkflow, completeFilingNode, revertFilingWorkflowToPreviousStage, toggleFilingSection49, getFilingSection49, updateFilingSection49Validity, applyFilingSection49Extension, redirectBlockedFilingWorkflowStage, resumeBlockedFilingWorkflowStage, saveFilingNodeDraft, runFilingWorkflowQueryReminderCron, listFilingQueryEscalationWarnings, createFilingWorkflowQuery, addFilingWorkflowQueryComment, updateFilingWorkflowQueryStatus, deleteDeliveryOrderDocument, upsertFilingWorkflowToggleState, uploadFilingAttachment, upsertFilingShipmentDetails, deleteFilingAttachment, updateFilingAttachmentValidity
+- **queries.ts**: computeChaDueDateWarnings, listFilingQueryEscalationWarnings
 - **cha.test.ts**: no exports detected
 - **checklist-email-automation.test.ts**: no exports detected
 - **do-extension.test.ts**: no exports detected

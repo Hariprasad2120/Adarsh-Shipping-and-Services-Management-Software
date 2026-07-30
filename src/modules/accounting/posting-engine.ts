@@ -57,6 +57,116 @@ const CANONICAL_RULE_CONTRACTS: Record<string, CanonicalRuleContract[]> = {
       requiresSourceApproval: true,
     },
   ],
+  "AR-SALES-INVOICE-v1": [
+    {
+      journalType: "SALES_INVOICE",
+      sourceSystem: "ACCOUNTING",
+      sourceType: "SALES_INVOICE",
+      requiresSourceApproval: false,
+    },
+    {
+      journalType: "SALES_INVOICE",
+      sourceSystem: "CRM",
+      sourceType: "APPROVED_INVOICE_REQUEST",
+      requiresSourceApproval: true,
+    },
+  ],
+  "AP-PURCHASE-BILL-v1": [
+    {
+      journalType: "PURCHASE_INVOICE",
+      sourceSystem: "ACCOUNTING",
+      sourceType: "PURCHASE_INVOICE",
+      requiresSourceApproval: false,
+    },
+  ],
+  "AR-CUSTOMER-RECEIPT-v1": [
+    {
+      journalType: "PAYMENT_ENTRY",
+      sourceSystem: "ACCOUNTING",
+      sourceType: "CUSTOMER_RECEIPT",
+      requiresSourceApproval: false,
+    },
+  ],
+  "AP-VENDOR-PAYMENT-v1": [
+    {
+      journalType: "PAYMENT_ENTRY",
+      sourceSystem: "ACCOUNTING",
+      sourceType: "VENDOR_PAYMENT",
+      requiresSourceApproval: false,
+    },
+  ],
+  "PAYROLL-PAYMENT-v1": [
+    {
+      journalType: "PAYMENT_ENTRY",
+      sourceSystem: "HRMS",
+      sourceType: "APPROVED_PAYROLL_PAYMENT",
+      requiresSourceApproval: true,
+    },
+  ],
+  "PAYROLL-CORRECTION-v1": [
+    {
+      journalType: "JOURNAL_ENTRY",
+      sourceSystem: "HRMS",
+      sourceType: "APPROVED_PAYROLL_CORRECTION",
+      requiresSourceApproval: true,
+    },
+  ],
+  "AR-CREDIT-NOTE-v1": [
+    {
+      journalType: "CUSTOMER_NOTE",
+      sourceSystem: "ACCOUNTING",
+      sourceType: "CUSTOMER_CREDIT_NOTE",
+      requiresSourceApproval: false,
+    },
+  ],
+  "AR-DEBIT-NOTE-v1": [
+    {
+      journalType: "CUSTOMER_NOTE",
+      sourceSystem: "ACCOUNTING",
+      sourceType: "CUSTOMER_DEBIT_NOTE",
+      requiresSourceApproval: false,
+    },
+  ],
+  "AP-VENDOR-DEBIT-NOTE-v1": [
+    {
+      journalType: "VENDOR_NOTE",
+      sourceSystem: "ACCOUNTING",
+      sourceType: "VENDOR_DEBIT_NOTE",
+      requiresSourceApproval: false,
+    },
+  ],
+  "AP-VENDOR-CREDIT-NOTE-v1": [
+    {
+      journalType: "VENDOR_NOTE",
+      sourceSystem: "ACCOUNTING",
+      sourceType: "VENDOR_CREDIT_NOTE",
+      requiresSourceApproval: false,
+    },
+  ],
+  "ASSET-DEPRECIATE-v1": [
+    {
+      journalType: "DEPRECIATION_RUN",
+      sourceSystem: "AMS",
+      sourceType: "APPROVED_DEPRECIATION_RUN",
+      requiresSourceApproval: true,
+    },
+  ],
+  "EXP-DIRECT-v1": [
+    {
+      journalType: "RECURRING_OCCURRENCE",
+      sourceSystem: "ACCOUNTING",
+      sourceType: "RECURRING_EXPENSE_OCCURRENCE",
+      requiresSourceApproval: false,
+    },
+  ],
+  "PARTNER-APPROPRIATION-v1": [
+    {
+      journalType: "PARTNER_TRANSACTION",
+      sourceSystem: "ACCOUNTING",
+      sourceType: "APPROVED_PARTNER_TRANSACTION",
+      requiresSourceApproval: true,
+    },
+  ],
   "GL-REVERSAL-v1": [
     {
       journalType: "JOURNAL_ENTRY",
@@ -937,6 +1047,51 @@ async function executePosting(
       attemptCount: 1,
     },
   });
+
+  const preparedPayment = await tx.accountingPayment.findUnique({
+    where: {
+      orgId_sourceSystem_sourceType_sourceId_sourceVersion: {
+        orgId: request.orgId,
+        sourceSystem: request.source.system,
+        sourceType: request.source.type,
+        sourceId: request.source.id,
+        sourceVersion: request.source.version,
+      },
+    },
+    include: {
+      allocations: {
+        where: { status: "ACTIVE" },
+        select: { amount: true },
+      },
+    },
+  });
+  if (preparedPayment) {
+    if (
+      preparedPayment.legalEntityId !== request.legalEntityId ||
+      preparedPayment.status !== "PENDING_APPROVAL"
+    ) {
+      throw new AccountingPostingError(
+        "PAYMENT_STATE_CONFLICT",
+        "The prepared payment is not eligible for canonical posting",
+      );
+    }
+    const allocationTotal = preparedPayment.allocations.reduce(
+      (total, allocation) => total.plus(decimal(allocation.amount)),
+      decimal("0"),
+    );
+    if (
+      !allocationTotal.equals(decimal(preparedPayment.allocatedAmount)) ||
+      !allocationTotal
+        .plus(decimal(preparedPayment.unappliedAmount))
+        .equals(decimal(preparedPayment.amount))
+    ) {
+      throw new AccountingPostingError(
+        "PAYMENT_ALLOCATION_INTEGRITY_FAILED",
+        "Active allocations and unapplied amount do not equal the prepared payment",
+      );
+    }
+  }
+
   const attempt = await tx.accountingPostingAttempt.create({
     data: {
       orgId: request.orgId,
@@ -1138,6 +1293,145 @@ async function executePosting(
       createdById: request.actor.actorId,
     })),
   });
+  const accountingDocument = await tx.accountingDocument.findUnique({
+    where: {
+      orgId_sourceSystem_sourceType_sourceId_sourceVersion: {
+        orgId: request.orgId,
+        sourceSystem: request.source.system,
+        sourceType: request.source.type,
+        sourceId: request.source.id,
+        sourceVersion: request.source.version,
+      },
+    },
+  });
+  if (accountingDocument) {
+    await tx.accountingDocument.update({
+      where: { id: accountingDocument.id },
+      data: {
+        status: "POSTED",
+        approvedById: request.approval.approvedById,
+        approvedAt: postingDate(request.approval.approvedAt, "approval.approvedAt"),
+        approvalEvidence: safePayload({
+          policyId: request.approval.policyId,
+          policyVersion: request.approval.policyVersion,
+          approvedById: request.approval.approvedById,
+          approvedAt: request.approval.approvedAt,
+        }),
+        journalEntryId: journal.id,
+        rowVersion: { increment: 1 },
+      },
+    });
+    const legacy = {
+      id: accountingDocument.legacyRecordId ?? "",
+      orgId: request.orgId,
+      status: "DRAFT",
+    };
+    if (accountingDocument.legacyRecordType === "SalesInvoice") {
+      await tx.salesInvoice.updateMany({ where: legacy, data: { status: "UNPAID" } });
+    } else if (accountingDocument.legacyRecordType === "PurchaseInvoice") {
+      await tx.purchaseInvoice.updateMany({ where: legacy, data: { status: "UNPAID" } });
+    } else if (accountingDocument.legacyRecordType === "CustomerNote") {
+      await tx.customerNote.updateMany({ where: legacy, data: { status: "SUBMITTED" } });
+    } else if (accountingDocument.legacyRecordType === "VendorNote") {
+      await tx.vendorNote.updateMany({ where: legacy, data: { status: "SUBMITTED" } });
+    }
+  }
+  const accountingPayment = await tx.accountingPayment.findUnique({
+    where: {
+      orgId_sourceSystem_sourceType_sourceId_sourceVersion: {
+        orgId: request.orgId,
+        sourceSystem: request.source.system,
+        sourceType: request.source.type,
+        sourceId: request.source.id,
+        sourceVersion: request.source.version,
+      },
+    },
+  });
+  if (accountingPayment) {
+    await tx.accountingPayment.update({
+      where: { id: accountingPayment.id },
+      data: {
+        status: "POSTED",
+        approvedById: request.approval.approvedById,
+        approvedAt: postingDate(request.approval.approvedAt, "approval.approvedAt"),
+        approvalEvidence: safePayload({
+          policyId: request.approval.policyId,
+          policyVersion: request.approval.policyVersion,
+          approvedById: request.approval.approvedById,
+          approvedAt: request.approval.approvedAt,
+        }),
+        journalEntryId: journal.id,
+        rowVersion: { increment: 1 },
+      },
+    });
+    if (accountingPayment.legacyPaymentEntryId) {
+      await tx.paymentEntry.updateMany({
+        where: {
+          id: accountingPayment.legacyPaymentEntryId,
+          orgId: request.orgId,
+          status: "DRAFT",
+        },
+        data: { status: "SUBMITTED" },
+      });
+    }
+  }
+  if (request.reversalOfId) {
+    const reversedDocument = await tx.accountingDocument.findUnique({
+      where: { journalEntryId: request.reversalOfId },
+    });
+    if (reversedDocument) {
+      await tx.accountingDocument.update({
+        where: { id: reversedDocument.id },
+        data: {
+          status: "CANCELLED",
+          cancelledAt: now,
+          rowVersion: { increment: 1 },
+        },
+      });
+      const legacy = {
+        id: reversedDocument.legacyRecordId ?? "",
+        orgId: request.orgId,
+      };
+      if (reversedDocument.legacyRecordType === "SalesInvoice") {
+        await tx.salesInvoice.updateMany({
+          where: legacy,
+          data: { status: "CANCELLED", outstandingAmount: new Prisma.Decimal(0) },
+        });
+      } else if (reversedDocument.legacyRecordType === "PurchaseInvoice") {
+        await tx.purchaseInvoice.updateMany({
+          where: legacy,
+          data: { status: "CANCELLED", outstandingAmount: new Prisma.Decimal(0) },
+        });
+      } else if (reversedDocument.legacyRecordType === "CustomerNote") {
+        await tx.customerNote.updateMany({ where: legacy, data: { status: "CANCELLED" } });
+      } else if (reversedDocument.legacyRecordType === "VendorNote") {
+        await tx.vendorNote.updateMany({ where: legacy, data: { status: "CANCELLED" } });
+      }
+    }
+    const reversedPayment = await tx.accountingPayment.findUnique({
+      where: { journalEntryId: request.reversalOfId },
+    });
+    if (reversedPayment) {
+      await tx.accountingPaymentAllocation.updateMany({
+        where: { paymentId: reversedPayment.id, status: "ACTIVE" },
+        data: { status: "REVERSED", reversedAt: now },
+      });
+      await tx.accountingPayment.update({
+        where: { id: reversedPayment.id },
+        data: {
+          status: "REVERSED",
+          reversedAt: now,
+          rowVersion: { increment: 1 },
+        },
+      });
+      if (reversedPayment.legacyPaymentEntryId) {
+        await tx.paymentEntry.updateMany({
+          where: { id: reversedPayment.legacyPaymentEntryId, orgId: request.orgId },
+          data: { status: "CANCELLED" },
+        });
+      }
+    }
+  }
   await tx.accountingAuditLog.create({
     data: {
       orgId: request.orgId,
@@ -1176,7 +1470,10 @@ async function executePosting(
   await tx.accountingIntegrationOutbox.create({
     data: {
       orgId: request.orgId,
-      destination: request.source.system,
+      legalEntityId: request.legalEntityId,
+      // Phase 4 deliberately has no external publisher. A later approved phase
+      // must introduce an explicit provider mapping before removing this guard.
+      destination: `SYNTHETIC_${request.source.system}`,
       eventType: request.reversalOfId ? "accounting.journal.reversed" : "accounting.journal.posted",
       eventVersion: 1,
       aggregateType: "JournalEntry",

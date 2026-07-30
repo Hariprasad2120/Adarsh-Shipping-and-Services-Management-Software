@@ -90,6 +90,13 @@ model Organisation {
   accountingSourceSnapshots       AccountingSourceSnapshot[]
   accountingPostingAttempts       AccountingPostingAttempt[]
   accountingPayrollRunSnapshots   AccountingPayrollRunSnapshot[]
+  accountingDocumentPolicies      AccountingDocumentPolicy[]
+  accountingDocuments             AccountingDocument[]
+  accountingDocumentLines         AccountingDocumentLine[]
+  accountingPayments              AccountingPayment[]
+  accountingPaymentAllocations    AccountingPaymentAllocation[]
+  accountingScheduledOccurrences  AccountingScheduledOccurrence[]
+  accountingCounterpartyScopes    AccountingCounterpartyEntityScope[]
 
   chaSettings                      ChaSettings?
   chaJobs                          ChaJob[]
@@ -2849,12 +2856,18 @@ model AccountingLegalEntity {
   createdAt     DateTime                    @default(now())
   updatedAt     DateTime                    @updatedAt
 
-  org              Organisation                 @relation(fields: [orgId], references: [id], onDelete: Restrict)
-  taxRegistrations AccountingTaxRegistration[]
-  sourceSnapshots  AccountingSourceSnapshot[]
-  integrationInbox AccountingIntegrationInbox[]
-  journalEntries   JournalEntry[]
-  accounts         Account[]
+  org                  Organisation                        @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  taxRegistrations     AccountingTaxRegistration[]
+  sourceSnapshots      AccountingSourceSnapshot[]
+  integrationInbox     AccountingIntegrationInbox[]
+  integrationOutbox    AccountingIntegrationOutbox[]
+  journalEntries       JournalEntry[]
+  accounts             Account[]
+  documentPolicies     AccountingDocumentPolicy[]
+  documents            AccountingDocument[]
+  payments             AccountingPayment[]
+  scheduledOccurrences AccountingScheduledOccurrence[]
+  counterpartyScopes   AccountingCounterpartyEntityScope[]
 
   @@unique([orgId, code])
   @@index([orgId, status])
@@ -3156,31 +3169,43 @@ model AccountingIntegrationInbox {
 }
 
 model AccountingIntegrationOutbox {
-  id             String                             @id @default(cuid())
-  orgId          String
-  destination    String
-  eventType      String
-  eventVersion   Int
-  aggregateType  String
-  aggregateId    String
-  correlationId  String?
-  causationId    String?
-  idempotencyKey String
-  payloadHash    String?
-  payload        Json
-  status         AccountingIntegrationMessageStatus @default(PENDING)
-  attemptCount   Int                                @default(0)
-  availableAt    DateTime                           @default(now())
-  publishedAt    DateTime?
-  lastErrorCode  String?
-  createdAt      DateTime                           @default(now())
-  updatedAt      DateTime                           @updatedAt
+  id                    String                             @id @default(cuid())
+  orgId                 String
+  legalEntityId         String?
+  destination           String
+  eventType             String
+  eventVersion          Int
+  aggregateType         String
+  aggregateId           String
+  correlationId         String?
+  causationId           String?
+  idempotencyKey        String
+  payloadHash           String?
+  payload               Json
+  status                AccountingIntegrationMessageStatus @default(PENDING)
+  attemptCount          Int                                @default(0)
+  availableAt           DateTime                           @default(now())
+  leaseToken            String?
+  leaseOwner            String?
+  leasedUntil           DateTime?
+  lastAttemptAt         DateTime?
+  publicationResultCode String?
+  publishedAt           DateTime?
+  deadLetterAt          DateTime?
+  manualReviewAt        DateTime?
+  lastErrorCode         String?
+  rowVersion            Int                                @default(1)
+  createdAt             DateTime                           @default(now())
+  updatedAt             DateTime                           @updatedAt
 
-  org Organisation @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  org         Organisation           @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity AccountingLegalEntity? @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
 
   @@unique([orgId, destination, idempotencyKey])
   @@index([orgId, status, availableAt])
+  @@index([orgId, status, leasedUntil], map: "AccountingIntegrationOutbox_org_status_lease_idx")
   @@index([orgId, aggregateType, aggregateId])
+  @@index([legalEntityId])
 }
 
 model AccountingRoundingPolicy {
@@ -3223,12 +3248,16 @@ model AccountingSourceSnapshot {
   occurredAt    DateTime
   createdAt     DateTime  @default(now())
 
-  org                  Organisation                  @relation(fields: [orgId], references: [id], onDelete: Restrict)
-  legalEntity          AccountingLegalEntity         @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
-  integrationInbox     AccountingIntegrationInbox[]
-  journals             JournalEntry[]
-  payrollRun           AccountingPayrollRunSnapshot?
-  legacyPayrollBatches PayrollBatch[]
+  org                          Organisation                    @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity                  AccountingLegalEntity           @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  integrationInbox             AccountingIntegrationInbox[]
+  journals                     JournalEntry[]
+  payrollRun                   AccountingPayrollRunSnapshot?
+  legacyPayrollBatches         PayrollBatch[]
+  documents                    AccountingDocument[]
+  payments                     AccountingPayment[]
+  scheduledOccurrences         AccountingScheduledOccurrence[]
+  accountingPaymentAllocations AccountingPaymentAllocation[]
 
   @@unique([orgId, sourceSystem, sourceType, sourceId, sourceVersion])
   @@unique([orgId, sourceSystem, requestId])
@@ -3279,6 +3308,277 @@ model AccountingPayrollRunSnapshot {
 
   @@unique([orgId, runId, runVersion])
   @@index([orgId, payPeriodStart, payPeriodEnd])
+}
+
+model AccountingDocumentPolicy {
+  id                 String    @id @default(cuid())
+  orgId              String
+  legalEntityId      String
+  documentType       String
+  version            Int
+  configuration      Json
+  configurationHash  String
+  statutoryValidated Boolean   @default(false)
+  approvedById       String
+  approvedAt         DateTime
+  effectiveFrom      DateTime  @db.Date
+  effectiveTo        DateTime? @db.Date
+  isActive           Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  org         Organisation          @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity AccountingLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  documents   AccountingDocument[]
+  payments    AccountingPayment[]
+
+  @@unique([orgId, legalEntityId, documentType, version], map: "AccountingDocumentPolicy_scope_version_key")
+  @@index([orgId, legalEntityId, documentType, isActive, effectiveFrom], map: "AccountingDocumentPolicy_active_idx")
+}
+
+model AccountingCounterpartyEntityScope {
+  id            String    @id @default(cuid())
+  orgId         String
+  legalEntityId String
+  partyType     String
+  partyId       String
+  version       Int       @default(1)
+  isActive      Boolean   @default(false)
+  effectiveFrom DateTime  @db.Date
+  effectiveTo   DateTime? @db.Date
+  approvedById  String
+  approvedAt    DateTime
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  org         Organisation          @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity AccountingLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, legalEntityId, partyType, partyId, version], map: "AccountingCounterpartyEntityScope_version_key")
+  @@index([orgId, legalEntityId, partyType, partyId, isActive], map: "AccountingCounterpartyEntityScope_active_idx")
+}
+
+model AccountingDocument {
+  id                      String    @id @default(cuid())
+  orgId                   String
+  legalEntityId           String
+  policyId                String
+  sourceSnapshotId        String
+  sourceSystem            String
+  sourceType              String
+  sourceId                String
+  sourceVersion           Int
+  legacyRecordType        String?
+  legacyRecordId          String?
+  documentType            String
+  schemaVersion           Int
+  status                  String    @default("DRAFT")
+  documentDate            DateTime  @db.Date
+  postingDate             DateTime  @db.Date
+  dueDate                 DateTime? @db.Date
+  counterpartyType        String?
+  counterpartyId          String?
+  transactionCurrencyCode String    @db.VarChar(3)
+  baseCurrencyCode        String    @db.VarChar(3)
+  exchangeRateId          String?
+  numberSeriesId          String
+  approvalPolicyId        String
+  approvalPolicyVersion   Int
+  roundingPolicyId        String
+  roundingPolicyVersion   Int
+  sourceApprovalVersion   Int?
+  subtotal                Decimal   @db.Decimal(28, 8)
+  discountAmount          Decimal   @default(0) @db.Decimal(28, 8)
+  taxAmount               Decimal   @default(0) @db.Decimal(28, 8)
+  totalAmount             Decimal   @db.Decimal(28, 8)
+  supportingDocumentRefs  Json?
+  approvalEvidence        Json?
+  immutablePayload        Json
+  payloadHash             String
+  requestId               String
+  idempotencyKey          String
+  correlationId           String
+  causationId             String?
+  makerId                 String
+  approvedById            String?
+  approvedAt              DateTime?
+  journalEntryId          String?   @unique(map: "AccountingDocument_journal_key")
+  correctionOfId          String?
+  correctionReason        String?
+  cancelledAt             DateTime?
+  rowVersion              Int       @default(1)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  org            Organisation                  @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity    AccountingLegalEntity         @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  policy         AccountingDocumentPolicy      @relation(fields: [policyId], references: [id], onDelete: Restrict)
+  sourceSnapshot AccountingSourceSnapshot      @relation(fields: [sourceSnapshotId], references: [id], onDelete: Restrict)
+  journalEntry   JournalEntry?                 @relation(fields: [journalEntryId], references: [id], onDelete: Restrict)
+  correctionOf   AccountingDocument?           @relation("AccountingDocumentCorrection", fields: [correctionOfId], references: [id], onDelete: Restrict)
+  corrections    AccountingDocument[]          @relation("AccountingDocumentCorrection")
+  lines          AccountingDocumentLine[]
+  paymentTargets AccountingPaymentAllocation[]
+
+  @@unique([orgId, sourceSystem, sourceType, sourceId, sourceVersion], map: "AccountingDocument_source_key")
+  @@unique([orgId, requestId], map: "AccountingDocument_request_key")
+  @@unique([orgId, idempotencyKey], map: "AccountingDocument_idempotency_key")
+  @@unique([orgId, legacyRecordType, legacyRecordId, sourceVersion], map: "AccountingDocument_legacy_key")
+  @@index([orgId, legalEntityId, documentType, status, postingDate], map: "AccountingDocument_state_idx")
+  @@index([orgId, counterpartyType, counterpartyId, status], map: "AccountingDocument_party_idx")
+  @@index([sourceSnapshotId], map: "AccountingDocument_snapshot_idx")
+  @@index([correctionOfId], map: "AccountingDocument_correction_idx")
+}
+
+model AccountingDocumentLine {
+  id             String   @id @default(cuid())
+  orgId          String
+  documentId     String
+  lineNumber     Int
+  description    String
+  quantity       Decimal  @db.Decimal(20, 6)
+  unitAmount     Decimal  @db.Decimal(28, 8)
+  discountAmount Decimal  @default(0) @db.Decimal(28, 8)
+  taxableAmount  Decimal  @db.Decimal(28, 8)
+  taxCategoryRef String?
+  taxAmount      Decimal  @default(0) @db.Decimal(28, 8)
+  totalAmount    Decimal  @db.Decimal(28, 8)
+  accountId      String
+  dimensions     Json?
+  sourceLineRef  String?
+  createdAt      DateTime @default(now())
+
+  org      Organisation       @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  document AccountingDocument @relation(fields: [documentId], references: [id], onDelete: Restrict)
+
+  @@unique([documentId, lineNumber], map: "AccountingDocumentLine_number_key")
+  @@index([orgId, accountId], map: "AccountingDocumentLine_account_idx")
+}
+
+model AccountingPayment {
+  id                      String    @id @default(cuid())
+  orgId                   String
+  legalEntityId           String
+  policyId                String
+  sourceSnapshotId        String
+  sourceSystem            String
+  sourceType              String
+  sourceId                String
+  sourceVersion           Int
+  legacyPaymentEntryId    String?
+  paymentType             String
+  schemaVersion           Int
+  status                  String    @default("DRAFT")
+  payerPayeeType          String
+  payerPayeeId            String
+  bankOrCashAccountId     String
+  controlAccountId        String
+  transactionDate         DateTime  @db.Date
+  valueDate               DateTime? @db.Date
+  transactionCurrencyCode String    @db.VarChar(3)
+  baseCurrencyCode        String    @db.VarChar(3)
+  exchangeRateId          String?
+  amount                  Decimal   @db.Decimal(28, 8)
+  allocatedAmount         Decimal   @default(0) @db.Decimal(28, 8)
+  unappliedAmount         Decimal   @default(0) @db.Decimal(28, 8)
+  paymentMethod           String
+  externalReference       String?
+  dimensions              Json?
+  supportingDocumentRefs  Json?
+  approvalEvidence        Json?
+  immutablePayload        Json
+  payloadHash             String
+  requestId               String
+  idempotencyKey          String
+  correlationId           String
+  causationId             String?
+  makerId                 String
+  approvedById            String?
+  approvedAt              DateTime?
+  journalEntryId          String?   @unique(map: "AccountingPayment_journal_key")
+  reversalOfId            String?
+  reversedAt              DateTime?
+  rowVersion              Int       @default(1)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  org            Organisation                  @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity    AccountingLegalEntity         @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  policy         AccountingDocumentPolicy      @relation(fields: [policyId], references: [id], onDelete: Restrict)
+  sourceSnapshot AccountingSourceSnapshot      @relation(fields: [sourceSnapshotId], references: [id], onDelete: Restrict)
+  journalEntry   JournalEntry?                 @relation(fields: [journalEntryId], references: [id], onDelete: Restrict)
+  reversalOf     AccountingPayment?            @relation("AccountingPaymentReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversals      AccountingPayment[]           @relation("AccountingPaymentReversal")
+  allocations    AccountingPaymentAllocation[]
+
+  @@unique([orgId, sourceSystem, sourceType, sourceId, sourceVersion], map: "AccountingPayment_source_key")
+  @@unique([orgId, requestId], map: "AccountingPayment_request_key")
+  @@unique([orgId, idempotencyKey], map: "AccountingPayment_idempotency_key")
+  @@unique([orgId, legacyPaymentEntryId, sourceVersion], map: "AccountingPayment_legacy_key")
+  @@index([orgId, legalEntityId, paymentType, status, transactionDate], map: "AccountingPayment_state_idx")
+  @@index([orgId, payerPayeeType, payerPayeeId, status], map: "AccountingPayment_party_idx")
+  @@index([orgId, legalEntityId, externalReference], map: "AccountingPayment_external_ref_idx")
+  @@index([sourceSnapshotId], map: "AccountingPayment_snapshot_idx")
+  @@index([reversalOfId], map: "AccountingPayment_reversal_idx")
+}
+
+model AccountingPaymentAllocation {
+  id                     String    @id @default(cuid())
+  orgId                  String
+  paymentId              String
+  targetType             String    @default("ACCOUNTING_DOCUMENT")
+  targetDocumentId       String?
+  targetSourceSnapshotId String?
+  targetVersion          Int
+  amount                 Decimal   @db.Decimal(28, 8)
+  status                 String    @default("ACTIVE")
+  reversalOfId           String?
+  createdAt              DateTime  @default(now())
+  reversedAt             DateTime?
+
+  org                  Organisation                  @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  payment              AccountingPayment             @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  targetDocument       AccountingDocument?           @relation(fields: [targetDocumentId], references: [id], onDelete: Restrict)
+  targetSourceSnapshot AccountingSourceSnapshot?     @relation(fields: [targetSourceSnapshotId], references: [id], onDelete: Restrict)
+  reversalOf           AccountingPaymentAllocation?  @relation("AccountingAllocationReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversals            AccountingPaymentAllocation[] @relation("AccountingAllocationReversal")
+
+  @@unique([paymentId, targetType, targetDocumentId, targetSourceSnapshotId, targetVersion, reversalOfId], map: "AccountingPaymentAllocation_active_key")
+  @@index([orgId, targetDocumentId, status], map: "AccountingPaymentAllocation_target_idx")
+  @@index([orgId, targetSourceSnapshotId, status], map: "AccountingPaymentAllocation_snapshot_idx")
+  @@index([reversalOfId], map: "AccountingPaymentAllocation_reversal_idx")
+}
+
+model AccountingScheduledOccurrence {
+  id                  String    @id @default(cuid())
+  orgId               String
+  legalEntityId       String
+  sourceSnapshotId    String
+  templateType        String
+  templateId          String
+  templateVersion     Int
+  scheduledFor        DateTime  @db.Date
+  occurrenceKey       String
+  status              String    @default("PENDING")
+  claimedBy           String?
+  claimedUntil        DateTime?
+  generatedRecordType String?
+  generatedRecordId   String?
+  journalEntryId      String?   @unique(map: "AccountingScheduledOccurrence_journal_key")
+  failureCode         String?
+  rowVersion          Int       @default(1)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  org            Organisation             @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity    AccountingLegalEntity    @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  sourceSnapshot AccountingSourceSnapshot @relation(fields: [sourceSnapshotId], references: [id], onDelete: Restrict)
+  journalEntry   JournalEntry?            @relation(fields: [journalEntryId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, templateType, templateId, templateVersion, scheduledFor], map: "AccountingScheduledOccurrence_source_key")
+  @@unique([orgId, occurrenceKey], map: "AccountingScheduledOccurrence_occurrence_key")
+  @@index([orgId, status, scheduledFor], map: "AccountingScheduledOccurrence_due_idx")
+  @@index([orgId, status, claimedUntil], map: "AccountingScheduledOccurrence_claim_idx")
 }
 
 model Account {
@@ -3389,24 +3689,27 @@ model JournalEntry {
   originalEffectiveDate      DateTime? @db.Date
   rowVersion                 Int       @default(1)
 
-  org                Organisation               @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  legalEntity        AccountingLegalEntity?     @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
-  branch             Branch?                    @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  lines              JournalEntryLine[]
-  glEntries          GeneralLedgerEntry[]
-  payrollBatches     PayrollBatch[]
-  assetDepreciations AssetDepreciationEntry[]
-  accountingPeriod   AccountingPeriod?          @relation(fields: [accountingPeriodId], references: [id], onDelete: Restrict)
-  sourceSnapshot     AccountingSourceSnapshot?  @relation(fields: [sourceSnapshotId], references: [id], onDelete: Restrict)
-  exchangeRate       AccountingExchangeRate?    @relation(fields: [exchangeRateId], references: [id], onDelete: Restrict)
-  approvalPolicy     AccountingApprovalPolicy?  @relation(fields: [accountingApprovalPolicyId], references: [id], onDelete: Restrict)
-  numberSeries       AccountingNumberSeries?    @relation(fields: [numberSeriesId], references: [id], onDelete: Restrict)
-  roundingPolicy     AccountingRoundingPolicy?  @relation(fields: [roundingPolicyId], references: [id], onDelete: Restrict)
-  reversalOf         JournalEntry?              @relation("JournalEntryReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
-  reversals          JournalEntry[]             @relation("JournalEntryReversal")
-  replacementOf      JournalEntry?              @relation("JournalEntryReplacement", fields: [replacementOfId], references: [id], onDelete: Restrict)
-  replacements       JournalEntry[]             @relation("JournalEntryReplacement")
-  postingAttempts    AccountingPostingAttempt[]
+  org                            Organisation                    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  legalEntity                    AccountingLegalEntity?          @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  branch                         Branch?                         @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  lines                          JournalEntryLine[]
+  glEntries                      GeneralLedgerEntry[]
+  payrollBatches                 PayrollBatch[]
+  assetDepreciations             AssetDepreciationEntry[]
+  accountingPeriod               AccountingPeriod?               @relation(fields: [accountingPeriodId], references: [id], onDelete: Restrict)
+  sourceSnapshot                 AccountingSourceSnapshot?       @relation(fields: [sourceSnapshotId], references: [id], onDelete: Restrict)
+  exchangeRate                   AccountingExchangeRate?         @relation(fields: [exchangeRateId], references: [id], onDelete: Restrict)
+  approvalPolicy                 AccountingApprovalPolicy?       @relation(fields: [accountingApprovalPolicyId], references: [id], onDelete: Restrict)
+  numberSeries                   AccountingNumberSeries?         @relation(fields: [numberSeriesId], references: [id], onDelete: Restrict)
+  roundingPolicy                 AccountingRoundingPolicy?       @relation(fields: [roundingPolicyId], references: [id], onDelete: Restrict)
+  reversalOf                     JournalEntry?                   @relation("JournalEntryReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversals                      JournalEntry[]                  @relation("JournalEntryReversal")
+  replacementOf                  JournalEntry?                   @relation("JournalEntryReplacement", fields: [replacementOfId], references: [id], onDelete: Restrict)
+  replacements                   JournalEntry[]                  @relation("JournalEntryReplacement")
+  postingAttempts                AccountingPostingAttempt[]
+  accountingDocuments            AccountingDocument[]
+  accountingPayments             AccountingPayment[]
+  accountingScheduledOccurrences AccountingScheduledOccurrence[]
 
   @@unique([orgId, voucherNo])
   @@unique([orgId, idempotencyKey])

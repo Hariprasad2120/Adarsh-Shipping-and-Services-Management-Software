@@ -108,3 +108,15 @@ Inbox outcomes are `PENDING`, `PROCESSING`, `PROCESSED`, `REJECTED`, `RETRYABLE`
 Terminal deterministic rejections are replay-stable and do not create unbounded attempts. `recoverStaleAccountingRequest` converts only an expired `PROCESSING` claim to `RETRYABLE` under the integration-retry permission and an audited row lock. `moveAccountingRequestToManualReview` records a stable non-sensitive reason code under the manual-review permission. Foreign-currency postings bind the approved exchange-rate row as immutable journal evidence. A reused source version must retain the same organization, legal entity and payload hash.
 
 Canonical rule IDs are not caller-defined extension points. Phase 3 registers exact journal/source contracts for manual/synthetic staging journals, bank transfers, approved HRMS payroll accruals and reversals; unknown or mismatched combinations fail closed.
+
+## Phase 4 contract set
+
+Document contract v1 carries server-resolved organization/legal entity, source identity/version, document type/dates, party, transaction/base currency and FX evidence, effective document/approval/number/rounding policies, source approval version, supporting references, Decimal lines/discount/tax/totals, dimensions, maker, correlation/causation and immutable payload hash. JavaScript-number money is rejected. Tax amounts require a configured category and policy; adapters never infer GST.
+
+Payment contract v1 carries the immutable payment source/version, payer/payee, bank/cash and control accounts, dates, currency/FX, amount, method/reference, documents/dimensions, exact allocation lines, unapplied amount, policy, maker and lineage. Allocations plus unapplied must exactly equal amount, cannot exceed eligible open balance, and cannot cross currency without an approved FX treatment.
+
+Approved HRMS payroll-payment v1 references the accepted payroll-run liability source snapshot and an independently approved instruction ID/version. Approved payroll-correction v1 references the original run version and an approved delta. Generic Accounting storage/outbox payloads exclude employee-level payroll detail. DELTA adjustments are implemented; replacement remains gated until a reversal/replacement policy is approved.
+
+Correction documents reference the original posted canonical document and original policy. Reason, party, currency, value and concurrent remaining capacity are mandatory. Recurring occurrence identity is deterministic from template ID/version/date; template snapshots are immutable and worker claims cannot overlap.
+
+Outbox publication is a separate post-commit operation. Claim uses a lease, owner, token, attempt count and `SKIP LOCKED`; settlement records a safe result code, retry schedule, deterministic manual-review result, or dead letter. Only exact guarded staging and `SYNTHETIC_*` destinations are publishable in Phase 4.

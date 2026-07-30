@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-30T05:50:48.635Z",
+  "generatedAt": "2026-07-30T09:15:46.784Z",
   "product": {
     "name": "Monolith Engine",
     "company": "Adarsh Shipping & Services",
@@ -7,9 +7,9 @@
   },
   "stats": {
     "totalAppRoutes": 232,
-    "totalApiRoutes": 208,
-    "totalPrismaModels": 304,
-    "totalModuleServices": 106,
+    "totalApiRoutes": 212,
+    "totalPrismaModels": 311,
+    "totalModuleServices": 114,
     "totalComponents": 124
   },
   "appRoutes": [
@@ -1735,6 +1735,14 @@
       ]
     },
     {
+      "path": "/api/cha/jobs/create-options",
+      "filePath": "src/app/api/cha/jobs/create-options/route.ts",
+      "module": "cha",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
       "path": "/api/cha/reports/jobs/[jobId]",
       "filePath": "src/app/api/cha/reports/jobs/[jobId]/route.ts",
       "module": "cha",
@@ -1975,6 +1983,14 @@
       ]
     },
     {
+      "path": "/api/cron/todo-reminders",
+      "filePath": "src/app/api/cron/todo-reminders/route.ts",
+      "module": "cron",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
       "path": "/api/cron/tracking-alerts",
       "filePath": "src/app/api/cron/tracking-alerts/route.ts",
       "module": "cron",
@@ -2133,6 +2149,14 @@
       "module": "customer-portal",
       "methods": [
         "POST"
+      ]
+    },
+    {
+      "path": "/api/dashboard/organization",
+      "filePath": "src/app/api/dashboard/organization/route.ts",
+      "module": "dashboard",
+      "methods": [
+        "GET"
       ]
     },
     {
@@ -3083,6 +3107,14 @@
       ]
     },
     {
+      "path": "/api/runtime/updates",
+      "filePath": "src/app/api/runtime/updates/route.ts",
+      "module": "runtime",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
       "path": "/api/setup",
       "filePath": "src/app/api/setup/route.ts",
       "module": "setup",
@@ -3247,6 +3279,13 @@
         "accountingSourceSnapshots",
         "accountingPostingAttempts",
         "accountingPayrollRunSnapshots",
+        "accountingDocumentPolicies",
+        "accountingDocuments",
+        "accountingDocumentLines",
+        "accountingPayments",
+        "accountingPaymentAllocations",
+        "accountingScheduledOccurrences",
+        "accountingCounterpartyScopes",
         "chaSettings",
         "chaJobs",
         "chaJobDeletionRequests",
@@ -3353,6 +3392,13 @@
         "AccountingSourceSnapshot",
         "AccountingPostingAttempt",
         "AccountingPayrollRunSnapshot",
+        "AccountingDocumentPolicy",
+        "AccountingDocument",
+        "AccountingDocumentLine",
+        "AccountingPayment",
+        "AccountingPaymentAllocation",
+        "AccountingScheduledOccurrence",
+        "AccountingCounterpartyEntityScope",
         "ChaSettings",
         "ChaJob",
         "ChaJobDeletionRequest",
@@ -6590,8 +6636,14 @@
         "taxRegistrations",
         "sourceSnapshots",
         "integrationInbox",
+        "integrationOutbox",
         "journalEntries",
-        "accounts"
+        "accounts",
+        "documentPolicies",
+        "documents",
+        "payments",
+        "scheduledOccurrences",
+        "counterpartyScopes"
       ],
       "relations": [
         "AccountingLegalEntityStatus",
@@ -6599,8 +6651,14 @@
         "AccountingTaxRegistration",
         "AccountingSourceSnapshot",
         "AccountingIntegrationInbox",
+        "AccountingIntegrationOutbox",
         "JournalEntry",
-        "Account"
+        "Account",
+        "AccountingDocumentPolicy",
+        "AccountingDocument",
+        "AccountingPayment",
+        "AccountingScheduledOccurrence",
+        "AccountingCounterpartyEntityScope"
       ],
       "module": "accounting"
     },
@@ -6945,6 +7003,7 @@
       "fields": [
         "id",
         "orgId",
+        "legalEntityId",
         "destination",
         "eventType",
         "eventVersion",
@@ -6958,15 +7017,25 @@
         "status",
         "attemptCount",
         "availableAt",
+        "leaseToken",
+        "leaseOwner",
+        "leasedUntil",
+        "lastAttemptAt",
+        "publicationResultCode",
         "publishedAt",
+        "deadLetterAt",
+        "manualReviewAt",
         "lastErrorCode",
+        "rowVersion",
         "createdAt",
         "updatedAt",
-        "org"
+        "org",
+        "legalEntity"
       ],
       "relations": [
         "AccountingIntegrationMessageStatus",
-        "Organisation"
+        "Organisation",
+        "AccountingLegalEntity"
       ],
       "module": "accounting"
     },
@@ -7020,7 +7089,11 @@
         "integrationInbox",
         "journals",
         "payrollRun",
-        "legacyPayrollBatches"
+        "legacyPayrollBatches",
+        "documents",
+        "payments",
+        "scheduledOccurrences",
+        "accountingPaymentAllocations"
       ],
       "relations": [
         "Organisation",
@@ -7028,7 +7101,11 @@
         "AccountingIntegrationInbox",
         "JournalEntry",
         "AccountingPayrollRunSnapshot",
-        "PayrollBatch"
+        "PayrollBatch",
+        "AccountingDocument",
+        "AccountingPayment",
+        "AccountingScheduledOccurrence",
+        "AccountingPaymentAllocation"
       ],
       "module": "accounting"
     },
@@ -7082,6 +7159,299 @@
       "relations": [
         "Organisation",
         "AccountingSourceSnapshot"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingDocumentPolicy",
+      "fields": [
+        "id",
+        "orgId",
+        "legalEntityId",
+        "documentType",
+        "version",
+        "configuration",
+        "configurationHash",
+        "statutoryValidated",
+        "approvedById",
+        "approvedAt",
+        "effectiveFrom",
+        "effectiveTo",
+        "isActive",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "legalEntity",
+        "documents",
+        "payments"
+      ],
+      "relations": [
+        "Organisation",
+        "AccountingLegalEntity",
+        "AccountingDocument",
+        "AccountingPayment"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingCounterpartyEntityScope",
+      "fields": [
+        "id",
+        "orgId",
+        "legalEntityId",
+        "partyType",
+        "partyId",
+        "version",
+        "isActive",
+        "effectiveFrom",
+        "effectiveTo",
+        "approvedById",
+        "approvedAt",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "legalEntity"
+      ],
+      "relations": [
+        "Organisation",
+        "AccountingLegalEntity"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingDocument",
+      "fields": [
+        "id",
+        "orgId",
+        "legalEntityId",
+        "policyId",
+        "sourceSnapshotId",
+        "sourceSystem",
+        "sourceType",
+        "sourceId",
+        "sourceVersion",
+        "legacyRecordType",
+        "legacyRecordId",
+        "documentType",
+        "schemaVersion",
+        "status",
+        "documentDate",
+        "postingDate",
+        "dueDate",
+        "counterpartyType",
+        "counterpartyId",
+        "transactionCurrencyCode",
+        "baseCurrencyCode",
+        "exchangeRateId",
+        "numberSeriesId",
+        "approvalPolicyId",
+        "approvalPolicyVersion",
+        "roundingPolicyId",
+        "roundingPolicyVersion",
+        "sourceApprovalVersion",
+        "subtotal",
+        "discountAmount",
+        "taxAmount",
+        "totalAmount",
+        "supportingDocumentRefs",
+        "approvalEvidence",
+        "immutablePayload",
+        "payloadHash",
+        "requestId",
+        "idempotencyKey",
+        "correlationId",
+        "causationId",
+        "makerId",
+        "approvedById",
+        "approvedAt",
+        "journalEntryId",
+        "correctionOfId",
+        "correctionReason",
+        "cancelledAt",
+        "rowVersion",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "legalEntity",
+        "policy",
+        "sourceSnapshot",
+        "journalEntry",
+        "correctionOf",
+        "corrections",
+        "lines",
+        "paymentTargets"
+      ],
+      "relations": [
+        "Organisation",
+        "AccountingLegalEntity",
+        "AccountingDocumentPolicy",
+        "AccountingSourceSnapshot",
+        "JournalEntry",
+        "AccountingDocument",
+        "AccountingDocumentLine",
+        "AccountingPaymentAllocation"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingDocumentLine",
+      "fields": [
+        "id",
+        "orgId",
+        "documentId",
+        "lineNumber",
+        "description",
+        "quantity",
+        "unitAmount",
+        "discountAmount",
+        "taxableAmount",
+        "taxCategoryRef",
+        "taxAmount",
+        "totalAmount",
+        "accountId",
+        "dimensions",
+        "sourceLineRef",
+        "createdAt",
+        "org",
+        "document"
+      ],
+      "relations": [
+        "Organisation",
+        "AccountingDocument"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingPayment",
+      "fields": [
+        "id",
+        "orgId",
+        "legalEntityId",
+        "policyId",
+        "sourceSnapshotId",
+        "sourceSystem",
+        "sourceType",
+        "sourceId",
+        "sourceVersion",
+        "legacyPaymentEntryId",
+        "paymentType",
+        "schemaVersion",
+        "status",
+        "payerPayeeType",
+        "payerPayeeId",
+        "bankOrCashAccountId",
+        "controlAccountId",
+        "transactionDate",
+        "valueDate",
+        "transactionCurrencyCode",
+        "baseCurrencyCode",
+        "exchangeRateId",
+        "amount",
+        "allocatedAmount",
+        "unappliedAmount",
+        "paymentMethod",
+        "externalReference",
+        "dimensions",
+        "supportingDocumentRefs",
+        "approvalEvidence",
+        "immutablePayload",
+        "payloadHash",
+        "requestId",
+        "idempotencyKey",
+        "correlationId",
+        "causationId",
+        "makerId",
+        "approvedById",
+        "approvedAt",
+        "journalEntryId",
+        "reversalOfId",
+        "reversedAt",
+        "rowVersion",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "legalEntity",
+        "policy",
+        "sourceSnapshot",
+        "journalEntry",
+        "reversalOf",
+        "reversals",
+        "allocations"
+      ],
+      "relations": [
+        "Organisation",
+        "AccountingLegalEntity",
+        "AccountingDocumentPolicy",
+        "AccountingSourceSnapshot",
+        "JournalEntry",
+        "AccountingPayment",
+        "AccountingPaymentAllocation"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingPaymentAllocation",
+      "fields": [
+        "id",
+        "orgId",
+        "paymentId",
+        "targetType",
+        "targetDocumentId",
+        "targetSourceSnapshotId",
+        "targetVersion",
+        "amount",
+        "status",
+        "reversalOfId",
+        "createdAt",
+        "reversedAt",
+        "org",
+        "payment",
+        "targetDocument",
+        "targetSourceSnapshot",
+        "reversalOf",
+        "reversals"
+      ],
+      "relations": [
+        "Organisation",
+        "AccountingPayment",
+        "AccountingDocument",
+        "AccountingSourceSnapshot",
+        "AccountingPaymentAllocation"
+      ],
+      "module": "accounting"
+    },
+    {
+      "name": "AccountingScheduledOccurrence",
+      "fields": [
+        "id",
+        "orgId",
+        "legalEntityId",
+        "sourceSnapshotId",
+        "templateType",
+        "templateId",
+        "templateVersion",
+        "scheduledFor",
+        "occurrenceKey",
+        "status",
+        "claimedBy",
+        "claimedUntil",
+        "generatedRecordType",
+        "generatedRecordId",
+        "journalEntryId",
+        "failureCode",
+        "rowVersion",
+        "createdAt",
+        "updatedAt",
+        "org",
+        "legalEntity",
+        "sourceSnapshot",
+        "journalEntry"
+      ],
+      "relations": [
+        "Organisation",
+        "AccountingLegalEntity",
+        "AccountingSourceSnapshot",
+        "JournalEntry"
       ],
       "module": "accounting"
     },
@@ -7222,7 +7592,10 @@
         "reversals",
         "replacementOf",
         "replacements",
-        "postingAttempts"
+        "postingAttempts",
+        "accountingDocuments",
+        "accountingPayments",
+        "accountingScheduledOccurrences"
       ],
       "relations": [
         "Organisation",
@@ -7239,7 +7612,10 @@
         "AccountingNumberSeries",
         "AccountingRoundingPolicy",
         "JournalEntry",
-        "AccountingPostingAttempt"
+        "AccountingPostingAttempt",
+        "AccountingDocument",
+        "AccountingPayment",
+        "AccountingScheduledOccurrence"
       ],
       "module": "accounting"
     },
@@ -11157,6 +11533,8 @@
         "cancelPurchaseInvoiceAction",
         "createPaymentEntryAction",
         "submitPaymentEntryAction",
+        "approveAccountingDocumentAction",
+        "approveAccountingPaymentAction",
         "cancelPaymentEntryAction",
         "updateAccountingSettingsAction",
         "initializeCOAAction",
@@ -11204,6 +11582,38 @@
     },
     {
       "module": "accounting",
+      "fileName": "document-adapters.ts",
+      "filePath": "src/modules/accounting/document-adapters.ts",
+      "exportedFunctions": [
+        "prepareLegacyCustomerNote",
+        "prepareLegacyVendorNote",
+        "prepareLegacySalesInvoice",
+        "prepareLegacyPurchaseInvoice",
+        "prepareLegacyPayment",
+        "approveAndPostAccountingDocument",
+        "approveAndPostAccountingPayment",
+        "prepareApprovedPayrollPayment",
+        "postApprovedPayrollCorrection",
+        "cancelCanonicalDocumentByLegacyRecord",
+        "reverseCanonicalPaymentByLegacyRecord"
+      ]
+    },
+    {
+      "module": "accounting",
+      "fileName": "document-contracts.ts",
+      "filePath": "src/modules/accounting/document-contracts.ts",
+      "exportedFunctions": [
+        "normalizeAccountingDocumentContract",
+        "normalizeAccountingPaymentContract",
+        "payrollPaymentIdentity",
+        "normalizePayrollCorrection",
+        "recurringOccurrenceIdentity",
+        "depreciationRunIdentity",
+        "asDecimalJson"
+      ]
+    },
+    {
+      "module": "accounting",
       "fileName": "integration-adapters.ts",
       "filePath": "src/modules/accounting/integration-adapters.ts",
       "exportedFunctions": [
@@ -11239,6 +11649,19 @@
         "isNegative",
         "debitCreditTotals",
         "assertBalanced"
+      ]
+    },
+    {
+      "module": "accounting",
+      "fileName": "outbox-operations.ts",
+      "filePath": "src/modules/accounting/outbox-operations.ts",
+      "exportedFunctions": [
+        "accountingOutboxRetryDelayMs",
+        "claimAccountingOutbox",
+        "settleAccountingOutboxClaim",
+        "retryAccountingOutbox",
+        "moveAccountingOutboxToManualReview",
+        "publishClaimedSyntheticOutbox"
       ]
     },
     {
@@ -11282,6 +11705,16 @@
         "canonicalPayload",
         "payloadHash",
         "newAccountingRequestId"
+      ]
+    },
+    {
+      "module": "accounting",
+      "fileName": "scheduled-operations.ts",
+      "filePath": "src/modules/accounting/scheduled-operations.ts",
+      "exportedFunctions": [
+        "registerAccountingScheduledOccurrence",
+        "claimAccountingScheduledOccurrences",
+        "settleAccountingScheduledOccurrence"
       ]
     },
     {
@@ -11377,8 +11810,20 @@
     },
     {
       "module": "accounting",
+      "fileName": "document-contracts.test.ts",
+      "filePath": "src/modules/accounting/__tests__/document-contracts.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "accounting",
       "fileName": "money.test.ts",
       "filePath": "src/modules/accounting/__tests__/money.test.ts",
+      "exportedFunctions": []
+    },
+    {
+      "module": "accounting",
+      "fileName": "outbox-operations.test.ts",
+      "filePath": "src/modules/accounting/__tests__/outbox-operations.test.ts",
       "exportedFunctions": []
     },
     {
@@ -11676,6 +12121,16 @@
     },
     {
       "module": "cha",
+      "fileName": "queries.ts",
+      "filePath": "src/modules/cha/jobs/queries.ts",
+      "exportedFunctions": [
+        "listJobs",
+        "getJobFilterOptions",
+        "getCreateJobOptions"
+      ]
+    },
+    {
+      "module": "cha",
       "fileName": "service.ts",
       "filePath": "src/modules/cha/service.ts",
       "exportedFunctions": [
@@ -11789,6 +12244,15 @@
         "upsertFilingShipmentDetails",
         "deleteFilingAttachment",
         "updateFilingAttachmentValidity"
+      ]
+    },
+    {
+      "module": "cha",
+      "fileName": "queries.ts",
+      "filePath": "src/modules/cha/warnings/queries.ts",
+      "exportedFunctions": [
+        "computeChaDueDateWarnings",
+        "listFilingQueryEscalationWarnings"
       ]
     },
     {
@@ -13309,6 +13773,11 @@
     },
     {
       "module": "monolith",
+      "fileName": "operations-overview.tsx",
+      "filePath": "src/components/monolith/operations-overview.tsx"
+    },
+    {
+      "module": "monolith",
       "fileName": "people-controls.tsx",
       "filePath": "src/components/monolith/people-controls.tsx"
     },
@@ -13418,11 +13887,6 @@
       "filePath": "src/components/sidebar.tsx"
     },
     {
-      "module": "todo",
-      "fileName": "todo-reminder-agent.tsx",
-      "filePath": "src/components/todo/todo-reminder-agent.tsx"
-    },
-    {
       "module": "shared",
       "fileName": "welcome-bar.tsx",
       "filePath": "src/components/welcome-bar.tsx"
@@ -13439,8 +13903,8 @@
     "accounting": {
       "appRoutes": 35,
       "apiRoutes": 0,
-      "prismaModels": 37,
-      "serviceFiles": 12,
+      "prismaModels": 44,
+      "serviceFiles": 18,
       "components": 0
     },
     "admin": {
@@ -13473,9 +13937,9 @@
     },
     "cha": {
       "appRoutes": 14,
-      "apiRoutes": 6,
+      "apiRoutes": 7,
       "prismaModels": 35,
-      "serviceFiles": 7,
+      "serviceFiles": 9,
       "components": 3
     },
     "communication": {
@@ -13501,7 +13965,7 @@
     },
     "cron": {
       "appRoutes": 0,
-      "apiRoutes": 7,
+      "apiRoutes": 8,
       "prismaModels": 0,
       "serviceFiles": 0,
       "components": 0
@@ -13515,7 +13979,7 @@
     },
     "dashboard": {
       "appRoutes": 3,
-      "apiRoutes": 0,
+      "apiRoutes": 1,
       "prismaModels": 0,
       "serviceFiles": 2,
       "components": 0
@@ -13602,7 +14066,7 @@
       "apiRoutes": 0,
       "prismaModels": 0,
       "serviceFiles": 0,
-      "components": 48
+      "components": 49
     },
     "notifications": {
       "appRoutes": 1,
@@ -13639,6 +14103,13 @@
       "serviceFiles": 0,
       "components": 0
     },
+    "runtime": {
+      "appRoutes": 0,
+      "apiRoutes": 1,
+      "prismaModels": 0,
+      "serviceFiles": 0,
+      "components": 0
+    },
     "setup": {
       "appRoutes": 1,
       "apiRoutes": 1,
@@ -13658,7 +14129,7 @@
       "apiRoutes": 0,
       "prismaModels": 2,
       "serviceFiles": 1,
-      "components": 1
+      "components": 0
     },
     "todos": {
       "appRoutes": 0,

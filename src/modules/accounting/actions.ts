@@ -10,6 +10,16 @@ import {
   prepareBankTransferRequest,
   prepareCrmDealInvoiceRequest,
 } from "./integration-adapters";
+import {
+  approveAndPostAccountingDocument,
+  approveAndPostAccountingPayment,
+  cancelCanonicalDocumentByLegacyRecord,
+  prepareLegacyPayment,
+  prepareLegacyPurchaseInvoice,
+  prepareLegacySalesInvoice,
+  prepareLegacyCustomerNote,
+  reverseCanonicalPaymentByLegacyRecord,
+} from "./document-adapters";
 
 type ActionResponse = { ok: true; data?: any } | { ok: false; error: string };
 
@@ -137,9 +147,13 @@ export async function submitSalesInvoiceAction(id: string): Promise<ActionRespon
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "accounting.invoice.submit");
+    await requirePermission(session.user.id, "accounting.sales-invoice.prepare");
 
-    const invoice = await accService.submitSalesInvoice(orgId, id, session.user.id);
+    const invoice = await prepareLegacySalesInvoice({
+      orgId,
+      invoiceId: id,
+      makerId: session.user.id,
+    });
     revalidatePath("/accounting/sales-invoices");
     revalidatePath(`/accounting/sales-invoices/${id}`);
     return { ok: true, data: invoice };
@@ -156,9 +170,15 @@ export async function cancelSalesInvoiceAction(id: string): Promise<ActionRespon
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "accounting.invoice.cancel");
+    await requirePermission(session.user.id, "accounting.correction.approve");
 
-    const invoice = await accService.cancelSalesInvoice(orgId, id, session.user.id);
+    const invoice = await cancelCanonicalDocumentByLegacyRecord({
+      orgId,
+      legacyRecordType: "SalesInvoice",
+      legacyRecordId: id,
+      actorId: session.user.id,
+      reason: "Controlled sales invoice cancellation",
+    });
     revalidatePath("/accounting/sales-invoices");
     revalidatePath(`/accounting/sales-invoices/${id}`);
     return { ok: true, data: invoice };
@@ -195,9 +215,13 @@ export async function submitPurchaseInvoiceAction(id: string): Promise<ActionRes
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "accounting.invoice.submit");
+    await requirePermission(session.user.id, "accounting.purchase-invoice.prepare");
 
-    const invoice = await accService.submitPurchaseInvoice(orgId, id, session.user.id);
+    const invoice = await prepareLegacyPurchaseInvoice({
+      orgId,
+      invoiceId: id,
+      makerId: session.user.id,
+    });
     revalidatePath("/accounting/purchase-invoices");
     revalidatePath(`/accounting/purchase-invoices/${id}`);
     return { ok: true, data: invoice };
@@ -214,9 +238,15 @@ export async function cancelPurchaseInvoiceAction(id: string): Promise<ActionRes
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "accounting.invoice.cancel");
+    await requirePermission(session.user.id, "accounting.correction.approve");
 
-    const invoice = await accService.cancelPurchaseInvoice(orgId, id, session.user.id);
+    const invoice = await cancelCanonicalDocumentByLegacyRecord({
+      orgId,
+      legacyRecordType: "PurchaseInvoice",
+      legacyRecordId: id,
+      actorId: session.user.id,
+      reason: "Controlled purchase invoice cancellation",
+    });
     revalidatePath("/accounting/purchase-invoices");
     revalidatePath(`/accounting/purchase-invoices/${id}`);
     return { ok: true, data: invoice };
@@ -253,14 +283,70 @@ export async function submitPaymentEntryAction(id: string): Promise<ActionRespon
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "accounting.payment.submit");
+    await requirePermission(session.user.id, "accounting.payment.prepare");
 
-    const payment = await accService.submitPaymentEntry(orgId, id, session.user.id);
+    const payment = await prepareLegacyPayment({
+      orgId,
+      paymentEntryId: id,
+      makerId: session.user.id,
+    });
     revalidatePath("/accounting/payment-entries");
     revalidatePath(`/accounting/payment-entries/${id}`);
     return { ok: true, data: payment };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to submit payment entry" };
+  }
+}
+
+export async function approveAccountingDocumentAction(
+  documentId: string,
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    await requirePermission(session.user.id, "accounting.document.approve");
+    await requirePermission(session.user.id, "accounting.post");
+    const result = await approveAndPostAccountingDocument({
+      orgId,
+      documentId,
+      approverId: session.user.id,
+    });
+    revalidatePath("/accounting");
+    return { ok: true, data: result };
+  } catch (err: unknown) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error ? err.message : "Failed to approve Accounting document",
+    };
+  }
+}
+
+export async function approveAccountingPaymentAction(
+  paymentId: string,
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    await requirePermission(session.user.id, "accounting.payment.approve");
+    await requirePermission(session.user.id, "accounting.payment.post");
+    const result = await approveAndPostAccountingPayment({
+      orgId,
+      paymentId,
+      approverId: session.user.id,
+    });
+    revalidatePath("/accounting/payment-entries");
+    return { ok: true, data: result };
+  } catch (err: unknown) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error ? err.message : "Failed to approve Accounting payment",
+    };
   }
 }
 
@@ -272,9 +358,14 @@ export async function cancelPaymentEntryAction(id: string): Promise<ActionRespon
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "accounting.payment.submit"); // cancel pays maps to submit/edit permission
+    await requirePermission(session.user.id, "accounting.payment.reverse");
 
-    const payment = await accService.cancelPaymentEntry(orgId, id, session.user.id);
+    const payment = await reverseCanonicalPaymentByLegacyRecord({
+      orgId,
+      legacyPaymentEntryId: id,
+      actorId: session.user.id,
+      reason: "Controlled payment reversal",
+    });
     revalidatePath("/accounting/payment-entries");
     revalidatePath(`/accounting/payment-entries/${id}`);
     return { ok: true, data: payment };
@@ -620,7 +711,11 @@ export async function submitCustomerNoteAction(id: string): Promise<ActionRespon
     if (!session?.user) return { ok: false, error: "Unauthorized" };
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
-    const note = await accService.submitCustomerNote(orgId, id, session.user.id);
+    const note = await prepareLegacyCustomerNote({
+      orgId,
+      noteId: id,
+      makerId: session.user.id,
+    });
     revalidatePath("/accounting/quotations");
     return { ok: true, data: note };
   } catch (err: any) {

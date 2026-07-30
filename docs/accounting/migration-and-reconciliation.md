@@ -164,3 +164,26 @@ Required populated-environment work remains unchanged: authorized restore, sourc
 - Full guarded suite: 279/282 passed. The only failures are the same three accepted pre-existing CHA cases: mock Google Drive checklist attachment, absent estimated filing date and absent `JOB_DELETED_DIRECT` audit event.
 - Production build passed Prisma generation, compilation, TypeScript and all 324 static pages; the existing non-fatal broad customer-portal file-trace warning remains.
 - Staging application check returned HTTP 307 from `127.0.0.1:3100`.
+
+## Phase 4 expand-only rollout
+
+Phase 4 adds five forward-only migrations after the Phase 3 chain:
+
+1. canonical document policy/document/line, payment/allocation and scheduled-occurrence tables plus outbox lease/result fields, tenant guards and immutability;
+2. partial active-allocation/external-reference indexes, allocation row-lock capacity and correction remaining-capacity enforcement;
+3. terminal scheduled-occurrence immutability;
+4. a table-safe replacement for the shared Phase 4 tenant trigger discovered by guarded integration testing.
+5. an effective-dated customer/vendor-to-legal-entity scope model and database tenant/party guard.
+
+No legacy fields are dropped. Production activation is disabled. Operational rollback stops new preparation/claim entry points and leaves posted canonical facts readable; fixes move forward with additive migrations. Never delete or rewrite posted facts.
+
+The clean guarded database was recreated from empty and the complete 59-migration chain applied. The accepted committed synthetic seed was streamed through the fail-closed staging wrapper so the two protected user-modified files remained untouched and the non-synthetic email edit was not seeded. Status, verifier and datasource-to-schema diff passed. No populated-data rehearsal occurred.
+
+Phase 4 validation evidence:
+
+- Phase 4 focused unit/architecture/integration selection: 39/39.
+- Guarded Phase 2/3/4 database selection: 34/34.
+- Full guarded suite: 306/309; only the same three accepted CHA failures remain.
+- TypeScript and the production build passed; Next generated 328 pages. The unchanged non-fatal customer-portal trace warning remains.
+- All Phase 4-created TypeScript files pass focused ESLint. The touched `actions.ts` retains the same 80 pre-existing `no-explicit-any` errors as committed HEAD. The previously documented `service.ts`/`seed.ts` debt remains exactly 36 errors and 23 warnings; no Phase 4 lint failure is hidden in it.
+- Product catalogue generation/check passed with 0 errors and 0 warnings.

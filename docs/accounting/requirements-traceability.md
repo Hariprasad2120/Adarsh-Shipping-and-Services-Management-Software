@@ -360,3 +360,18 @@ This overlay supersedes the generic “policy approval required” wording in th
 | ZOHO-REPORT-022 | `docs/accounting/sources/Zoho Books Workings.md:563-568` — 22. Day Book | reports.ts and report actions; named parity detailed in zoho-workflow-parity.md | Parity/UAT/reconciliation not yet accepted; detailed row in `zoho-workflow-parity.md` | 9,11-12 | Initial parity gap mapped; policy approval required |
 | ZOHO-REPORT-023 | `docs/accounting/sources/Zoho Books Workings.md:569-574` — 23. Journal Report | reports.ts and report actions; named parity detailed in zoho-workflow-parity.md | Parity/UAT/reconciliation not yet accepted; detailed row in `zoho-workflow-parity.md` | 9,11-12 | Initial parity gap mapped; policy approval required |
 | ZOHO-REPORT-024 | `docs/accounting/sources/Zoho Books Workings.md:575-579` — 24. Ledger Statement | reports.ts and report actions; named parity detailed in zoho-workflow-parity.md | Parity/UAT/reconciliation not yet accepted; detailed row in `zoho-workflow-parity.md` | 9,11-12 | Initial parity gap mapped; policy approval required |
+
+## Phase 4 implementation trace
+
+| Requirement | Implementation evidence | Test evidence | Remaining gate |
+|---|---|---|---|
+| Immutable versioned documents | `AccountingDocumentPolicy`, `AccountingDocument`, `AccountingDocumentLine`; `document-contracts.ts`; `document-adapters.ts` | contract and guarded Phase 4 integration tests | production tax/document policies |
+| Sales/purchase transition | adapter-routed actions; legacy submit-at-create blockers; registered AR/AP rules | architecture plus sales prepare/approve/post integration | purchase statutory treatment |
+| Payment and Decimal allocation | `AccountingPayment`, `AccountingPaymentAllocation`, payment contract, capacity trigger | equality, over-allocation, currency, posting and immutability tests | general-payment product rule |
+| Payroll payment/correction | approved payroll payment and correction producers; source-snapshot allocation | contract lineage/identity tests | replacement correction policy |
+| Credit/debit notes/cancellation | original-linked correction adapters, remaining-capacity trigger, canonical reversal actions | concurrent capacity and architecture tests | statutory/closed-period/standalone rules |
+| Depreciation/recurring/partner | deterministic identities, scheduled worker foundation, explicit pre-mutation gates | identity, worker concurrency and architecture tests | approved domain policies |
+| Outbox operations | lease/attempt/result/dead-letter/manual review fields and operations | retry unit and concurrent guarded publication tests | production provider/destination |
+| Direct-write prevention | canonical engine allowlist, legacy blockers, DB immutable/canonical-write triggers | posting-boundary architecture and guarded DB tests | offline historical import remains separately gated |
+| Tenant/legal-entity isolation | composite/runtime checks and Phase 4 tenant triggers | clean-chain trigger defect regression and isolation suites | none for synthetic Phase 4 scope |
+| DEC-0022 | Decimal contracts and versioned rounding evidence | exact 0.1/discount/allocation tests | statutory/jurisdiction approval remains pending |

@@ -92,3 +92,11 @@ Replay of the same idempotency key and canonical payload returns the existing jo
 `reverseCanonicalJournal` creates exact opposite lines and retains original request/effective-date, approved FX and dimension lineage. A row lock plus unique reversal invariant prevents double reversal. Closed-period reversal requires the configured next-open-period correction policy. `replaceCanonicalJournal` accepts a separately approved canonical request only after reversal and preserves the original effective date; a partial unique invariant prevents multiple posted replacements.
 
 The legacy `postGLTransactions` and `reverseGLTransactions` functions are fail-closed compatibility sentinels. The architecture test rejects new runtime journal/line/GL writers outside the canonical engine, while permitting only the Accounting draft creator. Database triggers also reject direct draft-to-posted promotion, non-canonical GL inserts and inserted/updated/deleted children or dimensions on posted journals.
+
+## Phase 4 registered document and payment rules
+
+The canonical engine additionally registers exact rule/source/journal triples for sales invoices, purchase bills, customer receipts, vendor payments, payroll payments, payroll corrections, customer credit/debit notes, vendor credit/debit notes, depreciation runs, recurring occurrences and partner appropriations. Registration is not production activation: a missing versioned policy or approved source event fails before a ledger mutation.
+
+Document/payment adapters persist `PENDING_APPROVAL` state and a canonical inbox payload. Approval re-resolves server permissions, rejects maker self-approval and calls the same engine. In the posting transaction the engine marks the matching canonical document/payment posted, links its journal, updates only the compatible legacy projection state, and creates an outbox event. Cancellation and payment reversal call the canonical reversal operation; active allocations are released in the same canonical transaction.
+
+All Phase 4 outbox destinations are deliberately `SYNTHETIC_*`. No production destination or external publisher exists. Production mapping requires a later explicit approval.

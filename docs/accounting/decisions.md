@@ -249,3 +249,9 @@ Zoho export/API coverage must also be inspected sufficiently to confirm migratio
 ## Approval rule
 
 Only rows marked `APPROVED` or the explicitly approved portion of `APPROVED — CONFIGURATION PENDING` may control Phase 2. Pending configuration must remain configuration—not hard-coded policy. `BLOCKED`, `OPEN`, `DEFERRED` and unresolved portions must not be silently resolved in code or schema.
+
+## Phase 4 decision application
+
+DEC-0022 remains partially implemented. Phase 4 extends arbitrary-precision Decimal handling to canonical documents, payments, allocations, payroll-payment instructions and corrections. Configurable rounding evidence remains versioned. This does not approve statutory GST, jurisdiction-specific component/document rounding, depreciation, partner terms, withholding, reverse charge, input-credit, closed-period note treatment, or production round-off behavior.
+
+Consequently, sales tax posts only under a hash-verified statutory policy; current guarded tests use explicit zero-tax synthetic policy. Purchase statutory/discount handling, quotation conversion, depreciation posting, legacy recurring financial generation, partner posting, standalone notes, payroll replacement, and production outbox delivery remain configuration- or policy-gated. No code default is an Adarsh production decision.
