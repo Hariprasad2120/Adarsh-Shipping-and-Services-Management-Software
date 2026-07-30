@@ -3,8 +3,7 @@
 import { motion } from "framer-motion";
 
 /**
- * Mona's animated avatar — a glowing cyan orb with a conic gradient ring.
- * Uses design-system accent color (#F9D972) and surfaces.
+ * Mona's animated avatar uses the active theme's accent and surface tokens.
  */
 export function MonaAvatar({
   size = 40,
@@ -29,13 +28,11 @@ export function MonaAvatar({
           className="absolute inset-0 rounded-full"
           style={{
             background:
-              "conic-gradient(from 0deg, #F9D972, #38bdf8, #818cf8, #c084fc, #F9D972)",
+              "conic-gradient(from 0deg, var(--mnx-accent), var(--mnx-accent-soft), var(--mnx-accent-text), var(--mnx-accent))",
             opacity: 0.6,
           }}
           animate={
-            isActive
-              ? { rotate: 360, scale: [1, 1.08, 1] }
-              : { rotate: 360 }
+            isActive ? { rotate: 360, scale: [1, 1.08, 1] } : { rotate: 360 }
           }
           transition={
             isActive
@@ -55,8 +52,8 @@ export function MonaAvatar({
           width: innerSize,
           height: innerSize,
           boxShadow: isActive
-            ? "0 0 20px rgba(0, 206, 196, 0.35), inset 0 0 10px rgba(0, 206, 196, 0.08)"
-            : "0 0 10px rgba(0, 206, 196, 0.15), inset 0 0 5px rgba(0, 206, 196, 0.05)",
+            ? "var(--mn-shadow-accent)"
+            : "var(--mn-shadow-accent-soft)",
         }}
         animate={isActive ? { scale: [1, 0.95, 1] } : {}}
         transition={
@@ -68,10 +65,10 @@ export function MonaAvatar({
           className="font-bold select-none"
           style={{
             fontSize,
-            background: "linear-gradient(135deg, #F9D972, #38bdf8)",
+            background: "var(--mn-gradient-accent)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            fontFamily: "var(--font-geist-sans), sans-serif",
+            fontFamily: "var(--mn-font-sans)",
             letterSpacing: "0.05em",
           }}
         >
@@ -86,7 +83,11 @@ export function MonaAvatar({
             <motion.div
               key={i}
               className="absolute rounded-full"
-              style={{ width: 3, height: 3, background: "#F9D972" }}
+              style={{
+                width: 3,
+                height: 3,
+                background: "var(--mnx-accent)",
+              }}
               animate={{
                 x: [0, Math.cos((i * 120 * Math.PI) / 180) * size * 0.6],
                 y: [0, Math.sin((i * 120 * Math.PI) / 180) * size * 0.6],
@@ -118,17 +119,17 @@ export function MonaAvatarSmall() {
       style={{
         width: 28,
         height: 28,
-        boxShadow: "0 0 8px rgba(0, 206, 196, 0.1)",
+        boxShadow: "var(--mn-shadow-accent-soft)",
       }}
     >
       <span
         className="font-bold select-none"
         style={{
           fontSize: 10,
-          background: "linear-gradient(135deg, #F9D972, #38bdf8)",
+          background: "var(--mn-gradient-accent)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
-          fontFamily: "var(--font-geist-sans), sans-serif",
+          fontFamily: "var(--mn-font-sans)",
         }}
       >
         M

@@ -63,7 +63,7 @@ export function MonaInput({
         handleSend();
       }
     },
-    [handleSend]
+    [handleSend],
   );
 
   const toggleVoice = useCallback(() => {
@@ -113,8 +113,8 @@ export function MonaInput({
           disabled={isLoading}
           className="relative flex shrink-0 items-center justify-center rounded-full p-2 transition-all"
           style={{
-            background: isListening ? "rgba(239, 68, 68, 0.12)" : "transparent",
-            color: isListening ? "#ef4444" : "var(--color-on-surface-variant)",
+            background: isListening ? "var(--mnx-danger-bg)" : "transparent",
+            color: isListening ? "var(--mnx-danger)" : "var(--mnx-text-muted)",
           }}
           title={isListening ? "Stop listening" : "Voice input"}
         >
@@ -147,7 +147,8 @@ export function MonaInput({
               style={{
                 width: 36,
                 height: 36,
-                border: "2px solid rgba(239, 68, 68, 0.5)",
+                border:
+                  "2px solid color-mix(in srgb, var(--mnx-danger) 50%, transparent)",
               }}
               animate={{ scale: [1, 1.4], opacity: [0.6, 0] }}
               transition={{ duration: 1, repeat: Infinity }}
@@ -178,12 +179,12 @@ export function MonaInput({
         style={{
           background:
             text.trim() && !isLoading
-              ? "linear-gradient(135deg, #F9D972, #E8C85D)"
+              ? "var(--mn-gradient-accent)"
               : "transparent",
           color:
             text.trim() && !isLoading
-              ? "#ffffff"
-              : "var(--color-on-surface-variant)",
+              ? "var(--mn-color-on-accent)"
+              : "var(--mnx-text-muted)",
           opacity: text.trim() && !isLoading ? 1 : 0.4,
         }}
         title="Send message (Enter)"

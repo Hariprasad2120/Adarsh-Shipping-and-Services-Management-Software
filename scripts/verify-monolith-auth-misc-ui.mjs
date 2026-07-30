@@ -224,7 +224,7 @@ const behaviorSources = {
 
 for (const [sourceName, signals] of Object.entries({
   root: [
-    "await auth()",
+    "await getSession()",
     "isRootControlEmail",
     'redirect("/dashboard")',
     "getEnabledModuleIds",
@@ -262,12 +262,7 @@ for (const [sourceName, signals] of Object.entries({
     "USER_ALREADY_LINKED_OTHER_GOOGLE",
     "response.status === 401",
   ],
-  proxy: [
-    '"/login"',
-    '"/setup"',
-    '"/google-chat-link"',
-    '"/verify"',
-  ],
+  proxy: ['"/login"', '"/setup"', '"/google-chat-link"', '"/verify"'],
 })) {
   for (const signal of signals) {
     assert(
@@ -302,7 +297,10 @@ const listing = spawnSync("tar", ["-tf", archivePath], {
   cwd: repositoryRoot,
   encoding: "utf8",
 });
-assert(listing.status === 0, listing.stderr || "Unable to list backup archive.");
+assert(
+  listing.status === 0,
+  listing.stderr || "Unable to list backup archive.",
+);
 const archiveFiles = listing.stdout
   .split(/\r?\n/)
   .filter((entry) => entry && !entry.endsWith("/"));

@@ -23,7 +23,9 @@ describe("module-aware main dashboard", () => {
 
   it("filters dashboard modules through organization settings and role-visible navigation", () => {
     const pageSource = readSource("src/app/(dashboard)/dashboard/page.tsx");
-    const portalSource = readSource("src/app/(dashboard)/dashboard/portal-client.tsx");
+    const portalSource = readSource(
+      "src/app/(dashboard)/dashboard/portal-client.tsx",
+    );
 
     expect(pageSource).toContain("getEnabledModuleIds");
     expect(pageSource).toContain("getVisibleSections(caps, enabledModuleIds)");
@@ -41,21 +43,32 @@ describe("module-aware main dashboard", () => {
 
     expect(styles).toContain("repeat(12, minmax(0, 1fr))");
     expect(styles).toContain("grid-column: span 6");
-    expect(styles).toContain("grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)");
-    expect(styles).not.toContain(".mnx-module-command {\n  min-width: 0;\n  padding:");
-    expect(styles).toContain("radial-gradient(circle at -16% -16%");
-    expect(styles).toContain("radial-gradient(circle at 116% 116%");
+    expect(styles).toContain(
+      "grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)",
+    );
+    expect(styles).not.toContain(
+      ".mnx-module-command {\n  min-width: 0;\n  padding:",
+    );
+    expect(styles).toContain(".mnx-module-card-art::after");
+    expect(styles).toContain("circle at -16% -16%");
+    expect(styles).toContain("circle at 116% 116%");
+    expect(styles).toContain("border-radius: var(--mn-radius-feature)");
+    expect(styles).toContain("box-shadow: var(--mn-shadow-panel)");
     expect(styles).not.toContain(".mnx-module-card:nth-child(5n + 1)");
     expect(styles).not.toContain("module-backgrounds");
     expect(styles).toContain(".mnx-module-graphic");
     expect(styles).toContain(".mnx-module-graphic-accent");
-    expect(styles).toContain(".mnx-module-card[data-visual=\"attendance\"] .mnx-module-graphic");
+    expect(styles).toContain(
+      '.mnx-module-card[data-visual="attendance"] .mnx-module-graphic',
+    );
     expect(styles).toContain("@keyframes mnx-module-graphic-float");
     expect(styles).toContain("@keyframes mnx-module-clock-hand");
     expect(styles).toContain("@media (prefers-reduced-motion: reduce)");
     expect(styles).toContain(".mnx-module-card:hover");
     expect(styles).toContain("box-shadow: var(--mnx-theme-shadow)");
-    expect(styles).toContain("transform var(--mn-motion-panel) var(--mnx-hover-ease)");
+    expect(styles).toContain(
+      "transform var(--mn-motion-panel) var(--mnx-hover-ease)",
+    );
     expect(styles).toContain(".mnx-module-card:focus-visible");
     expect(moduleCards).toContain("MODULE_LAYOUT_SEQUENCE");
     expect(moduleCards).toContain("function ModuleGraphic");
@@ -72,7 +85,9 @@ describe("module-aware main dashboard", () => {
   });
 
   it("renders the protected dashboard through shared foundation primitives", () => {
-    const portalSource = readSource("src/app/(dashboard)/dashboard/portal-client.tsx");
+    const portalSource = readSource(
+      "src/app/(dashboard)/dashboard/portal-client.tsx",
+    );
     const attendanceSource = readSource(
       "src/app/(dashboard)/dashboard/_components/attendance-command.tsx",
     );
@@ -95,51 +110,69 @@ describe("module-aware main dashboard", () => {
     expect(overviewSource).toContain('].join("-")');
     expect(overviewSource).not.toContain("key: date.toISOString()");
     expect(teamSource).toContain("<WorkspaceSectionHeading");
-    expect(teamSource).toContain('className="mnx-dashboard-metrics mnx-team-metrics"');
+    expect(teamSource).toContain(
+      'className="mnx-dashboard-metrics mnx-team-metrics"',
+    );
     expect(teamSource).not.toContain("mnx-summary-stat");
     expect(teamSource).toContain("<MonolithIconAction");
     expect(organizationSource).toContain("<WorkspaceSectionHeading");
-    expect(organizationSource).toContain('className="mnx-dashboard-metrics mnx-org-metrics"');
+    expect(organizationSource).toContain(
+      'className="mnx-dashboard-metrics mnx-org-metrics"',
+    );
     expect(organizationSource).not.toContain("mnx-org-stat-grid");
-    expect(styles).toContain("grid-template-columns: repeat(8, minmax(0, 1fr))");
+    expect(styles).toContain(
+      "grid-template-columns: repeat(8, minmax(0, 1fr))",
+    );
   });
 
   it("maps dashboard aliases to centralized semantic theme tokens", () => {
-    const tokens = readSource("src/styles/monolith-tokens.css").replace(/\r\n/g, "\n");
-    const styles = readSource("src/styles/monolith-system.css").replace(/\r\n/g, "\n");
+    const tokens = readSource("src/styles/monolith-tokens.css").replace(
+      /\r\n/g,
+      "\n",
+    );
+    const styles = readSource("src/styles/monolith-system.css").replace(
+      /\r\n/g,
+      "\n",
+    );
 
     expect(tokens).toContain("html.theme-light");
     expect(tokens).toContain("html.theme-night");
     expect(tokens).toContain("html.theme-violet");
-    expect(tokens).toContain("html.theme-purple");
+    expect(tokens).not.toContain("html.theme-purple");
     expect(tokens).toContain("--mn-font-sans");
     expect(tokens).toContain("--mn-color-canvas");
-    expect(tokens).toContain("html.theme-violet {\n  color-scheme: dark;\n  --mn-color-canvas: #000000;");
-    expect(tokens).toContain("html.theme-violet {\n  color-scheme: dark;\n  --mn-color-canvas: #000000;\n  --mn-color-surface: #090909;");
+    expect(tokens).toContain(
+      "html.theme-violet {\n  color-scheme: dark;\n  --mn-color-canvas: #000000;",
+    );
+    expect(tokens).toContain(
+      "html.theme-violet {\n  color-scheme: dark;\n  --mn-color-canvas: #000000;\n  --mn-color-surface: #090909;",
+    );
     expect(tokens).toContain("--mn-color-accent: #b5aaf5;");
-    expect(tokens).toContain("html.theme-purple {\n  color-scheme: light;");
-    expect(tokens).toContain("--mn-color-accent: #8b5cf6;");
     expect(styles).toContain("--mnx-page: var(--mn-color-canvas)");
-    expect(styles).toContain("--mnx-accent-gradient: var(--mn-gradient-accent)");
+    expect(styles).toContain(
+      "--mnx-accent-gradient: var(--mn-gradient-accent)",
+    );
   });
 
   it("defaults theme controls to Night and preserves the user-selected theme", () => {
     const layoutSource = readSource("src/app/layout.tsx");
     const appShellSource = readSource("src/components/monolith/app-shell.tsx");
-    const sidebarSource = readSource("src/components/sidebar.tsx");
-    const portalSource = readSource("src/app/customer-portal/_components/client-actions.tsx");
+    const portalSource = readSource(
+      "src/app/customer-portal/_components/client-actions.tsx",
+    );
 
     expect(layoutSource).toContain(": 'night'");
-    expect(layoutSource).toContain("savedTheme === 'purple'");
+    expect(layoutSource).not.toContain("savedTheme === 'purple'");
     expect(appShellSource).toContain('{ id: "night", label: "Night"');
     expect(appShellSource).toContain('{ id: "violet", label: "Violet"');
     expect(appShellSource).toContain('{ id: "light", label: "Light"');
-    expect(appShellSource).toContain('{ id: "purple", label: "Purple"');
-    expect(appShellSource).toContain('window.localStorage.setItem("theme", theme)');
-    expect(sidebarSource).toContain('theme === "night"');
-    expect(sidebarSource).toContain('? "violet"');
-    expect(sidebarSource).toContain('? "light"');
-    expect(sidebarSource).toContain('? "purple"');
-    expect(portalSource).toContain('theme === "light" ? "purple" : "night"');
+    expect(appShellSource).not.toContain('{ id: "purple"');
+    expect(appShellSource).toContain(
+      'window.localStorage.setItem("theme", theme)',
+    );
+    expect(portalSource).toContain("<MonolithThemeProvider>");
+    expect(portalSource).toContain(
+      'allowedThemes={["light", "night", "violet"]}',
+    );
   });
 });

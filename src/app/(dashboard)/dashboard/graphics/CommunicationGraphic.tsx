@@ -1,22 +1,33 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React from "react";
+import { motion } from "framer-motion";
 
-export const CommunicationGraphic: React.FC<{ isHovered?: boolean }> = ({ isHovered = false }) => {
+export const CommunicationGraphic: React.FC<{ isHovered?: boolean }> = ({
+  isHovered = false,
+}) => {
   return (
     <div className="mnx-dashboard-graphic relative w-full h-48 sm:h-56 flex items-center justify-center overflow-hidden p-4">
       <div className="mnx-dg-ambient absolute inset-0 pointer-events-none" />
 
       <div className="relative z-10 w-48 h-40 flex items-center justify-center">
-        <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 192 160">
-          <path className="mnx-dg-svg-line" d="M 50 80 Q 96 40 142 80 M 50 80 Q 96 120 142 80" fill="none" strokeWidth="2" />
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none z-0"
+          viewBox="0 0 192 160"
+        >
+          <path
+            className="mnx-dg-svg-line"
+            d="M 50 80 Q 96 40 142 80 M 50 80 Q 96 120 142 80"
+            fill="none"
+            strokeWidth="2"
+          />
           <motion.path
             d="M 50 80 Q 96 40 142 80"
             fill="none"
             stroke="var(--mnx-graphic-accent)"
             strokeWidth="3"
             strokeDasharray="10 20"
+            initial={{ strokeDashoffset: 0 }}
             animate={{ strokeDashoffset: [0, -30] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           />
         </svg>
 
@@ -26,7 +37,13 @@ export const CommunicationGraphic: React.FC<{ isHovered?: boolean }> = ({ isHove
           transition={{ duration: 2.5, repeat: Infinity }}
         >
           <div className="mnx-dg-icon w-8 h-8 rounded-xl border flex items-center justify-center">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg
+              className="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
           </div>

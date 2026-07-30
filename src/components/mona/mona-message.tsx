@@ -10,7 +10,7 @@ import { useState, useCallback } from "react";
 /**
  * Renders a single chat message bubble — user or Mona.
  * Uses design-system tokens: bg-mono-card, bg-mono-soft,
- * text-mono-text, border-mono-border, accent #F9D972.
+ * text-mono-text, border-mono-border, and the semantic accent token.
  */
 export function MonaMessage({ message }: { message: MonaChatMessage }) {
   const isUser = message.role === "user";
@@ -37,7 +37,11 @@ export function MonaMessage({ message }: { message: MonaChatMessage }) {
               <motion.div
                 key={i}
                 className="rounded-full"
-                style={{ width: 6, height: 6, background: "#F9D972" }}
+                style={{
+                  width: 6,
+                  height: 6,
+                  background: "var(--mnx-accent)",
+                }}
                 animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
                 transition={{
                   duration: 0.8,
@@ -73,14 +77,14 @@ export function MonaMessage({ message }: { message: MonaChatMessage }) {
           } ${
             isUser
               ? /* User bubble — accent cyan */
-                "text-white"
+                "text-[var(--mn-color-on-accent)]"
               : /* Mona bubble — surface token */
                 "bg-mono-soft text-mono-text border border-mono-border"
           }`}
           style={
             isUser
               ? {
-                  background: "linear-gradient(135deg, #F9D972, #E8C85D)",
+                  background: "var(--mn-gradient-accent)",
                 }
               : undefined
           }
@@ -102,7 +106,7 @@ export function MonaMessage({ message }: { message: MonaChatMessage }) {
               title="Copy message"
             >
               {copied ? (
-                <Check size={12} className="text-[#F9D972]" />
+                <Check size={12} className="mnx-text-accent" />
               ) : (
                 <Copy size={12} />
               )}
@@ -150,12 +154,12 @@ function renderMonaMarkdown(text: string): string {
     // Links — markdown style
     .replace(
       /\[(.+?)\]\((.+?)\)/g,
-      '<a href="$2" class="mona-link" target="_blank" rel="noopener">$1</a>'
+      '<a href="$2" class="mona-link" target="_blank" rel="noopener">$1</a>',
     )
     // Internal navigation links — /path/to/page
     .replace(
       /\*\*\/([\w\-\/]+)\*\*/g,
-      '<a href="/$1" class="mona-link mona-nav-link">/$1</a>'
+      '<a href="/$1" class="mona-link mona-nav-link">/$1</a>',
     )
     // Unordered list items
     .replace(/^[\-\*]\s+(.+)/gm, '<li class="mona-li">$1</li>')
@@ -167,7 +171,7 @@ function renderMonaMarkdown(text: string): string {
   // Wrap consecutive <li> in <ul>
   html = html.replace(
     /(<li class="mona-li[^"]*">.*?<\/li>(?:<br\/>)?)+/g,
-    (match) => `<ul class="mona-ul">${match.replace(/<br\/>/g, "")}</ul>`
+    (match) => `<ul class="mona-ul">${match.replace(/<br\/>/g, "")}</ul>`,
   );
 
   return html;

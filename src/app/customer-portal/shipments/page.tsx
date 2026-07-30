@@ -12,7 +12,19 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/monolith/badge";
 import { Button } from "@/components/monolith/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/monolith/card";
+import {
+  CustomerPortalMetrics,
+  CustomerPortalPage,
+  CustomerPortalPageHeader,
+  CustomerPortalSectionHeading,
+} from "@/components/monolith/customer-portal-workspace";
+import { WorkspaceMetric } from "@/components/monolith/workspace";
 import {
   DataTable,
   DataTableBody,
@@ -21,8 +33,12 @@ import {
   DataTableHead,
   DataTableHeader,
   DataTableToolbar,
-} from "@/components/data-table";
-import { getChaJobStatusBadgeVariant, getChaPriorityBadgeVariant, getChaStageBadgeVariant } from "@/lib/cha-badges";
+} from "@/components/monolith/workspace-data-table";
+import {
+  getChaJobStatusBadgeVariant,
+  getChaPriorityBadgeVariant,
+  getChaStageBadgeVariant,
+} from "@/lib/cha-badges";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import {
   getCustomerPortalShipmentsData,
@@ -39,30 +55,29 @@ export default async function CustomerPortalShipmentsPage({
   const data = await getCustomerPortalShipmentsData(session, filters);
 
   return (
-    <div className="space-y-6">
-      <section className="monolith-card monolith-accent rounded-xl border border-mono-border/50 bg-mono-card px-5 py-5 shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-2">
-            <p className="monolith-label">CHA Customer Shipments</p>
-            <h2 className="monolith-h1 text-mono-text">Shipment Catalogue</h2>
-            <p className="max-w-3xl text-sm text-mono-muted">
-              Browse the CHA jobs linked to {session.portalUser.customer.name}, narrow them by status and stage, and
-              open each shipment&apos;s workspace for read-only documents, checklist decisions, queries, recent updates,
-              and optional extra customer uploads.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Link href="/customer-portal/dashboard">
-              <Button variant="outline" size="sm" className="gap-1.5">
-                Dashboard
-                <ExternalLink className="size-3.5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+    <CustomerPortalPage>
+      <CustomerPortalPageHeader
+        eyebrow="CHA customer shipments"
+        title="Shipment Catalogue"
+        description={
+          <>
+            Browse CHA jobs linked to {session.portalUser.customer.name}, narrow
+            them by status and stage, and open each shipment&apos;s read-only
+            customer workspace.
+          </>
+        }
+        icon={<FolderKanban size={22} />}
+        actions={
+          <Link href="/customer-portal/dashboard">
+            <Button variant="outline" size="sm" className="gap-1.5">
+              Dashboard
+              <ExternalLink className="size-3.5" />
+            </Button>
+          </Link>
+        }
+      />
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <CustomerPortalMetrics>
         <StatCard
           title="Total Shipments"
           value={data.summary.totalShipments}
@@ -88,24 +103,31 @@ export default async function CustomerPortalShipmentsPage({
           helper="Filed or completed shipments from the last 30 days"
           icon={<PackageCheck size={16} />}
         />
-      </section>
+      </CustomerPortalMetrics>
 
-      <Card className="monolith-card monolith-accent rounded-xl border border-mono-border/45">
+      <CustomerPortalSectionHeading
+        index="01"
+        title="Shipment logbook"
+        description="Search and review customer-scoped CHA shipments without introducing a second page wrapper or nested scroll surface."
+      />
+      <Card className="mnx-portal-panel rounded-xl border border-mono-border/45">
         <CardHeader className="pb-4">
           <div className="flex items-center gap-3">
-            <span className="monolith-icon-badge">
+            <span className="mnx-portal-leading-icon">
               <Filter size={16} />
             </span>
             <div>
               <CardTitle>Search And Filters</CardTitle>
-              <p className="text-xs text-mono-muted">Server-side filters scoped only to this customer account.</p>
+              <p className="text-xs text-mono-muted">
+                Server-side filters scoped only to this customer account.
+              </p>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <form className="grid grid-cols-1 gap-4 lg:grid-cols-12" method="get">
             <div className="lg:col-span-4">
-              <label className="monolith-label block">Search</label>
+              <label className="mnx-portal-eyebrow block">Search</label>
               <div className="relative mt-2">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-mono-muted" />
                 <input
@@ -127,13 +149,19 @@ export default async function CustomerPortalShipmentsPage({
               name="status"
               label="Status"
               value={data.filters.status ?? ""}
-              options={data.filterOptions.statuses.map((value) => ({ value, label: value.replaceAll("_", " ") }))}
+              options={data.filterOptions.statuses.map((value) => ({
+                value,
+                label: value.replaceAll("_", " "),
+              }))}
             />
             <FilterSelect
               name="priority"
               label="Priority"
               value={data.filters.priority ?? ""}
-              options={data.filterOptions.priorities.map((value) => ({ value, label: value.replaceAll("_", " ") }))}
+              options={data.filterOptions.priorities.map((value) => ({
+                value,
+                label: value.replaceAll("_", " "),
+              }))}
             />
             <FilterSelect
               name="attention"
@@ -170,10 +198,16 @@ export default async function CustomerPortalShipmentsPage({
                 Apply Filters
               </Button>
               <Link href="/customer-portal/shipments">
-                <Button variant="outline" size="sm">Reset</Button>
+                <Button variant="outline" size="sm">
+                  Reset
+                </Button>
               </Link>
               <p className="ml-auto text-xs text-mono-muted">
-                Showing <span className="monolith-numeric text-mono-text">{data.totalResults}</span> shipment{data.totalResults === 1 ? "" : "s"}
+                Showing{" "}
+                <span className="mnx-portal-number text-mono-text">
+                  {data.totalResults}
+                </span>{" "}
+                shipment{data.totalResults === 1 ? "" : "s"}
               </p>
             </div>
           </form>
@@ -183,12 +217,15 @@ export default async function CustomerPortalShipmentsPage({
       <DataTable className="border border-mono-border/45">
         <DataTableToolbar className="bg-mono-card">
           <div className="flex items-center gap-3">
-            <span className="monolith-icon-badge">
+            <span className="mnx-portal-leading-icon">
               <FolderKanban size={16} />
             </span>
             <div>
-              <h2 className="monolith-h2 text-mono-text">Shipments</h2>
-              <p className="text-xs text-mono-muted">Read-only view of customer-scoped CHA jobs and follow-up indicators.</p>
+              <h2 className="mnx-portal-title-2 text-mono-text">Shipments</h2>
+              <p className="text-xs text-mono-muted">
+                Read-only view of customer-scoped CHA jobs and follow-up
+                indicators.
+              </p>
             </div>
           </div>
         </DataTableToolbar>
@@ -212,28 +249,49 @@ export default async function CustomerPortalShipmentsPage({
               {data.shipments.length === 0 ? (
                 <DataTableEmpty
                   colSpan={8}
-                  message={data.summary.totalShipments === 0
-                    ? "No CHA shipments are linked to this customer account yet."
-                    : "No shipments match the current filters."}
+                  message={
+                    data.summary.totalShipments === 0
+                      ? "No CHA shipments are linked to this customer account yet."
+                      : "No shipments match the current filters."
+                  }
                 />
               ) : (
                 data.shipments.map((shipment) => (
                   <tr key={shipment.id}>
                     <DataTableCell className="font-medium">
-                      <Link href={shipment.href} className="text-[#F9D972] transition-colors hover:text-[#E8C85D]">
+                      <Link
+                        href={shipment.href}
+                        className="mnx-portal-accent-text transition-colors "
+                      >
                         {shipment.jobNumber}
                       </Link>
-                      <div className="mt-1 text-xs text-mono-muted">{shipment.title}</div>
+                      <div className="mt-1 text-xs text-mono-muted">
+                        {shipment.title}
+                      </div>
                     </DataTableCell>
-                    <DataTableCell className="text-mono-muted">{shipment.customerRef || "—"}</DataTableCell>
-                    <DataTableCell>
-                      <Badge variant={getChaStageBadgeVariant(shipment.stageKey)}>{shipment.stageLabel}</Badge>
-                    </DataTableCell>
-                    <DataTableCell>
-                      <Badge variant={getChaJobStatusBadgeVariant(shipment.status)}>{shipment.status.replaceAll("_", " ")}</Badge>
+                    <DataTableCell className="text-mono-muted">
+                      {shipment.customerRef || "—"}
                     </DataTableCell>
                     <DataTableCell>
-                      <Badge variant={getChaPriorityBadgeVariant(shipment.priority)}>{shipment.priority.replaceAll("_", " ")}</Badge>
+                      <Badge
+                        variant={getChaStageBadgeVariant(shipment.stageKey)}
+                      >
+                        {shipment.stageLabel}
+                      </Badge>
+                    </DataTableCell>
+                    <DataTableCell>
+                      <Badge
+                        variant={getChaJobStatusBadgeVariant(shipment.status)}
+                      >
+                        {shipment.status.replaceAll("_", " ")}
+                      </Badge>
+                    </DataTableCell>
+                    <DataTableCell>
+                      <Badge
+                        variant={getChaPriorityBadgeVariant(shipment.priority)}
+                      >
+                        {shipment.priority.replaceAll("_", " ")}
+                      </Badge>
                     </DataTableCell>
                     <DataTableCell>
                       {shipment.hasCustomerAction ? (
@@ -250,11 +308,16 @@ export default async function CustomerPortalShipmentsPage({
                     <DataTableCell className="text-mono-muted">
                       <div>{formatDateTime(shipment.updatedAt)}</div>
                       {shipment.recentUpdateAt ? (
-                        <div className="mt-1 text-xs">Visible update {formatDateTime(shipment.recentUpdateAt)}</div>
+                        <div className="mt-1 text-xs">
+                          Visible update{" "}
+                          {formatDateTime(shipment.recentUpdateAt)}
+                        </div>
                       ) : null}
                     </DataTableCell>
                     <DataTableCell className="text-mono-muted">
-                      {shipment.estimatedClosureDate ? formatDate(shipment.estimatedClosureDate) : "—"}
+                      {shipment.estimatedClosureDate
+                        ? formatDate(shipment.estimatedClosureDate)
+                        : "—"}
                     </DataTableCell>
                   </tr>
                 ))
@@ -263,7 +326,7 @@ export default async function CustomerPortalShipmentsPage({
           </>
         )}
       </DataTable>
-    </div>
+    </CustomerPortalPage>
   );
 }
 
@@ -280,7 +343,7 @@ function FilterSelect({
 }) {
   return (
     <div className="lg:col-span-2">
-      <label className="monolith-label block">{label}</label>
+      <label className="mnx-portal-eyebrow block">{label}</label>
       <NativeSelect name={name} defaultValue={value} className="mt-2 w-full">
         <option value="">All</option>
         {options.map((option) => (
@@ -306,33 +369,26 @@ function StatCard({
   icon: ReactNode;
   tone?: "primary" | "warning";
 }) {
-  const iconStyle = tone === "warning"
-    ? { background: "rgba(251,146,60,0.10)", color: "#D88700" }
-    : undefined;
-
   return (
-    <Card
-      className={`rounded-xl border-mono-border/40 bg-mono-card p-5 ${
-        tone === "warning" ? "monolith-card monolith-accent-warning" : "monolith-card monolith-accent"
-      }`}
-    >
-      <div className="flex items-center justify-between gap-4">
-        <div className="space-y-2">
-          <p className="monolith-label">{title}</p>
-          <p className={`text-3xl monolith-numeric ${tone === "warning" && value > 0 ? "text-[#D88700]" : "text-mono-text"}`}>
-            {value}
-          </p>
-        </div>
-        <span className="monolith-icon-badge" style={iconStyle}>
-          {icon}
-        </span>
-      </div>
-      <p className="mt-3 text-xs text-mono-muted">{helper}</p>
-    </Card>
+    <WorkspaceMetric
+      icon={icon}
+      label={title}
+      value={value}
+      detail={helper}
+      className={
+        tone === "warning" && value > 0 ? "mnx-portal-panel-warning" : undefined
+      }
+    />
   );
 }
 
-function SectionErrorRow({ colSpan, message }: { colSpan: number; message: string }) {
+function SectionErrorRow({
+  colSpan,
+  message,
+}: {
+  colSpan: number;
+  message: string;
+}) {
   return (
     <>
       <DataTableHeader>
@@ -353,9 +409,12 @@ function buildAttentionSummary(shipment: {
   openQueryCount: number;
 }) {
   const parts: string[] = [];
-  if (shipment.pendingDocumentCount > 0) parts.push(`${shipment.pendingDocumentCount} doc`);
-  if (shipment.pendingChecklistCount > 0) parts.push(`${shipment.pendingChecklistCount} checklist`);
-  if (shipment.openQueryCount > 0) parts.push(`${shipment.openQueryCount} query`);
+  if (shipment.pendingDocumentCount > 0)
+    parts.push(`${shipment.pendingDocumentCount} doc`);
+  if (shipment.pendingChecklistCount > 0)
+    parts.push(`${shipment.pendingChecklistCount} checklist`);
+  if (shipment.openQueryCount > 0)
+    parts.push(`${shipment.openQueryCount} query`);
   return parts.join(" • ");
 }
 

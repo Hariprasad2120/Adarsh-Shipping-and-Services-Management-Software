@@ -78,7 +78,7 @@ function TabLink({
       href={`/hrms/ownership?tab=${tab}`}
       className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
         active
-          ? "bg-[var(--mnx-accent)] text-[var(--mnx-text)] shadow-sm shadow-[var(--mnx-accent)]/25"
+          ? "bg-[var(--mnx-accent)] text-[var(--mnx-text)] mnx-shadow-panel"
           : "bg-mono-soft text-mono-muted hover:bg-mono-soft hover:text-mono-text"
       }`}
     >

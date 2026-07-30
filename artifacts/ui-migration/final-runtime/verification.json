@@ -1,0 +1,505 @@
+{
+  "checks": 60,
+  "completedAt": "2026-07-30T10:14:46.636Z",
+  "modules": [
+    "Dashboard",
+    "Account",
+    "Accounting",
+    "Admin",
+    "AMS",
+    "Attendance",
+    "CHA",
+    "Communication",
+    "CRM",
+    "Expense",
+    "HRMS",
+    "LMS",
+    "Notifications",
+    "Product catalogue",
+    "Todo",
+    "Customer portal",
+    "Public and authentication"
+  ],
+  "results": [
+    {
+      "durationMs": 1187,
+      "kind": "authenticated",
+      "module": "Dashboard",
+      "route": "/dashboard",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 403,
+      "kind": "authenticated",
+      "module": "Account",
+      "route": "/account/security",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 417,
+      "kind": "authenticated",
+      "module": "Accounting",
+      "route": "/accounting/accounts",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 1138,
+      "kind": "authenticated",
+      "module": "Admin",
+      "route": "/admin/design-system",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 508,
+      "kind": "authenticated",
+      "module": "AMS",
+      "route": "/ams",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 452,
+      "kind": "authenticated",
+      "module": "Attendance",
+      "route": "/attendance",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 621,
+      "kind": "authenticated",
+      "module": "CHA",
+      "route": "/cha/jobs",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 349,
+      "kind": "authenticated",
+      "module": "Communication",
+      "route": "/communication",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 317,
+      "kind": "authenticated",
+      "module": "CRM",
+      "route": "/crm/leads",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 484,
+      "kind": "authenticated",
+      "module": "Expense",
+      "route": "/expense",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 437,
+      "kind": "authenticated",
+      "module": "HRMS",
+      "route": "/hrms/employees",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 543,
+      "kind": "authenticated",
+      "module": "LMS",
+      "route": "/lms",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 434,
+      "kind": "authenticated",
+      "module": "Notifications",
+      "route": "/notifications",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 593,
+      "kind": "authenticated",
+      "module": "Product catalogue",
+      "route": "/product-catalogue",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 290,
+      "kind": "authenticated",
+      "module": "Todo",
+      "route": "/todo",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 446,
+      "kind": "authenticated",
+      "module": "Dashboard",
+      "route": "/dashboard",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 241,
+      "kind": "authenticated",
+      "module": "Account",
+      "route": "/account/security",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 258,
+      "kind": "authenticated",
+      "module": "Accounting",
+      "route": "/accounting/accounts",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 461,
+      "kind": "authenticated",
+      "module": "Admin",
+      "route": "/admin/design-system",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 257,
+      "kind": "authenticated",
+      "module": "AMS",
+      "route": "/ams",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 307,
+      "kind": "authenticated",
+      "module": "Attendance",
+      "route": "/attendance",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 295,
+      "kind": "authenticated",
+      "module": "CHA",
+      "route": "/cha/jobs",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 276,
+      "kind": "authenticated",
+      "module": "Communication",
+      "route": "/communication",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 242,
+      "kind": "authenticated",
+      "module": "CRM",
+      "route": "/crm/leads",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 399,
+      "kind": "authenticated",
+      "module": "Expense",
+      "route": "/expense",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 241,
+      "kind": "authenticated",
+      "module": "HRMS",
+      "route": "/hrms/employees",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 318,
+      "kind": "authenticated",
+      "module": "LMS",
+      "route": "/lms",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 290,
+      "kind": "authenticated",
+      "module": "Notifications",
+      "route": "/notifications",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 354,
+      "kind": "authenticated",
+      "module": "Product catalogue",
+      "route": "/product-catalogue",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 201,
+      "kind": "authenticated",
+      "module": "Todo",
+      "route": "/todo",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 578,
+      "kind": "authenticated",
+      "module": "Dashboard",
+      "route": "/dashboard",
+      "theme": "light",
+      "viewport": "desktop-theme-smoke"
+    },
+    {
+      "durationMs": 524,
+      "kind": "authenticated",
+      "module": "Dashboard",
+      "route": "/admin/design-system",
+      "theme": "light",
+      "viewport": "desktop-theme-smoke"
+    },
+    {
+      "durationMs": 251,
+      "kind": "authenticated",
+      "module": "Dashboard",
+      "route": "/dashboard",
+      "theme": "night",
+      "viewport": "desktop-theme-smoke"
+    },
+    {
+      "durationMs": 454,
+      "kind": "authenticated",
+      "module": "Dashboard",
+      "route": "/admin/design-system",
+      "theme": "night",
+      "viewport": "desktop-theme-smoke"
+    },
+    {
+      "durationMs": 602,
+      "kind": "portal",
+      "module": "Customer portal",
+      "route": "/customer-portal/dashboard",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 251,
+      "kind": "portal",
+      "module": "Customer portal",
+      "route": "/customer-portal/shipments",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 191,
+      "kind": "portal",
+      "module": "Customer portal",
+      "route": "/customer-portal/approvals",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 261,
+      "kind": "portal",
+      "module": "Customer portal",
+      "route": "/customer-portal/kyc",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 170,
+      "kind": "portal",
+      "module": "Customer portal",
+      "route": "/customer-portal/notifications",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 236,
+      "kind": "portal",
+      "module": "Customer portal",
+      "route": "/customer-portal/dashboard",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 169,
+      "kind": "portal",
+      "module": "Customer portal",
+      "route": "/customer-portal/shipments",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 110,
+      "kind": "portal",
+      "module": "Customer portal",
+      "route": "/customer-portal/approvals",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 146,
+      "kind": "portal",
+      "module": "Customer portal",
+      "route": "/customer-portal/kyc",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 116,
+      "kind": "portal",
+      "module": "Customer portal",
+      "route": "/customer-portal/notifications",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 251,
+      "kind": "portal",
+      "module": "Customer portal",
+      "route": "/customer-portal/dashboard",
+      "theme": "light",
+      "viewport": "desktop-theme-smoke"
+    },
+    {
+      "durationMs": 200,
+      "kind": "portal",
+      "module": "Customer portal",
+      "route": "/customer-portal/dashboard",
+      "theme": "night",
+      "viewport": "desktop-theme-smoke"
+    },
+    {
+      "durationMs": 544,
+      "kind": "public",
+      "module": "Public and authentication",
+      "route": "/login",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 162,
+      "kind": "public",
+      "module": "Public and authentication",
+      "route": "/setup",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 138,
+      "kind": "public",
+      "module": "Public and authentication",
+      "route": "/invite/employee",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 102,
+      "kind": "public",
+      "module": "Public and authentication",
+      "route": "/invite/employee/ready",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 123,
+      "kind": "public",
+      "module": "Public and authentication",
+      "route": "/verify/final-ui-audit-invalid",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 122,
+      "kind": "public",
+      "module": "Public and authentication",
+      "route": "/google-chat-link",
+      "theme": "violet",
+      "viewport": "desktop"
+    },
+    {
+      "durationMs": 62,
+      "kind": "public",
+      "module": "Public and authentication",
+      "route": "/login",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 70,
+      "kind": "public",
+      "module": "Public and authentication",
+      "route": "/setup",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 80,
+      "kind": "public",
+      "module": "Public and authentication",
+      "route": "/invite/employee",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 74,
+      "kind": "public",
+      "module": "Public and authentication",
+      "route": "/invite/employee/ready",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 78,
+      "kind": "public",
+      "module": "Public and authentication",
+      "route": "/verify/final-ui-audit-invalid",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 75,
+      "kind": "public",
+      "module": "Public and authentication",
+      "route": "/google-chat-link",
+      "theme": "violet",
+      "viewport": "mobile"
+    },
+    {
+      "durationMs": 69,
+      "kind": "public",
+      "module": "Public and authentication",
+      "route": "/login",
+      "theme": "light",
+      "viewport": "desktop-theme-smoke"
+    },
+    {
+      "durationMs": 83,
+      "kind": "public",
+      "module": "Public and authentication",
+      "route": "/login",
+      "theme": "night",
+      "viewport": "desktop-theme-smoke"
+    }
+  ]
+}

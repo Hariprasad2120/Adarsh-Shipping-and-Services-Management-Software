@@ -1,10 +1,20 @@
 "use client";
 
-import { useState, useTransition, type ChangeEvent, type FormEvent } from "react";
+import {
+  useState,
+  useTransition,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import { UploadCloud } from "lucide-react";
 import { Button } from "@/components/monolith/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/monolith/card";
 import { FileUploadField } from "@/components/monolith/file-upload-field";
 import { Input } from "@/components/monolith/input";
 
@@ -20,7 +30,11 @@ const INITIAL_STATE: UploadState = {
   description: "",
 };
 
-export function CustomerShipmentUploadCard({ shipmentId }: { shipmentId: string }) {
+export function CustomerShipmentUploadCard({
+  shipmentId,
+}: {
+  shipmentId: string;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [form, setForm] = useState<UploadState>(INITIAL_STATE);
@@ -55,14 +69,22 @@ export function CustomerShipmentUploadCard({ shipmentId }: { shipmentId: string 
 
     startTransition(async () => {
       try {
-        const response = await fetch(`/api/customer-portal/shipments/${shipmentId}/documents`, {
-          method: "POST",
-          body: payload,
-        });
-        const body = (await response.json().catch(() => null)) as { error?: string; message?: string } | null;
+        const response = await fetch(
+          `/api/customer-portal/shipments/${shipmentId}/documents`,
+          {
+            method: "POST",
+            body: payload,
+          },
+        );
+        const body = (await response.json().catch(() => null)) as {
+          error?: string;
+          message?: string;
+        } | null;
 
         if (!response.ok) {
-          setError(body?.error || "The document could not be uploaded right now.");
+          setError(
+            body?.error || "The document could not be uploaded right now.",
+          );
           return;
         }
 
@@ -80,13 +102,14 @@ export function CustomerShipmentUploadCard({ shipmentId }: { shipmentId: string 
       <CardHeader>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center gap-3">
-            <span className="monolith-icon-badge">
+            <span className="mnx-portal-leading-icon">
               <UploadCloud size={16} />
             </span>
             <div>
               <CardTitle>Share Additional Document</CardTitle>
               <p className="text-xs text-mono-muted">
-                Upload any extra customer document, clarification, or supporting file for this shipment.
+                Upload any extra customer document, clarification, or supporting
+                file for this shipment.
               </p>
             </div>
           </div>
@@ -102,17 +125,27 @@ export function CustomerShipmentUploadCard({ shipmentId }: { shipmentId: string 
         </div>
       </CardHeader>
       <CardContent>
-        <form id="customer-shipment-upload-form" className="space-y-4" onSubmit={handleSubmit}>
+        <form
+          id="customer-shipment-upload-form"
+          className="space-y-4"
+          onSubmit={handleSubmit}
+        >
           <div className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="customer-upload-name" className="monolith-label">
+              <label
+                htmlFor="customer-upload-name"
+                className="mnx-portal-eyebrow"
+              >
                 Document Name
               </label>
               <Input
                 id="customer-upload-name"
                 value={form.documentName}
                 onChange={(event) => {
-                  setForm((current) => ({ ...current, documentName: event.target.value }));
+                  setForm((current) => ({
+                    ...current,
+                    documentName: event.target.value,
+                  }));
                   setError(null);
                   setSuccess(null);
                 }}
@@ -122,14 +155,20 @@ export function CustomerShipmentUploadCard({ shipmentId }: { shipmentId: string 
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="customer-upload-description" className="monolith-label">
+              <label
+                htmlFor="customer-upload-description"
+                className="mnx-portal-eyebrow"
+              >
                 Description
               </label>
               <textarea
                 id="customer-upload-description"
                 value={form.description}
                 onChange={(event) => {
-                  setForm((current) => ({ ...current, description: event.target.value }));
+                  setForm((current) => ({
+                    ...current,
+                    description: event.target.value,
+                  }));
                   setError(null);
                   setSuccess(null);
                 }}
@@ -137,7 +176,7 @@ export function CustomerShipmentUploadCard({ shipmentId }: { shipmentId: string 
                 maxLength={500}
                 rows={3}
                 disabled={isPending}
-                className="min-h-[88px] w-full rounded-xl border border-[#F9D972]/55 bg-mono-card px-4 py-3 text-[var(--text-base)] text-mono-text placeholder:text-[var(--color-placeholder)] focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/15 hover:border-[#F9D972]/85 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-[88px] w-full rounded-xl border mnx-portal-accent-border bg-mono-card px-4 py-3 text-[var(--text-base)] text-mono-text placeholder:text-[var(--color-placeholder)] focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
           </div>
@@ -148,8 +187,20 @@ export function CustomerShipmentUploadCard({ shipmentId }: { shipmentId: string 
             compact={false}
             accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,.csv,.zip"
             helperText="Supported files include PDF, images, Office documents, CSV, and ZIP up to 25 MB."
-            triggerText={form.file ? "Replace selected file" : "Drag and drop or choose a file to upload"}
-            selectedFile={form.file ? { file: form.file, name: form.file.name, sizeBytes: form.file.size } : null}
+            triggerText={
+              form.file
+                ? "Replace selected file"
+                : "Drag and drop or choose a file to upload"
+            }
+            selectedFile={
+              form.file
+                ? {
+                    file: form.file,
+                    name: form.file.name,
+                    sizeBytes: form.file.size,
+                  }
+                : null
+            }
             onInputChange={handleFileChange}
             onClear={() => {
               setForm((current) => ({ ...current, file: null }));
@@ -160,12 +211,12 @@ export function CustomerShipmentUploadCard({ shipmentId }: { shipmentId: string 
           />
 
           {error ? (
-            <div className="rounded-xl border border-[#D88700]/35 bg-[#D88700]/[0.08] px-4 py-3 text-sm text-[#D88700]">
+            <div className="rounded-xl border mnx-portal-warning-border mnx-portal-warning-surface px-4 py-3 text-sm mnx-portal-warning-text">
               {error}
             </div>
           ) : null}
           {success ? (
-            <div className="rounded-xl border border-[#F9D972]/35 bg-[#F9D972]/[0.08] px-4 py-3 text-sm text-[#F9D972]">
+            <div className="rounded-xl border mnx-portal-accent-border mnx-portal-accent-surface/[0.08] px-4 py-3 text-sm mnx-portal-accent-text">
               {success}
             </div>
           ) : null}

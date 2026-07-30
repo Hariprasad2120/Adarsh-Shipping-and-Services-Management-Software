@@ -17,18 +17,19 @@ export default async function ChaEditCustomerPage({
 
   const { id } = await params;
 
-  const [canManageChaCustomers, canManageCrmAccounts, employees, account] = await Promise.all([
-    can(session.user.id, "cha.customer.manage"),
-    can(session.user.id, "crm.account.manage"),
-    db.user.findMany({
-      where: { orgId },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-    db.crmAccount.findFirst({
-      where: { id, orgId, type: "Customer" },
-    }),
-  ]);
+  const [canManageChaCustomers, canManageCrmAccounts, employees, account] =
+    await Promise.all([
+      can(session.user.id, "cha.customer.manage"),
+      can(session.user.id, "crm.account.manage"),
+      db.user.findMany({
+        where: { orgId },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      }),
+      db.crmAccount.findFirst({
+        where: { id, orgId, type: "Customer" },
+      }),
+    ]);
 
   if (!canManageChaCustomers && !canManageCrmAccounts) {
     redirect("/cha/customers");
@@ -38,8 +39,9 @@ export default async function ChaEditCustomerPage({
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <EditCustomerClient initialData={JSON.parse(JSON.stringify(account))} employees={employees} />
-    </div>
+    <EditCustomerClient
+      initialData={JSON.parse(JSON.stringify(account))}
+      employees={employees}
+    />
   );
 }

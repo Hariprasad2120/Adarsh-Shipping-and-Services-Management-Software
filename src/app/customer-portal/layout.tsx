@@ -22,8 +22,13 @@ export default async function CustomerPortalLayout({
   const session = await requirePortalSession();
 
   // Query live counts for dashboard & sidebar badges
-  const [activeShipmentsCount, unreadPortalNotificationsCount, pendingApprovals, latestJobWithCoordinator, customerAccount] =
-    await Promise.all([
+  const [
+    activeShipmentsCount,
+    unreadPortalNotificationsCount,
+    pendingApprovals,
+    latestJobWithCoordinator,
+    customerAccount,
+  ] = await Promise.all([
     db.chaJob.count({
       where: {
         orgId: session.orgId,
@@ -82,7 +87,8 @@ export default async function CustomerPortalLayout({
     }),
   ]);
   const pendingApprovalsCount = pendingApprovals.length;
-  const unreadNotificationsCount = unreadPortalNotificationsCount + pendingApprovalsCount;
+  const unreadNotificationsCount =
+    unreadPortalNotificationsCount + pendingApprovalsCount;
 
   // Determine assigned support contact (coordinator)
   let coordinator: {
@@ -145,7 +151,8 @@ export default async function CustomerPortalLayout({
   const portalUserContext = {
     name: session.portalUser.name,
     email: session.portalUser.email,
-    designation: session.portalUser.contact?.designation || "Authorized Contact",
+    designation:
+      session.portalUser.contact?.designation || "Authorized Contact",
     customer: {
       id: session.customerId,
       name: session.portalUser.customer.name,

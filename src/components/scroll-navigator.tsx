@@ -39,7 +39,8 @@ export function ScrollNavigator() {
       const viewportHeight = window.innerHeight;
       const scrollTop = window.scrollY || root.scrollTop || 0;
       const maxScrollTop = Math.max(0, scrollHeight - viewportHeight);
-      const nextScrollable = scrollHeight > viewportHeight * SCROLLABLE_RATIO_THRESHOLD;
+      const nextScrollable =
+        scrollHeight > viewportHeight * SCROLLABLE_RATIO_THRESHOLD;
 
       setIsScrollable(nextScrollable);
 
@@ -48,7 +49,10 @@ export function ScrollNavigator() {
         return;
       }
 
-      const topThreshold = Math.max(viewportHeight, scrollHeight * TOP_THRESHOLD_RATIO);
+      const topThreshold = Math.max(
+        viewportHeight,
+        scrollHeight * TOP_THRESHOLD_RATIO,
+      );
       const distanceFromBottom = maxScrollTop - scrollTop;
 
       if (scrollTop <= topThreshold) {
@@ -98,7 +102,8 @@ export function ScrollNavigator() {
   function scrollToBottom() {
     const root = document.documentElement;
     const body = document.body;
-    const maxTop = Math.max(root.scrollHeight, body.scrollHeight) - window.innerHeight;
+    const maxTop =
+      Math.max(root.scrollHeight, body.scrollHeight) - window.innerHeight;
     window.scrollTo({ top: Math.max(0, maxTop), behavior: motion });
   }
 
@@ -108,15 +113,16 @@ export function ScrollNavigator() {
     <div className="fixed bottom-0 right-3 z-[60] sm:right-6">
       <div
         className={cn(
-          "overflow-hidden rounded-t-[20px] rounded-b-none backdrop-blur-xl",
-          "bg-[radial-gradient(circle_at_center_bottom,rgba(34,211,238,0.34),rgba(34,211,238,0.16)_36%,rgba(255,255,255,0.08)_72%,rgba(255,255,255,0.04)_100%)]",
-          "shadow-[0_10px_24px_-18px_rgba(34,211,238,0.28)]",
-          "supports-[backdrop-filter]:bg-[radial-gradient(circle_at_center_bottom,rgba(34,211,238,0.32),rgba(34,211,238,0.14)_38%,rgba(255,255,255,0.1)_72%,rgba(255,255,255,0.05)_100%)]",
-          prefersReducedMotion ? "" : "transition-[box-shadow,background-color] duration-200 hover:shadow-[0_14px_30px_-20px_rgba(34,211,238,0.34)]",
+          "mnx-scroll-navigator",
+          prefersReducedMotion
+            ? ""
+            : "transition-[box-shadow,background-color] duration-200",
         )}
       >
         <div className="flex min-w-[156px] items-center gap-2 px-3 pb-[max(0.72rem,env(safe-area-inset-bottom))] pt-2.5">
-          <span className="pr-1 text-[9px] font-semibold tracking-[0.3em] text-white">SCROLL</span>
+          <span className="mnx-scroll-navigator-label pr-1 text-[9px] font-semibold tracking-[0.3em]">
+            SCROLL
+          </span>
 
           {scrollState === "middle" ? (
             <div className="flex items-center gap-1.5">
@@ -126,7 +132,7 @@ export function ScrollNavigator() {
                 onClick={scrollToTop}
                 prefersReducedMotion={prefersReducedMotion}
               />
-              <span className="text-white/26">/</span>
+              <span className="mnx-scroll-navigator-separator">/</span>
               <InlineActionButton
                 label="BOTTOM"
                 direction="down"
@@ -165,13 +171,15 @@ function InlineActionButton({
       onClick={onClick}
       aria-label={label === "TOP" ? "Scroll to top" : "Scroll to bottom"}
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-1 text-white/88",
-        "hover:bg-white/10 focus:bg-white/12 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22d3ee]/28",
+        "mnx-scroll-navigator-action inline-flex items-center gap-1 rounded-full px-2 py-1",
+        "focus:outline-none focus-visible:ring-2",
         prefersReducedMotion ? "" : "transition-colors duration-150",
       )}
     >
-      <span className="text-[8px] font-semibold tracking-[0.22em]">{label}</span>
-      <div className="flex flex-col items-center leading-none text-white/76">
+      <span className="text-[8px] font-semibold tracking-[0.22em]">
+        {label}
+      </span>
+      <div className="flex flex-col items-center leading-none">
         <ChevronMark direction={direction} />
         <ChevronMark direction={direction} className="-mt-1" />
       </div>

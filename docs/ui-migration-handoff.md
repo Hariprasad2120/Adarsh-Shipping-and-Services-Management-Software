@@ -1,38 +1,38 @@
 # Monolith UI migration handoff
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
 
 ## Current state
 
 - Branch: `main`.
-- Batch 007 source base: `db4bc60`.
-- Protected reference: `/dashboard` was not redesigned.
-- Route inventory: 211 total, 1 protected, 198 migrated, 12 pending, and 14
-  layouts.
-- The combined migration covers all 32 discovered `/accounting` routes and all
-  57 discovered `/crm` routes, including their dynamic record routes.
-- Accounting presentation, behavior contracts, archive, audit, static gate,
-  targeted lint, production TypeScript, focused tests, production build, and
-  the authenticated theme/viewport matrix all pass.
-- CRM source replacement, archive verification, route/static audit, targeted
-  lint, focused and production TypeScript, focused tests, production build,
-  diff hygiene, and authentication HTTP smoke pass.
-- CRM and the Batch 004 Expense/CHA popup and theme-tinted-glass corrections
-  remain Migrated but not visually Verified because the connected in-app
-  Browser service exposes no browser instance. This blocker does not apply to
-  Accounting's completed authenticated Playwright matrix.
-- All 10 Communication and 10 Admin routes are migrated; 19 Batch 006 route
-  surfaces pass source, behavior, archive, type, test, build, and authenticated
-  visual gates.
-- `/admin/design-system` is now a separately verified live production
-  component catalogue: 207 unique runtime component names across 13 groups, 23
-  interactive route states, and 9 Light/Night/Violet desktop/tablet/mobile
-  checks pass.
-- All 15 Recruit routes remain verified and passed the Batch 006 regression
-  matrix.
-- All five Authentication/Miscellaneous routes are verified in Light, Night,
-  and Violet at desktop, tablet, and mobile widths. The only pending routes
-  are the 12-page `/customer-portal` family.
+- Final route inventory: **213 discovered, 212 migrated, 213 verified, 0
+  remaining**, across 14 layouts.
+- Protected reference: `/dashboard` was verified without redesign and is the
+  one discovered route excluded from the migrated count.
+- All 12 customer portal routes now use the shared production portal shell,
+  workspace compositions, theme provider, tables, forms, and mobile navigation.
+- Both employee invitation routes now use the shared production public shell;
+  the invitation validation, password policy, API calls, and redirects are
+  unchanged.
+- Legacy authenticated shells, duplicate data table/button components, unused
+  landing/HRMS visual systems, obsolete theme providers/classes, Purple theme,
+  Kiona font loading, and active legacy CSS compatibility selectors were
+  removed after archival.
+- The final static verifier and every module verifier pass.
+- Production TypeScript passes. Focused final-audit ESLint passes. The
+  optimized production build passes and generated all 328 application/API
+  routes.
+- Production Playwright passes 60 checks across 17 module families, Light,
+  Night, Violet, 1440 px desktop, and 390 px mobile coverage. It checks route
+  ownership, the live Admin production catalogue, overflow, one-scroller
+  boundaries, mobile navigation, theme tokens, page exceptions, and HTTP 500s.
+- The full test suite was run after staging migration/seed verification: 281
+  tests pass and three pre-existing CHA integration expectations remain red.
+  Repository-wide lint was also run and retains the existing business-code
+  backlog; no final-audit scoped lint finding remains.
+- Browser evidence is stored in
+  `artifacts/ui-migration/final-runtime/verification.json` with representative
+  screenshots.
 
 ## Production component catalogue
 
@@ -807,7 +807,7 @@ The minimal employee creation path is implemented on `/hrms/employees`.
 Delivered:
 
 - HR users with `hrms.employee.create` now see `Add Employee` and `Full
-  Onboarding` as separate choices.
+Onboarding` as separate choices.
 - `Add Employee` opens the shared Monolith dialog and requires only Employee ID,
   first name, last name, and email.
 - `Generate` reads the organisation's last Employee ID and proposes an unused

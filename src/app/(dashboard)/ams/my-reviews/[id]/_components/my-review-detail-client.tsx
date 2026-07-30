@@ -10,7 +10,7 @@ import {
   CriteriaPointsView,
 } from "@/components/ams/criteria-points-form";
 import { useNotifications } from "@/components/notifications/notification-provider";
-import { Button } from "@/components/monolith/button-1";
+import { Button } from "@/components/monolith/button";
 import {
   Card,
   CardContent,

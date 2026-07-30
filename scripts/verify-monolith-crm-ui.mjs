@@ -14,13 +14,7 @@ const repositoryRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
 );
-const crmRoot = path.join(
-  repositoryRoot,
-  "src",
-  "app",
-  "(dashboard)",
-  "crm",
-);
+const crmRoot = path.join(repositoryRoot, "src", "app", "(dashboard)", "crm");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -89,12 +83,14 @@ for (const requiredFile of [
 const shellSwitcher = read(
   "src/app/(dashboard)/_components/dashboard-shell-switcher.tsx",
 );
-for (const signal of [
-  'normalizedPathname === "/crm"',
-  'normalizedPathname.startsWith("/crm/")',
-]) {
-  assert(shellSwitcher.includes(signal), `Shell switcher is missing ${signal}.`);
-}
+assert(
+  shellSwitcher.includes("<MonolithAppShell"),
+  "The authenticated shell must always render MonolithAppShell.",
+);
+assert(
+  !shellSwitcher.includes("usePathname"),
+  "The authenticated shell must not retain route-specific legacy switching.",
+);
 
 const workspace = read("src/components/monolith/crm-workspace.tsx");
 for (const route of routes.filter(
@@ -226,9 +222,7 @@ const behaviorSources = {
   approval: read("src/components/crm/ApprovalActionBar.tsx"),
   quote: read("src/app/(dashboard)/crm/quotes/_components/NewQuotePage.tsx"),
   tickets: read("src/app/(dashboard)/crm/tickets/actions.ts"),
-  leadSource: read(
-    "src/app/(dashboard)/crm/lead-sources/import-button.tsx",
-  ),
+  leadSource: read("src/app/(dashboard)/crm/lead-sources/import-button.tsx"),
 };
 
 for (const [sourceName, signals] of Object.entries({

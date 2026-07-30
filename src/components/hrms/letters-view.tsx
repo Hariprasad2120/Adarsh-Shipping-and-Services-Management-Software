@@ -554,7 +554,7 @@ export function LettersView() {
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-[24px] border border-mono-border bg-mono-card p-6 shadow-sm">
+      <Card className="rounded-[var(--mn-radius-panel)] border border-mono-border bg-mono-card p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <span className="mnx-icon-badge">

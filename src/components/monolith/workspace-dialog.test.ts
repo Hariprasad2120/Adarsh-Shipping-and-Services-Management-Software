@@ -10,9 +10,7 @@ function source(relativePath: string) {
 
 describe("Monolith popup contract", () => {
   it("centralizes portals, focus containment, scroll locking, and accessible naming", () => {
-    const dialogSource = source(
-      "src/components/monolith/workspace-dialog.tsx",
-    );
+    const dialogSource = source("src/components/monolith/workspace-dialog.tsx");
     const chaSource = source("src/components/monolith/cha-workspace.tsx");
 
     expect(dialogSource).toContain("export function WorkspaceDialogLayer");
@@ -39,7 +37,9 @@ describe("Monolith popup contract", () => {
     expect(styles).toContain("height: min(52rem, 88dvh)");
     expect(styles).toContain("overscroll-behavior: contain");
     expect(styles).toContain("env(safe-area-inset-top)");
-    expect(styles).toContain("border-radius: 24px 24px 0 0");
+    expect(styles).toContain(
+      "border-radius: var(--mn-radius-feature) var(--mn-radius-feature) 0 0",
+    );
     expect(styles).not.toContain(".mnx-cha-dialog-layer");
     expect(styles).not.toContain(".mnx-cha-dialog-workspace");
   });
@@ -47,58 +47,46 @@ describe("Monolith popup contract", () => {
   it("provides readable theme-tinted glass to every floating Monolith surface", () => {
     const tokens = source("src/styles/monolith-tokens.css");
     const styles = source("src/styles/monolith-system.css");
-    const dialogSource = source(
-      "src/components/monolith/workspace-dialog.tsx",
-    );
+    const dialogSource = source("src/components/monolith/workspace-dialog.tsx");
     const menuSource = source("src/components/monolith/dropdown-menu.tsx");
     const warningSource = source(
       "src/components/monolith/warning-indicator-popover.tsx",
     );
     const monaSource = source("src/components/mona/mona-chat.tsx");
 
-    expect(tokens.match(/--mn-color-glass-surface:/g)).toHaveLength(4);
-    expect(tokens.match(/--mn-color-glass-surface-strong:/g)).toHaveLength(4);
-    expect(tokens.match(/--mn-color-glass-border:/g)).toHaveLength(4);
-    expect(tokens.match(/--mn-color-overlay:/g)).toHaveLength(4);
-    expect(tokens.match(/--mn-shadow-floating:/g)).toHaveLength(4);
-    expect(tokens.match(/--mn-gradient-glass:/g)).toHaveLength(4);
+    expect(tokens.match(/--mn-color-glass-surface:/g)).toHaveLength(3);
+    expect(tokens.match(/--mn-color-glass-surface-strong:/g)).toHaveLength(3);
+    expect(tokens.match(/--mn-color-glass-border:/g)).toHaveLength(3);
+    expect(tokens.match(/--mn-color-overlay:/g)).toHaveLength(3);
+    expect(tokens.match(/--mn-shadow-floating:/g)).toHaveLength(3);
+    expect(tokens.match(/--mn-gradient-glass:/g)).toHaveLength(3);
 
     expect(styles).toContain(".mnx-floating-surface");
     expect(styles).toContain("background-image: var(--mnx-glass-gradient)");
     expect(styles).toContain("backdrop-filter: var(--mnx-glass-filter)");
-    expect(styles).toContain('[data-sonner-toast]');
+    expect(styles).toContain("[data-sonner-toast]");
     expect(styles).toContain(".mnx-profile-popover");
     expect(styles).toContain(".mnx-command-dialog");
     expect(styles).toContain(".mnx-select-content");
 
     expect(dialogSource).toContain('"mnx-floating-surface"');
-    expect(menuSource).toContain(
-      "mnx-floating-surface mnx-floating-menu",
-    );
+    expect(menuSource).toContain("mnx-floating-surface mnx-floating-menu");
     expect(menuSource).not.toContain("bg-[var(--card)]");
-    expect(warningSource).toContain(
-      "mnx-floating-surface mnx-warning-popover",
-    );
-    expect(monaSource).toContain(
-      "mnx-floating-surface mnx-floating-tooltip",
-    );
+    expect(warningSource).toContain("mnx-floating-surface mnx-warning-popover");
+    expect(monaSource).toContain("mnx-floating-surface mnx-floating-tooltip");
     expect(monaSource).toContain("mnx-floating-surface mnx-mona-panel");
   });
 
   it("routes every CHA dialog and dropdown through the reference surface contract", () => {
     const chaSource = source("src/components/monolith/cha-workspace.tsx");
-    const createJobSource = source(
-      "src/components/cha/create-job-dialog.tsx",
-    );
+    const createJobSource = source("src/components/cha/create-job-dialog.tsx");
     const styles = source("src/styles/monolith-system.css");
 
     expect(chaSource).toContain("export function ChaModal");
     expect(chaSource).toContain("export function ChaDropdownSelect");
     expect(chaSource).toContain("export function ChaNativeSelect");
     expect(chaSource).toContain("export function ChaFilterMenu");
-    expect(chaSource).toContain(
-      "export function ChaWarningIndicatorPopover",
-    );
+    expect(chaSource).toContain("export function ChaWarningIndicatorPopover");
     expect(createJobSource).toContain("mnx-dialog mnx-cha-create-dialog");
     expect(createJobSource).toContain(
       "mnx-dialog-content mnx-cha-create-dialog-content",

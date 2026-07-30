@@ -1,9 +1,29 @@
 "use client";
 
-import { Check, Eye, EyeOff, MailCheck, ShieldCheck } from "lucide-react";
+import {
+  Check,
+  Eye,
+  EyeOff,
+  LoaderCircle,
+  MailCheck,
+  ShieldCheck,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MonolithAction } from "@/components/monolith/foundation";
+import {
+  PublicActions,
+  PublicBrand,
+  PublicFooter,
+  PublicHeader,
+  PublicInset,
+  PublicMonolithShell,
+  PublicPanel,
+  PublicStage,
+  PublicStatus,
+  WorkspaceBadge,
+  WorkspaceField,
+} from "@/components/monolith";
+import { Button } from "@/components/monolith/button";
 import { Input } from "@/components/monolith/input";
 
 type InvitationDetails = {
@@ -78,7 +98,9 @@ export function EmployeeInvitationAcceptance({ token }: { token: string }) {
   async function acceptInvitation(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!passwordValid) {
-      setError("Complete the password requirements and make sure both passwords match.");
+      setError(
+        "Complete the password requirements and make sure both passwords match.",
+      );
       return;
     }
 
@@ -108,144 +130,143 @@ export function EmployeeInvitationAcceptance({ token }: { token: string }) {
   }
 
   return (
-    <main className="min-h-screen bg-mono-bg px-4 py-10 text-mono-text sm:py-16">
-      <section className="mnx-panel mx-auto w-full max-w-xl overflow-hidden">
-        <div className="border-b border-mono-border bg-mono-soft px-6 py-6 sm:px-8">
-          <div className="flex items-center gap-4">
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--mnx-accent)] text-[var(--mnx-text)]">
-              <MailCheck className="size-6" aria-hidden="true" />
-            </span>
-            <div>
-              <p className="mnx-dashboard-spec-label">Workspace invitation</p>
-              <h1 className="mt-1 text-2xl font-medium tracking-tight">
-                Join your organisation
-              </h1>
-            </div>
-          </div>
-        </div>
+    <PublicMonolithShell data-public-route="employee-invitation">
+      <PublicBrand subtitle="Employee onboarding" />
+      <PublicStage className="mnx-public-stage-compact">
+        <PublicPanel className="mnx-public-form-panel">
+          <PublicHeader
+            eyebrow="Workspace invitation"
+            icon={<MailCheck />}
+            title="Join your organisation"
+            description="Validate your secure invitation and create the password for your employee workspace."
+          />
 
-        <div className="p-6 sm:p-8">
           {loading ? (
-            <div className="py-14 text-center text-sm text-mono-muted">
-              Validating your secure invitation…
+            <div className="mnx-public-panel-content">
+              <PublicStatus
+                tone="info"
+                eyebrow="Invitation validation"
+                icon={<LoaderCircle className="mnx-public-spinner" />}
+                title="Checking your secure invitation"
+                description="Monolith is confirming the invitation and organisation assignment."
+              />
             </div>
           ) : details ? (
-            <form className="space-y-6" onSubmit={acceptInvitation}>
-              <div className="rounded-2xl border border-mono-border bg-mono-soft p-5">
-                <p className="text-sm leading-relaxed text-mono-muted">
-                  Hello{" "}
-                  <strong className="font-medium text-mono-text">
-                    {details.employeeName}
-                  </strong>
-                  , you have been invited to join{" "}
-                  <strong className="font-medium text-mono-text">
-                    {details.organisationName}
-                  </strong>{" "}
-                  on Monolith.
+            <form className="mnx-public-form" onSubmit={acceptInvitation}>
+              <PublicInset>
+                <p>
+                  Hello <strong>{details.employeeName}</strong>, you have been
+                  invited to join <strong>{details.organisationName}</strong> on
+                  Monolith.
                 </p>
-                <p className="mt-3 text-xs text-mono-muted">{details.email}</p>
-              </div>
+                <small>{details.email}</small>
+              </PublicInset>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="password">
-                  Create password
-                </label>
-                <div className="relative">
+              <div className="mnx-public-form-grid">
+                <WorkspaceField
+                  htmlFor="password"
+                  label="Create password"
+                  required
+                >
+                  <div className="mnx-public-password-field">
+                    <Input
+                      autoComplete="new-password"
+                      id="password"
+                      onChange={(event) => setPassword(event.target.value)}
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                    />
+                    <Button
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                      className="mnx-public-password-toggle"
+                      mode="icon"
+                      onClick={() => setShowPassword((current) => !current)}
+                      type="button"
+                      variant="outline"
+                    >
+                      {showPassword ? <EyeOff /> : <Eye />}
+                    </Button>
+                  </div>
+                </WorkspaceField>
+
+                <WorkspaceField
+                  htmlFor="confirm-password"
+                  label="Confirm password"
+                  required
+                >
                   <Input
                     autoComplete="new-password"
-                    className="pr-12"
-                    id="password"
-                    onChange={(event) => setPassword(event.target.value)}
+                    id="confirm-password"
+                    onChange={(event) => setConfirmPassword(event.target.value)}
                     type={showPassword ? "text" : "password"}
-                    value={password}
+                    value={confirmPassword}
                   />
-                  <button
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-mono-muted transition hover:text-mono-text"
-                    onClick={() => setShowPassword((current) => !current)}
-                    type="button"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="size-4" />
-                    ) : (
-                      <Eye className="size-4" />
-                    )}
-                  </button>
-                </div>
+                </WorkspaceField>
               </div>
 
-              <div className="space-y-2">
-                <label
-                  className="text-sm font-medium"
-                  htmlFor="confirm-password"
-                >
-                  Confirm password
-                </label>
-                <Input
-                  autoComplete="new-password"
-                  id="confirm-password"
-                  onChange={(event) => setConfirmPassword(event.target.value)}
-                  type={showPassword ? "text" : "password"}
-                  value={confirmPassword}
-                />
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div
+                className="mnx-public-form-grid"
+                aria-label="Password requirements"
+              >
                 {passwordChecks.map((check) => (
-                  <span
-                    className={
-                      check.valid
-                        ? "flex items-center gap-2 text-xs text-[var(--mnx-success)]"
-                        : "flex items-center gap-2 text-xs text-mono-muted"
-                    }
+                  <WorkspaceBadge
                     key={check.label}
+                    variant={check.valid ? "success" : "neutral"}
                   >
-                    <Check className="size-3.5" aria-hidden="true" />
+                    <Check aria-hidden="true" />
                     {check.label}
-                  </span>
+                  </WorkspaceBadge>
                 ))}
-                <span
-                  className={
+                <WorkspaceBadge
+                  variant={
                     confirmPassword && password === confirmPassword
-                      ? "flex items-center gap-2 text-xs text-[var(--mnx-success)]"
-                      : "flex items-center gap-2 text-xs text-mono-muted"
+                      ? "success"
+                      : "neutral"
                   }
                 >
-                  <Check className="size-3.5" aria-hidden="true" />
+                  <Check aria-hidden="true" />
                   Passwords match
-                </span>
+                </WorkspaceBadge>
               </div>
 
               {error ? (
-                <p
-                  className="rounded-2xl border border-[var(--mnx-danger)]/30 bg-[var(--mnx-danger-bg)] px-4 py-3 text-sm text-[var(--mnx-danger)]"
-                  role="alert"
-                >
-                  {error}
-                </p>
+                <PublicStatus
+                  tone="danger"
+                  eyebrow="Invitation error"
+                  icon={<ShieldCheck />}
+                  title={error}
+                />
               ) : null}
 
-              <MonolithAction
-                className="w-full justify-center"
-                disabled={submitting || !passwordValid}
-                type="submit"
-                variant="primary"
-              >
-                <ShieldCheck className="size-4" aria-hidden="true" />
-                {submitting ? "Preparing workspace…" : "Accept and join"}
-              </MonolithAction>
+              <PublicActions>
+                <Button
+                  className="mnx-public-primary-action"
+                  disabled={submitting || !passwordValid}
+                  type="submit"
+                >
+                  <ShieldCheck aria-hidden="true" />
+                  {submitting ? "Preparing workspace…" : "Accept and join"}
+                </Button>
+              </PublicActions>
             </form>
           ) : (
-            <div className="py-10 text-center">
-              <p className="text-base font-medium">Invitation unavailable</p>
-              <p className="mt-2 text-sm text-mono-muted">{error}</p>
-              <p className="mt-5 text-xs text-mono-muted">
-                Ask your HR team to send a new invitation.
-              </p>
+            <div className="mnx-public-panel-content">
+              <PublicStatus
+                tone="danger"
+                eyebrow="Invitation unavailable"
+                icon={<ShieldCheck />}
+                title={error}
+                description="Ask your HR team to send a new invitation."
+              />
             </div>
           )}
-        </div>
-      </section>
-    </main>
+        </PublicPanel>
+      </PublicStage>
+      <PublicFooter>
+        Secure employee onboarding · Monolith identity services
+      </PublicFooter>
+    </PublicMonolithShell>
   );
 }

@@ -55,7 +55,10 @@ assert(
   communicationRoutes.length === 10,
   `Expected 10 Communication routes, found ${communicationRoutes.length}.`,
 );
-assert(adminRoutes.length === 10, `Expected 10 Admin routes, found ${adminRoutes.length}.`);
+assert(
+  adminRoutes.length === 10,
+  `Expected 10 Admin routes, found ${adminRoutes.length}.`,
+);
 
 for (const route of [
   "/communication",
@@ -69,7 +72,10 @@ for (const route of [
   "/communication/search",
   "/communication/settings",
 ]) {
-  assert(communicationRoutes.includes(route), `Missing Communication route ${route}.`);
+  assert(
+    communicationRoutes.includes(route),
+    `Missing Communication route ${route}.`,
+  );
 }
 
 for (const route of [
@@ -97,20 +103,23 @@ for (const requiredFile of [
   "src/components/monolith/communication-workspace.tsx",
   "src/components/monolith/admin-workspace.tsx",
 ]) {
-  assert(existsSync(path.join(repositoryRoot, requiredFile)), `Missing ${requiredFile}.`);
+  assert(
+    existsSync(path.join(repositoryRoot, requiredFile)),
+    `Missing ${requiredFile}.`,
+  );
 }
 
 const shellSwitcher = read(
   "src/app/(dashboard)/_components/dashboard-shell-switcher.tsx",
 );
-for (const signal of [
-  'normalizedPathname === "/communication"',
-  'normalizedPathname.startsWith("/communication/")',
-  'normalizedPathname === "/admin"',
-  'normalizedPathname.startsWith("/admin/")',
-]) {
-  assert(shellSwitcher.includes(signal), `Shell switcher is missing ${signal}.`);
-}
+assert(
+  shellSwitcher.includes("<MonolithAppShell"),
+  "The authenticated shell must always render MonolithAppShell.",
+);
+assert(
+  !shellSwitcher.includes("usePathname"),
+  "The authenticated shell must not retain route-specific legacy switching.",
+);
 
 const communicationWorkspace = read(
   "src/components/monolith/communication-workspace.tsx",
@@ -123,7 +132,9 @@ for (const route of communicationRoutes) {
 }
 
 const adminWorkspace = read("src/components/monolith/admin-workspace.tsx");
-for (const route of adminRoutes.filter((route) => route !== "/admin/design-system")) {
+for (const route of adminRoutes.filter(
+  (route) => route !== "/admin/design-system",
+)) {
   assert(
     adminWorkspace.includes(`"${route}"`),
     `Admin route metadata is missing ${route}.`,
@@ -136,8 +147,11 @@ assert(
 
 const scopedSources = [
   ...walk(communicationRoot, (file) => /\.(?:ts|tsx)$/.test(file)),
-  ...walk(adminRoot, (file) =>
-    /\.(?:ts|tsx)$/.test(file) && !file.includes(`${path.sep}design-system${path.sep}`),
+  ...walk(
+    adminRoot,
+    (file) =>
+      /\.(?:ts|tsx)$/.test(file) &&
+      !file.includes(`${path.sep}design-system${path.sep}`),
   ),
 ];
 
@@ -233,7 +247,10 @@ for (const className of [
 ]) {
   assert(styles.includes(className), `Missing shared style ${className}.`);
 }
-for (const breakpoint of ["@media (max-width: 70rem)", "@media (max-width: 42rem)"]) {
+for (const breakpoint of [
+  "@media (max-width: 70rem)",
+  "@media (max-width: 42rem)",
+]) {
   assert(styles.includes(breakpoint), `Missing responsive rule ${breakpoint}.`);
 }
 for (const denseLayout of [
@@ -241,7 +258,10 @@ for (const denseLayout of [
   '[data-communication-chat="true"]',
   ".mnx-communication-legacy-dialog",
 ]) {
-  assert(styles.includes(denseLayout), `Missing dense layout rule ${denseLayout}.`);
+  assert(
+    styles.includes(denseLayout),
+    `Missing dense layout rule ${denseLayout}.`,
+  );
 }
 
 const behaviorSources = {
@@ -259,12 +279,16 @@ const behaviorSources = {
   liveSettings: read(
     "src/app/(dashboard)/communication/google-chat-live-view/_components/google-chat-live-view-settings.tsx",
   ),
-  dataTools: read("src/app/(dashboard)/admin/data-tools/workbook-import-form.tsx"),
+  dataTools: read(
+    "src/app/(dashboard)/admin/data-tools/workbook-import-form.tsx",
+  ),
   passkeys: read("src/app/(dashboard)/admin/passkeys/page.tsx"),
   roles: read("src/app/(dashboard)/admin/roles/roles-manager.tsx"),
   sessions: read("src/app/(dashboard)/admin/sessions/sessions-dashboard.tsx"),
   settings: read("src/app/(dashboard)/admin/settings/settings-client.tsx"),
-  simulation: read("src/app/(dashboard)/admin/simulation/simulation-client.tsx"),
+  simulation: read(
+    "src/app/(dashboard)/admin/simulation/simulation-client.tsx",
+  ),
   notifications: read(
     "src/app/(dashboard)/admin/notifications/admin-notifications-client.tsx",
   ),
@@ -356,7 +380,10 @@ const listing = spawnSync("tar", ["-tf", archivePath], {
   cwd: repositoryRoot,
   encoding: "utf8",
 });
-assert(listing.status === 0, listing.stderr || "Unable to list backup archive.");
+assert(
+  listing.status === 0,
+  listing.stderr || "Unable to list backup archive.",
+);
 const archiveFiles = listing.stdout
   .split(/\r?\n/)
   .filter((entry) => entry && !entry.endsWith("/"));

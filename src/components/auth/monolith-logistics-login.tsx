@@ -5,13 +5,20 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { signIn } from "next-auth/react";
 import { clearStaleSessionData } from "@/lib/logout";
 import { isRootControlEmail } from "@/lib/root-access";
-import { DEFAULT_CALLBACK_URL, SUCCESS_TRANSITION_MS } from "./login-scene.config";
+import {
+  DEFAULT_CALLBACK_URL,
+  SUCCESS_TRANSITION_MS,
+} from "./login-scene.config";
 import styles from "./animated-login.module.css";
 
 type Mood = "idle" | "happy" | "charging" | "shy" | "error";
 type SubmitState = "idle" | "loading" | "success";
 
-const CREDENTIAL_QUERY_PARAMETERS = ["email", "password", "rememberMe"] as const;
+const CREDENTIAL_QUERY_PARAMETERS = [
+  "email",
+  "password",
+  "rememberMe",
+] as const;
 const subscribeToHydration = () => () => {};
 
 function MonolithPetGraphic() {
@@ -43,14 +50,38 @@ function MonolithPetGraphic() {
         <g className={styles.antenna}>
           <path d="m116 94-15-18 12-10-14-18 8-14" />
           <circle cx="109" cy="30" r="7" />
-          <path className={styles.antennaSignal} d="M91 29c-7 8-7 18 0 26M79 21c-13 14-13 33 0 47" />
+          <path
+            className={styles.antennaSignal}
+            d="M91 29c-7 8-7 18 0 26M79 21c-13 14-13 33 0 47"
+          />
         </g>
 
         <g className={styles.facePatch}>
-          <rect className={styles.patchBox} x="122" y="136" width="38" height="38" rx="9" />
+          <rect
+            className={styles.patchBox}
+            x="122"
+            y="136"
+            width="38"
+            height="38"
+            rx="9"
+          />
           <g className={styles.patchEye}>
-            <rect className={styles.crossArmA} x="128" y="151" width="26" height="8" rx="4" />
-            <rect className={styles.crossArmB} x="128" y="151" width="26" height="8" rx="4" />
+            <rect
+              className={styles.crossArmA}
+              x="128"
+              y="151"
+              width="26"
+              height="8"
+              rx="4"
+            />
+            <rect
+              className={styles.crossArmB}
+              x="128"
+              y="151"
+              width="26"
+              height="8"
+              rx="4"
+            />
           </g>
         </g>
 
@@ -71,12 +102,21 @@ function wait(ms: number) {
 }
 
 function getSafeCallbackUrl(identifier: string) {
-  const requestedCallbackUrl = new URLSearchParams(window.location.search).get("callbackUrl");
-  const fallbackTarget = isRootControlEmail(identifier) ? "/" : DEFAULT_CALLBACK_URL;
-  return requestedCallbackUrl?.startsWith("/") ? requestedCallbackUrl : fallbackTarget;
+  const requestedCallbackUrl = new URLSearchParams(window.location.search).get(
+    "callbackUrl",
+  );
+  const fallbackTarget = isRootControlEmail(identifier)
+    ? "/"
+    : DEFAULT_CALLBACK_URL;
+  return requestedCallbackUrl?.startsWith("/")
+    ? requestedCallbackUrl
+    : fallbackTarget;
 }
 
-function getSameOriginRedirectUrl(url: string | null | undefined, fallbackUrl: string) {
+function getSameOriginRedirectUrl(
+  url: string | null | undefined,
+  fallbackUrl: string,
+) {
   if (!url) return fallbackUrl;
   if (url.startsWith("/")) return url;
 
@@ -143,7 +183,9 @@ export function MonolithLogisticsLogin() {
   }, []);
 
   useEffect(() => {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     const motionScale = reduceMotion ? 0.35 : 1;
 
     const followPointer = (event: PointerEvent) => {
@@ -157,8 +199,14 @@ export function MonolithLogisticsLogin() {
       if (!bounds) return;
 
       target.current = {
-        x: Math.max(-1, Math.min(1, ((event.clientX - bounds.left) / bounds.width - 0.5) * 2)),
-        y: Math.max(-1, Math.min(1, ((event.clientY - bounds.top) / bounds.height - 0.5) * 2)),
+        x: Math.max(
+          -1,
+          Math.min(1, ((event.clientX - bounds.left) / bounds.width - 0.5) * 2),
+        ),
+        y: Math.max(
+          -1,
+          Math.min(1, ((event.clientY - bounds.top) / bounds.height - 0.5) * 2),
+        ),
       };
     };
 
@@ -169,8 +217,12 @@ export function MonolithLogisticsLogin() {
     };
 
     const animate = () => {
-      velocity.current.x = (velocity.current.x + (target.current.x - current.current.x) * 0.055) * 0.78;
-      velocity.current.y = (velocity.current.y + (target.current.y - current.current.y) * 0.055) * 0.78;
+      velocity.current.x =
+        (velocity.current.x + (target.current.x - current.current.x) * 0.055) *
+        0.78;
+      velocity.current.y =
+        (velocity.current.y + (target.current.y - current.current.y) * 0.055) *
+        0.78;
       current.current.x += velocity.current.x;
       current.current.y += velocity.current.y;
 
@@ -185,8 +237,10 @@ export function MonolithLogisticsLogin() {
         pet.style.setProperty("--y", `${y * 52 * motionScale}px`);
         pet.style.setProperty("--turn", `${x * 5.5 * motionScale}deg`);
         pet.style.setProperty("--skew", `${y * -2.2 * motionScale}deg`);
-        const horizontalStretch = 1 + (Math.abs(x) * 0.11 - Math.abs(y) * 0.055) * motionScale;
-        const verticalStretch = 1 + (Math.abs(y) * 0.1 - Math.abs(x) * 0.05) * motionScale;
+        const horizontalStretch =
+          1 + (Math.abs(x) * 0.11 - Math.abs(y) * 0.055) * motionScale;
+        const verticalStretch =
+          1 + (Math.abs(y) * 0.1 - Math.abs(x) * 0.05) * motionScale;
         pet.style.setProperty("--stretch-x", `${horizontalStretch}`);
         pet.style.setProperty("--stretch-y", `${verticalStretch}`);
         pet.style.setProperty("--eye-x", `${x * 10 * motionScale}px`);
@@ -309,7 +363,10 @@ export function MonolithLogisticsLogin() {
           <div ref={glowRef} className={styles.cursorGlow} aria-hidden="true" />
 
           <div className={`${styles.brand} ${styles.brandLight}`}>
-            <span className={styles.brandMark} aria-hidden="true"><i /><i /></span>
+            <span className={styles.brandMark} aria-hidden="true">
+              <i />
+              <i />
+            </span>
             <span>
               <strong>MONOLITH</strong>
               <small>Intelligent logistics</small>
@@ -318,19 +375,25 @@ export function MonolithLogisticsLogin() {
 
           <button
             type="button"
-            className={`monolith-plain ${styles.petButton} ${styles[`mood-${mood}`]}`}
+            className={`${styles.petButton} ${styles[`mood-${mood}`]}`}
             onClick={interactWithPet}
             aria-label={`Interact with Monolith pet. ${petMessage}`}
           >
             <span ref={petRef} className={styles.petFollower}>
-              <span className={styles.speechBubble} aria-live="polite">{petMessage}</span>
+              <span className={styles.speechBubble} aria-live="polite">
+                {petMessage}
+              </span>
               <span className={styles.petRig}>
                 <MonolithPetGraphic />
               </span>
             </span>
           </button>
 
-          <div ref={shadowRef} className={styles.petShadow} aria-hidden="true" />
+          <div
+            ref={shadowRef}
+            className={styles.petShadow}
+            aria-hidden="true"
+          />
 
           <p className={styles.petStatus}>
             <i />
@@ -346,11 +409,17 @@ export function MonolithLogisticsLogin() {
 
         <section className={styles.formPanel} aria-labelledby="login-title">
           <div className={`${styles.mobileBrand} ${styles.brand}`}>
-            <span className={styles.brandMark} aria-hidden="true"><i /><i /></span>
+            <span className={styles.brandMark} aria-hidden="true">
+              <i />
+              <i />
+            </span>
             <strong>MONOLITH</strong>
           </div>
 
-          <div className={styles.accountIcon} aria-hidden="true"><span /><i /></div>
+          <div className={styles.accountIcon} aria-hidden="true">
+            <span />
+            <i />
+          </div>
 
           <header className={styles.heading}>
             <p>SECURE OPERATIONS ACCESS</p>
@@ -398,7 +467,11 @@ export function MonolithLogisticsLogin() {
                     resetSubmitState();
                   }}
                 />
-                {email.includes("@") ? <b className={styles.valid} aria-label="Email entered">✓</b> : null}
+                {email.includes("@") ? (
+                  <b className={styles.valid} aria-label="Email entered">
+                    ✓
+                  </b>
+                ) : null}
               </span>
             </label>
 
@@ -453,35 +526,55 @@ export function MonolithLogisticsLogin() {
                 />
                 <span>Remember me</span>
               </label>
-              <a href="/forgot-password" className={styles.textButton}>Forgot password?</a>
+              <a href="/forgot-password" className={styles.textButton}>
+                Forgot password?
+              </a>
             </div>
 
-            <p id="login-message" className={styles.formMessage} role="alert">{message}</p>
+            <p id="login-message" className={styles.formMessage} role="alert">
+              {message}
+            </p>
 
-            <button className={styles.loginButton} type="submit" disabled={busy}>
+            <button
+              className={styles.loginButton}
+              type="submit"
+              disabled={busy}
+            >
               {submitState === "loading" ? (
-                <><i className={styles.spinner} /> Verifying route…</>
+                <>
+                  <i className={styles.spinner} /> Verifying route…
+                </>
               ) : submitState === "success" ? (
                 <>Access granted ✓</>
               ) : (
-                <>Log in <span>→</span></>
+                <>
+                  Log in <span>→</span>
+                </>
               )}
             </button>
 
-            <div className={styles.divider}><span>or</span></div>
+            <div className={styles.divider}>
+              <span>or</span>
+            </div>
 
             <button
               className={styles.ssoButton}
               type="button"
               disabled={busy}
-              onClick={() => void signIn("google", { callbackUrl: getSafeCallbackUrl(email.trim()) })}
+              onClick={() =>
+                void signIn("google", {
+                  callbackUrl: getSafeCallbackUrl(email.trim()),
+                })
+              }
             >
               <span>◎</span> Log in with SSO
             </button>
 
             <p className={styles.signup}>
               Don’t have access?
-              <a href="/request-access" className={styles.textButton}>Request access</a>
+              <a href="/request-access" className={styles.textButton}>
+                Request access
+              </a>
             </p>
           </form>
         </section>

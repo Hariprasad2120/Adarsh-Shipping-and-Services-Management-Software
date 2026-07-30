@@ -1,6 +1,10 @@
 "use client";
 
-import { CrmButton, CrmInput, CrmTextarea } from "@/components/monolith/crm-workspace";
+import {
+  CrmButton,
+  CrmInput,
+  CrmTextarea,
+} from "@/components/monolith/crm-workspace";
 
 import { NativeSelect } from "@/components/monolith/native-select";
 import { DateInput } from "@/components/monolith/date-input";
@@ -31,14 +35,21 @@ const STAGE_PROBABILITIES: Record<string, number> = {
   LOST: 0,
 };
 
-export function DealForm({ initialData, accounts, contacts, employees }: DealFormProps) {
+export function DealForm({
+  initialData,
+  accounts,
+  contacts,
+  employees,
+}: DealFormProps) {
   const router = useRouter();
   const isEdit = !!initialData;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState(initialData?.name || "");
   const [stage, setStage] = useState(initialData?.stage || "PROSPECTING");
-  const [probability, setProbability] = useState(initialData?.probability || 10);
+  const [probability, setProbability] = useState(
+    initialData?.probability || 10,
+  );
 
   // Auto-update probability when stage changes
   const handleStageChange = (newStage: string) => {
@@ -66,19 +77,39 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
     setIsSubmitting(false);
 
     if (res.ok) {
-      toast.success(isEdit ? "Deal updated successfully" : "Deal created successfully");
+      toast.success(
+        isEdit ? "Deal updated successfully" : "Deal created successfully",
+      );
       router.push(isEdit ? `/crm/deals/${initialData.id}` : "/crm/deals");
     } else {
       toast.error(res.error);
     }
   };
 
-  const stagesList = ["PROSPECTING", "QUALIFICATION", "PROPOSAL", "NEGOTIATION", "WON", "LOST"];
-  const serviceTypes = ["Freight Forwarding", "Customs Clearance", "Transportation", "Warehousing", "CHA Service", "Project Cargo", "Documentation"];
+  const stagesList = [
+    "PROSPECTING",
+    "QUALIFICATION",
+    "PROPOSAL",
+    "NEGOTIATION",
+    "WON",
+    "LOST",
+  ];
+  const serviceTypes = [
+    "Freight Forwarding",
+    "Customs Clearance",
+    "Transportation",
+    "Warehousing",
+    "CHA Service",
+    "Project Cargo",
+    "Documentation",
+  ];
   const logisticsCategories = ["Import", "Export"];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/60 rounded-xl p-6 shadow-2xl">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-8 max-w-5xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/60 rounded-xl p-6 shadow-2xl"
+    >
       {/* ─── SECTION: BASIC INFO ────────────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
@@ -88,7 +119,9 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Deal Name *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Deal Name *
+            </label>
             <CrmInput
               type="text"
               name="name"
@@ -100,7 +133,9 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Owner *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Owner *
+            </label>
             <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
@@ -109,12 +144,16 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             >
               <option value="">Select Owner</option>
               {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>{emp.name}</option>
+                <option key={emp.id} value={emp.id}>
+                  {emp.name}
+                </option>
               ))}
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Account (Company) *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Account (Company) *
+            </label>
             <NativeSelect
               name="accountId"
               defaultValue={initialData?.accountId || ""}
@@ -123,12 +162,16 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             >
               <option value="">Link Account</option>
               {accounts.map((acc) => (
-                <option key={acc.id} value={acc.id}>{acc.name}</option>
+                <option key={acc.id} value={acc.id}>
+                  {acc.name}
+                </option>
               ))}
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Primary Contact</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Primary Contact
+            </label>
             <NativeSelect
               name="contactId"
               defaultValue={initialData?.contactId || ""}
@@ -136,7 +179,9 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             >
               <option value="">Link Contact</option>
               {contacts.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
               ))}
             </NativeSelect>
           </div>
@@ -152,7 +197,9 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Deal Stage</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Deal Stage
+            </label>
             <NativeSelect
               name="stage"
               value={stage}
@@ -160,12 +207,16 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
               className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {stagesList.map((st) => (
-                <option key={st} value={st}>{st.replace("_", " ")}</option>
+                <option key={st} value={st}>
+                  {st.replace("_", " ")}
+                </option>
               ))}
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Deal Value (INR)</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Deal Value (INR)
+            </label>
             <CrmInput
               type="number"
               name="amount"
@@ -175,28 +226,50 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Probability (%)</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Probability (%)
+            </label>
             <CrmInput
               type="number"
               value={probability}
-              onChange={(e) => setProbability(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
+              onChange={(e) =>
+                setProbability(
+                  Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)),
+                )
+              }
               placeholder="e.g. 40"
               className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Expected Close Date</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Expected Close Date
+            </label>
             <DateInput
               name="expectedCloseDate"
-              defaultValue={initialData?.expectedCloseDate ? new Date(initialData.expectedCloseDate).toISOString().split("T")[0] : ""}
+              defaultValue={
+                initialData?.expectedCloseDate
+                  ? new Date(initialData.expectedCloseDate)
+                      .toISOString()
+                      .split("T")[0]
+                  : ""
+              }
               className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Next Follow Up Date</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Next Follow Up Date
+            </label>
             <DateInput
               name="nextFollowUpDate"
-              defaultValue={initialData?.nextFollowUpDate ? new Date(initialData.nextFollowUpDate).toISOString().split("T")[0] : ""}
+              defaultValue={
+                initialData?.nextFollowUpDate
+                  ? new Date(initialData.nextFollowUpDate)
+                      .toISOString()
+                      .split("T")[0]
+                  : ""
+              }
               className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
@@ -212,31 +285,41 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Service Type</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Service Type
+            </label>
             <NativeSelect
               name="serviceType"
               defaultValue={initialData?.serviceType || "Freight Forwarding"}
               className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {serviceTypes.map((t) => (
-                <option key={t} value={t}>{t}</option>
+                <option key={t} value={t}>
+                  {t}
+                </option>
               ))}
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Logistics Category</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Logistics Category
+            </label>
             <NativeSelect
               name="logisticsCategory"
               defaultValue={initialData?.logisticsCategory || "Import"}
               className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {logisticsCategories.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>
+                  {c}
+                </option>
               ))}
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Competitor</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Competitor
+            </label>
             <CrmInput
               type="text"
               name="competitor"
@@ -251,7 +334,9 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
       {/* Description / Lost Reason */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Description</label>
+          <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            Description
+          </label>
           <CrmTextarea
             name="description"
             defaultValue={initialData?.description || ""}
@@ -261,7 +346,9 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Reason for Loss</label>
+          <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+            Reason for Loss
+          </label>
           <CrmTextarea
             name="lostReason"
             defaultValue={initialData?.lostReason || ""}
@@ -284,10 +371,12 @@ export function DealForm({ initialData, accounts, contacts, employees }: DealFor
         <CrmButton
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-sm font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-sm font-bold transition-all mnx-shadow-panel cursor-pointer"
         >
           <Save className="size-4.5" />
-          <span>{isSubmitting ? "Saving..." : isEdit ? "Update Deal" : "Save Deal"}</span>
+          <span>
+            {isSubmitting ? "Saving..." : isEdit ? "Update Deal" : "Save Deal"}
+          </span>
         </CrmButton>
       </div>
     </form>

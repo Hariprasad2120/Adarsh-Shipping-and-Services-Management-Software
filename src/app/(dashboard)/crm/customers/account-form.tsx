@@ -1,12 +1,19 @@
 "use client";
 
-import { CrmButton, CrmInput, CrmTextarea } from "@/components/monolith/crm-workspace";
+import {
+  CrmButton,
+  CrmInput,
+  CrmTextarea,
+} from "@/components/monolith/crm-workspace";
 
 import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { createAccountAction, updateAccountAction } from "@/modules/crm/actions";
+import {
+  createAccountAction,
+  updateAccountAction,
+} from "@/modules/crm/actions";
 import { Save, Mail, MapPin, Notebook, User, ArrowDown } from "lucide-react";
 
 interface UserOption {
@@ -62,13 +69,42 @@ interface AccountFormProps {
 }
 
 const indianStates = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
-  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
-  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
-  "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
-  "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
-  "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry",
 ];
 
 const gstTreatments = [
@@ -77,7 +113,7 @@ const gstTreatments = [
   "Unregistered Business",
   "Consumer",
   "Overseas",
-  "SEZ"
+  "SEZ",
 ];
 
 const currencies = [
@@ -86,11 +122,24 @@ const currencies = [
   "EUR- Euro",
   "GBP- British Pound",
   "SGD- Singapore Dollar",
-  "AED- UAE Dirham"
+  "AED- UAE Dirham",
 ];
 
-const locations = ["Chennai", "Mumbai", "Delhi", "Kolkata", "Bangalore", "Hyderabad"];
-const paymentTermsList = ["Net 15", "Net 30", "Net 45", "Net 60", "Due on Receipt"];
+const locations = [
+  "Chennai",
+  "Mumbai",
+  "Delhi",
+  "Kolkata",
+  "Bangalore",
+  "Hyderabad",
+];
+const paymentTermsList = [
+  "Net 15",
+  "Net 30",
+  "Net 45",
+  "Net 60",
+  "Due on Receipt",
+];
 
 export function AccountForm({ initialData, employees }: AccountFormProps) {
   const router = useRouter();
@@ -99,12 +148,18 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
   const isEdit = !!initialData;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [customerSubType, setCustomerSubType] = useState(initialData?.customerSubType || "Business");
-  const [activeTab, setActiveTab] = useState<"OTHER_DETAILS" | "ADDRESS" | "REMARKS">("OTHER_DETAILS");
+  const [customerSubType, setCustomerSubType] = useState(
+    initialData?.customerSubType || "Business",
+  );
+  const [activeTab, setActiveTab] = useState<
+    "OTHER_DETAILS" | "ADDRESS" | "REMARKS"
+  >("OTHER_DETAILS");
 
   // Local state for name to track display name
   const [displayName, setDisplayName] = useState(initialData?.name || "");
-  const [companyName, setCompanyName] = useState(initialData?.companyName || "");
+  const [companyName, setCompanyName] = useState(
+    initialData?.companyName || "",
+  );
   const [firstName, setFirstName] = useState(initialData?.firstName || "");
   const [lastName, setLastName] = useState(initialData?.lastName || "");
 
@@ -112,24 +167,48 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
   const billingDetails = initialData?.billingAddressDetails || {};
   const shippingDetails = initialData?.shippingAddressDetails || {};
 
-  const [billingAttention, setBillingAttention] = useState(billingDetails.attention || "");
-  const [billingCountry, setBillingCountry] = useState(billingDetails.country || "India");
-  const [billingStreet1, setBillingStreet1] = useState(billingDetails.street1 || "");
-  const [billingStreet2, setBillingStreet2] = useState(billingDetails.street2 || "");
+  const [billingAttention, setBillingAttention] = useState(
+    billingDetails.attention || "",
+  );
+  const [billingCountry, setBillingCountry] = useState(
+    billingDetails.country || "India",
+  );
+  const [billingStreet1, setBillingStreet1] = useState(
+    billingDetails.street1 || "",
+  );
+  const [billingStreet2, setBillingStreet2] = useState(
+    billingDetails.street2 || "",
+  );
   const [billingCity, setBillingCity] = useState(billingDetails.city || "");
   const [billingState, setBillingState] = useState(billingDetails.state || "");
-  const [billingPincode, setBillingPincode] = useState(billingDetails.pincode || "");
+  const [billingPincode, setBillingPincode] = useState(
+    billingDetails.pincode || "",
+  );
   const [billingPhone, setBillingPhone] = useState(billingDetails.phone || "");
   const [billingFax, setBillingFax] = useState(billingDetails.fax || "");
 
-  const [shippingAttention, setShippingAttention] = useState(shippingDetails.attention || "");
-  const [shippingCountry, setShippingCountry] = useState(shippingDetails.country || "India");
-  const [shippingStreet1, setShippingStreet1] = useState(shippingDetails.street1 || "");
-  const [shippingStreet2, setShippingStreet2] = useState(shippingDetails.street2 || "");
+  const [shippingAttention, setShippingAttention] = useState(
+    shippingDetails.attention || "",
+  );
+  const [shippingCountry, setShippingCountry] = useState(
+    shippingDetails.country || "India",
+  );
+  const [shippingStreet1, setShippingStreet1] = useState(
+    shippingDetails.street1 || "",
+  );
+  const [shippingStreet2, setShippingStreet2] = useState(
+    shippingDetails.street2 || "",
+  );
   const [shippingCity, setShippingCity] = useState(shippingDetails.city || "");
-  const [shippingState, setShippingState] = useState(shippingDetails.state || "");
-  const [shippingPincode, setShippingPincode] = useState(shippingDetails.pincode || "");
-  const [shippingPhone, setShippingPhone] = useState(shippingDetails.phone || "");
+  const [shippingState, setShippingState] = useState(
+    shippingDetails.state || "",
+  );
+  const [shippingPincode, setShippingPincode] = useState(
+    shippingDetails.pincode || "",
+  );
+  const [shippingPhone, setShippingPhone] = useState(
+    shippingDetails.phone || "",
+  );
   const [shippingFax, setShippingFax] = useState(shippingDetails.fax || "");
 
   const handleCopyBillingAddress = () => {
@@ -152,7 +231,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
     setFirstName("Rajesh");
     setLastName("Kumar");
     setDisplayName("Alpha Shipping Solutions Ltd");
-    
+
     setBillingAttention("Rajesh Kumar - Logistics Manager");
     setBillingCountry("India");
     setBillingStreet1("No. 12, Harbour Way");
@@ -175,7 +254,8 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
     // 2. Set uncontrolled fields directly in the DOM
     const setVal = (name: string, value: string) => {
-      const el = document.getElementsByName(name)[0] as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+      const el = document.getElementsByName(name)[0] as
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
       if (el) el.value = value;
     };
 
@@ -194,21 +274,32 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
     setVal("openingBalanceAmount", "150000");
     setVal("creditLimit", "1000000");
     setVal("paymentTerms", "Net 30");
-    setVal("remarks", "Highly active logistics contractor. Prefers digital invoicing and email alerts.");
-    
+    setVal(
+      "remarks",
+      "Highly active logistics contractor. Prefers digital invoicing and email alerts.",
+    );
+
     // Checkbox elements
-    const emailCh = document.getElementsByName("channelEmail")[0] as HTMLInputElement;
+    const emailCh = document.getElementsByName(
+      "channelEmail",
+    )[0] as HTMLInputElement;
     if (emailCh) emailCh.checked = true;
 
-    const smsCh = document.getElementsByName("channelSms")[0] as HTMLInputElement;
+    const smsCh = document.getElementsByName(
+      "channelSms",
+    )[0] as HTMLInputElement;
     if (smsCh) smsCh.checked = true;
 
     // Set tax preference radio
-    const taxPrefR = document.querySelector('input[name="taxPreference"][value="Taxable"]') as HTMLInputElement;
+    const taxPrefR = document.querySelector(
+      'input[name="taxPreference"][value="Taxable"]',
+    ) as HTMLInputElement;
     if (taxPrefR) taxPrefR.checked = true;
-    
+
     // Choose the first employee as owner if available
-    const ownerEl = document.getElementsByName("ownerId")[0] as HTMLSelectElement;
+    const ownerEl = document.getElementsByName(
+      "ownerId",
+    )[0] as HTMLSelectElement;
     if (ownerEl && ownerEl.options.length > 1) {
       ownerEl.selectedIndex = 1;
     }
@@ -221,7 +312,10 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
     if (!displayName.trim()) {
       if (customerSubType === "Business" && companyName.trim()) {
         setDisplayName(companyName.trim());
-      } else if (customerSubType === "Individual" && (firstName.trim() || lastName.trim())) {
+      } else if (
+        customerSubType === "Individual" &&
+        (firstName.trim() || lastName.trim())
+      ) {
         setDisplayName(`${firstName.trim()} ${lastName.trim()}`.trim());
       }
     }
@@ -230,7 +324,10 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const nameToSave = displayName.trim() || companyName.trim() || `${firstName} ${lastName}`.trim();
+    const nameToSave =
+      displayName.trim() ||
+      companyName.trim() ||
+      `${firstName} ${lastName}`.trim();
     if (!nameToSave.trim()) {
       toast.error("Customer display name is required");
       return;
@@ -238,7 +335,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
     setIsSubmitting(true);
     const fd = new FormData(e.currentTarget);
-    
+
     // Inject display name explicitly
     fd.set("name", nameToSave);
 
@@ -249,17 +346,26 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
     setIsSubmitting(false);
 
     if (res.ok) {
-      toast.success(isEdit ? "Customer updated successfully" : "Customer created successfully");
+      toast.success(
+        isEdit
+          ? "Customer updated successfully"
+          : "Customer created successfully",
+      );
       if (redirectTo) {
         const targetUrl = new URL(redirectTo, window.location.origin);
         if (!isEdit && res.data?.id) {
           targetUrl.searchParams.set("customerId", res.data.id);
-          targetUrl.searchParams.set("customerName", res.data.name ?? nameToSave);
+          targetUrl.searchParams.set(
+            "customerName",
+            res.data.name ?? nameToSave,
+          );
           targetUrl.searchParams.set("new", "true");
         }
         router.push(`${targetUrl.pathname}${targetUrl.search}`);
       } else {
-        router.push(isEdit ? `/crm/customers/${initialData.id}` : "/crm/customers");
+        router.push(
+          isEdit ? `/crm/customers/${initialData.id}` : "/crm/customers",
+        );
       }
     } else {
       toast.error(res.error);
@@ -267,8 +373,10 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl bg-[var(--color-surface)] border-2 border-[var(--color-outline)] rounded-xl p-6 shadow-[4px_4px_0px_0px_var(--mnx-accent-soft)] animate-in fade-in duration-200">
-      
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-8 max-w-5xl bg-[var(--color-surface)] border-2 border-[var(--color-outline)] rounded-xl p-6 mnx-shadow-panel animate-in fade-in duration-200"
+    >
       {/* ─── SECTION 1: CUSTOMER TYPE ───────────────────────────────────── */}
       <div className="mnx-crm-panel-surface  bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl p-5 space-y-4">
         <div className="flex items-center justify-between gap-4 border-b border-[var(--color-outline-variant)] pb-2 mb-2">
@@ -280,7 +388,7 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             <CrmButton
               type="button"
               onClick={handleDemoFill}
-              className="px-3 py-1 bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)]/20 border border-[var(--mnx-accent)]/40 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-sm hover:shadow-[0_0_8px_var(--mnx-accent-soft)]"
+              className="px-3 py-1 bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)]/20 border border-[var(--mnx-accent)]/40 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-sm "
             >
               Demo Fill
             </CrmButton>
@@ -317,7 +425,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
           </div>
 
           <div className="md:col-span-2">
-            <label className="mnx-label mb-1.5 block">Primary Contact Name</label>
+            <label className="mnx-label mb-1.5 block">
+              Primary Contact Name
+            </label>
             <div className="grid grid-cols-12 gap-2">
               <div className="col-span-3">
                 <NativeSelect
@@ -373,7 +483,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             />
           </div>
           <div>
-            <label className="mnx-label mb-1.5 block">Customer Display Name *</label>
+            <label className="mnx-label mb-1.5 block">
+              Customer Display Name *
+            </label>
             <CrmInput
               type="text"
               name="displayName"
@@ -453,13 +565,18 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             </NativeSelect>
           </div>
           <div>
-            <label className="mnx-label mb-1.5 block">Communication Channels</label>
+            <label className="mnx-label mb-1.5 block">
+              Communication Channels
+            </label>
             <div className="flex gap-4 pt-2.5">
               <label className="flex items-center gap-1.5 text-xs text-[var(--color-on-surface)] cursor-pointer">
                 <CrmInput
                   type="checkbox"
                   name="channelEmail"
-                  defaultChecked={initialData?.communicationChannels?.includes("EMAIL") ?? true}
+                  defaultChecked={
+                    initialData?.communicationChannels?.includes("EMAIL") ??
+                    true
+                  }
                   className="accent-[var(--mnx-accent)] rounded"
                 />
                 <span>Email Notifications</span>
@@ -468,7 +585,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 <CrmInput
                   type="checkbox"
                   name="channelSms"
-                  defaultChecked={initialData?.communicationChannels?.includes("SMS") ?? false}
+                  defaultChecked={
+                    initialData?.communicationChannels?.includes("SMS") ?? false
+                  }
                   className="accent-[var(--mnx-accent)] rounded"
                 />
                 <span>SMS Alert</span>
@@ -486,7 +605,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             type="button"
             onClick={() => setActiveTab("OTHER_DETAILS")}
             className={`pb-3 px-5 text-xs font-bold uppercase tracking-wider border-b-3 -mb-[3px] transition-all cursor-pointer ${
-              activeTab === "OTHER_DETAILS" ? "border-[var(--mnx-accent)] text-[var(--color-on-surface)]" : "border-transparent text-mono-muted hover:text-[var(--color-on-surface)]"
+              activeTab === "OTHER_DETAILS"
+                ? "border-[var(--mnx-accent)] text-[var(--color-on-surface)]"
+                : "border-transparent text-mono-muted hover:text-[var(--color-on-surface)]"
             }`}
           >
             Other Details
@@ -495,7 +616,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             type="button"
             onClick={() => setActiveTab("ADDRESS")}
             className={`pb-3 px-5 text-xs font-bold uppercase tracking-wider border-b-3 -mb-[3px] transition-all cursor-pointer ${
-              activeTab === "ADDRESS" ? "border-[var(--mnx-accent)] text-[var(--color-on-surface)]" : "border-transparent text-mono-muted hover:text-[var(--color-on-surface)]"
+              activeTab === "ADDRESS"
+                ? "border-[var(--mnx-accent)] text-[var(--color-on-surface)]"
+                : "border-transparent text-mono-muted hover:text-[var(--color-on-surface)]"
             }`}
           >
             Address
@@ -504,7 +627,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
             type="button"
             onClick={() => setActiveTab("REMARKS")}
             className={`pb-3 px-5 text-xs font-bold uppercase tracking-wider border-b-3 -mb-[3px] transition-all cursor-pointer ${
-              activeTab === "REMARKS" ? "border-[var(--mnx-accent)] text-[var(--color-on-surface)]" : "border-transparent text-mono-muted hover:text-[var(--color-on-surface)]"
+              activeTab === "REMARKS"
+                ? "border-[var(--mnx-accent)] text-[var(--color-on-surface)]"
+                : "border-transparent text-mono-muted hover:text-[var(--color-on-surface)]"
             }`}
           >
             Remarks
@@ -516,26 +641,36 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
           <div className="p-6 bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] rounded-xl space-y-4 animate-in fade-in duration-150">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="mnx-label mb-1.5 block">GST Treatment *</label>
+                <label className="mnx-label mb-1.5 block">
+                  GST Treatment *
+                </label>
                 <NativeSelect
                   name="gstTreatment"
-                  defaultValue={initialData?.gstTreatment || "Registered Business - Regular"}
+                  defaultValue={
+                    initialData?.gstTreatment || "Registered Business - Regular"
+                  }
                   className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 >
                   {gstTreatments.map((t) => (
-                    <option key={t} value={t}>{t}</option>
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
                   ))}
                 </NativeSelect>
               </div>
               <div>
-                <label className="mnx-label mb-1.5 block">Place of Supply *</label>
+                <label className="mnx-label mb-1.5 block">
+                  Place of Supply *
+                </label>
                 <NativeSelect
                   name="placeOfSupply"
                   defaultValue={initialData?.placeOfSupply || "Tamil Nadu"}
                   className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 >
                   {indianStates.map((state) => (
-                    <option key={state} value={state}>{state}</option>
+                    <option key={state} value={state}>
+                      {state}
+                    </option>
                   ))}
                 </NativeSelect>
               </div>
@@ -543,7 +678,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="mnx-label mb-1.5 block">PAN ID / Tax Number</label>
+                <label className="mnx-label mb-1.5 block">
+                  PAN ID / Tax Number
+                </label>
                 <CrmInput
                   type="text"
                   name="pan"
@@ -570,7 +707,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                       type="radio"
                       name="taxPreference"
                       value="Taxable"
-                      defaultChecked={initialData?.taxPreference !== "Tax Exempt"}
+                      defaultChecked={
+                        initialData?.taxPreference !== "Tax Exempt"
+                      }
                       className="accent-[var(--mnx-accent)] size-4"
                     />
                     <span>Taxable</span>
@@ -580,7 +719,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                       type="radio"
                       name="taxPreference"
                       value="Tax Exempt"
-                      defaultChecked={initialData?.taxPreference === "Tax Exempt"}
+                      defaultChecked={
+                        initialData?.taxPreference === "Tax Exempt"
+                      }
                       className="accent-[var(--mnx-accent)] size-4"
                     />
                     <span>Tax Exempt</span>
@@ -598,26 +739,34 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 >
                   {currencies.map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
                   ))}
                 </NativeSelect>
               </div>
 
               <div>
-                <label className="mnx-label mb-1.5 block">Opening Balance Branch</label>
+                <label className="mnx-label mb-1.5 block">
+                  Opening Balance Branch
+                </label>
                 <NativeSelect
                   name="openingBalanceBranch"
                   defaultValue={initialData?.openingBalanceBranch || "Chennai"}
                   className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 >
                   {locations.map((loc) => (
-                    <option key={loc} value={loc}>{loc}</option>
+                    <option key={loc} value={loc}>
+                      {loc}
+                    </option>
                   ))}
                 </NativeSelect>
               </div>
 
               <div>
-                <label className="mnx-label mb-1.5 block">Opening Balance Amount (INR)</label>
+                <label className="mnx-label mb-1.5 block">
+                  Opening Balance Amount (INR)
+                </label>
                 <CrmInput
                   type="number"
                   step="0.01"
@@ -630,7 +779,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-[var(--color-outline-variant)]">
               <div>
-                <label className="mnx-label mb-1.5 block">Credit Limit (INR)</label>
+                <label className="mnx-label mb-1.5 block">
+                  Credit Limit (INR)
+                </label>
                 <CrmInput
                   type="number"
                   name="creditLimit"
@@ -647,12 +798,16 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   className="w-full px-3.5 py-2 bg-[var(--color-surface)] border border-[var(--mnx-accent-soft)] rounded-lg text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-3 focus:ring-[var(--mnx-accent-soft)]"
                 >
                   {paymentTermsList.map((term) => (
-                    <option key={term} value={term}>{term}</option>
+                    <option key={term} value={term}>
+                      {term}
+                    </option>
                   ))}
                 </NativeSelect>
               </div>
               <div>
-                <label className="mnx-label mb-1.5 block">Account Owner *</label>
+                <label className="mnx-label mb-1.5 block">
+                  Account Owner *
+                </label>
                 <NativeSelect
                   name="ownerId"
                   defaultValue={initialData?.ownerId || ""}
@@ -661,12 +816,13 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 >
                   <option value="">Select Owner</option>
                   {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>{emp.name}</option>
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name}
+                    </option>
                   ))}
                 </NativeSelect>
               </div>
             </div>
-
           </div>
         )}
 
@@ -684,7 +840,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
               <div className="grid grid-cols-1 gap-3 text-xs">
                 <div>
-                  <label className="mnx-label block mb-1 text-[9px]">Attention</label>
+                  <label className="mnx-label block mb-1 text-[9px]">
+                    Attention
+                  </label>
                   <CrmInput
                     type="text"
                     name="billingAttention"
@@ -694,7 +852,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   />
                 </div>
                 <div>
-                  <label className="mnx-label block mb-1 text-[9px]">Country/Region</label>
+                  <label className="mnx-label block mb-1 text-[9px]">
+                    Country/Region
+                  </label>
                   <CrmInput
                     type="text"
                     name="billingCountry"
@@ -704,7 +864,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   />
                 </div>
                 <div>
-                  <label className="mnx-label block mb-1 text-[9px]">Address Line 1</label>
+                  <label className="mnx-label block mb-1 text-[9px]">
+                    Address Line 1
+                  </label>
                   <CrmInput
                     type="text"
                     name="billingStreet1"
@@ -715,7 +877,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   />
                 </div>
                 <div>
-                  <label className="mnx-label block mb-1 text-[9px]">Address Line 2</label>
+                  <label className="mnx-label block mb-1 text-[9px]">
+                    Address Line 2
+                  </label>
                   <CrmInput
                     type="text"
                     name="billingStreet2"
@@ -727,7 +891,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="mnx-label block mb-1 text-[9px]">City</label>
+                    <label className="mnx-label block mb-1 text-[9px]">
+                      City
+                    </label>
                     <CrmInput
                       type="text"
                       name="billingCity"
@@ -737,7 +903,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                     />
                   </div>
                   <div>
-                    <label className="mnx-label block mb-1 text-[9px]">State</label>
+                    <label className="mnx-label block mb-1 text-[9px]">
+                      State
+                    </label>
                     <CrmInput
                       type="text"
                       name="billingState"
@@ -749,7 +917,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="mnx-label block mb-1 text-[9px]">Pin Code</label>
+                    <label className="mnx-label block mb-1 text-[9px]">
+                      Pin Code
+                    </label>
                     <CrmInput
                       type="text"
                       name="billingPincode"
@@ -759,7 +929,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                     />
                   </div>
                   <div>
-                    <label className="mnx-label block mb-1 text-[9px]">Phone</label>
+                    <label className="mnx-label block mb-1 text-[9px]">
+                      Phone
+                    </label>
                     <CrmInput
                       type="text"
                       name="billingPhone"
@@ -770,7 +942,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   </div>
                 </div>
                 <div>
-                  <label className="mnx-label block mb-1 text-[9px]">Fax Number</label>
+                  <label className="mnx-label block mb-1 text-[9px]">
+                    Fax Number
+                  </label>
                   <CrmInput
                     type="text"
                     name="billingFax"
@@ -801,7 +975,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
 
               <div className="grid grid-cols-1 gap-3 text-xs">
                 <div>
-                  <label className="mnx-label block mb-1 text-[9px]">Attention</label>
+                  <label className="mnx-label block mb-1 text-[9px]">
+                    Attention
+                  </label>
                   <CrmInput
                     type="text"
                     name="shippingAttention"
@@ -811,7 +987,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   />
                 </div>
                 <div>
-                  <label className="mnx-label block mb-1 text-[9px]">Country/Region</label>
+                  <label className="mnx-label block mb-1 text-[9px]">
+                    Country/Region
+                  </label>
                   <CrmInput
                     type="text"
                     name="shippingCountry"
@@ -821,7 +999,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   />
                 </div>
                 <div>
-                  <label className="mnx-label block mb-1 text-[9px]">Address Line 1</label>
+                  <label className="mnx-label block mb-1 text-[9px]">
+                    Address Line 1
+                  </label>
                   <CrmInput
                     type="text"
                     name="shippingStreet1"
@@ -832,7 +1012,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   />
                 </div>
                 <div>
-                  <label className="mnx-label block mb-1 text-[9px]">Address Line 2</label>
+                  <label className="mnx-label block mb-1 text-[9px]">
+                    Address Line 2
+                  </label>
                   <CrmInput
                     type="text"
                     name="shippingStreet2"
@@ -844,7 +1026,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="mnx-label block mb-1 text-[9px]">City</label>
+                    <label className="mnx-label block mb-1 text-[9px]">
+                      City
+                    </label>
                     <CrmInput
                       type="text"
                       name="shippingCity"
@@ -854,7 +1038,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                     />
                   </div>
                   <div>
-                    <label className="mnx-label block mb-1 text-[9px]">State</label>
+                    <label className="mnx-label block mb-1 text-[9px]">
+                      State
+                    </label>
                     <CrmInput
                       type="text"
                       name="shippingState"
@@ -866,7 +1052,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="mnx-label block mb-1 text-[9px]">Pin Code</label>
+                    <label className="mnx-label block mb-1 text-[9px]">
+                      Pin Code
+                    </label>
                     <CrmInput
                       type="text"
                       name="shippingPincode"
@@ -876,7 +1064,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                     />
                   </div>
                   <div>
-                    <label className="mnx-label block mb-1 text-[9px]">Phone</label>
+                    <label className="mnx-label block mb-1 text-[9px]">
+                      Phone
+                    </label>
                     <CrmInput
                       type="text"
                       name="shippingPhone"
@@ -887,7 +1077,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
                   </div>
                 </div>
                 <div>
-                  <label className="mnx-label block mb-1 text-[9px]">Fax Number</label>
+                  <label className="mnx-label block mb-1 text-[9px]">
+                    Fax Number
+                  </label>
                   <CrmInput
                     type="text"
                     name="shippingFax"
@@ -909,7 +1101,9 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
               <span>Customer Remarks & Notes</span>
             </h4>
             <div>
-              <label className="mnx-label block mb-1.5">Remarks (For internal CRM use)</label>
+              <label className="mnx-label block mb-1.5">
+                Remarks (For internal CRM use)
+              </label>
               <CrmTextarea
                 name="remarks"
                 defaultValue={initialData?.remarks || ""}
@@ -927,17 +1121,23 @@ export function AccountForm({ initialData, employees }: AccountFormProps) {
         <CrmButton
           type="button"
           onClick={() => router.back()}
-          className="px-5 py-2 bg-[var(--color-surface-container)] hover:bg-[var(--color-surface-container-low)] text-[var(--color-on-surface-variant)] border border-[var(--color-outline-variant)] rounded-xl text-sm font-semibold cursor-pointer shadow-[2px_2px_0px_0px_var(--mnx-border)] transition-all hover:-translate-y-0.5 active:translate-y-0 active:shadow-none"
+          className="px-5 py-2 bg-[var(--color-surface-container)] hover:bg-[var(--color-surface-container-low)] text-[var(--color-on-surface-variant)] border border-[var(--color-outline-variant)] rounded-xl text-sm font-semibold cursor-pointer mnx-shadow-panel transition-all hover:-translate-y-0.5 active:translate-y-0 active:shadow-none"
         >
           Cancel
         </CrmButton>
         <CrmButton
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] text-mono-text rounded-xl text-sm font-bold transition-all shadow-[2px_2px_0px_0px_var(--mnx-accent-soft)] hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_var(--mnx-accent-soft)] hover:bg-[var(--mnx-accent)] active:translate-y-0 active:shadow-none disabled:opacity-50 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] text-mono-text rounded-xl text-sm font-bold transition-all mnx-shadow-panel hover:-translate-y-0.5  hover:bg-[var(--mnx-accent)] active:translate-y-0 active:shadow-none disabled:opacity-50 cursor-pointer"
         >
           <Save className="size-4" />
-          <span>{isSubmitting ? "Saving..." : isEdit ? "Update Customer" : "Save Customer"}</span>
+          <span>
+            {isSubmitting
+              ? "Saving..."
+              : isEdit
+                ? "Update Customer"
+                : "Save Customer"}
+          </span>
         </CrmButton>
       </div>
     </form>

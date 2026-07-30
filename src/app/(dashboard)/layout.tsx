@@ -15,11 +15,17 @@ function normalizePathname(pathname: string | null) {
   return normalized || "/";
 }
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const pathname = normalizePathname((await headers()).get("x-current-pathname"));
+  const pathname = normalizePathname(
+    (await headers()).get("x-current-pathname"),
+  );
   const [caps, enabledModuleIds] = await Promise.all([
     loadCaps(session.user.id),
     getEnabledModuleIds(session.user.orgId!),
@@ -40,7 +46,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
           isPlatformAdmin={session.user.isPlatformAdmin}
           userEmail={session.user.email}
           userName={session.user.name}
-          sessionToken={session.user.sessionNonce}
           userId={session.user.id}
           enabledModuleIds={enabledModuleIds}
         >

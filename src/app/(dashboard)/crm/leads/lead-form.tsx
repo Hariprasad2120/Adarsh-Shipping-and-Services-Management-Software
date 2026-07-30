@@ -1,6 +1,11 @@
 "use client";
 
-import { CrmButton, CrmDialogLayer, CrmInput, CrmTextarea } from "@/components/monolith/crm-workspace";
+import {
+  CrmButton,
+  CrmDialogLayer,
+  CrmInput,
+  CrmTextarea,
+} from "@/components/monolith/crm-workspace";
 
 import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState } from "react";
@@ -26,24 +31,37 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastName, setLastName] = useState(initialData?.lastName || "");
   const [company, setCompany] = useState(initialData?.company || "");
-  const [isPerishable, setIsPerishable] = useState(initialData?.isPerishable || false);
+  const [isPerishable, setIsPerishable] = useState(
+    initialData?.isPerishable || false,
+  );
   const [showPerishablesDialog, setShowPerishablesDialog] = useState(false);
-  const [perishableType, setPerishableType] = useState(initialData?.perishableDetails?.perishableType || "");
-  const [tempRequired, setTempRequired] = useState(initialData?.perishableDetails?.tempRequired || "");
-  const [humidityControl, setHumidityControl] = useState(initialData?.perishableDetails?.humidityControl || "");
-  const [ventilation, setVentilation] = useState(initialData?.perishableDetails?.ventilation || "");
-  const [perishableRemarks, setPerishableRemarks] = useState(initialData?.perishableDetails?.perishableRemarks || "");
+  const [perishableType, setPerishableType] = useState(
+    initialData?.perishableDetails?.perishableType || "",
+  );
+  const [tempRequired, setTempRequired] = useState(
+    initialData?.perishableDetails?.tempRequired || "",
+  );
+  const [humidityControl, setHumidityControl] = useState(
+    initialData?.perishableDetails?.humidityControl || "",
+  );
+  const [ventilation, setVentilation] = useState(
+    initialData?.perishableDetails?.ventilation || "",
+  );
+  const [perishableRemarks, setPerishableRemarks] = useState(
+    initialData?.perishableDetails?.perishableRemarks || "",
+  );
 
   const handleFillDemo = () => {
     // Set controlled states
     setLastName("Hari");
     setCompany("Adarsh Shipping Logistics");
-    
+
     // Set other inputs
     const formEl = document.querySelector("form");
     if (formEl) {
       const setVal = (name: string, val: string) => {
-        const el = formEl.elements.namedItem(name) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+        const el = formEl.elements.namedItem(name) as
+          HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
         if (el) el.value = val;
       };
       setVal("firstName", "Adarsh");
@@ -64,7 +82,10 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
       setVal("pincode", "600041");
       setVal("country", "India");
       setVal("tags", "VIP Customer, Custom Clearance");
-      setVal("description", "Requires regular import shipments of automotive parts from Shanghai to Chennai Port. Expects LCL consolidation and custom clearing CHA support.");
+      setVal(
+        "description",
+        "Requires regular import shipments of automotive parts from Shanghai to Chennai Port. Expects LCL consolidation and custom clearing CHA support.",
+      );
       toast.success("Lead form demo data filled!");
     }
   };
@@ -86,19 +107,37 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
     setIsSubmitting(false);
 
     if (res.ok) {
-      toast.success(isEdit ? "Lead updated successfully" : "Lead created successfully");
+      toast.success(
+        isEdit ? "Lead updated successfully" : "Lead created successfully",
+      );
       router.push(isEdit ? `/crm/leads/${initialData.id}` : "/crm/leads");
     } else {
       toast.error(res.error);
     }
   };
 
-  const sources = ["Cold Call", "Web Site", "Partner Referral", "Employee Referral", "Trade Show", "External Agency"];
-  const statuses = ["NEW", "ATTEMPTED_TO_CONTACT", "CONTACTED", "QUALIFIED", "LOST"];
+  const sources = [
+    "Cold Call",
+    "Web Site",
+    "Partner Referral",
+    "Employee Referral",
+    "Trade Show",
+    "External Agency",
+  ];
+  const statuses = [
+    "NEW",
+    "ATTEMPTED_TO_CONTACT",
+    "CONTACTED",
+    "QUALIFIED",
+    "LOST",
+  ];
   const ratings = ["Hot", "Warm", "Cold"];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/60 rounded-xl p-6 shadow-2xl">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-8 max-w-5xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/60 rounded-xl p-6 shadow-2xl"
+    >
       {/* ─── SECTION: BASIC INFO ────────────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
@@ -108,7 +147,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">First Name</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              First Name
+            </label>
             <CrmInput
               type="text"
               name="firstName"
@@ -118,7 +159,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Last Name / Lead Name *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Last Name / Lead Name *
+            </label>
             <CrmInput
               type="text"
               name="lastName"
@@ -130,7 +173,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Company Name *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Company Name *
+            </label>
             <CrmInput
               type="text"
               name="company"
@@ -142,7 +187,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Designation</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Designation
+            </label>
             <CrmInput
               type="text"
               name="designation"
@@ -163,7 +210,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Email Address</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Email Address
+            </label>
             <CrmInput
               type="email"
               name="email"
@@ -173,7 +222,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Phone (Office)</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Phone (Office)
+            </label>
             <CrmInput
               type="text"
               name="phone"
@@ -183,7 +234,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Mobile Number</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Mobile Number
+            </label>
             <CrmInput
               type="text"
               name="mobile"
@@ -193,7 +246,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Fax Number</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Fax Number
+            </label>
             <CrmInput
               type="text"
               name="fax"
@@ -203,7 +258,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Website URL</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Website URL
+            </label>
             <CrmInput
               type="url"
               name="website"
@@ -224,43 +281,57 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Lead Source</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Lead Source
+            </label>
             <NativeSelect
               name="source"
               defaultValue={initialData?.source || "Cold Call"}
               className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {sources.map((src) => (
-                <option key={src} value={src}>{src}</option>
+                <option key={src} value={src}>
+                  {src}
+                </option>
               ))}
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Lead Status</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Lead Status
+            </label>
             <NativeSelect
               name="status"
               defaultValue={initialData?.status || "NEW"}
               className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {statuses.map((st) => (
-                <option key={st} value={st}>{st.replace("_", " ")}</option>
+                <option key={st} value={st}>
+                  {st.replace("_", " ")}
+                </option>
               ))}
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Rating</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Rating
+            </label>
             <NativeSelect
               name="rating"
               defaultValue={initialData?.rating || "Warm"}
               className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
             >
               {ratings.map((rt) => (
-                <option key={rt} value={rt}>{rt}</option>
+                <option key={rt} value={rt}>
+                  {rt}
+                </option>
               ))}
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Industry Segment</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Industry Segment
+            </label>
             <CrmInput
               type="text"
               name="industry"
@@ -270,7 +341,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Annual Revenue (INR)</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Annual Revenue (INR)
+            </label>
             <CrmInput
               type="number"
               name="annualRevenue"
@@ -280,7 +353,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Lead Owner (HRMS Linked) *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Lead Owner (HRMS Linked) *
+            </label>
             <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
@@ -289,7 +364,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             >
               <option value="">Select Owner</option>
               {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>{emp.name}</option>
+                <option key={emp.id} value={emp.id}>
+                  {emp.name}
+                </option>
               ))}
             </NativeSelect>
           </div>
@@ -300,8 +377,13 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
       <div className="space-y-4 p-5 rounded-xl bg-[var(--mnx-surface)]/45 border border-[var(--mnx-border)] mnx-crm-hover transition-all">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <h4 className="text-xs font-bold text-mono-text uppercase tracking-wider">Perishable Cargo Handling</h4>
-            <p className="text-[11px] text-mono-muted">Specify if this client requires temperature-controlled or perishable cargo shipping</p>
+            <h4 className="text-xs font-bold text-mono-text uppercase tracking-wider">
+              Perishable Cargo Handling
+            </h4>
+            <p className="text-[11px] text-mono-muted">
+              Specify if this client requires temperature-controlled or
+              perishable cargo shipping
+            </p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer select-none">
             <CrmInput
@@ -321,30 +403,58 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
         </div>
 
         {/* Hidden inputs to be caught by FormData */}
-        <CrmInput type="hidden" name="isPerishable" value={isPerishable ? "true" : "false"} />
+        <CrmInput
+          type="hidden"
+          name="isPerishable"
+          value={isPerishable ? "true" : "false"}
+        />
         <CrmInput type="hidden" name="perishableType" value={perishableType} />
         <CrmInput type="hidden" name="tempRequired" value={tempRequired} />
-        <CrmInput type="hidden" name="humidityControl" value={humidityControl} />
+        <CrmInput
+          type="hidden"
+          name="humidityControl"
+          value={humidityControl}
+        />
         <CrmInput type="hidden" name="ventilation" value={ventilation} />
-        <CrmInput type="hidden" name="perishableRemarks" value={perishableRemarks} />
+        <CrmInput
+          type="hidden"
+          name="perishableRemarks"
+          value={perishableRemarks}
+        />
 
         {isPerishable && (
           <div className="p-4 bg-[var(--mnx-surface)]/60 rounded-lg border border-[var(--mnx-border)]/50 text-xs grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in duration-200">
             <div>
-              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wide block mb-0.5">Cargo Type</span>
-              <span className="text-mono-text font-medium">{perishableType || "Not specified"}</span>
+              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wide block mb-0.5">
+                Cargo Type
+              </span>
+              <span className="text-mono-text font-medium">
+                {perishableType || "Not specified"}
+              </span>
             </div>
             <div>
-              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wide block mb-0.5">Temperature Range</span>
-              <span className="text-mono-text font-medium">{tempRequired || "Not specified"}</span>
+              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wide block mb-0.5">
+                Temperature Range
+              </span>
+              <span className="text-mono-text font-medium">
+                {tempRequired || "Not specified"}
+              </span>
             </div>
             <div>
-              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wide block mb-0.5">Humidity / Vent</span>
-              <span className="text-mono-text font-medium">H: {humidityControl || "N/A"} / V: {ventilation || "N/A"}</span>
+              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wide block mb-0.5">
+                Humidity / Vent
+              </span>
+              <span className="text-mono-text font-medium">
+                H: {humidityControl || "N/A"} / V: {ventilation || "N/A"}
+              </span>
             </div>
             <div>
-              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wide block mb-0.5">Remarks</span>
-              <span className="text-mono-text font-medium block truncate">{perishableRemarks || "None"}</span>
+              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wide block mb-0.5">
+                Remarks
+              </span>
+              <span className="text-mono-text font-medium block truncate">
+                {perishableRemarks || "None"}
+              </span>
             </div>
             <div className="col-span-2 md:col-span-4 flex justify-end pt-1">
               <CrmButton
@@ -368,7 +478,12 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
         >
           <div className="w-full max-w-md bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-[var(--mnx-border)]/50 bg-[var(--mnx-surface)]">
-              <span id="perishable-cargo-title" className="font-bold text-xs text-mono-text uppercase tracking-wider">Perishable Cargo Specification</span>
+              <span
+                id="perishable-cargo-title"
+                className="font-bold text-xs text-mono-text uppercase tracking-wider"
+              >
+                Perishable Cargo Specification
+              </span>
               <CrmButton
                 type="button"
                 onClick={() => setShowPerishablesDialog(false)}
@@ -379,7 +494,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Cargo Type (e.g. Fresh Fruits, Seafood, Vaccines)</label>
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                  Cargo Type (e.g. Fresh Fruits, Seafood, Vaccines)
+                </label>
                 <CrmInput
                   type="text"
                   placeholder="e.g. Chilled Blueberries"
@@ -390,7 +507,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Required Temp (°C)</label>
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                    Required Temp (°C)
+                  </label>
                   <CrmInput
                     type="text"
                     placeholder="e.g. 2°C to 4°C"
@@ -400,7 +519,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Humidity (%)</label>
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                    Humidity (%)
+                  </label>
                   <CrmInput
                     type="text"
                     placeholder="e.g. 85%"
@@ -410,7 +531,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Ventilation</label>
+                  <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                    Ventilation
+                  </label>
                   <CrmInput
                     type="text"
                     placeholder="e.g. 25 cbm/h"
@@ -421,7 +544,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">Special Remarks & Instructions</label>
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                  Special Remarks & Instructions
+                </label>
                 <CrmTextarea
                   rows={3}
                   placeholder="Provide remarks regarding temperature logging, reefer power connection, or pre-cooling needs..."
@@ -455,7 +580,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-3">
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Street Address</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Street Address
+            </label>
             <CrmInput
               type="text"
               name="address"
@@ -465,7 +592,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">City</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              City
+            </label>
             <CrmInput
               type="text"
               name="city"
@@ -475,7 +604,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">State</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              State
+            </label>
             <CrmInput
               type="text"
               name="state"
@@ -485,7 +616,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Pincode</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Pincode
+            </label>
             <CrmInput
               type="text"
               name="pincode"
@@ -495,7 +628,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Country</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Country
+            </label>
             <CrmInput
               type="text"
               name="country"
@@ -505,7 +640,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
             />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Comma-separated Tags</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Comma-separated Tags
+            </label>
             <CrmInput
               type="text"
               name="tags"
@@ -519,7 +656,9 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
 
       {/* Description */}
       <div>
-        <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Enquiry / Description</label>
+        <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+          Enquiry / Description
+        </label>
         <CrmTextarea
           name="description"
           defaultValue={initialData?.description || ""}
@@ -548,10 +687,12 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
         <CrmButton
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-sm font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-sm font-bold transition-all mnx-shadow-panel cursor-pointer"
         >
           <Save className="size-4.5" />
-          <span>{isSubmitting ? "Saving..." : isEdit ? "Update Lead" : "Save Lead"}</span>
+          <span>
+            {isSubmitting ? "Saving..." : isEdit ? "Update Lead" : "Save Lead"}
+          </span>
         </CrmButton>
       </div>
     </form>

@@ -1,36 +1,49 @@
-import { CrmButton, CrmInput, CrmTextarea, CrmConfigurationState, CrmPermissionState } from "@/components/monolith/crm-workspace";
+import {
+  CrmButton,
+  CrmInput,
+  CrmTextarea,
+  CrmConfigurationState,
+  CrmPermissionState,
+} from "@/components/monolith/crm-workspace";
 import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { listProducts } from "@/modules/crm/service";
 import { requirePermission } from "@/lib/rbac";
+import { Search, Package, Save } from "lucide-react";
 import {
-  Search,
-  Package,
-  Save
-} from "lucide-react";
-import { createProductAction, deleteProductAction } from "@/modules/crm/actions";
+  createProductAction,
+  deleteProductAction,
+} from "@/modules/crm/actions";
 import { DeleteRecordButton } from "../_components/delete-record-button";
 
 interface SearchParams {
   search?: string;
 }
 
-export default async function CrmProductsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+export default async function CrmProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;
   if (!orgId) {
-    return <CrmConfigurationState description="Missing organisation context." />;
+    return (
+      <CrmConfigurationState description="Missing organisation context." />
+    );
   }
 
   // Permission Guard
   try {
     await requirePermission(session.user.id, "crm.access");
   } catch (e) {
-    return <CrmPermissionState description="You do not have permission to view CRM products." />;
+    return (
+      <CrmPermissionState description="You do not have permission to view CRM products." />
+    );
   }
 
   const awaitedParams = await searchParams;
@@ -45,8 +58,12 @@ export default async function CrmProductsPage({ searchParams }: { searchParams: 
         {/* Left Column: Products List Table */}
         <div className="lg:col-span-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl overflow-hidden shadow-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Product Catalog</h3>
-            <span className="text-xs text-mono-muted font-bold">{products.length} service items</span>
+            <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
+              Product Catalog
+            </h3>
+            <span className="text-xs text-mono-muted font-bold">
+              {products.length} service items
+            </span>
           </div>
 
           <form method="GET" className="relative">
@@ -61,28 +78,40 @@ export default async function CrmProductsPage({ searchParams }: { searchParams: 
           </form>
 
           {products.length === 0 ? (
-            <div className="p-8 text-center text-mono-muted text-xs italic">No items found in the service catalog.</div>
+            <div className="p-8 text-center text-mono-muted text-xs italic">
+              No items found in the service catalog.
+            </div>
           ) : (
             <div className="divide-y divide-[var(--mnx-border)]/30">
               {products.map((product) => (
-                <div key={product.id} className="py-4 flex items-center justify-between gap-4">
+                <div
+                  key={product.id}
+                  className="py-4 flex items-center justify-between gap-4"
+                >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-mono-text text-sm block truncate">{product.name}</span>
+                      <span className="font-bold text-mono-text text-sm block truncate">
+                        {product.name}
+                      </span>
                       <span className="px-1.5 py-0.5 text-[8.5px] font-bold bg-mono-soft text-mono-muted rounded uppercase tracking-wider shrink-0">
                         {product.sku}
                       </span>
                     </div>
                     <span className="text-xs text-mono-muted block mt-0.5">
-                      Category: {product.category || "General"} • Tax: {product.taxPercent}% GST
+                      Category: {product.category || "General"} • Tax:{" "}
+                      {product.taxPercent}% GST
                     </span>
                     {product.description && (
-                      <p className="text-xs text-mono-muted mt-1 truncate">{product.description}</p>
+                      <p className="text-xs text-mono-muted mt-1 truncate">
+                        {product.description}
+                      </p>
                     )}
                   </div>
                   <div className="flex items-center gap-4 shrink-0">
                     <div className="text-right">
-                      <span className="text-sm font-black text-[var(--mnx-accent)] block">₹{product.price.toLocaleString("en-IN")}</span>
+                      <span className="text-sm font-black text-[var(--mnx-accent)] block">
+                        ₹{product.price.toLocaleString("en-IN")}
+                      </span>
                     </div>
                     <DeleteRecordButton
                       recordId={product.id}
@@ -100,7 +129,9 @@ export default async function CrmProductsPage({ searchParams }: { searchParams: 
         <div className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl p-6 shadow-2xl space-y-4">
           <div className="flex items-center gap-2 border-b border-[var(--mnx-border)]/30 pb-2">
             <Package className="size-4.5 text-[var(--mnx-accent)]" />
-            <h3 className="font-bold text-xs text-mono-text uppercase tracking-wider">Add New Service Item</h3>
+            <h3 className="font-bold text-xs text-mono-text uppercase tracking-wider">
+              Add New Service Item
+            </h3>
           </div>
 
           <form
@@ -111,7 +142,9 @@ export default async function CrmProductsPage({ searchParams }: { searchParams: 
             className="space-y-4"
           >
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">Product Name *</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                Product Name *
+              </label>
               <CrmInput
                 type="text"
                 name="name"
@@ -122,7 +155,9 @@ export default async function CrmProductsPage({ searchParams }: { searchParams: 
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">SKU / Code *</label>
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                  SKU / Code *
+                </label>
                 <CrmInput
                   type="text"
                   name="sku"
@@ -132,7 +167,9 @@ export default async function CrmProductsPage({ searchParams }: { searchParams: 
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">Category</label>
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                  Category
+                </label>
                 <CrmInput
                   type="text"
                   name="category"
@@ -143,7 +180,9 @@ export default async function CrmProductsPage({ searchParams }: { searchParams: 
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">Base Price (INR) *</label>
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                  Base Price (INR) *
+                </label>
                 <CrmInput
                   type="number"
                   name="price"
@@ -153,7 +192,9 @@ export default async function CrmProductsPage({ searchParams }: { searchParams: 
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">GST Rate (%)</label>
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                  GST Rate (%)
+                </label>
                 <NativeSelect
                   name="taxPercent"
                   defaultValue="18"
@@ -168,7 +209,9 @@ export default async function CrmProductsPage({ searchParams }: { searchParams: 
               </div>
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">Description</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                Description
+              </label>
               <CrmTextarea
                 name="description"
                 placeholder="Log service details..."
@@ -179,7 +222,7 @@ export default async function CrmProductsPage({ searchParams }: { searchParams: 
             <CrmInput type="hidden" name="active" value="true" />
             <CrmButton
               type="submit"
-              className="w-full flex items-center justify-center gap-1.5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text font-bold rounded-lg text-xs transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
+              className="w-full flex items-center justify-center gap-1.5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text font-bold rounded-lg text-xs transition-all mnx-shadow-panel cursor-pointer"
             >
               <Save className="size-4" />
               <span>Save Product Item</span>

@@ -6,7 +6,10 @@ import { NativeSelect } from "@/components/monolith/native-select";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createContactAction, updateContactAction } from "@/modules/crm/actions";
+import {
+  createContactAction,
+  updateContactAction,
+} from "@/modules/crm/actions";
 import { Save, User, Phone, Mail, Building, Tag } from "lucide-react";
 
 interface Option {
@@ -20,7 +23,11 @@ interface ContactFormProps {
   employees: Option[];
 }
 
-export function ContactForm({ initialData, accounts, employees }: ContactFormProps) {
+export function ContactForm({
+  initialData,
+  accounts,
+  employees,
+}: ContactFormProps) {
   const router = useRouter();
   const isEdit = !!initialData;
 
@@ -44,7 +51,11 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
     setIsSubmitting(false);
 
     if (res.ok) {
-      toast.success(isEdit ? "Contact updated successfully" : "Contact created successfully");
+      toast.success(
+        isEdit
+          ? "Contact updated successfully"
+          : "Contact created successfully",
+      );
       router.push(isEdit ? `/crm/contacts/${initialData.id}` : "/crm/contacts");
     } else {
       toast.error(res.error);
@@ -52,7 +63,10 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/60 rounded-xl p-6 shadow-2xl">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-8 max-w-5xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/60 rounded-xl p-6 shadow-2xl"
+    >
       {/* ─── SECTION: BASIC INFO ────────────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
@@ -62,7 +76,9 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">First Name</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              First Name
+            </label>
             <CrmInput
               type="text"
               name="firstName"
@@ -72,7 +88,9 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Last Name *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Last Name *
+            </label>
             <CrmInput
               type="text"
               name="lastName"
@@ -84,7 +102,9 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Linked Account (Company) *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Linked Account (Company) *
+            </label>
             <NativeSelect
               name="accountId"
               defaultValue={initialData?.accountId || ""}
@@ -93,12 +113,16 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
             >
               <option value="">Select Account</option>
               {accounts.map((acc) => (
-                <option key={acc.id} value={acc.id}>{acc.name}</option>
+                <option key={acc.id} value={acc.id}>
+                  {acc.name}
+                </option>
               ))}
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Designation</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Designation
+            </label>
             <CrmInput
               type="text"
               name="designation"
@@ -108,7 +132,9 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Department</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Department
+            </label>
             <CrmInput
               type="text"
               name="department"
@@ -126,7 +152,10 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
               id="is-decision-maker"
               className="size-4 rounded border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-accent)] focus:ring-0 focus:ring-offset-0 cursor-pointer"
             />
-            <label htmlFor="is-decision-maker" className="text-xs font-bold text-mono-text uppercase tracking-wide cursor-pointer select-none">
+            <label
+              htmlFor="is-decision-maker"
+              className="text-xs font-bold text-mono-text uppercase tracking-wide cursor-pointer select-none"
+            >
               Key Decision Maker / CHA Liaison
             </label>
           </div>
@@ -142,7 +171,9 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Email Address</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Email Address
+            </label>
             <CrmInput
               type="email"
               name="email"
@@ -152,7 +183,9 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Phone (Direct)</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Phone (Direct)
+            </label>
             <CrmInput
               type="text"
               name="phone"
@@ -162,7 +195,9 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Mobile Number</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Mobile Number
+            </label>
             <CrmInput
               type="text"
               name="mobile"
@@ -183,7 +218,9 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Contact Owner *</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Contact Owner *
+            </label>
             <NativeSelect
               name="ownerId"
               defaultValue={initialData?.ownerId || ""}
@@ -192,12 +229,16 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
             >
               <option value="">Select Owner</option>
               {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>{emp.name}</option>
+                <option key={emp.id} value={emp.id}>
+                  {emp.name}
+                </option>
               ))}
             </NativeSelect>
           </div>
           <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">Street Address</label>
+            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+              Street Address
+            </label>
             <CrmInput
               type="text"
               name="address"
@@ -221,10 +262,16 @@ export function ContactForm({ initialData, accounts, employees }: ContactFormPro
         <CrmButton
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-sm font-bold transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-sm font-bold transition-all mnx-shadow-panel cursor-pointer"
         >
           <Save className="size-4.5" />
-          <span>{isSubmitting ? "Saving..." : isEdit ? "Update Contact" : "Save Contact"}</span>
+          <span>
+            {isSubmitting
+              ? "Saving..."
+              : isEdit
+                ? "Update Contact"
+                : "Save Contact"}
+          </span>
         </CrmButton>
       </div>
     </form>

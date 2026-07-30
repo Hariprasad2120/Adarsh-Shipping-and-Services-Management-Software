@@ -62,7 +62,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
   const [lastName, setLastName] = useState("");
   const [industry, setIndustry] = useState("Logistics & Freight Forwarding");
   const [language, setLanguage] = useState("English");
-  const [gstTreatment, setGstTreatment] = useState("Registered Business - Regular");
+  const [gstTreatment, setGstTreatment] = useState(
+    "Registered Business - Regular",
+  );
   const [placeOfSupply, setPlaceOfSupply] = useState("Tamil Nadu");
   const [pan, setPan] = useState("");
   const [gstin, setGstin] = useState("");
@@ -110,9 +112,12 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
   const [gstFile, setGstFile] = useState<File | null>(null);
   const [adCodeFile, setAdCodeFile] = useState<File | null>(null);
   const [fssaiLicenceFile, setFssaiLicenceFile] = useState<File | null>(null);
-  const [companyAddressProofFile, setCompanyAddressProofFile] = useState<File | null>(null);
-  const [partnerAddressProofFile, setPartnerAddressProofFile] = useState<File | null>(null);
-  const [authorisationLetterFile, setAuthorisationLetterFile] = useState<File | null>(null);
+  const [companyAddressProofFile, setCompanyAddressProofFile] =
+    useState<File | null>(null);
+  const [partnerAddressProofFile, setPartnerAddressProofFile] =
+    useState<File | null>(null);
+  const [authorisationLetterFile, setAuthorisationLetterFile] =
+    useState<File | null>(null);
 
   const handleCopyAddress = () => {
     setShippingAttention(billingAttention);
@@ -130,13 +135,15 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
   const handleNameFieldBlur = () => {
     if (!displayName) {
       if (companyName) setDisplayName(companyName);
-      else if (firstName || lastName) setDisplayName(`${firstName} ${lastName}`.trim());
+      else if (firstName || lastName)
+        setDisplayName(`${firstName} ${lastName}`.trim());
     }
   };
 
   const validateStep = () => {
     if (currentStep === 1) {
-      const computedName = displayName || companyName || `${firstName} ${lastName}`.trim();
+      const computedName =
+        displayName || companyName || `${firstName} ${lastName}`.trim();
       if (!computedName) {
         toast.error("Please enter a Customer Display Name or Company Name.");
         return false;
@@ -214,14 +221,24 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
     if (gstFile) fd.set("kycFile_GST", gstFile);
     if (adCodeFile) fd.set("kycFile_AD_Code", adCodeFile);
     if (fssaiLicenceFile) fd.set("kycFile_FSSAI_Licence", fssaiLicenceFile);
-    if (companyAddressProofFile) fd.set("kycFile_Company_Address_Proof", companyAddressProofFile);
-    if (partnerAddressProofFile) fd.set("kycFile_Partner_/_Proprietor_Address_Proof", partnerAddressProofFile);
-    if (authorisationLetterFile) fd.set("kycFile_Authorisation_Letter", authorisationLetterFile);
+    if (companyAddressProofFile)
+      fd.set("kycFile_Company_Address_Proof", companyAddressProofFile);
+    if (partnerAddressProofFile)
+      fd.set(
+        "kycFile_Partner_/_Proprietor_Address_Proof",
+        partnerAddressProofFile,
+      );
+    if (authorisationLetterFile)
+      fd.set("kycFile_Authorisation_Letter", authorisationLetterFile);
 
     fd.set("type", "Customer");
 
     // set primary name
-    const nameToSave = displayName.trim() || companyName.trim() || `${firstName} ${lastName}`.trim() || "Unnamed Customer";
+    const nameToSave =
+      displayName.trim() ||
+      companyName.trim() ||
+      `${firstName} ${lastName}`.trim() ||
+      "Unnamed Customer";
     fd.set("name", nameToSave);
 
     try {
@@ -231,7 +248,10 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
         if (redirectTo) {
           const targetUrl = new URL(redirectTo, window.location.origin);
           targetUrl.searchParams.set("customerId", res.data?.id || "");
-          targetUrl.searchParams.set("customerName", res.data?.name || nameToSave);
+          targetUrl.searchParams.set(
+            "customerName",
+            res.data?.name || nameToSave,
+          );
           targetUrl.searchParams.set("new", "true");
           router.push(`${targetUrl.pathname}${targetUrl.search}`);
         } else {
@@ -249,7 +269,7 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
   };
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
+    <div className="min-w-0 space-y-8">
       {/* Wizard Header */}
       <ChaRoutePageHeader
         actions={
@@ -309,8 +329,10 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
       </ChaPanel>
 
       {/* Main Form Fields Container */}
-      <form onSubmit={handleSubmit} className="mnx-bg-surface rounded-2xl border mnx-border p-6 shadow-sm mnx-border space-y-6">
-        
+      <form
+        onSubmit={handleSubmit}
+        className="mnx-bg-surface rounded-2xl border mnx-border p-6 shadow-sm mnx-border space-y-6"
+      >
         {/* Step 1: Profile */}
         {currentStep === 1 && (
           <div className="space-y-6">
@@ -322,7 +344,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
 
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-2">Customer Type</label>
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-2">
+                  Customer Type
+                </label>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2 text-sm mnx-text-primary cursor-pointer font-medium">
                     <Input
@@ -352,7 +376,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
               {customerSubType === "Business" ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Company Name *</label>
+                    <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                      Company Name *
+                    </label>
                     <Input
                       type="text"
                       placeholder="e.g. Adarsh Shipping Ltd"
@@ -363,7 +389,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Display Name *</label>
+                    <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                      Display Name *
+                    </label>
                     <Input
                       type="text"
                       placeholder="Customer display name"
@@ -378,7 +406,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                 <div className="space-y-4">
                   <div className="grid grid-cols-12 gap-2">
                     <div className="col-span-3">
-                      <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Salutation</label>
+                      <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                        Salutation
+                      </label>
                       <NativeSelect
                         value={salutation}
                         onChange={(e) => setSalutation(e.target.value)}
@@ -392,7 +422,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                       </NativeSelect>
                     </div>
                     <div className="col-span-4">
-                      <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">First Name *</label>
+                      <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                        First Name *
+                      </label>
                       <Input
                         type="text"
                         placeholder="First Name"
@@ -403,7 +435,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                       />
                     </div>
                     <div className="col-span-5">
-                      <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Last Name</label>
+                      <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                        Last Name
+                      </label>
                       <Input
                         type="text"
                         placeholder="Last Name"
@@ -415,7 +449,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Display Name *</label>
+                    <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                      Display Name *
+                    </label>
                     <Input
                       type="text"
                       placeholder="Display Name"
@@ -430,13 +466,17 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Industry Segment</label>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                    Industry Segment
+                  </label>
                   <NativeSelect
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value)}
                     className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                   >
-                    <option value="Logistics & Freight Forwarding">Logistics & Freight Forwarding</option>
+                    <option value="Logistics & Freight Forwarding">
+                      Logistics & Freight Forwarding
+                    </option>
                     <option value="Manufacturing">Manufacturing</option>
                     <option value="Trading & Retail">Trading & Retail</option>
                     <option value="Imports / Exports">Imports / Exports</option>
@@ -444,7 +484,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   </NativeSelect>
                 </div>
                 <div>
-                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Customer Language</label>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                    Customer Language
+                  </label>
                   <NativeSelect
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
@@ -460,22 +502,32 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">GST Treatment</label>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                    GST Treatment
+                  </label>
                   <NativeSelect
                     value={gstTreatment}
                     onChange={(e) => setGstTreatment(e.target.value)}
                     className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                   >
-                    <option value="Registered Business - Regular">Registered Business - Regular</option>
-                    <option value="Registered Business - Composition">Registered Business - Composition</option>
-                    <option value="Unregistered Business">Unregistered Business</option>
+                    <option value="Registered Business - Regular">
+                      Registered Business - Regular
+                    </option>
+                    <option value="Registered Business - Composition">
+                      Registered Business - Composition
+                    </option>
+                    <option value="Unregistered Business">
+                      Unregistered Business
+                    </option>
                     <option value="Consumer">Consumer</option>
                     <option value="Overseas">Overseas</option>
                     <option value="SEZ">SEZ</option>
                   </NativeSelect>
                 </div>
                 <div>
-                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">GSTIN</label>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                    GSTIN
+                  </label>
                   <Input
                     type="text"
                     placeholder="e.g. 33AABCA1234F1Z1"
@@ -485,7 +537,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">PAN Card Number</label>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                    PAN Card Number
+                  </label>
                   <Input
                     type="text"
                     placeholder="e.g. ABCDE1234F"
@@ -510,7 +564,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Email Address</label>
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                  Email Address
+                </label>
                 <Input
                   type="email"
                   placeholder="e.g. contact@company.com"
@@ -520,7 +576,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Phone Number</label>
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                  Phone Number
+                </label>
                 <Input
                   type="text"
                   placeholder="e.g. +91 44 1234 5678"
@@ -530,7 +588,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Website URL</label>
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                  Website URL
+                </label>
                 <Input
                   type="url"
                   placeholder="e.g. https://domain.com"
@@ -542,7 +602,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
             </div>
 
             <div>
-              <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-2">Notification Channels</label>
+              <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-2">
+                Notification Channels
+              </label>
               <div className="flex gap-6">
                 <label className="flex items-center gap-2 text-sm mnx-text-primary cursor-pointer font-medium">
                   <Input
@@ -586,10 +648,14 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Billing */}
               <div className="space-y-4 border-r mnx-border pr-6 mnx-border">
-                <h3 className="text-sm font-bold mnx-text-primary uppercase">Billing Address</h3>
+                <h3 className="text-sm font-bold mnx-text-primary uppercase">
+                  Billing Address
+                </h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Attention</label>
+                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
+                      Attention
+                    </label>
                     <Input
                       type="text"
                       value={billingAttention}
@@ -598,7 +664,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Street 1</label>
+                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
+                      Street 1
+                    </label>
                     <Input
                       type="text"
                       value={billingStreet1}
@@ -607,7 +675,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Street 2</label>
+                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
+                      Street 2
+                    </label>
                     <Input
                       type="text"
                       value={billingStreet2}
@@ -617,7 +687,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">City</label>
+                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
+                        City
+                      </label>
                       <Input
                         type="text"
                         value={billingCity}
@@ -626,7 +698,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">State</label>
+                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
+                        State
+                      </label>
                       <Input
                         type="text"
                         value={billingState}
@@ -637,7 +711,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Pin Code</label>
+                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
+                        Pin Code
+                      </label>
                       <Input
                         type="text"
                         value={billingPincode}
@@ -646,7 +722,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Country</label>
+                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
+                        Country
+                      </label>
                       <Input
                         type="text"
                         value={billingCountry}
@@ -660,10 +738,14 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
 
               {/* Shipping */}
               <div className="space-y-4">
-                <h3 className="text-sm font-bold mnx-text-primary uppercase">Shipping Address</h3>
+                <h3 className="text-sm font-bold mnx-text-primary uppercase">
+                  Shipping Address
+                </h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Attention</label>
+                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
+                      Attention
+                    </label>
                     <Input
                       type="text"
                       value={shippingAttention}
@@ -672,7 +754,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Street 1</label>
+                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
+                      Street 1
+                    </label>
                     <Input
                       type="text"
                       value={shippingStreet1}
@@ -681,7 +765,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Street 2</label>
+                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
+                      Street 2
+                    </label>
                     <Input
                       type="text"
                       value={shippingStreet2}
@@ -691,7 +777,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">City</label>
+                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
+                        City
+                      </label>
                       <Input
                         type="text"
                         value={shippingCity}
@@ -700,7 +788,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">State</label>
+                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
+                        State
+                      </label>
                       <Input
                         type="text"
                         value={shippingState}
@@ -711,7 +801,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Pin Code</label>
+                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
+                        Pin Code
+                      </label>
                       <Input
                         type="text"
                         value={shippingPincode}
@@ -720,7 +812,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">Country</label>
+                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
+                        Country
+                      </label>
                       <Input
                         type="text"
                         value={shippingCountry}
@@ -740,13 +834,16 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
           <div className="space-y-6">
             <div className="border-b mnx-border pb-3 mnx-border">
               <h2 className="text-base font-bold mnx-text-primary uppercase font-display flex items-center gap-2">
-                <DollarSign className="mnx-text-accent size-5" /> Financial Parameters
+                <DollarSign className="mnx-text-accent size-5" /> Financial
+                Parameters
               </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Credit Limit (INR)</label>
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                  Credit Limit (INR)
+                </label>
                 <Input
                   type="number"
                   value={creditLimit}
@@ -755,7 +852,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Currency Preference</label>
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                  Currency Preference
+                </label>
                 <NativeSelect
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
@@ -770,7 +869,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Opening Balance Branch</label>
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                  Opening Balance Branch
+                </label>
                 <NativeSelect
                   value={openingBalanceBranch}
                   onChange={(e) => setOpeningBalanceBranch(e.target.value)}
@@ -782,7 +883,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                 </NativeSelect>
               </div>
               <div>
-                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Opening Balance Amount</label>
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                  Opening Balance Amount
+                </label>
                 <Input
                   type="number"
                   value={openingBalanceAmount}
@@ -791,7 +894,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Payment Terms</label>
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                  Payment Terms
+                </label>
                 <NativeSelect
                   value={paymentTerms}
                   onChange={(e) => setPaymentTerms(e.target.value)}
@@ -806,7 +911,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
             </div>
 
             <div>
-              <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">Account Owner / Account Manager</label>
+              <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                Account Owner / Account Manager
+              </label>
               <NativeSelect
                 value={ownerId}
                 onChange={(e) => setOwnerId(e.target.value)}
@@ -827,98 +934,151 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
           <div className="space-y-6">
             <div className="border-b mnx-border pb-3 mnx-border">
               <h2 className="text-base font-bold mnx-text-primary uppercase font-display flex items-center gap-2">
-                <FileText className="mnx-text-accent size-5" /> KYC Documents Upload
+                <FileText className="mnx-text-accent size-5" /> KYC Documents
+                Upload
               </h2>
             </div>
 
             <div className="space-y-4">
               <p className="text-xs mnx-text-muted leading-relaxed mb-4">
-                Upload customer verification documents. These files will be automatically pre-populated during custom clearance job document collection workflows.
+                Upload customer verification documents. These files will be
+                automatically pre-populated during custom clearance job document
+                collection workflows.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* IEC */}
                 <div className="p-4 border mnx-border mnx-bg-surface rounded-xl space-y-2 mnx-border">
-                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block">Import Export Code (IEC) *</label>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block">
+                    Import Export Code (IEC) *
+                  </label>
                   <Input
                     type="file"
                     onChange={(e) => setIecFile(e.target.files?.[0] || null)}
                     className="w-full text-xs mnx-text-muted file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold mnx-bg-accent mnx-text-accent mnx-hover-accent"
                     accept=".pdf,.png,.jpg,.jpeg"
                   />
-                  {iecFile && <p className="text-[10px] mnx-text-success font-semibold font-mono">Selected: {iecFile.name}</p>}
+                  {iecFile && (
+                    <p className="text-[10px] mnx-text-success font-semibold font-mono">
+                      Selected: {iecFile.name}
+                    </p>
+                  )}
                 </div>
 
                 {/* GST */}
                 <div className="p-4 border mnx-border mnx-bg-surface rounded-xl space-y-2 mnx-border">
-                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block">GST Registration *</label>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block">
+                    GST Registration *
+                  </label>
                   <Input
                     type="file"
                     onChange={(e) => setGstFile(e.target.files?.[0] || null)}
                     className="w-full text-xs mnx-text-muted file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold mnx-bg-accent mnx-text-accent mnx-hover-accent"
                     accept=".pdf,.png,.jpg,.jpeg"
                   />
-                  {gstFile && <p className="text-[10px] mnx-text-success font-semibold font-mono">Selected: {gstFile.name}</p>}
+                  {gstFile && (
+                    <p className="text-[10px] mnx-text-success font-semibold font-mono">
+                      Selected: {gstFile.name}
+                    </p>
+                  )}
                 </div>
 
                 {/* AD Code */}
                 <div className="p-4 border mnx-border mnx-bg-surface rounded-xl space-y-2 mnx-border">
-                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block">AD Code Letter *</label>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block">
+                    AD Code Letter *
+                  </label>
                   <Input
                     type="file"
                     onChange={(e) => setAdCodeFile(e.target.files?.[0] || null)}
                     className="w-full text-xs mnx-text-muted file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold mnx-bg-accent mnx-text-accent mnx-hover-accent"
                     accept=".pdf,.png,.jpg,.jpeg"
                   />
-                  {adCodeFile && <p className="text-[10px] mnx-text-success font-semibold font-mono">Selected: {adCodeFile.name}</p>}
+                  {adCodeFile && (
+                    <p className="text-[10px] mnx-text-success font-semibold font-mono">
+                      Selected: {adCodeFile.name}
+                    </p>
+                  )}
                 </div>
 
                 {/* FSSAI Licence */}
                 <div className="p-4 border mnx-border mnx-bg-surface rounded-xl space-y-2 mnx-border">
-                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block">FSSAI License Document</label>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block">
+                    FSSAI License Document
+                  </label>
                   <Input
                     type="file"
-                    onChange={(e) => setFssaiLicenceFile(e.target.files?.[0] || null)}
+                    onChange={(e) =>
+                      setFssaiLicenceFile(e.target.files?.[0] || null)
+                    }
                     className="w-full text-xs mnx-text-muted file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold mnx-bg-accent mnx-text-accent mnx-hover-accent"
                     accept=".pdf,.png,.jpg,.jpeg"
                   />
-                  {fssaiLicenceFile && <p className="text-[10px] mnx-text-success font-semibold font-mono">Selected: {fssaiLicenceFile.name}</p>}
+                  {fssaiLicenceFile && (
+                    <p className="text-[10px] mnx-text-success font-semibold font-mono">
+                      Selected: {fssaiLicenceFile.name}
+                    </p>
+                  )}
                 </div>
 
                 {/* Company Address Proof */}
                 <div className="p-4 border mnx-border mnx-bg-surface rounded-xl space-y-2 mnx-border">
-                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block">Company Address Proof</label>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block">
+                    Company Address Proof
+                  </label>
                   <Input
                     type="file"
-                    onChange={(e) => setCompanyAddressProofFile(e.target.files?.[0] || null)}
+                    onChange={(e) =>
+                      setCompanyAddressProofFile(e.target.files?.[0] || null)
+                    }
                     className="w-full text-xs mnx-text-muted file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold mnx-bg-accent mnx-text-accent mnx-hover-accent"
                     accept=".pdf,.png,.jpg,.jpeg"
                   />
-                  {companyAddressProofFile && <p className="text-[10px] mnx-text-success font-semibold font-mono">Selected: {companyAddressProofFile.name}</p>}
+                  {companyAddressProofFile && (
+                    <p className="text-[10px] mnx-text-success font-semibold font-mono">
+                      Selected: {companyAddressProofFile.name}
+                    </p>
+                  )}
                 </div>
 
                 {/* Partner Address Proof */}
                 <div className="p-4 border mnx-border mnx-bg-surface rounded-xl space-y-2 mnx-border">
-                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block">Partner / Proprietor Address Proof</label>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block">
+                    Partner / Proprietor Address Proof
+                  </label>
                   <Input
                     type="file"
-                    onChange={(e) => setPartnerAddressProofFile(e.target.files?.[0] || null)}
+                    onChange={(e) =>
+                      setPartnerAddressProofFile(e.target.files?.[0] || null)
+                    }
                     className="w-full text-xs mnx-text-muted file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold mnx-bg-accent mnx-text-accent mnx-hover-accent"
                     accept=".pdf,.png,.jpg,.jpeg"
                   />
-                  {partnerAddressProofFile && <p className="text-[10px] mnx-text-success font-semibold font-mono">Selected: {partnerAddressProofFile.name}</p>}
+                  {partnerAddressProofFile && (
+                    <p className="text-[10px] mnx-text-success font-semibold font-mono">
+                      Selected: {partnerAddressProofFile.name}
+                    </p>
+                  )}
                 </div>
 
                 {/* Authorisation Letter */}
                 <div className="p-4 border mnx-border mnx-bg-surface rounded-xl space-y-2 mnx-border md:col-span-2">
-                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block">Authorisation Letter (Signed)</label>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block">
+                    Authorisation Letter (Signed)
+                  </label>
                   <Input
                     type="file"
-                    onChange={(e) => setAuthorisationLetterFile(e.target.files?.[0] || null)}
+                    onChange={(e) =>
+                      setAuthorisationLetterFile(e.target.files?.[0] || null)
+                    }
                     className="w-full text-xs mnx-text-muted file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold mnx-bg-accent mnx-text-accent mnx-hover-accent"
                     accept=".pdf,.png,.jpg,.jpeg"
                   />
-                  {authorisationLetterFile && <p className="text-[10px] mnx-text-success font-semibold font-mono">Selected: {authorisationLetterFile.name}</p>}
+                  {authorisationLetterFile && (
+                    <p className="text-[10px] mnx-text-success font-semibold font-mono">
+                      Selected: {authorisationLetterFile.name}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -930,15 +1090,21 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
           <div className="space-y-6">
             <div className="border-b mnx-border pb-3 mnx-border">
               <h2 className="text-base font-bold mnx-text-primary uppercase font-display flex items-center gap-2">
-                <Globe className="mnx-text-accent size-5" /> Customer Portal Access
+                <Globe className="mnx-text-accent size-5" /> Customer Portal
+                Access
               </h2>
             </div>
 
             <div className="rounded-xl border mnx-border p-5 mnx-bg-soft mnx-border space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold mnx-text-primary">Enable Customer Portal</h3>
-                  <p className="text-xs mnx-text-muted mt-1">Allows the customer to log in directly to track shipments, approve expenses, and upload documents.</p>
+                  <h3 className="text-sm font-bold mnx-text-primary">
+                    Enable Customer Portal
+                  </h3>
+                  <p className="text-xs mnx-text-muted mt-1">
+                    Allows the customer to log in directly to track shipments,
+                    approve expenses, and upload documents.
+                  </p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer select-none">
                   <Input
@@ -965,54 +1131,145 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
 
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-3 rounded-xl border mnx-border p-4 mnx-bg-soft mnx-border">
-                <h3 className="text-xs font-bold uppercase mnx-text-muted">Primary Profile</h3>
+                <h3 className="text-xs font-bold uppercase mnx-text-muted">
+                  Primary Profile
+                </h3>
                 <div className="space-y-1.5 text-sm">
-                  <p><span className="font-semibold mnx-text-muted">Type:</span> {customerSubType}</p>
-                  <p><span className="font-semibold mnx-text-muted">Name:</span> {displayName}</p>
-                  {companyName && <p><span className="font-semibold mnx-text-muted">Company:</span> {companyName}</p>}
-                  <p><span className="font-semibold mnx-text-muted">Industry:</span> {industry}</p>
+                  <p>
+                    <span className="font-semibold mnx-text-muted">Type:</span>{" "}
+                    {customerSubType}
+                  </p>
+                  <p>
+                    <span className="font-semibold mnx-text-muted">Name:</span>{" "}
+                    {displayName}
+                  </p>
+                  {companyName && (
+                    <p>
+                      <span className="font-semibold mnx-text-muted">
+                        Company:
+                      </span>{" "}
+                      {companyName}
+                    </p>
+                  )}
+                  <p>
+                    <span className="font-semibold mnx-text-muted">
+                      Industry:
+                    </span>{" "}
+                    {industry}
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-3 rounded-xl border mnx-border p-4 mnx-bg-soft mnx-border">
-                <h3 className="text-xs font-bold uppercase mnx-text-muted">Contact Info</h3>
+                <h3 className="text-xs font-bold uppercase mnx-text-muted">
+                  Contact Info
+                </h3>
                 <div className="space-y-1.5 text-sm">
-                  <p><span className="font-semibold mnx-text-muted">Email:</span> {email || "—"}</p>
-                  <p><span className="font-semibold mnx-text-muted">Phone:</span> {phone || "—"}</p>
-                  <p><span className="font-semibold mnx-text-muted">Portal:</span> {isPortalEnabled ? "Enabled" : "Disabled"}</p>
+                  <p>
+                    <span className="font-semibold mnx-text-muted">Email:</span>{" "}
+                    {email || "—"}
+                  </p>
+                  <p>
+                    <span className="font-semibold mnx-text-muted">Phone:</span>{" "}
+                    {phone || "—"}
+                  </p>
+                  <p>
+                    <span className="font-semibold mnx-text-muted">
+                      Portal:
+                    </span>{" "}
+                    {isPortalEnabled ? "Enabled" : "Disabled"}
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-3 rounded-xl border mnx-border p-4 mnx-bg-soft mnx-border md:col-span-2">
-                <h3 className="text-xs font-bold uppercase mnx-text-muted">Uploaded KYC Documents</h3>
+                <h3 className="text-xs font-bold uppercase mnx-text-muted">
+                  Uploaded KYC Documents
+                </h3>
                 <div className="space-y-1.5 text-xs font-mono">
                   <p>
-                    <span className="font-semibold mnx-text-muted font-sans uppercase">IEC:</span>{" "}
-                    {iecFile ? iecFile.name : <span className="mnx-text-muted">No document uploaded</span>}
+                    <span className="font-semibold mnx-text-muted font-sans uppercase">
+                      IEC:
+                    </span>{" "}
+                    {iecFile ? (
+                      iecFile.name
+                    ) : (
+                      <span className="mnx-text-muted">
+                        No document uploaded
+                      </span>
+                    )}
                   </p>
                   <p>
-                    <span className="font-semibold mnx-text-muted font-sans uppercase">GST:</span>{" "}
-                    {gstFile ? gstFile.name : <span className="mnx-text-muted">No document uploaded</span>}
+                    <span className="font-semibold mnx-text-muted font-sans uppercase">
+                      GST:
+                    </span>{" "}
+                    {gstFile ? (
+                      gstFile.name
+                    ) : (
+                      <span className="mnx-text-muted">
+                        No document uploaded
+                      </span>
+                    )}
                   </p>
                   <p>
-                    <span className="font-semibold mnx-text-muted font-sans uppercase">AD Code:</span>{" "}
-                    {adCodeFile ? adCodeFile.name : <span className="mnx-text-muted">No document uploaded</span>}
+                    <span className="font-semibold mnx-text-muted font-sans uppercase">
+                      AD Code:
+                    </span>{" "}
+                    {adCodeFile ? (
+                      adCodeFile.name
+                    ) : (
+                      <span className="mnx-text-muted">
+                        No document uploaded
+                      </span>
+                    )}
                   </p>
                   <p>
-                    <span className="font-semibold mnx-text-muted font-sans uppercase">FSSAI Licence:</span>{" "}
-                    {fssaiLicenceFile ? fssaiLicenceFile.name : <span className="mnx-text-muted">No document uploaded</span>}
+                    <span className="font-semibold mnx-text-muted font-sans uppercase">
+                      FSSAI Licence:
+                    </span>{" "}
+                    {fssaiLicenceFile ? (
+                      fssaiLicenceFile.name
+                    ) : (
+                      <span className="mnx-text-muted">
+                        No document uploaded
+                      </span>
+                    )}
                   </p>
                   <p>
-                    <span className="font-semibold mnx-text-muted font-sans uppercase">Company Address:</span>{" "}
-                    {companyAddressProofFile ? companyAddressProofFile.name : <span className="mnx-text-muted">No document uploaded</span>}
+                    <span className="font-semibold mnx-text-muted font-sans uppercase">
+                      Company Address:
+                    </span>{" "}
+                    {companyAddressProofFile ? (
+                      companyAddressProofFile.name
+                    ) : (
+                      <span className="mnx-text-muted">
+                        No document uploaded
+                      </span>
+                    )}
                   </p>
                   <p>
-                    <span className="font-semibold mnx-text-muted font-sans uppercase">Partner Address:</span>{" "}
-                    {partnerAddressProofFile ? partnerAddressProofFile.name : <span className="mnx-text-muted">No document uploaded</span>}
+                    <span className="font-semibold mnx-text-muted font-sans uppercase">
+                      Partner Address:
+                    </span>{" "}
+                    {partnerAddressProofFile ? (
+                      partnerAddressProofFile.name
+                    ) : (
+                      <span className="mnx-text-muted">
+                        No document uploaded
+                      </span>
+                    )}
                   </p>
                   <p>
-                    <span className="font-semibold mnx-text-muted font-sans uppercase">Authorisation Letter:</span>{" "}
-                    {authorisationLetterFile ? authorisationLetterFile.name : <span className="mnx-text-muted">No document uploaded</span>}
+                    <span className="font-semibold mnx-text-muted font-sans uppercase">
+                      Authorisation Letter:
+                    </span>{" "}
+                    {authorisationLetterFile ? (
+                      authorisationLetterFile.name
+                    ) : (
+                      <span className="mnx-text-muted">
+                        No document uploaded
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>

@@ -1,12 +1,23 @@
 "use client";
 
-import { CrmButton, CrmInput, CrmTable } from "@/components/monolith/crm-workspace";
+import {
+  CrmButton,
+  CrmInput,
+  CrmTable,
+} from "@/components/monolith/crm-workspace";
 
 import React, { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { Plus, Check, RefreshCw } from "lucide-react";
 import type { ItemFormSchema } from "@/lib/items/validation";
-import {getCurrencies,saveCurrency,isAutoExchangeRateEnabled,setAutoExchangeRateEnabled,fetchOnlineRates,type CurrencyInfo,} from "@/lib/items/currency-store";
+import {
+  getCurrencies,
+  saveCurrency,
+  isAutoExchangeRateEnabled,
+  setAutoExchangeRateEnabled,
+  fetchOnlineRates,
+  type CurrencyInfo,
+} from "@/lib/items/currency-store";
 
 type ItemPriceListSectionProps = {
   form: UseFormReturn<ItemFormSchema>;
@@ -68,9 +79,13 @@ export function ItemPriceListSection({ form }: ItemPriceListSectionProps) {
     currencies.forEach((c) => {
       if (c.code === "INR") return; // INR is the base
 
-      const existingIdx = currentList.findIndex((item) => item.currency === c.code);
+      const existingIdx = currentList.findIndex(
+        (item) => item.currency === c.code,
+      );
       const suggestedRate = onlineRates[c.code] ?? c.exchangeRate;
-      const finalRate = autoFeed ? suggestedRate : (currentList[existingIdx]?.exchangeRate ?? c.exchangeRate);
+      const finalRate = autoFeed
+        ? suggestedRate
+        : (currentList[existingIdx]?.exchangeRate ?? c.exchangeRate);
 
       if (existingIdx === -1) {
         // Add new currency to form list
@@ -93,8 +108,14 @@ export function ItemPriceListSection({ form }: ItemPriceListSectionProps) {
         }
 
         // Recalculate price if base price changed and user hasn't modified it manually (or just recalculate default)
-        const expectedPrice = parseFloat((sellingPrice / item.exchangeRate).toFixed(2));
-        if (item.customPrice === undefined || isNaN(item.customPrice) || sellingPrice > 0 && !item.customPrice) {
+        const expectedPrice = parseFloat(
+          (sellingPrice / item.exchangeRate).toFixed(2),
+        );
+        if (
+          item.customPrice === undefined ||
+          isNaN(item.customPrice) ||
+          (sellingPrice > 0 && !item.customPrice)
+        ) {
           item.customPrice = expectedPrice;
           itemChanged = true;
         }
@@ -216,7 +237,9 @@ export function ItemPriceListSection({ form }: ItemPriceListSectionProps) {
 
       <div className="flex items-center gap-2 text-xs text-[var(--mnx-text-muted)]">
         <span>Automatic exchange rate suggestion from online API is</span>
-        <span className={`font-semibold ${autoFeed ? "text-[var(--mnx-accent)]" : "text-mono-muted"}`}>
+        <span
+          className={`font-semibold ${autoFeed ? "text-[var(--mnx-accent)]" : "text-mono-muted"}`}
+        >
           {autoFeed ? "ON" : "OFF"}
         </span>
         {loadingRates && (
@@ -235,8 +258,12 @@ export function ItemPriceListSection({ form }: ItemPriceListSectionProps) {
           </thead>
           <tbody className="divide-y divide-[var(--mnx-border)]">
             <tr className="bg-mono-soft">
-              <td className="py-2.5 font-semibold text-mono-muted">INR (Base)</td>
-              <td className="py-2.5 text-mono-muted font-mono">1.0000 (Fixed)</td>
+              <td className="py-2.5 font-semibold text-mono-muted">
+                INR (Base)
+              </td>
+              <td className="py-2.5 text-mono-muted font-mono">
+                1.0000 (Fixed)
+              </td>
               <td className="py-2.5 text-right font-semibold text-mono-muted font-mono">
                 ₹ {sellingPrice.toFixed(2)}
               </td>
@@ -246,7 +273,9 @@ export function ItemPriceListSection({ form }: ItemPriceListSectionProps) {
               const suggested = onlineRates[item.currency];
               return (
                 <tr key={item.currency} className="hover:bg-mono-soft">
-                  <td className="py-2.5 font-medium text-mono-muted">{item.currency}</td>
+                  <td className="py-2.5 font-medium text-mono-muted">
+                    {item.currency}
+                  </td>
                   <td className="py-2.5 space-y-1">
                     <div className="flex items-center gap-2">
                       <CrmInput
@@ -255,7 +284,12 @@ export function ItemPriceListSection({ form }: ItemPriceListSectionProps) {
                         min="0.0001"
                         className="h-8 w-28 rounded-xl border bg-mono-card px-2 text-xs font-mono outline-none"
                         value={item.exchangeRate}
-                        onChange={(e) => handleRateChange(item.currency, parseFloat(e.target.value) || 1)}
+                        onChange={(e) =>
+                          handleRateChange(
+                            item.currency,
+                            parseFloat(e.target.value) || 1,
+                          )
+                        }
                         disabled={autoFeed && !!suggested}
                       />
                       {autoFeed && suggested && (
@@ -266,20 +300,30 @@ export function ItemPriceListSection({ form }: ItemPriceListSectionProps) {
                     </div>
                     {suggested && (
                       <div className="text-[10px] text-mono-muted">
-                        Suggested rate: <span className="font-mono">{suggested.toFixed(4)}</span>
+                        Suggested rate:{" "}
+                        <span className="font-mono">
+                          {suggested.toFixed(4)}
+                        </span>
                       </div>
                     )}
                   </td>
                   <td className="py-2.5 text-right">
                     <div className="inline-flex items-center gap-1">
-                      <span className="text-[10px] text-mono-muted font-medium">{item.currency}</span>
+                      <span className="text-[10px] text-mono-muted font-medium">
+                        {item.currency}
+                      </span>
                       <CrmInput
                         type="number"
                         step="0.01"
                         min="0"
                         className="h-8 w-24 rounded-xl border bg-mono-card px-2 text-right text-xs font-mono outline-none font-semibold text-mono-muted"
                         value={item.customPrice ?? ""}
-                        onChange={(e) => handlePriceChange(item.currency, parseFloat(e.target.value) || 0)}
+                        onChange={(e) =>
+                          handlePriceChange(
+                            item.currency,
+                            parseFloat(e.target.value) || 0,
+                          )
+                        }
                       />
                     </div>
                   </td>
@@ -291,10 +335,17 @@ export function ItemPriceListSection({ form }: ItemPriceListSectionProps) {
       </div>
 
       <div className="border-t border-dashed border-[var(--mnx-border)] pt-4">
-        <h4 className="text-[11px] font-semibold uppercase tracking-wider text-mono-muted mb-2">Add New Currency</h4>
-        <form onSubmit={handleAddCurrency} className="flex flex-wrap items-end gap-3">
+        <h4 className="text-[11px] font-semibold uppercase tracking-wider text-mono-muted mb-2">
+          Add New Currency
+        </h4>
+        <form
+          onSubmit={handleAddCurrency}
+          className="flex flex-wrap items-end gap-3"
+        >
           <div>
-            <label className="block text-[10px] text-mono-muted mb-1">Code</label>
+            <label className="block text-[10px] text-mono-muted mb-1">
+              Code
+            </label>
             <CrmInput
               type="text"
               placeholder="e.g. USD"
@@ -305,7 +356,9 @@ export function ItemPriceListSection({ form }: ItemPriceListSectionProps) {
             />
           </div>
           <div>
-            <label className="block text-[10px] text-mono-muted mb-1">Exchange Rate (INR)</label>
+            <label className="block text-[10px] text-mono-muted mb-1">
+              Exchange Rate (INR)
+            </label>
             <CrmInput
               type="number"
               step="0.0001"
@@ -318,7 +371,7 @@ export function ItemPriceListSection({ form }: ItemPriceListSectionProps) {
           </div>
           <CrmButton
             type="submit"
-            className="inline-flex h-8 items-center gap-1 rounded-xl bg-[var(--mnx-accent)] px-3 text-xs font-semibold text-mono-text transition-all hover:bg-[var(--mnx-accent)] hover:shadow-[0_0_0_3px_var(--mnx-accent-soft)]"
+            className="inline-flex h-8 items-center gap-1 rounded-xl bg-[var(--mnx-accent)] px-3 text-xs font-semibold text-mono-text transition-all hover:bg-[var(--mnx-accent)] "
           >
             <Plus className="size-3.5" /> Add
           </CrmButton>

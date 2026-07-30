@@ -23,7 +23,12 @@ import {
   Truck,
 } from "lucide-react";
 import { Button } from "@/components/monolith/button";
-import {createJobAction,createJobTypeAction,createShipmentTypeAction,getNextJobNumberPreviewAction,} from "@/modules/cha/actions";
+import {
+  createJobAction,
+  createJobTypeAction,
+  createShipmentTypeAction,
+  getNextJobNumberPreviewAction,
+} from "@/modules/cha/actions";
 import { Input } from "@/components/monolith/input";
 import { cn } from "@/lib/utils";
 
@@ -34,10 +39,8 @@ const ADD_NEW_SHIPMENT_TYPE = "__add_new_shipment_type__";
 const ALWAYS_VISIBLE_OWNER_MANAGER_EMAILS = ["hr@adarshshipping.in"];
 const CHA_CREATE_TEXTAREA_CLASS =
   "mnx-cha-dialog-control min-h-[112px] w-full px-4 py-3 text-sm";
-const CHA_CREATE_INPUT_CLASS =
-  "mnx-cha-dialog-control !h-11";
-const CHA_CREATE_SELECT_CLASS =
-  "mnx-cha-dialog-control !h-11";
+const CHA_CREATE_INPUT_CLASS = "mnx-cha-dialog-control !h-11";
+const CHA_CREATE_SELECT_CLASS = "mnx-cha-dialog-control !h-11";
 
 type CreatedJobSummary = {
   id: string;
@@ -52,21 +55,18 @@ function getPriorityPresentation(priority: string) {
     case "HIGH":
       return {
         badge: "P1",
-        tone:
-          "mnx-border-danger mnx-bg-danger mnx-text-danger mnx-border-danger mnx-bg-danger mnx-text-danger",
+        tone: "mnx-border-danger mnx-bg-danger mnx-text-danger mnx-border-danger mnx-bg-danger mnx-text-danger",
       };
     case "LOW":
       return {
         badge: "P3",
-        tone:
-          "mnx-border mnx-bg-soft mnx-text-muted mnx-border mnx-bg-soft mnx-text-muted",
+        tone: "mnx-border mnx-bg-soft mnx-text-muted mnx-border mnx-bg-soft mnx-text-muted",
       };
     case "MEDIUM":
     default:
       return {
         badge: "P2",
-        tone:
-          "mnx-border-warning mnx-bg-warning mnx-text-warning mnx-border-warning mnx-bg-warning mnx-text-warning",
+        tone: "mnx-border-warning mnx-bg-warning mnx-text-warning mnx-border-warning mnx-bg-warning mnx-text-warning",
       };
   }
 }
@@ -74,8 +74,10 @@ function getPriorityPresentation(priority: string) {
 function getShipmentVisual(shipmentTypeName: string) {
   const normalized = shipmentTypeName.toLowerCase();
   if (normalized.includes("air")) return { Icon: Plane, label: "Air shipment" };
-  if (normalized.includes("road") || normalized.includes("truck")) return { Icon: Truck, label: "Road shipment" };
-  if (normalized.includes("rail") || normalized.includes("train")) return { Icon: TrainFront, label: "Rail shipment" };
+  if (normalized.includes("road") || normalized.includes("truck"))
+    return { Icon: Truck, label: "Road shipment" };
+  if (normalized.includes("rail") || normalized.includes("train"))
+    return { Icon: TrainFront, label: "Rail shipment" };
   return { Icon: Ship, label: "Sea shipment" };
 }
 
@@ -96,7 +98,9 @@ function CreateJobSuccessOverlay({
 }) {
   if (!summary) return null;
 
-  const { Icon: TransportIcon, label: transportLabel } = getShipmentVisual(summary.shipmentTypeName);
+  const { Icon: TransportIcon, label: transportLabel } = getShipmentVisual(
+    summary.shipmentTypeName,
+  );
 
   return (
     <ChaDialogLayer
@@ -138,9 +142,7 @@ function CreateJobSuccessOverlay({
           <div className="mnx-dialog-content">
             <div className="mnx-cha-success-route">
               <MotionButton
-                animate={
-                  reducedMotion ? { scale: 1 } : { scale: [1, 1.04, 1] }
-                }
+                animate={reducedMotion ? { scale: 1 } : { scale: [1, 1.04, 1] }}
                 aria-label={`${transportLabel} workflow active`}
                 className="mnx-cha-success-icon"
                 transition={
@@ -196,7 +198,8 @@ function CreateJobSuccessOverlay({
 
 function buildFinancialYearLabel(format?: string | null) {
   const now = new Date();
-  const startYear = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+  const startYear =
+    now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
   const endYear = startYear + 1;
   const normalized = (format || "YYYY-YY").toUpperCase();
 
@@ -222,7 +225,12 @@ interface CreateJobDialogProps {
     jobTypes: { id: string; name: string }[];
     shipmentTypes: { id: string; name: string }[];
     users: { id: string; name: string; email: string }[];
-    managers?: { id: string; name: string; email: string; branchId: string | null }[];
+    managers?: {
+      id: string;
+      name: string;
+      email: string;
+      branchId: string | null;
+    }[];
     teamGroups: { id: string; name: string; memberIds: any }[];
     branchNumberingRules: {
       branchId: string;
@@ -254,11 +262,15 @@ export function CreateJobDialog({
   const createdCustomerAppliedRef = useRef(false);
   const autoAddedManagerIdRef = useRef<string>("");
   const previousGeneratedPreviewRef = useRef("");
-  const successRedirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const successRedirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   // Form State
   const [newJobNumber, setNewJobNumber] = useState("");
-  const [jobNumberMode, setJobNumberMode] = useState<"SYSTEM" | "MANUAL">("SYSTEM");
+  const [jobNumberMode, setJobNumberMode] = useState<"SYSTEM" | "MANUAL">(
+    "SYSTEM",
+  );
   const [newTitle, setNewTitle] = useState("");
   const [newCustomerId, setNewCustomerId] = useState("");
   const [newCustomerRef, setNewCustomerRef] = useState("");
@@ -269,9 +281,9 @@ export function CreateJobDialog({
   const [newOwnerId, setNewOwnerId] = useState(currentUserId);
   const [newManagerId, setNewManagerId] = useState("");
   const [newRemarks, setNewRemarks] = useState("");
-  const [assignments, setAssignments] = useState<{ userId: string; responsibility: string }[]>([
-    { userId: currentUserId, responsibility: "OPERATIONS" },
-  ]);
+  const [assignments, setAssignments] = useState<
+    { userId: string; responsibility: string }[]
+  >([{ userId: currentUserId, responsibility: "OPERATIONS" }]);
   const [estimatedClosureDate, setEstimatedClosureDate] = useState("");
 
   // Autocomplete States
@@ -287,7 +299,8 @@ export function CreateJobDialog({
   const [showManagerDropdown, setShowManagerDropdown] = useState(false);
 
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
-  const [createdJobSummary, setCreatedJobSummary] = useState<CreatedJobSummary | null>(null);
+  const [createdJobSummary, setCreatedJobSummary] =
+    useState<CreatedJobSummary | null>(null);
 
   // Loading States
   const [creating, setCreating] = useState(false);
@@ -298,14 +311,21 @@ export function CreateJobDialog({
   const [showAddJobType, setShowAddJobType] = useState(false);
   const [showAddShipmentType, setShowAddShipmentType] = useState(false);
   const [newJobTypeName, setNewJobTypeName] = useState("");
-  const [newJobTypeMovementDirection, setNewJobTypeMovementDirection] = useState<"IMPORT" | "EXPORT" | "BOTH" | "OTHER">("IMPORT");
-  const [newJobTypeManifestRequirement, setNewJobTypeManifestRequirement] = useState<"IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM">("IGM");
-  const [newJobTypeCustomManifestLabel, setNewJobTypeCustomManifestLabel] = useState("");
-  const [newJobTypeManifestMandatory, setNewJobTypeManifestMandatory] = useState(true);
-  const [newJobTypeManifestHelpText, setNewJobTypeManifestHelpText] = useState("");
+  const [newJobTypeMovementDirection, setNewJobTypeMovementDirection] =
+    useState<"IMPORT" | "EXPORT" | "BOTH" | "OTHER">("IMPORT");
+  const [newJobTypeManifestRequirement, setNewJobTypeManifestRequirement] =
+    useState<"IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM">("IGM");
+  const [newJobTypeCustomManifestLabel, setNewJobTypeCustomManifestLabel] =
+    useState("");
+  const [newJobTypeManifestMandatory, setNewJobTypeManifestMandatory] =
+    useState(true);
+  const [newJobTypeManifestHelpText, setNewJobTypeManifestHelpText] =
+    useState("");
   const [newShipmentTypeName, setNewShipmentTypeName] = useState("");
   const [jobTypesList, setJobTypesList] = useState(options.jobTypes);
-  const [shipmentTypesList, setShipmentTypesList] = useState(options.shipmentTypes);
+  const [shipmentTypesList, setShipmentTypesList] = useState(
+    options.shipmentTypes,
+  );
 
   useEffect(() => {
     setJobTypesList(options.jobTypes);
@@ -334,13 +354,16 @@ export function CreateJobDialog({
       return;
     }
 
-    const mainShell = document.querySelector<HTMLElement>('[data-main-shell-scroll="true"]');
+    const mainShell = document.querySelector<HTMLElement>(
+      '[data-main-shell-scroll="true"]',
+    );
     const previousHtmlOverflow = document.documentElement.style.overflow;
     const previousOverflow = document.body.style.overflow;
     const previousPaddingRight = document.body.style.paddingRight;
     const previousMainShellOverflow = mainShell?.style.overflow;
     const previousMainShellOverscroll = mainShell?.style.overscrollBehavior;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const scrollbarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
 
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
@@ -371,7 +394,9 @@ export function CreateJobDialog({
     if (!createdCustomerId) return;
 
     setNewCustomerId(createdCustomerId);
-    const matchedCustomer = options.customers.find((customer) => customer.id === createdCustomerId);
+    const matchedCustomer = options.customers.find(
+      (customer) => customer.id === createdCustomerId,
+    );
     const nextCustomerName = createdCustomerName || matchedCustomer?.name || "";
     setCustomerSearch(nextCustomerName);
     setSelectedCustomerName(nextCustomerName);
@@ -403,8 +428,12 @@ export function CreateJobDialog({
       setEstimatedClosureDate("");
       setCustomerSearch("");
       setSelectedCustomerName("");
-      const defaultOwner = (options.managers || []).find((user) => user.id === currentUserId);
-      setOwnerSearch(defaultOwner ? `${defaultOwner.name} (${defaultOwner.email})` : "");
+      const defaultOwner = (options.managers || []).find(
+        (user) => user.id === currentUserId,
+      );
+      setOwnerSearch(
+        defaultOwner ? `${defaultOwner.name} (${defaultOwner.email})` : "",
+      );
       setManagerSearch("");
       draftRestoredRef.current = true;
       return;
@@ -423,21 +452,37 @@ export function CreateJobDialog({
       setNewPriority(parsed.priority || "MEDIUM");
       setNewOwnerId(parsed.ownerId || currentUserId);
       if (parsed.ownerId) {
-        const savedOwner = (options.managers || []).find((owner) => owner.id === parsed.ownerId);
-        setOwnerSearch(savedOwner ? `${savedOwner.name} (${savedOwner.email})` : "");
+        const savedOwner = (options.managers || []).find(
+          (owner) => owner.id === parsed.ownerId,
+        );
+        setOwnerSearch(
+          savedOwner ? `${savedOwner.name} (${savedOwner.email})` : "",
+        );
       } else {
-        const defaultOwner = (options.managers || []).find((user) => user.id === (parsed.ownerId || currentUserId));
-        setOwnerSearch(defaultOwner ? `${defaultOwner.name} (${defaultOwner.email})` : "");
+        const defaultOwner = (options.managers || []).find(
+          (user) => user.id === (parsed.ownerId || currentUserId),
+        );
+        setOwnerSearch(
+          defaultOwner ? `${defaultOwner.name} (${defaultOwner.email})` : "",
+        );
       }
       setNewManagerId(parsed.assignedManagerId || "");
       if (parsed.assignedManagerId) {
-        const savedManager = (options.managers || []).find((manager) => manager.id === parsed.assignedManagerId);
-        setManagerSearch(savedManager ? `${savedManager.name} (${savedManager.email})` : "");
+        const savedManager = (options.managers || []).find(
+          (manager) => manager.id === parsed.assignedManagerId,
+        );
+        setManagerSearch(
+          savedManager ? `${savedManager.name} (${savedManager.email})` : "",
+        );
       } else {
         setManagerSearch("");
       }
       setNewRemarks(parsed.remarks || "");
-      setAssignments(parsed.assignments || [{ userId: currentUserId, responsibility: "OPERATIONS" }]);
+      setAssignments(
+        parsed.assignments || [
+          { userId: currentUserId, responsibility: "OPERATIONS" },
+        ],
+      );
       setEstimatedClosureDate(parsed.estimatedClosureDate || "");
       if (parsed.customerId) {
         const cust = options.customers.find((c) => c.id === parsed.customerId);
@@ -474,21 +519,32 @@ export function CreateJobDialog({
     localStorage.setItem("cha_draft_job", JSON.stringify(draft));
   };
 
-  const filteredCustomers = customerSearch.trim() === ""
-    ? options.customers
-    : options.customers.filter((c) =>
-        c.name.toLowerCase().includes(customerSearch.toLowerCase())
-      );
+  const filteredCustomers =
+    customerSearch.trim() === ""
+      ? options.customers
+      : options.customers.filter((c) =>
+          c.name.toLowerCase().includes(customerSearch.toLowerCase()),
+        );
 
-  const selectedBranchRule = options.branchNumberingRules.find((rule) => rule.branchId === newBranchId);
+  const selectedBranchRule = options.branchNumberingRules.find(
+    (rule) => rule.branchId === newBranchId,
+  );
   const fallbackGeneratedPreview = selectedBranchRule
     ? [
         selectedBranchRule.prefix,
-        ...(selectedBranchRule.useFinancialYear ? [buildFinancialYearLabel(selectedBranchRule.financialYearFormat)] : []),
+        ...(selectedBranchRule.useFinancialYear
+          ? [buildFinancialYearLabel(selectedBranchRule.financialYearFormat)]
+          : []),
         String(
-          Math.max(selectedBranchRule.currentSequence + 1, selectedBranchRule.startingSequence, 1),
+          Math.max(
+            selectedBranchRule.currentSequence + 1,
+            selectedBranchRule.startingSequence,
+            1,
+          ),
         ).padStart(Math.max(selectedBranchRule.numberPadding, 1), "0"),
-        ...(selectedBranchRule.suffix?.trim() ? [selectedBranchRule.suffix.trim()] : []),
+        ...(selectedBranchRule.suffix?.trim()
+          ? [selectedBranchRule.suffix.trim()]
+          : []),
       ].join("-")
     : "";
   const generatedPreview = jobNumberPreview || fallbackGeneratedPreview;
@@ -508,17 +564,19 @@ export function CreateJobDialog({
     return [];
   };
 
-  const filteredTeamUsers = teamSearch.trim() === ""
-    ? options.users
-    : options.users.filter((u) =>
-        u.name.toLowerCase().includes(teamSearch.toLowerCase())
-      );
+  const filteredTeamUsers =
+    teamSearch.trim() === ""
+      ? options.users
+      : options.users.filter((u) =>
+          u.name.toLowerCase().includes(teamSearch.toLowerCase()),
+        );
 
-  const filteredTeamGroups = teamSearch.trim() === ""
-    ? (options.teamGroups || [])
-    : (options.teamGroups || []).filter((g) =>
-        g.name.toLowerCase().includes(teamSearch.toLowerCase())
-      );
+  const filteredTeamGroups =
+    teamSearch.trim() === ""
+      ? options.teamGroups || []
+      : (options.teamGroups || []).filter((g) =>
+          g.name.toLowerCase().includes(teamSearch.toLowerCase()),
+        );
 
   const eligibleManagers = (options.managers || []).filter((manager) => {
     if (!newBranchId) return true;
@@ -527,27 +585,34 @@ export function CreateJobDialog({
       ALWAYS_VISIBLE_OWNER_MANAGER_EMAILS.includes(manager.email.toLowerCase())
     );
   });
-  const displayedManagers = eligibleManagers.length > 0 ? eligibleManagers : (options.managers || []);
-  const filteredOwners = ownerSearch.trim() === ""
-    ? displayedManagers
-    : displayedManagers.filter((owner) => {
-        const needle = ownerSearch.toLowerCase();
-        return (
-          owner.name.toLowerCase().includes(needle) ||
-          owner.email.toLowerCase().includes(needle)
-        );
-      });
-  const filteredManagers = managerSearch.trim() === ""
-    ? displayedManagers
-    : displayedManagers.filter((manager) => {
-        const needle = managerSearch.toLowerCase();
-        return (
-          manager.name.toLowerCase().includes(needle) ||
-          manager.email.toLowerCase().includes(needle)
-        );
-      });
+  const displayedManagers =
+    eligibleManagers.length > 0 ? eligibleManagers : options.managers || [];
+  const filteredOwners =
+    ownerSearch.trim() === ""
+      ? displayedManagers
+      : displayedManagers.filter((owner) => {
+          const needle = ownerSearch.toLowerCase();
+          return (
+            owner.name.toLowerCase().includes(needle) ||
+            owner.email.toLowerCase().includes(needle)
+          );
+        });
+  const filteredManagers =
+    managerSearch.trim() === ""
+      ? displayedManagers
+      : displayedManagers.filter((manager) => {
+          const needle = managerSearch.toLowerCase();
+          return (
+            manager.name.toLowerCase().includes(needle) ||
+            manager.email.toLowerCase().includes(needle)
+          );
+        });
 
-  const selectManager = (manager: { id: string; name: string; email: string }) => {
+  const selectManager = (manager: {
+    id: string;
+    name: string;
+    email: string;
+  }) => {
     const prevAutoId = autoAddedManagerIdRef.current;
     setNewManagerId(manager.id);
     setManagerSearch(`${manager.name} (${manager.email})`);
@@ -577,13 +642,17 @@ export function CreateJobDialog({
       const response = await getNextJobNumberPreviewAction(branchId);
       if (!response.ok) {
         setJobNumberPreview("");
-        toast.error(response.error || "Failed to load the next generated job number.");
+        toast.error(
+          response.error || "Failed to load the next generated job number.",
+        );
         return;
       }
       setJobNumberPreview(response.data || "");
     } catch (err: any) {
       setJobNumberPreview("");
-      toast.error(err.message || "Failed to load the next generated job number.");
+      toast.error(
+        err.message || "Failed to load the next generated job number.",
+      );
     } finally {
       setJobNumberPreviewLoading(false);
     }
@@ -618,12 +687,19 @@ export function CreateJobDialog({
       toast.error(`${u.name} is already assigned.`);
       return;
     }
-    setAssignments([...assignments, { userId: u.id, responsibility: "OPERATIONS" }]);
+    setAssignments([
+      ...assignments,
+      { userId: u.id, responsibility: "OPERATIONS" },
+    ]);
     setTeamSearch("");
     setShowTeamDropdown(false);
   };
 
-  const handleAddTeamGroup = (group: { id: string; name: string; memberIds: any }) => {
+  const handleAddTeamGroup = (group: {
+    id: string;
+    name: string;
+    memberIds: any;
+  }) => {
     const memberIds = parseJsonArray(group.memberIds);
     if (memberIds.length === 0) {
       toast.error(`Team group '${group.name}' has no members.`);
@@ -653,7 +729,9 @@ export function CreateJobDialog({
 
   const handleAutoGenerateJobNumber = async () => {
     if (!selectedBranchRule?.isActive) {
-      toast.error("This branch is missing an active numbering rule. Configure it in CHA Settings first.");
+      toast.error(
+        "This branch is missing an active numbering rule. Configure it in CHA Settings first.",
+      );
       return;
     }
 
@@ -670,9 +748,13 @@ export function CreateJobDialog({
     setAssignments(assignments.filter((_, i) => i !== index));
   };
 
-  const handleAssignmentChange = (index: number, field: "userId" | "responsibility", value: string) => {
+  const handleAssignmentChange = (
+    index: number,
+    field: "userId" | "responsibility",
+    value: string,
+  ) => {
     setAssignments(
-      assignments.map((a, i) => (i === index ? { ...a, [field]: value } : a))
+      assignments.map((a, i) => (i === index ? { ...a, [field]: value } : a)),
     );
   };
 
@@ -693,9 +775,13 @@ export function CreateJobDialog({
     setNewBranchId("");
     setNewPriority("MEDIUM");
     setNewManagerId("");
-    const defaultOwner = displayedManagers.find((user) => user.id === currentUserId);
+    const defaultOwner = displayedManagers.find(
+      (user) => user.id === currentUserId,
+    );
     setNewOwnerId(currentUserId);
-    setOwnerSearch(defaultOwner ? `${defaultOwner.name} (${defaultOwner.email})` : "");
+    setOwnerSearch(
+      defaultOwner ? `${defaultOwner.name} (${defaultOwner.email})` : "",
+    );
     setManagerSearch("");
     setNewRemarks("");
     setEstimatedClosureDate("");
@@ -730,14 +816,24 @@ export function CreateJobDialog({
     if (successRedirectTimerRef.current) {
       clearTimeout(successRedirectTimerRef.current);
     }
-    successRedirectTimerRef.current = setTimeout(() => {
-      finishCreateFlow(false);
-    }, reducedMotion ? 1400 : 2600);
+    successRedirectTimerRef.current = setTimeout(
+      () => {
+        finishCreateFlow(false);
+      },
+      reducedMotion ? 1400 : 2600,
+    );
   };
 
   const handleCreateJob = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle || !newCustomerId || !newJobTypeId || !newShipmentTypeId || !newBranchId || !estimatedClosureDate) {
+    if (
+      !newTitle ||
+      !newCustomerId ||
+      !newJobTypeId ||
+      !newShipmentTypeId ||
+      !newBranchId ||
+      !estimatedClosureDate
+    ) {
       toast.error("Please fill in all mandatory job attributes.");
       return;
     }
@@ -750,11 +846,15 @@ export function CreateJobDialog({
       return;
     }
     if (!selectedBranchRule?.isActive) {
-      toast.error("The selected branch is not configured for CHA job numbering yet. Please update CHA Settings.");
+      toast.error(
+        "The selected branch is not configured for CHA job numbering yet. Please update CHA Settings.",
+      );
       return;
     }
     if (jobNumberMode === "MANUAL" && !newJobNumber.trim()) {
-      toast.error("Enter a manual job number or switch back to system-generated numbering.");
+      toast.error(
+        "Enter a manual job number or switch back to system-generated numbering.",
+      );
       return;
     }
 
@@ -763,7 +863,10 @@ export function CreateJobDialog({
     setCreating(true);
     try {
       const res = await createJobAction({
-        jobNumber: jobNumberMode === "MANUAL" ? newJobNumber.trim() || undefined : undefined,
+        jobNumber:
+          jobNumberMode === "MANUAL"
+            ? newJobNumber.trim() || undefined
+            : undefined,
         title: newTitle,
         customerId: newCustomerId,
         customerRef: newCustomerRef || undefined,
@@ -775,20 +878,27 @@ export function CreateJobDialog({
         assignedManagerId: newManagerId,
         assignments: validAssignments,
         remarks: newRemarks || undefined,
-        estimatedClosureDate: estimatedClosureDate ? new Date(estimatedClosureDate) : undefined,
+        estimatedClosureDate: estimatedClosureDate
+          ? new Date(estimatedClosureDate)
+          : undefined,
       });
 
       if (res.ok) {
         const shipmentTypeName =
-          shipmentTypesList.find((shipmentType) => shipmentType.id === newShipmentTypeId)?.name ||
-          "Shipment";
+          shipmentTypesList.find(
+            (shipmentType) => shipmentType.id === newShipmentTypeId,
+          )?.name || "Shipment";
         const managerName =
-          displayedManagers.find((manager) => manager.id === newManagerId)?.name ||
-          "Assigned Manager";
+          displayedManagers.find((manager) => manager.id === newManagerId)
+            ?.name || "Assigned Manager";
         setCreatedJobSummary({
           id: res.data.id,
           jobNumber: res.data.jobNumber,
-          customerName: selectedCustomerName || options.customers.find((customer) => customer.id === newCustomerId)?.name || "Customer",
+          customerName:
+            selectedCustomerName ||
+            options.customers.find((customer) => customer.id === newCustomerId)
+              ?.name ||
+            "Customer",
           shipmentTypeName,
           managerName,
         });
@@ -805,7 +915,9 @@ export function CreateJobDialog({
   };
 
   useEffect(() => {
-    const activeOwner = displayedManagers.find((owner) => owner.id === newOwnerId);
+    const activeOwner = displayedManagers.find(
+      (owner) => owner.id === newOwnerId,
+    );
     if (activeOwner) {
       setOwnerSearch(`${activeOwner.name} (${activeOwner.email})`);
     }
@@ -837,7 +949,10 @@ export function CreateJobDialog({
         name: trimmed,
         movementDirection: newJobTypeMovementDirection,
         manifestRequirement: newJobTypeManifestRequirement,
-        customManifestLabel: newJobTypeManifestRequirement === "CUSTOM" ? newJobTypeCustomManifestLabel : null,
+        customManifestLabel:
+          newJobTypeManifestRequirement === "CUSTOM"
+            ? newJobTypeCustomManifestLabel
+            : null,
         isManifestMandatory: newJobTypeManifestMandatory,
         manifestHelpText: newJobTypeManifestHelpText || null,
         isActive: true,
@@ -895,11 +1010,15 @@ export function CreateJobDialog({
     const shipmentType = shipmentTypesList[0];
 
     if (!branch || !customer || !jobType || !shipmentType) {
-      toast.error("Not enough reference data (branch/customer/job type/shipment type) to demo fill.");
+      toast.error(
+        "Not enough reference data (branch/customer/job type/shipment type) to demo fill.",
+      );
       return;
     }
 
-    const manager = (options.managers || []).find((m) => m.branchId === branch.id) || (options.managers || [])[0];
+    const manager =
+      (options.managers || []).find((m) => m.branchId === branch.id) ||
+      (options.managers || [])[0];
 
     setNewBranchId(branch.id);
     setNewTitle("Demo clearance job — sample cargo shipment for testing.");
@@ -917,12 +1036,17 @@ export function CreateJobDialog({
     setEstimatedClosureDate(closure.toISOString().slice(0, 10));
     setNewRemarks("Demo remarks: auto-filled for testing purposes.");
 
-    const nextAssignments = [{ userId: newOwnerId || currentUserId, responsibility: "OPERATIONS" }];
+    const nextAssignments = [
+      { userId: newOwnerId || currentUserId, responsibility: "OPERATIONS" },
+    ];
     if (manager) {
       setManagerSearch(`${manager.name} (${manager.email})`);
       autoAddedManagerIdRef.current = manager.id;
       if (manager.id !== (newOwnerId || currentUserId)) {
-        nextAssignments.push({ userId: manager.id, responsibility: "APPROVAL" });
+        nextAssignments.push({
+          userId: manager.id,
+          responsibility: "APPROVAL",
+        });
       }
       setNewManagerId(manager.id);
     } else {
@@ -935,10 +1059,16 @@ export function CreateJobDialog({
 
   const priorityPresentation = getPriorityPresentation(newPriority);
   const activeShipmentTypeName =
-    shipmentTypesList.find((shipmentType) => shipmentType.id === newShipmentTypeId)?.name || "Sea Freight";
+    shipmentTypesList.find(
+      (shipmentType) => shipmentType.id === newShipmentTypeId,
+    )?.name || "Sea Freight";
   const ActiveShipmentIcon = getShipmentVisual(activeShipmentTypeName).Icon;
-  const activeBranch = options.branches.find((branch) => branch.id === newBranchId);
-  const activeCustomer = options.customers.find((customer) => customer.id === newCustomerId);
+  const activeBranch = options.branches.find(
+    (branch) => branch.id === newBranchId,
+  );
+  const activeCustomer = options.customers.find(
+    (customer) => customer.id === newCustomerId,
+  );
 
   if (!open) return null;
 
@@ -991,73 +1121,99 @@ export function CreateJobDialog({
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b mnx-border pb-4">
                 <div>
                   <p className="mnx-label">Job initialization</p>
-                  <p className="mt-1 text-sm mnx-text-muted">Customer, numbering, shipment, and team configuration.</p>
+                  <p className="mt-1 text-sm mnx-text-muted">
+                    Customer, numbering, shipment, and team configuration.
+                  </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-xs mnx-text-muted">
-                  <span className="mnx-cha-summary-chip">{activeBranch?.name || "Select branch"}</span>
-                  <span className="mnx-cha-summary-chip">{activeCustomer?.name || "Select customer"}</span>
-                  <span className="mnx-cha-summary-chip flex items-center gap-1.5"><ActiveShipmentIcon size={12} />{activeShipmentTypeName}</span>
-                  <span className={cn("rounded-full border px-3 py-1.5 font-semibold", priorityPresentation.tone)}>{priorityPresentation.badge}</span>
-                </div>
-              </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Branch Selection */}
-              <div className="space-y-1">
-                <label className="mnx-label block">Customs Branch Office *</label>
-                <DropdownSelect
-                  required
-                  value={newBranchId}
-                  onValueChange={(value) => {
-                    setNewBranchId(value);
-                  }}
-                  placeholder="Choose Branch Location"
-                  triggerClassName={CHA_CREATE_SELECT_CLASS}
-                  options={options.branches.map((b) => ({
-                    value: b.id,
-                    label: `${b.name} (${b.code})`,
-                  }))}
-                />
-                {newBranchId && !selectedBranchRule?.isActive && (
-                  <p className="text-xs mnx-text-warning">
-                    This branch needs an active numbering rule before a job can be created.
-                  </p>
-                )}
-              </div>
-
-              {/* Job Number */}
-              <div className="space-y-1">
-                <label className="mnx-label block">Job Ref Number (Leave empty to Auto-number)</label>
-                <div className="flex gap-2">
-                  <Input
-                    type="text"
-                    placeholder="e.g. CHA-MAA-2026-0001"
-                    value={newJobNumber}
-                    onChange={(e) => setNewJobNumber(e.target.value)}
-                    className={CHA_CREATE_INPUT_CLASS}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAutoGenerateJobNumber}
-                    disabled={!newBranchId || jobNumberPreviewLoading}
-                    className="shrink-0 rounded-2xl mnx-border-accent mnx-bg-accent-soft mnx-text-accent mnx-hover-accent"
+                  <span className="mnx-cha-summary-chip">
+                    {activeBranch?.name || "Select branch"}
+                  </span>
+                  <span className="mnx-cha-summary-chip">
+                    {activeCustomer?.name || "Select customer"}
+                  </span>
+                  <span className="mnx-cha-summary-chip flex items-center gap-1.5">
+                    <ActiveShipmentIcon size={12} />
+                    {activeShipmentTypeName}
+                  </span>
+                  <span
+                    className={cn(
+                      "rounded-full border px-3 py-1.5 font-semibold",
+                      priorityPresentation.tone,
+                    )}
                   >
-                    {jobNumberPreviewLoading ? "Loading..." : "Generate"}
-                  </Button>
+                    {priorityPresentation.badge}
+                  </span>
                 </div>
-                {generatedPreview ? (
-                  <p className="text-xs mnx-text-muted">
-                    Preview: <span className="mnx-numeric mnx-text-primary">{generatedPreview}</span>
-                  </p>
-                ) : (
-                  <p className="text-xs mnx-text-muted">Select a branch to preview the next generated job number.</p>
-                )}
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Branch Selection */}
+                <div className="space-y-1">
+                  <label className="mnx-label block">
+                    Customs Branch Office *
+                  </label>
+                  <DropdownSelect
+                    required
+                    value={newBranchId}
+                    onValueChange={(value) => {
+                      setNewBranchId(value);
+                    }}
+                    placeholder="Choose Branch Location"
+                    triggerClassName={CHA_CREATE_SELECT_CLASS}
+                    options={options.branches.map((b) => ({
+                      value: b.id,
+                      label: `${b.name} (${b.code})`,
+                    }))}
+                  />
+                  {newBranchId && !selectedBranchRule?.isActive && (
+                    <p className="text-xs mnx-text-warning">
+                      This branch needs an active numbering rule before a job
+                      can be created.
+                    </p>
+                  )}
+                </div>
 
-              {/* Description */}
-              <div className="space-y-1 md:col-span-2">
-                <label className="mnx-label block">Description *</label>
+                {/* Job Number */}
+                <div className="space-y-1">
+                  <label className="mnx-label block">
+                    Job Ref Number (Leave empty to Auto-number)
+                  </label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      placeholder="e.g. CHA-MAA-2026-0001"
+                      value={newJobNumber}
+                      onChange={(e) => setNewJobNumber(e.target.value)}
+                      className={CHA_CREATE_INPUT_CLASS}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAutoGenerateJobNumber}
+                      disabled={!newBranchId || jobNumberPreviewLoading}
+                      className="shrink-0 rounded-2xl mnx-border-accent mnx-bg-accent-soft mnx-text-accent mnx-hover-accent"
+                    >
+                      {jobNumberPreviewLoading ? "Loading..." : "Generate"}
+                    </Button>
+                  </div>
+                  {generatedPreview ? (
+                    <p className="text-xs mnx-text-muted">
+                      Preview:{" "}
+                      <span className="mnx-numeric mnx-text-primary">
+                        {generatedPreview}
+                      </span>
+                    </p>
+                  ) : (
+                    <p className="text-xs mnx-text-muted">
+                      Select a branch to preview the next generated job number.
+                    </p>
+                  )}
+                </div>
+
+                {/* Description */}
+                <div className="space-y-1 md:col-span-2">
+                  <label className="mnx-label block">Description *</label>
                   <Textarea
                     required
                     rows={4}
@@ -1066,74 +1222,76 @@ export function CreateJobDialog({
                     onChange={(e) => setNewTitle(e.target.value)}
                     className={CHA_CREATE_TEXTAREA_CLASS}
                   />
-              </div>
-
-              {/* Customer Account Autocomplete */}
-              <div className="space-y-1 relative">
-                <label className="mnx-label block">Customer Account *</label>
-                <Input
-                  type="text"
-                  required
-                  placeholder="Type starting letters to search..."
-                  value={customerSearch}
-                  onChange={(e) => {
-                    setCustomerSearch(e.target.value);
-                    setShowCustomerDropdown(true);
-                    if (e.target.value !== selectedCustomerName) {
-                      setNewCustomerId("");
-                    }
-                  }}
-                  onFocus={() => setShowCustomerDropdown(true)}
-                  onBlur={() => {
-                    setTimeout(() => setShowCustomerDropdown(false), 250);
-                  }}
-                  className={CHA_CREATE_INPUT_CLASS}
-                />
-                {showCustomerDropdown && (
-                  <div className="mnx-floating-surface mnx-cha-menu mnx-cha-autocomplete absolute left-0 right-0 z-50 mt-2 max-h-60 overflow-y-auto p-2">
-                    {filteredCustomers.map((c) => (
-                      <Button
-                        key={c.id}
-                        type="button"
-                        onClick={() => {
-                          setNewCustomerId(c.id);
-                          setCustomerSearch(c.name);
-                          setSelectedCustomerName(c.name);
-                          setShowCustomerDropdown(false);
-                        }}
-                        className="mnx-cha-menu-option"
-                      >
-                        {c.name}
-                      </Button>
-                    ))}
-                    {filteredCustomers.length === 0 && (
-                      <div className="p-3 text-xs mnx-text-muted italic flex flex-col items-center gap-2">
-                        <span>No matching customer found.</span>
-                        <Button
-                          type="button"
-                          onClick={handleAddCustomerRedirect}
-                          className="mnx-plain mnx-text-accent text-xs font-medium"
-                        >
-                          + Add &quot;{customerSearch}&quot; as New Customer
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-                <div className="pt-2 text-right">
-                  <Button
-                    type="button"
-                    onClick={handleAddCustomerRedirect}
-                    className="mnx-plain mnx-text-accent text-xs font-medium"
-                  >
-                    Add New Customer
-                  </Button>
                 </div>
-              </div>
 
-              {/* Customer Ref */}
-              <div className="space-y-1">
-                <label className="mnx-label block">Customer Ref PO/WO (Optional)</label>
+                {/* Customer Account Autocomplete */}
+                <div className="space-y-1 relative">
+                  <label className="mnx-label block">Customer Account *</label>
+                  <Input
+                    type="text"
+                    required
+                    placeholder="Type starting letters to search..."
+                    value={customerSearch}
+                    onChange={(e) => {
+                      setCustomerSearch(e.target.value);
+                      setShowCustomerDropdown(true);
+                      if (e.target.value !== selectedCustomerName) {
+                        setNewCustomerId("");
+                      }
+                    }}
+                    onFocus={() => setShowCustomerDropdown(true)}
+                    onBlur={() => {
+                      setTimeout(() => setShowCustomerDropdown(false), 250);
+                    }}
+                    className={CHA_CREATE_INPUT_CLASS}
+                  />
+                  {showCustomerDropdown && (
+                    <div className="mnx-floating-surface mnx-cha-menu mnx-cha-autocomplete absolute left-0 right-0 z-50 mt-2 max-h-60 overflow-y-auto p-2">
+                      {filteredCustomers.map((c) => (
+                        <Button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setNewCustomerId(c.id);
+                            setCustomerSearch(c.name);
+                            setSelectedCustomerName(c.name);
+                            setShowCustomerDropdown(false);
+                          }}
+                          className="mnx-cha-menu-option"
+                        >
+                          {c.name}
+                        </Button>
+                      ))}
+                      {filteredCustomers.length === 0 && (
+                        <div className="p-3 text-xs mnx-text-muted italic flex flex-col items-center gap-2">
+                          <span>No matching customer found.</span>
+                          <Button
+                            type="button"
+                            onClick={handleAddCustomerRedirect}
+                            className="mnx-plain mnx-text-accent text-xs font-medium"
+                          >
+                            + Add &quot;{customerSearch}&quot; as New Customer
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="pt-2 text-right">
+                    <Button
+                      type="button"
+                      onClick={handleAddCustomerRedirect}
+                      className="mnx-plain mnx-text-accent text-xs font-medium"
+                    >
+                      Add New Customer
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Customer Ref */}
+                <div className="space-y-1">
+                  <label className="mnx-label block">
+                    Customer Ref PO/WO (Optional)
+                  </label>
                   <Input
                     type="text"
                     placeholder="e.g. PO-88712"
@@ -1141,438 +1299,535 @@ export function CreateJobDialog({
                     onChange={(e) => setNewCustomerRef(e.target.value)}
                     className={CHA_CREATE_INPUT_CLASS}
                   />
-              </div>
+                </div>
 
-              {/* Job Type */}
-              <div className="space-y-1">
-                <label className="mnx-label block">Clearance Job Type *</label>
-                <DropdownSelect
-                  required
-                  value={newJobTypeId}
-                  onValueChange={(value) => {
-                    if (value === ADD_NEW_JOB_TYPE) {
-                      setShowAddJobType(true);
-                      return;
-                    }
-                    setNewJobTypeId(value);
-                  }}
-                  placeholder="Select Category"
-                  triggerClassName={CHA_CREATE_SELECT_CLASS}
-                  options={[
-                    ...jobTypesList.map((jt) => ({
-                      value: jt.id,
-                      label: jt.name,
-                    })),
-                    { value: ADD_NEW_JOB_TYPE, label: "+ Add New Job Type" },
-                  ]}
-                />
-                {showAddJobType && (
-                  <div className="rounded-[20px] border mnx-border-accent mnx-bg-accent-soft p-4 space-y-3">
-                    <Input
-                      type="text"
-                      value={newJobTypeName}
-                      onChange={(e) => setNewJobTypeName(e.target.value)}
-                      placeholder="e.g. Transit Clearance"
-                      className={CHA_CREATE_INPUT_CLASS}
-                    />
-                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                      <label className="space-y-1">
-                        <span className="mnx-label block">Movement Direction</span>
-                        <NativeSelect
-                          value={newJobTypeMovementDirection}
-                          onChange={(e) => setNewJobTypeMovementDirection(e.target.value as "IMPORT" | "EXPORT" | "BOTH" | "OTHER")}
-                          className={CHA_CREATE_INPUT_CLASS}
-                        >
-                          <option value="IMPORT">Import</option>
-                          <option value="EXPORT">Export</option>
-                          <option value="BOTH">Both</option>
-                          <option value="OTHER">Other / Custom</option>
-                        </NativeSelect>
-                      </label>
-                      <label className="space-y-1">
-                        <span className="mnx-label block">Manifest Requirement</span>
-                        <NativeSelect
-                          value={newJobTypeManifestRequirement}
-                          onChange={(e) => setNewJobTypeManifestRequirement(e.target.value as "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM")}
-                          className={CHA_CREATE_INPUT_CLASS}
-                        >
-                          <option value="IGM">IGM</option>
-                          <option value="EGM">EGM</option>
-                          <option value="BOTH">Both</option>
-                          <option value="NONE">None</option>
-                          <option value="CUSTOM">Custom</option>
-                        </NativeSelect>
-                      </label>
-                    </div>
-                    {newJobTypeManifestRequirement === "CUSTOM" ? (
+                {/* Job Type */}
+                <div className="space-y-1">
+                  <label className="mnx-label block">
+                    Clearance Job Type *
+                  </label>
+                  <DropdownSelect
+                    required
+                    value={newJobTypeId}
+                    onValueChange={(value) => {
+                      if (value === ADD_NEW_JOB_TYPE) {
+                        setShowAddJobType(true);
+                        return;
+                      }
+                      setNewJobTypeId(value);
+                    }}
+                    placeholder="Select Category"
+                    triggerClassName={CHA_CREATE_SELECT_CLASS}
+                    options={[
+                      ...jobTypesList.map((jt) => ({
+                        value: jt.id,
+                        label: jt.name,
+                      })),
+                      { value: ADD_NEW_JOB_TYPE, label: "+ Add New Job Type" },
+                    ]}
+                  />
+                  {showAddJobType && (
+                    <div className="rounded-[var(--mn-radius-panel)] border mnx-border-accent mnx-bg-accent-soft p-4 space-y-3">
                       <Input
                         type="text"
-                        value={newJobTypeCustomManifestLabel}
-                        onChange={(e) => setNewJobTypeCustomManifestLabel(e.target.value)}
-                        placeholder="Custom manifest label"
+                        value={newJobTypeName}
+                        onChange={(e) => setNewJobTypeName(e.target.value)}
+                        placeholder="e.g. Transit Clearance"
                         className={CHA_CREATE_INPUT_CLASS}
                       />
-                    ) : null}
-                    <Input
-                      type="text"
-                      value={newJobTypeManifestHelpText}
-                      onChange={(e) => setNewJobTypeManifestHelpText(e.target.value)}
-                      placeholder="Help text / placeholder"
-                      className={CHA_CREATE_INPUT_CLASS}
-                    />
-                    <label className="flex items-center gap-2 text-xs mnx-text-muted">
+                      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                        <label className="space-y-1">
+                          <span className="mnx-label block">
+                            Movement Direction
+                          </span>
+                          <NativeSelect
+                            value={newJobTypeMovementDirection}
+                            onChange={(e) =>
+                              setNewJobTypeMovementDirection(
+                                e.target.value as
+                                  "IMPORT" | "EXPORT" | "BOTH" | "OTHER",
+                              )
+                            }
+                            className={CHA_CREATE_INPUT_CLASS}
+                          >
+                            <option value="IMPORT">Import</option>
+                            <option value="EXPORT">Export</option>
+                            <option value="BOTH">Both</option>
+                            <option value="OTHER">Other / Custom</option>
+                          </NativeSelect>
+                        </label>
+                        <label className="space-y-1">
+                          <span className="mnx-label block">
+                            Manifest Requirement
+                          </span>
+                          <NativeSelect
+                            value={newJobTypeManifestRequirement}
+                            onChange={(e) =>
+                              setNewJobTypeManifestRequirement(
+                                e.target.value as
+                                  "IGM" | "EGM" | "BOTH" | "NONE" | "CUSTOM",
+                              )
+                            }
+                            className={CHA_CREATE_INPUT_CLASS}
+                          >
+                            <option value="IGM">IGM</option>
+                            <option value="EGM">EGM</option>
+                            <option value="BOTH">Both</option>
+                            <option value="NONE">None</option>
+                            <option value="CUSTOM">Custom</option>
+                          </NativeSelect>
+                        </label>
+                      </div>
+                      {newJobTypeManifestRequirement === "CUSTOM" ? (
+                        <Input
+                          type="text"
+                          value={newJobTypeCustomManifestLabel}
+                          onChange={(e) =>
+                            setNewJobTypeCustomManifestLabel(e.target.value)
+                          }
+                          placeholder="Custom manifest label"
+                          className={CHA_CREATE_INPUT_CLASS}
+                        />
+                      ) : null}
                       <Input
-                        type="checkbox"
-                        checked={newJobTypeManifestMandatory}
-                        onChange={(e) => setNewJobTypeManifestMandatory(e.target.checked)}
+                        type="text"
+                        value={newJobTypeManifestHelpText}
+                        onChange={(e) =>
+                          setNewJobTypeManifestHelpText(e.target.value)
+                        }
+                        placeholder="Help text / placeholder"
+                        className={CHA_CREATE_INPUT_CLASS}
                       />
-                      Manifest field is mandatory
-                    </label>
-                    <div className="flex justify-end gap-2">
-                      <Button type="button" variant="outline" size="sm" onClick={() => setShowAddJobType(false)}>
-                        Cancel
-                      </Button>
-                      <Button type="button" size="sm" disabled={addingJobType} onClick={handleAddJobType}>
-                        {addingJobType ? "Adding..." : "Add Type"}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-1">
-                <label className="mnx-label block">Shipment Type *</label>
-                <DropdownSelect
-                  required
-                  value={newShipmentTypeId}
-                  onValueChange={(value) => {
-                    if (value === ADD_NEW_SHIPMENT_TYPE) {
-                      setShowAddShipmentType(true);
-                      return;
-                    }
-                    setNewShipmentTypeId(value);
-                  }}
-                  placeholder="Select Shipment Type"
-                  triggerClassName={CHA_CREATE_SELECT_CLASS}
-                  options={[
-                    ...shipmentTypesList.map((shipmentType) => ({
-                      value: shipmentType.id,
-                      label: shipmentType.name,
-                    })),
-                    { value: ADD_NEW_SHIPMENT_TYPE, label: "+ Add New Shipment Type" },
-                  ]}
-                />
-                {showAddShipmentType && (
-                  <div className="rounded-[20px] border mnx-border-accent mnx-bg-accent-soft p-4 space-y-3">
-                    <Input
-                      type="text"
-                      value={newShipmentTypeName}
-                      onChange={(e) => setNewShipmentTypeName(e.target.value)}
-                      placeholder="e.g. Rail"
-                      className={CHA_CREATE_INPUT_CLASS}
-                    />
-                    <div className="flex justify-end gap-2">
-                      <Button type="button" variant="outline" size="sm" onClick={() => setShowAddShipmentType(false)}>
-                        Cancel
-                      </Button>
-                      <Button type="button" size="sm" disabled={addingShipmentType} onClick={handleAddShipmentType}>
-                        {addingShipmentType ? "Adding..." : "Add Type"}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Priority */}
-              <div className="space-y-1">
-                <label className="mnx-label block">Job Priority *</label>
-                <DropdownSelect
-                  required
-                  value={newPriority}
-                  onValueChange={setNewPriority}
-                  placeholder="Select Priority"
-                  triggerClassName={CHA_CREATE_SELECT_CLASS}
-                  options={[
-                    { value: "LOW", label: "LOW" },
-                    { value: "MEDIUM", label: "MEDIUM" },
-                    { value: "HIGH", label: "HIGH" },
-                  ]}
-                />
-              </div>
-
-              {/* Owner */}
-              <div className="space-y-1 relative">
-                <label className="mnx-label block">Primary Operations Owner *</label>
-                <Input
-                  type="text"
-                  required
-                  value={ownerSearch}
-                  placeholder="Type owner name or email..."
-                  onChange={(event) => {
-                    setOwnerSearch(event.target.value);
-                    setNewOwnerId("");
-                    setShowOwnerDropdown(true);
-                  }}
-                  onFocus={() => setShowOwnerDropdown(true)}
-                  onBlur={() => {
-                    setTimeout(() => setShowOwnerDropdown(false), 250);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key !== "Enter") return;
-                    event.preventDefault();
-                    if (filteredOwners.length > 0) {
-                      selectOwner(filteredOwners[0]);
-                    }
-                  }}
-                  className={CHA_CREATE_INPUT_CLASS}
-                />
-                {showOwnerDropdown ? (
-                  <div className="mnx-floating-surface mnx-cha-menu mnx-cha-autocomplete absolute left-0 right-0 top-full z-50 mt-2 max-h-56 overflow-y-auto p-2">
-                    {filteredOwners.length > 0 ? (
-                      filteredOwners.map((owner) => (
+                      <label className="flex items-center gap-2 text-xs mnx-text-muted">
+                        <Input
+                          type="checkbox"
+                          checked={newJobTypeManifestMandatory}
+                          onChange={(e) =>
+                            setNewJobTypeManifestMandatory(e.target.checked)
+                          }
+                        />
+                        Manifest field is mandatory
+                      </label>
+                      <div className="flex justify-end gap-2">
                         <Button
-                          key={owner.id}
                           type="button"
-                          onClick={() => selectOwner(owner)}
-                          className="mnx-cha-menu-option justify-between"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowAddJobType(false)}
                         >
-                          <span>{owner.name}</span>
-                          <span className="text-[10px] mnx-text-muted">{owner.email}</span>
+                          Cancel
                         </Button>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 text-xs italic mnx-text-muted">
-                        No matching owners found.
-                      </div>
-                    )}
-                  </div>
-                ) : null}
-                {newOwnerId ? (
-                  <p className="text-xs mnx-text-muted">
-                    Selected owner: <span className="mnx-text-primary">{ownerSearch}</span>
-                  </p>
-                ) : null}
-              </div>
-
-              {/* Assigned Manager */}
-              <div className="space-y-1 relative">
-                <label className="mnx-label block">Assigned Manager *</label>
-                <Input
-                  type="text"
-                  required
-                  value={managerSearch}
-                  placeholder="Type manager name or email..."
-                  onChange={(event) => {
-                    setManagerSearch(event.target.value);
-                    setNewManagerId("");
-                    setShowManagerDropdown(true);
-                  }}
-                  onFocus={() => setShowManagerDropdown(true)}
-                  onBlur={() => {
-                    setTimeout(() => setShowManagerDropdown(false), 250);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key !== "Enter") return;
-                    event.preventDefault();
-                    if (filteredManagers.length > 0) {
-                      selectManager(filteredManagers[0]);
-                    }
-                  }}
-                  className={CHA_CREATE_INPUT_CLASS}
-                />
-                {showManagerDropdown ? (
-                  <div className="mnx-floating-surface mnx-cha-menu mnx-cha-autocomplete absolute left-0 right-0 top-full z-50 mt-2 max-h-56 overflow-y-auto p-2">
-                    {filteredManagers.length > 0 ? (
-                      filteredManagers.map((manager) => (
                         <Button
-                          key={manager.id}
                           type="button"
-                          onClick={() => selectManager(manager)}
-                          className="mnx-cha-menu-option justify-between"
+                          size="sm"
+                          disabled={addingJobType}
+                          onClick={handleAddJobType}
                         >
-                          <span>{manager.name}</span>
-                          <span className="text-[10px] mnx-text-muted">{manager.email}</span>
+                          {addingJobType ? "Adding..." : "Add Type"}
                         </Button>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 text-xs italic mnx-text-muted">
-                        No matching managers found.
                       </div>
-                    )}
-                  </div>
-                ) : null}
-                {newManagerId ? (
-                  <p className="text-xs mnx-text-muted">
-                    Selected manager: <span className="mnx-text-primary">{managerSearch}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="mnx-label block">Shipment Type *</label>
+                  <DropdownSelect
+                    required
+                    value={newShipmentTypeId}
+                    onValueChange={(value) => {
+                      if (value === ADD_NEW_SHIPMENT_TYPE) {
+                        setShowAddShipmentType(true);
+                        return;
+                      }
+                      setNewShipmentTypeId(value);
+                    }}
+                    placeholder="Select Shipment Type"
+                    triggerClassName={CHA_CREATE_SELECT_CLASS}
+                    options={[
+                      ...shipmentTypesList.map((shipmentType) => ({
+                        value: shipmentType.id,
+                        label: shipmentType.name,
+                      })),
+                      {
+                        value: ADD_NEW_SHIPMENT_TYPE,
+                        label: "+ Add New Shipment Type",
+                      },
+                    ]}
+                  />
+                  {showAddShipmentType && (
+                    <div className="rounded-[var(--mn-radius-panel)] border mnx-border-accent mnx-bg-accent-soft p-4 space-y-3">
+                      <Input
+                        type="text"
+                        value={newShipmentTypeName}
+                        onChange={(e) => setNewShipmentTypeName(e.target.value)}
+                        placeholder="e.g. Rail"
+                        className={CHA_CREATE_INPUT_CLASS}
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowAddShipmentType(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={addingShipmentType}
+                          onClick={handleAddShipmentType}
+                        >
+                          {addingShipmentType ? "Adding..." : "Add Type"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Priority */}
+                <div className="space-y-1">
+                  <label className="mnx-label block">Job Priority *</label>
+                  <DropdownSelect
+                    required
+                    value={newPriority}
+                    onValueChange={setNewPriority}
+                    placeholder="Select Priority"
+                    triggerClassName={CHA_CREATE_SELECT_CLASS}
+                    options={[
+                      { value: "LOW", label: "LOW" },
+                      { value: "MEDIUM", label: "MEDIUM" },
+                      { value: "HIGH", label: "HIGH" },
+                    ]}
+                  />
+                </div>
+
+                {/* Owner */}
+                <div className="space-y-1 relative">
+                  <label className="mnx-label block">
+                    Primary Operations Owner *
+                  </label>
+                  <Input
+                    type="text"
+                    required
+                    value={ownerSearch}
+                    placeholder="Type owner name or email..."
+                    onChange={(event) => {
+                      setOwnerSearch(event.target.value);
+                      setNewOwnerId("");
+                      setShowOwnerDropdown(true);
+                    }}
+                    onFocus={() => setShowOwnerDropdown(true)}
+                    onBlur={() => {
+                      setTimeout(() => setShowOwnerDropdown(false), 250);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter") return;
+                      event.preventDefault();
+                      if (filteredOwners.length > 0) {
+                        selectOwner(filteredOwners[0]);
+                      }
+                    }}
+                    className={CHA_CREATE_INPUT_CLASS}
+                  />
+                  {showOwnerDropdown ? (
+                    <div className="mnx-floating-surface mnx-cha-menu mnx-cha-autocomplete absolute left-0 right-0 top-full z-50 mt-2 max-h-56 overflow-y-auto p-2">
+                      {filteredOwners.length > 0 ? (
+                        filteredOwners.map((owner) => (
+                          <Button
+                            key={owner.id}
+                            type="button"
+                            onClick={() => selectOwner(owner)}
+                            className="mnx-cha-menu-option justify-between"
+                          >
+                            <span>{owner.name}</span>
+                            <span className="text-[10px] mnx-text-muted">
+                              {owner.email}
+                            </span>
+                          </Button>
+                        ))
+                      ) : (
+                        <div className="px-3 py-2 text-xs italic mnx-text-muted">
+                          No matching owners found.
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                  {newOwnerId ? (
+                    <p className="text-xs mnx-text-muted">
+                      Selected owner:{" "}
+                      <span className="mnx-text-primary">{ownerSearch}</span>
+                    </p>
+                  ) : null}
+                </div>
+
+                {/* Assigned Manager */}
+                <div className="space-y-1 relative">
+                  <label className="mnx-label block">Assigned Manager *</label>
+                  <Input
+                    type="text"
+                    required
+                    value={managerSearch}
+                    placeholder="Type manager name or email..."
+                    onChange={(event) => {
+                      setManagerSearch(event.target.value);
+                      setNewManagerId("");
+                      setShowManagerDropdown(true);
+                    }}
+                    onFocus={() => setShowManagerDropdown(true)}
+                    onBlur={() => {
+                      setTimeout(() => setShowManagerDropdown(false), 250);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter") return;
+                      event.preventDefault();
+                      if (filteredManagers.length > 0) {
+                        selectManager(filteredManagers[0]);
+                      }
+                    }}
+                    className={CHA_CREATE_INPUT_CLASS}
+                  />
+                  {showManagerDropdown ? (
+                    <div className="mnx-floating-surface mnx-cha-menu mnx-cha-autocomplete absolute left-0 right-0 top-full z-50 mt-2 max-h-56 overflow-y-auto p-2">
+                      {filteredManagers.length > 0 ? (
+                        filteredManagers.map((manager) => (
+                          <Button
+                            key={manager.id}
+                            type="button"
+                            onClick={() => selectManager(manager)}
+                            className="mnx-cha-menu-option justify-between"
+                          >
+                            <span>{manager.name}</span>
+                            <span className="text-[10px] mnx-text-muted">
+                              {manager.email}
+                            </span>
+                          </Button>
+                        ))
+                      ) : (
+                        <div className="px-3 py-2 text-xs italic mnx-text-muted">
+                          No matching managers found.
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                  {newManagerId ? (
+                    <p className="text-xs mnx-text-muted">
+                      Selected manager:{" "}
+                      <span className="mnx-text-primary">{managerSearch}</span>
+                    </p>
+                  ) : null}
+                </div>
+
+                {/* Estimated Closure Date */}
+                <div className="space-y-1">
+                  <label className="mnx-label block">
+                    Estimated Closure Date (Benchmark) *
+                  </label>
+                  <DateInput
+                    required
+                    value={estimatedClosureDate}
+                    onChange={(e) => setEstimatedClosureDate(e.target.value)}
+                    className={CHA_CREATE_INPUT_CLASS}
+                  />
+                </div>
+              </div>
+
+              {/* Team Assignments Mapping */}
+              <div className="space-y-3 pt-2">
+                <div className="border-b mnx-border-accent pb-3">
+                  <label className="mnx-label block">
+                    Team Assignments Mapping
+                  </label>
+                  <p className="text-xs mnx-text-muted mt-0.5">
+                    Type employee name and press **Enter** (or select from list)
+                    to add them.
                   </p>
-                ) : null}
-              </div>
+                </div>
 
-              {/* Estimated Closure Date */}
-              <div className="space-y-1">
-                <label className="mnx-label block">Estimated Closure Date (Benchmark) *</label>
-                <DateInput
-                  required
-                  value={estimatedClosureDate}
-                  onChange={(e) => setEstimatedClosureDate(e.target.value)}
-                  className={CHA_CREATE_INPUT_CLASS}
-                />
-              </div>
-            </div>
-
-            {/* Team Assignments Mapping */}
-            <div className="space-y-3 pt-2">
-              <div className="border-b mnx-border-accent pb-3">
-                <label className="mnx-label block">Team Assignments Mapping</label>
-                <p className="text-xs mnx-text-muted mt-0.5">
-                  Type employee name and press **Enter** (or select from list) to add them.
-                </p>
-              </div>
-
-              <div className="relative">
-                <Input
-                  type="text"
-                  placeholder="Type employee or group name here..."
-                  value={teamSearch}
-                  onChange={(e) => {
-                    setTeamSearch(e.target.value);
-                    setShowTeamDropdown(true);
-                  }}
-                  onFocus={() => setShowTeamDropdown(true)}
-                  onBlur={() => {
-                    setTimeout(() => setShowTeamDropdown(false), 250);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      const matchedGroup = filteredTeamGroups.find(
-                        (g) => g.name.toLowerCase() === teamSearch.trim().toLowerCase()
-                      );
-                      if (matchedGroup) {
-                        handleAddTeamGroup(matchedGroup);
-                      } else {
-                        const matchedUser = filteredTeamUsers.find(
-                          (u) => u.name.toLowerCase() === teamSearch.trim().toLowerCase()
+                <div className="relative">
+                  <Input
+                    type="text"
+                    placeholder="Type employee or group name here..."
+                    value={teamSearch}
+                    onChange={(e) => {
+                      setTeamSearch(e.target.value);
+                      setShowTeamDropdown(true);
+                    }}
+                    onFocus={() => setShowTeamDropdown(true)}
+                    onBlur={() => {
+                      setTimeout(() => setShowTeamDropdown(false), 250);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const matchedGroup = filteredTeamGroups.find(
+                          (g) =>
+                            g.name.toLowerCase() ===
+                            teamSearch.trim().toLowerCase(),
                         );
-                        if (matchedUser) {
-                          handleAddTeamUser(matchedUser);
-                        } else if (filteredTeamGroups.length > 0) {
-                          handleAddTeamGroup(filteredTeamGroups[0]);
-                        } else if (filteredTeamUsers.length > 0) {
-                          handleAddTeamUser(filteredTeamUsers[0]);
+                        if (matchedGroup) {
+                          handleAddTeamGroup(matchedGroup);
+                        } else {
+                          const matchedUser = filteredTeamUsers.find(
+                            (u) =>
+                              u.name.toLowerCase() ===
+                              teamSearch.trim().toLowerCase(),
+                          );
+                          if (matchedUser) {
+                            handleAddTeamUser(matchedUser);
+                          } else if (filteredTeamGroups.length > 0) {
+                            handleAddTeamGroup(filteredTeamGroups[0]);
+                          } else if (filteredTeamUsers.length > 0) {
+                            handleAddTeamUser(filteredTeamUsers[0]);
+                          }
                         }
                       }
-                    }
-                  }}
-                  className={CHA_CREATE_INPUT_CLASS}
-                />
-                {showTeamDropdown && teamSearch.trim() !== "" && (
-                  <div className="mnx-floating-surface mnx-cha-menu mnx-cha-autocomplete absolute left-0 right-0 z-50 mt-2 max-h-60 space-y-2 overflow-y-auto p-2">
-                    {filteredTeamGroups.length > 0 && (
+                    }}
+                    className={CHA_CREATE_INPUT_CLASS}
+                  />
+                  {showTeamDropdown && teamSearch.trim() !== "" && (
+                    <div className="mnx-floating-surface mnx-cha-menu mnx-cha-autocomplete absolute left-0 right-0 z-50 mt-2 max-h-60 space-y-2 overflow-y-auto p-2">
+                      {filteredTeamGroups.length > 0 && (
+                        <div>
+                          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] mnx-text-muted">
+                            Team Groups
+                          </div>
+                          {filteredTeamGroups.map((g) => (
+                            <Button
+                              key={g.id}
+                              type="button"
+                              onClick={() => handleAddTeamGroup(g)}
+                              className="mnx-cha-menu-option justify-between text-xs font-semibold"
+                            >
+                              <span>{g.name}</span>
+                              <span className="rounded-full mnx-bg-accent-soft px-2 py-1 text-[10px] font-semibold mnx-text-muted">
+                                GROUP ({parseJsonArray(g.memberIds).length})
+                              </span>
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+
                       <div>
-                        <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] mnx-text-muted">Team Groups</div>
-                        {filteredTeamGroups.map((g) => (
+                        {filteredTeamGroups.length > 0 && (
+                          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] mnx-text-muted">
+                            Individual Employees
+                          </div>
+                        )}
+                        {filteredTeamUsers.map((u) => (
                           <Button
-                            key={g.id}
+                            key={u.id}
                             type="button"
-                            onClick={() => handleAddTeamGroup(g)}
-                            className="mnx-cha-menu-option justify-between text-xs font-semibold"
+                            onClick={() => handleAddTeamUser(u)}
+                            className="mnx-cha-menu-option justify-between text-xs"
                           >
-                            <span>{g.name}</span>
-                            <span className="rounded-full mnx-bg-accent-soft px-2 py-1 text-[10px] font-semibold mnx-text-muted">
-                              GROUP ({parseJsonArray(g.memberIds).length})
-                            </span>
+                            {u.name} ({u.email})
                           </Button>
                         ))}
                       </div>
-                    )}
 
-                    <div>
-                      {filteredTeamGroups.length > 0 && (
-                        <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] mnx-text-muted">Individual Employees</div>
-                      )}
-                      {filteredTeamUsers.map((u) => (
-                        <Button
-                          key={u.id}
-                          type="button"
-                          onClick={() => handleAddTeamUser(u)}
-                          className="mnx-cha-menu-option justify-between text-xs"
-                        >
-                          {u.name} ({u.email})
-                        </Button>
-                      ))}
+                      {filteredTeamUsers.length === 0 &&
+                        filteredTeamGroups.length === 0 && (
+                          <div className="p-3 text-xs mnx-text-muted italic">
+                            No matching results found.
+                          </div>
+                        )}
                     </div>
+                  )}
+                </div>
 
-                    {filteredTeamUsers.length === 0 && filteredTeamGroups.length === 0 && (
-                      <div className="p-3 text-xs mnx-text-muted italic">No matching results found.</div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Display Assigned Team Members as Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                {assignments.map((assignment, index) => {
-                  const emp = options.users.find((u) => u.id === assignment.userId);
-                  return (
-                    <div
-                      key={assignment.userId || index}
-                      className="flex items-center justify-between gap-3 rounded-xl border mnx-border-accent mnx-bg-accent-soft p-4 mnx-shadow-panel transition"
-                    >
-                      <div className="space-y-1 flex-1 mr-3">
-                        <span className="text-xs font-semibold mnx-text-primary block">
-                          {emp?.name || "Unknown Employee"}
-                        </span>
-                        <DropdownSelect
-                          value={assignment.responsibility}
-                          onValueChange={(val) => handleAssignmentChange(index, "responsibility", val)}
-                          triggerClassName={cn(CHA_CREATE_SELECT_CLASS, "!h-10 !rounded-xl !text-xs")}
-                          options={[
-                            { value: "OPERATIONS", label: "OPERATIONS (Operations Executive)" },
-                            { value: "APPROVAL", label: "APPROVAL (Review Manager)" },
-                            { value: "FILING", label: "FILING (Customs Representative)" },
-                            { value: "ACCOUNTS", label: "ACCOUNTS (Accounts Executive)" },
-                            { value: "CUSTOMER_SERVICE", label: "CUSTOMER SERVICE" },
-                          ]}
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        mode="icon"
-                        size="md"
-                        onClick={() => handleRemoveAssignment(index)}
-                        aria-label="Remove assignment"
-                        className="mnx-plain !h-10 !w-10 !min-w-10 shrink-0 rounded-xl border mnx-border-danger mnx-bg-surface !px-0 mnx-text-danger shadow-sm mnx-hover-danger mnx-hover-danger mnx-hover-danger mnx-shadow-panel"
+                {/* Display Assigned Team Members as Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                  {assignments.map((assignment, index) => {
+                    const emp = options.users.find(
+                      (u) => u.id === assignment.userId,
+                    );
+                    return (
+                      <div
+                        key={assignment.userId || index}
+                        className="flex items-center justify-between gap-3 rounded-xl border mnx-border-accent mnx-bg-accent-soft p-4 mnx-shadow-panel transition"
                       >
-                        <Trash2 className="size-5" strokeWidth={2.1} />
-                      </Button>
-                    </div>
-                  );
-                })}
-                {assignments.length === 0 && (
-                  <p className="col-span-2 rounded-xl border border-dashed mnx-border-accent mnx-bg-accent-soft p-3 text-center text-xs italic mnx-text-muted">
-                    No team members assigned yet. Add one above.
-                  </p>
-                )}
+                        <div className="space-y-1 flex-1 mr-3">
+                          <span className="text-xs font-semibold mnx-text-primary block">
+                            {emp?.name || "Unknown Employee"}
+                          </span>
+                          <DropdownSelect
+                            value={assignment.responsibility}
+                            onValueChange={(val) =>
+                              handleAssignmentChange(
+                                index,
+                                "responsibility",
+                                val,
+                              )
+                            }
+                            triggerClassName={cn(
+                              CHA_CREATE_SELECT_CLASS,
+                              "!h-10 !rounded-xl !text-xs",
+                            )}
+                            options={[
+                              {
+                                value: "OPERATIONS",
+                                label: "OPERATIONS (Operations Executive)",
+                              },
+                              {
+                                value: "APPROVAL",
+                                label: "APPROVAL (Review Manager)",
+                              },
+                              {
+                                value: "FILING",
+                                label: "FILING (Customs Representative)",
+                              },
+                              {
+                                value: "ACCOUNTS",
+                                label: "ACCOUNTS (Accounts Executive)",
+                              },
+                              {
+                                value: "CUSTOMER_SERVICE",
+                                label: "CUSTOMER SERVICE",
+                              },
+                            ]}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          mode="icon"
+                          size="md"
+                          onClick={() => handleRemoveAssignment(index)}
+                          aria-label="Remove assignment"
+                          className="mnx-plain !h-10 !w-10 !min-w-10 shrink-0 rounded-xl border mnx-border-danger mnx-bg-surface !px-0 mnx-text-danger shadow-sm mnx-hover-danger mnx-hover-danger mnx-hover-danger mnx-shadow-panel"
+                        >
+                          <Trash2 className="size-5" strokeWidth={2.1} />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                  {assignments.length === 0 && (
+                    <p className="col-span-2 rounded-xl border border-dashed mnx-border-accent mnx-bg-accent-soft p-3 text-center text-xs italic mnx-text-muted">
+                      No team members assigned yet. Add one above.
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Remarks */}
-            <div className="space-y-2 pt-2">
-              <label className="mnx-label block">Final Notes &amp; Details</label>
-              <p className="text-xs mnx-text-muted">
-                Special shipment instructions, customs remarks, discharge notes, or operational handling context.
-              </p>
-              <Textarea
-                rows={4}
-                placeholder="Capture customs instructions, discharge context, free-day details, or any operational remarks the assigned team should see."
-                value={newRemarks}
-                onChange={(e) => setNewRemarks(e.target.value)}
-                className={CHA_CREATE_TEXTAREA_CLASS}
-              />
-            </div>
-
+              {/* Remarks */}
+              <div className="space-y-2 pt-2">
+                <label className="mnx-label block">
+                  Final Notes &amp; Details
+                </label>
+                <p className="text-xs mnx-text-muted">
+                  Special shipment instructions, customs remarks, discharge
+                  notes, or operational handling context.
+                </p>
+                <Textarea
+                  rows={4}
+                  placeholder="Capture customs instructions, discharge context, free-day details, or any operational remarks the assigned team should see."
+                  value={newRemarks}
+                  onChange={(e) => setNewRemarks(e.target.value)}
+                  className={CHA_CREATE_TEXTAREA_CLASS}
+                />
+              </div>
             </div>
           </div>
           <footer>

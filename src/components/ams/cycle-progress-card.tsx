@@ -61,7 +61,7 @@ const CURRENT_STEP_GLOW_CLASS = "shadow-[var(--mn-shadow-panel)]";
 
 function cardClassName(className?: string) {
   return [
-    "mnx-performance-surface mnx-accent-edge rounded-[24px] border border-mono-border/35 bg-mono-card p-5",
+    "mnx-performance-surface mnx-accent-edge rounded-[var(--mn-radius-panel)] border border-mono-border/35 bg-mono-card p-5",
     className,
   ]
     .filter(Boolean)

@@ -1,4 +1,10 @@
-import { CrmButton, CrmInput, CrmTextarea, CrmConfigurationState, CrmPermissionState } from "@/components/monolith/crm-workspace";
+import {
+  CrmButton,
+  CrmInput,
+  CrmTextarea,
+  CrmConfigurationState,
+  CrmPermissionState,
+} from "@/components/monolith/crm-workspace";
 import { NativeSelect } from "@/components/monolith/native-select";
 import React from "react";
 import { redirect } from "next/navigation";
@@ -7,33 +13,39 @@ import { db } from "@/lib/db";
 import { listProjects } from "@/modules/crm/service";
 import { requirePermission } from "@/lib/rbac";
 import { DateInput } from "@/components/monolith/date-input";
+import { Search, FolderKanban, Calendar, Save } from "lucide-react";
 import {
-  Search,
-  FolderKanban,
-  Calendar,
-  Save,
-} from "lucide-react";
-import { createProjectAction, deleteProjectAction } from "@/modules/crm/actions";
+  createProjectAction,
+  deleteProjectAction,
+} from "@/modules/crm/actions";
 import { DeleteRecordButton } from "../_components/delete-record-button";
 
 interface SearchParams {
   search?: string;
 }
 
-export default async function CrmProjectsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+export default async function CrmProjectsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   const session = await getSession();
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.orgId;
   if (!orgId) {
-    return <CrmConfigurationState description="Missing organisation context." />;
+    return (
+      <CrmConfigurationState description="Missing organisation context." />
+    );
   }
 
   // Permission Guard
   try {
     await requirePermission(session.user.id, "crm.project.manage");
   } catch (e) {
-    return <CrmPermissionState description="You do not have permission to view CRM operational projects." />;
+    return (
+      <CrmPermissionState description="You do not have permission to view CRM operational projects." />
+    );
   }
 
   const awaitedParams = await searchParams;
@@ -62,8 +74,12 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
         {/* Left Column: Projects list table */}
         <div className="lg:col-span-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl overflow-hidden shadow-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">Active Operations</h3>
-            <span className="text-xs text-mono-muted font-bold">{projects.length} running projects</span>
+            <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
+              Active Operations
+            </h3>
+            <span className="text-xs text-mono-muted font-bold">
+              {projects.length} running projects
+            </span>
           </div>
 
           <form method="GET" className="relative">
@@ -78,37 +94,53 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
           </form>
 
           {projects.length === 0 ? (
-            <div className="p-8 text-center text-mono-muted text-xs italic">No operational projects tracked.</div>
+            <div className="p-8 text-center text-mono-muted text-xs italic">
+              No operational projects tracked.
+            </div>
           ) : (
             <div className="divide-y divide-[var(--mnx-border)]/30">
               {projects.map((project) => (
-                <div key={project.id} className="py-4 flex items-center justify-between gap-4">
+                <div
+                  key={project.id}
+                  className="py-4 flex items-center justify-between gap-4"
+                >
                   <div className="min-w-0 flex-1">
-                    <span className="font-bold text-mono-text text-sm block truncate">{project.name}</span>
+                    <span className="font-bold text-mono-text text-sm block truncate">
+                      {project.name}
+                    </span>
                     <span className="text-xs text-mono-muted block mt-0.5">
-                      Client: {project.account?.name || "No Account"} • Status: {project.status}
+                      Client: {project.account?.name || "No Account"} • Status:{" "}
+                      {project.status}
                     </span>
                     <div className="flex gap-4 text-[10px] text-mono-muted mt-1.5">
                       {project.startDate && (
                         <span className="flex items-center gap-1">
                           <Calendar className="size-3" />
-                          Start: {new Date(project.startDate).toLocaleDateString("en-IN")}
+                          Start:{" "}
+                          {new Date(project.startDate).toLocaleDateString(
+                            "en-IN",
+                          )}
                         </span>
                       )}
                       {project.endDate && (
                         <span className="flex items-center gap-1">
                           <Calendar className="size-3" />
-                          Target: {new Date(project.endDate).toLocaleDateString("en-IN")}
+                          Target:{" "}
+                          {new Date(project.endDate).toLocaleDateString(
+                            "en-IN",
+                          )}
                         </span>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center gap-4 shrink-0">
-                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
-                      project.status === "COMPLETED"
-                        ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]"
-                        : "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]"
-                    }`}>
+                    <span
+                      className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                        project.status === "COMPLETED"
+                          ? "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]"
+                          : "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]"
+                      }`}
+                    >
                       {project.status.replace("_", " ")}
                     </span>
                     <DeleteRecordButton
@@ -127,7 +159,9 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
         <div className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl p-6 shadow-2xl space-y-4">
           <div className="flex items-center gap-2 border-b border-[var(--mnx-border)]/30 pb-2">
             <FolderKanban className="size-4.5 text-[var(--mnx-accent)]" />
-            <h3 className="font-bold text-xs text-mono-text uppercase tracking-wider">Start Operation Project</h3>
+            <h3 className="font-bold text-xs text-mono-text uppercase tracking-wider">
+              Start Operation Project
+            </h3>
           </div>
 
           <form
@@ -138,7 +172,9 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
             className="space-y-4"
           >
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">Project Title *</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                Project Title *
+              </label>
               <CrmInput
                 type="text"
                 name="name"
@@ -148,7 +184,9 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">Linked Client Account *</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                Linked Client Account *
+              </label>
               <NativeSelect
                 name="accountId"
                 className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
@@ -156,20 +194,26 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
               >
                 <option value="">Select Customer</option>
                 {accounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>{acc.name}</option>
+                  <option key={acc.id} value={acc.id}>
+                    {acc.name}
+                  </option>
                 ))}
               </NativeSelect>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">Start Date</label>
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                  Start Date
+                </label>
                 <DateInput
                   name="startDate"
                   className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">End Date</label>
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                  End Date
+                </label>
                 <DateInput
                   name="endDate"
                   className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
@@ -178,7 +222,9 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">Status</label>
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                  Status
+                </label>
                 <NativeSelect
                   name="status"
                   defaultValue="PLANNING"
@@ -191,20 +237,26 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
                 </NativeSelect>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">Project Owner *</label>
+                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                  Project Owner *
+                </label>
                 <NativeSelect
                   name="ownerId"
                   className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
                   required
                 >
                   {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>{emp.name}</option>
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name}
+                    </option>
                   ))}
                 </NativeSelect>
               </div>
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">Description</label>
+              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
+                Description
+              </label>
               <CrmTextarea
                 name="description"
                 placeholder="Log operational instructions..."
@@ -214,7 +266,7 @@ export default async function CrmProjectsPage({ searchParams }: { searchParams: 
             </div>
             <CrmButton
               type="submit"
-              className="w-full flex items-center justify-center gap-1.5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text font-bold rounded-lg text-xs transition-all shadow-md shadow-[var(--mnx-accent)]/10 cursor-pointer"
+              className="w-full flex items-center justify-center gap-1.5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text font-bold rounded-lg text-xs transition-all mnx-shadow-panel cursor-pointer"
             >
               <Save className="size-4" />
               <span>Launch Project</span>

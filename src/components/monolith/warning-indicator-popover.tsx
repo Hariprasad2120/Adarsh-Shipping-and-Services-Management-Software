@@ -39,7 +39,10 @@ export function WarningIndicatorPopover({
     const triggerRect = triggerRef.current?.getBoundingClientRect();
     if (!triggerRect) return;
     const panelWidth = panelRef.current?.offsetWidth ?? 352;
-    const nextLeft = Math.min(Math.max(16, triggerRect.left + triggerRect.width / 2 - panelWidth / 2), window.innerWidth - panelWidth - 16);
+    const nextLeft = Math.min(
+      Math.max(16, triggerRect.left + triggerRect.width / 2 - panelWidth / 2),
+      window.innerWidth - panelWidth - 16,
+    );
     setPanelPosition({ top: triggerRect.bottom + 12, left: nextLeft });
   }
 
@@ -55,7 +58,8 @@ export function WarningIndicatorPopover({
     };
   }, [isOpen]);
 
-  const toneClass = tone === "destructive" ? "danger-badge" : "warning-badge";
+  const toneClass =
+    tone === "destructive" ? "mnx-tone-danger" : "mnx-tone-warning";
 
   return (
     <>
@@ -65,7 +69,7 @@ export function WarningIndicatorPopover({
         aria-label={ariaLabel}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
-        className={cn("monolith-icon-badge", toneClass)}
+        className={cn("mnx-icon-badge", toneClass)}
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
@@ -110,7 +114,16 @@ export function WarningIndicatorPopover({
                     {meta}
                   </p>
                 ) : null}
-                <div className={cn(childrenLayout === "stack" ? "mt-3 flex flex-col gap-3" : "mt-3 grid grid-cols-2 gap-2", childrenClassName)}>{children}</div>
+                <div
+                  className={cn(
+                    childrenLayout === "stack"
+                      ? "mt-3 flex flex-col gap-3"
+                      : "mt-3 grid grid-cols-2 gap-2",
+                    childrenClassName,
+                  )}
+                >
+                  {children}
+                </div>
               </div>
             </div>,
             document.body,
