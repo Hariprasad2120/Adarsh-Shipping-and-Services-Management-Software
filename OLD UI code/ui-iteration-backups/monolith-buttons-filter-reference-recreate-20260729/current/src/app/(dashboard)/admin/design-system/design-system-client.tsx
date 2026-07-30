@@ -1,12 +1,9 @@
-"use client";
+﻿"use client";
 
 import {
   AlertCircle,
-  ArrowDown,
-  ArrowRight,
   ArrowUpRight,
   Boxes,
-  Check,
   CheckCircle2,
   Database,
   FileText,
@@ -15,11 +12,9 @@ import {
   MessageSquareText,
   MoreHorizontal,
   PackageCheck,
-  Plus,
   ShieldCheck,
   Sparkles,
   Users,
-  X,
 } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import * as AccountingComponents from "@/components/monolith/accounting-workspace";
@@ -100,6 +95,7 @@ import {
   FilterMenu,
   Input,
   Label,
+  MonolithAction,
   MonolithBadge,
   MonolithEmptyState,
   MonolithIconAction,
@@ -711,48 +707,14 @@ export default function DesignSystemClient() {
               <CardTitle>Actions and status</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="mnx-catalogue-action-board">
-                <div>
-                  <MonolithSpecLabel as="p">Button hierarchy</MonolithSpecLabel>
-                  <div className="mnx-catalogue-button-showcase">
-                    <Button>
-                      Create shipment
-                      <Plus aria-hidden="true" />
-                    </Button>
-                    <Button variant="accent">
-                      Approve checklist
-                      <Check aria-hidden="true" />
-                    </Button>
-                    <Button variant="inverse">Save draft</Button>
-                    <Button variant="outline">
-                      Export report
-                      <ArrowDown aria-hidden="true" />
-                    </Button>
-                    <Button variant="destructive">Delete job</Button>
-                    <Button disabled>Unavailable</Button>
-                  </div>
-                </div>
-                <div>
-                  <MonolithSpecLabel as="p">Text & icon actions</MonolithSpecLabel>
-                  <div className="mnx-catalogue-link-showcase">
-                    <a href="#forms">
-                      View shipment
-                      <ArrowUpRight aria-hidden="true" />
-                    </a>
-                    <a href="#forms" className="is-subtle">
-                      Edit details
-                    </a>
-                    <MonolithIconAction aria-label="Create record">
-                      <Plus aria-hidden="true" />
-                    </MonolithIconAction>
-                    <MonolithIconAction className="mnx-icon-button-dark" aria-label="Continue">
-                      <ArrowRight aria-hidden="true" />
-                    </MonolithIconAction>
-                    <MonolithIconAction className="mnx-icon-button-danger" aria-label="Cancel">
-                      <X aria-hidden="true" />
-                    </MonolithIconAction>
-                  </div>
-                </div>
+              <div className="mnx-catalogue-action-row">
+                <Button>Primary</Button>
+                <Button variant="outline">Secondary</Button>
+                <Button variant="destructive">Destructive</Button>
+                <MonolithAction variant="secondary">Foundation action</MonolithAction>
+                <MonolithIconAction aria-label="Icon action">
+                  <MoreHorizontal size={16} />
+                </MonolithIconAction>
               </div>
               <div className="mnx-catalogue-action-row">
                 <Badge variant="success">Success</Badge>

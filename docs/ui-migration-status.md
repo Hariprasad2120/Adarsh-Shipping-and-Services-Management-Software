@@ -1342,3 +1342,90 @@ Blocked:
 
 - Authenticated visual verification remains covered by the existing missing
   browser-instance blocker for CHA.
+
+## Login animated character restore
+
+Implemented on 2026-07-29 by request for `/login` only.
+
+- Restored the pre-Batch-007 animated Monolith character login scene while
+  preserving the existing credential, SSO, remember-me, callback, stale-session
+  cleanup, validation, and redirect behavior.
+- Kept the change scoped to `src/components/auth/monolith-logistics-login.tsx`,
+  its CSS module, and the small login scene type helper.
+- Other Authentication/Miscellaneous routes remain on the Batch 007 public
+  Monolith surfaces.
+
+Backup:
+`OLD UI code/ui-iteration-backups/login-animated-character-restore-20260729/`
+
+## Dashboard module graphics correction
+
+Implemented on 2026-07-29 for the protected `/dashboard` module command center.
+
+- Restored the shared `mnx-dashboard-graphic` and `mnx-dg-*` semantic graphic
+  token classes consumed by the module illustration components.
+- Constrained the module-card art slot so the Product Catalogue, HRMS,
+  Attendance, AMS, LMS, CRM, and related dashboard graphics are centered and
+  scaled inside their panels instead of rendering as broken outline fragments.
+- Preserved dashboard business data, module links, metrics, ordering, and card
+  interaction behavior.
+
+Backup:
+`OLD UI code/ui-iteration-backups/dashboard-module-graphics-fix-20260729/`
+
+## CHA dashboard workspace style restore
+
+Implemented on 2026-07-29 for the protected `/cha` command workspace.
+
+- Restored the shared CHA heading, Assigned Jobs toolbar, search, filter menu,
+  and status text classes consumed by the dashboard workspace table.
+- Normalized the Assigned Jobs action buttons and filter trigger back to the
+  Monolith datatable pill sizing instead of legacy compact/unstyled controls.
+- Restored the shared Operations Overview panel, pending action, expiry,
+  empty-state, job-reference, and recent-activity timeline styles.
+- Preserved existing job queries, permissions, links, refresh behavior,
+  warning indicators, filters, and row navigation.
+
+Backup:
+`OLD UI code/ui-iteration-backups/cha-dashboard-styles-restore-20260729/`
+
+Follow-up backup for the action-button correction:
+`OLD UI code/ui-iteration-backups/cha-dashboard-action-buttons-fix-20260729/`
+
+Design-system primitive revert:
+
+- Moved the action-button correction out of global `mnx-button-outline` and
+  `mnx-filter-button` selectors and into the CHA Assigned Jobs toolbar scope so
+  the design-system primitives keep their original button presentation.
+
+Backup:
+`OLD UI code/ui-iteration-backups/design-system-button-revert-20260729/`
+
+## Monolith button and filter primitive recreation
+
+Implemented on 2026-07-29 for the shared design-system primitives and
+datatable filter trigger.
+
+- Recreated the reference button hierarchy in the shared Monolith button
+  classes: primary, accent, secondary, outline, ghost, destructive, disabled,
+  compact, and icon-button tones.
+- Recreated the reference filter trigger dimensions, rounded corner, icon
+  sizing, and active-count chip for `mnx-filter-button` / `filter-button`.
+- Updated the `/admin/design-system` Actions and status preview to render the
+  same reference examples for button hierarchy plus text and icon actions.
+
+Backup:
+`OLD UI code/ui-iteration-backups/monolith-buttons-filter-reference-recreate-20260729/`
+
+## 2026-07-29 performance hot-path pass
+
+The presentation contract remains unchanged. `/cha/jobs` now lazy-loads
+create-dialog data only after New Job is requested, and `/dashboard` lazy-loads
+the Organization-tab directory. Both routes continue to use the existing
+Monolith components and semantic themes.
+
+Verification passed for targeted ESLint, production TypeScript, focused
+performance/dashboard tests, the 328-route production build, and a Playwright
+login/HMR smoke. Authenticated visual verification remains pending because the
+configured remote database is not documented as approved staging and the local
+PostgreSQL service credentials are unavailable.

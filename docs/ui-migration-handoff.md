@@ -871,3 +871,77 @@ Verification:
 - `node scripts/verify-monolith-expense-cha-ui.mjs`: passed;
 - visual verification remains covered by the existing CHA browser-instance
   blocker.
+
+## 2026-07-29 Login animated character restore
+
+The `/login` page was restored to the earlier animated Monolith character scene
+by request, without changing login behavior. The restore is limited to the
+login component, its CSS module, and the small scene type helper. Current
+credential login, Google SSO, remember-me, callback URL safety, stale-session
+cleanup, validation, success delay, and redirect behavior are preserved.
+
+Backup:
+`OLD UI code/ui-iteration-backups/login-animated-character-restore-20260729/`
+
+## 2026-07-29 Dashboard module graphics correction
+
+The protected `/dashboard` module command center graphics are repaired. The
+merge had left the active React illustration components without their shared
+`mnx-dashboard-graphic` and `mnx-dg-*` semantic CSS tokens, causing the card art
+to render as broken outline fragments. The shared graphic token block and a
+stable module-card art canvas are restored in `src/styles/monolith-system.css`.
+
+Backup:
+`OLD UI code/ui-iteration-backups/dashboard-module-graphics-fix-20260729/`
+
+## 2026-07-29 CHA dashboard workspace style restore
+
+The protected `/cha` command workspace styles are repaired. The active
+components were still rendering the shared Monolith class names, but the merge
+had dropped the CSS for the outside section headings, Assigned Jobs table
+toolbar/search/filter/status text, and the Operations Overview pending action,
+expiry, empty-state, job-reference, and recent-activity timeline surfaces.
+The Assigned Jobs action controls were also normalized so New Job, Filter, View
+All, and Settings use the Monolith datatable pill sizing rather than legacy
+compact/unstyled controls.
+
+Backup:
+`OLD UI code/ui-iteration-backups/cha-dashboard-styles-restore-20260729/`
+
+Follow-up backup:
+`OLD UI code/ui-iteration-backups/cha-dashboard-action-buttons-fix-20260729/`
+
+The follow-up button correction was then scoped back out of the global design
+system primitives. `mnx-button-outline` and `mnx-filter-button` are no longer
+globally restyled by this repair; only the CHA Assigned Jobs toolbar receives
+the datatable-specific sizing.
+
+Revert backup:
+`OLD UI code/ui-iteration-backups/design-system-button-revert-20260729/`
+
+## 2026-07-29 Monolith button and filter primitive recreation
+
+The shared button and filter primitives have been recreated from the v11
+reference source. `mnx-button` now carries the reference 48px pill proportions,
+variant fills/shadows/borders, compact and disabled states, and 15px action
+icons. `mnx-filter-button` / `filter-button` now carries the reference 35px
+datatable filter control with the small accent count chip. The
+`/admin/design-system` Actions and status preview now renders the same
+reference button hierarchy plus text and icon action examples.
+
+Backup:
+`OLD UI code/ui-iteration-backups/monolith-buttons-filter-reference-recreate-20260729/`
+
+## 2026-07-29 performance audit handoff
+
+The performance pass preserves the active Monolith presentation. Create Job
+options on `/cha/jobs` and Organization-tab data on `/dashboard` are now lazy;
+their loading surfaces use existing shared components.
+
+Passed: targeted ESLint, production TypeScript, 9 focused tests, 328-route
+production build, public `/login` Playwright smoke, and a controlled Turbopack
+Fast Refresh check with one page load and no console errors.
+
+Blocked: authenticated theme/viewport and performance measurements require an
+explicitly approved local/staging database and safe credentials. The repository
+`.env` remote Neon target was deliberately not used.

@@ -1486,8 +1486,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 13px;
-  padding: 0 21px;
+  gap: 10px;
+  padding: 0 20px;
   border: 1px solid transparent;
   border-radius: 999px;
   font-size: 12px;
@@ -1496,8 +1496,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   transition:
     transform var(--mnx-hover-duration) var(--mnx-hover-ease),
     box-shadow var(--mnx-hover-shadow-duration) var(--mnx-hover-ease),
-    border-color var(--mnx-hover-duration) var(--mnx-hover-ease),
-    background var(--mnx-hover-duration) var(--mnx-hover-ease);
+    border-color var(--mnx-hover-duration) var(--mnx-hover-ease);
 }
 
 .mnx-button:hover:not(:disabled) {
@@ -1510,28 +1509,16 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 }
 
 .mnx-button:disabled {
-  color: var(--mnx-muted);
-  background: var(--mnx-soft);
-  box-shadow: none;
-  cursor: not-allowed;
-  opacity: 1;
-}
-
-.mnx-button > svg,
-.mnx-button > span > svg {
-  width: 15px;
-  height: 15px;
-  flex: 0 0 auto;
+  cursor: wait;
+  opacity: 0.56;
 }
 
 .mnx-button-primary {
-  min-width: 170px;
-  justify-content: space-between;
   color: var(--mnx-primary-contrast);
   background: var(--mnx-primary-gradient);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.13),
-    0 10px 22px rgba(17, 18, 14, 0.2);
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 10px 22px rgba(17, 18, 14, 0.18);
 }
 
 .mnx-button-primary > svg,
@@ -1543,9 +1530,6 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 .theme-night .mnx-button-primary,
 .theme-violet .mnx-button-primary {
   color: var(--mnx-accent-contrast);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    0 10px 24px color-mix(in srgb, var(--mnx-accent) 22%, transparent);
 }
 
 .theme-night .mnx-button-primary > svg,
@@ -1557,77 +1541,10 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   color: var(--mnx-accent-contrast);
 }
 
-.mnx-button-accent {
-  color: var(--mnx-accent-contrast);
-  background: var(--mnx-accent-gradient);
-  box-shadow: 0 9px 20px color-mix(in srgb, var(--mnx-accent) 24%, transparent);
-}
-
 .mnx-button-secondary {
   border-color: var(--mnx-border);
   color: var(--mnx-text);
-  background: var(--mnx-card);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.09);
-}
-
-.mnx-button-outline {
-  border-color: color-mix(in srgb, var(--mnx-text) 60%, transparent);
-  color: var(--mnx-text);
-  background: transparent;
-}
-
-.mnx-button-ghost {
-  border-color: var(--mnx-border);
-  color: var(--mnx-text);
-  background: color-mix(in srgb, var(--mnx-card) 84%, transparent);
-  box-shadow: 0 7px 17px rgba(0, 0, 0, 0.08);
-}
-
-.mnx-filter-button,
-.filter-button {
-  height: 35px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  padding: 0 11px;
-  border: 1px solid var(--mnx-border);
-  border-radius: 10px;
-  color: var(--mnx-text);
   background: var(--mnx-surface-gradient);
-  font-size: 10px;
-  font-weight: 500;
-  line-height: 1;
-  cursor: pointer;
-  transition:
-    transform var(--mnx-hover-duration) var(--mnx-hover-ease),
-    box-shadow var(--mnx-hover-shadow-duration) var(--mnx-hover-ease),
-    border-color var(--mnx-hover-duration) var(--mnx-hover-ease);
-}
-
-.mnx-filter-button:hover,
-.filter-button:hover {
-  box-shadow: var(--mnx-theme-shadow-soft);
-}
-
-.mnx-filter-button > svg,
-.filter-button > svg {
-  width: 11px;
-  height: 11px;
-  flex: 0 0 auto;
-  margin-right: 5px;
-}
-
-.mnx-filter-button > i,
-.filter-button > i {
-  margin-left: 5px;
-  padding: 2px 5px;
-  border-radius: 99px;
-  color: var(--mnx-accent-contrast);
-  background: var(--mnx-accent-gradient);
-  font-size: 10px;
-  font-style: normal;
-  font-weight: 700;
 }
 
 .mnx-button-wide {
@@ -3244,14 +3161,14 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 }
 
 .mnx-icon-button {
-  width: 37px;
-  height: 37px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
   border: 1px solid var(--mnx-border);
   border-radius: 50%;
   color: var(--mnx-text);
-  background: var(--mnx-surface-gradient);
+  background: var(--mnx-control-gradient);
   cursor: pointer;
   transition:
     transform var(--mnx-hover-duration) var(--mnx-hover-ease),
@@ -3263,22 +3180,6 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   border-color: var(--mnx-accent);
   box-shadow: var(--mnx-theme-shadow-soft);
   transform: translateY(-2px);
-}
-
-.mnx-icon-button-dark {
-  color: var(--mnx-accent-contrast);
-  background: var(--mnx-accent-gradient);
-}
-
-.mnx-icon-button-danger {
-  border-color: color-mix(in srgb, var(--mnx-danger) 26%, transparent);
-  color: var(--mnx-danger);
-  background: transparent;
-}
-
-.mnx-icon-button-danger:hover {
-  border-color: color-mix(in srgb, var(--mnx-danger) 42%, transparent);
-  box-shadow: var(--mnx-danger-shadow);
 }
 
 .mnx-table-empty {
@@ -3630,22 +3531,20 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 }
 
 .mnx-button-compact {
-  min-width: auto;
-  min-height: 39px;
-  padding-inline: 16px;
-  font-size: 12px;
+  min-height: 34px;
+  padding-inline: 14px;
+  font-size: 10px;
 }
 
 .mnx-button-destructive {
-  border-color: color-mix(in srgb, var(--mnx-danger) 22%, transparent);
+  border-color: color-mix(in srgb, var(--mnx-danger) 24%, transparent);
   color: var(--mnx-danger);
   background: var(--mnx-danger-bg);
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--mnx-danger) 12%, transparent);
 }
 
 .mnx-button-destructive:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--mnx-danger) 42%, transparent);
-  box-shadow: var(--mnx-danger-shadow);
+  border-color: color-mix(in srgb, var(--mnx-danger) 46%, transparent);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--mnx-danger) 18%, transparent);
 }
 
 .mnx-badge-accent {
@@ -4004,54 +3903,6 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-}
-
-.mnx-catalogue-action-board {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.65fr);
-  gap: 35px;
-}
-
-.mnx-catalogue-button-showcase,
-.mnx-catalogue-link-showcase {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-
-.mnx-catalogue-button-showcase {
-  margin-top: 14px;
-}
-
-.mnx-catalogue-link-showcase {
-  margin-top: 15px;
-}
-
-.mnx-catalogue-link-showcase a {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--mnx-accent-text);
-  border-bottom: 1px solid currentcolor;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.2;
-  text-decoration: none;
-}
-
-.mnx-catalogue-link-showcase a:hover {
-  color: var(--mnx-text);
-}
-
-.mnx-catalogue-link-showcase a.is-subtle {
-  color: var(--mnx-muted);
-  border-bottom: 0;
-}
-
-.mnx-catalogue-link-showcase a svg {
-  width: 13px;
-  height: 13px;
 }
 
 .mnx-catalogue-stack {
@@ -9639,12 +9490,15 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
 
 .mnx-cha-panel-actions-row .mnx-button:hover:not(:disabled),
 .mnx-cha-panel-actions-row .mnx-button:active:not(:disabled),
+.mnx-cha-panel-actions-row .mnx-filter-button:hover,
+.mnx-cha-panel-actions-row .mnx-filter-button:active,
 .mnx-cha-dashboard-filter-options .mnx-menu-option:hover:not(:disabled),
 .mnx-cha-dashboard-filter-options .mnx-menu-option:active:not(:disabled) {
   transform: none;
 }
 
-.mnx-cha-panel-actions-row .mnx-button {
+.mnx-cha-panel-actions-row .mnx-button,
+.mnx-cha-panel-actions-row .mnx-filter-button {
   min-height: 42px;
   display: inline-flex;
   align-items: center;
@@ -9659,16 +9513,53 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
   line-height: 1;
 }
 
+.mnx-cha-panel-actions-row .mnx-button-primary {
+  min-width: 128px;
+}
+
+.mnx-cha-panel-actions-row .mnx-button-outline,
+.mnx-cha-panel-actions-row .mnx-filter-button {
+  color: var(--mnx-text);
+  border-color: color-mix(in srgb, var(--mnx-text) 48%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-card) 72%, transparent);
+}
+
+.mnx-cha-panel-actions-row .mnx-button-outline:hover:not(:disabled),
+.mnx-cha-panel-actions-row .mnx-filter-button:hover {
+  border-color: color-mix(in srgb, var(--mnx-text) 64%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-card) 84%, var(--mnx-accent));
+  box-shadow: var(--mnx-theme-shadow-soft);
+}
+
+.mnx-cha-panel-actions-row .mnx-button-outline,
+.mnx-cha-panel-actions-row .mnx-filter-button {
+  min-width: 118px;
+}
+
 .mnx-cha-panel-actions-row .mnx-button-compact {
   min-height: 42px;
   padding-inline: 18px;
   font-size: 13px;
 }
 
-.mnx-cha-panel-actions-row .mnx-button > svg {
+.mnx-cha-panel-actions-row .mnx-button > svg,
+.mnx-cha-panel-actions-row .mnx-filter-button > svg {
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
+}
+
+.mnx-cha-panel-actions-row .mnx-filter-button > i {
+  min-width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--mnx-accent-contrast);
+  background: var(--mnx-accent-gradient);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
 }
 
 .mnx-cha-dashboard-filter-menu {
