@@ -1,1075 +1,426 @@
 "use client";
 
-import {
-  AlertCircle,
-  ArrowDown,
-  ArrowRight,
-  ArrowUpRight,
-  Boxes,
-  Check,
-  CheckCircle2,
-  Database,
-  FileText,
-  Gauge,
-  LayoutGrid,
-  MessageSquareText,
-  MoreHorizontal,
-  PackageCheck,
-  Plus,
-  ShieldCheck,
-  Sparkles,
-  Users,
-  X,
-} from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
-import * as AccountingComponents from "@/components/monolith/accounting-workspace";
-import * as AdminComponents from "@/components/monolith/admin-workspace";
-import * as AlertComponents from "@/components/monolith/alert";
-import * as AppShellComponents from "@/components/monolith/app-shell";
-import * as BadgeComponents from "@/components/monolith/badge";
-import * as ButtonComponents from "@/components/monolith/button";
-import * as CardComponents from "@/components/monolith/card";
-import * as ChaComponents from "@/components/monolith/cha-workspace";
-import * as CommunicationComponents from "@/components/monolith/communication-workspace";
-import * as CrmComponents from "@/components/monolith/crm-workspace";
-import * as DateInputComponents from "@/components/monolith/date-input";
-import * as DropdownMenuComponents from "@/components/monolith/dropdown-menu";
-import * as DropdownSelectComponents from "@/components/monolith/dropdown-select";
-import * as FileUploadComponents from "@/components/monolith/file-upload-field";
-import * as FilterMenuComponents from "@/components/monolith/filter-menu";
-import * as FoundationComponents from "@/components/monolith/foundation";
-import * as InputComponents from "@/components/monolith/input";
-import * as LabelComponents from "@/components/monolith/label";
-import * as ModalComponents from "@/components/monolith/modal";
-import * as NativeSelectComponents from "@/components/monolith/native-select";
-import * as NeonCheckboxComponents from "@/components/monolith/neon-checkbox";
-import * as PeopleDataComponents from "@/components/monolith/people-data-table";
-import * as PeopleComponents from "@/components/monolith/people-workspace";
-import * as PerformanceComponents from "@/components/monolith/performance-workspace";
-import * as PublicComponents from "@/components/monolith/public-workspace";
-import * as StateComponents from "@/components/monolith/workspace-states";
-import * as TextareaComponents from "@/components/monolith/textarea";
-import * as WarningPopoverComponents from "@/components/monolith/warning-indicator-popover";
-import * as WorkspaceComponents from "@/components/monolith/workspace";
-import * as WorkspaceDialogComponents from "@/components/monolith/workspace-dialog";
-import {
-  AccountingDetail,
-  AccountingDetailList,
-  AccountingMetric,
-  AccountingMetrics,
-  AccountingStatus,
-  AdminBadge,
-  AdminButton,
-  AdminMetric,
-  AdminPanel,
-  Alert,
-  AlertContent,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  ChaDropdownSelect,
-  ChaMetric,
-  ChaMetrics,
-  ChaStatus,
-  ChaWarningIndicatorPopover,
-  CommunicationBadge,
-  CommunicationButton,
-  CommunicationMetric,
-  CommunicationPanel,
-  CrmButton,
-  CrmMetric,
-  CrmMetrics,
-  CrmPanel,
-  CrmStatus,
-  DateInput,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger,
-  DropdownSelect,
-  FileUploadField,
-  FilterMenu,
-  Input,
-  Label,
-  MonolithBadge,
-  MonolithEmptyState,
-  MonolithIconAction,
-  MonolithSpecLabel,
-  MonolithThemePicker,
-  NativeSelect,
-  NeonCheckbox,
-  PeopleAction,
-  PeoplePerson,
-  PeopleStatus,
-  PeopleSummary,
-  PeopleSummaryGrid,
-  PerformanceCard,
-  PerformanceControlButton,
-  PerformanceStatus,
-  PerformanceSummary,
-  PerformanceSummaryGrid,
-  PublicDetail,
-  PublicDetailGrid,
-  PublicHeader,
-  PublicInset,
-  PublicPanel,
-  PublicStatus,
-  PublicStatusBadge,
-  Textarea,
-  WorkspaceAction,
-  WorkspaceAlert,
-  WorkspaceBadge,
-  WorkspaceCheckbox,
-  WorkspaceDialog,
-  WorkspaceEmptyState,
-  WorkspaceErrorState,
-  WorkspaceField,
-  WorkspaceInput,
-  WorkspaceLoadingState,
-  WorkspaceMetric,
-  WorkspacePage,
-  WorkspacePageHeader,
-  WorkspacePanel,
-  WorkspacePanelHeader,
-  WorkspacePermissionState,
-  WorkspaceProgress,
-  WorkspaceSectionHeading,
-  WorkspaceTable,
-  WorkspaceTextarea,
-} from "@/components/monolith";
-import {
-  AccountingCommercialDocumentForm,
-  AccountingDeleteAction,
-  AccountingInvoiceDetail,
-  AccountingInvoiceForm,
-  AccountingItemDetail,
-  AccountingItemsList,
-  AccountingNewItemForm,
-} from "@/components/monolith";
+import { useState } from "react";
 
-type RuntimeModule = Record<string, unknown>;
-
-type CatalogueGroup = {
-  description: string;
-  exports: RuntimeModule;
-  name: string;
-};
-
-const SharedControlComponents = {
-  ...AlertComponents,
-  ...BadgeComponents,
-  ...ButtonComponents,
-  ...CardComponents,
-  ...DateInputComponents,
-  ...DropdownMenuComponents,
-  ...DropdownSelectComponents,
-  ...FileUploadComponents,
-  ...FilterMenuComponents,
-  ...InputComponents,
-  ...LabelComponents,
-  ...ModalComponents,
-  ...NativeSelectComponents,
-  ...NeonCheckboxComponents,
-  ...TextareaComponents,
-  ...WarningPopoverComponents,
-  ...WorkspaceDialogComponents,
-};
-
-const catalogueGroups: CatalogueGroup[] = [
-  {
-    name: "Application shell and themes",
-    description: "Authenticated shell, navigation, profile, search, and persisted theme control.",
-    exports: AppShellComponents,
-  },
-  {
-    name: "Foundation",
-    description: "Page, surface, action, badge, icon action, labels, and empty presentation.",
-    exports: FoundationComponents,
-  },
-  {
-    name: "Workspace",
-    description: "Production page frame, headers, metrics, panels, fields, tables, feedback, and states.",
-    exports: WorkspaceComponents,
-  },
-  {
-    name: "Controls and overlays",
-    description: "Buttons, cards, inputs, selects, uploads, alerts, menus, filters, warnings, modals, and dialogs.",
-    exports: SharedControlComponents,
-  },
-  {
-    name: "Shared asynchronous states",
-    description: "Permission, empty, loading, and error boundaries used across route families.",
-    exports: StateComponents,
-  },
-  {
-    name: "People operations",
-    description: "HRMS and Attendance layout, summaries, links, controls, tables, and states.",
-    exports: { ...PeopleComponents, ...PeopleDataComponents },
-  },
-  {
-    name: "Performance and learning",
-    description: "AMS and LMS layout, summaries, cards, tabs, controls, tables, and states.",
-    exports: PerformanceComponents,
-  },
-  {
-    name: "Customs operations",
-    description: "CHA layout, route headers, data surfaces, dialogs, selectors, filters, and warnings.",
-    exports: ChaComponents,
-  },
-  {
-    name: "Accounting",
-    description: "Accounting layout, operational surfaces, details, status, states, and specialized editors.",
-    exports: {
-      ...AccountingComponents,
-      AccountingCommercialDocumentForm,
-      AccountingDeleteAction,
-      AccountingInvoiceDetail,
-      AccountingInvoiceForm,
-      AccountingItemDetail,
-      AccountingItemsList,
-      AccountingNewItemForm,
-    },
-  },
-  {
-    name: "Customer operations",
-    description: "CRM layout, metrics, tabs, records, dialogs, controls, tables, and route states.",
-    exports: CrmComponents,
-  },
-  {
-    name: "Communication",
-    description: "Communication layout, panels, controls, tables, metrics, and route states.",
-    exports: CommunicationComponents,
-  },
-  {
-    name: "Administration",
-    description: "Admin layout, panels, controls, tables, metrics, and route states.",
-    exports: AdminComponents,
-  },
-  {
-    name: "Public and authentication",
-    description: "Public shell, brand, stage, panel, status, details, actions, and footer.",
-    exports: PublicComponents,
-  },
+const navItems = [
+  ["overview", "Overview", "⌂"],
+  ["foundations", "Foundations", "◐"],
+  ["typography", "Typography", "Aa"],
+  ["actions", "Actions", "↗"],
+  ["forms", "Forms", "⌑"],
+  ["surfaces", "Surfaces", "□"],
+  ["feedback", "Feedback", "!"],
+  ["data", "Data display", "≡"],
+  ["navigation", "Navigation", "◇"],
+  ["motion", "Motion", "∿"],
 ];
 
-const stateDemos: {
-  family: string;
-  name: string;
-  render: () => ReactNode;
-}[] = [
-  {
-    family: "Shared",
-    name: "Permission",
-    render: () => (
-      <WorkspacePermissionState
-        title="Access restricted"
-        description="This is the shared permission boundary used by protected routes."
-      />
-    ),
-  },
-  {
-    family: "Shared",
-    name: "Empty",
-    render: () => (
-      <WorkspaceEmptyState
-        title="No records yet"
-        description="The workspace is ready for its first production record."
-      />
-    ),
-  },
-  {
-    family: "Shared",
-    name: "Loading",
-    render: () => (
-      <WorkspaceLoadingState
-        title="Loading workspace"
-        description="Production data is being prepared."
-      />
-    ),
-  },
-  {
-    family: "Shared",
-    name: "Error",
-    render: () => (
-      <WorkspaceErrorState
-        title="Workspace unavailable"
-        description="The shared error boundary keeps recovery explicit."
-      />
-    ),
-  },
-  {
-    family: "People",
-    name: "Loading",
-    render: () => <PeopleComponents.PeopleLoadingState />,
-  },
-  {
-    family: "People",
-    name: "Error",
-    render: () => (
-      <PeopleComponents.PeopleErrorState description="People data could not be loaded." />
-    ),
-  },
-  {
-    family: "Performance",
-    name: "Loading",
-    render: () => <PerformanceComponents.PerformanceLoadingState />,
-  },
-  {
-    family: "Performance",
-    name: "Error",
-    render: () => (
-      <PerformanceComponents.PerformanceErrorState description="Performance data could not be loaded." />
-    ),
-  },
-  {
-    family: "CHA",
-    name: "Loading",
-    render: () => <ChaComponents.ChaLoadingState />,
-  },
-  {
-    family: "CHA",
-    name: "Error",
-    render: () => (
-      <ChaComponents.ChaErrorState description="Customs data could not be loaded." />
-    ),
-  },
-  {
-    family: "Accounting",
-    name: "Loading",
-    render: () => <AccountingComponents.AccountingLoadingState />,
-  },
-  {
-    family: "Accounting",
-    name: "Error",
-    render: () => (
-      <AccountingComponents.AccountingErrorState
-        description="Accounting data could not be loaded."
-        onRetry={() => undefined}
-      />
-    ),
-  },
-  {
-    family: "CRM",
-    name: "Permission",
-    render: () => <CrmComponents.CrmPermissionState />,
-  },
-  {
-    family: "CRM",
-    name: "Configuration",
-    render: () => <CrmComponents.CrmConfigurationState />,
-  },
-  {
-    family: "CRM",
-    name: "Loading",
-    render: () => <CrmComponents.CrmLoadingState />,
-  },
-  {
-    family: "CRM",
-    name: "Empty",
-    render: () => <CrmComponents.CrmEmptyState description="No CRM records match the active view." />,
-  },
-  {
-    family: "CRM",
-    name: "Error",
-    render: () => <CrmComponents.CrmErrorState description="CRM data could not be loaded." />,
-  },
-  {
-    family: "Communication",
-    name: "Loading",
-    render: () => <CommunicationComponents.CommunicationLoadingState />,
-  },
-  {
-    family: "Communication",
-    name: "Permission",
-    render: () => (
-      <CommunicationComponents.CommunicationPermissionState description="Communication access is required." />
-    ),
-  },
-  {
-    family: "Communication",
-    name: "Error",
-    render: () => (
-      <CommunicationComponents.CommunicationErrorState description="Communication data could not be loaded." />
-    ),
-  },
-  {
-    family: "Admin",
-    name: "Loading",
-    render: () => <AdminComponents.AdminLoadingState />,
-  },
-  {
-    family: "Admin",
-    name: "Permission",
-    render: () => (
-      <AdminComponents.AdminPermissionState description="Administrator access is required." />
-    ),
-  },
-  {
-    family: "Admin",
-    name: "Error",
-    render: () => (
-      <AdminComponents.AdminErrorState description="Administration data could not be loaded." />
-    ),
-  },
+const colors = [
+  ["Ink", "#11120E", "Primary text · strong surfaces"],
+  ["Paper", "#F7F7F2", "Page and card background"],
+  ["Signal Yellow", "#F9D972", "Primary accent · active states"],
+  ["Soft Yellow", "#FCE8A8", "Highlights · secondary emphasis"],
+  ["Mist", "#E8E9E2", "Borders · disabled fills"],
+  ["Slate", "#77786F", "Secondary text · icons"],
+  ["Success", "#E6F3EA", "Completed · approved"],
+  ["Danger", "#FCECEB", "Errors · destructive actions"],
 ];
 
-const sampleRows = [
-  ["MAA-IMP-260724", "Orion Retail", "Assessment", "On track"],
-  ["DEL-AIR-260718", "Vertex Technologies", "Documentation", "Attention"],
-  ["MUM-IMP-260701", "Atlas Foods", "Delivery", "Verified"],
+const shipments = [
+  ["MAA-IMP-260724", "Orion Retail Pvt Ltd", "Sea Import", "Assessment", "On track"],
+  ["DEL-AIR-260718", "Vertex Technologies", "Air Export", "Documentation", "Attention"],
+  ["MUM-IMP-260701", "Atlas Foods India", "Sea Import", "Delivery", "Completed"],
 ];
 
-function exportedComponents(module: RuntimeModule) {
-  return Object.entries(module)
-    .filter(([name, value]) => /^[A-Z]/.test(name) && typeof value === "function")
-    .map(([name]) => name)
-    .sort((left, right) => left.localeCompare(right));
-}
+const themes = [
+  { id: "light", label: "Light", icon: "○" },
+  { id: "night", label: "Night", icon: "●" },
+  { id: "violet", label: "Violet", icon: "◆" },
+] as const;
 
-function ComponentIndex({ group }: { group: CatalogueGroup }) {
-  const componentNames = useMemo(() => exportedComponents(group.exports), [group]);
+type Theme = (typeof themes)[number]["id"];
 
-  return (
-    <article className="mnx-catalogue-index-group">
-      <div>
-        <h3>{group.name}</h3>
-        <p>{group.description}</p>
-      </div>
-      <div className="mnx-catalogue-component-list">
-        {componentNames.map((name) => (
-          <WorkspaceBadge key={name} variant="neutral">
-            {name}
-          </WorkspaceBadge>
-        ))}
-      </div>
-    </article>
-  );
-}
+const themePalettes = [
+  { name: "Light", note: "Warm operational", colors: ["#EFF0EB", "#FFFEF9", "#11120E", "#F9D972"] },
+  { name: "Night", note: "True neutral black", colors: ["#000000", "#090909", "#F7F7F7", "#F9D972"] },
+  { name: "Violet Night", note: "Reference palette", colors: ["#0A0B13", "#181827", "#F8F7FF", "#B5AAF5"] },
+];
 
-function CatalogueSection({
-  children,
-  description,
-  id,
-  index,
+function SectionTitle({
+  eyebrow,
   title,
+  copy,
 }: {
-  children: ReactNode;
-  description: string;
-  id: string;
-  index: string;
+  eyebrow: string;
   title: string;
+  copy: string;
 }) {
   return (
-    <section className="mnx-catalogue-section" id={id}>
-      <WorkspaceSectionHeading index={index} title={title} description={description} />
-      {children}
-    </section>
-  );
-}
-
-function StateCatalogue() {
-  const [activeState, setActiveState] = useState(0);
-  const selected = stateDemos[activeState];
-
-  return (
-    <WorkspacePanel>
-      <WorkspacePanelHeader
-        eyebrow="Production route boundaries"
-        title={`${selected.family} / ${selected.name}`}
-        description="Choose a state to render its actual shared or module-specific implementation."
-      />
-      <div className="mnx-catalogue-state-picker" role="tablist" aria-label="Production states">
-        {stateDemos.map((state, index) => (
-          <WorkspaceAction
-            key={`${state.family}-${state.name}`}
-            size="compact"
-            variant={activeState === index ? "primary" : "secondary"}
-            onClick={() => setActiveState(index)}
-            role="tab"
-            aria-selected={activeState === index}
-          >
-            {state.family} · {state.name}
-          </WorkspaceAction>
-        ))}
+    <header className="section-heading">
+      <div>
+        <span className="section-index">{eyebrow}</span>
+        <h2>{title}</h2>
       </div>
-      <div className="mnx-catalogue-state-preview">{selected.render()}</div>
-    </WorkspacePanel>
+      <p>{copy}</p>
+    </header>
   );
 }
 
-function FloatingSurfaceCatalogue() {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
+function CopyToken({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      className="copy-token"
+      type="button"
+      onClick={() => {
+        navigator.clipboard?.writeText(value);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1000);
+      }}
+      aria-label={`Copy ${value}`}
+    >
+      {copied ? "Copied" : value}
+    </button>
+  );
+}
+
+export default function Home() {
+  const [theme, setTheme] = useState<Theme>("light");
+  const [active, setActive] = useState("overview");
+  const [enabled, setEnabled] = useState(true);
+  const [filter, setFilter] = useState("All");
+  const [selectOpen, setSelectOpen] = useState(false);
+  const [uploaded, setUploaded] = useState(false);
+  const activeColors = theme === "violet"
+    ? [
+        ["Night Ink", "#0A0B13", "Primary canvas · deep surfaces"],
+        ["Violet Surface", "#181827", "Cards · navigation surfaces"],
+        ["Violet Primary", "#B5AAF5", "Primary actions · active states"],
+        ["Violet Highlight", "#CBBDE1", "Highlights · secondary emphasis"],
+        ["Violet Mist", "#282A34", "Borders · disabled fills"],
+        ["Violet Slate", "#9493A2", "Secondary text · icons"],
+        ["Success", "#E6F3EA", "Completed · approved"],
+        ["Danger", "#FCECEB", "Errors · destructive actions"],
+      ]
+    : colors;
+
+  function navigate(id: string) {
+    setActive(id);
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  }
 
   return (
-    <>
-      <div className="mnx-catalogue-action-row">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <WorkspaceAction variant="secondary">
-              <MoreHorizontal size={15} />
-              Open production menu
-            </WorkspaceAction>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuLabel>Record actions</DropdownMenuLabel>
-            <DropdownMenuItem>Open record</DropdownMenuItem>
-            <DropdownMenuItem>Duplicate</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              Export
-              <DropdownMenuShortcut>CSV</DropdownMenuShortcut>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <FilterMenu
-          activeCount={2}
-          label="Filters"
-          open={filterOpen}
-          onOpenChange={setFilterOpen}
-        >
-          <div className="mnx-catalogue-menu-content">
-            <WorkspacePanelHeader
-              eyebrow="Current view"
-              title="Operational filters"
-              description="This is the production FilterMenu surface."
-            />
+    <main className={`system-page theme-${theme}`}>
+      <aside className="sidebar">
+        <a className="brand" href="#overview" onClick={() => setActive("overview")}>
+          <span className="brand-mark"><i /><i /></span>
+          <span><b>MONOLITH</b><small>Design system · v1.0</small></span>
+        </a>
+
+        <nav aria-label="Design system sections">
+          <p>LIBRARY</p>
+          {navItems.map(([id, label, icon]) => (
+            <button
+              key={id}
+              type="button"
+              className={active === id ? "active" : ""}
+              onClick={() => navigate(id)}
+            >
+              <span>{icon}</span>{label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="side-note">
+          <span className="pulse-dot" />
+          <div><b>System status</b><small>42 components ready</small></div>
+        </div>
+      </aside>
+
+      <div className="shell">
+        <header className="topbar">
+          <div className="breadcrumbs"><span>Monolith</span><i>/</i><b>Design system</b></div>
+          <div className="top-actions">
+            <div className="search"><span>⌕</span><input aria-label="Search components" placeholder="Search components…" /><kbd>⌘ K</kbd></div>
+            <button className="icon-button notification" aria-label="Notifications">♢<i /></button>
+            <div className="theme-picker" role="group" aria-label="Preview theme">
+              {themes.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={theme === item.id ? "active" : ""}
+                  onClick={() => setTheme(item.id)}
+                  aria-pressed={theme === item.id}
+                  title={`${item.label} theme`}
+                >
+                  <i>{item.icon}</i><span>{item.label}</span>
+                </button>
+              ))}
+            </div>
+            <button className="avatar" aria-label="Open profile">PJ</button>
           </div>
-        </FilterMenu>
-        <ChaWarningIndicatorPopover
-          ariaLabel="Review deadline warning"
-          eyebrow="Deadline warning"
-          description="The filing deadline is approaching."
-          meta="Used by production CHA warning indicators."
-        >
-          <ChaStatus variant="warning">2 days remaining</ChaStatus>
-          <ChaStatus variant="neutral">Review owner</ChaStatus>
-        </ChaWarningIndicatorPopover>
-        <WorkspaceAction onClick={() => setDialogOpen(true)}>
-          Open production dialog
-        </WorkspaceAction>
-      </div>
-      <WorkspaceDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        eyebrow="Shared workflow"
-        title="Production dialog"
-        description="Focus trap, Escape handling, scroll lock, responsive sizing, and theme tokens are all live."
-        footer={
-          <WorkspaceAction onClick={() => setDialogOpen(false)}>
-            Confirm
-          </WorkspaceAction>
-        }
-      >
-        <WorkspaceField label="Review note">
-          <WorkspaceTextarea defaultValue="This dialog is imported from the production workspace layer." />
-        </WorkspaceField>
-      </WorkspaceDialog>
-    </>
-  );
-}
+        </header>
 
-function FamilySample({
-  children,
-  exports,
-  icon,
-  name,
-}: {
-  children: ReactNode;
-  exports: RuntimeModule;
-  icon: ReactNode;
-  name: string;
-}) {
-  return (
-    <WorkspacePanel className="mnx-catalogue-family">
-      <WorkspacePanelHeader
-        eyebrow="Production composition"
-        title={name}
-        actions={icon}
-      />
-      {children}
-      <div className="mnx-catalogue-component-list">
-        {exportedComponents(exports).map((component) => (
-          <WorkspaceBadge key={component} variant="neutral">
-            {component}
-          </WorkspaceBadge>
-        ))}
-      </div>
-    </WorkspacePanel>
-  );
-}
-
-export default function DesignSystemClient() {
-  const componentCount = useMemo(
-    () =>
-      new Set(
-        catalogueGroups.flatMap((group) => exportedComponents(group.exports)),
-      ).size,
-    [],
-  );
-
-  return (
-    <WorkspacePage className="mnx-catalogue-page" data-production-catalogue="true">
-      <WorkspacePageHeader
-        eyebrow="ADMIN / PRODUCTION UI"
-        title="Monolith component catalogue"
-        description="A live inventory of the shared layouts, controls, states, and module compositions currently imported by migrated production routes."
-        icon={<LayoutGrid size={24} />}
-        actions={
-          <>
-            <WorkspaceBadge variant="success">Live production imports</WorkspaceBadge>
-            <WorkspaceAction size="compact" onClick={() => document.querySelector("#component-index")?.scrollIntoView()}>
-              Browse index
-              <ArrowUpRight size={14} />
-            </WorkspaceAction>
-          </>
-        }
-      />
-
-      <section className="mnx-workspace-metrics">
-        <WorkspaceMetric
-          icon={<PackageCheck size={16} />}
-          label="Runtime exports"
-          value={componentCount}
-          detail="Unique production component names"
-        />
-        <WorkspaceMetric
-          icon={<Boxes size={16} />}
-          label="Composition families"
-          value={catalogueGroups.length}
-          detail="Global, public, and module-specific"
-        />
-        <WorkspaceMetric
-          icon={<ShieldCheck size={16} />}
-          label="Required themes"
-          value="03"
-          detail="Light, Night, and Violet"
-        />
-        <WorkspaceMetric
-          icon={<Gauge size={16} />}
-          label="Catalogue state"
-          value="LIVE"
-          detail="Backed by production imports"
-        />
-      </section>
-
-      <CatalogueSection
-        id="themes"
-        index="01"
-        title="Theme test bench"
-        description="Switching themes here uses the same component, root classes, persistence, and semantic tokens as the authenticated application shell."
-      >
-        <WorkspacePanel>
-          <WorkspacePanelHeader
-            eyebrow="Interactive theme verification"
-            title="Light, Night, and Violet"
-            description="Select a theme, then inspect every live specimen below without leaving the page."
-            actions={
-              <MonolithThemePicker
-                allowedThemes={["light", "night", "violet"]}
-                ariaLabel="Catalogue test theme"
-              />
-            }
-          />
-          <div className="mnx-catalogue-token-grid">
-            {[
-              ["Canvas", "--mn-color-canvas"],
-              ["Surface", "--mn-color-surface"],
-              ["Text", "--mn-color-text"],
-              ["Accent", "--mn-color-accent"],
-              ["Success", "--mn-color-success"],
-              ["Danger", "--mn-color-danger"],
-            ].map(([label, token]) => (
-              <div key={token}>
-                <span style={{ background: `var(${token})` }} />
-                <strong>{label}</strong>
-                <code>{token}</code>
+        <div className="content">
+          <section id="overview" className="hero">
+            <div className="hero-copy">
+              <span className="kicker"><i /> MONOLITH INTERFACE LANGUAGE</span>
+              <h1>Quiet structure.<br /><em>Decisive action.</em></h1>
+              <p>A warm, precise system for building logistics software that feels intelligent, calm and unmistakably Monolith.</p>
+              <div className="hero-actions">
+                <button className="btn primary" onClick={() => navigate("foundations")}>Explore components <span>↗</span></button>
+                <button className="btn ghost">Implementation guide</button>
               </div>
-            ))}
-          </div>
-        </WorkspacePanel>
-      </CatalogueSection>
+            </div>
 
-      <CatalogueSection
-        id="global-primitives"
-        index="02"
-        title="Global production primitives"
-        description="Each specimen is the real shared component. The catalogue adds only layout around it."
-      >
-        <div className="mnx-catalogue-grid">
-          <Card>
-            <CardHeader>
-              <CardTitle>Actions and status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mnx-catalogue-action-board">
-                <div>
-                  <MonolithSpecLabel as="p">Button hierarchy</MonolithSpecLabel>
-                  <div className="mnx-catalogue-button-showcase">
-                    <Button>
-                      Create shipment
-                      <Plus aria-hidden="true" />
-                    </Button>
-                    <Button variant="accent">
-                      Approve checklist
-                      <Check aria-hidden="true" />
-                    </Button>
-                    <Button variant="inverse">Save draft</Button>
-                    <Button variant="outline">
-                      Export report
-                      <ArrowDown aria-hidden="true" />
-                    </Button>
-                    <Button variant="destructive">Delete job</Button>
-                    <Button disabled>Unavailable</Button>
-                  </div>
+            <div className="hero-board">
+              <div className="hero-stat">
+                <span>COMPONENT COVERAGE</span><strong>94<sup>%</sup></strong>
+                <div className="progress"><i /></div>
+                <small>Production-ready patterns</small>
+              </div>
+              <div className="hero-mini">
+                <div><span>42</span><small>Components</small></div>
+                <div><span>08</span><small>Core tokens</small></div>
+              </div>
+              <div className="orbit" aria-hidden="true"><i /><b>◆</b><span /></div>
+            </div>
+          </section>
+
+          <section id="foundations" className="system-section">
+            <SectionTitle eyebrow="01" title="Colour system" copy="A restrained palette built around operational clarity, warm contrast and a single high-energy accent." />
+            <div className="color-grid">
+              {activeColors.map(([name, hex, use], index) => (
+                <article className={`color-card color-${index}`} key={name}>
+                  <div className="swatch" style={{ background: hex }}><span>{index < 4 ? "Aa" : "01"}</span></div>
+                  <div><b>{name}</b><CopyToken value={hex} /><p>{use}</p></div>
+                </article>
+              ))}
+            </div>
+            <div className="theme-palette-grid">
+              {themePalettes.map((palette) => (
+                <article key={palette.name}>
+                  <div><b>{palette.name}</b><small>{palette.note}</small></div>
+                  <span>
+                    {palette.colors.map((color) => <i key={color} style={{ background: color }} title={color} />)}
+                  </span>
+                </article>
+              ))}
+            </div>
+            <div className="token-strip">
+              <span><b>4 px</b><small>Base unit</small></span>
+              <span><b>12 px</b><small>Input radius</small></span>
+              <span><b>20 px</b><small>Card radius</small></span>
+              <span><b>32 px</b><small>Section gap</small></span>
+              <span><b>160 ms</b><small>Micro motion</small></span>
+              <span><b>640 ms</b><small>Spring motion</small></span>
+            </div>
+          </section>
+
+          <section id="typography" className="system-section">
+            <SectionTitle eyebrow="02" title="Typography" copy="Large, light headlines carry confidence. Compact labels and tabular figures keep complex workflows readable." />
+            <div className="type-layout">
+              <div className="type-specimen">
+                <div><small>DISPLAY / 64 / −4%</small><h3>Move with clarity.</h3></div>
+                <div><small>HEADING / 32 / −3%</small><h4>Shipment intelligence</h4></div>
+                <div><small>BODY / 15 / 150%</small><p>Every operational decision should be understandable at a glance, even when the workflow beneath it is complex.</p></div>
+              </div>
+              <div className="text-states">
+                <label>FORM LABEL <span>Required</span></label>
+                <div className="mock-input">MAA-IMP-260724</div>
+                <p className="helper">Use the branch-prefixed job number.</p>
+                <p className="error">● Job number already exists.</p>
+                <a href="#actions">View naming guidelines <span>↗</span></a>
+              </div>
+            </div>
+            <div className="numeric-row">
+              <article><span>Active jobs</span><strong>1,284</strong><small className="up">↑ 12.4%</small></article>
+              <article><span>Clearance SLA</span><strong>04:18</strong><small>Hours avg.</small></article>
+              <article><span>Documents</span><strong>98.6<sup>%</sup></strong><small className="up">Verified</small></article>
+              <article><span>Exceptions</span><strong>07</strong><small className="down">Needs action</small></article>
+            </div>
+          </section>
+
+          <section id="actions" className="system-section">
+            <SectionTitle eyebrow="03" title="Actions & links" copy="Actions are explicit, tactile and ordered by consequence. The active theme accent is reserved for the primary path." />
+            <div className="component-board actions-board">
+              <div>
+                <p className="spec-label">BUTTON HIERARCHY</p>
+                <div className="button-showcase">
+                  <button className="btn primary">Create shipment <span>＋</span></button>
+                  <button className="btn dark">Approve checklist <span>✓</span></button>
+                  <button className="btn secondary">Save draft</button>
+                  <button className="btn outline">Export report <span>↓</span></button>
+                  <button className="btn destructive">Delete job</button>
+                  <button className="btn disabled" disabled>Unavailable</button>
                 </div>
-                <div>
-                  <MonolithSpecLabel as="p">Text & icon actions</MonolithSpecLabel>
-                  <div className="mnx-catalogue-link-showcase">
-                    <a href="#forms">
-                      View shipment
-                      <ArrowUpRight aria-hidden="true" />
-                    </a>
-                    <a href="#forms" className="is-subtle">
-                      Edit details
-                    </a>
-                    <MonolithIconAction aria-label="Create record">
-                      <Plus aria-hidden="true" />
-                    </MonolithIconAction>
-                    <MonolithIconAction className="mnx-icon-button-dark" aria-label="Continue">
-                      <ArrowRight aria-hidden="true" />
-                    </MonolithIconAction>
-                    <MonolithIconAction className="mnx-icon-button-danger" aria-label="Cancel">
-                      <X aria-hidden="true" />
-                    </MonolithIconAction>
-                  </div>
-                </div>
-              </div>
-              <div className="mnx-catalogue-action-row">
-                <Badge variant="success">Success</Badge>
-                <MonolithBadge tone="accent">Accent</MonolithBadge>
-                <WorkspaceBadge variant="warning">Warning</WorkspaceBadge>
-                <WorkspaceBadge variant="danger">Danger</WorkspaceBadge>
-                <WorkspaceBadge variant="neutral">Neutral</WorkspaceBadge>
-              </div>
-              <WorkspaceProgress label="Production progress" value={68} />
-            </CardContent>
-          </Card>
-
-          <WorkspacePanel>
-            <WorkspacePanelHeader
-              eyebrow="Shared controls"
-              title="Fields and inputs"
-              description="Workspace, native, and accessible custom controls."
-            />
-            <div className="mnx-catalogue-form-grid">
-              <WorkspaceField label="Record name" required>
-                <WorkspaceInput defaultValue="Production record" />
-              </WorkspaceField>
-              <WorkspaceField label="Owner">
-                <DropdownSelect
-                  defaultValue="ops"
-                  options={[
-                    { value: "ops", label: "Operations" },
-                    { value: "finance", label: "Finance" },
-                    { value: "people", label: "People" },
-                  ]}
-                />
-              </WorkspaceField>
-              <WorkspaceField label="Effective date">
-                <DateInput defaultValue="2026-07-29" />
-              </WorkspaceField>
-              <WorkspaceField label="Native select">
-                <NativeSelect defaultValue="active">
-                  <option value="active">Active</option>
-                  <option value="draft">Draft</option>
-                </NativeSelect>
-              </WorkspaceField>
-              <WorkspaceField label="Notes">
-                <WorkspaceTextarea defaultValue="Shared workspace textarea" />
-              </WorkspaceField>
-              <div className="mnx-catalogue-choice-stack">
-                <WorkspaceCheckbox label="WorkspaceCheckbox" defaultChecked />
-                <NeonCheckbox label="NeonCheckbox" defaultChecked />
               </div>
               <div>
-                <Label htmlFor="catalogue-input">Base Label and Input</Label>
-                <Input id="catalogue-input" defaultValue="Base input" />
+                <p className="spec-label">TEXT & ICON ACTIONS</p>
+                <div className="link-showcase">
+                  <a href="#forms">View shipment <span>↗</span></a>
+                  <a href="#forms" className="subtle-link">Edit details</a>
+                  <button className="icon-button">＋</button>
+                  <button className="icon-button dark-icon">→</button>
+                  <button className="icon-button danger-icon">×</button>
+                </div>
               </div>
-              <Textarea aria-label="Base textarea" defaultValue="Base textarea" />
             </div>
-          </WorkspacePanel>
-        </div>
+          </section>
 
-        <div className="mnx-catalogue-grid">
-          <WorkspacePanel>
-            <WorkspacePanelHeader eyebrow="Feedback" title="Alerts" />
-            <div className="mnx-catalogue-stack">
-              <WorkspaceAlert variant="info">Workspace informational alert</WorkspaceAlert>
-              <WorkspaceAlert variant="success">Workspace success alert</WorkspaceAlert>
-              <Alert variant="warning">
-                <AlertIcon><AlertCircle size={18} /></AlertIcon>
-                <AlertContent>
-                  <AlertTitle>Production alert composition</AlertTitle>
-                  <AlertDescription>Icon, content, title, and description are real alert slots.</AlertDescription>
-                </AlertContent>
-              </Alert>
-            </div>
-          </WorkspacePanel>
-          <WorkspacePanel>
-            <WorkspacePanelHeader eyebrow="Floating surfaces" title="Menus, warnings, and dialogs" />
-            <FloatingSurfaceCatalogue />
-          </WorkspacePanel>
-        </div>
+          <section id="forms" className="system-section">
+            <SectionTitle eyebrow="04" title="Forms & inputs" copy="Field states communicate before validation text does. Controls remain calm, legible and keyboard-friendly." />
+            <div className="forms-grid">
+              <article className="form-card">
+                <div className="card-title"><div><span>CREATE JOB</span><h3>Shipment details</h3></div><span className="step-pill">Step 1 of 3</span></div>
+                <div className="fields">
+                  <label className="field"><span>Job number <b>*</b></span><input defaultValue="MAA-IMP-260724" /><small>Generated from the selected branch.</small></label>
+                  <label className="field"><span>Customer <b>*</b></span><div className="select-control">Orion Retail Pvt Ltd <i>⌄</i></div></label>
+                  <div className="field-pair">
+                    <label className="field"><span>Shipment type</span><div className="select-control">Sea <i>⌄</i></div></label>
+                    <label className="field error-field"><span>IGM number</span><input placeholder="Enter IGM" /><small>IGM number is required.</small></label>
+                  </div>
+                  <label className="field"><span>Description</span><textarea defaultValue="Import clearance for electronic components" /></label>
+                </div>
+                <div className="form-footer"><button className="btn secondary">Cancel</button><button className="btn primary">Continue <span>→</span></button></div>
+              </article>
 
-        <WorkspacePanel>
-          <WorkspacePanelHeader
-            eyebrow="Data display"
-            title="Operational table"
-            description="Shared responsive wrapper, typography, badges, and row actions."
-          />
-          <WorkspaceTable>
-            <thead>
-              <tr>
-                <th>Record</th>
-                <th>Customer</th>
-                <th>Stage</th>
-                <th>Status</th>
-                <th aria-label="Actions" />
-              </tr>
-            </thead>
-            <tbody>
-              {sampleRows.map(([record, customer, stage, status]) => (
-                <tr key={record}>
-                  <td>{record}</td>
-                  <td>{customer}</td>
-                  <td>{stage}</td>
-                  <td>
-                    <WorkspaceBadge variant={status === "Attention" ? "warning" : status === "Verified" ? "success" : "neutral"}>
-                      {status}
-                    </WorkspaceBadge>
-                  </td>
-                  <td><WorkspaceAction size="compact" variant="secondary">Open</WorkspaceAction></td>
-                </tr>
-              ))}
-            </tbody>
-          </WorkspaceTable>
-        </WorkspacePanel>
+              <div className="form-extras">
+                <article className={`dropzone ${uploaded ? "uploaded" : ""}`} onClick={() => setUploaded(!uploaded)}>
+                  <div className="upload-icon">{uploaded ? "✓" : "↑"}</div>
+                  <b>{uploaded ? "Invoice_260724.pdf" : "Drop shipment documents"}</b>
+                  <p>{uploaded ? "2.4 MB · Ready to verify" : "Drag & drop, or click to browse"}</p>
+                  <small>{uploaded ? "Click to remove" : "PDF, DOCX, XLSX · Up to 25 MB"}</small>
+                </article>
 
-        <WorkspacePanel>
-          <WorkspacePanelHeader eyebrow="File workflows" title="Upload field" />
-          <FileUploadField
-            id="catalogue-file"
-            label="Production document upload"
-            helperText="Drag-and-drop and file selection use the shared production control."
-            onInputChange={() => undefined}
-          />
-        </WorkspacePanel>
-      </CatalogueSection>
-
-      <CatalogueSection
-        id="layouts-states"
-        index="03"
-        title="Layouts and route states"
-        description="This page is itself mounted inside MonolithAppShell and the Admin layout; the selector renders every production state family in place."
-      >
-        <WorkspacePanel>
-          <WorkspacePanelHeader
-            eyebrow="Live layout chain"
-            title="Current catalogue route"
-            description="The layout hierarchy is active, not mocked."
-          />
-          <div className="mnx-catalogue-layout-chain">
-            {[
-              ["MonolithAppShell", "Authentication, RBAC-aware navigation, search, profile, and themes"],
-              ["AdminWorkspaceFrame", "Administration layout with deliberate catalogue passthrough"],
-              ["WorkspacePage", "1200px production page frame and shared gutters"],
-              ["WorkspacePageHeader", "Current route hero and actions"],
-            ].map(([name, detail], index) => (
-              <div key={name}>
-                <MonolithSpecLabel>{String(index + 1).padStart(2, "0")}</MonolithSpecLabel>
-                <strong>{name}</strong>
-                <p>{detail}</p>
+                <article className="control-card">
+                  <p className="spec-label">TOGGLES & SELECTION</p>
+                  <div className="control-line"><span><b>Customer portal</b><small>Allow live shipment tracking</small></span><button className={`switch ${enabled ? "enabled" : ""}`} onClick={() => setEnabled(!enabled)} aria-label="Toggle customer portal"><i /></button></div>
+                  <div className="control-line"><span><b>Clearance mode</b><small>Choose one workflow</small></span><div className="segmented"><button className="active">Import</button><button>Export</button></div></div>
+                  <div className="custom-select">
+                    <button onClick={() => setSelectOpen(!selectOpen)}>Select branch <span>⌄</span></button>
+                    {selectOpen && <div><button>Chennai</button><button>Mumbai</button><button>Delhi</button></div>}
+                  </div>
+                </article>
               </div>
-            ))}
-          </div>
-        </WorkspacePanel>
-        <StateCatalogue />
-      </CatalogueSection>
-
-      <CatalogueSection
-        id="module-components"
-        index="04"
-        title="Module production compositions"
-        description="Representative live compositions sit above a runtime-derived index of every exported component in that module family."
-      >
-        <div className="mnx-catalogue-family-grid">
-          <FamilySample name="People operations" icon={<Users size={18} />} exports={{ ...PeopleComponents, ...PeopleDataComponents }}>
-            <PeopleSummaryGrid>
-              <PeopleSummary icon={<Users size={15} />} label="Employees" value="248" detail="Active people" />
-              <PeopleSummary icon={<CheckCircle2 size={15} />} label="Attendance" value="94%" detail="Today" />
-            </PeopleSummaryGrid>
-            <PeoplePerson name="Asha Menon" secondary="Operations manager" />
-            <div className="mnx-catalogue-action-row">
-              <PeopleAction size="compact">Open people</PeopleAction>
-              <PeopleStatus variant="success">Active</PeopleStatus>
             </div>
-          </FamilySample>
+          </section>
 
-          <FamilySample name="Performance and learning" icon={<Sparkles size={18} />} exports={PerformanceComponents}>
-            <PerformanceSummaryGrid>
-              <PerformanceSummary label="Cycles" value="04" detail="Active reviews" />
-              <PerformanceSummary label="Courses" value="18" detail="Published" />
-            </PerformanceSummaryGrid>
-            <PerformanceCard>
-              <strong>Quarterly review</strong>
-              <p>Production card used by AMS and LMS workspaces.</p>
-            </PerformanceCard>
-            <div className="mnx-catalogue-action-row">
-              <PerformanceControlButton size="compact">Review cycle</PerformanceControlButton>
-              <PerformanceStatus variant="warning">In progress</PerformanceStatus>
+          <section id="surfaces" className="system-section">
+            <SectionTitle eyebrow="05" title="Cards & panels" copy="Surfaces group related work through scale, tone and spacing—without adding visual noise." />
+            <div className="card-gallery">
+              <article className="metric-card">
+                <header><span>ACTIVE SHIPMENTS</span><button>↗</button></header>
+                <strong>284</strong><p><i>↑ 18</i> since last week</p>
+                <div className="spark-bars">{[42, 56, 48, 72, 66, 88, 78, 96].map((h, i) => <i key={i} style={{ height: `${h}%` }} />)}</div>
+              </article>
+              <article className="progress-card">
+                <header><div><span>CUSTOMS CLEARANCE</span><h3>MAA-IMP-260724</h3></div><span className="badge neutral">In progress</span></header>
+                <div className="route-progress"><i className="done">✓</i><span /><i className="done">✓</i><span /><i className="current">3</i><span /><i>4</i></div>
+                <div className="route-labels"><span>Documents</span><span>Checklist</span><span>Assessment</span><span>Delivery</span></div>
+              </article>
+              <article className="dark-task-card">
+                <header><span>OPEN ACTIONS</span><strong>3/7</strong></header>
+                {["Approve checklist", "Upload duty receipt", "Confirm delivery"].map((item, i) => (
+                  <div className="task" key={item}><span>{i === 0 ? "⌑" : i === 1 ? "↓" : "◇"}</span><p><b>{item}</b><small>{i === 0 ? "Due today · High priority" : "MAA-IMP-260724"}</small></p><i className={i === 0 ? "checked" : ""}>{i === 0 ? "✓" : ""}</i></div>
+                ))}
+              </article>
+              <article className="section-panel">
+                <header><div><span>DOCUMENTS</span><h3>Supplier documents</h3></div><button>•••</button></header>
+                <p>6 of 8 documents have been verified for this shipment.</p>
+                <div className="panel-progress"><i /></div>
+                <footer><span><b>6</b> verified</span><span><b>1</b> pending</span><span><b>1</b> unavailable</span></footer>
+              </article>
             </div>
-          </FamilySample>
+          </section>
 
-          <FamilySample name="Customs operations" icon={<FileText size={18} />} exports={ChaComponents}>
-            <ChaMetrics>
-              <ChaMetric label="Open jobs" value="32" detail="Current branch" />
-              <ChaMetric label="Warnings" value="05" detail="Need review" />
-            </ChaMetrics>
-            <ChaDropdownSelect
-              defaultValue="assessment"
-              options={[
-                { value: "assessment", label: "Assessment" },
-                { value: "delivery", label: "Delivery" },
-              ]}
-            />
-          </FamilySample>
-
-          <FamilySample
-            name="Accounting"
-            icon={<Database size={18} />}
-            exports={{
-              ...AccountingComponents,
-              AccountingCommercialDocumentForm,
-              AccountingDeleteAction,
-              AccountingInvoiceDetail,
-              AccountingInvoiceForm,
-              AccountingItemDetail,
-              AccountingItemsList,
-              AccountingNewItemForm,
-            }}
-          >
-            <AccountingMetrics>
-              <AccountingMetric label="Receivables" value="₹4.8L" detail="Outstanding" />
-              <AccountingMetric label="Payables" value="₹2.1L" detail="Current" />
-            </AccountingMetrics>
-            <AccountingDetailList>
-              <AccountingDetail label="Document" value="SI-2026-0184" />
-              <AccountingDetail label="Status" value={<AccountingStatus status="POSTED" />} />
-            </AccountingDetailList>
-          </FamilySample>
-
-          <FamilySample name="Customer operations" icon={<Boxes size={18} />} exports={CrmComponents}>
-            <CrmMetrics>
-              <CrmMetric label="Open deals" value="24" detail="₹18.2L pipeline" />
-              <CrmMetric label="Follow-ups" value="09" detail="Due today" />
-            </CrmMetrics>
-            <CrmPanel>
-              <strong>Orion Retail</strong>
-              <p>Production CRM panel and record status.</p>
-            </CrmPanel>
-            <div className="mnx-catalogue-action-row">
-              <CrmButton size="compact">Open account</CrmButton>
-              <CrmStatus variant="success">Qualified</CrmStatus>
+          <section id="feedback" className="system-section">
+            <SectionTitle eyebrow="06" title="Status & feedback" copy="Badges, alerts and loaders communicate operational state without taking over the interface." />
+            <div className="feedback-grid">
+              <article className="badge-panel">
+                <p className="spec-label">BADGES</p>
+                <div className="badges">
+                  <span className="badge success-badge">● Approved</span>
+                  <span className="badge warning-badge">● Attention</span>
+                  <span className="badge danger-badge">● Overdue</span>
+                  <span className="badge info-badge">● In review</span>
+                  <span className="badge neutral">Draft</span>
+                </div>
+                <p className="spec-label second">WARNING INDICATORS</p>
+                <div className="warning-icons"><button className="warning-dot">!<i /></button><button className="warning-pill">⚠ 3 exceptions</button><button className="notification-bell">♢<i>4</i></button></div>
+              </article>
+              <div className="alerts">
+                <article className="alert success-alert"><span>✓</span><div><b>Checklist approved</b><p>The customer has been notified automatically.</p></div><button>×</button></article>
+                <article className="alert warning-alert"><span>!</span><div><b>Delivery order expires soon</b><p>Extend the validity before 30 July 2026.</p></div><button>Review</button></article>
+                <article className="alert error-alert"><span>×</span><div><b>Document upload failed</b><p>The file exceeds the 25 MB limit.</p></div><button>Retry</button></article>
+              </div>
+              <article className="loader-panel">
+                <p className="spec-label">LOADING STATES</p>
+                <div className="loaders"><span className="spinner" /><span className="pulse-loader"><i /><i /><i /></span><span className="route-loader"><i /></span></div>
+                <div className="skeleton"><i /><i /><i /></div>
+              </article>
             </div>
-          </FamilySample>
+          </section>
 
-          <FamilySample name="Communication" icon={<MessageSquareText size={18} />} exports={CommunicationComponents}>
-            <section className="mnx-workspace-metrics">
-              <CommunicationMetric label="Unread" value="12" detail="Workspace inbox" />
-              <CommunicationMetric label="Spaces" value="08" detail="Connected" />
-            </section>
-            <CommunicationPanel>
-              <strong>Operations space</strong>
-              <p>Shared Mail, Chat, Drive, Calendar, and Meetings surface.</p>
-            </CommunicationPanel>
-            <div className="mnx-catalogue-action-row">
-              <CommunicationButton size="compact">Compose</CommunicationButton>
-              <CommunicationBadge variant="success">Connected</CommunicationBadge>
+          <section id="data" className="system-section">
+            <SectionTitle eyebrow="07" title="Tables & filters" copy="Dense operational data remains approachable through gentle dividers, fixed hierarchy and explicit row actions." />
+            <div className="table-card">
+              <header>
+                <div><span>SHIPMENT REGISTER</span><h3>Active clearance jobs</h3></div>
+                <div className="table-actions">
+                  <div className="filter-group">{["All", "Sea", "Air"].map(item => <button key={item} onClick={() => setFilter(item)} className={filter === item ? "active" : ""}>{item}</button>)}</div>
+                  <button className="filter-button">≡ Filter <i>2</i></button>
+                  <button className="btn primary small">＋ New job</button>
+                </div>
+              </header>
+              <div className="table-wrap">
+                <table>
+                  <thead><tr><th><input type="checkbox" aria-label="Select all" /></th><th>Job number</th><th>Customer</th><th>Mode</th><th>Current stage</th><th>Status</th><th /></tr></thead>
+                  <tbody>
+                    {shipments.filter(row => filter === "All" || row[2].includes(filter)).map((row, i) => (
+                      <tr key={row[0]}><td><input type="checkbox" aria-label={`Select ${row[0]}`} /></td><td><b>{row[0]}</b><small>{i === 0 ? "Created today" : `${i + 1} days ago`}</small></td><td>{row[1]}</td><td><span className="mode-icon">{row[2].includes("Sea") ? "≈" : "✈"}</span>{row[2]}</td><td>{row[3]}</td><td><span className={`table-status status-${i}`}>● {row[4]}</span></td><td><button className="row-action">•••</button></td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <footer><span>Showing 1–3 of 284 jobs</span><div><button disabled>←</button><button className="active">1</button><button>2</button><button>3</button><button>→</button></div></footer>
             </div>
-          </FamilySample>
+          </section>
 
-          <FamilySample name="Administration" icon={<ShieldCheck size={18} />} exports={AdminComponents}>
-            <section className="mnx-workspace-metrics">
-              <AdminMetric label="Active sessions" value="18" detail="Organisation-wide" />
-              <AdminMetric label="Roles" value="07" detail="Configured" />
-            </section>
-            <AdminPanel>
-              <strong>Organisation control</strong>
-              <p>Production Admin panel for permission-gated workflows.</p>
-            </AdminPanel>
-            <div className="mnx-catalogue-action-row">
-              <AdminButton size="compact">Review access</AdminButton>
-              <AdminBadge variant="warning">Admin only</AdminBadge>
+          <section id="navigation" className="system-section">
+            <SectionTitle eyebrow="08" title="Navigation" copy="Navigation stays quiet and predictable, giving the current operational context the strongest visual weight." />
+            <div className="nav-showcase">
+              <div className="mini-navbar">
+                <span className="mini-logo">M</span>
+                <nav><button className="active">Dashboard</button><button>Shipments</button><button>Customers</button><button>Documents</button><button>Reports</button></nav>
+                <div><button>⌕</button><button>♢</button><span>PJ</span></div>
+              </div>
+              <div className="mini-sidebar">
+                <header><span className="mini-logo">M</span><b>MONOLITH</b></header>
+                <nav>
+                  <button className="active"><span>⌂</span>Dashboard</button>
+                  <button><span>◇</span>CHA module <i>24</i></button>
+                  <button><span>□</span>Customers</button>
+                  <button><span>⌑</span>Documents</button>
+                  <button><span>≡</span>Reports</button>
+                </nav>
+                <footer><span>PJ</span><p><b>Purushothaman</b><small>Administrator</small></p><button>⌄</button></footer>
+              </div>
             </div>
-          </FamilySample>
+          </section>
 
-          <FamilySample name="Public and authentication" icon={<ShieldCheck size={18} />} exports={PublicComponents}>
-            <PublicPanel>
-              <PublicHeader
-                eyebrow="Secure workspace"
-                title="Public route composition"
-                description="Used by login, setup, verification, and account linking."
-                badge={<PublicStatusBadge tone="success">Verified</PublicStatusBadge>}
-              />
-              <PublicInset>
-                <PublicStatus
-                  eyebrow="Session"
-                  title="Identity verified"
-                  description="The public status component is live."
-                  icon={<CheckCircle2 size={18} />}
-                  tone="success"
-                />
-              </PublicInset>
-              <PublicDetailGrid>
-                <PublicDetail label="Workspace" value="Monolith" />
-                <PublicDetail label="Access" value="Secure" />
-              </PublicDetailGrid>
-            </PublicPanel>
-          </FamilySample>
+          <section id="motion" className="system-section motion-section">
+            <SectionTitle eyebrow="09" title="Motion language" copy="Movement should explain state, reward completion and preserve continuity—not decorate idle screens." />
+            <div className="motion-grid">
+              <article><span className="motion-dot ease" /><b>Micro response</b><small>160 ms · ease-out</small><p>Hover, focus and toggle feedback.</p></article>
+              <article><span className="motion-dot spring" /><b>Spring response</b><small>640 ms · expressive</small><p>Cards, mascots and success states.</p></article>
+              <article><span className="motion-dot progress-motion" /><b>Progress</b><small>1200 ms · linear</small><p>Loading and background activity.</p></article>
+            </div>
+          </section>
+
+          <footer className="page-footer"><span className="brand-mark"><i /><i /></span><p><b>Monolith Design System</b><small>One system. Limitless possibilities.</small></p><span>Version 1.0 · July 2026</span></footer>
         </div>
-      </CatalogueSection>
-
-      <CatalogueSection
-        id="component-index"
-        index="05"
-        title="Complete production component index"
-        description="This index is derived from imported runtime modules. New exported production components appear through the same module objects used by the application."
-      >
-        <WorkspacePanel>
-          <div className="mnx-catalogue-index">
-            {catalogueGroups.map((group) => (
-              <ComponentIndex key={group.name} group={group} />
-            ))}
-          </div>
-          <MonolithEmptyState className="mnx-catalogue-index-note">
-            <PackageCheck size={20} />
-            <div>
-              <strong>No disconnected examples</strong>
-              <p>Every visual specimen above is imported from production; this page owns layout and catalogue data only.</p>
-            </div>
-          </MonolithEmptyState>
-        </WorkspacePanel>
-      </CatalogueSection>
-    </WorkspacePage>
+      </div>
+    </main>
   );
 }
