@@ -1,10 +1,8 @@
 import { NotificationProvider } from "@/components/notifications/notification-provider";
 import { SessionSync } from "@/components/session-sync";
-import { getSession } from "@/lib/auth";
 import { CapsProvider } from "@/lib/caps-context";
-import { loadCaps } from "@/lib/rbac";
+import { getDashboardContext } from "@/lib/dashboard-context";
 import { getManagedModuleSectionIdForPath } from "@/modules/core/organisation/module-config";
-import { getEnabledModuleIds } from "@/modules/core/organisation/module-settings";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { DashboardShellSwitcher } from "./_components/dashboard-shell-switcher";
@@ -16,14 +14,12 @@ function normalizePathname(pathname: string | null) {
 }
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSession();
-  if (!session) redirect("/login");
+  const context = await getDashboardContext();
+  if (!context) redirect("/login");
+  if (!context.orgId) redirect("/setup");
 
   const pathname = normalizePathname((await headers()).get("x-current-pathname"));
-  const [caps, enabledModuleIds] = await Promise.all([
-    loadCaps(session.user.id),
-    getEnabledModuleIds(session.user.orgId!),
-  ]);
+  const { session, caps, enabledModuleIds } = context;
   const managedSectionId = getManagedModuleSectionIdForPath(pathname);
   const enabledModuleSet = new Set(enabledModuleIds);
 

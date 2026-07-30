@@ -1,13 +1,12 @@
-import { getSession } from "@/lib/auth";
+import { getDashboardContext } from "@/lib/dashboard-context";
 import { getVisibleSections } from "@/lib/navigation";
-import { loadCaps } from "@/lib/rbac";
+import type { Caps } from "@/lib/rbac";
 import {
   TOGGLEABLE_MODULE_SECTION_IDS,
   type ToggleableModuleSectionId,
 } from "@/modules/core/organisation/module-config";
-import { getEnabledModuleIds } from "@/modules/core/organisation/module-settings";
 import { getDashboardModuleSnapshot } from "@/modules/dashboard/service";
-import { getDashboardWidgets, getMe, getTeamReportees } from "@/modules/hrms/service";
+import { getDashboardWidgets, getMe } from "@/modules/hrms/service";
 import { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 import { isChaEdition } from "@/lib/app-edition";
 import { redirect } from "next/navigation";
@@ -15,11 +14,12 @@ import { HrmsPortalClient } from "./portal-client";
 
 const TOGGLEABLE_MODULE_SET = new Set<string>(TOGGLEABLE_MODULE_SECTION_IDS);
 
-async function getPermittedModuleSnapshot(userId: string, orgId: string) {
-  const [caps, enabledModuleIds] = await Promise.all([
-    loadCaps(userId),
-    getEnabledModuleIds(orgId),
-  ]);
+async function getPermittedModuleSnapshot(
+  userId: string,
+  orgId: string,
+  caps: Caps,
+  enabledModuleIds: ToggleableModuleSectionId[],
+) {
   const visibleModuleSections = getVisibleSections(caps, enabledModuleIds).filter(
     (section): section is typeof section & { id: ToggleableModuleSectionId } =>
       TOGGLEABLE_MODULE_SET.has(section.id),
@@ -49,18 +49,23 @@ async function getPermittedModuleSnapshot(userId: string, orgId: string) {
 }
 
 export default async function DashboardPage() {
-  const session = await getSession();
-  if (!session) redirect("/login");
+  const context = await getDashboardContext();
+  if (!context) redirect("/login");
+  if (!context.orgId) redirect("/setup");
   if (isChaEdition()) redirect("/cha");
 
-  const orgId = session.user.orgId!;
+  const { session, orgId, caps, enabledModuleIds } = context;
 
-  const [profileData, dashboardData, reportees, permittedModuleSnapshot] =
+  const [profileData, dashboardData, permittedModuleSnapshot] =
     await Promise.all([
       getMe(session.user.id),
       getDashboardWidgets(session.user.id, orgId),
-      getTeamReportees(session.user.id, orgId),
-      getPermittedModuleSnapshot(session.user.id, orgId),
+      getPermittedModuleSnapshot(
+        session.user.id,
+        orgId,
+        caps,
+        enabledModuleIds,
+      ),
     ]);
 
   const initialProfile: UserProfile = {
@@ -80,7 +85,6 @@ export default async function DashboardPage() {
       }}
       initialProfile={initialProfile}
       initialWidgetsData={dashboardData as DashboardWidgetsData}
-      initialReportees={reportees}
       initialModuleSnapshot={permittedModuleSnapshot}
     />
   );

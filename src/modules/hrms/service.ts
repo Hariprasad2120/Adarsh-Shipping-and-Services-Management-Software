@@ -11,6 +11,7 @@ import {
   toAttendanceDate,
 } from "@/lib/attendance-date";
 import { appendAttendancePunchEvent, calculateOtForPunch } from "@/lib/ot";
+import { invalidateDashboardMetricSnapshots } from "@/modules/dashboard/cache";
 import type { Prisma } from "@/generated/prisma/client";
 
 // ─── Core & Dashboard ──────────────────────────────────────────────────────────
@@ -90,23 +91,13 @@ export async function getMe(userId: string) {
     }
   }
 
-  let activePref = pref;
-  if (!activePref) {
-    activePref = await db.employeePreference.upsert({
-      where: { userId },
-      update: {},
-      create: {
-        userId,
-        widgets: JSON.stringify([
-          { key: "ANNOUNCEMENTS", visible: true, order: 0, width: "md" },
-          { key: "QUICKLINKS", visible: true, order: 1, width: "sm" },
-          { key: "HOLIDAYLIST", visible: true, order: 2, width: "sm" },
-          { key: "MYPENDINGTASKS", visible: true, order: 3, width: "md" },
-          { key: "ENPS_SURVEY", visible: true, order: 4, width: "sm" },
-        ]),
-      },
-    });
-  }
+    const defaultWidgets = [
+      { key: "ANNOUNCEMENTS", visible: true, order: 0, width: "md" },
+      { key: "QUICKLINKS", visible: true, order: 1, width: "sm" },
+      { key: "HOLIDAYLIST", visible: true, order: 2, width: "sm" },
+      { key: "MYPENDINGTASKS", visible: true, order: 3, width: "md" },
+      { key: "ENPS_SURVEY", visible: true, order: 4, width: "sm" },
+    ];
 
   return {
     user: {
@@ -121,7 +112,9 @@ export async function getMe(userId: string) {
       photo: user.photo,
     },
     permissions: Array.from(permsSet),
-    widgets: JSON.parse(activePref.widgets as string),
+      // Reads remain side-effect free. User/bootstrap flows or an explicit
+      // preference update persist this default when a row does not yet exist.
+      widgets: pref ? JSON.parse(pref.widgets as string) : defaultWidgets,
     attendanceStatus,
     totalInTime,
     pendingCounts: {
@@ -134,23 +127,26 @@ export async function getMe(userId: string) {
 
 export async function getDashboardWidgets(userId: string, orgId: string) {
   const now = await getNow();
-  const upcomingHolidays = await db.holiday.findMany({
-    where: { orgId, date: { gte: now } },
-    take: 5,
-    orderBy: { date: "asc" },
-  });
-
-  const announcements = await db.announcement.findMany({
-    where: { orgId },
-    take: 3,
-    orderBy: { createdAt: "desc" },
-  });
-
-  const recentTasks = await db.hrmsTask.findMany({
-    where: { assigneeId: userId, status: "PENDING" },
-    take: 5,
-    orderBy: { dueDate: "asc" },
-  });
+  const [upcomingHolidays, announcements, recentTasks] = await Promise.all([
+    db.holiday.findMany({
+      where: { orgId, date: { gte: now } },
+      select: { id: true, name: true, date: true, holidayType: true },
+      take: 5,
+      orderBy: { date: "asc" },
+    }),
+    db.announcement.findMany({
+      where: { orgId },
+      select: { id: true, title: true, body: true, createdAt: true },
+      take: 3,
+      orderBy: { createdAt: "desc" },
+    }),
+    db.hrmsTask.findMany({
+      where: { assigneeId: userId, status: "PENDING" },
+      select: { id: true, title: true, priority: true, dueDate: true },
+      take: 5,
+      orderBy: { dueDate: "asc" },
+    }),
+  ]);
 
   return {
     upcomingHolidays,
@@ -163,11 +159,13 @@ export async function updateDashboardWidgets(
   userId: string,
   widgets: unknown[],
 ) {
-  return db.employeePreference.upsert({
+  const preference = await db.employeePreference.upsert({
     where: { userId },
     update: { widgets: JSON.stringify(widgets) },
     create: { userId, widgets: JSON.stringify(widgets) },
   });
+  invalidateDashboardMetricSnapshots({ userId });
+  return preference;
 }
 
 // ─── Attendance & Punching ───────────────────────────────────────────────────
@@ -286,6 +284,7 @@ export async function punchAction(
 
   await calculateOtForPunch(userId, todayStart);
 
+  invalidateDashboardMetricSnapshots({ orgId, userId });
   return punch;
 }
 

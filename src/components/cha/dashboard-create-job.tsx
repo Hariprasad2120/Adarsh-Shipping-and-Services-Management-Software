@@ -1,42 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/monolith/button";
-import { CreateJobDialog } from "./create-job-dialog";
 import { CreateJobPermissionGuard } from "./create-job-permission-guard";
 
+const CreateJobDialog = dynamic(
+  () => import("./create-job-dialog").then((module) => module.CreateJobDialog),
+  { ssr: false },
+);
+
 interface DashboardCreateJobProps {
-  options: {
-    branches: { id: string; name: string; code: string }[];
-    customers: { id: string; name: string }[];
-    jobTypes: { id: string; name: string }[];
-    shipmentTypes: { id: string; name: string }[];
-    users: { id: string; name: string; email: string }[];
-    managers: { id: string; name: string; email: string; branchId: string | null }[];
-    teamGroups: { id: string; name: string; memberIds: unknown }[];
-    branchNumberingRules: {
-      branchId: string;
-      prefix: string;
-      suffix?: string | null;
-      startingSequence: number;
-      currentSequence: number;
-      numberPadding: number;
-      useFinancialYear: boolean;
-      financialYearFormat?: string | null;
-      isActive: boolean;
-    }[];
-  };
   currentUserId: string;
   canCreateJob: boolean;
 }
 
-export function DashboardCreateJob({ options, currentUserId, canCreateJob }: DashboardCreateJobProps) {
+type CreateOptions = React.ComponentProps<typeof CreateJobDialog>["options"];
+
+export function DashboardCreateJob({ currentUserId, canCreateJob }: DashboardCreateJobProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedCreateNew = searchParams.get("new") === "true";
   const [isOpen, setIsOpen] = useState(() => requestedCreateNew && canCreateJob);
+  const [options, setOptions] = useState<CreateOptions | null>(null);
+  const optionsRequestRef = useRef<Promise<CreateOptions> | null>(null);
+
+  const loadOptions = useCallback(async () => {
+    if (options) return options;
+    if (!optionsRequestRef.current) {
+      optionsRequestRef.current = fetch("/api/cha/jobs/create-options", { cache: "no-store" })
+        .then(async (response) => {
+          if (!response.ok) throw new Error("Unable to load create-job options.");
+          return response.json() as Promise<CreateOptions>;
+        })
+        .finally(() => {
+          optionsRequestRef.current = null;
+        });
+    }
+    const loaded = await optionsRequestRef.current;
+    setOptions(loaded);
+    return loaded;
+  }, [options]);
+
+  useEffect(() => {
+    if (isOpen && canCreateJob) void loadOptions();
+  }, [canCreateJob, isOpen, loadOptions]);
 
   const handleCreated = () => {
     // If we've successfully created the job, we should clear new=true from query parameters if present, and refresh the route
@@ -58,17 +68,26 @@ export function DashboardCreateJob({ options, currentUserId, canCreateJob }: Das
     <>
       {canCreateJob ? (
         <>
-          <Button size="sm" className="gap-2" onClick={() => setIsOpen(true)}>
+          <Button
+            size="sm"
+            className="gap-2"
+            onClick={() => {
+              setIsOpen(true);
+              void loadOptions();
+            }}
+          >
             <Plus aria-hidden="true" />
             New Job
           </Button>
-          <CreateJobDialog
-            open={isOpen}
-            onOpenChange={handleOpenChange}
-            options={options}
-            currentUserId={currentUserId}
-            onCreated={handleCreated}
-          />
+          {options ? (
+            <CreateJobDialog
+              open={isOpen}
+              onOpenChange={handleOpenChange}
+              options={options}
+              currentUserId={currentUserId}
+              onCreated={handleCreated}
+            />
+          ) : null}
         </>
       ) : null}
       <CreateJobPermissionGuard open={requestedCreateNew && !canCreateJob} fallbackHref="/cha" />

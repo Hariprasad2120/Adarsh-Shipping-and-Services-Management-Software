@@ -25,11 +25,12 @@ describe("module-aware main dashboard", () => {
     const pageSource = readSource("src/app/(dashboard)/dashboard/page.tsx");
     const portalSource = readSource("src/app/(dashboard)/dashboard/portal-client.tsx");
 
-    expect(pageSource).toContain("getEnabledModuleIds");
+    expect(pageSource).toContain("getDashboardContext");
     expect(pageSource).toContain("getVisibleSections(caps, enabledModuleIds)");
     expect(pageSource).toContain("getDashboardModuleSnapshot");
     expect(pageSource).toContain("permittedHrefsByModule");
     expect(portalSource).toContain("setModuleSnapshot");
+    expect(portalSource).toContain('fetch("/api/hrms/team/reportees")');
     expect(portalSource).toContain('module.id === "attendance"');
   });
 

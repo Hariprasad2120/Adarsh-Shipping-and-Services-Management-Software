@@ -59,4 +59,21 @@ describe("performance architecture boundaries", () => {
     expect(jobsPage).not.toContain("ensureSettingsAndDefaults");
     expect(jobsPage).not.toMatch(/\b(?:create|update|upsert|delete)\s*\(/);
   });
+
+  it("keeps dashboard and CHA initial reads bounded", () => {
+    const dashboardPage = read("src/app/(dashboard)/dashboard/page.tsx");
+    const dashboardService = read("src/modules/dashboard/service.ts");
+    const dashboardClient = read("src/app/(dashboard)/dashboard/portal-client.tsx");
+    const chaPage = read("src/app/(dashboard)/cha/page.tsx");
+    const database = read("src/lib/db.ts");
+
+    expect(dashboardPage).not.toContain("getTeamReportees");
+    expect(dashboardClient).toContain('fetch("/api/hrms/team/reportees")');
+    expect(dashboardService).toContain("readAggregatedCounts");
+    expect(dashboardService).toContain("METRIC_SNAPSHOT_TTL_MS = 8_000");
+    expect(chaPage).not.toContain("getCachedCustomers");
+    expect(chaPage).not.toContain("getEligibleManagers");
+    expect(chaPage).toContain("createNotifications: false");
+    expect(database).not.toContain("Starting local background scheduler");
+  });
 });

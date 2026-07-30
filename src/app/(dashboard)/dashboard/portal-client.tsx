@@ -20,7 +20,6 @@ interface HrmsPortalClientProps {
   sessionUser: { id: string; name: string; email: string };
   initialProfile: UserProfile;
   initialWidgetsData: DashboardWidgetsData;
-  initialReportees: ReporteeSummary[];
   initialModuleSnapshot: DashboardModuleSnapshot;
 }
 
@@ -97,17 +96,34 @@ export function HrmsPortalClient({
   sessionUser,
   initialProfile,
   initialWidgetsData,
-  initialReportees,
   initialModuleSnapshot,
 }: HrmsPortalClientProps) {
   const [activeTab, setActiveTab] = useState<DashboardTab>("myspace");
   const [profile, setProfile] = useState(initialProfile);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
-  const [reportees, setReportees] = useState(initialReportees);
+  const [reportees, setReportees] = useState<ReporteeSummary[] | null>(null);
   const [widgets, setWidgets] = useState(initialWidgetsData);
   const [moduleSnapshot, setModuleSnapshot] = useState(initialModuleSnapshot);
   const [organization, setOrganization] = useState<OrganizationPayload | null>(null);
   const organizationRequestRef = useRef(false);
+  const teamRequestRef = useRef(false);
+
+  useEffect(() => {
+    if (activeTab !== "team" || reportees || teamRequestRef.current) return;
+    let active = true;
+    teamRequestRef.current = true;
+    void fetch("/api/hrms/team/reportees")
+      .then((response) => readApiResponse<ReporteeSummary[]>(response))
+      .then((payload) => {
+        if (active) setReportees(payload);
+      })
+      .finally(() => {
+        teamRequestRef.current = false;
+      });
+    return () => {
+      active = false;
+    };
+  }, [activeTab, reportees]);
 
   useEffect(() => {
     if (activeTab !== "organization" || organization || organizationRequestRef.current) return;
@@ -127,22 +143,19 @@ export function HrmsPortalClient({
   }, [activeTab, organization]);
 
   async function refreshDashboard() {
-    const [profileResponse, widgetsResponse, reporteesResponse] = await Promise.all([
+    const [profileResponse, widgetsResponse] = await Promise.all([
       fetch("/api/hrms/me"),
       fetch("/api/hrms/dashboard"),
-      fetch("/api/hrms/team/reportees"),
     ]);
 
-    const [profilePayload, widgetsPayload, reporteesPayload] = await Promise.all([
+    const [profilePayload, widgetsPayload] = await Promise.all([
       readApiResponse<ProfilePayload>(profileResponse),
       readApiResponse<DashboardWidgetsData>(widgetsResponse),
-      readApiResponse<ReporteeSummary[]>(reporteesResponse),
     ]);
 
     const nextProfile = toUserProfile(profilePayload);
     setProfile(nextProfile);
     setWidgets(widgetsPayload);
-    setReportees(reporteesPayload);
     setModuleSnapshot((current) => ({
       ...current,
       modules: current.modules.map((module) =>
@@ -213,7 +226,13 @@ export function HrmsPortalClient({
             moduleSnapshot={moduleSnapshot}
           />
         ) : null}
-        {activeTab === "team" ? <DashboardTeam reportees={reportees} /> : null}
+        {activeTab === "team" && reportees ? <DashboardTeam reportees={reportees} /> : null}
+        {activeTab === "team" && !reportees ? (
+          <WorkspaceLoadingState
+            title="Loading team"
+            description="Preparing reportees and live attendance."
+          />
+        ) : null}
         {activeTab === "organization" && organization ? (
           <DashboardOrganization
             data={widgets}
