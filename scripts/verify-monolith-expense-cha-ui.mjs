@@ -257,7 +257,9 @@ for (const [sourceName, signals] of Object.entries({
   }
 }
 
-const styles = read("src/styles/monolith-system.css");
+const sharedStyles = read("src/styles/monolith-system.css");
+const moduleStyles = read("src/styles/modules/cha-expense.css");
+const styles = `${sharedStyles}\n${moduleStyles}`;
 const tokens = read("src/styles/monolith-tokens.css");
 for (const className of [
   ".mnx-floating-surface",

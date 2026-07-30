@@ -199,7 +199,7 @@ for (const component of [
   );
 }
 
-const styles = read("src/styles/monolith-system.css");
+const styles = `${read("src/styles/monolith-system.css")}\n${read("src/styles/modules/people.css")}`;
 for (const selector of [
   ".mnx-people-page",
   ".mnx-people-summary-grid",
@@ -217,15 +217,13 @@ for (const theme of ["theme-light", "theme-night", "theme-violet"]) {
 }
 
 const catalogue = read(
-  "src/app/(dashboard)/admin/design-system/design-system-client.tsx",
+  "src/components/monolith/catalogue/module-catalogue.tsx",
 );
 for (const catalogueEntry of [
-  'name: "People operations"',
-  '* as PeopleComponents from "@/modules/people/components/people-workspace"',
-  '* as PeopleDataComponents from "@/modules/people/components/people-data-table"',
-  "exports: { ...PeopleComponents, ...PeopleDataComponents }",
-  "WorkspaceDialog",
-  "PeopleLoadingState",
+  'peopleEntry("hrms", "HRMS")',
+  'peopleEntry("attendance", "Attendance")',
+  'component: "PeopleSection"',
+  'source: "src/modules/people/components/people-workspace.tsx"',
 ]) {
   assert(
     catalogue.includes(catalogueEntry),

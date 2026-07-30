@@ -195,7 +195,9 @@ assert(
   "Public routes do not own a semantic document/scrollbar surface.",
 );
 assert(
-  read("src/app/globals.css").includes("main:not(.mnx-public-shell)"),
+  read("src/styles/legacy-compatibility.css").includes(
+    "main:not(.mnx-public-shell)",
+  ),
   "Legacy global form rules are not scoped away from public Monolith pages.",
 );
 const scrollNavigator = read("src/components/navigation/scroll-navigator.tsx");
@@ -224,7 +226,7 @@ const behaviorSources = {
 
 for (const [sourceName, signals] of Object.entries({
   root: [
-    "await auth()",
+    "await getSession()",
     "isRootControlEmail",
     'redirect("/dashboard")',
     "getEnabledModuleIds",

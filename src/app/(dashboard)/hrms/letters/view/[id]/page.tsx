@@ -135,7 +135,7 @@ export default function EmployeeLetterViewPage({
             <div>
               <h1
                 className="text-lg font-black text-mono-text uppercase tracking-widest"
-                style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
+                style={{ fontFamily: "var(--mn-font-sans)" }}
               >
                 Letters & Contracts Portal
               </h1>

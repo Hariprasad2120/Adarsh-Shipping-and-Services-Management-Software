@@ -1,0 +1,967 @@
+/*
+ * Communication and Admin module composition styles.
+ * Shared primitives remain owned by monolith-system.css.
+ */
+
+/* Communication and administration workspaces */
+
+.mnx-communication-page,
+.mnx-admin-page {
+  gap: var(--mn-space-7);
+}
+
+.mnx-communication-page-header,
+.mnx-admin-page-header {
+  overflow: hidden;
+}
+
+.mnx-communication-page-header::after,
+.mnx-admin-page-header::after {
+  content: "";
+  position: absolute;
+  right: clamp(1.5rem, 4vw, 4rem);
+  bottom: -3.25rem;
+  width: 12rem;
+  height: 12rem;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 18%, var(--mnx-border));
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    color-mix(in srgb, var(--mnx-accent) 12%, transparent),
+    transparent 67%
+  );
+  pointer-events: none;
+}
+
+.mnx-communication-page-header .mnx-page-header-icon,
+.mnx-admin-page-header .mnx-page-header-icon {
+  color: var(--mnx-accent-text);
+  background: var(--mnx-accent-soft);
+  border-color: color-mix(in srgb, var(--mnx-accent) 34%, var(--mnx-border));
+}
+
+.mnx-communication-nav,
+.mnx-admin-nav {
+  display: flex;
+  min-width: 0;
+  gap: var(--mn-space-2);
+  overflow-x: auto;
+  padding: var(--mn-space-2);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-control);
+  background: var(--mnx-surface);
+  box-shadow: var(--mnx-shadow-soft);
+  scrollbar-width: thin;
+}
+
+.mnx-communication-nav a,
+.mnx-admin-nav a {
+  display: inline-flex;
+  min-height: 2.5rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--mn-space-4);
+  border: 1px solid transparent;
+  border-radius: calc(var(--mn-radius-control) - 0.2rem);
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition:
+    color var(--mn-motion-fast),
+    border-color var(--mn-motion-fast),
+    background-color var(--mn-motion-fast);
+}
+
+.mnx-communication-nav a:hover,
+.mnx-admin-nav a:hover {
+  color: var(--mnx-text-strong);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-communication-nav a[aria-current="page"],
+.mnx-admin-nav a[aria-current="page"] {
+  color: var(--mnx-text-strong);
+  border-color: color-mix(in srgb, var(--mnx-accent) 32%, var(--mnx-border));
+  background: var(--mnx-accent-soft);
+}
+
+.mnx-communication-content,
+.mnx-admin-content {
+  display: grid;
+  min-width: 0;
+  gap: var(--mn-space-7);
+}
+
+.mnx-communication-content > *,
+.mnx-admin-content > * {
+  min-width: 0;
+}
+
+.mnx-communication-content :where(h2, h3, h4),
+.mnx-admin-content :where(h2, h3, h4) {
+  color: var(--mnx-text-strong);
+}
+
+.mnx-communication-content :where(p, small),
+.mnx-admin-content :where(p, small) {
+  color: inherit;
+}
+
+.mnx-communication-panel,
+.mnx-admin-panel {
+  overflow: hidden;
+}
+
+.mnx-communication-table,
+.mnx-admin-table {
+  min-width: 44rem;
+}
+
+.mnx-communication-page
+  :where(
+    .monolith-card,
+    .bg-mono-card,
+    .mnx-communication-surface,
+    .mnx-admin-surface
+  ),
+.mnx-admin-page
+  :where(
+    .monolith-card,
+    .bg-mono-card,
+    .mnx-communication-surface,
+    .mnx-admin-surface
+  ) {
+  border-color: var(--mnx-border);
+  color: var(--mnx-text);
+  background: var(--mnx-surface);
+}
+
+.mnx-communication-page
+  :where(.monolith-input, .monolith-select, .monolith-textarea),
+.mnx-admin-page :where(.monolith-input, .monolith-select, .monolith-textarea) {
+  border-color: var(--mnx-control-border);
+  color: var(--mnx-control-text);
+  background: var(--mnx-control-bg);
+}
+
+.mnx-communication-split,
+.mnx-admin-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.34fr);
+  gap: var(--mn-space-6);
+}
+
+.mnx-communication-toolbar,
+.mnx-admin-toolbar {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-4);
+  border-bottom: 1px solid var(--mnx-border);
+}
+
+.mnx-communication-scroll-region,
+.mnx-admin-scroll-region {
+  min-width: 0;
+  overflow: auto;
+}
+
+.mnx-admin-link-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mn-space-4);
+}
+
+.mnx-admin-link-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  align-items: center;
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-5);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-card);
+  color: var(--mnx-text);
+  background: var(--mnx-surface);
+  box-shadow: var(--mnx-shadow-soft);
+  transition:
+    transform var(--mn-motion-fast),
+    border-color var(--mn-motion-fast),
+    box-shadow var(--mn-motion-fast);
+}
+
+.mnx-admin-link-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--mnx-accent) 36%, var(--mnx-border));
+  box-shadow: var(--mnx-shadow-hover);
+}
+
+.mnx-admin-link-card > svg,
+.mnx-admin-link-icon {
+  color: var(--mnx-accent-text);
+}
+
+.mnx-admin-link-icon {
+  display: inline-flex;
+  width: 2.75rem;
+  height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--mn-radius-control);
+  background: var(--mnx-accent-soft);
+}
+
+.mnx-admin-link-card strong,
+.mnx-admin-link-card small,
+.mnx-admin-record strong,
+.mnx-admin-record small,
+.mnx-admin-session-person strong,
+.mnx-admin-session-person small,
+.mnx-admin-table td > strong,
+.mnx-admin-table td > small {
+  display: block;
+}
+
+.mnx-admin-link-card strong,
+.mnx-admin-record strong,
+.mnx-admin-session-person strong,
+.mnx-admin-table td > strong {
+  color: var(--mnx-text-strong);
+  font-weight: 650;
+}
+
+.mnx-admin-link-card small,
+.mnx-admin-record small,
+.mnx-admin-session-person small,
+.mnx-admin-table td > small {
+  margin-top: var(--mn-space-1);
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+}
+
+.mnx-admin-panel-body {
+  display: grid;
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-5);
+}
+
+.mnx-admin-panel-body > p {
+  color: var(--mnx-text-muted);
+  line-height: 1.65;
+}
+
+.mnx-admin-code-block {
+  overflow-x: auto;
+  padding: var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-control);
+  color: var(--mnx-text);
+  background: var(--mnx-surface-soft);
+  font: 500 var(--mn-font-size-xs) / 1.7 var(--mn-font-mono);
+}
+
+.mnx-admin-import-form,
+.mnx-admin-settings-form,
+.mnx-admin-simulation {
+  display: grid;
+  gap: var(--mn-space-5);
+}
+
+.mnx-admin-file-drop {
+  display: flex;
+  min-height: 10rem;
+  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mn-space-2);
+  padding: var(--mn-space-5);
+  border: 1px dashed var(--mnx-control-border);
+  border-radius: var(--mn-radius-control);
+  text-align: center;
+  color: var(--mnx-text-muted);
+  background: var(--mnx-surface-soft);
+  transition:
+    border-color var(--mn-motion-fast),
+    background-color var(--mn-motion-fast);
+}
+
+.mnx-admin-file-drop:hover {
+  border-color: var(--mnx-accent);
+  background: var(--mnx-accent-soft);
+}
+
+.mnx-admin-file-drop > svg {
+  width: 2rem;
+  height: 2rem;
+  color: var(--mnx-accent-text);
+}
+
+.mnx-admin-file-drop strong {
+  color: var(--mnx-text-strong);
+}
+
+.mnx-admin-role-layout {
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.3fr) minmax(0, 1fr);
+  gap: var(--mn-space-6);
+}
+
+.mnx-admin-role-list,
+.mnx-admin-record-list {
+  display: grid;
+}
+
+.mnx-admin-role-list {
+  gap: var(--mn-space-2);
+  padding: var(--mn-space-4);
+}
+
+.mnx-admin-role-option {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.mnx-admin-role-option.is-selected,
+.mnx-admin-tabs .is-selected {
+  color: var(--mnx-accent-text);
+  border-color: color-mix(in srgb, var(--mnx-accent) 36%, var(--mnx-border));
+  background: var(--mnx-accent-soft);
+}
+
+.mnx-admin-role-option small {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+  text-transform: uppercase;
+}
+
+.mnx-admin-permission-groups {
+  display: grid;
+  gap: var(--mn-space-5);
+  padding: var(--mn-space-5);
+}
+
+.mnx-admin-permission-groups h3 {
+  margin-bottom: var(--mn-space-3);
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.mnx-admin-permission-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mn-space-2);
+}
+
+.mnx-admin-permission {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-3);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-control);
+  cursor: pointer;
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-admin-permission code {
+  grid-column: 2;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+}
+
+.mnx-admin-settings-form > section {
+  display: grid;
+  gap: var(--mn-space-4);
+}
+
+.mnx-admin-settings-form > section + section {
+  padding-top: var(--mn-space-5);
+  border-top: 1px solid var(--mnx-border);
+}
+
+.mnx-admin-settings-form section > div > p {
+  margin-top: var(--mn-space-2);
+  color: var(--mnx-text-muted);
+}
+
+.mnx-admin-inline-field,
+.mnx-admin-form-actions,
+.mnx-admin-record-actions,
+.mnx-admin-timeout-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mn-space-3);
+}
+
+.mnx-admin-inline-field .mnx-field-control,
+.mnx-admin-weight-grid .mnx-field-control,
+.mnx-admin-timeout-control .mnx-field-control {
+  width: 8rem;
+}
+
+.mnx-admin-inline-field > span {
+  color: var(--mnx-text-muted);
+}
+
+.mnx-admin-weight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mn-space-4);
+}
+
+.mnx-admin-clock {
+  color: var(--mnx-text-strong);
+  font: 650 var(--mn-font-size-2xl) / 1.2 var(--mn-font-mono);
+}
+
+.mnx-admin-danger-panel {
+  border-color: color-mix(in srgb, var(--mnx-danger) 42%, var(--mnx-border));
+}
+
+.mnx-admin-record {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-4) var(--mn-space-5);
+  border-top: 1px solid var(--mnx-border);
+}
+
+.mnx-admin-record:first-child {
+  border-top: 0;
+}
+
+.mnx-admin-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-5);
+}
+
+.mnx-admin-filter-grid > div {
+  display: flex;
+  gap: var(--mn-space-2);
+}
+
+.mnx-admin-table td > span,
+.mnx-admin-table td > svg {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+}
+
+.mnx-admin-activity-list {
+  display: grid;
+  max-height: 8rem;
+  gap: var(--mn-space-1);
+  overflow-y: auto;
+}
+
+.mnx-admin-session-record {
+  display: grid;
+  grid-template-columns: auto minmax(10rem, 0.35fr) minmax(16rem, 1fr) auto;
+  align-items: center;
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-4) var(--mn-space-5);
+  border-top: 1px solid var(--mnx-border);
+}
+
+.mnx-admin-session-record:first-child {
+  border-top: 0;
+}
+
+.mnx-admin-avatar {
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--mn-radius-control);
+  color: var(--mnx-accent-text);
+  background: var(--mnx-accent-soft);
+  font-weight: 750;
+}
+
+.mnx-admin-session-person .mnx-badge {
+  margin-top: var(--mn-space-2);
+}
+
+.mnx-admin-session-meta {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: var(--mn-space-3);
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+}
+
+.mnx-admin-session-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mn-space-1);
+}
+
+.mnx-admin-session-meta svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.mnx-admin-tabs {
+  display: flex;
+  gap: var(--mn-space-2);
+  overflow-x: auto;
+  padding: var(--mn-space-3) var(--mn-space-5);
+  border-bottom: 1px solid var(--mnx-border);
+}
+
+.mnx-admin-delivery-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-5);
+}
+
+.mnx-admin-delivery-stats > div {
+  padding: var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-control);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-admin-delivery-stats small,
+.mnx-admin-delivery-stats strong {
+  display: block;
+}
+
+.mnx-admin-delivery-stats small {
+  color: var(--mnx-text-muted);
+  text-transform: capitalize;
+}
+
+.mnx-admin-delivery-stats strong {
+  margin-top: var(--mn-space-2);
+  color: var(--mnx-text-strong);
+  font: 650 var(--mn-font-size-xl) / 1 var(--mn-font-mono);
+}
+
+.mnx-communication-panel-body {
+  display: grid;
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-5);
+}
+
+.mnx-communication-panel-body > p {
+  color: var(--mnx-text-muted);
+  line-height: 1.65;
+}
+
+.mnx-communication-surface {
+  min-width: 0;
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-card);
+  color: var(--mnx-text);
+  background: var(--mnx-surface);
+  box-shadow: var(--mnx-shadow-soft);
+}
+
+.mnx-communication-icon {
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 28%, var(--mnx-border));
+  border-radius: var(--mn-radius-control);
+  color: var(--mnx-accent-text);
+  background: var(--mnx-accent-soft);
+}
+
+.mnx-communication-heading {
+  color: var(--mnx-text-strong);
+  font-family: var(--mn-font-display);
+}
+
+.mnx-communication-label {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mnx-communication-table td > strong,
+.mnx-communication-table td > small,
+.mnx-communication-record strong,
+.mnx-communication-record small {
+  display: block;
+}
+
+.mnx-communication-table td > strong,
+.mnx-communication-record strong {
+  color: var(--mnx-text-strong);
+  font-weight: 650;
+}
+
+.mnx-communication-table td > small,
+.mnx-communication-record small {
+  margin-top: var(--mn-space-1);
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+}
+
+.mnx-communication-record-link {
+  color: var(--mnx-text-strong);
+  font-weight: 650;
+  transition: color var(--mn-motion-fast);
+}
+
+.mnx-communication-record-link:hover {
+  color: var(--mnx-accent-text);
+}
+
+.mnx-communication-form,
+.mnx-communication-settings-form {
+  display: grid;
+  gap: var(--mn-space-5);
+}
+
+.mnx-communication-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mn-space-4);
+}
+
+.mnx-communication-form-actions,
+.mnx-communication-inline-action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mn-space-3);
+}
+
+.mnx-communication-record-list {
+  display: grid;
+}
+
+.mnx-communication-record {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-4) var(--mn-space-5);
+  border-top: 1px solid var(--mnx-border);
+}
+
+.mnx-communication-record:first-child {
+  border-top: 0;
+}
+
+.mnx-communication-search-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-5);
+}
+
+.mnx-communication-result-count {
+  padding: 0 var(--mn-space-5) var(--mn-space-5);
+  color: var(--mnx-text-muted);
+}
+
+.mnx-communication-result-grid,
+.mnx-communication-folder-grid,
+.mnx-communication-action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mn-space-4);
+}
+
+.mnx-communication-folder {
+  display: grid;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-control);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-communication-folder > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-communication-settings-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(17rem, 0.34fr);
+  align-items: start;
+  gap: var(--mn-space-6);
+}
+
+.mnx-communication-settings-aside,
+.mnx-communication-health,
+.mnx-communication-scope-list,
+.mnx-communication-detail-list,
+.mnx-communication-diagnostics {
+  display: grid;
+  gap: var(--mn-space-3);
+}
+
+.mnx-communication-setting-row,
+.mnx-communication-health > div,
+.mnx-communication-detail-list > div,
+.mnx-communication-diagnostics > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-3) 0;
+  border-top: 1px solid var(--mnx-border);
+}
+
+.mnx-communication-setting-row:first-child,
+.mnx-communication-health > div:first-child,
+.mnx-communication-detail-list > div:first-child,
+.mnx-communication-diagnostics > div:first-child {
+  border-top: 0;
+}
+
+.mnx-communication-detail-list dt,
+.mnx-communication-diagnostics dt {
+  color: var(--mnx-text-muted);
+}
+
+.mnx-communication-detail-list dd,
+.mnx-communication-diagnostics dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--mnx-text-strong);
+  font-weight: 650;
+  text-align: right;
+}
+
+.mnx-communication-scope-list {
+  padding-left: 1.25rem;
+  color: var(--mnx-text-muted);
+  list-style: disc;
+}
+
+.mnx-communication-embed {
+  display: block;
+  width: 100%;
+  min-height: clamp(32rem, 68vh, 54rem);
+  border: 0;
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-communication-legacy-dialog > div,
+.mnx-communication-legacy-dialog > form {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: var(--mnx-text);
+  background: transparent;
+  box-shadow: none;
+}
+
+[data-communication-mail="true"] {
+  height: min(48rem, calc(100dvh - 12rem));
+  min-height: 34rem;
+  gap: 0;
+  border-radius: var(--mn-radius-panel);
+  color: var(--mnx-text);
+  background: var(--mnx-surface);
+  box-shadow: var(--mnx-shadow);
+}
+
+[data-communication-chat="true"] {
+  height: min(48rem, calc(100dvh - 12rem));
+  min-height: 34rem;
+  border-radius: var(--mn-radius-panel);
+  color: var(--mnx-text);
+  background: var(--mnx-surface);
+  box-shadow: var(--mnx-shadow);
+}
+
+@media (max-width: 70rem) {
+  .mnx-communication-content,
+  .mnx-admin-content {
+    gap: var(--mn-space-6);
+  }
+
+  .mnx-communication-split,
+  .mnx-admin-split {
+    grid-template-columns: 1fr;
+  }
+
+  .mnx-admin-link-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mnx-admin-role-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .mnx-communication-settings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .mnx-communication-result-grid,
+  .mnx-communication-folder-grid,
+  .mnx-communication-action-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  [data-communication-chat-details="true"] {
+    display: none;
+  }
+
+  .mnx-admin-session-record {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .mnx-admin-session-meta,
+  .mnx-admin-session-record .mnx-admin-record-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 42rem) {
+  .mnx-communication-page,
+  .mnx-admin-page {
+    gap: var(--mn-space-5);
+  }
+
+  .mnx-communication-page-header,
+  .mnx-admin-page-header {
+    padding: var(--mn-space-5);
+  }
+
+  .mnx-communication-page-header::after,
+  .mnx-admin-page-header::after {
+    display: none;
+  }
+
+  .mnx-communication-nav,
+  .mnx-admin-nav {
+    margin-inline: calc(var(--mn-space-1) * -1);
+    scroll-snap-type: x proximity;
+  }
+
+  .mnx-communication-nav a,
+  .mnx-admin-nav a {
+    min-height: 2.75rem;
+    scroll-snap-align: start;
+  }
+
+  .mnx-communication-toolbar,
+  .mnx-admin-toolbar {
+    align-items: stretch;
+  }
+
+  .mnx-communication-toolbar > *,
+  .mnx-admin-toolbar > * {
+    width: 100%;
+  }
+
+  .mnx-admin-link-grid,
+  .mnx-admin-permission-list,
+  .mnx-admin-weight-grid,
+  .mnx-admin-filter-grid,
+  .mnx-admin-delivery-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .mnx-admin-record,
+  .mnx-admin-session-record {
+    align-items: stretch;
+  }
+
+  .mnx-admin-record-actions,
+  .mnx-admin-form-actions {
+    width: 100%;
+  }
+
+  .mnx-admin-record-actions .mnx-button,
+  .mnx-admin-form-actions .mnx-button {
+    flex: 1 1 auto;
+  }
+
+  .mnx-communication-field-grid,
+  .mnx-communication-result-grid,
+  .mnx-communication-folder-grid,
+  .mnx-communication-action-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mnx-communication-search-form {
+    grid-template-columns: 1fr;
+  }
+
+  .mnx-communication-record,
+  .mnx-communication-setting-row {
+    align-items: stretch;
+  }
+
+  [data-communication-mail="true"] {
+    display: flex;
+    height: auto;
+    min-height: 0;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  [data-communication-mail-folders="true"] {
+    min-width: 0;
+    max-height: 18rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--mnx-border);
+  }
+
+  [data-communication-mail-list="true"],
+  [data-communication-mail-detail="true"] {
+    min-height: 28rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--mnx-border);
+  }
+
+  [data-communication-chat="true"] {
+    height: auto;
+    min-height: 0;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  [data-communication-chat-sidebar="true"],
+  [data-communication-chat-conversation="true"],
+  [data-communication-chat-details="true"] {
+    width: 100%;
+    min-height: 30rem;
+    border-right: 0;
+    border-left: 0;
+    border-bottom: 1px solid var(--mnx-border);
+  }
+
+  [data-communication-chat-sidebar="true"] {
+    max-height: 22rem;
+  }
+}

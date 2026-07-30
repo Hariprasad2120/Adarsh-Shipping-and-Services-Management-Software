@@ -9,131 +9,100 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
-const repositoryRoot = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "..",
-);
-
-function assert(condition, message) {
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const read = (relativePath) =>
+  readFileSync(path.join(repositoryRoot, relativePath), "utf8");
+const assert = (condition, message) => {
   if (!condition) throw new Error(message);
+};
+
+const paths = {
+  page: "src/app/(dashboard)/admin/design-system/page.tsx",
+  client: "src/app/(dashboard)/admin/design-system/design-system-client.tsx",
+  catalogueCss:
+    "src/app/(dashboard)/admin/design-system/design-system-catalogue.css",
+  sharedRegistry:
+    "src/components/monolith/catalogue/shared-catalogue.tsx",
+  moduleRegistry:
+    "src/components/monolith/catalogue/module-catalogue.tsx",
+  barrel: "src/components/monolith/index.ts",
+  workspace: "src/components/layout/workspace.tsx",
+  chaWorkspace: "src/modules/cha/components/workspace/cha-workspace.tsx",
+};
+
+for (const relativePath of Object.values(paths)) {
+  assert(existsSync(path.join(repositoryRoot, relativePath)), `Missing ${relativePath}.`);
 }
 
-function read(relativePath) {
-  return readFileSync(path.join(repositoryRoot, relativePath), "utf8");
-}
-
-const pagePath = "src/app/(dashboard)/admin/design-system/page.tsx";
-const clientPath =
-  "src/app/(dashboard)/admin/design-system/design-system-client.tsx";
-const shellPath = "src/modules/core/components/monolith-app-shell.tsx";
-const stylePath = "src/styles/monolith-system.css";
-
-for (const relativePath of [pagePath, clientPath, shellPath, stylePath]) {
-  assert(
-    existsSync(path.join(repositoryRoot, relativePath)),
-    `Missing production catalogue source: ${relativePath}.`,
-  );
-}
-
-const page = read(pagePath);
-const client = read(clientPath);
-const shell = read(shellPath);
-const styles = read(stylePath);
+const page = read(paths.page);
+const client = read(paths.client);
+const sharedRegistry = read(paths.sharedRegistry);
+const moduleRegistry = read(paths.moduleRegistry);
+const workspace = read(paths.workspace);
+const chaWorkspace = read(paths.chaWorkspace);
 
 assert(
   page.includes('can(session.user.id, "admin.org.manage")'),
-  "The catalogue must retain its administrator permission gate.",
+  "The administrator permission gate is missing.",
 );
 assert(
-  client.includes('data-production-catalogue="true"'),
-  "The production catalogue root marker is missing.",
+  page.includes('import "./design-system-catalogue.css"') &&
+    !page.includes("design-system-reference.css") &&
+    !page.includes("design-system-production.css"),
+  "The route must import only its layout-only catalogue stylesheet.",
 );
 assert(
-  client.includes("Object.entries(module)") &&
-    client.includes("exportedComponents(group.exports)"),
-  "The complete index must be derived from imported runtime modules.",
+  client.includes("sharedCatalogue") &&
+    client.includes("moduleCatalogue") &&
+    client.includes("entry.render()"),
+  "The route must render navigation and specimens from the typed registry.",
+);
+assert(
+  client.includes("<WorkspaceSectionHeading") &&
+    !client.includes("function SectionTitle") &&
+    !client.includes('className="section-heading"'),
+  "Catalogue major headings must use WorkspaceSectionHeading.",
+);
+assert(
+  sharedRegistry.includes('component: "WorkspaceSectionHeading"') &&
+    sharedRegistry.includes("<WorkspaceSectionHeading") &&
+    moduleRegistry.includes('component: "ChaSection"') &&
+    moduleRegistry.includes("<ChaSection"),
+  "Canonical shared and CHA live specimens are missing.",
+);
+assert(
+  workspace.includes('interactive = false') &&
+    workspace.includes('data-interactive="true"'),
+  "Explicit surface/metric interaction ownership is missing.",
+);
+assert(
+  chaWorkspace.includes("<WorkspaceSectionHeading") &&
+    !chaWorkspace.includes('<header className="mnx-cha-outside-heading">'),
+  "ChaSection must compose the canonical heading.",
 );
 
-for (const namespaceImport of [
-  "AccountingComponents",
-  "AdminComponents",
-  "AppShellComponents",
-  "ChaComponents",
-  "CommunicationComponents",
-  "CrmComponents",
-  "FoundationComponents",
-  "PeopleComponents",
-  "PerformanceComponents",
-  "PublicComponents",
-  "StateComponents",
-  "WorkspaceComponents",
+for (const legacyStyle of [
+  "src/app/(dashboard)/admin/design-system/design-system-reference.css",
+  "src/app/(dashboard)/admin/design-system/design-system-production.css",
 ]) {
   assert(
-    client.includes(`* as ${namespaceImport}`),
-    `Missing production namespace import ${namespaceImport}.`,
-  );
-}
-assert(
-  client.includes("SharedControlComponents") &&
-    client.includes("WorkspaceDialogComponents") &&
-    client.includes("WarningPopoverComponents"),
-  "The global controls and overlays inventory is incomplete.",
-);
-
-for (const specializedComponent of [
-  "AccountingCommercialDocumentForm",
-  "AccountingDeleteAction",
-  "AccountingInvoiceDetail",
-  "AccountingInvoiceForm",
-  "AccountingItemDetail",
-  "AccountingItemsList",
-  "AccountingNewItemForm",
-]) {
-  assert(
-    client.includes(specializedComponent),
-    `Missing specialized production component ${specializedComponent}.`,
+    !existsSync(path.join(repositoryRoot, legacyStyle)),
+    `Disconnected catalogue stylesheet remains: ${legacyStyle}.`,
   );
 }
 
-for (const stateFamily of [
-  "PeopleLoadingState",
-  "PerformanceLoadingState",
-  "ChaLoadingState",
-  "AccountingLoadingState",
-  "CrmConfigurationState",
-  "CommunicationPermissionState",
-  "AdminPermissionState",
-]) {
-  assert(
-    client.includes(stateFamily),
-    `Missing module state ${stateFamily}.`,
-  );
-}
-
-assert(
-  client.includes('allowedThemes={["light", "night", "violet"]}'),
-  "The interactive Light, Night, and Violet test control is missing.",
+const coverage = spawnSync(
+  process.execPath,
+  ["scripts/verify-design-system-coverage.mjs"],
+  { cwd: repositoryRoot, encoding: "utf8" },
 );
-assert(
-  shell.includes("export function MonolithThemePicker") &&
-    shell.includes("<MonolithThemePicker />"),
-  "The shell and catalogue must share the same production theme picker.",
+assert(coverage.status === 0, coverage.stderr || coverage.stdout);
+const boundary = spawnSync(
+  process.execPath,
+  ["scripts/verify-catalogue-style-boundary.mjs"],
+  { cwd: repositoryRoot, encoding: "utf8" },
 );
-assert(
-  styles.includes(".mnx-catalogue-family-grid") &&
-    styles.includes(".mnx-catalogue-state-preview"),
-  "Catalogue layout and responsive state styles are missing.",
-);
-assert(
-  !client.includes("changeLog") &&
-    !client.includes("typeRows") &&
-    !styles.includes(".mnx-showcase-"),
-  "Obsolete showcase examples or styles remain active.",
-);
-assert(
-  !existsSync(path.join(repositoryRoot, "docs", "design-system-showcase.md")),
-  "The obsolete design-system showcase document still exists.",
-);
+assert(boundary.status === 0, boundary.stderr || boundary.stdout);
 
 const archivePath = path.join(
   repositoryRoot,
@@ -141,34 +110,15 @@ const archivePath = path.join(
   "legacy-ui-before-admin-design-system-catalogue-4f93df4.zip",
 );
 assert(existsSync(archivePath), `Missing legacy catalogue archive ${archivePath}.`);
-assert(
-  statSync(archivePath).size === 38_803,
-  "Legacy catalogue archive size does not match.",
-);
+assert(statSync(archivePath).size === 38_803, "Legacy catalogue archive size changed.");
 const hash = createHash("sha256");
 for await (const chunk of createReadStream(archivePath)) hash.update(chunk);
 assert(
   hash.digest("hex").toUpperCase() ===
     "643FF25A031F1B8ED7A50F6A04E643564BB77F698A817EF586CD32ACDEC82E34",
-  "Legacy catalogue archive checksum does not match.",
+  "Legacy catalogue archive checksum changed.",
 );
 
-const listing = spawnSync("tar", ["-tf", archivePath], {
-  cwd: repositoryRoot,
-  encoding: "utf8",
-});
-assert(listing.status === 0, listing.stderr || "Unable to list backup archive.");
-for (const requiredEntry of [
-  "src/app/(dashboard)/admin/design-system/page.tsx",
-  "src/app/(dashboard)/admin/design-system/design-system-client.tsx",
-  "src/styles/monolith-system.css",
-]) {
-  assert(
-    listing.stdout.split(/\r?\n/).includes(requiredEntry),
-    `Legacy catalogue archive is missing ${requiredEntry}.`,
-  );
-}
-
 console.log(
-  "Verified the administrator gate, shared production theme picker, runtime-derived global/module component inventory, 23 live route states, specialized Accounting compositions, obsolete showcase removal, responsive semantic styles, and the legacy visual archive.",
+  "Verified the administrator gate, canonical production registry/specimens, shared heading and interaction ownership, catalogue CSS boundary, coverage enforcement, disconnected stylesheet removal, and retained legacy archive.",
 );

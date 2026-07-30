@@ -7,6 +7,7 @@ import {
   ChaSection,
 } from "@/modules/cha/components/workspace/cha-workspace";
 import { cn } from "@/lib/utils";
+import { WorkspaceSectionHeading } from "@/components/layout/workspace";
 
 export type AccentTone = "cyan" | "orange" | "green" | "violet" | "blue";
 export { ChaMetrics };
@@ -71,17 +72,14 @@ export function ChaControlPanel({
 }) {
   return (
     <section className="mnx-cha-section-block">
-      <header className="mnx-cha-outside-heading">
-        <div className="mnx-cha-heading-title">
-          <span className="mnx-cha-heading-index">{index}</span>
-          <h2>{title}</h2>
-        </div>
-        <div className="mnx-cha-heading-aside">
-          {description ? <p>{description}</p> : null}
-        </div>
-      </header>
+      <WorkspaceSectionHeading
+        className="mnx-cha-outside-heading"
+        index={index}
+        title={title}
+        description={description}
+        actions={actions}
+      />
       <ChaPanel>
-        {actions ? <div className="mnx-cha-panel-actions-row">{actions}</div> : null}
         {children ? (
           <div className={cn("mnx-cha-section-content", contentClassName)}>
             {children}

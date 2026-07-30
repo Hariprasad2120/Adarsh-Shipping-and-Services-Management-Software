@@ -9,9 +9,13 @@ Read these files before changing UI code:
 
 The authoritative visual references are, in order:
 
-1. The live administrator route `/admin/design-system`
-2. `_design-reference/Monolith-Design-System-v11-Full-Source-and-Dependencies`
-3. The existing working `/dashboard`
+1. Actual canonical components in `src/components/monolith`
+2. Live specimens in `/admin/design-system`
+3. `docs/monolith-design-system-reference.md`
+4. Read-only visual reference files
+
+The component source is authoritative. The design-system page proves and
+showcases the source. The design-system page must not override the source.
 
 The administrator design-system route must match the read-only reference before using it to migrate application pages. When the route and an older implementation disagree, follow the route and the canonical component map in `docs/monolith-design-system-reference.md`; do not invent a compromise style.
 
@@ -25,6 +29,10 @@ Rules:
 - Use centralized design tokens and shared production components.
 - Import reusable UI from `@/components/monolith`; never create route-local alternatives for an existing pattern.
 - A missing reusable pattern must be added to `src/components/monolith`, exported from its barrel, styled with semantic tokens, and demonstrated on `/admin/design-system` before module use.
+- Every new or discovered visual componentâ€”shared or module-specificâ€”must use a single canonical production implementation and must be registered with a live specimen in `/admin/design-system`; never create a design-system-only copy, and do not complete the change until `npm run design-system:verify` passes.
+- `/admin/design-system` is a live catalogue of the actual production components, not an independent reference implementation; its route-specific CSS may arrange specimens but must never style production components.
+- Non-actionable surfaces must not receive hover elevation or movement. Hover movement is allowed only for buttons, links, explicitly interactive surfaces and draggable elements.
+- All major page and section headings must use `WorkspaceSectionHeading`; do not create route-local heading typography or spacing.
 - Do not create one-off buttons, fields, cards, tables, badges, alerts, navigation, loading states or typography.
 - Support Light, Night and Violet themes.
 - Do not use inline hex colors when a semantic token exists.

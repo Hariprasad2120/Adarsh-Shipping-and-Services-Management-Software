@@ -76,7 +76,7 @@ export function CreateJobPermissionGuard({ open, fallbackHref }: CreateJobPermis
 
         <h2
           id="create-job-permission-title"
-          className="mt-5 font-[var(--font-geist-sans)] text-xl uppercase tracking-[0.16em] mnx-text-primary"
+          className="mt-5 font-[family:var(--mn-font-sans)] text-xl uppercase tracking-[0.16em] mnx-text-primary"
         >
           Permission Denied
         </h2>

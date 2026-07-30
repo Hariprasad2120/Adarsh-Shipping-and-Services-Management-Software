@@ -2275,7 +2275,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 {activeVersion ? `${activeVersion.isPublished ? "PUBLISHED" : "DRAFT"} V${activeVersion.versionNumber}` : "NO VERSION"}
               </Badge>
             </div>
-            <h1 className="mnx-heading-1 mnx-text-primary" style={{ fontFamily: "var(--font-geist-sans)", letterSpacing: "0.08em" }}>
+            <h1 className="mnx-heading-1 mnx-text-primary" style={{ fontFamily: "var(--mn-font-sans)", letterSpacing: "0.08em" }}>
               FILING WORKFLOW BLUEPRINT
             </h1>
             <p className="max-w-3xl text-sm mnx-text-muted">

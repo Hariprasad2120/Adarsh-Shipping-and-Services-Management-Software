@@ -8407,10 +8407,10 @@ export function JobWorkspaceClient({
                                                       }`}
                                                     label={
                                                       <span className="block min-w-0 flex-1 space-y-1">
-                                                        <span className="block font-[family:var(--font-geist-sans)] text-lg uppercase leading-6 tracking-[0.12em] mnx-text-primary">
+                                                        <span className="block font-[family:var(--mn-font-sans)] text-lg uppercase leading-6 tracking-[0.12em] mnx-text-primary">
                                                           {item.label} {item.isMandatory && <span className="mnx-text-danger font-bold">*</span>}
                                                         </span>
-                                                        <span className="block max-w-3xl font-[family:var(--font-geist-sans)] text-sm font-normal leading-5 mnx-text-muted">
+                                                        <span className="block max-w-3xl font-[family:var(--mn-font-sans)] text-sm font-normal leading-5 mnx-text-muted">
                                                           {checklistItemDescription}
                                                         </span>
                                                       </span>
@@ -11355,7 +11355,7 @@ export function JobWorkspaceClient({
             open={deleteModalMode === "delete"}
             onClose={resetDeletionModalState}
             title="Delete CHA Job"
-            titleClassName="font-[family:var(--font-geist-sans)] tracking-[0.12em]"
+            titleClassName="font-[family:var(--mn-font-sans)] tracking-[0.12em]"
             description={
               canDirectDeleteJob
                 ? `This will immediately remove ${job.jobNumber} from the active CHA workspace. Related records stay in history, but this action is destructive and should be used carefully.`
@@ -11437,7 +11437,7 @@ export function JobWorkspaceClient({
             open={deleteModalMode === "approve"}
             onClose={resetDeletionModalState}
             title="Approve Job Deletion"
-            titleClassName="font-[family:var(--font-geist-sans)] tracking-[0.12em]"
+            titleClassName="font-[family:var(--mn-font-sans)] tracking-[0.12em]"
             description={`Approve the pending deletion request for ${job.jobNumber}. This will immediately soft-delete the job after approval.`}
             className="max-w-2xl"
           >
@@ -11506,7 +11506,7 @@ export function JobWorkspaceClient({
             open={deleteModalMode === "reject"}
             onClose={resetDeletionModalState}
             title="Reject Job Deletion Request"
-            titleClassName="font-[family:var(--font-geist-sans)] tracking-[0.12em]"
+            titleClassName="font-[family:var(--mn-font-sans)] tracking-[0.12em]"
             description={`Reject the pending deletion request for ${job.jobNumber}. A rejection reason is required and the job will remain active.`}
             className="max-w-2xl"
           >

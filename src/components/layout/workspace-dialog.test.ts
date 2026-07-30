@@ -90,7 +90,10 @@ describe("Monolith popup contract", () => {
     const createJobSource = source(
       "src/modules/cha/components/create-job-dialog.tsx",
     );
-    const styles = source("src/styles/monolith-system.css");
+    const styles = [
+      source("src/styles/monolith-system.css"),
+      source("src/styles/modules/cha-expense.css"),
+    ].join("\n");
 
     expect(chaSource).toContain("export function ChaModal");
     expect(chaSource).toContain("export function ChaDropdownSelect");

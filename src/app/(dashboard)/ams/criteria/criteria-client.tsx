@@ -1982,7 +1982,7 @@ export function CriteriaClient({
         ].map(({ icon, label, value, accent }) => (
           <article
             key={label}
-            className="mnx-performance-surface mnx-accent-edge group relative overflow-hidden rounded-[24px] border border-mono-border/20 bg-mono-card p-5 shadow-[var(--mn-shadow-panel)] transition duration-300 hover:-translate-y-1 hover:border-mono-border hover:shadow-[var(--mn-shadow-panel)]"
+            className="mnx-performance-surface mnx-accent-edge group relative overflow-hidden rounded-[24px] border border-mono-border/20 bg-mono-card p-5 shadow-[var(--mn-shadow-panel)]"
           >
             <div className="mnx-performance-accent absolute inset-x-0 top-0 h-14 opacity-10" />
             <div className="relative flex h-full flex-col">

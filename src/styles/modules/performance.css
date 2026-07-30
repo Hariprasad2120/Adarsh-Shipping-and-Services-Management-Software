@@ -1,0 +1,407 @@
+/*
+ * AMS and LMS module composition styles.
+ * Shared primitives remain owned by monolith-system.css.
+ */
+
+/* Performance and learning operations: AMS and LMS */
+.mnx-performance-page {
+  width: min(100%, 100rem);
+  margin-inline: auto;
+}
+
+.mnx-performance-page-header {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(var(--mn-space-5), 3vw, var(--mn-space-8));
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-feature);
+  background: var(--mn-gradient-hero);
+  box-shadow: var(--mn-shadow-panel);
+}
+
+.mnx-performance-page-header::after {
+  position: absolute;
+  inset: auto -3rem -5.5rem auto;
+  width: 14rem;
+  height: 14rem;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 34%, transparent);
+  border-radius: 42% 58% 62% 38%;
+  content: "";
+  pointer-events: none;
+  transform: rotate(18deg);
+}
+
+.mnx-performance-page-header .mnx-page-header-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.mnx-performance-page-header .mnx-page-header-icon {
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 42%, var(--mnx-border));
+  border-radius: var(--mn-radius-control);
+  background: color-mix(in srgb, var(--mnx-accent) 16%, var(--mnx-surface));
+  color: var(--mnx-text);
+  box-shadow: var(--mn-shadow-accent-soft);
+}
+
+.mnx-performance-page-header .mnx-page-header-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.mnx-performance-content {
+  display: grid;
+  min-width: 0;
+  gap: var(--mn-space-6);
+}
+
+.mnx-performance-content > :where(div, section, article, form) {
+  min-width: 0;
+}
+
+.mnx-performance-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--mn-space-4);
+}
+
+.mnx-performance-summary {
+  display: grid;
+  min-height: 9rem;
+  align-content: space-between;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-5);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mn-gradient-surface);
+  box-shadow: var(--mn-shadow-panel);
+}
+
+.mnx-performance-summary-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-performance-summary-heading > span {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: calc(var(--mn-radius-control) - 0.125rem);
+  background: color-mix(in srgb, var(--mnx-accent) 18%, transparent);
+  color: var(--mnx-accent-text);
+}
+
+.mnx-performance-summary p,
+.mnx-performance-summary small {
+  margin: 0;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  line-height: var(--mn-type-body-line);
+}
+
+.mnx-performance-summary p {
+  font-weight: 650;
+  letter-spacing: var(--mn-type-label-tracking);
+  text-transform: uppercase;
+}
+
+.mnx-performance-summary strong {
+  color: var(--mnx-text-strong);
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 350;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.mnx-performance-section {
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.mnx-performance-section
+  > :not(.mnx-performance-section-header, .mnx-table-wrap) {
+  margin-inline: var(--mn-space-5);
+}
+
+.mnx-performance-section > :last-child:not(.mnx-table-wrap) {
+  margin-bottom: var(--mn-space-5);
+}
+
+.mnx-performance-section-header {
+  padding: var(--mn-space-5);
+  border-bottom: 1px solid var(--mnx-border);
+}
+
+.mnx-performance-card {
+  min-width: 0;
+  padding: var(--mn-space-5);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mn-gradient-surface);
+  color: var(--mnx-text);
+  box-shadow: var(--mn-shadow-panel);
+}
+
+.mnx-performance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mn-space-4);
+}
+
+.mnx-performance-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-4) var(--mn-space-5);
+  border-bottom: 1px solid var(--mnx-border);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 74%, transparent);
+}
+
+.mnx-performance-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-2);
+  padding: var(--mn-space-2);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-control);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 76%, transparent);
+}
+
+.mnx-performance-tabs .mnx-button {
+  flex: 1 1 auto;
+}
+
+.mnx-performance-table-shell {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mn-gradient-surface);
+  box-shadow: var(--mn-shadow-panel);
+}
+
+.mnx-performance-table-row {
+  transition: background-color var(--mn-motion-fast) var(--mn-ease-standard);
+}
+
+.mnx-performance-table-row:hover {
+  background: color-mix(in srgb, var(--mnx-accent) 7%, transparent);
+}
+
+.mnx-performance-table-head,
+.mnx-performance-table-cell {
+  padding: var(--mn-space-4) var(--mn-space-5);
+  border-bottom: 1px solid var(--mnx-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.mnx-performance-table-head {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  font-weight: 700;
+  letter-spacing: var(--mn-type-label-tracking);
+  text-transform: uppercase;
+}
+
+.mnx-performance-table-cell {
+  color: var(--mnx-text);
+  font-size: var(--mn-type-body-size);
+}
+
+.mnx-performance-table-row:last-child .mnx-performance-table-cell {
+  border-bottom: 0;
+}
+
+.mnx-performance-record-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mnx-performance-record-link:hover {
+  color: var(--mnx-accent-text);
+}
+
+.mnx-performance-page :where(.monolith-card) {
+  border-color: var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mn-gradient-surface);
+  color: var(--mnx-text);
+  box-shadow: var(--mn-shadow-panel);
+}
+
+.mnx-performance-page
+  :where(.monolith-input, .monolith-select, .monolith-textarea) {
+  border-color: var(--mnx-border);
+  border-radius: var(--mn-radius-control);
+  background: var(--mn-gradient-control);
+  color: var(--mnx-text);
+}
+
+.mnx-performance-page
+  :where(.monolith-input, .monolith-select, .monolith-textarea)::placeholder {
+  color: var(--mnx-text-muted);
+}
+
+.mnx-performance-page
+  :where(.monolith-input, .monolith-select, .monolith-textarea):focus {
+  border-color: color-mix(in srgb, var(--mnx-accent) 72%, var(--mnx-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mnx-accent) 18%, transparent);
+  outline: none;
+}
+
+.mnx-performance-page :where(.monolith-table) {
+  color: var(--mnx-text);
+}
+
+.mnx-performance-page :where(.monolith-table th) {
+  color: var(--mnx-text-muted);
+}
+
+.mnx-performance-page :where(.monolith-table td, .monolith-table th) {
+  border-color: var(--mnx-border);
+}
+
+.mnx-performance-surface {
+  border-color: var(--mnx-border);
+  background: var(--mn-gradient-surface);
+  color: var(--mnx-text);
+}
+
+.mnx-performance-soft {
+  border-color: var(--mnx-border);
+  background: color-mix(in srgb, var(--mnx-surface-soft) 78%, transparent);
+  color: var(--mnx-text);
+}
+
+.mnx-performance-accent {
+  border-color: color-mix(in srgb, var(--mnx-accent) 42%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-accent) 14%, var(--mnx-surface));
+  color: var(--mnx-accent-text);
+}
+
+.mnx-text-strong {
+  color: var(--mnx-text-strong);
+}
+
+.mnx-tone-success,
+.mnx-tone-warning,
+.mnx-tone-danger,
+.mnx-tone-info,
+.mnx-tone-neutral {
+  border: 1px solid;
+}
+
+.mnx-tone-success {
+  border-color: color-mix(in srgb, var(--mnx-success) 28%, var(--mnx-border));
+  background: var(--mnx-success-bg);
+  color: var(--mnx-success);
+}
+
+.mnx-tone-warning {
+  border-color: color-mix(in srgb, var(--mnx-warning) 28%, var(--mnx-border));
+  background: var(--mnx-warning-bg);
+  color: var(--mnx-warning);
+}
+
+.mnx-tone-danger {
+  border-color: color-mix(in srgb, var(--mnx-danger) 28%, var(--mnx-border));
+  background: var(--mnx-danger-bg);
+  color: var(--mnx-danger);
+}
+
+.mnx-tone-info {
+  border-color: color-mix(in srgb, var(--mnx-info) 28%, var(--mnx-border));
+  background: var(--mnx-info-bg);
+  color: var(--mnx-info);
+}
+
+.mnx-tone-neutral {
+  border-color: var(--mnx-border);
+  background: var(--mnx-surface-soft);
+  color: var(--mnx-text-muted);
+}
+
+.mnx-tone-success-text {
+  color: var(--mnx-success);
+}
+
+.mnx-tone-warning-text {
+  color: var(--mnx-warning);
+}
+
+.mnx-tone-danger-text {
+  color: var(--mnx-danger);
+}
+
+.mnx-tone-info-text {
+  color: var(--mnx-info);
+}
+
+.mnx-performance-page input[type="range"] {
+  width: 100%;
+  accent-color: var(--mnx-accent);
+}
+
+.mnx-performance-page :where(h2, h3, h4) {
+  color: var(--mnx-text-strong);
+}
+
+.mnx-performance-page :where(p, small) {
+  text-wrap: pretty;
+}
+
+@media (max-width: 70rem) {
+  .mnx-performance-summary-grid,
+  .mnx-performance-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 42rem) {
+  .mnx-performance-page-header {
+    padding: var(--mn-space-5);
+  }
+
+  .mnx-performance-page-header .mnx-page-header-copy {
+    align-items: flex-start;
+  }
+
+  .mnx-performance-summary-grid,
+  .mnx-performance-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mnx-performance-summary {
+    min-height: 7.5rem;
+  }
+
+  .mnx-performance-toolbar,
+  .mnx-performance-section-header {
+    align-items: stretch;
+  }
+
+  .mnx-performance-tabs {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media print {
+  .mnx-performance-page-header {
+    display: none;
+  }
+
+  .mnx-performance-page,
+  .mnx-performance-content {
+    display: block;
+  }
+}

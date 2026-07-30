@@ -49,6 +49,7 @@ import {
   WorkspacePage,
   WorkspacePageHeader,
   WorkspacePanel,
+  WorkspaceSectionHeading,
   WorkspaceState,
   WorkspaceTable,
 } from "@/components/layout/workspace";
@@ -271,20 +272,15 @@ export function ChaSection({
 }) {
   return (
     <section className="mnx-cha-section-block">
-      <header className="mnx-cha-outside-heading">
-        <div className="mnx-cha-heading-title">
-          {index ? <span className="mnx-cha-heading-index">{index}</span> : null}
-          <h2>
-            {title}
-            {badge ? <Badge variant="secondary">{badge}</Badge> : null}
-          </h2>
-        </div>
-        <div className="mnx-cha-heading-aside">
-          {description ? <p>{description}</p> : null}
-        </div>
-      </header>
+      <WorkspaceSectionHeading
+        className="mnx-cha-outside-heading"
+        index={index ?? ""}
+        title={title}
+        description={description}
+        badge={badge ? <Badge variant="secondary">{badge}</Badge> : null}
+        actions={actions}
+      />
       <WorkspacePanel className={cn("mnx-cha-section", className)}>
-        {actions ? <div className="mnx-cha-panel-actions-row">{actions}</div> : null}
         <div className="mnx-cha-section-content">{children}</div>
       </WorkspacePanel>
     </section>

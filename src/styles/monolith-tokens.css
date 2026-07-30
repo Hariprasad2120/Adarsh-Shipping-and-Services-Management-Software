@@ -10,8 +10,15 @@ html.theme-light {
   color-scheme: light;
 
   /* Typography */
-  --mn-font-sans: Inter, "Segoe UI", Arial, sans-serif;
-  --mn-font-mono: Inter, "Segoe UI", Arial, sans-serif;
+  --mn-font-sans:
+    var(--font-geist-sans),
+    "Segoe UI",
+    Arial,
+    sans-serif;
+  --mn-font-mono:
+    var(--font-geist-mono),
+    ui-monospace,
+    monospace;
   --mn-type-display-size: clamp(2.75rem, 5vw, 4rem);
   --mn-type-display-line: 1.05;
   --mn-type-display-tracking: -0.04em;
@@ -20,6 +27,9 @@ html.theme-light {
   --mn-type-heading-line: 1.08;
   --mn-type-heading-tracking: -0.03em;
   --mn-type-heading-weight: 430;
+  --mn-type-section-heading-size-desktop: clamp(2rem, 3.15vw, 2.75rem);
+  --mn-type-section-heading-size-tablet: clamp(2rem, 4.5vw, 2.5rem);
+  --mn-type-section-heading-size-mobile: 2rem;
   --mn-type-title-size: 1.25rem;
   --mn-type-title-line: 1.25;
   --mn-type-title-tracking: -0.02em;
@@ -45,6 +55,11 @@ html.theme-light {
   --mn-space-6: 1.5rem;
   --mn-space-8: 2rem;
   --mn-space-10: 2.5rem;
+  --mn-heading-top-space: 0.875rem;
+  --mn-heading-bottom-space: 0.625rem;
+  --mn-heading-index-title-gap: 1.0625rem;
+  --mn-heading-title-description-gap: 2.125rem;
+  --mn-heading-to-panel-gap: 0.625rem;
   --mn-layout-page-max: 75rem;
   --mn-layout-workspace-max: 75rem;
   --mn-layout-page-gutter: clamp(2rem, 3.3vw, 3.125rem);
@@ -55,7 +70,7 @@ html.theme-light {
   --mn-radius-control: 0.6875rem;
   --mn-radius-panel: 1.125rem;
   --mn-radius-feature: 1.625rem;
-  --mn-motion-fast: 320ms;
+  --mn-motion-fast: 160ms;
   --mn-motion-panel: 640ms;
   --mn-ease-standard: cubic-bezier(0.12, 0.86, 0.18, 1);
   --mn-filter-glass: blur(22px) saturate(1.36);

@@ -1379,7 +1379,7 @@ export function OtClient({
                 <Card
                   key={item.label}
                   className={cn(
-                    "mnx-content-wide group relative overflow-hidden border bg-mono-card p-0 shadow-ambient transition duration-300 hover:-translate-y-1.5 hover:shadow-ambient-hover",
+                    "mnx-content-wide group relative overflow-hidden border bg-mono-card p-0 shadow-ambient",
                     item.cardClassName,
                   )}
                 >

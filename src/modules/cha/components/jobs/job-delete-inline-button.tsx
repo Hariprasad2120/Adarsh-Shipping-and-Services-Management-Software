@@ -96,7 +96,7 @@ export function JobDeleteInlineButton({
       <Modal
         open={open}
         title="Delete CHA Job"
-        titleClassName="font-[family:var(--font-geist-sans)] tracking-[0.12em]"
+        titleClassName="font-[family:var(--mn-font-sans)] tracking-[0.12em]"
         description={`Confirm deletion for ${jobNumber}. This may affect related CHA workflow records and cannot be undone from the UI.`}
         onClose={resetState}
         className="max-w-2xl"

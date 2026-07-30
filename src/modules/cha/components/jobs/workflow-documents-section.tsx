@@ -290,9 +290,18 @@ export function RequirementDocumentCard({
     <div
       className={cn(
         "flex h-full min-h-[260px] flex-col rounded-xl border mnx-border-accent mnx-bg-surface p-5 mnx-shadow-panel transition-all",
-        selected ? "ring-2 mnx-border-accent mnx-shadow-panel" : "hover:-translate-y-px",
+        selected ? "ring-2 mnx-border-accent mnx-shadow-panel" : onSelect ? "hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2" : null,
       )}
+      data-interactive={onSelect ? "true" : undefined}
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
       onClick={() => onSelect?.(requirement.id)}
+      onKeyDown={(event) => {
+        if (onSelect && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
+          onSelect(requirement.id);
+        }
+      }}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
@@ -487,9 +496,18 @@ export function UploadedWorkflowDocumentCard({
     <div
       className={cn(
         "flex h-full min-h-[260px] flex-col rounded-xl border mnx-border-accent mnx-bg-surface p-5 mnx-shadow-panel transition-all",
-        selected ? "ring-2 mnx-border-accent mnx-shadow-panel" : "hover:-translate-y-px",
+        selected ? "ring-2 mnx-border-accent mnx-shadow-panel" : onSelect ? "hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2" : null,
       )}
+      data-interactive={onSelect ? "true" : undefined}
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
       onClick={() => onSelect?.(requirement.id)}
+      onKeyDown={(event) => {
+        if (onSelect && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
+          onSelect(requirement.id);
+        }
+      }}
     >
       <div className="flex h-full flex-col gap-3.5">
         <div className="flex flex-wrap items-center justify-between gap-3">

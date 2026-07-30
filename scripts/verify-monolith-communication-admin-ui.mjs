@@ -216,7 +216,7 @@ for (const [source, components] of [
   }
 }
 
-const styles = read("src/styles/monolith-system.css");
+const styles = `${read("src/styles/monolith-system.css")}\n${read("src/styles/modules/communication-admin.css")}`;
 for (const className of [
   ".mnx-communication-page",
   ".mnx-communication-page-header",

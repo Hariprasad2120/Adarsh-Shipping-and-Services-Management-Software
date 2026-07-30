@@ -13,6 +13,7 @@ import {
   RefreshCw,
   ShieldCheck,
 } from "lucide-react";
+import { WorkspaceSectionHeading } from "@/components/monolith";
 import { cn } from "@/lib/utils";
 import { MonolithSpecLabel } from "@/components/ui/foundation";
 import { WorkspaceBadge, WorkspacePanel } from "@/components/layout/workspace";
@@ -66,25 +67,26 @@ export function OperationsOverviewHeader({
   updatedLabel?: string;
 }) {
   return (
-    <header className="mnx-operations-overview-header">
-      <div className="mnx-section-heading-title">
-        <span>02</span>
-        <h2>Operations Overview</h2>
-      </div>
-      <div className="mnx-operations-overview-tools">
-        <p>Priority work, approaching deadlines and recent system activity</p>
-        <span>{updatedLabel}</span>
-        {refreshHref ? (
-          <Link
-            aria-label="Refresh operations overview"
-            className="mnx-icon-button mnx-operations-refresh"
-            href={refreshHref}
-          >
-            <RefreshCw aria-hidden="true" />
-          </Link>
-        ) : null}
-      </div>
-    </header>
+    <WorkspaceSectionHeading
+      className="mnx-operations-overview-header"
+      index="02"
+      title="Operations Overview"
+      description="Priority work, approaching deadlines and recent system activity"
+      actions={
+        <div className="mnx-operations-overview-tools">
+          <span>{updatedLabel}</span>
+          {refreshHref ? (
+            <Link
+              aria-label="Refresh operations overview"
+              className="mnx-icon-button mnx-operations-refresh"
+              href={refreshHref}
+            >
+              <RefreshCw aria-hidden="true" />
+            </Link>
+          ) : null}
+        </div>
+      }
+    />
   );
 }
 

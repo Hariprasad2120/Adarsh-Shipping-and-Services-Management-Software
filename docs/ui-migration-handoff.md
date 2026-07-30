@@ -2,6 +2,47 @@
 
 Last updated: 2026-07-30
 
+## 2026-07-30 production design-system ownership handoff
+
+Work is active on `codex/unify-production-design-system`, created from the
+preserved combined structural/performance HEAD through the required cleanup
+checkpoint branch. The pre-change checkpoint commit is `66e0f22`.
+
+Implemented so far:
+
+- reproducible component/style ownership audit;
+- canonical `@/components/monolith` public API and typed live catalogue;
+- one production `WorkspaceSectionHeading` for the catalogue and CHA;
+- semantic Geist font ownership;
+- explicit surface interactivity and actionable metrics;
+- removal of generic badge/static-panel movement;
+- strict shared/module/catalogue/legacy stylesheet ownership;
+- automated catalogue coverage and CSS-boundary verification in the standard
+  quality flow;
+- component-addition and ownership documentation.
+
+The explicit exclusions file records internal composite subcomponents and
+route-live module exports that still need independent safe fixtures. It is
+enforced for source existence, export existence, reason, owner, duplication,
+and overlap with registered entries.
+
+Final verification:
+
+- `npm run design-system:verify`, architecture enforcement, production
+  TypeScript, 30 focused UI tests, scoped ESLint, all module static verifiers,
+  and the optimized production build pass;
+- the coverage verifier was proven to reject a temporary unregistered visual
+  export before that fixture was removed;
+- authenticated staging-browser parity passes all nine theme/viewport
+  combinations for the catalogue and `/cha`, plus hover, focus, overflow, and
+  reduced-motion assertions;
+- full staging tests pass 285/288, with three unrelated existing CHA
+  integration failures; repository-wide lint remains blocked by the existing
+  backlog outside this architecture batch.
+
+No push has been performed. This validated batch is committed only on
+`codex/unify-production-design-system`.
+
 ## 2026-07-30 component architecture handoff
 
 The component ownership refactor is implemented without intentional visual or

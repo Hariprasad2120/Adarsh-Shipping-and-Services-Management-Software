@@ -70,32 +70,56 @@ interface WorkspaceSectionHeadingProps
   extends Omit<React.HTMLAttributes<HTMLElement>, "title"> {
   index: React.ReactNode;
   title: React.ReactNode;
-  description: React.ReactNode;
+  description?: React.ReactNode;
+  badge?: React.ReactNode;
+  actions?: React.ReactNode;
+  level?: 2 | 3 | 4 | 5 | 6;
 }
 
 export function WorkspaceSectionHeading({
+  actions,
+  badge,
   className,
   description,
   index,
+  level = 2,
   title,
   ...props
 }: WorkspaceSectionHeadingProps) {
+  const Heading: React.ElementType = `h${level}`;
+
   return (
     <header className={cn("mnx-section-heading", className)} {...props}>
       <div className="mnx-section-heading-title">
-        <span>{index}</span>
-        <h2>{title}</h2>
+        <span className="mnx-section-heading-index">{index}</span>
+        <Heading>
+          <span className="mnx-section-heading-text">{title}</span>
+          {badge ? <span className="mnx-section-heading-badge">{badge}</span> : null}
+        </Heading>
       </div>
-      <p>{description}</p>
+      {description || actions ? (
+        <div className="mnx-section-heading-aside">
+          {description ? <p>{description}</p> : null}
+          {actions ? <div className="mnx-section-heading-actions">{actions}</div> : null}
+        </div>
+      ) : null}
     </header>
   );
 }
 
 export function WorkspacePanel({
   className,
+  interactive = false,
   ...props
-}: React.HTMLAttributes<HTMLElement>) {
-  return <MonolithSurface as="section" className={className} {...props} />;
+}: React.HTMLAttributes<HTMLElement> & { interactive?: boolean }) {
+  return (
+    <MonolithSurface
+      as="section"
+      className={className}
+      interactive={interactive}
+      {...props}
+    />
+  );
 }
 
 interface WorkspaceMetricProps extends React.HTMLAttributes<HTMLElement> {
@@ -147,6 +171,7 @@ export function WorkspaceMetric({
     return (
       <a
         className={metricClassName}
+        data-interactive="true"
         href={href}
         aria-label={actionLabel}
         {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
@@ -157,7 +182,7 @@ export function WorkspaceMetric({
   }
 
   return (
-    <article className={metricClassName} {...props}>
+    <article className={metricClassName} data-interactive="false" {...props}>
       {content}
     </article>
   );

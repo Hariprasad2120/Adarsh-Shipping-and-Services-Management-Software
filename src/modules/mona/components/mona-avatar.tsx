@@ -71,7 +71,7 @@ export function MonaAvatar({
             background: "linear-gradient(135deg, #F9D972, #38bdf8)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            fontFamily: "var(--font-geist-sans), sans-serif",
+            fontFamily: "var(--mn-font-sans)",
             letterSpacing: "0.05em",
           }}
         >
@@ -128,7 +128,7 @@ export function MonaAvatarSmall() {
           background: "linear-gradient(135deg, #F9D972, #38bdf8)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
-          fontFamily: "var(--font-geist-sans), sans-serif",
+          fontFamily: "var(--mn-font-sans)",
         }}
       >
         M

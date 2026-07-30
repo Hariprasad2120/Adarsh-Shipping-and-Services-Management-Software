@@ -173,7 +173,7 @@ for (const [sourceName, signals] of Object.entries({
   for (const signal of signals) assert(behaviorSources[sourceName].includes(signal), `${sourceName} is missing protected behavior signal ${signal}.`);
 }
 
-const styles = read("src/styles/monolith-system.css");
+const styles = `${read("src/styles/monolith-system.css")}\n${read("src/styles/modules/accounting.css")}`;
 for (const className of [
   ".mnx-accounting-page",
   ".mnx-accounting-page-header",

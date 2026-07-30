@@ -178,7 +178,7 @@ export function MonaChat() {
               <div className="flex flex-1 flex-col">
                 <span
                   className="text-[14px] font-bold tracking-wide text-mono-text"
-                  style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
+                  style={{ fontFamily: "var(--mn-font-sans)" }}
                 >
                   MONA
                 </span>

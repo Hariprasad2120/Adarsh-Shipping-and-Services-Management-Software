@@ -2,10 +2,9 @@ import { redirect } from "next/navigation";
 import { Lock } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/rbac";
-import { WorkspaceState } from "@/components/layout/workspace";
+import { WorkspaceState } from "@/components/monolith";
 import DesignSystemClient from "./design-system-client";
-import "./design-system-reference.css";
-import "./design-system-production.css";
+import "./design-system-catalogue.css";
 
 export default async function AdminDesignSystemPage() {
   const session = await getSession();

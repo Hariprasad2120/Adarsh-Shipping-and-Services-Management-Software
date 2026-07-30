@@ -214,7 +214,7 @@ for (const component of [
   );
 }
 
-const systemStyles = read("src/styles/monolith-system.css");
+const systemStyles = `${read("src/styles/monolith-system.css")}\n${read("src/styles/modules/performance.css")}`;
 for (const className of [
   ".mnx-performance-page",
   ".mnx-performance-page-header",

@@ -30,7 +30,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { NeonCheckbox } from "@/components/ui/neon-checkbox";
 import { ChaFilterMenu as FilterMenu } from "@/modules/cha/components/workspace/cha-workspace";
-import { WorkspaceInput } from "@/components/layout/workspace";
+import { WorkspaceInput, WorkspaceSectionHeading } from "@/components/layout/workspace";
 import { JobFilingQueryWarningIndicator } from "@/modules/cha/components/warnings/job-filing-query-warning-indicator";
 import { ChaDueDateWarningsIndicator } from "@/modules/cha/components/warnings/cha-due-date-warnings-indicator";
 import type { DueDateWarningViewModel } from "@/modules/cha/components/warnings/cha-due-date-warning-indicator";
@@ -590,16 +590,19 @@ export function JobsClient({
     const visibleEnd = Math.min(data.page * data.pageSize, data.total);
     return (
       <section className="mnx-cha-section-block py-1">
-        <header className="mnx-cha-outside-heading">
-          <div className="mnx-cha-heading-title">
-            <span className="mnx-cha-heading-index">{isActiveSection ? "02" : "03"}</span>
-            <h2>{title}</h2>
-          </div>
-          <div className="mnx-cha-heading-aside">
-            <p>{description}</p>
-            <ChaVisibleRecords visible={data.items.length} total={data.total} tone={isActiveSection ? "blue" : "green"} />
-          </div>
-        </header>
+        <WorkspaceSectionHeading
+          className="mnx-cha-outside-heading"
+          index={isActiveSection ? "02" : "03"}
+          title={title}
+          description={description}
+          actions={
+            <ChaVisibleRecords
+              visible={data.items.length}
+              total={data.total}
+              tone={isActiveSection ? "blue" : "green"}
+            />
+          }
+        />
         <OperationalDataTable>
           <OperationalDataTableHeader
             eyebrow="Shipment register"

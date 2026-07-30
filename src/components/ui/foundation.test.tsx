@@ -55,4 +55,13 @@ describe("Monolith foundation primitives", () => {
       '<div class="mnx-empty-state mnx-table-empty"></div>',
     );
   });
+
+  it("requires explicit surface interactivity", () => {
+    expect(renderToStaticMarkup(<MonolithSurface />)).not.toContain(
+      "data-interactive",
+    );
+    expect(
+      renderToStaticMarkup(<MonolithSurface interactive tabIndex={0} />),
+    ).toContain('data-interactive="true"');
+  });
 });

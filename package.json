@@ -37,11 +37,14 @@
     "catalogue:update": "npx tsx scripts/update-product-catalogue.ts",
     "catalogue:check": "npx tsx scripts/check-product-catalogue.ts",
     "test": "tsx scripts/run-with-staging-env.ts vitest run",
+    "test:ui": "vitest run --config vitest.ui.config.ts",
     "test:playwright:performance": "node scripts/playwright-performance-security.mjs",
+    "test:design-system:parity": "node scripts/verify-monolith-design-system-runtime.mjs",
     "architecture:check": "node scripts/verify-code-organization.mjs",
     "audit:structure": "npm run architecture:check",
+    "design-system:verify": "node scripts/verify-design-system-coverage.mjs && node scripts/verify-catalogue-style-boundary.mjs",
     "audit:unused": "npx tsc --noEmit --noUnusedLocals --noUnusedParameters",
-    "quality": "npm run audit:structure && npm run lint && npm test && npm run build"
+    "quality": "npm run audit:structure && npm run design-system:verify && npm run lint && npm test && npm run build"
   },
   "dependencies": {
     "@carbon/icons-react": "^11.80.0",

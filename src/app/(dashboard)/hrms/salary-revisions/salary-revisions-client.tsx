@@ -57,7 +57,7 @@ function StatsCard({
   value: string;
 }) {
   return (
-    <article className="group relative overflow-hidden rounded-[24px] border border-mono-border/20 bg-mono-card p-5 shadow-ambient transition duration-300 hover:-translate-y-1 hover:shadow-ambient-hover dark:bg-mono-card dark:shadow-ambient dark:hover:shadow-ambient-hover">
+    <article className="group relative overflow-hidden rounded-[24px] border border-mono-border/20 bg-mono-card p-5 shadow-ambient dark:bg-mono-card dark:shadow-ambient">
       <div className="absolute inset-x-0 top-0 h-14 bg-[var(--mnx-surface-gradient)] bg-[var(--mnx-surface-gradient)]" />
       <div className="relative flex h-full flex-col">
         <div className="flex items-start justify-between">

@@ -245,7 +245,7 @@ function StatCard({
   glowColor: string;
 }) {
   return (
-    <div className="relative flex flex-col gap-2.5 overflow-hidden rounded-2xl border border-mono-border/55 bg-mono-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[var(--mnx-accent)]/30 hover:shadow-ambient-hover border-[var(--mnx-border)]/60 bg-[var(--mnx-soft)]/40 hover:border-[var(--mnx-border)]/60 hover:shadow-ambient-hover dark:backdrop-blur-md group">
+    <div className="relative flex flex-col gap-2.5 overflow-hidden rounded-2xl border border-mono-border/55 bg-mono-card p-5 shadow-sm border-[var(--mnx-border)]/60 bg-[var(--mnx-soft)]/40 dark:backdrop-blur-md group">
       {/* Background glow decoration */}
       <div
         className={`absolute -right-4 -top-4 w-12 h-12 rounded-full blur-2xl opacity-10 transition-opacity duration-300 group-hover:opacity-20 ${glowColor}`}
@@ -1080,7 +1080,7 @@ export function BiometricSyncClient() {
         <div className="space-y-5">
           {/* Info cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="relative overflow-hidden rounded-2xl border border-mono-border/55 bg-mono-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--mnx-accent)]/25 hover:shadow-ambient-hover border-[var(--mnx-border)]/60 bg-[var(--mnx-soft)]/40 hover:border-[var(--mnx-border)]/50 hover:shadow-ambient-hover dark:backdrop-blur-md">
+            <div className="relative overflow-hidden rounded-2xl border border-mono-border/55 bg-mono-card p-5 shadow-sm border-[var(--mnx-border)]/60 bg-[var(--mnx-soft)]/40 dark:backdrop-blur-md">
               <div className="flex items-center gap-3 mb-3 select-none">
                 {loadingStatus ? (
                   <Spinner className="size-5 text-mono-muted animate-spin" />
@@ -1114,7 +1114,7 @@ export function BiometricSyncClient() {
               </p>
             </div>
 
-            <div className="relative overflow-hidden rounded-2xl border border-mono-border/55 bg-mono-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--mnx-accent)]/25 hover:shadow-ambient-hover border-[var(--mnx-border)]/60 bg-[var(--mnx-soft)]/40 hover:border-[var(--mnx-border)]/50 hover:shadow-ambient-hover dark:backdrop-blur-md">
+            <div className="relative overflow-hidden rounded-2xl border border-mono-border/55 bg-mono-card p-5 shadow-sm border-[var(--mnx-border)]/60 bg-[var(--mnx-soft)]/40 dark:backdrop-blur-md">
               <div className="flex items-center gap-3 mb-3 select-none">
                 <Time className="size-5 text-[var(--mnx-accent)]" />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-mono-muted/60">
@@ -1131,7 +1131,7 @@ export function BiometricSyncClient() {
               </p>
             </div>
 
-            <div className="relative overflow-hidden rounded-2xl border border-mono-border/55 bg-mono-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--mnx-accent)]/25 hover:shadow-ambient-hover border-[var(--mnx-border)]/60 bg-[var(--mnx-soft)]/40 hover:border-[var(--mnx-border)]/50 hover:shadow-ambient-hover dark:backdrop-blur-md">
+            <div className="relative overflow-hidden rounded-2xl border border-mono-border/55 bg-mono-card p-5 shadow-sm border-[var(--mnx-border)]/60 bg-[var(--mnx-soft)]/40 dark:backdrop-blur-md">
               <div className="flex items-center gap-3 mb-3 select-none">
                 <CalendarHeatMap className="size-5 text-[var(--mnx-warning)]" />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-mono-muted/60">

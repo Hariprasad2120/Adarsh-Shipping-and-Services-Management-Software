@@ -2,6 +2,44 @@
 
 Last updated: 2026-07-30
 
+## 2026-07-30 production design-system ownership correction
+
+The administrator design-system route now renders a typed registry of actual
+production components. The disconnected reference client and both
+component-styling route stylesheets were removed; the remaining catalogue CSS
+owns only `.mnx-catalogue-*` arrangement. `WorkspaceSectionHeading` is shared by
+the catalogue, CHA assigned jobs, CHA job registers, `ChaSection`, and
+Operations Overview. Geist is canonical through semantic font tokens, static
+panels and badges no longer receive generic hover movement, and surfaces expose
+explicit interactivity.
+
+CSS ownership is split between tokens, shared system styles, six module style
+owners, catalogue layout, and an explicit legacy compatibility layer. The
+reproducible ownership audit records the current import graph, selectors,
+token bypass candidates, visual exports, enforced exclusions, and route-local
+review candidates.
+`npm run design-system:verify` now enforces registry/export/source coverage and
+the catalogue style boundary, and is included in `npm run quality`.
+
+Passed with the required 8 GB Node heap:
+
+- production TypeScript (`npx tsc --noEmit`);
+- 30 DB-free UI tests in 10 files;
+- all Design System and module static ownership verifiers;
+- architecture ownership enforcement and the negative catalogue-coverage
+  fixture proof;
+- scoped ESLint for the new/changed architecture (zero errors);
+- the 328-route optimized production build;
+- authenticated browser parity for Light, Night, and Violet at 1440, 1024, and
+  390 pixels, including overflow, static/interactive hover, keyboard focus, and
+  reduced motion.
+
+The repository-wide lint gate remains red on the existing cross-repository
+backlog. The full staging test run passed 285 of 288 tests; the three failures
+remain in pre-existing CHA integration expectations for a mock Drive
+attachment, estimated filing date initialization, and a direct-delete audit
+event. None is in a file changed by this UI correction.
+
 ## 2026-07-30 component architecture reorganization
 
 The presentation, routes, permissions, actions, API contracts, database

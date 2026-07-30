@@ -27,7 +27,7 @@
   background:
     radial-gradient(circle at 10% 20%, rgb(208 217 26 / 11%), transparent 25%),
     linear-gradient(135deg, #e8e9e1, #f7f7f3 52%, #e4e5dd);
-  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-family: var(--mn-font-sans);
 }
 
 .loginPage,

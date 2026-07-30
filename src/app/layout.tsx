@@ -79,8 +79,8 @@ export default function RootLayout({
           closeButton
           toastOptions={{
             style: {
-              fontFamily: "var(--font-geist-sans), sans-serif",
-              fontSize: "14px",
+              fontFamily: "var(--mn-font-sans)",
+              fontSize: "var(--mn-type-body-size)",
             },
           }}
         />

@@ -11,15 +11,18 @@ export function MonolithPage({
 export interface MonolithSurfaceProps
   extends React.HTMLAttributes<HTMLElement> {
   as?: "article" | "div" | "section";
+  interactive?: boolean;
 }
 
 export function MonolithSurface({
   as = "article",
   className,
+  interactive = false,
   ...props
 }: MonolithSurfaceProps) {
   return React.createElement(as, {
     className: cn("mnx-panel", className),
+    "data-interactive": interactive ? "true" : undefined,
     ...props,
   });
 }

@@ -10,6 +10,7 @@ import { listChaDueDateWarnings, listFilingQueryEscalationWarnings, listJobTypes
 import { DashboardCreateJob } from "@/modules/cha/components/dashboard-create-job";
 import { getChaDashboardMetrics, listChaRecentActivity } from "@/modules/cha/dashboard/queries";
 import { NeonCheckbox } from "@/components/ui/neon-checkbox";
+import { WorkspaceSectionHeading } from "@/components/layout/workspace";
 import { JobFilingQueryWarningIndicator } from "@/modules/cha/components/warnings/job-filing-query-warning-indicator";
 import { JobSection49ValidityWarningIndicator } from "@/modules/cha/components/warnings/job-section49-validity-warning-indicator";
 import {
@@ -370,15 +371,12 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
       </ChaMetrics>
 
       <section className="mnx-cha-section-block">
-        <header className="mnx-cha-outside-heading">
-          <div className="mnx-cha-heading-title">
-            <span className="mnx-cha-heading-index">01</span>
-            <h2>My Assigned Jobs</h2>
-          </div>
-          <div className="mnx-cha-heading-aside">
-            <p>Open or manage the jobs currently assigned to you.</p>
-          </div>
-        </header>
+        <WorkspaceSectionHeading
+          className="mnx-cha-outside-heading"
+          index="01"
+          title="My Assigned Jobs"
+          description="Open or manage the jobs currently assigned to you."
+        />
         <OperationalDataTable>
           <OperationalDataTableHeader
             eyebrow="Shipment register"

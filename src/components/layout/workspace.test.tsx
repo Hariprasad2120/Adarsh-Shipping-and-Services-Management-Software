@@ -87,6 +87,26 @@ describe("Monolith workspace states", () => {
     expect(heading).toContain("Large, light headlines carry confidence.");
   });
 
+  it("supports semantic heading level, badge, actions, and stable anatomy", () => {
+    const heading = renderToStaticMarkup(
+      <WorkspaceSectionHeading
+        id="custom-heading"
+        index="03"
+        title="Actions"
+        description="Production actions"
+        badge={<span>Stable</span>}
+        actions={<button type="button">Create</button>}
+        level={3}
+      />,
+    );
+
+    expect(heading).toContain('id="custom-heading"');
+    expect(heading).toContain("<h3>");
+    expect(heading).toContain("mnx-section-heading-index");
+    expect(heading).toContain("mnx-section-heading-badge");
+    expect(heading).toContain("mnx-section-heading-actions");
+  });
+
   it("renders dropdown selects through the shared reference classes", () => {
     const dropdown = renderToStaticMarkup(
       <DropdownSelect

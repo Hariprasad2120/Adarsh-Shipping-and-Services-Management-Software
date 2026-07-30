@@ -197,7 +197,7 @@ for (const component of [
   assert(workspace.includes(component), `Missing shared ${component}.`);
 }
 
-const styles = read("src/styles/monolith-system.css");
+const styles = `${read("src/styles/monolith-system.css")}\n${read("src/styles/modules/crm.css")}`;
 for (const className of [
   ".mnx-crm-page",
   ".mnx-crm-page-header",

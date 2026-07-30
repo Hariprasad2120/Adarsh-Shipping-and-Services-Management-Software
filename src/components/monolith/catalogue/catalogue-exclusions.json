@@ -1,0 +1,1112 @@
+[
+  {
+    "component": "OperationalDataTableActions",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "OperationalDataTableFooter",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "OperationalDataTableHeader",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "OperationalDataTableWrap",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "OperationalFilterButton",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "OperationalFilterGroup",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "OperationalFilterOption",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "OperationalMode",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "OperationalPageButton",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "OperationalPagination",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "OperationalPrimaryCell",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "OperationalRowAction",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "OperationalStatus",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "OperationalTable",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "OperationalTableCell",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "OperationalTableEmpty",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "OperationalTableHead",
+    "source": "src/components/data-display/operational-data-table.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "WorkspaceEmptyState",
+    "source": "src/components/feedback/workspace-states.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "WorkspaceErrorState",
+    "source": "src/components/feedback/workspace-states.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "WorkspaceLoadingState",
+    "source": "src/components/feedback/workspace-states.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "WorkspacePermissionState",
+    "source": "src/components/feedback/workspace-states.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "WorkspaceAction",
+    "source": "src/components/layout/workspace.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "WorkspaceCheckbox",
+    "source": "src/components/layout/workspace.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "WorkspaceEmptyTableRow",
+    "source": "src/components/layout/workspace.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "WorkspaceInput",
+    "source": "src/components/layout/workspace.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "WorkspacePage",
+    "source": "src/components/layout/workspace.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "WorkspacePanelHeader",
+    "source": "src/components/layout/workspace.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "WorkspaceProgress",
+    "source": "src/components/layout/workspace.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "WorkspaceSelect",
+    "source": "src/components/layout/workspace.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "WorkspaceState",
+    "source": "src/components/layout/workspace.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "WorkspaceTable",
+    "source": "src/components/layout/workspace.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "WorkspaceTextarea",
+    "source": "src/components/layout/workspace.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "Badge",
+    "source": "src/components/ui/badge.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "DropdownSelect",
+    "source": "src/components/ui/dropdown-select.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "MonolithAction",
+    "source": "src/components/ui/foundation.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "MonolithBadge",
+    "source": "src/components/ui/foundation.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "MonolithEmptyState",
+    "source": "src/components/ui/foundation.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "MonolithIconAction",
+    "source": "src/components/ui/foundation.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "MonolithPage",
+    "source": "src/components/ui/foundation.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "MonolithSpecLabel",
+    "source": "src/components/ui/foundation.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "Input",
+    "source": "src/components/ui/input.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "NativeSelect",
+    "source": "src/components/ui/native-select.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "Textarea",
+    "source": "src/components/ui/textarea.tsx",
+    "reason": "Internal primitive or composite subcomponent rendered through a registered live specimen; it is not a separate standalone catalogue pattern.",
+    "owner": "Monolith design system"
+  },
+  {
+    "component": "AccountingAction",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingActionLink",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingAlert",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingBadge",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingCheckbox",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingDetail",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingDetailList",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingDialog",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingEmptyTableRow",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingErrorState",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingField",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingInput",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingLoadingState",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingMetric",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingMetrics",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingRecordCard",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingRoutePageHeader",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingSection",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingSelect",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingStatus",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingTable",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingTextarea",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingToolbar",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AccountingWorkspaceFrame",
+    "source": "src/modules/accounting/components/accounting-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "accounting module"
+  },
+  {
+    "component": "AdminBadge",
+    "source": "src/modules/admin/components/admin-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "admin module"
+  },
+  {
+    "component": "AdminButton",
+    "source": "src/modules/admin/components/admin-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "admin module"
+  },
+  {
+    "component": "AdminEmptyTableRow",
+    "source": "src/modules/admin/components/admin-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "admin module"
+  },
+  {
+    "component": "AdminErrorState",
+    "source": "src/modules/admin/components/admin-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "admin module"
+  },
+  {
+    "component": "AdminField",
+    "source": "src/modules/admin/components/admin-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "admin module"
+  },
+  {
+    "component": "AdminInput",
+    "source": "src/modules/admin/components/admin-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "admin module"
+  },
+  {
+    "component": "AdminLoadingState",
+    "source": "src/modules/admin/components/admin-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "admin module"
+  },
+  {
+    "component": "AdminMetric",
+    "source": "src/modules/admin/components/admin-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "admin module"
+  },
+  {
+    "component": "AdminPanelHeader",
+    "source": "src/modules/admin/components/admin-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "admin module"
+  },
+  {
+    "component": "AdminPermissionState",
+    "source": "src/modules/admin/components/admin-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "admin module"
+  },
+  {
+    "component": "AdminSelect",
+    "source": "src/modules/admin/components/admin-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "admin module"
+  },
+  {
+    "component": "AdminTable",
+    "source": "src/modules/admin/components/admin-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "admin module"
+  },
+  {
+    "component": "AdminTextarea",
+    "source": "src/modules/admin/components/admin-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "admin module"
+  },
+  {
+    "component": "AdminWorkspaceFrame",
+    "source": "src/modules/admin/components/admin-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "admin module"
+  },
+  {
+    "component": "ChaAction",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaActionLink",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaDialogLayer",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaDropdownSelect",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaErrorState",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaFilterMenu",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaLoadingState",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaMetric",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaMetrics",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaModal",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaNativeSelect",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaPanel",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaRoutePageHeader",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaStatus",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaTable",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaTabs",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaToolbar",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaWarningIndicatorPopover",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "ChaWorkspaceFrame",
+    "source": "src/modules/cha/components/workspace/cha-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "cha module"
+  },
+  {
+    "component": "CommunicationBadge",
+    "source": "src/modules/communication/components/workspace/communication-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "communication module"
+  },
+  {
+    "component": "CommunicationButton",
+    "source": "src/modules/communication/components/workspace/communication-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "communication module"
+  },
+  {
+    "component": "CommunicationEmptyTableRow",
+    "source": "src/modules/communication/components/workspace/communication-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "communication module"
+  },
+  {
+    "component": "CommunicationErrorState",
+    "source": "src/modules/communication/components/workspace/communication-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "communication module"
+  },
+  {
+    "component": "CommunicationField",
+    "source": "src/modules/communication/components/workspace/communication-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "communication module"
+  },
+  {
+    "component": "CommunicationInput",
+    "source": "src/modules/communication/components/workspace/communication-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "communication module"
+  },
+  {
+    "component": "CommunicationLoadingState",
+    "source": "src/modules/communication/components/workspace/communication-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "communication module"
+  },
+  {
+    "component": "CommunicationMetric",
+    "source": "src/modules/communication/components/workspace/communication-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "communication module"
+  },
+  {
+    "component": "CommunicationPanelHeader",
+    "source": "src/modules/communication/components/workspace/communication-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "communication module"
+  },
+  {
+    "component": "CommunicationPermissionState",
+    "source": "src/modules/communication/components/workspace/communication-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "communication module"
+  },
+  {
+    "component": "CommunicationSelect",
+    "source": "src/modules/communication/components/workspace/communication-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "communication module"
+  },
+  {
+    "component": "CommunicationTable",
+    "source": "src/modules/communication/components/workspace/communication-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "communication module"
+  },
+  {
+    "component": "CommunicationTextarea",
+    "source": "src/modules/communication/components/workspace/communication-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "communication module"
+  },
+  {
+    "component": "CommunicationWorkspaceFrame",
+    "source": "src/modules/communication/components/workspace/communication-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "communication module"
+  },
+  {
+    "component": "MonolithAppShell",
+    "source": "src/modules/core/components/monolith-app-shell.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "core module"
+  },
+  {
+    "component": "CrmActionLink",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmButton",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmConfigurationState",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmDialog",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmDialogLayer",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmEmptyState",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmEmptyTableRow",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmErrorState",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmField",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmInput",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmLoadingState",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmMetric",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmMetrics",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmPermissionState",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmRecordLink",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmRouteOverview",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmSection",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmSelect",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmStatus",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmTable",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmTabs",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmTextarea",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmToolbar",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "CrmWorkspaceFrame",
+    "source": "src/modules/crm/components/workspace/crm-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "crm module"
+  },
+  {
+    "component": "PeopleActionLink",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleErrorState",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleLinkCard",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleLinkGrid",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleLoadingState",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleNotice",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeoplePerson",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleRecordLink",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleSectionHeader",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleSummary",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleSummaryGrid",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleTable",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleTableBody",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleTableCell",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleTableEmpty",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleTableHead",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleTableHeader",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleTableRow",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleTableToolbar",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PeopleWorkspaceFrame",
+    "source": "src/modules/people/components/people-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "people module"
+  },
+  {
+    "component": "PerformanceActionLink",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceCard",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceControlButton",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceControlInput",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceControlSelect",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceControlTextarea",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceErrorState",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceField",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceGrid",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceLoadingState",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceProgress",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceRecordLink",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceSectionHeader",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceStatus",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceSummary",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceSummaryGrid",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceTable",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceTableBody",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceTableCell",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceTableEmpty",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceTableHead",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceTableHeader",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceTableRow",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceTabs",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceToolbar",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  },
+  {
+    "component": "PerformanceWorkspaceFrame",
+    "source": "src/modules/performance/components/performance-workspace.tsx",
+    "reason": "Route-live module export documented by the ownership audit; a standalone safe mock-data fixture remains an explicit catalogue migration item.",
+    "owner": "performance module"
+  }
+]

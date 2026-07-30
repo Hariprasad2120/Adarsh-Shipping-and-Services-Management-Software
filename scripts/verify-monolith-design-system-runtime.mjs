@@ -1,12 +1,10 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium } from "playwright";
 
-const useLocalSpecialAccount = process.argv.includes(
-  "--use-local-special-account",
-);
+const useLocalSpecialAccount = process.argv.includes("--use-local-special-account");
 const baseUrl =
   process.env.UI_TEST_BASE_URL ??
-  (useLocalSpecialAccount ? "http://127.0.0.1:3100" : undefined);
+  (useLocalSpecialAccount ? "http://localhost:3100" : undefined);
 const email =
   process.env.UI_TEST_EMAIL ??
   (useLocalSpecialAccount ? "hr@adarshshipping.in" : undefined);
@@ -15,17 +13,22 @@ const password =
   (useLocalSpecialAccount ? "password@123" : undefined);
 
 if (!baseUrl || !email || !password) {
-  throw new Error(
-    "UI_TEST_BASE_URL, UI_TEST_EMAIL, and UI_TEST_PASSWORD are required.",
-  );
+  throw new Error("UI_TEST_BASE_URL, UI_TEST_EMAIL, and UI_TEST_PASSWORD are required.");
 }
 
-const outputDirectory = "artifacts/ui-migration/design-system-catalogue";
+const outputDirectory = "artifacts/ui-migration/design-system-parity";
 const themes = ["light", "night", "violet"];
 const viewports = [
   { name: "desktop", width: 1440, height: 1000 },
   { name: "tablet", width: 1024, height: 900 },
   { name: "mobile", width: 390, height: 844 },
+];
+const computedProperties = [
+  "fontFamily",
+  "fontSize",
+  "fontWeight",
+  "lineHeight",
+  "letterSpacing",
 ];
 
 await mkdir(outputDirectory, { recursive: true });
@@ -37,129 +40,129 @@ const results = [];
 
 page.on("pageerror", (error) => runtimeErrors.push(error.message));
 page.on("console", (message) => {
-  const text = message.text();
-  if (
-    message.type() === "error" &&
-    !text.includes("Failed to mark notifications presented TypeError: Failed to fetch")
-  ) {
-    runtimeErrors.push(text);
-  }
+  if (message.type() === "error") runtimeErrors.push(message.text());
 });
 page.on("response", (response) => {
-  if (response.status() >= 500) {
-    runtimeErrors.push(`${response.status()} ${response.url()}`);
-  }
+  if (response.status() >= 500) runtimeErrors.push(`${response.status()} ${response.url()}`);
 });
 
 try {
   await login(page);
+  // Authentication lands on the existing dashboard, whose animated SVG graphics
+  // can emit Chromium attribute warnings while the route is being replaced.
+  // Warm the target route before measuring catalogue/CHA runtime parity so this
+  // verifier reports errors owned by the routes under test.
+  await navigate(page, `${baseUrl}/admin/design-system`);
+  await page.locator('[data-catalogue-id="workspace-section-heading"]').waitFor();
+  runtimeErrors.length = 0;
 
   for (const viewport of viewports) {
     await page.setViewportSize(viewport);
 
     for (const theme of themes) {
       const priorErrorCount = runtimeErrors.length;
-      await page.evaluate(
-        (nextTheme) => window.localStorage.setItem("theme", nextTheme),
-        theme,
-      );
+      await page.evaluate((nextTheme) => localStorage.setItem("theme", nextTheme), theme);
       await navigate(page, `${baseUrl}/admin/design-system`);
-      await page
-        .locator('[data-production-catalogue="true"]')
-        .filter({ visible: true })
-        .first()
-        .waitFor();
+      await page.locator('[data-catalogue-id="workspace-section-heading"]').waitFor();
 
-      const themePicker = page.getByRole("group", {
-        name: "Catalogue test theme",
-      });
-      await themePicker.getByTitle(`${theme[0].toUpperCase()}${theme.slice(1)} theme`).click();
-      await page
-        .locator(`.mnx-dashboard-shell[data-theme="${theme}"]`)
-        .waitFor();
-
-      await page
-        .getByRole("tab", { name: "CRM · Configuration" })
-        .click();
-      await page.getByText("Configuration required", { exact: true }).waitFor();
-
-      await page
-        .getByRole("button", { name: "Open production dialog" })
-        .click();
-      await page.getByRole("dialog", { name: "Production dialog" }).waitFor();
-      await page.keyboard.press("Escape");
-      await page
-        .getByRole("dialog", { name: "Production dialog" })
-        .waitFor({ state: "detached" });
-
-      const verification = await page.evaluate((expectedTheme) => {
+      const catalogueHeading = await headingSnapshot(
+        page,
+        '[data-catalogue-id="workspace-section-heading"] .mnx-section-heading',
+      );
+      const panelBehavior = await verifyPanelBehavior(page);
+      const catalogueVerification = await page.evaluate((expectedTheme) => {
         const root = document.documentElement;
-        const catalogue = document.querySelector(
-          '[data-production-catalogue="true"]',
-        );
-        const shell = document.querySelector(".mnx-dashboard-shell");
-        const componentBadges = document.querySelectorAll(
-          "#component-index .mnx-catalogue-component-list .mnx-badge",
-        );
         return {
-          componentCount: new Set(
-            [...componentBadges].map((badge) => badge.textContent?.trim()),
-          ).size,
+          entries: document.querySelectorAll("[data-catalogue-id]").length,
           errorText:
             document.body.textContent?.includes("Application error") ||
             document.body.textContent?.includes("Internal Server Error") ||
             false,
-          hasCatalogue: Boolean(catalogue),
-          pageOverflows: root.scrollWidth > root.clientWidth + 1,
-          persistedTheme: window.localStorage.getItem("theme"),
-          rootClass: root.classList.contains(`theme-${expectedTheme}`),
-          semanticAccent: getComputedStyle(root)
-            .getPropertyValue("--mn-color-accent")
-            .trim(),
-          theme: shell?.getAttribute("data-theme"),
+          overflow: root.scrollWidth > root.clientWidth + 1,
+          rootTheme: root.classList.contains(`theme-${expectedTheme}`),
+          productionSelectorsInCatalogue: Boolean(
+            document.querySelector(".section-heading, .btn, .surface-card"),
+          ),
         };
       }, theme);
 
+      await navigate(page, `${baseUrl}/cha`);
+      const chaHeadingLocator = page
+        .locator(".mnx-section-heading")
+        .filter({ hasText: "My Assigned Jobs" })
+        .first();
+      await chaHeadingLocator.waitFor();
+      const chaHeading = await headingSnapshot(
+        page,
+        '.mnx-section-heading:has-text("My Assigned Jobs")',
+      );
+
+      for (const property of computedProperties) {
+        if (catalogueHeading.title[property] !== chaHeading.title[property]) {
+          throw new Error(
+            `${viewport.name} ${theme}: heading ${property} mismatch: ` +
+              `${catalogueHeading.title[property]} !== ${chaHeading.title[property]}`,
+          );
+        }
+      }
+      for (const property of ["color", "fontSize", "fontWeight", "lineHeight"]) {
+        if (catalogueHeading.index[property] !== chaHeading.index[property]) {
+          throw new Error(
+            `${viewport.name} ${theme}: heading index ${property} mismatch.`,
+          );
+        }
+      }
+      for (const property of ["columnGap", "paddingTop", "paddingBottom"]) {
+        if (catalogueHeading.container[property] !== chaHeading.container[property]) {
+          throw new Error(
+            `${viewport.name} ${theme}: heading container ${property} mismatch.`,
+          );
+        }
+      }
+
       const newErrors = runtimeErrors.slice(priorErrorCount);
       if (
-        newErrors.length > 0 ||
-        verification.errorText ||
-        !verification.hasCatalogue ||
-        verification.pageOverflows ||
-        verification.componentCount < 100 ||
-        verification.theme !== theme ||
-        verification.persistedTheme !== theme ||
-        !verification.rootClass ||
-        !verification.semanticAccent
+        newErrors.length ||
+        catalogueVerification.entries < 19 ||
+        catalogueVerification.errorText ||
+        catalogueVerification.overflow ||
+        !catalogueVerification.rootTheme ||
+        catalogueVerification.productionSelectorsInCatalogue ||
+        panelBehavior.staticMoved ||
+        !panelBehavior.interactiveMoved ||
+        !panelBehavior.interactiveFocusVisible
       ) {
         throw new Error(
           `${viewport.name} ${theme} failed: ${JSON.stringify({
+            catalogueVerification,
             newErrors,
-            verification,
+            panelBehavior,
           })}`,
         );
       }
 
-      await page.evaluate(() => {
-        window.scrollTo({ left: 0, top: 0 });
-        document.querySelector(".mnx-dashboard-main")?.scrollTo({
-          left: 0,
-          top: 0,
-        });
-      });
-      await page.waitForTimeout(200);
+      await navigate(page, `${baseUrl}/admin/design-system`);
       const screenshotPath = `${outputDirectory}/catalogue-${theme}-${viewport.name}.png`;
-      await page.screenshot({
-        path: screenshotPath,
-        fullPage: false,
-      });
+      await page.screenshot({ path: screenshotPath, fullPage: true });
       results.push({
+        catalogueHeading,
+        catalogueVerification,
+        chaHeading,
+        panelBehavior,
         screenshotPath,
         theme,
-        verification,
         viewport: viewport.name,
       });
     }
+  }
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await navigate(page, `${baseUrl}/admin/design-system`);
+  const reducedMotion = await page
+    .locator('[data-catalogue-id="workspace-panel"] [data-interactive="true"]')
+    .evaluate((element) => getComputedStyle(element).transitionDuration);
+  if (!reducedMotion.split(",").every((value) => Number.parseFloat(value) <= 0.01)) {
+    throw new Error(`Reduced-motion transition is not suppressed: ${reducedMotion}`);
   }
 
   await writeFile(
@@ -167,8 +170,9 @@ try {
     `${JSON.stringify(
       {
         generatedAt: new Date().toISOString(),
+        reducedMotion,
         results,
-        route: "/admin/design-system",
+        routes: ["/admin/design-system", "/cha"],
         themes,
         viewports,
       },
@@ -176,12 +180,76 @@ try {
       2,
     )}\n`,
   );
-
   console.log(
-    `Verified ${results.length} authenticated component-catalogue theme/viewport combinations, shared theme interaction, module state selection, dialog behavior, runtime inventory, and responsive overflow.`,
+    `Verified ${results.length} catalogue/CHA heading parity combinations, static and interactive panels, keyboard focus, overflow, themes, and reduced motion.`,
   );
 } finally {
   await browser.close();
+}
+
+async function headingSnapshot(targetPage, selector) {
+  return targetPage.locator(selector).first().evaluate((heading) => {
+    const title = heading.querySelector("h2");
+    const index = heading.querySelector(".mnx-section-heading-index");
+    const nextSurface = heading.nextElementSibling;
+    if (!title || !index) throw new Error("Canonical heading anatomy is missing.");
+    const titleStyle = getComputedStyle(title);
+    const indexStyle = getComputedStyle(index);
+    const containerStyle = getComputedStyle(heading);
+    const headingBox = heading.getBoundingClientRect();
+    const surfaceBox = nextSurface?.getBoundingClientRect();
+    return {
+      container: {
+        columnGap: containerStyle.columnGap,
+        paddingBottom: containerStyle.paddingBottom,
+        paddingTop: containerStyle.paddingTop,
+      },
+      descriptionAlignment: getComputedStyle(
+        heading.querySelector(".mnx-section-heading-aside") ?? heading,
+      ).justifyItems,
+      index: {
+        color: indexStyle.color,
+        fontSize: indexStyle.fontSize,
+        fontWeight: indexStyle.fontWeight,
+        lineHeight: indexStyle.lineHeight,
+      },
+      surfaceGap: surfaceBox ? Math.round(surfaceBox.top - headingBox.bottom) : null,
+      title: {
+        fontFamily: titleStyle.fontFamily,
+        fontSize: titleStyle.fontSize,
+        fontWeight: titleStyle.fontWeight,
+        letterSpacing: titleStyle.letterSpacing,
+        lineHeight: titleStyle.lineHeight,
+      },
+    };
+  });
+}
+
+async function verifyPanelBehavior(targetPage) {
+  const specimen = targetPage.locator('[data-catalogue-id="workspace-panel"]');
+  const staticPanel = specimen.locator('[data-interactive="true"]').locator("xpath=preceding-sibling::*[1]");
+  const interactivePanel = specimen.locator('[data-interactive="true"]');
+  const staticBefore = await staticPanel.evaluate((element) => getComputedStyle(element).transform);
+  await staticPanel.hover();
+  await targetPage.waitForTimeout(220);
+  const staticAfter = await staticPanel.evaluate((element) => getComputedStyle(element).transform);
+  const interactiveBefore = await interactivePanel.evaluate(
+    (element) => getComputedStyle(element).transform,
+  );
+  await interactivePanel.hover();
+  await targetPage.waitForTimeout(220);
+  const interactiveAfter = await interactivePanel.evaluate(
+    (element) => getComputedStyle(element).transform,
+  );
+  await interactivePanel.focus();
+  const interactiveFocusVisible = await interactivePanel.evaluate(
+    (element) => getComputedStyle(element).outlineStyle !== "none",
+  );
+  return {
+    interactiveFocusVisible,
+    interactiveMoved: interactiveBefore !== interactiveAfter,
+    staticMoved: staticBefore !== staticAfter,
+  };
 }
 
 async function login(targetPage) {
@@ -196,18 +264,13 @@ async function login(targetPage) {
   await targetPage.locator('input[name="email"]').fill(email);
   await targetPage.locator('input[name="password"]').fill(password);
   await targetPage.locator('button[type="submit"]').click();
-  await targetPage.waitForURL((url) => url.pathname !== "/login", {
-    timeout: 30_000,
-  });
+  await targetPage.waitForURL((url) => url.pathname !== "/login", { timeout: 30_000 });
 }
 
 async function navigate(targetPage, url) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
-      await targetPage.goto(url, {
-        waitUntil: "domcontentloaded",
-        timeout: 60_000,
-      });
+      await targetPage.goto(url, { waitUntil: "domcontentloaded", timeout: 60_000 });
       return;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

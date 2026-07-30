@@ -57,12 +57,22 @@ if (looseComponents.length > 0) {
   );
 }
 
-if (sourceFiles.some(({ file }) => file.startsWith("src/components/monolith/"))) {
-  fail("src/components/monolith is a retired migration source and must not exist.");
+const invalidMonolithFiles = sourceFiles
+  .map(({ file }) => file)
+  .filter(
+    (file) =>
+      file.startsWith("src/components/monolith/") &&
+      file !== "src/components/monolith/index.ts" &&
+      !file.startsWith("src/components/monolith/catalogue/"),
+  );
+if (invalidMonolithFiles.length > 0) {
+  fail(
+    "src/components/monolith may contain only the canonical public barrel and catalogue registry:\n" +
+      invalidMonolithFiles.join("\n"),
+  );
 }
 
 const deprecatedImports = [
-  "@/components/monolith",
   "@/components/ams/",
   "@/components/auth/",
   "@/components/cha/",
