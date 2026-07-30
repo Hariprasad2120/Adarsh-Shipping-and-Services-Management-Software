@@ -945,3 +945,21 @@ Fast Refresh check with one page load and no console errors.
 Blocked: authenticated theme/viewport and performance measurements require an
 explicitly approved local/staging database and safe credentials. The repository
 `.env` remote Neon target was deliberately not used.
+
+## 2026-07-30 login credential-query fix
+
+The `/login` double-entry symptom and credential-bearing URL were traced to the
+browser's native pre-hydration form submission. The login controls now stay
+disabled until hydration, the form declares POST as its safe native fallback,
+and the client removes any legacy `email`, `password`, or `rememberMe` query
+parameters without removing a valid `callbackUrl`.
+
+Passed: hydrated and JavaScript-disabled Playwright checks, targeted ESLint,
+the UI migration and production TypeScript projects, and `git diff --check`.
+No real user credentials or remote database authentication were used during
+verification. The historical Batch 007 static verifier remains stale against
+the current root authentication source and stops on its unrelated literal
+`await auth()` assertion; this fix does not modify the root flow.
+
+Backup:
+`OLD UI code/ui-iteration-backups/login-native-submit-credential-leak-fix-20260730/`

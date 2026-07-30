@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { signIn } from "next-auth/react";
 import { clearStaleSessionData } from "@/lib/logout";
 import { isRootControlEmail } from "@/lib/root-access";
@@ -10,6 +10,9 @@ import styles from "./animated-login.module.css";
 
 type Mood = "idle" | "happy" | "charging" | "shy" | "error";
 type SubmitState = "idle" | "loading" | "success";
+
+const CREDENTIAL_QUERY_PARAMETERS = ["email", "password", "rememberMe"] as const;
+const subscribeToHydration = () => () => {};
 
 function MonolithPetGraphic() {
   return (
@@ -87,6 +90,25 @@ function getSameOriginRedirectUrl(url: string | null | undefined, fallbackUrl: s
   }
 }
 
+function removeCredentialQueryParameters() {
+  const url = new URL(window.location.href);
+  const containedCredentials = CREDENTIAL_QUERY_PARAMETERS.some((parameter) =>
+    url.searchParams.has(parameter),
+  );
+
+  if (!containedCredentials) return;
+
+  for (const parameter of CREDENTIAL_QUERY_PARAMETERS) {
+    url.searchParams.delete(parameter);
+  }
+
+  window.history.replaceState(
+    window.history.state,
+    "",
+    `${url.pathname}${url.search}${url.hash}`,
+  );
+}
+
 export function MonolithLogisticsLogin() {
   const panelRef = useRef<HTMLElement>(null);
   const petRef = useRef<HTMLSpanElement>(null);
@@ -108,9 +130,15 @@ export function MonolithLogisticsLogin() {
   const [petMessage, setPetMessage] = useState("Tap me!");
   const [message, setMessage] = useState("");
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
-  const busy = submitState !== "idle";
+  const hydrated = useSyncExternalStore(
+    subscribeToHydration,
+    () => true,
+    () => false,
+  );
+  const busy = !hydrated || submitState !== "idle";
 
   useEffect(() => {
+    removeCredentialQueryParameters();
     clearStaleSessionData();
   }, []);
 
@@ -330,7 +358,12 @@ export function MonolithLogisticsLogin() {
             <span>Enter your login details</span>
           </header>
 
-          <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
+          <form
+            className={styles.loginForm}
+            method="post"
+            onSubmit={handleSubmit}
+            noValidate
+          >
             <label className={styles.field}>
               <span>Email</span>
               <span className={styles.inputWrap}>

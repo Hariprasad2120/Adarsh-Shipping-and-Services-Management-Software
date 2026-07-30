@@ -1429,3 +1429,30 @@ performance/dashboard tests, the 328-route production build, and a Playwright
 login/HMR smoke. Authenticated visual verification remains pending because the
 configured remote database is not documented as approved staging and the local
 PostgreSQL service credentials are unavailable.
+
+## 2026-07-30 Login native-submit credential leak fix
+
+The migrated `/login` form now keeps its controls disabled until React
+hydration has attached the credential sign-in handler. Its non-JavaScript
+fallback uses POST instead of the browser's default GET, so named credential
+fields cannot be serialized into the address bar. If an earlier native
+submission already added `email`, `password`, or `rememberMe` parameters, the
+hydrated page removes them with `history.replaceState` while retaining the safe
+`callbackUrl`.
+
+Backup:
+`OLD UI code/ui-iteration-backups/login-native-submit-credential-leak-fix-20260730/`
+
+Verification:
+
+- hydrated Playwright login check: POST form, enabled after hydration, invalid
+  credentials stayed on the sanitized login URL, no console or page errors;
+- JavaScript-disabled Playwright check: email, password, and submit controls
+  remained disabled and the form method was POST;
+- targeted ESLint: passed;
+- UI migration TypeScript (`tsconfig.ui-migration.json`): passed;
+- production TypeScript (`tsc --noEmit`): passed;
+- `git diff --check`: passed;
+- the historical Batch 007 static verifier still stops on its unrelated root
+  source assertion requiring the literal `await auth()`; the current root
+  authentication implementation predates this fix and was not changed.
