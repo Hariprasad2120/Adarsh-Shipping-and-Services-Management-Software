@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { AccountingItemDetail } from "@/components/monolith/accounting-items";
+import { AccountingItemDetail } from "@/modules/accounting/components/accounting-items";
 
 export default function AccountingItemDetailPage() {
   const params = useParams();

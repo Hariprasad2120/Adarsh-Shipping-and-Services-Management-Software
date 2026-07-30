@@ -6,7 +6,7 @@ import { JournalEntryDetailClient } from "./detail-client";
 import {
   AccountingActionLink,
   AccountingRoutePageHeader,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 
 interface JvDetailPageProps {
   params: Promise<{ id: string }>;

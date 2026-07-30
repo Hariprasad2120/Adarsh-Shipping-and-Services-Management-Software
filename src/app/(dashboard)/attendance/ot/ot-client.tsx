@@ -5,10 +5,10 @@ import {
   PeopleControlInput as MnxInput,
   PeopleControlTextarea as MnxTextarea,
   PeopleControlTable as MnxTable,
-} from "@/components/monolith/people-controls";
+} from "@/modules/people/components/people-controls";
 
-import { NativeSelect } from "@/components/monolith/native-select";
-import { DateInput } from "@/components/monolith/date-input";
+import { NativeSelect } from "@/components/ui/native-select";
+import { DateInput } from "@/components/ui/date-input";
 import { Fragment, useState, useTransition, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -18,9 +18,9 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/monolith/card";
-import { Button } from "@/components/monolith/button";
-import { WorkspaceDialog } from "@/components/monolith/workspace-dialog";
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { WorkspaceDialog } from "@/components/layout/workspace-dialog";
 import {
   DataTable,
   DataTableBody,
@@ -29,7 +29,7 @@ import {
   DataTableHead,
   DataTableHeader,
   DataTableRow,
-} from "@/components/monolith/people-data-table";
+} from "@/modules/people/components/people-data-table";
 import {
   Plus,
   Check,

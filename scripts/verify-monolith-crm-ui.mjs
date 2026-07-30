@@ -78,7 +78,7 @@ for (const requiredFile of [
   "src/app/(dashboard)/crm/layout.tsx",
   "src/app/(dashboard)/crm/loading.tsx",
   "src/app/(dashboard)/crm/error.tsx",
-  "src/components/monolith/crm-workspace.tsx",
+  "src/modules/crm/components/workspace/crm-workspace.tsx",
 ]) {
   assert(
     existsSync(path.join(repositoryRoot, requiredFile)),
@@ -96,7 +96,7 @@ for (const signal of [
   assert(shellSwitcher.includes(signal), `Shell switcher is missing ${signal}.`);
 }
 
-const workspace = read("src/components/monolith/crm-workspace.tsx");
+const workspace = read("src/modules/crm/components/workspace/crm-workspace.tsx");
 for (const route of routes.filter(
   (route) => !route.includes("[") && !["/crm/invoices/new"].includes(route),
 )) {
@@ -129,10 +129,14 @@ for (const pattern of [
 
 const scopedSources = [
   ...walk(crmRoot, (file) => /\.(?:ts|tsx)$/.test(file)),
-  ...walk(path.join(repositoryRoot, "src", "components", "crm"), (file) =>
-    /\.(?:ts|tsx)$/.test(file),
+  ...walk(
+    path.join(repositoryRoot, "src", "modules", "crm", "components"),
+    (file) =>
+      /\.(?:ts|tsx)$/.test(file) &&
+      !/\.(?:test|spec)\.[jt]sx?$/.test(file) &&
+      !file.includes(`${path.sep}workspace${path.sep}`),
   ),
-  ...walk(path.join(repositoryRoot, "src", "components", "items"), (file) =>
+  ...walk(path.join(repositoryRoot, "src", "modules", "items", "components"), (file) =>
     /\.(?:ts|tsx)$/.test(file),
   ),
 ];
@@ -223,8 +227,8 @@ const behaviorSources = {
   enquiry: read(
     "src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx",
   ),
-  approval: read("src/components/crm/ApprovalActionBar.tsx"),
-  quote: read("src/app/(dashboard)/crm/quotes/_components/NewQuotePage.tsx"),
+  approval: read("src/modules/crm/components/ApprovalActionBar.tsx"),
+  quote: read("src/modules/crm/components/quotes/NewQuotePage.tsx"),
   tickets: read("src/app/(dashboard)/crm/tickets/actions.ts"),
   leadSource: read(
     "src/app/(dashboard)/crm/lead-sources/import-button.tsx",

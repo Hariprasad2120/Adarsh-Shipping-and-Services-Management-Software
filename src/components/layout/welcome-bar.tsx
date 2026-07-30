@@ -12,8 +12,8 @@ import { getPathLabel } from "@/lib/route-labels";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   type DueDateWarningViewModel,
-} from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
-import { ChaDueDateWarningsIndicator } from "@/app/(dashboard)/cha/_components/cha-due-date-warnings-indicator";
+} from "@/modules/cha/components/warnings/cha-due-date-warning-indicator";
+import { ChaDueDateWarningsIndicator } from "@/modules/cha/components/warnings/cha-due-date-warnings-indicator";
 
 function toTitleCase(value: string) {
   return value

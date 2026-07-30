@@ -5,21 +5,21 @@ import {
   ChaNativeSelect as NativeSelect,
   ChaTable,
   ChaWarningIndicatorPopover as WarningIndicatorPopover,
-} from "@/components/monolith/cha-workspace";
-import { Textarea } from "@/components/monolith/textarea";
-import { Input } from "@/components/monolith/input";
-import { DateInput } from "@/components/monolith/date-input";
+} from "@/modules/cha/components/workspace/cha-workspace";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { DateInput } from "@/components/ui/date-input";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CreditCard, Search, Filter, ExternalLink, MessageSquare, ChevronDown, Plus } from "lucide-react";
-import { Button } from "@/components/monolith/button";
-import { Badge, type BadgeVariant } from "@/components/monolith/badge";
-import { FileUploadField } from "@/components/monolith/file-upload-field";
+import { Button } from "@/components/ui/button";
+import { Badge, type BadgeVariant } from "@/components/ui/badge";
+import { FileUploadField } from "@/components/forms/file-upload/file-upload-field";
 import * as actions from "@/modules/cha/actions";
 import Link from "next/link";
 import { formatChaBadgeLabel } from "@/lib/cha-badges";
-import { ChaPageHeader } from "../_components/cha-operations-shared";
+import { ChaPageHeader } from "@/modules/cha/components/workspace/cha-operations-shared";
 
 interface ExpensesClientProps {
   initialExpenses: any[];

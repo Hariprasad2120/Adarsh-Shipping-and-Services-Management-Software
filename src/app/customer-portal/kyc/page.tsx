@@ -1,7 +1,7 @@
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { listPortalShipments } from "@/modules/customer-portal/service";
 import { getPortalFeatureFlag } from "@/modules/customer-portal/feature-flags";
-import { PortalKycWorkspace } from "../_components/portal-kyc-workspace";
+import { PortalKycWorkspace } from "@/modules/customer-portal/components/portal-kyc-workspace";
 
 export default async function CustomerPortalKycPage() {
   const session = await requirePortalSession();

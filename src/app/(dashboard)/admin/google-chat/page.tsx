@@ -12,20 +12,8 @@ import {
   Wifi,
   WifiOff,
 } from "lucide-react";
-import {
-  AdminBadge,
-  AdminButton,
-  AdminEmptyTableRow,
-  AdminErrorState,
-  AdminLoadingState,
-  AdminPanel,
-  AdminPanelHeader,
-  AdminTable,
-  WorkspaceAlert,
-  WorkspaceMetric,
-  WorkspaceSectionHeading,
-  WorkspaceState,
-} from "@/components/monolith";
+import { AdminBadge, AdminButton, AdminEmptyTableRow, AdminErrorState, AdminLoadingState, AdminPanel, AdminPanelHeader, AdminTable } from "@/modules/admin/components/admin-workspace";
+import { WorkspaceAlert, WorkspaceMetric, WorkspaceSectionHeading, WorkspaceState } from "@/components/layout/workspace";
 
 type LinkedUser = {
   id: string;

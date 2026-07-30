@@ -25,7 +25,7 @@ function read(relativePath) {
 const pagePath = "src/app/(dashboard)/admin/design-system/page.tsx";
 const clientPath =
   "src/app/(dashboard)/admin/design-system/design-system-client.tsx";
-const shellPath = "src/components/monolith/app-shell.tsx";
+const shellPath = "src/modules/core/components/monolith-app-shell.tsx";
 const stylePath = "src/styles/monolith-system.css";
 
 for (const relativePath of [pagePath, clientPath, shellPath, stylePath]) {

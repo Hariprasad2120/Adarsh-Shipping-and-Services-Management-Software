@@ -13,8 +13,8 @@ import {
   MonolithEmptyState,
   MonolithIconAction,
   MonolithSurface,
-} from "@/components/monolith/foundation";
-import { WorkspaceSectionHeading } from "@/components/monolith/workspace";
+} from "@/components/ui/foundation";
+import { WorkspaceSectionHeading } from "@/components/layout/workspace";
 import type { ReporteeSummary } from "./dashboard-types";
 
 interface DashboardTeamProps {

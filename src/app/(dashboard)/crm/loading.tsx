@@ -1,4 +1,4 @@
-import { CrmLoadingState } from "@/components/monolith/crm-workspace";
+import { CrmLoadingState } from "@/modules/crm/components/workspace/crm-workspace";
 
 export default function CrmLoading() {
   return <CrmLoadingState />;

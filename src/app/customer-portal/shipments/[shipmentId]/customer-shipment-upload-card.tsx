@@ -3,10 +3,10 @@
 import { useState, useTransition, type ChangeEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { UploadCloud } from "lucide-react";
-import { Button } from "@/components/monolith/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
-import { FileUploadField } from "@/components/monolith/file-upload-field";
-import { Input } from "@/components/monolith/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileUploadField } from "@/components/forms/file-upload/file-upload-field";
+import { Input } from "@/components/ui/input";
 
 type UploadState = {
   file: File | null;

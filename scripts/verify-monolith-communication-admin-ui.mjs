@@ -94,8 +94,8 @@ for (const requiredFile of [
   "src/app/(dashboard)/admin/layout.tsx",
   "src/app/(dashboard)/admin/loading.tsx",
   "src/app/(dashboard)/admin/error.tsx",
-  "src/components/monolith/communication-workspace.tsx",
-  "src/components/monolith/admin-workspace.tsx",
+  "src/modules/communication/components/workspace/communication-workspace.tsx",
+  "src/modules/admin/components/admin-workspace.tsx",
 ]) {
   assert(existsSync(path.join(repositoryRoot, requiredFile)), `Missing ${requiredFile}.`);
 }
@@ -113,7 +113,7 @@ for (const signal of [
 }
 
 const communicationWorkspace = read(
-  "src/components/monolith/communication-workspace.tsx",
+  "src/modules/communication/components/workspace/communication-workspace.tsx",
 );
 for (const route of communicationRoutes) {
   assert(
@@ -122,7 +122,7 @@ for (const route of communicationRoutes) {
   );
 }
 
-const adminWorkspace = read("src/components/monolith/admin-workspace.tsx");
+const adminWorkspace = read("src/modules/admin/components/admin-workspace.tsx");
 for (const route of adminRoutes.filter((route) => route !== "/admin/design-system")) {
   assert(
     adminWorkspace.includes(`"${route}"`),
@@ -257,7 +257,7 @@ const behaviorSources = {
     "src/app/(dashboard)/communication/settings/page.tsx",
   ),
   liveSettings: read(
-    "src/app/(dashboard)/communication/google-chat-live-view/_components/google-chat-live-view-settings.tsx",
+    "src/modules/communication/components/google-chat-live-view-settings.tsx",
   ),
   dataTools: read("src/app/(dashboard)/admin/data-tools/workbook-import-form.tsx"),
   passkeys: read("src/app/(dashboard)/admin/passkeys/page.tsx"),

@@ -14,16 +14,8 @@ import {
   Search,
   Video,
 } from "lucide-react";
-import {
-  CommunicationBadge,
-  CommunicationEmptyTableRow,
-  CommunicationPanel,
-  CommunicationPanelHeader,
-  CommunicationTable,
-  WorkspaceAlert,
-  WorkspaceMetric,
-  WorkspaceSectionHeading,
-} from "@/components/monolith";
+import { CommunicationBadge, CommunicationEmptyTableRow, CommunicationPanel, CommunicationPanelHeader, CommunicationTable } from "@/modules/communication/components/workspace/communication-workspace";
+import { WorkspaceAlert, WorkspaceMetric, WorkspaceSectionHeading } from "@/components/layout/workspace";
 
 type Thread = Awaited<ReturnType<typeof listThreads>>["threads"][number];
 type Meeting = Awaited<ReturnType<typeof listUpcomingEvents>>[number];

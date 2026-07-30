@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { getCustomerPortalApprovalQueue } from "@/modules/customer-portal/shipments";
-import { Badge } from "@/components/monolith/badge";
-import { Button } from "@/components/monolith/button";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { CheckSquare, ArrowRight } from "lucide-react";
 
 export default async function CustomerPortalApprovalsPage() {

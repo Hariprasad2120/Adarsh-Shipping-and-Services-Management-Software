@@ -21,7 +21,7 @@ import {
   AccountingInput,
   AccountingSection,
   AccountingSelect,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 import { createAccountAction } from "@/modules/accounting/actions";
 
 interface AccountsClientProps {

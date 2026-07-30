@@ -1,8 +1,8 @@
 "use client";
 
-import { CrmButton, CrmDialogLayer, CrmInput, CrmTextarea } from "@/components/monolith/crm-workspace";
+import { CrmButton, CrmDialogLayer, CrmInput, CrmTextarea } from "@/modules/crm/components/workspace/crm-workspace";
 
-import { NativeSelect } from "@/components/monolith/native-select";
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { updateLeadStatusAction } from "@/modules/crm/actions";

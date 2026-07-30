@@ -1,5 +1,5 @@
-import { CrmButton, CrmInput, CrmTable, CrmConfigurationState, CrmPermissionState } from "@/components/monolith/crm-workspace";
-import { NativeSelect } from "@/components/monolith/native-select";
+import { CrmButton, CrmInput, CrmTable, CrmConfigurationState, CrmPermissionState } from "@/modules/crm/components/workspace/crm-workspace";
+import { NativeSelect } from "@/components/ui/native-select";
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -20,7 +20,7 @@ import {
   Users
 } from "lucide-react";
 import { deleteLeadAction } from "@/modules/crm/actions";
-import { DeleteRecordButton } from "../_components/delete-record-button";
+import { DeleteRecordButton } from "@/modules/crm/components/delete-record-button";
 
 interface SearchParams {
   search?: string;

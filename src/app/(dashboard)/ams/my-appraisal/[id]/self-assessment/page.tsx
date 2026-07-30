@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
-import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
+import { CycleProgressCard } from "@/modules/ams/components/cycle-progress-card";
 import { getAppraisal, getSelfFormTemplate } from "@/modules/ams/service";
 import { db } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";

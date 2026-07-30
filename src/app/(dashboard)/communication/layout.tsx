@@ -1,13 +1,8 @@
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ArrowRight, Link2 } from "lucide-react";
-import {
-  CommunicationWorkspaceFrame,
-  WorkspaceAction,
-  WorkspacePage,
-  WorkspacePageHeader,
-  WorkspaceState,
-} from "@/components/monolith";
+import { CommunicationWorkspaceFrame } from "@/modules/communication/components/workspace/communication-workspace";
+import { WorkspaceAction, WorkspacePage, WorkspacePageHeader, WorkspaceState } from "@/components/layout/workspace";
 import { ChatProvider } from "./_components/chat-provider";
 
 export default async function CommunicationLayout({

@@ -1,6 +1,6 @@
 "use client";
 
-import { CrmButton, CrmDialogLayer } from "@/components/monolith/crm-workspace";
+import { CrmButton, CrmDialogLayer } from "@/modules/crm/components/workspace/crm-workspace";
 
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";

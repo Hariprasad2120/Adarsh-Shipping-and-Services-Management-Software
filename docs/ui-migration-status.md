@@ -1,6 +1,79 @@
 # Monolith UI migration status
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
+
+## 2026-07-30 component architecture reorganization
+
+The presentation, routes, permissions, actions, API contracts, database
+behavior, and semantic token system were not redesigned. The former
+`src/components/monolith` migration source was split into canonical
+business-neutral primitives under `components/ui`, generic shared ownership
+folders, and route-aware module components. Existing AMS, Auth, CHA, CRM, HRMS,
+Items, Mona, Notifications, and reusable multi-route App Router components were
+moved into their owning modules with `git mv`.
+
+The AST inventory covers 899 source/style files and 537 TSX/JSX components.
+The final migration map has zero proposed path changes; uncertain zero-import or
+cross-module entries remain documented for manual retention review. The
+architecture guard passes, production TypeScript passes, and no active source
+imports the retired component paths or another route's private `_components`.
+
+This is a structural-only batch. Existing route migration/visual status below
+is unchanged; no earlier visual verification is being reclassified.
+
+## 2026-07-30 CHA shared operational datatable application
+
+Promoted the `/admin/design-system` "Tables & filters" shipment-register
+specimen into `src/components/data-display/operational-data-table.tsx`, backed
+by semantic `mnx-table-card` production styling. The catalogue now renders this
+shared component, and the CHA command dashboard assigned-jobs table plus the
+`/cha/jobs` Active and Completed Jobs tables use the same operational table-card
+surface with header actions, selectable rows, mode icons, status dots, row
+actions, and footer pagination/summary. Existing search, filters, create-job,
+active-pill, warning, row navigation, and pagination behavior is preserved.
+
+Passed with the required 8 GB Node heap:
+
+- targeted ESLint for the shared operational table, CHA dashboard, CHA jobs,
+  and design-system catalogue files;
+- UI migration TypeScript: `npx tsc --noEmit -p tsconfig.ui-migration.json`;
+- production TypeScript: `npx tsc --noEmit`;
+- static Expense/CHA verifier:
+  `node scripts/verify-monolith-expense-cha-ui.mjs`.
+
+Authenticated Light, Night, and Violet browser verification remains covered by
+the existing CHA browser-instance blocker.
+
+Follow-up correction:
+
+- Restored the operational table-card shell to the reference rounded, bordered,
+  shadowed card instead of a borderless table section.
+- Replaced degraded placeholder symbols in the design-system specimen and CHA
+  pagination/status rendering with shared checkbox controls, lucide icons, and
+  CSS-rendered status dots.
+- Added table-header scoped layout rules so CHA search/filter/create actions do
+  not stretch the table-card header.
+- Passed scoped ESLint, UI migration TypeScript, production TypeScript, the
+  Expense/CHA static verifier, and diff hygiene.
+- The historical design-system catalogue verifier remains incompatible with
+  this branch's reference-style `/admin/design-system` implementation and still
+  stops on its stale `data-production-catalogue="true"` root-marker assertion.
+
+## 2026-07-30 design-system section heading alignment
+
+Aligned the `/admin/design-system` section headings with the CHA outside-heading
+treatment: compact numbered index, large light-weight title, tighter line
+height/tracking, and the same heading padding before the following bordered
+component. The override applies to every `SectionTitle` block in the design
+system route, including Tables & filters, Status & feedback, Forms, Surfaces,
+Navigation, and Motion.
+
+Passed with the required 8 GB Node heap:
+
+- scoped ESLint for the design-system client;
+- UI migration TypeScript: `npx tsc --noEmit -p tsconfig.ui-migration.json`;
+- production TypeScript: `npx tsc --noEmit`;
+- diff hygiene for the design-system heading override and docs.
 
 ## 2026-07-30 structural cleanup
 

@@ -1,8 +1,8 @@
 "use client";
 
 import { Download } from "lucide-react";
-import { DataTable, DataTableBody, DataTableCell, DataTableEmpty, DataTableHead, DataTableHeader, DataTableRow, DataTableToolbar } from "@/components/shared/data-table";
-import { Badge } from "@/components/monolith/badge";
+import { DataTable, DataTableBody, DataTableCell, DataTableEmpty, DataTableHead, DataTableHeader, DataTableRow, DataTableToolbar } from "@/components/data-display/data-table";
+import { Badge } from "@/components/ui/badge";
 import { getChaDocumentStatusBadgeVariant } from "@/lib/cha-badges";
 import type { CustomerPortalShipmentDetailData } from "@/modules/customer-portal/shipments";
 

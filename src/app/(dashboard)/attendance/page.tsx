@@ -5,7 +5,7 @@ import {
   PeopleSectionHeader,
   PeopleSummary,
   PeopleSummaryGrid,
-} from "@/components/monolith/people-workspace";
+} from "@/modules/people/components/people-workspace";
 import { getSession } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { getVisibleSectionById } from "@/lib/navigation";

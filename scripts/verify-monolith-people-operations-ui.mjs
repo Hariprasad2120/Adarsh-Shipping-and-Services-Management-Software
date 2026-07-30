@@ -26,7 +26,9 @@ const activeHrmsViews = [
   "user-control-page.tsx",
   "users-table.tsx",
   "work-reports.tsx",
-].map((file) => path.join(repositoryRoot, "src", "components", "hrms", file));
+].map((file) =>
+  path.join(repositoryRoot, "src", "modules", "hrms", "components", file),
+);
 
 function walk(directory, predicate, found = []) {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
@@ -105,7 +107,7 @@ for (const signal of [
   );
 }
 
-const peopleWorkspace = read("src/components/monolith/people-workspace.tsx");
+const peopleWorkspace = read("src/modules/people/components/people-workspace.tsx");
 for (const route of routes.filter((route) => !route.includes("["))) {
   assert(
     peopleWorkspace.includes(`"${route}"`),
@@ -174,7 +176,7 @@ for (const sourcePath of scopedSources) {
   }
 }
 
-const peopleControls = read("src/components/monolith/people-controls.tsx");
+const peopleControls = read("src/modules/people/components/people-controls.tsx");
 for (const component of [
   "PeopleControlButton",
   "PeopleControlInput",
@@ -184,7 +186,7 @@ for (const component of [
   assert(peopleControls.includes(component), `Missing shared ${component}.`);
 }
 
-const peopleDataTable = read("src/components/monolith/people-data-table.tsx");
+const peopleDataTable = read("src/modules/people/components/people-data-table.tsx");
 for (const component of [
   "DataTable",
   "DataTableToolbar",
@@ -218,10 +220,10 @@ const catalogue = read(
   "src/app/(dashboard)/admin/design-system/design-system-client.tsx",
 );
 for (const catalogueEntry of [
-  '["people", "People ops", "HR"]',
-  "PeopleWorkspaceFrame",
-  "PeopleControlButton",
-  "PeopleDataTable",
+  'name: "People operations"',
+  '* as PeopleComponents from "@/modules/people/components/people-workspace"',
+  '* as PeopleDataComponents from "@/modules/people/components/people-data-table"',
+  "exports: { ...PeopleComponents, ...PeopleDataComponents }",
   "WorkspaceDialog",
   "PeopleLoadingState",
 ]) {
@@ -238,7 +240,7 @@ const behaviorSources = {
   overtime: read("src/app/(dashboard)/attendance/ot/ot-client.tsx"),
   overtimeActions: read("src/app/(dashboard)/attendance/ot/actions.ts"),
   punch: read("src/app/(dashboard)/attendance/punch/punch-card.tsx"),
-  tracking: read("src/components/hrms/tracking-dashboard-view.tsx"),
+  tracking: read("src/modules/hrms/components/tracking-dashboard-view.tsx"),
 };
 for (const [label, signals] of Object.entries({
   biometric: ["biometric", "sync"],

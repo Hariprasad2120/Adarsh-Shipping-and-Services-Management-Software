@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { listAccounts } from "@/modules/accounting/service";
 import { NewJVClient } from "./new-jv-client";
-import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+import { AccountingRoutePageHeader } from "@/modules/accounting/components/accounting-workspace";
 
 export default async function NewJournalEntryPage() {
   const session = await getSession();

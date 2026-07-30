@@ -9,7 +9,7 @@ import {
   AccountingSection,
   AccountingStatus,
   AccountingTable,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 
 export default async function JournalEntriesPage() {
   const session = await getSession();

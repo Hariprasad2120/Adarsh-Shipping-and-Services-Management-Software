@@ -7,13 +7,13 @@ import {
   PerformanceTableHead,
   PerformanceTableHeader,
   PerformanceTableRow,
-} from "@/components/monolith/performance-workspace";
+} from "@/modules/performance/components/performance-workspace";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/monolith/card";
+} from "@/components/ui/card";
 import { SlabForm } from "./slab-form";
 import { deleteSlabAction, seedSlabsAction } from "./actions";
 import { GRADE_BANDS } from "@/modules/ams/criteria-config";
@@ -21,7 +21,7 @@ import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { redirect } from "next/navigation";
-import { Button } from "@/components/monolith/button";
+import { Button } from "@/components/ui/button";
 import { Layers, Plus, Trash2 } from "lucide-react";
 
 const gradeColors: Record<string, string> = {

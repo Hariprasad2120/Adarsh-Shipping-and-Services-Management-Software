@@ -4,7 +4,7 @@ import {
   CrmMetric,
   CrmMetrics,
   CrmPermissionState,
-} from "@/components/monolith/crm-workspace";
+} from "@/modules/crm/components/workspace/crm-workspace";
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";

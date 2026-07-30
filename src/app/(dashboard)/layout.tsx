@@ -1,4 +1,4 @@
-import { NotificationProvider } from "@/components/notifications/notification-provider";
+import { NotificationProvider } from "@/modules/notifications/components/notification-provider";
 import { SessionSync } from "@/components/providers/session-sync";
 import { CapsProvider } from "@/lib/caps-context";
 import { getDashboardContext } from "@/lib/dashboard-context";

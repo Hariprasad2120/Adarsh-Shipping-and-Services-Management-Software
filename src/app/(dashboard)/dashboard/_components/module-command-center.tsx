@@ -3,7 +3,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
-import { WorkspaceSectionHeading } from "@/components/monolith/workspace";
+import { WorkspaceSectionHeading } from "@/components/layout/workspace";
 import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
 import { AttendanceGraphic } from "../graphics/AttendanceGraphic";
 import { CommunicationGraphic } from "../graphics/CommunicationGraphic";

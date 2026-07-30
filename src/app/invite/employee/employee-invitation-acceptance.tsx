@@ -3,8 +3,8 @@
 import { Check, Eye, EyeOff, MailCheck, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MonolithAction } from "@/components/monolith/foundation";
-import { Input } from "@/components/monolith/input";
+import { MonolithAction } from "@/components/ui/foundation";
+import { Input } from "@/components/ui/input";
 
 type InvitationDetails = {
   employeeName: string;

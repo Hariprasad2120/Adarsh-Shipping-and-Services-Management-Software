@@ -1,6 +1,6 @@
 "use client";
 
-import { PerformanceErrorState } from "@/components/monolith/performance-workspace";
+import { PerformanceErrorState } from "@/modules/performance/components/performance-workspace";
 
 export default function LmsError({
   error,

@@ -1,8 +1,8 @@
 "use client";
 
-import { CrmButton, CrmInput, CrmTextarea } from "@/components/monolith/crm-workspace";
+import { CrmButton, CrmInput, CrmTextarea } from "@/modules/crm/components/workspace/crm-workspace";
 
-import { NativeSelect } from "@/components/monolith/native-select";
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,10 +12,10 @@ import { ConvertModal } from "./convert-modal";
 import { RemarksModal } from "./remarks-modal";
 import { InterestedModal } from "./interested-modal";
 import { FollowUpModal } from "./follow-up-modal";
-import { NotesPanel } from "../../_components/notes-panel";
-import { AttachmentsPanel } from "../../_components/attachments-panel";
-import { ActivitiesPanel } from "../../_components/activities-panel";
-import { TimelinePanel } from "../../_components/timeline-panel";
+import { NotesPanel } from "@/modules/crm/components/records/notes-panel";
+import { AttachmentsPanel } from "@/modules/crm/components/records/attachments-panel";
+import { ActivitiesPanel } from "@/modules/crm/components/records/activities-panel";
+import { TimelinePanel } from "@/modules/crm/components/records/timeline-panel";
 import {Edit2,RefreshCcw,Trash2,Building,MapPin,Info,Ship,Plane,Clock,Timer,History,TrendingUp,Plus} from "lucide-react";
 
 interface LeadDetailWrapperProps {

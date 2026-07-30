@@ -11,10 +11,10 @@
     "src/app/(dashboard)/dashboard/**/*.tsx",
     "src/app/(dashboard)/account/security/page.tsx",
     "src/app/(dashboard)/account/security/sessions-client.tsx",
-    "src/components/monolith/index.ts",
-    "src/components/monolith/app-shell.tsx",
-    "src/components/monolith/foundation.tsx",
-    "src/components/monolith/workspace.tsx",
+    "src/components/ui/index.ts",
+    "src/modules/core/components/monolith-app-shell.tsx",
+    "src/components/ui/foundation.tsx",
+    "src/components/layout/workspace.tsx",
     "src/lib/route-labels.ts"
   ],
   "exclude": [

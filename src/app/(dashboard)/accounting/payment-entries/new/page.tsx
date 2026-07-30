@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { listAccounts } from "@/modules/accounting/service";
 import { NewPaymentClient } from "./new-payment-client";
-import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+import { AccountingRoutePageHeader } from "@/modules/accounting/components/accounting-workspace";
 
 export default async function NewPaymentEntryPage() {
   const session = await getSession();

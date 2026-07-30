@@ -1,4 +1,4 @@
-import { CommunicationLoadingState } from "@/components/monolith/communication-workspace";
+import { CommunicationLoadingState } from "@/modules/communication/components/workspace/communication-workspace";
 
 export default function CommunicationLoading() {
   return (

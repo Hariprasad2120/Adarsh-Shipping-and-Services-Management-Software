@@ -2,7 +2,7 @@
 
 import { ArrowLeftRight, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { DateInput } from "@/components/monolith/date-input";
+import { DateInput } from "@/components/ui/date-input";
 import {
   AccountingAction,
   AccountingAlert,
@@ -17,7 +17,7 @@ import {
   AccountingStatus,
   AccountingTable,
   AccountingTextarea,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 import { recordBankTransferAction } from "@/modules/accounting/actions";
 
 interface BankAccount {

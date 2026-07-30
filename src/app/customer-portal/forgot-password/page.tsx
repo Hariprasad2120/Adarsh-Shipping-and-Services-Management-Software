@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PortalActivationForm, PortalForgotPasswordRequestForm } from "../_components/client-actions";
+import { PortalActivationForm, PortalForgotPasswordRequestForm } from "@/modules/customer-portal/components/client-actions";
 
 export default async function CustomerPortalForgotPasswordPage({
   searchParams,

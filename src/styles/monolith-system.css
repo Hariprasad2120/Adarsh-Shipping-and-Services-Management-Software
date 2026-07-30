@@ -3031,6 +3031,89 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
 .mnx-table-card {
   overflow: hidden;
+  border: 1px solid var(--mnx-border);
+  border-radius: 20px;
+  background: var(--mnx-card);
+  box-shadow: var(--mnx-theme-shadow-soft);
+}
+
+.mnx-operational-table-header,
+.mnx-table-card > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--mnx-border);
+}
+
+.mnx-operational-table-header > div > span,
+.mnx-table-card > header > div > span {
+  color: var(--mnx-muted);
+  font-size: 9px;
+  font-weight: 720;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mnx-operational-table-header h3,
+.mnx-table-card > header h3 {
+  margin: 4px 0 0;
+  color: var(--mnx-text);
+  font-size: 18px;
+  font-weight: 520;
+  letter-spacing: -0.02em;
+}
+
+.mnx-operational-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.mnx-operational-table-actions .mnx-cha-actions-search,
+.mnx-operational-table-actions .mnx-cha-jobs-toolbar {
+  width: auto;
+  min-width: min(300px, 100%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+}
+
+.mnx-operational-table-actions .mnx-cha-jobs-toolbar {
+  min-width: 0;
+}
+
+.mnx-operational-table-actions .mnx-cha-actions-search .mnx-field-control,
+.mnx-operational-table-actions .mnx-cha-jobs-toolbar .mnx-search-field {
+  min-width: 0;
+}
+
+.mnx-operational-filter-group {
+  display: flex;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--mnx-page);
+}
+
+.mnx-operational-filter-group button {
+  height: 29px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--mnx-muted);
+  background: transparent;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.mnx-operational-filter-group button.active {
+  color: var(--mnx-accent-contrast);
+  background: var(--mnx-highlight-gradient);
 }
 
 .mnx-table-toolbar,
@@ -3197,6 +3280,68 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   font-weight: 650;
 }
 
+.mnx-operational-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.mnx-operational-mode-icon {
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 7px;
+  color: var(--mnx-accent-contrast);
+  background: var(--mnx-highlight-gradient);
+}
+
+.mnx-operational-table-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.mnx-operational-table-status::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.mnx-operational-table-status.is-success {
+  color: var(--mnx-success);
+}
+
+.mnx-operational-table-status.is-warning {
+  color: var(--mnx-warning);
+}
+
+.mnx-operational-table-status.is-danger {
+  color: var(--mnx-danger);
+}
+
+.mnx-operational-table-status.is-info {
+  color: var(--mnx-info);
+}
+
+.mnx-operational-row-action {
+  display: inline-grid;
+  place-items: center;
+  min-width: 27px;
+  min-height: 27px;
+  border: 0;
+  color: var(--mnx-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
 .mnx-person-cell {
   min-width: 205px;
   display: flex;
@@ -3287,12 +3432,63 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
 .mnx-table-footer {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
   gap: 18px;
   padding: 14px 24px;
   border-top: 1px solid var(--mnx-border);
   color: var(--mnx-muted);
   font-size: 9px;
+}
+
+.mnx-operational-pagination {
+  display: flex;
+  gap: 3px;
+}
+
+.mnx-operational-pagination button {
+  width: 27px;
+  height: 27px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--mnx-muted);
+  background: var(--mnx-page);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.mnx-operational-pagination button.active {
+  color: var(--mnx-accent-contrast);
+  background: var(--mnx-highlight-gradient);
+}
+
+.mnx-operational-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+@media (max-width: 760px) {
+  .mnx-operational-table-header,
+  .mnx-table-card > header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mnx-operational-table-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .mnx-operational-table-actions .mnx-cha-actions-search,
+  .mnx-operational-table-actions .mnx-cha-jobs-toolbar {
+    width: 100%;
+  }
+
+  .mnx-table-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 /* Shared production workspace primitives used by migrated routes. */

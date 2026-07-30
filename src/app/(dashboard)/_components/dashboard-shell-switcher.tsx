@@ -2,7 +2,7 @@
 
 import { DashboardChromeProvider } from "@/components/layout/dashboard-chrome";
 import { MainShell } from "@/components/layout/main-shell";
-import { MonolithAppShell } from "@/components/monolith/app-shell";
+import { MonolithAppShell } from "@/modules/core/components/monolith-app-shell";
 import { PageAnimator } from "@/components/feedback/page-animator";
 import { Sidebar } from "@/components/layout/sidebar";
 import { usePathname } from "next/navigation";

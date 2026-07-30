@@ -7,13 +7,8 @@ import {
   ToggleLeft,
   ToggleRight,
 } from "lucide-react";
-import {
-  Button,
-  WorkspaceAlert,
-  WorkspaceBadge,
-  WorkspacePanel,
-  WorkspacePanelHeader,
-} from "@/components/monolith";
+import { Button } from "@/components/ui/button";
+import { WorkspaceAlert, WorkspaceBadge, WorkspacePanel, WorkspacePanelHeader } from "@/components/layout/workspace";
 import type {
   ModuleControlItem,
   ToggleableModuleSectionId,

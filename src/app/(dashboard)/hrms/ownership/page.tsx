@@ -1,21 +1,21 @@
 import {
   PeopleControlInput as MnxInput,
   PeopleControlTable as MnxTable,
-} from "@/components/monolith/people-controls";
-import { NativeSelect } from "@/components/monolith/native-select";
+} from "@/modules/people/components/people-controls";
+import { NativeSelect } from "@/components/ui/native-select";
 import Link from "next/link";
 import { Fragment } from "react";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
-import { Button } from "@/components/monolith/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/monolith/card";
-import { Label } from "@/components/monolith/label";
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { redirect } from "next/navigation";
 import { Users, UserCheck, Building2, ChevronRight } from "lucide-react";
 import {

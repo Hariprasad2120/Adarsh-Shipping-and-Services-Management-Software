@@ -1,13 +1,8 @@
 import { ArrowUpRight, Boxes, Building2, ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import {
-  PublicMonolithShell,
-  WorkspaceMetric,
-  WorkspacePage,
-  WorkspacePageHeader,
-  WorkspaceSectionHeading,
-} from "@/components/monolith";
+import { PublicMonolithShell } from "@/modules/auth/components/public-workspace";
+import { WorkspaceMetric, WorkspacePage, WorkspacePageHeader, WorkspaceSectionHeading } from "@/components/layout/workspace";
 import { RootModuleControlClient } from "@/modules/core/components/root-module-control-client";
 import { RootSignOutButton } from "@/modules/core/components/root-signout-button";
 import { MODULE_CONTROL_ITEMS } from "@/modules/core/organisation/module-config";

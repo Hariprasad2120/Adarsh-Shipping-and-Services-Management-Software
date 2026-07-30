@@ -3,14 +3,14 @@
 import {
   PerformanceControlButton,
   PerformanceControlTextarea,
-} from "@/components/monolith/performance-workspace";
+} from "@/modules/performance/components/performance-workspace";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Info, Users } from "lucide-react";
-import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
-import { FormPreviewModal } from "@/components/ams/form-preview-modal";
-import { Button } from "@/components/monolith/button";
+import { CycleProgressCard } from "@/modules/ams/components/cycle-progress-card";
+import { FormPreviewModal } from "@/modules/ams/components/form-preview-modal";
+import { Button } from "@/components/ui/button";
 import type {
   AppraisalSelfFormTemplate,
   SelfAssessmentAnswers,
@@ -18,9 +18,9 @@ import type {
   ManagementReviewAnswers,
 } from "@/modules/ams/criteria-config";
 import type { CriterionPoint } from "@/modules/ams/types";
-import { useNotifications } from "@/components/notifications/notification-provider";
-import { DropdownSelect } from "@/components/monolith/dropdown-select";
-import { Input } from "@/components/monolith/input";
+import { useNotifications } from "@/modules/notifications/components/notification-provider";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Input } from "@/components/ui/input";
 
 type Reviewer = {
   id: string;

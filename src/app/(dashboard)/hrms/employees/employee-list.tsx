@@ -1,16 +1,16 @@
-import { PeopleControlTable as MnxTable } from "@/components/monolith/people-controls";
+import { PeopleControlTable as MnxTable } from "@/modules/people/components/people-controls";
 import Image from "next/image";
 import { toDisplayTitleCase } from "@/lib/text-case";
 import {
   Badge,
   DataTablePrimaryLinkCell,
-} from "@/components/monolith/people-data-table";
+} from "@/modules/people/components/people-data-table";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/monolith/card";
+} from "@/components/ui/card";
 import { EmployeeAccountActions } from "./employee-account-actions";
 
 type UserRoleName =

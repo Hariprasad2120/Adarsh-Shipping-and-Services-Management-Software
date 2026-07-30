@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/monolith/badge";
-import { Button } from "@/components/monolith/button";
-import { Modal } from "@/components/monolith/modal";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
 import {
   DataTable,
   DataTableBody,
@@ -13,7 +13,7 @@ import {
   DataTableHead,
   DataTableHeader,
   DataTableToolbar,
-} from "@/components/shared/data-table";
+} from "@/components/data-display/data-table";
 import type { getCustomerPortalShipmentDetailData } from "@/modules/customer-portal/shipments";
 
 type ChecklistItem = NonNullable<Awaited<ReturnType<typeof getCustomerPortalShipmentDetailData>>>["checklists"][number];

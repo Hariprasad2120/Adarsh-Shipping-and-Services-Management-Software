@@ -1,21 +1,21 @@
 "use client";
 
-import { PeopleControlTable as MnxTable } from "@/components/monolith/people-controls";
+import { PeopleControlTable as MnxTable } from "@/modules/people/components/people-controls";
 
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { FileSpreadsheet, IndianRupee, TrendingUp } from "lucide-react";
-import { DemoFillButton } from "@/components/shared/demo-fill-button";
+import { DemoFillButton } from "@/components/forms/development/demo-fill-button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/monolith/card";
-import { Button } from "@/components/monolith/button";
-import { DropdownSelect } from "@/components/monolith/dropdown-select";
-import { Input } from "@/components/monolith/input";
-import { useNotifications } from "@/components/notifications/notification-provider";
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Input } from "@/components/ui/input";
+import { useNotifications } from "@/modules/notifications/components/notification-provider";
 import { getSalaryDemoValues } from "@/lib/demo-fill";
 import {
   cityLabel,

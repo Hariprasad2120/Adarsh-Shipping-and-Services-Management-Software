@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { LockKeyhole, X } from "lucide-react";
 
-import { Button } from "@/components/monolith/button";
-import { ChaDialogLayer } from "@/components/monolith/cha-workspace";
+import { Button } from "@/components/ui/button";
+import { ChaDialogLayer } from "@/modules/cha/components/workspace/cha-workspace";
 
 interface AccessProhibitedCardProps {
   message: string;

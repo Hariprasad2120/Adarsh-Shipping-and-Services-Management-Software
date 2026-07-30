@@ -16,19 +16,8 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import {
-  WorkspaceAction,
-  WorkspaceBadge,
-  WorkspaceEmptyState,
-  WorkspaceField,
-  WorkspaceInput,
-  WorkspaceMetric,
-  WorkspacePage,
-  WorkspacePageHeader,
-  WorkspacePanel,
-  WorkspacePanelHeader,
-  WorkspaceSelect,
-} from "@/components/monolith";
+import { WorkspaceAction, WorkspaceBadge, WorkspaceField, WorkspaceInput, WorkspaceMetric, WorkspacePage, WorkspacePageHeader, WorkspacePanel, WorkspacePanelHeader, WorkspaceSelect } from "@/components/layout/workspace";
+import { WorkspaceEmptyState } from "@/components/feedback/workspace-states";
 import {
   benefits,
   ctaContent,

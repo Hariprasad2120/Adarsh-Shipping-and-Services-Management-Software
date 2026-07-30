@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
-import { HrmsAppSettingsPage } from "@/components/hrms/app-settings-page";
+import { HrmsAppSettingsPage } from "@/modules/hrms/components/app-settings-page";
 
 export default async function HrmsSettingsRoute() {
   const session = await getSession();

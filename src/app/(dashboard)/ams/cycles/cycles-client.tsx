@@ -3,7 +3,7 @@
 import {
   PerformanceControlButton,
   PerformanceTableRow,
-} from "@/components/monolith/performance-workspace";
+} from "@/modules/performance/components/performance-workspace";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
@@ -16,7 +16,7 @@ import {
   DataTableHeader,
   DataTableRow,
   DataTableToolbar,
-} from "@/components/monolith/workspace-data-table";
+} from "@/modules/people/components/workspace-data-table";
 
 type Cycle = {
   id: string;

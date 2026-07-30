@@ -1,7 +1,7 @@
 "use client";
 
 import { LogOut } from "lucide-react";
-import { Button } from "@/components/monolith/button";
+import { Button } from "@/components/ui/button";
 import { performLogout } from "@/lib/logout";
 
 export function RootSignOutButton() {

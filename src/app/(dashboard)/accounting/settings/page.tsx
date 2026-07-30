@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getAccountingSettings, listAccounts } from "@/modules/accounting/service";
 import { SettingsClient } from "./settings-client";
-import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+import { AccountingRoutePageHeader } from "@/modules/accounting/components/accounting-workspace";
 
 export default async function AccountingSettingsPage() {
   const session = await getSession();

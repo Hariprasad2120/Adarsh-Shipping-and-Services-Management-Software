@@ -1,7 +1,7 @@
 import React from "react";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { TravelView } from "@/components/hrms/travel-view";
+import { TravelView } from "@/modules/hrms/components/travel-view";
 
 export default async function TravelPage() {
   const session = await getSession();

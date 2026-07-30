@@ -5,9 +5,9 @@ import { AutoBreadcrumb } from "@/components/navigation/auto-breadcrumb";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { MonaProvider, useMonaChat } from "@/components/mona/mona-provider";
+import { MonaProvider, useMonaChat } from "@/modules/mona/components/mona-provider";
 
-const MonaChat = dynamic(() => import("@/components/mona/mona-chat").then((mod) => mod.MonaChat), {
+const MonaChat = dynamic(() => import("@/modules/mona/components/mona-chat").then((mod) => mod.MonaChat), {
   ssr: false,
 });
 

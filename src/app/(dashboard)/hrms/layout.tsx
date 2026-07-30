@@ -1,4 +1,4 @@
-import { PeopleWorkspaceFrame } from "@/components/monolith/people-workspace";
+import { PeopleWorkspaceFrame } from "@/modules/people/components/people-workspace";
 
 export default function HrmsLayout({
   children,

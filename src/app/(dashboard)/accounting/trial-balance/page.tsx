@@ -1,6 +1,6 @@
 import { Filter } from "lucide-react";
 import { redirect } from "next/navigation";
-import { DateInput } from "@/components/monolith/date-input";
+import { DateInput } from "@/components/ui/date-input";
 import {
   AccountingAction,
   AccountingAlert,
@@ -11,7 +11,7 @@ import {
   AccountingSelect,
   AccountingTable,
   AccountingToolbar,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getTrialBalance } from "@/modules/accounting/reports";

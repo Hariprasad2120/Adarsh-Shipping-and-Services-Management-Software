@@ -4,8 +4,8 @@ import {
   CrmPanel,
   CrmSection,
   CrmStatus,
-} from "@/components/monolith/crm-workspace";
-import { getCrmWorkspaceDetails } from "../_components/crm-workspace-page";
+} from "@/modules/crm/components/workspace/crm-workspace";
+import { getCrmWorkspaceDetails } from "@/modules/crm/components/records/crm-workspace-page";
 
 interface CatchAllPageProps {
   params: Promise<{ slug: string[] }>;

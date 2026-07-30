@@ -3,11 +3,11 @@
 import {
   PeopleControlButton as MnxAction,
   PeopleControlInput as MnxInput,
-} from "@/components/monolith/people-controls";
+} from "@/modules/people/components/people-controls";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { DemoFillButton } from "@/components/shared/demo-fill-button";
+import { DemoFillButton } from "@/components/forms/development/demo-fill-button";
 import {
   Badge,
   DataTable,
@@ -18,9 +18,9 @@ import {
   DataTableHeader,
   DataTableRow,
   DataTableToolbar,
-} from "@/components/monolith/people-data-table";
-import { DropdownSelect } from "@/components/monolith/dropdown-select";
-import { Input } from "@/components/monolith/input";
+} from "@/modules/people/components/people-data-table";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Input } from "@/components/ui/input";
 import { getLeaveDemoValues } from "@/lib/demo-fill";
 
 type LeaveType = { id: string; name: string; paid: boolean };

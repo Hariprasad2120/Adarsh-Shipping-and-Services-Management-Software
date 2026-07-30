@@ -2,8 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
-import { InvoiceDetailsPage, type InvoiceDetailRecord, type SidebarInvoiceRecord } from "../_components/InvoiceDetailsPage";
-import type { ApprovalCaps } from "@/components/crm/ApprovalActionBar";
+import { InvoiceDetailsPage, type InvoiceDetailRecord, type SidebarInvoiceRecord } from "@/modules/crm/components/invoices/InvoiceDetailsPage";
+import type { ApprovalCaps } from "@/modules/crm/components/ApprovalActionBar";
 
 export default async function CrmInvoiceDetailsPage({
   params,

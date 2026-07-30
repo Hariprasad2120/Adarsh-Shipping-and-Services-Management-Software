@@ -1,12 +1,12 @@
 "use client";
 
-import { Input } from "@/components/monolith/input";
+import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search } from "lucide-react";
-import { Button } from "@/components/monolith/button";
-import { ChaFilterMenu as FilterMenu } from "@/components/monolith/cha-workspace";
+import { Button } from "@/components/ui/button";
+import { ChaFilterMenu as FilterMenu } from "@/modules/cha/components/workspace/cha-workspace";
 import { cn } from "@/lib/utils";
 
 type CustomerFilterKey = "status" | "portal" | "balance";

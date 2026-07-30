@@ -1,6 +1,6 @@
 "use client";
 
-import { PeopleControlInput as MnxInput } from "@/components/monolith/people-controls";
+import { PeopleControlInput as MnxInput } from "@/modules/people/components/people-controls";
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect */
 
 import React, { useState, useEffect, use, useCallback } from "react";
@@ -14,13 +14,13 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/monolith/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/monolith/card";
+} from "@/components/ui/card";
 
 export default function EmployeeLetterViewPage({
   params,

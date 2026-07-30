@@ -79,12 +79,12 @@ for (const requiredFile of [
   "src/app/(dashboard)/accounting/layout.tsx",
   "src/app/(dashboard)/accounting/loading.tsx",
   "src/app/(dashboard)/accounting/error.tsx",
-  "src/components/monolith/accounting-workspace.tsx",
+  "src/modules/accounting/components/accounting-workspace.tsx",
   "src/modules/accounting/components/accounting-invoice-form.tsx",
   "src/modules/accounting/components/accounting-invoice-detail.tsx",
-  "src/components/monolith/accounting-items.tsx",
+  "src/modules/accounting/components/accounting-items.tsx",
   "src/modules/accounting/components/accounting-commercial-document-form.tsx",
-  "src/components/monolith/accounting-delete-action.tsx",
+  "src/modules/accounting/components/accounting-delete-action.tsx",
 ]) {
   assert(existsSync(path.join(repositoryRoot, requiredFile)), `Missing ${requiredFile}.`);
 }
@@ -95,7 +95,7 @@ for (const signal of [
   'normalizedPathname.startsWith("/accounting/")',
 ]) assert(shellSwitcher.includes(signal), `Shell switcher is missing ${signal}.`);
 
-const workspace = read("src/components/monolith/accounting-workspace.tsx");
+const workspace = read("src/modules/accounting/components/accounting-workspace.tsx");
 for (const component of [
   "AccountingWorkspaceFrame",
   "AccountingRoutePageHeader",
@@ -114,9 +114,9 @@ const scopedSources = [
   ...[
     "src/modules/accounting/components/accounting-invoice-form.tsx",
     "src/modules/accounting/components/accounting-invoice-detail.tsx",
-    "src/components/monolith/accounting-items.tsx",
+    "src/modules/accounting/components/accounting-items.tsx",
     "src/modules/accounting/components/accounting-commercial-document-form.tsx",
-    "src/components/monolith/accounting-delete-action.tsx",
+    "src/modules/accounting/components/accounting-delete-action.tsx",
   ].map((relativePath) => path.join(repositoryRoot, relativePath)),
 ];
 const forbiddenPatterns = [

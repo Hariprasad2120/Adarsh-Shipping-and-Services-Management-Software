@@ -4,7 +4,7 @@ import {
   PeopleControlButton as MnxAction,
   PeopleControlInput as MnxInput,
   PeopleControlTable as MnxTable,
-} from "@/components/monolith/people-controls";
+} from "@/modules/people/components/people-controls";
 
 /* eslint-disable react-hooks/set-state-in-effect */
 

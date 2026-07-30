@@ -9,9 +9,9 @@ import {
   PerformanceTableHead,
   PerformanceTableHeader,
   PerformanceTableRow,
-} from "@/components/monolith/performance-workspace";
-import { NativeSelect } from "@/components/monolith/native-select";
-import { DateInput } from "@/components/monolith/date-input";
+} from "@/modules/performance/components/performance-workspace";
+import { NativeSelect } from "@/components/ui/native-select";
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";

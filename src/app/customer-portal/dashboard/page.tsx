@@ -10,9 +10,9 @@ import {
   Star,
   TriangleAlert,
 } from "lucide-react";
-import { Badge } from "@/components/monolith/badge";
-import { Button } from "@/components/monolith/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DataTable,
   DataTableBody,
@@ -21,7 +21,7 @@ import {
   DataTableHead,
   DataTableHeader,
   DataTableToolbar,
-} from "@/components/shared/data-table";
+} from "@/components/data-display/data-table";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { getCustomerPortalDashboardData } from "@/modules/customer-portal/dashboard";
 

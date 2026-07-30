@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { NewInvoiceClient } from "./new-invoice-client";
-import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+import { AccountingRoutePageHeader } from "@/modules/accounting/components/accounting-workspace";
 
 export default async function NewSalesInvoicePage() {
   const session = await getSession();

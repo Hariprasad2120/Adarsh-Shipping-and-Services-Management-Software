@@ -76,9 +76,9 @@ npm run catalogue:check
 ## Project structure
 
 ```text
-src/app/    Next.js routes and route composition
-src/components/monolith/  Canonical Monolith design system
-src/components/{layout,navigation,feedback,shared,providers}/  Shared UI ownership
+src/app/    Next.js routes and route-private composition
+src/components/ui/  Canonical Monolith primitives
+src/components/{data-display,forms,layout,navigation,feedback,providers}/  Shared UI ownership
 src/modules/ Feature-owned business logic and components
 prisma/     Database schema, migrations, and seed data
 public/     Static assets

@@ -1,13 +1,13 @@
 "use client";
 
-import { ChaTable } from "@/components/monolith/cha-workspace";
-import { DateInput } from "@/components/monolith/date-input";
-import { FileUploadField } from "@/components/monolith/file-upload-field";
+import { ChaTable } from "@/modules/cha/components/workspace/cha-workspace";
+import { DateInput } from "@/components/ui/date-input";
+import { FileUploadField } from "@/components/forms/file-upload/file-upload-field";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ExternalLink, History } from "lucide-react";
-import { Button } from "@/components/monolith/button";
+import { Button } from "@/components/ui/button";
 import * as actions from "@/modules/cha/actions";
 
 type DoExtension = {

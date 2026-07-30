@@ -8,22 +8,11 @@ import {
   LoaderCircle,
   ShieldCheck,
 } from "lucide-react";
-import { DemoFillButton } from "@/components/shared/demo-fill-button";
-import {
-  Button,
-  Input,
-  PublicActions,
-  PublicBrand,
-  PublicFooter,
-  PublicHeader,
-  PublicInset,
-  PublicMonolithShell,
-  PublicPanel,
-  PublicStage,
-  PublicStatus,
-  PublicStatusBadge,
-  WorkspaceField,
-} from "@/components/monolith";
+import { DemoFillButton } from "@/components/forms/development/demo-fill-button";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { PublicActions, PublicBrand, PublicFooter, PublicHeader, PublicInset, PublicMonolithShell, PublicPanel, PublicStage, PublicStatus, PublicStatusBadge } from "@/modules/auth/components/public-workspace";
+import { WorkspaceField } from "@/components/layout/workspace";
 import { getSetupDemoValues } from "@/lib/demo-fill";
 
 export default function SetupPage() {

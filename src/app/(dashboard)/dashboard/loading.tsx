@@ -1,4 +1,4 @@
-import { MonolithPage } from "@/components/monolith/foundation";
+import { MonolithPage } from "@/components/ui/foundation";
 
 export default function DashboardLoading() {
   return (

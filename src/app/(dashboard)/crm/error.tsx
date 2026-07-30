@@ -1,6 +1,6 @@
 "use client";
 
-import { CrmErrorState } from "@/components/monolith/crm-workspace";
+import { CrmErrorState } from "@/modules/crm/components/workspace/crm-workspace";
 
 export default function CrmError({
   error,

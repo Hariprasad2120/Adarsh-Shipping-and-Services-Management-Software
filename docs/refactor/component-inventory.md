@@ -1,46 +1,23 @@
 # Component inventory
 
-## Canonical shared ownership
+The complete AST-backed inventory is in
+[`component-usage-map.md`](component-usage-map.md). It covers every TSX, JSX,
+TS, JS, and CSS file under `src/components`, `src/app`, `src/modules`, and
+`src/styles`, including exports, static and dynamic importers, ownership,
+business/route/style signals, destination, and classification.
 
-| Location | Responsibility |
-| --- | --- |
-| `src/components/monolith` | Production Monolith primitives and cross-module workspace compositions |
-| `src/components/layout` | Dashboard chrome, shell, sidebar, and welcome bar |
-| `src/components/navigation` | Breadcrumb rendering/labels and global scroll navigation |
-| `src/components/feedback` | Page transition/animation feedback |
-| `src/components/shared` | Cross-module data table, clickable row, and development fixture fill control |
-| `src/components/providers` | Session synchronization provider |
-| `src/modules/core/components` | Root-only module control and sign-out behavior |
+Final inventory summary:
 
-## Moved active components
+- 899 files inspected;
+- 537 TSX/JSX component files;
+- zero remaining proposed path changes;
+- 43 uncertain or cross-module review entries retained;
+- no direct files under `src/components`;
+- no `src/components/monolith`;
+- no imports from retired component paths;
+- no imports into another route's private `_components`;
+- no duplicate primitive filenames outside `components/ui`.
 
-- `auto-breadcrumb.tsx`, `breadcrumb-label.tsx`, `breadcrumbs.tsx`, and
-  `scroll-navigator.tsx` to `components/navigation`
-- `dashboard-chrome.tsx`, `main-shell.tsx`, `sidebar.tsx`, and
-  `welcome-bar.tsx` to `components/layout`
-- `clickable-row.tsx`, `data-table.tsx`, and `demo-fill-button.tsx` to
-  `components/shared`
-- `page-animator.tsx` to `components/feedback`
-- `session-sync.tsx` to `components/providers`
-- root module control and sign-out clients to `modules/core/components`
-- three Accounting forms/details that import feature actions to
-  `modules/accounting/components`
-
-Every static import and source-path test/verification reference was updated.
-Component props and exports were not changed.
-
-## Confirmed dead component
-
-`src/components/module-home.tsx` had no production or test consumer. Its only
-reference outside historical documentation was as an entry expected inside a
-legacy ZIP archive. It duplicated module-card composition with hardcoded
-palette values and was removed. The archive reference remains valid because
-the archived path is historical.
-
-## Retained component groups
-
-Existing `ams`, `auth`, `cha`, `crm`, `hrms`, `items`, `landing-page`, `mona`,
-`monolith`, and `notifications` component directories remain in place. Their
-business ownership and/or cross-route consumption requires a separate,
-feature-by-feature migration and visual matrix; similarity of names is not
-proof that they can be merged.
+Movement details and ownership rationale are recorded in
+[`component-migration-map.md`](component-migration-map.md) and the final
+[`component-reorganization-report.md`](component-reorganization-report.md).

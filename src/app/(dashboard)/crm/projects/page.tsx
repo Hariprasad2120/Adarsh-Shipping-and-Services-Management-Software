@@ -1,12 +1,12 @@
-import { CrmButton, CrmInput, CrmTextarea, CrmConfigurationState, CrmPermissionState } from "@/components/monolith/crm-workspace";
-import { NativeSelect } from "@/components/monolith/native-select";
+import { CrmButton, CrmInput, CrmTextarea, CrmConfigurationState, CrmPermissionState } from "@/modules/crm/components/workspace/crm-workspace";
+import { NativeSelect } from "@/components/ui/native-select";
 import React from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { listProjects } from "@/modules/crm/service";
 import { requirePermission } from "@/lib/rbac";
-import { DateInput } from "@/components/monolith/date-input";
+import { DateInput } from "@/components/ui/date-input";
 import {
   Search,
   FolderKanban,
@@ -14,7 +14,7 @@ import {
   Save,
 } from "lucide-react";
 import { createProjectAction, deleteProjectAction } from "@/modules/crm/actions";
-import { DeleteRecordButton } from "../_components/delete-record-button";
+import { DeleteRecordButton } from "@/modules/crm/components/delete-record-button";
 
 interface SearchParams {
   search?: string;

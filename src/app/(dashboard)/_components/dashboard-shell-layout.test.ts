@@ -131,7 +131,7 @@ describe("CHA dashboard shell layout safeguards", () => {
 
   it("keeps every Monolith workspace submenu interactive and accessible", () => {
     const appShellSource = readFileSync(
-      join(repoRoot, "src/components/monolith/app-shell.tsx"),
+      join(repoRoot, "src/modules/core/components/monolith-app-shell.tsx"),
       "utf8",
     );
     const systemStyles = readFileSync(

@@ -1,6 +1,6 @@
 "use client";
 
-import { AdminErrorState } from "@/components/monolith/admin-workspace";
+import { AdminErrorState } from "@/modules/admin/components/admin-workspace";
 
 export default function AdminError({
   error,

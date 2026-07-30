@@ -1,14 +1,14 @@
 "use client";
 
-import { CrmButton, CrmInput, CrmTable } from "@/components/monolith/crm-workspace";
+import { CrmButton, CrmInput, CrmTable } from "@/modules/crm/components/workspace/crm-workspace";
 
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { deleteAccountAction } from "@/modules/crm/actions";
-import { NotesPanel } from "../../_components/notes-panel";
-import { TimelinePanel } from "../../_components/timeline-panel";
+import { NotesPanel } from "@/modules/crm/components/records/notes-panel";
+import { TimelinePanel } from "@/modules/crm/components/records/timeline-panel";
 import {Edit2,Users,FileText,Plus,Search,ChevronDown,X,Building,MapPin,FileText as StatementIcon,DollarSign,TrendingUp,User as UserIcon,MoreHorizontal,ArrowRight} from "lucide-react";
 
 type CustomerContact = {

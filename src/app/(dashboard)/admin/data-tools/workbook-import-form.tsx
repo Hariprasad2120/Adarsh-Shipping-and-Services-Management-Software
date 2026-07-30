@@ -3,11 +3,8 @@
 import { useState, useTransition } from "react";
 import { Upload, FileSpreadsheet, CheckCircle, AlertTriangle } from "lucide-react";
 import { importWorkbookAction } from "./actions";
-import {
-  AdminButton,
-  AdminInput,
-  WorkspaceAlert,
-} from "@/components/monolith";
+import { AdminButton, AdminInput } from "@/modules/admin/components/admin-workspace";
+import { WorkspaceAlert } from "@/components/layout/workspace";
 
 export function WorkbookImportForm() {
   const [message, setMessage] = useState<string | null>(null);

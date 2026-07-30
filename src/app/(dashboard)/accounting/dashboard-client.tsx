@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { DateInput } from "@/components/monolith/date-input";
+import { DateInput } from "@/components/ui/date-input";
 import {
   AccountingAction,
   AccountingActionLink,
@@ -27,7 +27,7 @@ import {
   AccountingMetrics,
   AccountingSection,
   AccountingStatus,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 import { updateTransactionLockAction } from "@/modules/accounting/actions";
 
 interface DashboardClientProps {

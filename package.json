@@ -38,7 +38,8 @@
     "catalogue:check": "npx tsx scripts/check-product-catalogue.ts",
     "test": "tsx scripts/run-with-staging-env.ts vitest run",
     "test:playwright:performance": "node scripts/playwright-performance-security.mjs",
-    "audit:structure": "node scripts/verify-code-organization.mjs",
+    "architecture:check": "node scripts/verify-code-organization.mjs",
+    "audit:structure": "npm run architecture:check",
     "audit:unused": "npx tsc --noEmit --noUnusedLocals --noUnusedParameters",
     "quality": "npm run audit:structure && npm run lint && npm test && npm run build"
   },

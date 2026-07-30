@@ -301,7 +301,7 @@ const explicitlyOptimized = new Set([
   "src/app/api/cron/todo-reminders/route.ts",
   "src/app/api/dashboard/organization/route.ts",
   "src/app/api/runtime/updates/route.ts",
-  "src/components/notifications/notification-provider.tsx",
+  "src/modules/notifications/components/notification-provider.tsx",
   "src/modules/cha/jobs/queries.ts",
   "src/modules/cha/warnings/queries.ts",
 ]);

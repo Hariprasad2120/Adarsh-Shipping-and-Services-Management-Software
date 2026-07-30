@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getChartOfAccounts } from "@/modules/accounting/service";
 import { AccountsClient } from "./accounts-client";
-import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+import { AccountingRoutePageHeader } from "@/modules/accounting/components/accounting-workspace";
 
 export default async function ChartOfAccountsPage() {
   const session = await getSession();

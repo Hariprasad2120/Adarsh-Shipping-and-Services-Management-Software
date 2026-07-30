@@ -1,12 +1,12 @@
-import { CrmTable, CrmConfigurationState } from "@/components/monolith/crm-workspace";
+import { CrmTable, CrmConfigurationState } from "@/modules/crm/components/workspace/crm-workspace";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Prisma } from "@/generated/prisma/client";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { deleteAccountAction } from "@/modules/crm/actions";
-import { DeleteRecordButton } from "../_components/delete-record-button";
-import { Badge } from "@/components/monolith/badge";
+import { DeleteRecordButton } from "@/modules/crm/components/delete-record-button";
+import { Badge } from "@/components/ui/badge";
 import {
   CheckCircle2,
   Eye,
@@ -19,7 +19,7 @@ import {
 import {
   ChaMetricCard,
   ChaPageHeader,
-} from "../../cha/_components/cha-operations-shared";
+} from "@/modules/cha/components/workspace/cha-operations-shared";
 import { CustomersFilterBar } from "../../cha/customers/customers-filter-bar";
 
 interface SearchParams {

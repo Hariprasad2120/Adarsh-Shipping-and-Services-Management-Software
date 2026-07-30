@@ -1,12 +1,12 @@
 "use client";
 
-import { PeopleControlButton as MnxAction } from "@/components/monolith/people-controls";
+import { PeopleControlButton as MnxAction } from "@/modules/people/components/people-controls";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/monolith/button";
-import { Input } from "@/components/monolith/input";
-import { WorkspaceDialog } from "@/components/monolith/workspace-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { WorkspaceDialog } from "@/components/layout/workspace-dialog";
 
 type Division = { id: string; name: string };
 type Department = {

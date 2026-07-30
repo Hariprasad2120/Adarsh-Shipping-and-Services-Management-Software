@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PortalActivationForm } from "../_components/client-actions";
+import { PortalActivationForm } from "@/modules/customer-portal/components/client-actions";
 
 export default async function CustomerPortalActivatePage({
   searchParams,

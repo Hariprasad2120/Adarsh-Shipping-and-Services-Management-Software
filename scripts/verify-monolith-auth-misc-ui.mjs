@@ -70,7 +70,7 @@ const routeSources = [
   "src/app/(auth)/setup/page.tsx",
   "src/app/google-chat-link/page.tsx",
   "src/app/verify/[id]/page.tsx",
-  "src/components/auth/monolith-logistics-login.tsx",
+  "src/modules/auth/components/monolith-logistics-login.tsx",
   "src/modules/core/components/root-module-control-client.tsx",
   "src/modules/core/components/root-signout-button.tsx",
 ];
@@ -115,7 +115,7 @@ for (const relativePath of routeSources) {
   }
 }
 
-const publicWorkspace = read("src/components/monolith/public-workspace.tsx");
+const publicWorkspace = read("src/modules/auth/components/public-workspace.tsx");
 for (const component of [
   "PublicMonolithShell",
   "PublicBrand",
@@ -215,7 +215,7 @@ for (const routeSignal of [
 const behaviorSources = {
   root: read("src/app/page.tsx"),
   rootControl: read("src/modules/core/components/root-module-control-client.tsx"),
-  login: read("src/components/auth/monolith-logistics-login.tsx"),
+  login: read("src/modules/auth/components/monolith-logistics-login.tsx"),
   setup: read("src/app/(auth)/setup/page.tsx"),
   verify: read("src/app/verify/[id]/page.tsx"),
   googleChatLink: read("src/app/google-chat-link/page.tsx"),

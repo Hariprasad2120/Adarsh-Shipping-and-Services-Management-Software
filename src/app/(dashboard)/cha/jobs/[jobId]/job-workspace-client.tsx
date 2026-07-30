@@ -5,18 +5,18 @@ import {
   ChaModal as Modal,
   ChaNativeSelect as NativeSelect,
   ChaTable,
-} from "@/components/monolith/cha-workspace";
-import { Textarea } from "@/components/monolith/textarea";
-import { DateInput } from "@/components/monolith/date-input";
+} from "@/modules/cha/components/workspace/cha-workspace";
+import { Textarea } from "@/components/ui/textarea";
+import { DateInput } from "@/components/ui/date-input";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FileText, Upload, CheckCircle2, AlertTriangle, FolderOpen, ArrowRight, ShieldCheck, AlertCircle, Plus, Trash2, Check, Database, ExternalLink, Undo2, RotateCcw, Mail, History, ChevronDown, ChevronLeft, ChevronRight, Pencil, Lock, BarChart2, CreditCard, ClipboardList, HelpCircle, Clock3, LoaderCircle, LockKeyhole, Search, Maximize2, Copy, UserRound, CalendarDays, Building2, Package, MapPin, Plane, Ship, Bookmark, RefreshCcw, Zap, Boxes, Moon, X, } from "lucide-react";
-import { Button } from "@/components/monolith/button";
-import { Badge } from "@/components/monolith/badge";
-import { FileUploadField } from "@/components/monolith/file-upload-field";
-import { Input } from "@/components/monolith/input";
-import { WorkspaceSectionHeading } from "@/components/monolith/workspace";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { FileUploadField } from "@/components/forms/file-upload/file-upload-field";
+import { Input } from "@/components/ui/input";
+import { WorkspaceSectionHeading } from "@/components/layout/workspace";
 import * as actions from "@/modules/cha/actions";
 import { DoValidityPanel } from "./do-validity-panel";
 import {
@@ -27,12 +27,12 @@ import {
   WorkflowDocumentsSectionHeader,
   type WorkflowDocumentRequirement,
   type WorkflowDocumentVersion,
-} from "./workflow-documents-section";
-import { NeonCheckbox } from "@/components/monolith/neon-checkbox";
+} from "@/modules/cha/components/jobs/workflow-documents-section";
+import { NeonCheckbox } from "@/components/ui/neon-checkbox";
 import {
   ChaDueDateWarningNote,
-} from "@/app/(dashboard)/cha/_components/cha-due-date-warning-note";
-import type { DueDateWarningViewModel } from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
+} from "@/modules/cha/components/warnings/cha-due-date-warning-note";
+import type { DueDateWarningViewModel } from "@/modules/cha/components/warnings/cha-due-date-warning-indicator";
 import {
   formatChaBadgeLabel,
   getChaDocumentStatusBadgeVariant,

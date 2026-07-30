@@ -1,0 +1,123 @@
+/*
+ * Production host overrides for the canonical Monolith design-system reference.
+ *
+ * The visual source is intentionally kept equivalent to the read-only v11
+ * reference. These rules only isolate the catalogue from the authenticated
+ * dashboard shell and make the reference usable at every viewport size.
+ */
+
+.system-page {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  width: 100%;
+  height: 100dvh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  isolation: isolate;
+  font-family: var(--font-geist-sans), Inter, "Segoe UI", Arial, sans-serif;
+}
+
+.system-page,
+.system-page * {
+  box-sizing: border-box;
+}
+
+.system-page :is(button, input, textarea, select) {
+  font: inherit;
+}
+
+.system-page :is(button, a) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.system-page button {
+  color: inherit;
+}
+
+.system-page .shell {
+  min-width: 0;
+}
+
+.system-page .content {
+  width: 100%;
+}
+
+.system-page .system-section {
+  padding-top: 76px;
+}
+
+.system-page .section-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.52fr);
+  align-items: center;
+  gap: 34px;
+  padding: 14px 0 10px;
+  margin-bottom: 22px;
+}
+
+.system-page .section-heading > div {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.system-page .section-index {
+  flex: 0 0 auto;
+  color: var(--accent-text);
+  font-size: 10px;
+  font-weight: 760;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+.system-page .section-heading h2 {
+  min-width: 0;
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(32px, 3.15vw, 44px);
+  font-weight: 360;
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.system-page .section-heading > p {
+  width: min(620px, 100%);
+  margin: 0;
+  justify-self: end;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+@media (max-width: 900px) {
+  .system-page {
+    display: block;
+  }
+}
+
+@media (max-width: 760px) {
+  .system-page .section-heading {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 12px;
+    padding: 12px 0 8px;
+  }
+
+  .system-page .section-heading > p {
+    justify-self: start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .system-page,
+  .system-page *,
+  .system-page *::before,
+  .system-page *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

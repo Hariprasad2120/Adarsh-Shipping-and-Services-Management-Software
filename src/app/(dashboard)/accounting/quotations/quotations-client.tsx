@@ -9,7 +9,7 @@ import {
   createQuotationAction,
   submitCustomerNoteAction,
 } from "@/modules/accounting/actions";
-import { DateInput } from "@/components/monolith/date-input";
+import { DateInput } from "@/components/ui/date-input";
 import {
   AccountingAction,
   AccountingDialog,
@@ -25,7 +25,7 @@ import {
   AccountingTable,
   AccountingTextarea,
   AccountingToolbar,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 
 interface Quotation {
   id: string;

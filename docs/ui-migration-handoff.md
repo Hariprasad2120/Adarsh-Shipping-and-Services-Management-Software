@@ -1,6 +1,82 @@
 # Monolith UI migration handoff
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
+
+## 2026-07-30 component architecture handoff
+
+The component ownership refactor is implemented without intentional visual or
+behavior changes:
+
+- `src/components/monolith` is retired;
+- `src/components/ui` contains the canonical business-neutral primitives;
+- generic display, form, layout, navigation, feedback, and provider components
+  have explicit shared folders;
+- business workspaces and components live under their owning modules;
+- multi-page Accounting, CHA, CRM, LMS, and Customer Portal route components
+  moved out of App Router private folders;
+- remaining `_components` files are scoped to their owning route segment;
+- public component barrels mediate the intentional People, Performance, Items,
+  Mona, and CHA cross-module compositions;
+- `npm run architecture:check` enforces the boundaries;
+- the final AST inventory reports zero proposed moves and retains uncertain
+  files instead of deleting them.
+
+Fresh baseline and final results are in
+`docs/refactor/component-reorganization-baseline.md` and
+`docs/refactor/component-reorganization-report.md`. Existing customer-portal
+UI migration and authenticated CHA/CRM visual-matrix blockers remain unchanged.
+
+## 2026-07-30 CHA shared operational datatable handoff
+
+The `/admin/design-system` "Tables & filters" shipment-register specimen is now
+represented by a reusable production component family in
+`src/components/data-display/operational-data-table.tsx`. The CHA dashboard
+assigned-jobs table and `/cha/jobs` Active/Completed Jobs tables use this same
+operational table-card component rather than the generic table or People
+Operations table adapter. The component owns the header actions, table wrap,
+selectable rows, mode icons, status dots, row actions, footer summary, and
+pagination controls. Search, filters, create-job lazy loading, permission
+denial, active filter pills, row navigation, warning indicators, and pagination
+behavior are unchanged.
+
+Verification passed with the required 8 GB Node heap:
+
+- scoped ESLint for the shared operational table, CHA dashboard, CHA jobs, and
+  design-system catalogue files;
+- `npx tsc --noEmit -p tsconfig.ui-migration.json`;
+- `npx tsc --noEmit`;
+- `node scripts/verify-monolith-expense-cha-ui.mjs`.
+
+Live authenticated theme/viewport verification is still pending under the
+existing CHA browser-instance blocker.
+
+Correction note:
+
+- The shared operational table now restores the reference rounded card shell
+  instead of rendering as a borderless full-width table.
+- The design-system specimen, CHA dashboard table, and `/cha/jobs` tables use
+  the same corrected shell, status-dot rendering, checkbox control, mode icons,
+  row action icons, and pagination controls.
+- Scoped ESLint, UI migration TypeScript, production TypeScript, the
+  Expense/CHA static verifier, and diff hygiene passed after the correction.
+- `scripts/verify-monolith-design-system-catalogue.mjs` is still stale for the
+  current reference-style catalogue and stops before this table section on the
+  obsolete `data-production-catalogue="true"` assertion.
+
+## 2026-07-30 design-system section heading alignment
+
+`/admin/design-system` now uses a production override for every `.section-heading`
+so the section index/title/copy match the CHA outside-heading style and spacing.
+The heading blocks use the same large light title scale, tight line-height and
+tracking, numbered index treatment, and padding above the bordered component
+that follows each section.
+
+Verification passed:
+
+- scoped ESLint for `design-system-client.tsx`;
+- UI migration TypeScript;
+- production TypeScript;
+- diff hygiene.
 
 ## Current state
 

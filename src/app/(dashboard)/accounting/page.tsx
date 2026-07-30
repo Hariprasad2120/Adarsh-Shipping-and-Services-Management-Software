@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { getProfitAndLoss, getBalanceSheet } from "@/modules/accounting/reports";
 import { getAccountingSettings } from "@/modules/accounting/service";
 import { DashboardClient } from "./dashboard-client";
-import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+import { AccountingRoutePageHeader } from "@/modules/accounting/components/accounting-workspace";
 
 export default async function AccountingDashboardPage() {
   const session = await getSession();

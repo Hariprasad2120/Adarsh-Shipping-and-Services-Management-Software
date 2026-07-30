@@ -2,14 +2,14 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/immutability, react-hooks/exhaustive-deps, react/no-unescaped-entities */
 
-import { NativeSelect } from "@/components/monolith/native-select";
+import { NativeSelect } from "@/components/ui/native-select";
 import {
   CommunicationButton,
   CommunicationInput,
   CommunicationTable,
   CommunicationTextarea,
-} from "@/components/monolith/communication-workspace";
-import { WorkspaceDialogLayer } from "@/components/monolith/workspace-dialog";
+} from "@/modules/communication/components/workspace/communication-workspace";
+import { WorkspaceDialogLayer } from "@/components/layout/workspace-dialog";
 import { useState, useEffect } from "react";
 import { Search, Mail, Star, Trash, Inbox, Send, Paperclip, ExternalLink, Link2, Download, RefreshCw, Plus, AlertCircle, MoreVertical, Reply, ReplyAll, Forward, MessageSquare, Trash2, Printer, Languages, FileText, CheckCircle, ShieldAlert, AlertTriangle, Eye, Clock, ChevronDown, ChevronRight, ChevronUp, Bookmark, CalendarRange, AlertOctagon, ShoppingBag, Users, Tag, Settings, Folder, File, HelpCircle, CheckCircle2 } from "lucide-react";
 import DOMPurify from "isomorphic-dompurify";

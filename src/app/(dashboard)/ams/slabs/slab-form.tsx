@@ -1,11 +1,11 @@
 "use client";
 
-import { NativeSelect } from "@/components/monolith/native-select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useActionState, useState } from "react";
 import { createSlabAction } from "./actions";
-import { Button } from "@/components/monolith/button";
-import { Input } from "@/components/monolith/input";
-import { Label } from "@/components/monolith/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export function SlabForm() {
   const [grade, setGrade] = useState<string>("A+");
