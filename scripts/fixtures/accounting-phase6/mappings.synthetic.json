@@ -1,0 +1,25 @@
+[
+  {
+    "sourceSystem": "SYNTHETIC_PHASE6",
+    "targetOrganizationId": "stg_org_accounting",
+    "mappingType": "ORGANIZATION",
+    "sourceValue": "source-org",
+    "targetType": "Organisation",
+    "targetId": "stg_org_accounting",
+    "version": 1,
+    "status": "APPROVED",
+    "decisionReference": "SYNTHETIC-MAP-ORG"
+  },
+  {
+    "sourceSystem": "SYNTHETIC_PHASE6",
+    "targetOrganizationId": "stg_org_accounting",
+    "targetLegalEntityId": "stg_legal_entity_accounting",
+    "mappingType": "LEGAL_ENTITY",
+    "sourceValue": "source-entity",
+    "targetType": "AccountingLegalEntity",
+    "targetId": "stg_legal_entity_accounting",
+    "version": 1,
+    "status": "APPROVED",
+    "decisionReference": "SYNTHETIC-MAP-ENTITY"
+  }
+]

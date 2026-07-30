@@ -173,6 +173,11 @@ const PERMISSIONS = [
   { key: "accounting.partner-transaction.prepare", label: "Prepare partner transactions", group: "Accounting" },
   { key: "accounting.outbox.retry", label: "Retry Accounting outbox publication", group: "Accounting" },
   { key: "accounting.outbox.manual-review", label: "Review Accounting outbox publication", group: "Accounting" },
+  { key: "accounting.migration.read", label: "Read Accounting migration evidence", group: "Accounting" },
+  { key: "accounting.migration.execute", label: "Execute guarded Accounting migration preparation", group: "Accounting" },
+  { key: "accounting.migration.mapping.manage", label: "Manage Accounting migration mappings", group: "Accounting" },
+  { key: "accounting.migration.exception.manage", label: "Resolve Accounting migration exceptions", group: "Accounting" },
+  { key: "accounting.readiness.read", label: "Read Accounting production-readiness evidence", group: "Accounting" },
 
   // CHA Module
   { key: "cha.access", label: "Access CHA Module", group: "CHA" },

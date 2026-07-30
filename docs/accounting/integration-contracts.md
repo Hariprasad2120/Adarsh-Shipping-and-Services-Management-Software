@@ -1,5 +1,9 @@
 # Accounting Integration Contracts
 
+> Phase 6 update: external Accounting providers remain disabled. No Zoho or
+> live-provider contract is inferred from filenames or earlier documentation.
+> Provider authentication and writes need a separately accepted contract.
+
 Status: Phase 3 versioned envelope and selected adapters implemented on synthetic staging. No external provider connection or production event flow is authorized.
 
 ## Transport-independent envelope

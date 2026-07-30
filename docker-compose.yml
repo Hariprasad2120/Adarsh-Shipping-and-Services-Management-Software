@@ -5,31 +5,44 @@ services:
     environment:
       POSTGRES_DB: monolith_engine
       POSTGRES_USER: monolith
-      POSTGRES_PASSWORD: monolith_secret
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_HOST_PORT:-55432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U monolith -d monolith_engine"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   app:
     build: .
     restart: unless-stopped
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://monolith:monolith_secret@postgres:5432/monolith_engine
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      DATABASE_URL: postgresql://monolith:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/monolith_engine
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?NEXTAUTH_SECRET is required}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
-      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
+      EMAIL_PROVIDER: disabled
       EMAIL_FROM: ${EMAIL_FROM}
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_SECURE: ${SMTP_SECURE:-false}
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASS: ${SMTP_PASS}
-      CRON_SECRET: ${CRON_SECRET}
+      ACCOUNTING_PROVIDER_MODE: disabled
+      ACCOUNTING_PHASE6_EXECUTION: disabled
     ports:
       - "3000:3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
 
 volumes:
   postgres_data:

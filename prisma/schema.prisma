@@ -2821,6 +2821,30 @@ enum AccountingPostingAttemptStatus {
   FAILED
 }
 
+enum AccountingMigrationBatchStatus {
+  RECEIVED
+  VALIDATING
+  DRY_RUN_READY
+  EXECUTING
+  RECONCILING
+  COMPLETED
+  FAILED
+  QUARANTINED
+}
+
+enum AccountingMigrationRecordStatus {
+  PENDING
+  VALID
+  INVALID
+  BLOCKED
+  READY
+  EXECUTING
+  SUCCEEDED
+  SKIPPED
+  FAILED
+  MANUAL_REVIEW
+}
+
 model AccountingOrganisationProfile {
   id                      String                  @id @default(cuid())
   orgId                   String                  @unique
@@ -3579,6 +3603,176 @@ model AccountingScheduledOccurrence {
   @@unique([orgId, occurrenceKey], map: "AccountingScheduledOccurrence_occurrence_key")
   @@index([orgId, status, scheduledFor], map: "AccountingScheduledOccurrence_due_idx")
   @@index([orgId, status, claimedUntil], map: "AccountingScheduledOccurrence_claim_idx")
+}
+
+model AccountingMigrationBatch {
+  id                    String                         @id @default(cuid())
+  orgId                 String
+  legalEntityId         String?
+  contractVersion       String
+  sourceSystem          String
+  sourceBatchIdentifier String
+  sourceManifestHash    String
+  targetEnvironment     String                         @default("SYNTHETIC_STAGING")
+  mode                  String                         @default("DRY_RUN")
+  status                AccountingMigrationBatchStatus @default(RECEIVED)
+  actorId               String
+  correlationId         String
+  concurrency           Int                            @default(1)
+  executeAuthorized     Boolean                        @default(false)
+  productionBlocked     Boolean                        @default(true)
+  checkpointStage       String                         @default("INGEST")
+  sourceSummary         Json
+  policySnapshot        Json?
+  reconciliation        Json?
+  certification         Json?
+  quarantineReasonCode  String?
+  startedAt             DateTime                       @default(now())
+  completedAt           DateTime?
+  rowVersion            Int                            @default(1)
+  createdAt             DateTime                       @default(now())
+  updatedAt             DateTime                       @updatedAt
+
+  records     AccountingMigrationRecord[]
+  checkpoints AccountingMigrationCheckpoint[]
+  exceptions  AccountingMigrationException[]
+
+  @@unique([orgId, sourceSystem, sourceBatchIdentifier, sourceManifestHash], map: "AccountingMigrationBatch_source_key")
+  @@unique([orgId, correlationId], map: "AccountingMigrationBatch_correlation_key")
+  @@index([orgId, legalEntityId, status, createdAt], map: "AccountingMigrationBatch_scope_state_idx")
+}
+
+model AccountingMigrationRecord {
+  id                        String                          @id @default(cuid())
+  batchId                   String
+  orgId                     String
+  legalEntityId             String
+  sourceSystem              String
+  sourceRecordType          String
+  sourceIdentifier          String
+  sourceVersion             String
+  deterministicKey          String
+  payloadHash               String
+  normalizedPayload         Json
+  dependencyKeys            Json
+  status                    AccountingMigrationRecordStatus @default(PENDING)
+  validationStatus          String                          @default("PENDING")
+  reconciliationStatus      String                          @default("PENDING")
+  canonicalTargetType       String?
+  canonicalTargetIdentifier String?
+  errorClassification       String?
+  errorCode                 String?
+  retryCount                Int                             @default(0)
+  lastAttemptAt             DateTime?
+  migratedAt                DateTime?
+  rowVersion                Int                             @default(1)
+  createdAt                 DateTime                        @default(now())
+  updatedAt                 DateTime                        @updatedAt
+
+  batch       AccountingMigrationBatch        @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  exceptions  AccountingMigrationException[]
+  attachments AccountingMigrationAttachment[]
+
+  @@unique([batchId, deterministicKey], map: "AccountingMigrationRecord_batch_key")
+  @@index([orgId, legalEntityId, status, sourceRecordType], map: "AccountingMigrationRecord_scope_state_idx")
+  @@index([orgId, sourceSystem, sourceRecordType, sourceIdentifier, sourceVersion], map: "AccountingMigrationRecord_source_idx")
+}
+
+model AccountingMigrationMapping {
+  id                 String    @id @default(cuid())
+  orgId              String
+  legalEntityId      String?
+  sourceSystem       String
+  mappingType        String
+  sourceValue        String
+  scopeKey           String
+  targetType         String
+  targetId           String
+  version            Int
+  status             String    @default("DRAFT")
+  configurationHash  String
+  decisionReference  String
+  createdById        String
+  approvedById       String?
+  approvedAt         DateTime?
+  disabledAt         DateTime?
+  disabledReasonCode String?
+  rowVersion         Int       @default(1)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([orgId, scopeKey, version], map: "AccountingMigrationMapping_scope_version_key")
+  @@index([orgId, legalEntityId, sourceSystem, mappingType, status], map: "AccountingMigrationMapping_active_idx")
+}
+
+model AccountingMigrationCheckpoint {
+  id             String   @id @default(cuid())
+  batchId        String
+  stage          String
+  sequence       Int
+  lastRecordKey  String?
+  processedCount Int      @default(0)
+  successCount   Int      @default(0)
+  failedCount    Int      @default(0)
+  blockedCount   Int      @default(0)
+  stateHash      String
+  createdAt      DateTime @default(now())
+
+  batch AccountingMigrationBatch @relation(fields: [batchId], references: [id], onDelete: Restrict)
+
+  @@unique([batchId, stage, sequence], map: "AccountingMigrationCheckpoint_stage_key")
+  @@index([batchId, createdAt], map: "AccountingMigrationCheckpoint_batch_idx")
+}
+
+model AccountingMigrationException {
+  id                  String    @id @default(cuid())
+  batchId             String
+  recordId            String?
+  orgId               String
+  legalEntityId       String?
+  stage               String
+  errorClassification String
+  errorCode           String
+  safeMessage         String
+  retryable           Boolean   @default(false)
+  manualReview        Boolean   @default(false)
+  status              String    @default("OPEN")
+  resolutionCode      String?
+  resolutionReason    String?
+  resolvedById        String?
+  resolvedAt          DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  batch  AccountingMigrationBatch   @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  record AccountingMigrationRecord? @relation(fields: [recordId], references: [id], onDelete: Restrict)
+
+  @@index([orgId, legalEntityId, status, errorClassification], map: "AccountingMigrationException_scope_state_idx")
+  @@index([batchId, recordId], map: "AccountingMigrationException_record_idx")
+}
+
+model AccountingMigrationAttachment {
+  id                    String    @id @default(cuid())
+  recordId              String
+  orgId                 String
+  legalEntityId         String
+  sourceIdentifier      String
+  relativePath          String
+  mimeType              String
+  sizeBytes             Int
+  sha256                String
+  scanStatus            String    @default("SCAN_REQUIRED")
+  migrationStatus       String    @default("PENDING")
+  canonicalAttachmentId String?
+  failureCode           String?
+  migratedAt            DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  record AccountingMigrationRecord @relation(fields: [recordId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, legalEntityId, sourceIdentifier, sha256], map: "AccountingMigrationAttachment_identity_key")
+  @@index([recordId, migrationStatus], map: "AccountingMigrationAttachment_record_state_idx")
 }
 
 model Account {

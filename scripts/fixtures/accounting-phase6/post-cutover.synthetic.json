@@ -1,0 +1,18 @@
+{
+  "authenticationReadable": true,
+  "accountingNavigationReadable": true,
+  "permissionBoundariesVerified": true,
+  "representativeDocumentsReadable": true,
+  "journalDebitTotal": "100.00000000",
+  "journalCreditTotal": "100.00000000",
+  "generalLedgerReadable": true,
+  "invoicePaymentLineageComplete": true,
+  "allocationTotalsMatch": true,
+  "outboxHealthy": true,
+  "schedulerHealthy": true,
+  "configurationComplete": true,
+  "migrationReconciliationPassed": true,
+  "providerState": "DISABLED",
+  "p95ReadMilliseconds": 80,
+  "acceptedP95ReadMilliseconds": 100
+}

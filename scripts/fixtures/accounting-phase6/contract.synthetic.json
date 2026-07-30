@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "accounting-import/v1",
+  "sourceSystem": "SYNTHETIC_PHASE6",
+  "sourceBatchIdentifier": "phase6-dry-run-001",
+  "extractedAt": "2026-07-30T00:00:00.000Z",
+  "targetOrganizationRef": "source-org",
+  "records": [
+    {
+      "sourceSystem": "SYNTHETIC_PHASE6",
+      "sourceRecordType": "ORGANIZATION",
+      "sourceIdentifier": "org-record",
+      "sourceVersion": "1",
+      "targetOrganizationRef": "source-org",
+      "targetLegalEntityRef": "source-entity",
+      "importBatch": "phase6-dry-run-001",
+      "dependencies": [],
+      "payload": {
+        "currencyCode": "INR",
+        "totals": {
+          "debitTotal": "0",
+          "creditTotal": "0"
+        }
+      },
+      "attachments": []
+    },
+    {
+      "sourceSystem": "SYNTHETIC_PHASE6",
+      "sourceRecordType": "SALES_INVOICE",
+      "sourceIdentifier": "sales-invoice-001",
+      "sourceVersion": "1",
+      "targetOrganizationRef": "source-org",
+      "targetLegalEntityRef": "source-entity",
+      "importBatch": "phase6-dry-run-001",
+      "dependencies": [
+        "SYNTHETIC_PHASE6:ORGANIZATION:org-record:1"
+      ],
+      "payload": {
+        "currencyCode": "INR",
+        "acceptedCurrencyPolicyReference": "POLICY-CURRENCY-SYNTHETIC",
+        "totalAmount": "100.00000000",
+        "totals": {
+          "documentTotal": "100.00000000",
+          "debitTotal": "100.00000000",
+          "creditTotal": "100.00000000"
+        }
+      },
+      "attachments": []
+    }
+  ]
+}

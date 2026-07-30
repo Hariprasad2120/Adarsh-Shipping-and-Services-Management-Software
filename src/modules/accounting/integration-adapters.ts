@@ -51,11 +51,18 @@ export async function resolveCanonicalPostingConfiguration(
   orgId: string,
   dateInput: Date | string,
   journalType = "JOURNAL_ENTRY",
+  legalEntityId?: string,
 ) {
   const date = validDate(dateInput, "postingDate");
+  const explicitLegalEntityId = legalEntityId?.trim();
+  if (legalEntityId != null && !explicitLegalEntityId) {
+    throw new Error("Canonical Accounting legal entity is required");
+  }
   const [legalEntity, approvalPolicy, numberSeries, roundingPolicy, profile] = await Promise.all([
     db.accountingLegalEntity.findFirst({
-      where: { orgId, status: "ACTIVE", isDefault: true },
+      where: explicitLegalEntityId
+        ? { id: explicitLegalEntityId, orgId, status: "ACTIVE" }
+        : { orgId, status: "ACTIVE", isDefault: true },
       orderBy: { createdAt: "asc" },
     }),
     db.accountingApprovalPolicy.findFirst({
@@ -90,7 +97,13 @@ export async function resolveCanonicalPostingConfiguration(
     db.accountingOrganisationProfile.findUnique({ where: { orgId } }),
   ]);
 
-  if (!legalEntity) throw new Error("No active default Accounting legal entity is configured");
+  if (!legalEntity) {
+    throw new Error(
+      explicitLegalEntityId
+        ? "Requested Accounting legal entity is not active in this organization"
+        : "No active default Accounting legal entity is configured",
+    );
+  }
   if (!approvalPolicy) throw new Error(`No active approval policy is configured for ${journalType}`);
   if (!numberSeries) throw new Error(`No active number series is configured for ${journalType}`);
   if (!roundingPolicy) throw new Error("No active versioned Accounting rounding policy is configured");

@@ -332,6 +332,7 @@ async function persistPreparedDocument(input: {
 
 export async function prepareLegacyCustomerNote(input: {
   orgId: string;
+  legalEntityId?: string;
   noteId: string;
   makerId: string;
 }) {
@@ -342,6 +343,7 @@ export async function prepareLegacyCustomerNote(input: {
   if (!note) throw new Error("Draft Customer Note not found");
   return prepareLegacyCorrectionNote({
     orgId: input.orgId,
+    legalEntityId: input.legalEntityId,
     makerId: input.makerId,
     note: {
       id: note.id,
@@ -365,6 +367,7 @@ export async function prepareLegacyCustomerNote(input: {
 
 export async function prepareLegacyVendorNote(input: {
   orgId: string;
+  legalEntityId?: string;
   noteId: string;
   makerId: string;
 }) {
@@ -375,6 +378,7 @@ export async function prepareLegacyVendorNote(input: {
   if (!note) throw new Error("Draft Vendor Note not found");
   return prepareLegacyCorrectionNote({
     orgId: input.orgId,
+    legalEntityId: input.legalEntityId,
     makerId: input.makerId,
     note: {
       id: note.id,
@@ -398,6 +402,7 @@ export async function prepareLegacyVendorNote(input: {
 
 async function prepareLegacyCorrectionNote(input: {
   orgId: string;
+  legalEntityId?: string;
   makerId: string;
   partyType: "CUSTOMER" | "SUPPLIER";
   legacyRecordType: "CustomerNote" | "VendorNote";
@@ -445,6 +450,7 @@ async function prepareLegacyCorrectionNote(input: {
     input.orgId,
     input.note.postingDate,
     input.legacyRecordType === "CustomerNote" ? "CUSTOMER_NOTE" : "VENDOR_NOTE",
+    input.legalEntityId,
   );
   const original = await db.accountingDocument.findFirst({
     where: {
@@ -604,6 +610,7 @@ async function prepareLegacyCorrectionNote(input: {
 
 export async function prepareLegacySalesInvoice(input: {
   orgId: string;
+  legalEntityId?: string;
   invoiceId: string;
   makerId: string;
 }) {
@@ -623,6 +630,7 @@ export async function prepareLegacySalesInvoice(input: {
     input.orgId,
     invoice.postingDate,
     "SALES_INVOICE",
+    input.legalEntityId,
   );
   const { policy, configuration: policyConfig } = await resolveDocumentPolicy({
     orgId: input.orgId,
@@ -743,6 +751,7 @@ export async function prepareLegacySalesInvoice(input: {
 
 export async function prepareLegacyPurchaseInvoice(input: {
   orgId: string;
+  legalEntityId?: string;
   invoiceId: string;
   makerId: string;
 }) {
@@ -764,6 +773,7 @@ export async function prepareLegacyPurchaseInvoice(input: {
     input.orgId,
     invoice.postingDate,
     "PURCHASE_INVOICE",
+    input.legalEntityId,
   );
   const { policy, configuration: policyConfig } = await resolveDocumentPolicy({
     orgId: input.orgId,
@@ -865,6 +875,7 @@ async function persistPreparedPayment(input: {
     normalized.orgId,
     normalized.transactionDate,
     "PAYMENT_ENTRY",
+    normalized.legalEntityId,
   );
   const provisional: CanonicalPostingRequest = {
     requestId,
@@ -1017,6 +1028,7 @@ async function persistPreparedPayment(input: {
 
 export async function prepareLegacyPayment(input: {
   orgId: string;
+  legalEntityId?: string;
   paymentEntryId: string;
   makerId: string;
 }) {
@@ -1042,6 +1054,7 @@ export async function prepareLegacyPayment(input: {
     input.orgId,
     entry.postingDate,
     "PAYMENT_ENTRY",
+    input.legalEntityId,
   );
   const { policy, configuration: policyConfig } = await resolveDocumentPolicy({
     orgId: input.orgId,

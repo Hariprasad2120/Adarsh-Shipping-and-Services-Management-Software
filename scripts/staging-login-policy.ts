@@ -29,6 +29,9 @@ export const STAGING_MAKER_PERMISSION_KEYS = Object.freeze([
   "accounting.credit-note.prepare",
   "accounting.debit-note.prepare",
   "accounting.recurring-occurrence.process",
+  "accounting.migration.read",
+  "accounting.migration.execute",
+  "accounting.readiness.read",
   "crm.invoice.manage",
 ]);
 
@@ -60,6 +63,10 @@ export const STAGING_CHECKER_PERMISSION_KEYS = Object.freeze([
   "accounting.correction.approve",
   "accounting.outbox.retry",
   "accounting.outbox.manual-review",
+  "accounting.migration.read",
+  "accounting.migration.mapping.manage",
+  "accounting.migration.exception.manage",
+  "accounting.readiness.read",
 ]);
 
 export const STAGING_EXTERNAL_DELIVERY_ENV_KEYS = Object.freeze([

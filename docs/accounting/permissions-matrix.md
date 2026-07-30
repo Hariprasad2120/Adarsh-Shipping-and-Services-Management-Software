@@ -33,6 +33,10 @@ Status: Phase 3 canonical authorization implemented on synthetic staging. Server
 | Reports | `accounting.report.read` | — | `accounting.report.export` |
 | Audit | `accounting.audit.read` | — | `accounting.audit.export` |
 | Integration operations | `accounting.integration.read` | `accounting.integration.retry` | `accounting.integration.dead-letter.manage` |
+| Migration batches | `accounting.migration.read` | `accounting.migration.execute` | independent canonical document/payment approver |
+| Migration mappings | `accounting.migration.read` | `accounting.migration.mapping.manage` | different mapping approver with the same key |
+| Migration exceptions | `accounting.migration.read` | `accounting.migration.exception.manage` | reason-coded retry or pre-effect skip only |
+| Production readiness | `accounting.readiness.read` | — | — |
 
 Legacy permissions such as `accounting.read/create/approve` remain compatibility aliases until routes are migrated. They must not become a permanent coarse-grained bypass.
 
@@ -104,3 +108,13 @@ presentation only. Direct unauthorized URLs redirect to a non-disclosing
 Accounting access-denied state before operational queries run. Unrelated
 platform-admin, HR, CRM, or CHA permission does not imply ledger, approval, or
 posting authority.
+
+## Phase 6 migration enforcement
+
+Migration execution means guarded preparation on exact synthetic staging; it
+does not grant posting, provider delivery or production access. The migration
+actor may invoke only the canonical preparation adapters and cannot approve the
+result. Mapping approval rejects the mapping creator. Exception skip is blocked
+after a canonical target exists. Organization/legal-entity scope is enforced by
+exact mappings, repository predicates and database triggers. Production
+execution remains blocked independently of RBAC.

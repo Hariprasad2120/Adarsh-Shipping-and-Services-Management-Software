@@ -1,0 +1,29 @@
+{
+  "schemaConsistent": true,
+  "migrationsCurrent": true,
+  "requiredPermissionsPresent": true,
+  "organizationConfigured": true,
+  "legalEntitiesConfigured": true,
+  "numberSeriesConfigured": true,
+  "openPeriodsConfigured": true,
+  "accountMappingsComplete": true,
+  "currencyPolicyAccepted": true,
+  "exchangeRatePolicyAccepted": false,
+  "openingBalancePolicyAccepted": false,
+  "taxPolicyAccepted": false,
+  "depreciationPolicyAccepted": false,
+  "partnerPolicyAccepted": false,
+  "providersDisabled": true,
+  "schedulerState": "SYNTHETIC_STAGING_ONLY",
+  "outboxUnsafeDestinations": 0,
+  "migrationIncompleteBatches": 0,
+  "backupVerified": false,
+  "unresolvedPolicyGates": [
+    "EXCHANGE_RATE_POLICY",
+    "OPENING_BALANCE_POLICY",
+    "TAX_POLICY",
+    "DEPRECIATION_POLICY",
+    "PARTNER_POLICY",
+    "BACKUP_VERIFICATION"
+  ]
+}

@@ -46,6 +46,8 @@ const childEnvironment = {
   DATABASE_URL: databaseUrl.toString(),
   MONOLITH_ENV: "staging",
   PGAPPNAME: "monolith-accounting-staging",
+  ACCOUNTING_PROVIDER_MODE: "disabled",
+  ACCOUNTING_PHASE6_EXECUTION: "disabled",
 };
 const isFinalUiAuditPreparation =
   command === "tsx" &&

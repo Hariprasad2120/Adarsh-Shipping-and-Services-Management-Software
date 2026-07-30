@@ -247,6 +247,11 @@ async function seed() {
       { key: "accounting.recurring-occurrence.process", label: "Process recurring Accounting occurrences", group: "Accounting" },
       { key: "accounting.outbox.retry", label: "Retry Accounting outbox publication", group: "Accounting" },
       { key: "accounting.outbox.manual-review", label: "Review Accounting outbox publication", group: "Accounting" },
+      { key: "accounting.migration.read", label: "Read Accounting migration evidence", group: "Accounting" },
+      { key: "accounting.migration.execute", label: "Execute guarded Accounting migration preparation", group: "Accounting" },
+      { key: "accounting.migration.mapping.manage", label: "Manage Accounting migration mappings", group: "Accounting" },
+      { key: "accounting.migration.exception.manage", label: "Resolve Accounting migration exceptions", group: "Accounting" },
+      { key: "accounting.readiness.read", label: "Read Accounting production-readiness evidence", group: "Accounting" },
       { key: "crm.invoice.manage", label: "Manage CRM invoice requests", group: "CRM" },
     ];
     for (const permission of permissions) {
@@ -1489,11 +1494,11 @@ async function seed() {
     });
     await tx.accountingIntegrationOutbox.upsert({
       where: { id: "stg_outbox_accounting_status" },
-      update: { status: "PENDING" },
+      update: { status: "PENDING", destination: "SYNTHETIC_CRM" },
       create: {
         id: "stg_outbox_accounting_status",
         orgId: STAGING_ORG_ID,
-        destination: "CRM",
+        destination: "SYNTHETIC_CRM",
         eventType: "accounting-document.status-changed",
         eventVersion: 1,
         aggregateType: "SALES_INVOICE",

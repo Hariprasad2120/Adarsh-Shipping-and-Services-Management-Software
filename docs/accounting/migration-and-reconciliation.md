@@ -1,5 +1,11 @@
 # Accounting Migration and Reconciliation Design
 
+> Phase 6 update: executable migration is governed by
+> `phase-6-production-readiness.md` and the `accounting-import/v1` contract.
+> The legacy spreadsheet importer that inferred accounts and wrote GL rows
+> directly has been removed. This file remains background, not production
+> authorization.
+
 Status: Phase 2 synthetic-staging rehearsal only. No production, Neon or Zoho migration is authorized.
 
 ## Migration strategy
