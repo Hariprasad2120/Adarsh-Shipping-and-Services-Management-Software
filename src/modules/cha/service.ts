@@ -4309,7 +4309,9 @@ async function storeDeliveryOrderFile(
 export async function listSection49ValidityWarnings(
   actorId: string,
   orgId: string,
+  jobIds?: string[],
 ): Promise<Section49ValidityWarning[]> {
+  if (jobIds && jobIds.length === 0) return [];
   const [now, canViewAll] = await Promise.all([
     getNow(),
     can(actorId, "cha.job.view_all"),
@@ -4324,6 +4326,7 @@ export async function listSection49ValidityWarnings(
   const jobs = await db.chaJob.findMany({
     where: {
       ...getActiveChaJobWhere(orgId),
+      ...(jobIds ? { id: { in: jobIds } } : {}),
       status: "ACTIVE",
       stage: { not: "FILED" },
       filingSection49Flag: {

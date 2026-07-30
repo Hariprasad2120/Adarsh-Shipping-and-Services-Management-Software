@@ -2,7 +2,6 @@ import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { can, requirePermission } from "@/lib/rbac";
 import {
-  getCreateJobOptions,
   getJobFilterOptions,
   listJobs,
 } from "@/modules/cha/jobs/queries";
@@ -97,10 +96,6 @@ export default async function ChaJobsPage({
     computeChaDueDateWarnings(session.user.id, orgId, visibleJobIds),
     listFilingQueryEscalationWarnings(orgId, visibleJobIds),
   ]);
-  const initialCreateOptions = showCreateNew
-    ? await getCreateJobOptions(orgId)
-    : null;
-
   const filingQueryWarningMap = new Map(
     filingQueryWarnings.map((warning) => [
       warning.jobId,
@@ -195,7 +190,7 @@ export default async function ChaJobsPage({
         teamGroups: [],
         branchNumberingRules: [],
       }}
-      initialCreateOptions={initialCreateOptions}
+      initialCreateOptions={null}
       showCreateNew={showCreateNew}
       showCreatePermissionDenied={requestedCreateNew && !canCreateJob}
       canCreateJob={canCreateJob}

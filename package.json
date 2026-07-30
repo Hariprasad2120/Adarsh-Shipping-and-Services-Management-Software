@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "dev:webpack": "next dev --webpack",
-    "dev:turbopack": "next dev",
+    "dev:turbopack": "next dev --turbopack",
     "build": "npm run db:generate && next build",
     "start": "next start",
+    "worker:justdial": "tsx scripts/justdial-worker.ts",
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -35,7 +36,8 @@
     "seed:comm-panels": "npx tsx scripts/seed-communication-panels.ts",
     "catalogue:update": "npx tsx scripts/update-product-catalogue.ts",
     "catalogue:check": "npx tsx scripts/check-product-catalogue.ts",
-    "test": "tsx scripts/run-with-staging-env.ts vitest run"
+    "test": "tsx scripts/run-with-staging-env.ts vitest run",
+    "test:playwright:performance": "node scripts/playwright-performance-security.mjs"
   },
   "dependencies": {
     "@carbon/icons-react": "^11.80.0",

@@ -1,10 +1,15 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Briefcase, CheckCircle2, Filter, Plus, Search, Users } from "lucide-react";
-import { CreateJobDialog } from "@/components/cha/create-job-dialog";
 import { CreateJobPermissionGuard } from "@/components/cha/create-job-permission-guard";
+
+const CreateJobDialog = dynamic(
+  () => import("@/components/cha/create-job-dialog").then((module) => module.CreateJobDialog),
+  { ssr: false },
+);
 import { ClickableRow } from "@/components/clickable-row";
 import {
   DataTable,
@@ -209,6 +214,11 @@ export function JobsClient({
       setCreateOptionsLoading(false);
     }
   }, [createOptions]);
+
+  useEffect(() => {
+    if (!isModalOpen || !canCreateJob) return;
+    queueMicrotask(() => void loadCreateOptions());
+  }, [canCreateJob, isModalOpen, loadCreateOptions]);
 
   const activeFilterCount = [
     Boolean(search),

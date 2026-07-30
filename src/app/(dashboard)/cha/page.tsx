@@ -6,8 +6,9 @@ import { can, requirePermission } from "@/lib/rbac";
 import Link from "next/link";
 import type { Prisma } from "@/generated/prisma/client";
 import { ArrowRight, Settings } from "lucide-react";
-import { ensureSettingsAndDefaults, getEligibleManagers, listChaDueDateWarnings, listFilingQueryEscalationWarnings, listJobTypesForSelection, listSection49ValidityWarnings } from "@/modules/cha/service";
+import { listChaDueDateWarnings, listFilingQueryEscalationWarnings, listJobTypesForSelection, listSection49ValidityWarnings } from "@/modules/cha/service";
 import { DashboardCreateJob } from "@/components/cha/dashboard-create-job";
+import { getChaDashboardMetrics, listChaRecentActivity } from "@/modules/cha/dashboard/queries";
 import { JobFilingQueryWarningIndicator } from "./_components/job-filing-query-warning-indicator";
 import { JobSection49ValidityWarningIndicator } from "./_components/job-section49-validity-warning-indicator";
 import {
@@ -38,7 +39,6 @@ import { ChaControlPanel, ChaMetricCard, ChaMetrics, ChaPageHeader } from "./_co
 import { ChaDashboardFilterAction } from "./_components/cha-dashboard-filter-action";
 import { ChaDashboardSearchAction } from "./_components/cha-dashboard-search-action";
 import { ChaHeaderGraphic } from "./graphics/ChaHeaderGraphic";
-import { getCachedBranches, getCachedCustomers, getCachedUsers } from "@/lib/cache";
 
 function chaStatusTextClass(variant: ReturnType<typeof getChaStageBadgeVariant>) {
   switch (variant) {
@@ -182,40 +182,14 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
   };
 
   const [
-    activeJobsCount,
-    pendingChecklistsCount,
-    pendingFilingsCount,
-    urgentExpensesCount,
+    dashboardMetrics,
     myJobs,
-    branches,
-    customers,
     jobTypes,
-    shipmentTypes,
-    users,
-    eligibleManagers,
-    teamGroups,
-    ,
-    branchNumberingRules,
-    pendingAdvances,
-    dueDateWarnings,
-    section49Warnings,
-    filingQueryWarnings,
     pendingChecklistItems,
     pendingFilingItems,
     recentActivity,
   ] = await Promise.all([
-    db.chaJob.count({
-      where: { orgId, stage: { not: "FILED" }, status: "ACTIVE" },
-    }),
-    db.chaChecklistImport.count({
-      where: { status: "PENDING_APPROVAL", job: { orgId, deletedAt: null } },
-    }),
-    db.chaFiling.count({
-      where: { status: "PENDING", job: { orgId, deletedAt: null } },
-    }),
-    db.chaExpenseRequest.count({
-      where: { orgId, status: "URGENT_PAYMENT_REQUIRED", job: { deletedAt: null } },
-    }),
+    getChaDashboardMetrics(orgId),
     db.chaJob.findMany({
       where: {
         orgId,
@@ -243,38 +217,7 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
       take: 5,
       orderBy: { updatedAt: "desc" },
     }),
-    getCachedBranches(orgId),
-    getCachedCustomers(orgId),
     listJobTypesForSelection(orgId),
-    db.chaShipmentType.findMany({ where: { orgId, isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-    getCachedUsers(orgId),
-    getEligibleManagers(orgId),
-    db.chaTeamGroup.findMany({ where: { orgId }, select: { id: true, name: true, memberIds: true } }),
-    ensureSettingsAndDefaults(orgId),
-    db.chaBranchNumberingRule.findMany({
-      where: { orgId },
-      select: {
-        branchId: true,
-        prefix: true,
-        suffix: true,
-        startingSequence: true,
-        currentSequence: true,
-        numberPadding: true,
-        useFinancialYear: true,
-        financialYearFormat: true,
-        isActive: true,
-      },
-    }),
-    db.chaCustomerAdvance.findMany({
-      where: {
-        job: { orgId, deletedAt: null },
-        status: { in: ["FOLLOW_UP", "PARTIALLY_RECEIVED"] },
-      },
-      include: { receipts: true },
-    }),
-    listChaDueDateWarnings(session.user.id, orgId),
-    listSection49ValidityWarnings(session.user.id, orgId),
-    listFilingQueryEscalationWarnings(session.user.id, orgId),
     db.chaChecklistImport.findMany({
       where: { status: "PENDING_APPROVAL", job: { orgId, deletedAt: null } },
       select: {
@@ -293,35 +236,18 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
       orderBy: [{ estimatedFilingDate: "asc" }, { id: "asc" }],
       take: 4,
     }),
-    db.chaAuditLog.findMany({
-      where: { orgId },
-      include: {
-        job: { select: { id: true, jobNumber: true } },
-      },
-      orderBy: { timestamp: "desc" },
-      take: 6,
-    }),
+    listChaRecentActivity(orgId),
   ]);
 
-  const totalOutstandingAdvance = pendingAdvances.reduce((sum, adv) => {
-    const expected = Number(adv.expectedAmount || 0);
-    const received = adv.receipts.reduce((tot, r) => tot + Number(r.amount), 0);
-    return sum + Math.max(0, expected - received);
-  }, 0);
-
-  const recentActorIds = Array.from(
-    new Set(recentActivity.map((log) => log.actorId).filter((actorId) => actorId !== "system")),
-  );
-
-  const recentActors =
-    recentActorIds.length > 0
-      ? await db.user.findMany({
-          where: { id: { in: recentActorIds } },
-          select: { id: true, name: true },
-        })
-      : [];
-
-  const recentActorMap = new Map(recentActors.map((actor) => [actor.id, actor.name]));
+  const visibleJobIds = myJobs.map((job) => job.id);
+  const [dueDateWarnings, section49Warnings, filingQueryWarnings] = await Promise.all([
+    listChaDueDateWarnings(session.user.id, orgId, {
+      jobIds: visibleJobIds,
+      createNotifications: false,
+    }),
+    listSection49ValidityWarnings(session.user.id, orgId, visibleJobIds),
+    listFilingQueryEscalationWarnings(session.user.id, orgId, visibleJobIds),
+  ]);
 
   const filingQueryWarningMap = new Map(
     filingQueryWarnings.map((warning) => [
@@ -354,31 +280,31 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
   const metrics = [
     {
       title: "Active Clearance Jobs",
-      value: activeJobsCount,
+      value: dashboardMetrics.activeJobs,
       note: "Jobs currently in operations",
       accent: "blue" as const,
     },
     {
       title: "Checklists Pending",
-      value: pendingChecklistsCount,
+      value: dashboardMetrics.pendingChecklists,
       note: "Awaiting manager review decision",
       accent: "orange" as const,
     },
     {
       title: "Pending Filings",
-      value: pendingFilingsCount,
+      value: dashboardMetrics.pendingFilings,
       note: "Awaiting customs BOE/SB submissions",
       accent: "blue" as const,
     },
     {
       title: "Urgent Expenses",
-      value: urgentExpensesCount,
+      value: dashboardMetrics.urgentExpenses,
       note: "Immediate payouts required",
       accent: "orange" as const,
     },
     {
       title: "Outstanding Advances",
-      value: `\u20B9${totalOutstandingAdvance.toLocaleString("en-IN")}`,
+      value: `\u20B9${dashboardMetrics.outstandingAdvance.toLocaleString("en-IN")}`,
       note: "Expected follow-up collections",
       accent: "orange" as const,
     },
@@ -464,16 +390,6 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
             <DashboardCreateJob
               currentUserId={session.user.id}
               canCreateJob={canCreateJob}
-              options={{
-                branches,
-                customers,
-                jobTypes,
-                shipmentTypes,
-                users,
-                managers: eligibleManagers,
-                teamGroups,
-                branchNumberingRules,
-              }}
             />
             <ChaDashboardFilterAction
               jobTypes={jobTypes.map((jobType) => jobType.name)}
@@ -665,18 +581,18 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
               <ActivityTimeline>
                 {recentActivity.slice(0, 6).map((log) => {
                   const presentation = activityPresentation(log.event);
-                  const jobHref = log.job ? `/cha/jobs/${log.job.id}` : undefined;
+                  const jobHref = log.jobId ? `/cha/jobs/${log.jobId}` : undefined;
 
                   return (
                     <ActivityTimelineItem
                       key={log.id}
-                      actor={recentActorMap.get(log.actorId) || "System"}
+                      actor={log.actorName || "System"}
                       description={log.remarks || "Operational event logged."}
                       exactTime={log.timestamp.toISOString()}
                       href={jobHref}
                       icon={presentation.icon}
                       jobHref={jobHref}
-                      jobNumber={log.job?.jobNumber}
+                      jobNumber={log.jobNumber ?? undefined}
                       relativeTime={formatRelativeTime(log.timestamp)}
                       title={formatActivityTitle(log.event)}
                       tone={presentation.tone}

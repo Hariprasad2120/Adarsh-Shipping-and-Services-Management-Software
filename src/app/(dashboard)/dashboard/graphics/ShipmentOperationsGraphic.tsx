@@ -17,9 +17,8 @@ export const ShipmentOperationsGraphic: React.FC<{ isHovered?: boolean }> = ({ i
             stroke="var(--mnx-graphic-accent-strong)"
             strokeWidth="2.5"
             strokeDasharray="4 4"
-            animate={{
-              strokeDashoffset: isHovered ? [0, -20] : 0,
-            }}
+            initial={{ strokeDashoffset: 0 }}
+            animate={{ strokeDashoffset: isHovered ? -20 : 0 }}
             transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
           />
 

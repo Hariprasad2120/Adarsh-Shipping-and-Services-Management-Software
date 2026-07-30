@@ -1,6 +1,7 @@
 import "server-only";
 
 import { db } from "@/lib/db";
+import { Prisma } from "@/generated/prisma/client";
 import { toAttendanceDate } from "@/lib/attendance-date";
 import { getNow } from "@/lib/clock";
 import { detailedWorkflowStages, modules as catalogueModules } from "@/lib/catalogue-data";
@@ -13,6 +14,7 @@ import type {
   DashboardModuleSummary,
   DashboardModuleTone,
 } from "./types";
+import { registerDashboardMetricCacheInvalidator } from "./cache";
 
 type ModuleCounts = {
   primary: number;
@@ -438,36 +440,192 @@ function unavailableSummary(definition: ModuleDefinition): DashboardModuleSummar
   };
 }
 
-async function readModuleSummary(
-  definition: ModuleDefinition,
-  context: DashboardReadContext,
-): Promise<DashboardModuleSummary> {
-  try {
-    const counts = await definition.read(context);
-    return {
-      id: definition.id,
-      title: definition.title,
-      eyebrow: definition.eyebrow,
-      description: definition.description,
-      href: definition.href,
-      icon: definition.icon,
-      tone: definition.tone,
-      primaryMetric: {
-        label: definition.primaryLabel,
-        value: counts.primary,
-        detail: definition.primaryDetail,
-      },
-      supportingMetrics: [
-        { label: definition.secondaryLabel, value: counts.secondary },
-        { label: definition.tertiaryLabel, value: counts.tertiary },
-      ],
-      actions: definition.actions,
-      available: true,
-    };
-  } catch (error) {
-    console.error(`[dashboard] Failed to read ${definition.id} summary`, error);
-    return unavailableSummary(definition);
+type AggregateRow = {
+  module: ToggleableModuleSectionId;
+  primary: bigint | number;
+  secondary: bigint | number;
+  tertiary: bigint | number;
+};
+
+const metricSnapshotCache = new Map<
+  string,
+  { expiresAt: number; value: Promise<DashboardModuleSnapshot> }
+>();
+const METRIC_SNAPSHOT_TTL_MS = 8_000;
+
+function invalidateMetricCache({
+  orgId,
+  userId,
+}: {
+  orgId?: string;
+  userId?: string;
+} = {}) {
+  if (!orgId && !userId) {
+    metricSnapshotCache.clear();
+    return;
   }
+  for (const key of metricSnapshotCache.keys()) {
+    if ((!orgId || key.includes(`org=${orgId}|`)) && (!userId || key.includes(`user=${userId}|`))) {
+      metricSnapshotCache.delete(key);
+    }
+  }
+}
+
+registerDashboardMetricCacheInvalidator(invalidateMetricCache);
+
+function aggregateRow(
+  module: ToggleableModuleSectionId,
+  primary: Prisma.Sql,
+  secondary: Prisma.Sql,
+  tertiary: Prisma.Sql,
+) {
+  return Prisma.sql`SELECT ${module}::text AS module, (${primary})::bigint AS primary, (${secondary})::bigint AS secondary, (${tertiary})::bigint AS tertiary`;
+}
+
+async function readAggregatedCounts(context: DashboardReadContext, moduleIds: readonly ToggleableModuleSectionId[]) {
+  const enabled = new Set(moduleIds);
+  const userRows: Prisma.Sql[] = [];
+  const orgRows: Prisma.Sql[] = [];
+  const { orgId, userId, attendanceDate, caps } = context;
+
+  if (enabled.has("hrms")) {
+    userRows.push(aggregateRow(
+      "hrms",
+      Prisma.sql`SELECT COUNT(*) FROM "HrmsTask" WHERE "assigneeId" = ${userId} AND status = 'PENDING'`,
+      Prisma.sql`SELECT COUNT(*) FROM "HRCase" WHERE "userId" = ${userId} AND status IN ('OPEN', 'ASSIGNED', 'IN_PROGRESS')`,
+      Prisma.sql`SELECT COUNT(*) FROM "LeaveRequest" WHERE "userId" = ${userId} AND status = 'pending'`,
+    ));
+  }
+  if (enabled.has("attendance")) {
+    userRows.push(aggregateRow(
+      "attendance",
+      Prisma.sql`SELECT COUNT(*) FROM "AttendancePunch" WHERE "userId" = ${userId} AND date = ${attendanceDate} AND "inAt" IS NOT NULL`,
+      Prisma.sql`SELECT COUNT(*) FROM "LeaveRequest" WHERE "userId" = ${userId} AND status = 'pending'`,
+      Prisma.sql`SELECT COUNT(*) FROM "OTEntry" WHERE "userId" = ${userId} AND status = 'pending'`,
+    ));
+  }
+  if (enabled.has("ams")) {
+    userRows.push(aggregateRow(
+      "ams",
+      Prisma.sql`SELECT COUNT(*) FROM "Appraisal" a INNER JOIN "AppraisalCycle" c ON c.id = a."cycleId" WHERE a."employeeId" = ${userId} AND c."orgId" = ${orgId} AND a.stage <> 'CLOSED'`,
+      Prisma.sql`SELECT COUNT(*) FROM "AppraisalReviewer" r INNER JOIN "Appraisal" a ON a.id = r."appraisalId" INNER JOIN "AppraisalCycle" c ON c.id = a."cycleId" WHERE r."userId" = ${userId} AND c."orgId" = ${orgId} AND a.stage <> 'CLOSED'`,
+      Prisma.sql`SELECT COUNT(*) FROM "AppraisalSchedule" WHERE "orgId" = ${orgId} AND "employeeId" = ${userId} AND status = 'SCHEDULED'`,
+    ));
+  }
+  if (enabled.has("lms")) {
+    userRows.push(aggregateRow(
+      "lms",
+      Prisma.sql`SELECT COUNT(*) FROM "Course" WHERE "orgId" = ${orgId}`,
+      Prisma.sql`SELECT COUNT(*) FROM "CourseEnrollment" e INNER JOIN "Course" c ON c.id = e."courseId" WHERE e."userId" = ${userId} AND c."orgId" = ${orgId} AND e.status IN ('ENROLLED', 'IN_PROGRESS')`,
+      Prisma.sql`SELECT COUNT(*) FROM "CourseEnrollment" e INNER JOIN "Course" c ON c.id = e."courseId" WHERE e."userId" = ${userId} AND c."orgId" = ${orgId} AND e.status = 'COMPLETED'`,
+    ));
+  }
+  if (enabled.has("communication")) {
+    userRows.push(aggregateRow(
+      "communication",
+      Prisma.sql`SELECT COUNT(*) FROM "GoogleChatSpace" WHERE "orgId" = ${orgId} AND "linkStatus" = 'active'`,
+      Prisma.sql`SELECT COUNT(*) FROM "GoogleChatSubscription" WHERE "userId" = ${userId} AND enabled = true`,
+      Prisma.sql`SELECT COUNT(*) FROM "GoogleWorkspaceConnection" WHERE "userId" = ${userId} AND status = 'connected'`,
+    ));
+  }
+  if (enabled.has("expense")) {
+    userRows.push(aggregateRow(
+      "expense",
+      Prisma.sql`SELECT COUNT(*) FROM "ChaExpenseRequest" WHERE "orgId" = ${orgId} AND "requestedById" = ${userId} AND status IN ('UNDER_REVIEW', 'ACCOUNTS_REVIEW', 'CLARIFICATION_REQUIRED', 'APPROVED', 'READY_FOR_DISBURSEMENT', 'QUERY_RAISED')`,
+      Prisma.sql`SELECT COUNT(*) FROM "ChaExpenseRequest" WHERE "orgId" = ${orgId} AND "requestedById" = ${userId} AND "isUrgent" = true AND status IN ('UNDER_REVIEW', 'ACCOUNTS_REVIEW', 'CLARIFICATION_REQUIRED', 'APPROVED', 'READY_FOR_DISBURSEMENT', 'QUERY_RAISED')`,
+      Prisma.sql`SELECT COUNT(*) FROM "ChaExpenseRequest" WHERE "orgId" = ${orgId} AND "requestedById" = ${userId} AND status = 'PAID'`,
+    ));
+  }
+  if (enabled.has("crm")) {
+    orgRows.push(aggregateRow(
+      "crm",
+      Prisma.sql`SELECT COUNT(*) FROM "CrmLead" WHERE "orgId" = ${orgId} AND "isConverted" = false AND status <> 'LOST'`,
+      Prisma.sql`SELECT COUNT(*) FROM "CrmDeal" WHERE "orgId" = ${orgId} AND stage NOT IN ('WON', 'LOST')`,
+      Prisma.sql`SELECT COUNT(*) FROM "CrmAccount" WHERE "orgId" = ${orgId} AND status = 'ACTIVE'`,
+    ));
+  }
+  if (enabled.has("cha")) {
+    orgRows.push(aggregateRow(
+      "cha",
+      Prisma.sql`SELECT COUNT(*) FROM "ChaJob" WHERE "orgId" = ${orgId} AND "deletedAt" IS NULL AND status = 'ACTIVE'`,
+      Prisma.sql`SELECT COUNT(*) FROM "ChaJob" WHERE "orgId" = ${orgId} AND "deletedAt" IS NULL AND status = 'ACTIVE' AND priority IN ('HIGH', 'URGENT')`,
+      Prisma.sql`SELECT COUNT(*) FROM "ChaJob" WHERE "orgId" = ${orgId} AND "deletedAt" IS NULL AND status = 'ON_HOLD'`,
+    ));
+  }
+  if (enabled.has("accounting")) {
+    orgRows.push(aggregateRow(
+      "accounting",
+      Prisma.sql`SELECT COUNT(*) FROM "SalesInvoice" WHERE "orgId" = ${orgId} AND status IN ('UNPAID', 'PARTLY_PAID', 'OVERDUE')`,
+      Prisma.sql`SELECT COUNT(*) FROM "PurchaseInvoice" WHERE "orgId" = ${orgId} AND status IN ('UNPAID', 'PARTLY_PAID', 'OVERDUE')`,
+      Prisma.sql`SELECT COUNT(*) FROM "JournalEntry" WHERE "orgId" = ${orgId} AND status = 'DRAFT'`,
+    ));
+  }
+  if (enabled.has("recruit")) {
+    const employerView = Boolean(
+      caps["recruit.view"] || caps["recruit.dashboard.view"] || caps["recruit.application.manage"],
+    );
+    (employerView ? orgRows : userRows).push(
+      employerView
+        ? aggregateRow(
+            "recruit",
+            Prisma.sql`SELECT COUNT(*) FROM "RecruitJobOpening" WHERE "orgId" = ${orgId} AND "deletedAt" IS NULL AND status IN ('APPROVED', 'PUBLISHED')`,
+            Prisma.sql`SELECT COUNT(*) FROM "RecruitApplication" WHERE "orgId" = ${orgId} AND "deletedAt" IS NULL AND stage IN ('NEW', 'RESUME_REVIEW', 'SCREENING', 'SHORTLISTED', 'ASSESSMENT', 'INTERVIEW', 'HIRING_MANAGER_REVIEW', 'OFFER_APPROVAL', 'OFFER_SENT', 'ON_HOLD')`,
+            Prisma.sql`SELECT COUNT(*) FROM "RecruitCandidate" WHERE "orgId" = ${orgId} AND "deletedAt" IS NULL`,
+          )
+        : aggregateRow(
+            "recruit",
+            Prisma.sql`SELECT COUNT(*) FROM "RecruitJobOpening" WHERE "orgId" = ${orgId} AND "deletedAt" IS NULL AND status = 'PUBLISHED'`,
+            Prisma.sql`SELECT COUNT(*) FROM "RecruitJobSeekerApplication" WHERE "ownerId" = ${userId} AND "privateStatus" NOT IN ('ACCEPTED', 'REJECTED', 'WITHDRAWN', 'ARCHIVED')`,
+            Prisma.sql`SELECT COUNT(*) FROM "RecruitJobMatch" WHERE "ownerId" = ${userId}`,
+          ),
+    );
+  }
+
+  const [userCounts, orgCounts] = await Promise.all([
+    userRows.length
+      ? db.$queryRaw<AggregateRow[]>(Prisma.join(userRows, " UNION ALL "))
+      : Promise.resolve([]),
+    orgRows.length
+      ? db.$queryRaw<AggregateRow[]>(Prisma.join(orgRows, " UNION ALL "))
+      : Promise.resolve([]),
+  ]);
+  return new Map(
+    [...userCounts, ...orgCounts].map((row) => [
+      row.module,
+      {
+        primary: Number(row.primary),
+        secondary: Number(row.secondary),
+        tertiary: Number(row.tertiary),
+      },
+    ]),
+  );
+}
+
+function summaryFromCounts(
+  definition: ModuleDefinition,
+  counts: ModuleCounts | undefined,
+): DashboardModuleSummary {
+  if (!counts) return unavailableSummary(definition);
+  return {
+    id: definition.id,
+    title: definition.title,
+    eyebrow: definition.eyebrow,
+    description: definition.description,
+    href: definition.href,
+    icon: definition.icon,
+    tone: definition.tone,
+    primaryMetric: {
+      label: definition.primaryLabel,
+      value: counts.primary,
+      detail: definition.primaryDetail,
+    },
+    supportingMetrics: [
+      { label: definition.secondaryLabel, value: counts.secondary },
+      { label: definition.tertiaryLabel, value: counts.tertiary },
+    ],
+    actions: definition.actions,
+    available: true,
+  };
 }
 
 export async function getDashboardModuleSnapshot({
@@ -481,20 +639,32 @@ export async function getDashboardModuleSnapshot({
   caps: Caps;
   visibleModuleIds: readonly ToggleableModuleSectionId[];
 }): Promise<DashboardModuleSnapshot> {
-  const now = await getNow();
-  const visibleSet = new Set<ToggleableModuleSectionId>(visibleModuleIds);
-  const definitions = MODULE_DEFINITIONS.filter((definition) => visibleSet.has(definition.id));
-  const context: DashboardReadContext = {
-    orgId,
-    userId,
-    caps,
-    attendanceDate: toAttendanceDate(now),
-  };
+  const permissionFingerprint = Object.keys(caps).filter((key) => caps[key]).sort().join(",");
+  const moduleFingerprint = [...visibleModuleIds].sort().join(",");
+  const key = `org=${orgId}|user=${userId}|modules=${moduleFingerprint}|caps=${permissionFingerprint}`;
+  const cached = metricSnapshotCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
 
-  return {
-    modules: await Promise.all(
-      definitions.map((definition) => readModuleSummary(definition, context)),
-    ),
-    generatedAt: now.toISOString(),
-  };
+  const value = (async () => {
+    const now = await getNow();
+    const visibleSet = new Set<ToggleableModuleSectionId>(visibleModuleIds);
+    const definitions = MODULE_DEFINITIONS.filter((definition) => visibleSet.has(definition.id));
+    const dynamicDefinitions = definitions.filter((definition) => definition.id !== "product-catalogue");
+    const counts = await readAggregatedCounts(
+      { orgId, userId, caps, attendanceDate: toAttendanceDate(now) },
+      dynamicDefinitions.map((definition) => definition.id),
+    );
+    counts.set("product-catalogue", {
+      primary: catalogueModules.length,
+      secondary: catalogueModules.filter((module) => module.status === "Implemented").length,
+      tertiary: detailedWorkflowStages.length,
+    });
+    return {
+      modules: definitions.map((definition) => summaryFromCounts(definition, counts.get(definition.id))),
+      generatedAt: now.toISOString(),
+    };
+  })();
+  metricSnapshotCache.set(key, { expiresAt: Date.now() + METRIC_SNAPSHOT_TTL_MS, value });
+  value.catch(() => metricSnapshotCache.delete(key));
+  return value;
 }

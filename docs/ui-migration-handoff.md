@@ -963,3 +963,27 @@ the current root authentication source and stops on its unrelated literal
 
 Backup:
 `OLD UI code/ui-iteration-backups/login-native-submit-credential-leak-fix-20260730/`
+
+## 2026-07-30 performance phase 2 continuation
+
+The current uncommitted performance tree now contains request-scoped dashboard
+context, lazy Team/Organization data, two-query cached dashboard metrics,
+side-effect-free widget reads, lazy/dynamic CHA Create Job options, visible-job
+warning scoping, aggregated CHA metrics, joined activity actors, database/pool
+telemetry, a dedicated non-overlapping Justdial worker, explicit Turbopack
+scripts, and Playwright security/motion checks.
+
+Measured local-staging latency targets pass. The exact measurements, pool/SQL
+telemetry, commands and limitations are in
+`docs/performance-phase-2-results.md`.
+
+Do not mark this phase complete yet:
+
+- measured complete-request query counts remain 29 for `/cha` and 22 for
+  `/cha/jobs`, above the required maximum of eight;
+- the full suite passes 283/286 tests, with the three previously recorded CHA
+  fixture failures;
+- repository-wide lint exceeded the 120-second run window;
+- production per-query/pool telemetry still needs a representative run.
+
+No commit, push, reset, stash, clean or discard operation was performed.
