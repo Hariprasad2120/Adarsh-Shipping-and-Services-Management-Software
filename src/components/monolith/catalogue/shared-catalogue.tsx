@@ -340,7 +340,6 @@ export const sharedCatalogue: CatalogueEntry[] = [
           title="Active clearance jobs"
           actions={
             <>
-              <OperationalVisibleRecords visible={3} total={3} />
               <label className="mnx-search-field">
                 <Search aria-hidden="true" />
                 <Input aria-label="Search jobs" placeholder="Search customers, job numbers..." />
@@ -353,6 +352,7 @@ export const sharedCatalogue: CatalogueEntry[] = [
                 <Plus aria-hidden="true" />
                 New Job
               </Button>
+              <OperationalVisibleRecords visible={3} total={3} />
             </>
           }
         />

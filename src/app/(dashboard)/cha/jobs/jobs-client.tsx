@@ -603,12 +603,12 @@ export function JobsClient({
             title={title}
             actions={
               <>
+                {renderTableControls(tableKey)}
                 <ChaVisibleRecords
                   visible={data.items.length}
                   total={data.total}
                   tone={isActiveSection ? "blue" : "green"}
                 />
-                {renderTableControls(tableKey)}
               </>
             }
           />

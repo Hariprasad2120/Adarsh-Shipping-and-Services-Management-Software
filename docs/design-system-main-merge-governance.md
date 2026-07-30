@@ -39,11 +39,12 @@ avoid registering a reusable pattern.
 
 ## Operational data-table toolbar
 
-Search, visible-record count, filters, primary create action, and related table
+Search, filters, primary create action, visible-record count, and related table
 controls belong inside `OperationalDataTableHeader`. At desktop widths they
-form one aligned row. Compact filters and compact actions share the same
-control height, padding, icon size, and icon-to-label spacing. Responsive
-wrapping is allowed only when the viewport cannot safely contain the row.
+form one aligned row, with the visible-record count last at the far right.
+Compact filters and compact actions share the same control height, padding,
+icon size, and icon-to-label spacing. Responsive wrapping is allowed only when
+the viewport cannot safely contain the row.
 
 ## Merge and conflict-resolution rules
 

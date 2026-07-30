@@ -388,7 +388,6 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
             title="Active clearance jobs"
             actions={
               <>
-                <ChaVisibleRecords visible={myJobs.length} total={myJobs.length} />
                 <ChaDashboardSearchAction value={assignedSearch} />
                 <DashboardCreateJob
                   currentUserId={session.user.id}
@@ -409,6 +408,7 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
                   <Settings aria-hidden="true" />
                   Settings
                 </Link>
+                <ChaVisibleRecords visible={myJobs.length} total={myJobs.length} />
               </>
             }
           />
