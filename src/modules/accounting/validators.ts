@@ -22,6 +22,7 @@ export const AccountSchema = z.object({
   ]),
   isGroup: z.boolean().default(false),
   isActive: z.boolean().default(true),
+  allowJournalContact: z.boolean().default(false),
   openingDebit: z.number().nonnegative().default(0),
   openingCredit: z.number().nonnegative().default(0),
   branchId: z.string().nullable().optional(),
@@ -63,6 +64,7 @@ export const SalesInvoiceSchema = z.object({
   remarks: z.string().nullable().optional(),
   bankDetails: z.string().nullable().optional(),
   manualNotes: z.string().nullable().optional(),
+  paymentMethod: z.string().nullable().optional(),
 });
 
 export const PurchaseInvoiceSchema = z.object({
@@ -74,6 +76,7 @@ export const PurchaseInvoiceSchema = z.object({
   discountAmount: z.number().nonnegative().default(0),
   taxRate: z.number().nonnegative().default(18),
   remarks: z.string().nullable().optional(),
+  paymentMethod: z.string().nullable().optional(),
 });
 
 export const PaymentAllocationSchema = z.object({

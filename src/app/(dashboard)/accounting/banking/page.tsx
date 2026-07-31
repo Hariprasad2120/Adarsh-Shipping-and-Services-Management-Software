@@ -1,16 +1,16 @@
-import React from "react";
-import { getSession } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { listAccounts } from "@/modules/accounting/service";
 import { BankingClient } from "./banking-client";
-import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+import {
+  AccountingActionLink,
+  AccountingRoutePageHeader,
+} from "@/components/monolith/accounting-workspace";
+import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 
 export default async function BankingPage() {
-  const session = await getSession();
-  if (!session?.user) redirect("/login");
-
-  const orgId = session.user.orgId!;
+  const { caps, orgId } = await requireAccountingRouteAccess(
+    "/accounting/banking",
+  );
 
   // Parallelize all independent queries; use groupBy for balances to avoid loading all GL entries
   const [bankAccounts, balanceSums, transactions, allAccounts] = await Promise.all([
@@ -81,9 +81,27 @@ export default async function BankingPage() {
 
   return (
     <>
-      <AccountingRoutePageHeader />
+      <AccountingRoutePageHeader
+        actions={
+          <>
+            <AccountingActionLink href="/accounting/payments">
+              All payments
+            </AccountingActionLink>
+            {caps["accounting.payment.create"] ? (
+              <AccountingActionLink
+                href="/accounting/payment-entries/new"
+                variant="primary"
+              >
+                New payment draft
+              </AccountingActionLink>
+            ) : null}
+          </>
+        }
+      />
       <BankingClient
         bankAccounts={accountsWithBalances}
+        canCreatePayment={Boolean(caps["accounting.payment.create"])}
+        canPrepareTransfer={Boolean(caps["accounting.payment.prepare"])}
         transactions={transactions.map((t) => ({
           id: t.id,
           postingDate: t.postingDate,

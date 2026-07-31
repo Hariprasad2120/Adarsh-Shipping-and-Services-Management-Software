@@ -18,6 +18,7 @@ import {
   prepareLegacyPurchaseInvoice,
   prepareLegacySalesInvoice,
   prepareLegacyCustomerNote,
+  prepareLegacyVendorNote,
   reverseCanonicalPaymentByLegacyRecord,
 } from "./document-adapters";
 import { mapAccountingError } from "./operational-helpers";
@@ -283,6 +284,7 @@ export async function createPaymentEntryAction(data: any): Promise<ActionRespons
 
     const payment = await accService.createPaymentEntry(orgId, session.user.id, data);
     revalidatePath("/accounting/payment-entries");
+    revalidatePath("/accounting/payments");
     return { ok: true, data: payment };
   } catch (error: unknown) {
     return { ok: false, error: safeAccountingActionError(error) };
@@ -305,6 +307,7 @@ export async function submitPaymentEntryAction(id: string): Promise<ActionRespon
       makerId: session.user.id,
     });
     revalidatePath("/accounting/payment-entries");
+    revalidatePath("/accounting/payments");
     revalidatePath(`/accounting/payment-entries/${id}`);
     return { ok: true, data: payment };
   } catch (error: unknown) {
@@ -629,6 +632,7 @@ export async function listQuotationsAction(): Promise<ActionResponse> {
     if (!session?.user) return { ok: false, error: "Unauthorized" };
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
+    await requirePermission(session.user.id, "accounting.quotation.read");
     const data = await accService.listQuotations(orgId);
     return { ok: true, data };
   } catch (err: any) {
@@ -642,6 +646,7 @@ export async function getQuotationAction(id: string): Promise<ActionResponse> {
     if (!session?.user) return { ok: false, error: "Unauthorized" };
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
+    await requirePermission(session.user.id, "accounting.quotation.read");
     const data = await accService.getQuotation(orgId, id);
     return { ok: true, data };
   } catch (err: any) {
@@ -655,6 +660,7 @@ export async function createQuotationAction(data: any): Promise<ActionResponse> 
     if (!session?.user) return { ok: false, error: "Unauthorized" };
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
+    await requirePermission(session.user.id, "accounting.quotation.create");
     const quotation = await accService.createQuotation(orgId, session.user.id, data);
     revalidatePath("/accounting/quotations");
     return { ok: true, data: quotation };
@@ -663,18 +669,189 @@ export async function createQuotationAction(data: any): Promise<ActionResponse> 
   }
 }
 
-export async function convertQuotationToInvoiceAction(id: string): Promise<ActionResponse> {
+export async function updateQuotationAction(id: string, data: any): Promise<ActionResponse> {
   try {
     const session = await auth();
     if (!session?.user) return { ok: false, error: "Unauthorized" };
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
-    const invoice = await accService.convertQuotationToInvoice(orgId, id, session.user.id);
+    await requirePermission(session.user.id, "accounting.quotation.edit");
+    const quotation = await accService.updateQuotationDraft(orgId, id, session.user.id, data);
     revalidatePath("/accounting/quotations");
+    revalidatePath(`/accounting/quotations/${id}`);
+    return { ok: true, data: quotation };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to update quotation" };
+  }
+}
+
+export async function duplicateQuotationAction(id: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    await requirePermission(session.user.id, "accounting.quotation.create");
+    const quotation = await accService.duplicateQuotation(orgId, id, session.user.id);
+    revalidatePath("/accounting/quotations");
+    return { ok: true, data: quotation };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to duplicate quotation" };
+  }
+}
+
+export async function submitQuotationForApprovalAction(id: string, expectedVersion?: number): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    await requirePermission(session.user.id, "accounting.quotation.submit");
+    const quotation = await accService.submitQuotationApproval(orgId, id, session.user.id, expectedVersion);
+    revalidatePath("/accounting/quotations");
+    revalidatePath(`/accounting/quotations/${id}`);
+    return { ok: true, data: quotation };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to submit quotation for approval" };
+  }
+}
+
+export async function approveQuotationAction(id: string, expectedVersion?: number): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    await requirePermission(session.user.id, "accounting.quotation.approve");
+    const quotation = await accService.approveQuotationDraft(orgId, id, session.user.id, expectedVersion);
+    revalidatePath("/accounting/quotations");
+    revalidatePath(`/accounting/quotations/${id}`);
+    return { ok: true, data: quotation };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to approve quotation" };
+  }
+}
+
+export async function returnQuotationForRevisionAction(id: string, reason: string, expectedVersion?: number): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    await requirePermission(session.user.id, "accounting.quotation.approve");
+    const quotation = await accService.returnQuotationDraftForRevision(orgId, id, session.user.id, reason, expectedVersion);
+    revalidatePath("/accounting/quotations");
+    revalidatePath(`/accounting/quotations/${id}`);
+    return { ok: true, data: quotation };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to return quotation for revision" };
+  }
+}
+
+export async function sendQuotationAction(id: string, data: { expectedVersion?: number; templateVersion?: string | null; deliveryMode?: "EMAIL" | "PORTAL" | "MANUAL" }): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    await requirePermission(session.user.id, "accounting.quotation.send");
+    const quotation = await accService.sendQuotationDraft(orgId, id, session.user.id, data);
+    revalidatePath("/accounting/quotations");
+    revalidatePath(`/accounting/quotations/${id}`);
+    return { ok: true, data: quotation };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to send quotation" };
+  }
+}
+
+export async function acceptQuotationAction(id: string, data: { expectedVersion?: number; source: "INTERNAL" | "PORTAL" | "SYSTEM"; customerReference?: string | null }): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    await requirePermission(session.user.id, "accounting.quotation.decide");
+    const quotation = await accService.acceptQuotationDraft(orgId, id, session.user.id, data);
+    revalidatePath("/accounting/quotations");
+    revalidatePath(`/accounting/quotations/${id}`);
+    return { ok: true, data: quotation };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to accept quotation" };
+  }
+}
+
+export async function declineQuotationAction(id: string, data: { expectedVersion?: number; source: "INTERNAL" | "PORTAL" | "SYSTEM"; reason: string }): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    await requirePermission(session.user.id, "accounting.quotation.decide");
+    const quotation = await accService.declineQuotationDraft(orgId, id, session.user.id, data);
+    revalidatePath("/accounting/quotations");
+    revalidatePath(`/accounting/quotations/${id}`);
+    return { ok: true, data: quotation };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to decline quotation" };
+  }
+}
+
+export async function cancelQuotationAction(id: string, data: { expectedVersion?: number; reason?: string | null } = {}): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    await requirePermission(session.user.id, "accounting.quotation.cancel");
+    const quotation = await accService.cancelQuotationDraft(orgId, id, session.user.id, data);
+    revalidatePath("/accounting/quotations");
+    revalidatePath(`/accounting/quotations/${id}`);
+    return { ok: true, data: quotation };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to cancel quotation" };
+  }
+}
+
+export async function convertQuotationToInvoiceAction(
+  id: string,
+  data: {
+    expectedVersion?: number;
+    quantitiesByLineId?: Record<string, string>;
+  } = {},
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    await requirePermission(session.user.id, "accounting.quotation.convert_invoice");
+    const invoice = await accService.convertQuotationToInvoice(
+      orgId,
+      id,
+      session.user.id,
+      data,
+    );
+    revalidatePath("/accounting/quotations");
+    revalidatePath(`/accounting/quotations/${id}`);
     revalidatePath("/accounting/sales-invoices");
     return { ok: true, data: invoice };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to convert quotation" };
+  }
+}
+
+export async function runQuotationExpiryAction(): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    await requirePermission(session.user.id, "accounting.quotation.manage");
+    const expiredIds = await accService.runQuotationExpiry(orgId, session.user.id);
+    revalidatePath("/accounting/quotations");
+    return { ok: true, data: expiredIds };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to run quotation expiry" };
   }
 }
 
@@ -1104,5 +1281,132 @@ export async function getTrialBalanceAction(filters: any = {}): Promise<ActionRe
   }
 }
 
+export async function getUnitsAction(): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
 
+    const units = await accService.getUnits(orgId);
+    return { ok: true, data: units };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch units" };
+  }
+}
+
+export async function listVendorNotesAction(): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const data = await accService.listVendorNotes(orgId);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to list vendor notes" };
+  }
+}
+
+export async function getVendorNoteAction(id: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const data = await accService.getVendorNote(orgId, id);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to get vendor note" };
+  }
+}
+
+export async function createVendorNoteAction(data: any): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const note = await accService.createVendorNote(orgId, session.user.id, data);
+    revalidatePath("/accounting/quotations");
+    return { ok: true, data: note };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to create vendor note" };
+  }
+}
+
+export async function submitVendorNoteAction(id: string): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    const note = await prepareLegacyVendorNote({
+      orgId,
+      noteId: id,
+      makerId: session.user.id,
+    });
+    revalidatePath("/accounting/quotations");
+    return { ok: true, data: note };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to submit vendor note" };
+  }
+}
+
+// ─── Re-delegated capability policy actions ────────────────────────────────
+import {
+  saveAccountingCapabilityPolicyDraftAction as _saveCapDraft,
+  submitAccountingCapabilityPolicyAction as _submitCap,
+  approveAccountingCapabilityPolicyAction as _approveCap,
+  rejectAccountingCapabilityPolicyAction as _rejectCap,
+  revokeAccountingCapabilityPolicyAction as _revokeCap,
+  supersedeAccountingCapabilityPolicyAction as _supersedeCap,
+} from "./capability-policy-actions";
+
+export async function saveAccountingCapabilityPolicyDraftAction(...args: Parameters<typeof _saveCapDraft>) { return _saveCapDraft(...args); }
+export async function submitAccountingCapabilityPolicyAction(...args: Parameters<typeof _submitCap>) { return _submitCap(...args); }
+export async function approveAccountingCapabilityPolicyAction(...args: Parameters<typeof _approveCap>) { return _approveCap(...args); }
+export async function rejectAccountingCapabilityPolicyAction(...args: Parameters<typeof _rejectCap>) { return _rejectCap(...args); }
+export async function revokeAccountingCapabilityPolicyAction(...args: Parameters<typeof _revokeCap>) { return _revokeCap(...args); }
+export async function supersedeAccountingCapabilityPolicyAction(...args: Parameters<typeof _supersedeCap>) { return _supersedeCap(...args); }
+
+// ─── Re-delegated configuration admin actions ──────────────────────────────
+import {
+  saveAccountingOrganisationProfileAction as _saveOrgProfile,
+  saveAccountingLegalEntityAction as _saveLegal,
+  saveAccountingTaxRegistrationAction as _saveTax,
+  saveAccountingCurrencyAction as _saveCurrency,
+  saveAccountingDimensionDefinitionAction as _saveDimDef,
+  saveAccountingDimensionValueAction as _saveDimVal,
+  saveAccountingNumberSeriesAction as _saveNumSeries,
+  saveAccountingFiscalYearAction as _saveFY,
+  saveAccountingPeriodAction as _savePeriod,
+  requestAccountingPeriodLockAction as _reqLock,
+  approveAccountingPeriodLockAction as _approveLock,
+  rejectAccountingPeriodLockAction as _rejectLock,
+  saveAccountingExchangeRateDraftAction as _saveExDraft,
+  approveAccountingExchangeRateAction as _approveEx,
+  rejectAccountingExchangeRateAction as _rejectEx,
+} from "./configuration-admin-actions";
+
+export async function saveAccountingOrganisationProfileAction(...args: Parameters<typeof _saveOrgProfile>) { return _saveOrgProfile(...args); }
+export async function saveAccountingLegalEntityAction(...args: Parameters<typeof _saveLegal>) { return _saveLegal(...args); }
+export async function saveAccountingTaxRegistrationAction(...args: Parameters<typeof _saveTax>) { return _saveTax(...args); }
+export async function saveAccountingCurrencyAction(...args: Parameters<typeof _saveCurrency>) { return _saveCurrency(...args); }
+export async function saveAccountingDimensionDefinitionAction(...args: Parameters<typeof _saveDimDef>) { return _saveDimDef(...args); }
+export async function saveAccountingDimensionValueAction(...args: Parameters<typeof _saveDimVal>) { return _saveDimVal(...args); }
+export async function saveAccountingNumberSeriesAction(...args: Parameters<typeof _saveNumSeries>) { return _saveNumSeries(...args); }
+export async function saveAccountingFiscalYearAction(...args: Parameters<typeof _saveFY>) { return _saveFY(...args); }
+export async function saveAccountingPeriodAction(...args: Parameters<typeof _savePeriod>) { return _savePeriod(...args); }
+export async function requestAccountingPeriodLockAction(...args: Parameters<typeof _reqLock>) { return _reqLock(...args); }
+export async function approveAccountingPeriodLockAction(...args: Parameters<typeof _approveLock>) { return _approveLock(...args); }
+export async function rejectAccountingPeriodLockAction(...args: Parameters<typeof _rejectLock>) { return _rejectLock(...args); }
+export async function saveAccountingExchangeRateDraftAction(...args: Parameters<typeof _saveExDraft>) { return _saveExDraft(...args); }
+export async function approveAccountingExchangeRateAction(...args: Parameters<typeof _approveEx>) { return _approveEx(...args); }
+export async function rejectAccountingExchangeRateAction(...args: Parameters<typeof _rejectEx>) { return _rejectEx(...args); }
+
+// ─── Re-delegated unit actions ─────────────────────────────────────────────
+import { createUnitAction as _createUnit } from "./unit-actions";
+
+export async function createUnitAction(...args: Parameters<typeof _createUnit>) { return _createUnit(...args); }
 

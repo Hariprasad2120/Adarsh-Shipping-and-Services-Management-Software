@@ -18,7 +18,10 @@ import {
   AccountingSelect,
   AccountingTable,
 } from "@/components/monolith/accounting-workspace";
-import { createPaymentEntryAction } from "@/modules/accounting/actions";
+import {
+  createPaymentEntryAction,
+  submitPaymentEntryAction,
+} from "@/modules/accounting/actions";
 import {
   addDecimalStrings,
   compareDecimalStrings,
@@ -75,6 +78,9 @@ export function NewPaymentClient({
   const [remarks, setRemarks] = useState("");
   const [branchId, setBranchId] = useState("");
   const [allocations, setAllocations] = useState<Record<string, string>>({});
+  const [submitIntent, setSubmitIntent] = useState<"draft" | "approval">(
+    "draft",
+  );
 
   function updatePaymentType(nextType: "RECEIVE" | "PAY") {
     setPaymentType(nextType);
@@ -179,10 +185,21 @@ export function NewPaymentClient({
         allocations: allocationRows,
       });
       if (result.ok) {
-        toast.success(
-          "Payment draft saved",
-        );
-        router.push("/accounting/payment-entries");
+        if (submitIntent === "approval") {
+          const submission = await submitPaymentEntryAction(result.data.id);
+          if (!submission.ok) {
+            toast.error(submission.error);
+            router.push(`/accounting/payment-entries/${result.data.id}`);
+            router.refresh();
+            return;
+          }
+          toast.success("Payment submitted for approval");
+          router.push(`/accounting/payments/${submission.data.id}`);
+          router.refresh();
+          return;
+        }
+        toast.success("Payment draft saved");
+        router.push("/accounting/payments");
         router.refresh();
       } else {
         toast.error(result.error);
@@ -404,9 +421,28 @@ export function NewPaymentClient({
         />
       </AccountingMetrics>
       <div className="mnx-accounting-form-actions">
-        <AccountingAction disabled={isSaving} type="submit">
+        <AccountingAction
+          disabled={isSaving}
+          type="submit"
+          variant="secondary"
+          onClick={() => setSubmitIntent("draft")}
+        >
+          {isSaving && submitIntent === "draft" ? (
+            <Loader2 aria-hidden="true" className="animate-spin" size={16} />
+          ) : null}
+          {isSaving && submitIntent === "draft"
+            ? "Saving…"
+            : "Save as draft"}
+        </AccountingAction>
+        <AccountingAction
+          disabled={isSaving}
+          type="submit"
+          onClick={() => setSubmitIntent("approval")}
+        >
           {isSaving ? <Loader2 aria-hidden="true" className="animate-spin" size={16} /> : null}
-          {isSaving ? "Saving…" : "Record payment"}
+          {isSaving && submitIntent === "approval"
+            ? "Submitting…"
+            : "Submit for approval"}
         </AccountingAction>
       </div>
     </form>

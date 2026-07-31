@@ -55,20 +55,27 @@ export const SESSION_COOKIE_MAX_AGE_S = SESSION_REMEMBER_ME_DAYS * 24 * 60 * 60;
 // the strongest cookie scoping the platform offers.
 
 const IS_PROD = process.env.NODE_ENV === "production";
+const IS_STAGING = process.env.MONOLITH_ENV === "staging";
 
 export const USE_SECURE_COOKIES = IS_PROD;
 
 export const SESSION_COOKIE_NAME = IS_PROD
   ? "__Host-monolith.session-token"
-  : "monolith.dev.session-token";
+  : IS_STAGING
+    ? "monolith.staging.session-token"
+    : "monolith.dev.session-token";
 
 export const CSRF_COOKIE_NAME = IS_PROD
   ? "__Host-monolith.csrf-token"
-  : "monolith.dev.csrf-token";
+  : IS_STAGING
+    ? "monolith.staging.csrf-token"
+    : "monolith.dev.csrf-token";
 
 export const CALLBACK_URL_COOKIE_NAME = IS_PROD
   ? "__Secure-monolith.callback-url"
-  : "monolith.dev.callback-url";
+  : IS_STAGING
+    ? "monolith.staging.callback-url"
+    : "monolith.dev.callback-url";
 
 /**
  * Legacy/foreign cookie names that must NEVER authenticate Monolith and

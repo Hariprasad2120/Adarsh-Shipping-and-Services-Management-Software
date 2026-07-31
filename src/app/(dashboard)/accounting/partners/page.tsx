@@ -27,6 +27,7 @@ export default async function PartnerTransactionsPage() {
       </AccountingMetrics>
       <AccountingPolicyGate
         configured={configuration.policyGates.partnerTransactions}
+        readiness={configuration.capabilityReadiness.partnerTransactions}
         title="Partner transaction posting"
         description="Draft preparation and posting remain blocked because effective partner terms and CA-approved control mappings are not configured."
         requirements={[

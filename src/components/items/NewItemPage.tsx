@@ -27,6 +27,7 @@ interface NewItemPageProps {
 
 const DEFAULT_VALUES: ItemFormSchema = {
   name: "",
+  salesInformation: true,
   type: "Service",
   unit: "",
   sku: "",

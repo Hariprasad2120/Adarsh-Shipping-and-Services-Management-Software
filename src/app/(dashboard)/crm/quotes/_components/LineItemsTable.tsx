@@ -125,7 +125,7 @@ export function LineItemRow({
           <GripVertical className="size-4" />
         </CrmButton>
       </td>
-      <td className="min-w-[260px] px-2 py-2">
+      <td className="min-w-[260px] px-2 py-2 whitespace-nowrap">
         <div className="flex items-start gap-2">
           <div className="shrink-0">
             <CrmInput
@@ -204,7 +204,7 @@ export function LineItemRow({
           </div>
         </div>
       </td>
-      <td className="min-w-[90px] px-2 py-2">
+      <td className="min-w-[90px] px-2 py-2 whitespace-nowrap">
         <NativeSelect
           className="h-9 w-full rounded-xl border bg-mono-card px-2 text-[12px] text-[var(--mnx-text-strong)] outline-none"
           value={currency}
@@ -217,7 +217,7 @@ export function LineItemRow({
           ))}
         </NativeSelect>
       </td>
-      <td className="min-w-[100px] px-2 py-2">
+      <td className="min-w-[110px] px-2 py-2 whitespace-nowrap">
         <CrmInput
           type="number"
           step="0.0001"
@@ -233,7 +233,7 @@ export function LineItemRow({
           }}
         />
       </td>
-      <td className="min-w-[100px] px-2 py-2">
+      <td className="min-w-[100px] px-2 py-2 whitespace-nowrap">
         <NativeSelect
           className="h-9 w-full rounded-xl border bg-mono-card px-2 text-[12px] text-[var(--mnx-text-strong)] outline-none"
           {...form.register(`lineItems.${index}.unit`)}
@@ -245,7 +245,7 @@ export function LineItemRow({
           ))}
         </NativeSelect>
       </td>
-      <td className="min-w-[90px] px-2 py-2">
+      <td className="min-w-[90px] px-2 py-2 whitespace-nowrap">
         <CrmInput
           type="number"
           min="0"
@@ -263,7 +263,7 @@ export function LineItemRow({
         />
         {errors?.quantity ? <p className="mt-1 text-[11px] text-[var(--mnx-danger)]">{errors.quantity.message}</p> : null}
       </td>
-      <td className="min-w-[100px] px-2 py-2">
+      <td className="min-w-[100px] px-2 py-2 whitespace-nowrap">
         <CrmInput
           type="number"
           min="0"
@@ -281,7 +281,7 @@ export function LineItemRow({
         />
         {errors?.rate ? <p className="mt-1 text-[11px] text-[var(--mnx-danger)]">{errors.rate.message}</p> : null}
       </td>
-      <td className="min-w-[110px] px-2 py-2">
+      <td className="min-w-[110px] px-2 py-2 whitespace-nowrap">
         <NativeSelect
           className="h-9 w-full rounded-xl border bg-mono-card px-2 text-[12px] text-[var(--mnx-text-strong)] outline-none"
           {...form.register(`lineItems.${index}.tax`)}
@@ -294,7 +294,7 @@ export function LineItemRow({
           ))}
         </NativeSelect>
       </td>
-      <td className="min-w-[110px] px-2 py-2">
+      <td className="min-w-[110px] px-2 py-2 whitespace-nowrap">
         <NativeSelect
           className="h-9 w-full rounded-xl border bg-mono-card px-2 text-[12px] text-[var(--mnx-text-strong)] outline-none"
           {...form.register(`lineItems.${index}.tds`)}
@@ -306,10 +306,10 @@ export function LineItemRow({
           ))}
         </NativeSelect>
       </td>
-      <td className="min-w-[120px] px-2 py-3 text-right text-[13px] font-mono font-medium text-[var(--mnx-text-strong)]">
+      <td className="min-w-[120px] px-2 py-3 whitespace-nowrap text-right text-[13px] font-mono font-medium text-[var(--mnx-text-strong)]">
         ₹ {formatMoney(amount ?? 0)}
       </td>
-      <td className="min-w-[72px] px-2 py-3">
+      <td className="min-w-[72px] px-2 py-3 whitespace-nowrap">
         <div className="flex items-center justify-end">
           <CrmButton
             type="button"
@@ -372,7 +372,7 @@ export function LineItemsTable({ form }: LineItemsTableProps) {
     <section className="border-b border-[var(--mnx-border)] px-5 py-5">
       <div className="overflow-x-auto border border-[var(--mnx-border)]">
         <CrmTable className="min-w-[1280px] w-full bg-mono-card">
-          <thead className="bg-[var(--mnx-surface)] text-left text-[11px] uppercase tracking-[0.08em] text-[var(--mnx-text-muted)]">
+          <thead className="bg-[var(--mnx-surface)] text-left text-[11px] uppercase tracking-[0.08em] text-[var(--mnx-text-muted)] whitespace-nowrap">
             <tr>
               <th className="w-10 px-2 py-3"></th>
               <th className="min-w-[260px] px-2 py-3">Item Details</th>

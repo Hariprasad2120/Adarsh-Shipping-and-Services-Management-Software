@@ -27,6 +27,10 @@ import {
   type CanonicalPostingRequest,
 } from "./posting-engine";
 import { canonicalPayload, payloadHash } from "./request-integrity";
+import {
+  resolveActiveTaxRegistration,
+  resolveDocumentTaxConfiguration,
+} from "./tax-controls";
 
 type DocumentPolicyConfiguration = {
   currencyCode?: string;
@@ -42,6 +46,21 @@ type DocumentPolicyConfiguration = {
   paymentMethod?: string;
   preserveOriginalPolicyId?: string;
 };
+
+type CounterpartyTaxParty = {
+  gstin?: string | null;
+};
+
+const correctionDocumentTypes = new Set([
+  "CUSTOMER_CREDIT_NOTE",
+  "CUSTOMER_DEBIT_NOTE",
+  "VENDOR_CREDIT_NOTE",
+  "VENDOR_DEBIT_NOTE",
+]);
+
+function isCorrectionDocumentType(documentType: string) {
+  return correctionDocumentTypes.has(documentType);
+}
 
 function json(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(canonicalPayload(value)) as Prisma.InputJsonValue;
@@ -131,6 +150,64 @@ async function assertCounterpartyEntityScope(input: {
       `CONFIGURATION_REQUIRED: ${input.partyType.toLowerCase()} is not approved for this legal entity`,
     );
   }
+}
+
+function inferLegacyPlaceOfSupplyType(input: {
+  registrationStateCode?: string | null;
+  counterpartyGstin?: string | null;
+}) {
+  const registrationState = input.registrationStateCode?.trim() ?? null;
+  const counterpartyState = input.counterpartyGstin?.trim().slice(0, 2) || null;
+  if (!registrationState || !counterpartyState) {
+    return "INTER_STATE";
+  }
+  return registrationState === counterpartyState ? "INTRA_STATE" : "INTER_STATE";
+}
+
+function inferLegacyCounterpartyTreatment(
+  partyType: "CUSTOMER" | "SUPPLIER",
+  counterparty: CounterpartyTaxParty | null | undefined,
+) {
+  if (counterparty?.gstin?.trim()) {
+    return "REGISTERED_BUSINESS";
+  }
+  return partyType === "CUSTOMER" ? "CONSUMER" : "UNREGISTERED_BUSINESS";
+}
+
+async function resolveLegacyDocumentTaxConfiguration(input: {
+  orgId: string;
+  legalEntityId: string;
+  documentType: string;
+  partyType: "CUSTOMER" | "SUPPLIER";
+  counterparty: CounterpartyTaxParty | null | undefined;
+  date: Date;
+}) {
+  const registration = await resolveActiveTaxRegistration({
+    orgId: input.orgId,
+    legalEntityId: input.legalEntityId,
+    date: input.date,
+  });
+  if (!registration) {
+    throw new Error(
+      "CONFIGURATION_REQUIRED: no active tax registration is configured for this legal entity",
+    );
+  }
+  return resolveDocumentTaxConfiguration({
+    orgId: input.orgId,
+    taxRegistrationId: registration.id,
+    legalEntityId: input.legalEntityId,
+    documentType: input.documentType,
+    placeOfSupplyType: inferLegacyPlaceOfSupplyType({
+      registrationStateCode: registration.stateCode,
+      counterpartyGstin: input.counterparty?.gstin ?? null,
+    }),
+    counterpartyTreatment: inferLegacyCounterpartyTreatment(
+      input.partyType,
+      input.counterparty,
+    ),
+    supplyCategory: "SERVICE",
+    date: input.date,
+  });
 }
 
 async function persistPreparedDocument(input: {
@@ -338,7 +415,7 @@ export async function prepareLegacyCustomerNote(input: {
 }) {
   const note = await db.customerNote.findFirst({
     where: { id: input.noteId, orgId: input.orgId, status: "DRAFT" },
-    include: { items: true },
+    include: { items: true, customer: { select: { gstin: true } } },
   });
   if (!note) throw new Error("Draft Customer Note not found");
   return prepareLegacyCorrectionNote({
@@ -358,6 +435,7 @@ export async function prepareLegacyCustomerNote(input: {
       taxAmount: note.taxAmount,
       grandTotal: note.grandTotal,
       items: note.items,
+      counterpartyGstin: note.customer?.gstin ?? null,
     },
     partyType: "CUSTOMER",
     legacyRecordType: "CustomerNote",
@@ -373,7 +451,7 @@ export async function prepareLegacyVendorNote(input: {
 }) {
   const note = await db.vendorNote.findFirst({
     where: { id: input.noteId, orgId: input.orgId, status: "DRAFT" },
-    include: { items: true },
+    include: { items: true, vendor: { select: { gstin: true } } },
   });
   if (!note) throw new Error("Draft Vendor Note not found");
   return prepareLegacyCorrectionNote({
@@ -393,6 +471,7 @@ export async function prepareLegacyVendorNote(input: {
       taxAmount: note.taxAmount,
       grandTotal: note.grandTotal,
       items: note.items,
+      counterpartyGstin: note.vendor?.gstin ?? null,
     },
     partyType: "SUPPLIER",
     legacyRecordType: "VendorNote",
@@ -419,6 +498,7 @@ async function prepareLegacyCorrectionNote(input: {
     reason: string | null;
     taxAmount: Prisma.Decimal;
     grandTotal: Prisma.Decimal;
+    counterpartyGstin: string | null;
     items: Array<{
       id: string;
       itemName: string;
@@ -440,9 +520,6 @@ async function prepareLegacyCorrectionNote(input: {
   if (!input.note.reason?.trim()) {
     throw new Error("Correction reason is required");
   }
-  if (!input.note.originalInvoiceId) {
-    throw new Error("POLICY_GATED: correction notes must reference an original invoice");
-  }
   if (input.note.items.length === 0) {
     throw new Error("Correction note requires at least one line");
   }
@@ -452,19 +529,21 @@ async function prepareLegacyCorrectionNote(input: {
     input.legacyRecordType === "CustomerNote" ? "CUSTOMER_NOTE" : "VENDOR_NOTE",
     input.legalEntityId,
   );
-  const original = await db.accountingDocument.findFirst({
-    where: {
-      orgId: input.orgId,
-      legalEntityId: configuration.legalEntity.id,
-      legacyRecordType: input.originalLegacyRecordType,
-      legacyRecordId: input.note.originalInvoiceId,
-      status: "POSTED",
-      counterpartyType: input.partyType,
-      counterpartyId: input.note.partyId,
-    },
-    include: { policy: true },
-  });
-  if (!original) {
+  const original = input.note.originalInvoiceId
+    ? await db.accountingDocument.findFirst({
+        where: {
+          orgId: input.orgId,
+          legalEntityId: configuration.legalEntity.id,
+          legacyRecordType: input.originalLegacyRecordType,
+          legacyRecordId: input.note.originalInvoiceId,
+          status: "POSTED",
+          counterpartyType: input.partyType,
+          counterpartyId: input.note.partyId,
+        },
+        include: { policy: true },
+      })
+    : null;
+  if (input.note.originalInvoiceId && !original) {
     throw new Error("POLICY_GATED: original invoice is not a canonical posted document");
   }
   const documentType = `${
@@ -476,17 +555,29 @@ async function prepareLegacyCorrectionNote(input: {
     documentType,
     date: input.note.postingDate,
   });
-  if (policyConfig.preserveOriginalPolicyId !== original.policyId) {
-    throw new Error(
-      "CONFIGURATION_REQUIRED: correction policy must preserve the original invoice policy",
-    );
+  const resolvedTaxConfig = await resolveLegacyDocumentTaxConfiguration({
+    orgId: input.orgId,
+    legalEntityId: configuration.legalEntity.id,
+    documentType,
+    partyType: input.partyType,
+    counterparty: { gstin: input.note.counterpartyGstin },
+    date: input.note.postingDate,
+  });
+  if (original) {
+    if (policyConfig.preserveOriginalPolicyId !== original.policyId) {
+      throw new Error(
+        "CONFIGURATION_REQUIRED: correction policy must preserve the original invoice policy",
+      );
+    }
+    if (policyConfig.currencyCode !== original.transactionCurrencyCode) {
+      throw new Error(
+        "CONFIGURATION_REQUIRED: correction currency must match the original invoice",
+      );
+    }
   }
-  if (policyConfig.currencyCode !== original.transactionCurrencyCode) {
-    throw new Error(
-      "CONFIGURATION_REQUIRED: correction currency must match the original invoice",
-    );
-  }
-  const originalPolicyConfig = policyConfiguration(original.policy.configuration);
+  const originalPolicyConfig = original
+    ? policyConfiguration(original.policy.configuration)
+    : null;
   const controlAccountId =
     input.partyType === "CUSTOMER"
       ? policyConfig.receivableAccountId
@@ -498,16 +589,26 @@ async function prepareLegacyCorrectionNote(input: {
   if (!controlAccountId || !operatingAccountId || !policyConfig.currencyCode) {
     throw new Error("CONFIGURATION_REQUIRED: correction account/currency mappings are incomplete");
   }
+  const taxCategoryRef = originalPolicyConfig
+    ? originalPolicyConfig.taxCategoryRef ?? null
+    : policyConfig.taxCategoryRef ??
+      `${resolvedTaxConfig.profile.code}:${resolvedTaxConfig.rule.code}`;
   if (compare(input.note.taxAmount, "0") > 0) {
-    if (
-      !original.policy.statutoryValidated ||
-      !originalPolicyConfig.taxCategoryRef ||
-      !policyConfig.taxAccountId
-    ) {
-      throw new Error("POLICY_GATED: original statutory tax evidence is incomplete");
+    if (original) {
+      if (
+        !original.policy.statutoryValidated ||
+        !taxCategoryRef ||
+        !policyConfig.taxAccountId
+      ) {
+        throw new Error("POLICY_GATED: original statutory tax evidence is incomplete");
+      }
+    } else if (!policy.statutoryValidated || !taxCategoryRef || !policyConfig.taxAccountId) {
+      throw new Error("POLICY_GATED: correction note statutory tax evidence is incomplete");
     }
-  } else if (originalPolicyConfig.allowZeroTax !== true) {
-    throw new Error("CONFIGURATION_REQUIRED: original zero-tax treatment is not configured");
+  } else if (
+    (originalPolicyConfig?.allowZeroTax ?? policyConfig.allowZeroTax) !== true
+  ) {
+    throw new Error("CONFIGURATION_REQUIRED: zero-tax correction treatment is not configured");
   }
   const lines = input.note.items.map((item) => {
     const calculated = multiply(String(item.qty), item.rate);
@@ -519,7 +620,7 @@ async function prepareLegacyCorrectionNote(input: {
       description: item.itemName,
       quantity: String(item.qty),
       unitAmount: item.rate,
-      taxCategoryRef: originalPolicyConfig.taxCategoryRef ?? null,
+      taxCategoryRef,
       taxAmount: item.taxAmount,
       accountId: operatingAccountId,
     };
@@ -533,7 +634,7 @@ async function prepareLegacyCorrectionNote(input: {
     sourceVersion: sourceVersion(input.note.updatedAt),
     makerId: input.makerId,
     correlationId: `ACCOUNTING:${documentType}:${input.note.id}`,
-    causationId: original.requestId,
+    causationId: original?.requestId ?? null,
     documentType,
     documentDate: input.note.postingDate,
     postingDate: input.note.postingDate,
@@ -548,7 +649,9 @@ async function prepareLegacyCorrectionNote(input: {
     numberSeriesId: configuration.numberSeries.id,
     roundingPolicyId: configuration.roundingPolicy.id,
     roundingPolicyVersion: configuration.roundingPolicy.version,
-    supportingDocumentRefs: [`${input.originalLegacyRecordType}:${input.note.originalInvoiceId}`],
+    supportingDocumentRefs: input.note.originalInvoiceId
+      ? [`${input.originalLegacyRecordType}:${input.note.originalInvoiceId}`]
+      : [],
     lines,
   });
   if (!decimal(normalized.totalAmount).equals(input.note.grandTotal)) {
@@ -598,7 +701,7 @@ async function prepareLegacyCorrectionNote(input: {
     contract: { ...normalized, lines },
     legacyRecordType: input.legacyRecordType,
     legacyRecordId: input.note.id,
-    correctionOfId: original.id,
+    correctionOfId: original?.id ?? null,
     correctionReason: input.note.reason,
     ruleId,
     journalType: input.partyType === "CUSTOMER" ? "CUSTOMER_NOTE" : "VENDOR_NOTE",
@@ -619,7 +722,11 @@ export async function prepareLegacySalesInvoice(input: {
   ]);
   const invoice = await db.salesInvoice.findFirst({
     where: { id: input.invoiceId, orgId: input.orgId, status: "DRAFT" },
-    include: { items: true, taxLines: true, customer: { select: { id: true } } },
+    include: {
+      items: true,
+      taxLines: true,
+      customer: { select: { id: true, gstin: true } },
+    },
   });
   if (!invoice) throw new Error("Draft Sales Invoice not found");
   if (!invoice.items.length) throw new Error("Sales invoice requires at least one line");
@@ -638,6 +745,14 @@ export async function prepareLegacySalesInvoice(input: {
     documentType: "SALES_INVOICE",
     date: invoice.postingDate,
   });
+  const resolvedTaxConfig = await resolveLegacyDocumentTaxConfiguration({
+    orgId: input.orgId,
+    legalEntityId: configuration.legalEntity.id,
+    documentType: "SALES_INVOICE",
+    partyType: "CUSTOMER",
+    counterparty: invoice.customer,
+    date: invoice.postingDate,
+  });
   await assertCounterpartyEntityScope({
     orgId: input.orgId,
     legalEntityId: configuration.legalEntity.id,
@@ -652,14 +767,17 @@ export async function prepareLegacySalesInvoice(input: {
   ) {
     throw new Error("CONFIGURATION_REQUIRED: sales invoice account/currency mappings are incomplete");
   }
-  const taxRate = decimal(policyConfig.taxRate ?? "0", "configured taxRate");
-  if (compare(taxRate, "0") > 0 && !policy.statutoryValidated) {
-    throw new Error("POLICY_GATED: statutory sales tax policy is not approved");
+  if (!policy.statutoryValidated) {
+    throw new Error("POLICY_GATED: statutory sales document policy is not approved");
   }
-  if (
-    compare(taxRate, "0") > 0 &&
-    (!policyConfig.taxAccountId || !policyConfig.taxCategoryRef)
-  ) {
+  const taxRate = resolvedTaxConfig.rule.components.reduce(
+    (acc, component) => acc.plus(component.ratePercent),
+    decimal("0"),
+  );
+  const taxCategoryRef =
+    policyConfig.taxCategoryRef ??
+    `${resolvedTaxConfig.profile.code}:${resolvedTaxConfig.rule.code}`;
+  if (compare(taxRate, "0") > 0 && !policyConfig.taxAccountId) {
     throw new Error("CONFIGURATION_REQUIRED: sales tax account/category mapping is incomplete");
   }
   if (taxRate.isZero() && policyConfig.allowZeroTax !== true) {
@@ -679,7 +797,7 @@ export async function prepareLegacySalesInvoice(input: {
       description: item.itemName,
       quantity: String(item.qty),
       unitAmount: item.rate,
-      taxCategoryRef: policyConfig.taxCategoryRef ?? null,
+      taxCategoryRef,
       taxAmount: tax,
       accountId: policyConfig.revenueAccountId!,
     };
@@ -760,7 +878,7 @@ export async function prepareLegacyPurchaseInvoice(input: {
   ]);
   const invoice = await db.purchaseInvoice.findFirst({
     where: { id: input.invoiceId, orgId: input.orgId, status: "DRAFT" },
-    include: { items: true, supplier: { select: { id: true } } },
+    include: { items: true, supplier: { select: { id: true, gstin: true } } },
   });
   if (!invoice) throw new Error("Draft Purchase Invoice not found");
   if (!invoice.items.length) throw new Error("Purchase invoice requires at least one line");
@@ -779,6 +897,14 @@ export async function prepareLegacyPurchaseInvoice(input: {
     orgId: input.orgId,
     legalEntityId: configuration.legalEntity.id,
     documentType: "PURCHASE_INVOICE",
+    date: invoice.postingDate,
+  });
+  await resolveLegacyDocumentTaxConfiguration({
+    orgId: input.orgId,
+    legalEntityId: configuration.legalEntity.id,
+    documentType: "PURCHASE_INVOICE",
+    partyType: "SUPPLIER",
+    counterparty: invoice.supplier,
     date: invoice.postingDate,
   });
   await assertCounterpartyEntityScope({
@@ -1107,10 +1233,12 @@ export async function prepareLegacyPayment(input: {
   const targetDocuments = await db.accountingDocument.findMany({
     where: {
       orgId: input.orgId,
+      legalEntityId: configuration.legalEntity.id,
       legacyRecordType:
         paymentType === "CUSTOMER_RECEIPT" ? "SalesInvoice" : "PurchaseInvoice",
       legacyRecordId: { in: targetLegacyIds },
       status: "POSTED",
+      counterpartyId: entry.partyId,
     },
   });
   if (targetDocuments.length !== targetLegacyIds.length) {
@@ -1235,7 +1363,7 @@ export async function approveAndPostAccountingDocument(input: {
       ? "accounting.sales-invoice.approve"
       : document.documentType === "PURCHASE_INVOICE"
         ? "accounting.purchase-invoice.approve"
-        : document.correctionOfId
+        : isCorrectionDocumentType(document.documentType)
           ? "accounting.correction.approve"
           : "accounting.document.approve";
   await assertPermissions(input.orgId, input.approverId, [
@@ -1356,7 +1484,7 @@ export async function rejectAccountingDocument(input: {
           ? "accounting.sales-invoice.approve"
           : document.documentType === "PURCHASE_INVOICE"
             ? "accounting.purchase-invoice.approve"
-            : document.correctionOfId
+            : isCorrectionDocumentType(document.documentType)
               ? "accounting.correction.approve"
               : "accounting.document.approve";
       await assertPermissions(input.orgId, input.approverId, [

@@ -20,7 +20,16 @@ export default async function CustomerCreditNotesPage() {
     <>
       <AccountingRoutePageHeader
         actions={
-          caps["accounting.credit-note.prepare"] ? (
+          caps["accounting.invoice.create"] ? (
+            <div className="flex gap-2">
+              <AccountingActionLink href="/accounting/credit-notes/new">
+                + Sales Credit Note
+              </AccountingActionLink>
+              <AccountingActionLink href="/accounting/credit-notes/new?type=purchase">
+                + Purchase Credit Note
+              </AccountingActionLink>
+            </div>
+          ) : caps["accounting.credit-note.prepare"] ? (
             <AccountingActionLink href="/accounting/quotations">
               Prepare linked note
             </AccountingActionLink>

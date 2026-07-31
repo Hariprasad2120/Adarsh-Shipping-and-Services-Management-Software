@@ -1,8 +1,14 @@
 import { chromium } from "playwright";
+import {
+  assertLocalUiServerReady,
+  getLocalUiBaseUrl,
+} from "./local-ui-target.mjs";
 
-const baseUrl = process.env.UI_TEST_BASE_URL ?? "http://127.0.0.1:3000";
+const baseUrl = getLocalUiBaseUrl();
 const sentinelPassword = "url-leak-sentinel-password";
 let browser;
+
+await assertLocalUiServerReady(baseUrl);
 
 try {
   browser = await chromium.launch({ headless: true });

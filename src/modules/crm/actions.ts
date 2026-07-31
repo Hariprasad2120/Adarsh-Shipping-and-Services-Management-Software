@@ -8,8 +8,244 @@ import { db } from "@/lib/db";
 import * as leadSourceService from "./lead-source.service";
 import { syncCustomerPortalUsersForCrmCustomer } from "@/modules/customer-portal/service";
 import * as driveClient from "@/lib/google-drive-client";
+import { fetchGstPortalDetails } from "./gst-portal";
 
 type ActionResponse = { ok: true; data?: any } | { ok: false; error: string };
+
+type CustomerAddressInput = {
+  attention: string;
+  country: string;
+  street1: string;
+  street2: string;
+  city: string;
+  state: string;
+  pincode: string;
+  phone: string;
+  fax: string;
+};
+
+type CustomerContactPayload = {
+  id?: string;
+  firstName?: string;
+  lastName?: string;
+  designation?: string;
+  email?: string;
+  phone?: string;
+  isPrimary?: boolean;
+};
+
+type OpeningBalancePayload = {
+  branch: string;
+  amount: string;
+};
+
+function parseCustomerAddressDetails(
+  formData: FormData,
+  prefix: "billing" | "shipping" | "courier",
+): CustomerAddressInput {
+  return {
+    attention: (formData.get(`${prefix}Attention`) as string) || "",
+    country: (formData.get(`${prefix}Country`) as string) || "",
+    street1: (formData.get(`${prefix}Street1`) as string) || "",
+    street2: (formData.get(`${prefix}Street2`) as string) || "",
+    city: (formData.get(`${prefix}City`) as string) || "",
+    state: (formData.get(`${prefix}State`) as string) || "",
+    pincode: (formData.get(`${prefix}Pincode`) as string) || "",
+    phone: (formData.get(`${prefix}Phone`) as string) || "",
+    fax: (formData.get(`${prefix}Fax`) as string) || "",
+  };
+}
+
+function formatCustomerAddressString(details: CustomerAddressInput) {
+  const parts: string[] = [];
+  if (details.attention) parts.push(`Attention: ${details.attention}`);
+  if (details.street1) parts.push(details.street1);
+  if (details.street2) parts.push(details.street2);
+
+  const cityStateZip: string[] = [];
+  if (details.city) cityStateZip.push(details.city);
+  if (details.state) cityStateZip.push(details.state);
+  if (details.pincode) cityStateZip.push(details.pincode);
+  if (cityStateZip.length > 0) parts.push(cityStateZip.join(", "));
+
+  if (details.country) parts.push(details.country);
+  if (details.phone) parts.push(`Phone: ${details.phone}`);
+  if (details.fax) parts.push(`Fax: ${details.fax}`);
+
+  return parts.join("\n") || null;
+}
+
+function parseCustomerContacts(formData: FormData) {
+  const rawPayload = (formData.get("contactsPayload") as string) || "[]";
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawPayload);
+  } catch {
+    parsed = [];
+  }
+
+  if (!Array.isArray(parsed)) {
+    return [] as CustomerContactPayload[];
+  }
+
+  const contacts: CustomerContactPayload[] = [];
+  for (const entry of parsed) {
+    const source = entry as Record<string, unknown>;
+    const firstName = String(source.firstName ?? "").trim();
+    const lastName = String(source.lastName ?? "").trim();
+    const designation = String(source.designation ?? "").trim();
+    const email = String(source.email ?? "").trim();
+    const phone = String(source.phone ?? "").trim();
+    const id = String(source.id ?? "").trim();
+
+    if (!firstName && !lastName && !designation && !email && !phone) {
+      continue;
+    }
+
+    contacts.push({
+      id: id || undefined,
+      firstName: firstName || undefined,
+      lastName: lastName || "Contact",
+      designation: designation || undefined,
+      email: email || undefined,
+      phone: phone || undefined,
+      isPrimary: Boolean(source.isPrimary),
+    });
+  }
+
+  return contacts;
+}
+
+function parseOpeningBalances(formData: FormData) {
+  const rawPayload = (formData.get("openingBalancesPayload") as string) || "[]";
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawPayload);
+  } catch {
+    parsed = [];
+  }
+
+  if (!Array.isArray(parsed)) {
+    return [] as OpeningBalancePayload[];
+  }
+
+  const balances: OpeningBalancePayload[] = [];
+  for (const entry of parsed) {
+    const source = entry as Record<string, unknown>;
+    const branch = String(source.branch ?? "").trim();
+    const amount = String(source.amount ?? "").trim();
+    if (!branch && !amount) continue;
+    balances.push({
+      branch: branch || "Chennai",
+      amount: amount || "0",
+    });
+  }
+
+  return balances;
+}
+
+function parseAccountRemarks(rawRemarks: string | null | undefined) {
+  if (!rawRemarks) {
+    return { userRemarks: "", kyc: {} as Record<string, any> };
+  }
+
+  try {
+    const parsed = JSON.parse(rawRemarks);
+    if (parsed && typeof parsed === "object") {
+      return {
+        userRemarks:
+          typeof (parsed as { userRemarks?: unknown }).userRemarks === "string"
+            ? ((parsed as { userRemarks: string }).userRemarks ?? "")
+            : rawRemarks,
+        kyc:
+          (parsed as { kyc?: Record<string, any> }).kyc &&
+          typeof (parsed as { kyc?: Record<string, any> }).kyc === "object"
+            ? (parsed as { kyc: Record<string, any> }).kyc
+            : {},
+        ...parsed,
+      };
+    }
+  } catch {
+    // fall through to plain-text remarks
+  }
+
+  return { userRemarks: rawRemarks, kyc: {} as Record<string, any> };
+}
+
+async function syncAccountContacts(params: {
+  orgId: string;
+  actorUserId: string;
+  accountId: string;
+  ownerId: string;
+  contacts: CustomerContactPayload[];
+}) {
+  const { orgId, actorUserId, accountId, ownerId, contacts } = params;
+  const existingContacts = await db.crmContact.findMany({
+    where: { orgId, accountId },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      designation: true,
+      email: true,
+      phone: true,
+      mobile: true,
+      isPrimary: true,
+      isActive: true,
+    },
+  });
+
+  const keptIds = new Set<string>();
+
+  for (const [index, contact] of contacts.entries()) {
+    const payload = {
+      ownerId,
+      firstName: contact.firstName || null,
+      lastName: contact.lastName || "Contact",
+      designation: contact.designation || null,
+      email: contact.email || null,
+      phone: contact.phone || null,
+      mobile: contact.phone || null,
+      isPrimary: index === 0,
+      isActive: true,
+      updatedById: actorUserId,
+    };
+
+    if (contact.id) {
+      const existing = existingContacts.find((entry) => entry.id === contact.id);
+      if (existing) {
+        keptIds.add(existing.id);
+        await db.crmContact.update({
+          where: { id: existing.id },
+          data: payload,
+        });
+        continue;
+      }
+    }
+
+    const created = await db.crmContact.create({
+      data: {
+        orgId,
+        accountId,
+        createdById: actorUserId,
+        ...payload,
+      },
+    });
+    keptIds.add(created.id);
+  }
+
+  for (const existing of existingContacts) {
+    if (keptIds.has(existing.id)) continue;
+    await db.crmContact.update({
+      where: { id: existing.id },
+      data: {
+        isActive: false,
+        isPrimary: false,
+        updatedById: actorUserId,
+      },
+    });
+  }
+}
 
 // ─── Lead Actions ────────────────────────────────────────────────────────────
 
@@ -623,44 +859,18 @@ export async function createAccountAction(formData: FormData): Promise<ActionRes
     const lastName = (formData.get("lastName") as string) || "";
     const name = displayName.trim() || companyName.trim() || `${firstName} ${lastName}`.trim() || "Unnamed Customer";
 
-    const parseAddressDetails = (prefix: "billing" | "shipping") => {
-      return {
-        attention: (formData.get(`${prefix}Attention`) as string) || "",
-        country: (formData.get(`${prefix}Country`) as string) || "",
-        street1: (formData.get(`${prefix}Street1`) as string) || "",
-        street2: (formData.get(`${prefix}Street2`) as string) || "",
-        city: (formData.get(`${prefix}City`) as string) || "",
-        state: (formData.get(`${prefix}State`) as string) || "",
-        pincode: (formData.get(`${prefix}Pincode`) as string) || "",
-        phone: (formData.get(`${prefix}Phone`) as string) || "",
-        fax: (formData.get(`${prefix}Fax`) as string) || "",
-      };
+    const billingAddressDetails = parseCustomerAddressDetails(formData, "billing");
+    const shippingAddressDetails = parseCustomerAddressDetails(formData, "shipping");
+    const courierAddressDetails = parseCustomerAddressDetails(formData, "courier");
+    const contacts = parseCustomerContacts(formData);
+    const openingBalances = parseOpeningBalances(formData);
+    const primaryOpeningBalance = openingBalances[0] ?? {
+      branch: "Chennai",
+      amount: "0",
     };
 
-    const billingAddressDetails = parseAddressDetails("billing");
-    const shippingAddressDetails = parseAddressDetails("shipping");
-
-    const formatAddressString = (details: any) => {
-      const parts = [];
-      if (details.attention) parts.push(`Attention: ${details.attention}`);
-      if (details.street1) parts.push(details.street1);
-      if (details.street2) parts.push(details.street2);
-      
-      const cityStateZip = [];
-      if (details.city) cityStateZip.push(details.city);
-      if (details.state) cityStateZip.push(details.state);
-      if (details.pincode) cityStateZip.push(details.pincode);
-      if (cityStateZip.length > 0) parts.push(cityStateZip.join(", "));
-      
-      if (details.country) parts.push(details.country);
-      if (details.phone) parts.push(`Phone: ${details.phone}`);
-      if (details.fax) parts.push(`Fax: ${details.fax}`);
-      
-      return parts.join("\n") || null;
-    };
-
-    const billingAddress = formatAddressString(billingAddressDetails);
-    const shippingAddress = formatAddressString(shippingAddressDetails);
+    const billingAddress = formatCustomerAddressString(billingAddressDetails);
+    const shippingAddress = formatCustomerAddressString(shippingAddressDetails);
 
     const channels: string[] = [];
     if (formData.get("channelEmail") === "true" || formData.get("channelEmail") === "on") channels.push("EMAIL");
@@ -692,8 +902,8 @@ export async function createAccountAction(formData: FormData): Promise<ActionRes
       pan: (formData.get("pan") as string) || null,
       taxPreference: (formData.get("taxPreference") as string) || null,
       currency: (formData.get("currency") as string) || "INR",
-      openingBalanceBranch: (formData.get("openingBalanceBranch") as string) || null,
-      openingBalanceAmount: parseFloat((formData.get("openingBalanceAmount") as string) || "0") || 0,
+      openingBalanceBranch: primaryOpeningBalance.branch || null,
+      openingBalanceAmount: parseFloat(primaryOpeningBalance.amount || "0") || 0,
       isPortalEnabled: formData.get("isPortalEnabled") === "true" || formData.get("isPortalEnabled") === "on",
       remarks: (formData.get("remarks") as string) || null,
       billingAddressDetails: billingAddressDetails as any,
@@ -708,7 +918,8 @@ export async function createAccountAction(formData: FormData): Promise<ActionRes
       "FSSAI Licence",
       "Company Address Proof",
       "Partner / Proprietor Address Proof",
-      "Authorisation Letter"
+      "Authorisation Letter",
+      "Cancelled Cheque",
     ];
     const kycData: Record<string, any> = {};
     for (const type of kycTypes) {
@@ -744,10 +955,25 @@ export async function createAccountAction(formData: FormData): Promise<ActionRes
     const remarksObj = {
       userRemarks: data.remarks || "",
       kyc: kycData,
+      openingBalancesByBranch: openingBalances,
+      courierAddressDetails,
+      shippingSameAsBilling:
+        formData.get("shippingSameAsBilling") === "true" ||
+        formData.get("shippingSameAsBilling") === "on",
+      courierSameAsBilling:
+        formData.get("courierSameAsBilling") === "true" ||
+        formData.get("courierSameAsBilling") === "on",
     };
     data.remarks = JSON.stringify(remarksObj);
 
     const account = await crmService.createAccount(orgId, session.user.id, data);
+    await syncAccountContacts({
+      orgId,
+      actorUserId: session.user.id,
+      accountId: account.id,
+      ownerId: data.ownerId,
+      contacts,
+    });
     if (data.isPortalEnabled) {
       await syncCustomerPortalUsersForCrmCustomer({
         actorUserId: session.user.id,
@@ -1160,44 +1386,18 @@ export async function updateAccountAction(accountId: string, formData: FormData)
     const lastName = (formData.get("lastName") as string) || "";
     const name = displayName.trim() || companyName.trim() || `${firstName} ${lastName}`.trim() || "Unnamed Customer";
 
-    const parseAddressDetails = (prefix: "billing" | "shipping") => {
-      return {
-        attention: (formData.get(`${prefix}Attention`) as string) || "",
-        country: (formData.get(`${prefix}Country`) as string) || "",
-        street1: (formData.get(`${prefix}Street1`) as string) || "",
-        street2: (formData.get(`${prefix}Street2`) as string) || "",
-        city: (formData.get(`${prefix}City`) as string) || "",
-        state: (formData.get(`${prefix}State`) as string) || "",
-        pincode: (formData.get(`${prefix}Pincode`) as string) || "",
-        phone: (formData.get(`${prefix}Phone`) as string) || "",
-        fax: (formData.get(`${prefix}Fax`) as string) || "",
-      };
+    const billingAddressDetails = parseCustomerAddressDetails(formData, "billing");
+    const shippingAddressDetails = parseCustomerAddressDetails(formData, "shipping");
+    const courierAddressDetails = parseCustomerAddressDetails(formData, "courier");
+    const contacts = parseCustomerContacts(formData);
+    const openingBalances = parseOpeningBalances(formData);
+    const primaryOpeningBalance = openingBalances[0] ?? {
+      branch: "Chennai",
+      amount: "0",
     };
 
-    const billingAddressDetails = parseAddressDetails("billing");
-    const shippingAddressDetails = parseAddressDetails("shipping");
-
-    const formatAddressString = (details: any) => {
-      const parts = [];
-      if (details.attention) parts.push(`Attention: ${details.attention}`);
-      if (details.street1) parts.push(details.street1);
-      if (details.street2) parts.push(details.street2);
-      
-      const cityStateZip = [];
-      if (details.city) cityStateZip.push(details.city);
-      if (details.state) cityStateZip.push(details.state);
-      if (details.pincode) cityStateZip.push(details.pincode);
-      if (cityStateZip.length > 0) parts.push(cityStateZip.join(", "));
-      
-      if (details.country) parts.push(details.country);
-      if (details.phone) parts.push(`Phone: ${details.phone}`);
-      if (details.fax) parts.push(`Fax: ${details.fax}`);
-      
-      return parts.join("\n") || null;
-    };
-
-    const billingAddress = formatAddressString(billingAddressDetails);
-    const shippingAddress = formatAddressString(shippingAddressDetails);
+    const billingAddress = formatCustomerAddressString(billingAddressDetails);
+    const shippingAddress = formatCustomerAddressString(shippingAddressDetails);
 
     const channels: string[] = [];
     if (formData.get("channelEmail") === "true" || formData.get("channelEmail") === "on") channels.push("EMAIL");
@@ -1229,8 +1429,8 @@ export async function updateAccountAction(accountId: string, formData: FormData)
       pan: (formData.get("pan") as string) || null,
       taxPreference: (formData.get("taxPreference") as string) || null,
       currency: (formData.get("currency") as string) || "INR",
-      openingBalanceBranch: (formData.get("openingBalanceBranch") as string) || null,
-      openingBalanceAmount: parseFloat((formData.get("openingBalanceAmount") as string) || "0") || 0,
+      openingBalanceBranch: primaryOpeningBalance.branch || null,
+      openingBalanceAmount: parseFloat(primaryOpeningBalance.amount || "0") || 0,
       isPortalEnabled: formData.get("isPortalEnabled") === "true" || formData.get("isPortalEnabled") === "on",
       remarks: (formData.get("remarks") as string) || null,
       billingAddressDetails: billingAddressDetails as any,
@@ -1245,24 +1445,15 @@ export async function updateAccountAction(accountId: string, formData: FormData)
       "FSSAI Licence",
       "Company Address Proof",
       "Partner / Proprietor Address Proof",
-      "Authorisation Letter"
+      "Authorisation Letter",
+      "Cancelled Cheque",
     ];
 
     const existing = await db.crmAccount.findUnique({
       where: { id: accountId },
       select: { remarks: true },
     });
-    let remarksObj: any = {};
-    if (existing?.remarks) {
-      try {
-        remarksObj = JSON.parse(existing.remarks);
-        if (typeof remarksObj !== "object" || remarksObj === null) {
-          remarksObj = { userRemarks: existing.remarks };
-        }
-      } catch {
-        remarksObj = { userRemarks: existing.remarks };
-      }
-    }
+    const remarksObj: any = parseAccountRemarks(existing?.remarks);
 
     remarksObj.kyc = remarksObj.kyc || {};
     for (const type of kycTypes) {
@@ -1296,9 +1487,24 @@ export async function updateAccountAction(accountId: string, formData: FormData)
     }
 
     remarksObj.userRemarks = data.remarks || "";
+    remarksObj.openingBalancesByBranch = openingBalances;
+    remarksObj.courierAddressDetails = courierAddressDetails;
+    remarksObj.shippingSameAsBilling =
+      formData.get("shippingSameAsBilling") === "true" ||
+      formData.get("shippingSameAsBilling") === "on";
+    remarksObj.courierSameAsBilling =
+      formData.get("courierSameAsBilling") === "true" ||
+      formData.get("courierSameAsBilling") === "on";
     data.remarks = JSON.stringify(remarksObj);
 
     const account = await crmService.updateAccount(orgId, accountId, session.user.id, data);
+    await syncAccountContacts({
+      orgId,
+      actorUserId: session.user.id,
+      accountId: account.id,
+      ownerId: data.ownerId,
+      contacts,
+    });
     await syncCustomerPortalUsersForCrmCustomer({
       actorUserId: session.user.id,
       orgId,
@@ -1620,6 +1826,7 @@ export async function createInvoiceAction(formData: FormData, itemsJSON: string)
       ownerId: (formData.get("ownerId") as string) || session.user.id,
       bankDetails: (formData.get("bankDetails") as string) || null,
       manualNotes: (formData.get("manualNotes") as string) || null,
+      terms: (formData.get("terms") as string) || null,
     };
 
     const invoice = await crmService.createInvoice(orgId, session.user.id, data, items);
@@ -1667,6 +1874,7 @@ export async function updateInvoiceAction(invoiceId: string, formData: FormData,
       ownerId: (formData.get("ownerId") as string) || session.user.id,
       bankDetails: (formData.get("bankDetails") as string) || null,
       manualNotes: (formData.get("manualNotes") as string) || null,
+      terms: (formData.get("terms") as string) || null,
       updatedById: session.user.id,
     };
 
@@ -2921,5 +3129,75 @@ export async function getCallAttemptsAction(leadId: string): Promise<ActionRespo
   }
 }
 
+export async function fetchGstDetailsAction(gstin: string): Promise<ActionResponse> {
+  try {
+    const data = await fetchGstPortalDetails(gstin);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to fetch GST details" };
+  }
+}
 
+export async function lookupIndianPincodeAction(
+  pincode: string,
+): Promise<ActionResponse> {
+  try {
+    const normalized = pincode.replace(/\D/g, "");
+    if (!/^\d{6}$/.test(normalized)) {
+      return { ok: false, error: "Enter a valid 6-digit PIN code." };
+    }
+
+    const response = await fetch(
+      `https://api.postalpincode.in/pincode/${normalized}`,
+      {
+        cache: "no-store",
+        headers: {
+          Accept: "application/json",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`PIN lookup failed with HTTP ${response.status}`);
+    }
+
+    const payload = (await response.json()) as Array<{
+      Status?: string;
+      Message?: string;
+      PostOffice?: Array<{
+        District?: string;
+        State?: string;
+        Block?: string;
+        Name?: string;
+      }> | null;
+    }>;
+
+    const first = payload?.[0];
+    const postOffice = first?.PostOffice?.[0];
+    const city = postOffice?.District?.trim() || postOffice?.Block?.trim() || "";
+    const state = postOffice?.State?.trim() || "";
+
+    if (first?.Status !== "Success" || !city || !state) {
+      return {
+        ok: false,
+        error: first?.Message || "No city/state mapping found for this PIN code.",
+      };
+    }
+
+    return {
+      ok: true,
+      data: {
+        pincode: normalized,
+        city,
+        state,
+        postOffice: postOffice?.Name?.trim() || null,
+      },
+    };
+  } catch (err: any) {
+    return {
+      ok: false,
+      error: err.message || "Failed to look up PIN code details",
+    };
+  }
+}
 

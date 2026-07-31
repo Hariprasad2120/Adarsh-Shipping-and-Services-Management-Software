@@ -1,6 +1,7 @@
 import { CheckCircle2, LockKeyhole } from "lucide-react";
 
 import type { Caps } from "@/lib/rbac";
+import type { AccountingCapabilityReadiness } from "@/modules/accounting/capability-policies";
 import {
   deriveAccountingActionState,
   formatDecimalString,
@@ -80,6 +81,14 @@ function formatDateTime(value: string | null) {
         timeStyle: "short",
       })
     : "—";
+}
+
+function formatJournalMethod(
+  sourceType: string | null | undefined,
+  journalType: string | null | undefined,
+) {
+  const raw = sourceType ?? journalType ?? "MANUAL_JOURNAL";
+  return raw.replaceAll("_", " ");
 }
 
 export function AccountingPagination({
@@ -415,7 +424,83 @@ export function AccountingAllocationRegister({
   );
 }
 
-export function CanonicalJournalRegister({ data }: { data: JournalList }) {
+export function CanonicalJournalRegister({
+  basePath = "/accounting/journal-entries",
+  data,
+  emptyMessage = "No journal entries match this view.",
+  variant = "standard",
+}: {
+  basePath?: string;
+  data: JournalList;
+  emptyMessage?: string;
+  variant?: "standard" | "manual-journal";
+}) {
+  if (variant === "manual-journal") {
+    return (
+      <>
+        <AccountingTable>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Location</th>
+              <th>Journal #</th>
+              <th>Reference number</th>
+              <th>Status</th>
+              <th>Notes</th>
+              <th>Amount</th>
+              <th>Created by</th>
+              <th>Reporting method</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.rows.length === 0 ? (
+              <AccountingEmptyTableRow colSpan={9}>
+                {emptyMessage}
+              </AccountingEmptyTableRow>
+            ) : (
+              data.rows.map((journal) => (
+                <tr key={journal.id}>
+                  <td>{formatDate(journal.postingDate)}</td>
+                  <td>{journal.branchName ?? "Organisation-wide"}</td>
+                  <td>
+                    <a
+                      className="mnx-accounting-record-link"
+                      href={`/accounting/journal-entries/${journal.id}`}
+                    >
+                      <strong>{journal.voucherNo}</strong>
+                      <span>{journal.legalEntity}</span>
+                    </a>
+                  </td>
+                  <td>{journal.sourceId ?? "—"}</td>
+                  <td>
+                    <AccountingStatus status={journal.status} />
+                  </td>
+                  <td>{journal.remarks ?? "—"}</td>
+                  <td>
+                    <AccountingMoney
+                      amount={journal.totalDebit}
+                      currencyCode={journal.currencyCode}
+                    />
+                  </td>
+                  <td>{journal.createdBy}</td>
+                  <td>
+                    {formatJournalMethod(journal.sourceType, journal.journalType)}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </AccountingTable>
+        <AccountingPagination
+          basePath={basePath}
+          page={data.page}
+          pageSize={data.pageSize}
+          total={data.total}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <AccountingTable>
@@ -434,7 +519,7 @@ export function CanonicalJournalRegister({ data }: { data: JournalList }) {
         <tbody>
           {data.rows.length === 0 ? (
             <AccountingEmptyTableRow colSpan={8}>
-              No journal entries match this view.
+              {emptyMessage}
             </AccountingEmptyTableRow>
           ) : (
             data.rows.map((journal) => (
@@ -472,7 +557,7 @@ export function CanonicalJournalRegister({ data }: { data: JournalList }) {
         </tbody>
       </AccountingTable>
       <AccountingPagination
-        basePath="/accounting/journal-entries"
+        basePath={basePath}
         page={data.page}
         pageSize={data.pageSize}
         total={data.total}
@@ -694,36 +779,88 @@ export function AccountingOutboxTable({
 
 export function AccountingPolicyGate({
   configured,
+  readiness,
   description,
   requirements,
   title,
 }: {
-  configured: boolean;
+  configured?: boolean;
+  readiness?: AccountingCapabilityReadiness;
   description: string;
   requirements: string[];
   title: string;
 }) {
+  const effectiveConfigured = readiness?.enabled ?? configured ?? false;
+  const eyebrow = readiness
+    ? readiness.uiStatus === "READY"
+      ? "Ready"
+      : readiness.uiStatus === "PARTIALLY_CONFIGURED"
+        ? "Partially configured"
+        : readiness.uiStatus === "AWAITING_APPROVAL"
+          ? "Awaiting approval"
+          : readiness.uiStatus === "EXPIRED"
+            ? "Expired"
+            : readiness.uiStatus === "INVALID_CONFIGURATION"
+              ? "Invalid configuration"
+              : "Configuration required"
+    : effectiveConfigured
+      ? "Configured"
+      : "Policy required";
+  const summary = readiness
+    ? readiness.uiStatus === "READY"
+      ? "The approved capability policy is active and effective."
+      : readiness.uiStatus === "AWAITING_APPROVAL"
+        ? "An independent approval is still required before this workflow can run."
+        : readiness.uiStatus === "EXPIRED"
+          ? "The last approved capability policy expired and the workflow is fail-closed."
+          : readiness.uiStatus === "INVALID_CONFIGURATION"
+            ? "The stored capability policy is invalid and the workflow is fail-closed."
+            : readiness.uiStatus === "PARTIALLY_CONFIGURED"
+              ? "The policy exists, but additional approved configuration is still required."
+              : "No effective approved capability policy is available."
+    : effectiveConfigured
+      ? "The canonical configuration evidence is active."
+      : "Posting and financial generation remain fail-closed.";
+  const blockerRows = readiness?.blockers ?? [];
+  const warningRows = readiness?.warnings ?? [];
+  const allRows =
+    blockerRows.length || warningRows.length
+      ? [
+          ...blockerRows.map((blocker) => ({
+            key: `blocker:${blocker}`,
+            label: blocker,
+            status: "REQUIRED",
+          })),
+          ...warningRows.map((warning) => ({
+            key: `warning:${warning}`,
+            label: warning,
+            status: "WARNING",
+          })),
+        ]
+      : requirements.map((requirement) => ({
+          key: `requirement:${requirement}`,
+          label: requirement,
+          status: effectiveConfigured ? "CONFIGURED" : "REQUIRED",
+        }));
   return (
     <AccountingSection
-      eyebrow={configured ? "Configured" : "Policy required"}
+      eyebrow={eyebrow}
       title={title}
       description={description}
     >
-      <AccountingAlert variant={configured ? "success" : "warning"}>
-        {configured ? (
+      <AccountingAlert variant={effectiveConfigured ? "success" : "warning"}>
+        {effectiveConfigured ? (
           <CheckCircle2 aria-hidden="true" size={18} />
         ) : (
           <LockKeyhole aria-hidden="true" size={18} />
         )}
-        {configured
-          ? "The canonical configuration evidence is active."
-          : "Posting and financial generation remain fail-closed."}
+        {summary}
       </AccountingAlert>
       <ul className="mnx-accounting-list">
-        {requirements.map((requirement) => (
-          <li className="mnx-accounting-list-row" key={requirement}>
-            <span>{requirement}</span>
-            <AccountingStatus status={configured ? "CONFIGURED" : "REQUIRED"} />
+        {allRows.map((row) => (
+          <li className="mnx-accounting-list-row" key={row.key}>
+            <span>{row.label}</span>
+            <AccountingStatus status={row.status} />
           </li>
         ))}
       </ul>

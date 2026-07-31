@@ -12,7 +12,8 @@ export type AccountingOperationalArea =
   | "partners"
   | "outbox"
   | "readiness"
-  | "configuration";
+  | "configuration"
+  | "capabilities";
 
 export type AccountingRouteAccess = {
   area: AccountingOperationalArea;
@@ -72,6 +73,7 @@ const ROUTE_ACCESS: Array<{
   },
   {
     match: (path) =>
+      path.startsWith("/accounting/banking") ||
       path.startsWith("/accounting/payments") ||
       path.startsWith("/accounting/payment-entries") ||
       path.startsWith("/accounting/allocations"),
@@ -115,7 +117,9 @@ const ROUTE_ACCESS: Array<{
     },
   },
   {
-    match: (path) => path.startsWith("/accounting/depreciation"),
+    match: (path) =>
+      path.startsWith("/accounting/depreciation") ||
+      path.startsWith("/accounting/fixed-assets"),
     access: {
       area: "depreciation",
       permissions: ["accounting.depreciation.integrate"],
@@ -151,6 +155,53 @@ const ROUTE_ACCESS: Array<{
     },
   },
   {
+    match: (path) => path.startsWith("/accounting/capabilities"),
+    access: {
+      area: "capabilities",
+      permissions: [
+        "accounting.capability-policy.read",
+        "accounting.capability-policy.manage",
+        "accounting.capability-policy.approve",
+      ],
+    },
+  },
+  {
+    match: (path) =>
+      path.startsWith("/accounting/bulk-update"),
+    access: {
+      area: "configuration",
+      permissions: [
+        "accounting.account.read",
+        "accounting.journal.read",
+        "accounting.settings.manage",
+        "accounting.capability-policy.read",
+        "accounting.recurring-template.admin",
+        "accounting.recurring-occurrence.process",
+        "accounting.depreciation.integrate",
+      ],
+    },
+  },
+  {
+    match: (path) => path.startsWith("/accounting/currency-adjustments"),
+    access: {
+      area: "configuration",
+      permissions: [
+        "accounting.settings.manage",
+        "accounting.exchange_rate.maintain",
+      ],
+    },
+  },
+  {
+    match: (path) => path.startsWith("/accounting/transaction-locking"),
+    access: {
+      area: "configuration",
+      permissions: [
+        "accounting.settings.manage",
+        "accounting.period_lock.request",
+      ],
+    },
+  },
+  {
     match: (path) =>
       path.startsWith("/accounting/configuration") ||
       path.startsWith("/accounting/settings"),
@@ -163,6 +214,9 @@ const ROUTE_ACCESS: Array<{
         "accounting.number_series.admin",
         "accounting.approval_policy.admin",
         "accounting.rounding_policy.admin",
+        "accounting.capability-policy.read",
+        "accounting.capability-policy.manage",
+        "accounting.capability-policy.approve",
       ],
     },
   },

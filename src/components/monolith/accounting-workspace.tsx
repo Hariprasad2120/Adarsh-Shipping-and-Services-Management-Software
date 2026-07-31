@@ -26,6 +26,7 @@ import {
   Settings2,
   ShieldAlert,
   ShoppingCart,
+  Truck,
   UsersRound,
   WalletCards,
   Workflow,
@@ -98,29 +99,43 @@ const exactRouteMeta: Record<string, AccountingRouteMeta> = {
     icon: ClipboardCheck,
   },
   "/accounting/customer-receipts": {
-    eyebrow: "Accounts receivable",
+    eyebrow: "Banking",
     title: "Customer receipts",
     description:
       "Review canonical customer receipts, applied amounts, unapplied balances, and posting lineage.",
     icon: CircleDollarSign,
   },
   "/accounting/vendor-payments": {
-    eyebrow: "Accounts payable",
+    eyebrow: "Banking",
     title: "Vendor payments",
     description:
       "Review canonical supplier disbursements, allocations, unapplied balances, and posting lineage.",
     icon: CreditCard,
   },
+  "/accounting/vendor-master": {
+    eyebrow: "Accounts payable",
+    title: "Vendor master",
+    description:
+      "Maintain the shared supplier master used by purchase invoices, vendor payments, and debit notes.",
+    icon: Truck,
+  },
+  "/accounting/vendor-master/new": {
+    eyebrow: "Vendor onboarding",
+    title: "New vendor",
+    description:
+      "Create a supplier profile with contact, finance, KYC, and portal settings.",
+    icon: FilePlus2,
+  },
   "/accounting/payments": {
-    eyebrow: "Banking and payments",
-    title: "Payments",
+    eyebrow: "Banking",
+    title: "All payments",
     description:
       "Monitor every canonical receipt and payment without implying external fund execution.",
     icon: WalletCards,
   },
   "/accounting/allocations": {
-    eyebrow: "Settlement operations",
-    title: "Payment allocations",
+    eyebrow: "Banking",
+    title: "Allocations",
     description:
       "Trace active, reversed, partial, and multi-document allocations through canonical payment lineage.",
     icon: Workflow,
@@ -140,14 +155,14 @@ const exactRouteMeta: Record<string, AccountingRouteMeta> = {
     icon: RefreshCcw,
   },
   "/accounting/recurring": {
-    eyebrow: "Scheduled operations",
-    title: "Recurring transactions",
+    eyebrow: "Accountant",
+    title: "Recurring journals",
     description:
       "Monitor deterministic scheduled occurrences and their generated records without direct ledger writes.",
     icon: Repeat2,
   },
   "/accounting/depreciation": {
-    eyebrow: "Asset accounting",
+    eyebrow: "Accountant",
     title: "Depreciation runs",
     description:
       "Review source readiness and the Finance/CA policy gate before any depreciation effect is permitted.",
@@ -189,7 +204,7 @@ const exactRouteMeta: Record<string, AccountingRouteMeta> = {
     icon: ShieldAlert,
   },
   "/accounting/accounts": {
-    eyebrow: "Ledger administration",
+    eyebrow: "Accountant",
     title: "Chart of accounts",
     description:
       "Maintain the controlled account hierarchy, branch mappings, opening balances, and posting classifications.",
@@ -203,8 +218,8 @@ const exactRouteMeta: Record<string, AccountingRouteMeta> = {
     icon: FileBarChart,
   },
   "/accounting/banking": {
-    eyebrow: "Treasury operations",
-    title: "Banking and cash",
+    eyebrow: "Banking",
+    title: "Banking",
     description:
       "Review liquid accounts and record controlled transfers between bank and cash ledgers.",
     icon: Landmark,
@@ -252,11 +267,39 @@ const exactRouteMeta: Record<string, AccountingRouteMeta> = {
     icon: BriefcaseBusiness,
   },
   "/accounting/journal-entries": {
-    eyebrow: "General journal",
-    title: "Journal entries",
+    eyebrow: "Accountant",
+    title: "Manual journals",
     description:
       "Review balanced vouchers and their draft, posted, cancelled, and reversal states.",
     icon: BookOpenText,
+  },
+  "/accounting/bulk-update": {
+    eyebrow: "Accountant",
+    title: "Bulk update",
+    description:
+      "Use the controlled accountant maintenance workspaces for ledger, configuration, policy, and asset updates.",
+    icon: Settings2,
+  },
+  "/accounting/currency-adjustments": {
+    eyebrow: "Accountant",
+    title: "Currency adjustments",
+    description:
+      "Review functional currency settings and approved FX evidence before foreign-currency adjustments are used.",
+    icon: Calculator,
+  },
+  "/accounting/transaction-locking": {
+    eyebrow: "Accountant",
+    title: "Transaction locking",
+    description:
+      "Protect finalised periods by applying and reviewing transaction lock controls.",
+    icon: ShieldAlert,
+  },
+  "/accounting/fixed-assets": {
+    eyebrow: "Accountant",
+    title: "Fixed assets",
+    description:
+      "Review asset readiness, depreciation policy gates, and the connected fixed-asset accounting controls.",
+    icon: Calculator,
   },
   "/accounting/journal-entries/new": {
     eyebrow: "General journal",

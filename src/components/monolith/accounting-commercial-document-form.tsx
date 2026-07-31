@@ -2,9 +2,10 @@
 
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { MOCK_ITEMS } from "@/lib/items/mock-data";
+import { fetchAccountingItems } from "@/lib/items/accounting-item-client";
+import type { ItemListItem } from "@/lib/items/types";
 import { createInvoiceAction } from "@/modules/crm/actions";
 import { DateInput } from "./date-input";
 import {
@@ -23,6 +24,14 @@ type Option = { id: string; name: string };
 type ContactOption = Option & { accountId?: string | null };
 type ProductOption = Option & { price: number; taxPercent: number };
 type BankOption = { id: string; accountName: string; accountCode: string };
+type PaymentTermOption = { id: string; name: string; dueDays: number };
+type PriceListOption = {
+  id: string;
+  name: string;
+  currencyCode: string;
+  adjustmentMode: string;
+  defaultAdjustmentPercent: string | null;
+};
 type DocumentType = "INVOICE" | "SALES_ORDER" | "PURCHASE_ORDER";
 type Line = {
   productName: string;
@@ -42,6 +51,25 @@ const newLine = (): Line => ({
   exchangeRate: 1,
 });
 
+const DEFAULT_PAYMENT_TERMS: PaymentTermOption[] = [
+  { id: "due-on-receipt", name: "Due on Receipt", dueDays: 0 },
+  { id: "net-15", name: "Net 15", dueDays: 15 },
+  { id: "net-30", name: "Net 30", dueDays: 30 },
+];
+
+function applyPriceListAdjustment(baseRate: number, priceList: PriceListOption | null) {
+  if (!priceList) return baseRate;
+  const adjustment = Number(priceList.defaultAdjustmentPercent || 0);
+  if (!Number.isFinite(adjustment) || adjustment === 0) return baseRate;
+  if (priceList.adjustmentMode === "PERCENT_UP") {
+    return Number((baseRate * (1 + adjustment / 100)).toFixed(2));
+  }
+  if (priceList.adjustmentMode === "PERCENT_DOWN") {
+    return Number((baseRate * (1 - adjustment / 100)).toFixed(2));
+  }
+  return baseRate;
+}
+
 export function AccountingCommercialDocumentForm({
   accounts,
   allowedTypes,
@@ -50,6 +78,8 @@ export function AccountingCommercialDocumentForm({
   defaultType,
   employees,
   nextNumbers,
+  paymentTerms,
+  priceLists,
   products,
   redirectPath,
   vendors,
@@ -61,19 +91,40 @@ export function AccountingCommercialDocumentForm({
   defaultType: DocumentType;
   employees: Option[];
   nextNumbers: Record<string, string>;
+  paymentTerms: PaymentTermOption[];
+  priceLists: PriceListOption[];
   products: ProductOption[];
   redirectPath: string;
   vendors: Option[];
 }) {
   const router = useRouter();
+  const availablePaymentTerms = paymentTerms.length
+    ? paymentTerms
+    : DEFAULT_PAYMENT_TERMS;
   const [saving, setSaving] = useState(false);
   const [type, setType] = useState<DocumentType>(defaultType);
   const [number, setNumber] = useState(nextNumbers[defaultType] || "");
   const [accountId, setAccountId] = useState("");
   const [issueDate, setIssueDate] = useState(new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState("");
+  const [terms, setTerms] = useState(
+    availablePaymentTerms[0]?.name || "Due on Receipt",
+  );
+  const [selectedPriceListId, setSelectedPriceListId] = useState("");
   const [discount, setDiscount] = useState(0);
   const [lines, setLines] = useState<Line[]>([newLine()]);
+  const [catalogueItems, setCatalogueItems] = useState<ItemListItem[]>([]);
+
+  const selectedPriceList = useMemo(
+    () => priceLists.find((priceList) => priceList.id === selectedPriceListId) || null,
+    [priceLists, selectedPriceListId],
+  );
+
+  useEffect(() => {
+    void fetchAccountingItems({ activeOnly: true, limit: 500 })
+      .then((items) => setCatalogueItems(items))
+      .catch(() => setCatalogueItems([]));
+  }, []);
 
   const totals = useMemo(() => {
     const subtotal = lines.reduce((sum, line) => sum + line.qty * line.rate * line.exchangeRate, 0);
@@ -89,12 +140,33 @@ export function AccountingCommercialDocumentForm({
       if (key === "productName") {
         const name = String(value).trim().toLowerCase();
         const product = products.find((candidate) => candidate.name.toLowerCase() === name);
-        const catalogueItem = MOCK_ITEMS.find((candidate) => candidate.name.toLowerCase() === name);
+        const catalogueItem = catalogueItems.find((candidate) => candidate.name.toLowerCase() === name);
         if (product) {
-          next.rate = product.price;
+          next.rate = applyPriceListAdjustment(product.price, selectedPriceList);
           next.taxPercent = product.taxPercent;
+          if (selectedPriceList) {
+            next.currency = selectedPriceList.currencyCode;
+            next.exchangeRate = selectedPriceList.currencyCode === "INR" ? 1 : next.exchangeRate;
+          }
         } else if (catalogueItem) {
-          next.rate = catalogueItem.rate;
+          const matchingPrice = catalogueItem.priceList?.find(
+            (price) => price.currency === selectedPriceList?.currencyCode,
+          );
+          const derivedRate = matchingPrice
+            ? matchingPrice.customPrice ?? catalogueItem.rate / matchingPrice.exchangeRate
+            : catalogueItem.rate;
+          next.rate = applyPriceListAdjustment(derivedRate, selectedPriceList);
+          next.taxPercent =
+            catalogueItem.taxPreference === "Taxable"
+              ? Number(catalogueItem.taxRate || 18)
+              : 0;
+          if (selectedPriceList) {
+            next.currency = selectedPriceList.currencyCode;
+            next.exchangeRate =
+              selectedPriceList.currencyCode === "INR"
+                ? 1
+                : matchingPrice?.exchangeRate || next.exchangeRate;
+          }
         }
       }
       return next;
@@ -114,6 +186,7 @@ export function AccountingCommercialDocumentForm({
       data.append("type", type);
       data.append("accountId", accountId);
       data.append("discount", String(discount));
+      data.append("terms", terms);
       const result = await createInvoiceAction(data, JSON.stringify(lines));
       if (!result.ok) {
         toast.error(result.error);
@@ -129,10 +202,14 @@ export function AccountingCommercialDocumentForm({
     }
   }
 
-  const calculatedDueDate =
-    type === "INVOICE"
-      ? new Date(new Date(issueDate).getTime() + 30 * 86400000).toISOString().slice(0, 10)
-      : dueDate;
+  const calculatedDueDate = useMemo(() => {
+    if (type !== "INVOICE") return dueDate;
+    const selectedTerm =
+      availablePaymentTerms.find((term) => term.name === terms) || null;
+    const nextDate = new Date(issueDate);
+    nextDate.setDate(nextDate.getDate() + (selectedTerm?.dueDays ?? 30));
+    return nextDate.toISOString().slice(0, 10);
+  }, [availablePaymentTerms, dueDate, issueDate, terms, type]);
 
   return (
     <form className="mnx-accounting-form" onSubmit={submit}>
@@ -157,6 +234,11 @@ export function AccountingCommercialDocumentForm({
           <AccountingField label="Issue date" required>
             <DateInput name="date" required value={issueDate} onChange={(event) => setIssueDate(event.target.value)} />
           </AccountingField>
+          <AccountingField label="Terms">
+            <AccountingSelect value={terms} onChange={(event) => setTerms(event.target.value)}>
+              {availablePaymentTerms.map((term) => <option key={term.id} value={term.name}>{term.name}</option>)}
+            </AccountingSelect>
+          </AccountingField>
           {type === "INVOICE" ? (
             <AccountingField label="Due date">
               <AccountingInput readOnly value={calculatedDueDate} />
@@ -171,6 +253,19 @@ export function AccountingCommercialDocumentForm({
             <AccountingSelect name="bankDetails" defaultValue="">
               <option value="">No bank account selected</option>
               {bankAccounts.map((bank) => <option key={bank.id} value={`${bank.accountName} (A/C: ${bank.accountCode})`}>{bank.accountName} · {bank.accountCode}</option>)}
+            </AccountingSelect>
+          </AccountingField>
+          <AccountingField label="Price list">
+            <AccountingSelect
+              value={selectedPriceListId}
+              onChange={(event) => setSelectedPriceListId(event.target.value)}
+            >
+              <option value="">Standard selling price</option>
+              {priceLists.map((priceList) => (
+                <option key={priceList.id} value={priceList.id}>
+                  {priceList.name} · {priceList.currencyCode}
+                </option>
+              ))}
             </AccountingSelect>
           </AccountingField>
         </div>
@@ -216,7 +311,7 @@ export function AccountingCommercialDocumentForm({
       >
         <datalist id="accounting-commercial-products">
           {products.map((product) => <option key={product.id} value={product.name} />)}
-          {MOCK_ITEMS.filter((item) => !products.some((product) => product.name.toLowerCase() === item.name.toLowerCase())).map((item) => <option key={item.id} value={item.name} />)}
+          {catalogueItems.filter((item) => !products.some((product) => product.name.toLowerCase() === item.name.toLowerCase())).map((item) => <option key={item.id} value={item.name} />)}
         </datalist>
         <AccountingTable>
           <thead><tr><th>Product / service</th><th>Currency</th><th>Exchange rate</th><th>Quantity</th><th>Rate</th><th>GST</th><th>Amount (INR)</th><th>Action</th></tr></thead>

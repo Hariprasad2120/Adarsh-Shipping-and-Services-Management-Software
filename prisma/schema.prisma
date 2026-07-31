@@ -91,6 +91,40 @@ model Organisation {
   accountingPostingAttempts       AccountingPostingAttempt[]
   accountingPayrollRunSnapshots   AccountingPayrollRunSnapshot[]
   accountingDocumentPolicies      AccountingDocumentPolicy[]
+  accountingTaxProfiles           AccountingTaxProfile[]
+  accountingTaxRules              AccountingTaxRule[]
+  accountingTaxComponents         AccountingTaxComponent[]
+  accountingStatutoryReturnProfiles AccountingStatutoryReturnProfile[]
+  accountingStatutoryFilingPeriods  AccountingStatutoryFilingPeriod[]
+  accountingBankAccounts          AccountingBankAccount[]
+  accountingBankStatementImports  AccountingBankStatementImport[]
+  accountingBankStatementLines    AccountingBankStatementLine[]
+  accountingBankMatches           AccountingBankMatch[]
+  accountingReconciliationSessions AccountingReconciliationSession[]
+  accountingRecurringTemplates    AccountingRecurringTemplate[]
+  accountingRecurringSchedules    AccountingRecurringSchedule[]
+  accountingRecurringRuns         AccountingRecurringRun[]
+  accountingFinancialAssets       AccountingFinancialAsset[]
+  accountingAssetBooks            AccountingAssetBook[]
+  accountingDepreciationRuns      AccountingDepreciationRun[]
+  accountingPartners              AccountingPartner[]
+  accountingPartnerTerms          AccountingPartnerTerm[]
+  accountingAppropriations        AccountingAppropriation[]
+  accountingBudgets               AccountingBudget[]
+  accountingBudgetLines           AccountingBudgetLine[]
+  accountingCustomerProfiles      AccountingCustomerProfile[]
+  accountingVendorProfiles        AccountingVendorProfile[]
+  accountingPaymentTerms          AccountingPaymentTerm[]
+  accountingPaymentMethods        AccountingPaymentMethod[]
+  accountingPriceLists            AccountingPriceList[]
+  accountingUnitsOfMeasure        AccountingUnitOfMeasure[]
+  accountingReportingTags         AccountingReportingTag[]
+  accountingItemMasters           AccountingItemMaster[]
+  accountingSourceMappingProfiles AccountingSourceMappingProfile[]
+  accountingPeriodCloseRuns       AccountingPeriodCloseRun[]
+  accountingReportExportProfiles  AccountingReportExportProfile[]
+  accountingPortalPublicationProfiles AccountingPortalPublicationProfile[]
+  accountingCapabilityPolicies    AccountingCapabilityPolicy[]        @relation("AccountingCapabilityPolicyOrg")
   accountingDocuments             AccountingDocument[]
   accountingDocumentLines         AccountingDocumentLine[]
   accountingPayments              AccountingPayment[]
@@ -141,6 +175,7 @@ model Organisation {
   shipmentRatings                       ShipmentServiceRating[]
   shipmentRatingCategories              ShipmentRatingCategory[]
   customerChecklistResponses            CustomerChecklistResponse[]
+  units                                 Unit[]
 
   @@index([slug])
 }
@@ -342,26 +377,45 @@ model User {
   passkeySetupRequired  Boolean?              @default(false)
 
   // CRM Module Back-Relations
-  crmInvoicesApproved             CrmInvoice[]                  @relation("CrmInvoiceApprover")
-  crmApprovalLogsActed            CrmApprovalLog[]              @relation("CrmApprovalLogActor")
-  crmLeadsOwned                   CrmLead[]                     @relation("CrmLeadOwner")
-  crmContactsOwned                CrmContact[]                  @relation("CrmContactOwner")
-  crmAccountsOwned                CrmAccount[]                  @relation("CrmAccountOwner")
-  crmDealsOwned                   CrmDeal[]                     @relation("CrmDealOwner")
-  crmActivitiesOwned              CrmActivity[]                 @relation("CrmActivityOwner")
-  crmInvoicesOwned                CrmInvoice[]                  @relation("CrmInvoiceOwner")
-  crmVendorsOwned                 CrmVendor[]                   @relation("CrmVendorOwner")
-  crmProjectsOwned                CrmProject[]                  @relation("CrmProjectOwner")
-  crmNotesCreated                 CrmNote[]                     @relation("CrmNoteCreator")
-  crmAttachmentsCreated           CrmAttachment[]               @relation("CrmAttachmentCreator")
-  accountingPeriodLocksRequested  AccountingPeriodLockRequest[] @relation("AccountingPeriodLockRequester")
-  accountingPeriodLocksDecided    AccountingPeriodLockRequest[] @relation("AccountingPeriodLockDecider")
-  accountingExchangeRatesApproved AccountingExchangeRate[]      @relation("AccountingExchangeRateApprover")
-  crmTimelineCreated              CrmTimelineEvent[]            @relation("CrmTimelineCreator")
-  crmJdConfigs                    CrmLeadSourceJustdialConfig[] @relation("CrmJdConfigOwner")
-  crmExternalLeadsAssigned        CrmExternalLeadSnapshot[]     @relation("CrmExternalLeadAssignee")
-  crmLeadReminders                CrmLeadReminder[]             @relation("CrmLeadReminderUser")
-  crmWorkTimeLogs                 CrmWorkTimeLog[]              @relation("CrmWorkTimeLogUser")
+  crmInvoicesApproved                  CrmInvoice[]                  @relation("CrmInvoiceApprover")
+  crmApprovalLogsActed                 CrmApprovalLog[]              @relation("CrmApprovalLogActor")
+  crmLeadsOwned                        CrmLead[]                     @relation("CrmLeadOwner")
+  crmContactsOwned                     CrmContact[]                  @relation("CrmContactOwner")
+  crmAccountsOwned                     CrmAccount[]                  @relation("CrmAccountOwner")
+  crmDealsOwned                        CrmDeal[]                     @relation("CrmDealOwner")
+  crmActivitiesOwned                   CrmActivity[]                 @relation("CrmActivityOwner")
+  crmInvoicesOwned                     CrmInvoice[]                  @relation("CrmInvoiceOwner")
+  crmVendorsOwned                      CrmVendor[]                   @relation("CrmVendorOwner")
+  crmProjectsOwned                     CrmProject[]                  @relation("CrmProjectOwner")
+  crmNotesCreated                      CrmNote[]                     @relation("CrmNoteCreator")
+  crmAttachmentsCreated                CrmAttachment[]               @relation("CrmAttachmentCreator")
+  accountingPeriodLocksRequested       AccountingPeriodLockRequest[] @relation("AccountingPeriodLockRequester")
+  accountingPeriodLocksDecided         AccountingPeriodLockRequest[] @relation("AccountingPeriodLockDecider")
+  accountingExchangeRatesApproved      AccountingExchangeRate[]      @relation("AccountingExchangeRateApprover")
+  accountingStatutoryFilingPeriodsFiled AccountingStatutoryFilingPeriod[]
+  accountingBankStatementImportsCreated AccountingBankStatementImport[] @relation("AccountingBankStatementImportCreator")
+  accountingBankMatchesCreated          AccountingBankMatch[]           @relation("AccountingBankMatchCreator")
+  accountingReconciliationSessionsCompleted AccountingReconciliationSession[] @relation("AccountingReconciliationSessionCompleter")
+  accountingRecurringTemplatesCreated   AccountingRecurringTemplate[]   @relation("AccountingRecurringTemplateCreator")
+  accountingRecurringRunsProcessed      AccountingRecurringRun[]        @relation("AccountingRecurringRunProcessor")
+  accountingFinancialAssetsCreated      AccountingFinancialAsset[]      @relation("AccountingFinancialAssetCreator")
+  accountingDepreciationRunsProcessed   AccountingDepreciationRun[]     @relation("AccountingDepreciationRunProcessor")
+  accountingPartnersCreated             AccountingPartner[]             @relation("AccountingPartnerCreator")
+  accountingAppropriationsCreated       AccountingAppropriation[]       @relation("AccountingAppropriationCreator")
+  accountingBudgetsCreated              AccountingBudget[]              @relation("AccountingBudgetCreator")
+  accountingCapabilityPoliciesCreated  AccountingCapabilityPolicy[]  @relation("AccountingCapabilityPolicyCreator")
+  accountingCapabilityPoliciesApproved AccountingCapabilityPolicy[]  @relation("AccountingCapabilityPolicyApprover")
+  accountingCapabilityPoliciesRejected AccountingCapabilityPolicy[]  @relation("AccountingCapabilityPolicyRejector")
+  accountingCapabilityPoliciesRevoked  AccountingCapabilityPolicy[]  @relation("AccountingCapabilityPolicyRevoker")
+  crmTimelineCreated                   CrmTimelineEvent[]            @relation("CrmTimelineCreator")
+  crmJdConfigs                         CrmLeadSourceJustdialConfig[] @relation("CrmJdConfigOwner")
+  crmExternalLeadsAssigned             CrmExternalLeadSnapshot[]     @relation("CrmExternalLeadAssignee")
+  crmLeadReminders                     CrmLeadReminder[]             @relation("CrmLeadReminderUser")
+  crmWorkTimeLogs                      CrmWorkTimeLog[]              @relation("CrmWorkTimeLogUser")
+  salesInvoicesSalesperson             SalesInvoice[]                @relation("SalesInvoiceSalesperson")
+  purchaseInvoicesSalesperson          PurchaseInvoice[]             @relation("PurchaseInvoiceSalesperson")
+  customerNotesSalesperson             CustomerNote[]                @relation("CustomerNoteSalesperson")
+  vendorNotesSalesperson               VendorNote[]                  @relation("VendorNoteSalesperson")
 
   // PeoplePlus HRMS Relations
   hrmsPreferences          EmployeePreference?
@@ -1704,6 +1758,7 @@ model CrmAccount {
   quotations      Quotation[]
   customerNotes   CustomerNote[]
   jobCostings     JobCosting[]
+  accountingCustomerProfile AccountingCustomerProfile?
 
   chaJobs                               ChaJob[]
   customerPortalUsers                   CustomerPortalUser[]
@@ -1845,6 +1900,8 @@ model CrmVendor {
   supplierLedgers   SupplierLedgerEntry[]
   vendorNotes       VendorNote[]
   recurringExpenses RecurringExpense[]
+  accountingVendorProfile AccountingVendorProfile?
+  accountingPreferredItems AccountingItemMaster[] @relation("AccountingItemPreferredVendor")
 
   @@index([orgId])
   @@index([ownerId])
@@ -2859,6 +2916,7 @@ model AccountingOrganisationProfile {
   roundingMode            AccountingRoundingMode  @default(HALF_UP)
   correctionPolicy        Json?
   correctionPolicyVersion Int?
+  rowVersion              Int                     @default(1)
   createdAt               DateTime                @default(now())
   updatedAt               DateTime                @updatedAt
 
@@ -2877,6 +2935,7 @@ model AccountingLegalEntity {
   isDefault     Boolean                     @default(false)
   effectiveFrom DateTime?                   @db.Date
   effectiveTo   DateTime?                   @db.Date
+  rowVersion    Int                         @default(1)
   createdAt     DateTime                    @default(now())
   updatedAt     DateTime                    @updatedAt
 
@@ -2892,6 +2951,28 @@ model AccountingLegalEntity {
   payments             AccountingPayment[]
   scheduledOccurrences AccountingScheduledOccurrence[]
   counterpartyScopes   AccountingCounterpartyEntityScope[]
+  taxProfiles          AccountingTaxProfile[]
+  taxRules             AccountingTaxRule[]
+  statutoryReturnProfiles AccountingStatutoryReturnProfile[]
+  statutoryFilingPeriods  AccountingStatutoryFilingPeriod[]
+  bankAccounts           AccountingBankAccount[]
+  bankStatementImports   AccountingBankStatementImport[]
+  bankStatementLines     AccountingBankStatementLine[]
+  reconciliationSessions AccountingReconciliationSession[]
+  recurringTemplates     AccountingRecurringTemplate[]
+  financialAssets        AccountingFinancialAsset[]
+  assetBooks             AccountingAssetBook[]
+  depreciationRuns       AccountingDepreciationRun[]
+  partners               AccountingPartner[]
+  partnerTerms           AccountingPartnerTerm[]
+  appropriations         AccountingAppropriation[]
+  budgets                AccountingBudget[]
+  budgetLines            AccountingBudgetLine[]
+  sourceMappingProfiles  AccountingSourceMappingProfile[]
+  periodCloseRuns        AccountingPeriodCloseRun[]
+  reportExportProfiles   AccountingReportExportProfile[]
+  portalPublicationProfiles AccountingPortalPublicationProfile[]
+  capabilityPolicies   AccountingCapabilityPolicy[]        @relation("AccountingCapabilityPolicyLegalEntity")
 
   @@unique([orgId, code])
   @@index([orgId, status])
@@ -2911,12 +2992,18 @@ model AccountingTaxRegistration {
   effectiveTo      DateTime? @db.Date
   isActive         Boolean   @default(false)
   configuration    Json?
+  rowVersion       Int       @default(1)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
   org          Organisation             @relation(fields: [orgId], references: [id], onDelete: Restrict)
   legalEntity  AccountingLegalEntity    @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
   numberSeries AccountingNumberSeries[]
+  taxProfiles  AccountingTaxProfile[]
+  taxRules     AccountingTaxRule[]
+  statutoryReturnProfiles AccountingStatutoryReturnProfile[]
+  statutoryFilingPeriods AccountingStatutoryFilingPeriod[]
+  bankAccounts AccountingBankAccount[]
 
   @@unique([orgId, registrationCode])
   @@unique([orgId, gstin])
@@ -2934,6 +3021,7 @@ model AccountingPeriod {
   endDate      DateTime               @db.Date
   status       AccountingPeriodStatus @default(OPEN)
   hardLockedAt DateTime?
+  rowVersion   Int                    @default(1)
   createdAt    DateTime               @default(now())
   updatedAt    DateTime               @updatedAt
 
@@ -2941,6 +3029,7 @@ model AccountingPeriod {
   fiscalYear     FiscalYear                    @relation(fields: [fiscalYearId], references: [id], onDelete: Restrict)
   lockRequests   AccountingPeriodLockRequest[]
   journalEntries JournalEntry[]
+  closeRuns      AccountingPeriodCloseRun[]
 
   @@unique([fiscalYearId, periodNumber])
   @@unique([orgId, startDate, endDate])
@@ -2984,6 +3073,7 @@ model AccountingCurrency {
   decimalPlaces Int
   isFunctional  Boolean  @default(false)
   isEnabled     Boolean  @default(true)
+  rowVersion    Int      @default(1)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -3007,6 +3097,7 @@ model AccountingExchangeRate {
   status         AccountingExchangeRateStatus @default(DRAFT)
   approvedById   String?
   approvedAt     DateTime?
+  rowVersion     Int                          @default(1)
   createdAt      DateTime                     @default(now())
   updatedAt      DateTime                     @updatedAt
 
@@ -3054,6 +3145,7 @@ model AccountingDimensionDefinition {
   valueSource String
   isRequired  Boolean  @default(false)
   isActive    Boolean  @default(true)
+  rowVersion  Int      @default(1)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -3076,12 +3168,14 @@ model AccountingDimensionValue {
   effectiveFrom DateTime? @db.Date
   effectiveTo   DateTime? @db.Date
   isActive      Boolean   @default(true)
+  rowVersion    Int       @default(1)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   org         Organisation                     @relation(fields: [orgId], references: [id], onDelete: Restrict)
   definition  AccountingDimensionDefinition    @relation(fields: [definitionId], references: [id], onDelete: Restrict)
   assignments AccountingJournalLineDimension[]
+  budgetLines AccountingBudgetLine[]
 
   @@unique([definitionId, code])
   @@unique([orgId, definitionId, canonicalType, canonicalId])
@@ -3117,6 +3211,7 @@ model AccountingApprovalPolicy {
   isActive      Boolean   @default(false)
   effectiveFrom DateTime? @db.Date
   effectiveTo   DateTime? @db.Date
+  rowVersion    Int       @default(1)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -3256,6 +3351,953 @@ model AccountingRoundingPolicy {
   @@index([orgId, purpose, currencyCode, isActive])
 }
 
+model AccountingTaxProfile {
+  id                 String    @id @default(cuid())
+  orgId              String
+  legalEntityId      String?
+  taxRegistrationId  String
+  code               String
+  name               String
+  version            Int
+  configuration      Json?
+  statutoryValidated Boolean   @default(false)
+  effectiveFrom      DateTime  @db.Date
+  effectiveTo        DateTime? @db.Date
+  isActive           Boolean   @default(false)
+  rowVersion         Int       @default(1)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  org             Organisation              @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity     AccountingLegalEntity?    @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  taxRegistration AccountingTaxRegistration @relation(fields: [taxRegistrationId], references: [id], onDelete: Restrict)
+  rules           AccountingTaxRule[]
+  vendorProfiles  AccountingVendorProfile[]
+
+  @@unique([orgId, taxRegistrationId, code, version], map: "AccountingTaxProfile_scope_version_key")
+  @@index([orgId, taxRegistrationId, isActive, effectiveFrom], map: "AccountingTaxProfile_active_idx")
+  @@index([orgId, legalEntityId, code], map: "AccountingTaxProfile_legal_entity_idx")
+}
+
+model AccountingTaxRule {
+  id                    String    @id @default(cuid())
+  orgId                 String
+  taxProfileId          String
+  legalEntityId         String?
+  taxRegistrationId     String
+  code                  String
+  documentType          String
+  placeOfSupplyType     String
+  counterpartyTreatment String
+  supplyCategory        String
+  version               Int
+  configuration         Json
+  statutoryValidated    Boolean   @default(false)
+  effectiveFrom         DateTime  @db.Date
+  effectiveTo           DateTime? @db.Date
+  isActive              Boolean   @default(false)
+  rowVersion            Int       @default(1)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  org             Organisation              @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  taxProfile      AccountingTaxProfile      @relation(fields: [taxProfileId], references: [id], onDelete: Restrict)
+  legalEntity     AccountingLegalEntity?    @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  taxRegistration AccountingTaxRegistration @relation(fields: [taxRegistrationId], references: [id], onDelete: Restrict)
+  components      AccountingTaxComponent[]
+
+  @@unique([orgId, taxProfileId, code, version], map: "AccountingTaxRule_scope_version_key")
+  @@index([orgId, documentType, isActive, effectiveFrom], map: "AccountingTaxRule_active_idx")
+  @@index([orgId, taxRegistrationId, supplyCategory], map: "AccountingTaxRule_registration_supply_idx")
+}
+
+model AccountingTaxComponent {
+  id                 String   @id @default(cuid())
+  orgId              String
+  taxRuleId          String
+  componentCode      String
+  componentType      String
+  ratePercent        Decimal  @db.Decimal(12, 6)
+  recoverablePercent Decimal? @db.Decimal(12, 6)
+  ledgerAccountRole  String?
+  position           Int      @default(1)
+  configuration      Json?
+  rowVersion         Int      @default(1)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  org     Organisation      @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  taxRule AccountingTaxRule @relation(fields: [taxRuleId], references: [id], onDelete: Cascade)
+
+  @@unique([taxRuleId, componentCode], map: "AccountingTaxComponent_rule_code_key")
+  @@unique([taxRuleId, position], map: "AccountingTaxComponent_rule_position_key")
+  @@index([orgId, componentType], map: "AccountingTaxComponent_org_type_idx")
+}
+
+model AccountingStatutoryReturnProfile {
+  id                 String    @id @default(cuid())
+  orgId              String
+  legalEntityId      String?
+  taxRegistrationId  String
+  returnType         String
+  filingFrequency    String
+  dueDayOfMonth      Int?
+  configuration      Json?
+  statutoryValidated Boolean   @default(false)
+  effectiveFrom      DateTime  @db.Date
+  effectiveTo        DateTime? @db.Date
+  isActive           Boolean   @default(false)
+  rowVersion         Int       @default(1)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  org             Organisation                 @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity     AccountingLegalEntity?       @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  taxRegistration AccountingTaxRegistration    @relation(fields: [taxRegistrationId], references: [id], onDelete: Restrict)
+  filingPeriods   AccountingStatutoryFilingPeriod[]
+
+  @@unique([orgId, taxRegistrationId, returnType, effectiveFrom], map: "AccountingStatutoryReturnProfile_scope_effective_key")
+  @@index([orgId, returnType, isActive, effectiveFrom], map: "AccountingStatutoryReturnProfile_active_idx")
+  @@index([orgId, legalEntityId, filingFrequency], map: "AccountingStatutoryReturnProfile_scope_idx")
+}
+
+model AccountingStatutoryFilingPeriod {
+  id                 String    @id @default(cuid())
+  orgId              String
+  profileId          String
+  legalEntityId      String?
+  taxRegistrationId  String
+  returnType         String
+  periodStart        DateTime  @db.Date
+  periodEnd          DateTime  @db.Date
+  dueDate            DateTime? @db.Date
+  status             String    @default("OPEN")
+  acknowledgementRef String?
+  filedAt            DateTime?
+  filedById          String?
+  configuration      Json?
+  rowVersion         Int       @default(1)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  org             Organisation              @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  profile         AccountingStatutoryReturnProfile @relation(fields: [profileId], references: [id], onDelete: Restrict)
+  legalEntity     AccountingLegalEntity?    @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  taxRegistration AccountingTaxRegistration @relation(fields: [taxRegistrationId], references: [id], onDelete: Restrict)
+  filedBy         User?                     @relation(fields: [filedById], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, profileId, periodStart, periodEnd], map: "AccountingStatutoryFilingPeriod_profile_period_key")
+  @@index([orgId, returnType, status, periodStart], map: "AccountingStatutoryFilingPeriod_active_idx")
+  @@index([orgId, taxRegistrationId, dueDate], map: "AccountingStatutoryFilingPeriod_due_idx")
+  @@index([filedById])
+}
+
+model AccountingBankAccount {
+  id                 String    @id @default(cuid())
+  orgId              String
+  legalEntityId      String
+  taxRegistrationId  String?
+  ledgerAccountId    String
+  code               String
+  name               String
+  bankName           String
+  branchName         String?
+  accountNumberMasked String
+  ifsc               String?
+  currencyCode       String    @db.VarChar(3)
+  isPrimary          Boolean   @default(false)
+  configuration      Json?
+  statutoryValidated Boolean   @default(false)
+  effectiveFrom      DateTime  @db.Date
+  effectiveTo        DateTime? @db.Date
+  isActive           Boolean   @default(false)
+  rowVersion         Int       @default(1)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  org             Organisation               @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity     AccountingLegalEntity      @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  taxRegistration AccountingTaxRegistration? @relation(fields: [taxRegistrationId], references: [id], onDelete: Restrict)
+  ledgerAccount   Account                    @relation(fields: [ledgerAccountId], references: [id], onDelete: Restrict)
+  statementImports AccountingBankStatementImport[]
+  statementLines   AccountingBankStatementLine[]
+  reconciliationSessions AccountingReconciliationSession[]
+
+  @@unique([orgId, code], map: "AccountingBankAccount_org_code_key")
+  @@unique([orgId, ledgerAccountId], map: "AccountingBankAccount_org_ledger_key")
+  @@index([orgId, legalEntityId, isActive], map: "AccountingBankAccount_active_idx")
+}
+
+model AccountingBankStatementImport {
+  id                 String    @id @default(cuid())
+  orgId              String
+  legalEntityId      String
+  bankAccountId      String
+  sourceFileName     String
+  sourceFileHash     String
+  sourceFormat       String
+  statementStart     DateTime? @db.Date
+  statementEnd       DateTime? @db.Date
+  openingBalance     Decimal?  @db.Decimal(28, 8)
+  closingBalance     Decimal?  @db.Decimal(28, 8)
+  importStatus       String    @default("PENDING_REVIEW")
+  importExceptions   Json?
+  importedById       String
+  rowVersion         Int       @default(1)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  org          Organisation          @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity  AccountingLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  bankAccount  AccountingBankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Restrict)
+  importedBy   User                  @relation("AccountingBankStatementImportCreator", fields: [importedById], references: [id], onDelete: Restrict)
+  lines        AccountingBankStatementLine[]
+  reconciliationSessions AccountingReconciliationSession[]
+
+  @@unique([orgId, bankAccountId, sourceFileHash], map: "AccountingBankStatementImport_hash_key")
+  @@index([orgId, bankAccountId, importStatus, createdAt], map: "AccountingBankStatementImport_status_idx")
+  @@index([importedById])
+}
+
+model AccountingBankStatementLine {
+  id                    String    @id @default(cuid())
+  orgId                 String
+  legalEntityId         String
+  importId              String
+  bankAccountId         String
+  lineDate              DateTime  @db.Date
+  valueDate             DateTime? @db.Date
+  sequenceNumber        Int
+  reference             String?
+  description           String
+  debitAmount           Decimal?  @db.Decimal(28, 8)
+  creditAmount          Decimal?  @db.Decimal(28, 8)
+  runningBalance        Decimal?  @db.Decimal(28, 8)
+  importExceptionCode   String?
+  reconciliationStatus  String    @default("UNMATCHED")
+  canonicalTargetType   String?
+  canonicalTargetIdentifier String?
+  rawPayload            Json?
+  rowVersion            Int       @default(1)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  org         Organisation                @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity AccountingLegalEntity       @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  import      AccountingBankStatementImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+  bankAccount AccountingBankAccount       @relation(fields: [bankAccountId], references: [id], onDelete: Restrict)
+  matches     AccountingBankMatch[]
+
+  @@unique([importId, sequenceNumber], map: "AccountingBankStatementLine_import_sequence_key")
+  @@index([orgId, bankAccountId, lineDate, reconciliationStatus], map: "AccountingBankStatementLine_status_idx")
+}
+
+model AccountingReconciliationSession {
+  id                  String    @id @default(cuid())
+  orgId               String
+  legalEntityId       String
+  bankAccountId       String
+  statementImportId   String
+  periodStart         DateTime  @db.Date
+  periodEnd           DateTime  @db.Date
+  statementClosingBalance Decimal? @db.Decimal(28, 8)
+  ledgerClosingBalance Decimal?   @db.Decimal(28, 8)
+  differenceAmount    Decimal?  @db.Decimal(28, 8)
+  status              String    @default("OPEN")
+  proof               Json?
+  completedById       String?
+  completedAt         DateTime?
+  rowVersion          Int       @default(1)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  org            Organisation                @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity    AccountingLegalEntity       @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  bankAccount    AccountingBankAccount       @relation(fields: [bankAccountId], references: [id], onDelete: Restrict)
+  statementImport AccountingBankStatementImport @relation(fields: [statementImportId], references: [id], onDelete: Restrict)
+  completedBy    User?                       @relation("AccountingReconciliationSessionCompleter", fields: [completedById], references: [id], onDelete: Restrict)
+  matches        AccountingBankMatch[]
+
+  @@unique([orgId, bankAccountId, statementImportId], map: "AccountingReconciliationSession_scope_key")
+  @@index([orgId, bankAccountId, status, periodStart], map: "AccountingReconciliationSession_status_idx")
+  @@index([completedById])
+}
+
+model AccountingBankMatch {
+  id                    String    @id @default(cuid())
+  orgId                 String
+  sessionId             String
+  statementLineId       String
+  targetType            String
+  targetDocumentId      String?
+  targetJournalEntryId  String?
+  matchedAmount         Decimal   @db.Decimal(28, 8)
+  confidenceScore       Decimal?  @db.Decimal(12, 6)
+  reasonCode            String?
+  createdById           String
+  rowVersion            Int       @default(1)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  org           Organisation                 @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  session       AccountingReconciliationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  statementLine AccountingBankStatementLine  @relation(fields: [statementLineId], references: [id], onDelete: Cascade)
+  targetDocument AccountingDocument?         @relation(fields: [targetDocumentId], references: [id], onDelete: Restrict)
+  targetJournalEntry JournalEntry?           @relation(fields: [targetJournalEntryId], references: [id], onDelete: Restrict)
+  createdBy     User                         @relation("AccountingBankMatchCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@unique([sessionId, statementLineId, targetType, targetDocumentId, targetJournalEntryId], map: "AccountingBankMatch_unique_target_key")
+  @@index([orgId, sessionId, createdAt], map: "AccountingBankMatch_session_idx")
+  @@index([targetDocumentId])
+  @@index([targetJournalEntryId])
+  @@index([createdById])
+}
+
+model AccountingRecurringTemplate {
+  id                String    @id @default(cuid())
+  orgId             String
+  legalEntityId     String
+  code              String
+  name              String
+  sourceType        String
+  documentType      String
+  version           Int       @default(1)
+  scheduleMode      String
+  scheduleConfig    Json?
+  generationPolicy  Json?
+  approvalMode      String?
+  autoSubmit        Boolean   @default(false)
+  isActive          Boolean   @default(false)
+  effectiveFrom     DateTime  @db.Date
+  effectiveTo       DateTime? @db.Date
+  createdById       String
+  rowVersion        Int       @default(1)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  org         Organisation            @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity AccountingLegalEntity   @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  createdBy   User                    @relation("AccountingRecurringTemplateCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  schedules   AccountingRecurringSchedule[]
+  runs        AccountingRecurringRun[]
+
+  @@unique([orgId, code, version], map: "AccountingRecurringTemplate_code_version_key")
+  @@index([orgId, legalEntityId, isActive], map: "AccountingRecurringTemplate_active_idx")
+  @@index([createdById])
+}
+
+model AccountingRecurringSchedule {
+  id                   String    @id @default(cuid())
+  orgId                String
+  templateId           String
+  cadence              String
+  anchorDate           DateTime  @db.Date
+  nextDueDate          DateTime  @db.Date
+  lastProcessedDueDate DateTime? @db.Date
+  catchUpMode          String    @default("SKIP")
+  scheduleConfig       Json?
+  isActive             Boolean   @default(true)
+  rowVersion           Int       @default(1)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  org      Organisation              @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  template AccountingRecurringTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  runs     AccountingRecurringRun[]
+
+  @@unique([templateId, cadence, anchorDate], map: "AccountingRecurringSchedule_unique_key")
+  @@index([orgId, nextDueDate, isActive], map: "AccountingRecurringSchedule_due_idx")
+}
+
+model AccountingRecurringRun {
+  id                  String    @id @default(cuid())
+  orgId               String
+  templateId          String
+  scheduleId          String?
+  dueDate             DateTime  @db.Date
+  runStatus           String    @default("PENDING")
+  generatedRecordType String?
+  generatedRecordId   String?
+  result              Json?
+  idempotencyKey      String
+  processedById       String?
+  processedAt         DateTime?
+  rowVersion          Int       @default(1)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  org         Organisation              @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  template    AccountingRecurringTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  schedule    AccountingRecurringSchedule? @relation(fields: [scheduleId], references: [id], onDelete: Restrict)
+  processedBy User?                     @relation("AccountingRecurringRunProcessor", fields: [processedById], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, idempotencyKey], map: "AccountingRecurringRun_idempotency_key")
+  @@unique([templateId, dueDate], map: "AccountingRecurringRun_template_due_key")
+  @@index([orgId, runStatus, dueDate], map: "AccountingRecurringRun_status_idx")
+  @@index([processedById])
+}
+
+model AccountingFinancialAsset {
+  id                    String    @id @default(cuid())
+  orgId                 String
+  legalEntityId         String
+  legacyAssetId         String
+  assetCode             String
+  assetName             String
+  capitalizationDate    DateTime  @db.Date
+  capitalizationAmount  Decimal   @db.Decimal(28, 8)
+  salvageValue          Decimal?  @db.Decimal(28, 8)
+  usefulLifeMonths      Int?
+  sourceAssetVersion    Int?
+  policyJson            Json?
+  status                String    @default("ACTIVE")
+  createdById           String
+  rowVersion            Int       @default(1)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  org         Organisation          @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity AccountingLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  legacyAsset Asset                 @relation(fields: [legacyAssetId], references: [id], onDelete: Restrict)
+  createdBy   User                  @relation("AccountingFinancialAssetCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  books       AccountingAssetBook[]
+
+  @@unique([orgId, legacyAssetId], map: "AccountingFinancialAsset_legacy_asset_key")
+  @@unique([orgId, assetCode], map: "AccountingFinancialAsset_asset_code_key")
+  @@index([orgId, legalEntityId, status], map: "AccountingFinancialAsset_status_idx")
+  @@index([createdById])
+}
+
+model AccountingAssetBook {
+  id                           String    @id @default(cuid())
+  orgId                        String
+  legalEntityId                String
+  financialAssetId             String
+  bookCode                     String
+  bookType                     String
+  depreciationMethod           String
+  depreciationRate            Decimal?   @db.Decimal(12, 6)
+  usefulLifeMonths             Int?
+  capitalizationAmount         Decimal    @db.Decimal(28, 8)
+  salvageValue                 Decimal?   @db.Decimal(28, 8)
+  accumulatedDepreciation      Decimal    @default(0) @db.Decimal(28, 8)
+  netBookValue                 Decimal    @db.Decimal(28, 8)
+  assetAccountId               String?
+  depreciationExpenseAccountId String?
+  accumulatedDepAccountId      String?
+  policyJson                   Json?
+  effectiveFrom                DateTime   @db.Date
+  effectiveTo                  DateTime?  @db.Date
+  isActive                     Boolean    @default(false)
+  rowVersion                   Int        @default(1)
+  createdAt                    DateTime   @default(now())
+  updatedAt                    DateTime   @updatedAt
+
+  org                        Organisation           @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity                AccountingLegalEntity  @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  financialAsset             AccountingFinancialAsset @relation(fields: [financialAssetId], references: [id], onDelete: Restrict)
+  assetAccount               Account?               @relation("AccountingAssetBookAssetAccount", fields: [assetAccountId], references: [id], onDelete: Restrict)
+  depreciationExpenseAccount Account?               @relation("AccountingAssetBookExpenseAccount", fields: [depreciationExpenseAccountId], references: [id], onDelete: Restrict)
+  accumulatedDepAccount      Account?               @relation("AccountingAssetBookAccumulatedAccount", fields: [accumulatedDepAccountId], references: [id], onDelete: Restrict)
+  depreciationRuns           AccountingDepreciationRun[]
+
+  @@unique([orgId, financialAssetId, bookCode], map: "AccountingAssetBook_asset_book_code_key")
+  @@index([orgId, legalEntityId, bookType, isActive], map: "AccountingAssetBook_type_idx")
+  @@index([assetAccountId])
+  @@index([depreciationExpenseAccountId])
+  @@index([accumulatedDepAccountId])
+}
+
+model AccountingDepreciationRun {
+  id                    String    @id @default(cuid())
+  orgId                 String
+  legalEntityId         String
+  assetBookId           String
+  periodStart           DateTime  @db.Date
+  periodEnd             DateTime  @db.Date
+  depreciationDate      DateTime  @db.Date
+  depreciationAmount    Decimal   @db.Decimal(28, 8)
+  accumulatedAfter      Decimal   @db.Decimal(28, 8)
+  netBookValueAfter     Decimal   @db.Decimal(28, 8)
+  runStatus             String    @default("PENDING")
+  journalEntryId        String?
+  policySnapshot        Json?
+  idempotencyKey        String
+  processedById         String?
+  processedAt           DateTime?
+  rowVersion            Int       @default(1)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  org          Organisation          @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity  AccountingLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  assetBook    AccountingAssetBook   @relation(fields: [assetBookId], references: [id], onDelete: Restrict)
+  journalEntry JournalEntry?         @relation(fields: [journalEntryId], references: [id], onDelete: Restrict)
+  processedBy  User?                 @relation("AccountingDepreciationRunProcessor", fields: [processedById], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, idempotencyKey], map: "AccountingDepreciationRun_idempotency_key")
+  @@unique([assetBookId, periodStart, periodEnd], map: "AccountingDepreciationRun_book_period_key")
+  @@index([orgId, runStatus, depreciationDate], map: "AccountingDepreciationRun_status_idx")
+  @@index([journalEntryId])
+  @@index([processedById])
+}
+
+model AccountingPartner {
+  id                 String    @id @default(cuid())
+  orgId              String
+  legalEntityId      String
+  legacyPartnerId    String
+  partnerCode        String
+  partnerName        String
+  capitalAccountId   String
+  currentAccountId   String
+  drawingsAccountId  String?
+  status             String    @default("ACTIVE")
+  policyJson         Json?
+  createdById        String
+  rowVersion         Int       @default(1)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  org             Organisation          @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity     AccountingLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  legacyPartner   PartnerAccount        @relation(fields: [legacyPartnerId], references: [id], onDelete: Restrict)
+  capitalAccount  Account               @relation("AccountingPartnerCapitalAccount", fields: [capitalAccountId], references: [id], onDelete: Restrict)
+  currentAccount  Account               @relation("AccountingPartnerCurrentAccount", fields: [currentAccountId], references: [id], onDelete: Restrict)
+  drawingsAccount Account?              @relation("AccountingPartnerDrawingsAccount", fields: [drawingsAccountId], references: [id], onDelete: Restrict)
+  createdBy       User                  @relation("AccountingPartnerCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  terms           AccountingPartnerTerm[]
+  appropriations  AccountingAppropriation[]
+
+  @@unique([orgId, legacyPartnerId], map: "AccountingPartner_legacy_partner_key")
+  @@unique([orgId, partnerCode], map: "AccountingPartner_code_key")
+  @@index([orgId, legalEntityId, status], map: "AccountingPartner_status_idx")
+  @@index([createdById])
+}
+
+model AccountingPartnerTerm {
+  id                        String    @id @default(cuid())
+  orgId                     String
+  legalEntityId             String
+  partnerId                 String
+  version                   Int
+  profitSharingRatio        Decimal   @db.Decimal(12, 6)
+  interestOnCapitalRate     Decimal?  @db.Decimal(12, 6)
+  interestOnDrawingsRate    Decimal?  @db.Decimal(12, 6)
+  salaryAmount              Decimal?  @db.Decimal(28, 8)
+  salaryExpenseAccountId    String?
+  interestExpenseAccountId  String?
+  interestIncomeAccountId   String?
+  configuration             Json?
+  approvedByCA              Boolean   @default(false)
+  effectiveFrom             DateTime  @db.Date
+  effectiveTo               DateTime? @db.Date
+  isActive                  Boolean   @default(false)
+  rowVersion                Int       @default(1)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  org                   Organisation          @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity           AccountingLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  partner               AccountingPartner     @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  salaryExpenseAccount  Account?              @relation("AccountingPartnerTermSalaryExpenseAccount", fields: [salaryExpenseAccountId], references: [id], onDelete: Restrict)
+  interestExpenseAccount Account?             @relation("AccountingPartnerTermInterestExpenseAccount", fields: [interestExpenseAccountId], references: [id], onDelete: Restrict)
+  interestIncomeAccount Account?              @relation("AccountingPartnerTermInterestIncomeAccount", fields: [interestIncomeAccountId], references: [id], onDelete: Restrict)
+  appropriations        AccountingAppropriation[]
+
+  @@unique([orgId, partnerId, version], map: "AccountingPartnerTerm_version_key")
+  @@index([orgId, legalEntityId, isActive, effectiveFrom], map: "AccountingPartnerTerm_active_idx")
+  @@index([salaryExpenseAccountId])
+  @@index([interestExpenseAccountId])
+  @@index([interestIncomeAccountId])
+}
+
+model AccountingAppropriation {
+  id                    String    @id @default(cuid())
+  orgId                 String
+  legalEntityId         String
+  partnerId             String
+  termId                String
+  appropriationType     String
+  periodStart           DateTime  @db.Date
+  periodEnd             DateTime  @db.Date
+  amount                Decimal   @db.Decimal(28, 8)
+  basis                 Json?
+  status                String    @default("DRAFT")
+  journalEntryId        String?
+  idempotencyKey        String
+  createdById           String
+  rowVersion            Int       @default(1)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  org         Organisation          @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity AccountingLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  partner     AccountingPartner     @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  term        AccountingPartnerTerm @relation(fields: [termId], references: [id], onDelete: Restrict)
+  journalEntry JournalEntry?        @relation(fields: [journalEntryId], references: [id], onDelete: Restrict)
+  createdBy   User                  @relation("AccountingAppropriationCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, idempotencyKey], map: "AccountingAppropriation_idempotency_key")
+  @@unique([partnerId, appropriationType, periodStart, periodEnd], map: "AccountingAppropriation_period_key")
+  @@index([orgId, legalEntityId, status, periodEnd], map: "AccountingAppropriation_status_idx")
+  @@index([journalEntryId])
+  @@index([createdById])
+}
+
+model AccountingBudget {
+  id                String    @id @default(cuid())
+  orgId             String
+  legalEntityId     String
+  fiscalYearId      String
+  scenarioCode      String
+  name              String
+  version           Int
+  currencyCode      String    @db.VarChar(3)
+  periodGranularity String
+  configuration     Json?
+  approvedByMgmt    Boolean   @default(false)
+  isActive          Boolean   @default(false)
+  effectiveFrom     DateTime  @db.Date
+  effectiveTo       DateTime? @db.Date
+  createdById       String
+  rowVersion        Int       @default(1)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  org         Organisation          @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity AccountingLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  fiscalYear  FiscalYear            @relation(fields: [fiscalYearId], references: [id], onDelete: Restrict)
+  createdBy   User                  @relation("AccountingBudgetCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  lines       AccountingBudgetLine[]
+
+  @@unique([orgId, legalEntityId, fiscalYearId, scenarioCode, version], map: "AccountingBudget_scope_version_key")
+  @@index([orgId, legalEntityId, isActive, effectiveFrom], map: "AccountingBudget_active_idx")
+  @@index([createdById])
+}
+
+model AccountingBudgetLine {
+  id                String    @id @default(cuid())
+  orgId             String
+  budgetId          String
+  legalEntityId     String
+  lineNumber        Int
+  periodStart       DateTime  @db.Date
+  periodEnd         DateTime  @db.Date
+  accountId         String
+  dimensionValueId  String?
+  amount            Decimal   @db.Decimal(28, 8)
+  quantity          Decimal?  @db.Decimal(20, 6)
+  assumptions       Json?
+  rowVersion        Int       @default(1)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  org            Organisation              @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  budget         AccountingBudget          @relation(fields: [budgetId], references: [id], onDelete: Restrict)
+  legalEntity    AccountingLegalEntity     @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  account        Account                   @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  dimensionValue AccountingDimensionValue? @relation(fields: [dimensionValueId], references: [id], onDelete: Restrict)
+
+  @@unique([budgetId, lineNumber], map: "AccountingBudgetLine_budget_line_key")
+  @@index([orgId, periodStart, periodEnd], map: "AccountingBudgetLine_period_idx")
+  @@index([accountId])
+  @@index([dimensionValueId])
+}
+
+model AccountingCustomerProfile {
+  id                   String    @id @default(cuid())
+  orgId                String
+  crmAccountId         String    @unique
+  receivableAccountId  String
+  currencyCode         String    @db.VarChar(3)
+  creditLimit          Decimal?  @db.Decimal(28, 8)
+  paymentTermsDays     Int?
+  collectionPolicyVersion Int    @default(1)
+  dunningPolicyCode    String?
+  creditHold           Boolean   @default(false)
+  statementDeliveryMode String   @default("EMAIL")
+  configuration        Json?
+  isActive             Boolean   @default(true)
+  rowVersion           Int       @default(1)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  org               Organisation @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  crmAccount        CrmAccount   @relation(fields: [crmAccountId], references: [id], onDelete: Restrict)
+  receivableAccount Account      @relation("AccountingCustomerProfileReceivableAccount", fields: [receivableAccountId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, crmAccountId], map: "AccountingCustomerProfile_customer_key")
+  @@index([orgId, isActive], map: "AccountingCustomerProfile_active_idx")
+  @@index([receivableAccountId])
+}
+
+model AccountingVendorProfile {
+  id                   String    @id @default(cuid())
+  orgId                String
+  crmVendorId          String    @unique
+  payableAccountId     String
+  currencyCode         String    @db.VarChar(3)
+  paymentTermsDays     Int?
+  paymentPolicyVersion Int       @default(1)
+  taxProfileId         String?
+  paymentHold          Boolean   @default(false)
+  paymentMethod        String?
+  configuration        Json?
+  isActive             Boolean   @default(true)
+  rowVersion           Int       @default(1)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  org            Organisation         @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  crmVendor      CrmVendor            @relation(fields: [crmVendorId], references: [id], onDelete: Restrict)
+  payableAccount Account              @relation("AccountingVendorProfilePayableAccount", fields: [payableAccountId], references: [id], onDelete: Restrict)
+  taxProfile     AccountingTaxProfile? @relation(fields: [taxProfileId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, crmVendorId], map: "AccountingVendorProfile_vendor_key")
+  @@index([orgId, isActive], map: "AccountingVendorProfile_active_idx")
+  @@index([payableAccountId])
+  @@index([taxProfileId])
+}
+
+model AccountingPaymentTerm {
+  id                     String   @id @default(cuid())
+  orgId                  String
+  code                   String
+  name                   String
+  dueDays                Int
+  earlyDiscountDays      Int?
+  earlyDiscountPercent   Decimal? @db.Decimal(12, 4)
+  configuration          Json?
+  isActive               Boolean  @default(true)
+  rowVersion             Int      @default(1)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, code], map: "AccountingPaymentTerm_org_code_key")
+  @@index([orgId, isActive], map: "AccountingPaymentTerm_active_idx")
+}
+
+model AccountingPaymentMethod {
+  id               String   @id @default(cuid())
+  orgId            String
+  code             String
+  name             String
+  methodType       String
+  clearingAccountId String?
+  configuration    Json?
+  isActive         Boolean  @default(true)
+  rowVersion       Int      @default(1)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  org             Organisation @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  clearingAccount Account?     @relation("AccountingPaymentMethodClearingAccount", fields: [clearingAccountId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, code], map: "AccountingPaymentMethod_org_code_key")
+  @@index([orgId, isActive], map: "AccountingPaymentMethod_active_idx")
+  @@index([clearingAccountId])
+}
+
+model AccountingPriceList {
+  id                       String   @id @default(cuid())
+  orgId                    String
+  code                     String
+  name                     String
+  currencyCode             String   @db.VarChar(3)
+  adjustmentMode           String
+  defaultAdjustmentPercent Decimal? @db.Decimal(12, 4)
+  configuration            Json?
+  isActive                 Boolean  @default(true)
+  rowVersion               Int      @default(1)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, code], map: "AccountingPriceList_org_code_key")
+  @@index([orgId, isActive], map: "AccountingPriceList_active_idx")
+}
+
+model AccountingUnitOfMeasure {
+  id            String   @id @default(cuid())
+  orgId         String
+  code          String
+  name          String
+  symbol        String?
+  decimalPlaces Int      @default(0)
+  configuration Json?
+  isActive      Boolean  @default(true)
+  rowVersion    Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, code], map: "AccountingUnitOfMeasure_org_code_key")
+  @@index([orgId, isActive], map: "AccountingUnitOfMeasure_active_idx")
+}
+
+model AccountingReportingTag {
+  id            String   @id @default(cuid())
+  orgId         String
+  code          String
+  name          String
+  description   String?
+  configuration Json?
+  isActive      Boolean  @default(true)
+  rowVersion    Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, code], map: "AccountingReportingTag_org_code_key")
+  @@index([orgId, isActive], map: "AccountingReportingTag_active_idx")
+}
+
+model AccountingItemMaster {
+  id                   String    @id @default(cuid())
+  orgId                String
+  name                 String
+  sku                  String?
+  purchaseDescription  String?
+  purchaseRate         Decimal   @default(0) @db.Decimal(28, 8)
+  salesDescription     String?
+  salesRate            Decimal   @default(0) @db.Decimal(28, 8)
+  hsnSac               String?
+  usageUnit            String?
+  itemType             String
+  taxPreference        String
+  status               String    @default("Active")
+  priceList            Json?
+  priceListAuto        Boolean   @default(true)
+  imageDataUrl         String?
+  salesAccount         String?
+  purchaseAccount      String?
+  taxRate              String?
+  exemptionReason      String?
+  preferredVendorId    String?
+  preferredVendorName  String?
+  salesInformation     Boolean   @default(true)
+  purchaseInformation  Boolean   @default(true)
+  inventoryTracking    Boolean   @default(false)
+  openingStock         Decimal?  @db.Decimal(20, 6)
+  reorderPoint         Decimal?  @db.Decimal(20, 6)
+  chargeCategory       String?
+  applicableFor        String?
+  defaultContainerType String?
+  customFields         Json?
+  rowVersion           Int       @default(1)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  org             Organisation @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  preferredVendor CrmVendor?   @relation("AccountingItemPreferredVendor", fields: [preferredVendorId], references: [id], onDelete: Restrict)
+
+  @@index([orgId, status], map: "AccountingItemMaster_status_idx")
+  @@index([orgId, itemType, status], map: "AccountingItemMaster_type_status_idx")
+  @@index([preferredVendorId])
+  @@unique([orgId, sku], map: "AccountingItemMaster_org_sku_key")
+}
+
+model AccountingSourceMappingProfile {
+  id                 String    @id @default(cuid())
+  orgId              String
+  legalEntityId      String?
+  sourceSystem       String
+  sourceType         String
+  profileCode        String
+  targetModule       String
+  targetDocumentType String?
+  configuration      Json?
+  isActive           Boolean   @default(true)
+  rowVersion         Int       @default(1)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  org         Organisation           @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity AccountingLegalEntity? @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, legalEntityId, sourceSystem, sourceType, profileCode], map: "AccountingSourceMappingProfile_scope_key")
+  @@index([orgId, sourceSystem, sourceType, isActive], map: "AccountingSourceMappingProfile_active_idx")
+}
+
+model AccountingPeriodCloseRun {
+  id               String    @id @default(cuid())
+  orgId            String
+  legalEntityId    String
+  accountingPeriodId String
+  closeDate        DateTime  @db.Date
+  status           String    @default("OPEN")
+  checklist        Json?
+  reportBundle     Json?
+  notes            String?
+  closedById       String?
+  closedAt         DateTime?
+  reopenedById     String?
+  reopenedAt       DateTime?
+  rowVersion       Int       @default(1)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  org         Organisation          @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity AccountingLegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  period      AccountingPeriod      @relation(fields: [accountingPeriodId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, legalEntityId, accountingPeriodId], map: "AccountingPeriodCloseRun_scope_key")
+  @@index([orgId, status, closeDate], map: "AccountingPeriodCloseRun_status_idx")
+}
+
+model AccountingReportExportProfile {
+  id              String    @id @default(cuid())
+  orgId           String
+  legalEntityId   String?
+  reportCode      String
+  name            String
+  exportFormat    String
+  deliveryMode    String
+  filters         Json?
+  isPortalVisible Boolean   @default(false)
+  isActive        Boolean   @default(true)
+  rowVersion      Int       @default(1)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  org         Organisation           @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity AccountingLegalEntity? @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  portalPublicationProfiles AccountingPortalPublicationProfile[]
+
+  @@unique([orgId, legalEntityId, reportCode, name], map: "AccountingReportExportProfile_scope_key")
+  @@index([orgId, reportCode, isActive], map: "AccountingReportExportProfile_active_idx")
+}
+
+model AccountingPortalPublicationProfile {
+  id                    String    @id @default(cuid())
+  orgId                 String
+  legalEntityId         String?
+  documentType          String
+  audienceType          String
+  exportProfileId       String?
+  deliveryMode          String
+  retentionDays         Int?
+  configuration         Json?
+  isActive              Boolean   @default(true)
+  rowVersion            Int       @default(1)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  org             Organisation                  @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity     AccountingLegalEntity?        @relation(fields: [legalEntityId], references: [id], onDelete: Restrict)
+  exportProfile   AccountingReportExportProfile? @relation(fields: [exportProfileId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, legalEntityId, documentType, audienceType], map: "AccountingPortalPublicationProfile_scope_key")
+  @@index([orgId, audienceType, isActive], map: "AccountingPortalPublicationProfile_active_idx")
+  @@index([exportProfileId])
+}
+
 model AccountingSourceSnapshot {
   id            String    @id @default(cuid())
   orgId         String
@@ -3348,6 +4390,7 @@ model AccountingDocumentPolicy {
   effectiveFrom      DateTime  @db.Date
   effectiveTo        DateTime? @db.Date
   isActive           Boolean   @default(false)
+  rowVersion         Int       @default(1)
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
@@ -3358,6 +4401,52 @@ model AccountingDocumentPolicy {
 
   @@unique([orgId, legalEntityId, documentType, version], map: "AccountingDocumentPolicy_scope_version_key")
   @@index([orgId, legalEntityId, documentType, isActive, effectiveFrom], map: "AccountingDocumentPolicy_active_idx")
+}
+
+model AccountingCapabilityPolicy {
+  id                 String    @id @default(cuid())
+  orgId              String
+  legalEntityId      String?
+  capabilityCode     String
+  version            Int
+  status             String    @default("DRAFT")
+  configuration      Json
+  configurationHash  String
+  statutoryValidated Boolean   @default(false)
+  effectiveFrom      DateTime  @db.Date
+  effectiveTo        DateTime? @db.Date
+  createdById        String
+  submittedAt        DateTime?
+  approvedById       String?
+  approvedAt         DateTime?
+  rejectedById       String?
+  rejectedAt         DateTime?
+  rejectionReason    String?
+  revokedById        String?
+  revokedAt          DateTime?
+  revocationReason   String?
+  supersedesId       String?
+  rowVersion         Int       @default(1)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  org          Organisation                 @relation("AccountingCapabilityPolicyOrg", fields: [orgId], references: [id], onDelete: Restrict)
+  legalEntity  AccountingLegalEntity?       @relation("AccountingCapabilityPolicyLegalEntity", fields: [legalEntityId], references: [id], onDelete: Restrict)
+  createdBy    User                         @relation("AccountingCapabilityPolicyCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  approvedBy   User?                        @relation("AccountingCapabilityPolicyApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+  rejectedBy   User?                        @relation("AccountingCapabilityPolicyRejector", fields: [rejectedById], references: [id], onDelete: Restrict)
+  revokedBy    User?                        @relation("AccountingCapabilityPolicyRevoker", fields: [revokedById], references: [id], onDelete: Restrict)
+  supersedes   AccountingCapabilityPolicy?  @relation("AccountingCapabilityPolicySupersession", fields: [supersedesId], references: [id], onDelete: Restrict)
+  supersededBy AccountingCapabilityPolicy[] @relation("AccountingCapabilityPolicySupersession")
+
+  @@unique([orgId, legalEntityId, capabilityCode, version], map: "AccountingCapabilityPolicy_scope_version_key")
+  @@index([orgId, capabilityCode, status], map: "AccountingCapabilityPolicy_org_capability_status_idx")
+  @@index([orgId, legalEntityId, capabilityCode, effectiveFrom, effectiveTo], map: "AccountingCapabilityPolicy_effective_idx")
+  @@index([createdById])
+  @@index([approvedById])
+  @@index([rejectedById])
+  @@index([revokedById])
+  @@index([supersedesId])
 }
 
 model AccountingCounterpartyEntityScope {
@@ -3372,6 +4461,7 @@ model AccountingCounterpartyEntityScope {
   effectiveTo   DateTime? @db.Date
   approvedById  String
   approvedAt    DateTime
+  rowVersion    Int       @default(1)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -3443,6 +4533,7 @@ model AccountingDocument {
   corrections    AccountingDocument[]          @relation("AccountingDocumentCorrection")
   lines          AccountingDocumentLine[]
   paymentTargets AccountingPaymentAllocation[]
+  bankMatches    AccountingBankMatch[]
 
   @@unique([orgId, sourceSystem, sourceType, sourceId, sourceVersion], map: "AccountingDocument_source_key")
   @@unique([orgId, requestId], map: "AccountingDocument_request_key")
@@ -3787,6 +4878,7 @@ model Account {
   accountType     String // CASH | BANK | RECEIVABLE | PAYABLE | TAX | SALES | PURCHASE | EXPENSE | FIXED_ASSET | DEPRECIATION | EQUITY | ROUND_OFF | OTHER
   isGroup         Boolean  @default(false)
   isActive        Boolean  @default(true)
+  allowJournalContact Boolean @default(false)
   openingDebit    Decimal  @default(0.0) @db.Decimal(18, 4)
   openingCredit   Decimal  @default(0.0) @db.Decimal(18, 4)
   createdAt       DateTime @default(now())
@@ -3811,6 +4903,20 @@ model Account {
   partnerCapitalAccounts  PartnerAccount[]          @relation("PartnerCapital")
   partnerCurrentAccounts  PartnerAccount[]          @relation("PartnerCurrent")
   accountingControl       AccountingAccountControl?
+  accountingBankAccounts  AccountingBankAccount[]
+  accountingAssetBooksAsset         AccountingAssetBook[] @relation("AccountingAssetBookAssetAccount")
+  accountingAssetBooksExpense       AccountingAssetBook[] @relation("AccountingAssetBookExpenseAccount")
+  accountingAssetBooksAccumulated   AccountingAssetBook[] @relation("AccountingAssetBookAccumulatedAccount")
+  accountingPartnersCapital         AccountingPartner[]   @relation("AccountingPartnerCapitalAccount")
+  accountingPartnersCurrent         AccountingPartner[]   @relation("AccountingPartnerCurrentAccount")
+  accountingPartnersDrawings        AccountingPartner[]   @relation("AccountingPartnerDrawingsAccount")
+  accountingPartnerTermsSalaryExpense AccountingPartnerTerm[] @relation("AccountingPartnerTermSalaryExpenseAccount")
+  accountingPartnerTermsInterestExpense AccountingPartnerTerm[] @relation("AccountingPartnerTermInterestExpenseAccount")
+  accountingPartnerTermsInterestIncome  AccountingPartnerTerm[] @relation("AccountingPartnerTermInterestIncomeAccount")
+  accountingBudgetLines AccountingBudgetLine[]
+  accountingCustomerProfilesReceivable AccountingCustomerProfile[] @relation("AccountingCustomerProfileReceivableAccount")
+  accountingVendorProfilesPayable      AccountingVendorProfile[]   @relation("AccountingVendorProfilePayableAccount")
+  accountingPaymentMethodsClearing     AccountingPaymentMethod[]   @relation("AccountingPaymentMethodClearingAccount")
 
   @@unique([orgId, accountCode])
   @@index([orgId])
@@ -3819,17 +4925,19 @@ model Account {
 }
 
 model FiscalYear {
-  id        String   @id @default(cuid())
-  orgId     String
-  name      String
-  startDate DateTime @db.Date
-  endDate   DateTime @db.Date
-  closed    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  orgId      String
+  name       String
+  startDate  DateTime @db.Date
+  endDate    DateTime @db.Date
+  closed     Boolean  @default(false)
+  rowVersion Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   org               Organisation       @relation(fields: [orgId], references: [id], onDelete: Cascade)
   accountingPeriods AccountingPeriod[]
+  accountingBudgets AccountingBudget[]
 
   @@unique([orgId, name])
   @@index([orgId])
@@ -3904,6 +5012,9 @@ model JournalEntry {
   accountingDocuments            AccountingDocument[]
   accountingPayments             AccountingPayment[]
   accountingScheduledOccurrences AccountingScheduledOccurrence[]
+  accountingBankMatches          AccountingBankMatch[]
+  accountingDepreciationRuns     AccountingDepreciationRun[]
+  accountingAppropriations       AccountingAppropriation[]
 
   @@unique([orgId, voucherNo])
   @@unique([orgId, idempotencyKey])
@@ -3995,6 +5106,11 @@ model SalesInvoice {
   remarks           String?
   bankDetails       String?
   manualNotes       String?
+  paymentMethod     String?
+  sourceQuotationId String?
+  sourceQuotationVersion Int?
+  sourceQuotationNumber String?
+  sourceQuotationSnapshot Json?
   createdById       String
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -4011,12 +5127,19 @@ model SalesInvoice {
   payments      PaymentAllocation[]
   customerNotes CustomerNote[]
 
+  orderNumber   String?
+  placeOfSupply String?
+  terms         String?
+  salespersonId String?
+  salesperson   User?               @relation("SalesInvoiceSalesperson", fields: [salespersonId], references: [id], onDelete: SetNull)
+
   @@unique([orgId, invoiceNumber])
   @@index([orgId])
   @@index([branchId])
   @@index([customerId])
   @@index([crmDealId])
   @@index([jobId])
+  @@index([salespersonId])
 }
 
 model SalesInvoiceItem {
@@ -4028,6 +5151,11 @@ model SalesInvoiceItem {
   amount       Decimal @db.Decimal(18, 4)
   currency     String  @default("INR")
   exchangeRate Float   @default(1.0)
+  unit         String?
+  taxRate      Float?
+  tdsRate      Float?
+  sourceQuotationItemId String?
+  sourceQuotationQuantity Decimal? @db.Decimal(20, 6)
 
   salesInvoice SalesInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
@@ -4049,6 +5177,7 @@ model PurchaseInvoice {
   discountAmount    Decimal  @default(0.0) @db.Decimal(18, 4)
   taxAmount         Decimal  @default(0.0) @db.Decimal(18, 4)
   remarks           String?
+  paymentMethod     String?
   createdById       String
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -4064,11 +5193,18 @@ model PurchaseInvoice {
   payments    PaymentAllocation[]
   vendorNotes VendorNote[]
 
+  orderNumber   String?
+  placeOfSupply String?
+  terms         String?
+  salespersonId String?
+  salesperson   User?                 @relation("PurchaseInvoiceSalesperson", fields: [salespersonId], references: [id], onDelete: SetNull)
+
   @@unique([orgId, invoiceNumber])
   @@index([orgId])
   @@index([branchId])
   @@index([supplierId])
   @@index([jobId])
+  @@index([salespersonId])
 }
 
 model PurchaseInvoiceItem {
@@ -4078,6 +5214,9 @@ model PurchaseInvoiceItem {
   qty       Float
   rate      Decimal @db.Decimal(18, 4)
   amount    Decimal @db.Decimal(18, 4)
+  unit      String?
+  taxRate   Float?
+  tdsRate   Float?
 
   purchaseInvoice PurchaseInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
@@ -4274,6 +5413,7 @@ model Asset {
   org                 Organisation             @relation(fields: [orgId], references: [id], onDelete: Cascade)
   branch              Branch?                  @relation(fields: [branchId], references: [id], onDelete: SetNull)
   depreciationEntries AssetDepreciationEntry[]
+  accountingFinancialAssets AccountingFinancialAsset[]
 
   @@unique([orgId, assetCode])
   @@index([orgId])
@@ -4303,19 +5443,80 @@ model AssetDepreciationEntry {
 model Quotation {
   id              String   @id @default(cuid())
   orgId           String
+  legalEntityId   String?
   branchId        String?
   quotationNumber String
   customerId      String
+  customerContactId String?
   postingDate     DateTime @db.Date
   validUntil      DateTime @db.Date
-  status          String   @default("DRAFT") // DRAFT | OPEN | CONVERTED | EXPIRED | CANCELLED
+  status          String   @default("DRAFT") // DRAFT | PENDING_APPROVAL | SENT | ACCEPTED | DECLINED | EXPIRED | PARTIALLY_CONVERTED | CONVERTED | CANCELLED
+  referenceNumber String?
+  currencyCode    String   @default("INR") @db.VarChar(3)
+  exchangeRate    Decimal? @db.Decimal(28, 8)
+  exchangeRateEvidence Json?
   subTotal        Decimal  @default(0.0) @db.Decimal(18, 4)
+  grossSubtotal   Decimal  @default(0.0) @db.Decimal(18, 4)
   discountAmount  Decimal  @default(0.0) @db.Decimal(18, 4)
+  discountType    String?  @default("AMOUNT")
+  taxableSubtotal Decimal  @default(0.0) @db.Decimal(18, 4)
   taxAmount       Decimal  @default(0.0) @db.Decimal(18, 4)
+  gstComponentTotals Json?
+  additionalCharges Decimal @default(0.0) @db.Decimal(18, 4)
+  roundingAdjustment Decimal @default(0.0) @db.Decimal(18, 4)
   grandTotal      Decimal  @default(0.0) @db.Decimal(18, 4)
   terms           String?
+  paymentTermSnapshot Json?
+  priceListId     String?
+  priceListSnapshot Json?
+  salespersonId   String?
+  jobId           String?
+  subject         String?
+  notes           String?
+  termsAndConditions String?
+  internalRemarks String?
+  customerVisibleRemarks String?
   remarks         String?
+  billingAddressSnapshot Json?
+  shippingAddressSnapshot Json?
+  customerSnapshot Json?
+  branchSnapshot  Json?
+  legalEntitySnapshot Json?
+  customerContactSnapshot Json?
+  approvalPolicyId String?
+  approvalPolicyVersion Int?
+  approvalRequired Boolean @default(false)
+  submittedById   String?
+  submittedAt     DateTime?
+  approvedById    String?
+  approvedAt      DateTime?
+  approvalHistory Json?
+  approvalState   Json?
+  returnReason    String?
+  returnedAt      DateTime?
+  returnedById    String?
+  sentById        String?
+  sentAt          DateTime?
+  sendStatus      String?
+  sendDelivery    Json?
+  sentVersionSnapshot Json?
+  acceptedById    String?
+  acceptedAt      DateTime?
+  acceptanceSource String?
+  acceptanceComment String?
+  declinedById    String?
+  declinedAt      DateTime?
+  declineSource   String?
+  declineReason   String?
+  cancelledById   String?
+  cancelledAt     DateTime?
+  cancellationReason String?
+  attachmentReferences Json?
+  templateVersion String?
+  version         Int      @default(1)
+  rowVersion      Int      @default(1)
   createdById     String
+  updatedById     String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -4326,26 +5527,47 @@ model Quotation {
 
   @@unique([orgId, quotationNumber])
   @@index([orgId])
+  @@index([orgId, legalEntityId, status])
   @@index([branchId])
   @@index([customerId])
+  @@index([customerContactId])
+  @@index([salespersonId])
+  @@index([jobId])
+  @@index([validUntil, status])
 }
 
 model QuotationItem {
   id          String  @id @default(cuid())
   quotationId String
+  itemMasterId String?
   itemName    String
+  descriptionSnapshot String?
   hsnSac      String?
-  qty         Float
+  qty         Decimal @db.Decimal(20, 6)
   uom         String?
-  rate        Decimal @db.Decimal(18, 4)
-  discount    Decimal @default(0.0) @db.Decimal(18, 4)
-  taxRate     Float   @default(18.0)
+  rate        Decimal @db.Decimal(20, 6)
+  discount    Decimal @default(0.0) @db.Decimal(20, 6)
+  discountType String? @default("AMOUNT")
+  discountValue Decimal? @db.Decimal(20, 6)
+  taxRate     Decimal @default(18.0) @db.Decimal(10, 4)
+  taxCategorySnapshot Json?
+  taxGroupSnapshot Json?
+  gstComponents Json?
+  taxMode     String  @default("EXCLUSIVE")
+  taxableAmount Decimal @default(0.0) @db.Decimal(18, 4)
   taxAmount   Decimal @default(0.0) @db.Decimal(18, 4)
   amount      Decimal @db.Decimal(18, 4)
+  lineTotal   Decimal @default(0.0) @db.Decimal(18, 4)
+  jobId       String?
+  reportingTags Json?
+  customFieldValues Json?
+  itemSnapshot Json?
+  convertedQuantity Decimal @default(0.0) @db.Decimal(20, 6)
 
   quotation Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
 
   @@index([quotationId])
+  @@index([itemMasterId])
 }
 
 model CustomerNote {
@@ -4363,6 +5585,7 @@ model CustomerNote {
   grandTotal        Decimal  @default(0.0) @db.Decimal(18, 4)
   status            String   @default("DRAFT") // DRAFT | SUBMITTED | CANCELLED
   remarks           String?
+  paymentMethod     String?
   createdById       String
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -4373,11 +5596,18 @@ model CustomerNote {
   originalInvoice SalesInvoice?      @relation(fields: [originalInvoiceId], references: [id], onDelete: SetNull)
   items           CustomerNoteItem[]
 
+  orderNumber   String?
+  placeOfSupply String?
+  terms         String?
+  salespersonId String?
+  salesperson   User?              @relation("CustomerNoteSalesperson", fields: [salespersonId], references: [id], onDelete: SetNull)
+
   @@unique([orgId, noteNumber])
   @@index([orgId])
   @@index([branchId])
   @@index([customerId])
   @@index([originalInvoiceId])
+  @@index([salespersonId])
 }
 
 model CustomerNoteItem {
@@ -4389,6 +5619,8 @@ model CustomerNoteItem {
   amount         Decimal @db.Decimal(18, 4)
   taxRate        Float   @default(18.0)
   taxAmount      Decimal @default(0.0) @db.Decimal(18, 4)
+  unit           String?
+  tdsRate        Float?
 
   customerNote CustomerNote @relation(fields: [customerNoteId], references: [id], onDelete: Cascade)
 
@@ -4410,6 +5642,7 @@ model VendorNote {
   grandTotal        Decimal  @default(0.0) @db.Decimal(18, 4)
   status            String   @default("DRAFT") // DRAFT | SUBMITTED | CANCELLED
   remarks           String?
+  paymentMethod     String?
   createdById       String
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -4420,11 +5653,18 @@ model VendorNote {
   originalInvoice PurchaseInvoice? @relation(fields: [originalInvoiceId], references: [id], onDelete: SetNull)
   items           VendorNoteItem[]
 
+  orderNumber   String?
+  placeOfSupply String?
+  terms         String?
+  salespersonId String?
+  salesperson   User?            @relation("VendorNoteSalesperson", fields: [salespersonId], references: [id], onDelete: SetNull)
+
   @@unique([orgId, noteNumber])
   @@index([orgId])
   @@index([branchId])
   @@index([vendorId])
   @@index([originalInvoiceId])
+  @@index([salespersonId])
 }
 
 model VendorNoteItem {
@@ -4436,6 +5676,8 @@ model VendorNoteItem {
   amount       Decimal @db.Decimal(18, 4)
   taxRate      Float   @default(18.0)
   taxAmount    Decimal @default(0.0) @db.Decimal(18, 4)
+  unit         String?
+  tdsRate      Float?
 
   vendorNote VendorNote @relation(fields: [vendorNoteId], references: [id], onDelete: Cascade)
 
@@ -4534,6 +5776,7 @@ model PartnerAccount {
   org            Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   capitalAccount Account      @relation("PartnerCapital", fields: [capitalAccountId], references: [id], onDelete: Cascade)
   currentAccount Account      @relation("PartnerCurrent", fields: [currentAccountId], references: [id], onDelete: Cascade)
+  accountingPartners AccountingPartner[]
 
   @@unique([orgId, partnerCode])
   @@index([orgId])
@@ -7415,4 +8658,14 @@ model UserAgreementAcceptance {
 
   @@unique([userId, agreementVersionId])
   @@index([orgId])
+}
+
+model Unit {
+  id        String   @id @default(cuid())
+  orgId     String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  @@unique([orgId, name])
 }

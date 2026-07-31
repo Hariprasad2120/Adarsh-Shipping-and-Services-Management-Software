@@ -1,13 +1,15 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium } from "playwright";
+import {
+  assertLocalUiServerReady,
+  getLocalUiBaseUrl,
+} from "./local-ui-target.mjs";
 
 const useLocalSpecialAccount = process.argv.includes(
   "--use-local-special-account",
 );
-const baseUrl =
-  process.env.UI_TEST_BASE_URL ??
-  (useLocalSpecialAccount ? "http://localhost:3000" : undefined);
-const loginBaseUrl = process.env.UI_TEST_LOGIN_BASE_URL ?? baseUrl;
+const baseUrl = getLocalUiBaseUrl();
+const loginBaseUrl = getLocalUiBaseUrl(process.env.UI_TEST_LOGIN_BASE_URL);
 const email =
   process.env.UI_TEST_EMAIL ??
   (useLocalSpecialAccount ? "hr@adarshshipping.in" : undefined);
@@ -15,11 +17,12 @@ const password =
   process.env.UI_TEST_PASSWORD ??
   (useLocalSpecialAccount ? "password@123" : undefined);
 
-if (!baseUrl || !email || !password) {
+if (!email || !password) {
   throw new Error(
-    "UI_TEST_BASE_URL, UI_TEST_EMAIL, and UI_TEST_PASSWORD are required.",
+    "UI_TEST_EMAIL and UI_TEST_PASSWORD are required for the normal localhost:3000 application.",
   );
 }
+await assertLocalUiServerReady(baseUrl);
 
 const outputDirectory = "artifacts/ui-migration/performance-learning";
 const staticRoutes = [

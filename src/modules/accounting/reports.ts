@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
 import { GLEntryLine, TrialBalanceRow, ProfitAndLossStatement, BalanceSheetStatement } from "./types";
+import { assertStatutoryReportAvailability } from "./tax-controls";
 
 // Helper to check the default account balance type
 // Asset and Expense are Debit balance sheets. Liabilities, Equity, and Income are Credit balance sheets.
@@ -596,6 +597,23 @@ export async function getGSTR1Summary(
   orgId: string,
   filters: { fromDate?: Date; toDate?: Date } = {}
 ): Promise<any> {
+  const resolutionDate = filters.toDate ?? filters.fromDate ?? new Date();
+  const registration = await db.accountingTaxRegistration.findFirst({
+    where: { orgId, isActive: true },
+    orderBy: [{ updatedAt: "desc" }],
+    select: { id: true, legalEntityId: true },
+  });
+  if (!registration) {
+    throw new Error("CONFIGURATION_REQUIRED: no active tax registration is configured for GST reporting");
+  }
+  await assertStatutoryReportAvailability({
+    orgId,
+    taxRegistrationId: registration.id,
+    legalEntityId: registration.legalEntityId,
+    returnType: "GSTR1",
+    date: resolutionDate,
+  });
+
   const sales = await getSalesRegister(orgId, filters);
 
   const b2b = sales.filter((s) => s.customerGstin !== "—");
@@ -641,6 +659,23 @@ export async function getGSTR2BSummary(
   orgId: string,
   filters: { fromDate?: Date; toDate?: Date } = {}
 ): Promise<any> {
+  const resolutionDate = filters.toDate ?? filters.fromDate ?? new Date();
+  const registration = await db.accountingTaxRegistration.findFirst({
+    where: { orgId, isActive: true },
+    orderBy: [{ updatedAt: "desc" }],
+    select: { id: true, legalEntityId: true },
+  });
+  if (!registration) {
+    throw new Error("CONFIGURATION_REQUIRED: no active tax registration is configured for GST reporting");
+  }
+  await assertStatutoryReportAvailability({
+    orgId,
+    taxRegistrationId: registration.id,
+    legalEntityId: registration.legalEntityId,
+    returnType: "GSTR2B",
+    date: resolutionDate,
+  });
+
   const purchases = await getPurchaseRegister(orgId, filters);
 
   const sum = (arr: any[], key: string) => arr.reduce((acc, curr) => acc + (curr[key] || 0), 0);
@@ -662,6 +697,23 @@ export async function getConsolidatedGSTLedger(
   orgId: string,
   filters: { fromDate?: Date; toDate?: Date } = {}
 ): Promise<any[]> {
+  const resolutionDate = filters.toDate ?? filters.fromDate ?? new Date();
+  const registration = await db.accountingTaxRegistration.findFirst({
+    where: { orgId, isActive: true },
+    orderBy: [{ updatedAt: "desc" }],
+    select: { id: true, legalEntityId: true },
+  });
+  if (!registration) {
+    throw new Error("CONFIGURATION_REQUIRED: no active tax registration is configured for GST reporting");
+  }
+  await assertStatutoryReportAvailability({
+    orgId,
+    taxRegistrationId: registration.id,
+    legalEntityId: registration.legalEntityId,
+    returnType: "GST_LEDGER",
+    date: resolutionDate,
+  });
+
   const where: Prisma.GeneralLedgerEntryWhereInput = {
     orgId,
     account: {

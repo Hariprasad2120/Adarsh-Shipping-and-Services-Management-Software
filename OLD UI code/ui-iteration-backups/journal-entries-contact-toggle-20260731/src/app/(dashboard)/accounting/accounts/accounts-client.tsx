@@ -1,0 +1,361 @@
+"use client";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import {
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  FolderOpen,
+  Loader2,
+  Plus,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+  AccountingAction,
+  AccountingBadge,
+  AccountingCheckbox,
+  AccountingField,
+  AccountingInput,
+  AccountingSection,
+  AccountingSelect,
+} from "@/components/monolith/accounting-workspace";
+import { createAccountAction } from "@/modules/accounting/actions";
+
+interface AccountsClientProps {
+  initialCoa: any[];
+  branches: any[];
+}
+
+const rootTypes = ["ASSET", "LIABILITY", "EQUITY", "INCOME", "EXPENSE"];
+const accountTypes = [
+  "CASH",
+  "BANK",
+  "RECEIVABLE",
+  "PAYABLE",
+  "TAX",
+  "SALES",
+  "PURCHASE",
+  "EXPENSE",
+  "FIXED_ASSET",
+  "DEPRECIATION",
+  "EQUITY",
+  "ROUND_OFF",
+  "OTHER",
+];
+
+export function AccountsClient({
+  initialCoa,
+  branches,
+}: AccountsClientProps) {
+  const router = useRouter();
+  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>(
+    Object.fromEntries(initialCoa.map((node) => [node.id, true])),
+  );
+  const [isSaving, setIsSaving] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [formData, setFormData] = useState({
+    accountCode: "",
+    accountName: "",
+    parentAccountId: "",
+    rootType: "ASSET" as any,
+    accountType: "OTHER" as any,
+    isGroup: false,
+    isActive: true,
+    openingDebit: 0,
+    openingCredit: 0,
+    branchId: "",
+  });
+
+  function groupAccounts(nodes: any[]): Array<{ id: string; name: string }> {
+    return nodes.flatMap((node) =>
+      node.isGroup
+        ? [
+            {
+              id: node.id,
+              name: `${node.accountCode} — ${node.accountName}`,
+            },
+            ...groupAccounts(node.children || []),
+          ]
+        : [],
+    );
+  }
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!formData.accountCode || !formData.accountName) {
+      toast.error("Please fill in required fields");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const result = await createAccountAction({
+        ...formData,
+        parentAccountId: formData.parentAccountId || null,
+        branchId: formData.branchId || null,
+        openingDebit: Number(formData.openingDebit) || 0,
+        openingCredit: Number(formData.openingCredit) || 0,
+      });
+      if (result.ok) {
+        toast.success("Ledger account registered");
+        setShowAddForm(false);
+        setFormData({
+          accountCode: "",
+          accountName: "",
+          parentAccountId: "",
+          rootType: "ASSET",
+          accountType: "OTHER",
+          isGroup: false,
+          isActive: true,
+          openingDebit: 0,
+          openingCredit: 0,
+          branchId: "",
+        });
+        router.refresh();
+      } else toast.error(result.error);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create account",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  function renderNode(node: any): React.ReactNode {
+    const expanded = Boolean(expandedNodes[node.id]);
+    return (
+      <div className="mnx-accounting-tree-node" key={node.id}>
+        <div className="mnx-accounting-tree-row">
+          {node.isGroup ? (
+            <AccountingAction
+              aria-label={`${expanded ? "Collapse" : "Expand"} ${node.accountName}`}
+              className="mnx-button-compact"
+              type="button"
+              variant="secondary"
+              onClick={() =>
+                setExpandedNodes((current) => ({
+                  ...current,
+                  [node.id]: !current[node.id],
+                }))
+              }
+            >
+              {expanded ? (
+                <ChevronDown aria-hidden="true" size={14} />
+              ) : (
+                <ChevronRight aria-hidden="true" size={14} />
+              )}
+            </AccountingAction>
+          ) : (
+            <span aria-hidden="true" />
+          )}
+          {node.isGroup ? (
+            <FolderOpen aria-hidden="true" size={16} />
+          ) : (
+            <FileText aria-hidden="true" size={16} />
+          )}
+          <span className="mnx-accounting-tree-code">{node.accountCode}</span>
+          <strong>{node.accountName}</strong>
+          {node.accountType !== "OTHER" ? (
+            <AccountingBadge>{node.accountType}</AccountingBadge>
+          ) : null}
+          {!node.isActive ? (
+            <AccountingBadge variant="danger">Inactive</AccountingBadge>
+          ) : null}
+        </div>
+        {node.isGroup && expanded && node.children?.length > 0 ? (
+          <div className="mnx-accounting-tree-children">
+            {node.children.map((child: any) => renderNode(child))}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  const groups = groupAccounts(initialCoa);
+
+  return (
+    <>
+      <AccountingSection
+        eyebrow="Ledger hierarchy"
+        title="Account structure"
+        description="Group accounts organise the chart; leaf accounts receive transaction postings."
+        actions={
+          <AccountingAction
+            type="button"
+            onClick={() => setShowAddForm((open) => !open)}
+          >
+            <Plus aria-hidden="true" size={16} />
+            Add account
+          </AccountingAction>
+        }
+      >
+        <div className="mnx-accounting-tree">
+          {initialCoa.map((node) => renderNode(node))}
+        </div>
+      </AccountingSection>
+
+      {showAddForm || groups.length === 0 ? (
+        <AccountingSection
+          eyebrow="Account administration"
+          title="Register ledger account"
+          description="Create a group or posting account with its classification, opening balance, and branch scope."
+        >
+          <form className="mnx-accounting-form" onSubmit={handleSubmit}>
+            <div className="mnx-accounting-form-grid mnx-accounting-form-grid-wide">
+              <AccountingField label="Account code" required>
+                <AccountingInput
+                  required
+                  value={formData.accountCode}
+                  onChange={(event) =>
+                    setFormData((current) => ({
+                      ...current,
+                      accountCode: event.target.value,
+                    }))
+                  }
+                />
+              </AccountingField>
+              <AccountingField label="Account name" required>
+                <AccountingInput
+                  required
+                  value={formData.accountName}
+                  onChange={(event) =>
+                    setFormData((current) => ({
+                      ...current,
+                      accountName: event.target.value,
+                    }))
+                  }
+                />
+              </AccountingField>
+              <AccountingField label="Parent group">
+                <AccountingSelect
+                  value={formData.parentAccountId}
+                  onChange={(event) =>
+                    setFormData((current) => ({
+                      ...current,
+                      parentAccountId: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="">None — root account</option>
+                  {groups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
+                </AccountingSelect>
+              </AccountingField>
+              <AccountingField label="Root type">
+                <AccountingSelect
+                  value={formData.rootType}
+                  onChange={(event) =>
+                    setFormData((current) => ({
+                      ...current,
+                      rootType: event.target.value as any,
+                    }))
+                  }
+                >
+                  {rootTypes.map((type) => (
+                    <option key={type}>{type}</option>
+                  ))}
+                </AccountingSelect>
+              </AccountingField>
+              <AccountingField label="Account function">
+                <AccountingSelect
+                  value={formData.accountType}
+                  onChange={(event) =>
+                    setFormData((current) => ({
+                      ...current,
+                      accountType: event.target.value as any,
+                    }))
+                  }
+                >
+                  {accountTypes.map((type) => (
+                    <option key={type}>{type}</option>
+                  ))}
+                </AccountingSelect>
+              </AccountingField>
+              <AccountingField label="Opening debit">
+                <AccountingInput
+                  type="number"
+                  step="0.01"
+                  value={formData.openingDebit}
+                  onChange={(event) =>
+                    setFormData((current) => ({
+                      ...current,
+                      openingDebit: Number(event.target.value) || 0,
+                    }))
+                  }
+                />
+              </AccountingField>
+              <AccountingField label="Opening credit">
+                <AccountingInput
+                  type="number"
+                  step="0.01"
+                  value={formData.openingCredit}
+                  onChange={(event) =>
+                    setFormData((current) => ({
+                      ...current,
+                      openingCredit: Number(event.target.value) || 0,
+                    }))
+                  }
+                />
+              </AccountingField>
+              <AccountingField label="Branch">
+                <AccountingSelect
+                  value={formData.branchId}
+                  onChange={(event) =>
+                    setFormData((current) => ({
+                      ...current,
+                      branchId: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="">All branches / organisation-wide</option>
+                  {branches.map((branch) => (
+                    <option key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </option>
+                  ))}
+                </AccountingSelect>
+              </AccountingField>
+              <AccountingCheckbox
+                checked={formData.isGroup}
+                onChange={(event) =>
+                  setFormData((current) => ({
+                    ...current,
+                    isGroup: event.target.checked,
+                  }))
+                }
+                label="Group account"
+              />
+            </div>
+            <div className="mnx-accounting-form-actions">
+              <AccountingAction disabled={isSaving} type="submit">
+                {isSaving ? (
+                  <Loader2 aria-hidden="true" className="animate-spin" size={16} />
+                ) : null}
+                {isSaving ? "Saving…" : "Register account"}
+              </AccountingAction>
+            </div>
+          </form>
+        </AccountingSection>
+      ) : null}
+
+      <AccountingSection
+        eyebrow="Posting rules"
+        title="Account definitions"
+        description="The hierarchy protects double-entry integrity."
+      >
+        <p>
+          Group accounts organise classifications such as current assets or
+          accounts payable and cannot receive direct postings. Leaf accounts
+          receive physical transactions; receivable and payable sub-ledgers are
+          maintained automatically.
+        </p>
+      </AccountingSection>
+    </>
+  );
+}

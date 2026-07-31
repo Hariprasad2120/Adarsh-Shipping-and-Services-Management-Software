@@ -1,0 +1,5 @@
+ALTER TABLE "AccountingPeriod"
+  ADD COLUMN "rowVersion" INTEGER NOT NULL DEFAULT 1;
+
+ALTER TABLE "FiscalYear"
+  ADD COLUMN "rowVersion" INTEGER NOT NULL DEFAULT 1;
