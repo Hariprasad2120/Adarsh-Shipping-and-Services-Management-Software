@@ -1,7 +1,8 @@
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { config } from "dotenv";
+import { assertStagingOutboundDeliveryDisabled } from "./staging-login-policy";
 import { assertExactStagingEnvironment } from "./staging-target";
 
 const root = process.cwd();
@@ -24,7 +25,7 @@ const { url: databaseUrl } = assertExactStagingEnvironment("Staging command");
 const [command, ...commandArgs] = process.argv.slice(2);
 if (!command || !allowedCommands.has(command)) {
   throw new Error(
-    "Expected an approved local command: prisma, tsx, next, or vitest.",
+    "Expected an approved local command: next, prisma, tsx, or vitest.",
   );
 }
 
@@ -49,26 +50,19 @@ const childEnvironment = {
   ACCOUNTING_PROVIDER_MODE: "disabled",
   ACCOUNTING_PHASE6_EXECUTION: "disabled",
 };
+if (command === "next") {
+  assertStagingOutboundDeliveryDisabled(childEnvironment);
+  childEnvironment.NEXTAUTH_URL = "http://127.0.0.1:3100";
+  childEnvironment.AUTH_URL = "http://127.0.0.1:3100";
+  childEnvironment.MONOLITH_NEXT_DIST_DIR = ".monolith-staging/next";
+}
 const isFinalUiAuditPreparation =
   command === "tsx" &&
   commandArgs.some((argument) =>
     argument.endsWith("scripts/prepare-final-ui-audit.ts"),
   );
-const isFinalUiRuntime =
-  command === "tsx" &&
-  commandArgs.some((argument) =>
-    argument.endsWith("scripts/verify-monolith-final-runtime.mjs"),
-  );
-
 if (isFinalUiAuditPreparation) {
   childEnvironment.UI_AUDIT_PASSWORD = process.env.STAGING_TEST_PASSWORD;
-}
-if (isFinalUiRuntime) {
-  childEnvironment.UI_TEST_BASE_URL = "http://localhost:3100";
-  childEnvironment.UI_TEST_EMAIL = "final-ui-audit@staging.example.com";
-  childEnvironment.UI_TEST_PASSWORD = process.env.STAGING_TEST_PASSWORD;
-  childEnvironment.PORTAL_TEST_EMAIL = "portal-customer@staging.example.com";
-  childEnvironment.PORTAL_TEST_PASSWORD = process.env.STAGING_TEST_PASSWORD;
 }
 delete childEnvironment.STAGING_DATABASE_ADMIN_PASSWORD;
 delete childEnvironment.STAGING_DATABASE_PASSWORD;
@@ -77,30 +71,11 @@ const mayUseStagingTestPassword =
   commandArgs.some(
     (argument) =>
       argument.endsWith("prisma/seed.staging.ts") ||
-      argument.endsWith("scripts/verify-staging-login.ts"),
+      argument.endsWith("scripts/verify-staging-db.ts"),
   );
 if (!mayUseStagingTestPassword) {
   delete childEnvironment.STAGING_TEST_PASSWORD;
 }
-
-const isApplicationCheck =
-  command === "tsx" &&
-  commandArgs.some((argument) =>
-    [
-      "scripts/verify-staging-app-start.ts",
-      "scripts/verify-staging-login.ts",
-    ].some((entrypointPath) => argument.endsWith(entrypointPath)),
-  );
-const tsconfigPath = resolve(root, "tsconfig.json");
-const tsconfigBefore =
-  isApplicationCheck && existsSync(tsconfigPath)
-    ? readFileSync(tsconfigPath)
-    : undefined;
-const restoreTsconfig = () => {
-  if (tsconfigBefore) {
-    writeFileSync(tsconfigPath, tsconfigBefore);
-  }
-};
 
 const child = spawn(process.execPath, [entrypoint, ...commandArgs], {
   cwd: root,
@@ -114,12 +89,10 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
 }
 
 child.on("error", (error) => {
-  restoreTsconfig();
   console.error(`Failed to start ${command}:`, error.message);
   process.exitCode = 1;
 });
 
 child.on("exit", (code, signal) => {
-  restoreTsconfig();
   process.exitCode = signal ? 1 : (code ?? 1);
 });

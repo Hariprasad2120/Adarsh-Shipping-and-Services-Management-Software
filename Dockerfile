@@ -13,6 +13,14 @@ COPY . .
 RUN npx prisma generate
 RUN npm run build
 
+FROM deps AS migrator
+WORKDIR /app
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+COPY scripts/deploy-accounting-schema.ts ./scripts/deploy-accounting-schema.ts
+COPY scripts/verify-accounting-database-schema.ts ./scripts/verify-accounting-database-schema.ts
+CMD ["npm", "run", "accounting:schema:deploy"]
+
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production

@@ -30,6 +30,7 @@ interface NewItemDialogProps {
 
 const DEFAULT_VALUES: ItemFormSchema = {
   name: "",
+  salesInformation: true,
   type: "Service",
   unit: "",
   sku: "",
@@ -66,6 +67,7 @@ export function NewItemDialog({ open, onClose, onSaveSuccess, initialName = "", 
     if (itemToEdit) {
       return {
         name: itemToEdit.name,
+        salesInformation: itemToEdit.salesInformation ?? true,
         type: itemToEdit.type,
         unit: itemToEdit.usageUnit || "",
         sku: itemToEdit.sku || "",

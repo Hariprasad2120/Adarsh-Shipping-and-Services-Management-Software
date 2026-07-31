@@ -1127,7 +1127,23 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   display: none;
 }
 
-.mnx-sidebar-subnav > a {
+.mnx-sidebar-subnav-item {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.mnx-sidebar-subnav-heading {
+  margin: 8px 8px 0;
+  color: var(--mnx-muted);
+  font-size: 9px;
+  font-weight: 760;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.mnx-sidebar-subnav > a,
+.mnx-sidebar-subnav-item > a {
   min-width: 0;
   min-height: 32px;
   display: grid;
@@ -1144,7 +1160,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
     transform var(--mnx-hover-duration) var(--mnx-hover-ease);
 }
 
-.mnx-sidebar-subnav > a > span {
+.mnx-sidebar-subnav > a > span,
+.mnx-sidebar-subnav-item > a > span {
   width: 22px;
   height: 22px;
   display: grid;
@@ -1152,7 +1169,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   border-radius: 7px;
 }
 
-.mnx-sidebar-subnav > a b {
+.mnx-sidebar-subnav > a b,
+.mnx-sidebar-subnav-item > a b {
   overflow: hidden;
   font-size: 10px;
   font-weight: 570;
@@ -1160,18 +1178,21 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   white-space: nowrap;
 }
 
-.mnx-sidebar-subnav > a:hover {
+.mnx-sidebar-subnav > a:hover,
+.mnx-sidebar-subnav-item > a:hover {
   color: var(--mnx-text);
   background: color-mix(in srgb, var(--mnx-soft) 76%, transparent);
   transform: translateX(2px);
 }
 
-.mnx-sidebar-subnav > a.is-active {
+.mnx-sidebar-subnav > a.is-active,
+.mnx-sidebar-subnav-item > a.is-active {
   color: var(--mnx-accent-text);
   background: color-mix(in srgb, var(--mnx-accent-soft) 74%, transparent);
 }
 
-.mnx-sidebar-subnav > a.is-active > span {
+.mnx-sidebar-subnav > a.is-active > span,
+.mnx-sidebar-subnav-item > a.is-active > span {
   color: var(--mnx-accent-text);
   background: color-mix(in srgb, var(--mnx-accent) 18%, transparent);
 }
@@ -7023,6 +7044,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   .mnx-sidebar-entry b,
   .mnx-sidebar-entry > svg,
   .mnx-sidebar-subnav > a b,
+  .mnx-sidebar-subnav-item > a b,
   .mnx-mona-card > span:nth-child(2),
   .mnx-mona-card kbd,
   .mnx-sidebar-user > div,
@@ -7047,14 +7069,20 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
     border-left: 0;
   }
 
-  .mnx-sidebar-subnav > a {
+  .mnx-sidebar-subnav-heading {
+    display: none;
+  }
+
+  .mnx-sidebar-subnav > a,
+  .mnx-sidebar-subnav-item > a {
     min-height: 36px;
     grid-template-columns: 1fr;
     justify-items: center;
     padding: 0;
   }
 
-  .mnx-sidebar-subnav > a > span {
+  .mnx-sidebar-subnav > a > span,
+  .mnx-sidebar-subnav-item > a > span {
     width: 30px;
     height: 30px;
   }
@@ -7224,6 +7252,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   .mnx-sidebar-nav > p,
   .mnx-sidebar-entry b,
   .mnx-sidebar-subnav > a b,
+  .mnx-sidebar-subnav-item > a b,
   .mnx-mona-card > span:nth-child(2),
   .mnx-mona-card kbd,
   .mnx-sidebar-user > div,
@@ -7247,7 +7276,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
     border-left: 1px solid var(--mnx-border);
   }
 
-  .mnx-sidebar-subnav > a {
+  .mnx-sidebar-subnav > a,
+  .mnx-sidebar-subnav-item > a {
     min-height: 32px;
     grid-template-columns: 22px minmax(0, 1fr);
     justify-items: stretch;
@@ -11548,6 +11578,300 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
   border-top: 1px solid var(--mnx-border);
 }
 
+.mnx-accounting-journal-register-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-3);
+  margin-bottom: var(--mn-space-4);
+}
+
+.mnx-accounting-journal-register-summary > div {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 11rem;
+  padding: var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-md);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-accounting-journal-register-summary span {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  font-weight: var(--mn-type-label-weight);
+  letter-spacing: var(--mn-type-label-tracking);
+  text-transform: uppercase;
+}
+
+.mnx-accounting-journal-register-summary strong {
+  color: var(--mnx-text-strong);
+  font-size: 1rem;
+}
+
+.mnx-accounting-journal-header-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mn-space-4);
+}
+
+.mnx-accounting-journal-reference-layout {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mn-space-4);
+}
+
+.mnx-accounting-journal-template-link {
+  border: 0;
+  padding: 0;
+  color: var(--mnx-accent-text);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mnx-accounting-journal-template-link:hover {
+  text-decoration: underline;
+}
+
+.mnx-accounting-journal-inline-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  min-height: 100%;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-accounting-journal-inline-checkbox .mnx-checkbox {
+  margin-bottom: 0;
+}
+
+.mnx-accounting-journal-radio-group {
+  display: grid;
+  gap: var(--mn-space-2);
+  grid-column: 1 / span 2;
+}
+
+.mnx-accounting-journal-radio-group > label {
+  color: var(--mnx-text);
+  font-size: var(--mn-type-label-size);
+  font-weight: var(--mn-type-label-weight);
+  letter-spacing: var(--mn-type-label-tracking);
+  text-transform: uppercase;
+}
+
+.mnx-accounting-journal-radio-group > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mn-space-4);
+}
+
+.mnx-accounting-journal-radio-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--mnx-text);
+}
+
+.mnx-accounting-journal-lines {
+  display: grid;
+  gap: var(--mn-space-4);
+}
+
+.mnx-accounting-journal-lines-header,
+.mnx-accounting-journal-line-row {
+  display: grid;
+  grid-template-columns:
+    minmax(16rem, 1.6fr)
+    minmax(14rem, 1.35fr)
+    minmax(9rem, 0.8fr)
+    minmax(9rem, 0.8fr)
+    minmax(8rem, auto);
+  gap: var(--mn-space-3);
+  align-items: end;
+}
+
+.mnx-accounting-journal-lines-header {
+  padding: 0 var(--mn-space-1);
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  font-weight: var(--mn-type-label-weight);
+  letter-spacing: var(--mn-type-label-tracking);
+  text-transform: uppercase;
+}
+
+.mnx-accounting-journal-line-row {
+  padding: var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-md);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-accounting-journal-line-row .mnx-field {
+  margin: 0;
+}
+
+.mnx-accounting-journal-line-action {
+  display: flex;
+  align-items: end;
+  min-height: 100%;
+}
+
+.mnx-accounting-journal-line-action .mnx-button {
+  width: 100%;
+  justify-content: center;
+}
+
+.mnx-accounting-journal-summary-card {
+  display: grid;
+  gap: 1px;
+  width: min(35rem, 100%);
+  margin-top: var(--mn-space-4);
+  margin-left: auto;
+  overflow: hidden;
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-md);
+  background: var(--mnx-border);
+}
+
+.mnx-accounting-journal-summary-card > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--mn-space-3);
+  align-items: center;
+  padding: var(--mn-space-4);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-accounting-journal-summary-card span {
+  color: var(--mnx-text-muted);
+}
+
+.mnx-accounting-journal-summary-card strong {
+  color: var(--mnx-text-strong);
+  font-family: var(--font-geist-mono), monospace;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.mnx-accounting-journal-summary-total strong {
+  font-size: 1.05rem;
+}
+
+.mnx-accounting-journal-summary-difference strong:last-child {
+  color: var(--mnx-danger);
+}
+
+.mnx-accounting-journal-summary-difference.is-balanced strong:last-child {
+  color: var(--mnx-success);
+}
+
+.mnx-accounting-journal-table {
+  display: grid;
+  gap: var(--mn-space-3);
+}
+
+.mnx-accounting-journal-table-header,
+.mnx-accounting-journal-table-row {
+  display: grid;
+  grid-template-columns:
+    minmax(14rem, 1.45fr)
+    minmax(14rem, 1.45fr)
+    minmax(12rem, 1fr)
+    minmax(8rem, 0.65fr)
+    minmax(8rem, 0.65fr)
+    minmax(8rem, auto);
+  gap: var(--mn-space-3);
+  align-items: start;
+}
+
+.mnx-accounting-journal-table-header {
+  padding: 0 var(--mn-space-1);
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  font-weight: var(--mn-type-label-weight);
+  letter-spacing: var(--mn-type-label-tracking);
+  text-transform: uppercase;
+}
+
+.mnx-accounting-journal-table-row {
+  padding: var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-md);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-accounting-journal-table-row .mnx-field {
+  margin: 0;
+}
+
+.mnx-accounting-journal-table-row textarea {
+  min-height: 3.25rem;
+}
+
+.mnx-accounting-journal-table-action {
+  display: flex;
+  align-items: end;
+  min-height: 100%;
+}
+
+.mnx-accounting-journal-table-action .mnx-button {
+  width: 100%;
+  justify-content: center;
+}
+
+.mnx-accounting-journal-reference-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 40%);
+  gap: var(--mn-space-5);
+  align-items: end;
+  margin-top: var(--mn-space-4);
+}
+
+.mnx-accounting-journal-attachments {
+  display: grid;
+  gap: var(--mn-space-2);
+  align-content: start;
+}
+
+.mnx-accounting-journal-attachments > label {
+  color: var(--mnx-text);
+  font-size: var(--mn-type-label-size);
+  font-weight: var(--mn-type-label-weight);
+  letter-spacing: var(--mn-type-label-tracking);
+  text-transform: uppercase;
+}
+
+.mnx-accounting-journal-attachments > p {
+  margin: 0;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+}
+
+.mnx-accounting-journal-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  width: fit-content;
+  padding: 0.8rem 1rem;
+  border: 1px dashed color-mix(in srgb, var(--mnx-accent) 30%, var(--mnx-border));
+  border-radius: var(--mnx-radius-md);
+  color: var(--mnx-text);
+  background: var(--mnx-surface);
+  cursor: pointer;
+}
+
+.mnx-accounting-journal-upload:hover {
+  border-color: color-mix(in srgb, var(--mnx-accent) 52%, var(--mnx-border));
+}
+
+.mnx-accounting-journal-bottom-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-3);
+  padding-top: var(--mn-space-3);
+}
+
 .mnx-accounting-detail-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
@@ -11690,6 +12014,337 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
   border-left: 1px solid var(--mnx-border);
 }
 
+.mnx-account-structure-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-2);
+}
+
+.mnx-account-structure-layout {
+  display: grid;
+  grid-template-columns: minmax(20rem, 26rem) minmax(0, 1fr);
+  gap: var(--mn-space-5);
+  align-items: start;
+}
+
+.mnx-account-structure-sidebar {
+  display: grid;
+  gap: var(--mn-space-4);
+  min-height: 42rem;
+  padding-right: var(--mn-space-4);
+  border-right: 1px solid var(--mnx-border);
+}
+
+.mnx-account-structure-toolbar,
+.mnx-account-transactions-filters {
+  display: grid;
+  gap: var(--mn-space-3);
+}
+
+.mnx-account-structure-search {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  min-height: 2.875rem;
+  padding: 0 var(--mn-space-3);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-md);
+  background: var(--mnx-surface);
+}
+
+.mnx-account-structure-search svg {
+  flex: 0 0 auto;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-account-structure-search input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--mnx-text);
+}
+
+.mnx-account-structure-search input:focus {
+  outline: none;
+}
+
+.mnx-account-structure-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mn-space-3);
+}
+
+.mnx-account-structure-filter-grid label,
+.mnx-account-transactions-filters label {
+  display: grid;
+  gap: var(--mn-space-2);
+}
+
+.mnx-account-structure-filter-grid span,
+.mnx-account-transactions-filters span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  font-weight: var(--mn-type-label-weight);
+  letter-spacing: var(--mn-type-label-tracking);
+  text-transform: uppercase;
+}
+
+.mnx-account-structure-filter-grid select,
+.mnx-account-transactions-filters select {
+  min-height: 2.875rem;
+  padding: 0 var(--mn-space-3);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-md);
+  background: var(--mnx-surface);
+  color: var(--mnx-text);
+}
+
+.mnx-account-structure-tree {
+  display: grid;
+  gap: var(--mn-space-1);
+  max-height: 56rem;
+  overflow: auto;
+  padding-right: var(--mn-space-2);
+}
+
+.mnx-account-structure-node {
+  display: grid;
+  gap: var(--mn-space-1);
+}
+
+.mnx-account-structure-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mn-space-2);
+  width: 100%;
+  padding: var(--mn-space-3);
+  border: 1px solid transparent;
+  border-radius: var(--mnx-radius-md);
+  background: transparent;
+  color: var(--mnx-text);
+  text-align: left;
+}
+
+.mnx-account-structure-row:hover {
+  background: color-mix(in srgb, var(--mnx-accent) 8%, var(--mnx-surface-soft));
+}
+
+.mnx-account-structure-row.is-selected {
+  border-color: color-mix(in srgb, var(--mnx-accent) 30%, var(--mnx-border));
+  background: color-mix(in srgb, var(--mnx-accent) 10%, var(--mnx-surface));
+  box-shadow: var(--mnx-shadow-soft);
+}
+
+.mnx-account-structure-rail {
+  flex: 0 0 auto;
+}
+
+.mnx-account-structure-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: 0.08rem;
+  border-radius: 999px;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-account-structure-toggle.is-spacer {
+  visibility: hidden;
+}
+
+.mnx-account-structure-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mnx-accent) 10%, var(--mnx-surface-soft));
+  color: var(--mnx-text-strong);
+}
+
+.mnx-account-structure-content {
+  display: grid;
+  gap: var(--mn-space-1);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.mnx-account-structure-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mn-space-2);
+}
+
+.mnx-account-structure-code {
+  color: var(--mnx-text-muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.mnx-account-structure-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-2);
+  color: var(--mnx-text-muted);
+  font-size: 0.82rem;
+}
+
+.mnx-account-structure-meta span + span::before {
+  content: "•";
+  margin-right: var(--mn-space-2);
+}
+
+.mnx-account-structure-children {
+  display: grid;
+  gap: var(--mn-space-1);
+}
+
+.mnx-account-structure-detail {
+  display: grid;
+  gap: var(--mn-space-5);
+  min-width: 0;
+}
+
+.mnx-account-structure-detail-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--mn-space-4);
+}
+
+.mnx-account-structure-detail-header h3 {
+  margin: 0;
+}
+
+.mnx-account-structure-detail-header p {
+  margin: var(--mn-space-2) 0 0;
+  max-width: 52rem;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-account-structure-detail-kicker {
+  margin: 0 0 var(--mn-space-2);
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  font-weight: var(--mn-type-label-weight);
+  letter-spacing: var(--mn-type-label-tracking);
+  text-transform: uppercase;
+}
+
+.mnx-account-structure-detail-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-2);
+}
+
+.mnx-account-balance-hero {
+  display: grid;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-5);
+  border: 1px dashed color-mix(in srgb, var(--mnx-accent) 36%, var(--mnx-border));
+  border-radius: var(--mnx-radius-lg);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--mnx-accent) 12%, transparent), transparent 40%),
+    var(--mnx-surface-gradient);
+}
+
+.mnx-account-balance-hero span {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  font-weight: var(--mn-type-label-weight);
+  letter-spacing: var(--mn-type-label-tracking);
+  text-transform: uppercase;
+}
+
+.mnx-account-balance-hero strong {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--mn-space-3);
+  margin-top: var(--mn-space-2);
+  color: var(--mnx-text-strong);
+  font-size: clamp(1.9rem, 2vw, 2.6rem);
+  line-height: 1.1;
+}
+
+.mnx-account-balance-hero strong small {
+  color: var(--mnx-accent);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.mnx-account-balance-hero p {
+  margin: 0;
+  max-width: 38rem;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-account-structure-detail-grid {
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+
+.mnx-account-transactions-panel {
+  display: grid;
+  gap: var(--mn-space-4);
+}
+
+.mnx-account-transactions-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-account-transactions-header h4 {
+  margin: 0;
+}
+
+.mnx-account-transactions-header p {
+  margin: var(--mn-space-2) 0 0;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-account-structure-empty {
+  padding: var(--mn-space-5);
+  border: 1px dashed var(--mnx-border);
+  border-radius: var(--mnx-radius-lg);
+  background: var(--mnx-surface-soft);
+  color: var(--mnx-text-muted);
+}
+
+.mnx-account-structure-form {
+  display: grid;
+  gap: var(--mn-space-4);
+}
+
+.mnx-account-structure-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mn-space-4);
+}
+
+.mnx-account-structure-form-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-3);
+}
+
+.mnx-account-structure-guidance {
+  margin: 0;
+  padding: var(--mn-space-3) var(--mn-space-4);
+  border-radius: var(--mnx-radius-md);
+  background: color-mix(in srgb, var(--mnx-text-strong) 8%, var(--mnx-surface-soft));
+  color: var(--mnx-text-muted);
+}
+
 .mnx-accounting-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
@@ -11731,6 +12386,65 @@ button.mnx-accounting-record-card {
   border-top: 1px solid var(--mnx-border);
   color: var(--mnx-text-muted);
   font-size: var(--mn-type-label-size);
+}
+
+.mnx-accounting-workflow-grid,
+.mnx-accounting-banking-grid {
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
+.mnx-accounting-workflow-card,
+.mnx-accounting-banking-card {
+  display: grid;
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-5);
+}
+
+.mnx-accounting-workflow-card-header,
+.mnx-accounting-banking-card-header {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: var(--mn-space-3);
+  align-items: start;
+}
+
+.mnx-accounting-workflow-card-icon,
+.mnx-accounting-banking-card-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--mnx-accent-text);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--mnx-accent-soft) 72%, white 28%),
+      color-mix(in srgb, var(--mnx-accent-soft) 48%, transparent)
+    );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mnx-accent) 18%, transparent);
+}
+
+.mnx-accounting-workflow-card h3,
+.mnx-accounting-banking-card h3 {
+  margin: 0;
+  color: var(--mnx-text-strong);
+  font-size: 1rem;
+  font-weight: 620;
+}
+
+.mnx-accounting-workflow-card p,
+.mnx-accounting-banking-card p {
+  margin: 6px 0 0;
+  color: var(--mnx-text-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.mnx-accounting-workflow-card-footer,
+.mnx-accounting-banking-card-footer {
+  display: flex;
+  justify-content: flex-start;
 }
 
 .mnx-accounting-amount {
@@ -11858,8 +12572,47 @@ button.mnx-accounting-record-card {
 
   .mnx-accounting-form-grid,
   .mnx-accounting-form-grid-wide,
-  .mnx-accounting-report-nav {
+  .mnx-accounting-report-nav,
+  .mnx-account-structure-layout,
+  .mnx-account-structure-form-grid,
+  .mnx-account-structure-filter-grid {
     grid-template-columns: 1fr;
+  }
+
+  .mnx-account-structure-sidebar {
+    min-height: auto;
+    padding-right: 0;
+    padding-bottom: var(--mn-space-4);
+    border-right: 0;
+    border-bottom: 1px solid var(--mnx-border);
+  }
+
+  .mnx-accounting-journal-header-grid,
+  .mnx-accounting-journal-reference-layout,
+  .mnx-accounting-journal-lines-header,
+  .mnx-accounting-journal-line-row,
+  .mnx-accounting-journal-table-header,
+  .mnx-accounting-journal-table-row,
+  .mnx-accounting-journal-reference-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .mnx-accounting-journal-lines-header,
+  .mnx-accounting-journal-table-header {
+    display: none;
+  }
+
+  .mnx-accounting-journal-summary-card {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .mnx-accounting-journal-summary-card > div {
+    grid-template-columns: 1fr;
+  }
+
+  .mnx-accounting-journal-radio-group {
+    grid-column: auto;
   }
 
   .mnx-accounting-form-actions .mnx-button {

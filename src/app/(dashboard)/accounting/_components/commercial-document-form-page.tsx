@@ -39,7 +39,21 @@ export async function CommercialDocumentFormPage({
     return <AccountingAlert variant="danger">You do not have permission to manage commercial documents.</AccountingAlert>;
   }
 
-  const [accounts, contacts, vendors, employees, products, bankAccounts, quoteCount, invoiceCount, debitNoteCount, salesOrderCount, purchaseOrderCount] =
+  const [
+    accounts,
+    contacts,
+    vendors,
+    employees,
+    products,
+    bankAccounts,
+    paymentTerms,
+    priceLists,
+    quoteCount,
+    invoiceCount,
+    debitNoteCount,
+    salesOrderCount,
+    purchaseOrderCount,
+  ] =
     await Promise.all([
       db.crmAccount.findMany({
         where: { orgId },
@@ -70,6 +84,22 @@ export async function CommercialDocumentFormPage({
         where: { orgId, accountType: "BANK", isActive: true },
         select: { id: true, accountName: true, accountCode: true },
         orderBy: { accountName: "asc" },
+      }),
+      (db as any).accountingPaymentTerm.findMany({
+        where: { orgId, isActive: true },
+        select: { id: true, name: true, dueDays: true },
+        orderBy: { name: "asc" },
+      }),
+      (db as any).accountingPriceList.findMany({
+        where: { orgId, isActive: true },
+        select: {
+          id: true,
+          name: true,
+          currencyCode: true,
+          adjustmentMode: true,
+          defaultAdjustmentPercent: true,
+        },
+        orderBy: { name: "asc" },
       }),
       db.crmInvoice.count({ where: { orgId, type: "QUOTE" } }),
       db.crmInvoice.count({ where: { orgId, type: "INVOICE" } }),
@@ -102,6 +132,18 @@ export async function CommercialDocumentFormPage({
         employees={employees}
         products={products}
         bankAccounts={bankAccounts}
+        paymentTerms={paymentTerms}
+        priceLists={priceLists.map((priceList: {
+          id: string;
+          name: string;
+          currencyCode: string;
+          adjustmentMode: string;
+          defaultAdjustmentPercent: { toString(): string } | null;
+        }) => ({
+          ...priceList,
+          defaultAdjustmentPercent:
+            priceList.defaultAdjustmentPercent?.toString() ?? null,
+        }))}
         nextNumbers={nextNumbers}
         defaultType={defaultType}
         redirectPath={redirectPath}

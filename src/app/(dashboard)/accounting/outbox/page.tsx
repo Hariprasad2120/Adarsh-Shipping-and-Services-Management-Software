@@ -1,10 +1,16 @@
-import { AccountingOutboxTable } from "@/components/monolith/accounting-operational-views";
+import {
+  AccountingOutboxTable,
+  AccountingPolicyGate,
+} from "@/components/monolith/accounting-operational-views";
 import {
   AccountingRoutePageHeader,
   AccountingSection,
 } from "@/components/monolith/accounting-workspace";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
-import { listAccountingOutbox } from "@/modules/accounting/operational-queries";
+import {
+  getAccountingConfigurationOverview,
+  listAccountingOutbox,
+} from "@/modules/accounting/operational-queries";
 
 export default async function AccountingOutboxPage({
   searchParams,
@@ -15,13 +21,28 @@ export default async function AccountingOutboxPage({
     "/accounting/outbox",
   );
   const { page, status } = await searchParams;
-  const outbox = await listAccountingOutbox(orgId, {
-    page: Number(page) || 1,
-    status: status || undefined,
-  });
+  const [outbox, configuration] = await Promise.all([
+    listAccountingOutbox(orgId, {
+      page: Number(page) || 1,
+      status: status || undefined,
+    }),
+    getAccountingConfigurationOverview(orgId),
+  ]);
   return (
     <>
       <AccountingRoutePageHeader />
+      <AccountingPolicyGate
+        configured={configuration.policyGates.productionOutbox}
+        readiness={configuration.capabilityReadiness.productionOutbox}
+        title="Production publication readiness"
+        description="Transactional outbox events are durable, but production publication remains blocked until an approved capability policy is active."
+        requirements={[
+          "Approved destination contract",
+          "Hash-valid capability configuration",
+          "Independent approval evidence",
+          "Effective activation window",
+        ]}
+      />
       <AccountingSection
         eyebrow="Durable events"
         title="Transactional outbox"

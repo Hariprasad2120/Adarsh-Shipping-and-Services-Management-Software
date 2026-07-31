@@ -34,6 +34,7 @@ export default async function DepreciationRunsPage() {
       </AccountingAlert>
       <AccountingPolicyGate
         configured={configuration.policyGates.depreciation}
+        readiness={configuration.capabilityReadiness.depreciation}
         title="Depreciation run execution"
         description="The canonical rule and identity foundation exist, but Finance/CA-approved asset-book policy is absent."
         requirements={[

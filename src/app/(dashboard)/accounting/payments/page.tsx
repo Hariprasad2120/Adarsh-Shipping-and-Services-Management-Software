@@ -1,13 +1,19 @@
 import { Plus } from "lucide-react";
 
-import { CanonicalPaymentRegister } from "@/components/monolith/accounting-operational-views";
+import {
+  CanonicalPaymentRegister,
+  LegacyAccountingDraftRegister,
+} from "@/components/monolith/accounting-operational-views";
 import {
   AccountingActionLink,
   AccountingRoutePageHeader,
   AccountingSection,
 } from "@/components/monolith/accounting-workspace";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
-import { listCanonicalAccountingPayments } from "@/modules/accounting/operational-queries";
+import {
+  listCanonicalAccountingPayments,
+  listLegacyAccountingDrafts,
+} from "@/modules/accounting/operational-queries";
 
 export default async function AccountingPaymentsPage({
   searchParams,
@@ -18,9 +24,15 @@ export default async function AccountingPaymentsPage({
     "/accounting/payments",
   );
   const { page } = await searchParams;
-  const payments = await listCanonicalAccountingPayments(orgId, {
-    page: Number(page) || 1,
-  });
+  const [payments, drafts] = await Promise.all([
+    listCanonicalAccountingPayments(orgId, {
+      page: Number(page) || 1,
+    }),
+    listLegacyAccountingDrafts(orgId, "PAYMENT", {
+      page: 1,
+      pageSize: 10,
+    }),
+  ]);
   return (
     <>
       <AccountingRoutePageHeader
@@ -31,11 +43,21 @@ export default async function AccountingPaymentsPage({
               variant="primary"
             >
               <Plus aria-hidden="true" size={16} />
-              New draft
+              New payment
             </AccountingActionLink>
           ) : undefined
         }
       />
+      <AccountingSection
+        eyebrow="Compatibility drafts"
+        title="Draft payments"
+        description="Saved payment vouchers stay editable here until you submit them for independent approval."
+      >
+        <LegacyAccountingDraftRegister
+          data={drafts}
+          detailPath="/accounting/payment-entries"
+        />
+      </AccountingSection>
       <AccountingSection
         eyebrow="Canonical register"
         title="Receipts and payments"

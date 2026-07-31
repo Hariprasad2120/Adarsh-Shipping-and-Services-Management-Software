@@ -54,10 +54,12 @@ describe("production Monolith shell safeguards", () => {
     expect(appShell).toContain(
       "aria-controls={`mnx-sidebar-items-${section.id}`}",
     );
-    expect(appShell).toContain("section.items.map((item)");
+    expect(appShell).toContain("section.items.map((item, index)");
+    expect(appShell).toContain('className="mnx-sidebar-subnav-item"');
     expect(appShell).toContain("hidden={!isExpanded}");
     expect(appShell).toContain('role="group"');
     expect(styles).toContain(".mnx-sidebar-subnav[hidden]");
+    expect(styles).toContain(".mnx-sidebar-subnav-item > a");
     expect(styles).toContain(".mnx-sidebar-section.is-expanded");
   });
 });

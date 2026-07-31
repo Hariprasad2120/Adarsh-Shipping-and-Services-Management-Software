@@ -1,0 +1,213 @@
+import Link from "next/link";
+import { Phone, Mail, Truck, Search, Plus } from "lucide-react";
+import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+import {
+  AccountingActionLink,
+  AccountingEmptyTableRow,
+  AccountingMetric,
+  AccountingMetrics,
+  AccountingSection,
+  AccountingTable,
+} from "@/components/monolith/accounting-workspace";
+import { VendorMasterCreateForm } from "@/components/monolith/vendor-master-create-form";
+import { Badge } from "@/components/monolith/badge";
+import { DeleteRecordButton } from "@/app/(dashboard)/crm/_components/delete-record-button";
+import { deleteVendorAction } from "@/modules/crm/actions";
+import { listVendors } from "@/modules/crm/service";
+import { can } from "@/lib/rbac";
+import { db } from "@/lib/db";
+import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
+
+interface SearchParams {
+  search?: string;
+}
+
+export default async function AccountingVendorMasterPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const { orgId, session } = await requireAccountingRouteAccess(
+    "/accounting/vendor-master",
+    ["accounting.document.read", "accounting.invoice.read"],
+  );
+
+  const search = (await searchParams).search?.trim() ?? "";
+  const canManageVendors = await can(session.user.id, "crm.vendor.manage");
+
+  const [vendors, employees] = await Promise.all([
+    listVendors(orgId, { search }),
+    canManageVendors
+      ? db.user.findMany({
+          where: { orgId },
+          select: { id: true, name: true },
+          orderBy: { name: "asc" },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const activeCount = vendors.filter((vendor) => vendor.status === "ACTIVE").length;
+  const gstConfiguredCount = vendors.filter((vendor) => Boolean(vendor.gstin)).length;
+
+  return (
+    <div className="space-y-8">
+      <AccountingRoutePageHeader
+        actions={
+          canManageVendors ? (
+            <AccountingActionLink href="#vendor-master-create" variant="primary">
+              <Plus aria-hidden="true" /> New vendor
+            </AccountingActionLink>
+          ) : undefined
+        }
+      />
+
+      <AccountingMetrics>
+        <AccountingMetric
+          label="Registered vendors"
+          value={vendors.length}
+          detail="Supplier master records"
+        />
+        <AccountingMetric
+          label="Active"
+          value={activeCount}
+          detail="Currently enabled vendors"
+        />
+        <AccountingMetric
+          label="GSTIN configured"
+          value={gstConfiguredCount}
+          detail="Tax-ready supplier masters"
+        />
+      </AccountingMetrics>
+
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <AccountingSection
+            eyebrow="Accounts payable"
+            title="Vendor register"
+            description="Use the shared supplier master for payable, debit-note, and purchase-document preparation."
+          >
+            <form method="GET" className="relative mb-4">
+              <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-[var(--mnx-text-muted)]" />
+              <input
+                type="text"
+                name="search"
+                defaultValue={search}
+                placeholder="Search vendors by name or service..."
+                className="w-full rounded border border-[var(--mnx-border)] bg-[var(--mnx-surface)] py-2 pl-9 pr-3 text-sm text-[var(--mnx-text)] placeholder:text-[var(--mnx-text-muted)] focus:border-[var(--mnx-accent)] focus:outline-none"
+              />
+            </form>
+
+            <AccountingTable>
+              <thead>
+                <tr>
+                  <th>Vendor</th>
+                  <th>Services</th>
+                  <th>Contact</th>
+                  <th>GST / Tax</th>
+                  <th>Status</th>
+                  {canManageVendors ? <th className="text-right">Actions</th> : null}
+                </tr>
+              </thead>
+              <tbody>
+                {vendors.length === 0 ? (
+                  <AccountingEmptyTableRow colSpan={canManageVendors ? 6 : 5}>
+                    {search
+                      ? "No vendors matched the current search."
+                      : "No vendors have been registered yet."}
+                  </AccountingEmptyTableRow>
+                ) : (
+                  vendors.map((vendor) => (
+                    <tr key={vendor.id}>
+                      <td>
+                        <div className="space-y-1">
+                          <div className="font-semibold text-[var(--mnx-text)]">
+                            {vendor.name}
+                          </div>
+                          <div className="text-xs text-[var(--mnx-text-muted)]">
+                            {vendor.contactName || "No contact person set"}
+                          </div>
+                        </div>
+                      </td>
+                      <td>{vendor.services || "General logistics"}</td>
+                      <td>
+                        {vendor.email || vendor.phone ? (
+                          <div className="space-y-1 text-sm text-[var(--mnx-text)]">
+                            {vendor.email ? (
+                              <div className="flex items-center gap-2">
+                                <Mail className="size-4 text-[var(--mnx-text-muted)]" />
+                                <span>{vendor.email}</span>
+                              </div>
+                            ) : null}
+                            {vendor.phone ? (
+                              <div className="flex items-center gap-2">
+                                <Phone className="size-4 text-[var(--mnx-text-muted)]" />
+                                <span>{vendor.phone}</span>
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <span className="text-sm italic text-[var(--mnx-text-muted)]">
+                            No contact details
+                          </span>
+                        )}
+                      </td>
+                      <td>{vendor.gstin || "Not configured"}</td>
+                      <td>
+                        <Badge
+                          variant={vendor.status === "ACTIVE" ? "success" : "secondary"}
+                          className="uppercase"
+                        >
+                          {vendor.status || "ACTIVE"}
+                        </Badge>
+                      </td>
+                      {canManageVendors ? (
+                        <td className="text-right">
+                          <DeleteRecordButton
+                            recordId={vendor.id}
+                            deleteAction={deleteVendorAction}
+                            confirmMessage="Are you sure you want to delete this vendor?"
+                            className="mnx-plain mnx-icon-button mnx-tone-danger-text"
+                          />
+                        </td>
+                      ) : null}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </AccountingTable>
+          </AccountingSection>
+        </div>
+
+        {canManageVendors ? (
+          <div
+            id="vendor-master-create"
+            className="space-y-4 rounded-xl border border-[var(--mnx-border)]/55 bg-[var(--mnx-surface)] p-6 shadow-2xl"
+          >
+            <div className="flex items-center gap-2 border-b border-[var(--mnx-border)]/30 pb-2">
+              <Truck className="size-4.5 text-[var(--mnx-accent)]" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--mnx-text)]">
+                Add Vendor Master
+              </h3>
+            </div>
+            <VendorMasterCreateForm employees={employees} />
+          </div>
+        ) : null}
+      </div>
+
+      {!canManageVendors ? (
+        <AccountingSection
+          eyebrow="Access control"
+          title="Vendor maintenance is permissioned"
+          description="You can review the supplier master here, but creating or deleting vendors still requires CRM vendor-management authority."
+        >
+          <Link
+            href="/crm/vendors"
+            className="mnx-button mnx-button-secondary inline-flex"
+          >
+            Open CRM vendor workspace
+          </Link>
+        </AccountingSection>
+      ) : null}
+    </div>
+  );
+}

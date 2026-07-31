@@ -28,6 +28,12 @@ export default async function ChaEditCustomerPage({
       }),
       db.crmAccount.findFirst({
         where: { id, orgId, type: "Customer" },
+        include: {
+          contacts: {
+            where: { isActive: true },
+            orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+          },
+        },
       }),
     ]);
 

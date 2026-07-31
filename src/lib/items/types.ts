@@ -25,10 +25,26 @@ export type ItemListItem = {
   status: ItemStatus;
   priceList?: PriceListItem[];
   priceListAuto?: boolean;
+  imageDataUrl?: string;
+  salesAccount?: string;
+  purchaseAccount?: string;
+  taxRate?: string;
+  exemptionReason?: string;
+  preferredVendorId?: string;
+  preferredVendorName?: string;
+  salesInformation?: boolean;
+  purchaseInformation?: boolean;
+  inventoryTracking?: boolean;
+  openingStock?: number;
+  reorderPoint?: number;
+  chargeCategory?: string;
+  applicableFor?: string;
+  defaultContainerType?: string;
 };
 
 export type ItemFormValues = {
   name: string;
+  salesInformation: boolean;
   type: ItemType;
   unit?: string;
   sku?: string;
@@ -43,12 +59,15 @@ export type ItemFormValues = {
   costPrice?: number;
   purchaseAccount?: string;
   purchaseDescription?: string;
+  preferredVendorId?: string;
+  preferredVendorName?: string;
   inventoryTracking: boolean;
   openingStock?: number;
   reorderPoint?: number;
   chargeCategory?: string;
   applicableFor?: string;
   defaultContainerType?: string;
+  imageDataUrl?: string;
   priceList?: PriceListItem[];
   priceListAuto?: boolean;
 };

@@ -28,6 +28,7 @@ export default async function RecurringTransactionsPage({
       <AccountingRoutePageHeader />
       <AccountingPolicyGate
         configured={configuration.policyGates.recurringGeneration}
+        readiness={configuration.capabilityReadiness.recurringGeneration}
         title="Recurring financial generation"
         description="Occurrence identity and guarded claims are implemented; catch-up, skip, template approval, and generated-document policy are not approved."
         requirements={[

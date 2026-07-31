@@ -4,6 +4,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import pg from "pg";
 import { chromium } from "playwright";
 import { assertExactStagingEnvironment } from "./staging-target-runtime.mjs";
+import {
+  assertLocalUiServerReady,
+  getLocalUiBaseUrl,
+} from "./local-ui-target.mjs";
 
 const { connectionString } = assertExactStagingEnvironment(
   "Authentication runtime verification",
@@ -12,9 +16,7 @@ const { connectionString } = assertExactStagingEnvironment(
 const useLocalSpecialAccount = process.argv.includes(
   "--use-local-special-account",
 );
-const baseUrl =
-  process.env.UI_TEST_BASE_URL ??
-  (useLocalSpecialAccount ? "http://localhost:3000" : undefined);
+const baseUrl = getLocalUiBaseUrl();
 const email =
   process.env.UI_TEST_EMAIL ??
   (useLocalSpecialAccount ? "obj268version4@gmail.com" : undefined);
@@ -22,11 +24,12 @@ const password =
   process.env.UI_TEST_PASSWORD ??
   (useLocalSpecialAccount ? "password@123" : undefined);
 
-if (!baseUrl || !email || !password) {
+if (!email || !password) {
   throw new Error(
-    "UI_TEST_BASE_URL, UI_TEST_EMAIL, and UI_TEST_PASSWORD are required.",
+    "UI_TEST_EMAIL and UI_TEST_PASSWORD are required for the normal localhost:3000 application.",
   );
 }
+await assertLocalUiServerReady(baseUrl);
 const outputDirectory = "artifacts/ui-migration/auth-misc";
 const themes = ["light", "night", "violet"];
 const viewports = [

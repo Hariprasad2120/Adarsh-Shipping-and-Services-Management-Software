@@ -1,15 +1,20 @@
 import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright";
+import {
+  assertLocalUiServerReady,
+  getLocalUiBaseUrl,
+} from "./local-ui-target.mjs";
 
-const baseUrl = process.env.UI_TEST_BASE_URL;
+const baseUrl = getLocalUiBaseUrl();
 const email = process.env.UI_TEST_EMAIL;
 const password = process.env.UI_TEST_PASSWORD;
 
-if (!baseUrl || !email || !password) {
+if (!email || !password) {
   throw new Error(
-    "UI_TEST_BASE_URL, UI_TEST_EMAIL, and UI_TEST_PASSWORD are required.",
+    "UI_TEST_EMAIL and UI_TEST_PASSWORD are required for the normal localhost:3000 application.",
   );
 }
+await assertLocalUiServerReady(baseUrl);
 
 const outputDirectory = "artifacts/ui-migration";
 const viewports = [

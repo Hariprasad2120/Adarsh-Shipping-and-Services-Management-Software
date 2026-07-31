@@ -1,10 +1,20 @@
 "use client";
 
-import { ArrowLeftRight, Loader2 } from "lucide-react";
+import {
+  ArrowLeftRight,
+  CircleDollarSign,
+  CreditCard,
+  Landmark,
+  Link2,
+  Loader2,
+  WalletCards,
+  Workflow,
+} from "lucide-react";
 import { useState } from "react";
 import { DateInput } from "@/components/monolith/date-input";
 import {
   AccountingAction,
+  AccountingActionLink,
   AccountingAlert,
   AccountingDialog,
   AccountingEmptyTableRow,
@@ -12,6 +22,7 @@ import {
   AccountingInput,
   AccountingMetric,
   AccountingMetrics,
+  AccountingPanel,
   AccountingSection,
   AccountingSelect,
   AccountingStatus,
@@ -49,10 +60,14 @@ interface LeafAccount {
 
 export function BankingClient({
   bankAccounts,
+  canCreatePayment,
+  canPrepareTransfer,
   leafAccounts,
   transactions,
 }: {
   bankAccounts: BankAccount[];
+  canCreatePayment: boolean;
+  canPrepareTransfer: boolean;
   transactions: BankTransaction[];
   leafAccounts: LeafAccount[];
 }) {
@@ -75,6 +90,38 @@ export function BankingClient({
     (sum, account) => sum + account.balance,
     0,
   );
+  const bankingRoutes = [
+    {
+      href: "/accounting/banking",
+      title: "Overview",
+      description: "Balances, recent movement, and treasury controls.",
+      icon: Landmark,
+    },
+    {
+      href: "/accounting/payments",
+      title: "All payments",
+      description: "One register for receipts, payments, and their posting state.",
+      icon: WalletCards,
+    },
+    {
+      href: "/accounting/customer-receipts",
+      title: "Customer receipts",
+      description: "Incoming collections, applied amounts, and unapplied balances.",
+      icon: CircleDollarSign,
+    },
+    {
+      href: "/accounting/vendor-payments",
+      title: "Vendor payments",
+      description: "Supplier disbursements with posting and reversal lineage.",
+      icon: CreditCard,
+    },
+    {
+      href: "/accounting/allocations",
+      title: "Allocations",
+      description: "Links between payment documents and settled invoices or bills.",
+      icon: Workflow,
+    },
+  ];
 
   async function submitTransfer(event: React.FormEvent) {
     event.preventDefault();
@@ -132,17 +179,69 @@ export function BankingClient({
           value={bankAccounts.filter((account) => account.accountType === "CASH").length}
           detail="Active cash posting accounts"
         />
+        <AccountingMetric
+          label="Recent postings"
+          value={transactions.length}
+          detail="Latest liquid-account movements listed below"
+        />
       </AccountingMetrics>
 
       <AccountingSection
-        eyebrow="Treasury"
+        eyebrow="Banking"
+        title="Connected workflows"
+        description="All bank-related functions now sit under one Banking workspace so operators can move between overview, receipts, payments, and allocations without leaving the section."
+        actions={
+          canCreatePayment ? (
+            <AccountingActionLink
+              href="/accounting/payment-entries/new"
+              variant="primary"
+            >
+              <Link2 aria-hidden="true" size={16} />
+              Open payment workflow
+            </AccountingActionLink>
+          ) : undefined
+        }
+      >
+        <div className="mnx-accounting-card-grid mnx-accounting-workflow-grid">
+          {bankingRoutes.map((route) => {
+            const Icon = route.icon;
+
+            return (
+              <AccountingPanel
+                className="mnx-accounting-workflow-card"
+                key={route.href}
+              >
+                <header className="mnx-accounting-workflow-card-header">
+                  <span className="mnx-accounting-workflow-card-icon">
+                    <Icon aria-hidden="true" size={18} />
+                  </span>
+                  <div>
+                    <h3>{route.title}</h3>
+                    <p>{route.description}</p>
+                  </div>
+                </header>
+                <footer className="mnx-accounting-workflow-card-footer">
+                  <AccountingActionLink href={route.href}>
+                    Open {route.title}
+                  </AccountingActionLink>
+                </footer>
+              </AccountingPanel>
+            );
+          })}
+        </div>
+      </AccountingSection>
+
+      <AccountingSection
+        eyebrow="Banking"
         title="Liquid accounts"
         description="Current balances calculated from opening balances and posted general-ledger movement."
         actions={
-          <AccountingAction onClick={() => setShowTransfer(true)}>
-            <ArrowLeftRight aria-hidden="true" size={16} />
-            Record transfer
-          </AccountingAction>
+          canPrepareTransfer ? (
+            <AccountingAction onClick={() => setShowTransfer(true)}>
+              <ArrowLeftRight aria-hidden="true" size={16} />
+              Record transfer
+            </AccountingAction>
+          ) : undefined
         }
       >
         <div className="mnx-accounting-card-grid">
@@ -169,7 +268,7 @@ export function BankingClient({
       </AccountingSection>
 
       <AccountingSection
-        eyebrow="Cash book"
+        eyebrow="Banking"
         title="Recent bank and cash movement"
         description="The latest 50 non-cancelled ledger postings across liquid accounts."
       >
