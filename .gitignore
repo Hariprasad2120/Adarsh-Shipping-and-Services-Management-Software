@@ -70,6 +70,9 @@ pnpm-lock.yaml
 /scratch/
 /_cleanup_review/
 /docs/*
+!/docs/architecture/
+/docs/architecture/*
+!/docs/architecture/adr-001-cha-customs-filing-boundary.md
 !/docs/full-ui-migration-prompt.md
 !/docs/ui-migration-status.md
 !/docs/ui-migration-handoff.md

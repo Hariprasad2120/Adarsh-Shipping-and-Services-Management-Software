@@ -103,6 +103,20 @@ const exactRouteMeta: Record<string, ChaRouteMeta> = {
       "Search and coordinate every customs-clearance job across its controlled workflow.",
     icon: BriefcaseBusiness,
   },
+  "/cha/jobs/import": {
+    eyebrow: "Customs filing",
+    title: "Import jobs",
+    description:
+      "Open import clearance jobs and their customs filing data from the standard CHA job register.",
+    icon: BriefcaseBusiness,
+  },
+  "/cha/jobs/export": {
+    eyebrow: "Customs filing",
+    title: "Export jobs",
+    description:
+      "Open export clearance jobs and their customs filing data from the standard CHA job register.",
+    icon: BriefcaseBusiness,
+  },
   "/cha/reports": {
     eyebrow: "Operational intelligence",
     title: "CHA reports",

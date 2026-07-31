@@ -10,6 +10,7 @@ export type ChaJobListFilters = {
   priority?: string;
   branchId?: string;
   jobTypeId?: string;
+  movementDirection?: "IMPORT" | "EXPORT" | "BOTH" | "OTHER";
   assignedToMe?: boolean;
   jobGroup?: "ACTIVE" | "COMPLETED";
   page?: number;
@@ -37,6 +38,9 @@ export async function listJobs(userId: string, orgId: string, filters: ChaJobLis
   if (filters.priority) where.priority = filters.priority;
   if (filters.branchId) where.branchId = filters.branchId;
   if (filters.jobTypeId) where.jobTypeId = filters.jobTypeId;
+  if (filters.movementDirection) {
+    where.jobType = { movementDirection: filters.movementDirection };
+  }
   if (filters.assignedToMe) where.assignments = { some: { userId } };
 
   const completed = {
@@ -129,7 +133,11 @@ export async function getCreateJobOptions(orgId: string) {
     await Promise.all([
       db.branch.findMany({ where: { orgId }, select: { id: true, name: true, code: true }, orderBy: { name: "asc" } }),
       db.crmAccount.findMany({ where: { orgId, type: "Customer" }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-      db.chaJobType.findMany({ where: { orgId, isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+      db.chaJobType.findMany({
+        where: { orgId, isActive: true },
+        select: { id: true, name: true, movementDirection: true },
+        orderBy: { name: "asc" },
+      }),
       db.chaShipmentType.findMany({ where: { orgId, isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
       db.user.findMany({ where: { orgId, active: true }, select: { id: true, name: true, email: true }, orderBy: { name: "asc" } }),
       db.user.findMany({ where: managerWhere, select: { id: true, name: true, email: true, branchId: true }, orderBy: { name: "asc" } }),

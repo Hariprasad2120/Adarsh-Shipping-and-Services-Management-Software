@@ -30,6 +30,7 @@ import * as BadgeComponents from "@/components/monolith/badge";
 import * as ButtonComponents from "@/components/monolith/button";
 import * as CardComponents from "@/components/monolith/card";
 import * as ChaComponents from "@/components/monolith/cha-workspace";
+import * as ChaCustomsUiComponents from "@/modules/cha/customs/ui/customs-workspace";
 import * as CommunicationComponents from "@/components/monolith/communication-workspace";
 import * as CrmComponents from "@/components/monolith/crm-workspace";
 import * as DateInputComponents from "@/components/monolith/date-input";
@@ -222,8 +223,8 @@ const catalogueGroups: CatalogueGroup[] = [
   },
   {
     name: "Customs operations",
-    description: "CHA layout, route headers, data surfaces, dialogs, selectors, filters, and warnings.",
-    exports: ChaComponents,
+    description: "CHA layout, customs master grids, filing sections, subtabs, line items, dialogs, selectors, filters, and warnings.",
+    exports: { ...ChaComponents, ...ChaCustomsUiComponents },
   },
   {
     name: "Accounting",
@@ -940,18 +941,82 @@ export default function DesignSystemClient() {
             </div>
           </FamilySample>
 
-          <FamilySample name="Customs operations" icon={<FileText size={18} />} exports={ChaComponents}>
+          <FamilySample name="Customs operations" icon={<FileText size={18} />} exports={{ ...ChaComponents, ...ChaCustomsUiComponents }}>
             <ChaMetrics>
               <ChaMetric label="Open jobs" value="32" detail="Current branch" />
               <ChaMetric label="Warnings" value="05" detail="Need review" />
             </ChaMetrics>
-            <ChaDropdownSelect
-              defaultValue="assessment"
-              options={[
-                { value: "assessment", label: "Assessment" },
-                { value: "delivery", label: "Delivery" },
+            <ChaCustomsUiComponents.CustomsMasterToolbar search="0101" activeFilterCount={2}>
+              <WorkspaceField label="Status">
+                <ChaDropdownSelect
+                  defaultValue="active"
+                  options={[
+                    { value: "active", label: "Active" },
+                    { value: "inactive", label: "Inactive" },
+                  ]}
+                />
+              </WorkspaceField>
+            </ChaCustomsUiComponents.CustomsMasterToolbar>
+            <ChaCustomsUiComponents.CustomsMasterTable
+              rows={[
+                { id: "ritc-1", code: "01012100", description: "Pure-bred breeding animals", status: "Active" },
+                { id: "ritc-2", code: "001002", description: "Lab analysis Report", status: "Active" },
+              ]}
+              sort={{ key: "code", direction: "asc" }}
+              pagination={<ChaCustomsUiComponents.CustomsPagination page={1} pageSize={10} totalCount={2} />}
+              columns={[
+                { key: "code", header: "Code", sticky: "start", filterable: true, cell: (row) => row.code },
+                { key: "description", header: "Description", filterable: true, cell: (row) => row.description },
+                { key: "status", header: "Status", sticky: "end", cell: (row) => <ChaStatus variant="success">{row.status}</ChaStatus> },
               ]}
             />
+            <ChaCustomsUiComponents.CustomsBulkImportPreview inserted={12} updated={4} unchanged={30} rejected={2} />
+            <ChaCustomsUiComponents.CustomsFilingSection
+              title="BE main details"
+              description="Grouped fields use the shared customs filing form grid."
+              actions={<ChaCustomsUiComponents.CustomsSaveIndicator state="dirty" />}
+            >
+              <ChaCustomsUiComponents.CustomsFilingTabs
+                tabs={[
+                  { id: "be", label: "BE Main", status: "complete", selected: true },
+                  { id: "igm", label: "IGM", status: "in_progress" },
+                  { id: "invoice", label: "Invoice", status: "not_started" },
+                ]}
+              />
+              <ChaCustomsUiComponents.CustomsFormGrid columns={3}>
+                <WorkspaceField label="Customs house" required>
+                  <WorkspaceInput defaultValue="INMAA1" />
+                </WorkspaceField>
+                <WorkspaceField label="Transport mode" required>
+                  <WorkspaceInput defaultValue="SEA" />
+                </WorkspaceField>
+                <WorkspaceField label="Filing type">
+                  <WorkspaceInput defaultValue="Home consumption" />
+                </WorkspaceField>
+              </ChaCustomsUiComponents.CustomsFormGrid>
+              <ChaCustomsUiComponents.CustomsLineItemTable
+                title="Invoice line items"
+                footer={<span>Total amount INR 0.00</span>}
+              >
+                <WorkspaceTable>
+                  <tbody>
+                    <tr><td>INV-1</td><td>USD</td><td>0.00</td></tr>
+                  </tbody>
+                </WorkspaceTable>
+              </ChaCustomsUiComponents.CustomsLineItemTable>
+              <ChaCustomsUiComponents.CustomsValidationSummary
+                errors={[{ fieldId: "customs-house", label: "Customs house", message: "Required before validation" }]}
+              />
+            </ChaCustomsUiComponents.CustomsFilingSection>
+            <ChaCustomsUiComponents.CustomsFilingSection
+              title="Signed flat file"
+              description="Signed or submitted workspaces render read-only until controlled unlock."
+              readonly
+            >
+              <WorkspaceField label="Signature reference">
+                <WorkspaceInput defaultValue="Signed version 1" readOnly />
+              </WorkspaceField>
+            </ChaCustomsUiComponents.CustomsFilingSection>
           </FamilySample>
 
           <FamilySample

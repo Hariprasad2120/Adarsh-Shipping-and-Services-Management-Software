@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient } from "../src/generated/prisma/client";
+import { Prisma, PrismaClient, type Division } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { hash } from "bcryptjs";
 import * as path from "path";
@@ -10,6 +10,10 @@ import { seedChartOfAccounts } from "../src/modules/accounting/service";
 import { getBundledDocxTemplateFiles, importDocxTemplateFile } from "../src/modules/hrms/letter-template-import";
 import { ensureSpecialAccounts } from "../src/modules/core/user/special-account-bootstrap";
 import { ensureDefaultDocumentRequirements } from "../src/modules/cha/service";
+import {
+  CHA_CUSTOMS_PERMISSIONS,
+  CHA_CUSTOMS_UNASSIGNED_PERMISSION_KEYS,
+} from "../src/modules/cha/customs/permissions";
 
 
 // ─── Database client ────────────────────────────────────────────────────────────
@@ -216,6 +220,7 @@ const PERMISSIONS = [
   { key: "cha.customer.read", label: "View CHA Customers", group: "CHA" },
   { key: "cha.customer.manage", label: "Create and edit CHA Customers", group: "CHA" },
   { key: "cha.settings.manage", label: "Manage CHA Settings", group: "CHA" },
+  ...CHA_CUSTOMS_PERMISSIONS,
   // HR Letters & Contracts
   { key: "hrms.letters.view_all", label: "View all organisation letters", group: "HRMS" },
   { key: "hrms.letters.legal_review", label: "Review letters from legal perspective", group: "HRMS" },
@@ -258,8 +263,14 @@ const PERMISSIONS = [
 
 // ─── System roles & their default permissions ──────────────────────────────────
 
+const PERMISSIONS_NOT_GRANTED_BY_DEFAULT = new Set<string>([
+  ...CHA_CUSTOMS_UNASSIGNED_PERMISSION_KEYS,
+]);
+
 const SYSTEM_ROLES: Record<string, string[]> = {
-  Admin: PERMISSIONS.map((p) => p.key), // full access
+  Admin: PERMISSIONS
+    .map((p) => p.key)
+    .filter((key) => !PERMISSIONS_NOT_GRANTED_BY_DEFAULT.has(key)),
   Management: [
     "hrms.employee.read", "hrms.documents.read",
     "hrms.peopleplus.read",
@@ -448,14 +459,6 @@ function asNumber(value: unknown): number | null {
   if (!raw) return null;
   const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : null;
-}
-
-function asBoolean(value: unknown): boolean | null {
-  const normalized = asString(value).toLowerCase();
-  if (!normalized) return null;
-  if (["yes", "enabled", "active", "true"].includes(normalized)) return true;
-  if (["no", "disabled", "exited", "terminated", "false"].includes(normalized)) return false;
-  return null;
 }
 
 function parseDate(value: unknown): Date | null {
@@ -998,7 +1001,7 @@ async function seedUsers(
 
   // Collect active employees
   const existingDivisions = await db.division.findMany({ where: { orgId } });
-  const divisionByDepartmentAndName = new Map<string, any>(
+  const divisionByDepartmentAndName = new Map<string, Division>(
     existingDivisions.map((division) => [`${division.departmentId}:${division.name.toLowerCase()}`, division])
   );
 
@@ -1147,6 +1150,8 @@ async function seedUsers(
       },
     };
 
+    const payrollJson = payrollMeta as Prisma.InputJsonValue;
+
     await db.employmentRecord.upsert({
       where: { userId: user.id },
       update: {
@@ -1160,7 +1165,7 @@ async function seedUsers(
         travelling,
         fixedAllowance,
         stipend,
-        payrollMeta: payrollMeta as any,
+        payrollMeta: payrollJson,
       },
       create: {
         userId: user.id,
@@ -1175,7 +1180,7 @@ async function seedUsers(
         travelling,
         fixedAllowance,
         stipend,
-        payrollMeta: payrollMeta as any,
+        payrollMeta: payrollJson,
       },
     });
 
@@ -1452,7 +1457,7 @@ async function seedLetterTemplatesAndSettings(orgId: string) {
     }
     console.log(`  Seeded ${importedTemplates.length} DOCX templates.`);
   } catch (error) {
-    console.warn("  [Warning] Failed to seed DOCX templates:", (error as any).message || error);
+    console.warn("  [Warning] Failed to seed DOCX templates:", error instanceof Error ? error.message : error);
   }
 }
 

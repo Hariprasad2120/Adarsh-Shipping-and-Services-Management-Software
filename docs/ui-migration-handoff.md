@@ -1,10 +1,83 @@
 # Monolith UI migration handoff
 
-Last updated: 2026-07-30
+Last updated: 2026-07-31
+
+## 2026-07-31 CHA Customs Phase 7 handoff
+
+Phase 7 export/shared customs master pages are implemented on
+`feature/cha-customs-filing-workspace`.
+
+Delivered routes:
+
+- `/cha/masters`
+- `/cha/masters/ritc-unit`
+- `/cha/masters/cess-rate`
+- `/cha/masters/rodtep`
+- `/cha/masters/rosctl`
+- `/cha/masters/drawback`
+- `/cha/masters/scheme-code`
+- `/cha/masters/rodtep-eou`
+- `/cha/masters/[masterKey]/download`
+
+Implementation files:
+
+- `src/modules/cha/customs/masters/page-config.ts`
+- `src/app/(dashboard)/cha/masters/page.tsx`
+- `src/app/(dashboard)/cha/masters/[masterKey]/page.tsx`
+- `src/app/(dashboard)/cha/masters/[masterKey]/master-register-client.tsx`
+- `src/app/(dashboard)/cha/masters/[masterKey]/download/route.ts`
+- `src/app/(dashboard)/cha/masters/actions.ts`
+
+The pages stay hidden/disabled until `CHA_CUSTOMS_MASTER_DATA` is enabled and
+users have the customs master permissions. No import/common master pages,
+transaction pages, tariff calculations, or ICEGATE network calls were added in
+this phase.
+
+Verification passed for targeted ESLint, production TypeScript, full customs
+Vitest, Prisma validation, production build, and `git diff --check`.
+Playwright smoke could not be launched because this execution policy blocked
+both attempted background server mechanisms. Authenticated master-page browser
+screenshots still need test credentials with the customs master feature flag
+and permissions assigned.
+
+## 2026-07-31 CHA Customs Phase 8 handoff
+
+Phase 8 import, single-window, and common customs master pages are implemented
+on `feature/cha-customs-filing-workspace`.
+
+Delivered routes:
+
+- `/cha/masters/sw-cth`
+- `/cha/masters/aidc`
+- `/cha/masters/bcd`
+- `/cha/masters/master-notification`
+- `/cha/masters/supporting-document`
+- `/cha/masters/uom-master`
+
+Implementation stayed on the existing shared master route:
+`/cha/masters/[masterKey]`. The authoritative models are
+`ChaSingleWindowCthMaster`, `ChaAidcRateMaster`, `ChaBcdRateMaster`,
+`ChaCustomsNotificationMaster`, `ChaSupportingDocumentMaster`, and
+`ChaUomMaster`; no duplicate Import Master pages or data stores were created.
+
+Legacy aliases preserved in parsing include `notn`, `notnType`, `slNo`,
+`subSlNo`, `countryFTA`, `amendNotn`, and `amendSlNo`. Existing lookup
+services continue to be the compatibility adapters for import filing consumers.
+
+Verification passed for targeted ESLint, production TypeScript, Phase 8
+Vitest, full customs Vitest, Prisma validation, production build, and
+`git diff --check`. Playwright smoke could not be launched because this
+execution policy blocks the required background app server startup in this
+session. No job transaction tabs were implemented.
 
 ## Current state
 
-- Branch: `main`.
+- Branch: `feature/cha-customs-filing-workspace`.
+- The CHA import job creation prototype is layered on the cleaned-up Monolith
+  base as the URL-only route `/cha/labs/import-job-creation`. It is not linked
+  from the production sidebar by design, and it remains isolated from
+  production CHA creation actions, persistence, ICEGATE integrations, Drive, and
+  accounting side effects.
 - Final combined route inventory: **229 discovered, 228 migrated, 229
   source/type/test/build verified, 0 migration routes remaining**, across 14
   layouts.
@@ -36,6 +109,51 @@ Last updated: 2026-07-30
 - Browser evidence is stored in
   `artifacts/ui-migration/final-runtime/verification.json` with representative
   screenshots.
+
+## 2026-07-31 CHA customs Phase 6 UI framework handoff
+
+Delivered:
+
+- `src/modules/cha/customs/ui/customs-workspace.tsx` now provides reusable
+  Monolith/CHA compositions for customs master pages and import/export filing
+  forms without implementing the 13 master pages or final transaction tabs.
+- Master UI contracts include source/version headers, global search,
+  controlled filter surface, sticky header/columns, wide-table overflow,
+  pagination, row actions, bulk-import dry-run summary, download/upload
+  actions, empty/permission states, and URL search-parameter helpers.
+- Filing UI contracts include top-level/subtab strips, completeness badges,
+  grouped responsive form grids, line-item table shell, totals footer,
+  save-state indicator, dirty warning, validation summary with jump links,
+  read-only signed/submitted state, and concurrency conflict dialog routed
+  through the shared focus-managed dialog layer.
+- `src/styles/monolith-system.css` contains the shared customs framework
+  classes, all using semantic Monolith tokens and responsive fallbacks.
+- `/admin/design-system` now demonstrates the customs master table, filters,
+  bulk import preview, filing form section, line-item table, validation error,
+  and read-only signed state alongside the existing production CHA specimens.
+- `src/modules/cha/customs/routes.ts` now groups future customs route metadata
+  under Customs Masters, Import, and Export, and exposes flag + permission
+  filtering helpers.
+
+Verification:
+
+- targeted ESLint for Phase 6 files: passed;
+- `npx vitest run src/modules/cha/customs/__tests__`: 49 passed;
+- existing CHA workspace + customs UI focused tests: 9 passed;
+- design-system catalogue verifier: passed;
+- `npx tsc --noEmit --pretty false`: passed;
+- `npm run build`: passed with the existing non-fatal Turbopack trace warning;
+- full repository lint remains blocked by the known legacy backlog;
+- `scripts/verify-monolith-expense-cha-ui.mjs` is stale against the already
+  present URL-only CHA lab route and reports `Expected 11 CHA routes, found 12`.
+
+Next visual action:
+
+1. In Phase 7, consume these shared components from the specific master-page
+   register route and keep all new routes behind the existing customs feature
+   flags and permissions.
+2. When a browser is attached, verify `/admin/design-system` customs specimens
+   in Light, Night, and Violet at desktop, tablet, and mobile widths.
 
 ## Production component catalogue
 
@@ -1033,3 +1151,32 @@ The verification table in `docs/accounting/phase-5-operational-ui.md` records
 the final static, test, build, guarded staging, catalogue, and browser
 availability results. Authenticated visual verification remains the only
 environmental evidence gap because no in-app or attached browser was available.
+
+## 2026-07-31 CHA Customs Phase 9 handoff
+
+Phase 9 is implemented on `feature/cha-customs-filing-workspace`.
+
+Added:
+
+- import/export saved job views at `/cha/jobs/import` and `/cha/jobs/export`;
+- `customsDirection=IMPORT|EXPORT` support in the existing create-job dialog;
+- idempotent customs filing profile initialization after standard `ChaJob`
+  creation;
+- `Customs Filing Data` job workspace tab with import/export subtabs and URL
+  state;
+- focused Phase 9 tests in
+  `src/modules/cha/customs/__tests__/filing-workspace-shell.test.ts`.
+
+Preserved:
+
+- existing `ChaJob` job number, branch numbering, manager/customer/owner
+  validation, assignments, standard filing workflow, documents, checklist,
+  expenses, audit, and deletion approval flow;
+- existing job list behavior while customs filing feature flags are disabled;
+- no BE/SB form implementation and no ICEGATE network calls.
+
+Verification passed for focused Phase 9 Vitest, full customs Vitest, targeted
+ESLint on new/small Phase 9 files, production TypeScript, Prisma validation,
+production build, and `git diff --check`. A temporary-server Playwright smoke
+command was rejected by local command policy, so browser smoke remains the only
+Phase 9 evidence gap.

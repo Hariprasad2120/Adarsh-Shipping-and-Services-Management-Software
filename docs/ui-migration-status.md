@@ -1,6 +1,51 @@
 # Monolith UI migration status
 
-Last updated: 2026-07-30
+Last updated: 2026-07-31
+
+## CHA import job creation lab
+
+- Added the isolated `/cha/labs/import-job-creation` prototype on top of the
+  cleaned-up Monolith base.
+- The lab is URL-only and intentionally not registered in the production
+  sidebar/navigation.
+- It uses shared Monolith workspace components and keeps all draft state in
+  browser local storage; it does not call production CHA job actions, Prisma,
+  ICEGATE upload/signing/submission, Drive, or accounting side effects.
+- Lab-scoped verification is tracked with the prototype source under
+  `src/modules/cha/labs/import-job-creation`.
+
+## 2026-07-31 CHA customs shared UI framework
+
+- Added the Phase 6 reusable customs UI framework under
+  `src/modules/cha/customs/ui/customs-workspace.tsx`.
+- The framework reuses the existing CHA and Monolith primitives for page
+  headers, panels, toolbars, tabs, tables, states, badges, filters, menus, and
+  focus-managed dialogs.
+- Added shared customs layout classes to `src/styles/monolith-system.css` for
+  master headers/toolbars, sticky master tables, server-pagination footers,
+  bulk-import dry-run summaries, filing subtabs, responsive form grids,
+  line-item tables, totals footers, validation summaries, dirty warnings, and
+  read-only signed/submitted sections.
+- Registered production specimens in `/admin/design-system`: master table with
+  filters, master edit/import patterns, bulk import preview, filing form
+  section, line-item table, validation error, and read-only signed state.
+- Route metadata now groups future customs routes under Customs Masters,
+  Import, and Export while keeping them hidden unless feature flags and
+  permissions both allow them.
+
+Verification:
+
+- targeted ESLint for Phase 6 files: passed;
+- customs Vitest suite: 49 tests passed across 7 files;
+- existing CHA workspace + customs UI focused tests: 9 passed across 2 files;
+- design-system catalogue verifier: passed;
+- production TypeScript: passed;
+- production build: passed, retaining the existing non-fatal Turbopack
+  customer-portal checklist-files trace warning;
+- full repository lint remains blocked by the documented broad legacy backlog;
+- the older Expense/CHA static verifier remains stale against the existing
+  URL-only `/cha/labs/import-job-creation` route and stops with
+  `Expected 11 CHA routes, found 12`.
 
 ## Final migration audit
 
@@ -1426,6 +1471,113 @@ performance/dashboard tests, the 328-route production build, and a Playwright
 login/HMR smoke. Authenticated visual verification remains pending because the
 configured remote database is not documented as approved staging and the local
 PostgreSQL service credentials are unavailable.
+
+## 2026-07-31 CHA Customs Phase 7 export/shared master pages
+
+Implemented the Monolith export/shared customs master registers on the shared
+Phase 4 backend and Phase 6 UI framework.
+
+Routes added:
+
+- `/cha/masters`
+- `/cha/masters/ritc-unit`
+- `/cha/masters/cess-rate`
+- `/cha/masters/rodtep`
+- `/cha/masters/rosctl`
+- `/cha/masters/drawback`
+- `/cha/masters/scheme-code`
+- `/cha/masters/rodtep-eou`
+- `/cha/masters/[masterKey]/download`
+
+The pages reuse `ChaRitcTariffMaster`, `ChaCessRateMaster`,
+`ChaRodtepRateMaster`, `ChaRodtepEouRateMaster`, `ChaRosctlRateMaster`,
+`ChaDrawbackRateMaster`, and `ChaSchemeCodeMaster`. They remain hidden and
+return the canonical disabled/permission state unless
+`CHA_CUSTOMS_MASTER_DATA` and the matching customs master permissions are
+enabled. RITC is displayed in the Export/shared group but remains a shared
+lookup for import and export services.
+
+The register supports server pagination, URL global/per-column filters, sort,
+active/inactive status, Decimal-safe manual edit fields, create/edit,
+activate/deactivate with audit reason, bulk upload dry run/apply, rejection
+CSV preview, and bounded filtered CSV download. The screenshots were used only
+as field/function references; styling uses Monolith tokens and shared
+components.
+
+Verification passed for targeted ESLint, production TypeScript, the full
+customs Vitest suite, Prisma validation, production build, and
+`git diff --check`. Playwright smoke could not be launched because this
+execution policy blocked both attempted background server mechanisms;
+authenticated master-page visual checks remain dependent on test credentials,
+feature-flag assignment, and an approved running app server.
+
+## 2026-07-31 CHA Customs Phase 8 import/common master pages
+
+Implemented the remaining import, single-window, and common customs master
+registers on the existing Import Master foundation. No duplicate routes or
+duplicate authoritative data tables were added.
+
+Routes now covered by the shared `/cha/masters/[masterKey]` register:
+
+- `/cha/masters/sw-cth`
+- `/cha/masters/aidc`
+- `/cha/masters/bcd`
+- `/cha/masters/master-notification`
+- `/cha/masters/supporting-document`
+- `/cha/masters/uom-master`
+
+The pages reuse `ChaSingleWindowCthMaster`, `ChaAidcRateMaster`,
+`ChaBcdRateMaster`, `ChaCustomsNotificationMaster`,
+`ChaSupportingDocumentMaster`, and `ChaUomMaster`, plus the existing shared
+lookup services. AIDC and notification schemas now preserve the screenshot
+fields, legacy aliases (`notn`, `notnType`, `slNo`, `subSlNo`, amendment
+aliases), CVD fields, preferential flags, and validity dates.
+
+The shared register continues to provide server pagination, URL filters/sort,
+bulk XLSX/CSV dry-run/apply, filtered CSV download, active/inactive status,
+reference-count reporting before deactivation, audit reasons, source/version
+display, and Decimal-safe entry. Notification amendment fields render as a
+compact amendment chain.
+
+Verification passed for targeted ESLint, production TypeScript, Phase 8
+Vitest, full customs Vitest, Prisma validation, production build, and
+`git diff --check`. Playwright smoke remains blocked by the local execution
+policy that prevents launching a background app server in this session.
+
+## 2026-07-31 CHA Customs Phase 9 job entry shell
+
+Implemented the unified import/export customs job entry shell without creating
+a second job system.
+
+Routes:
+
+- `/cha/jobs/import`
+- `/cha/jobs/export`
+- `/cha/jobs/[jobId]?tab=customsFiling&customsSubtab=...`
+
+The saved views reuse the canonical CHA job query with an additive movement
+direction filter and one bounded profile projection query for visible rows.
+The existing create-job dialog and branch numbering remain the only job
+creation path; `customsDirection=IMPORT|EXPORT` only preselects the matching job
+type, validates customs flag/permission, creates the normal `ChaJob`, and then
+idempotently initializes the customs filing profile.
+
+The job workspace now has a gated `Customs Filing Data` top-level tab with
+direction-specific subtabs, URL state, completeness badges, disabled/permission
+states, save indicator, conflict-dialog contract, and a shell-only line table.
+Detailed BE/SB form fields are intentionally deferred to Phase 10.
+
+Verification:
+
+- Phase 9 focused Vitest: 6/6 passed.
+- Full customs Vitest: 65/65 passed.
+- Targeted ESLint for new Phase 9 files and smaller touched modules: passed.
+- `npx tsc --noEmit`: passed.
+- `npx prisma validate`: passed.
+- `npm run build`: passed with the existing Turbopack NFT trace warning from
+  `next.config.ts` / customer-portal checklist route.
+- `git diff --check`: passed with only LF-to-CRLF warnings.
+- Playwright temporary-server smoke was blocked by local command policy.
 
 ## 2026-07-30 Login native-submit credential leak fix
 

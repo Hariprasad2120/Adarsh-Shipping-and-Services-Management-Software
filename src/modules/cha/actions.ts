@@ -6,6 +6,11 @@ import { auth } from "@/lib/auth";
 import { can, requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { tracePerformance } from "@/lib/performance";
+import {
+  getChaCustomsFeatureFlags,
+  isChaCustomsFeatureEnabled,
+} from "@/modules/cha/customs/feature-flags";
+import { ensureCustomsFilingProfileForJob } from "@/modules/cha/customs/filing/workspace";
 import * as chaService from "./service";
 
 type ActionResponse<T = any> = { ok: true; data: T } | { ok: false; error: string };
@@ -175,11 +180,46 @@ export async function createJobAction(data: {
   assignedManagerId: string;
   assignments: { userId: string; responsibility: string }[];
   estimatedClosureDate?: Date | string;
+  customsFilingDirection?: "IMPORT" | "EXPORT";
 }): Promise<ActionResponse> {
   try {
     const { userId, orgId } = await getAuthAndVerify("cha.job.create");
+    if (data.customsFilingDirection) {
+      const [flags, canEditCustomsDraft, selectedJobType] = await Promise.all([
+        getChaCustomsFeatureFlags(orgId),
+        can(userId, "cha.customs.filing.edit_draft"),
+        db.chaJobType.findFirst({
+          where: { id: data.jobTypeId, orgId, isActive: true },
+          select: { movementDirection: true },
+        }),
+      ]);
+      const requiredFlag =
+        data.customsFilingDirection === "IMPORT"
+          ? "CHA_IMPORT_FILING_WORKSPACE"
+          : "CHA_EXPORT_FILING_WORKSPACE";
+      if (!isChaCustomsFeatureEnabled(flags, requiredFlag)) {
+        throw new Error("Customs filing workspace is disabled for this organisation.");
+      }
+      if (!canEditCustomsDraft) {
+        throw new Error("You do not have permission to create customs filing drafts.");
+      }
+      if (selectedJobType?.movementDirection !== data.customsFilingDirection) {
+        throw new Error(`Select an active ${data.customsFilingDirection.toLowerCase()} clearance job type.`);
+      }
+    }
     const job = await chaService.createJob(userId, orgId, data);
+    if (data.customsFilingDirection) {
+      await ensureCustomsFilingProfileForJob({
+        actorId: userId,
+        orgId,
+        jobId: job.id,
+        direction: data.customsFilingDirection,
+      });
+      revalidatePath(`/cha/jobs/${job.id}`);
+    }
     revalidatePath("/cha/jobs");
+    revalidatePath("/cha/jobs/import");
+    revalidatePath("/cha/jobs/export");
     return { ok: true, data: job };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to create CHA job" };

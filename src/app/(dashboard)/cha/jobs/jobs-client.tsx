@@ -94,7 +94,11 @@ interface JobsClientProps {
   options: {
     branches: { id: string; name: string; code: string }[];
     customers: { id: string; name: string }[];
-    jobTypes: { id: string; name: string }[];
+    jobTypes: {
+      id: string;
+      name: string;
+      movementDirection?: "IMPORT" | "EXPORT" | "BOTH" | "OTHER" | null;
+    }[];
     shipmentTypes: { id: string; name: string }[];
     users: { id: string; name: string; email: string }[];
     managers: { id: string; name: string; email: string; branchId: string | null }[];

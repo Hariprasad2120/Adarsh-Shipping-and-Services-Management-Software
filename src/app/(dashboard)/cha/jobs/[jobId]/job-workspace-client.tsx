@@ -26,6 +26,7 @@ import {
   FolderOpen,
   ArrowRight,
   ShieldCheck,
+  ShieldAlert,
   AlertCircle,
   Plus,
   Trash2,
@@ -69,7 +70,22 @@ import { Button } from "@/components/monolith/button";
 import { Badge } from "@/components/monolith/badge";
 import { FileUploadField } from "@/components/monolith/file-upload-field";
 import { Input } from "@/components/monolith/input";
-import { WorkspaceSectionHeading } from "@/components/monolith/workspace";
+import { WorkspaceSectionHeading, WorkspaceState } from "@/components/monolith/workspace";
+import {
+  CustomsConcurrencyConflictDialog,
+  CustomsDirtyStateWarning,
+  CustomsFilingSection,
+  CustomsFilingTabs,
+  CustomsLineItemTable,
+  CustomsPermissionDeniedState,
+  CustomsSaveIndicator,
+  CustomsValidationSummary,
+  type CustomsTabStatus,
+} from "@/modules/cha/customs/ui/customs-workspace";
+import type {
+  ChaCustomsFilingWorkspaceAccess,
+  ChaCustomsWorkspaceDirection,
+} from "@/modules/cha/customs/filing/workspace";
 import * as actions from "@/modules/cha/actions";
 import { DoValidityPanel } from "./do-validity-panel";
 import {
@@ -116,6 +132,8 @@ interface JobWorkspaceClientProps {
     email: string;
     branchId: string | null;
   }[];
+  initialCustomsSubtab?: string;
+  customsFilingAccess: ChaCustomsFilingWorkspaceAccess;
 }
 
 function getPaymentProofLinks(paymentProofKey?: string | null) {
@@ -224,6 +242,7 @@ type WorkspaceTab =
   | "additionalData"
   | "checklist"
   | "filing"
+  | "customsFiling"
   | "advances"
   | "expenses"
   | "audit";
@@ -335,6 +354,40 @@ function getWorkflowUiStageIndex(stage: string) {
   return WORKFLOW_UI_STAGES.findIndex(
     (item) => item.key === getWorkflowUiStageKey(stage),
   );
+}
+
+function normalizeCustomsTabStatus(value?: string | null): CustomsTabStatus {
+  if (value === "COMPLETE") return "complete";
+  if (value === "IN_PROGRESS") return "in_progress";
+  if (value === "BLOCKED") return "blocked";
+  return "not_started";
+}
+
+function getCustomsSubtabs(
+  direction: ChaCustomsWorkspaceDirection | null,
+  profile: ChaCustomsFilingWorkspaceAccess["profile"],
+) {
+  if (direction === "EXPORT") {
+    return [
+      { id: "sb-main", label: "SB Main Details", status: normalizeCustomsTabStatus(profile?.sbMainStatus) },
+      { id: "invoice-details", label: "Invoice Details", status: normalizeCustomsTabStatus(profile?.exportInvoiceStatus) },
+      { id: "item-details", label: "Item Details", status: normalizeCustomsTabStatus(profile?.exportItemStatus) },
+      { id: "supporting-documents", label: "Supporting Documents", status: normalizeCustomsTabStatus(profile?.exportDocumentStatus) },
+      { id: "checklist", label: "Checklist", status: normalizeCustomsTabStatus(profile?.checklistStatus) },
+      { id: "flat-file", label: "Flat File", status: normalizeCustomsTabStatus(profile?.flatFileStatus) },
+    ];
+  }
+
+  return [
+    { id: "be-main", label: "BE Main Details", status: normalizeCustomsTabStatus(profile?.beMainStatus) },
+    { id: "igm", label: "IGM", status: normalizeCustomsTabStatus(profile?.igmStatus) },
+    { id: "invoice", label: "Invoice", status: normalizeCustomsTabStatus(profile?.importInvoiceStatus) },
+    { id: "item-details", label: "Item Details", status: normalizeCustomsTabStatus(profile?.importItemStatus) },
+    { id: "declaration", label: "Declaration", status: normalizeCustomsTabStatus(profile?.importDeclarationStatus) },
+    { id: "supporting-documents", label: "Supporting Documents", status: normalizeCustomsTabStatus(profile?.importDocumentStatus) },
+    { id: "checklist", label: "Checklist", status: normalizeCustomsTabStatus(profile?.checklistStatus) },
+    { id: "flat-file", label: "Flat File", status: normalizeCustomsTabStatus(profile?.flatFileStatus) },
+  ];
 }
 
 function getValiditySummary(validityDate?: string | null) {
@@ -1449,6 +1502,8 @@ export function JobWorkspaceClient({
   initialTab,
   focusField,
   managers = [],
+  initialCustomsSubtab,
+  customsFilingAccess,
 }: JobWorkspaceClientProps) {
   const router = useRouter();
   const [, startRefreshTransition] = useTransition();
@@ -1464,6 +1519,7 @@ export function JobWorkspaceClient({
         "additionalData",
         "checklist",
         "filing",
+        "customsFiling",
         "advances",
         "expenses",
         "audit",
@@ -1473,6 +1529,16 @@ export function JobWorkspaceClient({
     }
     return getDefaultTabForStage(job.stage);
   });
+  const customsSubtabs = getCustomsSubtabs(
+    customsFilingAccess.direction,
+    customsFilingAccess.profile,
+  );
+  const defaultCustomsSubtab = customsSubtabs[0]?.id ?? "be-main";
+  const [activeCustomsSubtab, setActiveCustomsSubtab] = useState(() =>
+    customsSubtabs.some((tab) => tab.id === initialCustomsSubtab)
+      ? initialCustomsSubtab!
+      : defaultCustomsSubtab,
+  );
   const [expandedStageKey, setExpandedStageKey] = useState<string | null>(
     () => {
       if (initialTab) {
@@ -1499,7 +1565,8 @@ export function JobWorkspaceClient({
         currentTab === "overview" ||
         currentTab === "audit" ||
         currentTab === "advances" ||
-        currentTab === "expenses"
+        currentTab === "expenses" ||
+        currentTab === "customsFiling"
       ) {
         return currentTab;
       }
@@ -2104,6 +2171,7 @@ export function JobWorkspaceClient({
         "additionalData",
         "checklist",
         "filing",
+        "customsFiling",
         "advances",
         "expenses",
         "audit",
@@ -3422,11 +3490,27 @@ export function JobWorkspaceClient({
       return;
     }
     setActiveTab(tab);
+    if (tab === "customsFiling") {
+      const params = new URLSearchParams();
+      params.set("tab", "customsFiling");
+      params.set("customsSubtab", activeCustomsSubtab);
+      router.replace(`/cha/jobs/${job.id}?${params.toString()}`, { scroll: false });
+      return;
+    }
     if (tab === "overview") {
       window.setTimeout(() => {
         animateStageScrollIntoView("OVERVIEW");
       }, 80);
     }
+  };
+
+  const navigateToCustomsSubtab = (subtabId: string) => {
+    setActiveTab("customsFiling");
+    setActiveCustomsSubtab(subtabId);
+    const params = new URLSearchParams();
+    params.set("tab", "customsFiling");
+    params.set("customsSubtab", subtabId);
+    router.replace(`/cha/jobs/${job.id}?${params.toString()}`, { scroll: false });
   };
 
   const checklistApprovals = checklistWorkflow?.approvals ?? [];
@@ -7254,6 +7338,9 @@ export function JobWorkspaceClient({
       { key: "additionalData", label: "Additional Data" },
       { key: "checklist", label: "Checklist" },
       { key: "filing", label: "Filing" },
+      ...(customsFilingAccess.enabled && customsFilingAccess.canView
+        ? [{ key: "customsFiling" as WorkspaceTab, label: "Customs Filing Data" }]
+        : []),
       { key: "advances", label: "Advances" },
       {
         key: "expenses",
@@ -8250,6 +8337,8 @@ export function JobWorkspaceClient({
                 checklist:
                   "Upload the customs checklist file for internal and customer approval before filing.",
                 filing: "Enter BOE details and related information.",
+                customsFiling:
+                  "Maintain the structured BE/SB customs filing profile linked to this CHA job.",
                 advances:
                   "Track customer advance payments and record receipts.",
                 expenses:
@@ -8262,6 +8351,7 @@ export function JobWorkspaceClient({
                 additionalData: <Database size={18} />,
                 checklist: <ShieldCheck size={18} />,
                 filing: <FileText size={18} />,
+                customsFiling: <Database size={18} />,
                 advances: <CreditCard size={18} />,
                 expenses: <BarChart2 size={18} />,
                 audit: <ClipboardList size={18} />,
@@ -14517,6 +14607,101 @@ export function JobWorkspaceClient({
                   : "mnx-bg-surface p-6 shadow-sm",
               )}
             >
+              {activeTab === "customsFiling" && (
+                <div className="space-y-4">
+                  {!customsFilingAccess.enabled ? (
+                    <WorkspaceState
+                      variant="permission"
+                      eyebrow="Customs filing"
+                      title="Customs Filing Data is disabled"
+                      description="This job remains available in the standard CHA workspace while the filing workspace feature flag is off."
+                      icon={<ShieldAlert size={22} aria-hidden="true" />}
+                    />
+                  ) : !customsFilingAccess.canView ? (
+                    <CustomsPermissionDeniedState />
+                  ) : !customsFilingAccess.profile ? (
+                    <WorkspaceState
+                      variant="empty"
+                      eyebrow="Customs filing"
+                      title="Customs filing profile pending"
+                      description="The standard CHA job is active. A filing profile will be created by the import or export job entry flow."
+                      icon={<Database size={22} aria-hidden="true" />}
+                    />
+                  ) : (
+                    <>
+                      <CustomsFilingTabs
+                        tabs={customsSubtabs.map((tab) => ({
+                          ...tab,
+                          selected: activeCustomsSubtab === tab.id,
+                          onSelect: () => navigateToCustomsSubtab(tab.id),
+                        }))}
+                      />
+                      <CustomsDirtyStateWarning active={false} />
+                      <CustomsValidationSummary errors={[]} />
+                      <CustomsFilingSection
+                        title={
+                          customsSubtabs.find((tab) => tab.id === activeCustomsSubtab)
+                            ?.label ?? "Customs Filing Data"
+                        }
+                        description={`${customsFilingAccess.direction} draft v${customsFilingAccess.profile.currentDraftVersion} - concurrency ${customsFilingAccess.profile.lockVersion}`}
+                        readonly={!customsFilingAccess.canEditDraft || customsFilingAccess.profile.isLocked}
+                        actions={<CustomsSaveIndicator state="idle" />}
+                      >
+                        <div className="grid gap-4 xl:grid-cols-3">
+                          <div className="rounded-[var(--mn-radius-control)] border mnx-border mnx-bg-soft p-4">
+                            <p className="mnx-label">Profile Status</p>
+                            <p className="mt-2 text-sm font-semibold mnx-text-primary">
+                              {formatChaBadgeLabel(customsFilingAccess.profile.status)}
+                            </p>
+                          </div>
+                          <div className="rounded-[var(--mn-radius-control)] border mnx-border mnx-bg-soft p-4">
+                            <p className="mnx-label">Job Aggregate</p>
+                            <p className="mt-2 text-sm font-semibold mnx-text-primary">
+                              {job.jobNumber}
+                            </p>
+                          </div>
+                          <div className="rounded-[var(--mn-radius-control)] border mnx-border mnx-bg-soft p-4">
+                            <p className="mnx-label">Direction</p>
+                            <p className="mt-2 text-sm font-semibold mnx-text-primary">
+                              {customsFilingAccess.direction}
+                            </p>
+                          </div>
+                        </div>
+                        <CustomsLineItemTable
+                          title="Line workspace"
+                          actions={
+                            <Button type="button" variant="outline" size="sm" disabled>
+                              <Plus size={14} aria-hidden="true" />
+                              New row
+                            </Button>
+                          }
+                          footer={<span>Totals will be calculated by customs services.</span>}
+                        >
+                          <ChaTable>
+                            <thead>
+                              <tr>
+                                <th>Sequence</th>
+                                <th>Reference</th>
+                                <th>Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td colSpan={3}>Detailed {activeCustomsSubtab} rows start in the next phase.</td>
+                              </tr>
+                            </tbody>
+                          </ChaTable>
+                        </CustomsLineItemTable>
+                      </CustomsFilingSection>
+                      <CustomsConcurrencyConflictDialog
+                        open={false}
+                        onClose={() => undefined}
+                        onReload={() => router.refresh()}
+                      />
+                    </>
+                  )}
+                </div>
+              )}
               {activeTab === "overview" && (
                 <div
                   id="workflow-stage-overview"
