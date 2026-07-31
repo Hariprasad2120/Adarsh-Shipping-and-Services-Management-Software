@@ -8,6 +8,7 @@ import {
   Boxes,
   BriefcaseBusiness,
   Calculator,
+  ChevronRight,
   CircleDollarSign,
   ClipboardCheck,
   CreditCard,
@@ -36,6 +37,7 @@ import type {
   ReactNode,
   TableHTMLAttributes,
 } from "react";
+import { createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
 import {
   WorkspaceAction,
@@ -68,6 +70,11 @@ type AccountingRouteMeta = {
   icon: LucideIcon;
 };
 
+export type AccountingBreadcrumb = {
+  href?: string;
+  label: string;
+};
+
 const exactRouteMeta: Record<string, AccountingRouteMeta> = {
   "/accounting": {
     eyebrow: "Finance operations",
@@ -75,6 +82,13 @@ const exactRouteMeta: Record<string, AccountingRouteMeta> = {
     description:
       "Monitor double-entry ledgers, liquidity, receivables, payables, financial controls, and period performance.",
     icon: LayoutDashboard,
+  },
+  "/accounting/access-denied": {
+    eyebrow: "Accounting access",
+    title: "Access denied",
+    description:
+      "Your current role does not include access to this Accounting workspace.",
+    icon: ShieldAlert,
   },
   "/accounting/approvals": {
     eyebrow: "Maker-checker control",
@@ -444,6 +458,30 @@ export function getAccountingRouteMeta(
   return exactRouteMeta["/accounting"];
 }
 
+export function getAccountingBreadcrumbs(
+  pathname: string | null,
+): AccountingBreadcrumb[] {
+  const path = normalizePathname(pathname);
+  const current = getAccountingRouteMeta(path);
+
+  if (path === "/accounting") {
+    return [{ label: current.title }];
+  }
+
+  const breadcrumbs: AccountingBreadcrumb[] = [
+    { href: "/accounting", label: "Accounting" },
+  ];
+  const parentPath = path.split("/").slice(0, -1).join("/");
+  const parent = exactRouteMeta[parentPath];
+
+  if (parentPath !== "/accounting" && parent) {
+    breadcrumbs.push({ href: parentPath, label: parent.title });
+  }
+
+  breadcrumbs.push({ label: current.title });
+  return breadcrumbs;
+}
+
 export function AccountingWorkspaceFrame({
   children,
 }: {
@@ -476,17 +514,39 @@ export function AccountingRoutePageHeader({
 }) {
   const pathname = usePathname();
   const meta = getAccountingRouteMeta(pathname);
+  const breadcrumbs = getAccountingBreadcrumbs(pathname);
   const MetaIcon = meta.icon;
 
   return (
-    <WorkspacePageHeader
-      className={cn("mnx-accounting-page-header", className)}
-      eyebrow={eyebrow ?? meta.eyebrow}
-      title={title ?? meta.title}
-      description={description ?? meta.description}
-      icon={icon ?? <MetaIcon aria-hidden="true" />}
-      actions={actions}
-    />
+    <>
+      <nav className="mnx-accounting-breadcrumbs" aria-label="Breadcrumb">
+        <ol>
+          {breadcrumbs.map((breadcrumb, index) => {
+            const isCurrent = index === breadcrumbs.length - 1;
+            return (
+              <li key={`${breadcrumb.href ?? "current"}-${breadcrumb.label}`}>
+                {index > 0 ? <ChevronRight aria-hidden="true" /> : null}
+                {breadcrumb.href && !isCurrent ? (
+                  <Link href={breadcrumb.href}>{breadcrumb.label}</Link>
+                ) : (
+                  <span aria-current={isCurrent ? "page" : undefined}>
+                    {breadcrumb.label}
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+      <WorkspacePageHeader
+        className={cn("mnx-accounting-page-header", className)}
+        eyebrow={eyebrow ?? meta.eyebrow}
+        title={title ?? meta.title}
+        description={description ?? meta.description}
+        icon={icon ?? <MetaIcon aria-hidden="true" />}
+        actions={actions}
+      />
+    </>
   );
 }
 
@@ -504,6 +564,10 @@ export function AccountingMetrics({
 
 export const AccountingMetric = WorkspaceMetric;
 
+const AccountingSectionTableLabelContext = createContext<string | undefined>(
+  undefined,
+);
+
 export function AccountingSection({
   actions,
   children,
@@ -519,17 +583,22 @@ export function AccountingSection({
   eyebrow?: string;
   title: ReactNode;
 }) {
+  const tableLabel =
+    typeof title === "string" ? `${title} table` : "Accounting records";
+
   return (
-    <WorkspacePanel className={cn("mnx-accounting-section", className)}>
-      <WorkspacePanelHeader
-        className="mnx-accounting-section-header"
-        eyebrow={eyebrow}
-        title={title}
-        description={description}
-        actions={actions}
-      />
-      <div className="mnx-accounting-section-content">{children}</div>
-    </WorkspacePanel>
+    <AccountingSectionTableLabelContext.Provider value={tableLabel}>
+      <WorkspacePanel className={cn("mnx-accounting-section", className)}>
+        <WorkspacePanelHeader
+          className="mnx-accounting-section-header"
+          eyebrow={eyebrow}
+          title={title}
+          description={description}
+          actions={actions}
+        />
+        <div className="mnx-accounting-section-content">{children}</div>
+      </WorkspacePanel>
+    </AccountingSectionTableLabelContext.Provider>
   );
 }
 
@@ -567,11 +636,17 @@ export function AccountingRecordCard({
 
 export function AccountingTable({
   className,
+  scrollLabel,
   ...props
-}: TableHTMLAttributes<HTMLTableElement>) {
+}: TableHTMLAttributes<HTMLTableElement> & {
+  scrollLabel?: string;
+}) {
+  const sectionTableLabel = useContext(AccountingSectionTableLabelContext);
+
   return (
     <WorkspaceTable
       className={cn("mnx-accounting-table", className)}
+      scrollLabel={scrollLabel ?? sectionTableLabel ?? "Accounting records"}
       {...props}
     />
   );

@@ -410,10 +410,18 @@ export function WorkspaceAlert({
 
 export function WorkspaceTable({
   className,
+  scrollLabel,
   ...props
-}: React.TableHTMLAttributes<HTMLTableElement>) {
+}: React.TableHTMLAttributes<HTMLTableElement> & {
+  scrollLabel?: string;
+}) {
   return (
-    <div className="mnx-table-wrap">
+    <div
+      className="mnx-table-wrap"
+      role={scrollLabel ? "region" : undefined}
+      aria-label={scrollLabel}
+      tabIndex={scrollLabel ? 0 : undefined}
+    >
       <table className={cn("mnx-workspace-table", className)} {...props} />
     </div>
   );

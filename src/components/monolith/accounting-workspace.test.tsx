@@ -8,6 +8,7 @@ import {
   AccountingStatus,
   AccountingTable,
   AccountingToolbar,
+  getAccountingBreadcrumbs,
   getAccountingRouteMeta,
 } from "./accounting-workspace";
 
@@ -21,6 +22,22 @@ describe("Accounting production components", () => {
     expect(getAccountingRouteMeta("/accounting/sales-invoices/inv-1").title).toBe("Sales invoice details");
     expect(getAccountingRouteMeta("/accounting/purchase-invoices/pinv-1").title).toBe("Purchase invoice details");
     expect(getAccountingRouteMeta("/accounting/reports").title).toBe("Accounting reports");
+    expect(getAccountingRouteMeta("/accounting/access-denied").title).toBe("Access denied");
+  });
+
+  it("builds compact route-aware breadcrumbs", () => {
+    expect(getAccountingBreadcrumbs("/accounting")).toEqual([
+      { label: "Accounting command centre" },
+    ]);
+    expect(getAccountingBreadcrumbs("/accounting/sales-invoices")).toEqual([
+      { href: "/accounting", label: "Accounting" },
+      { label: "Sales invoices" },
+    ]);
+    expect(getAccountingBreadcrumbs("/accounting/sales-invoices/inv-1")).toEqual([
+      { href: "/accounting", label: "Accounting" },
+      { href: "/accounting/sales-invoices", label: "Sales invoices" },
+      { label: "Sales invoice details" },
+    ]);
   });
 
   it("renders shared metrics, panels, sections, controls, statuses, and tables", () => {
@@ -31,7 +48,11 @@ describe("Accounting production components", () => {
         </AccountingMetrics>
         <AccountingPanel>Panel content</AccountingPanel>
         <AccountingToolbar>Toolbar content</AccountingToolbar>
-        <AccountingSection title="Ledger register">Section content</AccountingSection>
+        <AccountingSection title="Ledger register">
+          <AccountingTable>
+            <tbody><tr><td>JV-001</td></tr></tbody>
+          </AccountingTable>
+        </AccountingSection>
         <AccountingStatus status="POSTED" />
         <AccountingTable>
           <tbody><tr><td>JV-001</td></tr></tbody>
@@ -45,5 +66,9 @@ describe("Accounting production components", () => {
     expect(markup).toContain("mnx-accounting-section");
     expect(markup).toContain("mnx-badge-success");
     expect(markup).toContain("mnx-accounting-table");
+    expect(markup).toContain('role="region"');
+    expect(markup).toContain('aria-label="Ledger register table"');
+    expect(markup).toContain('aria-label="Accounting records"');
+    expect(markup).toContain('tabindex="0"');
   });
 });

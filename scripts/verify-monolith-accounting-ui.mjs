@@ -168,6 +168,7 @@ const workspace = read("src/components/monolith/accounting-workspace.tsx");
 for (const component of [
   "AccountingWorkspaceFrame",
   "AccountingRoutePageHeader",
+  "getAccountingBreadcrumbs",
   "AccountingMetrics",
   "AccountingSection",
   "AccountingToolbar",
@@ -178,6 +179,15 @@ for (const component of [
   "AccountingErrorState",
 ])
   assert(workspace.includes(component), `Missing shared ${component}.`);
+assert(
+  workspace.includes('aria-label="Breadcrumb"'),
+  "Accounting route headers must expose shared breadcrumbs.",
+);
+assert(
+  workspace.includes("AccountingSectionTableLabelContext") &&
+    workspace.includes('sectionTableLabel ?? "Accounting records"'),
+  "Accounting tables must expose a keyboard-scrollable labelled region.",
+);
 
 const scopedSources = [
   ...walk(accountingRoot, (file) => /\.(?:ts|tsx)$/.test(file)),
@@ -312,6 +322,7 @@ for (const [sourceName, signals] of Object.entries({
 const styles = read("src/styles/monolith-system.css");
 for (const className of [
   ".mnx-accounting-page",
+  ".mnx-accounting-breadcrumbs",
   ".mnx-accounting-page-header",
   ".mnx-accounting-metrics",
   ".mnx-accounting-section",
@@ -322,6 +333,11 @@ for (const className of [
   ".mnx-accounting-dialog",
 ])
   assert(styles.includes(className), `Missing shared style ${className}.`);
+assert(
+  styles.includes(".mnx-accounting-table thead th") &&
+    styles.includes("position: sticky"),
+  "Accounting tables must retain sticky financial column headers.",
+);
 assert(
   styles.includes("@media (max-width: 64rem)") &&
     styles.includes("@media (max-width: 42rem)"),

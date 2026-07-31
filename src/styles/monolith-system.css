@@ -11370,12 +11370,14 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
 
 /* Accounting operations */
 .mnx-accounting-page {
+  width: min(100%, 100rem);
+  margin-inline: auto;
   gap: var(--mn-space-6);
 }
 
 .mnx-accounting-content {
   display: grid;
-  gap: var(--mn-space-6);
+  gap: var(--mn-space-5);
   min-width: 0;
 }
 
@@ -11383,26 +11385,61 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
   min-width: 0;
 }
 
+.mnx-accounting-breadcrumbs {
+  min-width: 0;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  font-weight: 600;
+}
+
+.mnx-accounting-breadcrumbs ol {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0 var(--mn-space-1);
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-width: thin;
+}
+
+.mnx-accounting-breadcrumbs li {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--mn-space-2);
+  white-space: nowrap;
+}
+
+.mnx-accounting-breadcrumbs svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  color: color-mix(in srgb, var(--mnx-text-muted) 58%, var(--mnx-border));
+}
+
+.mnx-accounting-breadcrumbs a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mnx-accounting-breadcrumbs a:hover,
+.mnx-accounting-breadcrumbs a:focus-visible {
+  color: var(--mnx-accent-text);
+}
+
+.mnx-accounting-breadcrumbs [aria-current="page"] {
+  color: var(--mnx-text);
+}
+
 .mnx-accounting-page-header {
   overflow: hidden;
   border-color: color-mix(in srgb, var(--mnx-accent) 24%, var(--mnx-border));
-  background: var(--mnx-hero-gradient);
+  background: var(--mnx-surface-gradient);
 }
 
 .mnx-accounting-page-header::after {
-  content: "";
-  position: absolute;
-  right: 2rem;
-  bottom: -3.5rem;
-  width: 12rem;
-  height: 12rem;
-  border: 1px solid color-mix(in srgb, var(--mnx-accent) 34%, transparent);
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 1.75rem color-mix(in srgb, var(--mnx-accent) 7%, transparent),
-    0 0 0 3.5rem color-mix(in srgb, var(--mnx-accent) 4%, transparent);
-  opacity: 0.54;
-  pointer-events: none;
+  display: none;
 }
 
 .mnx-accounting-page-header .mnx-page-header-icon {
@@ -11430,6 +11467,36 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
 
 .mnx-accounting-section-content:has(> .mnx-table-wrap) {
   padding: 0;
+}
+
+.mnx-accounting-page .mnx-table-wrap {
+  max-width: 100%;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+.mnx-accounting-page .mnx-table-wrap:focus-visible {
+  outline: 2px solid var(--mnx-accent);
+  outline-offset: -2px;
+}
+
+.mnx-accounting-table {
+  min-width: 52rem;
+}
+
+.mnx-accounting-table thead th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  background: var(--mnx-surface);
+}
+
+.mnx-accounting-table :is(th, td).mnx-accounting-amount {
+  text-align: right;
+}
+
+.mnx-accounting-table tbody tr:focus-within {
+  background: color-mix(in srgb, var(--mnx-accent) 7%, var(--mnx-surface));
 }
 
 .mnx-accounting-toolbar {
@@ -11756,6 +11823,15 @@ button.mnx-accounting-record-card {
 }
 
 @media (max-width: 42rem) {
+  .mnx-accounting-page,
+  .mnx-accounting-content {
+    gap: var(--mn-space-4);
+  }
+
+  .mnx-accounting-breadcrumbs ol {
+    padding-inline: 0;
+  }
+
   .mnx-accounting-page-header {
     padding: var(--mn-space-5);
   }
@@ -11793,10 +11869,21 @@ button.mnx-accounting-record-card {
   .mnx-accounting-list-row {
     align-items: flex-start;
   }
+
+  .mnx-accounting-pagination,
+  .mnx-accounting-pagination > div {
+    align-items: stretch;
+  }
+
+  .mnx-accounting-pagination > div,
+  .mnx-accounting-pagination .mnx-button {
+    width: 100%;
+  }
 }
 
 @media print {
   .mnx-accounting-page-header,
+  .mnx-accounting-breadcrumbs,
   .mnx-accounting-toolbar,
   .mnx-accounting-report-nav,
   .mnx-accounting-form-actions {
