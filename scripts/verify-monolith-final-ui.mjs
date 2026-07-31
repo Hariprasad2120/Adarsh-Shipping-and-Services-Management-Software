@@ -45,8 +45,8 @@ const portalPages = pageFiles.filter((filePath) =>
 );
 
 assert(
-  pageFiles.length === 229,
-  `Expected 229 routes, found ${pageFiles.length}.`,
+  pageFiles.length === 230,
+  `Expected 230 routes, found ${pageFiles.length}.`,
 );
 assert(
   layoutFiles.length === 14,
@@ -59,8 +59,8 @@ assert(
 
 const routeAudit = read("docs/ui-route-audit.md");
 for (const signal of [
-  "- Page routes: **229**",
-  "- Migrated routes: **228**",
+  "- Page routes: **230**",
+  "- Migrated routes: **229**",
   "- Pending individual module migrations: **0**",
   "| `/customer-portal`",
 ]) {

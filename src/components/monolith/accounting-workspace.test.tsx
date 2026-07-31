@@ -14,6 +14,7 @@ import {
 describe("Accounting production components", () => {
   it("maps all route families including dynamic details", () => {
     expect(getAccountingRouteMeta("/accounting").title).toBe("Accounting command centre");
+    expect(getAccountingRouteMeta("/accounting/readiness").title).toBe("Accounting readiness evidence");
     expect(getAccountingRouteMeta("/accounting/items/item-1").title).toBe("Item details");
     expect(getAccountingRouteMeta("/accounting/journal-entries/jv-1").title).toBe("Journal entry details");
     expect(getAccountingRouteMeta("/accounting/payment-entries/pay-1").title).toBe("Payment entry details");

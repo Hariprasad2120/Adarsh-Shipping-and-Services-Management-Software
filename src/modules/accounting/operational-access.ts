@@ -11,6 +11,7 @@ export type AccountingOperationalArea =
   | "depreciation"
   | "partners"
   | "outbox"
+  | "readiness"
   | "configuration";
 
 export type AccountingRouteAccess = {
@@ -140,6 +141,13 @@ const ROUTE_ACCESS: Array<{
         "accounting.outbox.retry",
         "accounting.outbox.manual-review",
       ],
+    },
+  },
+  {
+    match: (path) => path.startsWith("/accounting/readiness"),
+    access: {
+      area: "readiness",
+      permissions: ["accounting.readiness.read"],
     },
   },
   {

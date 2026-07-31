@@ -943,6 +943,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/accounting/manual-review"],
       },
       {
+        href: "/accounting/readiness",
+        label: "Governance · Readiness",
+        icon: Security,
+        permission: "accounting.readiness.read",
+        matchPaths: ["/accounting/readiness"],
+      },
+      {
         href: "/accounting/configuration",
         label: "Configuration",
         icon: Settings,

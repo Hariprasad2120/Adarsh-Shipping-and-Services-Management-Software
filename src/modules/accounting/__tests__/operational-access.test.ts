@@ -26,6 +26,9 @@ describe("Phase 5 Accounting route access", () => {
     expect(getAccountingRouteAccess("/accounting/manual-review").area).toBe(
       "outbox",
     );
+    expect(getAccountingRouteAccess("/accounting/readiness").area).toBe(
+      "readiness",
+    );
   });
 
   it("allows a route only through an accepted Accounting permission", () => {

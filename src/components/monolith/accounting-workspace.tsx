@@ -167,6 +167,13 @@ const exactRouteMeta: Record<string, AccountingRouteMeta> = {
       "Inspect legal entities, periods, currencies, policies, number series, mappings, and explicit policy gates.",
     icon: Settings2,
   },
+  "/accounting/readiness": {
+    eyebrow: "Production authorization planning",
+    title: "Accounting readiness evidence",
+    description:
+      "Collect and independently verify readiness metadata. This workspace cannot authorize production or begin cutover.",
+    icon: ShieldAlert,
+  },
   "/accounting/accounts": {
     eyebrow: "Ledger administration",
     title: "Chart of accounts",

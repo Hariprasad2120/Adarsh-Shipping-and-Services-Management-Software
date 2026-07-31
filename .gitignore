@@ -92,6 +92,7 @@ pnpm-lock.yaml
 !/docs/accounting/phase-7-rollout-readiness.md
 !/docs/accounting/phase-7-operational-runbook.md
 !/docs/accounting/phase-7-traceability.md
+!/docs/accounting/phase-8-production-authorization-planning.md
 !/docs/accounting/contracts/
 
 # sensitive data output

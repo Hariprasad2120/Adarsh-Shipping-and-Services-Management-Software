@@ -94,6 +94,7 @@ const requiredRoutes = [
   "/accounting/purchase-orders",
   "/accounting/purchase-orders/new",
   "/accounting/quotations",
+  "/accounting/readiness",
   "/accounting/recurring",
   "/accounting/reports",
   "/accounting/sales-invoices",
@@ -107,11 +108,30 @@ const requiredRoutes = [
 ];
 
 assert(
-  routes.length === 48,
-  `Expected 48 Accounting routes, found ${routes.length}.`,
+  requiredRoutes.length === 49,
+  `Expected inventory of 49 Accounting routes, found ${requiredRoutes.length}.`,
 );
+assert(
+  routes.length === 49,
+  `Expected 49 Accounting routes, found ${routes.length}.`,
+);
+assert(
+  new Set(routes).size === routes.length,
+  "Discovered duplicate Accounting routes.",
+);
+assert(
+  new Set(requiredRoutes).size === requiredRoutes.length,
+  "Expected Accounting route inventory contains duplicates.",
+);
+for (const route of routes)
+  assert(
+    route === "/accounting" || route.startsWith("/accounting/"),
+    `Discovered route outside Accounting: ${route}.`,
+  );
 for (const route of requiredRoutes)
   assert(routes.includes(route), `Missing discovered route ${route}.`);
+for (const route of routes)
+  assert(requiredRoutes.includes(route), `Unexpected discovered route ${route}.`);
 
 for (const requiredFile of [
   "src/app/(dashboard)/accounting/layout.tsx",
