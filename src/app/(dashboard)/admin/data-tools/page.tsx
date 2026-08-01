@@ -3,11 +3,8 @@ import { requirePermission } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import { WorkbookImportForm } from "./workbook-import-form";
 import { Database, FileSpreadsheet } from "lucide-react";
-import {
-  AdminPanel,
-  AdminPanelHeader,
-  WorkspaceSectionHeading,
-} from "@/components/monolith";
+import { AdminPanel, AdminPanelHeader } from "@/modules/admin/components/admin-workspace";
+import { WorkspaceSectionHeading } from "@/components/layout/workspace";
 
 export const metadata = {
   title: "Data Tools | Admin | Adarsh Shipping",

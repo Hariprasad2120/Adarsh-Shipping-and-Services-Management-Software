@@ -10,16 +10,8 @@ import {
   Shield,
 } from "lucide-react";
 import { NotificationSettings } from "./notification-settings";
-import { GoogleChatLiveViewSettings } from "../google-chat-live-view/_components/google-chat-live-view-settings";
-import {
-  CommunicationBadge,
-  CommunicationButton,
-  CommunicationField,
-  CommunicationInput,
-  CommunicationPanel,
-  CommunicationPanelHeader,
-  CommunicationTextarea,
-} from "@/components/monolith";
+import { GoogleChatLiveViewSettings } from "@/modules/communication/components/google-chat-live-view-settings";
+import { CommunicationBadge, CommunicationButton, CommunicationField, CommunicationInput, CommunicationPanel, CommunicationPanelHeader, CommunicationTextarea } from "@/modules/communication/components/workspace/communication-workspace";
 
 export default async function CommunicationSettings() {
   const session = await getSession();

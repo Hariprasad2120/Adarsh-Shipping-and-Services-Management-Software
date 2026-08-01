@@ -5,7 +5,7 @@ import {
   DataTableCell,
   DataTablePrimaryLinkCell,
   DataTableRow,
-} from "@/components/monolith/workspace-data-table";
+} from "@/modules/people/components/workspace-data-table";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 

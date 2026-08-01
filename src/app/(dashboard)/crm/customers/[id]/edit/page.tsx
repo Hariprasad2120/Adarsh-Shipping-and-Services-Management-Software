@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-
 interface EditAccountPageProps {
   params: Promise<{ id: string }>;
 }

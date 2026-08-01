@@ -1,13 +1,13 @@
 "use client";
 
-import { CrmButton, CrmInput } from "@/components/monolith/crm-workspace";
+import { CrmButton, CrmInput } from "@/modules/crm/components/workspace/crm-workspace";
 
-import { NativeSelect } from "@/components/monolith/native-select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Card, CardContent } from "@/components/monolith/card";
-import { Button } from "@/components/monolith/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { updateTicketStatusAction, assignTicketAction } from "./actions";
 import { MessageSquare, User, Calendar, AlertTriangle, ArrowRight, Shield } from "lucide-react";
 

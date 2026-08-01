@@ -1,12 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import {
-  AdminButton,
-  AdminField,
-  AdminInput,
-  WorkspaceAlert,
-} from "@/components/monolith";
+import { AdminButton, AdminField, AdminInput } from "@/modules/admin/components/admin-workspace";
+import { WorkspaceAlert } from "@/components/layout/workspace";
 import type { ReviewerRoleWeights } from "@/modules/ams/settings";
 
 export function SettingsClient({

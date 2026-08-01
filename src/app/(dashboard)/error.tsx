@@ -1,11 +1,7 @@
 "use client";
 
 import { RotateCcw } from "lucide-react";
-import {
-  WorkspaceAction,
-  WorkspacePage,
-  WorkspaceState,
-} from "@/components/monolith";
+import { WorkspaceAction, WorkspacePage, WorkspaceState } from "@/components/layout/workspace";
 
 export default function DashboardRouteError({
   reset,

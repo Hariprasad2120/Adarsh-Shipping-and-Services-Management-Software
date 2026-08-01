@@ -17,7 +17,7 @@ import {
   View,
   Search,
 } from "@carbon/icons-react";
-import { FolderIcon } from "@/components/monolith/folder-icon";
+import { FolderIcon } from "@/components/ui/folder-icon";
 const Folder = FolderIcon as unknown as CarbonIconType;
 import type { Caps } from "@/lib/rbac";
 import { isNavSectionEnabled } from "@/lib/app-edition";

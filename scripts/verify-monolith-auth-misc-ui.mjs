@@ -70,9 +70,9 @@ const routeSources = [
   "src/app/(auth)/setup/page.tsx",
   "src/app/google-chat-link/page.tsx",
   "src/app/verify/[id]/page.tsx",
-  "src/components/auth/monolith-logistics-login.tsx",
-  "src/components/root-module-control-client.tsx",
-  "src/components/root-signout-button.tsx",
+  "src/modules/auth/components/monolith-logistics-login.tsx",
+  "src/modules/core/components/root-module-control-client.tsx",
+  "src/modules/core/components/root-signout-button.tsx",
 ];
 
 for (const relativePath of routeSources) {
@@ -115,7 +115,7 @@ for (const relativePath of routeSources) {
   }
 }
 
-const publicWorkspace = read("src/components/monolith/public-workspace.tsx");
+const publicWorkspace = read("src/modules/auth/components/public-workspace.tsx");
 for (const component of [
   "PublicMonolithShell",
   "PublicBrand",
@@ -195,10 +195,12 @@ assert(
   "Public routes do not own a semantic document/scrollbar surface.",
 );
 assert(
-  read("src/app/globals.css").includes("main:not(.mnx-public-shell)"),
+  read("src/styles/legacy-compatibility.css").includes(
+    "main:not(.mnx-public-shell)",
+  ),
   "Legacy global form rules are not scoped away from public Monolith pages.",
 );
-const scrollNavigator = read("src/components/scroll-navigator.tsx");
+const scrollNavigator = read("src/components/navigation/scroll-navigator.tsx");
 for (const routeSignal of [
   'pathname === "/"',
   'pathname === "/login"',
@@ -214,8 +216,8 @@ for (const routeSignal of [
 
 const behaviorSources = {
   root: read("src/app/page.tsx"),
-  rootControl: read("src/components/root-module-control-client.tsx"),
-  login: read("src/components/auth/monolith-logistics-login.tsx"),
+  rootControl: read("src/modules/core/components/root-module-control-client.tsx"),
+  login: read("src/modules/auth/components/monolith-logistics-login.tsx"),
   setup: read("src/app/(auth)/setup/page.tsx"),
   verify: read("src/app/verify/[id]/page.tsx"),
   googleChatLink: read("src/app/google-chat-link/page.tsx"),

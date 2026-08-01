@@ -4,7 +4,7 @@
 
 import { Download, Loader2, Play } from "lucide-react";
 import { useState } from "react";
-import { DateInput } from "@/components/monolith/date-input";
+import { DateInput } from "@/components/ui/date-input";
 import {
   AccountingAction,
   AccountingAlert,
@@ -12,7 +12,7 @@ import {
   AccountingField,
   AccountingSection,
   AccountingTable,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 import {
   getAPAgeingAction,
   getARAgeingAction,

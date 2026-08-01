@@ -1,6 +1,6 @@
 import React from "react";
 import { getSession } from "@/lib/auth";
-import { PeopleNotice } from "@/components/monolith/people-workspace";
+import { PeopleNotice } from "@/modules/people/components/people-workspace";
 import { redirect } from "next/navigation";
 import { HelpCircle } from "lucide-react";
 

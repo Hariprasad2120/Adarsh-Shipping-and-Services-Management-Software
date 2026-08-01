@@ -2,7 +2,7 @@ import React from "react";
 import { db } from "@/lib/db";
 import { listAccounts } from "@/modules/accounting/service";
 import { NewJVClient } from "./new-jv-client";
-import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+import { AccountingRoutePageHeader } from "@/modules/accounting/components/accounting-workspace";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 
 export default async function NewJournalEntryPage() {

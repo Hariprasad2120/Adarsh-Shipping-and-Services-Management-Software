@@ -1,6 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { BreadcrumbLabel } from "@/components/breadcrumb-label";
+import { BreadcrumbLabel } from "@/components/navigation/breadcrumb-label";
 import { getNow } from "@/lib/clock";
 import { loadCaps, requirePermission } from "@/lib/rbac";
 import { toDisplayTitleCase } from "@/lib/text-case";

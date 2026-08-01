@@ -14,14 +14,8 @@ import {
 } from "lucide-react";
 import { GoogleChatLiveViewFallback } from "./google-chat-live-view-fallback";
 import { GoogleChatLiveViewDiagnostics } from "./google-chat-live-view-diagnostics";
-import {
-  CommunicationBadge,
-  CommunicationButton,
-  CommunicationPanel,
-  CommunicationPanelHeader,
-  CommunicationSelect,
-  WorkspaceAlert,
-} from "@/components/monolith";
+import { CommunicationBadge, CommunicationButton, CommunicationPanel, CommunicationPanelHeader, CommunicationSelect } from "@/modules/communication/components/workspace/communication-workspace";
+import { WorkspaceAlert } from "@/components/layout/workspace";
 
 type EmbedMode =
   | "embed-attempt"

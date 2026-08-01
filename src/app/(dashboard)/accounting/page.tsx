@@ -6,7 +6,7 @@ import {
   AccountingRoutePageHeader,
   AccountingSection,
   AccountingStatus,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 import {
   AccountingWorkflowCards,
   type AccountingWorkflowCardItem,
@@ -35,7 +35,6 @@ import {
   Workflow,
   type LucideIcon,
 } from "lucide-react";
-
 const accountingWorkflowDescriptions: Record<string, string> = {
   "/accounting": "Return to the accounting command centre and current operational metrics.",
   "/accounting/approvals": "Review accounting documents, journals, and payments that need checker action.",

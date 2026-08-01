@@ -100,8 +100,8 @@ for (const requiredFile of [
   "src/app/(dashboard)/admin/layout.tsx",
   "src/app/(dashboard)/admin/loading.tsx",
   "src/app/(dashboard)/admin/error.tsx",
-  "src/components/monolith/communication-workspace.tsx",
-  "src/components/monolith/admin-workspace.tsx",
+  "src/modules/communication/components/workspace/communication-workspace.tsx",
+  "src/modules/admin/components/admin-workspace.tsx",
 ]) {
   assert(
     existsSync(path.join(repositoryRoot, requiredFile)),
@@ -122,7 +122,7 @@ assert(
 );
 
 const communicationWorkspace = read(
-  "src/components/monolith/communication-workspace.tsx",
+  "src/modules/communication/components/workspace/communication-workspace.tsx",
 );
 for (const route of communicationRoutes) {
   assert(
@@ -131,10 +131,8 @@ for (const route of communicationRoutes) {
   );
 }
 
-const adminWorkspace = read("src/components/monolith/admin-workspace.tsx");
-for (const route of adminRoutes.filter(
-  (route) => route !== "/admin/design-system",
-)) {
+const adminWorkspace = read("src/modules/admin/components/admin-workspace.tsx");
+for (const route of adminRoutes.filter((route) => route !== "/admin/design-system")) {
   assert(
     adminWorkspace.includes(`"${route}"`),
     `Admin route metadata is missing ${route}.`,
@@ -230,7 +228,7 @@ for (const [source, components] of [
   }
 }
 
-const styles = read("src/styles/monolith-system.css");
+const styles = `${read("src/styles/monolith-system.css")}\n${read("src/styles/modules/communication-admin.css")}`;
 for (const className of [
   ".mnx-communication-page",
   ".mnx-communication-page-header",
@@ -277,7 +275,7 @@ const behaviorSources = {
     "src/app/(dashboard)/communication/settings/page.tsx",
   ),
   liveSettings: read(
-    "src/app/(dashboard)/communication/google-chat-live-view/_components/google-chat-live-view-settings.tsx",
+    "src/modules/communication/components/google-chat-live-view-settings.tsx",
   ),
   dataTools: read(
     "src/app/(dashboard)/admin/data-tools/workbook-import-form.tsx",

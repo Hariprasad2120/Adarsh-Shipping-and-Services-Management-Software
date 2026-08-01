@@ -1,6 +1,6 @@
 "use client";
 
-import { CrmButton } from "@/components/monolith/crm-workspace";
+import { CrmButton } from "@/modules/crm/components/workspace/crm-workspace";
 
 import React, { useState } from "react";
 import { toast } from "sonner";

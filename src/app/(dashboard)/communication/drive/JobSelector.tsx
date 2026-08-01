@@ -1,6 +1,6 @@
 "use client";
 
-import { NativeSelect } from "@/components/monolith/native-select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useRouter } from "next/navigation";
 
 export default function JobSelector({

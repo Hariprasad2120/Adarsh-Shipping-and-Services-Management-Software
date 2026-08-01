@@ -6,14 +6,7 @@ import {
   Users,
   Video,
 } from "lucide-react";
-import {
-  CommunicationBadge,
-  CommunicationEmptyTableRow,
-  CommunicationErrorState,
-  CommunicationPanel,
-  CommunicationPanelHeader,
-  CommunicationTable,
-} from "@/components/monolith";
+import { CommunicationBadge, CommunicationEmptyTableRow, CommunicationErrorState, CommunicationPanel, CommunicationPanelHeader, CommunicationTable } from "@/modules/communication/components/workspace/communication-workspace";
 
 type CalendarEvent = Awaited<
   ReturnType<typeof listUpcomingEvents>

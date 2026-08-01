@@ -1,9 +1,6 @@
 import { redirect } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
-import {
-  WorkspacePage,
-  WorkspacePageHeader,
-} from "@/components/monolith";
+import { WorkspacePage, WorkspacePageHeader } from "@/components/layout/workspace";
 import { getSession } from "@/lib/auth";
 import { listActiveSessions } from "@/lib/session-service";
 import {

@@ -1,4 +1,4 @@
-import { AdminLoadingState } from "@/components/monolith/admin-workspace";
+import { AdminLoadingState } from "@/modules/admin/components/admin-workspace";
 
 export default function AdminLoading() {
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { PeopleControlButton as MnxAction } from "@/components/monolith/people-controls";
+import { PeopleControlButton as MnxAction } from "@/modules/people/components/people-controls";
 
 import Link from "next/link";
 import {
@@ -15,10 +15,10 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { FilterMenu } from "@/components/monolith/filter-menu";
-import { DropdownSelect } from "@/components/monolith/dropdown-select";
-import { Input } from "@/components/monolith/input";
-import { WorkspaceDialog } from "@/components/monolith/workspace-dialog";
+import { FilterMenu } from "@/components/forms/filter-menu";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Input } from "@/components/ui/input";
+import { WorkspaceDialog } from "@/components/layout/workspace-dialog";
 
 type Branch = {
   id: string;

@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { TrackingDashboardView } from "@/components/hrms/tracking-dashboard-view";
+import { TrackingDashboardView } from "@/modules/hrms/components/tracking-dashboard-view";
 
 export default async function TrackingPage() {
   const session = await getSession();

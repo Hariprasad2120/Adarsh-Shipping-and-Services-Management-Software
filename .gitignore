@@ -50,6 +50,7 @@ next-env.d.ts
 
 # runtime logs and uploads
 next-auth.log
+*.log
 /uploads
 /users.json
 
@@ -79,6 +80,8 @@ pnpm-lock.yaml
 !/docs/performance-file-audit.md
 !/docs/performance-baseline.md
 !/docs/performance-results.md
+!/docs/refactor/
+!/docs/refactor/**
 !/docs/accounting/
 /docs/accounting/*
 !/docs/accounting/domain-model.md
@@ -122,6 +125,9 @@ ngrok.yml
 
 # local AI/dev artifacts
 /.codex-*
+/artifacts/
+/scrap/
+/Adarsh-Shipping-and-Services-Management-Software/
 /brain/
 /graphify-out/
 /Parsec *.mp4

@@ -3,9 +3,9 @@
 import {
   PeopleControlButton as MnxAction,
   PeopleControlTable as MnxTable,
-} from "@/components/monolith/people-controls";
+} from "@/modules/people/components/people-controls";
 
-import { NativeSelect } from "@/components/monolith/native-select";
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";

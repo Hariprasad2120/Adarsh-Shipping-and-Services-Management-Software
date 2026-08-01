@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { NewQuotePage } from "../_components/NewQuotePage";
+import { NewQuotePage } from "@/modules/crm/components/quotes/NewQuotePage";
 
 interface SearchParams {
   leadId?: string;

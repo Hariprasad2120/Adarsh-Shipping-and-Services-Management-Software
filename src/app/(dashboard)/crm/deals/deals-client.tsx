@@ -4,9 +4,9 @@ import {
   CrmButton,
   CrmInput,
   CrmTable,
-} from "@/components/monolith/crm-workspace";
+} from "@/modules/crm/components/workspace/crm-workspace";
 
-import { NativeSelect } from "@/components/monolith/native-select";
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { toast } from "sonner";

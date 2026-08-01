@@ -1,4 +1,4 @@
-import { CrmConfigurationState, CrmPermissionState } from "@/components/monolith/crm-workspace";
+import { CrmConfigurationState, CrmPermissionState } from "@/modules/crm/components/workspace/crm-workspace";
 import React, { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";

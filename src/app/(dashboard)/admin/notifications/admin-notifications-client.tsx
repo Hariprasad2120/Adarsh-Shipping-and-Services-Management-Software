@@ -1,13 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import {
-  AdminButton,
-  AdminEmptyTableRow,
-  AdminPanel,
-  AdminTable,
-} from "@/components/monolith";
-import { useNotifications } from "@/components/notifications/notification-provider";
+import { AdminButton, AdminEmptyTableRow, AdminPanel, AdminTable } from "@/modules/admin/components/admin-workspace";
+import { useNotifications } from "@/modules/notifications/components/notification-provider";
 
 type AdminNotificationRow = {
   id: string;

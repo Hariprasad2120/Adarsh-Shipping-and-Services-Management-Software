@@ -1,14 +1,14 @@
 "use client";
 
-import { Textarea } from "@/components/monolith/textarea";
-import { Input } from "@/components/monolith/input";
-import { Button } from "@/components/monolith/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
   ChaNativeSelect as NativeSelect,
   ChaPanel,
   ChaRoutePageHeader,
-} from "@/components/monolith/cha-workspace";
+} from "@/modules/cha/components/workspace/cha-workspace";
 import {
   GST_PUBLIC_SEARCH_URL,
   isGstLookupConfigurationError,

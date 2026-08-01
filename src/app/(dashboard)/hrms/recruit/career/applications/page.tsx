@@ -3,9 +3,9 @@
 import {
   PeopleControlButton as MnxAction,
   PeopleControlInput as MnxInput,
-} from "@/components/monolith/people-controls";
+} from "@/modules/people/components/people-controls";
 
-import { NativeSelect } from "@/components/monolith/native-select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useEffect, useCallback } from "react";
 import { Add, Search } from "@carbon/icons-react";
 import {
@@ -16,7 +16,7 @@ import {
   DataTableHeader,
   DataTableRow,
   DataTableEmpty,
-} from "@/components/monolith/people-data-table";
+} from "@/modules/people/components/people-data-table";
 
 type JsApp = {
   id: string;

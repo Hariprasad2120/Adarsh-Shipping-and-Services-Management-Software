@@ -8,8 +8,8 @@ import {
   PerformanceTableHead,
   PerformanceTableHeader,
   PerformanceTableRow,
-} from "@/components/monolith/performance-workspace";
-import { NativeSelect } from "@/components/monolith/native-select";
+} from "@/modules/performance/components/performance-workspace";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useTransition, FormEvent } from "react";
 import { toast } from "sonner";
 import {
@@ -17,8 +17,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/monolith/card";
-import { Button } from "@/components/monolith/button";
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { requestExtensionAction, decideExtensionAction } from "./actions";
 import {
   Plus,

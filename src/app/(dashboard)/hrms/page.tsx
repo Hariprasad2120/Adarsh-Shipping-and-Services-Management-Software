@@ -24,7 +24,7 @@ import {
   PeopleTableHead,
   PeopleTableHeader,
   PeopleTableRow,
-} from "@/components/monolith/people-workspace";
+} from "@/modules/people/components/people-workspace";
 
 export default async function HrmsDashboardPage() {
   const session = await getSession();

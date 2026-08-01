@@ -2,7 +2,7 @@
 
 import { notFound, useParams } from "next/navigation";
 import { getAllItems } from "@/lib/items/item-store";
-import { ItemDetailPage } from "@/components/items/ItemDetailPage";
+import { ItemDetailPage } from "@/modules/items/components/ItemDetailPage";
 import React, { useEffect, useState } from "react";
 import type { ItemListItem } from "@/lib/items/types";
 

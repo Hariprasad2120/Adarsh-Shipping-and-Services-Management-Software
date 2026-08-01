@@ -4,9 +4,9 @@ import {
   CrmButton,
   CrmInput,
   CrmTextarea,
-} from "@/components/monolith/crm-workspace";
+} from "@/modules/crm/components/workspace/crm-workspace";
 
-import { NativeSelect } from "@/components/monolith/native-select";
+import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,10 +20,10 @@ import {
   updateLeadAction,
   getCallAttemptsAction,
 } from "@/modules/crm/actions";
-import { NotesPanel } from "../../_components/notes-panel";
-import { AttachmentsPanel } from "../../_components/attachments-panel";
-import { ActivitiesPanel } from "../../_components/activities-panel";
-import { TimelinePanel } from "../../_components/timeline-panel";
+import { NotesPanel } from "@/modules/crm/components/records/notes-panel";
+import { AttachmentsPanel } from "@/modules/crm/components/records/attachments-panel";
+import { ActivitiesPanel } from "@/modules/crm/components/records/activities-panel";
+import { TimelinePanel } from "@/modules/crm/components/records/timeline-panel";
 import {
   ArrowLeft,
   Ship,

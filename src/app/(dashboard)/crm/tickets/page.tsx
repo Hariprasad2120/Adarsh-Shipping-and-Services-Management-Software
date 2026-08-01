@@ -4,7 +4,7 @@ import { requirePermission } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import { TicketForm } from "./ticket-form";
 import { TicketsClient } from "./tickets-client";
-import { CrmConfigurationState } from "@/components/monolith/crm-workspace";
+import { CrmConfigurationState } from "@/modules/crm/components/workspace/crm-workspace";
 
 export const metadata = {
   title: "Support Tickets | CRM | Adarsh Shipping",

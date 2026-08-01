@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { CommercialDocumentsPage } from "../_components/commercial-documents-page";
-import { AccountingLoadingState } from "@/components/monolith/accounting-workspace";
+import { CommercialDocumentsPage } from "@/modules/accounting/components/routes/commercial-documents-page";
+import { AccountingLoadingState } from "@/modules/accounting/components/accounting-workspace";
 
 export default function AccountingInvoicesSalesPage({
   searchParams,

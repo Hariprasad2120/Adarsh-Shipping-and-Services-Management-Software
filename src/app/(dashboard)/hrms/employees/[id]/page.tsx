@@ -4,7 +4,7 @@ import { getUser, listUsers } from "@/modules/core/user/service";
 import { requirePermission } from "@/lib/rbac";
 import { notFound, redirect } from "next/navigation";
 import { EmployeeProfile } from "./employee-profile";
-import { BreadcrumbLabel } from "@/components/breadcrumb-label";
+import { BreadcrumbLabel } from "@/components/navigation/breadcrumb-label";
 import { listEmployeeProfileFields } from "@/modules/hrms/employee-profile";
 
 type EmployeeProfileProps = React.ComponentProps<typeof EmployeeProfile>;

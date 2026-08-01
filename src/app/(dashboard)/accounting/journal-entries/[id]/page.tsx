@@ -5,7 +5,7 @@ import { AccountingJournalApprovalAction } from "@/components/monolith/accountin
 import {
   AccountingActionLink,
   AccountingRoutePageHeader,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { getCanonicalJournalDetail } from "@/modules/accounting/operational-queries";
 

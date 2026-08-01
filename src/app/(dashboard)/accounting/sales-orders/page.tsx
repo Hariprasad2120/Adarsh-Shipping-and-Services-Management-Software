@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { CommercialDocumentsPage } from "../_components/commercial-documents-page";
-import { AccountingLoadingState } from "@/components/monolith/accounting-workspace";
+import { CommercialDocumentsPage } from "@/modules/accounting/components/routes/commercial-documents-page";
+import { AccountingLoadingState } from "@/modules/accounting/components/accounting-workspace";
 
 // Wrap in Suspense so the layout shell streams to the client immediately while
 // data is being fetched, instead of blocking the entire response.

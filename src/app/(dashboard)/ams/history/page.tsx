@@ -5,7 +5,7 @@ import {
   PerformanceTableHead,
   PerformanceTableHeader,
   PerformanceTableRow,
-} from "@/components/monolith/performance-workspace";
+} from "@/modules/performance/components/performance-workspace";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
@@ -13,7 +13,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/monolith/card";
+} from "@/components/ui/card";
 import Link from "next/link";
 import { HistoryFilters } from "./history-filters";
 import { redirect } from "next/navigation";

@@ -2,13 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  AdminButton,
-  AdminInput,
-  AdminPanel,
-  AdminPanelHeader,
-  WorkspaceState,
-} from "@/components/monolith";
+import { AdminButton, AdminInput, AdminPanel, AdminPanelHeader } from "@/modules/admin/components/admin-workspace";
+import { WorkspaceState } from "@/components/layout/workspace";
 
 type Permission = { id: string; key: string; label: string; group: string };
 type RolePermission = { permission: Permission };

@@ -5,7 +5,7 @@ import {
   PerformanceSectionHeader,
   PerformanceSummary,
   PerformanceSummaryGrid,
-} from "@/components/monolith/performance-workspace";
+} from "@/modules/performance/components/performance-workspace";
 import { getSession } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { db } from "@/lib/db";

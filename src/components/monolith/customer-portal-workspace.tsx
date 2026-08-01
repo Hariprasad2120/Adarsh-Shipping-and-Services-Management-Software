@@ -8,13 +8,13 @@ import {
   PublicMonolithShell,
   PublicPanel,
   PublicStage,
-} from "./public-workspace";
+} from "@/modules/auth/components/public-workspace";
 import {
   WorkspacePage,
   WorkspacePageHeader,
   WorkspacePanel,
   WorkspaceSectionHeading,
-} from "./workspace";
+} from "@/components/layout/workspace";
 
 export function CustomerPortalPage({
   className,

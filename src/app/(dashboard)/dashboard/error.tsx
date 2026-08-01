@@ -5,7 +5,7 @@ import {
   MonolithAction,
   MonolithPage,
   MonolithSpecLabel,
-} from "@/components/monolith/foundation";
+} from "@/components/ui/foundation";
 
 export default function DashboardError({
   reset,

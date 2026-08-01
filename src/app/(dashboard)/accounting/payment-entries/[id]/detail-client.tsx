@@ -15,7 +15,7 @@ import {
   AccountingSection,
   AccountingStatus,
   AccountingTable,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 import {
   submitPaymentEntryAction,
 } from "@/modules/accounting/actions";

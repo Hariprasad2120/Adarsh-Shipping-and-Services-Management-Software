@@ -1,12 +1,12 @@
 "use client";
 
-import { NativeSelect } from "@/components/monolith/native-select";
+import { NativeSelect } from "@/components/ui/native-select";
 import {
   CommunicationButton,
   CommunicationInput,
   CommunicationTextarea,
-} from "@/components/monolith/communication-workspace";
-import { WorkspaceDialogLayer } from "@/components/monolith/workspace-dialog";
+} from "@/modules/communication/components/workspace/communication-workspace";
+import { WorkspaceDialogLayer } from "@/components/layout/workspace-dialog";
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps, prefer-const, @typescript-eslint/no-require-imports, react-hooks/immutability, react-hooks/set-state-in-effect */
 
 import { useState, useEffect, useRef, useCallback } from "react";

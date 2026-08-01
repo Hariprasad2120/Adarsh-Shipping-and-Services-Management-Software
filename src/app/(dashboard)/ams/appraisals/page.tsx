@@ -1,4 +1,4 @@
-import { PerformanceTableRow } from "@/components/monolith/performance-workspace";
+import { PerformanceTableRow } from "@/modules/performance/components/performance-workspace";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -12,7 +12,7 @@ import {
   DataTableHeader,
   DataTablePrimaryLinkCell,
   DataTableRow,
-} from "@/components/monolith/workspace-data-table";
+} from "@/modules/people/components/workspace-data-table";
 import { getSession } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { requirePermission } from "@/lib/rbac";

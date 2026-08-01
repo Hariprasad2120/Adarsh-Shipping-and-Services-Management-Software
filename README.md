@@ -51,8 +51,10 @@ npm run dev
 ```
 
 Development uses Webpack by default because the Next.js 16 Turbopack dev
-server is unstable for this Windows workspace. Turbopack remains available for
-explicit diagnostics with `npm run dev:turbopack`.
+server is not the default path in this repository. Development uses the
+guarded local-start wrapper in `scripts/start-local-dev.mjs` and defaults to
+Turbopack through `npm run dev`. Use `npm run dev:webpack` only as an explicit
+diagnostic fallback when needed.
 
 ## Common scripts
 
@@ -63,6 +65,9 @@ npm run build
 npm run start
 npm run lint
 npm run test
+npm run audit:structure
+npm run audit:unused
+npm run quality
 npm run db:generate
 npm run db:migrate
 npm run db:seed
@@ -73,13 +78,21 @@ npm run catalogue:check
 ## Project structure
 
 ```text
-src/        Application routes, modules, UI, and server logic
+src/app/    Next.js routes and route-private composition
+src/components/ui/  Canonical Monolith primitives
+src/components/{data-display,forms,layout,navigation,feedback,providers}/  Shared UI ownership
+src/modules/ Feature-owned business logic and components
 prisma/     Database schema, migrations, and seed data
 public/     Static assets
 mobile/     Android client source
 scripts/    Import, bootstrap, and maintenance scripts
 docs/       Product and feature documentation
 ```
+
+Architecture and performance guidance:
+
+- `docs/engineering/CODE_ORGANIZATION.md`
+- `docs/engineering/PERFORMANCE.md`
 
 ## CHA Production Edition
 
@@ -101,6 +114,8 @@ Related docs: [CHA_PRODUCTION_SCOPE.md](CHA_PRODUCTION_SCOPE.md), [DEPLOYMENT.md
 
 - This repository should contain source code, docs, and intentionally versioned assets only.
 - Local recordings, generated analysis output, scratch files, and Codex artifacts are ignored.
+- See `docs/engineering/CODE_ORGANIZATION.md` before adding shared components.
+- See `docs/engineering/PERFORMANCE.md` before changing hot-path runtime behavior.
 
 ## Checklist Main email automation
 

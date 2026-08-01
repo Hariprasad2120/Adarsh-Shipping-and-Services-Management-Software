@@ -10,7 +10,7 @@ import {
   AccountingSection,
   AccountingSelect,
   AccountingToolbar,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { listCanonicalJournals } from "@/modules/accounting/operational-queries";
 

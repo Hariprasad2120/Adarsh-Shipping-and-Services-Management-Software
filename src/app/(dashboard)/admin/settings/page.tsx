@@ -3,7 +3,7 @@ import { can } from "@/lib/rbac";
 import { getAppraisalSettings } from "@/modules/ams/settings";
 import { redirect } from "next/navigation";
 import { SettingsClient } from "./settings-client";
-import { AdminPanel, AdminPanelHeader } from "@/components/monolith";
+import { AdminPanel, AdminPanelHeader } from "@/modules/admin/components/admin-workspace";
 
 export default async function AdminSettingsPage() {
   const session = await getSession();

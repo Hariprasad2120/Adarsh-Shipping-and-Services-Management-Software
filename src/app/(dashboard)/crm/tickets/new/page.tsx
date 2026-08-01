@@ -1,4 +1,4 @@
-import { CrmButton } from "@/components/monolith/crm-workspace";
+import { CrmButton } from "@/modules/crm/components/workspace/crm-workspace";
 import { getSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
 import { redirect } from "next/navigation";

@@ -1,6 +1,6 @@
 "use client";
 
-import { PeopleErrorState } from "@/components/monolith/people-workspace";
+import { PeopleErrorState } from "@/modules/people/components/people-workspace";
 
 export default function HrmsError({
   error,

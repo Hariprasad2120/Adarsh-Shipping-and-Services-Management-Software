@@ -1,4 +1,4 @@
-import { AccountingWorkspaceFrame } from "@/components/monolith/accounting-workspace";
+import { AccountingWorkspaceFrame } from "@/modules/accounting/components/accounting-workspace";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { headers } from "next/headers";
 

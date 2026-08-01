@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
+import { CycleProgressCard } from "@/modules/ams/components/cycle-progress-card";
 import { listMyAppraisals } from "@/modules/ams/service";
 import { getNow } from "@/lib/clock";
 

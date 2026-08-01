@@ -9,7 +9,7 @@ import { PurchaseInvoiceDetailClient } from "./detail-client";
 import {
   AccountingActionLink,
   AccountingRoutePageHeader,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 
 interface PurchaseInvoiceDetailPageProps {
   params: Promise<{ id: string }>;

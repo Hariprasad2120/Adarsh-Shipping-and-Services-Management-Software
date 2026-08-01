@@ -1,6 +1,6 @@
 "use client";
 
-import { MonolithAppShell } from "@/components/monolith/app-shell";
+import { MonolithAppShell } from "@/modules/core/components/monolith-app-shell";
 import type { Caps } from "@/lib/rbac";
 
 export function DashboardShellSwitcher({

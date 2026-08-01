@@ -1,10 +1,10 @@
 "use client";
 
-import { CrmButton, CrmTextarea } from "@/components/monolith/crm-workspace";
+import { CrmButton, CrmTextarea } from "@/modules/crm/components/workspace/crm-workspace";
 
 import React, { useState, useTransition } from "react";
 import {ClipboardList,CheckCircle2,XCircle,RotateCcw,Clock,TrendingUp,FileText,ShoppingCart,Receipt,Loader2,} from "lucide-react";
-import { ApprovalStatusBadge } from "@/components/crm/ApprovalActionBar";
+import { ApprovalStatusBadge } from "@/modules/crm/components/ApprovalActionBar";
 import {actionApproveDocument,actionRequestRework,actionDeclineDocument,} from "@/modules/crm/approval-actions";
 import { toast } from "sonner";
 
