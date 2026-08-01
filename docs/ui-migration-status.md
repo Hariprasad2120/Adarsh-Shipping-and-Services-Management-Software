@@ -1,6 +1,43 @@
 # Monolith UI migration status
 
-Last updated: 2026-07-31
+Last updated: 2026-08-01
+
+## 2026-08-01 Accounting workspace discoverability continuation
+
+Fixed the current Monolith discoverability gap where many live Accounting
+routes were not reachable from the shared navigation or the `/accounting`
+workspace hub, which made the module appear incomplete even though the pages
+already existed.
+
+Delivered:
+
+- updated `src/lib/navigation.ts` so the shared Accounting navigation now also
+  exposes `Payment Entries`, `Quotations`, `Depreciation Runs`, `Reports Hub`,
+  and `Job Costing`;
+- updated `src/app/(dashboard)/accounting/page.tsx` so `/accounting` now works
+  as a real route hub and lists every currently visible Accounting workspace in
+  grouped Monolith workflow-card sections instead of only showing metrics and
+  recent activity;
+- updated `src/modules/accounting/operational-access.ts` so
+  `/accounting/quotations`, `/accounting/vendor-master`, and
+  `/accounting/jobs` no longer fall through to the generic overview access map
+  and instead resolve through the correct Accounting permission groups.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/lib/navigation.ts' 'src/modules/accounting/operational-access.ts' 'src/app/(dashboard)/accounting/page.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `git diff --check -- 'src/lib/navigation.ts' 'src/modules/accounting/operational-access.ts' 'src/app/(dashboard)/accounting/page.tsx'`:
+  passed, aside from the normal Windows line-ending warnings in the worktree.
+
+Blocked:
+
+- focused `vitest` verification remains blocked by the repository guard in
+  `vitest.config.ts`, which refuses to start without `.env.staging.local`;
+- authenticated browser verification still cannot run in this Codex session
+  because no browser backend is attached.
 
 ## 2026-07-31 Accounting quotation lifecycle foundation continuation
 

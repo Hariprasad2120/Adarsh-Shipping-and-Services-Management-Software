@@ -1,6 +1,41 @@
 # Monolith UI migration handoff
 
-Last updated: 2026-07-31
+Last updated: 2026-08-01
+
+## 2026-08-01 Accounting workspace discoverability handoff
+
+Addressed the current complaint that Accounting pages were effectively hidden
+even though the routes existed.
+
+Delivered:
+
+- expanded the shared Accounting sidebar in `src/lib/navigation.ts` to include
+  `/accounting/payment-entries`, `/accounting/quotations`,
+  `/accounting/depreciation`, `/accounting/reports`, and `/accounting/jobs`;
+- rebuilt `src/app/(dashboard)/accounting/page.tsx` into a proper Monolith
+  workspace hub that groups every currently visible Accounting destination into
+  workflow-card sections, so operators can now discover the live pages from the
+  module landing page itself;
+- tightened `src/modules/accounting/operational-access.ts` so quotations,
+  vendor-master, and job-costing routes resolve through the intended
+  Accounting access groups instead of relying on the generic overview fallback.
+
+Verification on Saturday, August 1, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/lib/navigation.ts' 'src/modules/accounting/operational-access.ts' 'src/app/(dashboard)/accounting/page.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `git diff --check -- 'src/lib/navigation.ts' 'src/modules/accounting/operational-access.ts' 'src/app/(dashboard)/accounting/page.tsx'`:
+  passed, aside from the normal Windows line-ending warnings in the worktree.
+
+Blocked:
+
+- `npx vitest run 'src/lib/navigation.test.ts'` is currently blocked by the
+  repository guard in `vitest.config.ts`, which requires `.env.staging.local`
+  before tests can boot;
+- authenticated browser verification remains unavailable in this session
+  because no in-app browser backend is attached.
 
 ## 2026-07-31 Accounting quotation lifecycle foundation continuation
 

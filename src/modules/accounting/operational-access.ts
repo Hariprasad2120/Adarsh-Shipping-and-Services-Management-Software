@@ -38,6 +38,7 @@ const ROUTE_ACCESS: Array<{
   {
     match: (path) =>
       path.startsWith("/accounting/documents") ||
+      path.startsWith("/accounting/quotations") ||
       path.startsWith("/accounting/sales-invoices") ||
       path.startsWith("/accounting/customer-receipts") ||
       path.startsWith("/accounting/credit-notes"),
@@ -51,12 +52,18 @@ const ROUTE_ACCESS: Array<{
         "accounting.sales-invoice.prepare",
         "accounting.receipt.prepare",
         "accounting.credit-note.prepare",
+        "accounting.quotation.read",
+        "accounting.quotation.create",
+        "accounting.quotation.manage",
+        "accounting.note.read",
+        "accounting.correction.read",
       ],
     },
   },
   {
     match: (path) =>
       path.startsWith("/accounting/purchase-invoices") ||
+      path.startsWith("/accounting/vendor-master") ||
       path.startsWith("/accounting/vendor-payments") ||
       path.startsWith("/accounting/debit-notes"),
     access: {
@@ -92,6 +99,7 @@ const ROUTE_ACCESS: Array<{
       path.startsWith("/accounting/journal-entries") ||
       path.startsWith("/accounting/general-ledger") ||
       path.startsWith("/accounting/accounts") ||
+      path.startsWith("/accounting/jobs") ||
       path.startsWith("/accounting/trial-balance") ||
       path.startsWith("/accounting/profit-loss") ||
       path.startsWith("/accounting/balance-sheet") ||

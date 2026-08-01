@@ -788,6 +788,18 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/accounting/payments"],
       },
       {
+        href: "/accounting/payment-entries",
+        label: "Payment Entries",
+        icon: Task,
+        sectionLabel: "Banking",
+        permission: [
+          "accounting.payment.read",
+          "accounting.payment.prepare",
+          "accounting.payment.allocate",
+        ],
+        matchPaths: ["/accounting/payment-entries"],
+      },
+      {
         href: "/accounting/customer-receipts",
         label: "Customer Receipts",
         icon: Time,
@@ -819,6 +831,19 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
           "accounting.payment.allocate",
         ],
         matchPaths: ["/accounting/allocations"],
+      },
+      {
+        href: "/accounting/quotations",
+        label: "Sales - Quotations",
+        icon: DocumentAdd,
+        permission: [
+          "accounting.quotation.read",
+          "accounting.quotation.create",
+          "accounting.quotation.manage",
+          "accounting.note.read",
+          "accounting.correction.read",
+        ],
+        matchPaths: ["/accounting/quotations"],
       },
       {
         href: "/accounting/sales-invoices",
@@ -944,6 +969,14 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/accounting/fixed-assets"],
       },
       {
+        href: "/accounting/depreciation",
+        label: "Depreciation Runs",
+        icon: Analytics,
+        sectionLabel: "Accountant",
+        permission: "accounting.depreciation.integrate",
+        matchPaths: ["/accounting/depreciation"],
+      },
+      {
         href: "/accounting/trial-balance",
         label: "Reporting · Trial Balance",
         icon: Analytics,
@@ -970,6 +1003,24 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         icon: Folder,
         permission: "accounting.dashboard.view",
         matchPaths: ["/accounting/items"],
+      },
+      {
+        href: "/accounting/reports",
+        label: "Reporting - Reports Hub",
+        icon: Report,
+        permission: "accounting.reports.view",
+        matchPaths: ["/accounting/reports"],
+      },
+      {
+        href: "/accounting/jobs",
+        label: "Operations - Job Costing",
+        icon: Task,
+        permission: [
+          "accounting.dashboard.view",
+          "accounting.document.read",
+          "accounting.ledger.read",
+        ],
+        matchPaths: ["/accounting/jobs"],
       },
       {
         href: "/accounting/recurring",
