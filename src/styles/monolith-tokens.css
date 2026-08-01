@@ -54,13 +54,16 @@ html.theme-light {
   --mn-space-4: 1rem;
   --mn-space-5: 1.25rem;
   --mn-space-6: 1.5rem;
+  --mn-space-7: 1.75rem;
   --mn-space-8: 2rem;
   --mn-space-10: 2.5rem;
   --mn-heading-top-space: 0.875rem;
   --mn-heading-bottom-space: 0.625rem;
   --mn-heading-index-title-gap: 1.0625rem;
   --mn-heading-title-description-gap: 2.125rem;
-  --mn-heading-to-panel-gap: 0.625rem;
+  --mn-heading-to-panel-gap: 1rem;
+  --mn-layout-workspace-stack-gap: 1.5rem;
+  --mn-layout-workspace-stack-gap-mobile: 1rem;
   --mn-layout-page-max: 75rem;
   --mn-layout-workspace-max: 75rem;
   --mn-layout-page-gutter: clamp(2rem, 3.3vw, 3.125rem);

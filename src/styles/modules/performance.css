@@ -7,6 +7,7 @@
 .mnx-performance-page {
   width: min(100%, 100rem);
   margin-inline: auto;
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-performance-page-header {
@@ -54,7 +55,7 @@
 .mnx-performance-content {
   display: grid;
   min-width: 0;
-  gap: var(--mn-space-6);
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-performance-content > :where(div, section, article, form) {

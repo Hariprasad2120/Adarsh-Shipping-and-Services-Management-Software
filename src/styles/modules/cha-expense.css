@@ -5,12 +5,12 @@
 
 /* Customs House Agent and Expense operations */
 .mnx-cha-page {
-  gap: var(--mn-space-6);
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-cha-content {
   display: grid;
-  gap: var(--mn-space-6);
+  gap: var(--mn-layout-workspace-stack-gap);
   min-width: 0;
 }
 

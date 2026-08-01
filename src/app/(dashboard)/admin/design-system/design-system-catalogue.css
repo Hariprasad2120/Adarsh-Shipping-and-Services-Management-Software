@@ -1,5 +1,5 @@
 .mnx-catalogue-page {
-  gap: var(--mn-space-8);
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-catalogue-toolbar {

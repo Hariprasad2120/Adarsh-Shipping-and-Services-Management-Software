@@ -2,6 +2,61 @@
 
 Last updated: 2026-08-01
 
+## 2026-08-01 workspace heading-spacing normalization
+
+Standardized the vertical spacing contract between page headers, section
+headings, and the next production surface so pages no longer drift between
+missing, oversized, or invalid gap values.
+
+Delivered:
+
+- added the missing `--mn-space-7` token and introduced shared workspace stack
+  spacing tokens in `src/styles/monolith-tokens.css`;
+- updated `src/styles/monolith-system.css` so `WorkspacePage` now owns a common
+  grid stack gap, section-heading-to-content spacing is more explicit, and the
+  core workspace shells use the same stack rhythm;
+- aligned the module composition styles in
+  `src/styles/modules/{accounting,cha-expense,communication-admin,crm,people,performance}.css`
+  to the shared stack-gap contract instead of mixing `var(--mn-space-6)`,
+  `var(--mn-space-8)`, and the previously undefined `var(--mn-space-7)`;
+- normalized the admin design-system catalogue page to the same workspace stack
+  spacing so catalogue sections match the live production page rhythm.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- targeted `git diff --check` for the touched token and stylesheet files:
+  passed, aside from the normal Windows line-ending warnings in the worktree;
+- targeted ESLint on the touched CSS files reported only the repository’s
+  expected “file ignored because no matching configuration was supplied”
+  warnings, with no lint errors.
+
+## 2026-08-01 global loading-screen unification
+
+Unified the route-loading experience so the airplane preloader is now the
+shared loading screen across the app instead of only appearing on a subset of
+routes while other segments kept their own skeleton loaders.
+
+Delivered:
+
+- added `src/components/feedback/app-route-loading.tsx` as the shared route
+  loader wrapper around `LoadingScreen`;
+- updated every existing `src/app/**/loading.tsx` route segment loader to use
+  the shared airplane loading screen instead of per-module skeleton states;
+- added missing top-level segment loaders for `(auth)`, `customer-portal`,
+  `google-chat-link`, `invite`, and `verify` so those pages also participate in
+  the shared loading experience during route resolution.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- targeted ESLint for the new shared loader component and all touched
+  `loading.tsx` files: passed;
+- targeted `git diff --check` for the touched loader files: passed, aside from
+  the normal Windows line-ending warnings in the worktree.
+
 ## 2026-08-01 merge recovery, portal loading, and dev-start cleanup
 
 Recovered the in-progress structural/performance merge so the Monolith app can

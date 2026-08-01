@@ -1,5 +1,5 @@
-import { AccountingLoadingState } from "@/modules/accounting/components/accounting-workspace";
+import { AppRouteLoading } from "@/components/feedback/app-route-loading";
 
 export default function AccountingLoading() {
-  return <AccountingLoadingState />;
+  return <AppRouteLoading scope="accounting" />;
 }

@@ -1,7 +1,5 @@
-import { CommunicationLoadingState } from "@/modules/communication/components/workspace/communication-workspace";
+import { AppRouteLoading } from "@/components/feedback/app-route-loading";
 
 export default function CommunicationLoading() {
-  return (
-    <CommunicationLoadingState description="Loading connected mail, chat, calendar, Drive, and meeting data." />
-  );
+  return <AppRouteLoading scope="communication" />;
 }

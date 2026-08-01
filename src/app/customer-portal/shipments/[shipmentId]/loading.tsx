@@ -1,52 +1,5 @@
-import { CustomerPortalPage } from "@/components/monolith/customer-portal-workspace";
+import { AppRouteLoading } from "@/components/feedback/app-route-loading";
 
 export default function CustomerPortalShipmentDetailLoading() {
-  return (
-    <CustomerPortalPage aria-label="Loading shipment workspace">
-      <div className="rounded-xl border border-mono-border/50 bg-mono-card p-5 shadow-sm">
-        <div className="h-8 w-36 animate-pulse rounded bg-mono-soft" />
-        <div className="mt-4 h-8 w-56 animate-pulse rounded bg-mono-soft" />
-        <div className="mt-3 h-4 w-full max-w-2xl animate-pulse rounded bg-mono-soft" />
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-        <div className="space-y-6 xl:col-span-7">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <div
-              key={index}
-              className="rounded-xl border border-mono-border/45 bg-mono-card p-5 shadow-sm"
-            >
-              <div className="h-4 w-48 animate-pulse rounded bg-mono-soft" />
-              <div className="mt-4 space-y-3">
-                {Array.from({ length: 4 }).map((__, rowIndex) => (
-                  <div
-                    key={rowIndex}
-                    className="h-12 animate-pulse rounded bg-mono-soft"
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="space-y-6 xl:col-span-5">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <div
-              key={index}
-              className="rounded-xl border border-mono-border/45 bg-mono-card p-5 shadow-sm"
-            >
-              <div className="h-4 w-40 animate-pulse rounded bg-mono-soft" />
-              <div className="mt-4 space-y-3">
-                {Array.from({ length: 4 }).map((__, rowIndex) => (
-                  <div
-                    key={rowIndex}
-                    className="h-10 animate-pulse rounded bg-mono-soft"
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </CustomerPortalPage>
-  );
+  return <AppRouteLoading scope="portal" />;
 }

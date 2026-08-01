@@ -1,13 +1,5 @@
-import { WorkspaceLoadingState } from "@/components/feedback/workspace-states";
-import { WorkspacePage } from "@/components/layout/workspace";
+import { AppRouteLoading } from "@/components/feedback/app-route-loading";
 
 export default function DashboardLoading() {
-  return (
-    <WorkspacePage aria-label="Loading workspace">
-      <WorkspaceLoadingState
-        title="Preparing your workspace"
-        description="We’re loading the latest records, permissions, and workspace controls."
-      />
-    </WorkspacePage>
-  );
+  return <AppRouteLoading scope="dashboard" />;
 }

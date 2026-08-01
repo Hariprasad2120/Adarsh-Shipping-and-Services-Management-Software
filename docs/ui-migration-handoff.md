@@ -2,6 +2,76 @@
 
 Last updated: 2026-08-01
 
+## 2026-08-01 workspace spacing handoff
+
+Normalized the shared vertical spacing rhythm across workspace pages so the
+distance between page headers, section headings, navigation strips, and the
+next surface no longer varies by module or silently disappears on shells that
+were using an undefined spacing token.
+
+Delivered:
+
+- added `--mn-space-7`, `--mn-layout-workspace-stack-gap`, and
+  `--mn-layout-workspace-stack-gap-mobile` in
+  `src/styles/monolith-tokens.css`;
+- updated `src/styles/monolith-system.css` so `WorkspacePage` now provides the
+  shared page stack gap and the core customer portal, communication/admin, CHA,
+  Accounting, People, Performance, and CRM shells all align to it;
+- synced the module-owned stylesheet mirrors in
+  `src/styles/modules/{accounting,cha-expense,communication-admin,crm,people,performance}.css`
+  to the same contract;
+- reduced the admin design-system catalogue page stack gap to the shared
+  workspace value so its headings and specimens match the production page
+  spacing used elsewhere.
+
+Verification on Saturday, August 1, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- targeted `git diff --check` for the touched token and stylesheet files:
+  passed, aside from the normal Windows line-ending warnings in the worktree;
+- targeted ESLint on the touched CSS files produced only expected repository
+  “file ignored because no matching configuration was supplied” warnings and no
+  errors.
+
+Open follow-up:
+
+- visual browser confirmation remains manual in this session because no Codex
+  browser backend is attached, so the fix was verified through the shared style
+  contract and repository checks rather than screenshot automation.
+
+## 2026-08-01 global loading-screen handoff
+
+Unified route-level loading so the airplane preloader now acts as the common
+loading screen across the app instead of being limited to the root loader while
+dashboard and portal segments still rendered their own skeleton states.
+
+Delivered:
+
+- added `src/components/feedback/app-route-loading.tsx` to centralize route
+  loading copy and reuse the shared `LoadingScreen`;
+- replaced the existing route-segment loaders under `src/app` so dashboard,
+  module, and customer-portal segments now use the same airplane preloader;
+- added missing top-level loaders for `(auth)`, `customer-portal`,
+  `google-chat-link`, `invite`, and `verify`, which extends the same loading
+  screen to those page families during navigation and initial segment
+  resolution.
+
+Verification on Saturday, August 1, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- targeted ESLint for the shared loader component and touched `loading.tsx`
+  files: passed;
+- targeted `git diff --check` for the touched loader files: passed, aside from
+  the normal Windows line-ending warnings in the worktree.
+
+Open follow-up:
+
+- interactive browser confirmation is still session-blocked because this Codex
+  run does not have an attached browser backend, so the loading screen behavior
+  was verified by static route-segment wiring rather than in-browser automation.
+
 ## 2026-08-01 merge recovery and startup handoff
 
 Recovered the broken structural/performance merge state that had left the app

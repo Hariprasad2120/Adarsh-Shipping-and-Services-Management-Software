@@ -1,7 +1,5 @@
-import { PerformanceLoadingState } from "@/modules/performance/components/performance-workspace";
+import { AppRouteLoading } from "@/components/feedback/app-route-loading";
 
 export default function LmsLoading() {
-  return (
-    <PerformanceLoadingState description="Loading learning workspace data." />
-  );
+  return <AppRouteLoading scope="lms" />;
 }
