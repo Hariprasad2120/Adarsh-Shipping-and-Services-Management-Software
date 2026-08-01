@@ -1,8 +1,8 @@
 "use client";
 
-import { CrmButton, CrmDialog, CrmInput } from "@/components/monolith/crm-workspace";
+import { CrmButton, CrmDialog, CrmInput } from "@/modules/crm/components/workspace/crm-workspace";
 
-import { DateInput } from "@/components/monolith/date-input";
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { CustomerPortalAuth } from "@/components/monolith/customer-portal-workspace";
-import { PublicStatus } from "@/components/monolith/public-workspace";
+import { PublicStatus } from "@/modules/auth/components/public-workspace";
 import { TriangleAlert } from "lucide-react";
-import { PortalActivationForm } from "../_components/client-actions";
+import { PortalActivationForm } from "@/modules/customer-portal/components/client-actions";
 
 export default async function CustomerPortalActivatePage({
   searchParams,

@@ -2,12 +2,8 @@
 
 import { useCallback, useState } from "react";
 import { AlertTriangle, Check, Copy, ExternalLink, Monitor } from "lucide-react";
-import {
-  CommunicationButton,
-  CommunicationPanel,
-  CommunicationPanelHeader,
-  WorkspaceAlert,
-} from "@/components/monolith";
+import { CommunicationButton, CommunicationPanel, CommunicationPanelHeader } from "@/modules/communication/components/workspace/communication-workspace";
+import { WorkspaceAlert } from "@/components/layout/workspace";
 
 const GOOGLE_CHAT_URLS = [
   "https://mail.google.com/chat/u/0/",

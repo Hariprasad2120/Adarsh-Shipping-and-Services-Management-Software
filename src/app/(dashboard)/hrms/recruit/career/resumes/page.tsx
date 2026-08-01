@@ -3,7 +3,7 @@
 import {
   PeopleControlButton as MnxAction,
   PeopleControlInput as MnxInput,
-} from "@/components/monolith/people-controls";
+} from "@/modules/people/components/people-controls";
 
 import { useState, useEffect } from "react";
 import { Add, DocumentAdd, Star, StarFilled } from "@carbon/icons-react";

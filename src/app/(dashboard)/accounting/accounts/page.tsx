@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+import { AccountingRoutePageHeader } from "@/modules/accounting/components/accounting-workspace";
 import { db } from "@/lib/db";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { AccountsClient } from "./accounts-client";

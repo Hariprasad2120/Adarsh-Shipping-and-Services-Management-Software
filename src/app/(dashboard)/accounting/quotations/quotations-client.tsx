@@ -10,7 +10,7 @@ import {
   createQuotationAction,
   submitCustomerNoteAction,
 } from "@/modules/accounting/actions";
-import { DateInput } from "@/components/monolith/date-input";
+import { DateInput } from "@/components/ui/date-input";
 import { AccountingNoteReasonSelect } from "@/components/monolith/accounting-note-reason-select";
 import { AccountingOptionalInvoiceLink } from "@/components/monolith/accounting-optional-invoice-link";
 import {
@@ -28,7 +28,7 @@ import {
   AccountingTable,
   AccountingTextarea,
   AccountingToolbar,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 import { fetchAccountingItems } from "@/lib/items/accounting-item-client";
 import type { ItemListItem } from "@/lib/items/types";
 

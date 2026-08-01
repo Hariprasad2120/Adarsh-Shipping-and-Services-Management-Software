@@ -1,0 +1,451 @@
+/*
+ * Accounting module composition styles.
+ * Shared primitives remain owned by monolith-system.css.
+ */
+
+/* Accounting operations */
+.mnx-accounting-page {
+  gap: var(--mn-space-6);
+}
+
+.mnx-accounting-content {
+  display: grid;
+  gap: var(--mn-space-6);
+  min-width: 0;
+}
+
+.mnx-accounting-content > :where(main, section, article, form, div) {
+  min-width: 0;
+}
+
+.mnx-accounting-page-header {
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--mnx-accent) 24%, var(--mnx-border));
+  background: var(--mnx-hero-gradient);
+}
+
+.mnx-accounting-page-header::after {
+  content: "";
+  position: absolute;
+  right: 2rem;
+  bottom: -3.5rem;
+  width: 12rem;
+  height: 12rem;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 34%, transparent);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 1.75rem color-mix(in srgb, var(--mnx-accent) 7%, transparent),
+    0 0 0 3.5rem color-mix(in srgb, var(--mnx-accent) 4%, transparent);
+  opacity: 0.54;
+  pointer-events: none;
+}
+
+.mnx-accounting-page-header .mnx-page-header-icon {
+  color: var(--mnx-accent-text);
+  background: color-mix(in srgb, var(--mnx-accent) 18%, var(--mnx-surface));
+}
+
+.mnx-accounting-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+}
+
+.mnx-accounting-section,
+.mnx-accounting-panel {
+  overflow: hidden;
+}
+
+.mnx-accounting-section-header {
+  border-bottom: 1px solid var(--mnx-border);
+}
+
+.mnx-accounting-section-content {
+  min-width: 0;
+  padding: var(--mn-space-5);
+}
+
+.mnx-accounting-section-content:has(> .mnx-table-wrap) {
+  padding: 0;
+}
+
+.mnx-accounting-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-md);
+  background: var(--mnx-control-gradient);
+}
+
+.mnx-accounting-toolbar > form,
+.mnx-accounting-toolbar > div {
+  display: flex;
+  flex: 1 1 24rem;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--mn-space-3);
+}
+
+.mnx-accounting-form {
+  display: grid;
+  gap: var(--mn-space-5);
+}
+
+.mnx-accounting-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mn-space-4);
+}
+
+.mnx-accounting-form-grid-wide {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mnx-accounting-field-span {
+  grid-column: 1 / -1;
+}
+
+.mnx-accounting-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--mn-space-3);
+  padding-top: var(--mn-space-4);
+  border-top: 1px solid var(--mnx-border);
+}
+
+.mnx-accounting-detail-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-md);
+  background: var(--mnx-border);
+}
+
+.mnx-accounting-detail-list > div {
+  min-width: 0;
+  padding: var(--mn-space-4);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-accounting-detail-list dt {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  font-weight: var(--mn-type-label-weight);
+  letter-spacing: var(--mn-type-label-tracking);
+  text-transform: uppercase;
+}
+
+.mnx-accounting-detail-list dd {
+  margin: var(--mn-space-2) 0 0;
+  overflow-wrap: anywhere;
+  color: var(--mnx-text);
+  font-size: var(--mn-type-body-size);
+  font-variant-numeric: tabular-nums;
+}
+
+.mnx-accounting-list {
+  display: grid;
+  gap: var(--mn-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mnx-accounting-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-3);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-sm);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-accounting-list-row > div {
+  min-width: 0;
+}
+
+.mnx-accounting-list-row b,
+.mnx-accounting-list-row small {
+  display: block;
+}
+
+.mnx-accounting-list-row b {
+  overflow: hidden;
+  color: var(--mnx-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mnx-accounting-list-row small {
+  margin-top: 0.2rem;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-accounting-report-grid {
+  display: grid;
+  grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+  gap: var(--mn-space-5);
+  align-items: start;
+}
+
+.mnx-accounting-split-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mn-space-5);
+  align-items: start;
+}
+
+.mnx-accounting-report-nav {
+  display: grid;
+  gap: var(--mn-space-1);
+  padding: var(--mn-space-2);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-md);
+  background: var(--mnx-surface-gradient);
+}
+
+.mnx-accounting-report-nav button {
+  justify-content: flex-start;
+}
+
+.mnx-accounting-tree {
+  display: grid;
+  gap: var(--mn-space-1);
+  max-height: 48rem;
+  overflow: auto;
+  padding-right: var(--mn-space-2);
+}
+
+.mnx-accounting-tree-node {
+  display: grid;
+  gap: var(--mn-space-1);
+}
+
+.mnx-accounting-tree-row {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  min-height: 2.5rem;
+  padding: var(--mn-space-2);
+  border-radius: var(--mnx-radius-sm);
+  color: var(--mnx-text);
+}
+
+.mnx-accounting-tree-row:hover {
+  background: color-mix(in srgb, var(--mnx-accent) 9%, var(--mnx-surface-soft));
+}
+
+.mnx-accounting-tree-code {
+  width: 4.5rem;
+  flex: 0 0 auto;
+  color: var(--mnx-text-muted);
+  font-family: var(--mn-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.mnx-accounting-tree-children {
+  display: grid;
+  gap: var(--mn-space-1);
+  margin-left: var(--mn-space-4);
+  padding-left: var(--mn-space-2);
+  border-left: 1px solid var(--mnx-border);
+}
+
+.mnx-accounting-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--mn-space-4);
+}
+
+.mnx-accounting-record-card {
+  display: grid;
+  gap: var(--mn-space-4);
+  padding: var(--mn-space-5);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-md);
+  color: var(--mnx-text);
+  background: var(--mnx-surface-gradient);
+  box-shadow: var(--mnx-shadow-soft);
+}
+
+button.mnx-accounting-record-card {
+  width: 100%;
+  text-align: left;
+}
+
+.mnx-accounting-record-card:hover {
+  border-color: color-mix(in srgb, var(--mnx-accent) 48%, var(--mnx-border));
+  box-shadow: var(--mnx-shadow);
+}
+
+.mnx-accounting-record-card header,
+.mnx-accounting-record-card footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-accounting-record-card footer {
+  align-items: center;
+  padding-top: var(--mn-space-3);
+  border-top: 1px solid var(--mnx-border);
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+}
+
+.mnx-accounting-amount {
+  font-family: var(--mn-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+.mnx-accounting-amount-success {
+  color: var(--mnx-success);
+}
+
+.mnx-accounting-amount-danger {
+  color: var(--mnx-danger);
+}
+
+.mnx-accounting-amount-warning {
+  color: var(--mnx-warning);
+}
+
+.mnx-accounting-record-link {
+  display: grid;
+  gap: 0.2rem;
+  color: var(--mnx-text);
+  text-decoration: none;
+}
+
+.mnx-accounting-record-link:hover strong {
+  color: var(--mnx-accent-text);
+}
+
+.mnx-accounting-record-link span,
+.mnx-table-subtext {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+  font-weight: 500;
+}
+
+.mnx-accounting-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-4);
+  border-top: 1px solid var(--mnx-border);
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+}
+
+.mnx-accounting-pagination > div {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-3);
+}
+
+.mnx-accounting-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mn-space-2);
+}
+
+.mnx-accounting-dialog .mnx-accounting-form {
+  gap: var(--mn-space-4);
+}
+
+.mnx-accounting-page :where(h1, h2, h3, h4) {
+  color: var(--mnx-text-strong);
+}
+
+.mnx-accounting-page :where(p, small) {
+  text-wrap: pretty;
+}
+
+@media (max-width: 64rem) {
+  .mnx-accounting-report-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mnx-accounting-split-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mnx-accounting-report-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 42rem) {
+  .mnx-accounting-page-header {
+    padding: var(--mn-space-5);
+  }
+
+  .mnx-accounting-page-header::after {
+    display: none;
+  }
+
+  .mnx-accounting-section-content {
+    padding: var(--mn-space-4);
+  }
+
+  .mnx-accounting-toolbar,
+  .mnx-accounting-toolbar > form,
+  .mnx-accounting-toolbar > div {
+    align-items: stretch;
+  }
+
+  .mnx-accounting-toolbar > *,
+  .mnx-accounting-toolbar > form > *,
+  .mnx-accounting-toolbar > div > * {
+    width: 100%;
+  }
+
+  .mnx-accounting-form-grid,
+  .mnx-accounting-form-grid-wide,
+  .mnx-accounting-report-nav {
+    grid-template-columns: 1fr;
+  }
+
+  .mnx-accounting-form-actions .mnx-button {
+    width: 100%;
+  }
+
+  .mnx-accounting-list-row {
+    align-items: flex-start;
+  }
+}
+
+@media print {
+  .mnx-accounting-page-header,
+  .mnx-accounting-toolbar,
+  .mnx-accounting-report-nav,
+  .mnx-accounting-form-actions {
+    display: none;
+  }
+
+  .mnx-accounting-page,
+  .mnx-accounting-content {
+    display: block;
+  }
+
+  .mnx-accounting-section,
+  .mnx-accounting-panel {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+}

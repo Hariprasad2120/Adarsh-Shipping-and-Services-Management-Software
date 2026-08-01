@@ -23,13 +23,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useCan } from "@/lib/caps-context";
-import { DropdownSelect } from "@/components/monolith/dropdown-select";
-import { Input } from "@/components/monolith/input";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Input } from "@/components/ui/input";
 import {
   PeopleControlButton as MnxAction,
   PeopleControlTable,
   PeopleControlTextarea,
-} from "@/components/monolith/people-controls";
+} from "@/modules/people/components/people-controls";
 
 type PayrollMeta = {
   employeeNumber?: string;

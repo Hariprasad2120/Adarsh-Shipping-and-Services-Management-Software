@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Toaster } from "sonner";
-import { ScrollNavigator } from "@/components/scroll-navigator";
+import { ScrollNavigator } from "@/components/navigation/scroll-navigator";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -62,8 +62,8 @@ export default function RootLayout({
           closeButton
           toastOptions={{
             style: {
-              fontFamily: "var(--font-geist-sans), sans-serif",
-              fontSize: "14px",
+              fontFamily: "var(--mn-font-sans)",
+              fontSize: "var(--mn-type-body-size)",
             },
           }}
         />

@@ -1,6 +1,6 @@
 "use client";
 
-import { AccountingErrorState } from "@/components/monolith/accounting-workspace";
+import { AccountingErrorState } from "@/modules/accounting/components/accounting-workspace";
 import { useEffect, useState } from "react";
 
 function createCorrelationId() {

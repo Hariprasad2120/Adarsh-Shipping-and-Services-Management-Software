@@ -4,10 +4,10 @@ import {
   PeopleControlButton as MnxAction,
   PeopleControlInput as MnxInput,
   PeopleControlTextarea as MnxTextarea,
-} from "@/components/monolith/people-controls";
+} from "@/modules/people/components/people-controls";
 
-import { NativeSelect } from "@/components/monolith/native-select";
-import { DateInput } from "@/components/monolith/date-input";
+import { NativeSelect } from "@/components/ui/native-select";
+import { DateInput } from "@/components/ui/date-input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 

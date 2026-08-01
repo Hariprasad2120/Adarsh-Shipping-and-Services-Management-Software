@@ -2,6 +2,66 @@
 
 Last updated: 2026-08-01
 
+## 2026-08-01 merge recovery, portal loading, and dev-start cleanup
+
+Recovered the in-progress structural/performance merge so the Monolith app can
+build again, restored the moved compatibility imports that were still pointing
+at removed `src/components/monolith` production files, and removed the
+default dev-start preflight work that was slowing `npm run dev`.
+
+Delivered:
+
+- resolved the remaining merge markers across Accounting, CRM, CHA, AMS, HRMS,
+  auth, and shared stylesheet files so the parser/build blockers are gone;
+- added a root `src/app/loading.tsx` so the shared loading experience can
+  render during initial shell resolution instead of only inside nested route
+  segments;
+- updated `scripts/start-local-dev.mjs` so accounting schema preflight no
+  longer runs during the default `npm run dev` path, and added
+  `npm run dev:preflight` for the guarded startup when it is explicitly needed;
+- restored compatibility imports for customer portal, Accounting helpers,
+  vendor creation, CHA workspace consumers, and CRM pages without reintroducing
+  duplicate UI implementations;
+- added thin compatibility re-export shims under `src/components/monolith`
+  that now point to the canonical owners in `src/components/ui`,
+  `src/components/layout`, and module-owned component folders.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx next build`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run architecture:check`:
+  blocked by pre-existing tracked generated/copied files already present under
+  `artifacts/ui-migration/final-runtime/*`, not by this merge-recovery slice.
+
+## 2026-07-30 structural and design-system merge baseline
+
+Preserved the source branch's structural-cleanup and design-system ownership
+history so the later August 1 Accounting continuation does not hide the
+underlying architectural work that must survive this integration.
+
+Delivered:
+
+- normalized the live production design-system ownership so `/admin/design-system`
+  is a catalogue of real production components rather than a parallel
+  implementation;
+- established the canonical ownership split across `src/components/ui`,
+  explicit shared component folders, module-owned components, and
+  compatibility-only `src/components/monolith`;
+- introduced the structural cleanup and architecture-verification baseline,
+  including `npm run architecture:check`, `npm run design-system:verify`, and
+  the supporting inventory/audit documentation;
+- applied the shared operational data-table and toolbar corrections that the
+  source branch had already verified against CHA and the design-system
+  catalogue.
+
+Verification preserved from the source branch:
+
+- production TypeScript passed;
+- source-side design-system and architecture verification passed;
+- the optimized production build passed there;
+- repository-wide lint and some staging-backed suites still remained blocked by
+  known pre-existing baseline issues outside those structural slices.
+
 ## 2026-08-01 Accounting workspace discoverability continuation
 
 Fixed the current Monolith discoverability gap where many live Accounting

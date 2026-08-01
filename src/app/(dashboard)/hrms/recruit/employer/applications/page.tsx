@@ -1,8 +1,8 @@
 "use client";
 
-import { PeopleControlInput as MnxInput } from "@/components/monolith/people-controls";
+import { PeopleControlInput as MnxInput } from "@/modules/people/components/people-controls";
 
-import { NativeSelect } from "@/components/monolith/native-select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Search } from "@carbon/icons-react";
@@ -14,7 +14,7 @@ import {
   DataTableHeader,
   DataTableRow,
   DataTableEmpty,
-} from "@/components/monolith/people-data-table";
+} from "@/modules/people/components/people-data-table";
 import { RECRUIT_APP_STAGES } from "@/modules/recruit/types";
 
 type Application = {

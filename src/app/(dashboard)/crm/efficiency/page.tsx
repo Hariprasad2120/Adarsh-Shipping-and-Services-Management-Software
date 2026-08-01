@@ -1,4 +1,4 @@
-import { CrmTable, CrmConfigurationState, CrmPermissionState } from "@/components/monolith/crm-workspace";
+import { CrmTable, CrmConfigurationState, CrmPermissionState } from "@/modules/crm/components/workspace/crm-workspace";
 import React from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";

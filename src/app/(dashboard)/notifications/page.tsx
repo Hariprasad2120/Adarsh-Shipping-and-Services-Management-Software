@@ -1,13 +1,5 @@
 import { Bell, Filter } from "lucide-react";
-import {
-  WorkspaceAction,
-  WorkspaceField,
-  WorkspaceInput,
-  WorkspacePage,
-  WorkspacePageHeader,
-  WorkspacePanel,
-  WorkspaceSelect,
-} from "@/components/monolith";
+import { WorkspaceAction, WorkspaceField, WorkspaceInput, WorkspacePage, WorkspacePageHeader, WorkspacePanel, WorkspaceSelect } from "@/components/layout/workspace";
 import { getSession } from "@/lib/auth";
 import { getNotificationPolicy } from "@/modules/notifications/policy";
 import { listUserNotifications } from "@/modules/notifications/service";

@@ -7,21 +7,16 @@ import {
   MessagesSquare,
   PackageCheck,
 } from "lucide-react";
-import { Badge } from "@/components/monolith/badge";
-import { Button } from "@/components/monolith/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/monolith/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   CustomerPortalMetrics,
   CustomerPortalPage,
   CustomerPortalPageHeader,
   CustomerPortalSectionHeading,
 } from "@/components/monolith/customer-portal-workspace";
-import { WorkspaceMetric } from "@/components/monolith/workspace";
+import { WorkspaceMetric } from "@/components/layout/workspace";
 import {
   DataTable,
   DataTableBody,
@@ -30,7 +25,7 @@ import {
   DataTableHead,
   DataTableHeader,
   DataTableToolbar,
-} from "@/components/monolith/workspace-data-table";
+} from "@/components/data-display/data-table";
 import {
   getChaJobStatusBadgeVariant,
   getChaPriorityBadgeVariant,

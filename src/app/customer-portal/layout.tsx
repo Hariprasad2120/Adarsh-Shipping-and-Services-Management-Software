@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import type { ReactNode } from "react";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { getCustomerPortalApprovalQueue } from "@/modules/customer-portal/shipments";
-import { PortalShellClient } from "./_components/client-actions";
+import { PortalShellClient } from "@/modules/customer-portal/components/client-actions";
 import { db } from "@/lib/db";
 
 export default async function CustomerPortalLayout({

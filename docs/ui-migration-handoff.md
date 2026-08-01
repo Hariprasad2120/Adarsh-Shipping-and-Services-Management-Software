@@ -2,6 +2,65 @@
 
 Last updated: 2026-08-01
 
+## 2026-08-01 merge recovery and startup handoff
+
+Recovered the broken structural/performance merge state that had left the app
+with CSS conflict markers, page-level merge markers, missing moved-component
+imports, and a slow default local startup path.
+
+Delivered:
+
+- cleared the remaining merge markers from the live source tree, including the
+  large CHA job workspace file and the shared Monolith stylesheet;
+- restored compatibility for pages still importing moved Monolith primitives by
+  wiring them to the canonical owners instead of recreating duplicate
+  implementations;
+- added `src/app/loading.tsx` so the global loading shell now participates in
+  initial route resolution;
+- changed the local dev launcher so `npm run dev` skips accounting schema
+  preflight by default while `npm run dev:preflight` preserves the guarded
+  startup path when explicitly requested;
+- verified that the full production build now succeeds again.
+
+Verification on Saturday, August 1, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx next build`: passed.
+
+Blocked:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run architecture:check` still
+  fails because pre-existing tracked generated/copied artifacts remain under
+  `artifacts/ui-migration/final-runtime/*`; this is a repository hygiene issue
+  outside the code changes made in this recovery pass.
+
+## 2026-07-30 structural and design-system handoff
+
+Preserved the source branch's July 30 handoff context so this integration keeps
+the component-ownership and design-system architecture work alongside the newer
+Accounting route history already present on `main`.
+
+Delivered:
+
+- kept the source-side history that moved production primitives to
+  `src/components/ui`, shared composites into explicit ownership folders, and
+  module UI into `src/modules/<module>/components`;
+- preserved the rule that `src/components/monolith` is compatibility and
+  catalogue-only during migration, not the canonical home for duplicate
+  production implementations;
+- retained the documented design-system governance around live catalogue
+  registration, stylesheet boundaries, and coverage verification;
+- preserved the source-side operational table and toolbar ownership notes so
+  that later route work can safely reapply those patterns without reintroducing
+  duplicate component implementations.
+
+Open follow-up:
+
+- the customer-portal family remained the principal pending route group in the
+  July 30 source-side UI migration record;
+- authenticated browser verification remained session-dependent there as well,
+  so the structural/design-system work should be treated as historically
+  verified but still subject to fresh post-integration validation.
+
 ## 2026-08-01 Accounting workspace discoverability handoff
 
 Addressed the current complaint that Accounting pages were effectively hidden

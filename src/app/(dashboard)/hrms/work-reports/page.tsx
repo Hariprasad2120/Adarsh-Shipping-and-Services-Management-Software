@@ -1,7 +1,7 @@
 import React from "react";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { WorkReportsView } from "@/components/hrms/work-reports";
+import { WorkReportsView } from "@/modules/hrms/components/work-reports";
 import { loadCaps } from "@/lib/rbac";
 
 export default async function WorkReportsPage() {

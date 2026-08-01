@@ -3,9 +3,9 @@
 import {
   PeopleControlButton as MnxAction,
   PeopleControlInput as MnxInput,
-} from "@/components/monolith/people-controls";
+} from "@/modules/people/components/people-controls";
 
-import { NativeSelect } from "@/components/monolith/native-select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useEffect } from "react";
 
 type Profile = {

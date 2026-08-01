@@ -8,19 +8,7 @@ import {
   LoaderCircle,
   ShieldCheck,
 } from "lucide-react";
-import {
-  PublicBrand,
-  PublicDetail,
-  PublicDetailGrid,
-  PublicFooter,
-  PublicHeader,
-  PublicInset,
-  PublicMonolithShell,
-  PublicPanel,
-  PublicStage,
-  PublicStatus,
-  PublicStatusBadge,
-} from "@/components/monolith";
+import { PublicBrand, PublicDetail, PublicDetailGrid, PublicFooter, PublicHeader, PublicInset, PublicMonolithShell, PublicPanel, PublicStage, PublicStatus, PublicStatusBadge } from "@/modules/auth/components/public-workspace";
 
 interface VerifiedDocument {
   documentHash: string;

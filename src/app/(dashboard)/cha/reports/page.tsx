@@ -1,6 +1,6 @@
-import { ChaTable } from "@/components/monolith/cha-workspace";
-import { Input } from "@/components/monolith/input";
-import { Button } from "@/components/monolith/button";
+import { ChaTable } from "@/modules/cha/components/workspace/cha-workspace";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -22,7 +22,7 @@ import {
   ChaPageHeader,
   ChaMetricCard,
   ChaSectionShell,
-} from "../_components/cha-operations-shared";
+} from "@/modules/cha/components/workspace/cha-operations-shared";
 
 export default async function ChaReportsPage({
   searchParams,

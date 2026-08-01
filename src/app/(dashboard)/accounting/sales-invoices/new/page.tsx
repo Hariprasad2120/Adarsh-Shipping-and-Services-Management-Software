@@ -1,7 +1,7 @@
 import React from "react";
 import { db } from "@/lib/db";
 import { NewInvoiceClient } from "./new-invoice-client";
-import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+import { AccountingRoutePageHeader } from "@/modules/accounting/components/accounting-workspace";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 
 export default async function NewSalesInvoicePage() {

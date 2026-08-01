@@ -1,6 +1,6 @@
 "use client";
 
-import { ChaErrorState } from "@/components/monolith/cha-workspace";
+import { ChaErrorState } from "@/modules/cha/components/workspace/cha-workspace";
 
 export default function ChaError({
   error,

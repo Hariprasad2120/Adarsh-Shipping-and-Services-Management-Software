@@ -1,7 +1,7 @@
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { getAccountingSettings, listAccounts } from "@/modules/accounting/service";
 import { SettingsClient } from "./settings-client";
-import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+import { AccountingRoutePageHeader } from "@/modules/accounting/components/accounting-workspace";
 
 export default async function AccountingSettingsPage() {
   const { orgId } = await requireAccountingRouteAccess("/accounting/settings");

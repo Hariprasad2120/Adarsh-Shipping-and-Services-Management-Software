@@ -1,7 +1,5 @@
-import {
-  WorkspaceErrorState,
-  WorkspacePage,
-} from "@/components/monolith";
+import { WorkspaceErrorState } from "@/components/feedback/workspace-states";
+import { WorkspacePage } from "@/components/layout/workspace";
 
 export default function DashboardNotFound() {
   return (

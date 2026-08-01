@@ -4,7 +4,7 @@ import {
   CrmTable,
   CrmConfigurationState,
   CrmPermissionState,
-} from "@/components/monolith/crm-workspace";
+} from "@/modules/crm/components/workspace/crm-workspace";
 // Trigger recompilation: 2026-06-19
 import React from "react";
 import Link from "next/link";

@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { ArrowRight, Bell, CheckSquare, Clock } from "lucide-react";
-import { Badge } from "@/components/monolith/badge";
-import { Button } from "@/components/monolith/button";
 import {
   CustomerPortalPage,
   CustomerPortalPageHeader,
 } from "@/components/monolith/customer-portal-workspace";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { getCustomerPortalApprovalQueue } from "@/modules/customer-portal/shipments";
 import { listPortalNotifications } from "@/modules/customer-portal/service";
-import { PortalMarkAllReadButton } from "../_components/client-actions";
+import { PortalMarkAllReadButton } from "@/modules/customer-portal/components/client-actions";
 
 export default async function CustomerPortalNotificationsPage() {
   const session = await requirePortalSession();

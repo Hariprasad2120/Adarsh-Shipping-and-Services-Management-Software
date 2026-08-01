@@ -1,6 +1,6 @@
 "use client";
 
-import { PeopleControlButton as MnxAction } from "@/components/monolith/people-controls";
+import { PeopleControlButton as MnxAction } from "@/modules/people/components/people-controls";
 
 import { Children, isValidElement, type ReactNode, useState } from "react";
 import Link from "next/link";
@@ -15,8 +15,8 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-import { DropdownSelect } from "@/components/monolith/dropdown-select";
-import { Input } from "@/components/monolith/input";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 type Division = { id: string; name: string };

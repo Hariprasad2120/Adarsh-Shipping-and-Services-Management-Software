@@ -8,7 +8,7 @@ import {
   PerformanceTableHead,
   PerformanceTableHeader,
   PerformanceTableRow,
-} from "@/components/monolith/performance-workspace";
+} from "@/modules/performance/components/performance-workspace";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -22,8 +22,8 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import { DropdownSelect } from "@/components/monolith/dropdown-select";
-import { Input } from "@/components/monolith/input";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Input } from "@/components/ui/input";
 import type { SalaryRevisionSummary } from "@/modules/hrms/salary-revisions-shared";
 import {
   formatINR,

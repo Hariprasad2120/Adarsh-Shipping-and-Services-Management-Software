@@ -2,7 +2,7 @@ import {
   CrmTable,
   CrmConfigurationState,
   CrmPermissionState,
-} from "@/components/monolith/crm-workspace";
+} from "@/modules/crm/components/workspace/crm-workspace";
 import React from "react";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";

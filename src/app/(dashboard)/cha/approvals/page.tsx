@@ -1,16 +1,16 @@
-import { ChaTable } from "@/components/monolith/cha-workspace";
+import { ChaTable } from "@/modules/cha/components/workspace/cha-workspace";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { can } from "@/lib/rbac";
 import { listManagerChecklistApprovals, listManagerJobDeletionRequests } from "@/modules/cha/service";
 import Link from "next/link";
 import { CheckSquare, ArrowRight, Trash2, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/monolith/button";
+import { Button } from "@/components/ui/button";
 import {
   ChaPageHeader,
   ChaSectionShell,
-} from "../_components/cha-operations-shared";
-import { Badge } from "@/components/monolith/badge";
+} from "@/modules/cha/components/workspace/cha-operations-shared";
+import { Badge } from "@/components/ui/badge";
 
 export default async function ChaApprovalsPage() {
   const session = await getSession();

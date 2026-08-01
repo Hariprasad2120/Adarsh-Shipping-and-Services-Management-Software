@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { LockKeyhole, X } from "lucide-react";
 
-import { Button } from "@/components/monolith/button";
-import { ChaDialogLayer } from "@/components/monolith/cha-workspace";
+import { Button } from "@/components/ui/button";
+import { ChaDialogLayer } from "@/modules/cha/components/workspace/cha-workspace";
 
 interface AccessProhibitedCardProps {
   message: string;
@@ -73,7 +73,7 @@ export function AccessProhibitedCard({ message, fallbackHref = "/cha/jobs" }: Ac
 
           <h1
             id="permission-denied-title"
-            className="mt-5 font-[var(--font-geist-sans)] text-xl uppercase tracking-[0.16em] mnx-text-primary"
+            className="mt-5 font-[family:var(--mn-font-sans)] text-xl uppercase tracking-[0.16em] mnx-text-primary"
           >
             Permission Denied
           </h1>

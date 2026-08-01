@@ -1,4 +1,4 @@
-import { AdminWorkspaceFrame } from "@/components/monolith/admin-workspace";
+import { AdminWorkspaceFrame } from "@/modules/admin/components/admin-workspace";
 
 export default function AdminLayout({
   children,

@@ -29,7 +29,7 @@ import {
   AccountingSelect,
   AccountingTable,
   AccountingTextarea,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 import {
   createAccountAction,
   updateAccountAction,

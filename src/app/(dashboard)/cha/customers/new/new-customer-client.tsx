@@ -1,6 +1,6 @@
 "use client";
 
-import { Input } from "@/components/monolith/input";
+import { Input } from "@/components/ui/input";
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -26,12 +26,12 @@ import {
   Loader2,
   FileText,
 } from "lucide-react";
-import { Button } from "@/components/monolith/button";
+import { Button } from "@/components/ui/button";
 import {
   ChaNativeSelect as NativeSelect,
   ChaPanel,
   ChaRoutePageHeader,
-} from "@/components/monolith/cha-workspace";
+} from "@/modules/cha/components/workspace/cha-workspace";
 
 interface UserOption {
   id: string;

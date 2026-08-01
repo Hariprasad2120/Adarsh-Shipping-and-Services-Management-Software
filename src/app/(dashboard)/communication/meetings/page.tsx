@@ -2,15 +2,8 @@ import { getSession } from "@/lib/auth";
 import { createEvent, listUpcomingEvents } from "@/lib/google-calendar-client";
 import { revalidatePath } from "next/cache";
 import { Calendar, Users, Video } from "lucide-react";
-import {
-  CommunicationButton,
-  CommunicationField,
-  CommunicationInput,
-  CommunicationPanel,
-  CommunicationPanelHeader,
-  CommunicationTextarea,
-  WorkspaceState,
-} from "@/components/monolith";
+import { CommunicationButton, CommunicationField, CommunicationInput, CommunicationPanel, CommunicationPanelHeader, CommunicationTextarea } from "@/modules/communication/components/workspace/communication-workspace";
+import { WorkspaceState } from "@/components/layout/workspace";
 
 type Meeting = Awaited<ReturnType<typeof listUpcomingEvents>>[number];
 

@@ -2,8 +2,8 @@
 
 import { Building2, Sparkles, Users2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { MonolithPage } from "@/components/monolith/foundation";
-import { WorkspaceLoadingState } from "@/components/monolith/workspace-states";
+import { MonolithPage } from "@/components/ui/foundation";
+import { WorkspaceLoadingState } from "@/components/feedback/workspace-states";
 import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 import { AttendanceCommand } from "./_components/attendance-command";

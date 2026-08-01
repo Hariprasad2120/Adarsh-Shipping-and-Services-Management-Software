@@ -11,14 +11,8 @@ import {
 import Link from "next/link";
 import JobSelector from "./JobSelector";
 import SyncDriveButton from "./SyncDriveButton";
-import {
-  CommunicationEmptyTableRow,
-  CommunicationField,
-  CommunicationPanel,
-  CommunicationPanelHeader,
-  CommunicationTable,
-  WorkspaceState,
-} from "@/components/monolith";
+import { CommunicationEmptyTableRow, CommunicationField, CommunicationPanel, CommunicationPanelHeader, CommunicationTable } from "@/modules/communication/components/workspace/communication-workspace";
+import { WorkspaceState } from "@/components/layout/workspace";
 
 type SearchParams = Promise<{ jobId?: string; folderId?: string }>;
 type DriveFile = Awaited<ReturnType<typeof listFiles>>[number];

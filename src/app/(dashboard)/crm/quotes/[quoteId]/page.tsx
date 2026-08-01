@@ -3,10 +3,14 @@ import { getSession } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { MOCK_ITEMS } from "@/lib/items/mock-data";
-import { QuoteDetailsPage } from "../_components/QuoteDetailsPage";
-import type { ApprovalCaps, ApprovalLogEntry } from "@/components/crm/ApprovalActionBar";
-import type { QuoteDetailRecord, QuoteListStatus, QuoteRecord } from "../_lib/types";
-import { getStateCodeForLocation } from "../_lib/gst-states";
+import { QuoteDetailsPage } from "@/modules/crm/components/quotes/QuoteDetailsPage";
+import type { ApprovalCaps, ApprovalLogEntry } from "@/modules/crm/components/ApprovalActionBar";
+import type {
+  QuoteDetailRecord,
+  QuoteListStatus,
+  QuoteRecord,
+} from "@/modules/crm/components/quotes/lib/types";
+import { getStateCodeForLocation } from "@/modules/crm/components/quotes/lib/gst-states";
 
 export default async function CrmQuoteDetailsPage({
   params,

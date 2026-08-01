@@ -1,10 +1,5 @@
-import { DropdownSelect } from "@/components/monolith/dropdown-select";
-import {
-  AdminButton,
-  AdminInput,
-  AdminPanel,
-  AdminPanelHeader,
-} from "@/components/monolith";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { AdminButton, AdminInput, AdminPanel, AdminPanelHeader } from "@/modules/admin/components/admin-workspace";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac";

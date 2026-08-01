@@ -5,6 +5,9 @@ const PORT = 3000;
 const ROOT = process.cwd();
 const RESTART = process.argv.includes("--restart");
 const BUNDLER = process.argv.includes("--webpack") ? "--webpack" : "--turbopack";
+const RUN_PREFLIGHT =
+  process.argv.includes("--with-preflight") ||
+  process.env.MONOLITH_DEV_PREFLIGHT === "1";
 const NODE_OPTIONS = mergeNodeOptions(process.env.NODE_OPTIONS);
 
 function mergeNodeOptions(current = "") {
@@ -175,5 +178,7 @@ if (listener) {
   await waitForPortToClose();
 }
 
-runPreflight();
+if (RUN_PREFLIGHT) {
+  runPreflight();
+}
 startNext();

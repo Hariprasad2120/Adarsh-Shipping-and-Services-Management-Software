@@ -1,8 +1,9 @@
 import {
+  CrmButton,
   CrmInput,
   CrmConfigurationState,
   CrmPermissionState,
-} from "@/components/monolith/crm-workspace";
+} from "@/modules/crm/components/workspace/crm-workspace";
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -11,7 +12,7 @@ import { listVendors } from "@/modules/crm/service";
 import { requirePermission } from "@/lib/rbac";
 import { Search, Plus, Phone, Mail } from "lucide-react";
 import { deleteVendorAction } from "@/modules/crm/actions";
-import { DeleteRecordButton } from "../_components/delete-record-button";
+import { DeleteRecordButton } from "@/modules/crm/components/delete-record-button";
 
 interface SearchParams {
   search?: string;

@@ -10,8 +10,8 @@ import {
   DataTableHeader,
   DataTableRow,
   DataTableToolbar,
-} from "@/components/monolith/workspace-data-table";
-import { Badge } from "@/components/monolith/badge";
+} from "@/components/data-display/data-table";
+import { Badge } from "@/components/ui/badge";
 import { getChaDocumentStatusBadgeVariant } from "@/lib/cha-badges";
 import type { CustomerPortalShipmentDetailData } from "@/modules/customer-portal/shipments";
 

@@ -1,15 +1,15 @@
 "use client";
 
-import { PerformanceControlButton } from "@/components/monolith/performance-workspace";
+import { PerformanceControlButton } from "@/modules/performance/components/performance-workspace";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CriteriaPointsForm } from "@/components/ams/criteria-points-form";
+import { CriteriaPointsForm } from "@/modules/ams/components/criteria-points-form";
 import type {
   AppraisalSelfFormTemplate,
   SelfAssessmentAnswers,
 } from "@/modules/ams/criteria-config";
 import type { CriterionPoint } from "@/modules/ams/types";
-import { useNotifications } from "@/components/notifications/notification-provider";
+import { useNotifications } from "@/modules/notifications/components/notification-provider";
 import { cn } from "@/lib/utils";
 
 const CYAN_PILL_CLASS =

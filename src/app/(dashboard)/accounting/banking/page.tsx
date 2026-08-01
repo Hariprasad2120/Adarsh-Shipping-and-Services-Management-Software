@@ -4,7 +4,7 @@ import { BankingClient } from "./banking-client";
 import {
   AccountingActionLink,
   AccountingRoutePageHeader,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 
 export default async function BankingPage() {

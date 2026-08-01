@@ -1,4 +1,4 @@
-import { PerformanceLoadingState } from "@/components/monolith/performance-workspace";
+import { PerformanceLoadingState } from "@/modules/performance/components/performance-workspace";
 
 export default function AmsLoading() {
   return (

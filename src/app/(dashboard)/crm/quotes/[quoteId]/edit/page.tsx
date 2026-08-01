@@ -2,8 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { MOCK_ITEMS } from "@/lib/items/mock-data";
-import { NewQuotePage } from "../../_components/NewQuotePage";
-import type { QuoteFormValues } from "../../_lib/types";
+import { NewQuotePage } from "@/modules/crm/components/quotes/NewQuotePage";
+import type { QuoteFormValues } from "@/modules/crm/components/quotes/lib/types";
 
 export default async function EditCrmQuotePage({
   params,

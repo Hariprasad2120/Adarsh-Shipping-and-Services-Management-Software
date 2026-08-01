@@ -3,18 +3,18 @@
 import {
   ChaNativeSelect as NativeSelect,
   ChaTable,
-} from "@/components/monolith/cha-workspace";
-import { Input } from "@/components/monolith/input";
+} from "@/modules/cha/components/workspace/cha-workspace";
+import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {ChevronRight,Edit,Plus,Save,Search,ShieldCheck,Trash2,Truck,Users,Workflow,X,} from "lucide-react";
-import { Badge } from "@/components/monolith/badge";
-import { Button } from "@/components/monolith/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {updateSettingsAction,createJobTypeAction,updateJobTypeManifestConfigAction,deleteJobTypeAction,createShipmentTypeAction,deleteShipmentTypeAction,createTeamGroupAction,deleteTeamGroupAction,upsertDocumentCategoryAction,deleteDocumentCategoryAction,upsertDocumentItemAction,deleteDocumentItemAction} from "@/modules/cha/actions";
 import { setPortalFeatureFlagAction } from "@/modules/customer-portal/actions";
-import { ChaPageHeader } from "../_components/cha-operations-shared";
+import { ChaPageHeader } from "@/modules/cha/components/workspace/cha-operations-shared";
 
 interface SettingsFormProps {
   initialSettings: {

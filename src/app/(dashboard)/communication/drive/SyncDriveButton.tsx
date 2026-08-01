@@ -4,10 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw, CheckCircle2, AlertTriangle } from "lucide-react";
 import { syncJobWorkspaceAction } from "./actions";
-import {
-  CommunicationButton,
-  WorkspaceAlert,
-} from "@/components/monolith";
+import { CommunicationButton } from "@/modules/communication/components/workspace/communication-workspace";
+import { WorkspaceAlert } from "@/components/layout/workspace";
 
 export default function SyncDriveButton({ jobId }: { jobId: string }) {
   const router = useRouter();

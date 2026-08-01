@@ -1,4 +1,4 @@
-import { PeopleLoadingState } from "@/components/monolith/people-workspace";
+import { PeopleLoadingState } from "@/modules/people/components/people-workspace";
 
 export default function HrmsLoading() {
   return (

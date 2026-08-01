@@ -3,11 +3,11 @@
 import {
   PerformanceControlButton,
   PerformanceTableRow,
-} from "@/components/monolith/performance-workspace";
+} from "@/modules/performance/components/performance-workspace";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useNotifications } from "@/components/notifications/notification-provider";
+import { useNotifications } from "@/modules/notifications/components/notification-provider";
 import {
   Badge,
   DataTable,
@@ -18,7 +18,7 @@ import {
   DataTableHeader,
   DataTableRow,
   MetaText,
-} from "@/components/monolith/workspace-data-table";
+} from "@/modules/people/components/workspace-data-table";
 
 type ReviewEntry = {
   id: string;

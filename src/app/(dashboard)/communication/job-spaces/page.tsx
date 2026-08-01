@@ -16,17 +16,8 @@ import {
   MessageSquare,
   RefreshCw,
 } from "lucide-react";
-import {
-  CommunicationBadge,
-  CommunicationButton,
-  CommunicationEmptyTableRow,
-  CommunicationInput,
-  CommunicationPanel,
-  CommunicationPanelHeader,
-  CommunicationTable,
-  WorkspaceMetric,
-  WorkspaceSectionHeading,
-} from "@/components/monolith";
+import { CommunicationBadge, CommunicationButton, CommunicationEmptyTableRow, CommunicationInput, CommunicationPanel, CommunicationPanelHeader, CommunicationTable } from "@/modules/communication/components/workspace/communication-workspace";
+import { WorkspaceMetric, WorkspaceSectionHeading } from "@/components/layout/workspace";
 
 function statusVariant(status?: string | null) {
   if (status === "success") return "success" as const;

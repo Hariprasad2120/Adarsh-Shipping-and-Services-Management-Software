@@ -325,7 +325,7 @@ describe("Google Chat Live View — Iframe Block Heuristic", () => {
 describe("Google Chat Live View — Feature Isolation", () => {
   it("actions.ts exports only the expected functions — no chat-tab functions", async () => {
     const actionsModule = await import(
-      "@/app/(dashboard)/communication/google-chat-live-view/actions"
+      "@/modules/communication/actions/google-chat-live-view"
     );
 
     // Only expected exports

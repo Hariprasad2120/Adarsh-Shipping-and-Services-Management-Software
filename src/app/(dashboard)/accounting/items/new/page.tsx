@@ -1,4 +1,4 @@
-import { AccountingNewItemForm } from "@/components/monolith/accounting-items";
+import { AccountingNewItemForm } from "@/modules/accounting/components/accounting-items";
 import { listVendors } from "@/modules/crm/service";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 

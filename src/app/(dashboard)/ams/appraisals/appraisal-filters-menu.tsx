@@ -1,12 +1,12 @@
 "use client";
 
-import { PerformanceControlButton } from "@/components/monolith/performance-workspace";
+import { PerformanceControlButton } from "@/modules/performance/components/performance-workspace";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { DropdownSelect } from "@/components/monolith/dropdown-select";
-import { FilterMenu } from "@/components/monolith/filter-menu";
-import { Input } from "@/components/monolith/input";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { FilterMenu } from "@/components/forms/filter-menu";
+import { Input } from "@/components/ui/input";
 
 type CycleOption = {
   id: string;

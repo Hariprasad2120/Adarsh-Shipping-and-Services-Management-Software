@@ -10,7 +10,7 @@ import {
   AccountingTable,
 } from "@/components/monolith/accounting-workspace";
 import { Badge } from "@/components/monolith/badge";
-import { DeleteRecordButton } from "@/app/(dashboard)/crm/_components/delete-record-button";
+import { DeleteRecordButton } from "@/modules/crm/components/delete-record-button";
 import { deleteVendorAction } from "@/modules/crm/actions";
 import { listVendors } from "@/modules/crm/service";
 import { can } from "@/lib/rbac";

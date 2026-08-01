@@ -7,7 +7,7 @@ import {
   CrmConfigurationState,
   CrmEmptyState,
   CrmPermissionState,
-} from "@/components/monolith/crm-workspace";
+} from "@/modules/crm/components/workspace/crm-workspace";
 
 interface PageProps {
   params: Promise<{ id: string }>;

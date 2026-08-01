@@ -1,11 +1,11 @@
-import { ChaTable } from "@/components/monolith/cha-workspace";
+import { ChaTable } from "@/modules/cha/components/workspace/cha-workspace";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Prisma } from "@/generated/prisma/client";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
-import { DeleteRecordButton } from "@/app/(dashboard)/crm/_components/delete-record-button";
+import { DeleteRecordButton } from "@/modules/crm/components/delete-record-button";
 import { deleteAccountAction } from "@/modules/crm/actions";
 import {
   Users,
@@ -20,8 +20,8 @@ import {
   ChaPageHeader,
   ChaMetricCard,
   ChaMetrics,
-} from "../_components/cha-operations-shared";
-import { Badge } from "@/components/monolith/badge";
+} from "@/modules/cha/components/workspace/cha-operations-shared";
+import { Badge } from "@/components/ui/badge";
 import { CustomersFilterBar } from "./customers-filter-bar";
 
 type CustomerSearchParams = {

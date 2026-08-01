@@ -4,8 +4,7 @@ import { ChevronDown, Info, Loader2, Plus, Trash2, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-
-import { DateInput } from "@/components/monolith/date-input";
+import { DateInput } from "@/components/ui/date-input";
 import {
   AccountingAction,
   AccountingAlert,
@@ -15,7 +14,7 @@ import {
   AccountingSection,
   AccountingSelect,
   AccountingTextarea,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 import { createJournalEntryAction } from "@/modules/accounting/actions";
 import {
   addDecimalStrings,
