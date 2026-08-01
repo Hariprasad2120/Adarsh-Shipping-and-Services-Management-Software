@@ -137,12 +137,12 @@ for (const requiredFile of [
   "src/app/(dashboard)/accounting/layout.tsx",
   "src/app/(dashboard)/accounting/loading.tsx",
   "src/app/(dashboard)/accounting/error.tsx",
-  "src/components/monolith/accounting-workspace.tsx",
-  "src/components/monolith/accounting-invoice-form.tsx",
-  "src/components/monolith/accounting-invoice-detail.tsx",
-  "src/components/monolith/accounting-items.tsx",
-  "src/components/monolith/accounting-commercial-document-form.tsx",
-  "src/components/monolith/accounting-delete-action.tsx",
+  "src/modules/accounting/components/accounting-workspace.tsx",
+  "src/modules/accounting/components/accounting-invoice-form.tsx",
+  "src/modules/accounting/components/accounting-invoice-detail.tsx",
+  "src/modules/accounting/components/accounting-items.tsx",
+  "src/modules/accounting/components/accounting-commercial-document-form.tsx",
+  "src/modules/accounting/components/accounting-delete-action.tsx",
   "src/components/monolith/accounting-operational-actions.tsx",
   "src/components/monolith/accounting-operational-views.tsx",
 ]) {
@@ -164,7 +164,7 @@ assert(
   "The authenticated shell must not retain route-specific legacy switching.",
 );
 
-const workspace = read("src/components/monolith/accounting-workspace.tsx");
+const workspace = read("src/modules/accounting/components/accounting-workspace.tsx");
 for (const component of [
   "AccountingWorkspaceFrame",
   "AccountingRoutePageHeader",
@@ -192,11 +192,11 @@ assert(
 const scopedSources = [
   ...walk(accountingRoot, (file) => /\.(?:ts|tsx)$/.test(file)),
   ...[
-    "src/components/monolith/accounting-invoice-form.tsx",
-    "src/components/monolith/accounting-invoice-detail.tsx",
-    "src/components/monolith/accounting-items.tsx",
-    "src/components/monolith/accounting-commercial-document-form.tsx",
-    "src/components/monolith/accounting-delete-action.tsx",
+    "src/modules/accounting/components/accounting-invoice-form.tsx",
+    "src/modules/accounting/components/accounting-invoice-detail.tsx",
+    "src/modules/accounting/components/accounting-items.tsx",
+    "src/modules/accounting/components/accounting-commercial-document-form.tsx",
+    "src/modules/accounting/components/accounting-delete-action.tsx",
     "src/components/monolith/accounting-operational-actions.tsx",
     "src/components/monolith/accounting-operational-views.tsx",
   ].map((relativePath) => path.join(repositoryRoot, relativePath)),
@@ -261,7 +261,7 @@ const behaviorSources = {
   paymentDetail: read(
     "src/app/(dashboard)/accounting/payment-entries/[id]/detail-client.tsx",
   ),
-  invoices: read("src/components/monolith/accounting-invoice-form.tsx"),
+  invoices: read("src/modules/accounting/components/accounting-invoice-form.tsx"),
   operationalActions: read("src/modules/accounting/operational-actions.ts"),
   operationalViews: read("src/components/monolith/accounting-operational-views.tsx"),
   quotations: read(
@@ -319,7 +319,7 @@ for (const [sourceName, signals] of Object.entries({
     );
 }
 
-const styles = read("src/styles/monolith-system.css");
+const styles = `${read("src/styles/monolith-system.css")}\n${read("src/styles/modules/accounting.css")}`;
 for (const className of [
   ".mnx-accounting-page",
   ".mnx-accounting-breadcrumbs",

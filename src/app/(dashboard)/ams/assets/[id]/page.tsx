@@ -5,7 +5,7 @@ import {
   PerformanceTableHead,
   PerformanceTableHeader,
   PerformanceTableRow,
-} from "@/components/monolith/performance-workspace";
+} from "@/modules/performance/components/performance-workspace";
 import React from "react";
 import { getSession } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";

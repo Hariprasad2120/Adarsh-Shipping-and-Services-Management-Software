@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CustomerPortalAuth } from "@/components/monolith/customer-portal-workspace";
-import { PortalLoginForm } from "../_components/client-actions";
+import { PortalLoginForm } from "@/modules/customer-portal/components/client-actions";
 
 export default function CustomerPortalLoginPage() {
   return (

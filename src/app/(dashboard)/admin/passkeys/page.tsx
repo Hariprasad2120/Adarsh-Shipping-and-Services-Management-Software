@@ -1,14 +1,7 @@
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import {
-  AdminBadge,
-  AdminButton,
-  AdminInput,
-  AdminPanel,
-  AdminPanelHeader,
-  AdminPermissionState,
-  WorkspaceState,
-} from "@/components/monolith";
+import { AdminBadge, AdminButton, AdminInput, AdminPanel, AdminPanelHeader, AdminPermissionState } from "@/modules/admin/components/admin-workspace";
+import { WorkspaceState } from "@/components/layout/workspace";
 import { decidePasskeyResetAction, forcePasskeyResetAction } from "./actions";
 import { requirePermission } from "@/lib/rbac";
 import { redirect } from "next/navigation";

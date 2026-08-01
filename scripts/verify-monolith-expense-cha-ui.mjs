@@ -17,7 +17,13 @@ const repositoryRoot = path.resolve(
 const dashboardRoot = path.join(repositoryRoot, "src", "app", "(dashboard)");
 const chaRoot = path.join(dashboardRoot, "cha");
 const expenseRoot = path.join(dashboardRoot, "expense");
-const chaComponentsRoot = path.join(repositoryRoot, "src", "components", "cha");
+const chaComponentsRoot = path.join(
+  repositoryRoot,
+  "src",
+  "modules",
+  "cha",
+  "components",
+);
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -111,7 +117,7 @@ assert(
   "The authenticated shell must not retain route-specific legacy switching.",
 );
 
-const workspace = read("src/components/monolith/cha-workspace.tsx");
+const workspace = read("src/modules/cha/components/workspace/cha-workspace.tsx");
 for (const component of [
   "ChaWorkspaceFrame",
   "ChaRoutePageHeader",
@@ -137,7 +143,13 @@ for (const component of [
 const scopedSources = [
   ...walk(chaRoot, (file) => /\.(?:ts|tsx)$/.test(file)),
   ...walk(expenseRoot, (file) => /\.(?:ts|tsx)$/.test(file)),
-  ...walk(chaComponentsRoot, (file) => /\.(?:ts|tsx)$/.test(file)),
+  ...walk(
+    chaComponentsRoot,
+    (file) =>
+      /\.(?:ts|tsx)$/.test(file) &&
+      !/\.(?:test|spec)\.[jt]sx?$/.test(file) &&
+      !file.includes(`${path.sep}workspace${path.sep}`),
+  ),
 ];
 
 const forbiddenPatterns = [
@@ -196,7 +208,7 @@ const behaviorSources = {
     "src/app/(dashboard)/cha/settings/filing-workflows/workflows-client.tsx",
   ),
   settings: read("src/app/(dashboard)/cha/settings/settings-form.tsx"),
-  createJob: read("src/components/cha/create-job-dialog.tsx"),
+  createJob: read("src/modules/cha/components/create-job-dialog.tsx"),
 };
 
 for (const [sourceName, signals] of Object.entries({
@@ -246,7 +258,9 @@ for (const [sourceName, signals] of Object.entries({
   }
 }
 
-const styles = read("src/styles/monolith-system.css");
+const sharedStyles = read("src/styles/monolith-system.css");
+const moduleStyles = read("src/styles/modules/cha-expense.css");
+const styles = `${sharedStyles}\n${moduleStyles}`;
 const tokens = read("src/styles/monolith-tokens.css");
 for (const className of [
   ".mnx-floating-surface",
@@ -307,13 +321,13 @@ assert(
   "Obsolete standalone CHA dialog sizing remains active.",
 );
 
-const dialogSource = read("src/components/monolith/workspace-dialog.tsx");
-const chaWorkspaceSource = read("src/components/monolith/cha-workspace.tsx");
-const dropdownSource = read("src/components/monolith/dropdown-menu.tsx");
+const dialogSource = read("src/components/layout/workspace-dialog.tsx");
+const chaWorkspaceSource = read("src/modules/cha/components/workspace/cha-workspace.tsx");
+const dropdownSource = read("src/components/ui/dropdown-menu.tsx");
 const warningSource = read(
-  "src/components/monolith/warning-indicator-popover.tsx",
+  "src/components/feedback/warning-indicator-popover.tsx",
 );
-const monaSource = read("src/components/mona/mona-chat.tsx");
+const monaSource = read("src/modules/mona/components/mona-chat.tsx");
 for (const signal of [
   "export function WorkspaceDialogLayer",
   "FOCUSABLE_SELECTOR",

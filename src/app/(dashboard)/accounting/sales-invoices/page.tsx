@@ -8,7 +8,7 @@ import {
   AccountingActionLink,
   AccountingRoutePageHeader,
   AccountingSection,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import {
   listCanonicalAccountingDocuments,

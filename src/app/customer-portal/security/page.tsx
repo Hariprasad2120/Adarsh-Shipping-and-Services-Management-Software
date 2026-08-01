@@ -1,5 +1,5 @@
 import { requirePortalSession } from "@/modules/customer-portal/auth";
-import { PortalPlaceholder } from "../_components/portal-placeholder";
+import { PortalPlaceholder } from "@/modules/customer-portal/components/portal-placeholder";
 
 export default async function CustomerPortalSecurityPage() {
   await requirePortalSession();

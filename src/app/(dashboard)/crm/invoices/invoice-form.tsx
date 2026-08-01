@@ -5,10 +5,10 @@ import {
   CrmInput,
   CrmTextarea,
   CrmTable,
-} from "@/components/monolith/crm-workspace";
+} from "@/modules/crm/components/workspace/crm-workspace";
 
-import { NativeSelect } from "@/components/monolith/native-select";
-import { DateInput } from "@/components/monolith/date-input";
+import { NativeSelect } from "@/components/ui/native-select";
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -456,19 +456,19 @@ export function InvoiceForm({
         </div>
 
         <div className="overflow-x-auto border border-[var(--mnx-border)]/60 rounded-lg">
-          <CrmTable className="w-full text-left text-xs text-mono-muted border-collapse">
+          <CrmTable className="w-full text-left text-xs text-mono-muted border-collapse whitespace-nowrap">
             <thead>
               <tr className="bg-[var(--mnx-surface)] border-b border-[var(--mnx-border)] font-bold text-mono-muted">
-                <th className="px-4 py-3 min-w-[200px]">
+                <th className="px-4 py-3 min-w-[200px] whitespace-nowrap">
                   Product / Service Name *
                 </th>
-                <th className="px-4 py-3 w-24">Currency</th>
-                <th className="px-4 py-3 w-28">EXCH Rate</th>
-                <th className="px-4 py-3 w-20">Qty</th>
-                <th className="px-4 py-3 w-28">Rate</th>
-                <th className="px-4 py-3 w-28">GST Tax (%)</th>
-                <th className="px-4 py-3 w-32 text-right">Amount (INR)</th>
-                <th className="px-4 py-3 w-12 text-center"></th>
+                <th className="px-4 py-3 w-24 whitespace-nowrap">Currency</th>
+                <th className="px-4 py-3 w-28 whitespace-nowrap">Exchange Rate</th>
+                <th className="px-4 py-3 w-20 whitespace-nowrap">Qty</th>
+                <th className="px-4 py-3 w-28 whitespace-nowrap">Rate</th>
+                <th className="px-4 py-3 w-28 whitespace-nowrap">GST Tax (%)</th>
+                <th className="px-4 py-3 w-32 whitespace-nowrap text-right">Amount (INR)</th>
+                <th className="px-4 py-3 w-12 whitespace-nowrap text-center"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--mnx-border)]/30">
@@ -481,7 +481,7 @@ export function InvoiceForm({
 
                 return (
                   <tr key={index} className="hover:bg-[var(--mnx-surface)]/15">
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 whitespace-nowrap">
                       <CrmInput
                         type="text"
                         value={item.productName}
@@ -494,7 +494,7 @@ export function InvoiceForm({
                         required
                       />
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 whitespace-nowrap">
                       <NativeSelect
                         value={item.currency}
                         onChange={(e) =>
@@ -508,7 +508,7 @@ export function InvoiceForm({
                         <option value="SGD">SGD</option>
                       </NativeSelect>
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 whitespace-nowrap">
                       <CrmInput
                         type="number"
                         min="0"
@@ -526,7 +526,7 @@ export function InvoiceForm({
                         required
                       />
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 whitespace-nowrap">
                       <CrmInput
                         type="number"
                         min="1"
@@ -539,7 +539,7 @@ export function InvoiceForm({
                         required
                       />
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 whitespace-nowrap">
                       <CrmInput
                         type="number"
                         min="0"
@@ -552,7 +552,7 @@ export function InvoiceForm({
                         required
                       />
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 whitespace-nowrap">
                       <NativeSelect
                         value={item.taxPercent}
                         onChange={(e) =>
@@ -567,14 +567,14 @@ export function InvoiceForm({
                         <option value="28">28% High Slab</option>
                       </NativeSelect>
                     </td>
-                    <td className="px-4 py-2 text-right font-bold text-mono-text text-sm">
+                    <td className="px-4 py-2 whitespace-nowrap text-right font-bold text-mono-text text-sm">
                       ₹
                       {itemAmount.toLocaleString("en-IN", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
                     </td>
-                    <td className="px-4 py-2 text-center">
+                    <td className="px-4 py-2 whitespace-nowrap text-center">
                       <CrmButton
                         type="button"
                         onClick={() => handleRemoveItem(index)}

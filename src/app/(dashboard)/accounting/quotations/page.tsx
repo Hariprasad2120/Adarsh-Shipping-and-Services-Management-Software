@@ -1,20 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React from "react";
-import { getSession } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { listQuotations, listCustomerNotes } from "@/modules/accounting/service";
+import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { QuotationsClient } from "./quotations-client";
 
 export default async function QuotationsPage() {
-  const session = await getSession();
-  if (!session?.user) redirect("/login");
+  const { orgId } = await requireAccountingRouteAccess("/accounting/quotations", [
+    "accounting.quotation.read",
+    "accounting.note.read",
+    "accounting.correction.read",
+  ]);
 
-  const orgId = session.user.orgId!;
-
-  // Fetch quotations, notes, customers and sales invoices
-  const [quotations, notes, customers, invoices] = await Promise.all([
+  // Fetch quotations, notes, customers, sales invoices, and shared payment terms
+  const [quotations, notes, customers, invoices, paymentTerms] = await Promise.all([
     listQuotations(orgId),
     listCustomerNotes(orgId),
     db.crmAccount.findMany({
@@ -27,6 +27,11 @@ export default async function QuotationsPage() {
       select: { id: true, invoiceNumber: true, grandTotal: true, postingDate: true },
       orderBy: { invoiceNumber: "desc" },
     }),
+    db.accountingPaymentTerm.findMany({
+      where: { orgId, isActive: true },
+      select: { id: true, name: true, dueDays: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
   return (
@@ -37,10 +42,12 @@ export default async function QuotationsPage() {
           customerName: q.customer?.name || "Unknown Customer",
           postingDate: q.postingDate,
           validUntil: q.validUntil,
-          taxableAmount: Number(q.taxableAmount),
+          rowVersion: q.rowVersion,
+          taxableAmount: Number(q.subTotal),
           taxAmount: Number(q.taxAmount),
           grandTotal: Number(q.grandTotal),
           status: q.status,
+          sendStatus: q.sendStatus,
           remarks: q.remarks,
         }))}
         initialNotes={notes.map((n: any) => ({
@@ -62,6 +69,7 @@ export default async function QuotationsPage() {
           grandTotal: Number(i.grandTotal),
           postingDate: i.postingDate,
         }))}
+        paymentTerms={paymentTerms}
       />
   );
 }

@@ -3,17 +3,16 @@ import {
   CrmInput,
   CrmConfigurationState,
   CrmPermissionState,
-} from "@/components/monolith/crm-workspace";
-import { NativeSelect } from "@/components/monolith/native-select";
+} from "@/modules/crm/components/workspace/crm-workspace";
 import React from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { db } from "@/lib/db";
 import { listVendors } from "@/modules/crm/service";
 import { requirePermission } from "@/lib/rbac";
-import { Search, Truck, Phone, Mail, Save } from "lucide-react";
-import { createVendorAction, deleteVendorAction } from "@/modules/crm/actions";
-import { DeleteRecordButton } from "../_components/delete-record-button";
+import { Search, Plus, Phone, Mail } from "lucide-react";
+import { deleteVendorAction } from "@/modules/crm/actions";
+import { DeleteRecordButton } from "@/modules/crm/components/delete-record-button";
 
 interface SearchParams {
   search?: string;
@@ -37,7 +36,7 @@ export default async function CrmVendorsPage({
   // Permission Guard
   try {
     await requirePermission(session.user.id, "crm.vendor.manage");
-  } catch (e) {
+  } catch {
     return (
       <CrmPermissionState description="You do not have permission to view CRM vendors." />
     );
@@ -46,21 +45,22 @@ export default async function CrmVendorsPage({
   const awaitedParams = await searchParams;
   const search = awaitedParams.search || "";
 
-  // Fetch vendors from db
   const vendors = await listVendors(orgId, { search });
-
-  // Fetch users for owner dropdown
-  const employees = await db.user.findMany({
-    where: { orgId },
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
-  });
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Left Column: Vendors list table */}
-        <div className="lg:col-span-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl overflow-hidden shadow-2xl p-6 space-y-4">
+      <div className="flex items-center justify-end">
+        <Link
+          href="/crm/vendors/new"
+          className="mnx-button mnx-button-primary inline-flex items-center gap-2"
+        >
+          <Plus className="size-4" />
+          New vendor
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 gap-8 items-start">
+        <div className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl overflow-hidden shadow-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
               Registered Vendors
@@ -123,128 +123,6 @@ export default async function CrmVendorsPage({
               ))}
             </div>
           )}
-        </div>
-
-        {/* Right Column: Inline Create Vendor Form */}
-        <div className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/55 rounded-xl p-6 shadow-2xl space-y-4">
-          <div className="flex items-center gap-2 border-b border-[var(--mnx-border)]/30 pb-2">
-            <Truck className="size-4.5 text-[var(--mnx-accent)]" />
-            <h3 className="font-bold text-xs text-mono-text uppercase tracking-wider">
-              Add New Vendor
-            </h3>
-          </div>
-
-          <form
-            action={async (fd) => {
-              "use server";
-              await createVendorAction(fd);
-            }}
-            className="space-y-4"
-          >
-            <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
-                Vendor Company Name *
-              </label>
-              <CrmInput
-                type="text"
-                name="name"
-                placeholder="e.g. South Linehaul Packers"
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
-                Contact Person
-              </label>
-              <CrmInput
-                type="text"
-                name="contactName"
-                placeholder="e.g. Ramesh Kumar"
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
-                  Phone
-                </label>
-                <CrmInput
-                  type="text"
-                  name="phone"
-                  placeholder="e.g. +91 94440 12345"
-                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
-                  Email
-                </label>
-                <CrmInput
-                  type="email"
-                  name="email"
-                  placeholder="e.g. ramesh@vendor.com"
-                  className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
-                GSTIN / Tax ID
-              </label>
-              <CrmInput
-                type="text"
-                name="gstin"
-                placeholder="e.g. 33AABCA1234F1Z1"
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
-                Services Provided
-              </label>
-              <CrmInput
-                type="text"
-                name="services"
-                placeholder="e.g. Custom clearance, Linehaul trucking"
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
-                Address
-              </label>
-              <CrmInput
-                type="text"
-                name="address"
-                placeholder="Street office address..."
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wider mb-1.5">
-                Vendor Owner *
-              </label>
-              <NativeSelect
-                name="ownerId"
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded text-xs text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
-                required
-              >
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.name}
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-            <CrmButton
-              type="submit"
-              className="w-full flex items-center justify-center gap-1.5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text font-bold rounded-lg text-xs transition-all mnx-shadow-panel cursor-pointer"
-            >
-              <Save className="size-4" />
-              <span>Save Vendor Details</span>
-            </CrmButton>
-          </form>
         </div>
       </div>
     </div>

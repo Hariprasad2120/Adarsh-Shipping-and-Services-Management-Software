@@ -2,13 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Bell, Monitor, Volume2, VolumeX } from "lucide-react";
-import {
-  CommunicationBadge,
-  CommunicationButton,
-  CommunicationPanel,
-  CommunicationPanelHeader,
-  WorkspaceAlert,
-} from "@/components/monolith";
+import { CommunicationBadge, CommunicationButton, CommunicationPanel, CommunicationPanelHeader } from "@/modules/communication/components/workspace/communication-workspace";
+import { WorkspaceAlert } from "@/components/layout/workspace";
 
 export function NotificationSettings() {
   const [desktopEnabled, setDesktopEnabled] = useState(false);

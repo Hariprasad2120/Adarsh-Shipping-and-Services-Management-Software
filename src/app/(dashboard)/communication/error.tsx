@@ -1,6 +1,6 @@
 "use client";
 
-import { CommunicationErrorState } from "@/components/monolith/communication-workspace";
+import { CommunicationErrorState } from "@/modules/communication/components/workspace/communication-workspace";
 
 export default function CommunicationError({
   error,

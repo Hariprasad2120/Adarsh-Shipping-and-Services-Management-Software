@@ -4,14 +4,14 @@ import {
   PerformanceControlButton,
   PerformanceControlInput,
   PerformanceControlTextarea,
-} from "@/components/monolith/performance-workspace";
-import { WorkspaceDialog } from "@/components/monolith/workspace-dialog";
+} from "@/modules/performance/components/performance-workspace";
+import { WorkspaceDialog } from "@/components/layout/workspace-dialog";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { DropdownSelect } from "@/components/monolith/dropdown-select";
-import { Input } from "@/components/monolith/input";
-import { Button } from "@/components/monolith/button";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import type { EvaluatorRole } from "@/modules/ams/criteria-config";
 import { motion, AnimatePresence } from "framer-motion";
 import {

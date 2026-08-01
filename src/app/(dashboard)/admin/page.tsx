@@ -15,13 +15,8 @@ import {
 } from "lucide-react";
 import { AdminChaTestingAction } from "./admin-cha-testing-action";
 import { db } from "@/lib/db";
-import {
-  AdminPanel,
-  AdminPanelHeader,
-  AdminPermissionState,
-  WorkspaceMetric,
-  WorkspaceSectionHeading,
-} from "@/components/monolith";
+import { AdminPanel, AdminPanelHeader, AdminPermissionState } from "@/modules/admin/components/admin-workspace";
+import { WorkspaceMetric, WorkspaceSectionHeading } from "@/components/layout/workspace";
 
 export default async function AdminPage() {
   const session = await getSession();

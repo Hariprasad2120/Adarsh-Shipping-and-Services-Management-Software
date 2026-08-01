@@ -3,7 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { getJobDetails, getChecklistInternalApproverIds, getEligibleManagers } from "@/modules/cha/service";
 import { db } from "@/lib/db";
 import { can, ForbiddenError } from "@/lib/rbac";
-import { BreadcrumbLabel } from "@/components/breadcrumb-label";
+import { BreadcrumbLabel } from "@/components/navigation/breadcrumb-label";
 import { JobWorkspaceClient } from "./job-workspace-client";
 import { AccessProhibitedCard } from "./access-prohibited-card";
 import { getChaCustomsFeatureFlags } from "@/modules/cha/customs/feature-flags";

@@ -98,10 +98,10 @@ import {
   WorkflowDocumentsSectionHeader,
   type WorkflowDocumentRequirement,
   type WorkflowDocumentVersion,
-} from "./workflow-documents-section";
+} from "@/modules/cha/components/jobs/workflow-documents-section";
 import { NeonCheckbox } from "@/components/monolith/neon-checkbox";
-import { ChaDueDateWarningNote } from "@/app/(dashboard)/cha/_components/cha-due-date-warning-note";
-import type { DueDateWarningViewModel } from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
+import { ChaDueDateWarningNote } from "@/modules/cha/components/warnings/cha-due-date-warning-note";
+import type { DueDateWarningViewModel } from "@/modules/cha/components/warnings/cha-due-date-warning-indicator";
 import {
   formatChaBadgeLabel,
   getChaDocumentStatusBadgeVariant,

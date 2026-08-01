@@ -18,8 +18,8 @@ import { useState } from "react";
 import {
   MonolithEmptyState,
   MonolithSurface,
-} from "@/components/monolith/foundation";
-import { WorkspaceSectionHeading } from "@/components/monolith/workspace";
+} from "@/components/ui/foundation";
+import { WorkspaceSectionHeading } from "@/components/layout/workspace";
 import type { DashboardWidgetsData } from "@/modules/hrms/types";
 
 interface DashboardOrganizationProps {

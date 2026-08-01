@@ -3,7 +3,7 @@
 import {
   PeopleControlButton as MnxAction,
   PeopleControlInput as MnxInput,
-} from "@/components/monolith/people-controls";
+} from "@/modules/people/components/people-controls";
 
 import { useState, useEffect, useCallback } from "react";
 import { Search, Bookmark, Close } from "@carbon/icons-react";
@@ -15,7 +15,7 @@ import {
   DataTableHeader,
   DataTableRow,
   DataTableEmpty,
-} from "@/components/monolith/people-data-table";
+} from "@/modules/people/components/people-data-table";
 
 type Listing = {
   id: string;

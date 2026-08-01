@@ -17,6 +17,21 @@ import {
   postCanonicalAccountingRequest,
   reverseCanonicalJournal,
 } from "./posting-engine";
+import {
+  acceptQuotation,
+  approveQuotation,
+  cancelQuotation,
+  cloneQuotationDraft,
+  convertQuotationToInvoiceDraft,
+  declineQuotation,
+  expireDueQuotations,
+  getAccountingQuotation,
+  listAccountingQuotations,
+  returnQuotationForRevision,
+  saveQuotationDraft,
+  sendQuotation,
+  submitQuotationForApproval,
+} from "./quotations";
 
 // ─── Chart of Accounts Seeding ──────────────────────────────────────────────────
 
@@ -294,6 +309,7 @@ export async function createAccount(orgId: string, createdById: string, data: an
       accountType: data.accountType,
       isGroup: data.isGroup || false,
       isActive: data.isActive !== false,
+      allowJournalContact: Boolean(data.allowJournalContact),
       openingDebit: new Prisma.Decimal(data.openingDebit ?? 0),
       openingCredit: new Prisma.Decimal(data.openingCredit ?? 0),
       branchId: data.branchId || null,
@@ -308,11 +324,68 @@ export async function updateAccount(orgId: string, id: string, updatedById: stri
   const account = await db.account.findFirst({ where: { id, orgId } });
   if (!account) throw new Error("Account not found");
 
+  const parentAccountId =
+    data.parentAccountId === undefined ? undefined : data.parentAccountId || null;
+
+  if (parentAccountId === id) {
+    throw new Error("An account cannot be its own parent");
+  }
+
+  if (parentAccountId) {
+    const parent = await db.account.findFirst({
+      where: { id: parentAccountId, orgId },
+      select: { id: true, isGroup: true, parentAccountId: true },
+    });
+    if (!parent) throw new Error("Parent account not found");
+    if (!parent.isGroup) throw new Error("Parent account must be a group account");
+
+    let currentParentId: string | null | undefined = parent.parentAccountId;
+    while (currentParentId) {
+      if (currentParentId === id) {
+        throw new Error("An account cannot be moved under one of its descendants");
+      }
+      const ancestor: { parentAccountId: string | null } | null =
+        await db.account.findFirst({
+        where: { id: currentParentId, orgId },
+        select: { parentAccountId: true },
+        });
+      currentParentId = ancestor?.parentAccountId;
+    }
+  }
+
+  if (data.accountCode && data.accountCode !== account.accountCode) {
+    const existingCode = await db.account.findFirst({
+      where: { orgId, accountCode: data.accountCode },
+      select: { id: true },
+    });
+    if (existingCode) {
+      throw new Error(`Account code ${data.accountCode} already exists`);
+    }
+  }
+
+  if (data.isGroup === false) {
+    const childCount = await db.account.count({
+      where: { orgId, parentAccountId: id },
+    });
+    if (childCount > 0) {
+      throw new Error("A group account with child ledgers cannot be converted to a posting account");
+    }
+  }
+
   const updatedAccount = await db.account.update({
     where: { id },
     data: {
-      accountName: data.accountName,
-      isActive: data.isActive,
+      accountCode: data.accountCode ?? undefined,
+      accountName: data.accountName ?? undefined,
+      parentAccountId,
+      rootType: data.rootType ?? undefined,
+      accountType: data.accountType ?? undefined,
+      isGroup: data.isGroup ?? undefined,
+      isActive: data.isActive ?? undefined,
+      allowJournalContact:
+        data.allowJournalContact !== undefined
+          ? Boolean(data.allowJournalContact)
+          : undefined,
       openingDebit: data.openingDebit != null ? new Prisma.Decimal(data.openingDebit) : undefined,
       openingCredit: data.openingCredit != null ? new Prisma.Decimal(data.openingCredit) : undefined,
       branchId: data.branchId !== undefined ? (data.branchId || null) : undefined,
@@ -734,7 +807,7 @@ export async function createSalesInvoice(orgId: string, createdById: string, dat
   const grandTotal = taxableAmount.add(taxAmount);
 
   const count = await db.salesInvoice.count({ where: { orgId } });
-  const invoiceNumber = `SINV-${1001 + count}`;
+  const invoiceNumber = data.invoiceNumber || `SINV-${1001 + count}`;
 
   const postingDate = data.postingDate ? new Date(data.postingDate) : await getNow();
   const dueDate = new Date(data.dueDate);
@@ -785,6 +858,7 @@ export async function createSalesInvoice(orgId: string, createdById: string, dat
         remarks: data.remarks || null,
         bankDetails: data.bankDetails || null,
         manualNotes: data.manualNotes || null,
+        paymentMethod: data.paymentMethod || null,
         createdById,
         items: {
           create: calculatedItems.map((it: any) => ({
@@ -1024,7 +1098,7 @@ export async function createPurchaseInvoice(orgId: string, createdById: string, 
   const grandTotal = taxableAmount.add(taxAmount);
 
   const count = await db.purchaseInvoice.count({ where: { orgId } });
-  const invoiceNumber = `PINV-${1001 + count}`;
+  const invoiceNumber = data.invoiceNumber || `PINV-${1001 + count}`;
 
   const postingDate = data.postingDate ? new Date(data.postingDate) : await getNow();
   const dueDate = new Date(data.dueDate);
@@ -1072,13 +1146,21 @@ export async function createPurchaseInvoice(orgId: string, createdById: string, 
         discountAmount,
         taxAmount,
         remarks: data.remarks || null,
+        paymentMethod: data.paymentMethod || null,
         createdById,
+        orderNumber: data.orderNumber || null,
+        placeOfSupply: data.placeOfSupply || null,
+        terms: data.terms || null,
+        salespersonId: data.salespersonId || null,
         items: {
           create: calculatedItems.map((it: any) => ({
             itemName: it.itemName,
             qty: Number(it.quantity.toString()),
             rate: it.rate,
             amount: it.amount,
+            unit: it.unit || null,
+            taxRate: it.taxRate != null ? Number(it.taxRate.toString()) : null,
+            tdsRate: it.tdsRate != null ? Number(it.tdsRate.toString()) : null,
           })),
         },
         taxLines: taxRate.isPositive() ? {
@@ -2002,82 +2084,160 @@ export async function validatePostingDateNotLocked(orgId: string, date: Date | s
 
 // 2. Quotation Preparation Services
 export async function listQuotations(orgId: string) {
-  return db.quotation.findMany({
-    where: { orgId },
-    include: { customer: { select: { name: true } } },
-    orderBy: { postingDate: "desc" }
-  });
+  const result = await listAccountingQuotations(orgId);
+  return result.items;
 }
 
 export async function getQuotation(orgId: string, id: string) {
-  return db.quotation.findFirst({
-    where: { id, orgId },
-    include: { customer: true, items: true }
-  });
+  return getAccountingQuotation(orgId, id);
+}
+
+function normalizeQuotationDraftPayload(data: any) {
+  const linesSource = Array.isArray(data?.lines)
+    ? data.lines
+    : Array.isArray(data?.items)
+      ? data.items
+      : [];
+
+  return {
+    ...data,
+    paymentTermName: data?.paymentTermName ?? data?.terms ?? null,
+    lines: linesSource.map((line: any) => ({
+      itemMasterId: line.itemMasterId ?? null,
+      itemName: line.itemName,
+      description: line.description ?? null,
+      hsnSac: line.hsnSac ?? null,
+      qty: String(line.qty ?? "0"),
+      uom: line.uom ?? line.unit ?? null,
+      rate: String(line.rate ?? "0"),
+      discountType: line.discountType ?? "AMOUNT",
+      discountValue:
+        line.discountValue != null
+          ? String(line.discountValue)
+          : line.discount != null
+            ? String(line.discount)
+            : "0",
+      taxRate: String(line.taxRate ?? "0"),
+      taxMode: line.taxMode ?? "EXCLUSIVE",
+      jobId: line.jobId ?? null,
+      reportingTags: line.reportingTags ?? null,
+      customFieldValues: line.customFieldValues ?? null,
+    })),
+  };
 }
 
 export async function createQuotation(orgId: string, createdById: string, data: any) {
-  if (!data.validUntil) throw new Error("A configured quotation validity date is required");
-  const count = await db.quotation.count({ where: { orgId } });
-  const quotationNumber = `QUOT-${1001 + count}`;
-  const postingDate = data.postingDate ? new Date(data.postingDate) : new Date();
-  const validUntil = new Date(data.validUntil);
-
-  const items = data.items || [];
-  let subTotal = 0;
-  let taxAmount = 0;
-  for (const it of items) {
-    if (it.taxRate == null) throw new Error("Every quotation line requires configured tax treatment");
-    const qty = parseFloat(it.qty || 1);
-    const rate = parseFloat(it.rate || 0);
-    const disc = parseFloat(it.discount || 0);
-    const taxRate = parseFloat(it.taxRate);
-    const amt = qty * rate - disc;
-    subTotal += amt;
-    taxAmount += amt * (taxRate / 100);
-  }
-  const grandTotal = subTotal + taxAmount;
-
-  return db.quotation.create({
-    data: {
-      orgId,
-      branchId: data.branchId || null,
-      quotationNumber,
-      customerId: data.customerId,
-      postingDate,
-      validUntil,
-      status: "OPEN",
-      subTotal: new Prisma.Decimal(subTotal),
-      discountAmount: new Prisma.Decimal(data.discountAmount || 0),
-      taxAmount: new Prisma.Decimal(taxAmount),
-      grandTotal: new Prisma.Decimal(grandTotal),
-      terms: data.terms || null,
-      remarks: data.remarks || null,
-      createdById,
-      items: {
-        create: items.map((it: any) => ({
-          itemName: it.itemName,
-          hsnSac: it.hsnSac || null,
-          qty: parseFloat(it.qty || 1),
-          uom: it.uom || "Nos",
-          rate: new Prisma.Decimal(parseFloat(it.rate || 0)),
-          discount: new Prisma.Decimal(parseFloat(it.discount || 0)),
-          taxRate: parseFloat(it.taxRate),
-          taxAmount: new Prisma.Decimal(parseFloat(it.qty || 1) * parseFloat(it.rate || 0) * (parseFloat(it.taxRate) / 100)),
-          amount: new Prisma.Decimal((parseFloat(it.qty || 1) * parseFloat(it.rate || 0)) - parseFloat(it.discount || 0)),
-        }))
-      }
-    }
+  return saveQuotationDraft({
+    orgId,
+    actorId: createdById,
+    ...normalizeQuotationDraftPayload(data),
   });
 }
 
-export async function convertQuotationToInvoice(orgId: string, quotationId: string, createdById: string) {
-  void orgId;
-  void quotationId;
-  void createdById;
-  throw new Error(
-    "QUOTATION_CONVERSION_GATED: prepare a versioned invoice request and resolve configured due-date, tax, account, numbering and approval policies",
-  );
+export async function convertQuotationToInvoice(
+  orgId: string,
+  quotationId: string,
+  createdById: string,
+  data?: {
+    expectedVersion?: number;
+    quantitiesByLineId?: Record<string, string>;
+  },
+) {
+  return convertQuotationToInvoiceDraft({
+    orgId,
+    actorId: createdById,
+    quotationId,
+    expectedVersion: data?.expectedVersion,
+    quantitiesByLineId: data?.quantitiesByLineId,
+  });
+}
+
+export async function updateQuotationDraft(orgId: string, id: string, actorId: string, data: any) {
+  return saveQuotationDraft({
+    orgId,
+    actorId,
+    id,
+    ...normalizeQuotationDraftPayload(data),
+  });
+}
+
+export async function duplicateQuotation(orgId: string, id: string, actorId: string) {
+  return cloneQuotationDraft({ orgId, quotationId: id, actorId });
+}
+
+export async function submitQuotationApproval(orgId: string, id: string, actorId: string, expectedVersion?: number) {
+  return submitQuotationForApproval({
+    orgId,
+    actorId,
+    quotationId: id,
+    expectedVersion,
+  });
+}
+
+export async function approveQuotationDraft(orgId: string, id: string, actorId: string, expectedVersion?: number) {
+  return approveQuotation({
+    orgId,
+    actorId,
+    quotationId: id,
+    expectedVersion,
+  });
+}
+
+export async function returnQuotationDraftForRevision(orgId: string, id: string, actorId: string, reason: string, expectedVersion?: number) {
+  return returnQuotationForRevision({
+    orgId,
+    actorId,
+    quotationId: id,
+    reason,
+    expectedVersion,
+  });
+}
+
+export async function sendQuotationDraft(orgId: string, id: string, actorId: string, data: { expectedVersion?: number; templateVersion?: string | null; deliveryMode?: "EMAIL" | "PORTAL" | "MANUAL" }) {
+  return sendQuotation({
+    orgId,
+    actorId,
+    quotationId: id,
+    expectedVersion: data.expectedVersion,
+    templateVersion: data.templateVersion,
+    deliveryMode: data.deliveryMode,
+  });
+}
+
+export async function acceptQuotationDraft(orgId: string, id: string, actorId: string, data: { expectedVersion?: number; source: "INTERNAL" | "PORTAL" | "SYSTEM"; customerReference?: string | null }) {
+  return acceptQuotation({
+    orgId,
+    actorId,
+    quotationId: id,
+    expectedVersion: data.expectedVersion,
+    source: data.source,
+    customerReference: data.customerReference,
+  });
+}
+
+export async function declineQuotationDraft(orgId: string, id: string, actorId: string, data: { expectedVersion?: number; source: "INTERNAL" | "PORTAL" | "SYSTEM"; reason: string }) {
+  return declineQuotation({
+    orgId,
+    actorId,
+    quotationId: id,
+    expectedVersion: data.expectedVersion,
+    source: data.source,
+    reason: data.reason,
+  });
+}
+
+export async function cancelQuotationDraft(orgId: string, id: string, actorId: string, data: { expectedVersion?: number; reason?: string | null }) {
+  return cancelQuotation({
+    orgId,
+    actorId,
+    quotationId: id,
+    expectedVersion: data.expectedVersion,
+    reason: data.reason,
+  });
+}
+
+export async function runQuotationExpiry(orgId: string, actorId?: string) {
+  return expireDueQuotations({ orgId, actorId });
 }
 
 // 3. Debit & Credit Notes (Customer)
@@ -2098,7 +2258,7 @@ export async function getCustomerNote(orgId: string, id: string) {
 
 export async function createCustomerNote(orgId: string, createdById: string, data: any) {
   const count = await db.customerNote.count({ where: { orgId } });
-  const noteNumber = `${data.noteType === "DEBIT" ? "CDN" : "CCN"}-${1001 + count}`;
+  const noteNumber = data.noteNumber || `${data.noteType === "DEBIT" ? "CDN" : "CCN"}-${1001 + count}`;
   const postingDate = data.postingDate ? new Date(data.postingDate) : new Date();
 
   const items = data.items || [];
@@ -2126,7 +2286,12 @@ export async function createCustomerNote(orgId: string, createdById: string, dat
       grandTotal: new Prisma.Decimal(grandTotal),
       status: "DRAFT",
       remarks: data.remarks || null,
+      paymentMethod: data.paymentMethod || null,
       createdById,
+      orderNumber: data.orderNumber || null,
+      placeOfSupply: data.placeOfSupply || null,
+      terms: data.terms || null,
+      salespersonId: data.salespersonId || null,
       items: {
         create: items.map((it: any) => ({
           itemName: it.itemName,
@@ -2135,6 +2300,8 @@ export async function createCustomerNote(orgId: string, createdById: string, dat
           amount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate)),
           taxRate: parseFloat(it.taxRate),
           taxAmount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate) * (parseFloat(it.taxRate) / 100)),
+          unit: it.unit || null,
+          tdsRate: it.tdsRate != null ? parseFloat(it.tdsRate) : null,
         }))
       }
     }
@@ -2258,7 +2425,7 @@ export async function getVendorNote(orgId: string, id: string) {
 
 export async function createVendorNote(orgId: string, createdById: string, data: any) {
   const count = await db.vendorNote.count({ where: { orgId } });
-  const noteNumber = `${data.noteType === "DEBIT" ? "VDN" : "VCN"}-${1001 + count}`;
+  const noteNumber = data.noteNumber || `${data.noteType === "DEBIT" ? "VDN" : "VCN"}-${1001 + count}`;
   const postingDate = data.postingDate ? new Date(data.postingDate) : new Date();
 
   const items = data.items || [];
@@ -2286,7 +2453,12 @@ export async function createVendorNote(orgId: string, createdById: string, data:
       grandTotal: new Prisma.Decimal(grandTotal),
       status: "DRAFT",
       remarks: data.remarks || null,
+      paymentMethod: data.paymentMethod || null,
       createdById,
+      orderNumber: data.orderNumber || null,
+      placeOfSupply: data.placeOfSupply || null,
+      terms: data.terms || null,
+      salespersonId: data.salespersonId || null,
       items: {
         create: items.map((it: any) => ({
           itemName: it.itemName,
@@ -2295,6 +2467,8 @@ export async function createVendorNote(orgId: string, createdById: string, data:
           amount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate)),
           taxRate: parseFloat(it.taxRate),
           taxAmount: new Prisma.Decimal(parseFloat(it.qty) * parseFloat(it.rate) * (parseFloat(it.taxRate) / 100)),
+          unit: it.unit || null,
+          tdsRate: it.tdsRate != null ? parseFloat(it.tdsRate) : null,
         }))
       }
     }
@@ -2849,6 +3023,22 @@ export async function updateJobCosting(orgId: string, id: string, data: any) {
       status: data.status,
       costCentre: data.costCentre || null
     }
+  });
+}
+
+export async function createUnit(orgId: string, name: string) {
+  return db.unit.create({
+    data: {
+      orgId,
+      name,
+    },
+  });
+}
+
+export async function getUnits(orgId: string) {
+  return db.unit.findMany({
+    where: { orgId },
+    orderBy: { name: "asc" },
   });
 }
 

@@ -10,17 +10,8 @@ import {
   Users,
   Wifi,
 } from "lucide-react";
-import {
-  AdminBadge,
-  AdminButton,
-  AdminEmptyTableRow,
-  AdminField,
-  AdminInput,
-  AdminPanel,
-  AdminPanelHeader,
-  AdminTable,
-  WorkspaceMetric,
-} from "@/components/monolith";
+import { AdminBadge, AdminButton, AdminEmptyTableRow, AdminField, AdminInput, AdminPanel, AdminPanelHeader, AdminTable } from "@/modules/admin/components/admin-workspace";
+import { WorkspaceMetric } from "@/components/layout/workspace";
 import {
   adminRevokeAllUserSessionsAction,
   adminRevokeSessionAction,

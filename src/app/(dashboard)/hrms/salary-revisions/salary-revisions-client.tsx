@@ -1,6 +1,6 @@
 "use client";
 
-import { PeopleControlButton as MnxAction } from "@/components/monolith/people-controls";
+import { PeopleControlButton as MnxAction } from "@/modules/people/components/people-controls";
 
 import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
@@ -23,8 +23,8 @@ import {
   DataTableHeader,
   DataTablePrimaryLinkCell,
   DataTableRow,
-} from "@/components/monolith/people-data-table";
-import { Input } from "@/components/monolith/input";
+} from "@/modules/people/components/people-data-table";
+import { Input } from "@/components/ui/input";
 import type {
   SalaryRevisionStats,
   SalaryRevisionSummary,

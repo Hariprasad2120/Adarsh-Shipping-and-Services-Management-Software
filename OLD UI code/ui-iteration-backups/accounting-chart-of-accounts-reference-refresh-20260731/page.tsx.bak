@@ -1,0 +1,21 @@
+import { db } from "@/lib/db";
+import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
+import { getChartOfAccounts } from "@/modules/accounting/service";
+import { AccountsClient } from "./accounts-client";
+import { AccountingRoutePageHeader } from "@/components/monolith/accounting-workspace";
+
+export default async function ChartOfAccountsPage() {
+  const { orgId } = await requireAccountingRouteAccess("/accounting/accounts");
+
+  const [coa, branches] = await Promise.all([
+    getChartOfAccounts(orgId),
+    db.branch.findMany({ where: { orgId } }),
+  ]);
+
+  return (
+    <>
+      <AccountingRoutePageHeader />
+      <AccountsClient initialCoa={coa} branches={branches} />
+    </>
+  );
+}

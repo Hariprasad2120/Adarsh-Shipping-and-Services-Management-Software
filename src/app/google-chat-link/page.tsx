@@ -12,19 +12,8 @@ import {
   RefreshCw,
   ShieldCheck,
 } from "lucide-react";
-import {
-  Button,
-  PublicActions,
-  PublicBrand,
-  PublicFooter,
-  PublicHeader,
-  PublicInset,
-  PublicMonolithShell,
-  PublicPanel,
-  PublicStage,
-  PublicStatus,
-  PublicStatusBadge,
-} from "@/components/monolith";
+import { Button } from "@/components/ui/button";
+import { PublicActions, PublicBrand, PublicFooter, PublicHeader, PublicInset, PublicMonolithShell, PublicPanel, PublicStage, PublicStatus, PublicStatusBadge } from "@/modules/auth/components/public-workspace";
 
 type Phase = "loading" | "confirm" | "submitting" | "success" | "error";
 type TokenInfo = { googleEmail?: string; googleDisplayName?: string } | null;

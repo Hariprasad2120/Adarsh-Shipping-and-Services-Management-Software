@@ -16,12 +16,25 @@ services:
       timeout: 5s
       retries: 10
 
+  accounting-migrate:
+    build:
+      context: .
+      target: migrator
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://monolith:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/monolith_engine
+      ACCOUNTING_PROVIDER_MODE: disabled
+      ACCOUNTING_PHASE6_EXECUTION: disabled
+
   app:
     build: .
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
+      accounting-migrate:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: postgresql://monolith:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/monolith_engine
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?NEXTAUTH_SECRET is required}

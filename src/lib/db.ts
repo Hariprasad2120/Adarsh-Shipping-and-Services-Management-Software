@@ -1,5 +1,5 @@
 // Bump this when Prisma schema changes need a fresh dev-time singleton.
-const PRISMA_CLIENT_SCHEMA_VERSION = "2026-07-29-employee-hrms-profile";
+const PRISMA_CLIENT_SCHEMA_VERSION = "2026-07-31-accounting-phase9-item-master";
 
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -153,6 +153,8 @@ type PrismaClientWithDelegates = PrismaClient & {
   googleChatInteractionEvent?: unknown;
   employeeHrmsProfile?: unknown;
   employeeProfileField?: unknown;
+  accountingCapabilityPolicy?: unknown;
+  accountingItemMaster?: unknown;
 };
 
 function hasRequiredDelegates(client: PrismaClient) {
@@ -170,7 +172,9 @@ function hasRequiredDelegates(client: PrismaClient) {
     typeof delegateClient.chaJobDeletionRequest !== "undefined" &&
     typeof delegateClient.googleChatInteractionEvent !== "undefined" &&
     typeof delegateClient.employeeHrmsProfile !== "undefined" &&
-    typeof delegateClient.employeeProfileField !== "undefined"
+    typeof delegateClient.employeeProfileField !== "undefined" &&
+    typeof delegateClient.accountingCapabilityPolicy !== "undefined" &&
+    typeof delegateClient.accountingItemMaster !== "undefined"
   );
 }
 

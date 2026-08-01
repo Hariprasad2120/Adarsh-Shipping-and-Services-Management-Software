@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCan } from "@/lib/caps-context";
-import { PeopleToggleButton } from "@/components/monolith/people-controls";
+import { PeopleToggleButton } from "@/modules/people/components/people-controls";
 
 export function EmployeeAccountActions({
   active,

@@ -11,8 +11,8 @@ import {
   MonolithEmptyState,
   MonolithSpecLabel,
   MonolithSurface,
-} from "@/components/monolith/foundation";
-import { WorkspaceSectionHeading } from "@/components/monolith/workspace";
+} from "@/components/ui/foundation";
+import { WorkspaceSectionHeading } from "@/components/layout/workspace";
 import type { DashboardModuleSnapshot } from "@/modules/dashboard/types";
 import type { DashboardWidgetsData, UserProfile } from "@/modules/hrms/types";
 import type { DashboardSessionUser } from "./dashboard-types";

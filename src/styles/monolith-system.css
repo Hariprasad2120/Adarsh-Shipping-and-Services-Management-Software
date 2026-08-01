@@ -13714,3 +13714,7 @@ button.mnx-accounting-record-card {
     grid-template-columns: 1fr;
   }
 }
+
+.mnx-state-spinner {
+  animation: mnx-people-spin 0.9s linear infinite;
+}

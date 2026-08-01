@@ -3,6 +3,10 @@ import "server-only";
 import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 
+import {
+  resolveAccountingCapabilityReadiness,
+  type AccountingCapabilityReadiness,
+} from "./capability-policies";
 import { add, serialize, subtract } from "./money";
 
 const DEFAULT_PAGE_SIZE = 25;
@@ -918,14 +922,31 @@ export async function listCanonicalJournals(
     sourceType?: string;
     dateFrom?: string;
     dateTo?: string;
+    search?: string;
   } = {},
 ) {
   const { page, pageSize, skip } = pagination(input);
+  const search = input.search?.trim();
   const where: Prisma.JournalEntryWhereInput = {
     orgId,
     ...(input.legalEntityId ? { legalEntityId: input.legalEntityId } : {}),
     ...(input.status ? { status: input.status } : {}),
     ...(input.sourceType ? { sourceType: input.sourceType } : {}),
+    ...(search
+      ? {
+          OR: [
+            { voucherNo: { contains: search, mode: "insensitive" } },
+            { remarks: { contains: search, mode: "insensitive" } },
+            { sourceId: { contains: search, mode: "insensitive" } },
+            { sourceType: { contains: search, mode: "insensitive" } },
+            {
+              branch: {
+                name: { contains: search, mode: "insensitive" },
+              },
+            },
+          ],
+        }
+      : {}),
     ...(input.dateFrom || input.dateTo
       ? {
           postingDate: {
@@ -944,10 +965,15 @@ export async function listCanonicalJournals(
       take: pageSize,
       include: {
         legalEntity: { select: { code: true, legalName: true } },
+        branch: { select: { name: true } },
         _count: { select: { lines: true, reversals: true, replacements: true } },
       },
     }),
   ]);
+  const userNames = await resolveUserNames(
+    orgId,
+    rows.map((row) => row.createdById),
+  );
   return {
     page,
     pageSize,
@@ -959,15 +985,18 @@ export async function listCanonicalJournals(
       sourceSystem: row.sourceSystem,
       sourceType: row.sourceType,
       sourceId: row.sourceId,
+      branchName: row.branch?.name ?? null,
       status: row.status,
       postingDate: iso(row.postingDate)!,
       legalEntity: row.legalEntity
         ? `${row.legalEntity.code} — ${row.legalEntity.legalName}`
         : "Legacy / unassigned",
+      remarks: row.remarks,
       currencyCode:
         row.transactionCurrencyCode ?? row.functionalCurrencyCode ?? "—",
       totalDebit: serialize(row.totalDebit),
       totalCredit: serialize(row.totalCredit),
+      createdBy: userNames.get(row.createdById) ?? "Unknown user",
       reversalOfId: row.reversalOfId,
       replacementOfId: row.replacementOfId,
       rowVersion: row.rowVersion,
@@ -1351,6 +1380,10 @@ export async function getAccountingConfigurationOverview(orgId: string) {
     accountControls,
     assets,
     partners,
+    recurringReadiness,
+    depreciationReadiness,
+    partnerReadiness,
+    outboxReadiness,
   ] = await Promise.all([
     db.accountingOrganisationProfile.findUnique({ where: { orgId } }),
     db.accountingLegalEntity.findMany({
@@ -1393,6 +1426,22 @@ export async function getAccountingConfigurationOverview(orgId: string) {
     db.accountingAccountControl.count({ where: { orgId } }),
     db.asset.count({ where: { orgId } }),
     db.partnerAccount.count({ where: { orgId } }),
+    resolveAccountingCapabilityReadiness({
+      orgId,
+      capability: "RECURRING_GENERATION",
+    }),
+    resolveAccountingCapabilityReadiness({
+      orgId,
+      capability: "ASSET_DEPRECIATION",
+    }),
+    resolveAccountingCapabilityReadiness({
+      orgId,
+      capability: "PARTNER_ACCOUNTING",
+    }),
+    resolveAccountingCapabilityReadiness({
+      orgId,
+      capability: "PRODUCTION_OUTBOX",
+    }),
   ]);
 
   const activeDocumentTypes = new Set(
@@ -1475,11 +1524,23 @@ export async function getAccountingConfigurationOverview(orgId: string) {
       purchaseInvoice: activeDocumentTypes.has("PURCHASE_INVOICE"),
       customerReceipt: activeDocumentTypes.has("CUSTOMER_RECEIPT"),
       vendorPayment: activeDocumentTypes.has("VENDOR_PAYMENT"),
-      depreciation: false,
-      recurringGeneration: false,
-      partnerTransactions: false,
-      productionOutbox: false,
+      depreciation: depreciationReadiness.enabled,
+      recurringGeneration: recurringReadiness.enabled,
+      partnerTransactions: partnerReadiness.enabled,
+      productionOutbox: outboxReadiness.enabled,
     },
+    capabilityReadiness: {
+      recurringGeneration: recurringReadiness,
+      depreciation: depreciationReadiness,
+      partnerTransactions: partnerReadiness,
+      productionOutbox: outboxReadiness,
+    } satisfies Record<
+      | "recurringGeneration"
+      | "depreciation"
+      | "partnerTransactions"
+      | "productionOutbox",
+      AccountingCapabilityReadiness
+    >,
     sourceCounts: { assets, partners },
   };
 }

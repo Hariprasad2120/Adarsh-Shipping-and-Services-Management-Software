@@ -1,4 +1,4 @@
-import { DateInput } from "@/components/monolith/date-input";
+import { DateInput } from "@/components/ui/date-input";
 import { OperationalLedgerTable } from "@/components/monolith/accounting-operational-views";
 import {
   AccountingAction,
@@ -7,7 +7,7 @@ import {
   AccountingSection,
   AccountingSelect,
   AccountingToolbar,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { getGeneralLedgerOperationalView } from "@/modules/accounting/operational-queries";
 

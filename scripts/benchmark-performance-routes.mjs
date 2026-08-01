@@ -1,15 +1,18 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { chromium } from "playwright";
-import { parse } from "dotenv";
+import {
+  assertLocalUiServerReady,
+  getLocalUiBaseUrl,
+} from "./local-ui-target.mjs";
 
-const baseUrl = process.env.UI_TEST_BASE_URL ?? "http://127.0.0.1:3100";
-if (!/^http:\/\/(?:127\.0\.0\.1|localhost):\d+$/.test(baseUrl)) {
-  throw new Error("Benchmarks are restricted to a local application URL.");
+const baseUrl = getLocalUiBaseUrl();
+const email = process.env.UI_TEST_EMAIL;
+const password = process.env.UI_TEST_PASSWORD;
+if (!email || !password) {
+  throw new Error(
+    "UI_TEST_EMAIL and UI_TEST_PASSWORD are required for the normal localhost:3000 application.",
+  );
 }
-const staging = parse(readFileSync(resolve(".env.staging.local")));
-const password = staging.STAGING_TEST_PASSWORD;
-if (!password) throw new Error("Local staging test password is missing.");
+await assertLocalUiServerReady(baseUrl);
 
 function percentile(values, fraction) {
   const sorted = [...values].sort((a, b) => a - b);
@@ -21,7 +24,7 @@ try {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(`${baseUrl}/login`, { waitUntil: "domcontentloaded" });
-  await page.locator('input[name="email"]').fill("accounting-maker@staging.example.com");
+  await page.locator('input[name="email"]').fill(email);
   await page.locator('input[name="password"]').fill(password);
   await page.locator('button[type="submit"]').click();
   await page.waitForURL((url) => url.pathname !== "/login", { timeout: 30_000 });

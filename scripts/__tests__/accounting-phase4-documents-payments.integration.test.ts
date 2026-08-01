@@ -33,6 +33,8 @@ const checkerRoleId = "stg_role_accounting_checker";
 const salesInvoiceId = "p4test-sales-invoice";
 const paymentEntryId = "p4test-customer-receipt";
 const salesPolicyId = "p4test-policy-sales";
+const taxRegistrationId = "p4test-tax-registration";
+const taxProfileId = "p4test-tax-profile";
 let client: Client;
 
 const phase4Permissions = {
@@ -193,6 +195,18 @@ async function cleanupPhase4Fixtures() {
       `DELETE FROM "SalesInvoice" WHERE "orgId" = $1 AND id LIKE 'p4test-%'`,
       [orgId],
     );
+    await client.query(
+      `DELETE FROM "AccountingTaxRule" WHERE "orgId" = $1 AND id LIKE 'p4test-%'`,
+      [orgId],
+    );
+    await client.query(
+      `DELETE FROM "AccountingTaxProfile" WHERE "orgId" = $1 AND id LIKE 'p4test-%'`,
+      [orgId],
+    );
+    await client.query(
+      `DELETE FROM "AccountingTaxRegistration" WHERE "orgId" = $1 AND id LIKE 'p4test-%'`,
+      [orgId],
+    );
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK");
@@ -201,6 +215,62 @@ async function cleanupPhase4Fixtures() {
 }
 
 async function configurePhase4Fixtures() {
+  await db.accountingTaxRegistration.upsert({
+    where: { id: taxRegistrationId },
+    update: {
+      isActive: true,
+      effectiveFrom: new Date("2027-04-01T00:00:00.000Z"),
+    },
+    create: {
+      id: taxRegistrationId,
+      orgId,
+      legalEntityId,
+      registrationCode: "P4TEST-GST",
+      registrationType: "GST",
+      stateCode: "33",
+      isActive: true,
+      effectiveFrom: new Date("2027-04-01T00:00:00.000Z"),
+    },
+  });
+  await db.accountingTaxProfile.upsert({
+    where: { id: taxProfileId },
+    update: { isActive: true, statutoryValidated: true },
+    create: {
+      id: taxProfileId,
+      orgId,
+      legalEntityId,
+      taxRegistrationId,
+      code: "P4TEST-ZERO-TAX",
+      name: "Phase 4 zero-tax fixture",
+      version: 1,
+      statutoryValidated: true,
+      effectiveFrom: new Date("2027-04-01T00:00:00.000Z"),
+      isActive: true,
+    },
+  });
+  for (const documentType of ["SALES_INVOICE", "CUSTOMER_CREDIT_NOTE"]) {
+    await db.accountingTaxRule.upsert({
+      where: { id: `p4test-tax-rule-${documentType.toLowerCase()}` },
+      update: { isActive: true, statutoryValidated: true },
+      create: {
+        id: `p4test-tax-rule-${documentType.toLowerCase()}`,
+        orgId,
+        taxProfileId,
+        legalEntityId,
+        taxRegistrationId,
+        code: `P4TEST-${documentType}`,
+        documentType,
+        placeOfSupplyType: "INTER_STATE",
+        counterpartyTreatment: "REGISTERED_BUSINESS",
+        supplyCategory: "SERVICE",
+        version: 1,
+        configuration: { synthetic: true, zeroTax: true },
+        statutoryValidated: true,
+        effectiveFrom: new Date("2027-04-01T00:00:00.000Z"),
+        isActive: true,
+      },
+    });
+  }
   for (const [id, partyType, partyId] of [
     ["p4test-customer-entity-scope", "CUSTOMER", "stg_crm_customer"],
     ["p4test-supplier-entity-scope", "SUPPLIER", "stg_crm_vendor"],
@@ -291,6 +361,7 @@ async function configurePhase4Fixtures() {
     currencyCode: "INR",
     receivableAccountId: "stg_account_receivable",
     revenueAccountId: "stg_account_sales",
+    allowZeroTax: true,
     preserveOriginalPolicyId: salesPolicyId,
   };
   for (const [id, documentType, configuration] of [
@@ -311,6 +382,7 @@ async function configurePhase4Fixtures() {
         configuration,
         configurationHash: payloadHash(configuration),
         isActive: true,
+        statutoryValidated: true,
       },
       create: {
         id,
@@ -320,7 +392,7 @@ async function configurePhase4Fixtures() {
         version: 1,
         configuration,
         configurationHash: payloadHash(configuration),
-        statutoryValidated: false,
+        statutoryValidated: true,
         approvedById: checkerId,
         approvedAt: new Date("2027-04-01T00:00:00.000Z"),
         effectiveFrom: new Date("2027-04-01T00:00:00.000Z"),
@@ -517,6 +589,45 @@ describe("Accounting Phase 4 canonical documents and payments", () => {
         makerId,
       }),
     ).rejects.toThrow(/correction_capacity_exceeded/i);
+  });
+
+  it("prepares a credit note without linking an original invoice", async () => {
+    await db.customerNote.create({
+      data: {
+        id: "p4test-credit-note-unlinked",
+        orgId,
+        noteNumber: "P4TEST-CREDIT-NOTE-UNLINKED",
+        noteType: "CREDIT",
+        customerId: "stg_crm_customer",
+        originalInvoiceId: null,
+        postingDate: new Date("2027-04-10T00:00:00.000Z"),
+        reason: "SYNTHETIC_UNLINKED_CORRECTION",
+        taxableAmount: "25",
+        grandTotal: "25",
+        createdById: makerId,
+        items: {
+          create: {
+            id: "p4test-credit-note-unlinked-line",
+            itemName: "Synthetic unlinked correction",
+            qty: 1,
+            rate: "25",
+            amount: "25",
+            taxRate: 0,
+            taxAmount: 0,
+          },
+        },
+      },
+    });
+
+    const prepared = await prepareLegacyCustomerNote({
+      orgId,
+      noteId: "p4test-credit-note-unlinked",
+      makerId,
+    });
+
+    expect(prepared.correctionOfId).toBeNull();
+    expect(prepared.supportingDocumentRefs).toEqual([]);
+    expect(prepared.documentType).toBe("CUSTOMER_CREDIT_NOTE");
   });
 
   it("claims each synthetic outbox event once and publishes without an external provider", async () => {

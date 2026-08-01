@@ -11,13 +11,8 @@ import {
   Search,
 } from "lucide-react";
 import Link from "next/link";
-import {
-  CommunicationButton,
-  CommunicationInput,
-  CommunicationPanel,
-  CommunicationPanelHeader,
-  WorkspaceState,
-} from "@/components/monolith";
+import { CommunicationButton, CommunicationInput, CommunicationPanel, CommunicationPanelHeader } from "@/modules/communication/components/workspace/communication-workspace";
+import { WorkspaceState } from "@/components/layout/workspace";
 
 type EmailResult = {
   id: string;

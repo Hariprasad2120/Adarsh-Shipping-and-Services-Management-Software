@@ -1,5 +1,6 @@
 import { CanonicalDocumentRegister } from "@/components/monolith/accounting-operational-views";
 import {
+  AccountingActionLink,
   AccountingAlert,
   AccountingRoutePageHeader,
   AccountingSection,
@@ -8,7 +9,7 @@ import { requireAccountingRouteAccess } from "@/modules/accounting/operational-a
 import { listCanonicalAccountingDocuments } from "@/modules/accounting/operational-queries";
 
 export default async function VendorDebitNotesPage() {
-  const { orgId } = await requireAccountingRouteAccess(
+  const { orgId, caps } = await requireAccountingRouteAccess(
     "/accounting/debit-notes",
   );
   const notes = await listCanonicalAccountingDocuments(orgId, {
@@ -17,7 +18,20 @@ export default async function VendorDebitNotesPage() {
   });
   return (
     <>
-      <AccountingRoutePageHeader />
+      <AccountingRoutePageHeader
+        actions={
+          caps["accounting.invoice.create"] ? (
+            <div className="flex gap-2">
+              <AccountingActionLink href="/accounting/debit-notes/new">
+                + Sales Debit Note
+              </AccountingActionLink>
+              <AccountingActionLink href="/accounting/debit-notes/new?type=purchase">
+                + Purchase Debit Note
+              </AccountingActionLink>
+            </div>
+          ) : undefined
+        }
+      />
       <AccountingAlert variant="warning">
         The canonical vendor-debit-note adapter exists, but no accepted vendor
         submit caller was discovered. Creation remains fail-closed until that

@@ -1,19 +1,19 @@
 "use client";
 
-import { PerformanceControlButton } from "@/components/monolith/performance-workspace";
+import { PerformanceControlButton } from "@/modules/performance/components/performance-workspace";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
-import { FormPreviewModal } from "@/components/ams/form-preview-modal";
+import { CycleProgressCard } from "@/modules/ams/components/cycle-progress-card";
+import { FormPreviewModal } from "@/modules/ams/components/form-preview-modal";
 import {
   CriteriaPointsForm,
   CriteriaPointsView,
-} from "@/components/ams/criteria-points-form";
-import { DemoFillButton } from "@/components/demo-fill-button";
-import { useNotifications } from "@/components/notifications/notification-provider";
-import { Button } from "@/components/monolith/button";
-import { Input } from "@/components/monolith/input";
+} from "@/modules/ams/components/criteria-points-form";
+import { DemoFillButton } from "@/components/forms/development/demo-fill-button";
+import { useNotifications } from "@/modules/notifications/components/notification-provider";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   buildReviewerDemoAnswers,
   demoPerformanceProfiles,

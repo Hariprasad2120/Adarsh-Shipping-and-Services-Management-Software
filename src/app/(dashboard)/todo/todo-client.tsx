@@ -18,24 +18,10 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import {
-  WorkspaceAction,
-  WorkspaceBadge,
-  WorkspaceCheckbox,
-  WorkspaceDialog,
-  WorkspaceEmptyState,
-  WorkspaceField,
-  WorkspaceInput,
-  WorkspaceMetric,
-  WorkspacePage,
-  WorkspacePageHeader,
-  WorkspacePanel,
-  WorkspacePanelHeader,
-  WorkspaceProgress,
-  WorkspaceSelect,
-  WorkspaceTextarea,
-} from "@/components/monolith";
-import { useNotifications } from "@/components/notifications/notification-provider";
+import { WorkspaceAction, WorkspaceBadge, WorkspaceCheckbox, WorkspaceField, WorkspaceInput, WorkspaceMetric, WorkspacePage, WorkspacePageHeader, WorkspacePanel, WorkspacePanelHeader, WorkspaceProgress, WorkspaceSelect, WorkspaceTextarea } from "@/components/layout/workspace";
+import { WorkspaceDialog } from "@/components/layout/workspace-dialog";
+import { WorkspaceEmptyState } from "@/components/feedback/workspace-states";
+import { useNotifications } from "@/modules/notifications/components/notification-provider";
 import { TodoHeaderGraphic } from "./graphics/TodoHeaderGraphic";
 
 type TodoStatus = "PENDING" | "COMPLETED";

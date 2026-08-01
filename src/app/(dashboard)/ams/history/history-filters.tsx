@@ -3,8 +3,8 @@
 import {
   PerformanceControlButton,
   PerformanceControlInput,
-} from "@/components/monolith/performance-workspace";
-import { NativeSelect } from "@/components/monolith/native-select";
+} from "@/modules/performance/components/performance-workspace";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarIcon, X, ChevronLeft, ChevronRight } from "lucide-react";

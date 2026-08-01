@@ -17,7 +17,7 @@ import {
   MonolithAction,
   MonolithBadge,
   MonolithSpecLabel,
-} from "@/components/monolith/foundation";
+} from "@/components/ui/foundation";
 import type { UserProfile } from "@/modules/hrms/types";
 import type { PunchAction } from "./dashboard-types";
 

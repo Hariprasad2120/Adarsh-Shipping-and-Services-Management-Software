@@ -3,41 +3,46 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Briefcase, CheckCircle2, Filter, Plus, Search, Users } from "lucide-react";
-import { CreateJobPermissionGuard } from "@/components/cha/create-job-permission-guard";
+import { ArrowLeft, ArrowRight, Briefcase, CheckCircle2, Filter, MoreHorizontal, Plane, Plus, Search, Ship, Users } from "lucide-react";
+import { CreateJobPermissionGuard } from "@/modules/cha/components/create-job-permission-guard";
 
 const CreateJobDialog = dynamic(
-  () => import("@/components/cha/create-job-dialog").then((module) => module.CreateJobDialog),
+  () => import("@/modules/cha/components/create-job-dialog").then((module) => module.CreateJobDialog),
   { ssr: false },
 );
-import { ClickableRow } from "@/components/clickable-row";
+import { ClickableRow } from "@/components/navigation/clickable-row";
 import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableFooter,
-  DataTableHead,
-  DataTableHeader,
-} from "@/components/monolith/workspace-data-table";
-import { Button } from "@/components/monolith/button";
-import { Badge } from "@/components/monolith/badge";
-import { ChaFilterMenu as FilterMenu } from "@/components/monolith/cha-workspace";
-import { WorkspaceInput } from "@/components/monolith/workspace";
-import { JobFilingQueryWarningIndicator } from "@/app/(dashboard)/cha/_components/job-filing-query-warning-indicator";
-import { ChaDueDateWarningsIndicator } from "@/app/(dashboard)/cha/_components/cha-due-date-warnings-indicator";
-import type { DueDateWarningViewModel } from "@/app/(dashboard)/cha/_components/cha-due-date-warning-indicator";
-import { formatChaBadgeLabel, getChaPriorityBadgeVariant } from "@/lib/cha-badges";
+  OperationalDataTable,
+  OperationalDataTableFooter,
+  OperationalDataTableHeader,
+  OperationalDataTableWrap,
+  OperationalMode,
+  OperationalPageButton,
+  OperationalPagination,
+  OperationalPrimaryCell,
+  OperationalRowAction,
+  OperationalStatus,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
+import { Button } from "@/components/ui/button";
+import { NeonCheckbox } from "@/components/ui/neon-checkbox";
+import { ChaFilterMenu as FilterMenu } from "@/modules/cha/components/workspace/cha-workspace";
+import { WorkspaceInput, WorkspaceSectionHeading } from "@/components/layout/workspace";
+import { JobFilingQueryWarningIndicator } from "@/modules/cha/components/warnings/job-filing-query-warning-indicator";
+import { ChaDueDateWarningsIndicator } from "@/modules/cha/components/warnings/cha-due-date-warnings-indicator";
+import type { DueDateWarningViewModel } from "@/modules/cha/components/warnings/cha-due-date-warning-indicator";
+import { formatChaBadgeLabel } from "@/lib/cha-badges";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import type { BadgeVariant } from "@/components/monolith/badge";
 import {
   ChaMetricCard,
   ChaMetrics,
   ChaPageHeader,
-  ChaSectionShell,
   ChaVisibleRecords,
-} from "../_components/cha-operations-shared";
+} from "@/modules/cha/components/workspace/cha-operations-shared";
 import { ChaHeaderGraphic } from "../graphics/ChaHeaderGraphic";
 
 type MovementDirection = "IMPORT" | "EXPORT" | "BOTH" | "OTHER" | null;
@@ -159,13 +164,6 @@ function formatChaStageShortLabel(stage?: string | null) {
     default:
       return formatChaBadgeLabel(stage);
   }
-}
-
-function getChaStageBadgeVariant(stage?: string | null): BadgeVariant {
-  if (stage === "FILED") return "success";
-  if (stage === "FILING" || stage === "CHECKLIST_APPROVAL") return "warning";
-  if (stage === "DOCUMENT_COLLECTION" || stage === "ADDITIONAL_DATA" || stage === "CHECKLIST_PREPARATION") return "default";
-  return "secondary";
 }
 
 export function JobsClient({
@@ -475,87 +473,90 @@ export function JobsClient({
   };
 
   const renderTableControls = (tableKey: "active" | "completed") => (
-    <div className="mnx-cha-jobs-table-controls">
-      <form
-        className="mnx-table-toolbar mnx-table-toolbar-search mnx-cha-jobs-toolbar"
-        role="search"
-        onSubmit={(event) => {
-          event.preventDefault();
-          applyFilters();
-        }}
-      >
-        <label className="mnx-search-field">
-          <Search size={16} aria-hidden="true" />
-          <WorkspaceInput
-            aria-label="Search jobs"
-            type="search"
-            placeholder="Search customers, job numbers..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </label>
+    <form
+      className="mnx-cha-jobs-toolbar"
+      role="search"
+      onSubmit={(event) => {
+        event.preventDefault();
+        applyFilters();
+      }}
+    >
+      <label className="mnx-search-field">
+        <Search size={16} aria-hidden="true" />
+        <WorkspaceInput
+          aria-label="Search jobs"
+          type="search"
+          placeholder="Search customers, job numbers..."
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+      </label>
 
-        <div className="mnx-cha-jobs-toolbar-actions">
-          {canCreateJob ? (
-            <Button
-              type="button"
-              disabled={createOptionsLoading}
-              onClick={() => {
-                setIsModalOpen(true);
-                void loadCreateOptions();
-              }}
-            >
-              <Plus className="size-4" /> New Job
-            </Button>
-          ) : null}
-          <FilterMenu
-            open={openFilterTable === tableKey}
-            onOpenChange={(open) => setOpenFilterTable(open ? tableKey : null)}
-            activeCount={activeFilterCount}
-            title="Filters"
-            ariaLabel="Open filters"
-            contentClassName="w-[min(460px,calc(100vw-2rem))] max-h-[62vh] overflow-y-auto"
-          >
-            <div className="overflow-hidden mnx-bg-surface">
-              <div className="grid min-h-[240px] grid-cols-1 sm:grid-cols-[156px_minmax(0,1fr)]">
-                <div className="border-b mnx-border mnx-bg-soft sm:border-b-0 sm:border-r">
-                  {filterTypes.map((item) => (
-                    <Button
-                      key={item.key}
-                      type="button"
-                      onClick={() => setActiveFilterType(item.key)}
-                      className={cn(
-                        "mnx-plain mnx-menu-option gap-2",
-                        activeFilterType === item.key && "mnx-menu-option-active",
-                      )}
-                    >
-                      <span className="min-w-0">
-                        <span className="mnx-label block truncate mnx-text-primary">{item.label}</span>
-                        <span className="mt-1 block truncate text-xs mnx-text-muted">{item.value}</span>
-                      </span>
-                      {item.active ? <span className="mnx-state-dot" /> : null}
-                    </Button>
-                  ))}
-                </div>
-                <div className="space-y-0 p-0">
-                  {renderFilterOptions()}
-                </div>
+      <div className="mnx-cha-jobs-toolbar-actions">
+        <FilterMenu
+          open={openFilterTable === tableKey}
+          onOpenChange={(open) => setOpenFilterTable(open ? tableKey : null)}
+          activeCount={activeFilterCount}
+          title="Filters"
+          ariaLabel="Open filters"
+          contentClassName="w-[min(460px,calc(100vw-2rem))] max-h-[62vh] overflow-y-auto"
+        >
+          <div className="overflow-hidden mnx-bg-surface">
+            <div className="grid min-h-[240px] grid-cols-1 sm:grid-cols-[156px_minmax(0,1fr)]">
+              <div className="border-b mnx-border mnx-bg-soft sm:border-b-0 sm:border-r">
+                {filterTypes.map((item) => (
+                  <Button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setActiveFilterType(item.key)}
+                    className={cn(
+                      "mnx-plain mnx-menu-option gap-2",
+                      activeFilterType === item.key && "mnx-menu-option-active",
+                    )}
+                  >
+                    <span className="min-w-0">
+                      <span className="mnx-label block truncate mnx-text-primary">{item.label}</span>
+                      <span className="mt-1 block truncate text-xs mnx-text-muted">{item.value}</span>
+                    </span>
+                    {item.active ? <span className="mnx-state-dot" /> : null}
+                  </Button>
+                ))}
+              </div>
+              <div className="space-y-0 p-0">
+                {renderFilterOptions()}
               </div>
             </div>
+          </div>
 
-            <div className="flex items-center justify-between gap-2 border-t mnx-border mnx-bg-surface p-3">
-              <Button variant="outline" onClick={resetFilters} className="flex-1">
-                Reset
-              </Button>
-              <Button onClick={applyFilters} className="flex-1">
-                Apply Filters
-              </Button>
-            </div>
-          </FilterMenu>
-        </div>
-      </form>
+          <div className="flex items-center justify-between gap-2 border-t mnx-border mnx-bg-surface p-3">
+            <Button variant="outline" onClick={resetFilters} className="flex-1">
+              Reset
+            </Button>
+            <Button onClick={applyFilters} className="flex-1">
+              Apply Filters
+            </Button>
+          </div>
+        </FilterMenu>
+        {canCreateJob ? (
+          <Button
+            type="button"
+            size="sm"
+            disabled={createOptionsLoading}
+            onClick={() => {
+              setIsModalOpen(true);
+              void loadCreateOptions();
+            }}
+          >
+            <Plus className="size-4" /> New Job
+          </Button>
+        ) : null}
+      </div>
+    </form>
+  );
 
-      {activePills.length > 0 ? (
+  const renderActivePills = () =>
+    activePills.length > 0 ? (
+      <div className="mnx-cha-jobs-table-controls">
         <div className="flex flex-wrap items-center gap-2">
           {activePills.map((pill) => (
             <Button
@@ -571,9 +572,8 @@ export function JobsClient({
             Clear All
           </Button>
         </div>
-      ) : null}
-    </div>
-  );
+      </div>
+    ) : null;
 
   const renderTable = ({
     title,
@@ -591,109 +591,143 @@ export function JobsClient({
     tableKey: "active" | "completed";
   }) => {
     const isActiveSection = tableKey === "active";
+    const visibleStart = data.total === 0 ? 0 : (data.page - 1) * data.pageSize + 1;
+    const visibleEnd = Math.min(data.page * data.pageSize, data.total);
     return (
-      <div className="py-1">
-        <ChaSectionShell
+      <section className="mnx-cha-section-block py-1">
+        <WorkspaceSectionHeading
+          className="mnx-cha-outside-heading"
           index={isActiveSection ? "02" : "03"}
           title={title}
           description={description}
-          accent={isActiveSection ? "blue" : "green"}
-          actions={<ChaVisibleRecords visible={data.items.length} total={data.total} tone={isActiveSection ? "blue" : "green"} />}
-        >
-          <div className="overflow-hidden">
-            {renderTableControls(tableKey)}
-            <DataTable className="rounded-t-none border-x-0 border-b-0 border-t-0 shadow-none">
-              <DataTableHeader>
+        />
+        <OperationalDataTable>
+          <OperationalDataTableHeader
+            eyebrow="Shipment register"
+            title={title}
+            actions={
+              <>
+                {renderTableControls(tableKey)}
+                <ChaVisibleRecords
+                  visible={data.items.length}
+                  total={data.total}
+                  tone={isActiveSection ? "blue" : "green"}
+                />
+              </>
+            }
+          />
+          {renderActivePills()}
+          <OperationalDataTableWrap>
+            <OperationalTable>
+              <thead>
                 <tr>
-                  <DataTableHead className="py-4">Job Number</DataTableHead>
-                  <DataTableHead className="py-4">Customer</DataTableHead>
-                  <DataTableHead className="py-4">Job Type</DataTableHead>
-                  <DataTableHead className="py-4">BOE / SB Number</DataTableHead>
-                  <DataTableHead className="py-4">Created On</DataTableHead>
-                  <DataTableHead className="py-4">Current Stage</DataTableHead>
-                  <DataTableHead className="py-4">Priority</DataTableHead>
-                  <DataTableHead className="py-4">Owner</DataTableHead>
+                  <OperationalTableHead>
+                    <NeonCheckbox aria-label={`Select all ${title.toLowerCase()}`} />
+                  </OperationalTableHead>
+                  <OperationalTableHead>Job Number</OperationalTableHead>
+                  <OperationalTableHead>Customer</OperationalTableHead>
+                  <OperationalTableHead>Mode</OperationalTableHead>
+                  <OperationalTableHead>Current Stage</OperationalTableHead>
+                  <OperationalTableHead>Status</OperationalTableHead>
+                  <OperationalTableHead />
                 </tr>
-              </DataTableHeader>
-              <DataTableBody>
+              </thead>
+              <tbody>
                 {data.items.length === 0 ? (
-                  <DataTableEmpty
-                    colSpan={8}
-                    message={
-                      <div className="flex flex-col items-center justify-center p-14 text-center mnx-text-muted">
-                        <div className="mnx-icon-badge mb-4">
-                          <Briefcase size={32} />
-                        </div>
-                        <p className="text-sm mnx-text-primary">{emptyTitle}</p>
-                        <p className="mt-1 text-xs">{emptyText}</p>
+                  <OperationalTableEmpty colSpan={7}>
+                    <div className="flex flex-col items-center justify-center p-14 text-center mnx-text-muted">
+                      <div className="mnx-icon-badge mb-4">
+                        <Briefcase size={32} />
                       </div>
-                    }
-                  />
+                      <p className="text-sm mnx-text-primary">{emptyTitle}</p>
+                      <p className="mt-1 text-xs">{emptyText}</p>
+                    </div>
+                  </OperationalTableEmpty>
                 ) : (
-                  data.items.map((job) => (
-                    <ClickableRow key={job.id} href={`/cha/jobs/${job.id}`}>
-                      <DataTableCell className="py-5 mnx-text-primary">
-                        <div className="flex items-center gap-2">
-                          <span>{job.jobNumber}</span>
-                          <ChaDueDateWarningsIndicator warnings={job.dueDateWarnings} />
-                          {job.filingQueryWarning ? (
-                            <JobFilingQueryWarningIndicator jobId={job.id} warning={job.filingQueryWarning} />
-                          ) : null}
-                        </div>
-                      </DataTableCell>
-                      <DataTableCell className="py-5">{job.customerName}</DataTableCell>
-                      <DataTableCell className="py-5 mnx-label">{job.jobTypeName}</DataTableCell>
-                      <DataTableCell className="py-5 mnx-numeric mnx-text-muted">
-                        {getFilingReference(job) || "Pending"}
-                      </DataTableCell>
-                      <DataTableCell className="py-5 mnx-text-muted">
-                        {formatJobDate(job.createdAt)}
-                      </DataTableCell>
-                      <DataTableCell className="py-5">
-                        <Badge variant={getChaStageBadgeVariant(job.stage)} className="uppercase">
-                          {formatChaStageShortLabel(job.stage)}
-                        </Badge>
-                      </DataTableCell>
-                      <DataTableCell className="py-5">
-                        <Badge variant={getChaPriorityBadgeVariant(job.priority)} className="uppercase">
-                          {job.priority}
-                        </Badge>
-                      </DataTableCell>
-                      <DataTableCell className="py-5 mnx-text-muted">{job.ownerName}</DataTableCell>
-                    </ClickableRow>
-                  ))
+                  data.items.map((job) => {
+                    const filingReference = getFilingReference(job);
+                    const isAir = job.jobTypeName.toLowerCase().includes("air");
+
+                    return (
+                      <ClickableRow key={job.id} href={`/cha/jobs/${job.id}`}>
+                        <OperationalTableCell>
+                          <NeonCheckbox aria-label={`Select ${job.jobNumber}`} />
+                        </OperationalTableCell>
+                        <OperationalPrimaryCell
+                          primary={
+                            <span className="flex items-center gap-2">
+                              {job.jobNumber}
+                              <ChaDueDateWarningsIndicator warnings={job.dueDateWarnings} />
+                              {job.filingQueryWarning ? (
+                                <JobFilingQueryWarningIndicator jobId={job.id} warning={job.filingQueryWarning} />
+                              ) : null}
+                            </span>
+                          }
+                          secondary={`${filingReference || "Reference pending"} - ${formatJobDate(job.createdAt)}`}
+                        />
+                        <OperationalTableCell>{job.customerName}</OperationalTableCell>
+                        <OperationalTableCell>
+                          <OperationalMode icon={isAir ? <Plane size={13} /> : <Ship size={13} />}>
+                            {job.jobTypeName}
+                          </OperationalMode>
+                        </OperationalTableCell>
+                        <OperationalTableCell>{formatChaStageShortLabel(job.stage)}</OperationalTableCell>
+                        <OperationalTableCell>
+                          <OperationalStatus
+                            tone={
+                              job.status === "COMPLETED"
+                                ? "success"
+                                : job.priority === "HIGH" || job.priority === "URGENT"
+                                  ? "warning"
+                                  : job.status === "CANCELLED"
+                                    ? "danger"
+                                    : "info"
+                            }
+                          >
+                            {job.status === "COMPLETED" ? "Completed" : job.priority}
+                          </OperationalStatus>
+                        </OperationalTableCell>
+                        <OperationalTableCell>
+                          <OperationalRowAction>
+                            <MoreHorizontal size={16} aria-hidden="true" />
+                          </OperationalRowAction>
+                        </OperationalTableCell>
+                      </ClickableRow>
+                    );
+                  })
                 )}
-              </DataTableBody>
-              {data.totalPages > 1 ? (
-                <DataTableFooter>
-                  <span className="text-xs mnx-text-muted">
-                    Page <span className="mnx-text-primary">{data.page}</span> of{" "}
-                    <span className="mnx-text-primary">{data.totalPages}</span> ({data.total} jobs)
-                  </span>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={data.page === 1}
-                      onClick={() => handlePageChange(tableKey, data.page - 1)}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={data.page === data.totalPages}
-                      onClick={() => handlePageChange(tableKey, data.page + 1)}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </DataTableFooter>
-              ) : null}
-            </DataTable>
-          </div>
-        </ChaSectionShell>
-      </div>
+              </tbody>
+            </OperationalTable>
+          </OperationalDataTableWrap>
+          <OperationalDataTableFooter
+            summary={`Showing ${visibleStart}-${visibleEnd} of ${data.total} jobs`}
+          >
+            <OperationalPagination>
+              <OperationalPageButton
+                disabled={data.page === 1}
+                onClick={() => handlePageChange(tableKey, data.page - 1)}
+              >
+                <ArrowLeft size={13} aria-hidden="true" />
+              </OperationalPageButton>
+              {Array.from({ length: Math.min(data.totalPages, 3) }, (_, index) => index + 1).map((page) => (
+                <OperationalPageButton
+                  key={page}
+                  active={page === data.page}
+                  onClick={() => handlePageChange(tableKey, page)}
+                >
+                  {page}
+                </OperationalPageButton>
+              ))}
+              <OperationalPageButton
+                disabled={data.page === data.totalPages || data.totalPages === 0}
+                onClick={() => handlePageChange(tableKey, data.page + 1)}
+              >
+                <ArrowRight size={13} aria-hidden="true" />
+              </OperationalPageButton>
+            </OperationalPagination>
+          </OperationalDataTableFooter>
+        </OperationalDataTable>
+      </section>
     );
   };
 

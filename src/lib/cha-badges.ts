@@ -1,4 +1,4 @@
-import type { BadgeVariant } from "@/components/monolith/badge";
+import type { BadgeVariant } from "@/components/ui/badge";
 
 export function formatChaBadgeLabel(value?: string | null) {
   return value ? value.replace(/_/g, " ") : "UNKNOWN";

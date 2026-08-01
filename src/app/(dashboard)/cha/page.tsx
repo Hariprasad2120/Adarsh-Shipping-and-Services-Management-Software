@@ -1,28 +1,34 @@
-import { ClickableRow } from "@/components/clickable-row";
+import { ClickableRow } from "@/components/navigation/clickable-row";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { can, requirePermission } from "@/lib/rbac";
 import Link from "next/link";
 import type { Prisma } from "@/generated/prisma/client";
-import { ArrowRight, Settings } from "lucide-react";
+import { ArrowRight, MoreHorizontal, Plane, Settings, Ship } from "lucide-react";
 import { listChaDueDateWarnings, listFilingQueryEscalationWarnings, listJobTypesForSelection, listSection49ValidityWarnings } from "@/modules/cha/service";
-import { DashboardCreateJob } from "@/components/cha/dashboard-create-job";
+import { DashboardCreateJob } from "@/modules/cha/components/dashboard-create-job";
 import { getChaDashboardMetrics, listChaRecentActivity } from "@/modules/cha/dashboard/queries";
-import { JobFilingQueryWarningIndicator } from "./_components/job-filing-query-warning-indicator";
-import { JobSection49ValidityWarningIndicator } from "./_components/job-section49-validity-warning-indicator";
+import { NeonCheckbox } from "@/components/ui/neon-checkbox";
+import { WorkspaceSectionHeading } from "@/components/layout/workspace";
+import { JobFilingQueryWarningIndicator } from "@/modules/cha/components/warnings/job-filing-query-warning-indicator";
+import { JobSection49ValidityWarningIndicator } from "@/modules/cha/components/warnings/job-section49-validity-warning-indicator";
 import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-} from "@/components/monolith/workspace-data-table";
+  OperationalDataTable,
+  OperationalDataTableFooter,
+  OperationalDataTableHeader,
+  OperationalDataTableWrap,
+  OperationalMode,
+  OperationalPrimaryCell,
+  OperationalRowAction,
+  OperationalStatus,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 import {
   formatChaBadgeLabel,
-  getChaPriorityBadgeVariant,
-  getChaStageBadgeVariant,
 } from "@/lib/cha-badges";
 import {
   ActivityTimeline,
@@ -34,26 +40,16 @@ import {
   OperationsOverviewHeader,
   OperationsPanel,
   PendingActionRow,
-} from "@/components/monolith/operations-overview";
-import { ChaControlPanel, ChaMetricCard, ChaMetrics, ChaPageHeader } from "./_components/cha-operations-shared";
-import { ChaDashboardFilterAction } from "./_components/cha-dashboard-filter-action";
-import { ChaDashboardSearchAction } from "./_components/cha-dashboard-search-action";
+} from "@/components/data-display/operations-overview/operations-overview";
+import {
+  ChaMetricCard,
+  ChaMetrics,
+  ChaPageHeader,
+  ChaVisibleRecords,
+} from "@/modules/cha/components/workspace/cha-operations-shared";
+import { ChaDashboardFilterAction } from "@/modules/cha/components/dashboard/cha-dashboard-filter-action";
+import { ChaDashboardSearchAction } from "@/modules/cha/components/dashboard/cha-dashboard-search-action";
 import { ChaHeaderGraphic } from "./graphics/ChaHeaderGraphic";
-
-function chaStatusTextClass(variant: ReturnType<typeof getChaStageBadgeVariant>) {
-  switch (variant) {
-    case "success":
-      return "mnx-cha-status-success";
-    case "destructive":
-      return "mnx-cha-status-danger";
-    case "warning":
-      return "mnx-cha-status-warning";
-    case "default":
-      return "mnx-cha-status-info";
-    default:
-      return "mnx-cha-status-muted";
-  }
-}
 
 function formatRelativeTime(date: Date) {
   const diffMs = Date.now() - date.getTime();
@@ -379,130 +375,140 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
         ))}
       </ChaMetrics>
 
-      <ChaControlPanel
-        index="01"
-        title="My Assigned Jobs"
-        description="Open or manage the jobs currently assigned to you."
-        contentClassName="!p-0"
-        actions={
-          <>
-            <ChaDashboardSearchAction value={assignedSearch} />
-            <DashboardCreateJob
-              currentUserId={session.user.id}
-              canCreateJob={canCreateJob}
-            />
-            <ChaDashboardFilterAction
-              jobTypes={jobTypes.map((jobType) => jobType.name)}
-              selectedCategories={selectedCategories}
-              selectedJobTypes={selectedJobTypes}
-              selectedStages={selectedStages}
-              stages={["DOCUMENT_COLLECTION", "CHECKLIST_PREPARATION", "CHECKLIST_APPROVAL", "FILING", "FILED"]}
-            />
-            <Link href="/cha/jobs" className="mnx-button mnx-button-outline mnx-button-compact">
-              View All
-              <ArrowRight aria-hidden="true" />
-            </Link>
-            <Link href="/cha/settings" className="mnx-button mnx-button-outline mnx-button-compact">
-              <Settings aria-hidden="true" />
-              Settings
-            </Link>
-          </>
-        }
-      >
-        <DataTable className="w-full rounded-none border-0 shadow-none">
-          {myJobs.length === 0 ? (
-            <>
-              <DataTableHeader>
+      <section className="mnx-cha-section-block">
+        <WorkspaceSectionHeading
+          className="mnx-cha-outside-heading"
+          index="01"
+          title="My Assigned Jobs"
+          description="Open or manage the jobs currently assigned to you."
+        />
+        <OperationalDataTable>
+          <OperationalDataTableHeader
+            eyebrow="Shipment register"
+            title="Active clearance jobs"
+            actions={
+              <>
+                <ChaDashboardSearchAction value={assignedSearch} />
+                <DashboardCreateJob
+                  currentUserId={session.user.id}
+                  canCreateJob={canCreateJob}
+                />
+                <ChaDashboardFilterAction
+                  jobTypes={jobTypes.map((jobType) => jobType.name)}
+                  selectedCategories={selectedCategories}
+                  selectedJobTypes={selectedJobTypes}
+                  selectedStages={selectedStages}
+                  stages={["DOCUMENT_COLLECTION", "CHECKLIST_PREPARATION", "CHECKLIST_APPROVAL", "FILING", "FILED"]}
+                />
+                <Link href="/cha/jobs" className="mnx-button mnx-button-outline mnx-button-compact">
+                  View All
+                  <ArrowRight aria-hidden="true" />
+                </Link>
+                <Link href="/cha/settings" className="mnx-button mnx-button-outline mnx-button-compact">
+                  <Settings aria-hidden="true" />
+                  Settings
+                </Link>
+                <ChaVisibleRecords visible={myJobs.length} total={myJobs.length} />
+              </>
+            }
+          />
+          <OperationalDataTableWrap>
+            <OperationalTable>
+              <thead>
                 <tr>
-                  <DataTableHead>Job Number</DataTableHead>
-                  <DataTableHead>Customer</DataTableHead>
-                  <DataTableHead>Job Type</DataTableHead>
-                  <DataTableHead>BOE / SB Number</DataTableHead>
-                  <DataTableHead>Created On</DataTableHead>
-                  <DataTableHead>Current Stage</DataTableHead>
-                  <DataTableHead>Priority</DataTableHead>
+                  <OperationalTableHead>
+                    <NeonCheckbox aria-label="Select all assigned jobs" />
+                  </OperationalTableHead>
+                  <OperationalTableHead>Job Number</OperationalTableHead>
+                  <OperationalTableHead>Customer</OperationalTableHead>
+                  <OperationalTableHead>Mode</OperationalTableHead>
+                  <OperationalTableHead>Current Stage</OperationalTableHead>
+                  <OperationalTableHead>Status</OperationalTableHead>
+                  <OperationalTableHead />
                 </tr>
-              </DataTableHeader>
-              <DataTableBody>
-                <DataTableEmpty
-                  colSpan={7}
-                  message={
+              </thead>
+              <tbody>
+                {myJobs.length === 0 ? (
+                  <OperationalTableEmpty colSpan={7}>
                     <div className="flex flex-col items-center justify-center p-14 text-center">
                       <p className="text-sm mnx-text-primary">You don&apos;t have any active job assignments yet.</p>
                       <p className="mt-1 text-xs mnx-text-muted">New work will appear here automatically.</p>
                     </div>
-                  }
-                />
-              </DataTableBody>
-            </>
-          ) : (
-            <>
-              <DataTableHeader>
-                <tr>
-                  <DataTableHead>Job Number</DataTableHead>
-                  <DataTableHead>Customer</DataTableHead>
-                  <DataTableHead>Job Type</DataTableHead>
-                  <DataTableHead>BOE / SB Number</DataTableHead>
-                  <DataTableHead>Created On</DataTableHead>
-                  <DataTableHead>Current Stage</DataTableHead>
-                  <DataTableHead>Priority</DataTableHead>
-                </tr>
-              </DataTableHeader>
-              <DataTableBody>
-                {myJobs.map((job) => (
-                  <ClickableRow key={job.id} href={`/cha/jobs/${job.id}`}>
-                    <DataTableCell className="mnx-text-accent">
-                      <div className="flex items-center gap-2">
-                        <Link href={`/cha/jobs/${job.id}`} className="transition-colors mnx-hover-accent">
-                          {job.jobNumber}
-                        </Link>
-                        {section49WarningMap.get(job.id) ? (
-                          <JobSection49ValidityWarningIndicator
-                            jobId={job.id}
-                            warning={section49WarningMap.get(job.id)!}
-                          />
-                        ) : null}
-                        {filingQueryWarningMap.get(job.id) ? (
-                          <JobFilingQueryWarningIndicator
-                            jobId={job.id}
-                            warning={filingQueryWarningMap.get(job.id)!}
-                          />
-                        ) : null}
-                      </div>
-                    </DataTableCell>
-                    <DataTableCell>{job.customer.name}</DataTableCell>
-                    <DataTableCell>{job.jobType.name}</DataTableCell>
-                    <DataTableCell className="mnx-numeric mnx-text-muted">
-                      {job.jobType.movementDirection === "IMPORT"
-                        ? job.filing?.billOfEntryNumber || "Pending"
+                  </OperationalTableEmpty>
+                ) : (
+                  myJobs.map((job) => {
+                    const filingReference =
+                      job.jobType.movementDirection === "IMPORT"
+                        ? job.filing?.billOfEntryNumber
                         : job.jobType.movementDirection === "EXPORT"
-                          ? job.filing?.shippingBillNumber || "Pending"
-                          : job.filing?.billOfEntryNumber || job.filing?.shippingBillNumber || "Pending"}
-                    </DataTableCell>
-                    <DataTableCell className="mnx-text-muted">
-                      {job.createdAt.toLocaleDateString("en-IN", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </DataTableCell>
-                    <DataTableCell>
-                      <span className={`mnx-cha-status-text ${chaStatusTextClass(getChaStageBadgeVariant(job.stage))}`}>
-                        {formatChaBadgeLabel(job.stage)}
-                      </span>
-                    </DataTableCell>
-                    <DataTableCell>
-                      <span className={`mnx-cha-status-text ${chaStatusTextClass(getChaPriorityBadgeVariant(job.priority))}`}>
-                        {job.priority}
-                      </span>
-                    </DataTableCell>
-                  </ClickableRow>
-                ))}
-              </DataTableBody>
-            </>
-          )}
-        </DataTable>
-      </ChaControlPanel>
+                          ? job.filing?.shippingBillNumber
+                          : job.filing?.billOfEntryNumber || job.filing?.shippingBillNumber;
+                    const isAir = job.jobType.name.toLowerCase().includes("air");
+
+                    return (
+                      <ClickableRow key={job.id} href={`/cha/jobs/${job.id}`}>
+                        <OperationalTableCell>
+                          <NeonCheckbox aria-label={`Select ${job.jobNumber}`} />
+                        </OperationalTableCell>
+                        <OperationalPrimaryCell
+                          primary={
+                            <span className="flex items-center gap-2">
+                              <Link href={`/cha/jobs/${job.id}`} className="transition-colors mnx-hover-accent">
+                                {job.jobNumber}
+                              </Link>
+                              {section49WarningMap.get(job.id) ? (
+                                <JobSection49ValidityWarningIndicator
+                                  jobId={job.id}
+                                  warning={section49WarningMap.get(job.id)!}
+                                />
+                              ) : null}
+                              {filingQueryWarningMap.get(job.id) ? (
+                                <JobFilingQueryWarningIndicator
+                                  jobId={job.id}
+                                  warning={filingQueryWarningMap.get(job.id)!}
+                                />
+                              ) : null}
+                            </span>
+                          }
+                          secondary={filingReference || "Reference pending"}
+                        />
+                        <OperationalTableCell>{job.customer.name}</OperationalTableCell>
+                        <OperationalTableCell>
+                          <OperationalMode icon={isAir ? <Plane size={13} /> : <Ship size={13} />}>
+                            {job.jobType.name}
+                          </OperationalMode>
+                        </OperationalTableCell>
+                        <OperationalTableCell>{formatChaBadgeLabel(job.stage)}</OperationalTableCell>
+                        <OperationalTableCell>
+                          <OperationalStatus
+                            tone={
+                              job.priority === "HIGH" || job.priority === "URGENT"
+                                ? "warning"
+                                : job.stage === "FILED"
+                                  ? "success"
+                                  : "info"
+                            }
+                          >
+                            {job.priority}
+                          </OperationalStatus>
+                        </OperationalTableCell>
+                        <OperationalTableCell>
+                          <OperationalRowAction>
+                            <MoreHorizontal size={16} aria-hidden="true" />
+                          </OperationalRowAction>
+                        </OperationalTableCell>
+                      </ClickableRow>
+                    );
+                  })
+                )}
+              </tbody>
+            </OperationalTable>
+          </OperationalDataTableWrap>
+          <OperationalDataTableFooter
+            summary={`Showing ${myJobs.length === 0 ? "0" : `1-${myJobs.length}`} of ${myJobs.length} assigned jobs`}
+          />
+        </OperationalDataTable>
+      </section>
 
       <OperationsOverview>
         <OperationsOverviewHeader refreshHref="/cha" />

@@ -108,8 +108,6 @@ function New-StagingEnvironment {
     "AUTH_SECRET=$authSecret",
     "STAGING_TEST_PASSWORD=$testPassword",
     "CRON_SECRET=$authSecret",
-    "NEXTAUTH_URL=http://localhost:3100",
-    "APP_URL=http://localhost:3100",
     "MONOLITH_NEXT_DIST_DIR=.monolith-staging/next",
     "EMAIL_PROVIDER=disabled",
     "EMAIL_FROM=staging@staging.example.com",

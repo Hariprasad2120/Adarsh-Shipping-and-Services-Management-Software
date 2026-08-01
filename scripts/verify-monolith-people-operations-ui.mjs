@@ -26,7 +26,9 @@ const activeHrmsViews = [
   "user-control-page.tsx",
   "users-table.tsx",
   "work-reports.tsx",
-].map((file) => path.join(repositoryRoot, "src", "components", "hrms", file));
+].map((file) =>
+  path.join(repositoryRoot, "src", "modules", "hrms", "components", file),
+);
 
 function walk(directory, predicate, found = []) {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
@@ -102,7 +104,7 @@ assert(
   "The authenticated shell must not retain route-specific legacy switching.",
 );
 
-const peopleWorkspace = read("src/components/monolith/people-workspace.tsx");
+const peopleWorkspace = read("src/modules/people/components/people-workspace.tsx");
 for (const route of routes.filter((route) => !route.includes("["))) {
   assert(
     peopleWorkspace.includes(`"${route}"`),
@@ -171,7 +173,7 @@ for (const sourcePath of scopedSources) {
   }
 }
 
-const peopleControls = read("src/components/monolith/people-controls.tsx");
+const peopleControls = read("src/modules/people/components/people-controls.tsx");
 for (const component of [
   "PeopleControlButton",
   "PeopleControlInput",
@@ -181,7 +183,7 @@ for (const component of [
   assert(peopleControls.includes(component), `Missing shared ${component}.`);
 }
 
-const peopleDataTable = read("src/components/monolith/people-data-table.tsx");
+const peopleDataTable = read("src/modules/people/components/people-data-table.tsx");
 for (const component of [
   "DataTable",
   "DataTableToolbar",
@@ -194,7 +196,7 @@ for (const component of [
   );
 }
 
-const styles = read("src/styles/monolith-system.css");
+const styles = `${read("src/styles/monolith-system.css")}\n${read("src/styles/modules/people.css")}`;
 for (const selector of [
   ".mnx-people-page",
   ".mnx-people-summary-grid",
@@ -212,15 +214,14 @@ for (const theme of ["theme-light", "theme-night", "theme-violet"]) {
 }
 
 const catalogue = read(
-  "src/app/(dashboard)/admin/design-system/design-system-client.tsx",
+  "src/components/monolith/catalogue/module-catalogue.tsx",
 );
 for (const catalogueEntry of [
-  'import * as PeopleComponents from "@/components/monolith/people-workspace"',
-  'import * as PeopleDataComponents from "@/components/monolith/people-data-table"',
-  'name: "People operations"',
+  'peopleEntry("hrms", "HRMS")',
+  'peopleEntry("attendance", "Attendance")',
+  'component: "PeopleSection"',
+  'source: "src/modules/people/components/people-workspace.tsx"',
   "<PeopleSummaryGrid>",
-  "WorkspaceDialog",
-  "PeopleLoadingState",
 ]) {
   assert(
     catalogue.includes(catalogueEntry),
@@ -235,7 +236,7 @@ const behaviorSources = {
   overtime: read("src/app/(dashboard)/attendance/ot/ot-client.tsx"),
   overtimeActions: read("src/app/(dashboard)/attendance/ot/actions.ts"),
   punch: read("src/app/(dashboard)/attendance/punch/punch-card.tsx"),
-  tracking: read("src/components/hrms/tracking-dashboard-view.tsx"),
+  tracking: read("src/modules/hrms/components/tracking-dashboard-view.tsx"),
 };
 for (const [label, signals] of Object.entries({
   biometric: ["biometric", "sync"],

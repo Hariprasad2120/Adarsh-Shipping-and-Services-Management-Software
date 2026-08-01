@@ -1,10 +1,19 @@
 "use client";
 
-import { Input } from "@/components/monolith/input";
-import React, { useState, useRef } from "react";
+import { Input } from "@/components/ui/input";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
-import { createAccountAction } from "@/modules/crm/actions";
+import {
+  createAccountAction,
+  fetchGstDetailsAction,
+  lookupIndianPincodeAction,
+} from "@/modules/crm/actions";
+import {
+  GST_PUBLIC_SEARCH_URL,
+  isGstLookupConfigurationError,
+} from "@/lib/gst-public-search";
 import {
   User,
   Mail,
@@ -15,15 +24,14 @@ import {
   ChevronRight,
   ArrowLeft,
   Loader2,
-  Building2,
   FileText,
 } from "lucide-react";
-import { Button } from "@/components/monolith/button";
+import { Button } from "@/components/ui/button";
 import {
   ChaNativeSelect as NativeSelect,
   ChaPanel,
   ChaRoutePageHeader,
-} from "@/components/monolith/cha-workspace";
+} from "@/modules/cha/components/workspace/cha-workspace";
 
 interface UserOption {
   id: string;
@@ -32,6 +40,43 @@ interface UserOption {
 
 interface NewCustomerClientProps {
   employees: UserOption[];
+}
+
+type AddressKey = "billing" | "shipping" | "courier";
+
+type ContactDraft = {
+  id: string;
+  fullName: string;
+  designation: string;
+  email: string;
+  phone: string;
+  isPrimary: boolean;
+};
+
+type LookupState = {
+  loading: boolean;
+  error: string | null;
+};
+
+type OpeningBalanceDraft = {
+  id: string;
+  branch: string;
+  amount: string;
+};
+
+function splitContactName(fullName: string) {
+  const trimmed = fullName.trim();
+  if (!trimmed) {
+    return { firstName: "", lastName: "Contact" };
+  }
+  const parts = trimmed.split(/\s+/);
+  if (parts.length === 1) {
+    return { firstName: parts[0], lastName: "Contact" };
+  }
+  return {
+    firstName: parts.slice(0, -1).join(" "),
+    lastName: parts.at(-1) ?? "Contact",
+  };
 }
 
 const steps = [
@@ -72,6 +117,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [website, setWebsite] = useState("");
+  const [primaryContactName, setPrimaryContactName] = useState("");
+  const [primaryContactDesignation, setPrimaryContactDesignation] = useState("");
+  const [additionalContacts, setAdditionalContacts] = useState<ContactDraft[]>([]);
   const [channelEmail, setChannelEmail] = useState(true);
   const [channelSms, setChannelSms] = useState(false);
 
@@ -95,17 +143,41 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
   const [shippingPincode, setShippingPincode] = useState("");
   const [shippingPhone, setShippingPhone] = useState("");
   const [shippingFax, setShippingFax] = useState("");
+  const [shippingSameAsBilling, setShippingSameAsBilling] = useState(false);
+
+  const [courierAttention, setCourierAttention] = useState("");
+  const [courierCountry, setCourierCountry] = useState("India");
+  const [courierStreet1, setCourierStreet1] = useState("");
+  const [courierStreet2, setCourierStreet2] = useState("");
+  const [courierCity, setCourierCity] = useState("");
+  const [courierState, setCourierState] = useState("");
+  const [courierPincode, setCourierPincode] = useState("");
+  const [courierPhone, setCourierPhone] = useState("");
+  const [courierFax, setCourierFax] = useState("");
+  const [courierSameAsBilling, setCourierSameAsBilling] = useState(true);
+  const [lookupState, setLookupState] = useState<Record<AddressKey, LookupState>>({
+    billing: { loading: false, error: null },
+    shipping: { loading: false, error: null },
+    courier: { loading: false, error: null },
+  });
+  const lastLookupRef = useRef<Record<AddressKey, string>>({
+    billing: "",
+    shipping: "",
+    courier: "",
+  });
 
   // Finance
   const [creditLimit, setCreditLimit] = useState("0");
   const [currency, setCurrency] = useState("INR");
-  const [openingBalanceBranch, setOpeningBalanceBranch] = useState("Chennai");
-  const [openingBalanceAmount, setOpeningBalanceAmount] = useState("0");
+  const [openingBalances, setOpeningBalances] = useState<OpeningBalanceDraft[]>([
+    { id: "opening-balance-1", branch: "Chennai", amount: "0" },
+  ]);
   const [paymentTerms, setPaymentTerms] = useState("Net 30");
   const [ownerId, setOwnerId] = useState(employees[0]?.id || "");
 
   // Portal
   const [isPortalEnabled, setIsPortalEnabled] = useState(false);
+  const [taxPreference, setTaxPreference] = useState("Taxable");
 
   // KYC Files
   const [iecFile, setIecFile] = useState<File | null>(null);
@@ -118,19 +190,281 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
     useState<File | null>(null);
   const [authorisationLetterFile, setAuthorisationLetterFile] =
     useState<File | null>(null);
+  const [cancelledChequeFile, setCancelledChequeFile] = useState<File | null>(null);
+  const [gstManualFallback, setGstManualFallback] = useState(false);
 
-  const handleCopyAddress = () => {
-    setShippingAttention(billingAttention);
-    setShippingCountry(billingCountry);
-    setShippingStreet1(billingStreet1);
-    setShippingStreet2(billingStreet2);
-    setShippingCity(billingCity);
-    setShippingState(billingState);
-    setShippingPincode(billingPincode);
-    setShippingPhone(billingPhone);
-    setShippingFax(billingFax);
-    toast.success("Billing address copied to Shipping address");
+  const handleGstinChange = async (val: string) => {
+    const cleanGst = val.trim().toUpperCase();
+    setGstin(cleanGst);
+
+    if (cleanGst.length >= 12) {
+      setPan(cleanGst.substring(2, 12));
+    }
+
+    if (cleanGst.length === 15) {
+      setGstManualFallback(false);
+      const promise = fetchGstDetailsAction(cleanGst).then((res) => {
+        if (!res.ok) {
+          if (isGstLookupConfigurationError(res.error)) {
+            setGstManualFallback(true);
+            throw new Error(
+              "Automatic GST lookup is unavailable right now. Use Verify on GST Portal to confirm and copy the details manually.",
+            );
+          }
+          throw new Error(res.error || "GST fetch failed");
+        }
+
+        const d = res.data as
+          | {
+              legalName: string;
+              tradeName?: string;
+              gstTreatment: string;
+              placeOfSupply: string;
+              billingAddress?: {
+                attention?: string;
+                country?: string;
+                street1?: string;
+                street2?: string;
+                city?: string;
+                state?: string;
+                pincode?: string;
+                phone?: string;
+                fax?: string;
+              };
+            }
+          | undefined;
+
+        if (!d) {
+          throw new Error("GST registration details were empty");
+        }
+
+        setCompanyName(d.legalName);
+        setDisplayName(d.tradeName || d.legalName);
+        setGstTreatment(d.gstTreatment);
+        setPlaceOfSupply(d.placeOfSupply);
+
+        if (d.billingAddress) {
+          setBillingAttention(d.billingAddress.attention ?? "");
+          setBillingCountry(d.billingAddress.country ?? "");
+          setBillingStreet1(d.billingAddress.street1 ?? "");
+          setBillingStreet2(d.billingAddress.street2 ?? "");
+          setBillingCity(d.billingAddress.city ?? "");
+          setBillingState(d.billingAddress.state ?? "");
+          setBillingPincode(d.billingAddress.pincode ?? "");
+          setBillingPhone(d.billingAddress.phone ?? "");
+          setBillingFax(d.billingAddress.fax ?? "");
+
+          setShippingAttention(d.billingAddress.attention ?? "");
+          setShippingCountry(d.billingAddress.country ?? "");
+          setShippingStreet1(d.billingAddress.street1 ?? "");
+          setShippingStreet2(d.billingAddress.street2 ?? "");
+          setShippingCity(d.billingAddress.city ?? "");
+          setShippingState(d.billingAddress.state ?? "");
+          setShippingPincode(d.billingAddress.pincode ?? "");
+          setShippingPhone(d.billingAddress.phone ?? "");
+          setShippingFax(d.billingAddress.fax ?? "");
+        }
+
+        return `Auto-populated details for ${d.legalName}`;
+      });
+
+      toast.promise(promise, {
+        loading: "Fetching GST registration details...",
+        success: (msg) => msg,
+        error: (err) => err.message || "Failed to fetch GST details"
+      });
+    }
   };
+
+  const addAdditionalContact = () => {
+    setAdditionalContacts((current) => [
+      ...current,
+      {
+        id: `new-${Date.now()}-${current.length}`,
+        fullName: "",
+        designation: "",
+        email: "",
+        phone: "",
+        isPrimary: false,
+      },
+    ]);
+  };
+
+  const addOpeningBalanceRow = () => {
+    setOpeningBalances((current) => [
+      ...current,
+      { id: `opening-balance-${Date.now()}-${current.length}`, branch: "Chennai", amount: "0" },
+    ]);
+  };
+
+  const updateOpeningBalanceRow = (
+    id: string,
+    field: "branch" | "amount",
+    value: string,
+  ) => {
+    setOpeningBalances((current) =>
+      current.map((row) => (row.id === id ? { ...row, [field]: value } : row)),
+    );
+  };
+
+  const removeOpeningBalanceRow = (id: string) => {
+    setOpeningBalances((current) =>
+      current.length === 1
+        ? [{ ...current[0], branch: "Chennai", amount: "0" }]
+        : current.filter((row) => row.id !== id),
+    );
+  };
+
+  const updateAdditionalContact = (
+    id: string,
+    field: keyof Omit<ContactDraft, "id" | "isPrimary">,
+    value: string,
+  ) => {
+    setAdditionalContacts((current) =>
+      current.map((contact) =>
+        contact.id === id ? { ...contact, [field]: value } : contact,
+      ),
+    );
+  };
+
+  const removeAdditionalContact = (id: string) => {
+    setAdditionalContacts((current) =>
+      current.filter((contact) => contact.id !== id),
+    );
+  };
+
+  const runPincodeLookup = async (kind: AddressKey, pincode: string) => {
+    const normalized = pincode.replace(/\D/g, "").slice(0, 6);
+    if (normalized.length !== 6 || lastLookupRef.current[kind] === normalized) {
+      return;
+    }
+
+    setLookupState((current) => ({
+      ...current,
+      [kind]: { loading: true, error: null },
+    }));
+
+    const result = await lookupIndianPincodeAction(normalized);
+    if (!result.ok) {
+      setLookupState((current) => ({
+        ...current,
+        [kind]: { loading: false, error: result.error },
+      }));
+      if (kind === "billing") {
+        setBillingCity("");
+        setBillingState("");
+      } else if (kind === "shipping") {
+        setShippingCity("");
+        setShippingState("");
+      } else {
+        setCourierCity("");
+        setCourierState("");
+      }
+      lastLookupRef.current[kind] = "";
+      return;
+    }
+
+    const city = String(result.data?.city ?? "");
+    const state = String(result.data?.state ?? "");
+
+    if (kind === "billing") {
+      setBillingCity(city);
+      setBillingState(state);
+    } else if (kind === "shipping") {
+      setShippingCity(city);
+      setShippingState(state);
+    } else {
+      setCourierCity(city);
+      setCourierState(state);
+    }
+
+    lastLookupRef.current[kind] = normalized;
+    setLookupState((current) => ({
+      ...current,
+      [kind]: { loading: false, error: null },
+    }));
+  };
+
+  useEffect(() => {
+    if (shippingSameAsBilling) {
+      const timer = window.setTimeout(() => {
+        setShippingAttention(billingAttention);
+        setShippingCountry(billingCountry);
+        setShippingStreet1(billingStreet1);
+        setShippingStreet2(billingStreet2);
+        setShippingCity(billingCity);
+        setShippingState(billingState);
+        setShippingPincode(billingPincode);
+        setShippingPhone(billingPhone);
+        setShippingFax(billingFax);
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
+  }, [
+    shippingSameAsBilling,
+    billingAttention,
+    billingCountry,
+    billingStreet1,
+    billingStreet2,
+    billingCity,
+    billingState,
+    billingPincode,
+    billingPhone,
+    billingFax,
+  ]);
+
+  useEffect(() => {
+    if (courierSameAsBilling) {
+      const timer = window.setTimeout(() => {
+        setCourierAttention(billingAttention);
+        setCourierCountry(billingCountry);
+        setCourierStreet1(billingStreet1);
+        setCourierStreet2(billingStreet2);
+        setCourierCity(billingCity);
+        setCourierState(billingState);
+        setCourierPincode(billingPincode);
+        setCourierPhone(billingPhone);
+        setCourierFax(billingFax);
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
+  }, [
+    courierSameAsBilling,
+    billingAttention,
+    billingCountry,
+    billingStreet1,
+    billingStreet2,
+    billingCity,
+    billingState,
+    billingPincode,
+    billingPhone,
+    billingFax,
+  ]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void runPincodeLookup("billing", billingPincode);
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [billingPincode]);
+
+  useEffect(() => {
+    if (!shippingSameAsBilling) {
+      const timer = window.setTimeout(() => {
+        void runPincodeLookup("shipping", shippingPincode);
+      }, 150);
+      return () => window.clearTimeout(timer);
+    }
+  }, [shippingPincode, shippingSameAsBilling]);
+
+  useEffect(() => {
+    if (!courierSameAsBilling) {
+      const timer = window.setTimeout(() => {
+        void runPincodeLookup("courier", courierPincode);
+      }, 150);
+      return () => window.clearTimeout(timer);
+    }
+  }, [courierPincode, courierSameAsBilling]);
 
   const handleNameFieldBlur = () => {
     if (!displayName) {
@@ -185,6 +519,8 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
     fd.set("email", email);
     fd.set("phone", phone);
     fd.set("website", website);
+    fd.set("shippingSameAsBilling", shippingSameAsBilling ? "true" : "false");
+    fd.set("courierSameAsBilling", courierSameAsBilling ? "true" : "false");
     fd.set("channelEmail", channelEmail ? "true" : "false");
     fd.set("channelSms", channelSms ? "true" : "false");
 
@@ -208,12 +544,30 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
     fd.set("shippingPhone", shippingPhone);
     fd.set("shippingFax", shippingFax);
 
+    fd.set("courierAttention", courierAttention);
+    fd.set("courierCountry", courierCountry);
+    fd.set("courierStreet1", courierStreet1);
+    fd.set("courierStreet2", courierStreet2);
+    fd.set("courierCity", courierCity);
+    fd.set("courierState", courierState);
+    fd.set("courierPincode", courierPincode);
+    fd.set("courierPhone", courierPhone);
+    fd.set("courierFax", courierFax);
+
     fd.set("creditLimit", creditLimit);
     fd.set("currency", currency);
-    fd.set("openingBalanceBranch", openingBalanceBranch);
-    fd.set("openingBalanceAmount", openingBalanceAmount);
+    const normalizedOpeningBalances = openingBalances
+      .map((row) => ({
+        branch: row.branch.trim(),
+        amount: row.amount.trim(),
+      }))
+      .filter((row) => row.branch || row.amount);
+    fd.set("openingBalancesPayload", JSON.stringify(normalizedOpeningBalances));
+    fd.set("openingBalanceBranch", normalizedOpeningBalances[0]?.branch || "Chennai");
+    fd.set("openingBalanceAmount", normalizedOpeningBalances[0]?.amount || "0");
     fd.set("paymentTerms", paymentTerms);
     fd.set("ownerId", ownerId);
+    fd.set("taxPreference", taxPreference);
     fd.set("isPortalEnabled", isPortalEnabled ? "true" : "false");
 
     // Set KYC Files
@@ -230,6 +584,9 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
       );
     if (authorisationLetterFile)
       fd.set("kycFile_Authorisation_Letter", authorisationLetterFile);
+    if (cancelledChequeFile) {
+      fd.set("kycFile_Cancelled_Cheque", cancelledChequeFile);
+    }
 
     fd.set("type", "Customer");
 
@@ -240,6 +597,26 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
       `${firstName} ${lastName}`.trim() ||
       "Unnamed Customer";
     fd.set("name", nameToSave);
+
+    const primaryName = primaryContactName.trim();
+    const contactsPayload = [
+      {
+        ...splitContactName(primaryName),
+        designation: primaryContactDesignation.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        isPrimary: true,
+      },
+      ...additionalContacts.map((contact) => ({
+        id: contact.id.startsWith("new-") ? undefined : contact.id,
+        ...splitContactName(contact.fullName),
+        designation: contact.designation.trim(),
+        email: contact.email.trim(),
+        phone: contact.phone.trim(),
+        isPrimary: false,
+      })),
+    ];
+    fd.set("contactsPayload", JSON.stringify(contactsPayload));
 
     try {
       const res = await createAccountAction(fd);
@@ -260,8 +637,10 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
       } else {
         toast.error(res.error || "Failed to create customer");
       }
-    } catch (err: any) {
-      toast.error(err.message || "An error occurred");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "An error occurred",
+      );
     } finally {
       submittingRef.current = false;
       setIsSubmitting(false);
@@ -532,9 +911,29 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     type="text"
                     placeholder="e.g. 33AABCA1234F1Z1"
                     value={gstin}
-                    onChange={(e) => setGstin(e.target.value)}
+                    onChange={(e) => handleGstinChange(e.target.value)}
                     className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                   />
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
+                    <Link
+                      href={GST_PUBLIC_SEARCH_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-semibold mnx-text-accent hover:underline"
+                    >
+                      Verify on GST Portal
+                    </Link>
+                    <span className="mnx-text-muted">
+                      Public portal lookup requires manual captcha verification.
+                    </span>
+                  </div>
+                  {gstManualFallback ? (
+                    <p className="mt-1 text-[11px] mnx-text-muted">
+                      Auto-fetch is not configured for this environment yet. Use
+                      the GST Portal link above to verify the GSTIN and enter the
+                      details manually.
+                    </p>
+                  ) : null}
                 </div>
                 <div>
                   <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
@@ -562,31 +961,172 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
-                  Email Address
-                </label>
-                <Input
-                  type="email"
-                  placeholder="e.g. contact@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                />
+            <div className="rounded-2xl border mnx-border p-5 mnx-bg-soft space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-bold mnx-text-primary uppercase">
+                    Primary Contact
+                  </h3>
+                  <p className="text-xs mnx-text-muted">
+                    This contact will be used as the main customer contact.
+                  </p>
+                </div>
+                <span className="rounded-full mnx-bg-accent px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] mnx-text-muted">
+                  Primary
+                </span>
               </div>
-              <div>
-                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
-                  Phone Number
-                </label>
-                <Input
-                  type="text"
-                  placeholder="e.g. +91 44 1234 5678"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+                <div className="xl:col-span-2">
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                    Contact Person Name
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="e.g. Rajesh Kumar"
+                    value={primaryContactName}
+                    onChange={(e) => setPrimaryContactName(e.target.value)}
+                    className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                    Designation
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="e.g. Operations Manager"
+                    value={primaryContactDesignation}
+                    onChange={(e) => setPrimaryContactDesignation(e.target.value)}
+                    className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                    Email Address
+                  </label>
+                  <Input
+                    type="email"
+                    placeholder="e.g. contact@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                    Phone Number
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="e.g. +91 44 1234 5678"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
+                  />
+                </div>
               </div>
+            </div>
+
+            <div className="rounded-2xl border mnx-border p-5 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-bold mnx-text-primary uppercase">
+                    Additional Contacts
+                  </h3>
+                  <p className="text-xs mnx-text-muted">
+                    Add extra decision-makers, logistics coordinators, or billing contacts.
+                  </p>
+                </div>
+                <Button type="button" variant="outline" onClick={addAdditionalContact}>
+                  Add Contact
+                </Button>
+              </div>
+
+              {additionalContacts.length === 0 ? (
+                <div className="rounded-xl border border-dashed mnx-border p-4 text-sm mnx-text-muted">
+                  No additional contacts added yet.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {additionalContacts.map((contact, index) => (
+                    <div
+                      key={contact.id}
+                      className="rounded-xl border mnx-border p-4 mnx-bg-soft space-y-4"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-bold uppercase tracking-[0.2em] mnx-text-muted">
+                          Contact {index + 2}
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => removeAdditionalContact(contact.id)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <div>
+                          <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                            Contact Person Name
+                          </label>
+                          <Input
+                            type="text"
+                            value={contact.fullName}
+                            onChange={(e) =>
+                              updateAdditionalContact(contact.id, "fullName", e.target.value)
+                            }
+                            className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                            Designation
+                          </label>
+                          <Input
+                            type="text"
+                            value={contact.designation}
+                            onChange={(e) =>
+                              updateAdditionalContact(contact.id, "designation", e.target.value)
+                            }
+                            className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                            Email Address
+                          </label>
+                          <Input
+                            type="email"
+                            value={contact.email}
+                            onChange={(e) =>
+                              updateAdditionalContact(contact.id, "email", e.target.value)
+                            }
+                            className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                            Phone Number
+                          </label>
+                          <Input
+                            type="text"
+                            value={contact.phone}
+                            onChange={(e) =>
+                              updateAdditionalContact(contact.id, "phone", e.target.value)
+                            }
+                            className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
                   Website URL
@@ -599,31 +1139,30 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-2">
-                Notification Channels
-              </label>
-              <div className="flex gap-6">
-                <label className="flex items-center gap-2 text-sm mnx-text-primary cursor-pointer font-medium">
-                  <Input
-                    type="checkbox"
-                    checked={channelEmail}
-                    onChange={(e) => setChannelEmail(e.target.checked)}
-                    className="mnx-choice-control size-4"
-                  />
-                  Email Notifications
+              <div>
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-2">
+                  Notification Channels
                 </label>
-                <label className="flex items-center gap-2 text-sm mnx-text-primary cursor-pointer font-medium">
-                  <Input
-                    type="checkbox"
-                    checked={channelSms}
-                    onChange={(e) => setChannelSms(e.target.checked)}
-                    className="mnx-choice-control size-4"
-                  />
-                  SMS Alerts
-                </label>
+                <div className="flex flex-wrap gap-6 pt-2">
+                  <label className="flex items-center gap-2 text-sm mnx-text-primary cursor-pointer font-medium">
+                    <Input
+                      type="checkbox"
+                      checked={channelEmail}
+                      onChange={(e) => setChannelEmail(e.target.checked)}
+                      className="mnx-choice-control size-4"
+                    />
+                    Email Notifications
+                  </label>
+                  <label className="flex items-center gap-2 text-sm mnx-text-primary cursor-pointer font-medium">
+                    <Input
+                      type="checkbox"
+                      checked={channelSms}
+                      onChange={(e) => setChannelSms(e.target.checked)}
+                      className="mnx-choice-control size-4"
+                    />
+                    SMS Alerts
+                  </label>
+                </div>
               </div>
             </div>
           </div>
@@ -632,197 +1171,110 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
         {/* Step 3: Address */}
         {currentStep === 3 && (
           <div className="space-y-6">
-            <div className="border-b mnx-border pb-3 mnx-border flex items-center justify-between">
+            <div className="border-b mnx-border pb-3 mnx-border">
               <h2 className="text-base font-bold mnx-text-primary uppercase font-display flex items-center gap-2">
                 <MapPin className="mnx-text-accent size-5" /> Addresses
               </h2>
-              <Button
-                type="button"
-                onClick={handleCopyAddress}
-                className="text-xs font-bold mnx-text-accent hover:underline bg-transparent border-0"
-              >
-                Copy Billing to Shipping
-              </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Billing */}
-              <div className="space-y-4 border-r mnx-border pr-6 mnx-border">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="space-y-4 rounded-2xl border mnx-border p-5">
                 <h3 className="text-sm font-bold mnx-text-primary uppercase">
                   Billing Address
                 </h3>
                 <div className="space-y-3">
-                  <div>
-                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
-                      Attention
-                    </label>
-                    <Input
-                      type="text"
-                      value={billingAttention}
-                      onChange={(e) => setBillingAttention(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                    />
+                  <Input value={billingAttention} onChange={(e) => setBillingAttention(e.target.value)} placeholder="Attention" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                  <Input value={billingStreet1} onChange={(e) => setBillingStreet1(e.target.value)} placeholder="Street 1" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                  <Input value={billingStreet2} onChange={(e) => setBillingStreet2(e.target.value)} placeholder="Street 2" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input value={billingCity} disabled placeholder={lookupState.billing.loading ? "Loading city..." : "City"} className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-soft text-sm mnx-text-primary" />
+                    <Input value={billingState} disabled placeholder={lookupState.billing.loading ? "Loading state..." : "State"} className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-soft text-sm mnx-text-primary" />
                   </div>
-                  <div>
-                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
-                      Street 1
-                    </label>
-                    <Input
-                      type="text"
-                      value={billingStreet1}
-                      onChange={(e) => setBillingStreet1(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input value={billingPincode} onChange={(e) => setBillingPincode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="PIN Code" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                    <Input value={billingCountry} onChange={(e) => setBillingCountry(e.target.value)} placeholder="Country" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
                   </div>
-                  <div>
-                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
-                      Street 2
-                    </label>
-                    <Input
-                      type="text"
-                      value={billingStreet2}
-                      onChange={(e) => setBillingStreet2(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input value={billingPhone} onChange={(e) => setBillingPhone(e.target.value)} placeholder="Phone" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                    <Input value={billingFax} onChange={(e) => setBillingFax(e.target.value)} placeholder="Fax" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
-                        City
-                      </label>
-                      <Input
-                        type="text"
-                        value={billingCity}
-                        onChange={(e) => setBillingCity(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
-                        State
-                      </label>
-                      <Input
-                        type="text"
-                        value={billingState}
-                        onChange={(e) => setBillingState(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
-                        Pin Code
-                      </label>
-                      <Input
-                        type="text"
-                        value={billingPincode}
-                        onChange={(e) => setBillingPincode(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
-                        Country
-                      </label>
-                      <Input
-                        type="text"
-                        value={billingCountry}
-                        onChange={(e) => setBillingCountry(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                      />
-                    </div>
-                  </div>
+                  {lookupState.billing.error ? (
+                    <p className="text-xs text-red-600">{lookupState.billing.error}</p>
+                  ) : null}
                 </div>
               </div>
 
-              {/* Shipping */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold mnx-text-primary uppercase">
-                  Shipping Address
-                </h3>
+              <div className="space-y-4 rounded-2xl border mnx-border p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-bold mnx-text-primary uppercase">
+                    Shipping Address
+                  </h3>
+                  <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider mnx-text-muted">
+                    <Input
+                      type="checkbox"
+                      checked={shippingSameAsBilling}
+                      onChange={(e) => setShippingSameAsBilling(e.target.checked)}
+                      className="mnx-choice-control size-4"
+                    />
+                    Billing As Shipping
+                  </label>
+                </div>
                 <div className="space-y-3">
-                  <div>
-                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
-                      Attention
-                    </label>
+                  <Input disabled={shippingSameAsBilling} value={shippingAttention} onChange={(e) => setShippingAttention(e.target.value)} placeholder="Attention" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                  <Input disabled={shippingSameAsBilling} value={shippingStreet1} onChange={(e) => setShippingStreet1(e.target.value)} placeholder="Street 1" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                  <Input disabled={shippingSameAsBilling} value={shippingStreet2} onChange={(e) => setShippingStreet2(e.target.value)} placeholder="Street 2" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input value={shippingCity} disabled placeholder={lookupState.shipping.loading ? "Loading city..." : "City"} className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-soft text-sm mnx-text-primary" />
+                    <Input value={shippingState} disabled placeholder={lookupState.shipping.loading ? "Loading state..." : "State"} className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-soft text-sm mnx-text-primary" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input disabled={shippingSameAsBilling} value={shippingPincode} onChange={(e) => setShippingPincode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="PIN Code" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                    <Input disabled={shippingSameAsBilling} value={shippingCountry} onChange={(e) => setShippingCountry(e.target.value)} placeholder="Country" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input disabled={shippingSameAsBilling} value={shippingPhone} onChange={(e) => setShippingPhone(e.target.value)} placeholder="Phone" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                    <Input disabled={shippingSameAsBilling} value={shippingFax} onChange={(e) => setShippingFax(e.target.value)} placeholder="Fax" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                  </div>
+                  {lookupState.shipping.error && !shippingSameAsBilling ? (
+                    <p className="text-xs text-red-600">{lookupState.shipping.error}</p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="space-y-4 rounded-2xl border mnx-border p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-bold mnx-text-primary uppercase">
+                    Courier Address
+                  </h3>
+                  <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider mnx-text-muted">
                     <Input
-                      type="text"
-                      value={shippingAttention}
-                      onChange={(e) => setShippingAttention(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
+                      type="checkbox"
+                      checked={courierSameAsBilling}
+                      onChange={(e) => setCourierSameAsBilling(e.target.checked)}
+                      className="mnx-choice-control size-4"
                     />
+                    Billing As Courier
+                  </label>
+                </div>
+                <div className="space-y-3">
+                  <Input disabled={courierSameAsBilling} value={courierAttention} onChange={(e) => setCourierAttention(e.target.value)} placeholder="Attention" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                  <Input disabled={courierSameAsBilling} value={courierStreet1} onChange={(e) => setCourierStreet1(e.target.value)} placeholder="Street 1" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                  <Input disabled={courierSameAsBilling} value={courierStreet2} onChange={(e) => setCourierStreet2(e.target.value)} placeholder="Street 2" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input value={courierCity} disabled placeholder={lookupState.courier.loading ? "Loading city..." : "City"} className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-soft text-sm mnx-text-primary" />
+                    <Input value={courierState} disabled placeholder={lookupState.courier.loading ? "Loading state..." : "State"} className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-soft text-sm mnx-text-primary" />
                   </div>
-                  <div>
-                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
-                      Street 1
-                    </label>
-                    <Input
-                      type="text"
-                      value={shippingStreet1}
-                      onChange={(e) => setShippingStreet1(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input disabled={courierSameAsBilling} value={courierPincode} onChange={(e) => setCourierPincode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="PIN Code" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                    <Input disabled={courierSameAsBilling} value={courierCountry} onChange={(e) => setCourierCountry(e.target.value)} placeholder="Country" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
                   </div>
-                  <div>
-                    <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
-                      Street 2
-                    </label>
-                    <Input
-                      type="text"
-                      value={shippingStreet2}
-                      onChange={(e) => setShippingStreet2(e.target.value)}
-                      className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input disabled={courierSameAsBilling} value={courierPhone} onChange={(e) => setCourierPhone(e.target.value)} placeholder="Phone" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
+                    <Input disabled={courierSameAsBilling} value={courierFax} onChange={(e) => setCourierFax(e.target.value)} placeholder="Fax" className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary" />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
-                        City
-                      </label>
-                      <Input
-                        type="text"
-                        value={shippingCity}
-                        onChange={(e) => setShippingCity(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
-                        State
-                      </label>
-                      <Input
-                        type="text"
-                        value={shippingState}
-                        onChange={(e) => setShippingState(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
-                        Pin Code
-                      </label>
-                      <Input
-                        type="text"
-                        value={shippingPincode}
-                        onChange={(e) => setShippingPincode(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-semibold mnx-text-muted uppercase block mb-1">
-                        Country
-                      </label>
-                      <Input
-                        type="text"
-                        value={shippingCountry}
-                        onChange={(e) => setShippingCountry(e.target.value)}
-                        className="w-full h-8 px-3 rounded-lg border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                      />
-                    </div>
-                  </div>
+                  {lookupState.courier.error && !courierSameAsBilling ? (
+                    <p className="text-xs text-red-600">{lookupState.courier.error}</p>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -867,32 +1319,69 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
               </div>
             </div>
 
+            <div className="rounded-2xl border mnx-border p-5 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-bold mnx-text-primary uppercase">
+                    Opening Balances By Branch
+                  </h3>
+                  <p className="text-xs mnx-text-muted">
+                    Add one row for each branch this customer does business with.
+                  </p>
+                </div>
+                <Button type="button" variant="outline" onClick={addOpeningBalanceRow}>
+                  Add Branch
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {openingBalances.map((row, index) => (
+                  <div
+                    key={row.id}
+                    className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-4 items-end"
+                  >
+                    <div>
+                      <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                        Branch {index + 1}
+                      </label>
+                      <NativeSelect
+                        value={row.branch}
+                        onChange={(e) =>
+                          updateOpeningBalanceRow(row.id, "branch", e.target.value)
+                        }
+                        className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
+                      >
+                        <option value="Chennai">Chennai</option>
+                        <option value="Mumbai">Mumbai</option>
+                        <option value="Delhi">Delhi</option>
+                      </NativeSelect>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                        Opening Balance Amount
+                      </label>
+                      <Input
+                        type="number"
+                        value={row.amount}
+                        onChange={(e) =>
+                          updateOpeningBalanceRow(row.id, "amount", e.target.value)
+                        }
+                        className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => removeOpeningBalanceRow(row.id)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
-                  Opening Balance Branch
-                </label>
-                <NativeSelect
-                  value={openingBalanceBranch}
-                  onChange={(e) => setOpeningBalanceBranch(e.target.value)}
-                  className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                >
-                  <option value="Chennai">Chennai</option>
-                  <option value="Mumbai">Mumbai</option>
-                  <option value="Delhi">Delhi</option>
-                </NativeSelect>
-              </div>
-              <div>
-                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
-                  Opening Balance Amount
-                </label>
-                <Input
-                  type="number"
-                  value={openingBalanceAmount}
-                  onChange={(e) => setOpeningBalanceAmount(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-                />
-              </div>
               <div>
                 <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
                   Payment Terms
@@ -908,23 +1397,40 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                   <option value="Due on Receipt">Due on Receipt</option>
                 </NativeSelect>
               </div>
+              <div />
+              <div />
             </div>
 
-            <div>
-              <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
-                Account Owner / Account Manager
-              </label>
-              <NativeSelect
-                value={ownerId}
-                onChange={(e) => setOwnerId(e.target.value)}
-                className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
-              >
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.name}
-                  </option>
-                ))}
-              </NativeSelect>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                  Account Owner / Account Manager
+                </label>
+                <NativeSelect
+                  value={ownerId}
+                  onChange={(e) => setOwnerId(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
+                >
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </div>
+              <div>
+                <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block mb-1.5">
+                  Tax Preference
+                </label>
+                <NativeSelect
+                  value={taxPreference}
+                  onChange={(e) => setTaxPreference(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl border mnx-border mnx-bg-surface text-sm mnx-text-primary focus:outline-none"
+                >
+                  <option value="Taxable">Taxable</option>
+                  <option value="Tax Exempt">Tax Exempt</option>
+                </NativeSelect>
+              </div>
             </div>
           </div>
         )}
@@ -1080,6 +1586,25 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     </p>
                   )}
                 </div>
+
+                <div className="p-4 border mnx-border mnx-bg-surface rounded-xl space-y-2 mnx-border md:col-span-2">
+                  <label className="text-xs font-bold mnx-text-muted uppercase tracking-wider block">
+                    Cancelled Cheque
+                  </label>
+                  <Input
+                    type="file"
+                    onChange={(e) =>
+                      setCancelledChequeFile(e.target.files?.[0] || null)
+                    }
+                    className="w-full text-xs mnx-text-muted file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold mnx-bg-accent mnx-text-accent mnx-hover-accent"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                  />
+                  {cancelledChequeFile && (
+                    <p className="text-[10px] mnx-text-success font-semibold font-mono">
+                      Selected: {cancelledChequeFile.name}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1156,6 +1681,14 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                       Industry:
                     </span>{" "}
                     {industry}
+                  </p>
+                  <p>
+                    <span className="font-semibold mnx-text-muted">
+                      Branch Balances:
+                    </span>{" "}
+                    {openingBalances
+                      .map((row) => `${row.branch}: ${row.amount || "0"}`)
+                      .join(" · ")}
                   </p>
                 </div>
               </div>
@@ -1265,6 +1798,18 @@ export function NewCustomerClient({ employees }: NewCustomerClientProps) {
                     </span>{" "}
                     {authorisationLetterFile ? (
                       authorisationLetterFile.name
+                    ) : (
+                      <span className="mnx-text-muted">
+                        No document uploaded
+                      </span>
+                    )}
+                  </p>
+                  <p>
+                    <span className="font-semibold mnx-text-muted font-sans uppercase">
+                      Cancelled Cheque:
+                    </span>{" "}
+                    {cancelledChequeFile ? (
+                      cancelledChequeFile.name
                     ) : (
                       <span className="mnx-text-muted">
                         No document uploaded

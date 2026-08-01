@@ -35,7 +35,7 @@ describe("production Monolith shell safeguards", () => {
   });
 
   it("keeps mobile navigation and focus-managed overlays in the shared shell", () => {
-    const appShell = read("src/components/monolith/app-shell.tsx");
+    const appShell = read("src/modules/core/components/monolith-app-shell.tsx");
 
     expect(appShell).toContain('aria-label="Open navigation"');
     expect(appShell).toContain('aria-modal="true"');
@@ -45,7 +45,7 @@ describe("production Monolith shell safeguards", () => {
   });
 
   it("keeps every workspace submenu interactive and accessible", () => {
-    const appShell = read("src/components/monolith/app-shell.tsx");
+    const appShell = read("src/modules/core/components/monolith-app-shell.tsx");
     const styles = read("src/styles/monolith-system.css");
 
     expect(appShell).toContain("expandedSections");
@@ -54,10 +54,12 @@ describe("production Monolith shell safeguards", () => {
     expect(appShell).toContain(
       "aria-controls={`mnx-sidebar-items-${section.id}`}",
     );
-    expect(appShell).toContain("section.items.map((item)");
+    expect(appShell).toContain("section.items.map((item, index)");
+    expect(appShell).toContain('className="mnx-sidebar-subnav-item"');
     expect(appShell).toContain("hidden={!isExpanded}");
     expect(appShell).toContain('role="group"');
     expect(styles).toContain(".mnx-sidebar-subnav[hidden]");
+    expect(styles).toContain(".mnx-sidebar-subnav-item > a");
     expect(styles).toContain(".mnx-sidebar-section.is-expanded");
   });
 });

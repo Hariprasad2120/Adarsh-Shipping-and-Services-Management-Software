@@ -1,7 +1,7 @@
 import { getSession } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { db } from "@/lib/db";
-import { BreadcrumbLabel } from "@/components/breadcrumb-label";
+import { BreadcrumbLabel } from "@/components/navigation/breadcrumb-label";
 import { can, loadCaps, requirePermission } from "@/lib/rbac";
 import { getRoles } from "@/modules/core/organisation/service";
 import { getAppraisal, computeAppraisalScore, getSelfFormTemplate } from "@/modules/ams/service";

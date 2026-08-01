@@ -1,5 +1,5 @@
 import { getSession } from "@/lib/auth";
-import { PeopleNotice } from "@/components/monolith/people-workspace";
+import { PeopleNotice } from "@/modules/people/components/people-workspace";
 import { redirect } from "next/navigation";
 import { Clock } from "lucide-react";
 

@@ -1,14 +1,14 @@
 "use client";
 
-import { Textarea } from "@/components/monolith/textarea";
-import { Input } from "@/components/monolith/input";
-import { ChaNativeSelect as NativeSelect } from "@/components/monolith/cha-workspace";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { ChaNativeSelect as NativeSelect } from "@/modules/cha/components/workspace/cha-workspace";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {AlertTriangle,CheckCircle2,ChevronDown,ChevronUp,Plus,RefreshCw,Save,Trash2,Workflow,X,PanelLeft,PanelRight,Settings2,ZoomIn,ZoomOut,} from "lucide-react";
-import { Badge } from "@/components/monolith/badge";
-import { Button } from "@/components/monolith/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/monolith/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import * as actions from "@/modules/cha/actions";
 
 interface WorkflowsClientProps {
@@ -2275,7 +2275,7 @@ export function WorkflowsClient({ initialTemplates, availableRoles, availableJob
                 {activeVersion ? `${activeVersion.isPublished ? "PUBLISHED" : "DRAFT"} V${activeVersion.versionNumber}` : "NO VERSION"}
               </Badge>
             </div>
-            <h1 className="mnx-heading-1 mnx-text-primary" style={{ fontFamily: "var(--font-geist-sans)", letterSpacing: "0.08em" }}>
+            <h1 className="mnx-heading-1 mnx-text-primary" style={{ fontFamily: "var(--mn-font-sans)", letterSpacing: "0.08em" }}>
               FILING WORKFLOW BLUEPRINT
             </h1>
             <p className="max-w-3xl text-sm mnx-text-muted">

@@ -113,7 +113,7 @@ assert(
 );
 
 const performanceWorkspace = read(
-  "src/components/monolith/performance-workspace.tsx",
+  "src/modules/performance/components/performance-workspace.tsx",
 );
 for (const route of routes.filter((route) => !route.includes("["))) {
   assert(
@@ -138,11 +138,18 @@ for (const pattern of [
 const scopedSources = [
   ...walk(amsRoot, (file) => /\.(?:ts|tsx)$/.test(file)),
   ...walk(lmsRoot, (file) => /\.(?:ts|tsx)$/.test(file)),
-  ...walk(path.join(repositoryRoot, "src", "components", "ams"), (file) =>
+  ...walk(path.join(repositoryRoot, "src", "modules", "ams", "components"), (file) =>
     /\.(?:ts|tsx)$/.test(file),
   ),
-  path.join(repositoryRoot, "src", "components", "hrms", "lms-view.tsx"),
-  path.join(repositoryRoot, "src", "components", "hrms", "pms-view.tsx"),
+  path.join(
+    repositoryRoot,
+    "src",
+    "modules",
+    "performance",
+    "components",
+    "lms-view.tsx",
+  ),
+  path.join(repositoryRoot, "src", "modules", "hrms", "components", "pms-view.tsx"),
 ];
 
 const forbiddenPatterns = [
@@ -204,7 +211,7 @@ for (const component of [
   );
 }
 
-const systemStyles = read("src/styles/monolith-system.css");
+const systemStyles = `${read("src/styles/monolith-system.css")}\n${read("src/styles/modules/performance.css")}`;
 for (const className of [
   ".mnx-performance-page",
   ".mnx-performance-page-header",
@@ -241,8 +248,8 @@ const behaviorSources = {
     "src/app/(dashboard)/ams/appraisals/[id]/management-review/management-review-client.tsx",
   ),
   assets: read("src/app/(dashboard)/ams/assets/assets-client.tsx"),
-  lms: read("src/components/hrms/lms-view.tsx"),
-  pms: read("src/components/hrms/pms-view.tsx"),
+  lms: read("src/modules/performance/components/lms-view.tsx"),
+  pms: read("src/modules/hrms/components/pms-view.tsx"),
 };
 
 for (const [sourceName, signals] of Object.entries({

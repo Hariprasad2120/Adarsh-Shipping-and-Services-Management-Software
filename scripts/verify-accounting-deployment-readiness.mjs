@@ -17,7 +17,11 @@ const migration = source(
 
 check("BUILD_COMMAND", packageJson.scripts?.build === "npm run db:generate && next build", "Build includes Prisma generation");
 check("MIGRATION_COMMAND", Boolean(packageJson.scripts?.["db:migrate:deploy"]), "Migration deployment is a distinct command");
-check("STARTUP_ORDER", compose.includes("condition: service_healthy"), "Database health precedes application startup");
+check("SCHEMA_VERIFY_COMMAND", Boolean(packageJson.scripts?.["accounting:schema:verify"]), "Accounting schema verification is a distinct read-only command");
+check("SCHEMA_PREFLIGHT_COMMAND", Boolean(packageJson.scripts?.["accounting:schema:preflight"]), "Development schema preflight is configured");
+check("SAFE_DEPLOY_COMMAND", Boolean(packageJson.scripts?.["deploy:accounting-safe"]), "Deployment generation, validation, migration, verification, and build are sequenced");
+check("STARTUP_ORDER", compose.includes("condition: service_healthy") && compose.includes("condition: service_completed_successfully"), "Database health and successful migration precede application startup");
+check("DOCKER_MIGRATOR", dockerfile.includes("AS migrator") && dockerfile.includes('CMD ["npm", "run", "accounting:schema:deploy"]'), "Docker migration failure blocks application startup");
 check("HEALTH_CHECK", dockerfile.includes("HEALTHCHECK") && compose.includes("/api/health"), "Non-mutating health check configured");
 check("PROVIDER_DEFAULT", compose.includes("ACCOUNTING_PROVIDER_MODE: disabled") && compose.includes("EMAIL_PROVIDER: disabled"), "Providers default disabled");
 check("PRODUCTION_MIGRATION_BLOCK", pipeline.includes('target === "production"') && pipeline.includes("PRODUCTION_BLOCKED"), "Phase 6 production execution is blocked");

@@ -1,7 +1,5 @@
-import {
-  WorkspaceLoadingState,
-  WorkspacePage,
-} from "@/components/monolith";
+import { WorkspaceLoadingState } from "@/components/feedback/workspace-states";
+import { WorkspacePage } from "@/components/layout/workspace";
 
 export default function DashboardLoading() {
   return (

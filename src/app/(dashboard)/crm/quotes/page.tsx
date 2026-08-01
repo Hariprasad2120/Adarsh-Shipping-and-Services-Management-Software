@@ -1,11 +1,14 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { QuotesIndexPage } from "./_components/QuotesIndexPage";
-import { quoteRecords } from "./_lib/quote-list-data";
+import { QuotesIndexPage } from "@/modules/crm/components/quotes/QuotesIndexPage";
+import { quoteRecords } from "@/modules/crm/components/quotes/lib/quote-list-data";
 import { checkAndTriggerSlaNotifications } from "@/modules/crm/approval-workflow";
-import type { QuoteListStatus, QuoteRecord } from "./_lib/types";
-import { CrmConfigurationState } from "@/components/monolith/crm-workspace";
+import type {
+  QuoteListStatus,
+  QuoteRecord,
+} from "@/modules/crm/components/quotes/lib/types";
+import { CrmConfigurationState } from "@/modules/crm/components/workspace/crm-workspace";
 
 export const metadata = { title: "Quotations — CRM" };
 

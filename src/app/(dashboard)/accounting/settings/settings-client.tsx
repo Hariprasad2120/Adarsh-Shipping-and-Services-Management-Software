@@ -12,7 +12,7 @@ import {
   AccountingField,
   AccountingSection,
   AccountingSelect,
-} from "@/components/monolith/accounting-workspace";
+} from "@/modules/accounting/components/accounting-workspace";
 import {
   initializeCOAAction,
   updateAccountingSettingsAction,

@@ -1,22 +1,22 @@
 "use client";
 
-import { PerformanceControlButton } from "@/components/monolith/performance-workspace";
+import { PerformanceControlButton } from "@/modules/performance/components/performance-workspace";
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CycleProgressCard } from "@/components/ams/cycle-progress-card";
+import { CycleProgressCard } from "@/modules/ams/components/cycle-progress-card";
 import {
   CriteriaPointsForm,
   CriteriaPointsView,
-} from "@/components/ams/criteria-points-form";
-import { useNotifications } from "@/components/notifications/notification-provider";
-import { Button } from "@/components/monolith/button";
+} from "@/modules/ams/components/criteria-points-form";
+import { useNotifications } from "@/modules/notifications/components/notification-provider";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/monolith/card";
+} from "@/components/ui/card";
 import type {
   AppraisalSelfFormTemplate,
   ReviewerRatingAnswers,

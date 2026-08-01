@@ -18,14 +18,23 @@ export default async function AccountingConfigurationPage() {
     <>
       <AccountingRoutePageHeader
         actions={
-          <AccountingActionLink href="/accounting/settings">
-            Legacy settings compatibility
-          </AccountingActionLink>
+          <>
+            <AccountingActionLink href="/accounting/configuration/admin">
+              Open config admin
+            </AccountingActionLink>
+            <AccountingActionLink href="/accounting/capabilities">
+              Manage capability policies
+            </AccountingActionLink>
+            <AccountingActionLink href="/accounting/settings">
+              Legacy settings compatibility
+            </AccountingActionLink>
+          </>
         }
       />
       <AccountingConfigurationView configuration={configuration} />
       <AccountingPolicyGate
         configured={configuration.policyGates.productionOutbox}
+        readiness={configuration.capabilityReadiness.productionOutbox}
         title="Production integration publication"
         description="Only synthetic destinations are accepted by the canonical outbox publisher in the current phase."
         requirements={[

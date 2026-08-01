@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { SessionsDashboard } from "./sessions-dashboard";
 import { requirePermission } from "@/lib/rbac";
-import { AdminPermissionState } from "@/components/monolith";
+import { AdminPermissionState } from "@/modules/admin/components/admin-workspace";
 
 export const metadata = {
   title: "Session Monitor | Admin | Adarsh Shipping",

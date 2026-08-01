@@ -3,7 +3,7 @@ import { CustomerPortalAuth } from "@/components/monolith/customer-portal-worksp
 import {
   PortalActivationForm,
   PortalForgotPasswordRequestForm,
-} from "../_components/client-actions";
+} from "@/modules/customer-portal/components/client-actions";
 
 export default async function CustomerPortalForgotPasswordPage({
   searchParams,

@@ -2,15 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  AdminBadge,
-  AdminButton,
-  AdminField,
-  AdminInput,
-  AdminPanel,
-  AdminPanelHeader,
-  WorkspaceAlert,
-} from "@/components/monolith";
+import { AdminBadge, AdminButton, AdminField, AdminInput, AdminPanel, AdminPanelHeader } from "@/modules/admin/components/admin-workspace";
+import { WorkspaceAlert } from "@/components/layout/workspace";
 
 type DailyJobResult = {
   created: number;

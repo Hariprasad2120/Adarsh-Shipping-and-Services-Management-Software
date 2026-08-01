@@ -12,14 +12,9 @@ import {
   Trash2,
   TriangleAlert,
 } from "lucide-react";
-import {
-  WorkspaceAction,
-  WorkspaceBadge,
-  WorkspaceEmptyState,
-  WorkspacePanel,
-  WorkspacePanelHeader,
-} from "@/components/monolith";
-import { useNotifications } from "@/components/notifications/notification-provider";
+import { WorkspaceAction, WorkspaceBadge, WorkspacePanel, WorkspacePanelHeader } from "@/components/layout/workspace";
+import { WorkspaceEmptyState } from "@/components/feedback/workspace-states";
+import { useNotifications } from "@/modules/notifications/components/notification-provider";
 
 type NotificationRow = {
   id: string;

@@ -8,15 +8,7 @@ import {
   MonitorSmartphone,
   ShieldCheck,
 } from "lucide-react";
-import {
-  WorkspaceAction,
-  WorkspaceAlert,
-  WorkspaceBadge,
-  WorkspaceEmptyTableRow,
-  WorkspacePanel,
-  WorkspacePanelHeader,
-  WorkspaceTable,
-} from "@/components/monolith";
+import { WorkspaceAction, WorkspaceAlert, WorkspaceBadge, WorkspaceEmptyTableRow, WorkspacePanel, WorkspacePanelHeader, WorkspaceTable } from "@/components/layout/workspace";
 import {
   revokeAllOtherSessionsAction,
   revokeMySessionAction,

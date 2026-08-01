@@ -157,9 +157,11 @@ describe("module-aware main dashboard", () => {
 
   it("defaults theme controls to Night and preserves the user-selected theme", () => {
     const layoutSource = readSource("src/app/layout.tsx");
-    const appShellSource = readSource("src/components/monolith/app-shell.tsx");
+    const appShellSource = readSource(
+      "src/modules/core/components/monolith-app-shell.tsx",
+    );
     const portalSource = readSource(
-      "src/app/customer-portal/_components/client-actions.tsx",
+      "src/modules/customer-portal/components/client-actions.tsx",
     );
 
     expect(layoutSource).toContain(": 'night'");
