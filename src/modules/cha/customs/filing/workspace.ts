@@ -2,6 +2,8 @@ import "server-only";
 
 import { db } from "@/lib/db";
 import { logChaAudit } from "@/modules/cha/service";
+import { getExportFilingDraft, type ExportFilingDraftView } from "./export-drafts";
+import { getImportFilingDraft, type ImportFilingDraftView } from "./import-drafts";
 
 export type ChaCustomsWorkspaceDirection = "IMPORT" | "EXPORT";
 
@@ -29,6 +31,8 @@ export type ChaCustomsFilingWorkspaceAccess = {
     checklistStatus: string;
     flatFileStatus: string;
   } | null;
+  importDraft: ImportFilingDraftView | null;
+  exportDraft: ExportFilingDraftView | null;
 };
 
 function normalizeDirection(value: string | null | undefined): ChaCustomsWorkspaceDirection | null {
@@ -112,6 +116,8 @@ export async function getCustomsFilingWorkspaceAccess(params: {
       canEditDraft: params.canEditDraft,
       direction,
       profile: null,
+      importDraft: null,
+      exportDraft: null,
     };
   }
 
@@ -144,5 +150,7 @@ export async function getCustomsFilingWorkspaceAccess(params: {
     canEditDraft: params.canEditDraft,
     direction,
     profile,
+    importDraft: direction === "IMPORT" && profile ? await getImportFilingDraft(profile.id) : null,
+    exportDraft: direction === "EXPORT" && profile ? await getExportFilingDraft(profile.id) : null,
   };
 }

@@ -4,6 +4,7 @@ import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { getChaCustomsFeatureFlags, isChaCustomsFeatureEnabled } from "../feature-flags";
 import { buildIcegateIdempotencyKey, sha256Base64 } from "./crypto.server";
+import { processIcegateExternalEvent } from "./event-processing.server";
 import { MockIcegateClient } from "./mock-client.server";
 import { RealIcegateClient } from "./client.server";
 import { redactIcegateValue } from "./redaction";
@@ -97,15 +98,26 @@ export async function submitGeneratedIcegateFile(input: SubmitGeneratedIcegateFi
       });
 
   const mapped = mapSubmissionResult(result);
+  await processIcegateExternalEvent({
+    submissionId: submission.id,
+    eventKind: mapped.eventKind,
+    status: mapped.status,
+    externalStatus: result.externalCode ?? result.validationStatus,
+    safeMessage: result.message ?? result.errorMessage,
+    actorId: input.actorId,
+    metadata: {
+      validationStatus: result.validationStatus,
+      message: result.message,
+      errorMessage: result.errorMessage,
+      externalCode: result.externalCode,
+      requestHash: result.requestHash,
+      responseHash: result.responseHash,
+    },
+    retryAfter: mapped.status === "RETRYABLE" ? new Date(Date.now() + 5 * 60 * 1000) : null,
+  });
   await db.chaCustomsExternalSubmission.update({
     where: { id: submission.id },
     data: {
-      status: mapped.status,
-      submittedAt: mapped.submittedAt,
-      acknowledgedAt: mapped.acknowledgedAt,
-      retryCount: result.retryable ? 1 : 0,
-      lastErrorCode: result.errorMessage ? result.externalCode ?? result.validationStatus : null,
-      lastSafeMessage: result.message ?? result.errorMessage,
       responseRedactedSnapshot: redactIcegateValue({
         validationStatus: result.validationStatus,
         message: result.message,
@@ -115,15 +127,27 @@ export async function submitGeneratedIcegateFile(input: SubmitGeneratedIcegateFi
       }) as Prisma.InputJsonValue,
     },
   });
-  await appendIcegateEvent(submission.id, 2, mapped.eventKind, result.externalCode ?? result.validationStatus, {
-    validationStatus: result.validationStatus,
-    message: result.message,
-    errorMessage: result.errorMessage,
-    requestHash: result.requestHash,
-    responseHash: result.responseHash,
-  });
 
   return { submissionId: submission.id, status: mapped.status, result };
+}
+
+async function appendIcegateEvent(
+  submissionId: string,
+  sequenceNo: number,
+  eventKind: "REQUEST_PREPARED" | "ACKNOWLEDGED" | "REJECTION_RECEIVED" | "RETRY_SCHEDULED",
+  externalStatus: string,
+  metadata: Record<string, unknown>,
+) {
+  return db.chaCustomsExternalEvent.create({
+    data: {
+      submissionId,
+      sequenceNo,
+      eventKind,
+      externalStatus,
+      safeMessage: typeof metadata.message === "string" ? metadata.message : null,
+      metadata: redactIcegateValue(metadata) as Prisma.InputJsonValue,
+    },
+  });
 }
 
 function mapSubmissionResult(result: IcegateSubmitResult) {
@@ -149,23 +173,4 @@ function mapSubmissionResult(result: IcegateSubmitResult) {
     submittedAt: new Date(),
     acknowledgedAt: null,
   };
-}
-
-async function appendIcegateEvent(
-  submissionId: string,
-  sequenceNo: number,
-  eventKind: "REQUEST_PREPARED" | "ACKNOWLEDGED" | "REJECTION_RECEIVED" | "RETRY_SCHEDULED",
-  externalStatus: string,
-  metadata: Record<string, unknown>,
-) {
-  return db.chaCustomsExternalEvent.create({
-    data: {
-      submissionId,
-      sequenceNo,
-      eventKind,
-      externalStatus,
-      safeMessage: typeof metadata.message === "string" ? metadata.message : null,
-      metadata: redactIcegateValue(metadata) as Prisma.InputJsonValue,
-    },
-  });
 }

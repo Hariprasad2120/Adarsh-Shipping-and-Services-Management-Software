@@ -1,6 +1,120 @@
 # Monolith UI migration handoff
 
-Last updated: 2026-07-31
+Last updated: 2026-08-01
+
+## 2026-08-01 CHA customs Phase 14 handoff
+
+Phase 14 hardening and rollout-readiness work is implemented on
+`feature/cha-customs-filing-workspace`.
+
+What shipped:
+
+- `src/modules/cha/customs/masters/resolution.ts` adds explicit master
+  resolution for import/export filing rows and requires human choice when
+  multiple valid rates or datasets exist.
+- `src/modules/cha/customs/filing/calculations.ts` centralizes server Decimal
+  calculations and requirement reporting for import/export invoice and item
+  totals.
+- `src/modules/cha/customs/filing/import-drafts.ts` and
+  `src/modules/cha/customs/filing/export-drafts.ts` now persist immutable
+  source/version snapshots, calculation ruleset metadata, and richer
+  validation messages instead of writing loose draft JSON only.
+- `src/modules/cha/customs/icegate/event-processing.server.ts` adds append-only
+  external event handling with deduplication, notification reuse, and guarded
+  OOC/LEO read-model updates.
+- `src/modules/cha/customs/icegate/service.server.ts` now routes normalized
+  submission responses through the shared event processor rather than mutating
+  submission state ad hoc.
+- `src/modules/cha/customs/__tests__/icegate-event-processing.test.ts`
+  exercises duplicate-event suppression, user notifications, and manual versus
+  external status conflict handling.
+- `scripts/benchmark-cha-customs-phase14.ts` and
+  `scripts/cleanup-cha-customs-phase14-bench.ts` provide repeatable staging
+  benchmark evidence and cleanup for synthetic benchmark data.
+
+Verification passed for:
+
+- full customs Vitest: 85/85;
+- focused staging customs matrix: 45/45;
+- targeted ESLint;
+- production TypeScript;
+- production build;
+- staging database migrate/status/verify;
+- staging seed;
+- staging app start check.
+
+Measured staging benchmark output:
+
+- master list page 1 / 50 rows on 40,000 seeded UOM rows: 50.97 ms;
+- filtered master list page 1 / 50 rows on the same dataset: 17.37 ms;
+- exact UOM lookup: 13.07 ms;
+- workspace profile/header/invoice generation projection load: 28.45 ms.
+
+Operational notes:
+
+- Customs feature flags still default to disabled unless explicitly set through
+  the organisation system-setting key
+  `org:{orgId}:cha_customs_feature_flags`.
+- `CHA_ICEGATE_LIVE_SUBMISSION` remains effectively disabled unless both the
+  environment and the feature-flag gate are enabled.
+- No live ICEGATE request was sent in this phase.
+
+Remaining note:
+
+- There is still no repository-native authenticated Playwright acceptance
+  harness for the full customs filing browser flow, so the Phase 14 readiness
+  evidence is service/persistence/build/staging based rather than a completed
+  operator-clickthrough recording.
+
+## 2026-08-01 CHA customs Phase 13 handoff
+
+Phase 13 export remaining customs filing subtabs are implemented on
+`feature/cha-customs-filing-workspace`.
+
+Delivered export subtabs inside `/cha/jobs/[jobId]?tab=customsFiling`:
+
+- `item-details`
+- `supporting-documents`
+- `checklist`
+- `flat-file`
+
+Implementation files:
+
+- `src/modules/cha/customs/filing/export-schemas.ts`
+- `src/modules/cha/customs/filing/export-drafts.ts`
+- `src/modules/cha/customs/filing/actions.ts`
+- `src/modules/cha/customs/ui/export-filing-tabs.tsx`
+- `src/app/(dashboard)/cha/jobs/[jobId]/job-workspace-client.tsx`
+- `src/modules/cha/customs/__tests__/export-filing-drafts.test.ts`
+
+What shipped:
+
+- Export item rows persist with verified customs fields for RITC, scheme,
+  quantity/UQC, unit pricing, PMV, GST/IGST, drawback, RoSCTL, RoDTEP, and
+  additional single-window data, while snapshotting the selected master source
+  and dataset version for historical reproducibility.
+- Export supporting documents attach customs/eSanchit-style metadata to the
+  existing CHA uploaded job document instead of duplicating the blob.
+- Export checklist generation is versioned, derived from saved filing data,
+  supports the with-declaration toggle, and preserves generation history.
+- Export flat-file generation is deterministic and versioned, records schema
+  version and content hash, separates dummy/live intent, exposes signing
+  connector availability, supports manual signature registration, and prevents
+  duplicate live submission of the same signed generation.
+- Submission remains behind permissions plus the existing ICEGATE feature flag
+  boundary and uses the mock ICEGATE adapter in tests. No live ICEGATE request
+  was sent in this phase.
+
+Verification passed for targeted ESLint, the export/import filing Vitest
+suites, production TypeScript, production build, and `git diff --check`
+(excluding the pre-existing CRLF warnings on the touched workspace files).
+
+Remaining note:
+
+- The repository does not yet have a dedicated authenticated Playwright smoke
+  harness for these new CHA customs job subtabs, so runtime verification in
+  this phase is covered by persistence/service tests and the production build
+  rather than a browser automation script.
 
 ## 2026-07-31 CHA Customs Phase 7 handoff
 

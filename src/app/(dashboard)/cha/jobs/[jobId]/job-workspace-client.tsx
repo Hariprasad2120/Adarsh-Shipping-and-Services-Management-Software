@@ -86,6 +86,8 @@ import type {
   ChaCustomsFilingWorkspaceAccess,
   ChaCustomsWorkspaceDirection,
 } from "@/modules/cha/customs/filing/workspace";
+import { ImportFilingTabs } from "@/modules/cha/customs/ui/import-filing-tabs";
+import { ExportFilingTabs } from "@/modules/cha/customs/ui/export-filing-tabs";
 import * as actions from "@/modules/cha/actions";
 import { DoValidityPanel } from "./do-validity-panel";
 import {
@@ -14636,68 +14638,90 @@ export function JobWorkspaceClient({
                           onSelect: () => navigateToCustomsSubtab(tab.id),
                         }))}
                       />
-                      <CustomsDirtyStateWarning active={false} />
-                      <CustomsValidationSummary errors={[]} />
-                      <CustomsFilingSection
-                        title={
-                          customsSubtabs.find((tab) => tab.id === activeCustomsSubtab)
-                            ?.label ?? "Customs Filing Data"
-                        }
-                        description={`${customsFilingAccess.direction} draft v${customsFilingAccess.profile.currentDraftVersion} - concurrency ${customsFilingAccess.profile.lockVersion}`}
-                        readonly={!customsFilingAccess.canEditDraft || customsFilingAccess.profile.isLocked}
-                        actions={<CustomsSaveIndicator state="idle" />}
-                      >
-                        <div className="grid gap-4 xl:grid-cols-3">
-                          <div className="rounded-[var(--mn-radius-control)] border mnx-border mnx-bg-soft p-4">
-                            <p className="mnx-label">Profile Status</p>
-                            <p className="mt-2 text-sm font-semibold mnx-text-primary">
-                              {formatChaBadgeLabel(customsFilingAccess.profile.status)}
-                            </p>
-                          </div>
-                          <div className="rounded-[var(--mn-radius-control)] border mnx-border mnx-bg-soft p-4">
-                            <p className="mnx-label">Job Aggregate</p>
-                            <p className="mt-2 text-sm font-semibold mnx-text-primary">
-                              {job.jobNumber}
-                            </p>
-                          </div>
-                          <div className="rounded-[var(--mn-radius-control)] border mnx-border mnx-bg-soft p-4">
-                            <p className="mnx-label">Direction</p>
-                            <p className="mt-2 text-sm font-semibold mnx-text-primary">
-                              {customsFilingAccess.direction}
-                            </p>
-                          </div>
-                        </div>
-                        <CustomsLineItemTable
-                          title="Line workspace"
-                          actions={
-                            <Button type="button" variant="outline" size="sm" disabled>
-                              <Plus size={14} aria-hidden="true" />
-                              New row
-                            </Button>
-                          }
-                          footer={<span>Totals will be calculated by customs services.</span>}
-                        >
-                          <ChaTable>
-                            <thead>
-                              <tr>
-                                <th>Sequence</th>
-                                <th>Reference</th>
-                                <th>Status</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr>
-                                <td colSpan={3}>Detailed {activeCustomsSubtab} rows start in the next phase.</td>
-                              </tr>
-                            </tbody>
-                          </ChaTable>
-                        </CustomsLineItemTable>
-                      </CustomsFilingSection>
-                      <CustomsConcurrencyConflictDialog
-                        open={false}
-                        onClose={() => undefined}
-                        onReload={() => router.refresh()}
-                      />
+                      {customsFilingAccess.direction === "IMPORT" &&
+                      customsFilingAccess.importDraft ? (
+                        <ImportFilingTabs
+                          activeSubtab={activeCustomsSubtab}
+                          draft={customsFilingAccess.importDraft}
+                          job={job}
+                          profile={customsFilingAccess.profile}
+                          readOnly={!customsFilingAccess.canEditDraft || customsFilingAccess.profile.isLocked}
+                        />
+                      ) : customsFilingAccess.direction === "EXPORT" &&
+                        customsFilingAccess.exportDraft ? (
+                        <ExportFilingTabs
+                          activeSubtab={activeCustomsSubtab}
+                          draft={customsFilingAccess.exportDraft}
+                          job={job}
+                          profile={customsFilingAccess.profile}
+                          readOnly={!customsFilingAccess.canEditDraft || customsFilingAccess.profile.isLocked}
+                        />
+                      ) : (
+                        <>
+                          <CustomsDirtyStateWarning active={false} />
+                          <CustomsValidationSummary errors={[]} />
+                          <CustomsFilingSection
+                            title={
+                              customsSubtabs.find((tab) => tab.id === activeCustomsSubtab)
+                                ?.label ?? "Customs Filing Data"
+                            }
+                            description={`${customsFilingAccess.direction} draft v${customsFilingAccess.profile.currentDraftVersion} - concurrency ${customsFilingAccess.profile.lockVersion}`}
+                            readonly={!customsFilingAccess.canEditDraft || customsFilingAccess.profile.isLocked}
+                            actions={<CustomsSaveIndicator state="idle" />}
+                          >
+                            <div className="grid gap-4 xl:grid-cols-3">
+                              <div className="rounded-[var(--mn-radius-control)] border mnx-border mnx-bg-soft p-4">
+                                <p className="mnx-label">Profile Status</p>
+                                <p className="mt-2 text-sm font-semibold mnx-text-primary">
+                                  {formatChaBadgeLabel(customsFilingAccess.profile.status)}
+                                </p>
+                              </div>
+                              <div className="rounded-[var(--mn-radius-control)] border mnx-border mnx-bg-soft p-4">
+                                <p className="mnx-label">Job Aggregate</p>
+                                <p className="mt-2 text-sm font-semibold mnx-text-primary">
+                                  {job.jobNumber}
+                                </p>
+                              </div>
+                              <div className="rounded-[var(--mn-radius-control)] border mnx-border mnx-bg-soft p-4">
+                                <p className="mnx-label">Direction</p>
+                                <p className="mt-2 text-sm font-semibold mnx-text-primary">
+                                  {customsFilingAccess.direction}
+                                </p>
+                              </div>
+                            </div>
+                            <CustomsLineItemTable
+                              title="Line workspace"
+                              actions={
+                                <Button type="button" variant="outline" size="sm" disabled>
+                                  <Plus size={14} aria-hidden="true" />
+                                  New row
+                                </Button>
+                              }
+                              footer={<span>Totals will be calculated by customs services.</span>}
+                            >
+                              <ChaTable>
+                                <thead>
+                                  <tr>
+                                    <th>Sequence</th>
+                                    <th>Reference</th>
+                                    <th>Status</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr>
+                                    <td colSpan={3}>Detailed {activeCustomsSubtab} rows start in the next phase.</td>
+                                  </tr>
+                                </tbody>
+                              </ChaTable>
+                            </CustomsLineItemTable>
+                          </CustomsFilingSection>
+                          <CustomsConcurrencyConflictDialog
+                            open={false}
+                            onClose={() => undefined}
+                            onReload={() => router.refresh()}
+                          />
+                        </>
+                      )}
                     </>
                   )}
                 </div>

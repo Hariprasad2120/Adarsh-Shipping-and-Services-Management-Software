@@ -1,6 +1,103 @@
 # Monolith UI migration status
 
-Last updated: 2026-07-31
+Last updated: 2026-08-01
+
+## 2026-08-01 CHA customs Phase 14 hardening and rollout readiness
+
+- Completed the Phase 14 cross-module hardening pass on
+  `feature/cha-customs-filing-workspace` without enabling production live
+  submission.
+- Added shared customs master-resolution logic in
+  `src/modules/cha/customs/masters/resolution.ts` so filing drafts now resolve
+  RITC/CTH, UOM, scheme, BCD, AIDC, cess, drawback, RoDTEP, RoSCTL,
+  supporting-document, and single-window selections through the shared master
+  services and fail closed on ambiguous matches instead of silently choosing a
+  row.
+- Added server-side Decimal calculation helpers in
+  `src/modules/cha/customs/filing/calculations.ts` for import/export invoice
+  and item totals, assessable/FOB/IGST values, and drawback/RoDTEP cap checks.
+  Draft persistence now stores the calculation ruleset version plus clear
+  requirement messages when authoritative inputs are missing.
+- Hardened import/export remaining-draft persistence so item, duty, and
+  supporting-document snapshots keep dataset/source metadata and immutable
+  master-resolution state for historical reproducibility.
+- Added append-only ICEGATE event processing in
+  `src/modules/cha/customs/icegate/event-processing.server.ts`, including
+  duplicate-event suppression, submission read-model updates, guarded OOC/LEO
+  projection updates, and notification fan-out to assigned CHA users through
+  the existing notification system.
+- Added focused coverage in
+  `src/modules/cha/customs/__tests__/icegate-event-processing.test.ts` for
+  deduplication, notification dispatch, import OOC projection, and export LEO
+  conflict handling.
+- Added reusable staging benchmark and cleanup scripts:
+  `scripts/benchmark-cha-customs-phase14.ts` and
+  `scripts/cleanup-cha-customs-phase14-bench.ts`.
+
+Verification:
+
+- targeted ESLint for Phase 14 customs files and benchmark/cleanup scripts:
+  passed;
+- full customs Vitest suite: 85/85 passed across 13 files;
+- focused staging customs matrix (workspace shell, master services,
+  import/export drafts, ICEGATE adapter, ICEGATE event processing): 45/45
+  passed across 6 files;
+- production TypeScript: passed;
+- production build: passed, retaining the existing non-fatal Turbopack
+  `next.config.ts` checklist-files trace warning;
+- staging database start/health/migrate/status/verify: passed;
+- staging fixture seed: passed and remained idempotent for the STAGING
+  organisation;
+- staging app start check: passed with HTTP 307 on `127.0.0.1:3100`;
+- staging synthetic benchmark:
+  `masterList50` 50.97 ms,
+  `masterFiltered50` 17.37 ms,
+  `uomExactLookup` 13.07 ms,
+  `workspaceProjectionLoad` 28.45 ms;
+- `git diff --check`: no whitespace errors, with the existing CRLF warnings on
+  already-touched workspace/docs files.
+
+## 2026-08-01 CHA customs Phase 13 export remaining subtabs
+
+- Implemented the remaining Export customs filing subtabs on
+  `feature/cha-customs-filing-workspace` inside the existing CHA job workspace:
+  Export Item Details, Supporting Documents, Checklist, and Flat File.
+- Reused the existing `ChaJob` workspace, customs filing profile, CHA document
+  store, checklist workflow, customs audit trail, and ICEGATE submission/event
+  boundary instead of adding duplicate transaction, document, approval, or
+  submission systems.
+- Added persisted export remaining-draft services and server actions for:
+  item rows with master snapshots; supporting-document metadata linked to the
+  existing uploaded job document; versioned export checklist snapshots; and
+  deterministic export flat-file generations with signing and submission state.
+- Export item details now support RITC, scheme, quantity/UQC, PMV/value,
+  GST/IGST, drawback, RoSCTL, RoDTEP, and verified single-window/additional
+  details through the shared customs lookup services and stored dataset/version
+  snapshots.
+- Export supporting documents reuse the existing file blob and store only
+  customs metadata such as IRN/DRN, declaration/file details, invoice/item
+  references, issuing party, beneficiary, and ICEGATE profile linkage.
+- Export checklist uses versioned generated summaries from saved draft data,
+  supports the with-declaration toggle, and preserves prior generations rather
+  than overwriting them.
+- Export flat-file generation now produces deterministic versioned fixtures with
+  schema/hash history, explicit dummy/live separation, signing-connector
+  availability states, duplicate-submission prevention, and append-only
+  ICEGATE mock event integration without performing live submission by default.
+
+Verification:
+
+- targeted ESLint for Phase 13 filing/action/UI/test files: passed;
+- export + import customs filing Vitest suites: passed, 19 tests across 2 files;
+- full production TypeScript: passed;
+- production build: passed, retaining the existing non-fatal Turbopack
+  customer-portal checklist-files trace warning;
+- `git diff --check`: no whitespace errors, with the existing CRLF warnings on
+  `src/app/(dashboard)/cha/jobs/[jobId]/job-workspace-client.tsx` and
+  `src/modules/cha/customs/filing/workspace.ts`;
+- a dedicated authenticated Playwright smoke for the Phase 13 CHA job tabs is
+  still not wired in this repository, so this phase relied on targeted draft
+  persistence tests plus production type/build verification.
 
 ## CHA import job creation lab
 

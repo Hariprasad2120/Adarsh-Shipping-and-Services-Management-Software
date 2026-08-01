@@ -252,6 +252,29 @@ Navigation:
 - Add master links only when Phase 1 creates production masters and permissions.
 - Do not expose the existing `/cha/labs/import-job-creation` lab in production navigation.
 
+## 6A. Phase 14 Actual Hardening Notes
+
+Phase 14 kept the same route map and focused on cross-module behavior:
+
+- `src/modules/cha/customs/masters/resolution.ts` now resolves master rows used
+  by import/export drafts and records whether a selection was `resolved`,
+  `missing`, or `ambiguous`.
+- `src/modules/cha/customs/filing/calculations.ts` now provides server-side
+  Decimal calculations for import/export invoices and items, including
+  assessable value, FOB, taxable value, IGST, drawback, RoDTEP, and RoSCTL
+  requirement reporting.
+- `src/modules/cha/customs/filing/import-drafts.ts` and
+  `src/modules/cha/customs/filing/export-drafts.ts` now persist master
+  resolution snapshots plus ruleset-versioned calculation metadata on saved
+  rows.
+- `src/modules/cha/customs/icegate/event-processing.server.ts` adds append-only
+  external-event processing with duplicate suppression, notification reuse, and
+  guarded OOC/LEO projection updates.
+- `scripts/benchmark-cha-customs-phase14.ts` and
+  `scripts/cleanup-cha-customs-phase14-bench.ts` provide repeatable staging
+  performance evidence for the large-row master register path and workspace
+  projection reads.
+
 ## 7. Proposed Module Ownership Map
 
 | Area | Proposed location |

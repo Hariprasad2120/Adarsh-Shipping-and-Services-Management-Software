@@ -76,6 +76,17 @@ const getCachedChaCustomsFeatureFlags = unstable_cache(
 );
 
 export async function getChaCustomsFeatureFlags(orgId: string): Promise<ChaCustomsFeatureFlags> {
-  return getCachedChaCustomsFeatureFlags(orgId);
+  try {
+    return await getCachedChaCustomsFeatureFlags(orgId);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("incrementalCache missing")) {
+      const row = await db.systemSetting.findUnique({
+        where: { key: getChaCustomsFeatureFlagsSettingKey(orgId) },
+        select: { value: true },
+      });
+      return parseChaCustomsFeatureFlags(row?.value);
+    }
+    throw error;
+  }
 }
 
