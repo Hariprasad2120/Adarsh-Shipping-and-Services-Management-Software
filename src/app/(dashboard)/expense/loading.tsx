@@ -1,5 +1,5 @@
-import { ChaLoadingState } from "@/modules/cha/components/workspace/cha-workspace";
+import { AppRouteLoading } from "@/components/feedback/app-route-loading";
 
 export default function ExpenseLoading() {
-  return <ChaLoadingState description="Loading expense operations data." />;
+  return <AppRouteLoading scope="expense" />;
 }

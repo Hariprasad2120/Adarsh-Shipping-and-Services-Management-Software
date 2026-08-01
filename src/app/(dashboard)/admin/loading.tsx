@@ -1,7 +1,5 @@
-import { AdminLoadingState } from "@/modules/admin/components/admin-workspace";
+import { AppRouteLoading } from "@/components/feedback/app-route-loading";
 
 export default function AdminLoading() {
-  return (
-    <AdminLoadingState description="Loading organisation administration, access, and security data." />
-  );
+  return <AppRouteLoading scope="admin" />;
 }

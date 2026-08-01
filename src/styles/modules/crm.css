@@ -32,7 +32,7 @@
 }
 
 .mnx-crm-page {
-  gap: var(--mn-space-8);
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-crm-page-header {
@@ -42,7 +42,7 @@
 .mnx-crm-content {
   display: grid;
   min-width: 0;
-  gap: var(--mn-space-8);
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-crm-content > * {
@@ -221,7 +221,7 @@
 
 @media (max-width: 70rem) {
   .mnx-crm-content {
-    gap: var(--mn-space-6);
+    gap: var(--mn-layout-workspace-stack-gap);
   }
 
   .mnx-crm-toolbar {
@@ -231,7 +231,7 @@
 
 @media (max-width: 42rem) {
   .mnx-crm-page {
-    gap: var(--mn-space-6);
+    gap: var(--mn-layout-workspace-stack-gap-mobile);
   }
 
   .mnx-crm-page-header {

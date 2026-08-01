@@ -1,5 +1,5 @@
-import { CrmLoadingState } from "@/modules/crm/components/workspace/crm-workspace";
+import { AppRouteLoading } from "@/components/feedback/app-route-loading";
 
 export default function CrmLoading() {
-  return <CrmLoadingState />;
+  return <AppRouteLoading scope="crm" />;
 }

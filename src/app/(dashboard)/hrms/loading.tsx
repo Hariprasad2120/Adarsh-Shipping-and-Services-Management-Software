@@ -1,7 +1,5 @@
-import { PeopleLoadingState } from "@/modules/people/components/people-workspace";
+import { AppRouteLoading } from "@/components/feedback/app-route-loading";
 
 export default function HrmsLoading() {
-  return (
-    <PeopleLoadingState description="Loading HRMS records and permissions." />
-  );
+  return <AppRouteLoading scope="hrms" />;
 }

@@ -7,6 +7,7 @@
 .mnx-people-page {
   width: min(100%, 100rem);
   margin-inline: auto;
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-people-page-header {
@@ -56,7 +57,7 @@
 .mnx-people-content {
   display: grid;
   min-width: 0;
-  gap: var(--mn-space-6);
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-people-content > :where(div, section, form) {

@@ -1,7 +1,5 @@
-import { PerformanceLoadingState } from "@/modules/performance/components/performance-workspace";
+import { AppRouteLoading } from "@/components/feedback/app-route-loading";
 
 export default function AmsLoading() {
-  return (
-    <PerformanceLoadingState description="Loading appraisal workspace data." />
-  );
+  return <AppRouteLoading scope="ams" />;
 }

@@ -7,7 +7,7 @@
 
 .mnx-communication-page,
 .mnx-admin-page {
-  gap: var(--mn-space-7);
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-communication-page-header,
@@ -92,7 +92,7 @@
 .mnx-admin-content {
   display: grid;
   min-width: 0;
-  gap: var(--mn-space-7);
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-communication-content > *,
@@ -805,7 +805,7 @@
 @media (max-width: 70rem) {
   .mnx-communication-content,
   .mnx-admin-content {
-    gap: var(--mn-space-6);
+    gap: var(--mn-layout-workspace-stack-gap);
   }
 
   .mnx-communication-split,
@@ -848,7 +848,7 @@
 @media (max-width: 42rem) {
   .mnx-communication-page,
   .mnx-admin-page {
-    gap: var(--mn-space-5);
+    gap: var(--mn-layout-workspace-stack-gap-mobile);
   }
 
   .mnx-communication-page-header,

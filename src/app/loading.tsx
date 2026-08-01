@@ -1,10 +1,5 @@
-import { LoadingScreen } from "@/components/feedback/loading-screen";
+import { AppRouteLoading } from "@/components/feedback/app-route-loading";
 
 export default function AppLoading() {
-  return (
-    <LoadingScreen
-      message="Preparing Monolith"
-      subtitle="Loading the latest workspace shell, session context, and route data."
-    />
-  );
+  return <AppRouteLoading scope="app" />;
 }

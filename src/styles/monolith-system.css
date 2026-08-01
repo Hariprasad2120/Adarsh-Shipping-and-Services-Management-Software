@@ -362,7 +362,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] {
 }
 
 .mnx-customer-portal-page {
-  gap: 24px;
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-customer-portal-page-header {
@@ -4034,7 +4034,10 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 .mnx-workspace-page {
   width: min(var(--mnx-workspace-max), 100%);
   max-width: var(--mnx-workspace-max);
+  min-width: 0;
   margin: 0 auto;
+  display: grid;
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-page-header {
@@ -8972,7 +8975,7 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
 
 .mnx-communication-page,
 .mnx-admin-page {
-  gap: var(--mn-space-7);
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-communication-page-header,
@@ -9057,7 +9060,7 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
 .mnx-admin-content {
   display: grid;
   min-width: 0;
-  gap: var(--mn-space-7);
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-communication-content > *,
@@ -9752,7 +9755,7 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
 @media (max-width: 70rem) {
   .mnx-communication-content,
   .mnx-admin-content {
-    gap: var(--mn-space-6);
+    gap: var(--mn-layout-workspace-stack-gap);
   }
 
   .mnx-communication-split,
@@ -9793,9 +9796,13 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
 }
 
 @media (max-width: 42rem) {
+  .mnx-workspace-page {
+    gap: var(--mn-layout-workspace-stack-gap-mobile);
+  }
+
   .mnx-communication-page,
   .mnx-admin-page {
-    gap: var(--mn-space-5);
+    gap: var(--mn-layout-workspace-stack-gap-mobile);
   }
 
   .mnx-communication-page-header,
@@ -9915,12 +9922,12 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
 
 /* Customs House Agent and Expense operations */
 .mnx-cha-page {
-  gap: var(--mn-space-6);
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-cha-content {
   display: grid;
-  gap: var(--mn-space-6);
+  gap: var(--mn-layout-workspace-stack-gap);
   min-width: 0;
 }
 
@@ -11372,12 +11379,12 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
 .mnx-accounting-page {
   width: min(100%, 100rem);
   margin-inline: auto;
-  gap: var(--mn-space-6);
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-accounting-content {
   display: grid;
-  gap: var(--mn-space-5);
+  gap: var(--mn-layout-workspace-stack-gap);
   min-width: 0;
 }
 
@@ -11825,7 +11832,7 @@ button.mnx-accounting-record-card {
 @media (max-width: 42rem) {
   .mnx-accounting-page,
   .mnx-accounting-content {
-    gap: var(--mn-space-4);
+    gap: var(--mn-layout-workspace-stack-gap-mobile);
   }
 
   .mnx-accounting-breadcrumbs ol {
@@ -11906,6 +11913,7 @@ button.mnx-accounting-record-card {
 .mnx-people-page {
   width: min(100%, 100rem);
   margin-inline: auto;
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-people-page-header {
@@ -11955,7 +11963,7 @@ button.mnx-accounting-record-card {
 .mnx-people-content {
   display: grid;
   min-width: 0;
-  gap: var(--mn-space-6);
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-people-content > :where(div, section, form) {
@@ -12663,6 +12671,11 @@ button.mnx-accounting-record-card {
 }
 
 @media (max-width: 42rem) {
+  .mnx-people-page,
+  .mnx-people-content {
+    gap: var(--mn-layout-workspace-stack-gap-mobile);
+  }
+
   .mnx-people-page-header {
     padding: var(--mn-space-5);
   }
@@ -12705,6 +12718,7 @@ button.mnx-accounting-record-card {
 .mnx-performance-page {
   width: min(100%, 100rem);
   margin-inline: auto;
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-performance-page-header {
@@ -12752,7 +12766,7 @@ button.mnx-accounting-record-card {
 .mnx-performance-content {
   display: grid;
   min-width: 0;
-  gap: var(--mn-space-6);
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-performance-content > :where(div, section, article, form) {
@@ -13029,6 +13043,11 @@ button.mnx-accounting-record-card {
 }
 
 @media (max-width: 42rem) {
+  .mnx-performance-page,
+  .mnx-performance-content {
+    gap: var(--mn-layout-workspace-stack-gap-mobile);
+  }
+
   .mnx-performance-page-header {
     padding: var(--mn-space-5);
   }
@@ -13097,7 +13116,7 @@ button.mnx-accounting-record-card {
 }
 
 .mnx-crm-page {
-  gap: var(--mn-space-8);
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-crm-page-header {
@@ -13107,7 +13126,7 @@ button.mnx-accounting-record-card {
 .mnx-crm-content {
   display: grid;
   min-width: 0;
-  gap: var(--mn-space-8);
+  gap: var(--mn-layout-workspace-stack-gap);
 }
 
 .mnx-crm-content > * {
@@ -13282,7 +13301,7 @@ button.mnx-accounting-record-card {
 
 @media (max-width: 70rem) {
   .mnx-crm-content {
-    gap: var(--mn-space-6);
+    gap: var(--mn-layout-workspace-stack-gap);
   }
 
   .mnx-crm-toolbar {
@@ -13292,7 +13311,11 @@ button.mnx-accounting-record-card {
 
 @media (max-width: 42rem) {
   .mnx-crm-page {
-    gap: var(--mn-space-6);
+    gap: var(--mn-layout-workspace-stack-gap-mobile);
+  }
+
+  .mnx-crm-content {
+    gap: var(--mn-layout-workspace-stack-gap-mobile);
   }
 
   .mnx-crm-page-header {

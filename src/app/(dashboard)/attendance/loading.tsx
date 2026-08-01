@@ -1,7 +1,5 @@
-import { PeopleLoadingState } from "@/modules/people/components/people-workspace";
+import { AppRouteLoading } from "@/components/feedback/app-route-loading";
 
 export default function AttendanceLoading() {
-  return (
-    <PeopleLoadingState description="Loading attendance calculations and workforce records." />
-  );
+  return <AppRouteLoading scope="attendance" />;
 }
