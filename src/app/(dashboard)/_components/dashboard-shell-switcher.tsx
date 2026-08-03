@@ -6,6 +6,7 @@ import type { Caps } from "@/lib/rbac";
 export function DashboardShellSwitcher({
   children,
   caps,
+  enabledFeatureIds,
   enabledModuleIds,
   isPlatformAdmin,
   userId,
@@ -14,6 +15,7 @@ export function DashboardShellSwitcher({
 }: {
   children: React.ReactNode;
   caps: Caps;
+  enabledFeatureIds: string[];
   enabledModuleIds: string[];
   isPlatformAdmin: boolean;
   userId: string;
@@ -23,6 +25,7 @@ export function DashboardShellSwitcher({
   return (
     <MonolithAppShell
       caps={caps}
+      enabledFeatureIds={enabledFeatureIds}
       enabledModuleIds={enabledModuleIds}
       isPlatformAdmin={isPlatformAdmin}
       userId={userId}

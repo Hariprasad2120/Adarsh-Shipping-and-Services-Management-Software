@@ -11,16 +11,6 @@ import {
   ChaStatus,
   ChaTable,
   ChaToolbar,
-} from "@/components/monolith/cha-workspace";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/monolith/dropdown-menu";
-import {
   WorkspaceAction,
   WorkspaceAlert,
   WorkspaceBadge,
@@ -28,7 +18,15 @@ import {
   WorkspaceInput,
   WorkspacePanelHeader,
   WorkspaceState,
-} from "@/components/monolith/workspace";
+} from "@/components/monolith";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { ChaCustomsFeatureFlags } from "../feature-flags";
 import type { ChaCustomsRouteMetadata } from "../routes";
 

@@ -28,6 +28,7 @@ import {
   type MasterActionResult,
 } from "../actions";
 import {
+  ChaAction,
   WorkspaceAction,
   WorkspaceAlert,
   WorkspaceBadge,
@@ -35,9 +36,8 @@ import {
   WorkspaceInput,
   WorkspaceSelect,
   WorkspaceTextarea,
-} from "@/components/monolith/workspace";
+} from "@/components/monolith";
 import { DateInput } from "@/components/monolith/date-input";
-import { ChaAction } from "@/components/monolith/cha-workspace";
 
 export type CustomsMasterGridRow = Record<string, unknown> & {
   id: string;

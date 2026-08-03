@@ -319,7 +319,7 @@ body::-webkit-scrollbar-corner {
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-display: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-geist-sans);
 
   --color-primary: var(--color-primary);
   --color-secondary: var(--color-secondary);
@@ -505,7 +505,7 @@ html.dark .shadow-2xl {
 }
 
 .ds-numeric {
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-mono);
   font-feature-settings:
     "zero" 1,
     "tnum" 1;
@@ -516,7 +516,7 @@ html.dark .shadow-2xl {
 .ds-h1,
 .ds-h2,
 .ds-h3 {
-  font-family: var(--font-display), var(--font-sans), sans-serif !important;
+  font-family: var(--font-display) !important;
   color: inherit;
   font-weight: 400 !important;
 }
@@ -956,7 +956,7 @@ label[class~="bg-cha-primary"]:active {
   min-height: 100vh;
   background: var(--background);
   color: var(--color-on-surface);
-  font-family: var(--font-sans), sans-serif;
+  font-family: var(--font-sans);
 }
 
 .ds-portal-shell {

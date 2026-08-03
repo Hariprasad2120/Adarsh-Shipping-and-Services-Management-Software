@@ -2,6 +2,100 @@
 
 Last updated: 2026-08-01
 
+## 2026-08-01 accounting workspace catalog handoff
+
+Reduced the current Accounting route sprawl by moving the live workspace list
+into one module-owned catalog and wiring both the shared sidebar and the
+`/accounting` landing hub to that same source.
+
+Delivered:
+
+- added `src/modules/accounting/workspace-catalog.ts` as the canonical source
+  for present Accounting workspace labels, permissions, grouping, route
+  matching, descriptions, and card icons;
+- updated `src/lib/navigation.ts` so the Accounting sidebar now consumes that
+  module-owned catalog instead of maintaining a separate inline route list;
+- updated `src/app/(dashboard)/accounting/page.tsx` so the landing hub uses the
+  same catalog for workflow descriptions and icons;
+- added a regression assertion in `src/lib/navigation.test.ts` so visible
+  Accounting nav items continue to mirror the catalog.
+
+Verification on Saturday, August 1, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/modules/accounting/workspace-catalog.ts' 'src/lib/navigation.ts' 'src/lib/navigation.test.ts' 'src/app/(dashboard)/accounting/page.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- targeted `git diff --check` for the touched Accounting catalog and navigation
+  files: passed, aside from the normal Windows line-ending warnings in the
+  worktree.
+
+## 2026-08-01 accounting route discoverability handoff
+
+Audited the dashboard route tree against the shared navigation and confirmed
+the current Accounting complaint was a discoverability gap rather than missing
+route files.
+
+Delivered:
+
+- compared the top-level Accounting routes in
+  `src/app/(dashboard)/accounting/**/page.tsx` against the canonical Accounting
+  nav section;
+- found that `/accounting/configuration/admin` was a real top-level workspace
+  but was not exposed from the shared Accounting navigation;
+- updated `src/lib/navigation.ts` so `Configuration Admin` is now visible in
+  the Accounting sidebar and automatically appears on the `/accounting`
+  workspace landing page that is derived from the same section data;
+- updated the Accounting landing-page route metadata in
+  `src/app/(dashboard)/accounting/page.tsx`;
+- added a regression check in `src/lib/navigation.test.ts` to keep both
+  configuration routes discoverable.
+
+Verification on Saturday, August 1, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx vitest run src/lib/navigation.test.ts`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/lib/navigation.ts' 'src/lib/navigation.test.ts' 'src/app/(dashboard)/accounting/page.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- targeted `git diff --check` for the touched navigation and Accounting files:
+  passed, aside from the normal Windows line-ending warnings in the worktree.
+
+## 2026-08-01 global single-font handoff
+
+Unified the live website typography to one family so every shared token path
+now resolves to Geist Sans instead of mixing the earlier sans, display, and
+mono variants.
+
+Delivered:
+
+- removed the extra Geist Mono loader from `src/app/layout.tsx`, leaving the
+  root app shell to load only the Geist Sans webfont;
+- repointed `--mn-font-sans`, `--mn-font-display`, and `--mn-font-mono` in
+  `src/styles/monolith-tokens.css` to the same sans family;
+- aligned the legacy compatibility theme aliases in
+  `src/styles/legacy-compatibility.css` to that same sans family so older
+  utility-driven surfaces do not reintroduce the removed font;
+- replaced the remaining direct production stylesheet references and the CHA
+  expenses SVG text fallback so they consume the shared token instead of
+  separate hardcoded family names.
+
+Verification on Saturday, August 1, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/app/layout.tsx' 'src/app/(dashboard)/cha/expenses/expenses-client.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- targeted `git diff --check` for the touched typography files: passed, aside
+  from the normal Windows line-ending warnings in the worktree.
+
+Open follow-up:
+
+- browser-based visual confirmation across all routes remains manual in this
+  session because no Codex browser backend is attached, so this handoff should
+  be treated as code-verified but still needing live UI review.
+
 ## 2026-08-01 workspace spacing handoff
 
 Normalized the shared vertical spacing rhythm across workspace pages so the

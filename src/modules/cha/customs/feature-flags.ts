@@ -4,10 +4,6 @@ import { db } from "@/lib/db";
 
 export const CHA_CUSTOMS_FEATURE_FLAG_KEYS = [
   "CHA_CUSTOMS_MASTER_DATA",
-  "CHA_IMPORT_FILING_WORKSPACE",
-  "CHA_EXPORT_FILING_WORKSPACE",
-  "CHA_ICEGATE_INTEGRATION",
-  "CHA_ICEGATE_LIVE_SUBMISSION",
 ] as const;
 
 export type ChaCustomsFeatureFlagKey = (typeof CHA_CUSTOMS_FEATURE_FLAG_KEYS)[number];
@@ -16,10 +12,6 @@ export type ChaCustomsFeatureFlags = Record<ChaCustomsFeatureFlagKey, boolean>;
 
 export const DEFAULT_CHA_CUSTOMS_FEATURE_FLAGS: ChaCustomsFeatureFlags = {
   CHA_CUSTOMS_MASTER_DATA: false,
-  CHA_IMPORT_FILING_WORKSPACE: false,
-  CHA_EXPORT_FILING_WORKSPACE: false,
-  CHA_ICEGATE_INTEGRATION: false,
-  CHA_ICEGATE_LIVE_SUBMISSION: false,
 };
 
 export const CHA_CUSTOMS_FEATURE_FLAGS_SETTINGS_SUFFIX = "cha_customs_feature_flags";
@@ -52,10 +44,6 @@ export function isChaCustomsFeatureEnabled(
   flags: ChaCustomsFeatureFlags,
   key: ChaCustomsFeatureFlagKey,
 ) {
-  if (key === "CHA_ICEGATE_LIVE_SUBMISSION" && !flags.CHA_ICEGATE_INTEGRATION) {
-    return false;
-  }
-
   return flags[key] === true;
 }
 

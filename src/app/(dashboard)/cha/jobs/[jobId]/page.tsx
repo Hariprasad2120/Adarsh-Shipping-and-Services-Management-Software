@@ -6,11 +6,6 @@ import { can, ForbiddenError } from "@/lib/rbac";
 import { BreadcrumbLabel } from "@/components/navigation/breadcrumb-label";
 import { JobWorkspaceClient } from "./job-workspace-client";
 import { AccessProhibitedCard } from "./access-prohibited-card";
-import { getChaCustomsFeatureFlags } from "@/modules/cha/customs/feature-flags";
-import {
-  getCustomsFilingWorkspaceAccess,
-  type ChaCustomsFilingWorkspaceAccess,
-} from "@/modules/cha/customs/filing/workspace";
 
 interface WorkspaceData {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,7 +26,6 @@ interface WorkspaceData {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   settings: any;
   internalApproversCount: number;
-  customsFilingAccess: ChaCustomsFilingWorkspaceAccess;
 }
 
 export default async function ChaJobWorkspacePage({
@@ -39,7 +33,7 @@ export default async function ChaJobWorkspacePage({
   searchParams,
 }: {
   params: Promise<{ jobId: string }>;
-  searchParams: Promise<{ tab?: string; focus?: string; customsSubtab?: string }>;
+  searchParams: Promise<{ tab?: string; focus?: string }>;
 }) {
   const session = await getSession();
   if (!session?.user) redirect("/login");
@@ -48,7 +42,7 @@ export default async function ChaJobWorkspacePage({
   if (!orgId) redirect("/setup");
 
   const { jobId } = await params;
-  const { tab, focus, customsSubtab } = await searchParams;
+  const { tab, focus } = await searchParams;
 
   let data: WorkspaceData | null = null;
   let error: unknown = null;
@@ -67,9 +61,6 @@ export default async function ChaJobWorkspacePage({
       canRequestExpenses,
       canManageExpenses,
       canPayExpenses,
-      customsFlags,
-      canViewCustomsFiling,
-      canEditCustomsFilingDraft,
       dbUsers,
       settings,
       eligibleManagers,
@@ -85,9 +76,6 @@ export default async function ChaJobWorkspacePage({
       can(session.user.id, "cha.expense.request"),
       can(session.user.id, "cha.expense.manage"),
       can(session.user.id, "cha.expense.pay"),
-      getChaCustomsFeatureFlags(orgId),
-      can(session.user.id, "cha.customs.filing.view"),
-      can(session.user.id, "cha.customs.filing.edit_draft"),
       db.user.findMany({ where: { orgId, active: true }, select: { id: true, name: true, email: true } }),
       db.chaSettings.findUnique({ where: { orgId } }),
       getEligibleManagers(orgId),
@@ -107,14 +95,6 @@ export default async function ChaJobWorkspacePage({
 
     // internalApproverIds depends on job — runs after getJobDetails resolves
     const internalApproverIds = await getChecklistInternalApproverIds(orgId, job);
-    const customsFilingAccess = await getCustomsFilingWorkspaceAccess({
-      orgId,
-      jobId,
-      movementDirection: job.jobType?.movementDirection,
-      flags: customsFlags,
-      canView: canViewCustomsFiling,
-      canEditDraft: canEditCustomsFilingDraft,
-    });
 
     data = {
       job,
@@ -133,7 +113,6 @@ export default async function ChaJobWorkspacePage({
       parsedExpenseCategories,
       settings,
       internalApproversCount: internalApproverIds.length,
-      customsFilingAccess,
     };
   } catch (err: unknown) {
     error = err;
@@ -182,8 +161,6 @@ export default async function ChaJobWorkspacePage({
         internalApproversCount={data.internalApproversCount}
         initialTab={tab}
         focusField={focus}
-        initialCustomsSubtab={tab === "customsFiling" ? customsSubtab : undefined}
-        customsFilingAccess={data.customsFilingAccess}
       />
     </>
   );

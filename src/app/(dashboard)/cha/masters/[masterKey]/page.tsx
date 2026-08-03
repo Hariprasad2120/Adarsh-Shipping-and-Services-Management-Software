@@ -3,7 +3,7 @@ import { ShieldAlert } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { db } from "@/lib/db";
-import { WorkspaceState } from "@/components/monolith/workspace";
+import { WorkspaceState } from "@/components/monolith";
 import { getChaCustomsFeatureFlags, isChaCustomsFeatureEnabled } from "@/modules/cha/customs/feature-flags";
 import { queryCustomsMasterGrid } from "@/modules/cha/customs/masters/service";
 import { masterGridQuerySchema, type MasterGridQueryInput } from "@/modules/cha/customs/masters/schemas";

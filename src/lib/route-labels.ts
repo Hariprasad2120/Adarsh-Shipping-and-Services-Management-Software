@@ -52,6 +52,7 @@ const PATH_LABELS: Record<string, string> = {
   "/cha/customers/new": "New Customer",
   "/cha/settings": "Settings",
   "/cha/settings/filing-workflows": "Filing Workflows",
+  "/cha/labs/import-job-creation": "Import Job Creation Lab",
   "/crm/deals": "Deals Pipeline",
   "/crm/deals/new": "New Deal",
   "/crm/products": "Products & Services",

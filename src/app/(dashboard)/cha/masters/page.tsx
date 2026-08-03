@@ -3,8 +3,7 @@ import { redirect } from "next/navigation";
 import { Database, ShieldAlert } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/rbac";
-import { WorkspacePanelHeader, WorkspaceState } from "@/components/monolith/workspace";
-import { ChaPanel } from "@/components/monolith/cha-workspace";
+import { ChaPanel, WorkspacePanelHeader, WorkspaceState } from "@/components/monolith";
 import { getChaCustomsFeatureFlags, isChaCustomsFeatureEnabled } from "@/modules/cha/customs/feature-flags";
 import { CUSTOMS_MASTER_PAGE_CONFIGS } from "@/modules/cha/customs/masters/page-config";
 

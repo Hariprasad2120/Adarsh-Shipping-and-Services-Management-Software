@@ -3,7 +3,10 @@ import "server-only";
 import { cache } from "react";
 import { getSession } from "@/lib/auth";
 import { loadCaps } from "@/lib/rbac";
-import { getEnabledModuleIds } from "@/modules/core/organisation/module-settings";
+import {
+  getEnabledFeatureIds,
+  getEnabledModuleIds,
+} from "@/modules/core/organisation/module-settings";
 
 /**
  * One request-scoped source for the authenticated dashboard shell context.
@@ -18,13 +21,20 @@ export const getDashboardContext = cache(async () => {
 
   const orgId = session.user.orgId;
   if (!orgId) {
-    return { session, orgId: null, caps: {}, enabledModuleIds: [] };
+    return {
+      session,
+      orgId: null,
+      caps: {},
+      enabledModuleIds: [],
+      enabledFeatureIds: [],
+    };
   }
 
-  const [caps, enabledModuleIds] = await Promise.all([
+  const [caps, enabledModuleIds, enabledFeatureIds] = await Promise.all([
     loadCaps(session.user.id),
     getEnabledModuleIds(orgId),
+    getEnabledFeatureIds(orgId),
   ]);
 
-  return { session, orgId, caps, enabledModuleIds };
+  return { session, orgId, caps, enabledModuleIds, enabledFeatureIds };
 });

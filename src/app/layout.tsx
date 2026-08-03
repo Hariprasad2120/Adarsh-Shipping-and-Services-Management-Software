@@ -11,13 +11,6 @@ const geistSans = localFont({
   display: "swap",
 });
 
-const geistMono = localFont({
-  src: "../../node_modules/next/dist/next-devtools/server/font/geist-mono-latin.woff2",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-  display: "swap",
-});
-
 export const metadata: Metadata = {
   title: "Monolith Engine",
   description: "Operations platform for Adarsh Shipping & Services.",
@@ -32,7 +25,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} h-full antialiased`}
     >
       <head>
         <script

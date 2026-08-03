@@ -3,7 +3,7 @@ import { isChaCustomsFeatureEnabled } from "./feature-flags";
 import { CUSTOMS_MASTER_PAGE_CONFIGS } from "./masters/page-config";
 
 export type ChaCustomsRouteMetadata = {
-  group: "Customs Masters" | "Import" | "Export";
+  group: "Customs Masters";
   href: string;
   label: string;
   requiredPermission: string;
@@ -25,20 +25,6 @@ export const CHA_CUSTOMS_ROUTE_METADATA: readonly ChaCustomsRouteMetadata[] = [
     requiredPermission: "cha.customs.master.view",
     requiredFlag: "CHA_CUSTOMS_MASTER_DATA" as const,
   })),
-  {
-    group: "Import",
-    href: "/cha/jobs/import",
-    label: "Import Jobs",
-    requiredPermission: "cha.customs.filing.view",
-    requiredFlag: "CHA_IMPORT_FILING_WORKSPACE",
-  },
-  {
-    group: "Export",
-    href: "/cha/jobs/export",
-    label: "Export Jobs",
-    requiredPermission: "cha.customs.filing.view",
-    requiredFlag: "CHA_EXPORT_FILING_WORKSPACE",
-  },
 ] as const;
 
 export function getEnabledChaCustomsRouteMetadata(flags: ChaCustomsFeatureFlags) {
@@ -60,13 +46,7 @@ export function getGroupedChaCustomsRouteMetadata(
   flags: ChaCustomsFeatureFlags,
   caps: Record<string, boolean>,
 ) {
-  return getVisibleChaCustomsRouteMetadata(flags, caps).reduce<
-    Record<ChaCustomsRouteMetadata["group"], ChaCustomsRouteMetadata[]>
-  >(
-    (groups, route) => {
-      groups[route.group].push(route);
-      return groups;
-    },
-    { "Customs Masters": [], Import: [], Export: [] },
-  );
+  return {
+    "Customs Masters": getVisibleChaCustomsRouteMetadata(flags, caps),
+  };
 }

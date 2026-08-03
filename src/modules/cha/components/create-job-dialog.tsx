@@ -7,7 +7,7 @@ import {
   ChaDropdownSelect as DropdownSelect,
   ChaNativeSelect as NativeSelect,
 } from "@/modules/cha/components/workspace/cha-workspace";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
@@ -222,11 +222,7 @@ interface CreateJobDialogProps {
   options: {
     branches: { id: string; name: string; code: string }[];
     customers: { id: string; name: string }[];
-    jobTypes: {
-      id: string;
-      name: string;
-      movementDirection?: "IMPORT" | "EXPORT" | "BOTH" | "OTHER" | null;
-    }[];
+    jobTypes: { id: string; name: string }[];
     shipmentTypes: { id: string; name: string }[];
     users: { id: string; name: string; email: string }[];
     managers?: {
@@ -261,11 +257,6 @@ export function CreateJobDialog({
 }: CreateJobDialogProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const requestedCustomsDirection =
-    searchParams.get("customsDirection") === "IMPORT" ||
-    searchParams.get("customsDirection") === "EXPORT"
-      ? (searchParams.get("customsDirection") as "IMPORT" | "EXPORT")
-      : null;
   const reducedMotion = useReducedMotion();
   const draftRestoredRef = useRef(false);
   const createdCustomerAppliedRef = useRef(false);
@@ -343,15 +334,6 @@ export function CreateJobDialog({
   useEffect(() => {
     setShipmentTypesList(options.shipmentTypes);
   }, [options.shipmentTypes]);
-
-  const getRequestedCustomsJobTypeId = useCallback(() => {
-    if (!requestedCustomsDirection) return "";
-    return (
-      options.jobTypes.find(
-        (jobType) => jobType.movementDirection === requestedCustomsDirection,
-      )?.id || ""
-    );
-  }, [options.jobTypes, requestedCustomsDirection]);
 
   useEffect(() => {
     return () => {
@@ -435,7 +417,7 @@ export function CreateJobDialog({
       setNewTitle("");
       setNewCustomerId("");
       setNewCustomerRef("");
-      setNewJobTypeId(getRequestedCustomsJobTypeId());
+      setNewJobTypeId("");
       setNewShipmentTypeId("");
       setNewBranchId("");
       setNewPriority("MEDIUM");
@@ -464,7 +446,7 @@ export function CreateJobDialog({
       setNewTitle(parsed.title || "");
       setNewCustomerId(parsed.customerId || "");
       setNewCustomerRef(parsed.customerRef || "");
-      setNewJobTypeId(getRequestedCustomsJobTypeId() || parsed.jobTypeId || "");
+      setNewJobTypeId(parsed.jobTypeId || "");
       setNewShipmentTypeId(parsed.shipmentTypeId || "");
       setNewBranchId(parsed.branchId || "");
       setNewPriority(parsed.priority || "MEDIUM");
@@ -515,7 +497,7 @@ export function CreateJobDialog({
       localStorage.removeItem("cha_draft_job");
       draftRestoredRef.current = true;
     }
-  }, [open, options.customers, options.managers, currentUserId, getRequestedCustomsJobTypeId]);
+  }, [open, options.customers, options.managers, currentUserId]);
 
   const saveDraft = () => {
     const draft = {
@@ -788,7 +770,7 @@ export function CreateJobDialog({
     setNewTitle("");
     setNewCustomerId("");
     setNewCustomerRef("");
-    setNewJobTypeId(getRequestedCustomsJobTypeId());
+    setNewJobTypeId("");
     setNewShipmentTypeId("");
     setNewBranchId("");
     setNewPriority("MEDIUM");
@@ -818,10 +800,8 @@ export function CreateJobDialog({
     resetFormFields();
     onOpenChange(false);
 
-    if ((openCreatedJob || requestedCustomsDirection) && createdJobId) {
-      router.push(
-        `/cha/jobs/${createdJobId}${requestedCustomsDirection ? "?tab=customsFiling" : ""}`,
-      );
+    if (openCreatedJob && createdJobId) {
+      router.push(`/cha/jobs/${createdJobId}`);
       return;
     }
 
@@ -901,7 +881,6 @@ export function CreateJobDialog({
         estimatedClosureDate: estimatedClosureDate
           ? new Date(estimatedClosureDate)
           : undefined,
-        customsFilingDirection: requestedCustomsDirection || undefined,
       });
 
       if (res.ok) {
