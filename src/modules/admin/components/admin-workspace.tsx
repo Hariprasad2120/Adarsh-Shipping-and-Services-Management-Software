@@ -100,9 +100,9 @@ const exactRouteMeta: Record<string, AdminRouteMeta> = {
   },
   "/admin/settings": {
     eyebrow: "Configuration",
-    title: "Appraisal settings",
+    title: "Organisation settings",
     description:
-      "Configure organisation appraisal weights while preserving review policy and validation.",
+      "Configure appraisal policy and run dedicated organisation-level administration tools such as the Accounting demo bootstrap.",
     icon: Settings2,
   },
   "/admin/simulation": {

@@ -102,6 +102,13 @@ const exactRouteMeta: Record<string, PeopleRouteMeta> = {
       "Raise and track confidential HR questions through the shared service workflow.",
     icon: HelpCircle,
   },
+  "/hrms/incentives": {
+    eyebrow: "Compensation operations",
+    title: "Incentive working",
+    description:
+      "Review CRM-submitted incentive entries and process approval, rejection, and payout decisions.",
+    icon: BadgeCheck,
+  },
   "/hrms/letters": {
     eyebrow: "Documents",
     title: "Employee letters",

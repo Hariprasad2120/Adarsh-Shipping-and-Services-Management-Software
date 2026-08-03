@@ -25,6 +25,18 @@ const ROUTE_ACCESS: Array<{
   access: AccountingRouteAccess;
 }> = [
   {
+    match: (path) => path.startsWith("/accounting/credit-notes"),
+    access: {
+      area: "purchases",
+      permissions: [
+        "accounting.document.read",
+        "accounting.invoice.read",
+        "accounting.credit-note.prepare",
+        "accounting.debit-note.prepare",
+      ],
+    },
+  },
+  {
     match: (path) => path === "/accounting/approvals",
     access: {
       area: "approvals",
@@ -37,11 +49,26 @@ const ROUTE_ACCESS: Array<{
   },
   {
     match: (path) =>
+      path.startsWith("/accounting/communications") ||
+      path.startsWith("/accounting/customization") ||
+      path.startsWith("/accounting/report-builder"),
+    access: {
+      area: "configuration",
+      permissions: [
+        "accounting.reports.view",
+        "accounting.settings.manage",
+        "accounting.audit.read",
+      ],
+    },
+  },
+  {
+    match: (path) =>
       path.startsWith("/accounting/documents") ||
       path.startsWith("/accounting/quotations") ||
       path.startsWith("/accounting/sales-invoices") ||
+      path.startsWith("/accounting/sales-receipts") ||
       path.startsWith("/accounting/customer-receipts") ||
-      path.startsWith("/accounting/credit-notes"),
+      path.startsWith("/accounting/customer-advances"),
     access: {
       area: "sales",
       permissions: [
@@ -64,6 +91,8 @@ const ROUTE_ACCESS: Array<{
     match: (path) =>
       path.startsWith("/accounting/purchase-invoices") ||
       path.startsWith("/accounting/vendor-master") ||
+      path.startsWith("/accounting/vendor-master") ||
+      path.startsWith("/accounting/expenses") ||
       path.startsWith("/accounting/vendor-payments") ||
       path.startsWith("/accounting/debit-notes"),
     access: {
@@ -143,6 +172,7 @@ const ROUTE_ACCESS: Array<{
   {
     match: (path) =>
       path.startsWith("/accounting/outbox") ||
+      path.startsWith("/accounting/integrations") ||
       path.startsWith("/accounting/manual-review"),
     access: {
       area: "outbox",
@@ -204,6 +234,17 @@ const ROUTE_ACCESS: Array<{
     access: {
       area: "configuration",
       permissions: [
+        "accounting.settings.manage",
+        "accounting.period_lock.request",
+      ],
+    },
+  },
+  {
+    match: (path) => path.startsWith("/accounting/tax-settlement"),
+    access: {
+      area: "configuration",
+      permissions: [
+        "accounting.reports.view",
         "accounting.settings.manage",
         "accounting.period_lock.request",
       ],

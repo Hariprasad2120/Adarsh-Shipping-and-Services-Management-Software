@@ -21,15 +21,20 @@ export default async function CustomerReceiptsPage() {
     <>
       <AccountingRoutePageHeader
         actions={
-          caps["accounting.payment.create"] ? (
-            <AccountingActionLink
-              href="/accounting/payment-entries/new?type=RECEIVE"
-              variant="primary"
-            >
-              <Plus aria-hidden="true" size={16} />
-              New receipt draft
+          <div className="mnx-accounting-inline-actions">
+            {caps["accounting.payment.create"] ? (
+              <AccountingActionLink
+                href="/accounting/sales-receipts/new"
+                variant="primary"
+              >
+                <Plus aria-hidden="true" size={16} />
+                New sales receipt
+              </AccountingActionLink>
+            ) : null}
+            <AccountingActionLink href="/accounting/customer-advances">
+              Customer advances
             </AccountingActionLink>
-          ) : undefined
+          </div>
         }
       />
       <AccountingSection

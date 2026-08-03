@@ -21,6 +21,7 @@ import {
   prepareLegacyVendorNote,
   reverseCanonicalPaymentByLegacyRecord,
 } from "./document-adapters";
+import { seedAccountingDemoMonth } from "./demo";
 import { mapAccountingError } from "./operational-helpers";
 
 type ActionResponse = { ok: true; data?: any } | { ok: false; error: string };
@@ -43,7 +44,14 @@ export async function createAccountAction(data: any): Promise<ActionResponse> {
 
     const account = await accService.createAccount(orgId, session.user.id, data);
     revalidatePath("/accounting/accounts");
-    return { ok: true, data: account };
+    return {
+      ok: true,
+      data: {
+        id: account.id,
+        accountCode: account.accountCode,
+        accountName: account.accountName,
+      },
+    };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to create account" };
   }
@@ -61,7 +69,14 @@ export async function updateAccountAction(id: string, data: any): Promise<Action
 
     const account = await accService.updateAccount(orgId, id, session.user.id, data);
     revalidatePath("/accounting/accounts");
-    return { ok: true, data: account };
+    return {
+      ok: true,
+      data: {
+        id: account.id,
+        accountCode: account.accountCode,
+        accountName: account.accountName,
+      },
+    };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to update account" };
   }
@@ -98,10 +113,9 @@ export async function submitJournalEntryAction(
     const orgId = session.user.orgId;
     if (!orgId) return { ok: false, error: "Missing organisation config" };
 
-    await requirePermission(session.user.id, "accounting.journal.approve");
-    await requirePermission(session.user.id, "accounting.post");
+    await requirePermission(session.user.id, "accounting.journal.prepare");
 
-    const journal = await accService.submitJournalEntry(
+    const journal = await accService.submitJournalDraftForApproval(
       orgId,
       id,
       session.user.id,
@@ -109,6 +123,35 @@ export async function submitJournalEntryAction(
     );
     revalidatePath("/accounting/journal-entries");
     revalidatePath(`/accounting/journal-entries/${id}`);
+    return { ok: true, data: journal };
+  } catch (error: unknown) {
+    return { ok: false, error: safeAccountingActionError(error) };
+  }
+}
+
+export async function updateJournalEntryAction(
+  id: string,
+  data: any,
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "accounting.journal.prepare");
+
+    const journal = await accService.updateJournalEntryDraft(
+      orgId,
+      id,
+      session.user.id,
+      data,
+    );
+    revalidatePath("/accounting/journal-entries");
+    revalidatePath(`/accounting/journal-entries/${id}`);
+    revalidatePath(`/accounting/journal-entries/${journal.id}`);
+    revalidatePath("/accounting/approvals");
     return { ok: true, data: journal };
   } catch (error: unknown) {
     return { ok: false, error: safeAccountingActionError(error) };
@@ -840,6 +883,34 @@ export async function convertQuotationToInvoiceAction(
   }
 }
 
+export async function convertQuotationToSalesOrderAction(
+  id: string,
+  data: {
+    expectedVersion?: number;
+    quantitiesByLineId?: Record<string, string>;
+  } = {},
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+    await requirePermission(session.user.id, "crm.invoice.manage");
+    const salesOrder = await accService.convertQuotationToSalesOrder(
+      orgId,
+      id,
+      session.user.id,
+      data,
+    );
+    revalidatePath("/accounting/quotations");
+    revalidatePath(`/accounting/quotations/${id}`);
+    revalidatePath("/accounting/sales-orders");
+    return { ok: true, data: salesOrder };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to convert quotation to sales order" };
+  }
+}
+
 export async function runQuotationExpiryAction(): Promise<ActionResponse> {
   try {
     const session = await auth();
@@ -1350,6 +1421,45 @@ export async function submitVendorNoteAction(id: string): Promise<ActionResponse
     return { ok: true, data: note };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to submit vendor note" };
+  }
+}
+
+export async function seedAccountingDemoMonthAction(): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "admin.org.manage");
+    await requirePermission(session.user.id, "accounting.settings.manage");
+
+    const result = await seedAccountingDemoMonth({
+      orgId,
+      requestedById: session.user.id,
+    });
+
+    revalidatePath("/admin/settings");
+    revalidatePath("/accounting");
+    revalidatePath("/accounting/approvals");
+    revalidatePath("/accounting/accounts");
+    revalidatePath("/accounting/balance-sheet");
+    revalidatePath("/accounting/banking");
+    revalidatePath("/accounting/customer-receipts");
+    revalidatePath("/accounting/general-ledger");
+    revalidatePath("/accounting/journal-entries");
+    revalidatePath("/accounting/payment-entries");
+    revalidatePath("/accounting/payments");
+    revalidatePath("/accounting/profit-loss");
+    revalidatePath("/accounting/purchase-invoices");
+    revalidatePath("/accounting/reports");
+    revalidatePath("/accounting/sales-invoices");
+    revalidatePath("/accounting/trial-balance");
+
+    return { ok: true, data: result };
+  } catch (error: unknown) {
+    return { ok: false, error: safeAccountingActionError(error) };
   }
 }
 

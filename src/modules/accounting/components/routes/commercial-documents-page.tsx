@@ -127,7 +127,12 @@ export async function CommercialDocumentsPage({
                 <td><strong>{record.invoiceNumber}</strong></td>
                 <td>{record.type.replaceAll("_", " ")}</td>
                 <td>
-                  {record.account ? (
+                  {record.type === "PURCHASE_ORDER" && record.vendor ? (
+                    <div>
+                      <strong>{record.vendor.name}</strong>
+                      <span>Supplier</span>
+                    </div>
+                  ) : record.account ? (
                     <Link className="mnx-accounting-record-link" href={`/crm/customers/${record.account.id}`}>
                       <strong>{record.account.name}</strong>
                       <span>Customer account</span>
@@ -139,11 +144,21 @@ export async function CommercialDocumentsPage({
                 <td><AccountingStatus status={record.status} /></td>
                 <td>{record.owner.name}</td>
                 <td>
-                  <AccountingDeleteAction
-                    id={record.id}
-                    action={deleteInvoiceAction}
-                    confirmMessage="Delete this commercial document? This action cannot be undone."
-                  />
+                  <div className="mnx-accounting-inline-actions">
+                    {record.type === "PURCHASE_ORDER" ? (
+                      <AccountingActionLink
+                        className="mnx-button-compact"
+                        href={`/accounting/purchase-orders/${record.id}`}
+                      >
+                        Review
+                      </AccountingActionLink>
+                    ) : null}
+                    <AccountingDeleteAction
+                      id={record.id}
+                      action={deleteInvoiceAction}
+                      confirmMessage="Delete this commercial document? This action cannot be undone."
+                    />
+                  </div>
                 </td>
               </tr>
             )) : (

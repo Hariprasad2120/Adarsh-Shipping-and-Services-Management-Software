@@ -724,6 +724,26 @@ export function AccountingActionLink({
   );
 }
 
+export function AccountingDraftEditLink({
+  href,
+  className,
+  children = "Edit draft",
+}: {
+  href: string;
+  className?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <AccountingActionLink
+      className={className}
+      href={href}
+      variant="secondary"
+    >
+      {children}
+    </AccountingActionLink>
+  );
+}
+
 export function AccountingDialog({
   children,
   description,

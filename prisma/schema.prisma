@@ -68,7 +68,12 @@ model Organisation {
   customerNotes                   CustomerNote[]
   vendorNotes                     VendorNote[]
   recurringExpenses               RecurringExpense[]
+  recurringExpenseRuns            RecurringExpenseRun[]
   recurringJournals               RecurringJournal[]
+  recurringSalesInvoiceProfiles   RecurringSalesInvoiceProfile[]
+  recurringSalesInvoiceRuns       RecurringSalesInvoiceRun[]
+  accountingCustomerAdvanceRequests AccountingCustomerAdvanceRequest[]
+  accountingCustomerAdvanceReceipts AccountingCustomerAdvanceReceipt[]
   transactionLock                 TransactionLock?
   partnerAccounts                 PartnerAccount[]
   accountingProfile               AccountingOrganisationProfile?
@@ -124,6 +129,9 @@ model Organisation {
   accountingPeriodCloseRuns       AccountingPeriodCloseRun[]
   accountingReportExportProfiles  AccountingReportExportProfile[]
   accountingPortalPublicationProfiles AccountingPortalPublicationProfile[]
+  accountingCustomFieldDefinitions AccountingCustomFieldDefinition[]
+  accountingAutomationRules       AccountingAutomationRule[]
+  accountingWorkspaceModules      AccountingWorkspaceModule[]
   accountingCapabilityPolicies    AccountingCapabilityPolicy[]        @relation("AccountingCapabilityPolicyOrg")
   accountingDocuments             AccountingDocument[]
   accountingDocumentLines         AccountingDocumentLine[]
@@ -206,6 +214,8 @@ model Branch {
   vendorNotes       VendorNote[]
   recurringExpenses RecurringExpense[]
   recurringJournals RecurringJournal[]
+  recurringSalesInvoiceProfiles RecurringSalesInvoiceProfile[]
+  accountingCustomerAdvanceRequests AccountingCustomerAdvanceRequest[]
 
   chaJobs                ChaJob[]
   chaBranchNumberingRule ChaBranchNumberingRule?
@@ -387,6 +397,9 @@ model User {
   crmInvoicesOwned                     CrmInvoice[]                  @relation("CrmInvoiceOwner")
   crmVendorsOwned                      CrmVendor[]                   @relation("CrmVendorOwner")
   crmProjectsOwned                     CrmProject[]                  @relation("CrmProjectOwner")
+  incentiveEntriesForEmployee          IncentiveEntry[]              @relation("IncentiveEntryEmployee")
+  incentiveEntriesCreated              IncentiveEntry[]              @relation("IncentiveEntryCreator")
+  incentiveEntriesProcessed            IncentiveEntry[]              @relation("IncentiveEntryProcessor")
   crmNotesCreated                      CrmNote[]                     @relation("CrmNoteCreator")
   crmAttachmentsCreated                CrmAttachment[]               @relation("CrmAttachmentCreator")
   accountingPeriodLocksRequested       AccountingPeriodLockRequest[] @relation("AccountingPeriodLockRequester")
@@ -1758,6 +1771,8 @@ model CrmAccount {
   quotations      Quotation[]
   customerNotes   CustomerNote[]
   jobCostings     JobCosting[]
+  recurringSalesInvoiceProfiles RecurringSalesInvoiceProfile[]
+  accountingCustomerAdvanceRequests AccountingCustomerAdvanceRequest[]
   accountingCustomerProfile AccountingCustomerProfile?
 
   chaJobs                               ChaJob[]
@@ -1854,6 +1869,39 @@ model CrmActivity {
   @@index([orgId, status])
   @@index([ownerId])
   @@index([relatedToType, relatedToId])
+}
+
+model IncentiveEntry {
+  id            String   @id @default(cuid())
+  orgId         String
+  employeeId    String
+  createdById   String
+  processedById String?
+
+  sourceModule   String   @default("CRM")
+  incentiveType  String
+  referenceLabel String
+  customerName   String?
+  amount         Float    @default(0.0)
+  currency       String   @default("INR")
+  eligibleDate   DateTime
+  status         String   @default("SUBMITTED") // SUBMITTED | REVIEWED | APPROVED | REJECTED | PAID
+  notes          String?
+  hrNotes        String?
+  processedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  employee    User  @relation("IncentiveEntryEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+  createdBy   User  @relation("IncentiveEntryCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  processedBy User? @relation("IncentiveEntryProcessor", fields: [processedById], references: [id], onDelete: SetNull)
+
+  @@index([orgId])
+  @@index([orgId, status])
+  @@index([employeeId])
+  @@index([createdById])
+  @@index([processedById])
+  @@index([orgId, eligibleDate])
 }
 
 model CrmProduct {
@@ -1963,6 +2011,10 @@ model CrmInvoice {
   commodity                String?
   weight                   String?
   discountType             String? @default("percentage")
+  sourceQuotationId        String?
+  sourceQuotationVersion   Int?
+  sourceQuotationNumber    String?
+  sourceQuotationSnapshot  Json?
 
   createdById String
   updatedById String
@@ -1978,6 +2030,7 @@ model CrmInvoice {
   @@index([approvalStatus])
   @@index([approvedById])
   @@index([crmLeadId])
+  @@index([sourceQuotationId])
 }
 
 model CrmApprovalLog {
@@ -2014,8 +2067,11 @@ model CrmInvoiceItem {
   amount       Float
   currency     String  @default("INR")
   exchangeRate Float   @default(1.0)
+  sourceQuotationItemId String?
+  sourceQuotationQuantity Decimal? @db.Decimal(20, 6)
 
   @@index([invoiceId])
+  @@index([sourceQuotationItemId])
 }
 
 model CrmProject {
@@ -4298,6 +4354,67 @@ model AccountingPortalPublicationProfile {
   @@index([exportProfileId])
 }
 
+model AccountingCustomFieldDefinition {
+  id          String   @id @default(cuid())
+  orgId       String
+  scope       String
+  key         String
+  label       String
+  dataType    String
+  helpText    String?
+  options     Json?
+  required    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  position    Int      @default(0)
+  rowVersion  Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, scope, key], map: "AccountingCustomFieldDefinition_scope_key")
+  @@index([orgId, scope, isActive], map: "AccountingCustomFieldDefinition_active_idx")
+}
+
+model AccountingAutomationRule {
+  id            String   @id @default(cuid())
+  orgId         String
+  name          String
+  triggerType   String
+  targetScope   String
+  actionType    String
+  conditions    Json?
+  configuration Json?
+  isActive      Boolean  @default(true)
+  rowVersion    Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, name], map: "AccountingAutomationRule_name_key")
+  @@index([orgId, targetScope, isActive], map: "AccountingAutomationRule_active_idx")
+}
+
+model AccountingWorkspaceModule {
+  id            String   @id @default(cuid())
+  orgId         String
+  code          String
+  name          String
+  routePath     String
+  description   String?
+  configuration Json?
+  isActive      Boolean  @default(true)
+  rowVersion    Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, code], map: "AccountingWorkspaceModule_code_key")
+  @@index([orgId, isActive], map: "AccountingWorkspaceModule_active_idx")
+}
+
 model AccountingSourceSnapshot {
   id            String    @id @default(cuid())
   orgId         String
@@ -4662,6 +4779,50 @@ model AccountingPaymentAllocation {
   @@index([orgId, targetDocumentId, status], map: "AccountingPaymentAllocation_target_idx")
   @@index([orgId, targetSourceSnapshotId, status], map: "AccountingPaymentAllocation_snapshot_idx")
   @@index([reversalOfId], map: "AccountingPaymentAllocation_reversal_idx")
+}
+
+model AccountingCustomerAdvanceRequest {
+  id              String    @id @default(cuid())
+  orgId           String
+  branchId        String?
+  customerId      String
+  requestNumber   String
+  requestType     String    @default("CUSTOMER_ADVANCE") // CUSTOMER_ADVANCE | RETAINER_INVOICE
+  postingDate     DateTime  @db.Date
+  dueDate         DateTime? @db.Date
+  requestedAmount Decimal   @db.Decimal(18, 4)
+  currencyCode    String    @default("INR") @db.VarChar(3)
+  status          String    @default("OPEN") // OPEN | CANCELLED
+  referenceNo     String?
+  remarks         String?
+  createdById     String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  org      Organisation                     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  branch   Branch?                          @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  customer CrmAccount                       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  receipts AccountingCustomerAdvanceReceipt[]
+
+  @@unique([orgId, requestNumber])
+  @@index([orgId, status, postingDate])
+  @@index([branchId])
+  @@index([customerId])
+}
+
+model AccountingCustomerAdvanceReceipt {
+  id             String   @id @default(cuid())
+  orgId          String
+  advanceId      String
+  paymentEntryId String   @unique
+  amount         Decimal  @db.Decimal(18, 4)
+  createdAt      DateTime @default(now())
+
+  org         Organisation                   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  advance     AccountingCustomerAdvanceRequest @relation(fields: [advanceId], references: [id], onDelete: Cascade)
+  paymentEntry PaymentEntry                  @relation(fields: [paymentEntryId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, advanceId])
 }
 
 model AccountingScheduledOccurrence {
@@ -5178,6 +5339,9 @@ model PurchaseInvoice {
   taxAmount         Decimal  @default(0.0) @db.Decimal(18, 4)
   remarks           String?
   paymentMethod     String?
+  sourcePurchaseOrderId String?
+  sourcePurchaseOrderNumber String?
+  sourcePurchaseOrderSnapshot Json?
   createdById       String
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -5205,6 +5369,7 @@ model PurchaseInvoice {
   @@index([supplierId])
   @@index([jobId])
   @@index([salespersonId])
+  @@index([sourcePurchaseOrderId])
 }
 
 model PurchaseInvoiceItem {
@@ -5217,10 +5382,12 @@ model PurchaseInvoiceItem {
   unit      String?
   taxRate   Float?
   tdsRate   Float?
+  sourcePurchaseOrderItemId String?
 
   purchaseInvoice PurchaseInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId])
+  @@index([sourcePurchaseOrderItemId])
 }
 
 model PaymentEntry {
@@ -5246,6 +5413,7 @@ model PaymentEntry {
   paidFrom    Account             @relation("PaymentsFrom", fields: [paidFromAccountId], references: [id], onDelete: Cascade)
   paidTo      Account             @relation("PaymentsTo", fields: [paidToAccountId], references: [id], onDelete: Cascade)
   allocations PaymentAllocation[]
+  customerAdvanceReceipt AccountingCustomerAdvanceReceipt?
 
   @@index([orgId])
   @@index([branchId])
@@ -5698,6 +5866,8 @@ model RecurringExpense {
   endDate          DateTime? @db.Date
   nextDueDate      DateTime  @db.Date
   narration        String?
+  paymentMethod    String?
+  paymentTermName  String?
   autoPost         Boolean   @default(false)
   isActive         Boolean   @default(true)
   createdAt        DateTime  @default(now())
@@ -5707,11 +5877,30 @@ model RecurringExpense {
   branch         Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
   vendor         CrmVendor    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   expenseAccount Account      @relation(fields: [expenseAccountId], references: [id], onDelete: Cascade)
+  runs           RecurringExpenseRun[]
 
   @@index([orgId])
   @@index([branchId])
   @@index([vendorId])
   @@index([expenseAccountId])
+}
+
+model RecurringExpenseRun {
+  id                         String    @id @default(cuid())
+  orgId                      String
+  templateId                 String
+  dueDate                    DateTime  @db.Date
+  runStatus                  String    // GENERATED | SKIPPED | FAILED
+  generatedPurchaseInvoiceId String?
+  failureReason              String?
+  idempotencyKey             String
+  createdAt                  DateTime  @default(now())
+
+  org      Organisation    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  template  RecurringExpense @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, idempotencyKey])
+  @@index([orgId, templateId, dueDate])
 }
 
 model RecurringJournal {
@@ -5741,6 +5930,85 @@ model RecurringJournal {
   @@index([branchId])
   @@index([debitAccountId])
   @@index([creditAccountId])
+}
+
+model RecurringSalesInvoiceProfile {
+  id                 String    @id @default(cuid())
+  orgId              String
+  branchId           String?
+  customerId         String
+  profileName        String
+  status             String    @default("DRAFT") // DRAFT | ACTIVE | PAUSED | CANCELLED | COMPLETED | EXPIRED
+  frequency          String    // DAILY | WEEKLY | MONTHLY | QUARTERLY | YEARLY
+  timezone           String    @default("Asia/Kolkata")
+  startDate          DateTime  @db.Date
+  endDate            DateTime? @db.Date
+  nextInvoiceDate    DateTime  @db.Date
+  lastInvoiceDate    DateTime? @db.Date
+  currencyCode       String    @default("INR")
+  autoSend           Boolean   @default(false)
+  approvalRequired   Boolean   @default(true)
+  autoChargeTokenRef String?
+  paymentTermName    String?
+  subject            String?
+  remarks            String?
+  failureCount       Int       @default(0)
+  lastFailureAt      DateTime?
+  lastFailureReason  String?
+  createdById        String
+  updatedById        String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  org      Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  branch   Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  customer CrmAccount   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lines    RecurringSalesInvoiceLine[]
+  runs     RecurringSalesInvoiceRun[]
+
+  @@index([orgId])
+  @@index([branchId])
+  @@index([customerId])
+  @@index([orgId, status, nextInvoiceDate])
+}
+
+model RecurringSalesInvoiceLine {
+  id           String   @id @default(cuid())
+  profileId    String
+  sortOrder    Int      @default(0)
+  itemName     String
+  description  String?
+  qty          Decimal  @db.Decimal(20, 6)
+  rate         Decimal  @db.Decimal(20, 6)
+  taxRate      Decimal  @default(18.0) @db.Decimal(10, 4)
+  unit         String?
+  currencyCode String   @default("INR")
+  exchangeRate Decimal  @default(1.0) @db.Decimal(20, 6)
+
+  profile RecurringSalesInvoiceProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model RecurringSalesInvoiceRun {
+  id                     String   @id @default(cuid())
+  orgId                  String
+  profileId              String
+  dueDate                DateTime @db.Date
+  runStatus              String   @default("GENERATED") // GENERATED | SKIPPED | FAILED
+  generatedSalesInvoiceId String?
+  idempotencyKey         String
+  resultJson             Json?
+  failureReason          String?
+  createdAt              DateTime @default(now())
+
+  org     Organisation               @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  profile RecurringSalesInvoiceProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, profileId, dueDate])
+  @@unique([orgId, idempotencyKey])
+  @@index([orgId])
+  @@index([profileId, createdAt])
 }
 
 model TransactionLock {

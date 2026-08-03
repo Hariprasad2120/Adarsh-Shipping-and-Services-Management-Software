@@ -22,6 +22,9 @@ describe("People operations production components", () => {
     expect(getPeopleRouteMeta("/hrms/employees/employee-1").title).toBe(
       "Employee profile",
     );
+    expect(getPeopleRouteMeta("/hrms/incentives").title).toBe(
+      "Incentive working",
+    );
     expect(getPeopleRouteMeta("/hrms/letters/view/letter-1").title).toBe(
       "Employee letter",
     );

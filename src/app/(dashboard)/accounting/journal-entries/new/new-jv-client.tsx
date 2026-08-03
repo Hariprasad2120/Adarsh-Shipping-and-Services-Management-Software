@@ -15,7 +15,10 @@ import {
   AccountingSelect,
   AccountingTextarea,
 } from "@/modules/accounting/components/accounting-workspace";
-import { createJournalEntryAction } from "@/modules/accounting/actions";
+import {
+  createJournalEntryAction,
+  updateJournalEntryAction,
+} from "@/modules/accounting/actions";
 import {
   addDecimalStrings,
   compareDecimalStrings,
@@ -36,6 +39,13 @@ interface NewJVClientProps {
     label: string;
     type: "CUSTOMER" | "SUPPLIER" | "EMPLOYEE";
   }>;
+  initialDraft?: {
+    id: string;
+    branchId: string;
+    postingDate: string;
+    remarks: string;
+    lines: JournalLine[];
+  } | null;
 }
 
 type JournalLine = {
@@ -58,21 +68,24 @@ export function NewJVClient({
   accounts,
   branches,
   contacts,
+  initialDraft = null,
 }: NewJVClientProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
-  const [branchId, setBranchId] = useState("");
+  const [branchId, setBranchId] = useState(initialDraft?.branchId ?? "");
   const [postingDate, setPostingDate] = useState(
-    new Date().toISOString().split("T")[0],
+    initialDraft?.postingDate ?? new Date().toISOString().split("T")[0],
   );
   const [reverseJournalDate, setReverseJournalDate] = useState("");
   const [publishReverseOnlyOnDate, setPublishReverseOnlyOnDate] =
     useState(false);
   const [referenceNumber, setReferenceNumber] = useState("");
-  const [remarks, setRemarks] = useState("");
+  const [remarks, setRemarks] = useState(initialDraft?.remarks ?? "");
   const [reportingMethod, setReportingMethod] = useState("ACCRUAL_AND_CASH");
   const [currencyCode, setCurrencyCode] = useState("INR");
-  const [lines, setLines] = useState<JournalLine[]>([emptyLine(), emptyLine()]);
+  const [lines, setLines] = useState<JournalLine[]>(
+    initialDraft?.lines?.length ? initialDraft.lines : [emptyLine(), emptyLine()],
+  );
 
   function decimalOrZero(value: string) {
     try {
@@ -101,6 +114,10 @@ export function NewJVClient({
 
   function lineAllowsContact(line: JournalLine) {
     return Boolean(accountById(line.accountId)?.allowJournalContact);
+  }
+
+  function lineRequiresContact(line: JournalLine) {
+    return lineAllowsContact(line);
   }
 
   function updateLine(index: number, field: keyof JournalLine, value: string) {
@@ -135,6 +152,16 @@ export function NewJVClient({
       toast.error("Please select an account for every line");
       return;
     }
+    if (
+      lines.some(
+        (line) => lineRequiresContact(line) && !line.partyKey,
+      )
+    ) {
+      toast.error(
+        "Contact is mandatory for every ledger line that has manual-journal contact enabled.",
+      );
+      return;
+    }
 
     let normalizedLines: JournalLine[];
     try {
@@ -155,36 +182,52 @@ export function NewJVClient({
       return;
     }
 
+    const payload = {
+      postingDate: new Date(postingDate),
+      remarks: remarks || null,
+      branchId: branchId || null,
+      lines: normalizedLines.map((line) => {
+        const [partyType, partyId] = line.partyKey
+          ? line.partyKey.split("::")
+          : [null, null];
+        return {
+          accountId: line.accountId,
+          debit: line.debit || "0",
+          credit: line.credit || "0",
+          partyType,
+          partyId,
+          remarks: line.remarks || null,
+        };
+      }),
+    };
+
     setIsSaving(true);
     try {
-      const result = await createJournalEntryAction({
-        postingDate: new Date(postingDate),
-        remarks: remarks || null,
-        branchId: branchId || null,
-        lines: normalizedLines.map((line) => {
-          const [partyType, partyId] = line.partyKey
-            ? line.partyKey.split("::")
-            : [null, null];
-          return {
-            accountId: line.accountId,
-            debit: line.debit || "0",
-            credit: line.credit || "0",
-            partyType,
-            partyId,
-            remarks: line.remarks || null,
-          };
-        }),
-      });
+      const result = initialDraft
+        ? await updateJournalEntryAction(initialDraft.id, payload)
+        : await createJournalEntryAction(payload);
       if (result.ok) {
-        toast.success("Journal draft saved for separate approval");
-        router.push("/accounting/journal-entries");
+        toast.success(
+          initialDraft
+            ? "Journal draft updated"
+            : "Journal draft saved for separate approval",
+        );
+        router.push(
+          initialDraft
+            ? `/accounting/journal-entries/${result.data.id}`
+            : "/accounting/journal-entries",
+        );
         router.refresh();
       } else {
         toast.error(result.error);
       }
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to create journal entry",
+        error instanceof Error
+          ? error.message
+          : initialDraft
+            ? "Failed to update journal draft"
+            : "Failed to create journal entry",
       );
     } finally {
       setIsSaving(false);
@@ -195,7 +238,7 @@ export function NewJVClient({
     <form className="mnx-accounting-form" onSubmit={handleSubmit}>
       <AccountingSection
         eyebrow="Voucher setup"
-        title="New journal"
+        title={initialDraft ? "Edit journal draft" : "New journal"}
         description="Prepare the manual journal in the requested operational layout. Draft creation still persists the currently supported header and line fields only."
         actions={
           <button
@@ -383,6 +426,7 @@ export function NewJVClient({
                 <AccountingField label="Contact (INR)">
                   <AccountingSelect
                     disabled={!contactEnabled}
+                    required={lineRequiresContact(line)}
                     value={line.partyKey}
                     onChange={(event) =>
                       updateLine(index, "partyKey", event.target.value)
@@ -494,6 +538,9 @@ export function NewJVClient({
         {isBalanced
           ? "The manual journal is balanced and can be saved as a draft for independent approval."
           : "The manual journal cannot be saved until debit and credit totals match exactly."}
+        {lines.some((line) => lineRequiresContact(line) && !line.partyKey)
+          ? " Contact-enabled ledgers also require a selected contact before save or posting."
+          : ""}
       </AccountingAlert>
 
       <div className="mnx-accounting-journal-bottom-actions">
@@ -513,7 +560,7 @@ export function NewJVClient({
           {isSaving ? (
             <Loader2 aria-hidden="true" className="animate-spin" size={16} />
           ) : null}
-          Save as Draft
+          {initialDraft ? "Save draft changes" : "Save as Draft"}
         </AccountingAction>
         <AccountingAction
           type="button"

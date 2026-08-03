@@ -116,26 +116,6 @@ async function waitForPortToClose() {
   process.exit(1);
 }
 
-function runPreflight() {
-  const npmCli = process.env.npm_execpath;
-  if (!npmCli) {
-    console.error("This launcher must be run through npm (for example, npm run dev).");
-    process.exit(1);
-  }
-
-  const result = spawnSync(
-    process.execPath,
-    [npmCli, "run", "accounting:schema:preflight"],
-    {
-      cwd: ROOT,
-      env: { ...process.env, NODE_OPTIONS },
-      stdio: "inherit",
-    },
-  );
-
-  if (result.status !== 0) process.exit(result.status ?? 1);
-}
-
 function startNext() {
   const nextCli = join(ROOT, "node_modules", "next", "dist", "bin", "next");
   const child = spawn(

@@ -22,6 +22,8 @@ describe("Phase 5 operational UI architecture", () => {
     const routes = [
       "",
       "approvals",
+      "communications",
+      "customization",
       "sales-invoices",
       "purchase-invoices",
       "customer-receipts",
@@ -35,7 +37,10 @@ describe("Phase 5 operational UI architecture", () => {
       "recurring",
       "depreciation",
       "partners",
+      "report-builder",
+      "tax-settlement",
       "outbox",
+      "integrations",
       "manual-review",
       "configuration",
     ];

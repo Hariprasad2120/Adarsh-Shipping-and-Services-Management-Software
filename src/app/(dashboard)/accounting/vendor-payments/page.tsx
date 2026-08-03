@@ -22,20 +22,25 @@ export default async function VendorPaymentsPage() {
       <AccountingRoutePageHeader
         actions={
           caps["accounting.payment.create"] ? (
-            <AccountingActionLink
-              href="/accounting/payment-entries/new?type=PAY"
-              variant="primary"
-            >
-              <Plus aria-hidden="true" size={16} />
-              New payment draft
-            </AccountingActionLink>
+            <div className="flex gap-2">
+              <AccountingActionLink
+                href="/accounting/payment-entries/new?type=PAY"
+                variant="primary"
+              >
+                <Plus aria-hidden="true" size={16} />
+                New payment draft
+              </AccountingActionLink>
+              <AccountingActionLink href="/accounting/purchase-invoices">
+                Select open bill
+              </AccountingActionLink>
+            </div>
           ) : undefined
         }
       />
       <AccountingSection
         eyebrow="Accounts payable"
         title="Canonical vendor-payment register"
-        description="Prepared Accounting disbursements are not marked externally transferred unless a supported external state exists."
+        description="Prepared Accounting disbursements preserve supplier, bill allocation, on-account balance, and posting lineage without inferring external bank execution."
       >
         <CanonicalPaymentRegister
           basePath="/accounting/vendor-payments"

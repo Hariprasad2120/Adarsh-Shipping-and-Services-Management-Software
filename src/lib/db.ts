@@ -1,5 +1,5 @@
 // Bump this when Prisma schema changes need a fresh dev-time singleton.
-const PRISMA_CLIENT_SCHEMA_VERSION = "2026-07-31-accounting-phase9-item-master";
+const PRISMA_CLIENT_SCHEMA_VERSION = "2026-08-01-accounting-phase9-customization-and-automation";
 
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -155,6 +155,14 @@ type PrismaClientWithDelegates = PrismaClient & {
   employeeProfileField?: unknown;
   accountingCapabilityPolicy?: unknown;
   accountingItemMaster?: unknown;
+  recurringSalesInvoiceProfile?: unknown;
+  recurringSalesInvoiceRun?: unknown;
+  accountingCustomerAdvanceRequest?: unknown;
+  accountingCustomerAdvanceReceipt?: unknown;
+  recurringExpenseRun?: unknown;
+  accountingCustomFieldDefinition?: unknown;
+  accountingAutomationRule?: unknown;
+  accountingWorkspaceModule?: unknown;
 };
 
 function hasRequiredDelegates(client: PrismaClient) {
@@ -174,7 +182,15 @@ function hasRequiredDelegates(client: PrismaClient) {
     typeof delegateClient.employeeHrmsProfile !== "undefined" &&
     typeof delegateClient.employeeProfileField !== "undefined" &&
     typeof delegateClient.accountingCapabilityPolicy !== "undefined" &&
-    typeof delegateClient.accountingItemMaster !== "undefined"
+    typeof delegateClient.accountingItemMaster !== "undefined" &&
+    typeof delegateClient.recurringSalesInvoiceProfile !== "undefined" &&
+    typeof delegateClient.recurringSalesInvoiceRun !== "undefined" &&
+    typeof delegateClient.accountingCustomerAdvanceRequest !== "undefined" &&
+    typeof delegateClient.accountingCustomerAdvanceReceipt !== "undefined" &&
+    typeof delegateClient.recurringExpenseRun !== "undefined" &&
+    typeof delegateClient.accountingCustomFieldDefinition !== "undefined" &&
+    typeof delegateClient.accountingAutomationRule !== "undefined" &&
+    typeof delegateClient.accountingWorkspaceModule !== "undefined"
   );
 }
 

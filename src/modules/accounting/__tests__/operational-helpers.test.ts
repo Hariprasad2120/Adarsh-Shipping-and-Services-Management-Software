@@ -81,6 +81,15 @@ describe("Phase 5 action-state and error policy", () => {
       message:
         "This record changed or was already processed. Refresh and review its current state.",
     });
+    expect(
+      mapAccountingError(
+        new Error("This bank ledger is already mapped to another Banking account."),
+      ),
+    ).toEqual({
+      code: "INVALID_SELECTION",
+      message:
+        "This bank ledger is already linked to another bank account. Create a new BANK ledger or edit the existing account instead.",
+    });
     expect(mapAccountingError(new Error("password=secret database exploded"))).toEqual({
       code: "ACCOUNTING_OPERATION_FAILED",
       message: "The Accounting operation could not be completed safely.",

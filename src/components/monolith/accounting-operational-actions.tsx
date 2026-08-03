@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { submitJournalEntryAction } from "@/modules/accounting/actions";
 import {
   AccountingAction,
+  AccountingActionLink,
   AccountingAlert,
   AccountingDialog,
   AccountingField,
@@ -19,6 +21,7 @@ import {
   approveOperationalPaymentAction,
   moveOperationalOutboxToReviewAction,
   rejectOperationalDocumentAction,
+  rejectOperationalJournalAction,
   rejectOperationalPaymentAction,
   retryOperationalOutboxAction,
   reverseOperationalDocumentAction,
@@ -33,6 +36,8 @@ export function AccountingJournalApprovalAction({
   id: string;
 }) {
   const router = useRouter();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [reason, setReason] = useState("");
   const [pending, setPending] = useState(false);
 
   async function approve() {
@@ -49,15 +54,142 @@ export function AccountingJournalApprovalAction({
     router.refresh();
   }
 
+  async function reject(event: React.FormEvent) {
+    event.preventDefault();
+    if (reason.trim().length < 8) {
+      toast.error("Enter a reason of at least 8 characters.");
+      return;
+    }
+    setPending(true);
+    const result = await rejectOperationalJournalAction(id, expectedVersion, reason);
+    setPending(false);
+    if (!result.ok) {
+      toast.error(result.error);
+      if (result.code === "STALE_STATE") router.refresh();
+      return;
+    }
+    toast.success("Journal rejected and marked as cancelled.");
+    setDialogOpen(false);
+    setReason("");
+    router.refresh();
+  }
+
   return (
-    <AccountingAction disabled={pending} onClick={approve}>
-      {pending ? (
-        <Loader2 aria-hidden="true" className="animate-spin" size={16} />
-      ) : (
-        <Check aria-hidden="true" size={16} />
-      )}
-      Approve and post
-    </AccountingAction>
+    <>
+      <div className="mnx-accounting-inline-actions">
+        <AccountingAction disabled={pending} onClick={approve}>
+          {pending ? (
+            <Loader2 aria-hidden="true" className="animate-spin" size={16} />
+          ) : (
+            <Check aria-hidden="true" size={16} />
+          )}
+          Approve and post
+        </AccountingAction>
+        <AccountingAction
+          disabled={pending}
+          onClick={() => setDialogOpen(true)}
+          variant="destructive"
+        >
+          <X aria-hidden="true" size={16} />
+          Reject
+        </AccountingAction>
+      </div>
+      <AccountingDialog
+        open={dialogOpen}
+        onClose={() => {
+          if (!pending) setDialogOpen(false);
+        }}
+        title="Reject submitted journal"
+        description="Rejecting a submitted manual journal cancels that submitted version and preserves the audit trail."
+        footer={
+          <>
+            <AccountingAction
+              disabled={pending}
+              onClick={() => setDialogOpen(false)}
+              type="button"
+              variant="secondary"
+            >
+              Keep submitted journal
+            </AccountingAction>
+            <AccountingAction
+              disabled={pending || reason.trim().length < 8}
+              form="accounting-journal-reject"
+              type="submit"
+              variant="destructive"
+            >
+              {pending ? (
+                <Loader2 aria-hidden="true" className="animate-spin" size={16} />
+              ) : null}
+              Reject journal
+            </AccountingAction>
+          </>
+        }
+      >
+        <form
+          className="mnx-accounting-form"
+          id="accounting-journal-reject"
+          onSubmit={reject}
+        >
+          <AccountingAlert variant="warning">
+            <ShieldAlert aria-hidden="true" size={16} /> This rejection is safe
+            only for the current submitted version and will fail if another user
+            already acted on it.
+          </AccountingAlert>
+          <AccountingField label="Rejection reason" required>
+            <AccountingTextarea
+              autoFocus
+              maxLength={500}
+              minLength={8}
+              required
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+            />
+          </AccountingField>
+        </form>
+      </AccountingDialog>
+    </>
+  );
+}
+
+export function AccountingJournalDraftActions({
+  editHref,
+  expectedVersion,
+  id,
+}: {
+  editHref: string;
+  expectedVersion: number;
+  id: string;
+}) {
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+
+  async function submit() {
+    setPending(true);
+    const result = await submitJournalEntryAction(id, expectedVersion);
+    setPending(false);
+    if (!result.ok) {
+      toast.error(result.error);
+      router.refresh();
+      return;
+    }
+    toast.success("Journal submitted for independent approval.");
+    router.refresh();
+  }
+
+  return (
+    <div className="mnx-accounting-inline-actions">
+      <AccountingActionLink href={editHref} variant="secondary">
+        Edit draft
+      </AccountingActionLink>
+      <AccountingAction disabled={pending} onClick={submit}>
+        {pending ? (
+          <Loader2 aria-hidden="true" className="animate-spin" size={16} />
+        ) : (
+          <Check aria-hidden="true" size={16} />
+        )}
+        Submit for approval
+      </AccountingAction>
+    </div>
   );
 }
 

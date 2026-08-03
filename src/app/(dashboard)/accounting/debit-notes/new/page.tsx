@@ -58,13 +58,13 @@ export default async function NewDebitNotePage({ searchParams }: PageProps) {
     isPurchase
       ? Promise.resolve([])
       : db.salesInvoice.findMany({
-          where: { orgId, status: { in: ["APPROVED", "SUBMITTED"] } },
+          where: { orgId, status: { in: ["UNPAID", "PARTLY_PAID", "PAID", "OVERDUE"] } },
           select: { id: true, invoiceNumber: true, customerId: true },
           orderBy: { invoiceNumber: "asc" },
         }),
     isPurchase
       ? db.purchaseInvoice.findMany({
-          where: { orgId, status: { in: ["APPROVED", "SUBMITTED"] } },
+          where: { orgId, status: { in: ["UNPAID", "PARTLY_PAID", "PAID", "OVERDUE"] } },
           select: { id: true, invoiceNumber: true, supplierId: true },
           orderBy: { invoiceNumber: "asc" },
         })

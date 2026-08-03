@@ -1,19 +1,14 @@
 import React from "react";
-import { getSession } from "@/lib/auth";
-import { PeopleNotice } from "@/modules/people/components/people-workspace";
 import { redirect } from "next/navigation";
-import { HelpCircle } from "lucide-react";
+import { getSession } from "@/lib/auth";
+import { requirePermission } from "@/lib/rbac";
+import { HelpDeskView } from "@/components/hrms/helpdesk-view";
 
 export default async function HelpDeskPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  return (
-    <PeopleNotice
-      eyebrow="HR query help desk"
-      title="Ask HR from the application header"
-      description="HR query cases can be raised from the Ask action in the application header."
-      icon={<HelpCircle aria-hidden="true" />}
-    />
-  );
+  await requirePermission(session.user.id, "hrms.helpdesk.read");
+
+  return <HelpDeskView />;
 }
