@@ -29,6 +29,19 @@ export type ModuleControlItem = {
   description: string;
 };
 
+export const MANAGED_FEATURE_IDS = [
+  "cha-labs",
+] as const;
+
+export type ManagedFeatureId = (typeof MANAGED_FEATURE_IDS)[number];
+
+export type FeatureControlItem = {
+  id: ManagedFeatureId;
+  parentModuleId: ToggleableModuleSectionId;
+  label: string;
+  description: string;
+};
+
 export const MODULE_CONTROL_ITEMS: readonly ModuleControlItem[] = [
   { id: "product-catalogue", label: "Product Catalogue", description: "Interactive catalogue and technical manual pages." },
   { id: "hrms", label: "HRMS", description: "Employees, onboarding, letters, payroll, and people operations." },
@@ -43,7 +56,17 @@ export const MODULE_CONTROL_ITEMS: readonly ModuleControlItem[] = [
   { id: "recruit", label: "Recruit", description: "Employer and job-seeker recruiting workspaces." },
 ] as const;
 
+export const MODULE_FEATURE_CONTROL_ITEMS: readonly FeatureControlItem[] = [
+  {
+    id: "cha-labs",
+    parentModuleId: "cha",
+    label: "CHA Labs",
+    description: "Experimental CHA lab routes such as the import job creation workspace.",
+  },
+] as const;
+
 const TOGGLEABLE_MODULE_SET = new Set<string>(TOGGLEABLE_MODULE_SECTION_IDS);
+const MANAGED_FEATURE_SET = new Set<string>(MANAGED_FEATURE_IDS);
 
 const MANAGED_ROUTE_PREFIXES: Array<{ prefix: string; sectionId: ToggleableModuleSectionId }> = [
   { prefix: "/product-catalogue", sectionId: "product-catalogue" },
@@ -59,6 +82,10 @@ const MANAGED_ROUTE_PREFIXES: Array<{ prefix: string; sectionId: ToggleableModul
   { prefix: "/accounting", sectionId: "accounting" },
 ] as const;
 
+const MANAGED_FEATURE_ROUTE_PREFIXES: Array<{ prefix: string; featureId: ManagedFeatureId }> = [
+  { prefix: "/cha/labs/import-job-creation", featureId: "cha-labs" },
+] as const;
+
 export function isSectionEnabled(
   sectionId: string,
   enabledModuleIds?: Iterable<string>,
@@ -71,10 +98,33 @@ export function isSectionEnabled(
   return enabledSet.has(sectionId);
 }
 
+export function isFeatureEnabled(
+  featureId: string | null | undefined,
+  enabledFeatureIds?: Iterable<string>,
+) {
+  if (!featureId) return true;
+  if (!MANAGED_FEATURE_SET.has(featureId)) return true;
+  if (!enabledFeatureIds) return true;
+
+  const enabledSet =
+    enabledFeatureIds instanceof Set ? enabledFeatureIds : new Set(enabledFeatureIds);
+  return enabledSet.has(featureId);
+}
+
 export function getManagedModuleSectionIdForPath(pathname: string) {
   for (const route of MANAGED_ROUTE_PREFIXES) {
     if (pathname === route.prefix || pathname.startsWith(`${route.prefix}/`)) {
       return route.sectionId;
+    }
+  }
+
+  return null;
+}
+
+export function getManagedFeatureIdForPath(pathname: string) {
+  for (const route of MANAGED_FEATURE_ROUTE_PREFIXES) {
+    if (pathname === route.prefix || pathname.startsWith(`${route.prefix}/`)) {
+      return route.featureId;
     }
   }
 

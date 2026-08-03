@@ -8188,6 +8188,55 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
   width: 100%;
 }
 
+.mnx-root-module-features {
+  display: grid;
+  gap: 12px;
+  padding-top: 18px;
+  border-top: 1px solid var(--mnx-border);
+}
+
+.mnx-root-module-feature {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-control);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-root-module-feature > div:first-child {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.mnx-root-module-feature b,
+.mnx-root-module-feature small {
+  display: block;
+}
+
+.mnx-root-module-feature small {
+  margin-top: 4px;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-font-size-xs);
+  line-height: 1.45;
+}
+
+.mnx-root-module-feature-icon {
+  width: 2rem;
+  height: 2rem;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--mnx-accent) 24%, var(--mnx-border));
+  border-radius: var(--mn-radius-control);
+  color: var(--mnx-accent-text);
+  background: color-mix(in srgb, var(--mnx-accent-soft) 26%, var(--mnx-card));
+}
+
 @media (max-width: 70rem) {
   .mnx-public-stage {
     grid-template-columns: 1fr;
@@ -11055,7 +11104,7 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
 
 .mnx-accounting-journal-summary-card strong {
   color: var(--mnx-text-strong);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--mn-font-mono);
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
@@ -11308,7 +11357,7 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
   width: 4.5rem;
   flex: 0 0 auto;
   color: var(--mnx-text-muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--mn-font-mono);
   font-variant-numeric: tabular-nums;
 }
 
@@ -11490,7 +11539,7 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
 
 .mnx-account-structure-code {
   color: var(--mnx-text-muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--mn-font-mono);
   font-variant-numeric: tabular-nums;
 }
 
@@ -11754,7 +11803,7 @@ button.mnx-accounting-record-card {
 }
 
 .mnx-accounting-amount {
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--mn-font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
 }

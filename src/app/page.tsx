@@ -5,8 +5,14 @@ import { PublicMonolithShell } from "@/modules/auth/components/public-workspace"
 import { WorkspaceMetric, WorkspacePage, WorkspacePageHeader, WorkspaceSectionHeading } from "@/components/layout/workspace";
 import { RootModuleControlClient } from "@/modules/core/components/root-module-control-client";
 import { RootSignOutButton } from "@/modules/core/components/root-signout-button";
-import { MODULE_CONTROL_ITEMS } from "@/modules/core/organisation/module-config";
-import { getEnabledModuleIds } from "@/modules/core/organisation/module-settings";
+import {
+  MODULE_CONTROL_ITEMS,
+  MODULE_FEATURE_CONTROL_ITEMS,
+} from "@/modules/core/organisation/module-config";
+import {
+  getEnabledFeatureIds,
+  getEnabledModuleIds,
+} from "@/modules/core/organisation/module-settings";
 import { isRootControlEmail } from "@/lib/root-access";
 
 export default async function RootPage() {
@@ -20,7 +26,10 @@ export default async function RootPage() {
     redirect("/dashboard");
   }
 
-  const enabledModuleIds = await getEnabledModuleIds(session.user.orgId!);
+  const [enabledModuleIds, enabledFeatureIds] = await Promise.all([
+    getEnabledModuleIds(session.user.orgId!),
+    getEnabledFeatureIds(session.user.orgId!),
+  ]);
 
   return (
     <PublicMonolithShell
@@ -74,6 +83,8 @@ export default async function RootPage() {
         />
 
         <RootModuleControlClient
+          initialFeatureItems={MODULE_FEATURE_CONTROL_ITEMS}
+          initialEnabledFeatureIds={enabledFeatureIds}
           initialItems={MODULE_CONTROL_ITEMS}
           initialEnabledModuleIds={enabledModuleIds}
         />

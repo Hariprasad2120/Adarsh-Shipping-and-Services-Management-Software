@@ -2,7 +2,10 @@ import { NotificationProvider } from "@/modules/notifications/components/notific
 import { SessionSync } from "@/components/providers/session-sync";
 import { CapsProvider } from "@/lib/caps-context";
 import { getDashboardContext } from "@/lib/dashboard-context";
-import { getManagedModuleSectionIdForPath } from "@/modules/core/organisation/module-config";
+import {
+  getManagedFeatureIdForPath,
+  getManagedModuleSectionIdForPath,
+} from "@/modules/core/organisation/module-config";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { DashboardShellSwitcher } from "./_components/dashboard-shell-switcher";
@@ -25,12 +28,18 @@ export default async function DashboardLayout({
   const pathname = normalizePathname(
     (await headers()).get("x-current-pathname"),
   );
-  const { session, caps, enabledModuleIds } = context;
+  const { session, caps, enabledFeatureIds, enabledModuleIds } = context;
   const managedSectionId = getManagedModuleSectionIdForPath(pathname);
+  const managedFeatureId = getManagedFeatureIdForPath(pathname);
   const enabledModuleSet = new Set(enabledModuleIds);
+  const enabledFeatureSet = new Set(enabledFeatureIds);
 
   if (managedSectionId && !enabledModuleSet.has(managedSectionId)) {
     redirect("/dashboard");
+  }
+
+  if (managedFeatureId && !enabledFeatureSet.has(managedFeatureId)) {
+    redirect("/cha");
   }
 
   return (
@@ -39,6 +48,7 @@ export default async function DashboardLayout({
         <SessionSync />
         <DashboardShellSwitcher
           caps={caps}
+          enabledFeatureIds={enabledFeatureIds}
           isPlatformAdmin={session.user.isPlatformAdmin}
           userEmail={session.user.email}
           userName={session.user.name}

@@ -45,6 +45,7 @@ export type MonolithTheme = "night" | "violet" | "light";
 export interface MonolithAppShellProps {
   children: React.ReactNode;
   caps: Caps;
+  enabledFeatureIds: string[];
   enabledModuleIds: string[];
   isPlatformAdmin: boolean;
   userId: string;
@@ -242,6 +243,7 @@ export function MonolithAppShell(props: MonolithAppShellProps) {
 function MonolithAppShellBody({
   children,
   caps,
+  enabledFeatureIds,
   enabledModuleIds,
   isPlatformAdmin,
   userId,
@@ -268,8 +270,8 @@ function MonolithAppShellBody({
   const searchRef = useRef<HTMLInputElement | null>(null);
   const profileRef = useRef<HTMLDivElement | null>(null);
   const visibleSections = useMemo(
-    () => getVisibleSections(caps, enabledModuleIds),
-    [caps, enabledModuleIds],
+    () => getVisibleSections(caps, enabledModuleIds, enabledFeatureIds),
+    [caps, enabledFeatureIds, enabledModuleIds],
   );
 
   const filteredSections = useMemo(() => {

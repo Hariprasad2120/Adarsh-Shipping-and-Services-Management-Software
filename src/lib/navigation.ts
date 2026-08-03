@@ -21,7 +21,11 @@ import { FolderIcon } from "@/components/ui/folder-icon";
 const Folder = FolderIcon as unknown as CarbonIconType;
 import type { Caps } from "@/lib/rbac";
 import { isNavSectionEnabled } from "@/lib/app-edition";
-import { isSectionEnabled } from "@/modules/core/organisation/module-config";
+import { ACCOUNTING_WORKSPACE_CATALOG } from "@/modules/accounting/workspace-catalog";
+import {
+  isFeatureEnabled,
+  isSectionEnabled,
+} from "@/modules/core/organisation/module-config";
 
 export type SecondaryNavItem = {
   href: string;
@@ -30,6 +34,7 @@ export type SecondaryNavItem = {
   sectionLabel?: string;
   permission?: string | string[];
   hideFor?: string;
+  featureId?: string;
   matchPaths?: string[];
 };
 
@@ -711,6 +716,14 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         permission: "cha.settings.manage",
         matchPaths: ["/cha/settings"],
       },
+      {
+        href: "/cha/labs/import-job-creation",
+        label: "Labs",
+        icon: Search,
+        permission: "cha.access",
+        featureId: "cha-labs",
+        matchPaths: ["/cha/labs/import-job-creation"],
+      },
     ],
   },
   {
@@ -755,451 +768,7 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
       "crm.invoice.manage",
     ],
     matchPaths: ["/accounting"],
-    items: [
-      {
-        href: "/accounting",
-        label: "Overview",
-        icon: View,
-        permission: [
-          "accounting.dashboard.view",
-          "accounting.document.read",
-          "accounting.payment.read",
-          "accounting.ledger.read",
-        ],
-        matchPaths: ["/accounting"],
-      },
-      {
-        href: "/accounting/approvals",
-        label: "Approval Inbox",
-        icon: Task,
-        permission: [
-          "accounting.document.approve",
-          "accounting.payment.approve",
-          "accounting.journal.approve",
-        ],
-        matchPaths: ["/accounting/approvals"],
-      },
-      {
-        href: "/accounting/banking",
-        label: "Overview",
-        icon: Dashboard,
-        sectionLabel: "Banking",
-        permission: [
-          "accounting.payment.read",
-          "accounting.payment.prepare",
-          "accounting.payment.allocate",
-        ],
-        matchPaths: ["/accounting/banking"],
-      },
-      {
-        href: "/accounting/payments",
-        label: "Payments",
-        icon: Time,
-        sectionLabel: "Banking",
-        permission: [
-          "accounting.payment.read",
-          "accounting.payment.prepare",
-        ],
-        matchPaths: ["/accounting/payments"],
-      },
-      {
-        href: "/accounting/payment-entries",
-        label: "Payment Entries",
-        icon: Task,
-        sectionLabel: "Banking",
-        permission: [
-          "accounting.payment.read",
-          "accounting.payment.prepare",
-          "accounting.payment.allocate",
-        ],
-        matchPaths: ["/accounting/payment-entries"],
-      },
-      {
-        href: "/accounting/customer-receipts",
-        label: "Customer Receipts",
-        icon: Time,
-        sectionLabel: "Banking",
-        permission: [
-          "accounting.payment.read",
-          "accounting.receipt.prepare",
-        ],
-        matchPaths: ["/accounting/customer-receipts"],
-      },
-      {
-        href: "/accounting/vendor-payments",
-        label: "Vendor Payments",
-        icon: Time,
-        sectionLabel: "Banking",
-        permission: [
-          "accounting.payment.read",
-          "accounting.payment.prepare",
-        ],
-        matchPaths: ["/accounting/vendor-payments"],
-      },
-      {
-        href: "/accounting/expenses",
-        label: "Expenses & Reimbursements",
-        icon: Report,
-        sectionLabel: "Banking",
-        permission: [
-          "accounting.payment.read",
-          "accounting.payment.prepare",
-        ],
-        matchPaths: ["/accounting/expenses"],
-      },
-      {
-        href: "/accounting/allocations",
-        label: "Allocations",
-        icon: Task,
-        sectionLabel: "Banking",
-        permission: [
-          "accounting.payment.read",
-          "accounting.payment.allocate",
-        ],
-        matchPaths: ["/accounting/allocations"],
-      },
-      {
-        href: "/accounting/quotations",
-        label: "Sales - Quotations",
-        icon: DocumentAdd,
-        permission: [
-          "accounting.quotation.read",
-          "accounting.quotation.create",
-          "accounting.quotation.manage",
-          "accounting.note.read",
-          "accounting.correction.read",
-        ],
-        matchPaths: ["/accounting/quotations"],
-      },
-      {
-        href: "/accounting/sales-invoices",
-        label: "Sales · Invoices",
-        icon: DocumentAdd,
-        sectionLabel: "Banking",
-        permission: [
-          "accounting.document.read",
-          "accounting.invoice.read",
-          "accounting.sales-invoice.prepare",
-        ],
-        matchPaths: ["/accounting/sales-invoices"],
-      },
-      {
-        href: "/accounting/credit-notes",
-        label: "Credit Notes",
-        icon: DocumentAdd,
-        sectionLabel: "Banking",
-        permission: [
-          "accounting.document.read",
-          "accounting.credit-note.prepare",
-        ],
-        matchPaths: ["/accounting/credit-notes"],
-      },
-      {
-        href: "/accounting/purchase-invoices",
-        label: "Purchases · Invoices",
-        icon: DocumentAdd,
-        sectionLabel: "Banking",
-        permission: [
-          "accounting.document.read",
-          "accounting.invoice.read",
-          "accounting.purchase-invoice.prepare",
-        ],
-        matchPaths: ["/accounting/purchase-invoices"],
-      },
-      {
-        href: "/accounting/debit-notes",
-        label: "Purchases · Debit Notes",
-        icon: DocumentAdd,
-        sectionLabel: "Banking",
-        permission: [
-          "accounting.document.read",
-          "accounting.debit-note.prepare",
-        ],
-        matchPaths: ["/accounting/debit-notes"],
-      },
-      {
-        href: "/accounting/vendor-master",
-        label: "Vendor Master",
-        icon: DocumentAdd,
-        sectionLabel: "Banking",
-        permission: [
-          "accounting.document.read",
-          "accounting.invoice.read",
-        ],
-        matchPaths: ["/accounting/vendor-master"],
-      },
-      {
-        href: "/accounting/journal-entries",
-        label: "Manual Journals",
-        icon: DocumentAdd,
-        sectionLabel: "Accountant",
-        permission: [
-          "accounting.journal.read",
-          "accounting.ledger.read",
-        ],
-        matchPaths: ["/accounting/journal-entries"],
-      },
-      {
-        href: "/accounting/general-ledger",
-        label: "Ledger · General Ledger",
-        icon: Report,
-        sectionLabel: "Accountant",
-        permission: [
-          "accounting.ledger.read",
-          "accounting.reports.view",
-        ],
-        matchPaths: ["/accounting/general-ledger"],
-      },
-      {
-        href: "/accounting/recurring",
-        label: "Recurring Journals",
-        icon: Calendar,
-        sectionLabel: "Accountant",
-        permission: [
-          "accounting.recurring-template.admin",
-          "accounting.recurring-occurrence.process",
-        ],
-        matchPaths: ["/accounting/recurring"],
-      },
-      {
-        href: "/accounting/accounts",
-        label: "Chart of Accounts",
-        icon: Folder,
-        sectionLabel: "Accountant",
-        permission: "accounting.account.read",
-        matchPaths: ["/accounting/accounts"],
-      },
-      {
-        href: "/accounting/bulk-update",
-        label: "Bulk Update",
-        icon: Settings,
-        sectionLabel: "Accountant",
-        permission: [
-          "accounting.account.read",
-          "accounting.settings.manage",
-          "accounting.capability-policy.read",
-        ],
-        matchPaths: ["/accounting/bulk-update"],
-      },
-      {
-        href: "/accounting/currency-adjustments",
-        label: "Currency Adjustments",
-        icon: Analytics,
-        sectionLabel: "Accountant",
-        permission: [
-          "accounting.exchange_rate.maintain",
-          "accounting.settings.manage",
-        ],
-        matchPaths: ["/accounting/currency-adjustments"],
-      },
-      {
-        href: "/accounting/transaction-locking",
-        label: "Transaction Locking",
-        icon: Security,
-        sectionLabel: "Accountant",
-        permission: [
-          "accounting.period_lock.request",
-          "accounting.settings.manage",
-        ],
-        matchPaths: ["/accounting/transaction-locking"],
-      },
-      {
-        href: "/accounting/tax-settlement",
-        label: "Reporting · Tax Settlement",
-        icon: Analytics,
-        permission: [
-          "accounting.reports.view",
-          "accounting.settings.manage",
-          "accounting.period_lock.request",
-        ],
-        matchPaths: ["/accounting/tax-settlement"],
-      },
-      {
-        href: "/accounting/fixed-assets",
-        label: "Fixed Assets",
-        icon: Analytics,
-        sectionLabel: "Accountant",
-        permission: "accounting.depreciation.integrate",
-        matchPaths: ["/accounting/fixed-assets"],
-      },
-      {
-        href: "/accounting/depreciation",
-        label: "Depreciation Runs",
-        icon: Analytics,
-        sectionLabel: "Accountant",
-        permission: "accounting.depreciation.integrate",
-        matchPaths: ["/accounting/depreciation"],
-      },
-      {
-        href: "/accounting/trial-balance",
-        label: "Reporting · Trial Balance",
-        icon: Analytics,
-        permission: "accounting.reports.view",
-        matchPaths: ["/accounting/trial-balance"],
-      },
-      {
-        href: "/accounting/profit-loss",
-        label: "Reporting · Profit & Loss",
-        icon: Analytics,
-        permission: "accounting.reports.view",
-        matchPaths: ["/accounting/profit-loss"],
-      },
-      {
-        href: "/accounting/balance-sheet",
-        label: "Reporting · Balance Sheet",
-        icon: Analytics,
-        permission: "accounting.reports.view",
-        matchPaths: ["/accounting/balance-sheet"],
-      },
-      {
-        href: "/accounting/items",
-        label: "Master Data · Items",
-        icon: Folder,
-        permission: "accounting.dashboard.view",
-        matchPaths: ["/accounting/items"],
-      },
-      {
-        href: "/accounting/reports",
-        label: "Reporting · Reports Hub",
-        icon: Report,
-        permission: "accounting.reports.view",
-        matchPaths: ["/accounting/reports"],
-      },
-      {
-        href: "/accounting/jobs",
-        label: "Operations · Job Costing",
-        icon: Task,
-        permission: [
-          "accounting.dashboard.view",
-          "accounting.document.read",
-          "accounting.ledger.read",
-        ],
-        matchPaths: ["/accounting/jobs"],
-      },
-      {
-        href: "/accounting/partners",
-        label: "Operations · Partners",
-        icon: Group,
-        permission: "accounting.partner-transaction.prepare",
-        matchPaths: ["/accounting/partners"],
-      },
-      {
-        href: "/accounting/outbox",
-        label: "Integration · Outbox",
-        icon: Report,
-        permission: [
-          "accounting.audit.read",
-          "accounting.outbox.retry",
-          "accounting.outbox.manual-review",
-        ],
-        matchPaths: ["/accounting/outbox"],
-      },
-      {
-        href: "/accounting/integrations",
-        label: "Integration · Hub",
-        icon: Report,
-        permission: [
-          "accounting.audit.read",
-          "accounting.outbox.retry",
-          "accounting.integration.manual-review",
-        ],
-        matchPaths: ["/accounting/integrations"],
-      },
-      {
-        href: "/accounting/manual-review",
-        label: "Integration · Review",
-        icon: Security,
-        permission: [
-          "accounting.integration.manual-review",
-          "accounting.outbox.manual-review",
-        ],
-        matchPaths: ["/accounting/manual-review"],
-      },
-      {
-        href: "/accounting/communications",
-        label: "Operations · Communications",
-        icon: Notification,
-        permission: [
-          "accounting.reports.view",
-          "accounting.settings.manage",
-        ],
-        matchPaths: ["/accounting/communications"],
-      },
-      {
-        href: "/accounting/report-builder",
-        label: "Reporting · Builder",
-        icon: Analytics,
-        permission: "accounting.reports.view",
-        matchPaths: ["/accounting/report-builder"],
-      },
-      {
-        href: "/accounting/customization",
-        label: "Configuration · Customization",
-        icon: Settings,
-        permission: "accounting.settings.manage",
-        matchPaths: ["/accounting/customization"],
-      },
-      {
-        href: "/accounting/readiness",
-        label: "Governance · Readiness",
-        icon: Security,
-        permission: "accounting.readiness.read",
-        matchPaths: ["/accounting/readiness"],
-      },
-      {
-        href: "/accounting/capabilities",
-        label: "Configuration · Capabilities",
-        icon: Settings,
-        permission: [
-          "accounting.capability-policy.read",
-          "accounting.capability-policy.manage",
-          "accounting.capability-policy.approve",
-        ],
-        matchPaths: ["/accounting/capabilities"],
-      },
-      {
-        href: "/accounting/configuration",
-        label: "Configuration",
-        icon: Settings,
-        permission: [
-          "accounting.settings.manage",
-          "accounting.period_lock.request",
-          "accounting.exchange_rate.maintain",
-          "accounting.number_series.admin",
-          "accounting.approval_policy.admin",
-          "accounting.capability-policy.read",
-        ],
-        matchPaths: ["/accounting/configuration"],
-      },
-      {
-        href: "/accounting/settings",
-        label: "Configuration · Legacy Settings",
-        icon: Settings,
-        permission: "accounting.settings.manage",
-        matchPaths: ["/accounting/settings"],
-      },
-      {
-        href: "/accounting/invoices-sales",
-        label: "CRM · Invoices & Sales",
-        icon: DocumentAdd,
-        permission: "crm.invoice.manage",
-        matchPaths: ["/accounting/invoices-sales"],
-      },
-      {
-        href: "/accounting/sales-orders",
-        label: "Sales · Orders",
-        icon: DocumentAdd,
-        permission: "crm.invoice.manage",
-        matchPaths: ["/accounting/sales-orders"],
-      },
-      {
-        href: "/accounting/purchase-orders",
-        label: "Purchases · Orders",
-        icon: DocumentAdd,
-        permission: "crm.invoice.manage",
-        matchPaths: ["/accounting/purchase-orders"],
-      },
-    ],
+    items: ACCOUNTING_WORKSPACE_CATALOG,
   },
   {
     id: "recruit",
@@ -1476,9 +1045,17 @@ export function getActiveItemHref(pathname: string, items: SecondaryNavItem[]) {
   return rankedMatches[0]?.href ?? null;
 }
 
-export function getVisibleSections(caps: Caps, enabledSectionIds?: Iterable<string>) {
+export function getVisibleSections(
+  caps: Caps,
+  enabledSectionIds?: Iterable<string>,
+  enabledFeatureIds?: Iterable<string>,
+) {
   return NAV_SECTIONS.map((section) => {
-    const visibleItems = section.items.filter((item) => isVisible(caps, item.permission, item.hideFor));
+    const visibleItems = section.items.filter(
+      (item) =>
+        isVisible(caps, item.permission, item.hideFor) &&
+        isFeatureEnabled(item.featureId, enabledFeatureIds),
+    );
     return { ...section, items: visibleItems };
   }).filter((section) => {
     if (!isNavSectionEnabled(section.id)) return false;
@@ -1489,6 +1066,15 @@ export function getVisibleSections(caps: Caps, enabledSectionIds?: Iterable<stri
   });
 }
 
-export function getVisibleSectionById(caps: Caps, id: string, enabledSectionIds?: Iterable<string>) {
-  return getVisibleSections(caps, enabledSectionIds).find((section) => section.id === id) ?? null;
+export function getVisibleSectionById(
+  caps: Caps,
+  id: string,
+  enabledSectionIds?: Iterable<string>,
+  enabledFeatureIds?: Iterable<string>,
+) {
+  return (
+    getVisibleSections(caps, enabledSectionIds, enabledFeatureIds).find(
+      (section) => section.id === id,
+    ) ?? null
+  );
 }

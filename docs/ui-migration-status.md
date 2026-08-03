@@ -2,6 +2,103 @@
 
 Last updated: 2026-08-01
 
+## 2026-08-01 accounting workspace catalog consolidation
+
+Consolidated the live Accounting workspace registry into one module-owned
+catalog so the sidebar and the `/accounting` landing hub no longer maintain
+parallel copies of route labels, permissions, grouping, and workflow metadata.
+
+Delivered:
+
+- added `src/modules/accounting/workspace-catalog.ts` as the canonical
+  Accounting workspace registry for present, discoverable Accounting routes;
+- updated `src/lib/navigation.ts` so the Accounting section now consumes that
+  module-owned catalog instead of carrying a second inline route list;
+- updated `src/app/(dashboard)/accounting/page.tsx` so the Accounting hub now
+  resolves workflow descriptions and icons from the same catalog instead of a
+  separate local map;
+- added a navigation regression assertion in `src/lib/navigation.test.ts` so
+  the visible Accounting sidebar continues to mirror the module catalog.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/modules/accounting/workspace-catalog.ts' 'src/lib/navigation.ts' 'src/lib/navigation.test.ts' 'src/app/(dashboard)/accounting/page.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- targeted `git diff --check` for the touched Accounting catalog and navigation
+  files: passed, aside from the normal Windows line-ending warnings in the
+  worktree.
+
+## 2026-08-01 accounting route discoverability audit
+
+Audited the live dashboard route tree against the shared navigation model, with
+special focus on Accounting where operators reported that some real pages
+existed in code but did not surface through the UI.
+
+Delivered:
+
+- compared the top-level `src/app/(dashboard)/accounting/**/page.tsx` routes
+  against the Accounting navigation section and workspace hub model;
+- confirmed the main Accounting issue was discoverability rather than missing
+  route files: `/accounting/configuration/admin` existed as a real top-level
+  workspace but was not represented in the shared Accounting nav items;
+- updated `src/lib/navigation.ts` so `Configuration Admin` now appears in the
+  Accounting sidebar and therefore also on the `/accounting` landing hub, which
+  is generated from the same canonical nav section;
+- updated `src/app/(dashboard)/accounting/page.tsx` with the new route
+  description and icon mapping;
+- added a regression test in `src/lib/navigation.test.ts` so the Accounting
+  configuration workspace and its admin sub-workspace remain discoverable.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx vitest run src/lib/navigation.test.ts`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/lib/navigation.ts' 'src/lib/navigation.test.ts' 'src/app/(dashboard)/accounting/page.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- targeted `git diff --check` for the touched navigation and Accounting files:
+  passed, aside from the normal Windows line-ending warnings in the worktree.
+
+## 2026-08-01 global single-font unification
+
+Collapsed the website typography stack to a single family so the same Geist
+Sans face now drives display, heading, body, control, and numeric text
+throughout the live app instead of mixing separate sans, display, and mono
+families.
+
+Delivered:
+
+- removed the extra Geist Mono root font loader from `src/app/layout.tsx` so
+  the app shell now loads only the Geist Sans webfont;
+- updated `src/styles/monolith-tokens.css` so `--mn-font-sans`,
+  `--mn-font-display`, and `--mn-font-mono` all resolve to the same
+  `--font-geist-sans` family;
+- updated `src/styles/legacy-compatibility.css` so legacy Tailwind/theme font
+  aliases now also point to the same sans family instead of the removed mono
+  face;
+- replaced remaining production stylesheet direct references to
+  the previous direct mono-family references with the shared token and removed the
+  hardcoded `system-ui, sans-serif` SVG text fallback in the CHA expenses
+  route.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/app/layout.tsx' 'src/app/(dashboard)/cha/expenses/expenses-client.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- targeted `git diff --check` for the touched typography files: passed, aside
+  from the normal Windows line-ending warnings in the worktree.
+
+Blocked:
+
+- full route-by-route visual verification is still manual in this session
+  because no browser backend is attached, so the unification was verified
+  through the shared font-token graph and repository checks.
+
 ## 2026-08-01 workspace heading-spacing normalization
 
 Standardized the vertical spacing contract between page headers, section

@@ -1,18 +1,27 @@
 import { db } from "@/lib/db";
 import { revalidateTag, unstable_cache } from "next/cache";
 import {
+  MANAGED_FEATURE_IDS,
   TOGGLEABLE_MODULE_SECTION_IDS,
+  type ManagedFeatureId,
   type ToggleableModuleSectionId,
 } from "./module-config";
 
 export const MODULE_SETTINGS_KEY_PREFIX = "org";
 export const ENABLED_MODULES_SETTINGS_SUFFIX = "enabled_modules";
+export const ENABLED_FEATURES_SETTINGS_SUFFIX = "enabled_features";
 
 const TOGGLEABLE_MODULE_SET = new Set<string>(TOGGLEABLE_MODULE_SECTION_IDS);
+const MANAGED_FEATURE_SET = new Set<string>(MANAGED_FEATURE_IDS);
 const ENABLED_MODULES_CACHE_TAG = "org:enabled-modules";
+const ENABLED_FEATURES_CACHE_TAG = "org:enabled-features";
 
 function getEnabledModulesSettingKey(orgId: string) {
   return `${MODULE_SETTINGS_KEY_PREFIX}:${orgId}:${ENABLED_MODULES_SETTINGS_SUFFIX}`;
+}
+
+function getEnabledFeaturesSettingKey(orgId: string) {
+  return `${MODULE_SETTINGS_KEY_PREFIX}:${orgId}:${ENABLED_FEATURES_SETTINGS_SUFFIX}`;
 }
 
 function parseStoredEnabledModules(value: string | null | undefined): ToggleableModuleSectionId[] {
@@ -33,6 +42,24 @@ function parseStoredEnabledModules(value: string | null | undefined): Toggleable
   }
 }
 
+function parseStoredEnabledFeatures(value: string | null | undefined): ManagedFeatureId[] {
+  if (!value) return [...MANAGED_FEATURE_IDS];
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) return [...MANAGED_FEATURE_IDS];
+
+    const enabled = parsed.filter(
+      (item): item is ManagedFeatureId =>
+        typeof item === "string" && MANAGED_FEATURE_SET.has(item),
+    );
+
+    return enabled.length > 0 ? Array.from(new Set(enabled)) : [];
+  } catch {
+    return [...MANAGED_FEATURE_IDS];
+  }
+}
+
 const getCachedEnabledModuleIds = unstable_cache(
   async (orgId: string): Promise<ToggleableModuleSectionId[]> => {
     const row = await db.systemSetting.findUnique({
@@ -49,6 +76,22 @@ const getCachedEnabledModuleIds = unstable_cache(
   },
 );
 
+const getCachedEnabledFeatureIds = unstable_cache(
+  async (orgId: string): Promise<ManagedFeatureId[]> => {
+    const row = await db.systemSetting.findUnique({
+      where: { key: getEnabledFeaturesSettingKey(orgId) },
+      select: { value: true },
+    });
+
+    return parseStoredEnabledFeatures(row?.value);
+  },
+  ["org:enabled-features"],
+  {
+    tags: [ENABLED_FEATURES_CACHE_TAG],
+    revalidate: 300,
+  },
+);
+
 export async function getEnabledModuleIds(orgId: string): Promise<ToggleableModuleSectionId[]> {
   return getCachedEnabledModuleIds(orgId);
 }
@@ -60,6 +103,19 @@ export async function getFreshEnabledModuleIds(orgId: string): Promise<Toggleabl
   });
 
   return parseStoredEnabledModules(row?.value);
+}
+
+export async function getEnabledFeatureIds(orgId: string): Promise<ManagedFeatureId[]> {
+  return getCachedEnabledFeatureIds(orgId);
+}
+
+export async function getFreshEnabledFeatureIds(orgId: string): Promise<ManagedFeatureId[]> {
+  const row = await db.systemSetting.findUnique({
+    where: { key: getEnabledFeaturesSettingKey(orgId) },
+    select: { value: true },
+  });
+
+  return parseStoredEnabledFeatures(row?.value);
 }
 
 export async function setEnabledModuleIds(
@@ -81,6 +137,29 @@ export async function setEnabledModuleIds(
   return parseStoredEnabledModules(row.value);
 }
 
+export async function setEnabledFeatureIds(
+  orgId: string,
+  enabledFeatureIds: readonly ManagedFeatureId[],
+) {
+  const normalized = MANAGED_FEATURE_IDS.filter((id) => enabledFeatureIds.includes(id));
+
+  const row = await db.systemSetting.upsert({
+    where: { key: getEnabledFeaturesSettingKey(orgId) },
+    update: { value: JSON.stringify(normalized) },
+    create: {
+      key: getEnabledFeaturesSettingKey(orgId),
+      value: JSON.stringify(normalized),
+    },
+  });
+
+  revalidateTag(ENABLED_FEATURES_CACHE_TAG, "max");
+  return parseStoredEnabledFeatures(row.value);
+}
+
 export async function getEnabledModuleIdSet(orgId: string) {
   return new Set(await getEnabledModuleIds(orgId));
+}
+
+export async function getEnabledFeatureIdSet(orgId: string) {
+  return new Set(await getEnabledFeatureIds(orgId));
 }

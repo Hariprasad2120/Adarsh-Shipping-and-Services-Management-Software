@@ -150,6 +150,21 @@ model Organisation {
   chaShipmentTypes                 ChaShipmentType[]
   chaDocumentRequirementCategories ChaDocumentRequirementCategory[]
   filingWorkflowTemplates          FilingWorkflowTemplate[]
+  chaCustomsMasterImportRuns       ChaCustomsMasterImportRun[]
+  chaCustomsMasterValidationErrors ChaCustomsMasterValidationError[]
+  chaRitcTariffMasters             ChaRitcTariffMaster[]
+  chaCessRateMasters               ChaCessRateMaster[]
+  chaRodtepRateMasters             ChaRodtepRateMaster[]
+  chaRodtepEouRateMasters          ChaRodtepEouRateMaster[]
+  chaRosctlRateMasters             ChaRosctlRateMaster[]
+  chaDrawbackRateMasters           ChaDrawbackRateMaster[]
+  chaSchemeCodeMasters             ChaSchemeCodeMaster[]
+  chaSingleWindowCthMasters        ChaSingleWindowCthMaster[]
+  chaAidcRateMasters               ChaAidcRateMaster[]
+  chaBcdRateMasters                ChaBcdRateMaster[]
+  chaCustomsNotificationMasters    ChaCustomsNotificationMaster[]
+  chaSupportingDocumentMasters     ChaSupportingDocumentMaster[]
+  chaUomMasters                    ChaUomMaster[]
 
   // Google Chat Integration
   googleChatSpaces        GoogleChatSpace[]
@@ -6441,6 +6456,7 @@ model ChaJob {
   filing                      ChaFiling?
   filingWorkflowInstance      FilingWorkflowInstance?
   filingSection49Flag         FilingSection49Flag?
+  customsFilingProfile        ChaCustomsFilingProfile?
   customerAdvance             ChaCustomerAdvance?
   expenseRequests             ChaExpenseRequest[]
   auditLogs                   ChaAuditLog[]
@@ -6871,6 +6887,660 @@ model ChaFilingDateHistory {
   @@index([setById])
 }
 
+enum ChaCustomsFilingDirection {
+  IMPORT
+  EXPORT
+}
+
+enum ChaCustomsFilingProfileStatus {
+  DRAFT
+  READY_FOR_CHECKLIST
+  CHECKLIST_GENERATED
+  FLAT_FILE_GENERATED
+  SIGNED
+  SUBMITTED
+  ACKNOWLEDGED
+  QUERY
+  REJECTED
+  PROCESSED
+  CANCELLED
+}
+
+enum ChaCustomsSubtabStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETE
+  BLOCKED
+}
+
+enum ChaCustomsArtifactKind {
+  CHECKLIST
+  FLAT_FILE
+}
+
+enum ChaCustomsArtifactStatus {
+  DRAFT
+  GENERATED
+  SIGNED
+  SUPERSEDED
+  CANCELLED
+}
+
+enum ChaCustomsExternalSubmissionStatus {
+  PENDING
+  SENT
+  ACKNOWLEDGED
+  QUERY
+  REJECTED
+  PROCESSED
+  RETRYABLE
+  FAILED
+  CANCELLED
+}
+
+enum ChaCustomsExternalEventKind {
+  REQUEST_PREPARED
+  SUBMITTED
+  ACKNOWLEDGED
+  QUERY_RECEIVED
+  REJECTION_RECEIVED
+  PROCESSED
+  RETRY_SCHEDULED
+  FAILED
+}
+
+model ChaCustomsFilingProfile {
+  id                       String                         @id @default(cuid())
+  jobId                    String                         @unique
+  movementDirection        ChaCustomsFilingDirection
+  filingType               String?
+  transportMode            String?
+  customsHouse             String?
+  customsHouseCode         String?
+  customsSiteCode          String?
+  icegateProfileReference  String?
+  currentDraftVersion      Int                            @default(1)
+  status                   ChaCustomsFilingProfileStatus  @default(DRAFT)
+  isLocked                 Boolean                        @default(false)
+  lockedById               String?
+  lockedAt                 DateTime?
+  lockVersion              Int                            @default(1)
+  calculationRulesetVersion String?
+  masterDatasetVersions    Json?
+  beMainStatus             ChaCustomsSubtabStatus         @default(NOT_STARTED)
+  igmStatus                ChaCustomsSubtabStatus         @default(NOT_STARTED)
+  importInvoiceStatus      ChaCustomsSubtabStatus         @default(NOT_STARTED)
+  importItemStatus         ChaCustomsSubtabStatus         @default(NOT_STARTED)
+  importDeclarationStatus  ChaCustomsSubtabStatus         @default(NOT_STARTED)
+  importDocumentStatus     ChaCustomsSubtabStatus         @default(NOT_STARTED)
+  sbMainStatus             ChaCustomsSubtabStatus         @default(NOT_STARTED)
+  exportInvoiceStatus      ChaCustomsSubtabStatus         @default(NOT_STARTED)
+  exportItemStatus         ChaCustomsSubtabStatus         @default(NOT_STARTED)
+  exportDocumentStatus     ChaCustomsSubtabStatus         @default(NOT_STARTED)
+  checklistStatus          ChaCustomsSubtabStatus         @default(NOT_STARTED)
+  flatFileStatus           ChaCustomsSubtabStatus         @default(NOT_STARTED)
+  createdById              String?
+  updatedById              String?
+  createdAt                DateTime                       @default(now())
+  updatedAt                DateTime                       @updatedAt
+
+  job                   ChaJob                         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  importHeader          ChaImportFilingHeader?
+  importIgm             ChaImportIgmHeader?
+  importInvoices        ChaImportInvoice[]
+  importItems           ChaImportItem[]
+  importDeclarations    ChaImportDeclaration[]
+  importDocuments       ChaImportSupportingDocument[]
+  exportHeader          ChaExportFilingHeader?
+  exportInvoices        ChaExportInvoice[]
+  exportItems           ChaExportItem[]
+  exportDocuments       ChaExportSupportingDocument[]
+  checklistGenerations  ChaCustomsChecklistGeneration[]
+  flatFileGenerations   ChaCustomsFlatFileGeneration[]
+  externalSubmissions   ChaCustomsExternalSubmission[]
+
+  @@index([movementDirection, status])
+  @@index([status])
+  @@index([isLocked])
+}
+
+model ChaImportFilingHeader {
+  id                       String   @id @default(cuid())
+  profileId                String   @unique
+  beType                   String?
+  beNumber                 String?
+  beDate                   DateTime?
+  examinationDate          DateTime?
+  outOfChargeDate          DateTime?
+  dutyPaidDate             DateTime?
+  deliveredDate            DateTime?
+  filingType               String?
+  warehouseCode            String?
+  warehouseCustomsSiteId   String?
+  packageCount             Decimal? @db.Decimal(20, 6)
+  packageCode              String?
+  grossWeight              Decimal? @db.Decimal(20, 6)
+  netWeight                Decimal? @db.Decimal(20, 6)
+  uom                      String?
+  icegateIdSnapshot        String?
+  chaPanSnapshot           String?
+  atpNameSnapshot          String?
+  atpPanSnapshot           String?
+  importerNameSnapshot     String?
+  importerIecSnapshot      String?
+  importerBranchSerialNo   String?
+  importerCategory         String?
+  importerType             String?
+  importerClass            String?
+  importerAddressSnapshot  String?
+  importerCitySnapshot     String?
+  importerStateSnapshot    String?
+  importerPinCodeSnapshot  String?
+  importerAdCodeSnapshot   String?
+  importerOriginState      String?
+  importerGstnType         String?
+  importerTaxRegistrationNo String?
+  portOfShipment           String?
+  portOfShipmentCode       String?
+  countryOfShipment        String?
+  countryOfShipmentCode    String?
+  portOfOrigin             String?
+  portOfOriginCode         String?
+  countryOfOrigin          String?
+  countryOfOriginCode      String?
+  firstCheck               Boolean  @default(false)
+  greenChannel             Boolean  @default(false)
+  kacchaBe                 Boolean  @default(false)
+  provisionalAssessment    Boolean  @default(false)
+  highSeaSale              Boolean  @default(false)
+  exBond                   Boolean  @default(false)
+  ucrType                  String?
+  ucrNo                    String?
+  paymentMethod            String?
+  bondDetailsSnapshot      Json?
+  certificateDetailsSnapshot Json?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  profile ChaCustomsFilingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model ChaImportIgmHeader {
+  id             String   @id @default(cuid())
+  profileId      String   @unique
+  igmNo          String?
+  fileType       String?
+  igmDate        DateTime?
+  inwardDate     DateTime?
+  gatewayPort    String?
+  gatewayMode    String?
+  marksAndNos    String?
+  section48      Boolean  @default(false)
+  section48Text  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  profile    ChaCustomsFilingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  billRows   ChaImportIgmBillRow[]
+  containers ChaImportContainer[]
+}
+
+model ChaImportIgmBillRow {
+  id              String   @id @default(cuid())
+  igmHeaderId     String
+  sequenceNo      Int
+  mblNo           String?
+  noMbl           Boolean  @default(false)
+  mblDate         DateTime?
+  hblNo           String?
+  hblDate         DateTime?
+  packageCount    Decimal? @db.Decimal(20, 6)
+  packageCode     String?
+  grossWeight     Decimal? @db.Decimal(20, 6)
+  netWeight       Decimal? @db.Decimal(20, 6)
+  uom             String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  igmHeader ChaImportIgmHeader @relation(fields: [igmHeaderId], references: [id], onDelete: Cascade)
+
+  @@unique([igmHeaderId, sequenceNo])
+  @@index([igmHeaderId, sequenceNo])
+}
+
+model ChaImportContainer {
+  id              String   @id @default(cuid())
+  igmHeaderId     String
+  sequenceNo      Int
+  containerNo     String
+  containerSize   String?
+  sealNo          String?
+  packageCount    Decimal? @db.Decimal(20, 6)
+  grossWeight     Decimal? @db.Decimal(20, 6)
+  netWeight       Decimal? @db.Decimal(20, 6)
+  rawSnapshot     Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  igmHeader ChaImportIgmHeader @relation(fields: [igmHeaderId], references: [id], onDelete: Cascade)
+
+  @@unique([igmHeaderId, sequenceNo])
+  @@index([igmHeaderId, sequenceNo])
+  @@index([igmHeaderId, containerNo])
+}
+
+model ChaImportInvoice {
+  id                       String   @id @default(cuid())
+  profileId                String
+  sequenceNo               Int
+  invoiceNo                String
+  invoiceDate              DateTime?
+  natureOfPayment          String?
+  natureOfTransaction      String?
+  currency                 String?
+  exchangeRate             Decimal? @db.Decimal(30, 12)
+  invoiceValue             Decimal? @db.Decimal(28, 8)
+  invoiceValueInr          Decimal? @db.Decimal(28, 8)
+  incoTerms                String?
+  valuationMethod          String?
+  supplierNameSnapshot     String?
+  supplierAddressSnapshot  String?
+  supplierCountrySnapshot  String?
+  supplierZipCodeSnapshot  String?
+  useForAllInvoice         Boolean  @default(false)
+  useAsDefaultManufacturer Boolean  @default(false)
+  sellerSnapshot           Json?
+  brokerSnapshot           Json?
+  thirdPartySnapshot       Json?
+  aeoSnapshot              Json?
+  svbSnapshot              Json?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  profile ChaCustomsFilingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  charges ChaImportInvoiceCharge[]
+  items   ChaImportItem[]
+
+  @@unique([profileId, sequenceNo])
+  @@index([profileId, sequenceNo])
+  @@index([profileId, invoiceNo])
+}
+
+model ChaImportInvoiceCharge {
+  id             String   @id @default(cuid())
+  invoiceId      String
+  sequenceNo     Int
+  chargeType     String
+  currency       String?
+  exchangeRate   Decimal? @db.Decimal(30, 12)
+  rate           Decimal? @db.Decimal(28, 8)
+  amount         Decimal? @db.Decimal(28, 8)
+  amountInr      Decimal? @db.Decimal(28, 8)
+  isActual       Boolean  @default(false)
+  rawSnapshot    Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  invoice ChaImportInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@unique([invoiceId, sequenceNo])
+  @@index([invoiceId, sequenceNo])
+}
+
+model ChaImportItem {
+  id                      String   @id @default(cuid())
+  profileId               String
+  invoiceId               String?
+  sequenceNo              Int
+  invoiceSequenceNo       Int?
+  ritcNo                  String?
+  itemDescription         String?
+  schemeCode              String?
+  quantity                Decimal? @db.Decimal(20, 6)
+  unit                    String?
+  unitPrice               Decimal? @db.Decimal(28, 8)
+  per                     Decimal? @db.Decimal(20, 6)
+  itemAmount              Decimal? @db.Decimal(28, 8)
+  itemAmountInr           Decimal? @db.Decimal(28, 8)
+  assessableValue         Decimal? @db.Decimal(28, 8)
+  totalPmv                Decimal? @db.Decimal(28, 8)
+  endUse                  String?
+  masterSnapshot          Json?
+  dutySnapshot            Json?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  profile ChaCustomsFilingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  invoice ChaImportInvoice?       @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  @@unique([profileId, sequenceNo])
+  @@index([profileId, sequenceNo])
+  @@index([profileId, ritcNo])
+  @@index([invoiceId, sequenceNo])
+}
+
+model ChaImportDeclaration {
+  id               String   @id @default(cuid())
+  profileId        String
+  sequenceNo        Int
+  statementType     String?
+  statementCode     String?
+  statementText     String?
+  declarationType   String?
+  declarationNo     String?
+  declarationDate   DateTime?
+  invoiceSequenceNo Int?
+  itemSequenceNo    Int?
+  rawSnapshot       Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  profile ChaCustomsFilingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, sequenceNo])
+  @@index([profileId, sequenceNo])
+  @@index([profileId, invoiceSequenceNo, itemSequenceNo])
+}
+
+model ChaImportSupportingDocument {
+  id                  String   @id @default(cuid())
+  profileId           String
+  sequenceNo           Int
+  documentCode         String
+  documentNameSnapshot String?
+  irnNo                String?
+  drnNo                String?
+  issueDate            DateTime?
+  expiryDate           DateTime?
+  declarationType      String?
+  fileType             String?
+  placeOfIssue         String?
+  invoiceSequenceNo    Int?
+  itemSequenceNo       Int?
+  icegateIdSnapshot    String?
+  documentVersionId    String?
+  rawSnapshot          Json?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  profile ChaCustomsFilingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, sequenceNo])
+  @@index([profileId, sequenceNo])
+  @@index([profileId, documentCode])
+  @@index([documentVersionId])
+}
+
+model ChaExportFilingHeader {
+  id                         String   @id @default(cuid())
+  profileId                  String   @unique
+  sbType                     String?
+  sbNumber                   String?
+  sbDate                     DateTime?
+  bookingNo                  String?
+  bookingDate                DateTime?
+  examinationDate            DateTime?
+  leoDate                    DateTime?
+  icegateIdSnapshot          String?
+  chaExporterPanSnapshot     String?
+  exporterNameSnapshot       String?
+  exporterIecSnapshot        String?
+  exporterBranchSerialNo     String?
+  exporterType               String?
+  exporterClass              String?
+  exporterAddressSnapshot    String?
+  exporterCitySnapshot       String?
+  exporterStateSnapshot      String?
+  exporterPinCodeSnapshot    String?
+  exporterAdCodeSnapshot     String?
+  exporterOriginState        String?
+  exporterGstnType           String?
+  exporterTaxRegistrationNo  String?
+  consigneeNameSnapshot      String?
+  consigneeAddressSnapshot   String?
+  consigneeCountrySnapshot   String?
+  buyerNameSnapshot          String?
+  buyerCountrySnapshot       String?
+  portOfDischarge            String?
+  portOfDischargeCode        String?
+  dischargeCountry           String?
+  portOfDestination          String?
+  portOfDestinationCode      String?
+  destinationCountry         String?
+  annexureCSnapshot          Json?
+  packageSnapshot            Json?
+  containerSnapshot          Json?
+  eouSnapshot                Json?
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  profile ChaCustomsFilingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model ChaExportInvoice {
+  id                  String   @id @default(cuid())
+  profileId           String
+  sequenceNo          Int
+  invoiceNo           String
+  invoiceDate         DateTime?
+  contractNo          String?
+  natureOfPayment     String?
+  periodOfPayment     String?
+  currency            String?
+  exchangeRate        Decimal? @db.Decimal(30, 12)
+  productValue        Decimal? @db.Decimal(28, 8)
+  productValueInr     Decimal? @db.Decimal(28, 8)
+  incoTerms           String?
+  addFreight          String?
+  buyerSnapshot       Json?
+  thirdPartySnapshot  Json?
+  aeoSnapshot         Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  profile ChaCustomsFilingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  charges ChaExportInvoiceCharge[]
+  items   ChaExportItem[]
+
+  @@unique([profileId, sequenceNo])
+  @@index([profileId, sequenceNo])
+  @@index([profileId, invoiceNo])
+}
+
+model ChaExportInvoiceCharge {
+  id             String   @id @default(cuid())
+  invoiceId      String
+  sequenceNo     Int
+  chargeType     String
+  currency       String?
+  exchangeRate   Decimal? @db.Decimal(30, 12)
+  rate           Decimal? @db.Decimal(28, 8)
+  amount         Decimal? @db.Decimal(28, 8)
+  amountInr      Decimal? @db.Decimal(28, 8)
+  isDeduction    Boolean  @default(false)
+  rawSnapshot    Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  invoice ChaExportInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@unique([invoiceId, sequenceNo])
+  @@index([invoiceId, sequenceNo])
+}
+
+model ChaExportItem {
+  id                  String   @id @default(cuid())
+  profileId           String
+  invoiceId           String?
+  sequenceNo          Int
+  invoiceSequenceNo   Int?
+  productSequenceNo   Int?
+  ritcNo              String?
+  itemDescription     String?
+  schemeCode          String?
+  quantity            Decimal? @db.Decimal(20, 6)
+  unit                String?
+  unitPrice           Decimal? @db.Decimal(28, 8)
+  per                 Decimal? @db.Decimal(20, 6)
+  itemAmount          Decimal? @db.Decimal(28, 8)
+  itemAmountInr       Decimal? @db.Decimal(28, 8)
+  totalPmv            Decimal? @db.Decimal(28, 8)
+  endUse              String?
+  taxableValue        Decimal? @db.Decimal(28, 8)
+  igstRate            Decimal? @db.Decimal(28, 8)
+  igstAmount          Decimal? @db.Decimal(28, 8)
+  drawbackSnapshot    Json?
+  rodtepSnapshot      Json?
+  rosctlSnapshot      Json?
+  singleWindowSnapshot Json?
+  masterSnapshot      Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  profile ChaCustomsFilingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  invoice ChaExportInvoice?       @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  @@unique([profileId, sequenceNo])
+  @@index([profileId, sequenceNo])
+  @@index([profileId, ritcNo])
+  @@index([invoiceId, sequenceNo])
+}
+
+model ChaExportSupportingDocument {
+  id                       String   @id @default(cuid())
+  profileId                String
+  sequenceNo                Int
+  documentCode              String
+  documentNameSnapshot      String?
+  irnNo                     String?
+  drnNo                     String?
+  issueDate                 DateTime?
+  expiryDate                DateTime?
+  declarationType           String?
+  fileType                  String?
+  placeOfIssue              String?
+  invoiceSequenceNo         Int?
+  itemSequenceNo            Int?
+  icegateIdSnapshot         String?
+  issuingPartyCode          String?
+  issuingPartyNameSnapshot  String?
+  issuingPartyAddressSnapshot String?
+  beneficiaryCode           String?
+  beneficiaryNameSnapshot   String?
+  beneficiaryAddressSnapshot String?
+  documentVersionId         String?
+  rawSnapshot               Json?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  profile ChaCustomsFilingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, sequenceNo])
+  @@index([profileId, sequenceNo])
+  @@index([profileId, documentCode])
+  @@index([documentVersionId])
+}
+
+model ChaCustomsChecklistGeneration {
+  id              String                    @id @default(cuid())
+  profileId       String
+  versionNo       Int
+  status          ChaCustomsArtifactStatus  @default(GENERATED)
+  checklistId     String?
+  fileVersionId   String?
+  fileKey         String?
+  fileName        String?
+  checksum        String?
+  generatedById   String?
+  generatedAt     DateTime                  @default(now())
+  supersededAt    DateTime?
+  metadata        Json?
+
+  profile ChaCustomsFilingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, versionNo])
+  @@index([profileId, generatedAt])
+  @@index([profileId, status])
+}
+
+model ChaCustomsFlatFileGeneration {
+  id                  String                   @id @default(cuid())
+  profileId           String
+  versionNo           Int
+  status              ChaCustomsArtifactStatus @default(GENERATED)
+  fileKey             String?
+  fileName            String?
+  checksum            String
+  contentHash         String
+  generatedById       String?
+  generatedAt         DateTime                 @default(now())
+  signedAt            DateTime?
+  signedById          String?
+  signingStatus       String?
+  signatureReference  String?
+  signatureMetadata   Json?
+  supersededAt        DateTime?
+  metadata            Json?
+
+  profile     ChaCustomsFilingProfile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  submissions ChaCustomsExternalSubmission[]
+
+  @@unique([profileId, versionNo])
+  @@index([profileId, generatedAt])
+  @@index([profileId, status])
+  @@index([checksum])
+}
+
+model ChaCustomsExternalSubmission {
+  id                 String                              @id @default(cuid())
+  profileId          String
+  flatFileGenerationId String?
+  idempotencyKey     String                              @unique
+  submissionMode     String                              @default("MANUAL")
+  status             ChaCustomsExternalSubmissionStatus  @default(PENDING)
+  submittedAt        DateTime?
+  submittedById      String?
+  acknowledgedAt     DateTime?
+  processedAt        DateTime?
+  retryCount         Int                                 @default(0)
+  nextRetryAt        DateTime?
+  lastErrorCode      String?
+  lastSafeMessage    String?
+  requestRedactedSnapshot Json?
+  responseRedactedSnapshot Json?
+  createdAt          DateTime                            @default(now())
+  updatedAt          DateTime                            @updatedAt
+
+  profile            ChaCustomsFilingProfile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  flatFileGeneration ChaCustomsFlatFileGeneration? @relation(fields: [flatFileGenerationId], references: [id], onDelete: SetNull)
+  events             ChaCustomsExternalEvent[]
+
+  @@index([profileId, createdAt])
+  @@index([profileId, status])
+  @@index([flatFileGenerationId])
+}
+
+model ChaCustomsExternalEvent {
+  id                       String                       @id @default(cuid())
+  submissionId             String
+  sequenceNo               Int
+  eventKind                ChaCustomsExternalEventKind
+  externalStatus           String?
+  safeMessage              String?
+  requestRedactedSnapshot  Json?
+  responseRedactedSnapshot Json?
+  occurredAt               DateTime                     @default(now())
+  recordedById             String?
+  retryAfter               DateTime?
+  metadata                 Json?
+
+  submission ChaCustomsExternalSubmission @relation(fields: [submissionId], references: [id], onDelete: Restrict)
+
+  @@unique([submissionId, sequenceNo])
+  @@index([submissionId, occurredAt])
+  @@index([eventKind, occurredAt])
+}
+
 model ChaCustomerAdvance {
   id                String                      @id @default(cuid())
   jobId             String                      @unique
@@ -7014,6 +7684,583 @@ model ChaAuditLog {
 
   @@index([orgId, timestamp])
   @@index([jobId, timestamp])
+}
+
+enum ChaCustomsMasterType {
+  RITC_TARIFF
+  CESS_RATE
+  RODTEP
+  RODTEP_EOU
+  ROSCTL
+  DRAWBACK
+  SCHEME_CODE
+  SINGLE_WINDOW_CTH
+  AIDC
+  BCD
+  MASTER_NOTIFICATION
+  SUPPORTING_DOCUMENT
+  UOM
+}
+
+enum ChaCustomsMasterSourceType {
+  LEGACY_IMPORT_MASTER
+  XLSX_CSV_UPLOAD
+  MANUAL_ADMINISTRATION
+  VERIFIED_EXTERNAL_INTEGRATION
+  CONTROLLED_SEED_FIXTURE
+}
+
+enum ChaCustomsMasterImportStatus {
+  RECEIVED
+  VALIDATING
+  DRY_RUN_READY
+  IMPORTING
+  COMPLETED
+  COMPLETED_WITH_REJECTIONS
+  FAILED
+  ROLLED_BACK
+  SUPERSEDED
+}
+
+enum ChaCustomsMasterRecordStatus {
+  ACTIVE
+  INACTIVE
+  SUPERSEDED
+}
+
+enum ChaCustomsMasterValidationSeverity {
+  INFO
+  WARNING
+  ERROR
+}
+
+model ChaCustomsMasterImportRun {
+  id                    String                         @id @default(cuid())
+  orgId                 String
+  masterType            ChaCustomsMasterType
+  sourceType            ChaCustomsMasterSourceType
+  sourceName            String
+  sourceReference       String?
+  sourcePublicationDate DateTime?
+  sourceEffectiveDate   DateTime?
+  datasetVersion        String
+  fileChecksum          String?
+  status                ChaCustomsMasterImportStatus   @default(RECEIVED)
+  receivedRowCount      Int                            @default(0)
+  validRowCount         Int                            @default(0)
+  insertedRowCount      Int                            @default(0)
+  updatedRowCount       Int                            @default(0)
+  unchangedRowCount     Int                            @default(0)
+  rejectedRowCount      Int                            @default(0)
+  importedById          String?
+  startedAt             DateTime                       @default(now())
+  completedAt           DateTime?
+  supersededByRunId     String?
+  supersedesRunId       String?
+  rolledBackAt          DateTime?
+  rollbackReason        String?
+  sourceMetadata        Json?
+  createdAt             DateTime                       @default(now())
+  updatedAt             DateTime                       @updatedAt
+
+  org                  Organisation                      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  validationErrors     ChaCustomsMasterValidationError[]
+  ritcTariffs          ChaRitcTariffMaster[]
+  cessRates            ChaCessRateMaster[]
+  rodtepRates          ChaRodtepRateMaster[]
+  rodtepEouRates       ChaRodtepEouRateMaster[]
+  rosctlRates          ChaRosctlRateMaster[]
+  drawbackRates        ChaDrawbackRateMaster[]
+  schemeCodes          ChaSchemeCodeMaster[]
+  singleWindowCthRows  ChaSingleWindowCthMaster[]
+  aidcRates            ChaAidcRateMaster[]
+  bcdRates             ChaBcdRateMaster[]
+  notifications        ChaCustomsNotificationMaster[]
+  supportingDocuments  ChaSupportingDocumentMaster[]
+  uoms                 ChaUomMaster[]
+
+  @@unique([orgId, masterType, datasetVersion])
+  @@index([orgId, masterType, status])
+  @@index([orgId, sourceEffectiveDate])
+  @@index([orgId, sourcePublicationDate])
+  @@index([status, startedAt])
+}
+
+model ChaCustomsMasterValidationError {
+  id          String                              @id @default(cuid())
+  orgId       String
+  importRunId String
+  rowNumber   Int?
+  field       String?
+  code        String
+  message     String
+  severity    ChaCustomsMasterValidationSeverity @default(ERROR)
+  rawValue    String?
+  createdAt   DateTime                            @default(now())
+
+  org       Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  importRun ChaCustomsMasterImportRun @relation(fields: [importRunId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, importRunId])
+  @@index([orgId, code])
+  @@index([importRunId, rowNumber])
+}
+
+model ChaRitcTariffMaster {
+  id                    String                       @id @default(cuid())
+  orgId                 String
+  sourceRunId           String
+  datasetVersion        String
+  tariffItem            String
+  description           String
+  uom                   String?
+  importPolicy          String?
+  importPolicyCondition String?
+  exportPolicy          String?
+  exportPolicyCondition String?
+  sims                  Boolean                      @default(false)
+  nfmims                Boolean                      @default(false)
+  pims                  Boolean                      @default(false)
+  bis                   Boolean                      @default(false)
+  tobacco               Boolean                      @default(false)
+  status                ChaCustomsMasterRecordStatus @default(ACTIVE)
+  effectiveFrom         DateTime?
+  effectiveTo           DateTime?
+  rawSnapshot           Json?
+  createdById           String?
+  updatedById           String?
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+
+  org       Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  sourceRun ChaCustomsMasterImportRun @relation(fields: [sourceRunId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, tariffItem, datasetVersion])
+  @@index([orgId, tariffItem])
+  @@index([orgId, status])
+  @@index([orgId, effectiveFrom, effectiveTo])
+  @@index([orgId, description])
+  @@index([sourceRunId])
+}
+
+model ChaCessRateMaster {
+  id                String                       @id @default(cuid())
+  orgId             String
+  sourceRunId       String
+  datasetVersion    String
+  ritcCode          String
+  cessSerialNo      String
+  cessFlag          String?
+  tarValue          Decimal?                     @db.Decimal(28, 8)
+  tarAccountingUnit String?
+  cessRateAdvance   Decimal?                     @db.Decimal(28, 8)
+  cessValue         Decimal?                     @db.Decimal(28, 8)
+  cessAccountingUnit String?
+  status            ChaCustomsMasterRecordStatus @default(ACTIVE)
+  effectiveFrom     DateTime?
+  effectiveTo       DateTime?
+  rawSnapshot       Json?
+  createdById       String?
+  updatedById       String?
+  createdAt         DateTime                     @default(now())
+  updatedAt         DateTime                     @updatedAt
+
+  org       Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  sourceRun ChaCustomsMasterImportRun @relation(fields: [sourceRunId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, ritcCode, cessSerialNo, datasetVersion])
+  @@index([orgId, ritcCode])
+  @@index([orgId, status])
+  @@index([orgId, effectiveFrom, effectiveTo])
+  @@index([sourceRunId])
+}
+
+model ChaRodtepRateMaster {
+  id             String                       @id @default(cuid())
+  orgId          String
+  sourceRunId    String
+  datasetVersion String
+  ritcNo         String
+  description    String?
+  rate           Decimal?                     @db.Decimal(28, 8)
+  ratePer        Decimal?                     @db.Decimal(28, 8)
+  uqc            String?
+  capRate        Decimal?                     @db.Decimal(28, 8)
+  status         ChaCustomsMasterRecordStatus @default(ACTIVE)
+  effectiveFrom  DateTime?
+  effectiveTo    DateTime?
+  rawSnapshot    Json?
+  createdById    String?
+  updatedById    String?
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+
+  org       Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  sourceRun ChaCustomsMasterImportRun @relation(fields: [sourceRunId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, ritcNo, datasetVersion])
+  @@index([orgId, ritcNo])
+  @@index([orgId, status])
+  @@index([orgId, effectiveFrom, effectiveTo])
+  @@index([orgId, description])
+  @@index([sourceRunId])
+}
+
+model ChaRodtepEouRateMaster {
+  id             String                       @id @default(cuid())
+  orgId          String
+  sourceRunId    String
+  datasetVersion String
+  ritcNo         String
+  description    String?
+  rate           Decimal?                     @db.Decimal(28, 8)
+  ratePer        Decimal?                     @db.Decimal(28, 8)
+  uqc            String?
+  capRate        Decimal?                     @db.Decimal(28, 8)
+  status         ChaCustomsMasterRecordStatus @default(ACTIVE)
+  effectiveFrom  DateTime?
+  effectiveTo    DateTime?
+  rawSnapshot    Json?
+  createdById    String?
+  updatedById    String?
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+
+  org       Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  sourceRun ChaCustomsMasterImportRun @relation(fields: [sourceRunId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, ritcNo, datasetVersion])
+  @@index([orgId, ritcNo])
+  @@index([orgId, status])
+  @@index([orgId, effectiveFrom, effectiveTo])
+  @@index([orgId, description])
+  @@index([sourceRunId])
+}
+
+model ChaRosctlRateMaster {
+  id             String                       @id @default(cuid())
+  orgId          String
+  sourceRunId    String
+  datasetVersion String
+  rosctlCode     String
+  description    String?
+  percentage     Decimal?                     @db.Decimal(28, 8)
+  rateAmount     Decimal?                     @db.Decimal(28, 8)
+  accountingUnit String?
+  schedule       String
+  status         ChaCustomsMasterRecordStatus @default(ACTIVE)
+  effectiveFrom  DateTime?
+  effectiveTo    DateTime?
+  rawSnapshot    Json?
+  createdById    String?
+  updatedById    String?
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+
+  org       Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  sourceRun ChaCustomsMasterImportRun @relation(fields: [sourceRunId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, rosctlCode, schedule, datasetVersion])
+  @@index([orgId, rosctlCode])
+  @@index([orgId, status])
+  @@index([orgId, effectiveFrom, effectiveTo])
+  @@index([orgId, description])
+  @@index([sourceRunId])
+}
+
+model ChaDrawbackRateMaster {
+  id              String                       @id @default(cuid())
+  orgId           String
+  sourceRunId     String
+  datasetVersion  String
+  dbkHeader       String?
+  dbkSerialNo     String
+  description     String?
+  rateAdvance     Decimal?                     @db.Decimal(28, 8)
+  specificValue   Decimal?                     @db.Decimal(28, 8)
+  accountingUnit  String?
+  perUnit         String?
+  status          ChaCustomsMasterRecordStatus @default(ACTIVE)
+  effectiveFrom   DateTime?
+  effectiveTo     DateTime?
+  rawSnapshot     Json?
+  createdById     String?
+  updatedById     String?
+  createdAt       DateTime                     @default(now())
+  updatedAt       DateTime                     @updatedAt
+
+  org       Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  sourceRun ChaCustomsMasterImportRun @relation(fields: [sourceRunId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, dbkSerialNo, datasetVersion])
+  @@index([orgId, dbkSerialNo])
+  @@index([orgId, status])
+  @@index([orgId, effectiveFrom, effectiveTo])
+  @@index([orgId, description])
+  @@index([sourceRunId])
+}
+
+model ChaSchemeCodeMaster {
+  id                   String                       @id @default(cuid())
+  orgId                String
+  sourceRunId          String
+  datasetVersion       String
+  eximCode             String
+  exportSchemeName     String?
+  importSchemeName     String?
+  schemeType           String                       @default("GENERAL")
+  applicableExpSchemes String?
+  description          String?
+  expLicense           Boolean                      @default(false)
+  impLicense           Boolean                      @default(false)
+  licenseDepb          Boolean                      @default(false)
+  expEou               Boolean                      @default(false)
+  expDfiaLicense       Boolean                      @default(false)
+  expDrawback          Boolean                      @default(false)
+  status               ChaCustomsMasterRecordStatus @default(ACTIVE)
+  effectiveFrom        DateTime?
+  effectiveTo          DateTime?
+  rawSnapshot          Json?
+  createdById          String?
+  updatedById          String?
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+
+  org       Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  sourceRun ChaCustomsMasterImportRun @relation(fields: [sourceRunId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, eximCode, schemeType, datasetVersion])
+  @@index([orgId, eximCode])
+  @@index([orgId, status])
+  @@index([orgId, effectiveFrom, effectiveTo])
+  @@index([orgId, description])
+  @@index([sourceRunId])
+}
+
+model ChaSingleWindowCthMaster {
+  id             String                       @id @default(cuid())
+  orgId          String
+  sourceRunId    String
+  datasetVersion String
+  fromCth        String
+  toCth          String?
+  agencyName     String?
+  agencyCode     String
+  effectiveFrom  DateTime?
+  effectiveTo    DateTime?
+  remarks        String?
+  status         ChaCustomsMasterRecordStatus @default(ACTIVE)
+  rawSnapshot    Json?
+  createdById    String?
+  updatedById    String?
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+
+  org       Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  sourceRun ChaCustomsMasterImportRun @relation(fields: [sourceRunId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, fromCth, agencyCode, datasetVersion])
+  @@index([orgId, fromCth])
+  @@index([orgId, status])
+  @@index([orgId, effectiveFrom, effectiveTo])
+  @@index([orgId, agencyCode])
+  @@index([sourceRunId])
+}
+
+model ChaAidcRateMaster {
+  id               String                       @id @default(cuid())
+  orgId            String
+  sourceRunId      String
+  datasetVersion   String
+  notificationType String
+  notificationNo   String
+  notificationDate DateTime?
+  serialNo         String
+  cth              String
+  itemDescription  String?
+  rate             Decimal?                     @db.Decimal(28, 8)
+  amount           Decimal?                     @db.Decimal(28, 8)
+  uqc              String?
+  flag             String?
+  condition        String?
+  cvdRate          Decimal?                     @db.Decimal(28, 8)
+  cvdAmount        Decimal?                     @db.Decimal(28, 8)
+  cvdUqc           String?
+  cvdFlag          String?
+  acdFlag          String?
+  adFlag           String?
+  status           ChaCustomsMasterRecordStatus @default(ACTIVE)
+  effectiveFrom    DateTime?
+  effectiveTo      DateTime?
+  rawSnapshot      Json?
+  createdById      String?
+  updatedById      String?
+  createdAt        DateTime                     @default(now())
+  updatedAt        DateTime                     @updatedAt
+
+  org       Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  sourceRun ChaCustomsMasterImportRun @relation(fields: [sourceRunId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, notificationNo, serialNo, cth, datasetVersion])
+  @@index([orgId, cth])
+  @@index([orgId, notificationNo, serialNo])
+  @@index([orgId, status])
+  @@index([orgId, effectiveFrom, effectiveTo])
+  @@index([orgId, itemDescription])
+  @@index([sourceRunId])
+}
+
+model ChaBcdRateMaster {
+  id              String                       @id @default(cuid())
+  orgId           String
+  sourceRunId     String
+  datasetVersion  String
+  cth             String
+  itemDescription String?
+  bcdFlag         String?
+  bcdRate         Decimal?                     @db.Decimal(28, 8)
+  amount          Decimal?                     @db.Decimal(28, 8)
+  uqc             String?
+  preferential    String?
+  pFlag           String?
+  pRate           Decimal?                     @db.Decimal(28, 8)
+  pAmount         Decimal?                     @db.Decimal(28, 8)
+  pUqc            String?
+  sUqc            String?
+  status          ChaCustomsMasterRecordStatus @default(ACTIVE)
+  effectiveFrom   DateTime?
+  effectiveTo     DateTime?
+  rawSnapshot     Json?
+  createdById     String?
+  updatedById     String?
+  createdAt       DateTime                     @default(now())
+  updatedAt       DateTime                     @updatedAt
+
+  org       Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  sourceRun ChaCustomsMasterImportRun @relation(fields: [sourceRunId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, cth, datasetVersion])
+  @@index([orgId, cth])
+  @@index([orgId, status])
+  @@index([orgId, effectiveFrom, effectiveTo])
+  @@index([orgId, itemDescription])
+  @@index([sourceRunId])
+}
+
+model ChaCustomsNotificationMaster {
+  id                     String                       @id @default(cuid())
+  orgId                  String
+  sourceRunId            String
+  datasetVersion         String
+  notificationNo         String
+  notificationType       String
+  notificationDate       DateTime?
+  serialNo               String
+  subSerialNo            String                       @default("")
+  pflg                   String?
+  category               String?
+  quota                  String?
+  port                   String?
+  countryFta             String?
+  cth                    String?
+  listItem               String?
+  itemDescription        String?
+  rate                   Decimal?                     @db.Decimal(28, 8)
+  amount                 Decimal?                     @db.Decimal(28, 8)
+  uqc                    String?
+  flag                   String?
+  condition              String?
+  cvdRate                Decimal?                     @db.Decimal(28, 8)
+  cvdAmount              Decimal?                     @db.Decimal(28, 8)
+  cvdUqc                 String?
+  cvdFlag                String?
+  amendNotification      String?
+  amendYear              String?
+  amendSerialNo          String?
+  adFlag                 String?
+  preferentialDutyFlag   String?
+  bcdAmount              Decimal?                     @db.Decimal(28, 8)
+  bcdUqc                 String?
+  bondCode               String?
+  schemeCode             String?
+  drawbackType           String?
+  effectiveFrom          DateTime?
+  effectiveTo            DateTime?
+  status                 ChaCustomsMasterRecordStatus @default(ACTIVE)
+  rawSnapshot            Json?
+  createdById            String?
+  updatedById            String?
+  createdAt              DateTime                     @default(now())
+  updatedAt              DateTime                     @updatedAt
+
+  org       Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  sourceRun ChaCustomsMasterImportRun @relation(fields: [sourceRunId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, notificationNo, notificationType, serialNo, subSerialNo, datasetVersion])
+  @@index([orgId, notificationNo, serialNo])
+  @@index([orgId, cth])
+  @@index([orgId, status])
+  @@index([orgId, effectiveFrom, effectiveTo])
+  @@index([orgId, itemDescription])
+  @@index([sourceRunId])
+}
+
+model ChaSupportingDocumentMaster {
+  id                  String                       @id @default(cuid())
+  orgId               String
+  sourceRunId         String
+  datasetVersion      String
+  documentCode        String
+  documentName        String
+  invoiceSerialNo     Int?
+  itemSerialNo        Int?
+  documentDescription String?
+  status              ChaCustomsMasterRecordStatus @default(ACTIVE)
+  effectiveFrom       DateTime?
+  effectiveTo         DateTime?
+  rawSnapshot         Json?
+  createdById         String?
+  updatedById         String?
+  createdAt           DateTime                     @default(now())
+  updatedAt           DateTime                     @updatedAt
+
+  org       Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  sourceRun ChaCustomsMasterImportRun @relation(fields: [sourceRunId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, documentCode, invoiceSerialNo, itemSerialNo, datasetVersion])
+  @@index([orgId, documentCode])
+  @@index([orgId, status])
+  @@index([orgId, effectiveFrom, effectiveTo])
+  @@index([orgId, documentName])
+  @@index([sourceRunId])
+}
+
+model ChaUomMaster {
+  id                  String                       @id @default(cuid())
+  orgId               String
+  sourceRunId         String
+  datasetVersion      String
+  quantityCode        String
+  quantityDescription String
+  quantityType        String?
+  status              ChaCustomsMasterRecordStatus @default(ACTIVE)
+  effectiveFrom       DateTime?
+  effectiveTo         DateTime?
+  rawSnapshot         Json?
+  createdById         String?
+  updatedById         String?
+  createdAt           DateTime                     @default(now())
+  updatedAt           DateTime                     @updatedAt
+
+  org       Organisation              @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  sourceRun ChaCustomsMasterImportRun @relation(fields: [sourceRunId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, quantityCode, datasetVersion])
+  @@index([orgId, quantityCode])
+  @@index([orgId, status])
+  @@index([orgId, effectiveFrom, effectiveTo])
+  @@index([orgId, quantityDescription])
+  @@index([sourceRunId])
 }
 
 model CustomerDocumentSubmission {

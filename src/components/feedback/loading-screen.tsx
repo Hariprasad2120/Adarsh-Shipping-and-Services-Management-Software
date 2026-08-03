@@ -185,8 +185,7 @@ const containerStyle = (
   alignItems: "center",
   justifyContent: "center",
   zIndex: 99999,
-  fontFamily:
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  fontFamily: "var(--mn-font-sans)",
   color: "#FFFFFF",
   overflow: "hidden",
   boxSizing: "border-box",
