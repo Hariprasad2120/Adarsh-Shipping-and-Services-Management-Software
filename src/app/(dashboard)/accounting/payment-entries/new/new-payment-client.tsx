@@ -40,6 +40,9 @@ interface NewPaymentClientProps {
   salesInvoices: any[];
   purchaseInvoices: any[];
   initialPaymentType?: "RECEIVE" | "PAY";
+  initialPartyId?: string;
+  initialAmount?: string;
+  initialAllocations?: Record<string, string>;
 }
 
 export function NewPaymentClient({
@@ -51,6 +54,9 @@ export function NewPaymentClient({
   salesInvoices,
   purchaseInvoices,
   initialPaymentType = "RECEIVE",
+  initialPartyId = "",
+  initialAmount = "",
+  initialAllocations = {},
 }: NewPaymentClientProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
@@ -59,9 +65,9 @@ export function NewPaymentClient({
   const [partyType, setPartyType] = useState<"CUSTOMER" | "SUPPLIER">(
     initialPaymentType === "PAY" ? "SUPPLIER" : "CUSTOMER",
   );
-  const [partyId, setPartyId] = useState("");
+  const [partyId, setPartyId] = useState(initialPartyId);
   const [postingDate, setPostingDate] = useState(new Date().toISOString().split("T")[0]);
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(initialAmount);
   const [paidFromAccountId, setPaidFromAccountId] = useState(
     initialPaymentType === "PAY"
       ? bankAccounts[0]?.id || ""
@@ -77,7 +83,9 @@ export function NewPaymentClient({
   const [referenceNo, setReferenceNo] = useState("");
   const [remarks, setRemarks] = useState("");
   const [branchId, setBranchId] = useState("");
-  const [allocations, setAllocations] = useState<Record<string, string>>({});
+  const [allocations, setAllocations] = useState<Record<string, string>>(
+    initialAllocations,
+  );
   const [submitIntent, setSubmitIntent] = useState<"draft" | "approval">(
     "draft",
   );

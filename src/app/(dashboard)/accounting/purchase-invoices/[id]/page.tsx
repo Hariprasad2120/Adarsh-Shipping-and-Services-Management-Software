@@ -17,7 +17,7 @@ interface PurchaseInvoiceDetailPageProps {
 
 export default async function PurchaseInvoiceDetailPage({ params }: PurchaseInvoiceDetailPageProps) {
   const { id } = await params;
-  const { orgId } = await requireAccountingRouteAccess(
+  const { orgId, caps } = await requireAccountingRouteAccess(
     `/accounting/purchase-invoices/${id}`,
     [
       "accounting.document.read",
@@ -80,9 +80,18 @@ export default async function PurchaseInvoiceDetailPage({ params }: PurchaseInvo
       <AccountingRoutePageHeader
         title={`Invoice ${invoice.invoiceNumber}`}
         actions={
-          <AccountingActionLink href="/accounting/purchase-invoices">
-            Back to purchase invoices
-          </AccountingActionLink>
+          <div className="flex gap-2">
+            {caps["accounting.payment.create"] ? (
+              <AccountingActionLink
+                href={`/accounting/payment-entries/new?type=PAY&partyId=${invoice.supplierId}&invoiceId=${invoice.id}`}
+              >
+                Record vendor payment
+              </AccountingActionLink>
+            ) : null}
+            <AccountingActionLink href="/accounting/purchase-invoices">
+              Back to purchase invoices
+            </AccountingActionLink>
+          </div>
         }
       />
       <PurchaseInvoiceDetailClient invoice={serializedInvoice} />

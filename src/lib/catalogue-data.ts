@@ -33,6 +33,13 @@ export interface CatalogueModule {
   integrations: string[];
   ctaLabel: string;
   lifecycleGuide: LifecycleGuide;
+  setupGuide?: {
+    summary: string;
+    prerequisites: string[];
+    setupSteps: string[];
+    firstMonthRunbook: string[];
+    workingChecks: string[];
+  };
   status: "Implemented" | "Partial" | "Planned";
 }
 
@@ -677,6 +684,35 @@ export const modules: CatalogueModule[] = [
           usage: "Accounting posting records financial recognition only; external bank transfer execution is a separate unsupported state unless evidence exists.",
           mutations: ["AccountingPayment PENDING_APPROVAL", "AccountingPaymentAllocation", "AccountingIntegrationInbox PENDING"]
         }
+      ]
+    },
+    setupGuide: {
+      summary: "The Monolith Accounting module now supports a dedicated July 2026 demo bootstrap, but the production setup path still starts with organization control, account mappings, legal-entity scope, and an explicit maker-checker operating model.",
+      prerequisites: [
+        "Create the organisation in Monolith setup, then confirm at least one active admin user and one additional active user who can act as an independent Accounting checker.",
+        "From HRMS or Admin roles, confirm branch, reporting, and access structure first so Finance users can be assigned explicit Accounting permissions instead of relying on broad legacy access.",
+        "Grant Accounting users the exact permissions they need: settings management for configuration, prepare permissions for drafts, approve permissions for checker review, and posting permissions for canonical release.",
+        "Open `/accounting/settings` and seed the standard chart of accounts so default bank, receivable, payable, sales, purchase, salary, tax, and depreciation mappings are available before any transaction draft is created.",
+        "Open `/accounting/configuration/admin` and verify the legal entity, INR functional currency, fiscal year, accounting periods, document policies, approval policies, number series, tax profile, tax rule, and counterparty scope records are active for the target posting dates."
+      ],
+      setupSteps: [
+        "Step 1: In Admin → Roles, create or verify an Accounting Full Access role for Finance users, then assign separate maker and approver users so the checker is never the same identity that prepared the draft.",
+        "Step 2: In Accounting → Settings, confirm the default bank, cash, receivable, payable, sales, purchase, tax, salary, and depreciation mappings point to active posting ledgers rather than group accounts.",
+        "Step 3: In Accounting → Configuration Admin, review organization profile, legal entity, tax registration, document policy, number series, approval policy, and period state. The module is intentionally fail-closed when one of these controls is missing.",
+        "Step 4: In Vendor Master and customer-facing masters, create or validate counterparties and let Monolith maintain the linked customer/vendor accounting profiles and legal-entity scope needed for invoices and payments.",
+        "Step 5: Begin with one draft journal, one sales invoice, one purchase invoice, one customer receipt, and one vendor payment. Prepare each record first, then approve it separately from the Approval Inbox to confirm the operating chain works end to end.",
+        "Step 6: Use General Ledger, Trial Balance, Profit & Loss, Balance Sheet, Banking, and document detail routes to verify that posted facts, balances, and lineage are visible after the canonical engine completes each request."
+      ],
+      firstMonthRunbook: [
+        "Use Admin → Settings → Seed July 2026 Accounting demo to generate a controlled one-month walkthrough inside the current organisation. The demo creates dedicated maker and approver users, a demo customer and vendor, bank metadata, posted invoices, posted payments, and posted manual journals.",
+        "The July demo intentionally exercises the core workflow on explicit past dates: opening capital on July 1, 2026; a sales invoice on July 3, 2026; a purchase invoice on July 6, 2026; customer receipt and vendor payment during mid-July 2026; and closing-style accrual journals at the end of July 2026.",
+        "After seeding, review `/accounting/approvals`, `/accounting/journal-entries`, `/accounting/sales-invoices`, `/accounting/purchase-invoices`, `/accounting/payment-entries`, `/accounting/banking`, `/accounting/trial-balance`, and `/accounting/general-ledger` to confirm the operational flow and posted outputs.",
+        "If the seed is rerun, Monolith reuses the dedicated July 2026 demo identities and resumes any partially prepared draft instead of blindly duplicating posted records."
+      ],
+      workingChecks: [
+        "A healthy setup should show posted canonical documents for the July 2026 demo, posted payments for both receivable and payable flows, and posted manual journals for opening capital, payroll accrual, and bank charges.",
+        "The ledger must remain balanced for July 2026, and the Admin Settings demo summary should confirm debit and credit totals match for the posted July slice.",
+        "If a draft cannot progress, first inspect Accounting Configuration Admin for policy or scope gaps before assuming it is only a permission issue. The module blocks missing legal entity, policy, counterparty scope, or period configuration by design."
       ]
     }
   },

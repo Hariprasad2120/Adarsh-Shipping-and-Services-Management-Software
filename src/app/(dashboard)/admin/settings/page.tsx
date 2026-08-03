@@ -10,20 +10,25 @@ export default async function AdminSettingsPage() {
   if (!session) redirect("/login");
   const allowed = await can(session.user.id, "admin.org.manage");
   if (!allowed) redirect("/dashboard");
+  const canManageAccountingDemo = await can(
+    session.user.id,
+    "accounting.settings.manage",
+  );
 
   const settings = await getAppraisalSettings(session.user.orgId!);
 
   return (
     <AdminPanel>
       <AdminPanelHeader
-        eyebrow="Review policy"
-        title="Reviewer availability and weighting"
-        description="Set the response deadline and relative influence of each reviewer role."
+        eyebrow="Organisation settings"
+        title="Appraisal controls and Accounting demo"
+        description="Maintain reviewer policy and trigger a dedicated July 2026 Accounting demo dataset from one admin workspace."
       />
       <div className="mnx-admin-panel-body">
         <SettingsClient
           initialDays={settings.availabilityDeadlineDays}
           initialWeights={settings.reviewerRoleWeights}
+          canManageAccountingDemo={canManageAccountingDemo}
         />
       </div>
     </AdminPanel>

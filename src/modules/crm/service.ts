@@ -645,6 +645,7 @@ export async function listInvoices(
     skip: filters?.skip,
     include: {
       account: { select: { id: true, name: true } },
+      vendor: { select: { id: true, name: true } },
       owner: { select: { id: true, name: true } },
     },
   });

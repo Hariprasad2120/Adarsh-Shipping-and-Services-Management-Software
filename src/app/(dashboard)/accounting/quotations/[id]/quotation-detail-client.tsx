@@ -10,6 +10,7 @@ import {
   acceptQuotationAction,
   approveQuotationAction,
   cancelQuotationAction,
+  convertQuotationToSalesOrderAction,
   convertQuotationToInvoiceAction,
   declineQuotationAction,
   duplicateQuotationAction,
@@ -24,16 +25,18 @@ import {
 } from "@/modules/accounting/operational-helpers";
 import {
   AccountingAction,
-  AccountingActionLink,
   AccountingAlert,
   AccountingDetail,
   AccountingDetailList,
+  AccountingDraftEditLink,
   AccountingEmptyTableRow,
   AccountingField,
   AccountingInput,
   AccountingMetric,
   AccountingMetrics,
   AccountingMoney,
+  AccountingActionLink,
+  AccountingSelect,
   AccountingSection,
   AccountingStatus,
   AccountingTable,
@@ -61,6 +64,7 @@ export function QuotationDetailClient({
     canDecide: boolean;
     canCancel: boolean;
     canConvert: boolean;
+    canConvertToSalesOrder: boolean;
     canCreate: boolean;
   };
   quotation: any;
@@ -69,6 +73,7 @@ export function QuotationDetailClient({
 
   const router = useRouter();
   const [isBusy, setIsBusy] = useState<string | null>(null);
+  const [deliveryMode, setDeliveryMode] = useState<"EMAIL" | "PORTAL" | "MANUAL">("EMAIL");
   const [quantitiesByLineId, setQuantitiesByLineId] = useState<Record<string, string>>(
     () =>
       Object.fromEntries(
@@ -144,10 +149,16 @@ export function QuotationDetailClient({
     await runAction("send", async () => {
       const result = await sendQuotationAction(quotation.id, {
         expectedVersion: quotation.rowVersion,
-        deliveryMode: "EMAIL",
+        deliveryMode,
       });
       if (!result.ok) throw new Error(result.error || "Quotation could not be sent");
-      toast.success("Quotation queued for sending");
+      toast.success(
+        deliveryMode === "PORTAL"
+          ? "Quotation published to the customer portal"
+          : deliveryMode === "MANUAL"
+            ? "Manual quotation dispatch recorded"
+            : "Quotation queued for email delivery",
+      );
     });
   }
 
@@ -208,6 +219,25 @@ export function QuotationDetailClient({
     });
   }
 
+  async function convertQuotationToSalesOrder() {
+    const requestedLines = Object.fromEntries(
+      remainingTotals
+        .map((line: QuotationLine) => [line.id, quantitiesByLineId[line.id] ?? "0"] as const)
+        .filter(([, value]: readonly [string, string]) => compareDecimalStrings(String(value || "0"), "0") > 0),
+    );
+    await runAction("convert-sales-order", async () => {
+      const result = await convertQuotationToSalesOrderAction(quotation.id, {
+        expectedVersion: quotation.rowVersion,
+        quantitiesByLineId: requestedLines,
+      });
+      if (!result.ok) {
+        throw new Error(result.error || "Quotation could not be converted to a sales order");
+      }
+      toast.success("Sales order created from quotation");
+      router.push("/accounting/sales-orders");
+    });
+  }
+
   const canSubmit =
     caps.canSubmit &&
     quotation.status === "DRAFT" &&
@@ -224,6 +254,12 @@ export function QuotationDetailClient({
     ["DRAFT", "PENDING_APPROVAL", "SENT"].includes(quotation.status);
   const canConvert =
     caps.canConvert &&
+    ["ACCEPTED", "PARTIALLY_CONVERTED"].includes(quotation.status) &&
+    remainingTotals.some(
+      (line: QuotationLine) => compareDecimalStrings(line.remainingQuantity, "0") > 0,
+    );
+  const canConvertToSalesOrder =
+    caps.canConvertToSalesOrder &&
     ["ACCEPTED", "PARTIALLY_CONVERTED"].includes(quotation.status) &&
     remainingTotals.some(
       (line: QuotationLine) => compareDecimalStrings(line.remainingQuantity, "0") > 0,
@@ -249,6 +285,11 @@ export function QuotationDetailClient({
                 Duplicate
               </AccountingAction>
             ) : null}
+            {caps.canEdit && quotation.status === "DRAFT" ? (
+              <AccountingDraftEditLink href={`/accounting/quotations?edit=${quotation.id}`}>
+                Edit draft
+              </AccountingDraftEditLink>
+            ) : null}
             {canSubmit ? (
               <AccountingAction disabled={isBusy === "submit"} onClick={() => void submitForApproval()}>
                 {isBusy === "submit" ? <Loader2 className="animate-spin" size={16} /> : null}
@@ -272,10 +313,25 @@ export function QuotationDetailClient({
               </>
             ) : null}
             {canSend ? (
-              <AccountingAction disabled={isBusy === "send"} onClick={() => void sendQuotation()}>
-                {isBusy === "send" ? <Loader2 className="animate-spin" size={16} /> : null}
-                Send
-              </AccountingAction>
+              <>
+                <AccountingField label="Delivery mode">
+                  <AccountingSelect
+                    disabled={isBusy === "send"}
+                    value={deliveryMode}
+                    onChange={(event) =>
+                      setDeliveryMode(event.target.value as "EMAIL" | "PORTAL" | "MANUAL")
+                    }
+                  >
+                    <option value="EMAIL">Email</option>
+                    <option value="PORTAL">Portal</option>
+                    <option value="MANUAL">Manual</option>
+                  </AccountingSelect>
+                </AccountingField>
+                <AccountingAction disabled={isBusy === "send"} onClick={() => void sendQuotation()}>
+                  {isBusy === "send" ? <Loader2 className="animate-spin" size={16} /> : null}
+                  Send
+                </AccountingAction>
+              </>
             ) : null}
             {canAccept ? (
               <AccountingAction disabled={isBusy === "accept"} onClick={() => void acceptQuotation()}>
@@ -401,15 +457,34 @@ export function QuotationDetailClient({
             )) : <AccountingEmptyTableRow colSpan={9}>No quotation lines were captured.</AccountingEmptyTableRow>}
           </tbody>
         </AccountingTable>
-        {canConvert ? (
+        {canConvert || canConvertToSalesOrder ? (
           <div className="mnx-accounting-inline-actions">
-            <AccountingAction disabled={isBusy === "convert"} onClick={() => void convertQuotation()}>
-              {isBusy === "convert" ? <Loader2 className="animate-spin" size={16} /> : null}
-              Convert selected quantity to draft invoice
-            </AccountingAction>
-            <AccountingActionLink href="/accounting/sales-invoices/new">
-              Open invoice workspace
-            </AccountingActionLink>
+            {canConvert ? (
+              <AccountingAction disabled={isBusy === "convert"} onClick={() => void convertQuotation()}>
+                {isBusy === "convert" ? <Loader2 className="animate-spin" size={16} /> : null}
+                Convert selected quantity to draft invoice
+              </AccountingAction>
+            ) : null}
+            {canConvertToSalesOrder ? (
+              <AccountingAction
+                disabled={isBusy === "convert-sales-order"}
+                onClick={() => void convertQuotationToSalesOrder()}
+                variant="secondary"
+              >
+                {isBusy === "convert-sales-order" ? <Loader2 className="animate-spin" size={16} /> : null}
+                Convert selected quantity to sales order
+              </AccountingAction>
+            ) : null}
+            {canConvert ? (
+              <AccountingActionLink href="/accounting/sales-invoices/new">
+                Open invoice workspace
+              </AccountingActionLink>
+            ) : null}
+            {canConvertToSalesOrder ? (
+              <AccountingActionLink href="/accounting/sales-orders/new">
+                Open sales order workspace
+              </AccountingActionLink>
+            ) : null}
           </div>
         ) : null}
       </AccountingSection>
@@ -424,6 +499,16 @@ export function QuotationDetailClient({
           <AccountingDetail label="Submitted at" value={formatDateTime(quotation.submittedAt)} />
           <AccountingDetail label="Approved at" value={formatDateTime(quotation.approvedAt)} />
           <AccountingDetail label="Sent at" value={formatDateTime(quotation.sentAt)} />
+          <AccountingDetail
+            label="Delivery mode"
+            value={
+              quotation.sendDelivery &&
+              typeof quotation.sendDelivery === "object" &&
+              !Array.isArray(quotation.sendDelivery)
+                ? String((quotation.sendDelivery as Record<string, unknown>).mode ?? "—")
+                : "—"
+            }
+          />
           <AccountingDetail label="Accepted at" value={formatDateTime(quotation.acceptedAt)} />
           <AccountingDetail label="Declined at" value={formatDateTime(quotation.declinedAt)} />
           <AccountingDetail label="Cancelled at" value={formatDateTime(quotation.cancelledAt)} />

@@ -23,6 +23,7 @@ import {
   cancelQuotation,
   cloneQuotationDraft,
   convertQuotationToInvoiceDraft,
+  convertQuotationToSalesOrderDraft,
   declineQuotation,
   expireDueQuotations,
   getAccountingQuotation,
@@ -299,6 +300,17 @@ export async function createAccount(orgId: string, createdById: string, data: an
   const existingCode = await db.account.findFirst({ where: { orgId, accountCode: data.accountCode } });
   if (existingCode) throw new Error(`Account code ${data.accountCode} already exists`);
 
+  const accountType = data.accountType;
+  const legalEntityId =
+    accountType === "BANK"
+      ? (
+          await db.accountingLegalEntity.findFirst({
+            where: { orgId, status: "ACTIVE", isDefault: true },
+            select: { id: true },
+          })
+        )?.id ?? null
+      : null;
+
   const account = await db.account.create({
     data: {
       orgId,
@@ -313,6 +325,7 @@ export async function createAccount(orgId: string, createdById: string, data: an
       openingDebit: new Prisma.Decimal(data.openingDebit ?? 0),
       openingCredit: new Prisma.Decimal(data.openingCredit ?? 0),
       branchId: data.branchId || null,
+      legalEntityId,
     },
   });
 
@@ -323,6 +336,17 @@ export async function createAccount(orgId: string, createdById: string, data: an
 export async function updateAccount(orgId: string, id: string, updatedById: string, data: any) {
   const account = await db.account.findFirst({ where: { id, orgId } });
   if (!account) throw new Error("Account not found");
+
+  const nextAccountType = data.accountType ?? account.accountType;
+  const nextLegalEntityId =
+    nextAccountType === "BANK" && !account.legalEntityId
+      ? (
+          await db.accountingLegalEntity.findFirst({
+            where: { orgId, status: "ACTIVE", isDefault: true },
+            select: { id: true },
+          })
+        )?.id ?? undefined
+      : undefined;
 
   const parentAccountId =
     data.parentAccountId === undefined ? undefined : data.parentAccountId || null;
@@ -389,6 +413,7 @@ export async function updateAccount(orgId: string, id: string, updatedById: stri
       openingDebit: data.openingDebit != null ? new Prisma.Decimal(data.openingDebit) : undefined,
       openingCredit: data.openingCredit != null ? new Prisma.Decimal(data.openingCredit) : undefined,
       branchId: data.branchId !== undefined ? (data.branchId || null) : undefined,
+      legalEntityId: nextLegalEntityId,
     },
   });
 
@@ -502,6 +527,163 @@ export async function getJournalEntry(orgId: string, id: string) {
   });
 }
 
+function assertJournalContactRequirements(
+  lines: Array<{
+    accountId: string;
+    accountName?: string | null;
+    allowJournalContact: boolean;
+    partyType?: string | null;
+    partyId?: string | null;
+  }>,
+) {
+  for (const [index, line] of lines.entries()) {
+    const accountLabel = line.accountName || `line ${index + 1}`;
+    const hasPartyType = Boolean(line.partyType);
+    const hasPartyId = Boolean(line.partyId);
+
+    if (hasPartyType !== hasPartyId) {
+      throw new Error(
+        `Journal contact details are incomplete for ${accountLabel}.`,
+      );
+    }
+
+    if (line.allowJournalContact && (!hasPartyType || !hasPartyId)) {
+      throw new Error(
+        `Contact is mandatory for ${accountLabel} because the selected ledger requires manual-journal contact support.`,
+      );
+    }
+  }
+}
+
+async function transitionJournalEntryStatus(
+  tx: Prisma.TransactionClient,
+  input: {
+    orgId: string;
+    journalId: string;
+    fromStatus: string;
+    toStatus: string;
+    expectedRowVersion?: number;
+    extraData?: Prisma.JournalEntryUpdateManyMutationInput;
+  },
+) {
+  const usesManualTransitionGuard =
+    (input.fromStatus === "DRAFT" && input.toStatus === "SUBMITTED") ||
+    (input.fromStatus === "SUBMITTED" &&
+      ["CANCELLED", "SUPERSEDED"].includes(input.toStatus));
+  if (usesManualTransitionGuard) {
+    await tx.$queryRaw`
+      SELECT set_config('monolith.accounting_manual_journal_transition', 'on', true)
+    `;
+  }
+  const result = await tx.journalEntry.updateMany({
+    where: {
+      id: input.journalId,
+      orgId: input.orgId,
+      status: input.fromStatus,
+      ...(input.expectedRowVersion == null
+        ? {}
+        : { rowVersion: input.expectedRowVersion }),
+    },
+    data: {
+      status: input.toStatus,
+      rowVersion: { increment: 1 },
+      ...(input.extraData ?? {}),
+    },
+  });
+
+  if (result.count !== 1) {
+    throw new Error("Journal state changed before this action could complete");
+  }
+}
+
+async function createJournalEntryRecord(
+  tx: Prisma.TransactionClient,
+  orgId: string,
+  createdById: string,
+  data: any,
+  parsedLines: Array<{
+    accountId: string;
+    debit: Prisma.Decimal;
+    credit: Prisma.Decimal;
+    partyType?: string | null;
+    partyId?: string | null;
+    remarks?: string | null;
+  }>,
+  postingDate: Date,
+  voucherNo: string,
+  totalDebit: Prisma.Decimal,
+  totalCredit: Prisma.Decimal,
+) {
+  const accountIds = [
+    ...new Set<string>(
+      parsedLines.map((line: any) => String(line.accountId || "")),
+    ),
+  ];
+  const [accounts, branch] = await Promise.all([
+    tx.account.findMany({
+      where: {
+        orgId,
+        id: { in: accountIds },
+        isActive: true,
+        isGroup: false,
+      },
+      select: {
+        id: true,
+        accountName: true,
+        allowJournalContact: true,
+      },
+    }),
+    data.branchId
+      ? tx.branch.findFirst({
+          where: { orgId, id: data.branchId },
+          select: { id: true },
+        })
+      : Promise.resolve(null),
+  ]);
+  if (accountIds.some((id) => !id) || accounts.length !== accountIds.length) {
+    throw new Error("Every journal line must use an active posting account");
+  }
+  if (data.branchId && !branch) {
+    throw new Error("The selected branch is not available");
+  }
+  const accountById = new Map(accounts.map((account) => [account.id, account]));
+  assertJournalContactRequirements(
+    parsedLines.map((line: any) => {
+      const account = accountById.get(String(line.accountId));
+      return {
+        accountId: String(line.accountId),
+        accountName: account?.accountName ?? null,
+        allowJournalContact: Boolean(account?.allowJournalContact),
+        partyType: line.partyType || null,
+        partyId: line.partyId || null,
+      };
+    }),
+  );
+  return tx.journalEntry.create({
+    data: {
+      orgId,
+      branchId: data.branchId || null,
+      voucherNo,
+      postingDate,
+      remarks: data.remarks || null,
+      status: "DRAFT",
+      totalDebit,
+      totalCredit,
+      createdById,
+      lines: {
+        create: parsedLines.map((l: any) => ({
+          accountId: l.accountId,
+          debit: l.debit,
+          credit: l.credit,
+          partyType: l.partyType || null,
+          partyId: l.partyId || null,
+          remarks: l.remarks || null,
+        })),
+      },
+    },
+  });
+}
+
 export async function createJournalEntry(orgId: string, createdById: string, data: any) {
   const lines = data.lines || [];
   if (lines.length < 2) throw new Error("A journal draft requires at least two lines");
@@ -523,64 +705,165 @@ export async function createJournalEntry(orgId: string, createdById: string, dat
   const postingDate = data.postingDate ? new Date(data.postingDate) : await getNow();
   if (Number.isNaN(postingDate.getTime())) throw new Error("Posting date is invalid");
 
-  const voucherNo = `DRAFT-${globalThis.crypto.randomUUID()}`;
+  const voucherNo = data.voucherNo || `DRAFT-${globalThis.crypto.randomUUID()}`;
 
-  const entry = await db.$transaction(async (tx) => {
-    const accountIds = [
-      ...new Set<string>(
-        parsedLines.map((line: any) => String(line.accountId || "")),
-      ),
-    ];
-    const [accountCount, branch] = await Promise.all([
-      tx.account.count({
-        where: {
-          orgId,
-          id: { in: accountIds },
-          isActive: true,
-          isGroup: false,
-        },
-      }),
-      data.branchId
-        ? tx.branch.findFirst({
-            where: { orgId, id: data.branchId },
-            select: { id: true },
-          })
-        : Promise.resolve(null),
-    ]);
-    if (accountIds.some((id) => !id) || accountCount !== accountIds.length) {
-      throw new Error("Every journal line must use an active posting account");
-    }
-    if (data.branchId && !branch) {
-      throw new Error("The selected branch is not available");
-    }
-    const journal = await tx.journalEntry.create({
-      data: {
-        orgId,
-        branchId: data.branchId || null,
-        voucherNo,
-        postingDate,
-        remarks: data.remarks || null,
-        status: "DRAFT",
-        totalDebit,
-        totalCredit,
-        createdById,
-        lines: {
-          create: parsedLines.map((l: any) => ({
-            accountId: l.accountId,
-            debit: l.debit,
-            credit: l.credit,
-            partyType: l.partyType || null,
-            partyId: l.partyId || null,
-            remarks: l.remarks || null,
-          })),
-        },
-      },
-    });
-    return journal;
-  });
+  const entry = await db.$transaction((tx) =>
+    createJournalEntryRecord(
+      tx,
+      orgId,
+      createdById,
+      data,
+      parsedLines,
+      postingDate,
+      voucherNo,
+      totalDebit,
+      totalCredit,
+    ),
+  );
 
   await createAuditLog(orgId, createdById, "CREATE_JOURNAL", "JournalEntry", entry.id, null, entry);
   return entry;
+}
+
+export async function updateJournalEntryDraft(
+  orgId: string,
+  id: string,
+  actorId: string,
+  data: any,
+) {
+  const existing = await db.journalEntry.findFirst({
+    where: {
+      id,
+      orgId,
+      status: "DRAFT",
+      createdById: actorId,
+    },
+    include: { lines: true },
+  });
+
+  if (!existing) {
+    throw new Error("Editable draft journal not found");
+  }
+
+  const nextDraft = await db.$transaction(async (tx) => {
+    const lines = data.lines || [];
+    if (lines.length < 2) throw new Error("A journal draft requires at least two lines");
+    const parsedLines = lines.map((line: any, index: number) => {
+      const debit = decimal(line.debit ?? "0", `line ${index + 1} debit`);
+      const credit = decimal(line.credit ?? "0", `line ${index + 1} credit`);
+      if (debit.isNegative() || credit.isNegative()) {
+        throw new Error("Journal draft amounts cannot be negative");
+      }
+      if ((!debit.isZero() && !credit.isZero()) || (debit.isZero() && credit.isZero())) {
+        throw new Error("Each journal draft line must contain exactly one positive debit or credit");
+      }
+      return { ...line, debit, credit };
+    });
+    const totalDebit = parsedLines.reduce((total: Prisma.Decimal, line: any) => add(total, line.debit), add());
+    const totalCredit = parsedLines.reduce((total: Prisma.Decimal, line: any) => add(total, line.credit), add());
+    assertBalanced(parsedLines);
+    const postingDate = data.postingDate ? new Date(data.postingDate) : await getNow();
+    if (Number.isNaN(postingDate.getTime())) throw new Error("Posting date is invalid");
+
+    const created = await createJournalEntryRecord(
+      tx,
+      orgId,
+      actorId,
+      data,
+      parsedLines,
+      postingDate,
+      existing.voucherNo,
+      totalDebit,
+      totalCredit,
+    );
+
+    await transitionJournalEntryStatus(tx, {
+      orgId,
+      journalId: existing.id,
+      fromStatus: "DRAFT",
+      toStatus: "SUPERSEDED",
+      expectedRowVersion: existing.rowVersion,
+    });
+
+    return created;
+  });
+
+  await createAuditLog(
+    orgId,
+    actorId,
+    "UPDATE_JOURNAL_DRAFT",
+    "JournalEntry",
+    nextDraft.id,
+    existing,
+    nextDraft,
+  );
+
+  return nextDraft;
+}
+
+export async function submitJournalDraftForApproval(
+  orgId: string,
+  id: string,
+  userId: string,
+  expectedVersion?: number,
+) {
+  const journal = await db.journalEntry.findFirst({
+    where: {
+      id,
+      orgId,
+      status: "DRAFT",
+      createdById: userId,
+      ...(expectedVersion == null ? {} : { rowVersion: expectedVersion }),
+    },
+    include: {
+      lines: {
+        include: {
+          account: {
+            select: {
+              accountName: true,
+              allowJournalContact: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!journal) throw new Error("Draft Journal Entry not found");
+
+  assertJournalContactRequirements(
+    journal.lines.map((line) => ({
+      accountId: line.accountId,
+      accountName: line.account.accountName,
+      allowJournalContact: line.account.allowJournalContact,
+      partyType: line.partyType,
+      partyId: line.partyId,
+    })),
+  );
+
+  await db.$transaction(async (tx) => {
+    await transitionJournalEntryStatus(tx, {
+      orgId,
+      journalId: journal.id,
+      fromStatus: "DRAFT",
+      toStatus: "SUBMITTED",
+      expectedRowVersion: journal.rowVersion,
+    });
+  });
+
+  const submitted = await db.journalEntry.findUniqueOrThrow({
+    where: { id: journal.id },
+  });
+  await createAuditLog(
+    orgId,
+    userId,
+    "SUBMIT_JOURNAL_FOR_APPROVAL",
+    "JournalEntry",
+    submitted.id,
+    journal,
+    submitted,
+  );
+  return submitted;
 }
 
 export async function submitJournalEntry(
@@ -593,16 +876,36 @@ export async function submitJournalEntry(
     where: {
       id,
       orgId,
-      status: "DRAFT",
+      status: "SUBMITTED",
       ...(expectedVersion == null ? {} : { rowVersion: expectedVersion }),
     },
-    include: { lines: true },
+    include: {
+      lines: {
+        include: {
+          account: {
+            select: {
+              accountName: true,
+              allowJournalContact: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!journal) throw new Error("Draft Journal Entry not found");
   if (journal.createdById === userId) {
     throw new Error("The maker cannot approve their own journal draft");
   }
+  assertJournalContactRequirements(
+    journal.lines.map((line) => ({
+      accountId: line.accountId,
+      accountName: line.account.accountName,
+      allowJournalContact: line.account.allowJournalContact,
+      partyType: line.partyType,
+      partyId: line.partyId,
+    })),
+  );
   const configuration = await resolveCanonicalPostingConfiguration(orgId, journal.postingDate);
   const now = await getNow();
   const requestId = `ACCOUNTING:MANUAL_JOURNAL:${journal.id}:${journal.rowVersion}`;
@@ -665,18 +968,78 @@ export async function submitJournalEntry(
     })),
     correlationId: requestId,
   });
-  await db.journalEntry.updateMany({
-    where: {
-      id: journal.id,
+  await db.$transaction(async (tx) => {
+    await transitionJournalEntryStatus(tx, {
       orgId,
-      status: "DRAFT",
-      rowVersion: journal.rowVersion,
-    },
-    data: { status: "SUPERSEDED", rowVersion: { increment: 1 } },
+      journalId: journal.id,
+      fromStatus: "SUBMITTED",
+      toStatus: "SUPERSEDED",
+      expectedRowVersion: journal.rowVersion,
+      extraData: {
+        approvedById: userId,
+        approvedAt: now,
+      },
+    });
   });
   const posted = await db.journalEntry.findUniqueOrThrow({ where: { id: result.journalEntryId } });
   await createAuditLog(orgId, userId, "POST_MANUAL_JOURNAL", "JournalEntry", posted.id, journal, posted);
   return posted;
+}
+
+export async function rejectJournalEntry(
+  orgId: string,
+  id: string,
+  userId: string,
+  reason: string,
+  expectedVersion?: number,
+) {
+  const trimmedReason = reason.trim();
+  if (trimmedReason.length < 8) {
+    throw new Error("A rejection reason of at least 8 characters is required");
+  }
+
+  const journal = await db.journalEntry.findFirst({
+    where: {
+      id,
+      orgId,
+      status: "SUBMITTED",
+      ...(expectedVersion == null ? {} : { rowVersion: expectedVersion }),
+    },
+  });
+
+  if (!journal) throw new Error("Submitted journal not found");
+  if (journal.createdById === userId) {
+    throw new Error("The maker cannot reject their own submitted journal");
+  }
+
+  await db.$transaction(async (tx) => {
+    await transitionJournalEntryStatus(tx, {
+      orgId,
+      journalId: journal.id,
+      fromStatus: "SUBMITTED",
+      toStatus: "CANCELLED",
+      expectedRowVersion: journal.rowVersion,
+      extraData: {
+        approvedById: userId,
+        approvedAt: await getNow(),
+        reversalReason: trimmedReason,
+      },
+    });
+  });
+
+  const cancelled = await db.journalEntry.findUniqueOrThrow({
+    where: { id: journal.id },
+  });
+  await createAuditLog(
+    orgId,
+    userId,
+    "REJECT_JOURNAL_ENTRY",
+    "JournalEntry",
+    cancelled.id,
+    journal,
+    cancelled,
+  );
+  return cancelled;
 }
 
 export async function cancelJournalEntry(orgId: string, id: string, userId: string) {
@@ -1147,13 +1510,16 @@ export async function createPurchaseInvoice(orgId: string, createdById: string, 
         taxAmount,
         remarks: data.remarks || null,
         paymentMethod: data.paymentMethod || null,
+        sourcePurchaseOrderId: data.sourcePurchaseOrderId || null,
+        sourcePurchaseOrderNumber: data.sourcePurchaseOrderNumber || null,
+        sourcePurchaseOrderSnapshot: data.sourcePurchaseOrderSnapshot || null,
         createdById,
         orderNumber: data.orderNumber || null,
         placeOfSupply: data.placeOfSupply || null,
         terms: data.terms || null,
         salespersonId: data.salespersonId || null,
         items: {
-          create: calculatedItems.map((it: any) => ({
+          create: calculatedItems.map((it: any, index: number) => ({
             itemName: it.itemName,
             qty: Number(it.quantity.toString()),
             rate: it.rate,
@@ -1161,6 +1527,9 @@ export async function createPurchaseInvoice(orgId: string, createdById: string, 
             unit: it.unit || null,
             taxRate: it.taxRate != null ? Number(it.taxRate.toString()) : null,
             tdsRate: it.tdsRate != null ? Number(it.tdsRate.toString()) : null,
+            sourcePurchaseOrderItemId:
+              data.sourcePurchaseOrderItems?.[index]?.sourcePurchaseOrderItemId ||
+              null,
           })),
         },
         taxLines: taxRate.isPositive() ? {
@@ -2152,6 +2521,24 @@ export async function convertQuotationToInvoice(
   });
 }
 
+export async function convertQuotationToSalesOrder(
+  orgId: string,
+  quotationId: string,
+  createdById: string,
+  data?: {
+    expectedVersion?: number;
+    quantitiesByLineId?: Record<string, string>;
+  },
+) {
+  return convertQuotationToSalesOrderDraft({
+    orgId,
+    actorId: createdById,
+    quotationId,
+    expectedVersion: data?.expectedVersion,
+    quantitiesByLineId: data?.quantitiesByLineId,
+  });
+}
+
 export async function updateQuotationDraft(orgId: string, id: string, actorId: string, data: any) {
   return saveQuotationDraft({
     orgId,
@@ -2244,7 +2631,10 @@ export async function runQuotationExpiry(orgId: string, actorId?: string) {
 export async function listCustomerNotes(orgId: string) {
   return db.customerNote.findMany({
     where: { orgId },
-    include: { customer: { select: { name: true } } },
+    include: {
+      customer: { select: { name: true } },
+      originalInvoice: { select: { invoiceNumber: true } },
+    },
     orderBy: { postingDate: "desc" }
   });
 }
@@ -2411,7 +2801,10 @@ export async function submitCustomerNote(orgId: string, id: string, userId: stri
 export async function listVendorNotes(orgId: string) {
   return db.vendorNote.findMany({
     where: { orgId },
-    include: { vendor: { select: { name: true } } },
+    include: {
+      vendor: { select: { name: true } },
+      originalInvoice: { select: { invoiceNumber: true } },
+    },
     orderBy: { postingDate: "desc" }
   });
 }

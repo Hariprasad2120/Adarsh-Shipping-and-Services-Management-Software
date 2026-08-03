@@ -2,19 +2,29 @@
 
 import React from "react";
 import { db } from "@/lib/db";
-import { listQuotations, listCustomerNotes } from "@/modules/accounting/service";
+import {
+  getQuotation,
+  listCustomerNotes,
+  listQuotations,
+} from "@/modules/accounting/service";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { QuotationsClient } from "./quotations-client";
 
-export default async function QuotationsPage() {
+export default async function QuotationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ edit?: string }>;
+}) {
+  const { edit } = await searchParams;
   const { orgId } = await requireAccountingRouteAccess("/accounting/quotations", [
     "accounting.quotation.read",
+    "accounting.quotation.edit",
     "accounting.note.read",
     "accounting.correction.read",
   ]);
 
   // Fetch quotations, notes, customers, sales invoices, and shared payment terms
-  const [quotations, notes, customers, invoices, paymentTerms] = await Promise.all([
+  const [quotations, notes, customers, invoices, paymentTerms, editDraft] = await Promise.all([
     listQuotations(orgId),
     listCustomerNotes(orgId),
     db.crmAccount.findMany({
@@ -32,7 +42,26 @@ export default async function QuotationsPage() {
       select: { id: true, name: true, dueDays: true },
       orderBy: { name: "asc" },
     }),
+    edit ? getQuotation(orgId, edit) : Promise.resolve(null),
   ]);
+
+  const serializedEditDraft =
+    editDraft && editDraft.status === "DRAFT"
+      ? {
+          id: editDraft.id,
+          customerId: editDraft.customerId,
+          validUntil: editDraft.validUntil.toISOString().slice(0, 10),
+          terms: editDraft.terms ?? "",
+          remarks: editDraft.remarks ?? "",
+          rowVersion: editDraft.rowVersion,
+          items: editDraft.items.map((line: any) => ({
+            itemName: line.itemName,
+            qty: Number(line.qty),
+            rate: Number(line.rate),
+            taxRate: Number(line.taxRate),
+          })),
+        }
+      : null;
 
   return (
       <QuotationsClient
@@ -69,6 +98,7 @@ export default async function QuotationsPage() {
           grandTotal: Number(i.grandTotal),
           postingDate: i.postingDate,
         }))}
+        initialEditDraft={serializedEditDraft}
         paymentTerms={paymentTerms}
       />
   );

@@ -8,13 +8,18 @@ import { requireAccountingRouteAccess } from "@/modules/accounting/operational-a
 export default async function NewPaymentEntryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string }>;
+  searchParams: Promise<{
+    type?: string;
+    partyId?: string;
+    invoiceId?: string;
+  }>;
 }) {
   const { orgId } = await requireAccountingRouteAccess(
     "/accounting/payment-entries/new",
     ["accounting.payment.create"],
   );
-  const requestedType = (await searchParams).type;
+  const resolvedSearchParams = await searchParams;
+  const requestedType = resolvedSearchParams.type;
   const initialPaymentType = requestedType === "PAY" ? "PAY" : "RECEIVE";
 
   const [
@@ -165,6 +170,31 @@ export default async function NewPaymentEntryPage({
       ];
     },
   );
+  const initialPartyId =
+    resolvedSearchParams.partyId &&
+    (
+      initialPaymentType === "PAY" ? supplierList : customerList
+    ).some((party) => party.id === resolvedSearchParams.partyId)
+      ? resolvedSearchParams.partyId
+      : "";
+  const selectedInvoice =
+    initialPaymentType === "PAY"
+      ? serializedPurchaseInvoices.find(
+          (invoice) => invoice.id === resolvedSearchParams.invoiceId,
+        )
+      : serializedSalesInvoices.find(
+          (invoice) => invoice.id === resolvedSearchParams.invoiceId,
+        );
+  const initialScopedPartyId =
+    selectedInvoice
+      ? "supplierId" in selectedInvoice
+        ? selectedInvoice.supplierId
+        : selectedInvoice.customerId
+      : initialPartyId;
+  const initialAmount = selectedInvoice?.outstandingAmount ?? "";
+  const initialAllocations = selectedInvoice
+    ? { [selectedInvoice.id]: selectedInvoice.outstandingAmount }
+    : {};
 
   return (
     <>
@@ -178,6 +208,9 @@ export default async function NewPaymentEntryPage({
         salesInvoices={serializedSalesInvoices}
         purchaseInvoices={serializedPurchaseInvoices}
         initialPaymentType={initialPaymentType}
+        initialPartyId={initialScopedPartyId}
+        initialAmount={initialAmount}
+        initialAllocations={initialAllocations}
       />
     </>
   );

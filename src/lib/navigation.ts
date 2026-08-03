@@ -209,6 +209,14 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/hrms/payroll"],
       },
       {
+        href: "/hrms/incentives",
+        label: "Incentive Working",
+        icon: Analytics,
+        sectionLabel: "Incentive",
+        permission: "hrms.salary.read",
+        matchPaths: ["/hrms/incentives"],
+      },
+      {
         href: "/hrms/tracking",
         label: "Employee Tracking",
         icon: Analytics,
@@ -621,6 +629,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/crm/efficiency"],
       },
       {
+        href: "/crm/incentives",
+        label: "Incentives",
+        icon: Analytics,
+        permission: "crm.access",
+        matchPaths: ["/crm/incentives"],
+      },
+      {
         href: "/crm/lead-sources",
         label: "Lead Sources",
         icon: Settings,
@@ -822,6 +837,17 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/accounting/vendor-payments"],
       },
       {
+        href: "/accounting/expenses",
+        label: "Expenses & Reimbursements",
+        icon: Report,
+        sectionLabel: "Banking",
+        permission: [
+          "accounting.payment.read",
+          "accounting.payment.prepare",
+        ],
+        matchPaths: ["/accounting/expenses"],
+      },
+      {
         href: "/accounting/allocations",
         label: "Allocations",
         icon: Task,
@@ -849,6 +875,7 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         href: "/accounting/sales-invoices",
         label: "Sales · Invoices",
         icon: DocumentAdd,
+        sectionLabel: "Banking",
         permission: [
           "accounting.document.read",
           "accounting.invoice.read",
@@ -858,8 +885,9 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
       },
       {
         href: "/accounting/credit-notes",
-        label: "Sales · Credit Notes",
+        label: "Credit Notes",
         icon: DocumentAdd,
+        sectionLabel: "Banking",
         permission: [
           "accounting.document.read",
           "accounting.credit-note.prepare",
@@ -870,6 +898,7 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         href: "/accounting/purchase-invoices",
         label: "Purchases · Invoices",
         icon: DocumentAdd,
+        sectionLabel: "Banking",
         permission: [
           "accounting.document.read",
           "accounting.invoice.read",
@@ -881,6 +910,7 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         href: "/accounting/debit-notes",
         label: "Purchases · Debit Notes",
         icon: DocumentAdd,
+        sectionLabel: "Banking",
         permission: [
           "accounting.document.read",
           "accounting.debit-note.prepare",
@@ -891,6 +921,7 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         href: "/accounting/vendor-master",
         label: "Vendor Master",
         icon: DocumentAdd,
+        sectionLabel: "Banking",
         permission: [
           "accounting.document.read",
           "accounting.invoice.read",
@@ -912,11 +943,23 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         href: "/accounting/general-ledger",
         label: "Ledger · General Ledger",
         icon: Report,
+        sectionLabel: "Accountant",
         permission: [
           "accounting.ledger.read",
           "accounting.reports.view",
         ],
         matchPaths: ["/accounting/general-ledger"],
+      },
+      {
+        href: "/accounting/recurring",
+        label: "Recurring Journals",
+        icon: Calendar,
+        sectionLabel: "Accountant",
+        permission: [
+          "accounting.recurring-template.admin",
+          "accounting.recurring-occurrence.process",
+        ],
+        matchPaths: ["/accounting/recurring"],
       },
       {
         href: "/accounting/accounts",
@@ -959,6 +1002,17 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
           "accounting.settings.manage",
         ],
         matchPaths: ["/accounting/transaction-locking"],
+      },
+      {
+        href: "/accounting/tax-settlement",
+        label: "Reporting · Tax Settlement",
+        icon: Analytics,
+        permission: [
+          "accounting.reports.view",
+          "accounting.settings.manage",
+          "accounting.period_lock.request",
+        ],
+        matchPaths: ["/accounting/tax-settlement"],
       },
       {
         href: "/accounting/fixed-assets",
@@ -1006,14 +1060,14 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
       },
       {
         href: "/accounting/reports",
-        label: "Reporting - Reports Hub",
+        label: "Reporting · Reports Hub",
         icon: Report,
         permission: "accounting.reports.view",
         matchPaths: ["/accounting/reports"],
       },
       {
         href: "/accounting/jobs",
-        label: "Operations - Job Costing",
+        label: "Operations · Job Costing",
         icon: Task,
         permission: [
           "accounting.dashboard.view",
@@ -1021,17 +1075,6 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
           "accounting.ledger.read",
         ],
         matchPaths: ["/accounting/jobs"],
-      },
-      {
-        href: "/accounting/recurring",
-        label: "Recurring Journals",
-        icon: Calendar,
-        sectionLabel: "Accountant",
-        permission: [
-          "accounting.recurring-template.admin",
-          "accounting.recurring-occurrence.process",
-        ],
-        matchPaths: ["/accounting/recurring"],
       },
       {
         href: "/accounting/partners",
@@ -1052,6 +1095,17 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/accounting/outbox"],
       },
       {
+        href: "/accounting/integrations",
+        label: "Integration · Hub",
+        icon: Report,
+        permission: [
+          "accounting.audit.read",
+          "accounting.outbox.retry",
+          "accounting.integration.manual-review",
+        ],
+        matchPaths: ["/accounting/integrations"],
+      },
+      {
         href: "/accounting/manual-review",
         label: "Integration · Review",
         icon: Security,
@@ -1060,6 +1114,30 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
           "accounting.outbox.manual-review",
         ],
         matchPaths: ["/accounting/manual-review"],
+      },
+      {
+        href: "/accounting/communications",
+        label: "Operations · Communications",
+        icon: Notification,
+        permission: [
+          "accounting.reports.view",
+          "accounting.settings.manage",
+        ],
+        matchPaths: ["/accounting/communications"],
+      },
+      {
+        href: "/accounting/report-builder",
+        label: "Reporting · Builder",
+        icon: Analytics,
+        permission: "accounting.reports.view",
+        matchPaths: ["/accounting/report-builder"],
+      },
+      {
+        href: "/accounting/customization",
+        label: "Configuration · Customization",
+        icon: Settings,
+        permission: "accounting.settings.manage",
+        matchPaths: ["/accounting/customization"],
       },
       {
         href: "/accounting/readiness",

@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
+import { loadUserPermissions } from "@/lib/rbac";
 import { Prisma } from "@/generated/prisma/client";
 
 import {
@@ -367,22 +368,37 @@ async function authorizeActor(
         : request.replacementOfId
           ? "accounting.replace"
         : "accounting.post";
-  const rows = await tx.$queryRaw<Array<{ allowed: boolean }>>`
-    SELECT TRUE AS allowed
-    FROM "User" u
-    JOIN "UserRole" ur ON ur."userId" = u.id
-    JOIN "Role" r ON r.id = ur."roleId" AND r."orgId" = u."orgId"
-    JOIN "RolePermission" rp ON rp."roleId" = r.id
-    JOIN "Permission" p ON p.id = rp."permissionId"
-    WHERE u.id = ${request.actor.actorId}
-      AND u."orgId" = ${request.orgId}
-      AND u.active = TRUE
-      AND p.key = ${permission}
-    LIMIT 1
-  `;
-  if (rows.length === 0) {
+  const actor = await tx.user.findFirst({
+    where: {
+      id: request.actor.actorId,
+      orgId: request.orgId,
+      active: true,
+    },
+    select: { id: true },
+  });
+  if (!actor) {
+    throw new AccountingPostingError(
+      "ACCOUNTING_PERMISSION_REQUIRED",
+      `Missing Accounting permission ${permission}`,
+    );
+  }
+
+  const permissions = await loadUserPermissions(request.actor.actorId);
+  if (!permissions.has(permission)) {
     throw new AccountingPostingError("ACCOUNTING_PERMISSION_REQUIRED", `Missing Accounting permission ${permission}`);
   }
+}
+
+type ExistingInboxRetryState = {
+  status: string;
+  retryClassification: string | null;
+};
+
+export function canRetryDeterministicInboxRequest(state: ExistingInboxRetryState) {
+  if (!["REJECTED", "FAILED", "DEAD_LETTER", "MANUAL_REVIEW"].includes(state.status)) {
+    return false;
+  }
+  return state.retryClassification !== "IDEMPOTENCY_CONFLICT";
 }
 
 async function resolveContext(
@@ -557,26 +573,29 @@ async function resolveContext(
     );
   }
 
-  const [approverPermission, maker] = await Promise.all([
-    tx.$queryRaw<Array<{ allowed: boolean }>>`
-      SELECT TRUE AS allowed
-      FROM "User" u
-      JOIN "UserRole" ur ON ur."userId" = u.id
-      JOIN "Role" r ON r.id = ur."roleId" AND r."orgId" = u."orgId"
-      JOIN "RolePermission" rp ON rp."roleId" = r.id
-      JOIN "Permission" p ON p.id = rp."permissionId"
-      WHERE u.id = ${request.approval.approvedById}
-        AND u."orgId" = ${request.orgId}
-        AND u.active = TRUE
-        AND p.key IN ('accounting.journal.approve', 'accounting.approve')
-      LIMIT 1
-    `,
+  const [approver, maker] = await Promise.all([
+    tx.user.findFirst({
+      where: {
+        id: request.approval.approvedById,
+        orgId: request.orgId,
+        active: true,
+      },
+      select: { id: true },
+    }),
     tx.user.findFirst({
       where: { id: request.makerId, orgId: request.orgId, active: true },
       select: { id: true },
     }),
   ]);
-  if (approverPermission.length === 0) {
+  const approverPermissions = approver
+    ? await loadUserPermissions(request.approval.approvedById)
+    : null;
+  if (
+    !approver ||
+    !approverPermissions ||
+    (!approverPermissions.has("accounting.journal.approve") &&
+      !approverPermissions.has("accounting.approve"))
+  ) {
     throw new AccountingPostingError(
       "APPROVER_INVALID",
       "Approval evidence does not identify an active Accounting approver in this organization",
@@ -882,6 +901,9 @@ async function existingResult(
     throw new AccountingPostingError("REQUEST_IN_PROGRESS", "The same request is already processing", "RETRYABLE");
   }
   if (["REJECTED", "FAILED", "DEAD_LETTER", "MANUAL_REVIEW"].includes(existing.status)) {
+    if (canRetryDeterministicInboxRequest(existing)) {
+      return null;
+    }
     throw new AccountingPostingError(
       existing.lastErrorCode ?? "REQUEST_PREVIOUSLY_REJECTED",
       "This deterministic Accounting request has already reached a terminal failure state",
@@ -1024,8 +1046,24 @@ async function executePosting(
       },
     },
     update: {
+      legalEntityId: request.legalEntityId,
+      messageType: request.source.type,
+      messageVersion: request.requestVersion,
+      requestId: request.requestId,
+      payload: safePayload(canonicalPostingPayload(request)),
+      payloadHash: hash,
+      sourceSnapshotId: snapshot.id,
+      correlationId: request.correlationId,
+      causationId: request.causationId ?? null,
       status: "PROCESSING",
       processingAt: await getNow(),
+      processedAt: null,
+      processedRecordType: null,
+      processedRecordId: null,
+      lastErrorCode: null,
+      retryClassification: null,
+      rejectedAt: null,
+      manualReviewAt: null,
       attemptCount: { increment: 1 },
       rowVersion: { increment: 1 },
     },

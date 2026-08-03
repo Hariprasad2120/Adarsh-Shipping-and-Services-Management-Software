@@ -204,7 +204,7 @@ export function deriveAccountingActionState(input: {
         : "Posted records are immutable and require reversal permission.",
     };
   }
-  if (status === "PENDING_APPROVAL") {
+  if (status === "PENDING_APPROVAL" || status === "SUBMITTED") {
     const canApprove =
       !input.isMaker && input.hasApprovePermission && input.hasPostPermission;
     return {
@@ -260,6 +260,11 @@ export function mapAccountingError(error: unknown): SafeAccountingError {
       code: "INVALID_SELECTION",
       message: "A selected party, branch, or posting account is no longer eligible. Refresh and select again.",
     }],
+    [/already mapped to another Banking account|already linked to a bank account/i, {
+      code: "INVALID_SELECTION",
+      message:
+        "This bank ledger is already linked to another bank account. Create a new BANK ledger or edit the existing account instead.",
+    }],
     [/must be positive|cannot be negative|greater than zero|unbalanced|debit and credit|exactly one positive|at least one invoice line/i, {
       code: "VALIDATION_ERROR",
       message: "Review the required amounts and ensure the Accounting entry is valid and balanced.",
@@ -276,9 +281,27 @@ export function mapAccountingError(error: unknown): SafeAccountingError {
       code: "CONFIGURATION_REQUIRED",
       message: "Required Accounting configuration is incomplete.",
     }],
+    [/CONFIGURATION_BANK_LEDGER_ACCOUNT_INVALID|CONFIGURATION_LEGAL_ENTITY_NOT_FOUND/i, {
+      code: "CONFIGURATION_REQUIRED",
+      message:
+        "The selected BANK ledger is missing required Accounting legal-entity setup. Refresh and try again after saving the ledger.",
+    }],
+    [/CONFIGURATION_BANK_ACCOUNT_NAME_REQUIRED|CONFIGURATION_BANK_NAME_REQUIRED|CONFIGURATION_BANK_ACCOUNT_MASK_REQUIRED/i, {
+      code: "VALIDATION_ERROR",
+      message:
+        "Complete the required bank-account fields, including internal name, institution name, and masked account identifier.",
+    }],
     [/policy_gated|policy.*not approved/i, {
       code: "POLICY_GATED",
       message: "This operation is blocked until its Accounting policy is approved.",
+    }],
+    [/ACCOUNTING_PERMISSION_REQUIRED/i, {
+      code: "FORBIDDEN",
+      message: "You do not have permission to perform this Accounting action.",
+    }],
+    [/APPROVER_INVALID/i, {
+      code: "FORBIDDEN",
+      message: "The selected approver is not eligible to approve this Accounting record.",
     }],
     [/permission|forbidden|unauthor/i, {
       code: "FORBIDDEN",

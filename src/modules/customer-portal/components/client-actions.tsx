@@ -256,6 +256,11 @@ function PortalShellClientBody({
       icon: FileText,
     },
     {
+      href: "/customer-portal/quotations",
+      label: "Quotations",
+      icon: FileText,
+    },
+    {
       href: "/customer-portal/notifications",
       label: "Notifications",
       icon: Bell,

@@ -60,7 +60,7 @@ export default async function JournalEntriesPage({
       <AccountingRoutePageHeader
         eyebrow="Manual journals"
         title="All manual journals"
-        description="Review draft and posted journal activity by date, location, maker, and narration."
+        description="Review draft, submitted, posted, cancelled, and superseded journal activity by date, location, maker, and narration."
         actions={
           caps["accounting.journal.prepare"] ? (
             <AccountingActionLink
@@ -92,6 +92,7 @@ export default async function JournalEntriesPage({
               <AccountingSelect name="status" defaultValue={status}>
                 <option value="">All statuses</option>
                 <option value="DRAFT">Draft</option>
+                <option value="SUBMITTED">Submitted</option>
                 <option value="POSTED">Posted</option>
                 <option value="CANCELLED">Cancelled</option>
               </AccountingSelect>

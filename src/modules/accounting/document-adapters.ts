@@ -10,6 +10,7 @@ import {
   type AccountingPaymentContractInput,
 } from "./document-contracts";
 import { resolveCanonicalPostingConfiguration } from "./integration-adapters";
+import { ensureLegacyCounterpartyEntityScope } from "./legacy-bootstrap";
 import {
   add,
   assertBalanced,
@@ -132,7 +133,7 @@ async function assertCounterpartyEntityScope(input: {
   partyId: string;
   date: Date;
 }) {
-  const scope = await db.accountingCounterpartyEntityScope.findFirst({
+  let scope = await db.accountingCounterpartyEntityScope.findFirst({
     where: {
       orgId: input.orgId,
       legalEntityId: input.legalEntityId,
@@ -145,6 +146,40 @@ async function assertCounterpartyEntityScope(input: {
     orderBy: { version: "desc" },
     select: { id: true },
   });
+  if (!scope) {
+    const party =
+      input.partyType === "CUSTOMER"
+        ? await db.crmAccount.findFirst({
+            where: { id: input.partyId, orgId: input.orgId, status: "ACTIVE" },
+            select: { id: true },
+          })
+        : await db.crmVendor.findFirst({
+            where: { id: input.partyId, orgId: input.orgId, status: "ACTIVE" },
+            select: { id: true },
+          });
+    if (party) {
+      await ensureLegacyCounterpartyEntityScope({
+        orgId: input.orgId,
+        legalEntityId: input.legalEntityId,
+        partyType: input.partyType,
+        partyId: input.partyId,
+        date: input.date,
+      });
+      scope = await db.accountingCounterpartyEntityScope.findFirst({
+        where: {
+          orgId: input.orgId,
+          legalEntityId: input.legalEntityId,
+          partyType: input.partyType,
+          partyId: input.partyId,
+          isActive: true,
+          effectiveFrom: { lte: input.date },
+          OR: [{ effectiveTo: null }, { effectiveTo: { gte: input.date } }],
+        },
+        orderBy: { version: "desc" },
+        select: { id: true },
+      });
+    }
+  }
   if (!scope) {
     throw new Error(
       `CONFIGURATION_REQUIRED: ${input.partyType.toLowerCase()} is not approved for this legal entity`,

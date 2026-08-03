@@ -471,6 +471,37 @@ export default function ProductCataloguePage() {
         </div>
       </WorkspacePanel>
 
+      {activeModule.setupGuide ? (
+        <WorkspacePanel>
+          <WorkspacePanelHeader
+            eyebrow="Implementation guide"
+            title={`${activeModule.name} setup and first-month launch`}
+            description={activeModule.setupGuide.summary}
+          />
+          <div className="mnx-catalogue-dossier-grid">
+            <DossierList
+              title="Prerequisites"
+              items={activeModule.setupGuide.prerequisites}
+              numbered
+            />
+            <DossierList
+              title="Setup sequence"
+              items={activeModule.setupGuide.setupSteps}
+              numbered
+            />
+            <DossierList
+              title="July 2026 demo runbook"
+              items={activeModule.setupGuide.firstMonthRunbook}
+              numbered
+            />
+            <DossierList
+              title="Working checks"
+              items={activeModule.setupGuide.workingChecks}
+            />
+          </div>
+        </WorkspacePanel>
+      ) : null}
+
       <WorkspacePanel>
         <WorkspacePanelHeader
           eyebrow="Cross-module connectivity"

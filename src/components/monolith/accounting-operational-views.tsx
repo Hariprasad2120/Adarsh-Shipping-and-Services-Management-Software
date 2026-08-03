@@ -1,6 +1,7 @@
 import { CheckCircle2, LockKeyhole } from "lucide-react";
 
 import type { Caps } from "@/lib/rbac";
+import { resolveAccountingDocumentQueuePath } from "@/modules/accounting/legacy-record-type-routes";
 import type { AccountingCapabilityReadiness } from "@/modules/accounting/capability-policies";
 import {
   deriveAccountingActionState,
@@ -132,13 +133,17 @@ export function AccountingPagination({
 }
 
 export function CanonicalDocumentRegister({
+  actionLabel = "Review",
   basePath,
   data,
   emptyMessage = "No canonical documents match this view.",
+  resolveHref,
 }: {
+  actionLabel?: string;
   basePath: string;
   data: DocumentList;
   emptyMessage?: string;
+  resolveHref?: (document: DocumentList["rows"][number]) => string | null;
 }) {
   return (
     <>
@@ -163,6 +168,13 @@ export function CanonicalDocumentRegister({
           ) : (
             data.rows.map((document) => (
               <tr key={document.id}>
+                {(() => {
+                  const href =
+                    resolveHref?.(document) ??
+                    `/accounting/documents/${document.id}`;
+
+                  return (
+                    <>
                 <td>
                   <AccountingBadge>
                     {document.documentType.replaceAll("_", " ")}
@@ -182,13 +194,20 @@ export function CanonicalDocumentRegister({
                   <AccountingStatus status={document.status} />
                 </td>
                 <td>
-                  <AccountingActionLink
-                    className="mnx-button-compact"
-                    href={`/accounting/documents/${document.id}`}
-                  >
-                    Review
-                  </AccountingActionLink>
+                  {href ? (
+                    <AccountingActionLink
+                      className="mnx-button-compact"
+                      href={href}
+                    >
+                      {actionLabel}
+                    </AccountingActionLink>
+                  ) : (
+                    "—"
+                  )}
                 </td>
+                    </>
+                  );
+                })()}
               </tr>
             ))
           )}
@@ -202,6 +221,18 @@ export function CanonicalDocumentRegister({
       />
     </>
   );
+}
+
+export function resolveCanonicalDocumentReviewHref(
+  document: DocumentList["rows"][number],
+) {
+  return `/accounting/documents/${document.id}`;
+}
+
+export function resolveCanonicalDocumentQueueHref(
+  document: DocumentList["rows"][number],
+) {
+  return resolveAccountingDocumentQueuePath(document.documentType);
 }
 
 export function LegacyAccountingDraftRegister({

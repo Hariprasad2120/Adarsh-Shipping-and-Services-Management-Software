@@ -27,15 +27,15 @@ export function JournalEntryDetailClient({ jv }: { jv: any }) {
   async function handleSubmit() {
     if (
       !confirm(
-        "Submit this journal entry and post its double-entry lines to the general ledger?",
+        "Submit this journal entry for independent approval? The draft will become immutable.",
       )
     )
       return;
     setIsSubmitting(true);
     try {
-      const result = await submitJournalEntryAction(jv.id);
+      const result = await submitJournalEntryAction(jv.id, jv.rowVersion);
       if (result.ok) {
-        toast.success("Journal entry submitted and posted");
+        toast.success("Journal entry submitted for approval");
         router.refresh();
       } else {
         toast.error(result.error);
@@ -88,7 +88,7 @@ export function JournalEntryDetailClient({ jv }: { jv: any }) {
                 {isSubmitting ? (
                   <Loader2 aria-hidden="true" className="animate-spin" size={16} />
                 ) : null}
-                Submit and post
+                Submit for approval
               </AccountingAction>
             ) : null}
             {jv.status === "SUBMITTED" ? (

@@ -540,6 +540,185 @@ function editableQuotationStatus(status: string) {
   return status === "DRAFT";
 }
 
+async function resolveQuotationPortalPublicationProfile(input: {
+  orgId: string;
+  legalEntityId?: string | null;
+}) {
+  const profiles = await db.accountingPortalPublicationProfile.findMany({
+    where: {
+      orgId: input.orgId,
+      documentType: "QUOTATION",
+      audienceType: "CUSTOMER",
+      isActive: true,
+      OR: [
+        input.legalEntityId ? { legalEntityId: input.legalEntityId } : undefined,
+        { legalEntityId: null },
+      ].filter(Boolean) as Prisma.AccountingPortalPublicationProfileWhereInput[],
+    },
+    orderBy: [{ updatedAt: "desc" }],
+    take: 10,
+  });
+  return (
+    profiles.find((profile) => profile.legalEntityId === input.legalEntityId) ??
+    profiles.find((profile) => profile.legalEntityId == null) ??
+    null
+  );
+}
+
+async function prepareQuotationDelivery(input: {
+  orgId: string;
+  quotationId: string;
+  quotationNumber: string;
+  legalEntityId?: string | null;
+  customerId: string;
+  customerContactId?: string | null;
+  deliveryMode: "EMAIL" | "PORTAL" | "MANUAL";
+}) {
+  const customer = await db.crmAccount.findFirst({
+    where: { orgId: input.orgId, id: input.customerId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      isPortalEnabled: true,
+    },
+  });
+  if (!customer) {
+    throw new Error("QUOTATION_CUSTOMER_NOT_FOUND");
+  }
+
+  if (input.deliveryMode === "EMAIL") {
+    const contact = input.customerContactId
+      ? await db.crmContact.findFirst({
+          where: {
+            orgId: input.orgId,
+            id: input.customerContactId,
+            accountId: input.customerId,
+            isActive: true,
+          },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        })
+      : await db.crmContact.findFirst({
+          where: {
+            orgId: input.orgId,
+            accountId: input.customerId,
+            isActive: true,
+            email: { not: null },
+          },
+          orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        });
+    const emailTo = optionalText(contact?.email) || optionalText(customer.email);
+    if (!emailTo) {
+      throw new Error("QUOTATION_EMAIL_RECIPIENT_REQUIRED");
+    }
+    const contactName =
+      contact && [contact.firstName, contact.lastName].filter(Boolean).join(" ").trim();
+    await db.emailQueue.create({
+      data: {
+        to: emailTo,
+        subject: `Quotation ${input.quotationNumber}`,
+        html: [
+          `<p>Hello ${contactName || customer.name},</p>`,
+          `<p>Your quotation <strong>${input.quotationNumber}</strong> is ready.</p>`,
+          `<p>Please review it in the Monolith commercial workflow.</p>`,
+        ].join(""),
+        text: `Quotation ${input.quotationNumber} is ready for ${customer.name}.`,
+        metadata: json({
+          kind: "ACCOUNTING_QUOTATION",
+          quotationId: input.quotationId,
+          customerId: input.customerId,
+          customerContactId: contact?.id ?? null,
+          deliveryMode: "EMAIL",
+        }),
+      },
+    });
+    return {
+      sendStatus: "QUEUED" as const,
+      sendDelivery: {
+        mode: "EMAIL",
+        state: "QUEUED",
+        queuedAt: new Date().toISOString(),
+        recipientEmail: emailTo,
+        recipientName: contactName || customer.name,
+      },
+    };
+  }
+
+  if (input.deliveryMode === "PORTAL") {
+    if (!customer.isPortalEnabled) {
+      throw new Error("QUOTATION_CUSTOMER_PORTAL_DISABLED");
+    }
+    const profile = await resolveQuotationPortalPublicationProfile({
+      orgId: input.orgId,
+      legalEntityId: input.legalEntityId,
+    });
+    if (!profile) {
+      throw new Error("QUOTATION_PORTAL_PUBLICATION_PROFILE_REQUIRED");
+    }
+    const portalUsers = await db.customerPortalUser.findMany({
+      where: {
+        orgId: input.orgId,
+        customerId: input.customerId,
+        status: "ACTIVE",
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+      },
+    });
+    if (!portalUsers.length) {
+      throw new Error("QUOTATION_PORTAL_RECIPIENTS_NOT_FOUND");
+    }
+    await db.customerPortalNotification.createMany({
+      data: portalUsers.map((portalUser) => ({
+        orgId: input.orgId,
+        customerId: input.customerId,
+        portalUserId: portalUser.id,
+        kind: "ACCOUNTING_QUOTATION_AVAILABLE",
+        title: `Quotation ${input.quotationNumber} is available`,
+        body: `A new quotation has been published for ${customer.name}.`,
+        link: `/customer-portal/quotations/${input.quotationId}`,
+        payload: json({
+          quotationId: input.quotationId,
+          quotationNumber: input.quotationNumber,
+          deliveryMode: "PORTAL",
+        }),
+      })),
+    });
+    return {
+      sendStatus: "DELIVERED_INTERNAL" as const,
+      sendDelivery: {
+        mode: "PORTAL",
+        state: "PUBLISHED",
+        publishedAt: new Date().toISOString(),
+        portalPublicationProfileId: profile.id,
+        portalUserIds: portalUsers.map((portalUser) => portalUser.id),
+      },
+    };
+  }
+
+  return {
+    sendStatus: "DELIVERED_INTERNAL" as const,
+    sendDelivery: {
+      mode: "MANUAL",
+      state: "RECORDED",
+      recordedAt: new Date().toISOString(),
+    },
+  };
+}
+
 export async function listAccountingQuotations(
   orgId: string,
   filters: QuotationListFilters = {},
@@ -1237,23 +1416,30 @@ export async function sendQuotation(input: {
   if (!["DRAFT", "PENDING_APPROVAL"].includes(quotation.status)) {
     throw new Error("QUOTATION_SEND_INVALID_STATUS");
   }
+  const deliveryMode = input.deliveryMode || "EMAIL";
   const nextStatus = assertQuotationTransition(quotation.status, "SENT");
+  const delivery = await prepareQuotationDelivery({
+    orgId: input.orgId,
+    quotationId: quotation.id,
+    quotationNumber: quotation.quotationNumber,
+    legalEntityId: quotation.legalEntityId,
+    customerId: quotation.customerId,
+    customerContactId: quotation.customerContactId,
+    deliveryMode,
+  });
   const updated = await db.quotation.update({
     where: { id: quotation.id },
     data: {
       status: nextStatus,
       sentById: input.actorId,
       sentAt: new Date(),
-      sendStatus: "QUEUED",
-      sendDelivery: json({
-        mode: input.deliveryMode || "EMAIL",
-        state: "QUEUED",
-        queuedAt: new Date().toISOString(),
-      }),
+      sendStatus: delivery.sendStatus,
+      sendDelivery: json(delivery.sendDelivery),
       sentVersionSnapshot: json({
         quotationVersion: quotation.version,
         rowVersion: quotation.rowVersion,
         templateVersion: optionalText(input.templateVersion) || quotation.templateVersion || "default",
+        deliveryMode,
       }),
       updatedById: input.actorId,
       rowVersion: { increment: 1 },
@@ -1265,7 +1451,12 @@ export async function sendQuotation(input: {
     action: "QUOTATION_SENT",
     quotationId: quotation.id,
     beforeValues: { status: quotation.status, rowVersion: quotation.rowVersion },
-    afterValues: { status: updated.status, rowVersion: updated.rowVersion, sendStatus: updated.sendStatus },
+    afterValues: {
+      status: updated.status,
+      rowVersion: updated.rowVersion,
+      sendStatus: updated.sendStatus,
+      deliveryMode,
+    },
   });
   return updated;
 }
@@ -1578,4 +1769,176 @@ export async function convertQuotationToInvoiceDraft(input: {
     afterValues: { salesInvoiceId: invoice.id },
   });
   return invoice;
+}
+
+export async function convertQuotationToSalesOrderDraft(input: {
+  orgId: string;
+  actorId: string;
+  quotationId: string;
+  expectedVersion?: number;
+  quantitiesByLineId?: Record<string, string>;
+}) {
+  const quotation = await db.quotation.findFirst({
+    where: { orgId: input.orgId, id: input.quotationId },
+    include: { items: true },
+  });
+  if (!quotation) throw new Error("QUOTATION_NOT_FOUND");
+  requireQuotationRowVersion(quotation.rowVersion, input.expectedVersion);
+  if (!["ACCEPTED", "PARTIALLY_CONVERTED"].includes(quotation.status)) {
+    throw new Error("QUOTATION_CONVERSION_REQUIRES_ACCEPTED_STATUS");
+  }
+
+  const requestedLines = quotation.items.map((line) => {
+    const remaining = subtractDecimalStrings(
+      line.qty.toString(),
+      line.convertedQuantity.toString(),
+    );
+    if (compareDecimalStrings(remaining, "0") <= 0) {
+      return { line, remaining, requested: "0" };
+    }
+    const requested = input.quantitiesByLineId?.[line.id]
+      ? normalizeMoney(input.quantitiesByLineId[line.id], "0")
+      : remaining;
+    if (compareDecimalStrings(requested, "0") < 0) {
+      throw new Error("QUOTATION_CONVERSION_QTY_INVALID");
+    }
+    if (compareDecimalStrings(requested, remaining) > 0) {
+      throw new Error("QUOTATION_CONVERSION_EXCEEDS_REMAINING");
+    }
+    return { line, remaining, requested };
+  });
+
+  const orderLines = requestedLines.filter(
+    ({ requested }) => compareDecimalStrings(requested, "0") > 0,
+  );
+  if (orderLines.length === 0) {
+    if (quotation.status === "CONVERTED") {
+      const latest = await db.crmInvoice.findFirst({
+        where: {
+          orgId: input.orgId,
+          type: "SALES_ORDER",
+          sourceQuotationId: quotation.id,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      if (latest) return latest;
+    }
+    throw new Error("QUOTATION_NOTHING_REMAINING_TO_CONVERT");
+  }
+
+  const orderCount = await db.crmInvoice.count({
+    where: { orgId: input.orgId, type: "SALES_ORDER" },
+  });
+  const salesOrderNumber = `CHN-SO-${String(orderCount + 1).padStart(3, "0")}`;
+  const orderDate = new Date();
+
+  const salesOrder = await db.$transaction(async (tx) => {
+    const created = await tx.crmInvoice.create({
+      data: {
+        orgId: input.orgId,
+        ownerId: quotation.salespersonId || input.actorId,
+        invoiceNumber: salesOrderNumber,
+        type: "SALES_ORDER",
+        date: orderDate,
+        dueDate: quotation.validUntil,
+        status: "CONFIRMED",
+        discount: Number(quotation.discountAmount.toString()),
+        tax: Number(quotation.taxAmount.toString()),
+        total: Number(quotation.grandTotal.toString()),
+        approvalStatus: "APPROVED",
+        approvedAt: quotation.acceptedAt ?? orderDate,
+        approvedById: quotation.acceptedById || input.actorId,
+        accountId: quotation.customerId,
+        contactId: quotation.customerContactId,
+        manualNotes:
+          quotation.customerVisibleRemarks ||
+          quotation.remarks ||
+          `Converted from quotation ${quotation.quotationNumber}`,
+        terms: quotation.termsAndConditions,
+        referenceNumber: quotation.referenceNumber,
+        sourceQuotationId: quotation.id,
+        sourceQuotationVersion: quotation.version,
+        sourceQuotationNumber: quotation.quotationNumber,
+        sourceQuotationSnapshot: json({
+          quotationNumber: quotation.quotationNumber,
+          version: quotation.version,
+          status: quotation.status,
+          acceptedAt: quotation.acceptedAt?.toISOString() ?? null,
+          convertedAt: orderDate.toISOString(),
+        }),
+        createdById: input.actorId,
+        updatedById: input.actorId,
+        items: {
+          create: orderLines.map(({ line, requested }) => {
+            const lineAmount = multiplyDecimalStrings(
+              requested,
+              line.rate.toString(),
+            );
+            const lineTaxAmount = divideDecimalStrings(
+              multiplyDecimalStrings(lineAmount, line.taxRate.toString()),
+              "100",
+              8,
+            );
+            return {
+              productName: line.itemName,
+              qty: Number(requested),
+              rate: Number(line.rate.toString()),
+              taxPercent: Number(line.taxRate.toString()),
+              taxLabel: line.hsnSac,
+              unit: line.uom,
+              amount: Number(addDecimalStrings(lineAmount, lineTaxAmount)),
+              currency: quotation.currencyCode,
+              exchangeRate: Number(quotation.exchangeRate?.toString() || "1"),
+              sourceQuotationItemId: line.id,
+              sourceQuotationQuantity: new Prisma.Decimal(requested),
+            };
+          }),
+        },
+      },
+    });
+
+    for (const { line, requested } of orderLines) {
+      const newConverted = addDecimalStrings(
+        line.convertedQuantity.toString(),
+        requested,
+      );
+      await tx.quotationItem.update({
+        where: { id: line.id },
+        data: {
+          convertedQuantity: new Prisma.Decimal(newConverted),
+        },
+      });
+    }
+
+    const refreshedLines = requestedLines.map(({ line, requested }) => ({
+      qty: line.qty,
+      convertedQuantity: new Prisma.Decimal(
+        addDecimalStrings(line.convertedQuantity.toString(), requested),
+      ),
+    }));
+    const nextStatus = deriveConversionStatus(refreshedLines);
+    await tx.quotation.update({
+      where: { id: quotation.id },
+      data: {
+        status: nextStatus,
+        updatedById: input.actorId,
+        rowVersion: { increment: 1 },
+      },
+    });
+
+    return created;
+  });
+
+  await writeQuotationAudit({
+    orgId: input.orgId,
+    actorId: input.actorId,
+    action: "QUOTATION_CONVERTED_TO_SALES_ORDER",
+    quotationId: quotation.id,
+    beforeValues: { status: quotation.status, rowVersion: quotation.rowVersion },
+    afterValues: {
+      salesOrderId: salesOrder.id,
+      salesOrderNumber: salesOrder.invoiceNumber,
+    },
+  });
+  return salesOrder;
 }

@@ -2,6 +2,7 @@
 
 import { FileCheck2, Loader2, Plus, Send, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -9,12 +10,14 @@ import {
   createCustomerNoteAction,
   createQuotationAction,
   submitCustomerNoteAction,
+  updateQuotationAction,
 } from "@/modules/accounting/actions";
 import { DateInput } from "@/components/ui/date-input";
 import { AccountingNoteReasonSelect } from "@/components/monolith/accounting-note-reason-select";
 import { AccountingOptionalInvoiceLink } from "@/components/monolith/accounting-optional-invoice-link";
 import {
   AccountingAction,
+  AccountingDraftEditLink,
   AccountingDialog,
   AccountingEmptyTableRow,
   AccountingField,
@@ -81,6 +84,15 @@ type PaymentTerm = {
 };
 
 type FormItem = { itemName: string; qty: number; rate: number; taxRate: number };
+type EditableQuotationDraft = {
+  id: string;
+  customerId: string;
+  validUntil: string;
+  terms: string;
+  remarks: string;
+  rowVersion: number;
+  items: FormItem[];
+};
 const emptyItem = (): FormItem => ({ itemName: "", qty: 1, rate: 0, taxRate: 0 });
 const money = (value: number) => `₹${value.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
 const DEFAULT_PAYMENT_TERMS: PaymentTerm[] = [
@@ -164,30 +176,41 @@ export function QuotationsClient({
   initialNotes,
   customers,
   invoices,
+  initialEditDraft,
   paymentTerms,
 }: {
   initialQuotations: Quotation[];
   initialNotes: CustomerNote[];
   customers: Customer[];
   invoices: Invoice[];
+  initialEditDraft: EditableQuotationDraft | null;
   paymentTerms: PaymentTerm[];
 }) {
+  const router = useRouter();
   const availablePaymentTerms = paymentTerms.length
     ? paymentTerms
     : DEFAULT_PAYMENT_TERMS;
   const [tab, setTab] = useState<"quotations" | "notes">("quotations");
   const [quotations, setQuotations] = useState(initialQuotations);
   const [notes, setNotes] = useState(initialNotes);
-  const [quotationOpen, setQuotationOpen] = useState(false);
+  const [quotationOpen, setQuotationOpen] = useState(Boolean(initialEditDraft));
   const [noteOpen, setNoteOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [quotationCustomer, setQuotationCustomer] = useState("");
-  const [quotationTerms, setQuotationTerms] = useState(
-    availablePaymentTerms[0]?.name || "Due on Receipt",
+  const [quotationCustomer, setQuotationCustomer] = useState(
+    initialEditDraft?.customerId ?? "",
   );
-  const [validUntil, setValidUntil] = useState(defaultQuotationValidity);
-  const [quotationRemarks, setQuotationRemarks] = useState("");
-  const [quotationItems, setQuotationItems] = useState<FormItem[]>([emptyItem()]);
+  const [quotationTerms, setQuotationTerms] = useState(
+    initialEditDraft?.terms || availablePaymentTerms[0]?.name || "Due on Receipt",
+  );
+  const [validUntil, setValidUntil] = useState(
+    initialEditDraft?.validUntil ?? defaultQuotationValidity,
+  );
+  const [quotationRemarks, setQuotationRemarks] = useState(
+    initialEditDraft?.remarks ?? "",
+  );
+  const [quotationItems, setQuotationItems] = useState<FormItem[]>(
+    initialEditDraft?.items.length ? initialEditDraft.items : [emptyItem()],
+  );
   const [catalogueItems, setCatalogueItems] = useState<ItemListItem[]>([]);
   const [noteType, setNoteType] = useState<"CREDIT" | "DEBIT">("CREDIT");
   const [noteCustomer, setNoteCustomer] = useState("");
@@ -195,6 +218,9 @@ export function QuotationsClient({
   const [noteReason, setNoteReason] = useState("");
   const [noteRemarks, setNoteRemarks] = useState("");
   const [noteItems, setNoteItems] = useState<FormItem[]>([emptyItem()]);
+  const [editingQuotationId, setEditingQuotationId] = useState<string | null>(
+    initialEditDraft?.id ?? null,
+  );
 
   useEffect(() => {
     void fetchAccountingItems({ activeOnly: true, limit: 500 })
@@ -202,47 +228,87 @@ export function QuotationsClient({
       .catch(() => setCatalogueItems([]));
   }, []);
 
+  function resetQuotationDraftForm() {
+    setEditingQuotationId(null);
+    setQuotationCustomer("");
+    setQuotationTerms(availablePaymentTerms[0]?.name || "Due on Receipt");
+    setValidUntil(defaultQuotationValidity);
+    setQuotationRemarks("");
+    setQuotationItems([emptyItem()]);
+  }
+
+  function closeQuotationDialog() {
+    if (busy) return;
+    setQuotationOpen(false);
+    resetQuotationDraftForm();
+    if (initialEditDraft) {
+      router.push("/accounting/quotations");
+      router.refresh();
+    }
+  }
+
   async function createQuotation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!quotationCustomer) return toast.error("Select a customer");
     if (quotationItems.some((item) => !item.itemName.trim() || item.qty <= 0 || item.rate < 0)) return toast.error("Complete every quotation line");
     setBusy(true);
     try {
-      const result = await createQuotationAction({
+      const payload = {
         customerId: quotationCustomer,
         validUntil,
         terms: quotationTerms || null,
         remarks: quotationRemarks,
         items: quotationItems,
-      });
-      if (!result.ok) return toast.error(result.error || "Quotation could not be created");
+      };
+      const result = editingQuotationId
+        ? await updateQuotationAction(editingQuotationId, payload)
+        : await createQuotationAction(payload);
+      if (!result.ok) {
+        return toast.error(
+          result.error ||
+            (editingQuotationId
+              ? "Quotation draft could not be updated"
+              : "Quotation could not be created"),
+        );
+      }
       const selectedCustomer =
         customers.find((customer) => customer.id === quotationCustomer) || null;
-      setQuotations((current) => [
-        {
-          id: result.data.id,
-          quotationNumber: result.data.quotationNumber,
-          customerName: selectedCustomer?.name || "Unknown Customer",
-          postingDate: result.data.postingDate,
-          validUntil: result.data.validUntil,
-          rowVersion: Number(result.data.rowVersion ?? 1),
-          taxableAmount: Number(result.data.subTotal ?? 0),
-          taxAmount: Number(result.data.taxAmount ?? 0),
-          grandTotal: Number(result.data.grandTotal ?? 0),
-          status: result.data.status,
-          sendStatus: result.data.sendStatus ?? null,
-          remarks: result.data.remarks ?? null,
-        },
-        ...current,
-      ]);
-      setQuotationCustomer("");
-      setQuotationTerms(availablePaymentTerms[0]?.name || "Due on Receipt");
-      setQuotationRemarks("");
-      setQuotationItems([emptyItem()]);
+      const nextRow = {
+        id: result.data.id,
+        quotationNumber: result.data.quotationNumber,
+        customerName: selectedCustomer?.name || "Unknown Customer",
+        postingDate: result.data.postingDate,
+        validUntil: result.data.validUntil,
+        rowVersion: Number(result.data.rowVersion ?? 1),
+        taxableAmount: Number(result.data.subTotal ?? 0),
+        taxAmount: Number(result.data.taxAmount ?? 0),
+        grandTotal: Number(result.data.grandTotal ?? 0),
+        status: result.data.status,
+        sendStatus: result.data.sendStatus ?? null,
+        remarks: result.data.remarks ?? null,
+      };
+      setQuotations((current) =>
+        editingQuotationId
+          ? current.map((record) =>
+              record.id === editingQuotationId ? nextRow : record,
+            )
+          : [nextRow, ...current],
+      );
+      resetQuotationDraftForm();
       setQuotationOpen(false);
-      toast.success("Quotation prepared");
+      if (initialEditDraft) {
+        router.push("/accounting/quotations");
+        router.refresh();
+      }
+      toast.success(editingQuotationId ? "Quotation draft updated" : "Quotation prepared");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Quotation could not be created");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : editingQuotationId
+            ? "Quotation draft could not be updated"
+            : "Quotation could not be created",
+      );
     } finally {
       setBusy(false);
     }
@@ -300,7 +366,14 @@ export function QuotationsClient({
   return (
     <>
       <AccountingRoutePageHeader
-        actions={<AccountingAction type="button" onClick={() => tab === "quotations" ? setQuotationOpen(true) : setNoteOpen(true)}><Plus aria-hidden="true" /> {tab === "quotations" ? "New quotation" : "New note"}</AccountingAction>}
+        actions={<AccountingAction type="button" onClick={() => {
+          if (tab === "quotations") {
+            resetQuotationDraftForm();
+            setQuotationOpen(true);
+            return;
+          }
+          setNoteOpen(true);
+        }}><Plus aria-hidden="true" /> {tab === "quotations" ? "New quotation" : "New note"}</AccountingAction>}
       />
       <AccountingMetrics>
         <AccountingMetric label="Quotations" value={quotations.length} detail="Prepared customer offers" />
@@ -339,6 +412,11 @@ export function QuotationsClient({
                   <Link className="mnx-button mnx-button-secondary" href={`/accounting/quotations/${record.id}`}>
                     Open
                   </Link>
+                  {record.status === "DRAFT" ? (
+                    <AccountingDraftEditLink href={`/accounting/quotations?edit=${record.id}`} className="mnx-button-compact">
+                      Edit draft
+                    </AccountingDraftEditLink>
+                  ) : null}
                   {["ACCEPTED", "PARTIALLY_CONVERTED"].includes(record.status) ? (
                     <AccountingAction type="button" size="compact" onClick={() => void convert(record.id)}>
                       <FileCheck2 aria-hidden="true" /> Convert
@@ -372,11 +450,15 @@ export function QuotationsClient({
 
       <AccountingDialog
         open={quotationOpen}
-        onClose={() => !busy && setQuotationOpen(false)}
-        title="Prepare quotation"
-        description="Create a priced customer offer with a controlled validity date."
+        onClose={closeQuotationDialog}
+        title={editingQuotationId ? "Edit quotation draft" : "Prepare quotation"}
+        description={
+          editingQuotationId
+            ? "Update the current draft without leaving the quotations workspace."
+            : "Create a priced customer offer with a controlled validity date."
+        }
         size="wide"
-        footer={<><AccountingAction type="button" variant="secondary" disabled={busy} onClick={() => setQuotationOpen(false)}>Cancel</AccountingAction><AccountingAction type="submit" form="accounting-quotation-form" disabled={busy}>{busy ? <Loader2 className="mnx-spin" aria-hidden="true" /> : null} Prepare quotation</AccountingAction></>}
+        footer={<><AccountingAction type="button" variant="secondary" disabled={busy} onClick={closeQuotationDialog}>Cancel</AccountingAction><AccountingAction type="submit" form="accounting-quotation-form" disabled={busy}>{busy ? <Loader2 className="mnx-spin" aria-hidden="true" /> : null} {editingQuotationId ? "Save draft changes" : "Prepare quotation"}</AccountingAction></>}
       >
         <form id="accounting-quotation-form" className="mnx-accounting-form" onSubmit={createQuotation}>
           <div className="mnx-accounting-form-grid">

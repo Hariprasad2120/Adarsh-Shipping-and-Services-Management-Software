@@ -29,6 +29,7 @@ export default async function QuotationDetailPage({
       "accounting.quotation.decide",
       "accounting.quotation.cancel",
       "accounting.quotation.convert_invoice",
+      "crm.invoice.manage",
     ],
   );
 
@@ -84,6 +85,7 @@ export default async function QuotationDetailPage({
     canDecide: Boolean(caps["accounting.quotation.decide"]),
     canCancel: Boolean(caps["accounting.quotation.cancel"]),
     canConvert: Boolean(caps["accounting.quotation.convert_invoice"]),
+    canConvertToSalesOrder: Boolean(caps["crm.invoice.manage"]),
     canCreate: Boolean(caps["accounting.quotation.create"]),
   };
 
