@@ -140,6 +140,28 @@ function stripHtmlToText(html: string) {
     .trim();
 }
 
+function wrapHtmlDocument(html: string) {
+  return [
+    "<!DOCTYPE html>",
+    '<html lang="en">',
+    "<head>",
+    '<meta charset="utf-8" />',
+    "<title>HR Letter Template</title>",
+    "<style>",
+    "body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.5; margin: 24px; color: #111827; }",
+    "p { margin: 0 0 12px; }",
+    "h1, h2, h3 { margin: 18px 0 10px; font-weight: 700; }",
+    "ul, ol { margin: 0 0 12px 24px; }",
+    "img { max-width: 100%; height: auto; }",
+    "</style>",
+    "</head>",
+    "<body>",
+    html,
+    "</body>",
+    "</html>",
+  ].join("");
+}
+
 function rewriteHtmlAssetPaths(html: string, targetFolder: string) {
   return html.replace(/src="([^"]+)"/gi, (_, source) => {
     const normalized = source.replace(/\\/g, "/");
@@ -173,7 +195,7 @@ export async function saveEditorHtmlAsDocx(html: string, outputDocxPath: string)
   ensureTemplateStorageDir();
   const tempBase = path.join(TEMPLATE_STORAGE_DIR, `temp-editor-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   const tempHtmlPath = `${tempBase}.html`;
-  fs.writeFileSync(tempHtmlPath, html, "utf8");
+  fs.writeFileSync(tempHtmlPath, wrapHtmlDocument(html), "utf8");
 
   try {
     const psScript = path.join(process.cwd(), "scripts", "save-html-as-docx.ps1");

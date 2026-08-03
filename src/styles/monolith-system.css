@@ -4158,10 +4158,15 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 }
 
 .mnx-icon-button {
+  min-width: 37px;
+  min-height: 37px;
   width: 37px;
   height: 37px;
+  padding: 0;
   display: grid;
+  flex: 0 0 37px;
   place-items: center;
+  aspect-ratio: 1;
   border: 1px solid var(--mnx-border);
   border-radius: 50%;
   color: var(--mnx-text);

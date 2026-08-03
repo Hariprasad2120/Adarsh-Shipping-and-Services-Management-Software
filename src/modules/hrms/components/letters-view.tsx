@@ -1,22 +1,24 @@
 "use client";
 
 import {
-  PeopleControlButton as MnxAction,
   PeopleControlInput as MnxInput,
   PeopleControlTextarea as MnxTextarea,
-  PeopleControlTable as MnxTable,
 } from "@/modules/people/components";
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect */
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import DOMPurify from "isomorphic-dompurify";
 import {
-  AlertTriangle,
+  Bold,
+  ChevronDown,
   CheckCircle2,
   Eye,
   FileCheck,
+  Heading1,
   FilePenLine,
   ImagePlus,
+  Italic as ItalicIcon,
+  List,
   Loader2,
   Mail,
   Plus,
@@ -33,6 +35,17 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
 import { NativeSelect } from "@/components/ui/native-select";
+import {
+  WorkspaceAction,
+  WorkspaceAlert,
+  WorkspaceBadge,
+  WorkspaceEmptyTableRow,
+  WorkspacePage,
+  WorkspacePanel,
+  WorkspacePanelHeader,
+  WorkspaceTable,
+} from "@/components/layout/workspace";
+import { LetterDocumentPreviewSurface } from "@/modules/hrms/components/letter-document-preview-surface";
 
 type TemplateField = {
   key: string;
@@ -77,6 +90,76 @@ const TABS = [
   { key: "settings", label: "Signatory Settings" },
 ] as const;
 
+function escapePreviewValue(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function renderDraftPreviewHtml({
+  template,
+  details,
+  settings,
+}: {
+  template: TemplateRecord | null;
+  details: Record<string, unknown>;
+  settings: {
+    signatoryName: string;
+    signatoryDesignation: string;
+    signatorySignatureUrl: string;
+    companySealUrl: string;
+  };
+}) {
+  if (!template) return "";
+
+  const sourceHtml =
+    template.editorDocument?.html || template.previewHtml || template.content;
+  const mergedValues: Record<string, string> = {
+    ...Object.fromEntries(
+      Object.entries(details || {}).map(([key, value]) => [key, String(value ?? "")]),
+    ),
+    authorised_signatory_name:
+      String(details.authorised_signatory_name ?? settings.signatoryName ?? ""),
+    authorised_signatory_designation: String(
+      details.authorised_signatory_designation ??
+        settings.signatoryDesignation ??
+        "",
+    ),
+    authorised_signatory_signature: String(
+      details.authorised_signatory_signature ??
+        settings.signatorySignatureUrl ??
+        "",
+    ),
+    company_seal: String(details.company_seal ?? settings.companySealUrl ?? ""),
+  };
+
+  return sourceHtml.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (_, key: string) => {
+    const field = template.fieldSchema.find((item) => item.key === key);
+    const value = mergedValues[key] ?? "";
+
+    if (!value) {
+      return '<span class="rounded bg-mono-soft px-1 py-0.5 text-mono-muted">________</span>';
+    }
+
+    if (
+      field?.inputType === "image" ||
+      key === "authorised_signatory_signature" ||
+      key === "company_seal" ||
+      key === "employee_signature"
+    ) {
+      const normalized = value.startsWith("/") ? value : `/${value}`;
+      return `<img src="${escapePreviewValue(normalized)}" alt="${escapePreviewValue(
+        field?.label || key,
+      )}" style="display:inline-block;max-height:88px;max-width:220px;vertical-align:middle;" />`;
+    }
+
+    return escapePreviewValue(value).replace(/\n/g, "<br />");
+  });
+}
+
 function RichTemplateEditor({
   value,
   variables,
@@ -90,6 +173,7 @@ function RichTemplateEditor({
 }) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const savedRangeRef = useRef<Range | null>(null);
 
   useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML !== value) {
@@ -97,14 +181,41 @@ function RichTemplateEditor({
     }
   }, [value]);
 
+  const saveSelection = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || !editorRef.current) return;
+    const range = selection.getRangeAt(0);
+    if (editorRef.current.contains(range.commonAncestorContainer)) {
+      savedRangeRef.current = range.cloneRange();
+    }
+  }, []);
+
+  const restoreSelection = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection) return;
+    if (savedRangeRef.current) {
+      selection.removeAllRanges();
+      selection.addRange(savedRangeRef.current);
+    }
+  }, []);
+
   const syncValue = () => {
     onChange(editorRef.current?.innerHTML ?? "");
   };
 
   const runCommand = (command: string, commandValue?: string) => {
+    restoreSelection();
     editorRef.current?.focus();
     document.execCommand(command, false, commandValue);
+    saveSelection();
     syncValue();
+  };
+
+  const handleToolbarMouseDown = (
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    event.preventDefault();
+    restoreSelection();
   };
 
   const insertPlaceholder = () => {
@@ -130,72 +241,91 @@ function RichTemplateEditor({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-mono-border bg-mono-soft p-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => runCommand("bold")}
-        >
-          Bold
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => runCommand("italic")}
-        >
-          Italic
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => runCommand("formatBlock", "<h2>")}
-        >
-          Heading
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => runCommand("insertUnorderedList")}
-        >
-          Bullets
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={insertPlaceholder}
-        >
-          Placeholder
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => imageInputRef.current?.click()}
-        >
-          <ImagePlus className="size-4" />
-          <span>Image</span>
-        </Button>
-        <MnxInput
-          ref={imageInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleImageSelection}
+      <div className="overflow-hidden rounded-[24px] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,247,242,0.98))] shadow-[0_18px_44px_rgba(15,23,42,0.06)]">
+        <div className="flex flex-wrap items-center gap-2 bg-[linear-gradient(180deg,rgba(248,244,236,0.88),rgba(243,238,229,0.78))] px-4 py-3">
+          <button
+            type="button"
+            className="inline-flex min-w-[2.75rem] items-center justify-center gap-2 rounded-xl border border-mono-border/55 bg-white/96 px-3 py-2 text-xs font-semibold text-mono-text shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition hover:border-primary/35 hover:bg-[rgba(255,248,220,0.9)]"
+            onMouseDown={handleToolbarMouseDown}
+            onClick={() => runCommand("bold")}
+            aria-label="Bold"
+            title="Bold"
+          >
+            <Bold className="size-4" />
+          </button>
+          <button
+            type="button"
+            className="inline-flex min-w-[2.75rem] items-center justify-center gap-2 rounded-xl border border-mono-border/55 bg-white/96 px-3 py-2 text-xs font-semibold text-mono-text shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition hover:border-primary/35 hover:bg-[rgba(255,248,220,0.9)]"
+            onMouseDown={handleToolbarMouseDown}
+            onClick={() => runCommand("italic")}
+            aria-label="Italic"
+            title="Italic"
+          >
+            <ItalicIcon className="size-4" />
+          </button>
+          <button
+            type="button"
+            className="inline-flex min-w-[2.75rem] items-center justify-center gap-2 rounded-xl border border-mono-border/55 bg-white/96 px-3 py-2 text-xs font-semibold text-mono-text shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition hover:border-primary/35 hover:bg-[rgba(255,248,220,0.9)]"
+            onMouseDown={handleToolbarMouseDown}
+            onClick={() => runCommand("formatBlock", "h2")}
+            aria-label="Heading"
+            title="Heading"
+          >
+            <Heading1 className="size-4" />
+          </button>
+          <button
+            type="button"
+            className="inline-flex min-w-[2.75rem] items-center justify-center gap-2 rounded-xl border border-mono-border/55 bg-white/96 px-3 py-2 text-xs font-semibold text-mono-text shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition hover:border-primary/35 hover:bg-[rgba(255,248,220,0.9)]"
+            onMouseDown={handleToolbarMouseDown}
+            onClick={() => runCommand("insertUnorderedList")}
+            aria-label="Bullets"
+            title="Bullets"
+          >
+            <List className="size-4" />
+          </button>
+          <div className="mx-1 hidden h-7 w-px bg-mono-border/45 sm:block" />
+          <button
+            type="button"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-mono-border/55 bg-white/96 px-4 py-2 text-xs font-semibold text-mono-text shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition hover:border-primary/35 hover:bg-[rgba(255,248,220,0.9)]"
+            onMouseDown={handleToolbarMouseDown}
+            onClick={insertPlaceholder}
+            title="Insert placeholder"
+          >
+            <span className="rounded-md bg-mono-soft px-1.5 py-0.5 font-mono text-[10px] leading-none">
+              {`{{ }}`}
+            </span>
+            <span>Placeholder</span>
+          </button>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-mono-border/55 bg-white/96 px-4 py-2 text-xs font-semibold text-mono-text shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition hover:border-primary/35 hover:bg-[rgba(255,248,220,0.9)]"
+            onMouseDown={handleToolbarMouseDown}
+            onClick={() => imageInputRef.current?.click()}
+            title="Insert image"
+          >
+            <ImagePlus className="size-4" />
+            <span>Image</span>
+          </button>
+          <MnxInput
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageSelection}
+          />
+        </div>
+
+        <div
+          ref={editorRef}
+          contentEditable
+          suppressContentEditableWarning
+          onMouseUp={saveSelection}
+          onKeyUp={saveSelection}
+          onBlur={saveSelection}
+          onInput={syncValue}
+          className="min-h-[34rem] bg-white px-5 py-5 text-sm leading-7 text-mono-text outline-none"
         />
       </div>
-
-      <div
-        ref={editorRef}
-        contentEditable
-        suppressContentEditableWarning
-        onInput={syncValue}
-        className="min-h-[28rem] rounded-2xl border border-mono-border bg-mono-card p-4 text-sm text-mono-text outline-none focus:border-primary"
-      />
     </div>
   );
 }
@@ -322,6 +452,32 @@ export function LettersView() {
   const activeTemplate =
     templates.find((template) => template.id === wizardTemplateId) ||
     selectedTemplate;
+  const selectedRequestTemplate = selectedRequest
+    ? templates.find((template) => template.id === selectedRequest.templateId) ||
+      null
+    : null;
+  const selectedRequestPreviewHtml = selectedRequest
+    ? renderDraftPreviewHtml({
+        template: selectedRequestTemplate,
+        details: selectedRequest.details || {},
+        settings: {
+          signatoryName: settingsForm.signatoryName,
+          signatoryDesignation: settingsForm.signatoryDesignation,
+          signatorySignatureUrl: settingsForm.signatorySignatureUrl,
+          companySealUrl: settingsForm.companySealUrl,
+        },
+      })
+    : "";
+
+  const getStatusVariant = (
+    status: string,
+  ): "accent" | "neutral" | "success" | "warning" | "danger" => {
+    if (status === "ISSUED" || status === "ACCEPTED") return "success";
+    if (status === "READY_TO_ISSUE") return "accent";
+    if (status === "DRAFT") return "neutral";
+    if (status.includes("REVIEW") || status.includes("APPROVAL")) return "warning";
+    return "danger";
+  };
 
   const loadTemplateDefaults = async (userId: string, templateId: string) => {
     if (!userId || !templateId) return;
@@ -553,66 +709,84 @@ export function LettersView() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="rounded-[var(--mn-radius-panel)] border border-mono-border bg-mono-card p-6 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <span className="mnx-icon-badge">
-              <Mail className="size-5" />
-            </span>
-            <div>
-              <h1 className="mnx-title-1 font-semibold text-mono-text">
-                HR Letters & Contracts
-              </h1>
-              <p className="mt-2 text-sm text-mono-muted">
-                DOCX-based templates, guided drafting, approvals, and issuance
-                in one workspace.
-              </p>
+    <WorkspacePage className="space-y-6">
+      <WorkspacePanel className="overflow-hidden border-transparent bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(255,248,220,0.88))] shadow-none">
+        <div className="flex flex-wrap items-start justify-between gap-5 px-6 py-6">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <span className="flex size-11 items-center justify-center rounded-2xl bg-[rgba(255,214,10,0.14)] text-mono-text">
+                <Mail className="size-5" />
+              </span>
+              <div className="space-y-1">
+                <p className="mnx-dashboard-spec-label">Documents</p>
+                <h1 className="text-[2rem] font-semibold tracking-[-0.03em] text-mono-text">
+                  HR Letters &amp; Contracts
+                </h1>
+              </div>
             </div>
+            <p className="max-w-3xl text-sm leading-6 text-mono-muted">
+              DOCX-backed templates, guided drafting, structured approvals, and
+              in-app document review in one workspace.
+            </p>
           </div>
-
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             {isHR ? (
-              <Button type="button" onClick={() => setShowPrepareModal(true)}>
+              <WorkspaceAction
+                onClick={() => setShowPrepareModal(true)}
+                className="rounded-2xl px-5 text-sm font-semibold normal-case"
+              >
                 <Plus className="size-4" />
                 <span>Prepare Letter</span>
-              </Button>
+              </WorkspaceAction>
             ) : null}
-            <Button
-              type="button"
+            <WorkspaceAction
               variant="outline"
-              mode="icon"
               onClick={fetchData}
+              className="rounded-2xl px-5 text-sm font-semibold normal-case"
             >
               <RefreshCw className="size-4" />
-            </Button>
+              <span>Refresh</span>
+            </WorkspaceAction>
           </div>
         </div>
-      </Card>
+      </WorkspacePanel>
 
-      <div className="flex flex-wrap gap-5 border-b border-mono-border">
-        {TABS.filter((tab) =>
-          tab.key === "templates" || tab.key === "settings" ? isHR : true,
-        ).map((tab) => (
-          <MnxAction
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveTab(tab.key)}
-            className={`border-b-2 pb-3 text-xs font-semibold uppercase tracking-[0.12em] transition ${
-              activeTab === tab.key
-                ? "border-primary text-mono-accent"
-                : "border-transparent text-mono-muted hover:text-mono-text"
-            }`}
-          >
-            {tab.label}
-          </MnxAction>
-        ))}
-      </div>
+      <WorkspacePanel className="space-y-4 border-transparent p-6 shadow-none">
+        <div className="space-y-2">
+          <p className="mnx-dashboard-spec-label">Workspace views</p>
+          <h2 className="text-2xl font-semibold tracking-[-0.02em] text-mono-text">
+            Letters workflow
+          </h2>
+          <p className="text-sm leading-6 text-mono-muted">
+            Switch between the live registry, approval queue, template library,
+            and signatory controls.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {TABS.filter((tab) =>
+            tab.key === "templates" || tab.key === "settings" ? isHR : true,
+          ).map((tab) => (
+            <WorkspaceAction
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              size="compact"
+              variant={activeTab === tab.key ? "accent" : "outline"}
+              className="rounded-2xl px-5 text-sm font-semibold normal-case"
+            >
+              {tab.label}
+            </WorkspaceAction>
+          ))}
+        </div>
+      </WorkspacePanel>
 
       {activeTab === "register" ? (
-        <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
-          <div className="overflow-x-auto">
-            <MnxTable className="mnx-workspace-table">
+        <WorkspacePanel className="overflow-hidden">
+          <WorkspacePanelHeader
+            eyebrow="Registry"
+            title="Letter registry"
+            description="Review every letter request, its workflow state, and the related employee record."
+          />
+          <WorkspaceTable scrollLabel="HR letters registry">
               <thead>
                 <tr>
                   <th className="px-6 py-3">Employee</th>
@@ -625,14 +799,11 @@ export function LettersView() {
               </thead>
               <tbody>
                 {requests.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="py-10 text-center text-sm text-mono-muted"
-                    >
+                  <WorkspaceEmptyTableRow colSpan={6}>
+                    <div className="py-10 text-center text-sm text-mono-muted">
                       No letters generated yet.
-                    </td>
-                  </tr>
+                    </div>
+                  </WorkspaceEmptyTableRow>
                 ) : (
                   requests.map((request) => {
                     const template = templates.find(
@@ -653,23 +824,38 @@ export function LettersView() {
                           {new Date(request.createdAt).toLocaleString()}
                         </td>
                         <td className="px-6 py-4">
-                          <span className="rounded-full border border-mono-border bg-mono-soft px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-mono-text">
+                          <WorkspaceBadge variant={getStatusVariant(request.status)}>
                             {request.status.replace(/_/g, " ")}
-                          </span>
+                          </WorkspaceBadge>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              type="button"
+                          <div className="flex items-center justify-end gap-2">
+                            <WorkspaceAction
+                              size="compact"
                               variant="outline"
-                              mode="icon"
+                              className="min-w-0 rounded-xl px-0"
                               onClick={() => {
                                 setSelectedRequest(request);
                                 setShowViewModal(true);
                               }}
                             >
                               <Eye className="size-4" />
-                            </Button>
+                            </WorkspaceAction>
+                            {isHR && request.status === "DRAFT" ? (
+                              <WorkspaceAction
+                                size="compact"
+                                variant="outline"
+                                className="rounded-xl"
+                                onClick={() =>
+                                  handleWorkflowTransition(
+                                    request.id,
+                                    "SUBMIT",
+                                  )
+                                }
+                              >
+                                Submit for Review
+                              </WorkspaceAction>
+                            ) : null}
                             {request.status === "ISSUED" ? (
                               <a
                                 href={`/verify/${request.id}`}
@@ -677,24 +863,24 @@ export function LettersView() {
                                 rel="noreferrer"
                                 className="inline-flex"
                               >
-                                <Button
-                                  type="button"
+                                <WorkspaceAction
+                                  size="compact"
                                   variant="outline"
-                                  mode="icon"
+                                  className="min-w-0 rounded-xl px-0"
                                 >
                                   <Shield className="size-4" />
-                                </Button>
+                                </WorkspaceAction>
                               </a>
                             ) : null}
                             {isHR && request.status === "DRAFT" ? (
-                              <Button
-                                type="button"
+                              <WorkspaceAction
+                                size="compact"
                                 variant="outline"
-                                mode="icon"
+                                className="min-w-0 rounded-xl px-0"
                                 onClick={() => handleDeleteRequest(request.id)}
                               >
                                 <Trash className="size-4" />
-                              </Button>
+                              </WorkspaceAction>
                             ) : null}
                           </div>
                         </td>
@@ -703,20 +889,22 @@ export function LettersView() {
                   })
                 )}
               </tbody>
-            </MnxTable>
-          </div>
-        </div>
+            </WorkspaceTable>
+        </WorkspacePanel>
       ) : null}
 
       {activeTab === "inbox" ? (
         <div className="space-y-4">
           {inboxRequests.length === 0 ? (
-            <Card className="rounded-2xl border border-dashed border-mono-border bg-mono-card p-10 text-center text-mono-muted">
-              <CheckCircle2 className="mx-auto mb-3 size-10 text-mono-accent" />
+            <WorkspaceAlert
+              variant="success"
+              className="items-center justify-center p-10 text-center"
+            >
+              <CheckCircle2 className="size-10 text-mono-accent" />
               <p className="text-sm">
                 No letters are waiting for your approval.
               </p>
-            </Card>
+            </WorkspaceAlert>
           ) : (
             inboxRequests.map((request) => {
               const template = templates.find(
@@ -732,10 +920,13 @@ export function LettersView() {
                       <p className="text-base font-semibold uppercase tracking-[0.05em] text-mono-text">
                         {template?.name} for {request.user.name}
                       </p>
-                      <p className="text-sm text-mono-muted">
+                      <p className="font-sans text-sm text-mono-muted">
                         Stage: {request.status.replace(/_/g, " ")} | Created:{" "}
                         {new Date(request.createdAt).toLocaleString()}
                       </p>
+                      <WorkspaceBadge variant={getStatusVariant(request.status)}>
+                        {request.status.replace(/_/g, " ")}
+                      </WorkspaceBadge>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button
@@ -802,30 +993,78 @@ export function LettersView() {
       ) : null}
 
       {activeTab === "templates" && isHR ? (
-        <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
-          <div className="space-y-4">
-            <Card className="rounded-2xl border border-mono-border bg-mono-card p-4 shadow-sm">
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
+        <div className="space-y-6">
+          <WorkspacePanel className="overflow-hidden border-transparent shadow-none">
+            <div className="space-y-2 px-5 py-5">
+              <p className="mnx-dashboard-spec-label">Template controls</p>
+              <h2 className="text-2xl font-semibold tracking-[-0.02em] text-mono-text">
+                Template selector
+              </h2>
+              <p className="text-sm leading-6 text-mono-muted">
+                Choose the template you want to edit, and manage source-file
+                actions alongside it.
+              </p>
+            </div>
+            <div className="grid gap-4 px-5 pb-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
+              <div className="space-y-2">
+                <label className="mnx-dashboard-spec-label">
+                  Active template
+                </label>
+                <NativeSelect
+                  value={selectedTemplate?.id || ""}
+                  onChange={(event) => {
+                    const nextTemplate =
+                      templates.find((item) => item.id === event.target.value) ||
+                      null;
+                    setSelectedTemplate(nextTemplate);
+                    setEditorHtml(
+                      nextTemplate?.editorDocument?.html ||
+                        nextTemplate?.previewHtml ||
+                        "",
+                    );
+                  }}
+                  className="w-full font-sans text-sm"
+                >
+                  <option value="">Choose template</option>
+                  {templates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name} | v{template.version} |{" "}
+                      {template.isLegalReviewed ? "Legal OK" : "Review needed"}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </div>
+
+              <div className="rounded-[22px] border border-mono-border/70 bg-mono-card px-4 py-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-mono-text">
+                    Source DOCX actions
+                  </p>
+                  <p className="text-xs leading-5 text-mono-muted">
+                    Manage the authoritative DOCX files used for template
+                    revisions, legal approval, and issue-time generation.
+                  </p>
+                </div>
+                <div className="mt-4 grid gap-2">
+                  <WorkspaceAction
                     onClick={handleImportBundledTemplates}
                     disabled={submitting}
+                    className="rounded-xl"
                   >
                     <WandSparkles className="size-4" />
-                    <span>Import Bundled DOCX</span>
-                  </Button>
-                  <Button
-                    type="button"
+                    <span>Import bundled DOCX</span>
+                  </WorkspaceAction>
+                  <WorkspaceAction
                     variant="outline"
                     onClick={() => templateUploadInputRef.current?.click()}
                     disabled={templateUploading}
+                    className="rounded-xl"
                   >
                     <Upload className="size-4" />
                     <span>
-                      {templateUploading ? "Uploading..." : "Upload DOCX"}
+                      {templateUploading ? "Uploading..." : "Upload template"}
                     </span>
-                  </Button>
+                  </WorkspaceAction>
                   <MnxInput
                     ref={templateUploadInputRef}
                     type="file"
@@ -834,113 +1073,132 @@ export function LettersView() {
                     onChange={handleUploadTemplateDocx}
                   />
                 </div>
-                <p className="text-sm text-mono-muted">
-                  Manage authoritative DOCX templates, rich-editor revisions,
-                  and legal activation.
-                </p>
+                <WorkspaceAlert variant="info" className="mt-4 font-sans text-sm">
+                  Template revisions, legal approval, and issue-time generation
+                  all use these DOCX sources.
+                </WorkspaceAlert>
               </div>
-            </Card>
-
-            <div className="space-y-3">
-              {templates.map((template) => (
-                <MnxAction
-                  key={template.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedTemplate(template);
-                    setEditorHtml(
-                      template.editorDocument?.html ||
-                        template.previewHtml ||
-                        "",
-                    );
-                  }}
-                  className={`w-full rounded-2xl border p-4 text-left shadow-sm transition ${
-                    selectedTemplate?.id === template.id
-                      ? "border-primary bg-mono-soft"
-                      : "border-mono-border bg-mono-card hover:border-primary"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold uppercase tracking-[0.08em] text-mono-text">
-                        {template.name}
-                      </p>
-                      <p className="mt-2 text-xs text-mono-muted">
-                        Type: {template.type} | Ver: {template.version}
-                      </p>
-                    </div>
-                    <span
-                      className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${
-                        template.isLegalReviewed
-                          ? "bg-mono-accent/10 text-mono-accent"
-                          : "bg-[var(--mnx-warning-bg)]/10 text-[var(--mnx-warning)]"
-                      }`}
-                    >
-                      {template.isLegalReviewed ? "Legal OK" : "Review Needed"}
-                    </span>
-                  </div>
-                </MnxAction>
-              ))}
             </div>
-          </div>
+          </WorkspacePanel>
 
           <div className="space-y-6">
             {selectedTemplate ? (
-              <>
-                <Card className="rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-mono-border pb-4">
-                    <div>
-                      <h2 className="mnx-title-2 font-semibold text-mono-text">
+              <div className="space-y-5">
+                <WorkspacePanel className="overflow-hidden border-transparent">
+                  <div className="flex flex-wrap items-start justify-between gap-4 px-6 py-5">
+                    <div className="space-y-2">
+                      <p className="mnx-dashboard-spec-label">Active template</p>
+                      <h2 className="text-2xl font-semibold text-mono-text">
                         {selectedTemplate.name}
                       </h2>
-                      <p className="mt-2 text-sm text-mono-muted">
-                        Source: {selectedTemplate.sourceFileName || "DOCX"} |
-                        Stored DOCX: {selectedTemplate.sourceDocxPath || "N/A"}
+                      <p className="text-sm text-mono-muted">
+                        Source file: {selectedTemplate.sourceFileName || "DOCX"}
+                        {selectedTemplate.sourceDocxPath
+                          ? ` • Stored at ${selectedTemplate.sourceDocxPath}`
+                          : ""}
                       </p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <WorkspaceBadge
+                        variant={
+                          selectedTemplate.isLegalReviewed
+                            ? "success"
+                            : "warning"
+                        }
+                      >
+                        {selectedTemplate.isLegalReviewed
+                          ? "Legal approved"
+                          : "Needs legal review"}
+                      </WorkspaceBadge>
                       {isLegal && !selectedTemplate.isLegalReviewed ? (
-                        <Button
-                          type="button"
+                        <WorkspaceAction
+                          className="rounded-xl"
                           onClick={() =>
                             handleLegalApproveTemplate(selectedTemplate.id)
                           }
                         >
                           <FileCheck className="size-4" />
-                          <span>Approve Legal</span>
-                        </Button>
+                          <span>Approve legal</span>
+                        </WorkspaceAction>
                       ) : null}
-                      <Button
-                        type="button"
+                      <WorkspaceAction
                         variant="outline"
+                        className="rounded-xl"
                         onClick={handleSaveTemplateRevision}
                         disabled={submitting}
                       >
                         <Save className="size-4" />
-                        <span>Save Revision</span>
-                      </Button>
+                        <span>Save revision</span>
+                      </WorkspaceAction>
                     </div>
                   </div>
 
-                  <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_22rem]">
-                    <div className="space-y-4">
-                      <div className="mnx-form-section space-y-3">
-                        <h3 className="mnx-title-3 font-semibold text-mono-text">
-                          Rich Template Editor
-                        </h3>
-                        <RichTemplateEditor
-                          value={editorHtml}
-                          variables={selectedTemplate.variables}
-                          onChange={setEditorHtml}
-                          onUploadImage={uploadEditorImage}
-                        />
-                      </div>
+                  <div className="space-y-5 px-3 pb-5">
+                    <div className="pt-1">
+                      <RichTemplateEditor
+                        value={editorHtml}
+                        variables={selectedTemplate.variables}
+                        onChange={setEditorHtml}
+                        onUploadImage={uploadEditorImage}
+                      />
+                    </div>
 
-                      <div className="mnx-form-section space-y-3">
-                        <h3 className="mnx-title-3 font-semibold text-mono-text">
-                          Preview
-                        </h3>
-                        <div className="rounded-2xl border border-mono-border bg-mono-soft p-5">
+                    <details className="rounded-[22px] border border-mono-border/70 bg-mono-card px-4 py-3">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-medium text-mono-text">
+                            Template fields
+                          </p>
+                          <p className="mt-1 text-xs text-mono-muted">
+                            Expand only when you need placeholder metadata.
+                          </p>
+                        </div>
+                        <ChevronDown className="size-4 text-mono-muted" />
+                      </summary>
+                      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        {selectedTemplate.fieldSchema.map((field) => (
+                          <div
+                            key={field.key}
+                            className="rounded-[20px] bg-white px-4 py-4 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.12)]"
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-mono-text">
+                                  {field.label}
+                                </p>
+                                <p className="mt-1 text-xs text-mono-muted">
+                                  {field.key}
+                                </p>
+                              </div>
+                              <WorkspaceBadge
+                                variant={
+                                  field.required ? "accent" : "neutral"
+                                }
+                              >
+                                {field.required ? "Required" : "Optional"}
+                              </WorkspaceBadge>
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.12em] text-mono-muted">
+                              <span className="rounded-full bg-mono-soft px-2.5 py-1">
+                                {field.inputType}
+                              </span>
+                              <span className="rounded-full bg-mono-soft px-2.5 py-1">
+                                {field.defaultSource}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+
+                    <WorkspacePanel className="overflow-hidden border-0 bg-[linear-gradient(180deg,rgba(251,247,239,0.95),rgba(255,255,255,1))] shadow-none">
+                      <WorkspacePanelHeader
+                        eyebrow="Live layout"
+                        title="Rendered preview"
+                        description="Review the current template structure before you save a new revision."
+                      />
+                      <div className="px-5 pb-5">
+                        <div className="rounded-[24px] bg-white p-8 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.12),0_24px_60px_rgba(15,23,42,0.08)]">
                           <div
                             className="prose max-w-none text-mono-text"
                             dangerouslySetInnerHTML={{
@@ -949,46 +1207,17 @@ export function LettersView() {
                           />
                         </div>
                       </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="mnx-form-section space-y-3">
-                        <h3 className="mnx-title-3 font-semibold text-mono-text">
-                          Template Fields
-                        </h3>
-                        <div className="rounded-2xl border border-mono-border bg-mono-soft p-4">
-                          <div className="space-y-3">
-                            {selectedTemplate.fieldSchema.map((field) => (
-                              <div
-                                key={field.key}
-                                className="rounded-xl border border-mono-border bg-mono-card p-3"
-                              >
-                                <p className="text-sm font-medium text-mono-text">
-                                  {field.label}
-                                </p>
-                                <p className="mt-1 text-xs text-mono-muted">
-                                  {field.key}
-                                </p>
-                                <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-mono-muted">
-                                  {field.inputType} | {field.defaultSource} |{" "}
-                                  {field.required ? "required" : "optional"}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    </WorkspacePanel>
                   </div>
-                </Card>
-              </>
+                </WorkspacePanel>
+              </div>
             ) : (
-              <Card className="rounded-2xl border border-dashed border-mono-border bg-mono-card p-12 text-center text-mono-muted">
+              <WorkspacePanel className="border-dashed p-12 text-center text-mono-muted">
                 <FilePenLine className="mx-auto mb-3 size-12 text-mono-accent" />
                 <p className="text-sm">
                   Select a template to preview and edit it.
                 </p>
-              </Card>
+              </WorkspacePanel>
             )}
           </div>
         </div>
@@ -1255,7 +1484,7 @@ export function LettersView() {
             : ""
         }
         onClose={() => setShowViewModal(false)}
-        className="max-w-5xl"
+        size="workspace"
       >
         {selectedRequest ? (
           <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
@@ -1285,23 +1514,35 @@ export function LettersView() {
             </div>
 
             <div className="space-y-4">
-              {selectedRequest.pdfPath ? (
-                <iframe
-                  src={`/${selectedRequest.pdfPath}`}
-                  className="h-[34rem] w-full rounded-2xl border border-mono-border bg-mono-card"
-                  title="Letter preview"
-                />
-              ) : (
-                <Card className="rounded-2xl border border-dashed border-mono-border bg-mono-card p-12 text-center text-mono-muted">
-                  <AlertTriangle className="mx-auto mb-3 size-10 text-[var(--mnx-warning)]" />
-                  <p className="text-sm">
-                    This draft has not been issued yet, so the final PDF is not
-                    available.
-                  </p>
-                </Card>
-              )}
+              <LetterDocumentPreviewSurface
+                title={
+                  selectedRequest.pdfPath
+                    ? "Issued document"
+                    : "Draft preview"
+                }
+                description={
+                  selectedRequest.pdfPath
+                    ? "The embedded browser PDF viewer is shown directly here for print, open, and download actions."
+                    : "This rendered draft preview is visible before issue so the letter can be read and approved."
+                }
+                pdfPath={selectedRequest.pdfPath || null}
+                htmlPreview={
+                  selectedRequest.pdfPath ? null : selectedRequestPreviewHtml
+                }
+                downloadPath={selectedRequest.pdfPath || null}
+              />
 
               <div className="flex flex-wrap justify-end gap-2">
+                {isHR && selectedRequest.status === "DRAFT" ? (
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      handleWorkflowTransition(selectedRequest.id, "SUBMIT")
+                    }
+                  >
+                    Submit for Review
+                  </Button>
+                ) : null}
                 {isHR && selectedRequest.status === "HR_REVIEW" ? (
                   <Button
                     type="button"
@@ -1404,6 +1645,6 @@ export function LettersView() {
           </div>
         ) : null}
       </Modal>
-    </div>
+    </WorkspacePage>
   );
 }

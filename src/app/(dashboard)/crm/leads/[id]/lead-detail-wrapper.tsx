@@ -877,7 +877,9 @@ export function LeadDetailWrapper({
                         Created By
                       </span>
                       <span className="text-mono-muted">
-                        {lead.createdById ? "Site Admin" : "Unknown"}
+                        {lead.createdBy?.name ||
+                          lead.createdBy?.email ||
+                          (lead.createdById ? "Unknown user" : "Unknown")}
                       </span>
                     </div>
                     <div>

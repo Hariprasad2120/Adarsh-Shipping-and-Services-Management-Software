@@ -407,16 +407,20 @@ export function PeopleWorkspaceFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const meta = getPeopleRouteMeta(pathname);
   const Icon = meta.icon;
+  const normalizedPath = normalizePathname(pathname);
+  const hideFrameHeader = normalizedPath === "/hrms/letters";
 
   return (
     <WorkspacePage className="mnx-people-page" data-people-workspace="true">
-      <WorkspacePageHeader
-        className="mnx-people-page-header"
-        eyebrow={meta.eyebrow}
-        title={meta.title}
-        description={meta.description}
-        icon={<Icon aria-hidden="true" />}
-      />
+      {hideFrameHeader ? null : (
+        <WorkspacePageHeader
+          className="mnx-people-page-header"
+          eyebrow={meta.eyebrow}
+          title={meta.title}
+          description={meta.description}
+          icon={<Icon aria-hidden="true" />}
+        />
+      )}
       <div className="mnx-people-content">{children}</div>
     </WorkspacePage>
   );

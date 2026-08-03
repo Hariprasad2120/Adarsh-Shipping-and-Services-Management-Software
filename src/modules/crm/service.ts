@@ -209,6 +209,7 @@ export async function getLead(orgId: string, id: string) {
     where: { id, orgId },
     include: {
       owner: { select: { id: true, name: true, email: true } },
+      createdBy: { select: { id: true, name: true, email: true } },
       crmExternalLead: true,
     },
   });
