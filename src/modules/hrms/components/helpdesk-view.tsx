@@ -162,10 +162,7 @@ export function HelpDeskView() {
       setData(payload);
       setForm((current) => ({
         ...current,
-        categoryId:
-          current.categoryId ||
-          payload.categories[0]?.id ||
-          "",
+        categoryId: current.categoryId || payload.categories[0]?.id || "",
       }));
       setSelectedCaseId((current) => current ?? payload.cases[0]?.id ?? null);
     } catch (loadError) {
@@ -187,7 +184,9 @@ export function HelpDeskView() {
   }, []);
 
   const categoryMap = useMemo(() => {
-    return new Map((data?.categories ?? []).map((category) => [category.id, category]));
+    return new Map(
+      (data?.categories ?? []).map((category) => [category.id, category]),
+    );
   }, [data?.categories]);
 
   const filteredCases = useMemo(() => {
@@ -195,7 +194,14 @@ export function HelpDeskView() {
     if (!term) return data?.cases ?? [];
     return (data?.cases ?? []).filter((item) => {
       const categoryName = categoryMap.get(item.categoryId)?.name ?? "";
-      return [item.id, item.title, item.description, item.status, item.user.name, categoryName]
+      return [
+        item.id,
+        item.title,
+        item.description,
+        item.status,
+        item.user.name,
+        categoryName,
+      ]
         .join(" ")
         .toLowerCase()
         .includes(term);
@@ -298,10 +304,27 @@ export function HelpDeskView() {
   return (
     <>
       <PeopleSummaryGrid>
-        <PeopleSummary icon={<Ticket aria-hidden="true" />} label="Total cases" value={data?.cases.length ?? 0} />
-        <PeopleSummary icon={<LifeBuoy aria-hidden="true" />} label="Open cases" value={openCount} />
-        <PeopleSummary icon={<MessageSquare aria-hidden="true" />} label="Resolved or closed" value={closedCount} />
-        <PeopleSummary icon={<CircleHelp aria-hidden="true" />} label="FAQ guidance" value={faqCount} detail={`${data?.categories.length ?? 0} categories available`} />
+        <PeopleSummary
+          icon={<Ticket aria-hidden="true" />}
+          label="Total cases"
+          value={data?.cases.length ?? 0}
+        />
+        <PeopleSummary
+          icon={<LifeBuoy aria-hidden="true" />}
+          label="Open cases"
+          value={openCount}
+        />
+        <PeopleSummary
+          icon={<MessageSquare aria-hidden="true" />}
+          label="Resolved or closed"
+          value={closedCount}
+        />
+        <PeopleSummary
+          icon={<CircleHelp aria-hidden="true" />}
+          label="FAQ guidance"
+          value={faqCount}
+          detail={`${data?.categories.length ?? 0} categories available`}
+        />
       </PeopleSummaryGrid>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
