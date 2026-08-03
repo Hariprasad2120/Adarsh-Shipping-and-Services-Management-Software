@@ -9,6 +9,196 @@ export type Caps = Record<string, boolean>;
 
 const RBAC_PERMISSIONS_TAG = "rbac:user-permissions";
 
+// Accounting permissions were expanded from older coarse grants into more
+// granular operational capabilities. Keep those older grants usable so
+// long-lived roles can continue working across the migrated module.
+const PERMISSION_COMPATIBILITY: Record<string, readonly string[]> = {
+  "accounting.dashboard.view": ["accounting.read"],
+  "accounting.account.read": ["accounting.read"],
+  "accounting.account.create": ["accounting.create"],
+  "accounting.account.update": ["accounting.create"],
+  "accounting.journal.read": ["accounting.read"],
+  "accounting.journal.prepare": [
+    "accounting.create",
+    "accounting.draft.create",
+    "accounting.journal.create",
+    "accounting.journal.submit",
+  ],
+  "accounting.journal.approve": ["accounting.approve"],
+  "accounting.post": ["accounting.approve"],
+  "accounting.reverse": [
+    "accounting.journal.cancel",
+    "accounting.invoice.cancel",
+  ],
+  "accounting.ledger.read": ["accounting.read"],
+  "accounting.audit.read": ["accounting.read"],
+  "accounting.document.read": ["accounting.read", "accounting.invoice.read"],
+  "accounting.document.approve": ["accounting.approve"],
+  "accounting.invoice.read": ["accounting.read"],
+  "accounting.invoice.create": ["accounting.create"],
+  "accounting.invoice.update": ["accounting.create"],
+  "accounting.sales-invoice.prepare": [
+    "accounting.create",
+    "accounting.invoice.create",
+    "accounting.invoice.submit",
+  ],
+  "accounting.sales-invoice.approve": ["accounting.approve"],
+  "accounting.purchase-invoice.prepare": [
+    "accounting.create",
+    "accounting.invoice.create",
+    "accounting.invoice.submit",
+  ],
+  "accounting.purchase-invoice.approve": ["accounting.approve"],
+  "accounting.credit-note.prepare": [
+    "accounting.create",
+    "accounting.invoice.create",
+    "accounting.invoice.submit",
+  ],
+  "accounting.debit-note.prepare": [
+    "accounting.create",
+    "accounting.invoice.create",
+    "accounting.invoice.submit",
+  ],
+  "accounting.correction.approve": ["accounting.approve"],
+  "accounting.payment.read": ["accounting.read"],
+  "accounting.payment.create": ["accounting.create"],
+  "accounting.payment.prepare": [
+    "accounting.create",
+    "accounting.payment.create",
+    "accounting.payment.submit",
+  ],
+  "accounting.payment.approve": ["accounting.approve"],
+  "accounting.payment.post": ["accounting.approve"],
+  "accounting.payment.allocate": ["accounting.create", "accounting.payment.submit"],
+  "accounting.payment.reverse": ["accounting.reverse"],
+  "accounting.receipt.prepare": [
+    "accounting.create",
+    "accounting.payment.create",
+    "accounting.payment.submit",
+  ],
+  "accounting.reports.view": ["accounting.read"],
+};
+
+const ACCOUNTING_READ_PERMISSION_BUNDLE = [
+  "accounting.dashboard.view",
+  "accounting.account.read",
+  "accounting.audit.read",
+  "accounting.document.read",
+  "accounting.invoice.read",
+  "accounting.journal.read",
+  "accounting.ledger.read",
+  "accounting.payment.read",
+  "accounting.reports.view",
+] as const;
+
+const ACCOUNTING_FULL_PERMISSION_BUNDLE = [
+  ...ACCOUNTING_READ_PERMISSION_BUNDLE,
+  "crm.invoice.manage",
+  "accounting.account.create",
+  "accounting.account.update",
+  "accounting.approval_policy.admin",
+  "accounting.capability-policy.approve",
+  "accounting.capability-policy.manage",
+  "accounting.capability-policy.read",
+  "accounting.correction.approve",
+  "accounting.credit-note.prepare",
+  "accounting.debit-note.prepare",
+  "accounting.depreciation.integrate",
+  "accounting.document.approve",
+  "accounting.draft.create",
+  "accounting.exchange_rate.maintain",
+  "accounting.integration.manual-review",
+  "accounting.integration.post",
+  "accounting.integration.retry",
+  "accounting.invoice.cancel",
+  "accounting.invoice.create",
+  "accounting.invoice.submit",
+  "accounting.invoice.update",
+  "accounting.journal.approve",
+  "accounting.journal.cancel",
+  "accounting.journal.create",
+  "accounting.journal.prepare",
+  "accounting.journal.submit",
+  "accounting.number_series.admin",
+  "accounting.outbox.manual-review",
+  "accounting.outbox.retry",
+  "accounting.partner-transaction.prepare",
+  "accounting.payment.allocate",
+  "accounting.payment.approve",
+  "accounting.payment.create",
+  "accounting.payment.post",
+  "accounting.payment.prepare",
+  "accounting.payment.reverse",
+  "accounting.payment.submit",
+  "accounting.period_lock.approve",
+  "accounting.period_lock.request",
+  "accounting.post",
+  "accounting.purchase-invoice.approve",
+  "accounting.purchase-invoice.prepare",
+  "accounting.readiness.read",
+  "accounting.receipt.prepare",
+  "accounting.recurring-occurrence.process",
+  "accounting.recurring-template.admin",
+  "accounting.replace",
+  "accounting.reverse",
+  "accounting.rounding_policy.admin",
+  "accounting.sales-invoice.approve",
+  "accounting.sales-invoice.prepare",
+  "accounting.settings.manage",
+] as const;
+
+type AccountingDepartmentAccessContext = {
+  departmentCode: string | null;
+  departmentName: string | null;
+  roleNames: string[];
+};
+
+function normalizeDepartmentIdentifier(value: string | null | undefined) {
+  return (value ?? "").toLowerCase().replace(/[^a-z]/g, "");
+}
+
+function isAccountsDepartment(context: AccountingDepartmentAccessContext) {
+  const identifiers = [
+    normalizeDepartmentIdentifier(context.departmentCode),
+    normalizeDepartmentIdentifier(context.departmentName),
+  ].filter(Boolean);
+  return identifiers.some((identifier) =>
+    ["accounts", "accounting", "acccounts"].includes(identifier),
+  );
+}
+
+function normalizeRoleName(value: string) {
+  return value.trim().toLowerCase();
+}
+
+export function getDepartmentScopedPermissionKeys(
+  context: AccountingDepartmentAccessContext,
+  existingKeys: Iterable<string> = [],
+) {
+  if (!isAccountsDepartment(context)) return new Set<string>();
+
+  const existingKeySet = new Set(existingKeys);
+  const roleNames = context.roleNames.map(normalizeRoleName);
+
+  if (roleNames.some((roleName) => roleName === "manager" || roleName === "director")) {
+    return new Set(ACCOUNTING_FULL_PERMISSION_BUNDLE);
+  }
+
+  if (roleNames.includes("management")) {
+    return new Set(ACCOUNTING_READ_PERMISSION_BUNDLE);
+  }
+
+  if (roleNames.some((roleName) => roleName === "employee" || roleName === "tl")) {
+    return new Set(ACCOUNTING_READ_PERMISSION_BUNDLE);
+  }
+
+  if (Array.from(existingKeySet).some((key) => key.startsWith("accounting."))) {
+    return new Set<string>();
+  }
+
+  return new Set(ACCOUNTING_READ_PERMISSION_BUNDLE);
+}
+
 // Process-level in-memory cache — shared across all concurrent requests in the same
 // Node process. Eliminates thundering herd when unstable_cache TTL expires and multiple
 // simultaneous requests (page + API routes) all miss the cross-request cache at once.
@@ -71,6 +261,58 @@ async function loadPermissionKeys(userId: string): Promise<string[]> {
   return keys;
 }
 
+async function loadDepartmentScopedPermissionKeys(userId: string, existingKeys: Iterable<string>) {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      department: {
+        select: {
+          code: true,
+          name: true,
+        },
+      },
+      roles: {
+        select: {
+          role: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!user) return new Set<string>();
+
+  return getDepartmentScopedPermissionKeys(
+    {
+      departmentCode: user.department?.code ?? null,
+      departmentName: user.department?.name ?? null,
+      roleNames: user.roles.map((assignment) => assignment.role.name),
+    },
+    existingKeys,
+  );
+}
+
+export function expandPermissionKeys(keys: Iterable<string>): Set<string> {
+  const expanded = new Set(keys);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const [permission, compatibleKeys] of Object.entries(
+      PERMISSION_COMPATIBILITY,
+    )) {
+      if (expanded.has(permission)) continue;
+      if (compatibleKeys.some((key) => expanded.has(key))) {
+        expanded.add(permission);
+        changed = true;
+      }
+    }
+  }
+  return expanded;
+}
+
 export function invalidateRbacCache() {
   permMemCache.clear();
   try {
@@ -86,7 +328,11 @@ export function invalidateRbacCache() {
 export const loadUserPermissions = cache(async (userId: string): Promise<Set<string>> => {
   return timeBlock(`rbac:loadUserPermissions`, async () => {
     const keys = await loadPermissionKeys(userId);
-    return new Set(keys);
+    const departmentScopedKeys = await loadDepartmentScopedPermissionKeys(
+      userId,
+      keys,
+    );
+    return expandPermissionKeys([...keys, ...departmentScopedKeys]);
   }, 50);
 });
 

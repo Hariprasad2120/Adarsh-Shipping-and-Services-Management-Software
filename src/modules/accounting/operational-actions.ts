@@ -19,7 +19,7 @@ import {
   moveAccountingOutboxToManualReview,
   retryAccountingOutbox,
 } from "./outbox-operations";
-import { submitJournalEntry } from "./service";
+import { rejectJournalEntry, submitJournalEntry } from "./service";
 
 type OperationalActionResult =
   | { ok: true; data?: { id: string; status?: string } }
@@ -158,6 +158,29 @@ export async function approveOperationalJournalAction(
     revalidateAccountingRecord();
     revalidatePath(`/accounting/journal-entries/${journalId}`);
     revalidatePath(`/accounting/journal-entries/${result.id}`);
+    return { ok: true, data: { id: result.id, status: result.status } };
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function rejectOperationalJournalAction(
+  journalId: string,
+  expectedVersion: number,
+  reason: string,
+): Promise<OperationalActionResult> {
+  try {
+    const { orgId, userId } = await actionContext();
+    await requirePermission(userId, "accounting.journal.approve");
+    const result = await rejectJournalEntry(
+      orgId,
+      journalId,
+      userId,
+      reason,
+      expectedVersion,
+    );
+    revalidateAccountingRecord();
+    revalidatePath(`/accounting/journal-entries/${journalId}`);
     return { ok: true, data: { id: result.id, status: result.status } };
   } catch (error) {
     return failure(error);

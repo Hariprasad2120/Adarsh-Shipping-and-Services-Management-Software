@@ -71,12 +71,13 @@ describe("canonical Accounting posting boundary", () => {
         if (directJournalCreates !== 1 || !draftCreate) {
           violations.push(`${file}: only one explicit DRAFT journal create is allowed`);
         }
-        const draftSupersede =
-          /journalEntry\.updateMany\s*\([\s\S]*?status:\s*"DRAFT"[\s\S]*?status:\s*"SUPERSEDED"/.test(
-            source,
-          );
-        if (directJournalMutations !== 1 || !draftSupersede) {
-          violations.push(`${file}: only the DRAFT-to-SUPERSEDED compatibility update is allowed`);
+        const controlledLifecycleMutation =
+          /journalEntry\.updateMany\s*\(/.test(source) &&
+          source.includes("fromStatus") &&
+          source.includes("toStatus") &&
+          source.includes("rowVersion: { increment: 1 }");
+        if (directJournalMutations !== 1 || !controlledLifecycleMutation) {
+          violations.push(`${file}: only one controlled journal lifecycle mutation helper is allowed`);
         }
         if (
           directLineCreates !== 0 ||

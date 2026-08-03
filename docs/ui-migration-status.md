@@ -2,102 +2,956 @@
 
 Last updated: 2026-08-01
 
-## 2026-08-01 merge recovery, portal loading, and dev-start cleanup
+## 2026-08-01 Accounting demo bootstrap and setup-guide continuation
 
-Recovered the in-progress structural/performance merge so the Monolith app can
-build again, restored the moved compatibility imports that were still pointing
-at removed `src/components/monolith` production files, and removed the
-default dev-start preflight work that was slowing `npm run dev`.
-
-Delivered:
-
-- resolved the remaining merge markers across Accounting, CRM, CHA, AMS, HRMS,
-  auth, and shared stylesheet files so the parser/build blockers are gone;
-- added a root `src/app/loading.tsx` so the shared loading experience can
-  render during initial shell resolution instead of only inside nested route
-  segments;
-- updated `scripts/start-local-dev.mjs` so accounting schema preflight no
-  longer runs during the default `npm run dev` path, and added
-  `npm run dev:preflight` for the guarded startup when it is explicitly needed;
-- restored compatibility imports for customer portal, Accounting helpers,
-  vendor creation, CHA workspace consumers, and CRM pages without reintroducing
-  duplicate UI implementations;
-- added thin compatibility re-export shims under `src/components/monolith`
-  that now point to the canonical owners in `src/components/ui`,
-  `src/components/layout`, and module-owned component folders.
-
-Verification:
-
-- `NODE_OPTIONS=--max-old-space-size=8192 npx next build`: passed;
-- `NODE_OPTIONS=--max-old-space-size=8192 npm run architecture:check`:
-  blocked by pre-existing tracked generated/copied files already present under
-  `artifacts/ui-migration/final-runtime/*`, not by this merge-recovery slice.
-
-## 2026-07-30 structural and design-system merge baseline
-
-Preserved the source branch's structural-cleanup and design-system ownership
-history so the later August 1 Accounting continuation does not hide the
-underlying architectural work that must survive this integration.
+Added a dedicated Accounting-only demo bootstrap, surfaced it in Admin
+Settings, and expanded the Product Catalogue with a detailed Accounting setup
+and first-month operating guide.
 
 Delivered:
 
-- normalized the live production design-system ownership so `/admin/design-system`
-  is a catalogue of real production components rather than a parallel
-  implementation;
-- established the canonical ownership split across `src/components/ui`,
-  explicit shared component folders, module-owned components, and
-  compatibility-only `src/components/monolith`;
-- introduced the structural cleanup and architecture-verification baseline,
-  including `npm run architecture:check`, `npm run design-system:verify`, and
-  the supporting inventory/audit documentation;
-- applied the shared operational data-table and toolbar corrections that the
-  source branch had already verified against CHA and the design-system
-  catalogue.
+- added `src/modules/accounting/demo.ts` so Admin can seed an idempotent July
+  2026 Accounting walkthrough into the current organisation, including
+  dedicated demo maker/approver users, bank metadata, demo customer/vendor
+  masters, posted sales and purchase documents, posted customer/vendor
+  payments, and posted manual journals;
+- extended `src/modules/accounting/actions.ts` with
+  `seedAccountingDemoMonthAction`, then updated
+  `src/app/(dashboard)/admin/settings/page.tsx`,
+  `src/app/(dashboard)/admin/settings/settings-client.tsx`, and
+  `src/components/monolith/admin-workspace.tsx` so Admin Settings now exposes a
+  clear Accounting demo button plus run-summary feedback;
+- hardened `src/modules/accounting/legacy-bootstrap.ts` so organisations now
+  auto-create missing `AccountingAccountControl` rows for active posting
+  ledgers, while only the configured trade receivable/payable control accounts
+  require party references by default;
+- expanded `src/lib/catalogue-data.ts` and
+  `src/app/(dashboard)/product-catalogue/page.tsx` so the Accounting module now
+  includes a detailed organisation setup sequence, July 2026 demo runbook, and
+  working-check checklist inside the Product Catalogue.
 
-Verification preserved from the source branch:
+Verification on Saturday, August 1, 2026:
 
-- production TypeScript passed;
-- source-side design-system and architecture verification passed;
-- the optimized production build passed there;
-- repository-wide lint and some staging-backed suites still remained blocked by
-  known pre-existing baseline issues outside those structural slices.
-
-## 2026-08-01 Accounting workspace discoverability continuation
-
-Fixed the current Monolith discoverability gap where many live Accounting
-routes were not reachable from the shared navigation or the `/accounting`
-workspace hub, which made the module appear incomplete even though the pages
-already existed.
-
-Delivered:
-
-- updated `src/lib/navigation.ts` so the shared Accounting navigation now also
-  exposes `Payment Entries`, `Quotations`, `Depreciation Runs`, `Reports Hub`,
-  and `Job Costing`;
-- updated `src/app/(dashboard)/accounting/page.tsx` so `/accounting` now works
-  as a real route hub and lists every currently visible Accounting workspace in
-  grouped Monolith workflow-card sections instead of only showing metrics and
-  recent activity;
-- updated `src/modules/accounting/operational-access.ts` so
-  `/accounting/quotations`, `/accounting/vendor-master`, and
-  `/accounting/jobs` no longer fall through to the generic overview access map
-  and instead resolve through the correct Accounting permission groups.
-
-Verification:
-
-- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/lib/navigation.ts' 'src/modules/accounting/operational-access.ts' 'src/app/(dashboard)/accounting/page.tsx'`:
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/modules/accounting/demo.ts' 'src/modules/accounting/legacy-bootstrap.ts' 'src/app/(dashboard)/admin/settings/page.tsx' 'src/app/(dashboard)/admin/settings/settings-client.tsx' 'src/components/monolith/admin-workspace.tsx' 'src/app/(dashboard)/product-catalogue/page.tsx' 'src/lib/catalogue-data.ts'`:
   passed;
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
   passed;
-- `git diff --check -- 'src/lib/navigation.ts' 'src/modules/accounting/operational-access.ts' 'src/app/(dashboard)/accounting/page.tsx'`:
+- live demo bootstrap run against `hr@adarshshipping.in`'s organisation
+  (`cmr4m8jb10000ysbwuoj2bvvx`) via `seedAccountingDemoMonth(...)`: passed and
+  reported 2 posted canonical documents, 2 posted payments, 3 posted manual
+  journals, and balanced July totals of debit `892850.00` and credit
+  `892850.00`;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build`: passed; Turbopack
+  still reports the existing unrelated NFT tracing warning through
+  `next.config.ts` and
+  `src/app/api/customer-portal/document-versions/[id]/route.ts`, but the build
+  completed successfully.
+
+Open follow-up:
+
+- the new Accounting demo currently seeds the active organisation rather than
+  provisioning a separate switchable workspace/org shell;
+- `src/modules/accounting/actions.ts` still carries the repository's existing
+  broad `@typescript-eslint/no-explicit-any` lint debt, unchanged by this
+  slice.
+
+## 2026-08-01 Accounting FX revaluation draft continuation
+
+Completed the last open 9.18 Accounting FX automation gap by turning close-date
+review into a controlled draft-journal workflow instead of leaving it as
+manual-only evidence.
+
+Delivered:
+
+- extended `src/modules/accounting/foreign-exchange.ts` so close runs can now
+  resolve configured FX gain/loss posting accounts, convert realized and
+  unrealized review rows into balanced journal lines, create a normal draft
+  journal through the existing maker-checker journal service, and persist the
+  draft lineage/status back onto the close run;
+- updated `src/app/(dashboard)/accounting/currency-adjustments/page.tsx` so
+  the close-run table now uses the richer FX workspace data, supports `Refresh
+  FX review`, allows `Create FX draft` after review evidence exists, and links
+  directly to the resulting journal detail route;
+- added focused unit coverage in
+  `src/modules/accounting/__tests__/foreign-exchange.test.ts` for happy-path
+  draft creation and missing-account safeguards;
+- added `vitest.unit.config.ts` so mocked unit suites like the new FX draft
+  coverage can run locally without requiring the repository's staging-database
+  Vitest bootstrap.
+
+Verification on Saturday, August 1, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/modules/accounting/foreign-exchange.ts' 'src/app/(dashboard)/accounting/currency-adjustments/page.tsx' 'src/modules/accounting/__tests__/foreign-exchange.test.ts'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx vitest run --config vitest.unit.config.ts src/modules/accounting/__tests__/foreign-exchange.test.ts src/modules/accounting/__tests__/tax-settlement.test.ts src/modules/accounting/__tests__/phase9-late-slices.test.ts --reporter verbose`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build`: passed; Turbopack
+  still reports the existing unrelated NFT tracing warning through
+  `next.config.ts` and
+  `src/app/api/customer-portal/document-versions/[id]/route.ts`, but the build
+  completed successfully.
+
+Open follow-up:
+
+- browser verification remains intentionally skipped for the remaining Phase 9
+  slices per current instruction;
+- Phase 9 implementation is now complete through 9.23, with only optional
+  authenticated browser QA left if a browser backend returns in a later
+  session.
+
+## 2026-08-01 Accounting foreign-exchange review continuation
+
+Continued the remaining 9.18 Accounting FX parity by adding realized and
+unrealized review behavior on top of the earlier currency-control and
+tax-settlement workspaces.
+
+Delivered:
+
+- added `src/modules/accounting/foreign-exchange.ts` so Accounting can now
+  compute open foreign-currency revaluation exposure from approved historical
+  and latest FX rates, compute realized settlement variance from actual
+  payment allocations, and record a close-run FX review snapshot into
+  `AccountingPeriodCloseRun`;
+- updated `src/app/(dashboard)/accounting/currency-adjustments/page.tsx` so
+  the route now shows unrealized and realized FX review tables plus a
+  controlled `Record FX review` action for open, ready, and reopened close
+  runs;
+- tightened `src/modules/accounting/tax-settlement.ts` so final close now
+  requires a matching FX review snapshot when foreign-currency exposure or
+  settlement variance exists for the close date;
+- extended `src/modules/accounting/phase9-workspaces.ts` and
+  `src/modules/accounting/__tests__/tax-settlement.test.ts` so row-version and
+  guarded close behavior stay covered.
+
+Verification on Saturday, August 1, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/modules/accounting/foreign-exchange.ts' 'src/modules/accounting/tax-settlement.ts' 'src/app/(dashboard)/accounting/currency-adjustments/page.tsx' 'src/modules/accounting/phase9-workspaces.ts' 'src/modules/accounting/__tests__/tax-settlement.test.ts'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx vitest run 'src/modules/accounting/__tests__/tax-settlement.test.ts' 'src/modules/accounting/__tests__/phase9-late-slices.test.ts'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build`: passed; Turbopack
+  still reports the existing unrelated NFT tracing warning through
+  `next.config.ts` and
+  `src/app/api/customer-portal/document-versions/[id]/route.ts`, but the build
+  completed successfully.
+
+Open follow-up:
+
+- browser verification remains intentionally skipped for the remaining Phase 9
+  slices per current instruction;
+- the main remaining 9.18 FX gap is now automatic journalized revaluation
+  posting rather than realized/unrealized review and close-evidence control.
+
+## 2026-08-01 Accounting tax-settlement behavior continuation
+
+Continued the 9.18 Accounting parity work by adding operational filing-period
+and period-close transitions on top of the earlier tax-settlement visibility
+workspace.
+
+Delivered:
+
+- added `src/modules/accounting/tax-settlement.ts` so statutory filing periods
+  can now move through guarded `OPEN -> READY -> FILED` transitions with
+  report-availability checks, live report snapshots, acknowledgement-reference
+  enforcement, audit logging, and row-version protection;
+- added guarded close-run transitions so period-close runs can now move through
+  `OPEN/REOPENED -> READY -> CLOSED` and `CLOSED -> REOPENED`, with blocking
+  checks for overlapping open filing periods and missing transaction-lock
+  coverage before final close;
+- updated `src/app/(dashboard)/accounting/tax-settlement/page.tsx` so Finance
+  operators can now execute those controlled filing and close transitions
+  directly from the live settlement workspace instead of returning to
+  configuration-admin CRUD;
+- extended `src/modules/accounting/phase9-workspaces.ts` and added
+  `src/modules/accounting/__tests__/tax-settlement.test.ts` so row-version
+  data and focused transition coverage back the new operational behavior.
+
+Verification on Saturday, August 1, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/modules/accounting/tax-settlement.ts' 'src/app/(dashboard)/accounting/tax-settlement/page.tsx' 'src/modules/accounting/__tests__/tax-settlement.test.ts' 'src/modules/accounting/phase9-workspaces.ts'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx vitest run 'src/modules/accounting/__tests__/tax-settlement.test.ts' 'src/modules/accounting/__tests__/phase9-late-slices.test.ts'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build`: passed; Turbopack
+  still reports the existing unrelated NFT tracing warning through
+  `next.config.ts` and
+  `src/app/api/customer-portal/document-versions/[id]/route.ts`, but the build
+  completed successfully.
+
+Open follow-up:
+
+- browser verification remains intentionally skipped for the remaining Phase 9
+  slices per current instruction;
+- the main remaining 9.18 gap is now deeper foreign-exchange parity, especially
+  realized/unrealized revaluation behavior, rather than missing filing / close
+  transition controls.
+
+## 2026-08-01 Banking overview and account workspace foundation
+
+Extended the existing `/accounting/banking` route into a real Banking
+workspace backed by `AccountingBankAccount`, posted ledger balances, and the
+existing accounting configuration and permission boundaries.
+
+Delivered:
+
+- added `src/modules/accounting/banking-service.ts`,
+  `src/modules/accounting/banking-actions.ts`, and
+  `src/modules/accounting/banking-shared.ts` so Banking now has a dedicated
+  service boundary for overview filters, money aggregation, account metadata
+  management, inactive-account handling, and account transaction workspace
+  queries;
+- rebuilt `src/app/(dashboard)/accounting/banking/page.tsx` and
+  `src/app/(dashboard)/accounting/banking/banking-client.tsx` so the Banking
+  overview now shows real Cash in Hand and Bank Balance summaries, server-fed
+  search/date/status filters, Amount in Bank vs Amount in Books separation,
+  masked identifiers, active/inactive state, and working `Edit account`,
+  `View transactions`, and `Mark inactive` actions only;
+- added `src/app/(dashboard)/accounting/banking/[bankAccountId]/page.tsx` and
+  `bank-account-client.tsx` so each bank account now has a transaction
+  workspace with real posted-book rows, stable running balances with opening
+  carry-forward, reference links back to source accounting records, and the
+  same safe edit/inactivate controls;
+- reused the existing `saveAccountingBankAccount` configuration path rather
+  than creating a duplicate Banking persistence workflow, and preserved the
+  existing Banking foundation migration without modification;
+- added focused Banking tests in
+  `src/modules/accounting/__tests__/banking-service.test.ts` and
+  `src/app/(dashboard)/accounting/banking/banking-client.test.tsx`.
+
+Verification on Saturday, August 1, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/modules/accounting/banking-shared.ts' 'src/modules/accounting/banking-service.ts' 'src/modules/accounting/banking-actions.ts' 'src/modules/accounting/__tests__/banking-service.test.ts' 'src/app/(dashboard)/accounting/banking/page.tsx' 'src/app/(dashboard)/accounting/banking/banking-client.tsx' 'src/app/(dashboard)/accounting/banking/banking-client.test.tsx' 'src/app/(dashboard)/accounting/banking/[bankAccountId]/page.tsx' 'src/app/(dashboard)/accounting/banking/[bankAccountId]/bank-account-client.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx vitest run 'src/modules/accounting/__tests__/banking-service.test.ts' 'src/app/(dashboard)/accounting/banking/banking-client.test.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma validate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build`: passed; Turbopack
+  still reports the existing unrelated NFT tracing warning through
+  `next.config.ts` and
+  `src/app/api/customer-portal/checklist-files/[id]/route.ts`, but the build
+  completed successfully.
+
+Open follow-up:
+
+- this slice intentionally did not start real bank connectors, statement inbox,
+  rule engine, reconciliation, deposit capture, or automatic import flows
+  because those backing services are not yet implemented in this repository;
+- Banking account creation in this pass stays constrained to existing
+  `AccountingBankAccount` fields and configuration metadata, with book balances
+  continuing to come only from posted ledger activity.
+
+## 2026-08-01 Accounting dashboard late-phase visibility continuation
+
+Continued the 9.20 to 9.23 acceptance work by upgrading the main Accounting
+landing route so the newer statutory, reporting, integration, and
+customization slices are visible from `/accounting` instead of only through
+their leaf workspaces.
+
+Delivered:
+
+- updated `src/app/(dashboard)/accounting/page.tsx` so the dashboard now loads
+  live summaries from the currency-control, tax-settlement, report-builder,
+  integrations, and customization workspaces in parallel with the existing
+  operational queue metrics;
+- added a Phase 9 controls metric band for foreign-currency subledgers, open
+  filing periods, active export profiles, active source mappings, and active
+  custom metadata;
+- added dashboard tables for connected late-phase workspaces and recent
+  statutory filing / close checkpoints so the Finance landing route reflects
+  the broader Phase 9 surface area instead of only core drafts/approvals/audit
+  queues.
+
+Verification on Saturday, August 1, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/app/(dashboard)/accounting/page.tsx' 'src/modules/accounting/phase9-workspaces.ts' 'src/app/(dashboard)/accounting/currency-adjustments/page.tsx' 'src/app/(dashboard)/accounting/tax-settlement/page.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx vitest run 'src/modules/accounting/__tests__/operational-access.test.ts' 'src/modules/accounting/__tests__/operational-ui.architecture.test.ts' 'src/modules/accounting/__tests__/phase9-late-slices.test.ts'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build`: passed.
+
+Open follow-up:
+
+- browser verification remains intentionally skipped for the remaining Phase 9
+  slices per current instruction;
+- the remaining work is now mostly in deeper behavioral parity and final
+  specification-derived acceptance coverage rather than missing dashboard
+  visibility for the late-phase routes.
+
+## 2026-08-01 Accounting tax-settlement and currency-control continuation
+
+Continued the 9.18 Accounting parity work by turning the earlier accountant
+foundations into live operational control surfaces for FX visibility,
+statutory filing checkpoints, and close-control review.
+
+Delivered:
+
+- extended `src/modules/accounting/phase9-workspaces.ts` with
+  `getAccountingCurrencyControlWorkspace()` and
+  `getAccountingTaxSettlementWorkspace()` so Accounting can now load
+  functional-currency settings, foreign-currency customer/vendor profiles,
+  recent period-close runs, filing periods, validated tax profile counts, GST
+  summary snapshots, and current transaction-lock dates from one late-phase
+  workspace layer;
+- upgraded `src/app/(dashboard)/accounting/currency-adjustments/page.tsx` so
+  the route now shows foreign-currency subledger visibility and recent close
+  checkpoints instead of only static configuration evidence;
+- added `src/app/(dashboard)/accounting/tax-settlement/page.tsx` as a live
+  Monolith tax-settlement workspace with registration metrics, filing-period
+  tables, GST report snapshots, current lock-date visibility, and workflow
+  connectors into reports, transaction locking, configuration admin, and
+  currency controls;
+- updated `src/components/monolith/accounting-workspace.tsx`,
+  `src/lib/navigation.ts`, and
+  `src/modules/accounting/operational-access.ts` so
+  `/accounting/tax-settlement` behaves as a first-class Accounting route;
+- updated `src/modules/accounting/__tests__/operational-access.test.ts` and
+  `src/modules/accounting/__tests__/operational-ui.architecture.test.ts` so
+  the new route is covered by the shared operational-access and route
+  architecture assertions.
+
+Verification on Saturday, August 1, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/modules/accounting/phase9-workspaces.ts' 'src/app/(dashboard)/accounting/currency-adjustments/page.tsx' 'src/app/(dashboard)/accounting/tax-settlement/page.tsx' 'src/components/monolith/accounting-workspace.tsx' 'src/modules/accounting/operational-access.ts' 'src/lib/navigation.ts' 'src/modules/accounting/__tests__/operational-access.test.ts' 'src/modules/accounting/__tests__/operational-ui.architecture.test.ts'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx vitest run 'src/modules/accounting/__tests__/operational-access.test.ts' 'src/modules/accounting/__tests__/operational-ui.architecture.test.ts' 'src/modules/accounting/__tests__/phase9-late-slices.test.ts'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run accounting:phase9:test`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build`: passed.
+
+Open follow-up:
+
+- browser verification remains intentionally skipped for the remaining Phase 9
+  slices per current instruction;
+- with the local dev server stopped, the earlier `.next\\monolith-dev-3.stderr.log`
+  lock is no longer blocking build verification;
+- the main remaining 9.18 gap is deeper behavioral parity for automated
+  settlement/revaluation flows, not the operational workspace layer.
+
+## 2026-08-01 Accounting late-phase workspaces and API continuation
+
+Continued Accounting Phase 9 beyond the 9.15 purchases slice by wiring the
+late-stage operational workspaces that were still missing across approvals,
+communications, customization, reporting, integrations, and slice-derived
+tests.
+
+Delivered:
+
+- added additive persisted Accounting customization registries in
+  `prisma/schema.prisma` plus
+  `prisma/migrations/20260801000310_accounting_phase9_customization_and_automation/migration.sql`
+  for `AccountingCustomFieldDefinition`, `AccountingAutomationRule`, and
+  `AccountingWorkspaceModule`;
+- added `src/modules/accounting/customization.ts` and
+  `src/modules/accounting/phase9-workspaces.ts` so Accounting now has
+  server-authoritative customization CRUD plus late-slice summary queries for
+  approval coverage, communications, report-builder catalog, and integrations;
+- added live Monolith routes `/accounting/customization`,
+  `/accounting/communications`, `/accounting/report-builder`, and
+  `/accounting/integrations`, and expanded `/accounting/approvals` with
+  workflow coverage summary;
+- added authenticated Accounting API endpoints for approvals summary,
+  communications, report catalog, integrations, custom fields, automation
+  rules, and workspace modules;
+- updated `src/components/monolith/accounting-workspace.tsx`,
+  `src/lib/navigation.ts`, and
+  `src/modules/accounting/operational-access.ts` so the new late-phase routes
+  behave as first-class Accounting workspaces;
+- added focused late-slice assertions in
+  `src/modules/accounting/__tests__/phase9-late-slices.test.ts` and updated the
+  existing operational route architecture tests to cover the new surfaces.
+
+Verification on Saturday, August 1, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma validate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma generate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/modules/accounting/customization.ts' 'src/modules/accounting/phase9-workspaces.ts' 'src/app/(dashboard)/accounting/customization/page.tsx' 'src/app/(dashboard)/accounting/communications/page.tsx' 'src/app/(dashboard)/accounting/report-builder/page.tsx' 'src/app/(dashboard)/accounting/integrations/page.tsx' 'src/app/(dashboard)/accounting/approvals/page.tsx' 'src/app/api/accounting/approvals/summary/route.ts' 'src/app/api/accounting/communications/route.ts' 'src/app/api/accounting/reports/catalog/route.ts' 'src/app/api/accounting/custom-fields/route.ts' 'src/app/api/accounting/custom-fields/[id]/route.ts' 'src/app/api/accounting/automation-rules/route.ts' 'src/app/api/accounting/automation-rules/[id]/route.ts' 'src/app/api/accounting/workspace-modules/route.ts' 'src/app/api/accounting/workspace-modules/[id]/route.ts' 'src/app/api/accounting/integrations/route.ts' 'src/components/monolith/accounting-workspace.tsx' 'src/modules/accounting/operational-access.ts' 'src/lib/navigation.ts' 'src/lib/db.ts'`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx vitest run 'src/modules/accounting/__tests__/operational-access.test.ts' 'src/modules/accounting/__tests__/operational-ui.architecture.test.ts' 'src/modules/accounting/__tests__/phase9-late-slices.test.ts'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run accounting:phase9:test`:
+  passed;
+- targeted `git diff --check` for the touched late-phase files: passed, aside
+  from the normal Windows line-ending warnings in the worktree.
+
+Open follow-up:
+
+- browser verification remains intentionally skipped for the remaining Phase 9
+  slices per current instruction;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build` is still blocked by
+  the locked `.next\\monolith-dev-3.stderr.log` while the local dev app stays
+  running on port 3000;
+- deeper 9.18 multi-currency, subaccounts, locking, and tax-settlement parity
+  is still the largest remaining specification gap after this continuation.
+
+## 2026-08-01 Accounting debit-note and correction-route continuation
+
+Continued the 9.15 Purchases lifecycle work by fixing the remaining
+customer-side visibility gap in the shared debit-note route and aligning the
+shared correction-route metadata with the mixed customer/vendor behavior now
+present in Accounting.
+
+Delivered:
+
+- added
+  `src/app/(dashboard)/accounting/debit-notes/customer-note-drafts-client.tsx`
+  and updated `/accounting/debit-notes` so customer debit-note drafts now
+  appear alongside vendor debit-note drafts and the canonical debit-note
+  register;
+- updated `src/modules/accounting/service.ts` so customer-note listings now
+  include original invoice references for source-lineage display;
+- normalized the shared credit-note route metadata, navigation label, and
+  access classification so `/accounting/credit-notes` no longer reads as
+  sales-only when it now covers both customer and vendor credits.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/app/(dashboard)/accounting/debit-notes/page.tsx' 'src/app/(dashboard)/accounting/debit-notes/customer-note-drafts-client.tsx' 'src/app/(dashboard)/accounting/debit-notes/vendor-note-drafts-client.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- targeted `git diff --check` for the touched debit-note and correction-route
+  files: passed, aside from the normal Windows line-ending warnings in the
+  worktree.
+
+Blocked:
+
+- browser verification is intentionally skipped for the remaining slices per
+  current instruction;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build` remains blocked by the
+  locked `.next\\monolith-dev-3.stderr.log` while the local dev app stays
+  running on port 3000;
+- remaining 9.15 work is now mostly in deeper canonical payable-party mapping
+  and any leftover vendor-settlement edge cases, not basic correction-route
+  visibility.
+
+## 2026-08-01 Accounting expenses and reimbursements continuation
+
+Continued the 9.15 Purchases lifecycle work by adding an Accounting-side
+Finance workspace for operational expense and reimbursement payout visibility
+without inventing unsupported canonical posting paths.
+
+Delivered:
+
+- added `/accounting/expenses` with live Monolith metrics, workflow cards, and
+  payable-ready queue tables for CHA operational expenses and HR fuel
+  reimbursements;
+- wired the new route into `src/components/monolith/accounting-workspace.tsx`,
+  `src/lib/navigation.ts`, and
+  `src/modules/accounting/operational-access.ts` so it behaves as a first-class
+  Accounting workspace;
+- kept payout execution in the existing `/expense` and `/hrms/reimbursement`
+  source flows because those modules still own approval, proof, and party
+  identity and do not yet resolve automatically into canonical customer or
+  supplier payment-entry parties.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/app/(dashboard)/accounting/expenses/page.tsx' 'src/components/monolith/accounting-workspace.tsx' 'src/lib/navigation.ts' 'src/modules/accounting/operational-access.ts'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run accounting:phase9:test`:
+  passed;
+- targeted `git diff --check` for the touched Accounting expenses files:
   passed, aside from the normal Windows line-ending warnings in the worktree.
 
 Blocked:
 
-- focused `vitest` verification remains blocked by the repository guard in
-  `vitest.config.ts`, which refuses to start without `.env.staging.local`;
+- browser verification is intentionally skipped for the remaining slices per
+  current instruction;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build` remains blocked by the
+  locked `.next\\monolith-dev-3.stderr.log` while the local dev app stays
+  running on port 3000;
+- remaining 9.15 work is now mostly in deeper canonical payable-party mapping
+  and any leftover vendor-settlement edge cases, not basic expense visibility.
+
+## 2026-08-01 Accounting vendor-credit and AP-settlement continuation
+
+Continued the 9.15 Purchases lifecycle work by finishing the vendor credit-note
+draft path in Accounting and tightening the vendor-payment handoff into a
+supplier- and bill-scoped AP settlement flow.
+
+Delivered:
+
+- updated `/accounting/credit-notes/new` so both customer and supplier
+  original-invoice pickers now load real posted invoice states instead of the
+  impossible legacy `APPROVED` / `SUBMITTED` filter;
+- added
+  `src/app/(dashboard)/accounting/credit-notes/vendor-credit-drafts-client.tsx`
+  and updated `/accounting/credit-notes` so vendor credit-note drafts now
+  appear in Accounting with direct submit-to-canonical actions and canonical
+  review links once prepared;
+- updated `/accounting/payment-entries/new` so vendor disbursements can open
+  pre-scoped to a supplier and specific bill, with the outstanding amount
+  preloaded into both the draft payment amount and the starting allocation;
+- updated `/accounting/purchase-invoices/[id]` and `/accounting/vendor-payments`
+  so AP operators can jump directly from an open bill or the vendor-payment
+  register into that scoped settlement flow.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/app/(dashboard)/accounting/credit-notes/page.tsx' 'src/app/(dashboard)/accounting/credit-notes/new/page.tsx' 'src/app/(dashboard)/accounting/credit-notes/vendor-credit-drafts-client.tsx' 'src/app/(dashboard)/accounting/payment-entries/new/page.tsx' 'src/app/(dashboard)/accounting/payment-entries/new/new-payment-client.tsx' 'src/app/(dashboard)/accounting/purchase-invoices/[id]/page.tsx' 'src/app/(dashboard)/accounting/vendor-payments/page.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run accounting:phase9:test`:
+  passed;
+- targeted `git diff --check` for the touched vendor-credit and AP-settlement
+  files: passed, aside from the normal Windows line-ending warnings in the
+  worktree.
+
+Blocked:
+
+- browser verification is intentionally skipped for the remaining slices per
+  current instruction;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build` remains blocked by the
+  locked `.next\\monolith-dev-3.stderr.log` while the local dev app stays
+  running on port 3000;
+- direct expense-entry / reimbursement parity and some broader AP settlement
+  edge cases are still open in 9.15.
+
+## 2026-08-01 Accounting recurring-bill continuation
+
+Continued the 9.15 Purchases lifecycle work by turning the dormant
+`RecurringExpense` foundation into a live recurring-bill workflow that
+generates draft purchase invoices instead of legacy direct posting.
+
+Delivered:
+
+- added additive recurring-bill run persistence plus
+  `prisma/migrations/20260801000300_accounting_phase9_recurring_expense_runs/migration.sql`;
+- added `src/modules/accounting/recurring-expenses.ts` and
+  `src/modules/accounting/recurring-expense-actions.ts` so Accounting can now
+  create recurring bill profiles, process due occurrences, generate one-off
+  draft purchase invoices, skip due dates, pause/resume profiles, and record
+  generated / skipped / failed run lineage with idempotency keys;
+- added `src/app/(dashboard)/accounting/recurring/recurring-expense-client.tsx`
+  and updated `src/app/(dashboard)/accounting/recurring/page.tsx` so the live
+  recurring workspace now hosts both recurring sales invoices and recurring
+  bills in one Monolith operational route;
+- updated `src/lib/db.ts` so the Prisma singleton refresh guard recognizes the
+  new recurring-expense run delegate.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma validate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma generate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/modules/accounting/recurring-expenses.ts' 'src/modules/accounting/recurring-expense-actions.ts' 'src/app/(dashboard)/accounting/recurring/page.tsx' 'src/app/(dashboard)/accounting/recurring/recurring-expense-client.tsx' 'src/app/(dashboard)/accounting/recurring/recurring-sales-client.tsx' 'src/lib/db.ts'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run accounting:phase9:test`:
+  passed;
+- targeted `git diff --check` for the touched recurring-bill files: passed,
+  aside from the normal Windows line-ending warnings in the worktree.
+
+Blocked:
+
+- browser verification is intentionally skipped for the remaining slices per
+  current instruction;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build` remains blocked by the
+  locked `.next\\monolith-dev-3.stderr.log` while the local dev app stays
+  running on port 3000;
+- vendor-credit, expense, and broader AP settlement parity are still open in
+  9.15.
+
+## 2026-08-01 Accounting vendor debit-note continuation
+
+Continued the 9.15 Purchases lifecycle work by exposing vendor debit-note
+drafts in Accounting and fixing the original-invoice selectors to use real AP
+invoice states.
+
+Delivered:
+
+- updated `/accounting/debit-notes/new` so both customer and supplier
+  original-invoice pickers now load real posted invoice states instead of the
+  impossible legacy `APPROVED` / `SUBMITTED` filter;
+- added
+  `src/app/(dashboard)/accounting/debit-notes/vendor-note-drafts-client.tsx`
+  and updated `/accounting/debit-notes` so vendor debit-note drafts now appear
+  in a dedicated draft register with direct submit-to-canonical actions and
+  canonical review links once prepared;
+- updated `src/modules/accounting/service.ts` so vendor-note listings now
+  include original purchase-invoice references for AP correction lineage.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/app/(dashboard)/accounting/debit-notes/page.tsx' 'src/app/(dashboard)/accounting/debit-notes/new/page.tsx' 'src/app/(dashboard)/accounting/debit-notes/vendor-note-drafts-client.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- targeted `git diff --check` for the touched debit-note files: passed, aside
+  from the normal Windows line-ending warnings in the worktree.
+
+Blocked:
+
 - authenticated browser verification still cannot run in this Codex session
-  because no browser backend is attached.
+  because the browser runtime exposes zero available browser backends, even
+  though the local app is healthy on `http://127.0.0.1:3000`;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build` remains blocked by the
+  locked `.next\\monolith-dev-3.stderr.log` while the local dev app stays
+  running on port 3000;
+- recurring-bill, vendor-credit, expense, and broader AP settlement parity are
+  still open in 9.15.
+
+## 2026-08-01 Accounting purchase-order continuation
+
+Started the 9.15 Purchases lifecycle work by turning purchase orders into a
+true supplier-side Accounting flow with draft-bill conversion instead of
+leaving them as generic CRM commercial documents.
+
+Delivered:
+
+- added additive purchase-order lineage persistence on `PurchaseInvoice` and
+  `PurchaseInvoiceItem` plus
+  `prisma/migrations/20260801000250_accounting_phase9_purchase_order_purchase_invoice_lineage/migration.sql`;
+- added `src/modules/accounting/purchase-orders.ts` and
+  `src/modules/accounting/purchase-order-actions.ts` so Accounting can now
+  load purchase-order detail and convert eligible purchase orders into normal
+  draft purchase invoices with duplicate prevention and an explicit mixed-tax
+  safeguard;
+- added `src/app/(dashboard)/accounting/purchase-orders/[id]/page.tsx` and
+  `src/app/(dashboard)/accounting/purchase-orders/[id]/detail-client.tsx` so
+  the Monolith now exposes supplier-aware purchase-order detail, linked-bill
+  lineage, and one-click draft purchase-invoice conversion;
+- updated the generic commercial register so purchase-order rows now show the
+  supplier instead of a customer account and expose a review action into the
+  new Accounting detail route.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma validate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma generate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/modules/accounting/purchase-orders.ts' 'src/modules/accounting/purchase-order-actions.ts' 'src/app/(dashboard)/accounting/purchase-orders/[id]/page.tsx' 'src/app/(dashboard)/accounting/purchase-orders/[id]/detail-client.tsx' 'src/app/(dashboard)/accounting/_components/commercial-documents-page.tsx' 'src/components/monolith/accounting-workspace.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run accounting:phase9:test`:
+  passed.
+
+Blocked:
+
+- authenticated browser verification still cannot run in this Codex session
+  because the browser runtime exposes zero available browser backends, even
+  though the local app is healthy on `http://127.0.0.1:3000`;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build` remains blocked by the
+  locked `.next\\monolith-dev-3.stderr.log` while the local dev app stays
+  running on port 3000;
+- recurring-bill, vendor-credit, expense, and broader AP settlement parity are
+  still open in 9.15.
+
+## 2026-08-01 Accounting customer-advance and sales-receipt continuation
+
+Continued the 9.14 Sales lifecycle work by landing the remaining
+retainer-invoice / customer-advance and sales-receipt coverage on the
+canonical receipt workflow instead of reviving legacy direct posting.
+
+Delivered:
+
+- added additive accounting customer-advance / retainer request persistence
+  plus
+  `prisma/migrations/20260801000240_accounting_phase9_customer_advance_requests/migration.sql`;
+- added `src/modules/accounting/customer-advances.ts` and
+  `src/modules/accounting/customer-advance-actions.ts` so Accounting can now
+  create customer-advance and retainer requests, summarize linked canonical
+  receipt coverage, create controlled receipt drafts against the remaining
+  balance, and cancel untouched requests;
+- added `src/app/(dashboard)/accounting/customer-advances/page.tsx` and
+  `src/app/(dashboard)/accounting/customer-advances/customer-advances-client.tsx`
+  so the Monolith now exposes a live customer-advance workspace with request
+  intake, remaining-balance visibility, linked draft/canonical receipt lineage,
+  and direct receipt-draft generation into the normal payment approval flow;
+- added dedicated `/accounting/sales-receipts` and
+  `/accounting/sales-receipts/new` routes, and updated
+  `/accounting/customer-receipts` so sales receipts now have an explicit
+  register entry point plus navigation into customer advances;
+- updated `src/lib/db.ts` and `tsconfig.json` so stable `.next/types` output is
+  the repo-wide TypeScript source of truth after the earlier corrupted
+  `.next/dev/types` artifacts.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma validate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma generate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/modules/accounting/customer-advances.ts' 'src/modules/accounting/customer-advance-actions.ts' 'src/app/(dashboard)/accounting/customer-advances/page.tsx' 'src/app/(dashboard)/accounting/customer-advances/customer-advances-client.tsx' 'src/app/(dashboard)/accounting/sales-receipts/page.tsx' 'src/app/(dashboard)/accounting/customer-receipts/page.tsx' 'src/lib/db.ts' 'src/components/monolith/accounting-workspace.tsx' 'src/modules/accounting/operational-access.ts'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx next typegen`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run accounting:phase9:test`:
+  passed.
+
+Blocked:
+
+- authenticated browser verification still cannot run in this Codex session
+  because the browser runtime exposes zero available browser backends, even
+  though the local app is healthy on `http://127.0.0.1:3000`;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build` remains blocked by the
+  locked `.next\\monolith-dev-3.stderr.log` while the local dev app stays
+  running on port 3000;
+- 9.15 Purchases lifecycle parity is now the next open Phase 9 slice.
+
+## 2026-08-01 Accounting recurring sales-invoice continuation
+
+Continued the 9.14 Sales lifecycle work by replacing the guarded recurring
+placeholder with a real recurring sales-invoice profile workspace that
+generates draft invoices through the normal invoice service.
+
+Delivered:
+
+- added additive recurring sales-invoice persistence plus
+  `prisma/migrations/20260801000230_accounting_phase9_recurring_sales_invoice_profiles/migration.sql`;
+- added `src/modules/accounting/recurring-sales-invoices.ts` and
+  `src/modules/accounting/recurring-sales-invoice-actions.ts` so recurring
+  profiles now support create, due-generation, skip, pause, resume, cancel,
+  deterministic occurrence identity, failure tracking, and generated-invoice
+  lineage;
+- updated `src/lib/db.ts` so the dev-time Prisma singleton refresh guard now
+  recognizes the new recurring delegates;
+- updated `src/app/(dashboard)/accounting/recurring/page.tsx` and added
+  `src/app/(dashboard)/accounting/recurring/recurring-sales-client.tsx` so the
+  route now exposes a live Monolith recurring-invoice workspace instead of the
+  earlier policy-gate placeholder;
+- archived the previous recurring placeholder route in
+  `OLD UI code/src/app/(dashboard)/accounting/recurring/page.tsx`.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma validate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma generate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/lib/db.ts' 'src/modules/accounting/recurring-sales-invoices.ts' 'src/modules/accounting/recurring-sales-invoice-actions.ts' 'src/app/(dashboard)/accounting/recurring/page.tsx' 'src/app/(dashboard)/accounting/recurring/recurring-sales-client.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run accounting:phase9:test`:
+  passed.
+
+Blocked:
+
+- authenticated browser verification still cannot run in this Codex session
+  because the browser runtime exposes zero available browser backends, even
+  though the local app is healthy on `http://127.0.0.1:3000`;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build` remains blocked by the
+  locked `.next\\monolith-dev-3.stderr.log` while the local dev app stays
+  running on port 3000;
+- the retainer-invoice / customer-advance and sales-receipt portions of 9.14
+  remain open.
+
+## 2026-08-01 Accounting quotation sales-order conversion continuation
+
+Continued the 9.14 Sales lifecycle work by turning accepted quotations into
+confirmed sales orders with explicit source-lineage instead of stopping at the
+draft sales-invoice conversion path.
+
+Delivered:
+
+- added additive quotation-lineage persistence to `CrmInvoice` and
+  `CrmInvoiceItem` plus
+  `prisma/migrations/20260801000220_accounting_phase9_quote_sales_order_lineage/migration.sql`;
+- updated `src/modules/accounting/quotations.ts`,
+  `src/modules/accounting/service.ts`, and
+  `src/modules/accounting/actions.ts` so accepted quotations can now be
+  converted into confirmed `SALES_ORDER` records with quote snapshot metadata,
+  copied line quantities/rates/tax values, duplicate-prevention behavior for
+  exhausted quotations, and server-side converted-quantity updates;
+- updated
+  `src/app/(dashboard)/accounting/quotations/[id]/page.tsx`
+  and
+  `src/app/(dashboard)/accounting/quotations/[id]/quotation-detail-client.tsx`
+  so the quotation detail route now exposes sales-order conversion next to the
+  existing draft-invoice conversion flow for users who already manage
+  commercial documents.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma validate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma generate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/modules/accounting/quotations.ts' 'src/app/(dashboard)/accounting/quotations/[id]/page.tsx' 'src/app/(dashboard)/accounting/quotations/[id]/quotation-detail-client.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run accounting:phase9:test`:
+  passed;
+- `git diff --check -- 'prisma/schema.prisma' 'prisma/migrations/20260801000220_accounting_phase9_quote_sales_order_lineage/migration.sql' 'src/modules/accounting/quotations.ts' 'src/modules/accounting/service.ts' 'src/modules/accounting/actions.ts' 'src/app/(dashboard)/accounting/quotations/[id]/page.tsx' 'src/app/(dashboard)/accounting/quotations/[id]/quotation-detail-client.tsx' 'task.md'`:
+  passed, aside from the normal Windows line-ending warnings in the worktree.
+
+Blocked:
+
+- authenticated browser verification still cannot run in this Codex session
+  because the browser runtime exposes zero available browser backends, even
+  though the local app is healthy on `http://127.0.0.1:3000`;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build` remains blocked by the
+  locked `.next\\monolith-dev-3.stderr.log` while the local dev app stays
+  running on port 3000;
+- linting `src/modules/accounting/actions.ts` and
+  `src/modules/accounting/service.ts` still hits pre-existing
+  `@typescript-eslint/no-explicit-any` debt outside this specific slice, even
+  though the touched quotation route files and conversion service logic that
+  were directly verified for this batch are clean.
+
+## 2026-08-01 Manual journal contact-required enforcement continuation
+
+Tightened the Monolith manual-journal flow so ledger lines that have
+`allowJournalContact` enabled now require a selected contact before the draft
+can be saved and before any older draft can be posted.
+
+Delivered:
+
+- updated `src/app/(dashboard)/accounting/journal-entries/new/new-jv-client.tsx`
+  so contact-enabled lines are treated as required in the form, display a clear
+  validation message, and block draft save while missing;
+- updated `src/modules/accounting/service.ts` so manual-journal validation now
+  rejects incomplete contact payloads, enforces a mandatory contact for
+  `allowJournalContact` ledgers during draft creation, and re-checks the same
+  requirement before posting existing drafts.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- targeted `git diff --check` for the touched manual-journal files: passed,
+  aside from the normal Windows line-ending warnings in the worktree.
+
+Blocked:
+
+- targeted ESLint for `src/modules/accounting/service.ts` is still blocked by
+  the file's large pre-existing `@typescript-eslint/no-explicit-any` backlog
+  unrelated to this contact-enforcement slice;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx vitest run 'src/modules/accounting/__tests__/posting-boundary.architecture.test.ts'`
+  is still red on the pre-existing expectation that `service.ts` contains the
+  unrelated `QUOTATION_CONVERSION_GATED` sentinel;
+- authenticated browser verification still cannot run in this Codex session
+  because the browser runtime exposes zero available browser backends, even
+  though the local app remains healthy.
+
+## 2026-08-01 Accounting quotation draft edit affordance continuation
+
+Standardized the Monolith draft-edit affordance for the currently supported
+quotation draft workflow so operators can reopen and revise draft content from
+both the register and the draft detail surface.
+
+Delivered:
+
+- added shared `AccountingDraftEditLink` in
+  `src/components/monolith/accounting-workspace.tsx` so draft-edit actions can
+  use one consistent Monolith control;
+- updated `src/app/(dashboard)/accounting/quotations/page.tsx` to accept an
+  `?edit=` draft target, load the selected quotation draft, and pass its
+  editable payload into the client workspace;
+- updated `src/app/(dashboard)/accounting/quotations/quotations-client.tsx` so
+  the quotations workspace now opens the shared dialog in edit mode, pre-fills
+  draft values, saves through `updateQuotationAction`, and exposes `Edit draft`
+  from draft rows;
+- updated
+  `src/app/(dashboard)/accounting/quotations/[id]/quotation-detail-client.tsx`
+  so draft quotation detail now exposes the same `Edit draft` affordance.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/components/monolith/accounting-workspace.tsx' 'src/app/(dashboard)/accounting/quotations/page.tsx' 'src/app/(dashboard)/accounting/quotations/quotations-client.tsx' 'src/app/(dashboard)/accounting/quotations/[id]/quotation-detail-client.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- targeted `git diff --check` for the touched quotation workspace files:
+  passed, aside from the normal Windows line-ending warnings in the worktree.
+
+Remaining:
+
+- this standardizes the draft-edit pattern only where the backend already
+  supports draft updates today; other draft-detail surfaces such as legacy
+  invoices and payment entries still need server-side edit flows before the
+  same Monolith affordance can be turned on there honestly;
+- authenticated browser verification still cannot run in this Codex session
+  because the browser runtime exposes zero available browser backends, even
+  though the local app remains healthy.
+
+## 2026-08-01 HRMS and CRM incentive workspace addition
+
+Added a new incentive workflow spanning CRM as the input surface and HRMS as
+the primary back-office processing workspace.
+
+Delivered:
+
+- added additive `IncentiveEntry` persistence plus
+  `prisma/migrations/20260801000210_add_incentive_entries/migration.sql`;
+- added `src/app/(dashboard)/crm/incentives/page.tsx` and
+  `src/app/(dashboard)/crm/incentives/incentives-client.tsx` so CRM now has an
+  incentive input area for employee incentive submission;
+- added `src/app/(dashboard)/hrms/incentives/page.tsx` and
+  `src/app/(dashboard)/hrms/incentives/incentives-client.tsx` so HRMS now has
+  the main incentive working tab for review, approval, rejection, and payout
+  progression;
+- added shared incentive service and API routes in
+  `src/modules/incentives/*`, `src/app/api/crm/incentives/route.ts`, and
+  `src/app/api/hrms/incentives/route.ts`;
+- updated navigation and workspace metadata so HRMS exposes a new `Incentive`
+  sidebar subheading with `Incentive Working`, while CRM exposes a new
+  `Incentives` route.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma validate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma generate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx vitest run 'src/components/monolith/crm-workspace.test.tsx' 'src/components/monolith/people-workspace.test.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/app/(dashboard)/crm/incentives/page.tsx' 'src/app/(dashboard)/crm/incentives/incentives-client.tsx' 'src/app/(dashboard)/hrms/incentives/page.tsx' 'src/app/(dashboard)/hrms/incentives/incentives-client.tsx' 'src/app/api/crm/incentives/route.ts' 'src/app/api/hrms/incentives/route.ts' 'src/modules/incentives/service.ts' 'src/modules/incentives/validators.ts' 'src/lib/navigation.ts' 'src/components/monolith/crm-workspace.tsx' 'src/components/monolith/people-workspace.tsx' 'src/components/monolith/crm-workspace.test.tsx' 'src/components/monolith/people-workspace.test.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `git diff --check` for the touched incentive files: passed, aside from the
+  normal Windows line-ending warnings in the worktree.
+
+Blocked:
+
+- authenticated browser verification still cannot run in this Codex session
+  because the browser runtime exposes zero available browser backends, even
+  though the local app remains healthy;
+- this slice adds new routes, so the historical aggregate route totals in the
+  migration docs are stale until the next full route-audit regeneration.
+
+## 2026-08-01 HRMS help desk workspace continuation
+
+Replaced the static `/hrms/helpdesk` notice with a real Monolith help desk
+workspace backed by the existing HR case APIs and permissions.
+
+Delivered:
+
+- added `src/components/hrms/helpdesk-view.tsx` so HRMS Help Desk now supports
+  category-aware case creation, FAQ guidance, searchable case tracking, and
+  case conversation updates within the shared People Operations workspace;
+- updated `src/app/(dashboard)/hrms/helpdesk/page.tsx` so the route now
+  enforces `hrms.helpdesk.read` before rendering the live workspace;
+- archived the previous notice-only route implementation under
+  `OLD UI code/src/app/(dashboard)/hrms/helpdesk/page.tsx`.
+
+Verification:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/app/(dashboard)/hrms/helpdesk/page.tsx' 'src/components/hrms/helpdesk-view.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `git diff --check -- 'src/app/(dashboard)/hrms/helpdesk/page.tsx' 'src/components/hrms/helpdesk-view.tsx' 'OLD UI code/src/app/(dashboard)/hrms/helpdesk/page.tsx' 'docs/ui-migration-status.md' 'docs/ui-migration-handoff.md'`:
+  passed, aside from the normal Windows line-ending warnings in the worktree.
+
+Blocked:
+
+- authenticated browser verification still cannot run in this Codex session
+  because the browser runtime exposes zero available browser backends, even
+  though the local app remains healthy.
 
 ## 2026-07-31 Accounting quotation lifecycle foundation continuation
 
@@ -150,6 +1004,61 @@ Blocked:
   running on port 3000;
 - `NODE_OPTIONS=--max-old-space-size=8192 npm run accounting:phase9:safety-scan`
   still reports pre-existing repository findings outside this quotation slice.
+
+## 2026-08-01 Accounting quotation delivery and portal continuation
+
+Continued the 9.14 Sales lifecycle work by replacing the quotation send stub
+with delivery-mode handling that uses the existing email queue and customer
+portal infrastructure, then exposing portal-published quotations to portal
+users and letting those portal recipients accept or decline them in-place.
+
+Delivered:
+
+- updated `src/modules/accounting/quotations.ts` so quotation send now handles:
+  - `EMAIL` by resolving a CRM customer/contact email and enqueueing an
+    `EmailQueue` record;
+  - `PORTAL` by requiring an active
+    `AccountingPortalPublicationProfile`, notifying active
+    `CustomerPortalUser` recipients, and recording portal publication metadata;
+  - `MANUAL` by recording explicit manual dispatch evidence instead of reusing
+    the queued email state;
+- updated
+  `src/app/(dashboard)/accounting/quotations/[id]/quotation-detail-client.tsx`
+  so the quotation detail route now lets operators choose the delivery mode
+  before sending;
+- added `src/modules/customer-portal/accounting-quotations.ts`,
+  `src/app/customer-portal/quotations/page.tsx`, and
+  `src/app/customer-portal/quotations/[id]/page.tsx` so customers can review
+  quotations that were published to the portal;
+- added `src/app/customer-portal/quotations/[id]/quotation-decision-panel.tsx`
+  and updated `src/modules/customer-portal/accounting-quotations.ts` plus
+  `src/modules/customer-portal/actions.ts` so portal customers can accept a
+  quotation with an optional reference or decline it with a required reason,
+  while still enforcing portal publication, customer scope, expiry, and
+  row-version checks;
+- updated `src/app/customer-portal/_components/client-actions.tsx` and the
+  portal quotation notification link target so the portal shell exposes the new
+  Quotations route and portal-delivered quotation notifications now land on the
+  exact quotation detail route.
+
+Verification:
+
+- targeted ESLint for the touched quotation and portal files: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/modules/customer-portal/accounting-quotations.ts' 'src/modules/customer-portal/actions.ts' 'src/app/customer-portal/quotations/[id]/page.tsx' 'src/app/customer-portal/quotations/[id]/quotation-decision-panel.tsx' 'src/modules/accounting/quotations.ts'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run accounting:phase9:test`:
+  passed.
+
+Blocked:
+
+- authenticated browser verification still cannot run in this Codex session
+  because the browser runtime exposes zero available browser backends, even
+  though the local app is healthy on `http://127.0.0.1:3000`;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build` remains blocked by the
+  locked `.next\\monolith-dev-3.stderr.log` while the local dev app stays
+  running on port 3000.
 
 ## 2026-07-31 Accounting quotations shared-master continuation
 
@@ -2555,6 +3464,74 @@ Blocked:
 - no in-app browser instance is available, so authenticated visual verification
   of the click-to-reveal chooser remains pending.
 
+## 2026-08-01 journal draft editing and submitted review flow
+
+Manual journals now follow an explicit maker-checker lifecycle: drafts remain
+editable by their creator, submitted journals lose edit controls, and approvers
+can either post or reject them.
+
+Delivered:
+
+- added draft-only journal edit actions on the detail route for the original
+  maker, with the edit flow reopening `/accounting/journal-entries/new` in
+  draft-edit mode and saving the revision as a new draft version while marking
+  the superseded draft accordingly;
+- changed journal submission into a distinct `DRAFT -> SUBMITTED` step so a
+  maker can save, revise, and then explicitly send the journal for independent
+  review;
+- removed edit affordances once a journal reaches `SUBMITTED`, and updated the
+  shared accounting action-state helper to treat submitted journals as pending
+  approval rather than editable work in progress;
+- updated the approvals queue and journal register copy so manual-journal review
+  targets submitted journals instead of raw drafts;
+- extended journal approval actions with both `Approve and post` and `Reject`
+  paths, requiring a rejection reason and marking rejected submitted journals as
+  `CANCELLED`;
+- enforced manual-journal contact requirements both while saving/editing drafts
+  and again during submit/approve transitions, so ledgers with manual-journal
+  contact support cannot be submitted or posted without a selected contact.
+
+Verification:
+
+- targeted ESLint across the touched journal UI/actions/architecture-test files:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx vitest run src/modules/accounting/__tests__/posting-boundary.architecture.test.ts`:
+  still fails on the pre-existing unrelated expectation that
+  `src/modules/accounting/service.ts` contains `QUOTATION_CONVERSION_GATED`;
+- authenticated browser verification remains unavailable because no in-app
+  browser instance is connected.
+
+## 2026-08-01 accounting sidebar heading alignment
+
+Aligned the shared Accounting sidebar headings so the Banking and Accountant
+groups render in the intended hierarchy instead of splitting into mixed or
+repeated labels.
+
+Delivered:
+
+- assigned the Banking section label to sales invoices, sales credit notes,
+  purchase invoices, purchase debit notes, and vendor master so they stay under
+  the same Banking heading as overview, payments, receipts, vendor payments, and
+  allocations;
+- assigned the Accountant section label to General Ledger so the heading does
+  not break between manual journals and the other ledger controls;
+- moved Recurring Journals into the main Accountant block so it functions like
+  the other accountant controls instead of reappearing later as a separated
+  heading group;
+- aligned Banking wording in the shared route metadata and Banking workspace
+  shortcut cards so `/accounting/banking` reads as Banking `Overview` and
+  `/accounting/payments` reads as `Payments`.
+
+Verification:
+
+- targeted ESLint for `src/lib/navigation.ts`,
+  `src/components/monolith/accounting-workspace.tsx`, and
+  `src/app/(dashboard)/accounting/banking/banking-client.tsx`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`: passed;
+- authenticated browser verification remains unavailable because no in-app
+  browser instance is connected.
+
 ## 2026-07-31 debit-note reason classification
 
 Separated debit-note reasons by their accounting effect instead of reusing the
@@ -2612,3 +3589,95 @@ Verification:
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`: passed;
 - authenticated browser verification remains unavailable because no in-app
   browser instance is connected.
+
+## 2026-08-01 Banking foundation audit and hardening
+
+Audited the new Banking overview and account workspace foundation and fixed the
+highest-risk defects without broadening the Banking scope into later phases.
+
+Delivered:
+
+- hardened `src/modules/accounting/banking-service.ts` so Banking now validates
+  account kinds server-side, rejects duplicate ledger mappings before
+  persistence, blocks unsafe currency or ledger changes after dependent Banking
+  activity exists, treats inactivation idempotently, and uses stricter posted
+  ledger-entry filtering for book-balance calculations;
+- kept client/server boundaries clean by continuing to deliver only serializable
+  Banking DTOs, masked identifiers, and server-action entry points to browser
+  components;
+- added a Banking route loading state via
+  `src/app/(dashboard)/accounting/banking/loading.tsx`;
+- expanded focused Banking coverage from the earlier 2 files / 6 tests to 4
+  files / 22 tests, including route read access, manage permission enforcement,
+  masking edge cases, duplicate mapping protection, amount-in-bank separation,
+  and running-balance carry-forward behavior.
+
+Verification:
+
+- targeted ESLint for the Banking service, actions, route files, and Banking
+  tests: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx vitest run 'src/modules/accounting/__tests__/banking-service.test.ts' 'src/modules/accounting/__tests__/banking-actions.test.ts' 'src/modules/accounting/__tests__/banking-route-access.test.ts' 'src/app/(dashboard)/accounting/banking/banking-client.test.tsx' --reporter verbose`:
+  passed, 4 files / 22 tests;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma validate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build`: passed, with the
+  existing Turbopack NFT tracing warning still reported from `next.config.ts`
+  through `src/app/api/customer-portal/checklist-files/[id]/route.ts`.
+
+Open limits:
+
+- Banking access denial still follows the shared `/accounting/access-denied`
+  route gate before page rendering rather than a Banking-local denied component;
+- no real bank connectors, statement ingestion workflows, reconciliation, or
+  other later Banking phases were started in this audit pass.
+
+## 2026-08-01 Banking statement import and uncategorized review
+
+Extended the existing Banking overview and account workspace with the next
+production Banking phase: manual CSV statement import, import history, and
+read-only uncategorized transaction visibility.
+
+Delivered:
+
+- `src/modules/accounting/banking-import.ts` now provides the Banking-local CSV
+  parsing, explicit date-format handling, decimal normalization, duplicate
+  fingerprinting, bounded previews, and tenant-scoped file storage helpers used
+  by this phase;
+- `src/modules/accounting/banking-statements-service.ts`,
+  `src/modules/accounting/banking-service.ts`, and
+  `src/modules/accounting/banking-actions.ts` now support statement preview,
+  deterministic duplicate detection, bounded import commit, import history,
+  statement-backed Amount in Bank, and real uncategorized counts from imported
+  unresolved lines without creating ledger postings;
+- `src/app/(dashboard)/accounting/banking/banking-client.tsx`,
+  `src/app/(dashboard)/accounting/banking/[bankAccountId]/bank-account-client.tsx`,
+  and `src/app/(dashboard)/accounting/banking/statement-dialog.tsx` now expose
+  working Bank Statements entry points, CSV-only import configuration and
+  preview, account-scoped history, and a read-only Uncategorized Transactions
+  view in the Banking workspace;
+- focused Banking coverage expanded again to 5 files / 26 tests with explicit
+  CSV normalization, signed-amount handling, ambiguous-date rejection,
+  zero-amount rejection, and duplicate-within-file coverage in
+  `src/modules/accounting/__tests__/banking-import.test.ts`.
+
+Verification:
+
+- targeted ESLint for the touched Banking service, action, route, and client
+  files: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx vitest run 'src/modules/accounting/__tests__/banking-import.test.ts' 'src/modules/accounting/__tests__/banking-service.test.ts' 'src/modules/accounting/__tests__/banking-actions.test.ts' 'src/modules/accounting/__tests__/banking-route-access.test.ts' 'src/app/(dashboard)/accounting/banking/banking-client.test.tsx' --reporter verbose`:
+  passed, 5 files / 26 tests;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx prisma validate`: passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npm run build`: passed, with the
+  existing Turbopack NFT tracing warning still reported from `next.config.ts`
+  through `src/app/api/customer-portal/document-versions/[id]/route.ts`.
+
+Open limits:
+
+- manual statement import is intentionally CSV-only in this phase;
+- statement imports remain synchronous and bounded rather than using a separate
+  background-job system;
+- no connectors, inbound statement email, rules, quick categorize, matching,
+  reconciliation, or other later Banking phases were started here.

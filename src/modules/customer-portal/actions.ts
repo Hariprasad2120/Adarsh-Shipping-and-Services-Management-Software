@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac";
+import { getPortalSession } from "@/modules/customer-portal/auth";
+import { submitPortalAccountingQuotationDecision } from "@/modules/customer-portal/accounting-quotations";
 import {
   createInternalCustomerQuery,
   inviteCustomerPortalUser,
@@ -114,6 +116,43 @@ export async function setPortalFeatureFlagAction(flag: "CUSTOMER_PORTAL_SHIPMENT
     return { ok: true, data: value };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "Failed to update feature flag" };
+  }
+}
+
+export async function respondToPortalQuotationAction(input: {
+  quotationId: string;
+  decision: "ACCEPTED" | "DECLINED";
+  remarks?: string | null;
+  expectedVersion?: number;
+}): Promise<ActionResult> {
+  try {
+    const session = await getPortalSession();
+    if (!session?.portalUser?.id || !session.portalUser.customerId || !session.orgId) {
+      throw new Error("Unauthorized");
+    }
+
+    const result = await submitPortalAccountingQuotationDecision({
+      orgId: session.orgId,
+      customerId: session.portalUser.customerId,
+      portalUserId: session.portalUser.id,
+      quotationId: input.quotationId,
+      decision: input.decision,
+      remarks: input.remarks,
+      expectedVersion: input.expectedVersion,
+    });
+
+    revalidatePath("/customer-portal/quotations");
+    revalidatePath(`/customer-portal/quotations/${input.quotationId}`);
+    revalidatePath("/accounting/quotations");
+    revalidatePath(`/accounting/quotations/${input.quotationId}`);
+
+    return { ok: true, data: result };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error ? error.message : "Failed to submit quotation decision",
+    };
   }
 }
 

@@ -9,6 +9,7 @@ import {
   type CanonicalPostingRequest,
 } from "./posting-engine";
 import { canonicalPayload, newAccountingRequestId, payloadHash } from "./request-integrity";
+import { ensureLegacyAccountingOperationalBootstrap } from "./legacy-bootstrap";
 
 function json(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(canonicalPayload(value)) as Prisma.InputJsonValue;
@@ -54,6 +55,7 @@ export async function resolveCanonicalPostingConfiguration(
   legalEntityId?: string,
 ) {
   const date = validDate(dateInput, "postingDate");
+  await ensureLegacyAccountingOperationalBootstrap(orgId, date);
   const explicitLegalEntityId = legalEntityId?.trim();
   if (legalEntityId != null && !explicitLegalEntityId) {
     throw new Error("Canonical Accounting legal entity is required");
