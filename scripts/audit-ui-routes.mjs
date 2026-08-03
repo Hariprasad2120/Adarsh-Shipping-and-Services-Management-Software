@@ -1,4 +1,10 @@
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,90 +13,13 @@ const repositoryRoot = path.resolve(
   "..",
 );
 const appRoot = path.join(repositoryRoot, "src", "app");
+const docsRoot = path.join(repositoryRoot, "docs");
 const outputPath = path.join(repositoryRoot, "docs", "ui-route-audit.md");
-const knownMonolithRoutes = new Set([
-  "/dashboard",
-  "/account/security",
-  "/admin/design-system",
-  "/notifications",
-  "/product-catalogue",
-  "/todo",
-]);
-
-function isPeopleOperationsRoute(route) {
-  return (
-    route === "/hrms" ||
-    route.startsWith("/hrms/") ||
-    route === "/attendance" ||
-    route.startsWith("/attendance/")
-  );
-}
-
-function isPerformanceLearningRoute(route) {
-  return (
-    route === "/ams" ||
-    route.startsWith("/ams/") ||
-    route === "/lms" ||
-    route.startsWith("/lms/")
-  );
-}
-
-function isCustomsExpenseRoute(route) {
-  return (
-    route === "/cha" ||
-    route.startsWith("/cha/") ||
-    route === "/expense" ||
-    route.startsWith("/expense/")
-  );
-}
-
-function isAccountingRoute(route) {
-  return route === "/accounting" || route.startsWith("/accounting/");
-}
-
-function isCrmRoute(route) {
-  return route === "/crm" || route.startsWith("/crm/");
-}
-
-function isCommunicationRoute(route) {
-  return route === "/communication" || route.startsWith("/communication/");
-}
-
-function isAdminRoute(route) {
-  return route === "/admin" || route.startsWith("/admin/");
-}
-
-function isCustomerPortalRoute(route) {
-  return route === "/customer-portal" || route.startsWith("/customer-portal/");
-}
-
-function isAuthenticationMiscRoute(route) {
-  return new Set([
-    "/",
-    "/google-chat-link",
-    "/login",
-    "/setup",
-    "/verify/[id]",
-  ]).has(route);
-}
-
-function isEmployeeInvitationRoute(route) {
-  return new Set(["/invite/employee", "/invite/employee/ready"]).has(route);
-}
-
-function isMonolithRoute(route) {
-  return (
-    knownMonolithRoutes.has(route) ||
-    isPeopleOperationsRoute(route) ||
-    isPerformanceLearningRoute(route) ||
-    isCustomsExpenseRoute(route) ||
-    isAccountingRoute(route) ||
-    isCrmRoute(route) ||
-    isCommunicationRoute(route) ||
-    isAdminRoute(route) ||
-    isCustomerPortalRoute(route)
-  );
-}
+const migrationMatrixPath = path.join(
+  repositoryRoot,
+  "docs",
+  "UI_DESIGN_SYSTEM_MIGRATION_STATUS.md",
+);
 
 function walk(directory, targetName, found = []) {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
@@ -131,6 +60,58 @@ function routeFamily(route) {
   return route === "/" ? "/" : `/${route.split("/").filter(Boolean)[0]}`;
 }
 
+function routeFamilyLabel(route) {
+  const family = routeFamily(route);
+  switch (family) {
+    case "/":
+      return "Public";
+    case "/account":
+      return "Account";
+    case "/accounting":
+      return "Accounting";
+    case "/admin":
+      return "Admin";
+    case "/ams":
+      return "AMS";
+    case "/attendance":
+      return "Attendance";
+    case "/cha":
+      return "CHA";
+    case "/communication":
+      return "Communication";
+    case "/crm":
+      return "CRM";
+    case "/customer-portal":
+      return "Customer portal";
+    case "/dashboard":
+      return "Dashboard";
+    case "/expense":
+      return "Expense";
+    case "/google-chat-link":
+      return "Public";
+    case "/hrms":
+      return "HRMS";
+    case "/invite":
+      return "Invitations";
+    case "/lms":
+      return "LMS";
+    case "/login":
+      return "Authentication";
+    case "/notifications":
+      return "Notifications";
+    case "/product-catalogue":
+      return "Product catalogue";
+    case "/setup":
+      return "Authentication";
+    case "/todo":
+      return "Todo";
+    case "/verify":
+      return "Verification";
+    default:
+      return family.replace(/^\//, "") || "Public";
+  }
+}
+
 function layoutChain(absolutePagePath) {
   const layouts = [];
   let directory = path.dirname(absolutePagePath);
@@ -145,44 +126,194 @@ function layoutChain(absolutePagePath) {
   return layouts;
 }
 
-function shellFor(pageSource, route) {
-  if (pageSource.includes("/(dashboard)/")) {
-    return isMonolithRoute(route)
-      ? "Monolith AppShell"
-      : "Legacy authenticated shell";
+function shellFor(pageSource) {
+  if (pageSource.includes("/customer-portal/")) {
+    return "Monolith customer portal shell";
   }
-  if (isCustomerPortalRoute(route))
-    return "Monolith customer portal shell (conditional auth bypass)";
+  if (pageSource.includes("/(dashboard)/")) {
+    return "Monolith AppShell";
+  }
   if (pageSource.includes("/(auth)/")) return "Public authentication layout";
-  return "Root layout only";
+  return "Root layout";
 }
 
-function stateFor(route) {
-  if (route === "/dashboard") return "Protected reference";
-  if (route === "/account/security")
-    return "Migrated before this foundation session";
-  if (route === "/admin/design-system")
-    return "Migrated and verified production component catalogue";
-  if (knownMonolithRoutes.has(route)) return "Migrated in batch 001";
-  if (isPeopleOperationsRoute(route))
-    return "Migrated in people operations batch 002";
-  if (isPerformanceLearningRoute(route))
-    return "Migrated in performance and learning batch 003";
-  if (isCustomsExpenseRoute(route))
-    return "Migrated in Expense and CHA batch 004";
-  if (isAccountingRoute(route)) return "Migrated in Accounting batch 005";
-  if (isCrmRoute(route)) return "Migrated in CRM batch 005";
-  if (isCommunicationRoute(route))
-    return "Migrated in Communication and Admin batch 006";
-  if (isAdminRoute(route))
-    return "Migrated in Communication and Admin batch 006";
-  if (isCustomerPortalRoute(route))
-    return "Migrated in final customer portal batch 008";
-  if (isAuthenticationMiscRoute(route))
-    return "Migrated in Authentication and Miscellaneous batch 007";
-  if (isEmployeeInvitationRoute(route))
-    return "Migrated in HRMS employee invitation extension";
-  return "Pending module migration";
+function currentUiOwner(source) {
+  if (source.includes("/admin/design-system/")) {
+    return "Admin design-system catalogue";
+  }
+  if (source.startsWith("src/modules/")) {
+    return "Module-owned composition";
+  }
+  if (source.startsWith("src/components/")) {
+    return "Shared component system";
+  }
+  if (source.includes("/customer-portal/")) {
+    return "Customer portal route composition";
+  }
+  if (source.includes("/dashboard/")) {
+    return "Dashboard route composition";
+  }
+  if (source.includes("/cha/")) {
+    return "CHA route composition";
+  }
+  if (source.includes("/crm/")) {
+    return "CRM route composition";
+  }
+  if (source.includes("/accounting/")) {
+    return "Accounting route composition";
+  }
+  if (source.includes("/hrms/")) {
+    return "HRMS route composition";
+  }
+  if (source.includes("/attendance/")) {
+    return "Attendance route composition";
+  }
+  if (source.includes("/ams/") || source.includes("/lms/")) {
+    return "Performance/Learning route composition";
+  }
+  if (source.includes("/communication/")) {
+    return "Communication route composition";
+  }
+  if (source.includes("/admin/")) {
+    return "Admin route composition";
+  }
+  if (source.includes("/(auth)/") || source.includes("/invite/") || source.includes("/verify/")) {
+    return "Public/auth route composition";
+  }
+  return "Route-local composition";
+}
+
+function analyzeVisualOwnership(absolutePath) {
+  if (!existsSync(absolutePath)) {
+    return {
+      findings: "Source missing during audit.",
+      status: "BLOCKED_RUNTIME_VERIFICATION",
+    };
+  }
+
+  const source = readFileSync(absolutePath, "utf8");
+  const rawVisualPattern = /<(button|input|textarea|select|table|dialog|h1|h2|h3|article)\b/g;
+  const visualUtilityPattern =
+    /\b(?:rounded(?:-\[[^\]]+\]|-\w+)?|shadow(?:-\[[^\]]+\]|-\w+)?|bg-(?:\[|mono-|white|black)|text-(?:\[|mono-)|border(?:-\[|-\w+)?|hover:-(?:translate|shadow|bg|border))/g;
+  const counts = new Map();
+  for (const match of source.matchAll(rawVisualPattern)) {
+    counts.set(match[1], (counts.get(match[1]) ?? 0) + 1);
+  }
+  const visualUtilityCount = (source.match(visualUtilityPattern) ?? []).length;
+  const directButtonLinks = (source.match(/<Link[^>]*className=/g) ?? []).length;
+
+  if (absolutePath.endsWith(`${path.sep}loading.tsx`)) {
+    if (source.includes("app-route-loading") || source.includes("LoadingScreen")) {
+      return {
+        findings: "Shared route-loading surface in use.",
+        status: "COMPLIANT",
+      };
+    }
+    return {
+      findings: "Route-local loading state still present.",
+      status: "PARTIAL",
+    };
+  }
+
+  if (
+    absolutePath.endsWith(`${path.sep}error.tsx`) ||
+    absolutePath.endsWith(`${path.sep}not-found.tsx`)
+  ) {
+    if (source.includes("WorkspaceState") || source.includes("WorkspaceErrorState")) {
+      return {
+        findings: "Shared workspace-state feedback contract in use.",
+        status: "COMPLIANT",
+      };
+    }
+    return {
+      findings: "Route-local error/not-found state markup detected.",
+      status: "PARTIAL",
+    };
+  }
+
+  if (absolutePath.endsWith(`${path.sep}layout.tsx`)) {
+    return {
+      findings: source.includes("CrmWorkspaceFrame") ||
+        source.includes("ChaWorkspaceFrame") ||
+        source.includes("AccountingWorkspaceFrame") ||
+        source.includes("AdminWorkspaceFrame") ||
+        source.includes("PeopleWorkspaceFrame") ||
+        source.includes("PerformanceWorkspaceFrame")
+        ? "Module workspace frame is applied."
+        : "Layout composes route family framing but still needs runtime verification.",
+      status: "COMPLIANT",
+    };
+  }
+
+  if (absolutePath.includes(`${path.sep}dashboard${path.sep}`)) {
+    return {
+      findings:
+        "Dashboard remains the protected composition reference. Route-local compositions are intentionally preserved pending selective canonical extraction.",
+      status: "SPECIALISED_COMPLIANT",
+    };
+  }
+
+  const rawSummary = [...counts.entries()]
+    .map(([tag, count]) => `${tag}:${count}`)
+    .join(", ");
+  const findingParts = [];
+  if (rawSummary) findingParts.push(`Raw visual elements detected (${rawSummary}).`);
+  if (visualUtilityCount > 0) {
+    findingParts.push(`${visualUtilityCount} visual utility token candidates detected.`);
+  }
+  if (directButtonLinks > 0) {
+    findingParts.push(`${directButtonLinks} Link elements carry direct button styling.`);
+  }
+
+  if (counts.size === 0 && visualUtilityCount === 0 && directButtonLinks === 0) {
+    return {
+      findings: "No obvious route-local visual recreation detected by static audit.",
+      status: "COMPLIANT",
+    };
+  }
+
+  const hasPrimitiveRecreation = [...counts.keys()].some((tag) =>
+    ["button", "input", "textarea", "select", "table", "dialog", "article"].includes(tag),
+  );
+
+  return {
+    findings: findingParts.join(" "),
+    status:
+      hasPrimitiveRecreation || visualUtilityCount > 20 || directButtonLinks > 0
+        ? "NON_COMPLIANT"
+        : "PARTIAL",
+  };
+}
+
+function canonicalReplacementFor(source, absolutePath) {
+  if (source.includes("/dashboard/")) {
+    return "Preserve dashboard-specific composition; extract only reusable patterns into module/shared owners.";
+  }
+  if (absolutePath.endsWith(`${path.sep}loading.tsx`)) {
+    return "Use shared route loading via app-route-loading or canonical workspace loading state.";
+  }
+  if (
+    absolutePath.endsWith(`${path.sep}error.tsx`) ||
+    absolutePath.endsWith(`${path.sep}not-found.tsx`)
+  ) {
+    return "Use canonical workspace-state feedback components.";
+  }
+  if (source.includes("/cha/")) {
+    return "CHA workspace frame, page header, section heading, operational tables, and shared feedback/actions.";
+  }
+  if (source.includes("/crm/")) {
+    return "CRM workspace frame, shared action/form/table/state contracts, and module-owned CRM compositions.";
+  }
+  if (source.includes("/accounting/")) {
+    return "Accounting workspace contracts plus shared canonical form/table/action primitives.";
+  }
+  if (source.includes("/customer-portal/")) {
+    return "Customer portal workspace components and shared canonical form/feedback patterns.";
+  }
+  if (source.includes("/(auth)/") || source.includes("/invite/") || source.includes("/verify/")) {
+    return "Public/auth shared workspace shells and canonical field/action/feedback components.";
+  }
+  return "Shared Monolith page/header/section/panel/action/form/feedback primitives.";
 }
 
 function markdownEscape(value) {
@@ -199,8 +330,7 @@ const pages = walk(appRoot, "page.tsx")
       route,
       family: routeFamily(route),
       layouts: layoutChain(absolutePath),
-      shell: shellFor(source, route),
-      state: stateFor(route),
+      shell: shellFor(source),
     };
   })
   .sort(
@@ -267,44 +397,96 @@ const familyCounts = new Map();
 for (const page of pages) {
   const current = familyCounts.get(page.family) ?? {
     discovered: 0,
-    protected: 0,
-    migrated: 0,
-    pending: 0,
+    specialised: 0,
+    compliant: 0,
+    partial: 0,
+    nonCompliant: 0,
   };
   current.discovered += 1;
-  if (page.state === "Protected reference") current.protected += 1;
-  else if (page.state.startsWith("Migrated")) current.migrated += 1;
-  else current.pending += 1;
+  const analysis = analyzeVisualOwnership(page.absolutePath);
+  if (analysis.status === "SPECIALISED_COMPLIANT") current.specialised += 1;
+  else if (analysis.status === "COMPLIANT") current.compliant += 1;
+  else if (analysis.status === "PARTIAL") current.partial += 1;
+  else current.nonCompliant += 1;
   familyCounts.set(page.family, current);
 }
 
+function inventoryEntries(kind) {
+  return walk(appRoot, `${kind}.tsx`)
+    .map((absolutePath) => {
+      const source = sourcePath(absolutePath);
+      const route = routeFromSource(absolutePath);
+      const analysis = analyzeVisualOwnership(absolutePath);
+      return {
+        absolutePath,
+        source,
+        route,
+        routeState: `${route} (${kind})`,
+        family: routeFamilyLabel(route),
+        owner: currentUiOwner(source),
+        findings: analysis.findings,
+        replacement: canonicalReplacementFor(source, absolutePath),
+        status: analysis.status,
+        sourceVerification: "Source inspected in current mainline checkout.",
+        runtimeVerification:
+          "Manual browser verification still pending in this Codex session.",
+        notes:
+          kind === "page"
+            ? shellFor(source)
+            : kind === "layout"
+              ? "Applies framing/guards to descendant routes."
+              : `Route ${kind} state.`,
+      };
+    })
+    .sort(
+      (left, right) =>
+        left.route.localeCompare(right.route) ||
+        left.source.localeCompare(right.source),
+    );
+}
+
+const migrationEntries = [
+  ...inventoryEntries("page"),
+  ...inventoryEntries("layout"),
+  ...inventoryEntries("loading"),
+  ...inventoryEntries("error"),
+  ...inventoryEntries("not-found"),
+];
+
+const statusCounts = migrationEntries.reduce((counts, entry) => {
+  counts[entry.status] = (counts[entry.status] ?? 0) + 1;
+  return counts;
+}, {});
+
 const generatedAt = new Date().toISOString();
+mkdirSync(docsRoot, { recursive: true });
 const lines = [
   "# UI route and layout audit",
   "",
   `Generated by \`node scripts/audit-ui-routes.mjs\` at ${generatedAt}.`,
   "",
   "This is a source-level audit of every App Router page and layout. It records",
-  "coverage and shell ownership. Production runtime, theme, and viewport evidence",
-  "is recorded in `docs/ui-migration-status.md`.",
+  "coverage and shell ownership. The fresh route-by-route migration matrix is",
+  "recorded in `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`.",
   "",
   "## Audit summary",
   "",
   `- Page routes: **${pages.length}**`,
   `- Layouts: **${layouts.length}**`,
-  `- Protected visual reference routes: **${pages.filter((page) => page.state === "Protected reference").length}**`,
-  `- Migrated routes: **${pages.filter((page) => page.state.startsWith("Migrated")).length}**`,
-  `- Pending individual module migrations: **${pages.filter((page) => page.state === "Pending module migration").length}**`,
+  `- Loading states: **${inventoryEntries("loading").length}**`,
+  `- Error states: **${inventoryEntries("error").length}**`,
+  `- Not-found states: **${inventoryEntries("not-found").length}**`,
+  `- Migration matrix rows: **${migrationEntries.length}**`,
   "",
   "## Route families",
   "",
-  "| Family | Discovered | Protected | Migrated | Pending |",
-  "| --- | ---: | ---: | ---: | ---: |",
+  "| Family | Discovered | Specialised | Compliant | Partial | Non-compliant |",
+  "| --- | ---: | ---: | ---: | ---: | ---: |",
   ...[...familyCounts.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
     .map(
       ([family, counts]) =>
-        `| \`${family}\` | ${counts.discovered} | ${counts.protected} | ${counts.migrated} | ${counts.pending} |`,
+        `| \`${family}\` | ${counts.discovered} | ${counts.specialised} | ${counts.compliant} | ${counts.partial} | ${counts.nonCompliant} |`,
     ),
   "",
   "## Layout inventory",
@@ -322,31 +504,49 @@ const lines = [
   "| --- | --- | --- | --- | --- |",
   ...pages.map(
     (page) =>
-      `| \`${markdownEscape(page.route)}\` | \`${page.source}\` | ${page.layouts.map((layout) => `\`${layout}\``).join("<br>")} | ${page.shell} | ${page.state} |`,
+      `| \`${markdownEscape(page.route)}\` | \`${page.source}\` | ${page.layouts.map((layout) => `\`${layout}\``).join("<br>")} | ${page.shell} | ${analyzeVisualOwnership(page.absolutePath).status} |`,
   ),
   "",
   "## Audit boundary",
   "",
   "- Route groups are removed from public URLs; dynamic segments remain in bracket form.",
   "- Layout coverage is calculated from filesystem ancestry.",
-  "- `/dashboard` remains the protected visual reference and is not redesigned.",
-  "- `/account/security` was migrated before the foundation session.",
-  "- `/notifications`, `/product-catalogue`, and `/todo` were migrated in batch 001.",
-  "- `/admin/design-system` is the live catalogue of production layouts, components, states, and module compositions.",
-  "- All `/hrms` and `/attendance` routes were migrated in people operations batch 002.",
-  "- All `/ams` and `/lms` routes were migrated in performance and learning batch 003.",
-  "- All `/cha` and `/expense` routes were migrated in Expense and CHA batch 004.",
-  "- All `/accounting` routes were migrated in Accounting batch 005.",
-  "- All `/crm` routes were migrated in CRM batch 005.",
-  "- All `/customer-portal` routes were migrated in the final customer portal batch 008.",
-  "- `/`, `/login`, `/setup`, `/verify/[id]`, and `/google-chat-link` were migrated in Authentication and Miscellaneous batch 007.",
-  "- `/invite/employee` and `/invite/employee/ready` were migrated in the HRMS employee invitation extension.",
-  "- Every discovered route is assigned to the production Monolith UI or the protected",
-  "  `/dashboard` visual reference; no route remains pending migration.",
+  "- `/dashboard` remains the protected composition reference and is classified as `SPECIALISED_COMPLIANT`.",
+  "- Static analysis intentionally over-reports route-local raw headings and primitives for manual review.",
+  "- Runtime/theme/viewport verification still requires manual browser evidence in this session.",
+  "- The migration matrix reflects current source, not historical claims from older handoff documents.",
   "",
 ];
 
 writeFileSync(outputPath, lines.join("\n"), "utf8");
+
+const matrixLines = [
+  "# UI Design System Migration Status",
+  "",
+  `Generated by \`node scripts/audit-ui-routes.mjs\` at ${generatedAt}.`,
+  "",
+  "This matrix is a fresh source audit of every discovered route page and route state.",
+  "Runtime verification is still pending unless separately documented with browser evidence.",
+  "",
+  "## Status summary",
+  "",
+  `- \`COMPLIANT\`: **${statusCounts.COMPLIANT ?? 0}**`,
+  `- \`PARTIAL\`: **${statusCounts.PARTIAL ?? 0}**`,
+  `- \`NON_COMPLIANT\`: **${statusCounts.NON_COMPLIANT ?? 0}**`,
+  `- \`SPECIALISED_COMPLIANT\`: **${statusCounts.SPECIALISED_COMPLIANT ?? 0}**`,
+  `- \`MIGRATED\`: **${statusCounts.MIGRATED ?? 0}**`,
+  `- \`BLOCKED_RUNTIME_VERIFICATION\`: **${statusCounts.BLOCKED_RUNTIME_VERIFICATION ?? 0}**`,
+  "",
+  "| Route/state | Source files | Route family | Current UI owner | Findings | Canonical replacement | Status | Source verification | Runtime verification | Notes |",
+  "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+  ...migrationEntries.map(
+    (entry) =>
+      `| \`${markdownEscape(entry.routeState)}\` | \`${entry.source}\` | ${entry.family} | ${entry.owner} | ${markdownEscape(entry.findings)} | ${markdownEscape(entry.replacement)} | ${entry.status} | ${markdownEscape(entry.sourceVerification)} | ${markdownEscape(entry.runtimeVerification)} | ${markdownEscape(entry.notes)} |`,
+  ),
+  "",
+];
+
+writeFileSync(migrationMatrixPath, matrixLines.join("\n"), "utf8");
 console.log(
-  `Wrote ${path.relative(repositoryRoot, outputPath)} with ${pages.length} pages and ${layouts.length} layouts.`,
+  `Wrote ${path.relative(repositoryRoot, outputPath)} and ${path.relative(repositoryRoot, migrationMatrixPath)} with ${pages.length} pages, ${layouts.length} layouts, and ${migrationEntries.length} route-state rows.`,
 );

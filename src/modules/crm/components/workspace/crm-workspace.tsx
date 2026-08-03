@@ -185,6 +185,13 @@ const exactRouteMeta: Record<string, CrmRouteMeta> = {
       "Review weighted pipeline, expected revenue, team targets, and closing confidence.",
     icon: Target,
   },
+  "/crm/incentives": {
+    eyebrow: "Sales incentives",
+    title: "Incentives",
+    description:
+      "Capture CRM-side incentive inputs and hand them into the HRMS review, approval, and payout workflow.",
+    icon: CircleDollarSign,
+  },
   "/crm/invoices": {
     eyebrow: "Commercial documents",
     title: "Invoices",
