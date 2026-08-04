@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   FileText,
   Download,
+  ExternalLink,
   ShieldCheck,
   Signature,
   Loader2,
@@ -241,21 +242,42 @@ export default function EmployeeLetterViewPage({
             </CardContent>
           </Card>
 
-          {/* Embedded PDF iframe or view details */}
+          {/* Browser PDF access */}
           <Card className="rounded-2xl border-mono-border/60 bg-mono-card shadow-sm overflow-hidden">
             <CardHeader className="border-b border-mono-border p-4">
               <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                 <FileText className="size-4 text-[var(--mnx-accent)]" />
-                Letter Preview
+                Letter Preview Access
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="p-6">
               {doc.pdfPath ? (
-                <iframe
-                  src={`/${doc.pdfPath}`}
-                  className="w-full h-[600px] border-0"
-                  title="PDF Preview"
-                />
+                <div className="space-y-4">
+                  <p className="text-sm leading-6 text-mono-muted">
+                    Open the issued letter in your browser&apos;s native PDF
+                    viewer. The HRMS portal no longer embeds the preview inside
+                    this page.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <a
+                      href={`/${doc.pdfPath}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center gap-2 bg-[var(--mnx-accent)] text-[var(--mnx-text)] hover:bg-[var(--mnx-accent-soft)] hover:shadow-ambient-hover px-4 py-2 rounded-xl text-xs uppercase tracking-wide font-bold transition-all"
+                    >
+                      <ExternalLink className="size-4" />
+                      <span>Open PDF Viewer</span>
+                    </a>
+                    <a
+                      href={`/${doc.pdfPath}`}
+                      download
+                      className="inline-flex items-center justify-center gap-2 bg-mono-card border border-mono-border hover:bg-mono-soft px-4 py-2 rounded-xl text-xs uppercase tracking-wide font-bold transition-all"
+                    >
+                      <Download className="size-4" />
+                      <span>Download PDF</span>
+                    </a>
+                  </div>
+                </div>
               ) : (
                 <div className="text-center py-20 text-mono-muted">
                   <FileText className="size-12 mx-auto text-[var(--mnx-accent)]/30 mb-3" />

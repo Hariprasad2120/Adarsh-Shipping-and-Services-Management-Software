@@ -1,17 +1,17 @@
 "use client";
 
 import {
-  CrmButton,
-  CrmDialogLayer,
+  CrmDialog,
   CrmInput,
   CrmTextarea,
 } from "@/modules/crm/components/workspace/crm-workspace";
 
+import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { updateLeadStatusAction } from "@/modules/crm/actions";
-import { X, Ship, Plane, Info } from "lucide-react";
+import { Ship, Plane } from "lucide-react";
 
 interface InterestedModalProps {
   leadId: string;
@@ -26,8 +26,15 @@ export function InterestedModal({
   onClose,
   onSuccess,
 }: InterestedModalProps) {
+  type ServiceScope =
+    | "BOTH_FREIGHT_AND_CLEARANCE"
+    | "ONLY_FREIGHT"
+    | "ONLY_CLEARANCE";
+
   const [activeTab, setActiveTab] = useState<"Sea" | "Air">("Sea");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serviceScope, setServiceScope] =
+    useState<ServiceScope>("BOTH_FREIGHT_AND_CLEARANCE");
   const [isPerishable, setIsPerishable] = useState(false);
   const [isFutureFollowUp, setIsFutureFollowUp] = useState(false);
   const [followUpReminderDate, setFollowUpReminderDate] = useState("");
@@ -96,6 +103,7 @@ export function InterestedModal({
       setSeaShipmentPlanning("30 days");
       setSeaShipmentsDone("Yes");
       setSeaPurpose("Commercial Manufacturing");
+      setServiceScope("BOTH_FREIGHT_AND_CLEARANCE");
       toast.success("Sea enquiry demo data filled!");
     } else {
       setAol("London Heathrow (LHR)");
@@ -112,6 +120,7 @@ export function InterestedModal({
       setAirShipmentPlanning("7 days");
       setAirShipmentsDone("Yes");
       setAirPurpose("Retail Distribution");
+      setServiceScope("BOTH_FREIGHT_AND_CLEARANCE");
       toast.success("Air enquiry demo data filled!");
     }
   };
@@ -157,6 +166,10 @@ export function InterestedModal({
         pod: pod || "Not Specified",
         commodity: seaCommodity || "Not Specified",
         weight: seaWeight || "Not Specified",
+        dimensions:
+          seaLclFcl === "LCL"
+            ? seaDimensions || "Not Specified"
+            : undefined,
         cbm: seaLclFcl === "LCL" ? parseFloat(seaCbm) || 0 : undefined,
         containerType: seaDimensions || "Not Specified",
         containerCount: seaPackages || "Not Specified",
@@ -167,6 +180,7 @@ export function InterestedModal({
         shipmentPlanning: seaShipmentPlanning,
         shipmentsDoneBefore: seaShipmentsDone,
         purpose: seaPurpose,
+        serviceScope,
         rates: {
           oceanFreight: 0,
           cfsCharges: 0,
@@ -198,6 +212,7 @@ export function InterestedModal({
         shipmentPlanning: airShipmentPlanning,
         shipmentsDoneBefore: airShipmentsDone,
         purpose: airPurpose,
+        serviceScope,
         rates: {
           airFreight: 0,
           handlingCharges: 0,
@@ -226,74 +241,122 @@ export function InterestedModal({
   };
 
   return (
-    <CrmDialogLayer
+    <CrmDialog
       open
       onClose={onClose}
+      title="In-Call Enquiry Form"
+      description="Capture the enquiry details discussed during the call and convert the lead into an active enquiry."
       size="wide"
-      labelledBy="interested-enquiry-title"
+      footer={
+        <>
+          <Button
+            type="button"
+            onClick={handleFillDemo}
+            variant="outline"
+            className="mr-auto mnx-button-compact"
+          >
+            Fill Demo
+          </Button>
+          <Button type="button" onClick={onClose} variant="outline">
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="interested-enquiry-form"
+            disabled={isSubmitting}
+            variant="accent"
+            className="disabled:opacity-50"
+          >
+            {isSubmitting ? "Saving..." : "Save Enquiry Details"}
+          </Button>
+        </>
+      }
     >
-      <div className="w-full max-w-2xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[var(--mnx-border)]/50 bg-[var(--mnx-surface)]">
-          <div className="flex items-center gap-2">
-            <Info className="size-4.5 text-[var(--mnx-accent)]" />
-            <span
-              id="interested-enquiry-title"
-              className="font-bold text-sm text-mono-text uppercase tracking-wider"
-            >
-              In-Call Enquiry Form
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <CrmButton
-              type="button"
-              onClick={handleFillDemo}
-              className="px-2.5 py-1 bg-[var(--mnx-accent)]/10 hover:bg-[var(--mnx-accent)]/20 border border-[var(--mnx-accent)]/35 text-[var(--mnx-accent)] rounded text-[10px] font-bold uppercase tracking-wider transition-all"
-            >
-              Fill Demo
-            </CrmButton>
-            <CrmButton
-              onClick={onClose}
-              className="p-1 hover:bg-mono-soft rounded text-mono-muted hover:text-mono-text cursor-pointer"
-            >
-              <X className="size-4" />
-            </CrmButton>
-          </div>
-        </div>
-
+      <form
+        id="interested-enquiry-form"
+        onSubmit={handleSave}
+        className="flex min-h-0 flex-col"
+      >
         {/* Modal Navigation Tabs */}
-        <div className="flex bg-[var(--mnx-surface)] border-b border-[var(--mnx-border)]/40">
-          <CrmButton
+        <div className="flex flex-wrap items-center justify-center gap-3 border-b border-[var(--mnx-border)]/40 bg-[var(--mnx-surface)] px-6 py-4">
+          <Button
             type="button"
             onClick={() => setActiveTab("Sea")}
-            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 transition-all cursor-pointer ${
+            variant={activeTab === "Sea" ? "accent" : "outline"}
+            className={`min-w-[220px] justify-center gap-2 px-8 ${
               activeTab === "Sea"
-                ? "border-[var(--mnx-accent)] text-mono-text bg-[var(--mnx-surface)]/30"
-                : "border-transparent text-mono-muted hover:text-mono-text"
+                ? ""
+                : ""
             }`}
           >
             <Ship className="size-4" />
             <span>Sea Enquiry</span>
-          </CrmButton>
-          <CrmButton
+          </Button>
+          <Button
             type="button"
             onClick={() => setActiveTab("Air")}
-            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 transition-all cursor-pointer ${
+            variant={activeTab === "Air" ? "accent" : "outline"}
+            className={`min-w-[220px] justify-center gap-2 px-8 ${
               activeTab === "Air"
-                ? "border-[var(--mnx-accent)] text-mono-text bg-[var(--mnx-surface)]/30"
-                : "border-transparent text-mono-muted hover:text-mono-text"
+                ? ""
+                : ""
             }`}
           >
             <Plane className="size-4" />
             <span>Air Enquiry</span>
-          </CrmButton>
+          </Button>
         </div>
 
-        <form onSubmit={handleSave} className="flex-1 flex flex-col min-h-0">
-          {/* Scrollable Form Body */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 pr-4">
+        <div className="space-y-5 pt-6">
+            <div className="space-y-3 rounded-xl border border-[var(--mnx-border)]/60 bg-[var(--mnx-surface)]/35 p-4">
+              <div className="space-y-1">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-mono-text">
+                  Scope of Work
+                </span>
+                <span className="block text-[9px] text-mono-muted">
+                  Choose whether the customer needs freight, clearance, or both.
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  type="button"
+                  variant={
+                    serviceScope === "BOTH_FREIGHT_AND_CLEARANCE"
+                      ? "accent"
+                      : "outline"
+                  }
+                  className="min-w-[220px] justify-center gap-2"
+                  onClick={() =>
+                    setServiceScope("BOTH_FREIGHT_AND_CLEARANCE")
+                  }
+                >
+                  Both Freight and Clearance
+                </Button>
+                <Button
+                  type="button"
+                  variant={
+                    serviceScope === "ONLY_FREIGHT" ? "accent" : "outline"
+                  }
+                  className="min-w-[180px] justify-center gap-2"
+                  onClick={() => setServiceScope("ONLY_FREIGHT")}
+                >
+                  Only Freight
+                </Button>
+                <Button
+                  type="button"
+                  variant={
+                    serviceScope === "ONLY_CLEARANCE" ? "accent" : "outline"
+                  }
+                  className="min-w-[180px] justify-center gap-2"
+                  onClick={() => setServiceScope("ONLY_CLEARANCE")}
+                >
+                  Only Clearance
+                </Button>
+              </div>
+            </div>
+
             {/* Toggles Panel */}
-            <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-[var(--mnx-surface)]/35 border border-[var(--mnx-border)]/60 mb-2">
+            <div className="grid grid-cols-1 gap-4 rounded-xl bg-[var(--mnx-surface)]/35 p-4 md:grid-cols-2">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <span className="text-[11px] font-bold text-mono-text uppercase tracking-wider block">
@@ -363,7 +426,7 @@ export function InterestedModal({
             {activeTab === "Sea" ? (
               // SEA ENQUIRY FORM FIELDS
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
                       Direction
@@ -394,7 +457,7 @@ export function InterestedModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
                       POL (Port of Loading){" "}
@@ -425,7 +488,11 @@ export function InterestedModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div
+                  className={`grid grid-cols-1 gap-4 ${
+                    seaLclFcl === "LCL" ? "md:grid-cols-4" : "md:grid-cols-3"
+                  }`}
+                >
                   <div>
                     <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
                       Commodity {!isPerishable && !isFutureFollowUp && "*"}
@@ -453,20 +520,35 @@ export function InterestedModal({
                     />
                   </div>
                   {seaLclFcl === "LCL" ? (
-                    <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
-                        CBM (Volume) {!isPerishable && !isFutureFollowUp && "*"}
-                      </label>
-                      <CrmInput
-                        type="number"
-                        step="any"
-                        required={!isPerishable && !isFutureFollowUp}
-                        placeholder="e.g. 2.5"
-                        value={seaCbm}
-                        onChange={(e) => setSeaCbm(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/55 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-                      />
-                    </div>
+                    <>
+                      <div>
+                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                          Dimensions {!isPerishable && !isFutureFollowUp && "*"}
+                        </label>
+                        <CrmInput
+                          type="text"
+                          required={!isPerishable && !isFutureFollowUp}
+                          placeholder="e.g. 120x80x60 cm"
+                          value={seaDimensions}
+                          onChange={(e) => setSeaDimensions(e.target.value)}
+                          className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/55 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                          CBM (Volume) {!isPerishable && !isFutureFollowUp && "*"}
+                        </label>
+                        <CrmInput
+                          type="number"
+                          step="any"
+                          required={!isPerishable && !isFutureFollowUp}
+                          placeholder="e.g. 2.5"
+                          value={seaCbm}
+                          onChange={(e) => setSeaCbm(e.target.value)}
+                          className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/55 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                        />
+                      </div>
+                    </>
                   ) : (
                     <div>
                       <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
@@ -483,7 +565,7 @@ export function InterestedModal({
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div>
                     <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
                       {seaLclFcl === "LCL"
@@ -534,7 +616,7 @@ export function InterestedModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
                       Client Actual Name
@@ -559,7 +641,7 @@ export function InterestedModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div>
                     <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
                       Shipment Planning
@@ -607,7 +689,7 @@ export function InterestedModal({
             ) : (
               // AIR ENQUIRY FORM FIELDS
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
                       AOL (Airport of Loading){" "}
@@ -638,7 +720,7 @@ export function InterestedModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div>
                     <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
                       Commodity {!isPerishable && !isFutureFollowUp && "*"}
@@ -702,7 +784,7 @@ export function InterestedModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div>
                     <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
                       No. of Packages{" "}
@@ -759,7 +841,7 @@ export function InterestedModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
                       Client Actual Name
@@ -784,7 +866,7 @@ export function InterestedModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div>
                     <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
                       Shipment Planning
@@ -858,27 +940,8 @@ export function InterestedModal({
                 className="w-full p-2.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)] placeholder:text-mono-muted min-h-[50px]"
               />
             </div>
-          </div>
-
-          {/* Action Footer */}
-          <div className="flex-shrink-0 flex justify-end gap-3 p-4 bg-[var(--mnx-surface)] border-t border-[var(--mnx-border)]/30">
-            <CrmButton
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] text-mono-muted rounded-lg text-xs font-semibold cursor-pointer"
-            >
-              Cancel
-            </CrmButton>
-            <CrmButton
-              type="submit"
-              disabled={isSubmitting}
-              className="flex items-center gap-2 px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-xs font-bold transition-all mnx-shadow-panel cursor-pointer"
-            >
-              {isSubmitting ? "Saving..." : "Save Enquiry Details"}
-            </CrmButton>
-          </div>
-        </form>
-      </div>
-    </CrmDialogLayer>
+        </div>
+      </form>
+    </CrmDialog>
   );
 }

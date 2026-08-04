@@ -205,14 +205,40 @@ export async function listEnquiries(orgId: string, filters?: { search?: string; 
 }
 
 export async function getLead(orgId: string, id: string) {
-  return db.crmLead.findFirst({
+  const lead = await db.crmLead.findFirst({
     where: { id, orgId },
     include: {
       owner: { select: { id: true, name: true, email: true } },
-      createdBy: { select: { id: true, name: true, email: true } },
       crmExternalLead: true,
     },
   });
+
+  if (!lead) {
+    return null;
+  }
+
+  const createdBy = await db.user.findFirst({
+    where: { id: lead.createdById, orgId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      designation: true,
+      employeeNumber: true,
+      personalPhone: true,
+      org: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
+
+  return {
+    ...lead,
+    createdBy,
+  };
 }
 
 export async function createLead(orgId: string, createdById: string, data: any) {

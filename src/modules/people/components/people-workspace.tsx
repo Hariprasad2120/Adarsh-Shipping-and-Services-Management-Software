@@ -56,7 +56,7 @@ type PeopleRouteMeta = {
   eyebrow: string;
   title: string;
   description: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
 };
 
 const exactRouteMeta: Record<string, PeopleRouteMeta> = {
@@ -65,7 +65,6 @@ const exactRouteMeta: Record<string, PeopleRouteMeta> = {
     title: "HRMS command centre",
     description:
       "Employees, organisation, payroll, hiring, requests, and workforce services in one operational workspace.",
-    icon: Users,
   },
   "/hrms/approvals": {
     eyebrow: "Workflow",
@@ -418,7 +417,7 @@ export function PeopleWorkspaceFrame({ children }: { children: ReactNode }) {
           eyebrow={meta.eyebrow}
           title={meta.title}
           description={meta.description}
-          icon={<Icon aria-hidden="true" />}
+          icon={Icon ? <Icon aria-hidden="true" /> : undefined}
         />
       )}
       <div className="mnx-people-content">{children}</div>

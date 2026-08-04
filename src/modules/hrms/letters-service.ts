@@ -5,6 +5,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { promisify } from "util";
 import { createNotification } from "@/modules/notifications/service";
+import { createTextPdfBuffer } from "@/lib/document-preview";
 import {
   getBundledDocxTemplateFiles,
   importDocxTemplateFile,
@@ -15,6 +16,7 @@ import {
   LetterFieldSchema,
   LetterTemplateEditorDocument,
 } from "@/modules/hrms/letter-template-types";
+import { renderDraftPreviewHtml } from "@/modules/hrms/components/letters-shared";
 
 const execAsync = promisify(exec);
 
@@ -33,6 +35,72 @@ function parseStoredJson<T>(value: unknown, fallback: T): T {
 function resolvePublicPath(input: string | null | undefined) {
   if (!input) return null;
   return path.isAbsolute(input) ? input : path.join(process.cwd(), "public", input.replace(/^\//, ""));
+}
+
+function createLetterArtifactId(prefix: string) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+async function runTemplateDocumentCompilation({
+  relativeDocxPath,
+  relativePdfPath,
+  templatePath,
+  placeholders,
+  signaturePath,
+  sealPath,
+  employeeSignaturePath,
+}: {
+  relativeDocxPath: string;
+  relativePdfPath: string;
+  templatePath: string;
+  placeholders: Record<string, string>;
+  signaturePath: string | null;
+  sealPath: string | null;
+  employeeSignaturePath: string | null;
+}) {
+  const rootDir = process.cwd();
+  const fullDocxPath = path.join(rootDir, relativeDocxPath);
+  const fullPdfPath = path.join(rootDir, relativePdfPath);
+  const artifactId = path.basename(relativePdfPath, path.extname(relativePdfPath));
+  const tempJsonPath = path.join(rootDir, `public/import-output/letters/${artifactId}.json`);
+
+  const buildJson = {
+    templatePath,
+    outputPath: fullDocxPath,
+    pdfOutputPath: fullPdfPath,
+    placeholders,
+    signaturePath,
+    sealPath,
+    employeeSignaturePath,
+  };
+
+  if (!fs.existsSync(path.dirname(tempJsonPath))) {
+    fs.mkdirSync(path.dirname(tempJsonPath), { recursive: true });
+  }
+  fs.writeFileSync(tempJsonPath, JSON.stringify(buildJson, null, 2));
+
+  try {
+    const psScript = path.join(rootDir, "scripts/generate-document-from-template.ps1");
+    const { stdout, stderr } = await execAsync(
+      `powershell.exe -ExecutionPolicy Bypass -File "${psScript}" -jsonPath "${tempJsonPath}"`
+    );
+
+    if (stderr?.trim()) console.error("PowerShell warnings/stderr:", stderr);
+    const psResult = JSON.parse(stdout.trim());
+    if (!psResult.ok) throw new Error(psResult.error || "PowerShell execution failed");
+
+    fs.unlinkSync(tempJsonPath);
+
+    return {
+      pdfHash: psResult.pdfHash as string,
+      fullDocxPath,
+      fullPdfPath,
+    };
+  } catch (err: any) {
+    if (fs.existsSync(tempJsonPath)) fs.unlinkSync(tempJsonPath);
+    console.error("Compilation error details:", err);
+    throw new Error(`Word PDF Compilation failed: ${err.message}`);
+  }
 }
 
 function stripHtmlToText(html: string) {
@@ -478,6 +546,77 @@ export async function createHRLetterRequest(orgId: string, templateId: string, u
   });
 }
 
+export async function generateHRLetterPreviewPdf(orgId: string, input: {
+  templateId: string;
+  userId: string;
+  details?: Record<string, unknown>;
+}) {
+  const [template, settings, userDefaults] = await Promise.all([
+    db.hRLetterTemplate.findFirst({ where: { id: input.templateId, orgId } }),
+    getHRLetterSettings(orgId),
+    getEmployeePrepopulatedDetails(input.userId, orgId, input.templateId),
+  ]);
+
+  if (!template) throw new Error("Template not found");
+  const serializedTemplate = serializeTemplate(template);
+
+  const previewDetails = {
+    ...userDefaults,
+    ...Object.fromEntries(
+      Object.entries(input.details || {}).map(([key, value]) => [
+        key,
+        String(value ?? ""),
+      ]),
+    ),
+  };
+
+  previewDetails.letter_number =
+    previewDetails.letter_number || `PREVIEW-${new Date().getFullYear()}`;
+  previewDetails.issue_date =
+    previewDetails.issue_date || formatDate(new Date());
+  previewDetails.authorised_signatory_name =
+    previewDetails.authorised_signatory_name || settings.signatoryName || "";
+  previewDetails.authorised_signatory_designation =
+    previewDetails.authorised_signatory_designation ||
+    settings.signatoryDesignation ||
+    "";
+  previewDetails.authorised_signatory_signature =
+    previewDetails.authorised_signatory_signature ||
+    settings.signatorySignatureUrl ||
+    "";
+  previewDetails.company_seal =
+    previewDetails.company_seal || settings.companySealUrl || "";
+
+  const previewId = createLetterArtifactId("preview");
+  const relativePdfPath = `public/import-output/letters/previews/${previewId}.pdf`;
+  const absolutePdfPath = path.join(process.cwd(), relativePdfPath);
+  const previewHtml = renderDraftPreviewHtml({
+    template: serializedTemplate,
+    details: previewDetails,
+    settings: {
+      signatoryName: settings.signatoryName || "",
+      signatoryDesignation: settings.signatoryDesignation || "",
+      signatorySignatureUrl: settings.signatorySignatureUrl || "",
+      companySealUrl: settings.companySealUrl || "",
+    },
+  });
+  const previewText = stripHtmlToText(previewHtml);
+  const pdfBuffer = createTextPdfBuffer({
+    title: serializedTemplate.name,
+    subtitle: `Preview generated on ${formatDate(new Date())}`,
+    lines: previewText.split(/\n+/).filter(Boolean),
+  });
+
+  fs.mkdirSync(path.dirname(absolutePdfPath), { recursive: true });
+  fs.writeFileSync(absolutePdfPath, pdfBuffer);
+
+  return {
+    pdfPath: relativePdfPath.replace(/^public\//, ""),
+    docxPath: null,
+    documentHash: null,
+  };
+}
+
 export async function updateHRLetterRequest(id: string, orgId: string, details: any) {
   return db.hRLetterRequest.updateMany({
     where: { id, orgId },
@@ -644,46 +783,26 @@ async function compileAndIssueDocument(request: any, orgId: string, operatorId: 
   detailsObj.authorised_signatory_name = settings.signatoryName;
   detailsObj.authorised_signatory_designation = settings.signatoryDesignation;
 
-  const rootDir = process.cwd();
   const relativeDocxPath = `public/import-output/letters/${request.id}.docx`;
   const relativePdfPath = `public/import-output/letters/${request.id}.pdf`;
-  const fullDocxPath = path.join(rootDir, relativeDocxPath);
-  const fullPdfPath = path.join(rootDir, relativePdfPath);
   const fullTemplatePath = resolvePublicPath(template.sourceDocxPath);
 
   if (!fullTemplatePath || !fs.existsSync(fullTemplatePath)) {
     throw new Error("Template DOCX source is missing");
   }
 
-  const verificationUrl = `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/verify/${request.id}`;
-  const buildJson = {
-    templatePath: fullTemplatePath,
-    outputPath: fullDocxPath,
-    pdfOutputPath: fullPdfPath,
-    placeholders: detailsObj,
-    signaturePath: resolvePublicPath(settings.signatorySignatureUrl),
-    sealPath: resolvePublicPath(settings.companySealUrl),
-    employeeSignaturePath: detailsObj.employee_signature ? resolvePublicPath(detailsObj.employee_signature) : null,
-    verificationUrl,
-  };
-
-  const tempJsonPath = path.join(rootDir, `public/import-output/letters/${request.id}.json`);
-  if (!fs.existsSync(path.dirname(tempJsonPath))) {
-    fs.mkdirSync(path.dirname(tempJsonPath), { recursive: true });
-  }
-  fs.writeFileSync(tempJsonPath, JSON.stringify(buildJson, null, 2));
-
   try {
-    const psScript = path.join(rootDir, "scripts/generate-document-from-template.ps1");
-    const { stdout, stderr } = await execAsync(
-      `powershell.exe -ExecutionPolicy Bypass -File "${psScript}" -jsonPath "${tempJsonPath}"`
-    );
-
-    if (stderr?.trim()) console.error("PowerShell warnings/stderr:", stderr);
-    const psResult = JSON.parse(stdout.trim());
-    if (!psResult.ok) throw new Error(psResult.error || "PowerShell execution failed");
-
-    fs.unlinkSync(tempJsonPath);
+    const psResult = await runTemplateDocumentCompilation({
+      relativeDocxPath,
+      relativePdfPath,
+      templatePath: fullTemplatePath,
+      placeholders: detailsObj,
+      signaturePath: resolvePublicPath(settings.signatorySignatureUrl),
+      sealPath: resolvePublicPath(settings.companySealUrl),
+      employeeSignaturePath: detailsObj.employee_signature
+        ? resolvePublicPath(detailsObj.employee_signature)
+        : null,
+    });
 
     auditEntries.push({
       timestamp: new Date().toISOString(),
@@ -695,6 +814,8 @@ async function compileAndIssueDocument(request: any, orgId: string, operatorId: 
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + settings.letterValidityDaysDefault);
+
+    const verificationUrl = `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/verify/${request.id}`;
 
     await db.emailQueue.create({
       data: {
@@ -731,9 +852,7 @@ async function compileAndIssueDocument(request: any, orgId: string, operatorId: 
       }
     });
   } catch (err: any) {
-    if (fs.existsSync(tempJsonPath)) fs.unlinkSync(tempJsonPath);
-    console.error("Compilation error details:", err);
-    throw new Error(`Word PDF Compilation failed: ${err.message}`);
+    throw err;
   }
 }
 

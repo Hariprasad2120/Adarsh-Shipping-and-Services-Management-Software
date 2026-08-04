@@ -7,10 +7,9 @@ import {
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect */
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import DOMPurify from "isomorphic-dompurify";
+import { useRouter } from "next/navigation";
 import {
   Bold,
-  ChevronDown,
   CheckCircle2,
   Eye,
   FileCheck,
@@ -32,56 +31,31 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
 import { NativeSelect } from "@/components/ui/native-select";
+import {
+  OperationalDataTable,
+  OperationalDataTableFooter,
+  OperationalDataTableHeader,
+  OperationalDataTableWrap,
+  OperationalPrimaryCell,
+  OperationalStatus,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 import {
   WorkspaceAction,
   WorkspaceAlert,
   WorkspaceBadge,
-  WorkspaceEmptyTableRow,
   WorkspacePage,
   WorkspacePanel,
-  WorkspacePanelHeader,
-  WorkspaceTable,
 } from "@/components/layout/workspace";
-import { LetterDocumentPreviewSurface } from "@/modules/hrms/components/letter-document-preview-surface";
-
-type TemplateField = {
-  key: string;
-  label: string;
-  inputType:
-    | "text"
-    | "textarea"
-    | "date"
-    | "number"
-    | "currency"
-    | "email"
-    | "select"
-    | "image";
-  required: boolean;
-  defaultSource: string;
-  placeholder?: string;
-  helpText?: string;
-  readOnly?: boolean;
-  options?: Array<{ label: string; value: string }>;
-};
-
-type TemplateRecord = {
-  id: string;
-  name: string;
-  type: string;
-  version: number;
-  isActive: boolean;
-  isLegalReviewed: boolean;
-  content: string;
-  previewHtml: string | null;
-  variables: string[];
-  sourceDocxPath: string | null;
-  sourceFileName: string | null;
-  fieldSchema: TemplateField[];
-  editorDocument: { html: string };
-};
+import {
+  type TemplateRecord,
+  renderDraftPreviewHtml,
+} from "@/modules/hrms/components/letters-shared";
 
 const TABS = [
   { key: "register", label: "Letters Registry" },
@@ -89,76 +63,6 @@ const TABS = [
   { key: "templates", label: "Letter Templates" },
   { key: "settings", label: "Signatory Settings" },
 ] as const;
-
-function escapePreviewValue(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function renderDraftPreviewHtml({
-  template,
-  details,
-  settings,
-}: {
-  template: TemplateRecord | null;
-  details: Record<string, unknown>;
-  settings: {
-    signatoryName: string;
-    signatoryDesignation: string;
-    signatorySignatureUrl: string;
-    companySealUrl: string;
-  };
-}) {
-  if (!template) return "";
-
-  const sourceHtml =
-    template.editorDocument?.html || template.previewHtml || template.content;
-  const mergedValues: Record<string, string> = {
-    ...Object.fromEntries(
-      Object.entries(details || {}).map(([key, value]) => [key, String(value ?? "")]),
-    ),
-    authorised_signatory_name:
-      String(details.authorised_signatory_name ?? settings.signatoryName ?? ""),
-    authorised_signatory_designation: String(
-      details.authorised_signatory_designation ??
-        settings.signatoryDesignation ??
-        "",
-    ),
-    authorised_signatory_signature: String(
-      details.authorised_signatory_signature ??
-        settings.signatorySignatureUrl ??
-        "",
-    ),
-    company_seal: String(details.company_seal ?? settings.companySealUrl ?? ""),
-  };
-
-  return sourceHtml.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (_, key: string) => {
-    const field = template.fieldSchema.find((item) => item.key === key);
-    const value = mergedValues[key] ?? "";
-
-    if (!value) {
-      return '<span class="rounded bg-mono-soft px-1 py-0.5 text-mono-muted">________</span>';
-    }
-
-    if (
-      field?.inputType === "image" ||
-      key === "authorised_signatory_signature" ||
-      key === "company_seal" ||
-      key === "employee_signature"
-    ) {
-      const normalized = value.startsWith("/") ? value : `/${value}`;
-      return `<img src="${escapePreviewValue(normalized)}" alt="${escapePreviewValue(
-        field?.label || key,
-      )}" style="display:inline-block;max-height:88px;max-width:220px;vertical-align:middle;" />`;
-    }
-
-    return escapePreviewValue(value).replace(/\n/g, "<br />");
-  });
-}
 
 function RichTemplateEditor({
   value,
@@ -171,6 +75,8 @@ function RichTemplateEditor({
   onChange: (value: string) => void;
   onUploadImage: (file: File) => Promise<string | null>;
 }) {
+  const toolbarIconButtonClass = "min-w-[2.75rem]";
+  const toolbarActionButtonClass = "px-4";
   const editorRef = useRef<HTMLDivElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const savedRangeRef = useRef<Range | null>(null);
@@ -243,50 +149,60 @@ function RichTemplateEditor({
     <div className="space-y-3">
       <div className="overflow-hidden rounded-[24px] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,247,242,0.98))] shadow-[0_18px_44px_rgba(15,23,42,0.06)]">
         <div className="flex flex-wrap items-center gap-2 bg-[linear-gradient(180deg,rgba(248,244,236,0.88),rgba(243,238,229,0.78))] px-4 py-3">
-          <button
+          <Button
             type="button"
-            className="inline-flex min-w-[2.75rem] items-center justify-center gap-2 rounded-xl border border-mono-border/55 bg-white/96 px-3 py-2 text-xs font-semibold text-mono-text shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition hover:border-primary/35 hover:bg-[rgba(255,248,220,0.9)]"
+            variant="outline"
+            size="sm"
+            className={toolbarIconButtonClass}
             onMouseDown={handleToolbarMouseDown}
             onClick={() => runCommand("bold")}
             aria-label="Bold"
             title="Bold"
           >
             <Bold className="size-4" />
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="inline-flex min-w-[2.75rem] items-center justify-center gap-2 rounded-xl border border-mono-border/55 bg-white/96 px-3 py-2 text-xs font-semibold text-mono-text shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition hover:border-primary/35 hover:bg-[rgba(255,248,220,0.9)]"
+            variant="outline"
+            size="sm"
+            className={toolbarIconButtonClass}
             onMouseDown={handleToolbarMouseDown}
             onClick={() => runCommand("italic")}
             aria-label="Italic"
             title="Italic"
           >
             <ItalicIcon className="size-4" />
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="inline-flex min-w-[2.75rem] items-center justify-center gap-2 rounded-xl border border-mono-border/55 bg-white/96 px-3 py-2 text-xs font-semibold text-mono-text shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition hover:border-primary/35 hover:bg-[rgba(255,248,220,0.9)]"
+            variant="outline"
+            size="sm"
+            className={toolbarIconButtonClass}
             onMouseDown={handleToolbarMouseDown}
             onClick={() => runCommand("formatBlock", "h2")}
             aria-label="Heading"
             title="Heading"
           >
             <Heading1 className="size-4" />
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="inline-flex min-w-[2.75rem] items-center justify-center gap-2 rounded-xl border border-mono-border/55 bg-white/96 px-3 py-2 text-xs font-semibold text-mono-text shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition hover:border-primary/35 hover:bg-[rgba(255,248,220,0.9)]"
+            variant="outline"
+            size="sm"
+            className={toolbarIconButtonClass}
             onMouseDown={handleToolbarMouseDown}
             onClick={() => runCommand("insertUnorderedList")}
             aria-label="Bullets"
             title="Bullets"
           >
             <List className="size-4" />
-          </button>
+          </Button>
           <div className="mx-1 hidden h-7 w-px bg-mono-border/45 sm:block" />
-          <button
+          <Button
             type="button"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-mono-border/55 bg-white/96 px-4 py-2 text-xs font-semibold text-mono-text shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition hover:border-primary/35 hover:bg-[rgba(255,248,220,0.9)]"
+            variant="outline"
+            size="sm"
+            className={toolbarActionButtonClass}
             onMouseDown={handleToolbarMouseDown}
             onClick={insertPlaceholder}
             title="Insert placeholder"
@@ -295,17 +211,19 @@ function RichTemplateEditor({
               {`{{ }}`}
             </span>
             <span>Placeholder</span>
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-mono-border/55 bg-white/96 px-4 py-2 text-xs font-semibold text-mono-text shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition hover:border-primary/35 hover:bg-[rgba(255,248,220,0.9)]"
+            variant="outline"
+            size="sm"
+            className={toolbarActionButtonClass}
             onMouseDown={handleToolbarMouseDown}
             onClick={() => imageInputRef.current?.click()}
             title="Insert image"
           >
             <ImagePlus className="size-4" />
             <span>Image</span>
-          </button>
+          </Button>
           <MnxInput
             ref={imageInputRef}
             type="file"
@@ -331,27 +249,20 @@ function RichTemplateEditor({
 }
 
 export function LettersView() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<
     "register" | "inbox" | "templates" | "settings"
   >("register");
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [templates, setTemplates] = useState<TemplateRecord[]>([]);
-  const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [showPrepareModal, setShowPrepareModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [selectedTemplate, setSelectedTemplate] =
     useState<TemplateRecord | null>(null);
   const [editorHtml, setEditorHtml] = useState("");
-  const [wizardUserId, setWizardUserId] = useState("");
-  const [wizardTemplateId, setWizardTemplateId] = useState("");
-  const [wizardDetails, setWizardDetails] = useState<Record<string, string>>(
-    {},
-  );
-  const [wizardLoading, setWizardLoading] = useState(false);
   const [templateUploading, setTemplateUploading] = useState(false);
   const templateUploadInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -372,20 +283,18 @@ export function LettersView() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [meRes, reqRes, tempRes, empRes, settingsRes] = await Promise.all([
+      const [meRes, reqRes, tempRes, settingsRes] = await Promise.all([
         fetch("/api/hrms/me"),
         fetch("/api/hrms/letters"),
         fetch("/api/hrms/letters?type=templates"),
-        fetch("/api/hrms/letters?type=employees"),
         fetch("/api/hrms/letters/settings"),
       ]);
 
-      const [meJson, reqJson, tempJson, empJson, settingsJson] =
+      const [meJson, reqJson, tempJson, settingsJson] =
         await Promise.all([
           meRes.json(),
           reqRes.json(),
           tempRes.json(),
-          empRes.json(),
           settingsRes.json(),
         ]);
 
@@ -406,7 +315,6 @@ export function LettersView() {
           );
         }
       }
-      if (empJson.ok) setEmployees(empJson.data);
       if (settingsJson.ok && settingsJson.data) {
         setSettingsForm({
           numberingPattern: settingsJson.data.numberingPattern || "",
@@ -448,12 +356,8 @@ export function LettersView() {
       (isManagement && request.status === "MGMT_APPROVAL") ||
       (isHR && request.status === "READY_TO_ISSUE"),
   );
-
-  const activeTemplate =
-    templates.find((template) => template.id === wizardTemplateId) ||
-    selectedTemplate;
   const selectedRequestTemplate = selectedRequest
-    ? templates.find((template) => template.id === selectedRequest.templateId) ||
+    ? templates.find((template) => template.id === selectedRequest.templateId) ??
       null
     : null;
   const selectedRequestPreviewHtml = selectedRequest
@@ -479,52 +383,14 @@ export function LettersView() {
     return "danger";
   };
 
-  const loadTemplateDefaults = async (userId: string, templateId: string) => {
-    if (!userId || !templateId) return;
-    setWizardLoading(true);
-    try {
-      const response = await fetch(
-        `/api/hrms/letters?type=prepopulate&userId=${userId}&templateId=${templateId}`,
-      );
-      const json = await response.json();
-      if (!json.ok)
-        throw new Error(json.error?.message || "Failed to load defaults");
-      setWizardDetails(json.data || {});
-    } catch (error: any) {
-      toast.error(error.message || "Failed to load prefilled template fields");
-    } finally {
-      setWizardLoading(false);
-    }
-  };
-
-  const handleCreateRequest = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setSubmitting(true);
-    try {
-      const response = await fetch("/api/hrms/letters", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          templateId: wizardTemplateId,
-          userId: wizardUserId,
-          details: wizardDetails,
-        }),
-      });
-      const json = await response.json();
-      if (!json.ok)
-        throw new Error(json.error?.message || "Failed to create draft");
-
-      toast.success("Letter draft created");
-      setShowPrepareModal(false);
-      setWizardUserId("");
-      setWizardTemplateId("");
-      setWizardDetails({});
-      fetchData();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to create draft");
-    } finally {
-      setSubmitting(false);
-    }
+  const getOperationalStatusTone = (
+    status: string,
+  ): "success" | "warning" | "danger" | "info" | "neutral" => {
+    if (status === "ISSUED" || status === "ACCEPTED") return "success";
+    if (status === "READY_TO_ISSUE") return "info";
+    if (status === "DRAFT") return "neutral";
+    if (status.includes("REVIEW") || status.includes("APPROVAL")) return "warning";
+    return "danger";
   };
 
   const handleWorkflowTransition = async (
@@ -678,6 +544,16 @@ export function LettersView() {
     return json.data.path as string;
   };
 
+  const buildPreviewViewerPath = useCallback(
+    (pdfPath: string) =>
+      `/api/hrms/letters/preview-file?path=${encodeURIComponent(pdfPath)}`,
+    [],
+  );
+
+  const openBrowserPdf = useCallback((pdfPath: string) => {
+    window.open(buildPreviewViewerPath(pdfPath), "_blank", "noopener,noreferrer");
+  }, [buildPreviewViewerPath]);
+
   const handleUpdateSettings = async (event: React.FormEvent) => {
     event.preventDefault();
     setSubmitting(true);
@@ -732,17 +608,17 @@ export function LettersView() {
           <div className="flex flex-wrap items-center gap-2">
             {isHR ? (
               <WorkspaceAction
-                onClick={() => setShowPrepareModal(true)}
-                className="rounded-2xl px-5 text-sm font-semibold normal-case"
+                size="compact"
+                onClick={() => router.push("/hrms/letters/prepare")}
               >
                 <Plus className="size-4" />
                 <span>Prepare Letter</span>
               </WorkspaceAction>
             ) : null}
             <WorkspaceAction
+              size="compact"
               variant="outline"
               onClick={fetchData}
-              className="rounded-2xl px-5 text-sm font-semibold normal-case"
             >
               <RefreshCw className="size-4" />
               <span>Refresh</span>
@@ -771,7 +647,6 @@ export function LettersView() {
               onClick={() => setActiveTab(tab.key)}
               size="compact"
               variant={activeTab === tab.key ? "accent" : "outline"}
-              className="rounded-2xl px-5 text-sm font-semibold normal-case"
             >
               {tab.label}
             </WorkspaceAction>
@@ -780,30 +655,39 @@ export function LettersView() {
       </WorkspacePanel>
 
       {activeTab === "register" ? (
-        <WorkspacePanel className="overflow-hidden">
-          <WorkspacePanelHeader
+        <OperationalDataTable>
+          <OperationalDataTableHeader
             eyebrow="Registry"
             title="Letter registry"
-            description="Review every letter request, its workflow state, and the related employee record."
-          />
-          <WorkspaceTable scrollLabel="HR letters registry">
+          >
+            <p>
+              Review every letter request, its workflow state, and the related
+              employee record.
+            </p>
+          </OperationalDataTableHeader>
+          <OperationalDataTableWrap
+            role="region"
+            aria-label="HR letters registry"
+            tabIndex={0}
+          >
+            <OperationalTable>
               <thead>
                 <tr>
-                  <th className="px-6 py-3">Employee</th>
-                  <th className="px-6 py-3">Document Type</th>
-                  <th className="px-6 py-3">Letter No</th>
-                  <th className="px-6 py-3">Created</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
+                  <OperationalTableHead>Employee</OperationalTableHead>
+                  <OperationalTableHead>Document Type</OperationalTableHead>
+                  <OperationalTableHead>Letter No</OperationalTableHead>
+                  <OperationalTableHead>Created</OperationalTableHead>
+                  <OperationalTableHead>Status</OperationalTableHead>
+                  <OperationalTableHead className="text-right">
+                    Actions
+                  </OperationalTableHead>
                 </tr>
               </thead>
               <tbody>
                 {requests.length === 0 ? (
-                  <WorkspaceEmptyTableRow colSpan={6}>
-                    <div className="py-10 text-center text-sm text-mono-muted">
-                      No letters generated yet.
-                    </div>
-                  </WorkspaceEmptyTableRow>
+                  <OperationalTableEmpty colSpan={6}>
+                    No letters generated yet.
+                  </OperationalTableEmpty>
                 ) : (
                   requests.map((request) => {
                     const template = templates.find(
@@ -811,41 +695,43 @@ export function LettersView() {
                     );
                     return (
                       <tr key={request.id}>
-                        <td className="px-6 py-4 font-medium text-mono-text">
-                          {request.user.name}
-                        </td>
-                        <td className="px-6 py-4 text-mono-text">
+                        <OperationalPrimaryCell
+                          primary={request.user.name}
+                          secondary={request.user.employeeCode || undefined}
+                        />
+                        <OperationalTableCell>
                           {template?.name || "Letter"}
-                        </td>
-                        <td className="px-6 py-4 mnx-numeric">
+                        </OperationalTableCell>
+                        <OperationalTableCell className="mnx-numeric">
                           {request.letterNumber}
-                        </td>
-                        <td className="px-6 py-4 text-mono-muted">
+                        </OperationalTableCell>
+                        <OperationalTableCell className="text-mono-muted">
                           {new Date(request.createdAt).toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4">
-                          <WorkspaceBadge variant={getStatusVariant(request.status)}>
+                        </OperationalTableCell>
+                        <OperationalTableCell>
+                          <OperationalStatus
+                            tone={getOperationalStatusTone(request.status)}
+                          >
                             {request.status.replace(/_/g, " ")}
-                          </WorkspaceBadge>
-                        </td>
-                        <td className="px-6 py-4">
+                          </OperationalStatus>
+                        </OperationalTableCell>
+                        <OperationalTableCell>
                           <div className="flex items-center justify-end gap-2">
-                            <WorkspaceAction
-                              size="compact"
+                            <Button
                               variant="outline"
-                              className="min-w-0 rounded-xl px-0"
+                              mode="icon"
                               onClick={() => {
                                 setSelectedRequest(request);
                                 setShowViewModal(true);
                               }}
+                              aria-label={`Review ${template?.name || "letter"} for ${request.user.name}`}
                             >
                               <Eye className="size-4" />
-                            </WorkspaceAction>
+                            </Button>
                             {isHR && request.status === "DRAFT" ? (
-                              <WorkspaceAction
-                                size="compact"
+                              <Button
                                 variant="outline"
-                                className="rounded-xl"
+                                size="sm"
                                 onClick={() =>
                                   handleWorkflowTransition(
                                     request.id,
@@ -854,7 +740,7 @@ export function LettersView() {
                                 }
                               >
                                 Submit for Review
-                              </WorkspaceAction>
+                              </Button>
                             ) : null}
                             {request.status === "ISSUED" ? (
                               <a
@@ -863,34 +749,38 @@ export function LettersView() {
                                 rel="noreferrer"
                                 className="inline-flex"
                               >
-                                <WorkspaceAction
-                                  size="compact"
+                                <Button
                                   variant="outline"
-                                  className="min-w-0 rounded-xl px-0"
+                                  mode="icon"
+                                  aria-label={`Open verification page for ${request.user.name}`}
                                 >
                                   <Shield className="size-4" />
-                                </WorkspaceAction>
+                                </Button>
                               </a>
                             ) : null}
                             {isHR && request.status === "DRAFT" ? (
-                              <WorkspaceAction
-                                size="compact"
+                              <Button
                                 variant="outline"
-                                className="min-w-0 rounded-xl px-0"
+                                mode="icon"
                                 onClick={() => handleDeleteRequest(request.id)}
+                                aria-label={`Delete draft for ${request.user.name}`}
                               >
                                 <Trash className="size-4" />
-                              </WorkspaceAction>
+                              </Button>
                             ) : null}
                           </div>
-                        </td>
+                        </OperationalTableCell>
                       </tr>
                     );
                   })
                 )}
               </tbody>
-            </WorkspaceTable>
-        </WorkspacePanel>
+            </OperationalTable>
+          </OperationalDataTableWrap>
+          <OperationalDataTableFooter
+            summary={`${requests.length} ${requests.length === 1 ? "letter" : "letters"} in registry`}
+          />
+        </OperationalDataTable>
       ) : null}
 
       {activeTab === "inbox" ? (
@@ -911,9 +801,9 @@ export function LettersView() {
                 (item) => item.id === request.templateId,
               );
               return (
-                <Card
+                <WorkspacePanel
                   key={request.id}
-                  className="mnx-panel mnx-accent-edge rounded-2xl border border-mono-border bg-mono-card p-5 shadow-sm"
+                  className="w-full rounded-2xl p-5"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="space-y-2">
@@ -932,6 +822,7 @@ export function LettersView() {
                       <Button
                         type="button"
                         variant="outline"
+                        size="sm"
                         onClick={() => {
                           setSelectedRequest(request);
                           setShowViewModal(true);
@@ -942,6 +833,7 @@ export function LettersView() {
                       {isHR && request.status === "HR_REVIEW" ? (
                         <Button
                           type="button"
+                          size="sm"
                           onClick={() =>
                             handleWorkflowTransition(request.id, "HR_APPROVE")
                           }
@@ -952,6 +844,7 @@ export function LettersView() {
                       {isLegal && request.status === "LEGAL_REVIEW" ? (
                         <Button
                           type="button"
+                          size="sm"
                           onClick={() =>
                             handleWorkflowTransition(
                               request.id,
@@ -965,6 +858,7 @@ export function LettersView() {
                       {isManagement && request.status === "MGMT_APPROVAL" ? (
                         <Button
                           type="button"
+                          size="sm"
                           onClick={() =>
                             handleWorkflowTransition(request.id, "MGMT_APPROVE")
                           }
@@ -975,6 +869,7 @@ export function LettersView() {
                       {isHR && request.status === "READY_TO_ISSUE" ? (
                         <Button
                           type="button"
+                          size="sm"
                           onClick={() =>
                             handleWorkflowTransition(request.id, "ISSUE")
                           }
@@ -985,7 +880,7 @@ export function LettersView() {
                       ) : null}
                     </div>
                   </div>
-                </Card>
+                </WorkspacePanel>
               );
             })
           )}
@@ -1005,7 +900,7 @@ export function LettersView() {
                 actions alongside it.
               </p>
             </div>
-            <div className="grid gap-4 px-5 pb-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
+            <div className="space-y-4 px-5 pb-5">
               <div className="space-y-2">
                 <label className="mnx-dashboard-spec-label">
                   Active template
@@ -1035,44 +930,44 @@ export function LettersView() {
                 </NativeSelect>
               </div>
 
-              <div className="rounded-[22px] border border-mono-border/70 bg-mono-card px-4 py-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-mono-text">
-                    Source DOCX actions
-                  </p>
-                  <p className="text-xs leading-5 text-mono-muted">
-                    Manage the authoritative DOCX files used for template
-                    revisions, legal approval, and issue-time generation.
-                  </p>
+              <div className="rounded-[22px] bg-[linear-gradient(180deg,rgba(255,252,247,0.98),rgba(247,243,234,0.94))] px-4 py-4 shadow-[0_12px_32px_rgba(15,23,42,0.05)]">
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-mono-text">
+                      Source DOCX actions
+                    </p>
+                    <p className="max-w-2xl text-xs leading-5 text-mono-muted">
+                      Manage the authoritative DOCX files used for template
+                      revisions, legal approval, and issue-time generation.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <WorkspaceAction
+                      onClick={handleImportBundledTemplates}
+                      disabled={submitting}
+                    >
+                      <WandSparkles className="size-4" />
+                      <span>Import bundled DOCX</span>
+                    </WorkspaceAction>
+                    <WorkspaceAction
+                      variant="outline"
+                      onClick={() => templateUploadInputRef.current?.click()}
+                      disabled={templateUploading}
+                    >
+                      <Upload className="size-4" />
+                      <span>
+                        {templateUploading ? "Uploading..." : "Upload template"}
+                      </span>
+                    </WorkspaceAction>
+                  </div>
                 </div>
-                <div className="mt-4 grid gap-2">
-                  <WorkspaceAction
-                    onClick={handleImportBundledTemplates}
-                    disabled={submitting}
-                    className="rounded-xl"
-                  >
-                    <WandSparkles className="size-4" />
-                    <span>Import bundled DOCX</span>
-                  </WorkspaceAction>
-                  <WorkspaceAction
-                    variant="outline"
-                    onClick={() => templateUploadInputRef.current?.click()}
-                    disabled={templateUploading}
-                    className="rounded-xl"
-                  >
-                    <Upload className="size-4" />
-                    <span>
-                      {templateUploading ? "Uploading..." : "Upload template"}
-                    </span>
-                  </WorkspaceAction>
-                  <MnxInput
-                    ref={templateUploadInputRef}
-                    type="file"
-                    accept=".docx"
-                    className="hidden"
-                    onChange={handleUploadTemplateDocx}
-                  />
-                </div>
+                <MnxInput
+                  ref={templateUploadInputRef}
+                  type="file"
+                  accept=".docx"
+                  className="hidden"
+                  onChange={handleUploadTemplateDocx}
+                />
                 <WorkspaceAlert variant="info" className="mt-4 font-sans text-sm">
                   Template revisions, legal approval, and issue-time generation
                   all use these DOCX sources.
@@ -1112,7 +1007,6 @@ export function LettersView() {
                       </WorkspaceBadge>
                       {isLegal && !selectedTemplate.isLegalReviewed ? (
                         <WorkspaceAction
-                          className="rounded-xl"
                           onClick={() =>
                             handleLegalApproveTemplate(selectedTemplate.id)
                           }
@@ -1123,7 +1017,6 @@ export function LettersView() {
                       ) : null}
                       <WorkspaceAction
                         variant="outline"
-                        className="rounded-xl"
                         onClick={handleSaveTemplateRevision}
                         disabled={submitting}
                       >
@@ -1143,71 +1036,6 @@ export function LettersView() {
                       />
                     </div>
 
-                    <details className="rounded-[22px] border border-mono-border/70 bg-mono-card px-4 py-3">
-                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-medium text-mono-text">
-                            Template fields
-                          </p>
-                          <p className="mt-1 text-xs text-mono-muted">
-                            Expand only when you need placeholder metadata.
-                          </p>
-                        </div>
-                        <ChevronDown className="size-4 text-mono-muted" />
-                      </summary>
-                      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                        {selectedTemplate.fieldSchema.map((field) => (
-                          <div
-                            key={field.key}
-                            className="rounded-[20px] bg-white px-4 py-4 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.12)]"
-                          >
-                            <div className="flex flex-wrap items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium text-mono-text">
-                                  {field.label}
-                                </p>
-                                <p className="mt-1 text-xs text-mono-muted">
-                                  {field.key}
-                                </p>
-                              </div>
-                              <WorkspaceBadge
-                                variant={
-                                  field.required ? "accent" : "neutral"
-                                }
-                              >
-                                {field.required ? "Required" : "Optional"}
-                              </WorkspaceBadge>
-                            </div>
-                            <div className="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.12em] text-mono-muted">
-                              <span className="rounded-full bg-mono-soft px-2.5 py-1">
-                                {field.inputType}
-                              </span>
-                              <span className="rounded-full bg-mono-soft px-2.5 py-1">
-                                {field.defaultSource}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </details>
-
-                    <WorkspacePanel className="overflow-hidden border-0 bg-[linear-gradient(180deg,rgba(251,247,239,0.95),rgba(255,255,255,1))] shadow-none">
-                      <WorkspacePanelHeader
-                        eyebrow="Live layout"
-                        title="Rendered preview"
-                        description="Review the current template structure before you save a new revision."
-                      />
-                      <div className="px-5 pb-5">
-                        <div className="rounded-[24px] bg-white p-8 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.12),0_24px_60px_rgba(15,23,42,0.08)]">
-                          <div
-                            className="prose max-w-none text-mono-text"
-                            dangerouslySetInnerHTML={{
-                              __html: DOMPurify.sanitize(editorHtml),
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </WorkspacePanel>
                   </div>
                 </WorkspacePanel>
               </div>
@@ -1330,148 +1158,6 @@ export function LettersView() {
       ) : null}
 
       <Modal
-        open={showPrepareModal}
-        title="Prepare Letter"
-        description="Choose the employee and letter format, then complete only the fields required for that DOCX template."
-        onClose={() => setShowPrepareModal(false)}
-        className="max-w-4xl"
-      >
-        <form onSubmit={handleCreateRequest} className="space-y-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <label className="mnx-dashboard-spec-label">
-                Recipient Employee
-              </label>
-              <NativeSelect
-                value={wizardUserId}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setWizardUserId(value);
-                  setWizardDetails({});
-                  if (value && wizardTemplateId)
-                    void loadTemplateDefaults(value, wizardTemplateId);
-                }}
-                required
-                className="w-full text-sm"
-              >
-                <option value="">Choose employee</option>
-                {employees.map((employee) => (
-                  <option key={employee.id} value={employee.id}>
-                    {employee.name} ({employee.email})
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-
-            <div className="space-y-2">
-              <label className="mnx-dashboard-spec-label">Letter Format</label>
-              <NativeSelect
-                value={wizardTemplateId}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setWizardTemplateId(value);
-                  setWizardDetails({});
-                  if (wizardUserId && value)
-                    void loadTemplateDefaults(wizardUserId, value);
-                }}
-                required
-                className="w-full text-sm"
-              >
-                <option value="">Choose format</option>
-                {templates
-                  .filter((template) => template.isActive)
-                  .map((template) => (
-                    <option key={template.id} value={template.id}>
-                      {template.name} (v{template.version})
-                    </option>
-                  ))}
-              </NativeSelect>
-            </div>
-          </div>
-
-          {wizardLoading ? (
-            <div className="flex min-h-[10rem] items-center justify-center rounded-2xl border border-mono-border bg-mono-soft">
-              <Loader2 className="size-6 animate-spin text-mono-accent" />
-            </div>
-          ) : activeTemplate ? (
-            <div className="mnx-form-section space-y-4">
-              <h3 className="mnx-title-3 font-semibold text-mono-text">
-                Template Details
-              </h3>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {activeTemplate.fieldSchema.map((field) => (
-                  <div
-                    key={field.key}
-                    className={`space-y-2 ${field.inputType === "textarea" ? "sm:col-span-2" : ""}`}
-                  >
-                    <label className="mnx-dashboard-spec-label">
-                      {field.label}
-                    </label>
-                    {field.inputType === "textarea" ? (
-                      <MnxTextarea
-                        rows={4}
-                        required={field.required}
-                        readOnly={field.readOnly}
-                        value={wizardDetails[field.key] || ""}
-                        onChange={(event) =>
-                          setWizardDetails((current) => ({
-                            ...current,
-                            [field.key]: event.target.value,
-                          }))
-                        }
-                        placeholder={field.placeholder}
-                        className="w-full text-sm"
-                      />
-                    ) : (
-                      <MnxInput
-                        type={
-                          field.inputType === "currency"
-                            ? "text"
-                            : field.inputType
-                        }
-                        required={field.required}
-                        readOnly={field.readOnly}
-                        value={wizardDetails[field.key] || ""}
-                        onChange={(event) =>
-                          setWizardDetails((current) => ({
-                            ...current,
-                            [field.key]: event.target.value,
-                          }))
-                        }
-                        placeholder={field.placeholder}
-                        className={`w-full text-sm ${field.inputType === "currency" ? "mnx-numeric" : ""}`}
-                      />
-                    )}
-                    {field.helpText ? (
-                      <p className="text-xs text-mono-muted">
-                        {field.helpText}
-                      </p>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          <div className="flex justify-end gap-3 border-t border-mono-border pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowPrepareModal(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={submitting || !wizardUserId || !wizardTemplateId}
-            >
-              {submitting ? "Creating..." : "Create Draft"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      <Modal
         open={showViewModal && !!selectedRequest}
         title={
           selectedRequest
@@ -1489,7 +1175,7 @@ export function LettersView() {
         {selectedRequest ? (
           <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
             <div className="space-y-4">
-              <Card className="rounded-2xl border border-mono-border bg-mono-soft p-4">
+              <WorkspacePanel className="rounded-2xl bg-mono-soft p-4">
                 <h3 className="mnx-title-3 font-semibold text-mono-text">
                   Field Values
                 </h3>
@@ -1498,7 +1184,7 @@ export function LettersView() {
                     ([key, value]) => (
                       <div
                         key={key}
-                        className="rounded-xl border border-mono-border bg-mono-card p-3"
+                        className="rounded-xl bg-mono-card p-3 shadow-[inset_0_0_0_1px_rgba(17,18,14,0.06)]"
                       >
                         <p className="mnx-dashboard-spec-label">
                           {key.replace(/_/g, " ")}
@@ -1510,27 +1196,69 @@ export function LettersView() {
                     ),
                   )}
                 </div>
-              </Card>
+              </WorkspacePanel>
             </div>
 
             <div className="space-y-4">
-              <LetterDocumentPreviewSurface
-                title={
-                  selectedRequest.pdfPath
-                    ? "Issued document"
-                    : "Draft preview"
-                }
-                description={
-                  selectedRequest.pdfPath
-                    ? "The embedded browser PDF viewer is shown directly here for print, open, and download actions."
-                    : "This rendered draft preview is visible before issue so the letter can be read and approved."
-                }
-                pdfPath={selectedRequest.pdfPath || null}
-                htmlPreview={
-                  selectedRequest.pdfPath ? null : selectedRequestPreviewHtml
-                }
-                downloadPath={selectedRequest.pdfPath || null}
-              />
+              <div className="space-y-4">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-2">
+                      <p className="mnx-dashboard-spec-label">Letter preview</p>
+                      <h3 className="text-lg font-semibold text-mono-text">
+                        Letter viewer
+                      </h3>
+                      <p className="max-w-2xl text-sm leading-6 text-mono-muted">
+                        Draft letters render directly as formatted letter content
+                        inside this popup. Issued letters still use the browser
+                        PDF viewer.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedRequest.pdfPath ? (
+                        <>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() =>
+                              openBrowserPdf(selectedRequest.pdfPath)
+                            }
+                          >
+                            <Eye className="size-4" />
+                            <span>Open in tab</span>
+                          </Button>
+                          <a
+                            href={`${buildPreviewViewerPath(selectedRequest.pdfPath)}&download=true`}
+                            download
+                            className="inline-flex"
+                          >
+                            <Button type="button" variant="outline">
+                              <Save className="size-4" />
+                              <span>Download PDF</span>
+                            </Button>
+                          </a>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {selectedRequest.pdfPath ? (
+                    <div className="overflow-hidden rounded-2xl bg-white shadow-[0_24px_60px_rgba(15,23,42,0.12)]">
+                      <iframe
+                        src={`${buildPreviewViewerPath(selectedRequest.pdfPath)}#toolbar=1&navpanes=1&scrollbar=1&view=FitH`}
+                        className="h-[78vh] min-h-[38rem] w-full border-0 bg-white"
+                        title={`${selectedRequest.letterNumber} PDF preview`}
+                      />
+                    </div>
+                  ) : (
+                    <div className="overflow-hidden rounded-2xl bg-white shadow-[0_24px_60px_rgba(15,23,42,0.12)]">
+                      <iframe
+                        srcDoc={`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8" /><style>html,body{margin:0;padding:0;background:#fff;color:#111827;}body{font-family:'Times New Roman',Georgia,serif;}.sheet{max-width:980px;margin:0 auto;padding:36px 40px 64px;line-height:1.6;font-size:17px;}p{margin:0 0 12px;}h1,h2,h3{margin:20px 0 12px;line-height:1.3;}ul,ol{margin:0 0 14px 24px;}img{max-width:100%;height:auto;}@media (max-width:900px){.sheet{padding:24px 18px 48px;font-size:15px;}}</style></head><body><article class="sheet">${selectedRequestPreviewHtml}</article></body></html>`}
+                        className="h-[78vh] min-h-[38rem] w-full border-0 bg-white"
+                        title={`${selectedRequest.letterNumber} letter preview`}
+                      />
+                    </div>
+                  )}
+              </div>
 
               <div className="flex flex-wrap justify-end gap-2">
                 {isHR && selectedRequest.status === "DRAFT" ? (
@@ -1593,16 +1321,6 @@ export function LettersView() {
                   selectedRequest.status === "ACCEPTED") &&
                 selectedRequest.pdfPath ? (
                   <>
-                    <a
-                      href={`/${selectedRequest.pdfPath}`}
-                      download
-                      className="inline-flex"
-                    >
-                      <Button type="button" variant="outline">
-                        <Save className="size-4" />
-                        <span>Download PDF</span>
-                      </Button>
-                    </a>
                     <Button
                       type="button"
                       variant="outline"

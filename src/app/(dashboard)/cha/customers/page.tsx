@@ -1,4 +1,3 @@
-import { ChaTable } from "@/modules/cha/components/workspace/cha-workspace";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Prisma } from "@/generated/prisma/client";
@@ -17,11 +16,21 @@ import {
   Pencil,
 } from "lucide-react";
 import {
+  OperationalDataTable,
+  OperationalDataTableFooter,
+  OperationalDataTableWrap,
+  OperationalPrimaryCell,
+  OperationalStatus,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
+import {
   ChaPageHeader,
   ChaMetricCard,
   ChaMetrics,
 } from "@/modules/cha/components/workspace/cha-operations-shared";
-import { Badge } from "@/components/ui/badge";
 import { CustomersFilterBar } from "./customers-filter-bar";
 
 type CustomerSearchParams = {
@@ -121,6 +130,12 @@ export default async function ChaCustomersPage({
     db.crmAccount.count({ where: { orgId, type: "Customer", status: "ACTIVE" } }),
     db.crmAccount.count({ where: { orgId, type: "Customer", isPortalEnabled: true } }),
   ]);
+  const visibleCount = customers.length;
+  const currencyFormatter = new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  });
 
   return (
     <div className="space-y-8">
@@ -169,41 +184,45 @@ export default async function ChaCustomersPage({
       />
 
       {/* Customers Data Table */}
-      <div className="overflow-hidden rounded-xl border mnx-border mnx-bg-surface shadow-sm">
-        <div className="overflow-x-auto">
-          <ChaTable className="mnx-cha-table min-w-full">
+      <OperationalDataTable>
+        <OperationalDataTableWrap>
+          <OperationalTable>
             <thead>
               <tr>
-                <th>Customer Name</th>
-                <th>Company Name</th>
-                <th>Contact Info</th>
-                <th>Outstanding Balance</th>
-                <th>Last Updated</th>
-                <th>Status</th>
-                <th className="text-right">Actions</th>
+                <OperationalTableHead>Customer Name</OperationalTableHead>
+                <OperationalTableHead>Company Name</OperationalTableHead>
+                <OperationalTableHead>Contact Info</OperationalTableHead>
+                <OperationalTableHead>Outstanding Balance</OperationalTableHead>
+                <OperationalTableHead>Last Updated</OperationalTableHead>
+                <OperationalTableHead>Status</OperationalTableHead>
+                <OperationalTableHead className="text-right">Actions</OperationalTableHead>
               </tr>
             </thead>
             <tbody>
               {customers.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-sm mnx-text-muted">
-                    {hasActiveFilters ? "No customers match the current filters." : "No customers found in your master database."}
-                  </td>
-                </tr>
+                <OperationalTableEmpty colSpan={7}>
+                  <div className="flex flex-col items-center justify-center p-14 text-center">
+                    <p className="text-sm mnx-text-primary">
+                      {hasActiveFilters ? "No customers match the current filters." : "No customers found in your master database."}
+                    </p>
+                    <p className="mt-1 text-xs mnx-text-muted">
+                      {hasActiveFilters ? "Try clearing filters or broadening the search." : "Create a new customer profile to start building the register."}
+                    </p>
+                  </div>
+                </OperationalTableEmpty>
               ) : (
                 customers.map((customer) => {
                   const balance = customer.openingBalanceAmount || 0;
+                  const statusTone = customer.status === "ACTIVE" ? "success" : "neutral";
 
                   return (
-                    <tr key={customer.id} className="transition-colors">
-                      <td>
-                        <div>
-                          <p className="text-base mnx-text-primary">{customer.name}</p>
-                          <p className="mt-1 text-xs mnx-text-muted">{customer.customerSubType || "Business"}</p>
-                        </div>
-                      </td>
-                      <td className="text-base mnx-text-primary">{customer.companyName || customer.name}</td>
-                      <td>
+                    <tr key={customer.id}>
+                      <OperationalPrimaryCell
+                        primary={customer.name}
+                        secondary={customer.customerSubType || "Business"}
+                      />
+                      <OperationalTableCell>{customer.companyName || customer.name}</OperationalTableCell>
+                      <OperationalTableCell>
                         {customer.email || customer.phone ? (
                           <div className="space-y-1 text-sm mnx-text-primary">
                             {customer.email ? (
@@ -222,56 +241,65 @@ export default async function ChaCustomersPage({
                         ) : (
                           <span className="text-sm italic mnx-text-muted">No contact details</span>
                         )}
-                      </td>
-                      <td>
+                      </OperationalTableCell>
+                      <OperationalTableCell>
                         <span className="mnx-numeric text-sm mnx-text-primary">
-                          {new Intl.NumberFormat("en-IN", {
-                            style: "currency",
-                            currency: "INR",
-                            maximumFractionDigits: 2,
-                          }).format(balance)}
+                          {currencyFormatter.format(balance)}
                         </span>
-                      </td>
-                      <td className="mnx-numeric mnx-text-muted">
+                      </OperationalTableCell>
+                      <OperationalTableCell className="mnx-numeric mnx-text-muted">
                         {customer.updatedAt.toLocaleDateString("en-IN", {
                           day: "2-digit",
                           month: "short",
                           year: "numeric",
                         })}
-                      </td>
-                      <td>
-                        <Badge variant={customer.status === "ACTIVE" ? "success" : "secondary"} className="uppercase">
+                      </OperationalTableCell>
+                      <OperationalTableCell>
+                        <OperationalStatus tone={statusTone}>
                           {customer.status || "ACTIVE"}
-                        </Badge>
-                      </td>
-                      <td className="text-right">
+                        </OperationalStatus>
+                      </OperationalTableCell>
+                      <OperationalTableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Link href={`/crm/customers/${customer.id}`} className="mnx-icon-button mnx-icon-button mnx-text-info" title="View details">
+                          <Link
+                            href={`/crm/customers/${customer.id}`}
+                            className="mnx-operational-row-action mnx-text-info"
+                            title="View details"
+                            aria-label={`View ${customer.name}`}
+                          >
                             <Eye className="size-4" />
                           </Link>
                           {(canManageChaCustomers || canManageCrmAccounts) ? (
                             <>
-                              <Link href={`/cha/customers/${customer.id}/edit`} className="mnx-icon-button mnx-icon-button mnx-text-accent" title="Edit customer">
+                              <Link
+                                href={`/cha/customers/${customer.id}/edit`}
+                                className="mnx-operational-row-action mnx-text-accent"
+                                title="Edit customer"
+                                aria-label={`Edit ${customer.name}`}
+                              >
                                 <Pencil className="size-4" />
                               </Link>
                               <DeleteRecordButton
                                 recordId={customer.id}
                                 confirmMessage="Are you sure you want to delete this customer account? All linked contacts, jobs, and portal access may be affected."
                                 deleteAction={deleteAccountAction}
-                                className="mnx-plain mnx-icon-button mnx-icon-button mnx-text-danger"
+                                className="mnx-plain mnx-operational-row-action mnx-text-danger"
                               />
                             </>
                           ) : null}
                         </div>
-                      </td>
+                      </OperationalTableCell>
                     </tr>
                   );
                 })
               )}
             </tbody>
-          </ChaTable>
-        </div>
-      </div>
+          </OperationalTable>
+        </OperationalDataTableWrap>
+        <OperationalDataTableFooter
+          summary={`Showing ${visibleCount === 0 ? "0" : `1-${visibleCount}`} of ${totalCount} customers`}
+        />
+      </OperationalDataTable>
     </div>
   );
 }

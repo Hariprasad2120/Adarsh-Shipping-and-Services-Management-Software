@@ -2183,7 +2183,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 13px;
+  gap: 10px;
   padding: 0 21px;
   border: 1px solid transparent;
   border-radius: 999px;
@@ -10560,6 +10560,26 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
 
 .mnx-border-info {
   border-color: color-mix(in srgb, var(--mnx-info) 36%, var(--mnx-border));
+}
+
+.mnx-design-border-normalized {
+  border-color: color-mix(in srgb, var(--mnx-border) 82%, transparent);
+}
+
+:where(
+  [class*="border-mono-border"],
+  [class*="border-[var(--mnx-border)]"],
+  [class*="border-[var(--mn-color-border)]"]
+) {
+  border-color: color-mix(in srgb, var(--mnx-border) 82%, transparent) !important;
+}
+
+:where(
+  [class*="divide-mono-border"],
+  [class*="divide-[var(--mnx-border)]"],
+  [class*="divide-[var(--mn-color-border)]"]
+) > :not([hidden]) ~ :not([hidden]) {
+  border-color: color-mix(in srgb, var(--mnx-border) 82%, transparent) !important;
 }
 
 .mnx-shadow-panel {

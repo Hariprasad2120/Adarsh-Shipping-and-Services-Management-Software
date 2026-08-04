@@ -31,7 +31,6 @@ import {
   Edit2,
   RefreshCcw,
   Trash2,
-  Building,
   MapPin,
   Info,
   Ship,
@@ -96,16 +95,17 @@ export function LeadDetailWrapper({
     }
   };
 
-  const formatRevenue = (value: number | null) => {
-    if (value === null) return "Not Specified";
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
-
   const leadName = `${lead.firstName || ""} ${lead.lastName}`.trim();
+  const creator = lead.createdBy ?? lead.owner;
+  const creatorName = creator?.name || "Unknown user";
+  const creatorEmail = creator?.email || "Not Specified";
+  const creatorDesignation = creator?.designation || "Not Specified";
+  const creatorPhone = creator?.personalPhone || "Not Specified";
+  const creatorOrganisation = creator?.org?.name || "Not Specified";
+  const creatorEmployeeId =
+    creator?.employeeNumber !== null && creator?.employeeNumber !== undefined
+      ? String(creator.employeeNumber)
+      : "Not Specified";
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -114,15 +114,16 @@ export function LeadDetailWrapper({
         {/* Left Column: Business Card & Structured Fields */}
         <div className="lg:col-span-2 space-y-6">
           {/* 3D Call Action & Operations Panel */}
-          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] mnx-shadow-panel  transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-6 mnx-crm-panel-surface ">
-            <div className="space-y-2 flex-1">
-              <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-widest block font-sans">
-                Call Action / Lead Status
-              </span>
-              <div className="flex flex-wrap gap-3">
+          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] mnx-shadow-panel transition-all duration-200 mnx-crm-panel-surface">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(260px,1fr)]">
+              <div className="space-y-3">
+                <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-widest block font-sans">
+                  Call Action / Lead Status
+                </span>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <CrmButton
                   onClick={() => setShowInterestedModal(true)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
+                  className={`w-full justify-center px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
                     lead.status === "INTERESTED"
                       ? "bg-[var(--mnx-accent)] text-mono-text border-[var(--mnx-accent)] shadow-none translate-y-[2px] translate-x-[2px]"
                       : "bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border-[var(--mnx-accent)]/40 hover:border-[var(--mnx-accent)] mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
@@ -132,7 +133,7 @@ export function LeadDetailWrapper({
                 </CrmButton>
                 <CrmButton
                   onClick={() => setShowRemarksModal(true)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
+                  className={`w-full justify-center px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
                     lead.status === "NOT_INTERESTED"
                       ? "bg-[var(--mnx-danger-bg)] text-mono-text border-[var(--mnx-danger)] shadow-none translate-y-[2px] translate-x-[2px]"
                       : "bg-[var(--mnx-surface)] text-[var(--mnx-danger)] border-[var(--mnx-danger)] hover:border-[var(--mnx-danger)] mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
@@ -145,7 +146,7 @@ export function LeadDetailWrapper({
                     setFollowUpStatus("NOT_PICKED");
                     setShowFollowUpModal(true);
                   }}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
+                  className={`w-full justify-center px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
                     lead.status === "NOT_PICKED"
                       ? "bg-[var(--mnx-accent)] text-mono-text border-[var(--mnx-accent)] shadow-none translate-y-[2px] translate-x-[2px]"
                       : "bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border-[var(--mnx-accent)]/40 hover:border-[var(--mnx-accent)]/80 mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
@@ -158,7 +159,7 @@ export function LeadDetailWrapper({
                     setFollowUpStatus("NOT_REACHABLE");
                     setShowFollowUpModal(true);
                   }}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
+                  className={`w-full justify-center px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 cursor-pointer ${
                     lead.status === "NOT_REACHABLE"
                       ? "bg-[var(--mnx-accent)] text-mono-text border-[var(--mnx-accent)] shadow-none translate-y-[2px] translate-x-[2px]"
                       : "bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border-[var(--mnx-accent)]/40 hover:border-[var(--mnx-accent)]/80 mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
@@ -166,35 +167,37 @@ export function LeadDetailWrapper({
                 >
                   Not Reachable
                 </CrmButton>
+                </div>
               </div>
-            </div>
-
-            <div className="space-y-2 flex-shrink-0 md:text-right">
-              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-widest block font-sans">
-                Operations
-              </span>
-              <div className="flex flex-wrap items-center gap-3 justify-start md:justify-end">
+              <div className="space-y-3 rounded-xl border border-[var(--mnx-border)]/50 bg-[var(--mnx-surface)]/35 p-4">
+                <span className="text-[10px] font-bold text-mono-muted uppercase tracking-widest block font-sans">
+                  Operations
+                </span>
+                <div className="grid gap-3">
                 <CrmButton
                   onClick={() => setShowConvertModal(true)}
-                  className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[var(--mnx-accent)] mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
+                  className="flex w-full items-center justify-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[var(--mnx-accent)] mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
                 >
                   <RefreshCcw className="size-3.5" />
                   <span>Convert Lead</span>
                 </CrmButton>
-                <Link
-                  href={`/crm/leads/${lead.id}/edit`}
-                  className="flex items-center gap-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border-2 border-mono-border text-mono-muted px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
-                >
-                  <Edit2 className="size-3.5" />
-                  <span>Edit</span>
-                </Link>
-                <CrmButton
-                  onClick={handleDelete}
-                  className="flex items-center gap-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-danger-bg)] border-2 border-[var(--mnx-danger)] text-[var(--mnx-danger)] hover:text-[var(--mnx-danger)] hover:border-[var(--mnx-danger)] px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
-                >
-                  <Trash2 className="size-3.5" />
-                  <span>Delete</span>
-                </CrmButton>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Link
+                      href={`/crm/leads/${lead.id}/edit`}
+                      className="flex items-center justify-center gap-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border-2 border-mono-border text-mono-muted px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
+                    >
+                      <Edit2 className="size-3.5" />
+                      <span>Edit</span>
+                    </Link>
+                    <CrmButton
+                      onClick={handleDelete}
+                      className="flex items-center justify-center gap-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-danger-bg)] border-2 border-[var(--mnx-danger)] text-[var(--mnx-danger)] hover:text-[var(--mnx-danger)] hover:border-[var(--mnx-danger)] px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
+                    >
+                      <Trash2 className="size-3.5" />
+                      <span>Delete</span>
+                    </CrmButton>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -211,18 +214,18 @@ export function LeadDetailWrapper({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
               <div className="space-y-1">
                 <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                  Lead Owner
+                  Created By
                 </span>
                 <span className="text-mono-text font-medium">
-                  {lead.owner.name} ({lead.owner.email})
+                  {creatorName}
                 </span>
               </div>
               <div className="space-y-1">
                 <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                  Company
+                  Employee ID
                 </span>
                 <span className="text-mono-text font-medium">
-                  {lead.company}
+                  {creatorEmployeeId}
                 </span>
               </div>
               <div className="space-y-1">
@@ -230,7 +233,7 @@ export function LeadDetailWrapper({
                   Email
                 </span>
                 <span className="text-mono-text font-medium">
-                  {lead.email || "Not Specified"}
+                  {creatorEmail}
                 </span>
               </div>
               <div className="space-y-1">
@@ -238,15 +241,15 @@ export function LeadDetailWrapper({
                   Designation
                 </span>
                 <span className="text-mono-text font-medium">
-                  {lead.designation || "Not Specified"}
+                  {creatorDesignation}
                 </span>
               </div>
               <div className="space-y-1">
                 <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                  Phone
+                  Organisation
                 </span>
                 <span className="text-mono-text font-medium">
-                  {lead.phone || "Not Specified"}
+                  {creatorOrganisation}
                 </span>
               </div>
               <div className="space-y-1">
@@ -254,68 +257,7 @@ export function LeadDetailWrapper({
                   Mobile
                 </span>
                 <span className="text-mono-text font-medium">
-                  {lead.mobile || "Not Specified"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Lead Information Section */}
-          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-4">
-            <div className="flex items-center gap-3 border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
-              <Building className="size-4.5 text-[var(--mnx-accent)]" />
-              <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
-                Lead Information
-              </h3>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
-              <div className="space-y-1">
-                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                  Lead Source
-                </span>
-                <span className="text-mono-text font-medium">
-                  {lead.source || "Cold Call"}
-                </span>
-              </div>
-              <div className="space-y-1">
-                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                  Lead Status
-                </span>
-                <span className="text-mono-text font-medium">
-                  {lead.status}
-                </span>
-              </div>
-              <div className="space-y-1">
-                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                  Industry
-                </span>
-                <span className="text-mono-text font-medium">
-                  {lead.industry || "Not Specified"}
-                </span>
-              </div>
-              <div className="space-y-1">
-                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                  Rating
-                </span>
-                <span className="text-mono-text font-medium">
-                  {lead.rating || "Warm"}
-                </span>
-              </div>
-              <div className="space-y-1">
-                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                  Annual Revenue
-                </span>
-                <span className="text-mono-text font-medium">
-                  {formatRevenue(lead.annualRevenue)}
-                </span>
-              </div>
-              <div className="space-y-1">
-                <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                  Employee Count
-                </span>
-                <span className="text-mono-text font-medium">
-                  {lead.employeeCount || "Not Specified"}
+                  {creatorPhone}
                 </span>
               </div>
             </div>

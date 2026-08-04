@@ -1,4 +1,20 @@
 <!-- BEGIN:nextjs-agent-rules -->
+Mandatory Monolith UI rules
+
+Before creating, changing, or reviewing any user-facing UI, read:
+
+docs/MONOLITH_UI_DESIGN_SYSTEM.md
+
+docs/engineering/CODE_ORGANIZATION.md when present
+
+docs/engineering/PERFORMANCE.md when present
+
+The current production component implementations and /admin/design-system are authoritative. The dashboard is the composition reference and CHA is the operational reference.
+
+Implement shared UI in the approved owner folders under src/components; implement genuine module compositions under src/modules/<module>/components. src/components/monolith is the public aggregation/catalogue boundary and must not contain a second component implementation.
+
+Do not add new selectors to src/styles/legacy-compatibility.css. Do not claim a route is migrated without current source and runtime verification.
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
