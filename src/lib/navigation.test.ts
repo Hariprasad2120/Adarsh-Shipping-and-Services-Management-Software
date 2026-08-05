@@ -10,6 +10,7 @@ describe("module visibility helpers", () => {
   it("maps protected paths to their managed module ids", () => {
     expect(getManagedModuleSectionIdForPath("/crm/leads")).toBe("crm");
     expect(getManagedModuleSectionIdForPath("/product-catalogue")).toBe("product-catalogue");
+    expect(getManagedModuleSectionIdForPath("/freight-forwarding")).toBe("freight-forwarding");
     expect(getManagedModuleSectionIdForPath("/hrms/recruit/employer")).toBe("recruit");
     expect(getManagedModuleSectionIdForPath("/dashboard")).toBeNull();
     expect(getManagedFeatureIdForPath("/cha/labs/import-job-creation")).toBe("cha-labs");
@@ -30,7 +31,6 @@ describe("module visibility helpers", () => {
     expect(ids).not.toContain("crm");
   });
 
-  it("shows Accounting navigation for Accounts-department managers with derived caps", () => {
   it("filters feature-gated nav items using enabled feature ids", () => {
     const caps = {
       "cha.access": true,

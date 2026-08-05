@@ -1,14 +1,19 @@
 "use client";
 
 import {
+  CrmActionLink,
   CrmButton,
+  CrmField,
   CrmInput,
+  CrmPanel,
+  CrmSection,
+  CrmStatus,
+  CrmTabs,
   CrmTextarea,
 } from "@/modules/crm/components/workspace/crm-workspace";
 
 import { NativeSelect } from "@/components/ui/native-select";
-import React, { useState, useRef, useEffect } from "react";
-import Link from "next/link";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -21,28 +26,16 @@ import {
   getCallAttemptsAction,
 } from "@/modules/crm/actions";
 import { NotesPanel } from "@/modules/crm/components/records/notes-panel";
-import { AttachmentsPanel } from "@/modules/crm/components/records/attachments-panel";
 import { ActivitiesPanel } from "@/modules/crm/components/records/activities-panel";
 import { TimelinePanel } from "@/modules/crm/components/records/timeline-panel";
 import {
   ArrowLeft,
-  Ship,
-  Plane,
-  Calendar,
-  AlertTriangle,
   Clock,
-  Sparkles,
-  Eye,
-  Briefcase,
-  User,
-  Info,
   RefreshCcw,
   Edit2,
-  Trash2,
   Save,
   Mail,
   X,
-  Plus,
 } from "lucide-react";
 
 interface EnquiryDetailClientProps {
@@ -55,18 +48,21 @@ interface EnquiryDetailClientProps {
   workTimeLogs: any[];
   calls: any[];
   isManager: boolean;
+  backHref?: string;
+  backLabel?: string;
 }
 
 export function EnquiryDetailClient({
   lead,
   users,
   notes,
-  attachments,
   activities,
   timeline,
   workTimeLogs,
   calls,
   isManager,
+  backHref = "/crm/enquiries",
+  backLabel = "Back to Enquiries",
 }: EnquiryDetailClientProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -382,183 +378,158 @@ export function EnquiryDetailClient({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      {/* Back button and page link bar */}
-      <div className="flex items-center justify-between">
-        <Link
-          href="/crm/enquiries"
-          className="flex items-center gap-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border-2 border-mono-border text-mono-muted px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
-        >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <CrmActionLink href={backHref}>
           <ArrowLeft className="size-4" />
-          <span>Back to Enquiries</span>
-        </Link>
+          <span>{backLabel}</span>
+        </CrmActionLink>
 
-        {/* Conversion to Quote Button */}
-        <Link
-          href={`/crm/quotes/new?leadId=${lead.id}`}
-          className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] text-mono-text px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[var(--mnx-accent)] mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
-        >
+        <CrmActionLink href={`/crm/quotes/new?leadId=${lead.id}`} primary>
           <RefreshCcw className="size-4" />
           <span>Convert as Quote</span>
-        </Link>
+        </CrmActionLink>
       </div>
 
       {/* ─── STATUS CONTROL & ASSIGNMENT PANEL ─── */}
-      <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] mnx-shadow-panel  transition-all duration-200 flex flex-col xl:flex-row xl:items-center justify-between gap-6 mnx-crm-panel-surface ">
-        {/* Left Side: status info */}
-        <div className="space-y-2 flex-1">
-          <div className="flex items-center gap-3">
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] border border-[var(--mnx-accent)]/20 font-mono">
-              Ref: {lead.enquiryRef || "GEN-ENQ"}
-            </span>
-            <span
-              className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                lead.status === "FOLLOW_UP"
-                  ? "bg-[var(--mnx-accent)]/15 text-[var(--mnx-accent)] border border-[var(--mnx-accent)]/20"
-                  : "bg-[var(--mnx-accent)]/15 text-[var(--mnx-accent)] border border-[var(--mnx-accent)]/20"
-              }`}
-            >
-              {lead.status === "FOLLOW_UP"
-                ? "Follow Up Active"
-                : "Interested Enquiry"}
-            </span>
-          </div>
-          <h2 className="text-xl font-bold uppercase text-mono-text font-sans tracking-wide">
-            {lead.firstName ? `${lead.firstName} ` : ""}
-            {lead.lastName}
-          </h2>
-          <p className="text-xs text-mono-muted">
-            Current Owner:{" "}
-            <span className="text-mono-text font-medium">
-              {lead.owner?.name || "Unassigned"}
-            </span>{" "}
-            ({lead.owner?.email || "N/A"})
-          </p>
-        </div>
-
-        {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Status conversion button */}
-          {lead.status === "INTERESTED" && (
-            <CrmButton
-              onClick={() => setIsMarkingFollowUp(true)}
-              className="flex items-center gap-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-warning)] text-mono-text px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border-2 border-[var(--mnx-accent)] mnx-shadow-panel hover:translate-y-[-1px] hover:translate-x-[-1px]  active:translate-y-[2px] active:translate-x-[2px] active:shadow-none cursor-pointer"
-            >
-              <Clock className="size-4" />
-              <span>Schedule Follow Up</span>
-            </CrmButton>
-          )}
-
-          {/* Manager Reassignment Dropdown */}
-          {lead.status === "FOLLOW_UP" && isManager && (
-            <div className="flex items-center gap-2 p-2 bg-[var(--mnx-surface)] rounded-xl border border-[var(--mnx-border)] mnx-shadow-panel">
-              <span className="text-[10px] font-bold text-mono-muted uppercase tracking-wider pl-2">
-                Assign Owner:
-              </span>
-              <NativeSelect
-                value={selectedOwnerId}
-                onChange={(e) => setSelectedOwnerId(e.target.value)}
-                className="bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text px-2 py-1.5 focus:outline-none focus:border-[var(--mnx-accent)]"
-              >
-                <option value="">Unassigned</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name}
-                  </option>
-                ))}
-              </NativeSelect>
-              <CrmButton
-                onClick={handleAssignOwner}
-                disabled={isAssigning}
-                className="px-3 py-1.5 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-xs font-bold uppercase tracking-wide cursor-pointer"
-              >
-                {isAssigning ? "Saving..." : "Apply"}
-              </CrmButton>
+      <CrmPanel className="mnx-crm-panel-surface p-4 md:p-5">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <CrmStatus variant="accent">{lead.enquiryRef || "GEN-ENQ"}</CrmStatus>
+              <CrmStatus variant={lead.status === "FOLLOW_UP" ? "warning" : "success"}>
+                {lead.status === "FOLLOW_UP" ? "Follow Up Active" : "Interested Enquiry"}
+              </CrmStatus>
             </div>
-          )}
+            <div className="space-y-1">
+              <h2 className="text-2xl font-normal leading-tight text-[var(--mnx-text-strong)]">
+                {lead.firstName ? `${lead.firstName} ` : ""}
+                {lead.lastName}
+              </h2>
+              <p className="text-sm text-[var(--mnx-text-muted)]">
+                Current owner:{" "}
+                <span className="font-normal text-[var(--mnx-text-strong)]">
+                  {lead.owner?.name || "Unassigned"}
+                </span>
+                {" · "}
+                {lead.owner?.email || "No email available"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {lead.status === "INTERESTED" ? (
+              <CrmButton
+                onClick={() => setIsMarkingFollowUp(true)}
+                variant="secondary"
+                size="compact"
+                className="gap-2"
+              >
+                <Clock className="size-4" />
+                <span>Schedule Follow Up</span>
+              </CrmButton>
+            ) : null}
+
+            {lead.status === "FOLLOW_UP" && isManager ? (
+              <CrmPanel className="px-4 py-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
+                    Assign owner
+                  </span>
+                  <NativeSelect
+                    value={selectedOwnerId}
+                    onChange={(e) => setSelectedOwnerId(e.target.value)}
+                    className="min-w-[12rem]"
+                  >
+                    <option value="">Unassigned</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                  <CrmButton
+                    onClick={handleAssignOwner}
+                    disabled={isAssigning}
+                    variant="secondary"
+                    size="compact"
+                  >
+                    {isAssigning ? "Saving..." : "Apply"}
+                  </CrmButton>
+                </div>
+              </CrmPanel>
+            ) : null}
+          </div>
         </div>
-      </div>
+      </CrmPanel>
 
       {/* Mark as Follow Up Popup / Expandable Area */}
-      {isMarkingFollowUp && (
-        <form
-          onSubmit={handleMarkAsFollowUp}
-          className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 space-y-4 animate-in slide-in-from-top-4 duration-200 mnx-crm-panel-surface mnx-tone-warning"
-        >
-          <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-2">
-            <h3 className="font-bold text-xs text-[var(--mnx-accent)] uppercase tracking-wider flex items-center gap-2">
-              <Clock className="size-4" />
-              <span>Schedule Sales Follow Up</span>
-            </h3>
-            <CrmButton
-              type="button"
-              onClick={() => setIsMarkingFollowUp(false)}
-              className="text-mono-muted hover:text-mono-text p-1"
-            >
-              <X className="size-4" />
-            </CrmButton>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
-                Follow up Reminder Date & Time *
-              </label>
-              <CrmInput
-                type="datetime-local"
-                required
-                value={followUpDate}
-                onChange={(e) => setFollowUpDate(e.target.value)}
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
+      {isMarkingFollowUp ? (
+        <CrmPanel className="border-[var(--mnx-warning)]/25 bg-[var(--mnx-warning-bg)]/35">
+          <form onSubmit={handleMarkAsFollowUp} className="space-y-4">
+            <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--mnx-warning)]">
+                  Follow Up Workflow
+                </p>
+                <h3 className="mt-1 flex items-center gap-2 text-base font-semibold text-[var(--mnx-text-strong)]">
+                  <Clock className="size-4" />
+                  <span>Schedule sales follow up</span>
+                </h3>
+              </div>
+              <CrmButton
+                type="button"
+                variant="secondary"
+                size="compact"
+                onClick={() => setIsMarkingFollowUp(false)}
+              >
+                <X className="size-4" />
+              </CrmButton>
             </div>
-            <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
-                Follow up Call Remarks / Directives *
-              </label>
-              <CrmTextarea
-                rows={2}
-                required
-                value={followUpRemarks}
-                onChange={(e) => setFollowUpRemarks(e.target.value)}
-                placeholder="Call outcome, notes, and specific follow-up actions required..."
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)] placeholder:text-mono-muted"
-              />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <CrmField label="Follow up reminder date and time" required>
+                <CrmInput
+                  type="datetime-local"
+                  required
+                  value={followUpDate}
+                  onChange={(e) => setFollowUpDate(e.target.value)}
+                />
+              </CrmField>
+              <CrmField label="Follow up call remarks and directives" required>
+                <CrmTextarea
+                  rows={2}
+                  required
+                  value={followUpRemarks}
+                  onChange={(e) => setFollowUpRemarks(e.target.value)}
+                  placeholder="Call outcome, notes, and specific follow-up actions required..."
+                />
+              </CrmField>
             </div>
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <CrmButton
-              type="button"
-              onClick={() => setIsMarkingFollowUp(false)}
-              className="px-4 py-2 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] text-mono-muted rounded-lg text-xs font-semibold"
-            >
-              Cancel
-            </CrmButton>
-            <CrmButton
-              type="submit"
-              disabled={isSubmitting}
-              className="px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-warning)] text-mono-text rounded-lg text-xs font-bold transition-all mnx-shadow-panel"
-            >
-              {isSubmitting ? "Scheduling..." : "Confirm Schedule & Save"}
-            </CrmButton>
-          </div>
-        </form>
-      )}
+            <div className="flex justify-end gap-3 pt-2">
+              <CrmButton type="button" variant="secondary" onClick={() => setIsMarkingFollowUp(false)}>
+                Cancel
+              </CrmButton>
+              <CrmButton type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Scheduling..." : "Confirm Schedule & Save"}
+              </CrmButton>
+            </div>
+          </form>
+        </CrmPanel>
+      ) : null}
 
       {/* Split detail grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left column details (Cargo, Rates, Simulation) */}
         <div className="lg:col-span-2 space-y-6">
-          {/* General Cargo & Client details card */}
-          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] mnx-shadow-panel space-y-4">
-            <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
-              <div className="flex items-center gap-3">
-                <Info className="size-4.5 text-[var(--mnx-accent)]" />
-                <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
-                  Enquiry & Cargo Details
-                </h3>
-              </div>
+          <CrmSection
+            eyebrow="Demand record"
+            title="Enquiry and cargo details"
+            description="Review the qualified enquiry context, route, consignee contact, and shipment intent."
+            actions={
               <CrmButton
                 onClick={() => setIsEditingCargoDetails(!isEditingCargoDetails)}
-                className="flex items-center gap-1.5 bg-[var(--mnx-surface)] hover:bg-[var(--mnx-text-muted)] border border-[var(--mnx-border)] hover:border-[var(--mnx-accent)]/50 text-mono-muted px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                variant="secondary"
+                size="compact"
+                className="gap-1.5"
               >
                 {isEditingCargoDetails ? (
                   <X className="size-3.5" />
@@ -567,7 +538,8 @@ export function EnquiryDetailClient({
                 )}
                 <span>{isEditingCargoDetails ? "Cancel" : "Edit Details"}</span>
               </CrmButton>
-            </div>
+            }
+          >
 
             {isEditingCargoDetails ? (
               <form onSubmit={handleSaveCargoDetails} className="space-y-4">
@@ -578,7 +550,7 @@ export function EnquiryDetailClient({
                   </span>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                         Client Name
                       </label>
                       <CrmInput
@@ -590,7 +562,7 @@ export function EnquiryDetailClient({
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                         Company
                       </label>
                       <CrmInput
@@ -601,7 +573,7 @@ export function EnquiryDetailClient({
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                         Email
                       </label>
                       <CrmInput
@@ -613,7 +585,7 @@ export function EnquiryDetailClient({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                           Phone
                         </label>
                         <CrmInput
@@ -624,7 +596,7 @@ export function EnquiryDetailClient({
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                           Mobile
                         </label>
                         <CrmInput
@@ -645,7 +617,7 @@ export function EnquiryDetailClient({
                   </span>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                         Cargo Mode
                       </label>
                       <NativeSelect
@@ -658,7 +630,7 @@ export function EnquiryDetailClient({
                       </NativeSelect>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                         Commodity
                       </label>
                       <CrmInput
@@ -669,7 +641,7 @@ export function EnquiryDetailClient({
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                         Weight / Packages
                       </label>
                       <CrmInput
@@ -684,7 +656,7 @@ export function EnquiryDetailClient({
                   {enquiryType === "Sea" ? (
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                           POL (Port of Loading)
                         </label>
                         <CrmInput
@@ -695,7 +667,7 @@ export function EnquiryDetailClient({
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                        <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                           POD (Port of Discharge)
                         </label>
                         <CrmInput
@@ -735,7 +707,7 @@ export function EnquiryDetailClient({
 
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                         Incoterm
                       </label>
                       <CrmInput
@@ -746,7 +718,7 @@ export function EnquiryDetailClient({
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                         Shipment Planning
                       </label>
                       <CrmInput
@@ -757,7 +729,7 @@ export function EnquiryDetailClient({
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                         Purpose of Cargo
                       </label>
                       <CrmInput
@@ -791,55 +763,60 @@ export function EnquiryDetailClient({
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                    Client Actual Name
+                  <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                    Client Name
                   </span>
-                  <span className="text-mono-text font-medium">
+                  <span className="block pl-1 text-base font-normal text-[var(--mnx-text-strong)]">
                     {clientName}
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                    Business Name
+                  <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                    Company
                   </span>
-                  <span className="text-mono-text font-medium">
+                  <span className="block pl-1 text-base font-normal text-[var(--mnx-text-strong)]">
                     {company || "Direct Client"}
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                    Email Address
+                  <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                    Email
                   </span>
-                  <span className="text-mono-text font-medium">
+                  <span className="block pl-1 text-base font-normal text-[var(--mnx-text-primary)]">
                     {email || "Not Specified"}
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                    Phone & Mobile
+                  <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                    Phone Number
                   </span>
-                  <span className="text-mono-text font-medium">
-                    {phone && `Phone: ${phone}`}
-                    {phone && mobile && " | "}
-                    {mobile && `Mobile: ${mobile}`}
-                    {!phone && !mobile && "Not Specified"}
+                  <span className="block pl-1 text-base font-normal text-[var(--mnx-text-primary)]">
+                    {phone || "Not Specified"}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                    Mobile Number
+                  </span>
+                  <span className="block pl-1 text-base font-normal text-[var(--mnx-text-primary)]">
+                    {mobile || "Not Specified"}
                   </span>
                 </div>
 
                 <div className="md:col-span-2 border-t border-[var(--mnx-border)]/30 pt-3 mt-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                      Cargo Mode & Incoterm
+                  <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                      Cargo Mode
                     </span>
-                    <span className="text-mono-text font-medium uppercase">
-                      {enquiryType} ({incoterm})
+                    <span className="block pl-1 text-base font-normal text-[var(--mnx-text-strong)]">
+                      {enquiryType}
                     </span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                      Commodity & Weight
+                    <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                      Commodity
                     </span>
-                    <span className="text-mono-text font-medium">
+                    <span className="block pl-1 text-mono-text font-normal">
                       {commodity || "Not Specified"} •{" "}
                       {weight || "Not Specified"}
                     </span>
@@ -847,44 +824,44 @@ export function EnquiryDetailClient({
 
                   {enquiryType === "Sea" ? (
                     <div className="md:col-span-2 space-y-1">
-                      <span className="text-[11px] font-bold text-[var(--mnx-accent)] uppercase tracking-wider block font-mono">
+                      <span className="text-[11px] font-normal text-[var(--mnx-accent)] uppercase tracking-wider block font-mono">
                         Routing (Sea POL ➔ POD)
                       </span>
-                      <span className="text-mono-text font-bold text-sm">
+                      <span className="block pl-1 text-mono-text font-normal text-sm">
                         {pol || "N/A"} ➔ {pod || "N/A"}
                       </span>
                     </div>
                   ) : (
                     <div className="md:col-span-2 space-y-1">
-                      <span className="text-[11px] font-bold text-[var(--mnx-accent)] uppercase tracking-wider block font-mono">
+                      <span className="text-[11px] font-normal text-[var(--mnx-accent)] uppercase tracking-wider block font-mono">
                         Routing (Air AOL ➔ AOD)
                       </span>
-                      <span className="text-mono-text font-bold text-sm">
+                      <span className="block pl-1 text-mono-text font-normal text-sm">
                         {aol || "N/A"} ➔ {aod || "N/A"}
                       </span>
                     </div>
                   )}
 
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                      Shipment Planning Window
+                  <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                      Shipment Planning
                     </span>
-                    <span className="text-mono-text font-medium">
+                    <span className="block pl-1 text-base font-normal text-[var(--mnx-text-primary)]">
                       {planning}
                     </span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                      Purpose of Shipment
+                  <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
+                      Purpose of Cargo
                     </span>
-                    <span className="text-mono-text font-medium">
+                    <span className="block pl-1 text-base font-normal text-[var(--mnx-text-primary)]">
                       {purpose}
                     </span>
                   </div>
                 </div>
               </div>
             )}
-          </div>
+          </CrmSection>
 
           {/* Perishable Cargo Card (displays always if lead.isPerishable is true, or provides toggle) */}
           {lead.isPerishable && (
@@ -917,7 +894,7 @@ export function EnquiryDetailClient({
                 <form onSubmit={handleSavePerishables} className="space-y-4">
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                         Cargo Category
                       </label>
                       <NativeSelect
@@ -940,7 +917,7 @@ export function EnquiryDetailClient({
                       </NativeSelect>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                         Required Temp (°C)
                       </label>
                       <CrmInput
@@ -952,7 +929,7 @@ export function EnquiryDetailClient({
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                      <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                         Humidity Control (%)
                       </label>
                       <CrmInput
@@ -999,31 +976,31 @@ export function EnquiryDetailClient({
               ) : (
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                    <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
                       Cargo Category
                     </span>
-                    <span className="text-mono-text font-semibold">
+                    <span className="text-mono-text font-normal">
                       {perishableType}
                     </span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                    <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
                       Operating Temp
                     </span>
-                    <span className="text-[var(--mnx-accent)] font-bold block mnx-numeric">
+                    <span className="text-[var(--mnx-accent)] font-normal block mnx-numeric">
                       {temperature || "Ambient"} °C
                     </span>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                    <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
                       Humidity Target
                     </span>
-                    <span className="text-mono-text font-medium block mnx-numeric">
+                    <span className="text-mono-text font-normal block mnx-numeric">
                       {humidity || "N/A"}
                     </span>
                   </div>
                   <div className="col-span-3 border-t border-[var(--mnx-border)]/30 pt-3 mt-1 space-y-1">
-                    <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
+                    <span className="text-[11px] font-normal text-mono-muted uppercase tracking-wider block">
                       Ventilation & Airflow Remarks
                     </span>
                     <p className="text-xs text-mono-muted bg-[var(--mnx-surface)]/40 p-2.5 rounded-lg border border-[var(--mnx-border)]/20 leading-relaxed italic">
@@ -1036,33 +1013,21 @@ export function EnquiryDetailClient({
             </div>
           )}
 
-          {/* Pricing Worksheet Card */}
-          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] mnx-shadow-panel space-y-4">
-            <div className="flex items-center justify-between border-b border-[var(--mnx-border)]/30 pb-3 mb-2">
-              <span className="text-[11px] font-bold text-mono-muted uppercase tracking-wider block">
-                Rates & Costing Worksheet
-              </span>
-              <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)] border border-[var(--mnx-accent)]/20 font-mono">
-                Worksheet Calculator
-              </span>
-            </div>
-
+          <CrmSection
+            eyebrow="Commercial worksheet"
+            title="Rates and costing worksheet"
+            description="Capture the current working estimate for this enquiry before conversion."
+            actions={<CrmStatus variant="accent">Worksheet calculator</CrmStatus>}
+          >
             <LocalRatesWorksheet lead={lead} />
-          </div>
+          </CrmSection>
 
-          {/* Email Parsing & Simulation Panel */}
-          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] mnx-shadow-panel space-y-6">
-            {/* Headers */}
-            <div className="border-b border-[var(--mnx-border)]/30 pb-3">
-              <h3 className="font-bold text-sm text-mono-text uppercase tracking-wider">
-                Inbound Email Rate Parser & Simulator
-              </h3>
-              <p className="text-xs text-mono-muted mt-1">
-                Verify automatic pricing extraction by pasting pricing feedback
-                or simulating agent inbound email threads containing reference
-                code.
-              </p>
-            </div>
+          {false && (
+            <CrmSection
+              eyebrow="Automation checks"
+              title="Inbound email rate parser and simulator"
+              description="Verify automatic pricing extraction by pasting pricing feedback or simulating agent inbound email replies."
+            >
 
             {/* Paste box tool */}
             <div className="space-y-3">
@@ -1089,7 +1054,7 @@ export function EnquiryDetailClient({
             </div>
 
             {/* Simulation form */}
-            <div className="space-y-3 pt-3 border-t border-[var(--mnx-border)]/30">
+            <div className="space-y-3 border-t border-[var(--mnx-border)]/30 pt-3">
               <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-wide block font-mono">
                 2. Simulate Inbound Agent Reply Email (Database Update)
               </span>
@@ -1151,19 +1116,20 @@ export function EnquiryDetailClient({
                 </div>
               </form>
             </div>
-          </div>
+            </CrmSection>
+          )}
         </div>
 
         {/* Right column details (Timeline, Activities, Notes) */}
         <div className="space-y-6 col-span-1">
           {/* Follow-up Reminder Details Card */}
           {lead.isFutureFollowUp && lead.followUpReminderDate && (
-            <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-accent)]/40 mnx-shadow-panel space-y-3 mnx-crm-panel-surface mnx-tone-warning">
-              <span className="text-[10px] font-bold text-[var(--mnx-accent)] uppercase tracking-widest block font-sans">
+            <CrmPanel className="space-y-3 border-[var(--mnx-warning)]/25 bg-[var(--mnx-warning-bg)]/35">
+              <span className="text-[10px] font-bold text-[var(--mnx-warning)] uppercase tracking-widest block font-sans">
                 Follow-up Alarm
               </span>
               <div className="flex items-center gap-2 text-mono-text">
-                <Clock className="size-4.5 text-[var(--mnx-accent)] shrink-0" />
+                <Clock className="size-4.5 text-[var(--mnx-warning)] shrink-0" />
                 <span className="font-bold text-sm mnx-numeric">
                   {new Date(lead.followUpReminderDate).toLocaleString("en-IN")}
                 </span>
@@ -1172,81 +1138,69 @@ export function EnquiryDetailClient({
                 A sales reminder is active. Mark the lead interested or
                 converted to clear active follow-up directives.
               </p>
-            </div>
+            </CrmPanel>
           )}
 
           {/* Related lists tabs container */}
-          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)] mnx-shadow-panel space-y-6">
+          <CrmPanel className="space-y-4 bg-[var(--mnx-card)] p-4 md:p-5">
             {/* Nav pills */}
-            <div className="flex border-b border-[var(--mnx-border)]/40 pb-1 gap-4 overflow-x-auto select-none">
+            <CrmTabs className="flex-wrap overflow-visible rounded-none border-x-0 border-t-0 bg-transparent p-0 pb-3">
               <CrmButton
                 onClick={() => setActiveTab("OVERVIEW")}
-                className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "OVERVIEW"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
-                }`}
+                variant={activeTab === "OVERVIEW" ? "primary" : "secondary"}
+                size="compact"
+                className="shrink-0 font-normal"
               >
                 Summary
               </CrmButton>
               <CrmButton
                 onClick={() => setActiveTab("NOTES")}
-                className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "NOTES"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
-                }`}
+                variant={activeTab === "NOTES" ? "primary" : "secondary"}
+                size="compact"
+                className="shrink-0 font-normal"
               >
                 Notes ({notes.length})
               </CrmButton>
               <CrmButton
                 onClick={() => setActiveTab("ACTIVITIES")}
-                className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ACTIVITIES"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
-                }`}
+                variant={activeTab === "ACTIVITIES" ? "primary" : "secondary"}
+                size="compact"
+                className="shrink-0 font-normal"
               >
                 Tasks ({activities.length})
               </CrmButton>
               <CrmButton
                 onClick={() => setActiveTab("TIMELINE")}
-                className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "TIMELINE"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
-                }`}
+                variant={activeTab === "TIMELINE" ? "primary" : "secondary"}
+                size="compact"
+                className="shrink-0 font-normal"
               >
                 Audit
               </CrmButton>
               <CrmButton
                 onClick={() => setActiveTab("TIME_TRACKER")}
-                className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "TIME_TRACKER"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
-                }`}
+                variant={activeTab === "TIME_TRACKER" ? "primary" : "secondary"}
+                size="compact"
+                className="shrink-0 font-normal"
               >
                 Time Tracker ({workTimeLogs.length})
               </CrmButton>
               <CrmButton
                 onClick={() => setActiveTab("CALLS")}
-                className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "CALLS"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
-                }`}
+                variant={activeTab === "CALLS" ? "primary" : "secondary"}
+                size="compact"
+                className="shrink-0 font-normal"
               >
                 Calls ({calls.length})
               </CrmButton>
-            </div>
+            </CrmTabs>
 
             {/* Content areas */}
-            <div className="space-y-4 text-xs">
+            <div className="space-y-3 px-1 text-xs">
               {activeTab === "OVERVIEW" && (
-                <div className="space-y-4">
-                  <div className="p-3.5 bg-[var(--mnx-surface)]/50 rounded-xl space-y-2 border border-[var(--mnx-border)]/30">
-                    <span className="font-bold text-mono-text block uppercase tracking-wider">
+                <div className="space-y-3">
+                  <div className="rounded-xl border border-[var(--mnx-border)]/30 bg-[var(--mnx-surface)]/50 p-3.5 space-y-2">
+                    <span className="font-normal text-mono-text block uppercase tracking-wider">
                       Enquiry Logging Details
                     </span>
                     <p className="text-mono-muted leading-relaxed">
@@ -1256,9 +1210,9 @@ export function EnquiryDetailClient({
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 text-mono-muted">
+                  <div className="grid grid-cols-2 gap-4 text-mono-muted">
                     <div>
-                      <span className="font-semibold text-mono-muted block uppercase text-[9px]">
+                      <span className="font-normal text-mono-muted block uppercase text-[9px]">
                         Source
                       </span>
                       <span className="text-mono-muted">
@@ -1266,7 +1220,7 @@ export function EnquiryDetailClient({
                       </span>
                     </div>
                     <div>
-                      <span className="font-semibold text-mono-muted block uppercase text-[9px]">
+                      <span className="font-normal text-mono-muted block uppercase text-[9px]">
                         Qualified At
                       </span>
                       <span className="text-mono-muted">
@@ -1679,7 +1633,7 @@ export function EnquiryDetailClient({
                 </div>
               )}
             </div>
-          </div>
+          </CrmPanel>
         </div>
       </div>
     </div>
@@ -1835,7 +1789,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-3">
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                 Ocean Freight (INR)
               </label>
               <CrmInput
@@ -1846,7 +1800,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                 CFS Charges (INR)
               </label>
               <CrmInput
@@ -1857,7 +1811,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                 Custom Clearance Charges (INR)
               </label>
               <CrmInput
@@ -1868,7 +1822,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                 BL Charges (INR)
               </label>
               <CrmInput
@@ -1882,7 +1836,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
 
           <div className="space-y-3">
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                 VGM Charges (INR)
               </label>
               <CrmInput
@@ -1894,7 +1848,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide">
+                <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide">
                   LCL Charges (INR)
                 </label>
                 {isImportLcl && (
@@ -1912,7 +1866,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide">
+                <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide">
                   DO Charges (INR)
                 </label>
                 {isImportLcl && volume >= 3 && (
@@ -1950,7 +1904,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                 CFS Customs (INR)
               </label>
               <CrmInput
@@ -1966,7 +1920,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-3">
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                 Air Freight (INR)
               </label>
               <CrmInput
@@ -1977,7 +1931,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                 Handling Charges (INR)
               </label>
               <CrmInput
@@ -1988,7 +1942,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                 Custom Clearance Charges (INR)
               </label>
               <CrmInput
@@ -2002,7 +1956,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
 
           <div className="space-y-3">
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                 AWB Charges (INR)
               </label>
               <CrmInput
@@ -2013,7 +1967,7 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
                 Delivery Charges (INR)
               </label>
               <CrmInput
@@ -2029,16 +1983,17 @@ function LocalRatesWorksheet({ lead }: { lead: any }) {
 
       {/* Summary & Save Action */}
       <div className="flex items-center justify-between pt-3 border-t border-[var(--mnx-border)]/30">
-        <div className="text-sm font-semibold text-mono-text">
+        <div className="text-sm font-normal text-mono-text">
           Total Estimated Rates:{" "}
-          <span className="text-[var(--mnx-accent)] font-bold mnx-numeric">
+          <span className="text-[var(--mnx-accent)] font-normal mnx-numeric">
             ₹{calculateTotal().toLocaleString("en-IN")}
           </span>
         </div>
         <CrmButton
           type="submit"
           disabled={isSaving}
-          className="px-5 py-2 bg-[var(--mnx-accent)] hover:bg-[var(--mnx-accent)] disabled:opacity-50 text-mono-text rounded-lg text-xs font-bold uppercase tracking-wide transition-all cursor-pointer mnx-shadow-panel "
+          variant="primary"
+          size="compact"
         >
           {isSaving ? "Saving Worksheet..." : "Save Worksheet Rates"}
         </CrmButton>

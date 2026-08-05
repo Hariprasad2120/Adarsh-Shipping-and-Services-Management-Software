@@ -2223,7 +2223,6 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
 .mnx-button-primary {
   min-width: 170px;
-  justify-content: space-between;
   color: var(--mnx-primary-contrast);
   background: var(--mnx-primary-gradient);
   box-shadow:
@@ -2232,8 +2231,7 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 }
 
 .mnx-button-primary > svg,
-.mnx-button-primary > span > svg,
-.mnx-button-primary > span:not(.mnx-button-spinner) {
+.mnx-button-primary > span > svg {
   color: var(--mnx-accent);
 }
 
@@ -2247,10 +2245,8 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
 
 .theme-night .mnx-button-primary > svg,
 .theme-night .mnx-button-primary > span > svg,
-.theme-night .mnx-button-primary > span:not(.mnx-button-spinner),
 .theme-violet .mnx-button-primary > svg,
-.theme-violet .mnx-button-primary > span > svg,
-.theme-violet .mnx-button-primary > span:not(.mnx-button-spinner) {
+.theme-violet .mnx-button-primary > span > svg {
   color: var(--mnx-accent-contrast);
 }
 
@@ -3869,20 +3865,42 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   background: var(--mnx-page);
 }
 
-.mnx-operational-filter-group button {
+.mnx-operational-filter-group :where(button, a) {
   height: 29px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 0 11px;
   border: 0;
   border-radius: 8px;
   color: var(--mnx-muted);
   background: transparent;
   font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
   cursor: pointer;
 }
 
-.mnx-operational-filter-group button.active {
+.mnx-operational-filter-group :where(button, a) > span {
+  display: inline-flex;
+  min-width: 1rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0 0.3rem;
+  background: color-mix(in srgb, var(--mnx-border) 65%, transparent);
+  color: inherit;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.mnx-operational-filter-group :where(button, a).active {
   color: var(--mnx-accent-contrast);
   background: var(--mnx-highlight-gradient);
+}
+
+.mnx-operational-filter-group :where(button, a).active > span {
+  background: color-mix(in srgb, var(--mnx-accent-contrast) 18%, transparent);
 }
 
 .mnx-table-toolbar,
@@ -4028,8 +4046,18 @@ html[data-dashboard-shell="true"] [data-sonner-toast] [data-close-button] {
   transition: background var(--mnx-hover-duration) var(--mnx-hover-ease);
 }
 
+.mnx-table-card tbody tr.mnx-operational-linked-row {
+  cursor: pointer;
+}
+
 .mnx-table-card tbody tr:hover {
   background: color-mix(in srgb, var(--mnx-card) 94%, var(--mnx-accent));
+}
+
+.mnx-table-card tbody tr.mnx-operational-linked-row:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mnx-accent) 55%, white 10%);
+  outline-offset: -2px;
+  background: color-mix(in srgb, var(--mnx-card) 90%, var(--mnx-accent));
 }
 
 .mnx-table-card td > small,
@@ -10692,6 +10720,221 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--mnx-accent) 12%, var(--mnx-surface));
 }
 
+.mnx-filter-menu-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--mnx-card);
+  width: 100%;
+  max-height: 24rem;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mnx-filter-menu-panel-header {
+  display: grid;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.mnx-filter-menu-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-filter-menu-panel-title {
+  margin: 0;
+  color: var(--mnx-text-strong);
+  font-size: 1rem;
+  font-weight: 540;
+  letter-spacing: -0.04em;
+}
+
+.mnx-filter-menu-panel-header-action {
+  min-height: 2rem;
+  padding-inline: 0.65rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.mnx-filter-menu-panel-header-action:hover,
+.mnx-filter-menu-panel-header-action:focus-visible,
+.mnx-filter-menu-panel-view-all:hover,
+.mnx-filter-menu-panel-view-all:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.mnx-filter-menu-panel-categories {
+  display: grid;
+  gap: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mnx-filter-menu-panel-categories::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.mnx-filter-menu-panel-category {
+  display: grid;
+  padding-block: 0.2rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--mnx-border) 72%, transparent);
+}
+
+.mnx-filter-menu-panel-category:last-child {
+  border-bottom: 0;
+}
+
+.mnx-filter-menu-panel-category-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+  padding: 0.65rem 0.2rem;
+  border: 0;
+  color: var(--mnx-text-strong);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mnx-filter-menu-panel-category-trigger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mnx-accent) 48%, transparent);
+  outline-offset: 2px;
+}
+
+.mnx-filter-menu-panel-category-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  min-width: 0;
+}
+
+.mnx-filter-menu-panel-category-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.mnx-filter-menu-panel-category-meta > svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  color: var(--mnx-text);
+}
+
+.mnx-filter-menu-panel-category-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.mnx-filter-menu-panel-category-value {
+  color: var(--mnx-text-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.mnx-filter-menu-panel-section {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.1rem 0 0.6rem 1.35rem;
+}
+
+.mnx-filter-menu-panel-options {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.mnx-filter-menu-panel-option-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.32rem 0.1rem;
+  color: var(--mnx-text);
+  cursor: pointer;
+}
+
+.mnx-filter-menu-panel-option-row .mnx-choice-control {
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.05rem;
+  flex: 0 0 auto;
+}
+
+.mnx-filter-menu-panel-option-label,
+.mnx-filter-menu-panel-option-note {
+  display: block;
+}
+
+.mnx-filter-menu-panel-option-label {
+  color: var(--mnx-text);
+  font-size: 0.85rem;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.mnx-filter-menu-panel-option-note,
+.mnx-filter-menu-panel-empty {
+  color: var(--mnx-text-muted);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.mnx-filter-menu-panel-empty {
+  margin: 0;
+  padding: 0.25rem 0.15rem;
+}
+
+.mnx-filter-menu-panel-view-all {
+  color: var(--mnx-accent-text);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.mnx-filter-menu-panel-footer {
+  display: grid;
+  gap: var(--mn-space-2);
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--mnx-border);
+  flex: 0 0 auto;
+}
+
+.mnx-filter-active-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.5rem;
+  min-height: 1.5rem;
+  padding: 0.2rem 0;
+}
+
+.mnx-filter-active-link {
+  color: var(--mnx-text-muted);
+  font-size: 0.625rem;
+  font-weight: 400;
+  line-height: 1;
+  text-decoration: none;
+  text-underline-offset: 0.12em;
+  transition: color 140ms ease, text-decoration-color 140ms ease;
+}
+
+.mnx-filter-active-link:hover,
+.mnx-filter-active-link:focus-visible {
+  color: var(--mnx-accent-text);
+  text-decoration: underline;
+}
+
 .mnx-state-dot {
   width: 0.45rem;
   height: 0.45rem;
@@ -10699,6 +10942,12 @@ body:has(.mnx-public-shell)::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background: var(--mnx-accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--mnx-accent) 18%, transparent);
+}
+
+@media (max-width: 42rem) {
+  .mnx-filter-menu-panel {
+    padding: 0.85rem;
+  }
 }
 
 .mnx-workflow-link {
@@ -13336,10 +13585,10 @@ button.mnx-accounting-record-card {
   min-width: 0;
   gap: var(--mn-space-1);
   overflow-x: auto;
-  padding: var(--mn-space-1);
-  border: 1px solid var(--mnx-border);
-  border-radius: var(--mn-radius-control);
-  background: var(--mnx-surface-soft);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .mnx-crm-tabs > * {

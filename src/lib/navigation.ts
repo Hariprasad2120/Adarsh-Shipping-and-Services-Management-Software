@@ -466,6 +466,20 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/crm/enquiries"],
       },
       {
+        href: "/crm/freight-forwarding",
+        label: "Freight Forwarding",
+        icon: Folder,
+        permission: "crm.lead.read",
+        matchPaths: ["/crm/freight-forwarding"],
+      },
+      {
+        href: "/crm/customs-clearance",
+        label: "Customs Clearance",
+        icon: Folder,
+        permission: "crm.lead.read",
+        matchPaths: ["/crm/customs-clearance"],
+      },
+      {
         href: "/crm/contacts",
         label: "Contacts",
         icon: Group,
@@ -646,6 +660,21 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         icon: Settings,
         permission: "crm.leadSource.read",
         matchPaths: ["/crm/lead-sources"],
+      },
+    ],
+  },
+  {
+    id: "freight-forwarding",
+    href: "/freight-forwarding",
+    label: "Freight Forwarding",
+    icon: Folder,
+    matchPaths: ["/freight-forwarding"],
+    items: [
+      {
+        href: "/freight-forwarding",
+        label: "Workspace Home",
+        icon: Dashboard,
+        matchPaths: ["/freight-forwarding"],
       },
     ],
   },

@@ -4,8 +4,8 @@ import { cache } from "react";
 import { getSession } from "@/lib/auth";
 import { loadCaps } from "@/lib/rbac";
 import {
-  getEnabledFeatureIds,
-  getEnabledModuleIds,
+  getFreshEnabledFeatureIds,
+  getFreshEnabledModuleIds,
 } from "@/modules/core/organisation/module-settings";
 
 /**
@@ -32,8 +32,8 @@ export const getDashboardContext = cache(async () => {
 
   const [caps, enabledModuleIds, enabledFeatureIds] = await Promise.all([
     loadCaps(session.user.id),
-    getEnabledModuleIds(orgId),
-    getEnabledFeatureIds(orgId),
+    getFreshEnabledModuleIds(orgId),
+    getFreshEnabledFeatureIds(orgId),
   ]);
 
   return { session, orgId, caps, enabledModuleIds, enabledFeatureIds };

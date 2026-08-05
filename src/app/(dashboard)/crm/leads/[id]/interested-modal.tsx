@@ -60,6 +60,7 @@ export function InterestedModal({
   const [seaPurpose, setSeaPurpose] = useState("Commercial");
 
   // Air Enquiry States
+  const [airType, setAirType] = useState<"Import" | "Export">("Import");
   const [aol, setAol] = useState("");
   const [aod, setAod] = useState("");
   const [airCommodity, setAirCommodity] = useState("");
@@ -108,6 +109,7 @@ export function InterestedModal({
     } else {
       setAol("London Heathrow (LHR)");
       setAod("Chennai International (MAA)");
+      setAirType("Export");
       setAirCommodity("Electronic Components");
       setAirWeight("250");
       setAirWeightUnit("KG");
@@ -195,6 +197,7 @@ export function InterestedModal({
     } else {
       payload = {
         type: "Air",
+        airType,
         aol: aol || "Not Specified",
         aod: aod || "Not Specified",
         commodity: airCommodity || "Not Specified",
@@ -426,6 +429,22 @@ export function InterestedModal({
             {activeTab === "Sea" ? (
               // SEA ENQUIRY FORM FIELDS
               <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">
+                      Direction
+                    </label>
+                    <NativeSelect
+                      value={airType}
+                      onChange={(e) => setAirType(e.target.value as "Import" | "Export")}
+                      className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                    >
+                      <option value="Import">Import</option>
+                      <option value="Export">Export</option>
+                    </NativeSelect>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <label className="block text-[10px] font-bold text-mono-muted uppercase tracking-wide mb-1">

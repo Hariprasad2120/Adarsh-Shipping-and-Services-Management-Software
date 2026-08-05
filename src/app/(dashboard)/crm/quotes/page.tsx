@@ -84,6 +84,7 @@ export default async function CrmQuotesPage() {
       date: q.date.toISOString().split("T")[0],
       location: q.manualNotes ? "Chennai" : "Chennai", // default fallback
       quoteNumber: q.invoiceNumber,
+      referenceNumber: q.referenceNumber || undefined,
       customerName: q.account?.name || "Cash Customer",
       status,
       amount: q.total,

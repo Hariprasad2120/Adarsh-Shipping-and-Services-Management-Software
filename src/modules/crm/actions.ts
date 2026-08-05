@@ -9,6 +9,7 @@ import * as leadSourceService from "./lead-source.service";
 import { syncCustomerPortalUsersForCrmCustomer } from "@/modules/customer-portal/service";
 import * as driveClient from "@/lib/google-drive-client";
 import { fetchGstPortalDetails } from "./gst-portal";
+import { routeQualifiedEnquiry } from "./services/service-enquiry-routing.service";
 
 type ActionResponse = { ok: true; data?: any } | { ok: false; error: string };
 
@@ -310,6 +311,212 @@ export async function createLeadAction(formData: FormData): Promise<ActionRespon
   }
 }
 
+export async function createDirectEnquiryAction(
+  formData: FormData,
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) return { ok: false, error: "Unauthorized" };
+
+    const orgId = session.user.orgId;
+    if (!orgId) return { ok: false, error: "Missing organisation config" };
+
+    await requirePermission(session.user.id, "crm.lead.create");
+
+    const requestKey = ((formData.get("directEnquiryRequestKey") as string) || "").trim();
+    const selectedScope = (formData.get("serviceScope") as string) || "";
+    const shipmentMode = (formData.get("shipmentMode") as string) || "";
+    const shipmentDirection = (formData.get("shipmentDirection") as string) || "";
+    const customerId = ((formData.get("customerId") as string) || "").trim() || null;
+    const lastName = ((formData.get("lastName") as string) || "").trim();
+    const company = ((formData.get("company") as string) || "").trim();
+
+    if (!requestKey) {
+      return { ok: false, error: "Missing request key for the direct enquiry." };
+    }
+
+    if (!selectedScope) {
+      return { ok: false, error: "Choose the required service type for the enquiry." };
+    }
+
+    if (!shipmentMode || !shipmentDirection) {
+      return {
+        ok: false,
+        error: "Choose the shipment mode and whether the enquiry is Import or Export.",
+      };
+    }
+
+    const existingLead = await db.crmLead.findFirst({
+      where: {
+        orgId,
+        directEnquiryRequestKey: requestKey,
+      },
+      include: {
+        serviceEnquiries: true,
+      },
+    });
+
+    if (existingLead) {
+      return {
+        ok: true,
+        data: {
+          leadId: existingLead.id,
+          serviceEnquiries: existingLead.serviceEnquiries,
+        },
+      };
+    }
+
+    let existingCustomer = null;
+    if (customerId) {
+      existingCustomer = await db.crmAccount.findFirst({
+        where: {
+          id: customerId,
+          orgId,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          ownerId: true,
+          billingAddress: true,
+        },
+      });
+
+      if (!existingCustomer) {
+        return { ok: false, error: "Selected customer was not found for this organisation." };
+      }
+    }
+
+    const resolvedLastName =
+      lastName || existingCustomer?.name?.trim() || "Existing Customer";
+    const resolvedCompany = company || existingCustomer?.name?.trim() || resolvedLastName;
+
+    const isPerishable = formData.get("isPerishable") === "true";
+    const perishableDetails = isPerishable
+      ? {
+          perishableType: (formData.get("perishableType") as string) || "",
+          tempRequired: (formData.get("tempRequired") as string) || "",
+          humidityControl: (formData.get("humidityControl") as string) || "",
+          ventilation: (formData.get("ventilation") as string) || "",
+          perishableRemarks: (formData.get("perishableRemarks") as string) || "",
+        }
+      : null;
+
+    const lead = await crmService.createLead(orgId, session.user.id, {
+      firstName: ((formData.get("firstName") as string) || "").trim() || null,
+      lastName: resolvedLastName,
+      company: resolvedCompany,
+      designation: ((formData.get("designation") as string) || "").trim() || null,
+      email:
+        ((formData.get("email") as string) || "").trim() ||
+        existingCustomer?.email ||
+        null,
+      phone:
+        ((formData.get("phone") as string) || "").trim() ||
+        existingCustomer?.phone ||
+        null,
+      mobile: ((formData.get("mobile") as string) || "").trim() || null,
+      fax: ((formData.get("fax") as string) || "").trim() || null,
+      website: ((formData.get("website") as string) || "").trim() || null,
+      source: ((formData.get("source") as string) || "").trim() || "Existing Client",
+      status: "INTERESTED",
+      industry: ((formData.get("industry") as string) || "").trim() || null,
+      annualRevenue:
+        parseFloat((formData.get("annualRevenue") as string) || "0") || 0,
+      employeeCount:
+        parseInt((formData.get("employeeCount") as string) || "0", 10) || 0,
+      rating: (formData.get("rating") as string) || null,
+      address:
+        ((formData.get("address") as string) || "").trim() ||
+        existingCustomer?.billingAddress ||
+        null,
+      city: ((formData.get("city") as string) || "").trim() || null,
+      state: ((formData.get("state") as string) || "").trim() || null,
+      country: ((formData.get("country") as string) || "").trim() || null,
+      pincode: ((formData.get("pincode") as string) || "").trim() || null,
+      description: ((formData.get("description") as string) || "").trim() || null,
+      tags: formData.get("tags")
+        ? (formData.get("tags") as string)
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean)
+        : [],
+      ownerId:
+        ((formData.get("ownerId") as string) || "").trim() ||
+        existingCustomer?.ownerId ||
+        session.user.id,
+      isPerishable,
+      perishableDetails,
+      directEnquiryRequestKey: requestKey,
+    });
+
+    const enquirySnapshot =
+      shipmentMode === "SEA"
+        ? {
+            type: "Sea",
+            seaType: shipmentDirection === "IMP" ? "Import" : "Export",
+            seaLclFcl: (formData.get("seaLoadType") as string) || "LCL",
+            pol: (formData.get("originPoint") as string) || "Not Specified",
+            pod: (formData.get("destinationPoint") as string) || "Not Specified",
+            commodity: (formData.get("commodity") as string) || "Not Specified",
+            weight: (formData.get("weight") as string) || "Not Specified",
+            dimensions: (formData.get("dimensions") as string) || "Not Specified",
+            packages: (formData.get("packages") as string) || "Not Specified",
+            incoterm: (formData.get("incoterm") as string) || null,
+            serviceScope: selectedScope,
+            leadSource: (formData.get("source") as string) || "Existing Client",
+          }
+        : {
+            type: "Air",
+            airType: shipmentDirection === "IMP" ? "Import" : "Export",
+            aol: (formData.get("originPoint") as string) || "Not Specified",
+            aod: (formData.get("destinationPoint") as string) || "Not Specified",
+            commodity: (formData.get("commodity") as string) || "Not Specified",
+            weight: (formData.get("weight") as string) || "Not Specified",
+            dimensions: (formData.get("dimensions") as string) || "Not Specified",
+            packages: (formData.get("packages") as string) || "Not Specified",
+            incoterm: (formData.get("incoterm") as string) || null,
+            serviceScope: selectedScope,
+            leadSource: (formData.get("source") as string) || "Existing Client",
+          };
+
+    const routed = await routeQualifiedEnquiry({
+      actorUserId: session.user.id,
+      orgId,
+      leadId: lead.id,
+      selectedScope: selectedScope as
+        | "BOTH_FREIGHT_AND_CLEARANCE"
+        | "ONLY_FREIGHT"
+        | "ONLY_CLEARANCE",
+      enquirySnapshot,
+      origin: "DIRECT_ENQUIRY",
+      customerId,
+      isPerishable,
+    });
+
+    await crmService.addTimelineEvent(orgId, {
+      relatedToType: "LEAD",
+      relatedToId: lead.id,
+      eventType: "DIRECT_ENQUIRY_CREATED",
+      description: `Direct enquiry created and routed.${customerId ? " Existing customer selected." : ""}`,
+      createdById: session.user.id,
+    });
+
+    revalidatePath("/crm/enquiries");
+    revalidatePath("/crm/freight-forwarding");
+    revalidatePath("/crm/customs-clearance");
+    revalidatePath("/crm/leads");
+
+    return {
+      ok: true,
+      data: routed,
+    };
+  } catch (err: any) {
+    return { ok: false, error: err.message || "Failed to create direct enquiry" };
+  }
+}
+
 export async function updateLeadAction(leadId: string, formData: FormData): Promise<ActionResponse> {
   try {
     const session = await auth();
@@ -602,15 +809,96 @@ export async function updateLeadStatusAction(
       });
     }
 
+    if (status === "INTERESTED" && additionalData?.enquiry) {
+      const serviceScope = additionalData?.enquiry?.serviceScope as
+        | "BOTH_FREIGHT_AND_CLEARANCE"
+        | "ONLY_FREIGHT"
+        | "ONLY_CLEARANCE"
+        | undefined;
+
+      if (!serviceScope) {
+        return { ok: false, error: "Choose the requested service scope before marking the lead as interested." };
+      }
+
+      const contactEmail = existingLead.email || "";
+      const contactMobile = existingLead.mobile || "";
+
+      let existingContact = null;
+      if (contactEmail || contactMobile) {
+        existingContact = await db.crmContact.findFirst({
+          where: {
+            orgId,
+            OR: [
+              contactEmail ? { email: contactEmail } : undefined,
+              contactMobile ? { mobile: contactMobile } : undefined,
+            ].filter(Boolean) as any,
+          },
+        });
+      }
+
+      if (!existingContact) {
+        await db.crmContact.create({
+          data: {
+            orgId,
+            ownerId: existingLead.ownerId,
+            firstName: existingLead.firstName,
+            lastName: existingLead.lastName,
+            email: existingLead.email,
+            phone: existingLead.phone,
+            mobile: existingLead.mobile,
+            designation: existingLead.designation,
+            address: existingLead.address,
+            createdById: session.user.id,
+            updatedById: session.user.id,
+          },
+        });
+      }
+
+      const routed = await routeQualifiedEnquiry({
+        actorUserId: session.user.id,
+        orgId,
+        leadId,
+        selectedScope: serviceScope,
+        enquirySnapshot: additionalData.enquiry,
+        origin: "LEAD_CONVERSION",
+        isPerishable: additionalData?.isPerishable ?? false,
+        isFutureFollowUp: additionalData?.isFutureFollowUp ?? false,
+        followUpReminderDate: additionalData?.followUpReminderDate
+          ? new Date(additionalData.followUpReminderDate)
+          : null,
+      });
+
+      await crmService.addTimelineEvent(orgId, {
+        relatedToType: "LEAD",
+        relatedToId: leadId,
+        eventType: "LEAD_STATUS_CHANGED",
+        description: `Lead status updated to Interested.${changeRemarks ? ` Reason/Remarks: ${changeRemarks}` : ""}`,
+        createdById: session.user.id,
+      });
+
+      if (changeRemarks) {
+        await crmService.addNote(orgId, {
+          relatedToType: "LEAD",
+          relatedToId: leadId,
+          body: `[System Note - Status Change: Interested] Reason: ${changeRemarks}`,
+          createdById: session.user.id,
+        });
+      }
+
+      revalidatePath(`/crm/leads/${leadId}`);
+      revalidatePath(`/crm/enquiries/${leadId}`);
+      revalidatePath("/crm/enquiries");
+      revalidatePath("/crm/freight-forwarding");
+      revalidatePath("/crm/customs-clearance");
+      revalidatePath("/crm/leads");
+
+      return { ok: true, data: routed };
+    }
+
     const updateData: any = { status };
 
     if (status === "NOT_INTERESTED") {
       updateData.notInterestedReason = additionalData?.reason || "";
-    } else if (status === "INTERESTED") {
-      updateData.enquiryDetails = additionalData?.enquiry || null;
-      updateData.isPerishable = additionalData?.isPerishable ?? false;
-      updateData.isFutureFollowUp = additionalData?.isFutureFollowUp ?? false;
-      updateData.followUpReminderDate = additionalData?.followUpReminderDate ? new Date(additionalData.followUpReminderDate) : null;
     }
 
     if (status === "INTERESTED" || status === "FOLLOW_UP") {
@@ -822,6 +1110,19 @@ export async function saveEnquiryRatesAction(
       },
     });
 
+    await db.crmServiceEnquiry.updateMany({
+      where: { orgId, leadId },
+      data: {
+        pricingSnapshot: {
+          rates: ratesData,
+          updatedAt: new Date().toISOString(),
+          updatedById: session.user.id,
+        } as any,
+        status: "PRICING_IN_PROGRESS",
+        updatedById: session.user.id,
+      },
+    });
+
     await crmService.addTimelineEvent(orgId, {
       relatedToType: "LEAD",
       relatedToId: leadId,
@@ -831,6 +1132,9 @@ export async function saveEnquiryRatesAction(
     });
 
     revalidatePath(`/crm/leads/${leadId}`);
+    revalidatePath(`/crm/enquiries/${leadId}`);
+    revalidatePath("/crm/freight-forwarding");
+    revalidatePath("/crm/customs-clearance");
     return { ok: true, data: updatedLead };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to save enquiry rates" };
@@ -2607,7 +2911,8 @@ export async function toggleJustdialActiveAction(isActive: boolean): Promise<Act
 export async function saveQuoteAction(
   quoteId: string | undefined,
   values: any,
-  isSubmit: boolean
+  isSubmit: boolean,
+  linkedLeadId?: string
 ): Promise<ActionResponse> {
   try {
     const session = await auth();
@@ -2662,13 +2967,31 @@ export async function saveQuoteAction(
 
     const now = new Date();
 
-    let matchedLeadId = null;
-    if (customerId && customerId.trim()) {
+    let matchedLeadId = linkedLeadId?.trim() || null;
+    let resolvedReferenceNumber = referenceNumber?.trim() || null;
+
+    if (matchedLeadId) {
+      const linkedLead = await db.crmLead.findFirst({
+        where: { id: matchedLeadId, orgId },
+        select: { id: true, enquiryRef: true },
+      });
+      if (!linkedLead) {
+        matchedLeadId = null;
+      } else if (!resolvedReferenceNumber && linkedLead.enquiryRef) {
+        resolvedReferenceNumber = linkedLead.enquiryRef;
+      }
+    }
+
+    if (!matchedLeadId && customerId && customerId.trim()) {
       const matchedLead = await db.crmLead.findFirst({
-        where: { orgId, convertedAccountId: customerId.trim() }
+        where: { orgId, convertedAccountId: customerId.trim() },
+        select: { id: true, enquiryRef: true },
       });
       if (matchedLead) {
         matchedLeadId = matchedLead.id;
+        if (!resolvedReferenceNumber && matchedLead.enquiryRef) {
+          resolvedReferenceNumber = matchedLead.enquiryRef;
+        }
       }
     }
 
@@ -2691,7 +3014,7 @@ export async function saveQuoteAction(
       ownerId: salesperson || session.user.id,
       createdById: session.user.id,
       updatedById: session.user.id,
-      referenceNumber: referenceNumber || null,
+      referenceNumber: resolvedReferenceNumber,
       location: location || null,
       placeOfSupply: placeOfSupply || null,
       discountType: discountType || "percentage",

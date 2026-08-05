@@ -51,11 +51,13 @@ export function NewQuotePage({
   quoteId,
   salespersons: propSalespersons,
   accounts: propAccounts,
+  linkedLeadId,
 }: {
   initialData?: QuoteFormValues;
   quoteId?: string;
   salespersons?: ComboboxOption[];
   accounts?: CustomerOption[];
+  linkedLeadId?: string;
 }) {
   const effectiveSalespersons = propSalespersons || salespersons;
   const effectiveAccounts = propAccounts ?? [];
@@ -234,7 +236,7 @@ export function NewQuotePage({
     const values = form.getValues();
 
     try {
-      const res = await saveQuoteAction(quoteId, values, isSubmit);
+      const res = await saveQuoteAction(quoteId, values, isSubmit, linkedLeadId);
       if (res.ok) {
         toast.success(isSubmit ? "Quote submitted for approval." : "Quote saved as draft.");
         if (res.data?.id) {
@@ -256,7 +258,7 @@ export function NewQuotePage({
   return (
     <div className="min-h-screen bg-[var(--mnx-surface)] text-[var(--mnx-text-strong)]">
       <div className="mx-auto flex min-h-screen max-w-[1400px] flex-col">
-        <main className="flex-1 overflow-y-auto pb-32">
+        <main className="flex-1 overflow-y-auto pb-8">
           <div className="bg-mono-card">
             <div className="border-b border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-6 py-4 flex items-center gap-4">
               <Link
@@ -300,7 +302,7 @@ export function NewQuotePage({
             />
             <ShippingDetailsSection form={form} incoterms={incoterms} containerTypes={containerTypes} />
             <LineItemsTable form={form} />
-             <NotesAndTermsSection
+            <NotesAndTermsSection
               form={form}
               files={files}
               onFilesChange={setFiles}
@@ -309,35 +311,34 @@ export function NewQuotePage({
               sgst={calculations.sgst}
               igst={calculations.igst}
             />
+            <FixedActionBar
+              onSaveDraft={() => handlePersist("draft")}
+              onSaveSend={async () => {
+                const isValid = await form.trigger();
+                if (!isValid) {
+                  toast.error("Please correct the highlighted fields before sending.");
+                  return;
+                }
+                setSendDialogOpen(true);
+              }}
+              onCancel={() => {
+                if (form.formState.isDirty || files.length) {
+                  setCancelDialogOpen(true);
+                  return;
+                }
+                window.history.back();
+              }}
+              template={template}
+              templateOptions={pdfTemplates}
+              templateMenuOpen={templateMenuOpen}
+              onToggleTemplateMenu={() => setTemplateMenuOpen((current) => !current)}
+              onTemplateChange={(nextTemplate) => {
+                setTemplate(nextTemplate);
+                setTemplateMenuOpen(false);
+              }}
+            />
           </div>
         </main>
-
-        <FixedActionBar
-          onSaveDraft={() => handlePersist("draft")}
-          onSaveSend={async () => {
-            const isValid = await form.trigger();
-            if (!isValid) {
-              toast.error("Please correct the highlighted fields before sending.");
-              return;
-            }
-            setSendDialogOpen(true);
-          }}
-          onCancel={() => {
-            if (form.formState.isDirty || files.length) {
-              setCancelDialogOpen(true);
-              return;
-            }
-            window.history.back();
-          }}
-          template={template}
-          templateOptions={pdfTemplates}
-          templateMenuOpen={templateMenuOpen}
-          onToggleTemplateMenu={() => setTemplateMenuOpen((current) => !current)}
-          onTemplateChange={(nextTemplate) => {
-            setTemplate(nextTemplate);
-            setTemplateMenuOpen(false);
-          }}
-        />
       </div>
 
       <ConfirmDialog

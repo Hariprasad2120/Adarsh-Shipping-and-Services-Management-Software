@@ -1,8 +1,9 @@
 import * as React from "react";
+import Link from "next/link";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-const buttonVariants = cva("mnx-button", {
+export const buttonVariants = cva("mnx-button", {
   variants: {
     variant: {
       default: "mnx-button-primary",
@@ -33,6 +34,15 @@ export interface ButtonProps
     React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {}
 
+export interface ButtonLinkProps
+  extends Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href">,
+    VariantProps<typeof buttonVariants> {
+  href: string;
+  prefetch?: boolean;
+  replace?: boolean;
+  scroll?: boolean;
+}
+
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, mode, type = "button", ...props }, ref) => (
     <button
@@ -48,3 +58,23 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = "Button";
+
+export function ButtonLink({
+  className,
+  href,
+  variant,
+  size,
+  mode,
+  ...props
+}: ButtonLinkProps) {
+  return (
+    <Link
+      href={href}
+      data-variant={variant ?? "default"}
+      data-size={size ?? "md"}
+      data-mode={mode ?? "default"}
+      className={cn(buttonVariants({ variant, size, mode }), className)}
+      {...props}
+    />
+  );
+}

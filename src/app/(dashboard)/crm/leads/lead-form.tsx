@@ -11,22 +11,84 @@ import { NativeSelect } from "@/components/ui/native-select";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createLeadAction, updateLeadAction } from "@/modules/crm/actions";
-import { Save, X, Briefcase, Mail, Phone, MapPin, Tag } from "lucide-react";
+import {
+  createDirectEnquiryAction,
+  createLeadAction,
+  updateLeadAction,
+} from "@/modules/crm/actions";
+import { Save, X, Briefcase, Mail, MapPin, Tag } from "lucide-react";
 
 interface UserOption {
   id: string;
   name: string;
 }
 
-interface LeadFormProps {
-  initialData?: any;
-  employees: UserOption[];
+interface LeadPerishableDetails {
+  perishableType?: string | null;
+  tempRequired?: string | null;
+  humidityControl?: string | null;
+  ventilation?: string | null;
+  perishableRemarks?: string | null;
 }
 
-export function LeadForm({ initialData, employees }: LeadFormProps) {
+interface LeadFormInitialData {
+  id?: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  company?: string | null;
+  designation?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  mobile?: string | null;
+  fax?: string | null;
+  website?: string | null;
+  source?: string | null;
+  status?: string | null;
+  rating?: string | null;
+  industry?: string | null;
+  annualRevenue?: number | string | null;
+  ownerId?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  pincode?: string | null;
+  country?: string | null;
+  description?: string | null;
+  isPerishable?: boolean;
+  tags?: string[];
+  perishableDetails?: unknown | null;
+}
+
+interface LeadFormProps {
+  initialData?: LeadFormInitialData;
+  employees: UserOption[];
+  customers?: Array<{
+    id: string;
+    name: string;
+    email: string | null;
+    phone: string | null;
+  }>;
+  leadSources?: string[];
+  mode?: "lead" | "direct-enquiry";
+}
+
+export function LeadForm({
+  initialData,
+  employees,
+  customers = [],
+  leadSources = [],
+  mode = "lead",
+}: LeadFormProps) {
   const router = useRouter();
   const isEdit = !!initialData;
+  const isDirectEnquiry = mode === "direct-enquiry";
+  const initialPerishableDetails =
+    initialData?.perishableDetails &&
+    typeof initialData.perishableDetails === "object" &&
+    !Array.isArray(initialData.perishableDetails)
+      ? (initialData.perishableDetails as LeadPerishableDetails)
+      : undefined;
+  const editRecordId = initialData?.id;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastName, setLastName] = useState(initialData?.lastName || "");
@@ -36,25 +98,67 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
   );
   const [showPerishablesDialog, setShowPerishablesDialog] = useState(false);
   const [perishableType, setPerishableType] = useState(
-    initialData?.perishableDetails?.perishableType || "",
+    initialPerishableDetails?.perishableType || "",
   );
   const [tempRequired, setTempRequired] = useState(
-    initialData?.perishableDetails?.tempRequired || "",
+    initialPerishableDetails?.tempRequired || "",
   );
   const [humidityControl, setHumidityControl] = useState(
-    initialData?.perishableDetails?.humidityControl || "",
+    initialPerishableDetails?.humidityControl || "",
   );
   const [ventilation, setVentilation] = useState(
-    initialData?.perishableDetails?.ventilation || "",
+    initialPerishableDetails?.ventilation || "",
   );
   const [perishableRemarks, setPerishableRemarks] = useState(
-    initialData?.perishableDetails?.perishableRemarks || "",
+    initialPerishableDetails?.perishableRemarks || "",
+  );
+  const sources =
+    leadSources.length > 0
+      ? leadSources
+      : [
+          "Cold Call",
+          "Web Site",
+          "Partner Referral",
+          "Employee Referral",
+          "Trade Show",
+          "External Agency",
+          "Existing Client",
+          "Web Enquiry",
+        ];
+  const initialSource = initialData?.source || "Cold Call";
+  const initialSourceIsPreset = sources.includes(initialSource);
+  const [source, setSource] = useState(
+    initialSourceIsPreset ? initialSource : "CUSTOM",
+  );
+  const [customSource, setCustomSource] = useState(
+    initialSourceIsPreset ? "" : initialSource,
+  );
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [shipmentMode, setShipmentMode] = useState<"SEA" | "AIR">("SEA");
+  const [shipmentDirection, setShipmentDirection] = useState<"IMP" | "EXP">("IMP");
+  const [serviceScope, setServiceScope] = useState<
+    "BOTH_FREIGHT_AND_CLEARANCE" | "ONLY_FREIGHT" | "ONLY_CLEARANCE"
+  >("BOTH_FREIGHT_AND_CLEARANCE");
+  const [originPoint, setOriginPoint] = useState("");
+  const [destinationPoint, setDestinationPoint] = useState("");
+  const [commodity, setCommodity] = useState("");
+  const [weight, setWeight] = useState("");
+  const [dimensions, setDimensions] = useState("");
+  const [packages, setPackages] = useState("");
+  const [incoterm, setIncoterm] = useState("FOB");
+  const [seaLoadType, setSeaLoadType] = useState<"LCL" | "FCL">("LCL");
+  const [directEnquiryRequestKey] = useState(() =>
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `direct-enquiry-${Date.now()}`,
   );
 
   const handleFillDemo = () => {
     // Set controlled states
     setLastName("Hari");
     setCompany("Adarsh Shipping Logistics");
+    setSource("Partner Referral");
+    setCustomSource("");
 
     // Set other inputs
     const formEl = document.querySelector("form");
@@ -71,8 +175,7 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
       setVal("mobile", "+91 98840 12345");
       setVal("fax", "+91 44 2819 5678");
       setVal("website", "https://www.adarshshipping.in");
-      setVal("source", "Partner Referral");
-      setVal("status", "NEW");
+      setVal("status", isDirectEnquiry ? "INTERESTED" : "NEW");
       setVal("rating", "Hot");
       setVal("industry", "Logistics & Supply Chain");
       setVal("annualRevenue", "15000000");
@@ -86,6 +189,19 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
         "description",
         "Requires regular import shipments of automotive parts from Shanghai to Chennai Port. Expects LCL consolidation and custom clearing CHA support.",
       );
+      if (isDirectEnquiry) {
+        setShipmentMode("SEA");
+        setShipmentDirection("IMP");
+        setServiceScope("BOTH_FREIGHT_AND_CLEARANCE");
+        setOriginPoint("Shanghai, China");
+        setDestinationPoint("Chennai, India");
+        setCommodity("Automotive Parts");
+        setWeight("1500 KG");
+        setDimensions("20FT General");
+        setPackages("12 boxes");
+        setIncoterm("FOB");
+        setSeaLoadType("LCL");
+      }
       toast.success("Lead form demo data filled!");
     }
   };
@@ -96,34 +212,46 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
       toast.error("Lead Name/Last Name and Company are required");
       return;
     }
+    if (isEdit && !editRecordId) {
+      toast.error("Unable to update this record because the lead ID is missing");
+      return;
+    }
 
     setIsSubmitting(true);
     const fd = new FormData(e.currentTarget);
 
     const res = isEdit
-      ? await updateLeadAction(initialData.id, fd)
-      : await createLeadAction(fd);
+      ? await updateLeadAction(editRecordId!, fd)
+      : isDirectEnquiry
+        ? await createDirectEnquiryAction(fd)
+        : await createLeadAction(fd);
 
     setIsSubmitting(false);
 
     if (res.ok) {
       toast.success(
-        isEdit ? "Lead updated successfully" : "Lead created successfully",
+        isEdit
+          ? isDirectEnquiry
+            ? "Enquiry updated successfully"
+            : "Lead updated successfully"
+          : isDirectEnquiry
+            ? "Enquiry created successfully"
+            : "Lead created successfully",
       );
-      router.push(isEdit ? `/crm/leads/${initialData.id}` : "/crm/leads");
+        router.push(
+        isEdit
+          ? isDirectEnquiry
+            ? `/crm/enquiries/${editRecordId}`
+            : `/crm/leads/${editRecordId}`
+          : isDirectEnquiry
+            ? `/crm/enquiries/${res.data?.leadId ?? ""}`
+            : "/crm/leads",
+      );
     } else {
       toast.error(res.error);
     }
   };
 
-  const sources = [
-    "Cold Call",
-    "Web Site",
-    "Partner Referral",
-    "Employee Referral",
-    "Trade Show",
-    "External Agency",
-  ];
   const statuses = [
     "NEW",
     "ATTEMPTED_TO_CONTACT",
@@ -132,12 +260,223 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
     "LOST",
   ];
   const ratings = ["Hot", "Warm", "Cold"];
+  const resolvedSource =
+    source === "CUSTOM" ? customSource.trim() : source || "Cold Call";
 
   return (
     <form
       onSubmit={handleSubmit}
       className="space-y-8 max-w-5xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/60 rounded-xl p-6 shadow-2xl"
     >
+      {isDirectEnquiry ? (
+        <>
+          <CrmInput
+            type="hidden"
+            name="directEnquiryRequestKey"
+            value={directEnquiryRequestKey}
+          />
+          <CrmInput type="hidden" name="customerId" value={selectedCustomerId} />
+          <CrmInput type="hidden" name="serviceScope" value={serviceScope} />
+          <CrmInput type="hidden" name="shipmentMode" value={shipmentMode} />
+          <CrmInput
+            type="hidden"
+            name="shipmentDirection"
+            value={shipmentDirection}
+          />
+          <CrmInput type="hidden" name="originPoint" value={originPoint} />
+          <CrmInput
+            type="hidden"
+            name="destinationPoint"
+            value={destinationPoint}
+          />
+          <CrmInput type="hidden" name="commodity" value={commodity} />
+          <CrmInput type="hidden" name="weight" value={weight} />
+          <CrmInput type="hidden" name="dimensions" value={dimensions} />
+          <CrmInput type="hidden" name="packages" value={packages} />
+          <CrmInput type="hidden" name="incoterm" value={incoterm} />
+          <CrmInput type="hidden" name="seaLoadType" value={seaLoadType} />
+        </>
+      ) : null}
+
+      {isDirectEnquiry ? (
+        <div className="space-y-4 rounded-xl border border-[var(--mnx-border)]/50 bg-[var(--mnx-surface)]/45 p-5">
+          <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2">
+            Direct Enquiry Routing
+          </h3>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+                Existing Customer
+              </label>
+              <NativeSelect
+                value={selectedCustomerId}
+                onChange={(e) => setSelectedCustomerId(e.target.value)}
+                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              >
+                <option value="">Select existing customer</option>
+                {customers.map((customer) => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+                Requested Services *
+              </label>
+              <NativeSelect
+                value={serviceScope}
+                onChange={(e) =>
+                  setServiceScope(
+                    e.target.value as
+                      | "BOTH_FREIGHT_AND_CLEARANCE"
+                      | "ONLY_FREIGHT"
+                      | "ONLY_CLEARANCE",
+                  )
+                }
+                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              >
+                <option value="BOTH_FREIGHT_AND_CLEARANCE">
+                  Both Freight and Clearance
+                </option>
+                <option value="ONLY_FREIGHT">Freight Forwarding only</option>
+                <option value="ONLY_CLEARANCE">Customs Clearance only</option>
+              </NativeSelect>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+                Shipment Mode *
+              </label>
+              <NativeSelect
+                value={shipmentMode}
+                onChange={(e) => setShipmentMode(e.target.value as "SEA" | "AIR")}
+                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              >
+                <option value="SEA">Sea</option>
+                <option value="AIR">Air</option>
+              </NativeSelect>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+                Direction *
+              </label>
+              <NativeSelect
+                value={shipmentDirection}
+                onChange={(e) => setShipmentDirection(e.target.value as "IMP" | "EXP")}
+                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              >
+                <option value="IMP">Import</option>
+                <option value="EXP">Export</option>
+              </NativeSelect>
+            </div>
+            {shipmentMode === "SEA" ? (
+              <div>
+                <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+                  Sea Load Type
+                </label>
+                <NativeSelect
+                  value={seaLoadType}
+                  onChange={(e) => setSeaLoadType(e.target.value as "LCL" | "FCL")}
+                  className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+                >
+                  <option value="LCL">LCL</option>
+                  <option value="FCL">FCL</option>
+                </NativeSelect>
+              </div>
+            ) : null}
+            <div>
+              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+                Origin *
+              </label>
+              <CrmInput
+                type="text"
+                value={originPoint}
+                onChange={(e) => setOriginPoint(e.target.value)}
+                placeholder={shipmentMode === "SEA" ? "Port of loading" : "Airport of loading"}
+                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                required={isDirectEnquiry}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+                Destination *
+              </label>
+              <CrmInput
+                type="text"
+                value={destinationPoint}
+                onChange={(e) => setDestinationPoint(e.target.value)}
+                placeholder={shipmentMode === "SEA" ? "Port of discharge" : "Airport of discharge"}
+                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                required={isDirectEnquiry}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+                Commodity *
+              </label>
+              <CrmInput
+                type="text"
+                value={commodity}
+                onChange={(e) => setCommodity(e.target.value)}
+                placeholder="Cargo / commodity"
+                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                required={isDirectEnquiry}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+                Weight *
+              </label>
+              <CrmInput
+                type="text"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                placeholder="e.g. 1500 KG"
+                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                required={isDirectEnquiry}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+                Dimensions
+              </label>
+              <CrmInput
+                type="text"
+                value={dimensions}
+                onChange={(e) => setDimensions(e.target.value)}
+                placeholder="Container type / dimensions"
+                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+                Packages
+              </label>
+              <CrmInput
+                type="text"
+                value={packages}
+                onChange={(e) => setPackages(e.target.value)}
+                placeholder="e.g. 12 boxes"
+                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+                Incoterm
+              </label>
+              <CrmInput
+                type="text"
+                value={incoterm}
+                onChange={(e) => setIncoterm(e.target.value)}
+                placeholder="e.g. FOB"
+                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {/* ─── SECTION: BASIC INFO ────────────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-mono-text uppercase tracking-wider border-b border-[var(--mnx-border)]/30 pb-2 flex items-center gap-2">
@@ -282,36 +621,80 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
-              Lead Source
+              {isDirectEnquiry ? "Enquiry Source" : "Lead Source"}
             </label>
-            <NativeSelect
-              name="source"
-              defaultValue={initialData?.source || "Cold Call"}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
-            >
-              {sources.map((src) => (
-                <option key={src} value={src}>
-                  {src}
-                </option>
-              ))}
-            </NativeSelect>
+            <div className="space-y-2">
+              <input type="hidden" name="source" value={resolvedSource} />
+              <NativeSelect
+                value={source}
+                onChange={(e) => {
+                  const nextValue = e.target.value;
+                  setSource(nextValue);
+                  if (nextValue !== "CUSTOM") {
+                    setCustomSource("");
+                  }
+                }}
+                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              >
+                {sources.map((src) => (
+                  <option key={src} value={src}>
+                    {src}
+                  </option>
+                ))}
+                <option value="CUSTOM">+ Add new source</option>
+              </NativeSelect>
+              {source === "CUSTOM" ? (
+                <div className="space-y-2">
+                  <CrmInput
+                    type="text"
+                    value={customSource}
+                    onChange={(e) => setCustomSource(e.target.value)}
+                    placeholder="Enter a new enquiry source"
+                    className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
+                    required
+                  />
+                  <CrmButton
+                    type="button"
+                    onClick={() => {
+                      setSource("Cold Call");
+                      setCustomSource("");
+                    }}
+                    className="text-xs font-semibold text-[var(--mnx-accent)]"
+                  >
+                    Use a preset source instead
+                  </CrmButton>
+                </div>
+              ) : null}
+            </div>
           </div>
-          <div>
-            <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
-              Lead Status
-            </label>
-            <NativeSelect
-              name="status"
-              defaultValue={initialData?.status || "NEW"}
-              className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
-            >
-              {statuses.map((st) => (
-                <option key={st} value={st}>
-                  {st.replace("_", " ")}
-                </option>
-              ))}
-            </NativeSelect>
-          </div>
+          {isDirectEnquiry ? (
+            <div>
+              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+                Enquiry Status
+              </label>
+              <CrmInput type="hidden" name="status" value="INTERESTED" />
+              <div className="flex min-h-10 items-center rounded-lg border border-[var(--mnx-accent)]/30 bg-[var(--mnx-accent)]/10 px-3.5 text-sm font-semibold text-[var(--mnx-accent)]">
+                Interested
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
+                Lead Status
+              </label>
+              <NativeSelect
+                name="status"
+                defaultValue={initialData?.status || "NEW"}
+                className="w-full px-3.5 py-2 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-sm text-mono-muted focus:outline-none focus:border-[var(--mnx-accent)]"
+              >
+                {statuses.map((st) => (
+                  <option key={st} value={st}>
+                    {st.replace("_", " ")}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+          )}
           <div>
             <label className="block text-xs font-bold text-mono-muted uppercase tracking-wide mb-1.5">
               Rating
@@ -691,7 +1074,15 @@ export function LeadForm({ initialData, employees }: LeadFormProps) {
         >
           <Save className="size-4.5" />
           <span>
-            {isSubmitting ? "Saving..." : isEdit ? "Update Lead" : "Save Lead"}
+            {isSubmitting
+              ? "Saving..."
+              : isEdit
+                ? isDirectEnquiry
+                  ? "Update Enquiry"
+                  : "Update Lead"
+                : isDirectEnquiry
+                  ? "Save Enquiry"
+                  : "Save Lead"}
           </span>
         </CrmButton>
       </div>

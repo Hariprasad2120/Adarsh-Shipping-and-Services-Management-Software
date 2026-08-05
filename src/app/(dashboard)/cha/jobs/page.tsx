@@ -17,6 +17,14 @@ function normalizeMovementDirection(value: string | null) {
     : null;
 }
 
+function parseMultiValueParam(value: string | string[] | undefined) {
+  if (typeof value !== "string") return [];
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function serializeDueDateWarning(warning: Awaited<ReturnType<typeof computeChaDueDateWarnings>>[number]) {
   return {
     type: warning.type,
@@ -48,11 +56,11 @@ export default async function ChaJobsPage({
 
   const params = await searchParams;
   const search = typeof params.search === "string" ? params.search : undefined;
-  const stage = typeof params.stage === "string" ? params.stage : undefined;
-  const status = typeof params.status === "string" ? params.status : undefined;
-  const priority = typeof params.priority === "string" ? params.priority : undefined;
-  const branchId = typeof params.branchId === "string" ? params.branchId : undefined;
-  const jobTypeId = typeof params.jobTypeId === "string" ? params.jobTypeId : undefined;
+  const stage = parseMultiValueParam(params.stage);
+  const status = parseMultiValueParam(params.status);
+  const priority = parseMultiValueParam(params.priority);
+  const branchId = parseMultiValueParam(params.branchId);
+  const jobTypeId = parseMultiValueParam(params.jobTypeId);
   const assignedToMe = params.assignedToMe === "true";
   const activePage = typeof params.activePage === "string" ? parseInt(params.activePage, 10) : 1;
   const completedPage = typeof params.completedPage === "string" ? parseInt(params.completedPage, 10) : 1;

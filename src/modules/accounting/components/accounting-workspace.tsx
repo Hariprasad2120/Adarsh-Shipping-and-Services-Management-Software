@@ -40,6 +40,7 @@ import type {
 } from "react";
 import { createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
+import { ButtonLink } from "@/components/ui/button";
 import {
   WorkspaceAction,
   WorkspaceAlert,
@@ -707,20 +708,19 @@ export function AccountingActionLink({
   variant?: "primary" | "secondary" | "destructive";
 }) {
   return (
-    <Link
-      className={cn(
-        "mnx-button",
-        variant === "primary"
-          ? "mnx-button-primary"
-          : variant === "destructive"
-            ? "mnx-button-destructive"
-            : "mnx-button-secondary",
-        className,
-      )}
+    <ButtonLink
+      className={className}
       href={href}
+      variant={
+        variant === "primary"
+          ? "default"
+          : variant === "destructive"
+            ? "destructive"
+            : "inverse"
+      }
     >
       {children}
-    </Link>
+    </ButtonLink>
   );
 }
 

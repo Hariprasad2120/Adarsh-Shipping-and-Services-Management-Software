@@ -1,6 +1,787 @@
 # Monolith UI migration handoff
 
-Last updated: 2026-08-03
+Last updated: 2026-08-05
+
+## 2026-08-05 CRM enquiries and leads table action-column removal
+
+Removed the rightmost action column from the CRM enquiries and leads registers
+so both tables now rely on the existing linked primary cells instead of a
+separate eye/delete action rail.
+
+Delivered:
+
+- updated `src/app/(dashboard)/crm/enquiries/page.tsx` to remove the `Actions`
+  header and row action cell while preserving the linked enquiry number as the
+  navigation path into each enquiry record;
+- updated `src/app/(dashboard)/crm/leads/page.tsx` to remove the `Actions`
+  header and row action cell, including the inline view and delete controls,
+  while preserving the linked lead name as the navigation path into each lead
+  record;
+- aligned the empty-state `colSpan` values in both tables with the new six-
+  column layouts.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/crm/enquiries/page.tsx' 'src/app/(dashboard)/crm/leads/page.tsx'`:
+  passed.
+
+Known limits:
+
+- this change intentionally removes the inline lead delete affordance from the
+  leads register, so deletion now depends on any remaining lead-detail workflow
+  rather than the list view;
+- no authenticated browser runtime is attached in this Codex session, so the
+  result is source-verified and lint-targeted rather than browser-verified in
+  Light, Night, and Violet themes.
+
+## 2026-08-05 CRM enquiries and leads whole-row navigation follow-up
+
+Made the full enquiry and lead register rows actionable so users can open a
+record by clicking anywhere across the row, not just the primary text cell.
+
+Delivered:
+
+- added `src/components/data-display/operational-linked-row.tsx` as a shared
+  data-display owner component that gives operational table rows link-like
+  click and keyboard behavior while keeping route pages server-rendered;
+- updated `src/app/(dashboard)/crm/enquiries/page.tsx` and
+  `src/app/(dashboard)/crm/leads/page.tsx` to use the shared clickable row
+  wrapper for each record row instead of inline text links;
+- updated `src/styles/monolith-system.css` so actionable rows show pointer
+  cursor feedback and a visible focus treatment.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/components/data-display/operational-linked-row.tsx' 'src/app/(dashboard)/crm/enquiries/page.tsx' 'src/app/(dashboard)/crm/leads/page.tsx'`:
+  passed.
+
+Known limits:
+
+- this pass only applies the shared whole-row interaction to the CRM enquiries
+  and leads registers touched here; other operational tables still keep their
+  existing interaction patterns unless migrated separately;
+- no authenticated browser runtime is attached in this Codex session, so the
+  result is source-verified and lint-verified rather than browser-verified in
+  Light, Night, and Violet themes.
+
+## 2026-08-05 CRM enquiry detail tab-shell cleanup follow-up
+
+Removed the grey container background and border around the CRM enquiry-detail
+right-rail tab actions so the pill actions sit directly on the page surface.
+
+Delivered:
+
+- updated `src/styles/monolith-system.css` to remove the shared `.mnx-crm-tabs`
+  shell border, background, radius, and inner padding while keeping the tab
+  row layout and horizontal scrolling behavior intact.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx' 'src/modules/crm/components/workspace/crm-workspace.tsx'`:
+  still fails on pre-existing route debt in `enquiry-detail-client.tsx`,
+  primarily long-standing `@typescript-eslint/no-explicit-any` findings and the
+  existing `react-hooks/set-state-in-effect` warning around `setLocalCalls(calls)`.
+
+Known limits:
+
+- because `.mnx-crm-tabs` is a shared CRM tab-shell style, the same chrome
+  removal also applies to other CRM surfaces that use `CrmTabs`;
+- no authenticated browser runtime is attached in this Codex session, so the
+  result is source-verified only.
+
+## 2026-08-05 CRM lead detail tab-shell alignment follow-up
+
+Aligned the lead detail page's related-lists tab strip with the shared CRM tab
+pattern already used by the enquiry detail page.
+
+Delivered:
+
+- updated `src/app/(dashboard)/crm/leads/[id]/lead-detail-wrapper.tsx` to
+  replace the older underlined route-local tab buttons with shared `CrmTabs`
+  and compact `CrmButton` pills;
+- kept the lead-specific `Files` tab intact while renaming the common tabs to
+  match the enquiry detail wording more closely, including `Summary` and
+  `Tasks`.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/crm/leads/[id]/lead-detail-wrapper.tsx' 'src/modules/crm/components/workspace/crm-workspace.tsx'`:
+  still fails on pre-existing route debt in `lead-detail-wrapper.tsx`,
+  primarily long-standing `@typescript-eslint/no-explicit-any` findings and
+  existing `react-hooks/set-state-in-effect` warnings.
+
+Known limits:
+
+- this follow-up aligns the lead detail tab strip with the enquiry detail page,
+  but the wider lead detail screen still retains substantial older route-local
+  composition beyond the tab area;
+- no authenticated browser runtime is attached in this Codex session, so the
+  result is source-verified only.
+
+## 2026-08-05 CRM enquiry and lead tab-section surface cleanup
+
+Removed the remaining grey outer surface behind the right-rail tab and content
+sections on both CRM enquiry and lead detail pages.
+
+Delivered:
+
+- updated `src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx`
+  so the related-lists container no longer renders the default CRM panel
+  background, border, or shadow;
+- updated `src/app/(dashboard)/crm/leads/[id]/lead-detail-wrapper.tsx` to drop
+  the route-local grey boxed wrapper around the tabs and content section.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx' 'src/app/(dashboard)/crm/leads/[id]/lead-detail-wrapper.tsx'`:
+  still fails on pre-existing route debt in both legacy detail files,
+  primarily long-standing `@typescript-eslint/no-explicit-any` findings and
+  existing `react-hooks/set-state-in-effect` warnings.
+
+Known limits:
+
+- this pass removes the outer grey container surface only; inner summary/info
+  cards within the active tabs remain unchanged;
+- no authenticated browser runtime is attached in this Codex session, so the
+  result is source-verified only.
+
+## 2026-08-05 CRM duplicate page-level loading cleanup
+
+Removed the extra CRM item-detail loading screen so CRM pages rely on the
+shared `crm/loading.tsx` route loader instead of stacking a second local page
+loader on top of it.
+
+Delivered:
+
+- updated `src/app/(dashboard)/crm/items/[id]/page.tsx` to remove the local
+  client `loading` state and inline `Loading...` screen;
+- switched the item lookup to a direct synchronous read so the route now either
+  renders the item detail immediately or falls through to `notFound()`.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/crm/items/[id]/page.tsx'`:
+  passed.
+
+Known limits:
+
+- this cleanup removes the duplicate page-level loader I found in the CRM route
+  family, but it does not affect button-level pending states such as upload or
+  action spinners inside CRM workflows;
+- no authenticated browser runtime is attached in this Codex session, so the
+  result is source-verified and lint-verified rather than browser-verified.
+
+## 2026-08-04 CRM enquiry-detail design-system composition follow-up
+
+Moved the main `/crm/enquiries/[id]` detail experience further onto the shared
+CRM design-system composition path while preserving the existing enquiry
+actions, follow-up workflow, worksheet logic, and email simulation behavior.
+
+Delivered:
+
+- updated `src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx`
+  so the visible top-level experience now uses shared `CrmActionLink`,
+  `CrmPanel`, `CrmSection`, `CrmField`, and `CrmStatus` primitives for the
+  command bar, enquiry hero, follow-up scheduling surface, main detail section,
+  worksheet section, automation section, reminder card, and right-rail tab
+  shell;
+- replaced the older route-local tab underline treatment in the right rail with
+  shared CRM button variants, so the summary/notes/tasks/audit/time/calls tabs
+  now follow the approved monolith action styling more closely;
+- preserved the route's current business logic, owner reassignment flow,
+  worksheet save behavior, and automation/test tooling while changing the page
+  composition and visual ownership.
+
+Verification on Tuesday, August 4, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx' 'src/app/(dashboard)/crm/enquiries/[id]/page.tsx'`:
+  still fails on pre-existing route debt in `enquiry-detail-client.tsx`,
+  primarily `@typescript-eslint/no-explicit-any` and the existing
+  `react-hooks/set-state-in-effect` finding around `setLocalCalls(calls)`.
+
+Known limits:
+
+- this pass focuses on the main visible page composition shown in the enquiry
+  detail workspace; deeper sub-surfaces inside the long legacy client component,
+  including perishable/worksheet internals and some nested utility blocks,
+  still retain older route-local field/layout markup;
+- no authenticated browser runtime is attached in this Codex session, so the
+  migration is source-verified only and still needs Light, Night, and Violet
+  runtime verification across desktop, tablet, and mobile.
+
+## 2026-08-04 CRM enquiries shared filter-menu follow-up
+
+Replaced the enquiry register's one-off `Apply` search submit control with the
+shared operational filter-menu pattern, and moved the enquiry-type filtering
+into that same datatable toolbar.
+
+Delivered:
+
+- added `src/modules/crm/components/enquiries/enquiry-register-toolbar.tsx` as
+  a module-owned CRM toolbar composition built on the shared
+  `OperationalDataTableHeader`, compact search field, shared filter-menu
+  dropdown, active-filter summary row, and CRM command actions;
+- updated `src/app/(dashboard)/crm/enquiries/page.tsx` to use the new toolbar,
+  preserving the existing `search` and `type` query semantics while removing
+  the duplicate lower enquiry-type filter strip;
+- kept the current enquiry dataset behavior intact while exposing the filter
+  choices directly through the datatable's canonical filter control.
+
+Verification on Tuesday, August 4, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/crm/enquiries/page.tsx' 'src/modules/crm/components/enquiries/enquiry-register-toolbar.tsx'`:
+  passed.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so this
+  follow-up is source-verified and lint-verified rather than browser-verified
+  in Light, Night, and Violet themes;
+- this pass keeps the current enquiry filters limited to the existing
+  `search`, `perishable`, and `future follow-up` controls rather than adding
+  new server-side filter dimensions.
+
+## 2026-08-04 CRM action-link button-element follow-up
+
+Updated the CRM action wrapper so CRM command-bar actions now render the shared
+design-system `Button` element instead of a CRM-specific link wrapper.
+
+Delivered:
+
+- updated `src/modules/crm/components/workspace/crm-workspace.tsx` so
+  `CrmActionLink` now uses the shared `Button` component and client-side router
+  navigation for its `href`;
+- preserved the shared Monolith button variants and compact/default sizing
+  contract already used by the CRM toolbar actions, while changing the rendered
+  element from link markup to a real button element.
+
+Verification on Tuesday, August 4, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/crm/components/workspace/crm-workspace.tsx'`:
+  passed.
+
+Known limits:
+
+- this follow-up intentionally changes the CRM action wrapper implementation
+  without touching unrelated route-local text links, tab links, or row-action
+  links elsewhere in CRM;
+- no authenticated browser runtime is attached in this Codex session, so the
+  fix is source-verified and lint-verified rather than browser-verified in
+  Light, Night, and Violet themes.
+
+## 2026-08-04 CRM enquiries operational table alignment handoff
+
+Aligned `/crm/enquiries` with the shared operational data-table system used by
+ CHA instead of keeping the older route-local CRM toolbar and table shell.
+
+Delivered:
+
+- updated `src/app/(dashboard)/crm/enquiries/page.tsx` to replace the custom
+  page-level header/card stack with the shared
+  `OperationalDataTable`/`OperationalDataTableHeader`/`OperationalVisibleRecords`
+  shell;
+- converted the enquiries toolbar to the shared compact search field plus
+  operational apply button, while keeping the page's actual supported filters:
+  `search` and `type` (`all`, `perishable`, `future_follow`);
+- replaced the custom enquiry-type pills with the shared operational filter
+  group treatment and kept their counts in sync with the current route data;
+- moved the list body onto the shared operational table primitives so enquiry
+  actions now use the same row-action contract as the CHA data tables;
+- regenerated `docs/ui-route-audit.md`,
+  `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`, and
+  `docs/ui-component-and-style-ownership-audit.md`.
+
+Verification on Tuesday, August 4, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/crm/enquiries/page.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route inventory;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed.
+
+Known limits:
+
+- the route still preserves CRM-specific enquiry row content and status/flag
+  wording instead of collapsing everything into the exact CHA jobs column
+  model, because the underlying enquiry data shape is different;
+- this pass did not add new filter capabilities beyond the existing `search`
+  and `type` query parameters already supported by the page logic.
+
+## 2026-08-04 CRM leads filter-menu and operational toolbar handoff
+
+Aligned `/crm/leads` with the same shared operational toolbar/filter treatment
+ now used by the CRM enquiries register, while preserving the existing lead
+ query behavior.
+
+Delivered:
+
+- added `src/modules/crm/components/leads/lead-register-toolbar.tsx` as a
+  module-owned composition that uses the shared operational table header,
+  visible-records block, compact search field, shared filter-menu dropdown, and
+  active-filter link summary;
+- updated `src/app/(dashboard)/crm/leads/page.tsx` to replace the old native
+  status select and route-local apply/reset controls with the shared filter-menu
+  pattern while preserving the existing `search`, `status`, and `tab` query
+  semantics;
+- moved the lead tab strip onto the shared operational filter-group treatment so
+  the leads register now matches the CRM enquiries register and CHA table
+  family more closely;
+- regenerated `docs/ui-route-audit.md`,
+  `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`, and
+  `docs/ui-component-and-style-ownership-audit.md`.
+
+Verification on Tuesday, August 4, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/crm/leads/page.tsx' 'src/modules/crm/components/leads/lead-register-toolbar.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route inventory;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed.
+
+Known limits:
+
+- the leads route still keeps its CRM-specific row content, delete action, and
+  lead-status cooldown logic rather than adopting the CHA jobs data model;
+- this pass does not add saved-view persistence to CRM leads; the shared
+  filter-menu usage here is visual and interaction-aligned only.
+
+## 2026-08-04 Shared primary button spacing and label-color fix
+
+Fixed the shared primary button CSS so icon-plus-label actions stop drifting
+ away from the approved Monolith button look when the label is wrapped in a
+ `span`.
+
+Delivered:
+
+- updated `src/styles/monolith-system.css` to remove
+  `justify-content: space-between` from `.mnx-button-primary`, which was
+  creating the oversized gap between the icon and text;
+- updated `src/styles/monolith-system.css` to stop coloring
+  `.mnx-button-primary > span:not(.mnx-button-spinner)`, which was turning
+  wrapped button labels into the accent color instead of keeping the standard
+  primary-button label color;
+- preserved icon tinting for the icon element itself, so the fix only corrects
+  label spacing and label color without changing unrelated button behavior.
+
+Verification on Tuesday, August 4, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/crm/components/leads/lead-register-toolbar.tsx' 'src/app/(dashboard)/crm/enquiries/page.tsx' 'src/app/(dashboard)/crm/leads/page.tsx' 'src/modules/crm/components/workspace/crm-workspace.tsx'`:
+  passed.
+
+Known limits:
+
+- no browser runtime is attached in this Codex session, so this shared visual
+  correction is source-verified and lint-verified rather than screenshot- or
+  theme-verified in Light, Night, and Violet;
+- if any route intentionally relied on the old broken primary-button label tint
+  or forced icon-label separation, it will now inherit the corrected shared
+  button behavior instead.
+
+## 2026-08-04 CRM action-link compact toolbar sizing fix
+
+Fixed the CRM action-link wrapper so toolbar links can use the same compact
+ button size contract as CHA operational toolbar actions instead of always
+ falling back to the larger default shell.
+
+Delivered:
+
+- updated `src/modules/crm/components/workspace/crm-workspace.tsx` so
+  `CrmActionLink` now accepts `size="compact"` and applies the shared
+  `mnx-button-compact` contract;
+- updated `src/modules/crm/components/leads/lead-register-toolbar.tsx` so
+  `Lead Sources` and `Create Lead` use the compact toolbar button size instead
+  of the default oversized shell;
+- updated `src/app/(dashboard)/crm/enquiries/page.tsx` so the enquiries toolbar
+  actions use the same compact size contract.
+
+Verification on Tuesday, August 4, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/crm/components/workspace/crm-workspace.tsx' 'src/modules/crm/components/leads/lead-register-toolbar.tsx' 'src/app/(dashboard)/crm/enquiries/page.tsx'`:
+  passed.
+
+Known limits:
+
+- this fixes the CRM toolbar action-link size mismatch, but it does not change
+  the global Monolith button typography contract beyond the earlier shared
+  primary-button spacing/color correction;
+- no authenticated browser runtime is attached in this Codex session, so the
+  change is source-verified and lint-verified rather than browser-verified in
+  Light, Night, and Violet themes.
+
+## 2026-08-04 Shared ButtonLink architecture fix
+
+Centralized button-styled navigation links onto one shared design-system
+ primitive so module wrappers stop reconstructing Monolith button classes by
+ hand and drifting away from the catalogue button behavior.
+
+Delivered:
+
+- updated `src/components/ui/button.tsx` to export a shared `ButtonLink`
+  primitive backed by the same `buttonVariants` contract as the shared `Button`
+  component;
+- updated `src/modules/crm/components/workspace/crm-workspace.tsx`,
+  `src/modules/cha/components/workspace/cha-workspace.tsx`,
+  `src/modules/people/components/people-workspace.tsx`,
+  `src/modules/performance/components/performance-workspace.tsx`, and
+  `src/modules/accounting/components/accounting-workspace.tsx` so their
+  action-link wrappers now delegate to `ButtonLink` instead of manually
+  assembling `mnx-button*` classes;
+- updated `src/components/feedback/workspace-states.tsx`,
+  `src/modules/crm/components/service-enquiries/service-enquiry-queue.tsx`, and
+  `src/modules/crm/components/service-enquiries/service-enquiry-detail.tsx` to
+  replace direct button-like `Link` class strings with the shared `ButtonLink`
+  primitive;
+- kept the CRM leads and enquiries toolbar actions on these shared wrappers so
+  future button-style fixes now land through a single source of truth.
+
+Verification on Tuesday, August 4, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/components/ui/button.tsx' 'src/components/feedback/workspace-states.tsx' 'src/modules/crm/components/workspace/crm-workspace.tsx' 'src/modules/cha/components/workspace/cha-workspace.tsx' 'src/modules/people/components/people-workspace.tsx' 'src/modules/performance/components/performance-workspace.tsx' 'src/modules/accounting/components/accounting-workspace.tsx' 'src/modules/crm/components/service-enquiries/service-enquiry-queue.tsx' 'src/modules/crm/components/service-enquiries/service-enquiry-detail.tsx' 'src/modules/crm/components/leads/lead-register-toolbar.tsx' 'src/app/(dashboard)/crm/leads/page.tsx' 'src/app/(dashboard)/crm/enquiries/page.tsx'`:
+  passed.
+
+Known limits:
+
+- this centralizes the shared button-link path for the main workspace wrappers
+  and the CRM routes touched here, but other direct `mnx-button*` usages that
+  render actual `<button>` elements remain intentionally unchanged;
+- no authenticated browser runtime is attached in this Codex session, so this
+  architectural fix is source-verified and lint-verified rather than browser-
+  verified in Light, Night, and Violet themes.
+
+## 2026-08-04 Shared filter-menu interaction cleanup follow-up
+
+Adjusted the shared filter menu interaction so open sections can be collapsed
+again, the option list scrolls without a visible scrollbar, the in-panel
+search row is removed, and the `Save view` control now uses the shared
+design-system button contract.
+
+Delivered:
+
+- updated `src/components/forms/filter-menu.tsx` so accordion sections can be
+  fully closed, the internal search row is removed, and the header action uses
+  the shared `Button` component;
+- updated `src/styles/monolith-system.css` so only the option list scrolls and
+  the scrollbar stays visually hidden;
+- removed the no-longer-needed section search flags from
+  `src/app/(dashboard)/cha/jobs/jobs-client.tsx`;
+- updated `src/components/forms/filter-menu.test.tsx` to reflect the new
+  no-search shared markup.
+
+Verification on Tuesday, August 4, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/components/forms/filter-menu.tsx' 'src/components/forms/filter-menu.test.tsx' 'src/app/(dashboard)/cha/jobs/jobs-client.tsx' 'src/app/(dashboard)/cha/customers/customers-filter-bar.tsx'`:
+  passed.
+
+## 2026-08-04 Shared filter-menu compact sizing follow-up
+
+Tightened the newly refreshed shared filter menu after runtime feedback so the
+panel is smaller, the typography is less oversized, the internal scrollbar is
+gone, and the broken top `Select a view` control has been removed.
+
+Delivered:
+
+- updated `src/components/forms/filter-menu.tsx` to remove the unused view
+  selector props/markup from the shared panel;
+- updated `src/styles/monolith-system.css` so the shared filter panel now uses
+  a smaller overall footprint, smaller heading/control/option text, and no
+  internal scrolling regions;
+- updated `src/app/(dashboard)/cha/jobs/jobs-client.tsx` and
+  `src/app/(dashboard)/cha/customers/customers-filter-bar.tsx` so the current
+  filter menu dropdown width is narrower.
+
+Verification on Tuesday, August 4, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/components/forms/filter-menu.tsx' 'src/components/forms/filter-menu.test.tsx' 'src/app/(dashboard)/cha/jobs/jobs-client.tsx' 'src/app/(dashboard)/cha/customers/customers-filter-bar.tsx'`:
+  passed.
+
+## 2026-08-04 Shared accordion filter-menu refresh handoff
+
+Replaced the temporary button-only shared filter trigger with a new Monolith
+accordion filter menu patterned after the provided reference: large title,
+top view selector, right-side action link, collapsible filter groups, in-panel
+search, and checkbox-style option rows.
+
+Delivered:
+
+- updated `src/components/forms/filter-menu.tsx` so `FilterMenu` once again
+  opens shared dropdown content and `CategorizedFilterMenuPanel` now renders
+  the new accordion/filter-list treatment instead of the earlier category-card
+  panel;
+- updated `src/styles/monolith-system.css` with the new shared filter-menu
+  layout and option-row styling;
+- migrated `src/app/(dashboard)/cha/jobs/jobs-client.tsx` to feed the shared
+  filter menu with grouped section data for stage, status, priority, branch,
+  job type, and assignment filters;
+- migrated `src/app/(dashboard)/cha/customers/customers-filter-bar.tsx` to the
+  same shared grouped-section contract for status, portal access, and balance;
+- updated `src/components/forms/filter-menu.test.tsx` to cover the new shared
+  accordion markup contract.
+
+Verification on Tuesday, August 4, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/components/forms/filter-menu.tsx' 'src/components/forms/filter-menu.test.tsx' 'src/app/(dashboard)/cha/jobs/jobs-client.tsx' 'src/app/(dashboard)/cha/customers/customers-filter-bar.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx vitest run 'src/components/forms/filter-menu.test.tsx' --reporter verbose`:
+  could not start because the repository's guarded Vitest configuration still
+  requires `.env.staging.local` before test execution.
+
+Open follow-up:
+
+- the new top-right `Save view` action is currently visual/shared-layout only;
+  persistent saved-filter-view behavior is not yet wired for these routes;
+- no authenticated browser backend is attached in this Codex session, so the
+  change is source-verified and lint-verified rather than runtime-verified in
+  Light, Night, and Violet themes.
+
+## 2026-08-04 Shared filter-menu removal handoff
+
+Removed the current shared design-system filter dropdown behavior while
+preserving the existing filter trigger button styling and count chip.
+
+Delivered:
+
+- updated `src/components/forms/filter-menu.tsx` so `FilterMenu` now renders
+  only the existing Monolith filter button and no longer mounts the dropdown
+  menu content/panel;
+- preserved the shared trigger contract used across current consumers, so the
+  visible button remains in place on routes that already use the shared
+  filter-menu primitive.
+
+Verification on Tuesday, August 4, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/components/forms/filter-menu.tsx'`:
+  passed.
+
+Open follow-up:
+
+- `CategorizedFilterMenuPanel` and its styling remain in the repository but are
+  no longer reachable through the shared `FilterMenu` trigger; they can be
+  removed in a later cleanup pass if you want the unused menu implementation
+  deleted as well;
+- no authenticated browser backend is attached in this Codex session, so the
+  change is source-verified and lint-verified rather than runtime-verified in
+  Light, Night, and Violet themes.
+
+## 2026-08-04 Design-system categorized filter-menu handoff
+
+Redesigned the shared Monolith filter-menu pattern so category selection now
+happens through a dropdown and the selected category reveals its matching
+sub-filter options directly underneath, instead of relying on the older
+side-by-side category rail.
+
+Delivered:
+
+- updated `src/components/forms/filter-menu.tsx` to add the shared
+  `CategorizedFilterMenuPanel` helper on top of the existing `FilterMenu`
+  trigger contract;
+- added shared categorized filter-menu styling in
+  `src/styles/monolith-system.css` for the new header, category summary,
+  selector, option stack, and footer regions;
+- migrated `src/app/(dashboard)/cha/jobs/jobs-client.tsx` so the operational
+  jobs register filter menu now uses the new dropdown category selector and
+  reveals the active category's sub-options below it;
+- migrated `src/app/(dashboard)/cha/customers/customers-filter-bar.tsx` to the
+  same categorized filter-menu pattern so the customer register follows the
+  same design-system interaction;
+- added `src/components/forms/filter-menu.test.tsx` to cover the shared
+  categorized panel markup contract;
+- regenerated `docs/ui-route-audit.md`,
+  `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`, and
+  `docs/ui-component-and-style-ownership-audit.md`.
+
+Verification on Tuesday, August 4, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/components/forms/filter-menu.tsx' 'src/components/forms/filter-menu.test.tsx' 'src/app/(dashboard)/cha/jobs/jobs-client.tsx' 'src/app/(dashboard)/cha/customers/customers-filter-bar.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route inventory;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx vitest run 'src/components/forms/filter-menu.test.tsx' --reporter verbose`:
+  could not start because the repository's guarded Vitest configuration still
+  requires `.env.staging.local` before test execution.
+
+Open follow-up:
+
+- the new categorized panel is live in the CHA jobs and customers filter menus,
+  but other filter-menu consumers such as HRMS employee directory, AMS
+  appraisals, and customs masters still use their earlier flat or custom menu
+  layouts and can be migrated onto the same shared pattern in a follow-up pass;
+- no authenticated browser backend is attached in this Codex session, so the
+  redesign is source-verified and lint-verified rather than runtime-verified in
+  Light, Night, and Violet themes.
+
+## 2026-08-04 CRM leads operational-table and header-icon handoff
+
+Aligned the `/crm/leads` index page more closely with the shared Monolith data
+display and action contracts while removing the icon that was rendering before
+the route heading.
+
+Delivered:
+
+- updated `src/app/(dashboard)/crm/leads/page.tsx` to replace the local
+  `CrmTable` presentation with the shared
+  `OperationalDataTable`, `OperationalDataTableWrap`, `OperationalTable`,
+  `OperationalPrimaryCell`, `OperationalStatus`, `OperationalTableEmpty`, and
+  `OperationalDataTableFooter` components;
+- migrated the primary page actions on the route to the approved CRM button
+  contracts by using shared `CrmButton` / `CrmActionLink` primitives instead of
+  keeping the previous route-local button treatment around the main filters and
+  create action;
+- updated `src/modules/crm/components/workspace/crm-workspace.tsx` so the
+  `/crm/leads` page header no longer renders the leading icon while preserving
+  the standard CRM header treatment on the rest of the workspace;
+- regenerated `docs/ui-route-audit.md`,
+  `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`, and
+  `docs/ui-component-and-style-ownership-audit.md`.
+
+Verification on Tuesday, August 4, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/crm/leads/page.tsx' 'src/modules/crm/components/workspace/crm-workspace.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the current route inventory;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed.
+
+Open follow-up:
+
+- the fresh static audit still marks `/crm/leads` as `NON_COMPLIANT` because
+  the route continues to own several directly styled `Link` elements for tab
+  navigation and other action-like links; the main table and primary actions
+  now use the shared design-system contracts, but the tab/navigation treatment
+  still needs a canonical replacement to clear the remaining audit finding;
+- no authenticated browser backend is attached in this Codex session, so the
+  change is source-verified and lint-verified rather than runtime-verified in
+  Light, Night, and Violet themes.
+
+## 2026-08-04 CRM service-enquiry routing foundation handoff
+
+Added the first normalized CRM routing layer for freight forwarding and customs
+clearance so interested leads now create durable service work items instead of
+relying only on mixed `CrmLead.enquiryDetails` JSON.
+
+Delivered:
+
+- added Prisma enums and `CrmServiceEnquiry` in `prisma/schema.prisma` plus
+  additive migration
+  `prisma/migrations/20260804113000_add_crm_service_enquiries/`;
+- added `src/modules/crm/services/service-enquiry-routing.service.ts` with the
+  transactional `routeQualifiedEnquiry(...)` orchestration and normalized
+  queue/detail queries;
+- updated `src/modules/crm/actions.ts` so interested-lead conversion now routes
+  through the centralized service-enquiry transaction and mirrors rate-sheet
+  saves into normalized `pricingSnapshot` state;
+- added the new CRM routes
+  `src/app/(dashboard)/crm/freight-forwarding/**` and
+  `src/app/(dashboard)/crm/customs-clearance/**`;
+- added module-owned CRM service-enquiry UI in
+  `src/modules/crm/components/service-enquiries/**`;
+- updated `src/modules/crm/components/workspace/crm-workspace.tsx`,
+  `src/lib/navigation.ts`, and `src/lib/route-labels.ts` so the new routes are
+  first-class CRM workspaces in shared chrome and navigation;
+- added permission catalogue entries to `prisma/seed.ts`;
+- added `docs/architecture/adr-crm-service-enquiry-routing.md` and
+  `docs/crm-freight-customs-implementation.md`;
+- regenerated `docs/ui-route-audit.md`,
+  `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`, and
+  `docs/ui-component-and-style-ownership-audit.md`.
+
+Verification on Tuesday, August 4, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx prisma format`: passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx prisma validate`: passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx prisma generate`: passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed in this session after the service-enquiry additions;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint ...` over the new
+  service-enquiry files, CRM workspace metadata, navigation, route labels, and
+  db singleton: passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed route inventory for the new CRM pages;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the pre-existing repository-wide `src/components/monolith`
+  ownership baseline, not on this CRM routing pass.
+
+Open follow-up:
+
+- direct enquiry creation, quote linkage by `serviceEnquiryId`, normalized
+  freight/customs pricing records, and job conversion are still deferred;
+- the new CRM pages are source-verified and type-verified in this session, but
+  no authenticated browser backend is attached for Light/Night/Violet runtime
+  verification.
+
+## 2026-08-04 Freight Forwarding module scaffold handoff
+
+Added a new first-class `Freight Forwarding` dashboard module and routed it
+through the same Monolith registration points used by the existing operational
+modules, while intentionally keeping its internal workspace blank for now.
+
+Delivered:
+
+- added `src/app/(dashboard)/freight-forwarding/page.tsx` as the new protected
+  route;
+- added `src/modules/freight-forwarding/components/freight-forwarding-workspace.tsx`
+  and `src/modules/freight-forwarding/components/index.ts` so the module owns
+  its workspace composition under `src/modules/<module>/components`;
+- updated `src/modules/core/organisation/module-config.ts` so
+  `freight-forwarding` is treated as a managed toggleable module and
+  `/freight-forwarding` is protected by the dashboard shell's module-enable
+  gate;
+- updated `src/lib/navigation.ts` and `src/lib/route-labels.ts` so the new
+  module appears in primary navigation, command search, and topbar route
+  labeling;
+- updated `src/modules/dashboard/types.ts`,
+  `src/modules/dashboard/service.ts`, and
+  `src/app/(dashboard)/dashboard/_components/module-command-center.tsx` so the
+  dashboard module card can render the new module with a zero-state summary;
+- updated `src/lib/navigation.test.ts` with a managed-path assertion for the
+  new module and removed a pre-existing malformed stray `it(...)` stub that was
+  making the test file unparsable;
+- regenerated `docs/ui-route-audit.md`,
+  `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` so the new route family is
+  reflected in the current source audit.
+
+Verification on Tuesday, August 4, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/core/organisation/module-config.ts' 'src/lib/navigation.ts' 'src/modules/dashboard/types.ts' 'src/modules/dashboard/service.ts' 'src/app/(dashboard)/dashboard/_components/module-command-center.tsx' 'src/lib/route-labels.ts' 'src/lib/navigation.test.ts' 'src/modules/freight-forwarding/components/freight-forwarding-workspace.tsx' 'src/modules/freight-forwarding/components/index.ts' 'src/app/(dashboard)/freight-forwarding/page.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and regenerated the route audit and migration matrix;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and regenerated the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the existing repository-wide `src/components/monolith`
+  ownership baseline, not on the Freight Forwarding module scaffold;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  still fails on the existing unrelated Accounting recurring/customization,
+  customer-advances, incentives, and Prisma-model baseline issues outside this
+  module addition;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx vitest run 'src/lib/navigation.test.ts'`:
+  could not start because the repository's guarded Vitest configuration
+  requires `.env.staging.local` before test execution.
+
+Open follow-up:
+
+- the Freight Forwarding module currently exposes only its blank landing
+  workspace; no sub-routes, data model, permissions, or workflow actions were
+  added in this pass;
+- no authenticated browser backend is attached in this Codex session, so the
+  new module was source-verified and shell-wired rather than screenshot-verified
+  in Light, Night, and Violet themes.
 
 ## 2026-08-04 CRM lead detail creator-data handoff
 
@@ -3960,3 +4741,34 @@ Known limits:
 - the Banking UI deliberately omits rules, quick categorize, matching,
   reconciliation, undo import, and external connector controls until those
   backing services exist.
+
+## 2026-08-04 Shared filter active-link design-system handoff
+
+The compact filter summary row is now part of the shared filter design system
+instead of being a CHA Jobs-only implementation.
+
+Delivered:
+
+- `src/components/forms/filter-menu.tsx` now exports `FilterActiveLinks`, a
+  shared tiny text-link summary row for active filters and clear actions;
+- `src/styles/monolith-system.css` now defines the compact active-link spacing,
+  reduced row height, small font size, and hover/focus treatment for that
+  shared summary pattern;
+- `src/app/(dashboard)/cha/jobs/jobs-client.tsx` now consumes the shared
+  summary component instead of route-local inline classes;
+- `src/app/(dashboard)/cha/customers/customers-filter-bar.tsx` now shows the
+  same compact active-filter summary row beneath the filter/search controls so
+  CHA customer filters match the shared pattern.
+
+Verification on Tuesday, August 4, 2026:
+
+- pending focused ESLint on the touched shared filter files and CHA consumers in
+  this pass.
+
+Known limits:
+
+- AMS appraisal filters and HRMS employee directory filters still use their
+  existing custom panel bodies because they are not yet built on the shared
+  categorized filter-panel pattern;
+- this pass standardizes the compact active-filter summary treatment and does
+  not change saved-view persistence behavior.

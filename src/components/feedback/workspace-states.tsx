@@ -1,10 +1,10 @@
-import Link from "next/link";
 import {
   AlertTriangle,
   Inbox,
   LoaderCircle,
   LockKeyhole,
 } from "lucide-react";
+import { ButtonLink } from "@/components/ui/button";
 import { WorkspaceState } from "@/components/layout/workspace";
 
 interface WorkspaceStateAction {
@@ -21,9 +21,9 @@ interface SharedWorkspaceStateProps {
 function StateAction({ action }: { action?: WorkspaceStateAction }) {
   if (!action) return null;
   return (
-    <Link className="mnx-button mnx-button-primary" href={action.href}>
+    <ButtonLink href={action.href}>
       {action.label}
-    </Link>
+    </ButtonLink>
   );
 }
 

@@ -37,6 +37,7 @@ import type {
   ThHTMLAttributes,
 } from "react";
 import { cn } from "@/lib/utils";
+import { ButtonLink } from "@/components/ui/button";
 import {
   WorkspaceAction,
   WorkspaceBadge,
@@ -501,12 +502,9 @@ export function PeopleActionLink({
   href: string;
 }) {
   return (
-    <Link
-      className={cn("mnx-button mnx-button-secondary", className)}
-      href={href}
-    >
+    <ButtonLink className={className} href={href} variant="inverse">
       {children}
-    </Link>
+    </ButtonLink>
   );
 }
 

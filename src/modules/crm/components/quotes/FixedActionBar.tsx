@@ -28,8 +28,8 @@ export function FixedActionBar({
   onTemplateChange,
 }: FixedActionBarProps) {
   return (
-    <div className="sticky bottom-0 z-40 border-t border-[var(--mnx-border)] bg-mono-card px-4 py-3 mnx-shadow-panel">
-      <div className="mx-auto flex max-w-[1400px] flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div className="border-t border-[var(--mnx-border)] bg-mono-card px-6 py-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-2">
           <Button
             className="h-9 bg-[var(--mnx-accent)] px-4 text-[12px] hover:bg-[var(--mnx-accent)]"

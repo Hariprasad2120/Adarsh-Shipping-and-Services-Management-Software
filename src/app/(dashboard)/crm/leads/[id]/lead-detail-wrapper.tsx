@@ -3,6 +3,7 @@
 import {
   CrmButton,
   CrmInput,
+  CrmTabs,
   CrmTextarea,
 } from "@/modules/crm/components/workspace/crm-workspace";
 
@@ -722,80 +723,66 @@ export function LeadDetailWrapper({
         {/* Right Column: Related Lists & Timeline Activities */}
         <div className="space-y-6">
           {/* Tabs Navigation Card */}
-          <div className="p-6 rounded-xl bg-[var(--mnx-surface)] border border-[var(--mnx-border)]/50 space-y-6">
+          <div className="p-6 rounded-xl bg-[var(--mnx-card)] border border-[var(--mnx-border)]/50 space-y-6">
             {/* Horizontal Tabs Selection */}
-            <div className="flex border-b border-[var(--mnx-border)]/50 pb-1 gap-4 overflow-x-auto select-none">
+            <CrmTabs className="flex-wrap overflow-visible rounded-none border-x-0 border-t-0 bg-transparent p-0 pb-3">
               <CrmButton
                 onClick={() => setActiveTab("OVERVIEW")}
-                className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "OVERVIEW"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
-                }`}
+                variant={activeTab === "OVERVIEW" ? "primary" : "secondary"}
+                size="compact"
+                className="shrink-0 font-normal"
               >
-                Overview
+                Summary
               </CrmButton>
               <CrmButton
                 onClick={() => setActiveTab("NOTES")}
-                className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "NOTES"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
-                }`}
+                variant={activeTab === "NOTES" ? "primary" : "secondary"}
+                size="compact"
+                className="shrink-0 font-normal"
               >
                 Notes ({notes.length})
               </CrmButton>
               <CrmButton
                 onClick={() => setActiveTab("ACTIVITIES")}
-                className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ACTIVITIES"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
-                }`}
+                variant={activeTab === "ACTIVITIES" ? "primary" : "secondary"}
+                size="compact"
+                className="shrink-0 font-normal"
               >
-                Activities ({activities.length})
+                Tasks ({activities.length})
               </CrmButton>
               <CrmButton
                 onClick={() => setActiveTab("ATTACHMENTS")}
-                className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "ATTACHMENTS"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
-                }`}
+                variant={activeTab === "ATTACHMENTS" ? "primary" : "secondary"}
+                size="compact"
+                className="shrink-0 font-normal"
               >
                 Files ({attachments.length})
               </CrmButton>
               <CrmButton
                 onClick={() => setActiveTab("TIMELINE")}
-                className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "TIMELINE"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
-                }`}
+                variant={activeTab === "TIMELINE" ? "primary" : "secondary"}
+                size="compact"
+                className="shrink-0 font-normal"
               >
                 Audit
               </CrmButton>
               <CrmButton
                 onClick={() => setActiveTab("TIME_TRACKER")}
-                className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "TIME_TRACKER"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
-                }`}
+                variant={activeTab === "TIME_TRACKER" ? "primary" : "secondary"}
+                size="compact"
+                className="shrink-0 font-normal"
               >
                 Time Tracker ({workTimeLogs.length})
               </CrmButton>
               <CrmButton
                 onClick={() => setActiveTab("CALLS")}
-                className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer shrink-0 ${
-                  activeTab === "CALLS"
-                    ? "border-[var(--mnx-accent)] text-mono-text"
-                    : "border-transparent text-mono-muted hover:text-mono-text"
-                }`}
+                variant={activeTab === "CALLS" ? "primary" : "secondary"}
+                size="compact"
+                className="shrink-0 font-normal"
               >
                 Calls ({calls.length})
               </CrmButton>
-            </div>
+            </CrmTabs>
 
             {/* Tab Rendering Content */}
             <div className="space-y-4">

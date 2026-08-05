@@ -236,6 +236,27 @@ const MODULE_DEFINITIONS: readonly ModuleDefinition[] = [
     },
   },
   {
+    id: "freight-forwarding",
+    title: "Freight forwarding",
+    eyebrow: "FORWARDING",
+    description: "Prepare the forwarding workspace foundation for future shipment planning and execution flows.",
+    href: "/freight-forwarding",
+    icon: "freight-forwarding",
+    tone: "info",
+    primaryLabel: "active jobs",
+    primaryDetail: "No freight forwarding workflows are configured yet",
+    secondaryLabel: "pending milestones",
+    tertiaryLabel: "ready screens",
+    actions: [
+      { label: "Open workspace", href: "/freight-forwarding" },
+    ],
+    read: async () => ({
+      primary: 0,
+      secondary: 0,
+      tertiary: 0,
+    }),
+  },
+  {
     id: "communication",
     title: "Communication",
     eyebrow: "WORKSPACE",
@@ -659,6 +680,13 @@ export async function getDashboardModuleSnapshot({
       secondary: catalogueModules.filter((module) => module.status === "Implemented").length,
       tertiary: detailedWorkflowStages.length,
     });
+    if (visibleSet.has("freight-forwarding")) {
+      counts.set("freight-forwarding", {
+        primary: 0,
+        secondary: 0,
+        tertiary: 0,
+      });
+    }
     return {
       modules: definitions.map((definition) => summaryFromCounts(definition, counts.get(definition.id))),
       generatedAt: now.toISOString(),

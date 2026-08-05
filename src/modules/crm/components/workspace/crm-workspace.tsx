@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   AlertTriangle,
   BarChart3,
@@ -46,6 +46,7 @@ import type {
   TableHTMLAttributes,
 } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   WorkspaceAction,
   type WorkspaceActionProps,
@@ -70,6 +71,7 @@ type CrmRouteMeta = {
   title: string;
   description: string;
   icon: LucideIcon;
+  hideHeaderIcon?: boolean;
 };
 
 const exactRouteMeta: Record<string, CrmRouteMeta> = {
@@ -171,6 +173,20 @@ const exactRouteMeta: Record<string, CrmRouteMeta> = {
       "Qualify incoming customer requests and coordinate their conversion into active sales work.",
     icon: Inbox,
   },
+  "/crm/freight-forwarding": {
+    eyebrow: "Demand intake",
+    title: "Freight forwarding",
+    description:
+      "Track qualified freight forwarding work items routed from CRM leads and direct enquiries.",
+    icon: Truck,
+  },
+  "/crm/customs-clearance": {
+    eyebrow: "Demand intake",
+    title: "Customs clearance",
+    description:
+      "Track qualified customs clearance work items routed from CRM leads and direct enquiries.",
+    icon: ClipboardCheck,
+  },
   "/crm/events": {
     eyebrow: "Relationship activity",
     title: "Events",
@@ -247,6 +263,7 @@ const exactRouteMeta: Record<string, CrmRouteMeta> = {
     description:
       "Prioritise new prospects, follow-up windows, qualification status, ownership, and conversion.",
     icon: Users,
+    hideHeaderIcon: true,
   },
   "/crm/leads/new": {
     eyebrow: "Demand qualification",
@@ -450,6 +467,24 @@ export function getCrmRouteMeta(pathname: string | null): CrmRouteMeta {
       icon: Inbox,
     };
   }
+  if (/^\/crm\/freight-forwarding\/[^/]+$/.test(path)) {
+    return {
+      eyebrow: "Demand record",
+      title: "Freight forwarding enquiry",
+      description:
+        "Review the normalized freight forwarding service enquiry, assignment, and workflow links.",
+      icon: Truck,
+    };
+  }
+  if (/^\/crm\/customs-clearance\/[^/]+$/.test(path)) {
+    return {
+      eyebrow: "Demand record",
+      title: "Customs clearance enquiry",
+      description:
+        "Review the normalized customs clearance service enquiry, assignment, and workflow links.",
+      icon: ClipboardCheck,
+    };
+  }
   if (/^\/crm\/invoices\/[^/]+$/.test(path)) {
     return {
       eyebrow: "Commercial document",
@@ -535,7 +570,7 @@ export function CrmWorkspaceFrame({ children }: { children: ReactNode }) {
         eyebrow={meta.eyebrow}
         title={meta.title}
         description={meta.description}
-        icon={<Icon aria-hidden="true" />}
+        icon={meta.hideHeaderIcon ? undefined : <Icon aria-hidden="true" />}
       />
       <div className="mnx-crm-content">{children}</div>
     </WorkspacePage>
@@ -756,23 +791,25 @@ export function CrmActionLink({
   className,
   href,
   primary = false,
+  size = "compact",
 }: {
   children: ReactNode;
   className?: string;
   href: string;
   primary?: boolean;
+  size?: "default" | "compact";
 }) {
+  const router = useRouter();
+
   return (
-    <Link
-      className={cn(
-        "mnx-button",
-        primary ? "mnx-button-primary" : "mnx-button-secondary",
-        className,
-      )}
-      href={href}
+    <Button
+      className={className}
+      variant={primary ? "default" : "inverse"}
+      size={size === "compact" ? "sm" : "md"}
+      onClick={() => router.push(href)}
     >
       {children}
-    </Link>
+    </Button>
   );
 }
 

@@ -7,6 +7,7 @@ const CHA_VISIBLE_NAV_SECTIONS = new Set([
   "todo",
   "notifications",
   "cha",
+  "freight-forwarding",
   "admin",
 ]);
 

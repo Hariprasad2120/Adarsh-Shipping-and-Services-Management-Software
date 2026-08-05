@@ -27,6 +27,7 @@ import {
   OperationalTableEmpty,
   OperationalTableHead,
 } from "@/components/data-display/operational-data-table";
+import { CategorizedFilterMenuPanel, FilterActiveLinks, type FilterMenuPanelSection } from "@/components/forms/filter-menu";
 import { Button } from "@/components/ui/button";
 import { NeonCheckbox } from "@/components/ui/neon-checkbox";
 import { ChaFilterMenu as FilterMenu } from "@/modules/cha/components/workspace/cha-workspace";
@@ -35,7 +36,6 @@ import { JobFilingQueryWarningIndicator } from "@/modules/cha/components/warning
 import { ChaDueDateWarningsIndicator } from "@/modules/cha/components/warnings/cha-due-date-warnings-indicator";
 import type { DueDateWarningViewModel } from "@/modules/cha/components/warnings/cha-due-date-warning-indicator";
 import { formatChaBadgeLabel } from "@/lib/cha-badges";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   ChaMetricCard,
@@ -89,11 +89,11 @@ interface JobsClientProps {
   completedJobsData: TableData;
   filters: {
     search?: string;
-    stage?: string;
-    status?: string;
-    priority?: string;
-    branchId?: string;
-    jobTypeId?: string;
+    stage?: string[];
+    status?: string[];
+    priority?: string[];
+    branchId?: string[];
+    jobTypeId?: string[];
     assignedToMe?: boolean;
   };
   options: {
@@ -177,11 +177,11 @@ export function JobsClient({
   const searchParams = useSearchParams();
 
   const [search, setSearch] = useState(filters.search || "");
-  const [stage, setStage] = useState(filters.stage || "");
-  const [status, setStatus] = useState(filters.status || "");
-  const [priority, setPriority] = useState(filters.priority || "");
-  const [branchId, setBranchId] = useState(filters.branchId || "");
-  const [jobTypeId, setJobTypeId] = useState(filters.jobTypeId || "");
+  const [stage, setStage] = useState<string[]>(filters.stage || []);
+  const [status, setStatus] = useState<string[]>(filters.status || []);
+  const [priority, setPriority] = useState<string[]>(filters.priority || []);
+  const [branchId, setBranchId] = useState<string[]>(filters.branchId || []);
+  const [jobTypeId, setJobTypeId] = useState<string[]>(filters.jobTypeId || []);
   const [assignedToMe, setAssignedToMe] = useState(filters.assignedToMe || false);
   const [isModalOpen, setIsModalOpen] = useState(showCreateNew && canCreateJob);
   const [createOptions, setCreateOptions] =
@@ -189,7 +189,7 @@ export function JobsClient({
   const [createOptionsLoading, setCreateOptionsLoading] = useState(false);
   const createOptionsRequestRef = useRef(false);
   const [openFilterTable, setOpenFilterTable] = useState<"active" | "completed" | null>(null);
-  const [activeFilterType, setActiveFilterType] = useState<FilterPanelKey>("stage");
+  const [activeFilterType, setActiveFilterType] = useState<FilterPanelKey | "">("stage");
 
   const loadCreateOptions = useCallback(async () => {
     if (createOptions || createOptionsRequestRef.current) return;
@@ -220,22 +220,22 @@ export function JobsClient({
 
   const activeFilterCount = [
     Boolean(search),
-    Boolean(stage),
-    Boolean(status),
-    Boolean(priority),
-    Boolean(branchId),
-    Boolean(jobTypeId),
+    stage.length > 0,
+    status.length > 0,
+    priority.length > 0,
+    branchId.length > 0,
+    jobTypeId.length > 0,
     assignedToMe,
   ].filter(Boolean).length;
 
   const buildParams = (
     overrides?: Partial<{
       search: string;
-      stage: string;
-      status: string;
-      priority: string;
-      branchId: string;
-      jobTypeId: string;
+      stage: string[];
+      status: string[];
+      priority: string[];
+      branchId: string[];
+      jobTypeId: string[];
       assignedToMe: boolean;
     }>,
   ) => {
@@ -251,15 +251,49 @@ export function JobsClient({
     };
     const params = new URLSearchParams();
     if (next.search) params.set("search", next.search);
-    if (next.stage) params.set("stage", next.stage);
-    if (next.status) params.set("status", next.status);
-    if (next.priority) params.set("priority", next.priority);
-    if (next.branchId) params.set("branchId", next.branchId);
-    if (next.jobTypeId) params.set("jobTypeId", next.jobTypeId);
+    if (next.stage.length) params.set("stage", next.stage.join(","));
+    if (next.status.length) params.set("status", next.status.join(","));
+    if (next.priority.length) params.set("priority", next.priority.join(","));
+    if (next.branchId.length) params.set("branchId", next.branchId.join(","));
+    if (next.jobTypeId.length) params.set("jobTypeId", next.jobTypeId.join(","));
     if (next.assignedToMe) params.set("assignedToMe", "true");
     params.set("activePage", "1");
     params.set("completedPage", "1");
     return params;
+  };
+
+  const toggleValue = (current: string[], value: string) =>
+    current.includes(value)
+      ? current.filter((item) => item !== value)
+      : [...current, value];
+
+  const syncFilters = (overrides?: Partial<{
+    search: string;
+    stage: string[];
+    status: string[];
+    priority: string[];
+    branchId: string[];
+    jobTypeId: string[];
+    assignedToMe: boolean;
+  }>) => {
+    const next = {
+      search,
+      stage,
+      status,
+      priority,
+      branchId,
+      jobTypeId,
+      assignedToMe,
+      ...overrides,
+    };
+    setSearch(next.search);
+    setStage(next.stage);
+    setStatus(next.status);
+    setPriority(next.priority);
+    setBranchId(next.branchId);
+    setJobTypeId(next.jobTypeId);
+    setAssignedToMe(next.assignedToMe);
+    router.push(`/cha/jobs?${buildParams(overrides).toString()}`);
   };
 
   const applyFilters = () => {
@@ -268,45 +302,39 @@ export function JobsClient({
     setOpenFilterTable(null);
   };
 
+  const buildJobsHref = (
+    overrides?: Partial<{
+      search: string;
+      stage: string[];
+      status: string[];
+      priority: string[];
+      branchId: string[];
+      jobTypeId: string[];
+      assignedToMe: boolean;
+    }>,
+  ) => {
+    const params = buildParams(overrides);
+    const query = params.toString();
+    return query ? `/cha/jobs?${query}` : "/cha/jobs";
+  };
+
   const handlePageChange = (table: "active" | "completed", page: number) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set(table === "active" ? "activePage" : "completedPage", String(page));
     router.push(`/cha/jobs?${params.toString()}`);
   };
 
-  const resetFilters = () => {
-    setSearch("");
-    setStage("");
-    setStatus("");
-    setPriority("");
-    setBranchId("");
-    setJobTypeId("");
-    setAssignedToMe(false);
-    router.push("/cha/jobs");
-    setOpenFilterTable(null);
-  };
-
-  const removeFilter = (filterKey: "search" | "stage" | "status" | "priority" | "branchId" | "jobTypeId" | "assignedToMe") => {
-    if (filterKey === "search") setSearch("");
-    if (filterKey === "stage") setStage("");
-    if (filterKey === "status") setStatus("");
-    if (filterKey === "priority") setPriority("");
-    if (filterKey === "branchId") setBranchId("");
-    if (filterKey === "jobTypeId") setJobTypeId("");
-    if (filterKey === "assignedToMe") setAssignedToMe(false);
-
-    const params = buildParams({
-      [filterKey]: filterKey === "assignedToMe" ? false : "",
-    } as Partial<{
-      search: string;
-      stage: string;
-      status: string;
-      priority: string;
-      branchId: string;
-      jobTypeId: string;
-      assignedToMe: boolean;
-    }>);
-    router.push(`/cha/jobs?${params.toString()}`);
+  const removeFilterHref = (
+    filterKey: "search" | "stage" | "status" | "priority" | "branchId" | "jobTypeId" | "assignedToMe",
+    value?: string,
+  ) => {
+    if (filterKey === "search") return buildJobsHref({ search: "" });
+    if (filterKey === "stage") return buildJobsHref({ stage: value ? stage.filter((item) => item !== value) : [] });
+    if (filterKey === "status") return buildJobsHref({ status: value ? status.filter((item) => item !== value) : [] });
+    if (filterKey === "priority") return buildJobsHref({ priority: value ? priority.filter((item) => item !== value) : [] });
+    if (filterKey === "branchId") return buildJobsHref({ branchId: value ? branchId.filter((item) => item !== value) : [] });
+    if (filterKey === "jobTypeId") return buildJobsHref({ jobTypeId: value ? jobTypeId.filter((item) => item !== value) : [] });
+    return buildJobsHref({ assignedToMe: false });
   };
 
   const assignedViewLabel = assignedToMe ? "Mine" : "All";
@@ -345,69 +373,30 @@ export function JobsClient({
 
   const activePills = [
     search ? { key: "search" as const, label: `Search: ${search}` } : null,
-    stage ? { key: "stage" as const, label: `Stage: ${formatChaStageShortLabel(stage)}` } : null,
-    status ? { key: "status" as const, label: `Status: ${status}` } : null,
-    priority ? { key: "priority" as const, label: `Priority: ${priority}` } : null,
-    branchId
-      ? { key: "branchId" as const, label: `Branch: ${options.branches.find((branch) => branch.id === branchId)?.name ?? "Selected"}` }
-      : null,
-    jobTypeId
-      ? { key: "jobTypeId" as const, label: `Type: ${options.jobTypes.find((jobType) => jobType.id === jobTypeId)?.name ?? "Selected"}` }
-      : null,
+    ...stage.map((value) => ({ key: "stage" as const, value, label: `Stage: ${formatChaStageShortLabel(value)}` })),
+    ...status.map((value) => ({ key: "status" as const, value, label: `Status: ${formatChaBadgeLabel(value)}` })),
+    ...priority.map((value) => ({ key: "priority" as const, value, label: `Priority: ${value}` })),
+    ...branchId.map((value) => ({
+      key: "branchId" as const,
+      value,
+      label: `Branch: ${options.branches.find((branch) => branch.id === value)?.name ?? "Selected"}`,
+    })),
+    ...jobTypeId.map((value) => ({
+      key: "jobTypeId" as const,
+      value,
+      label: `Type: ${options.jobTypes.find((jobType) => jobType.id === value)?.name ?? "Selected"}`,
+    })),
     assignedToMe ? { key: "assignedToMe" as const, label: "Assigned to me" } : null,
-  ].filter(Boolean) as { key: "search" | "stage" | "status" | "priority" | "branchId" | "jobTypeId" | "assignedToMe"; label: string }[];
+  ].filter(Boolean) as { key: "search" | "stage" | "status" | "priority" | "branchId" | "jobTypeId" | "assignedToMe"; label: string; value?: string }[];
 
-  const filterTypes: { key: FilterPanelKey; label: string; value: string; active: boolean }[] = [
-    { key: "stage", label: "Workflow Stage", value: stage ? formatChaStageShortLabel(stage) : "All", active: Boolean(stage) },
-    { key: "status", label: "Status", value: status || "All", active: Boolean(status) },
-    { key: "priority", label: "Priority", value: priority || "All", active: Boolean(priority) },
+  const filterSections: FilterMenuPanelSection[] = [
     {
-      key: "branchId",
-      label: "Branch",
-      value: branchId ? options.branches.find((branch) => branch.id === branchId)?.name ?? "Selected" : "All",
-      active: Boolean(branchId),
-    },
-    {
-      key: "jobTypeId",
-      label: "Job Type",
-      value: jobTypeId ? options.jobTypes.find((jobType) => jobType.id === jobTypeId)?.name ?? "Selected" : "All",
-      active: Boolean(jobTypeId),
-    },
-    { key: "assignedToMe", label: "Assignment", value: assignedToMe ? "Mine" : "All", active: assignedToMe },
-  ];
-
-  const filterOptionButton = ({
-    label,
-    note,
-    selected,
-    onClick,
-  }: {
-    label: string;
-    note?: string;
-    selected: boolean;
-    onClick: () => void;
-  }) => (
-    <Button
-      key={`${activeFilterType}-${label}-${note ?? ""}`}
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "mnx-plain mnx-menu-option py-2 text-sm",
-        selected && "mnx-menu-option-active",
-      )}
-    >
-      <span className="min-w-0">
-        <span className="block truncate">{label}</span>
-        {note ? <span className="mt-0.5 block truncate text-xs mnx-text-muted">{note}</span> : null}
-      </span>
-      {selected ? <span className="mnx-state-dot" /> : null}
-    </Button>
-  );
-
-  const renderFilterOptions = () => {
-    if (activeFilterType === "stage") {
-      return [
-        filterOptionButton({ label: "All Stages", selected: !stage, onClick: () => setStage("") }),
+      key: "stage",
+      label: "Workflow Stage",
+      value: stage.length ? `${stage.length} selected` : "All",
+      active: stage.length > 0,
+      options: [
+        { key: "stage-all", label: "All Stages", selected: stage.length === 0, onSelect: () => syncFilters({ stage: [] }) },
         ...[
           { value: "DOCUMENT_COLLECTION", note: "Documentation" },
           { value: "ADDITIONAL_DATA", note: "Additional data" },
@@ -415,58 +404,99 @@ export function JobsClient({
           { value: "CHECKLIST_APPROVAL", note: "Checklist approval" },
           { value: "FILING", note: "Filing" },
           { value: "FILED", note: "Completed" },
-        ].map((item) =>
-          filterOptionButton({
-            label: formatChaStageShortLabel(item.value),
-            note: item.note,
-            selected: stage === item.value,
-            onClick: () => setStage(item.value),
-          }),
-        ),
-      ];
-    }
-
-    if (activeFilterType === "status") {
-      return [
-        filterOptionButton({ label: "All Statuses", selected: !status, onClick: () => setStatus("") }),
-        ...["ACTIVE", "HOLD", "CANCELLED", "COMPLETED"].map((item) =>
-          filterOptionButton({ label: formatChaBadgeLabel(item), selected: status === item, onClick: () => setStatus(item) }),
-        ),
-      ];
-    }
-
-    if (activeFilterType === "priority") {
-      return [
-        filterOptionButton({ label: "All Priorities", selected: !priority, onClick: () => setPriority("") }),
-        ...["LOW", "MEDIUM", "HIGH"].map((item) =>
-          filterOptionButton({ label: item, selected: priority === item, onClick: () => setPriority(item) }),
-        ),
-      ];
-    }
-
-    if (activeFilterType === "branchId") {
-      return [
-        filterOptionButton({ label: "All Branches", selected: !branchId, onClick: () => setBranchId("") }),
-        ...options.branches.map((branch) =>
-          filterOptionButton({ label: branch.name, selected: branchId === branch.id, onClick: () => setBranchId(branch.id) }),
-        ),
-      ];
-    }
-
-    if (activeFilterType === "jobTypeId") {
-      return [
-        filterOptionButton({ label: "All Job Types", selected: !jobTypeId, onClick: () => setJobTypeId("") }),
-        ...options.jobTypes.map((jobType) =>
-          filterOptionButton({ label: jobType.name, selected: jobTypeId === jobType.id, onClick: () => setJobTypeId(jobType.id) }),
-        ),
-      ];
-    }
-
-    return [
-      filterOptionButton({ label: "All Jobs", note: "Every visible job", selected: !assignedToMe, onClick: () => setAssignedToMe(false) }),
-      filterOptionButton({ label: "Assigned to me", note: "Only your queue", selected: assignedToMe, onClick: () => setAssignedToMe(true) }),
-    ];
-  };
+        ].map((item) => ({
+          key: `stage-${item.value}`,
+          label: formatChaStageShortLabel(item.value),
+          note: item.note,
+          selected: stage.includes(item.value),
+          onSelect: () => syncFilters({ stage: toggleValue(stage, item.value) }),
+        })),
+      ],
+    },
+    {
+      key: "status",
+      label: "Status",
+      value: status.length ? `${status.length} selected` : "All",
+      active: status.length > 0,
+      options: [
+        { key: "status-all", label: "All Statuses", selected: status.length === 0, onSelect: () => syncFilters({ status: [] }) },
+        ...["ACTIVE", "HOLD", "CANCELLED", "COMPLETED"].map((item) => ({
+          key: `status-${item}`,
+          label: formatChaBadgeLabel(item),
+          selected: status.includes(item),
+          onSelect: () => syncFilters({ status: toggleValue(status, item) }),
+        })),
+      ],
+    },
+    {
+      key: "priority",
+      label: "Priority",
+      value: priority.length ? `${priority.length} selected` : "All",
+      active: priority.length > 0,
+      options: [
+        { key: "priority-all", label: "All Priorities", selected: priority.length === 0, onSelect: () => syncFilters({ priority: [] }) },
+        ...["LOW", "MEDIUM", "HIGH"].map((item) => ({
+          key: `priority-${item}`,
+          label: item,
+          selected: priority.includes(item),
+          onSelect: () => syncFilters({ priority: toggleValue(priority, item) }),
+        })),
+      ],
+    },
+    {
+      key: "branchId",
+      label: "Branch",
+      value: branchId.length ? `${branchId.length} selected` : "All",
+      active: branchId.length > 0,
+      options: [
+        { key: "branch-all", label: "All Branches", selected: branchId.length === 0, onSelect: () => syncFilters({ branchId: [] }) },
+        ...options.branches.map((branch) => ({
+          key: `branch-${branch.id}`,
+          label: branch.name,
+          note: branch.code,
+          selected: branchId.includes(branch.id),
+          onSelect: () => syncFilters({ branchId: toggleValue(branchId, branch.id) }),
+        })),
+      ],
+    },
+    {
+      key: "jobTypeId",
+      label: "Job Type",
+      value: jobTypeId.length ? `${jobTypeId.length} selected` : "All",
+      active: jobTypeId.length > 0,
+      options: [
+        { key: "job-type-all", label: "All Job Types", selected: jobTypeId.length === 0, onSelect: () => syncFilters({ jobTypeId: [] }) },
+        ...options.jobTypes.map((jobType) => ({
+          key: `job-type-${jobType.id}`,
+          label: jobType.name,
+          selected: jobTypeId.includes(jobType.id),
+          onSelect: () => syncFilters({ jobTypeId: toggleValue(jobTypeId, jobType.id) }),
+        })),
+      ],
+    },
+    {
+      key: "assignedToMe",
+      label: "Assignment",
+      value: assignedToMe ? "Mine" : "All",
+      active: assignedToMe,
+      options: [
+        {
+          key: "assignment-all",
+          label: "All Jobs",
+          note: "Every visible job",
+          selected: !assignedToMe,
+          onSelect: () => syncFilters({ assignedToMe: false }),
+        },
+        {
+          key: "assignment-mine",
+          label: "Assigned to me",
+          note: "Only your queue",
+          selected: assignedToMe,
+          onSelect: () => syncFilters({ assignedToMe: !assignedToMe }),
+        },
+      ],
+    },
+  ];
 
   const renderTableControls = (tableKey: "active" | "completed") => (
     <form
@@ -495,43 +525,15 @@ export function JobsClient({
           activeCount={activeFilterCount}
           title="Filters"
           ariaLabel="Open filters"
-          contentClassName="w-[min(460px,calc(100vw-2rem))] max-h-[62vh] overflow-y-auto"
+          contentClassName="w-[min(320px,calc(100vw-1rem))]"
         >
-          <div className="overflow-hidden mnx-bg-surface">
-            <div className="grid min-h-[240px] grid-cols-1 sm:grid-cols-[156px_minmax(0,1fr)]">
-              <div className="border-b mnx-border mnx-bg-soft sm:border-b-0 sm:border-r">
-                {filterTypes.map((item) => (
-                  <Button
-                    key={item.key}
-                    type="button"
-                    onClick={() => setActiveFilterType(item.key)}
-                    className={cn(
-                      "mnx-plain mnx-menu-option gap-2",
-                      activeFilterType === item.key && "mnx-menu-option-active",
-                    )}
-                  >
-                    <span className="min-w-0">
-                      <span className="mnx-label block truncate mnx-text-primary">{item.label}</span>
-                      <span className="mt-1 block truncate text-xs mnx-text-muted">{item.value}</span>
-                    </span>
-                    {item.active ? <span className="mnx-state-dot" /> : null}
-                  </Button>
-                ))}
-              </div>
-              <div className="space-y-0 p-0">
-                {renderFilterOptions()}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between gap-2 border-t mnx-border mnx-bg-surface p-3">
-            <Button variant="outline" onClick={resetFilters} className="flex-1">
-              Reset
-            </Button>
-            <Button onClick={applyFilters} className="flex-1">
-              Apply Filters
-            </Button>
-          </div>
+          <CategorizedFilterMenuPanel
+            activeCategoryKey={activeFilterType}
+            onActiveCategoryChange={(value) => setActiveFilterType(value as FilterPanelKey | "")}
+            sections={filterSections}
+            title="Filters"
+            headerActionLabel="Save view"
+          />
         </FilterMenu>
         {canCreateJob ? (
           <Button
@@ -553,21 +555,14 @@ export function JobsClient({
   const renderActivePills = () =>
     activePills.length > 0 ? (
       <div className="mnx-cha-jobs-table-controls">
-        <div className="flex flex-wrap items-center gap-2">
-          {activePills.map((pill) => (
-            <Button
-              key={pill.key}
-              type="button"
-              onClick={() => removeFilter(pill.key)}
-              className="mnx-plain mnx-badge"
-            >
-              {pill.label} x
-            </Button>
-          ))}
-          <Button type="button" variant="outline" size="sm" onClick={resetFilters} className="h-7 text-[10px] rounded-full">
-            Clear All
-          </Button>
-        </div>
+        <FilterActiveLinks
+          links={activePills.map((pill) => ({
+            key: `${pill.key}-${pill.value ?? pill.label}`,
+            href: removeFilterHref(pill.key, pill.value),
+            label: `${pill.label} x`,
+          }))}
+          clearHref="/cha/jobs"
+        />
       </div>
     ) : null;
 

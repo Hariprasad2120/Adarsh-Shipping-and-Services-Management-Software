@@ -10,6 +10,7 @@ export type DashboardModuleIcon =
   | "communication"
   | "crm"
   | "expense"
+  | "freight-forwarding"
   | "hrms"
   | "lms"
   | "product-catalogue"

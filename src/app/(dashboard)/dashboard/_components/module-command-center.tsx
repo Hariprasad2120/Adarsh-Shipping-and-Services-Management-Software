@@ -46,6 +46,7 @@ function getModuleVisual(moduleId: string) {
   if (moduleId === "ams") return "performance";
   if (moduleId === "lms") return "learning";
   if (moduleId === "crm") return "pipeline";
+  if (moduleId === "freight-forwarding") return "shipment";
   if (moduleId === "communication") return "communication";
   if (moduleId === "expense") return "expense";
   if (moduleId === "cha") return "shipment";

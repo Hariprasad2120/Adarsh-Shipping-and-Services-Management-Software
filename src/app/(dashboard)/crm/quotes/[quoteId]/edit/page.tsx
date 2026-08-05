@@ -98,5 +98,13 @@ export default async function EditCrmQuotePage({
     gstin: a.gstin ?? undefined,
   }));
 
-  return <NewQuotePage initialData={initialData} quoteId={quoteId} salespersons={salespersons} accounts={accounts} />;
+  return (
+    <NewQuotePage
+      initialData={initialData}
+      quoteId={quoteId}
+      salespersons={salespersons}
+      accounts={accounts}
+      linkedLeadId={dbQuote.crmLeadId || undefined}
+    />
+  );
 }

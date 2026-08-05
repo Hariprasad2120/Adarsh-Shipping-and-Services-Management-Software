@@ -200,6 +200,18 @@ export async function listEnquiries(orgId: string, filters?: { search?: string; 
     orderBy: { createdAt: "desc" },
     include: {
       owner: { select: { id: true, name: true, email: true } },
+      serviceEnquiries: {
+        select: {
+          id: true,
+          serviceType: true,
+          departmentRef: true,
+          enquiryRef: true,
+          sharedSequence: true,
+          sequenceDate: true,
+          serviceCode: true,
+        },
+        orderBy: [{ createdAt: "asc" }],
+      },
     },
   });
 }

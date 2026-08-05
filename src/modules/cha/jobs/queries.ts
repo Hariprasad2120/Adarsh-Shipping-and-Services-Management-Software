@@ -5,11 +5,11 @@ import type { Prisma } from "@/generated/prisma/client";
 
 export type ChaJobListFilters = {
   search?: string;
-  stage?: string;
-  status?: string;
-  priority?: string;
-  branchId?: string;
-  jobTypeId?: string;
+  stage?: string[];
+  status?: string[];
+  priority?: string[];
+  branchId?: string[];
+  jobTypeId?: string[];
   assignedToMe?: boolean;
   jobGroup?: "ACTIVE" | "COMPLETED";
   page?: number;
@@ -32,11 +32,11 @@ export async function listJobs(userId: string, orgId: string, filters: ChaJobLis
       ],
     });
   }
-  if (filters.stage) where.stage = filters.stage;
-  if (filters.status) where.status = filters.status;
-  if (filters.priority) where.priority = filters.priority;
-  if (filters.branchId) where.branchId = filters.branchId;
-  if (filters.jobTypeId) where.jobTypeId = filters.jobTypeId;
+  if (filters.stage?.length) where.stage = { in: filters.stage };
+  if (filters.status?.length) where.status = { in: filters.status };
+  if (filters.priority?.length) where.priority = { in: filters.priority };
+  if (filters.branchId?.length) where.branchId = { in: filters.branchId };
+  if (filters.jobTypeId?.length) where.jobTypeId = { in: filters.jobTypeId };
   if (filters.assignedToMe) where.assignments = { some: { userId } };
 
   const completed = {

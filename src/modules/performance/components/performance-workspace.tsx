@@ -32,6 +32,7 @@ import type {
 } from "react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { ButtonLink } from "@/components/ui/button";
 import {
   WorkspaceAction,
   type WorkspaceActionProps,
@@ -398,12 +399,9 @@ export function PerformanceActionLink({
   href: string;
 }) {
   return (
-    <Link
-      className={cn("mnx-button mnx-button-secondary", className)}
-      href={href}
-    >
+    <ButtonLink className={className} href={href} variant="inverse">
       {children}
-    </Link>
+    </ButtonLink>
   );
 }
 

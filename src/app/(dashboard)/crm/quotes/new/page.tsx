@@ -192,5 +192,12 @@ export default async function NewCrmQuotePage({ searchParams }: { searchParams: 
     }
   }
 
-  return <NewQuotePage salespersons={salespersons} accounts={accounts} initialData={initialData} />;
+  return (
+    <NewQuotePage
+      salespersons={salespersons}
+      accounts={accounts}
+      initialData={initialData}
+      linkedLeadId={leadId}
+    />
+  );
 }

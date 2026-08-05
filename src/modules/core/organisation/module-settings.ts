@@ -10,11 +10,15 @@ import {
 export const MODULE_SETTINGS_KEY_PREFIX = "org";
 export const ENABLED_MODULES_SETTINGS_SUFFIX = "enabled_modules";
 export const ENABLED_FEATURES_SETTINGS_SUFFIX = "enabled_features";
+const ENABLED_MODULES_MIGRATION_SUFFIX = "enabled_modules_migrated_2026_08_04";
 
 const TOGGLEABLE_MODULE_SET = new Set<string>(TOGGLEABLE_MODULE_SECTION_IDS);
 const MANAGED_FEATURE_SET = new Set<string>(MANAGED_FEATURE_IDS);
 const ENABLED_MODULES_CACHE_TAG = "org:enabled-modules";
 const ENABLED_FEATURES_CACHE_TAG = "org:enabled-features";
+const LEGACY_AUTO_ENABLED_MODULE_IDS: readonly ToggleableModuleSectionId[] = [
+  "freight-forwarding",
+];
 
 function getEnabledModulesSettingKey(orgId: string) {
   return `${MODULE_SETTINGS_KEY_PREFIX}:${orgId}:${ENABLED_MODULES_SETTINGS_SUFFIX}`;
@@ -22,6 +26,10 @@ function getEnabledModulesSettingKey(orgId: string) {
 
 function getEnabledFeaturesSettingKey(orgId: string) {
   return `${MODULE_SETTINGS_KEY_PREFIX}:${orgId}:${ENABLED_FEATURES_SETTINGS_SUFFIX}`;
+}
+
+function getEnabledModulesMigrationKey(orgId: string) {
+  return `${MODULE_SETTINGS_KEY_PREFIX}:${orgId}:${ENABLED_MODULES_MIGRATION_SUFFIX}`;
 }
 
 function parseStoredEnabledModules(value: string | null | undefined): ToggleableModuleSectionId[] {
@@ -60,6 +68,60 @@ function parseStoredEnabledFeatures(value: string | null | undefined): ManagedFe
   }
 }
 
+async function migrateLegacyEnabledModulesIfNeeded(
+  orgId: string,
+  value: string | null | undefined,
+) {
+  if (!value) {
+    return [...TOGGLEABLE_MODULE_SECTION_IDS];
+  }
+
+  const parsed = parseStoredEnabledModules(value);
+  const missingLegacyDefaults = LEGACY_AUTO_ENABLED_MODULE_IDS.filter(
+    (id) => !parsed.includes(id),
+  );
+
+  if (missingLegacyDefaults.length === 0) {
+    return parsed;
+  }
+
+  const migrationKey = getEnabledModulesMigrationKey(orgId);
+  const migrationState = await db.systemSetting.findUnique({
+    where: { key: migrationKey },
+    select: { value: true },
+  });
+
+  if (migrationState?.value === "done") {
+    return parsed;
+  }
+
+  const migrated = TOGGLEABLE_MODULE_SECTION_IDS.filter(
+    (id) => parsed.includes(id) || missingLegacyDefaults.includes(id),
+  );
+
+  await db.$transaction([
+    db.systemSetting.upsert({
+      where: { key: getEnabledModulesSettingKey(orgId) },
+      update: { value: JSON.stringify(migrated) },
+      create: {
+        key: getEnabledModulesSettingKey(orgId),
+        value: JSON.stringify(migrated),
+      },
+    }),
+    db.systemSetting.upsert({
+      where: { key: migrationKey },
+      update: { value: "done" },
+      create: {
+        key: migrationKey,
+        value: "done",
+      },
+    }),
+  ]);
+
+  revalidateTag(ENABLED_MODULES_CACHE_TAG, "max");
+  return migrated;
+}
+
 const getCachedEnabledModuleIds = unstable_cache(
   async (orgId: string): Promise<ToggleableModuleSectionId[]> => {
     const row = await db.systemSetting.findUnique({
@@ -67,7 +129,7 @@ const getCachedEnabledModuleIds = unstable_cache(
       select: { value: true },
     });
 
-    return parseStoredEnabledModules(row?.value);
+    return migrateLegacyEnabledModulesIfNeeded(orgId, row?.value);
   },
   ["org:enabled-modules"],
   {
@@ -102,7 +164,7 @@ export async function getFreshEnabledModuleIds(orgId: string): Promise<Toggleabl
     select: { value: true },
   });
 
-  return parseStoredEnabledModules(row?.value);
+  return migrateLegacyEnabledModulesIfNeeded(orgId, row?.value);
 }
 
 export async function getEnabledFeatureIds(orgId: string): Promise<ManagedFeatureId[]> {

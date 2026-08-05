@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   AlertTriangle,
@@ -26,6 +25,7 @@ import type {
   TableHTMLAttributes,
 } from "react";
 import { cn } from "@/lib/utils";
+import { ButtonLink } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownSelect,
@@ -333,9 +333,9 @@ export function ChaActionLink({
   href: string;
 }) {
   return (
-    <Link className={cn("mnx-button mnx-button-secondary", className)} href={href}>
+    <ButtonLink className={className} href={href} variant="inverse">
       {children}
-    </Link>
+    </ButtonLink>
   );
 }
 
