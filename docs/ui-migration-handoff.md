@@ -1,6 +1,1112 @@
 # Monolith UI migration handoff
 
-Last updated: 2026-08-05
+Last updated: 2026-08-06
+
+## 2026-08-06 CRM to Freight/CHA process handoff flow
+
+Replaced the placeholder Freight Forwarding and CHA `Process` routes with a
+real queue-first operational handoff flow from CRM quotations.
+
+Delivered:
+
+- updated `src/modules/crm/approval-workflow.ts` and
+  `src/modules/crm/approval-actions.ts` so quotation `Create Booking` now
+  queues Freight and CHA work into `PROCESSING_PENDING`, and each module now
+  has a dedicated completion action that writes back the real Freight booking
+  or CHA job only after processing starts from its `Process` route;
+- added `src/modules/crm/quote-process.ts`-driven process queue pages at
+  `src/app/(dashboard)/freight-forwarding/process/page.tsx` and
+  `src/app/(dashboard)/cha/process/page.tsx` so both modules now show
+  quote-only handoff data instead of creating downstream records immediately;
+- added detail routes at
+  `src/app/(dashboard)/freight-forwarding/process/[quoteId]/page.tsx` and
+  `src/app/(dashboard)/cha/process/[quoteId]/page.tsx` so teams open the quote
+  from the process queue, choose transaction mode or create the CHA job there,
+  and complete the downstream record from that dedicated process surface;
+- updated
+  `src/modules/freight-forwarding/components/freight-forwarding-create-booking-client.tsx`
+  so the Freight create-booking page can run in a process-completion mode with
+  quote-prefilled values, a custom title, custom back link, and final
+  redirection into the created transaction;
+- updated `src/modules/cha/components/create-job-dialog.tsx` and
+  `src/app/(dashboard)/cha/jobs/new/new-job-client.tsx` so the page-form CHA
+  job creation flow accepts quote-prefilled defaults and can report the created
+  job back into the CRM quotation handoff;
+- updated `src/modules/crm/components/ApprovalActionBar.tsx` so quotations in
+  `BOOKING_CREATED` open the dedicated Freight or CHA process page while the
+  record is still waiting in the process queue;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` so the process queue and
+  detail routes are reflected in the current migration inventory.
+
+Verification on Thursday, August 6, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route matrix for the new process detail routes;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed.
+
+Known limits:
+
+- focused ESLint still fails if `src/modules/cha/components/create-job-dialog.tsx`
+  is included because that long-lived file already carries pre-existing
+  `react-hooks/set-state-in-effect` and `@typescript-eslint/no-explicit-any`
+  violations outside this process-handoff change;
+- no authenticated browser runtime is attached in this Codex session, so the
+  new queue pages and process detail flows are source-verified and
+  type-verified rather than manually browser-verified in Light, Night, and
+  Violet themes.
+
+## 2026-08-06 Freight Forwarding and CHA process routes
+
+Added dedicated empty `Process` pages for both Freight Forwarding and CHA so
+each module now has a stable route ready for future workflow implementation.
+
+Delivered:
+
+- added `src/app/(dashboard)/freight-forwarding/process/page.tsx` as a
+  tokenized Freight Forwarding workspace page with a canonical header, section,
+  panel, and empty state;
+- added `src/app/(dashboard)/cha/process/page.tsx` as a CHA workspace route
+  with the shared CHA route header contract and an empty-state section;
+- updated `src/lib/navigation.ts` so both modules expose `Process` in their
+  sidebar navigation;
+- updated `src/lib/route-labels.ts`,
+  `src/modules/cha/components/workspace/cha-workspace.tsx`, and
+  `src/modules/cha/components/workspace/cha-workspace.test.tsx` so the new CHA
+  route has the correct label and route metadata;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` so both new routes are
+  reflected in the current migration inventory.
+
+Verification on Thursday, August 6, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/cha/process/page.tsx' 'src/app/(dashboard)/freight-forwarding/process/page.tsx' 'src/lib/navigation.ts' 'src/lib/route-labels.ts' 'src/modules/cha/components/workspace/cha-workspace.tsx' 'src/modules/cha/components/workspace/cha-workspace.test.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route matrix with the new process routes;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  new pages are source-verified and type-verified rather than manually checked
+  in Light, Night, and Violet themes.
+
+## 2026-08-05 CHA dedicated new-job page
+
+Replaced the popup-first CHA job creation entry points with a dedicated
+`/cha/jobs/new` route while keeping the existing create-job form logic as the
+single source of truth.
+
+Delivered:
+
+- added `src/app/(dashboard)/cha/jobs/new/page.tsx` and
+  `src/app/(dashboard)/cha/jobs/new/new-job-client.tsx` so CHA now has a real
+  create-job workspace route with a route header and back-to-jobs action;
+- updated `src/modules/cha/components/create-job-dialog.tsx` so the existing
+  CHA create-job implementation can render either as the original modal or as a
+  full-page surface, preserving the existing form fields, job-type/shipment-type
+  creation helpers, draft restore behavior, and server action integration;
+- updated `src/modules/cha/components/dashboard-create-job.tsx`,
+  `src/app/(dashboard)/cha/page.tsx`, and
+  `src/app/(dashboard)/cha/jobs/jobs-client.tsx` so the Dashboard and Jobs
+  `New Job` actions now navigate to `/cha/jobs/new` instead of opening the
+  popup;
+- updated `src/app/(dashboard)/cha/jobs/page.tsx` so legacy
+  `/cha/jobs?new=true` requests redirect into `/cha/jobs/new`, preserving old
+  deep links and customer-create return flows;
+- updated CHA route metadata and breadcrumb labels in
+  `src/modules/cha/components/workspace/cha-workspace.tsx`,
+  `src/modules/cha/components/workspace/cha-workspace.test.tsx`, and
+  `src/lib/route-labels.ts`;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` so the new
+  `/cha/jobs/new` route is recorded in the route inventory.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/cha/page.tsx' 'src/app/(dashboard)/cha/jobs/page.tsx' 'src/app/(dashboard)/cha/jobs/jobs-client.tsx' 'src/app/(dashboard)/cha/jobs/new/page.tsx' 'src/app/(dashboard)/cha/jobs/new/new-job-client.tsx' 'src/modules/cha/components/dashboard-create-job.tsx' 'src/modules/cha/components/workspace/cha-workspace.tsx' 'src/modules/cha/components/workspace/cha-workspace.test.tsx' 'src/lib/route-labels.ts'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route matrix with the new `/cha/jobs/new` page;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed.
+
+Known limits:
+
+- focused ESLint still fails if `src/modules/cha/components/create-job-dialog.tsx`
+  is included because that long-lived file already carries pre-existing
+  `react-hooks/set-state-in-effect` and `@typescript-eslint/no-explicit-any`
+  violations outside this routing change;
+- no authenticated browser runtime is attached in this Codex session, so the
+  new page flow is source-verified and type-verified rather than manually
+  browser-verified in Light, Night, and Violet themes.
+
+## 2026-08-05 CRM quotation create-booking operational handoff fix
+
+Fixed the broken CRM quotation `Create Booking` flow so a customer-approved
+quotation now launches real downstream operational records instead of only
+writing a freight placeholder reference.
+
+Delivered:
+
+- updated `src/modules/crm/approval-workflow.ts` so quote conversion now
+  creates a real Freight Forwarding `FREIGHT_BOOKING` draft transaction with
+  prefilled customer, enquiry/job reference, port, Incoterm, commodity, and
+  internal handoff notes;
+- preserved the existing CHA job creation path and now store direct Freight
+  transaction linkage (`freightTransactionId` and `freightBookingGroupId`)
+  beside the CHA job linkage in the quote workflow conversion snapshot;
+- updated `src/modules/crm/components/quotes/lib/types.ts` so the quote
+  workflow conversion contract exposes the direct Freight transaction and
+  booking-group references;
+- updated `src/modules/crm/components/ApprovalActionBar.tsx` so `Create
+  Booking` first shows a routing summary dialog, then after conversion exposes
+  direct `Process CHA Job` and `Process Freight Booking` actions;
+- updated
+  `src/modules/freight-forwarding/components/freight-forwarding-workspace-client.tsx`
+  so Workspace Home and the transaction registries now expose explicit
+  `Process` actions instead of passive text-only next-step hints;
+- updated `src/app/(dashboard)/cha/jobs/jobs-client.tsx` so the CHA jobs
+  register now exposes a direct `Process` action per row, matching the
+  requested downstream workflow handoff more clearly.
+
+Verification on Wednesday, August 5, 2026:
+
+- pending focused ESLint for the touched CRM, Freight Forwarding, and CHA UI
+  files in this session.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  repaired handoff is source-verified only and still needs manual browser
+  verification in Light, Night, and Violet themes;
+- the Freight Forwarding handoff currently creates a prefilled HBL-side draft
+  transaction and opens the existing transaction detail page for continuation;
+  it does not yet introduce the later dedicated post-conversion booking wizard
+  the user plans to design.
+
+## 2026-08-05 CRM quote detail submit action visibility
+
+Kept the CRM quote detail submit action in the main toolbar so users can always
+see where quote submission lives alongside the other top-row actions.
+
+Delivered:
+
+- updated `src/modules/crm/components/quotes/QuoteDetailsPage.tsx` so the
+  `Submit For Approval` control now stays in the visible toolbar next to Edit,
+  Mails, Share, and PDF/Print;
+- updated the same header panel to allow visible overflow so the three-dot
+  dropdown menu can render outside the toolbar card instead of being folded
+  back into the panel bounds;
+- updated `src/lib/rbac.ts` so the migrated CRM quote workflow permissions map
+  back to the older seeded `crm.invoice.manage` grant, allowing current CRM
+  users to submit draft quotes for approval without waiting for a role reseed;
+- updated `src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx` so the submit
+  dialog manager dropdown now lists active org users with `Manager` and
+  `Admin` roles, plus platform admins, instead of only the narrower approval
+  permission lookup;
+- updated `src/modules/crm/components/quotes/QuoteDetailsPage.tsx` so the
+  quote header card adds extra bottom padding and a higher stacking context
+  while the three-dot actions menu is open, keeping Delete and Workflow
+  preferences fully visible;
+- updated the same quote detail component so the left-rail filters now stay
+  hidden until the quote-view dropdown is opened, and the collapsed rail uses
+  a dedicated compact layout instead of the broken squeezed header state;
+- preserved the existing CRM dialog and approval server action flow, but now
+  disable the button instead of removing it when the quote is not a submittable
+  draft or the current user lacks submit access.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/lib/rbac.ts' 'src/modules/crm/components/quotes/QuoteDetailsPage.tsx' 'src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx'`:
+  passed.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so this
+  toolbar update is source-verified only and still needs manual browser
+  verification in Light, Night, and Violet themes.
+
+## 2026-08-05 CRM quote detail logistics section
+
+Added the missing logistics summary block to the CRM quote details workspace so
+users can see the shipping context recorded during quote creation without going
+back into edit mode.
+
+Delivered:
+
+- updated `src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx` so the detail
+  serializer now forwards `portOfLoadingCountry` and
+  `portOfDestinationCountry` in addition to the existing logistics fields;
+- updated `src/modules/crm/components/quotes/lib/types.ts` so the quote detail
+  contract includes the full logistics shape used by the detail view;
+- updated `src/modules/crm/components/quotes/QuoteDetailsPage.tsx` so the
+  page renders a dedicated `Logistics Details` card with port, country,
+  Incoterm, container, commodity, and weight values using the existing shared
+  detail-card treatment.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx' 'src/modules/crm/components/quotes/QuoteDetailsPage.tsx' 'src/modules/crm/components/quotes/lib/types.ts'`:
+  passed.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  logistics section is source-verified and lint-verified rather than manually
+  browser-verified in Light, Night, and Violet themes.
+
+## 2026-08-05 CRM quote detail layout fix
+
+Refined the CRM quote detail presentation so the route behaves like a normal
+Monolith CRM workspace instead of rendering a second full-screen shell inside
+the existing page frame.
+
+Delivered:
+
+- updated `src/modules/crm/components/quotes/QuoteDetailsPage.tsx` so the page
+  now uses a contained two-column workspace layout instead of nested
+  `min-h-screen` shells;
+- moved the left-side quote register onto a standard CRM panel treatment and
+  replaced the vertical collapsed `QUOTE LIST` label with a compact horizontal
+  state that no longer reads like a broken UI;
+- softened the quote detail header scale and spacing so the title, status, and
+  total sit inside a shared CRM surface rather than a custom route-wide chrome;
+- converted the major quote detail sections to shared CRM composition patterns,
+  so versioning, workflow, summary panels, and the detail/activity workspace
+  now flow through `CrmSection`, `CrmPanel`, and shared CRM status surfaces;
+- replaced the raw manager approval `<select>` with `CrmSelect` to keep the
+  submission dialog on the shared CRM form-control contract.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/crm/components/quotes/QuoteDetailsPage.tsx'`:
+  passed.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  quote detail fix is source-verified and lint-verified rather than manually
+  browser-verified in Light, Night, and Violet themes.
+
+## 2026-08-05 Accounting quotations workspace redesign
+
+Reworked the Accounting quotations route into a cleaner split workspace that
+keeps the quotation register and selected quotation detail in one place while
+preserving the existing quotation and note workflows.
+
+Delivered:
+
+- updated `src/app/(dashboard)/accounting/quotations/page.tsx` so the route now
+  resolves an active quotation from `?quote=` and loads the permission-aware
+  quotation detail payload needed for embedded actions;
+- added `src/app/(dashboard)/accounting/quotations/quotation-presentation.ts`
+  to share the serialized quotation presentation shape between the embedded
+  workspace detail and the standalone quotation detail route;
+- rewrote `src/app/(dashboard)/accounting/quotations/quotations-client.tsx`
+  into a register-plus-detail workspace with a searchable left-side quotation
+  list, a cleaner selected quotation summary surface, and the existing note
+  management flow still available on the same route;
+- refreshed
+  `src/app/(dashboard)/accounting/quotations/[id]/quotation-detail-client.tsx`
+  so the detail surface now supports both the standalone route and the
+  embedded quotations workspace while continuing to use the existing Accounting
+  approval, dispatch, decision, duplication, and conversion actions;
+- updated `src/app/(dashboard)/accounting/quotations/[id]/page.tsx` so the
+  standalone detail route shares the same serialized quotation presentation and
+  now requests the quotation-create capability required for duplication;
+- added the quotations workspace layout styles to
+  `src/styles/modules/accounting.css` using Accounting module tokens and
+  canonical Monolith surfaces instead of route-local ad hoc styling;
+- updated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md` with the current source
+  verification status for this quotations batch.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/accounting/quotations/page.tsx' 'src/app/(dashboard)/accounting/quotations/quotations-client.tsx' 'src/app/(dashboard)/accounting/quotations/quotation-presentation.ts' 'src/app/(dashboard)/accounting/quotations/[id]/page.tsx' 'src/app/(dashboard)/accounting/quotations/[id]/quotation-detail-client.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed in this session;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/app/(dashboard)/accounting/quotations/page.tsx' 'src/app/(dashboard)/accounting/quotations/quotations-client.tsx' 'src/app/(dashboard)/accounting/quotations/quotation-presentation.ts' 'src/app/(dashboard)/accounting/quotations/[id]/page.tsx' 'src/app/(dashboard)/accounting/quotations/[id]/quotation-detail-client.tsx' 'src/styles/modules/accounting.css'`:
+  passed, aside from normal Windows line-ending warnings in this worktree.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  redesigned quotations workspace is source-verified and lint/typecheck-verified
+  rather than manually browser-verified in Light, Night, and Violet themes;
+- the new quotations workspace intentionally prioritizes the important
+  quotation actions and keeps less-frequent note work under the existing
+  secondary tab instead of duplicating every note action into the split detail
+  surface.
+
+## 2026-08-05 Shared document dropzone and Freight Forwarding attachment panel
+
+Added a new shared document-upload dropzone and applied it to the Freight
+Forwarding Reference document panel.
+
+Delivered:
+
+- added `src/components/forms/file-upload/document-dropzone-field.tsx` as a
+  new shared Monolith upload surface with drag-and-drop, browse, and selected
+  file preview support;
+- exported the component through `src/components/monolith/index.ts` and added a
+  live specimen to `src/components/monolith/catalogue/shared-catalogue.tsx`;
+- added the shared dropzone styling to `src/styles/monolith-system.css` using
+  Monolith tokens and the existing yellow highlight gradient language;
+- updated
+  `src/modules/freight-forwarding/components/freight-forwarding-booking-page.tsx`
+  so the Reference document panel now uses the shared dropzone in place of the
+  raw browser file input while keeping the Attachment name field above it;
+- added the Freight Forwarding layout hook for the new dropzone in
+  `src/styles/modules/freight-forwarding.css`.
+
+Verification on Wednesday, August 5, 2026:
+
+- pending focused ESLint, TypeScript, design-system verification, and targeted
+  `git diff --check` after the component and Freight Forwarding integration
+  patch in this session.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  new dropzone is source-verified and still needs manual browser verification
+  in Light, Night, and Violet themes;
+- the Freight Forwarding Reference document panel still treats the selected
+  file as local client state only because the booking attachment upload
+  backend is not yet wired.
+
+## 2026-08-05 Freight Forwarding dedicated create-booking page
+
+Replaced the popup-first Freight Forwarding booking start with a dedicated
+create-booking page that lets users choose MBL, HBL, or both and fill the
+matching transaction details before records are created.
+
+Delivered:
+
+- rewrote `src/app/(dashboard)/freight-forwarding/create-booking/page.tsx` so
+  `/freight-forwarding/create-booking` is now a real workspace route instead of
+  an automatic redirect, with server-loaded Freight Forwarding reference data
+  and optional `?mode=` preselection;
+- updated `src/app/(dashboard)/freight-forwarding/create-booking/[documentType]/page.tsx`
+  so legacy `/create-booking/mbl` and `/create-booking/hbl` entry points now
+  redirect into the new dedicated page with the correct transaction mode;
+- added
+  `src/modules/freight-forwarding/components/freight-forwarding-create-booking-client.tsx`
+  as the new page client that keeps transaction mode selection on-page and
+  renders MBL, HBL, or both transaction-detail forms in one workflow;
+- extended
+  `src/modules/freight-forwarding/components/freight-forwarding-booking-page.tsx`
+  so the shared Freight Forwarding form can be reused as an embedded
+  create-booking editor without its own standalone header or save action;
+- added `createFreightBookingWithDetailsAction` in
+  `src/modules/freight-forwarding/actions.ts` so the dedicated page can create
+  fully populated MBL/HBL transaction records directly instead of first
+  creating empty drafts from the older modal flow;
+- updated `src/modules/freight-forwarding/components/freight-forwarding-workspace.tsx`,
+  `src/modules/freight-forwarding/components/freight-forwarding-workspace-client.tsx`,
+  and `src/app/(dashboard)/freight-forwarding/settings/page.tsx` so every
+  Freight Forwarding `Create Booking` entry point now opens the dedicated page
+  instead of the previous popup-based start path;
+- updated `src/styles/modules/freight-forwarding.css` with dedicated layout
+  styling for the new mode selector and stacked create-booking transaction
+  sections;
+- updated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md` with the current source
+  verification status for this create-booking batch.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/freight-forwarding/create-booking/page.tsx' 'src/app/(dashboard)/freight-forwarding/create-booking/[documentType]/page.tsx' 'src/app/(dashboard)/freight-forwarding/settings/page.tsx' 'src/modules/freight-forwarding/actions.ts' 'src/modules/freight-forwarding/service.ts' 'src/modules/freight-forwarding/components/freight-forwarding-booking-page.tsx' 'src/modules/freight-forwarding/components/freight-forwarding-create-booking-client.tsx' 'src/modules/freight-forwarding/components/freight-forwarding-workspace.tsx' 'src/modules/freight-forwarding/components/freight-forwarding-workspace-client.tsx' 'src/modules/freight-forwarding/components/index.ts'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  still fails on the repo's existing
+  `src/modules/crm/components/masters/crm-masters-workspace.tsx` errors where
+  `"xl"` is not assignable to `WorkspaceDialogSize`; those failures predate
+  this Freight Forwarding batch;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  still fails on the repo's existing unregistered visual export
+  `src/components/ui/button.tsx#ButtonLink`, which predates this batch;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/app/(dashboard)/freight-forwarding/create-booking/page.tsx' 'src/app/(dashboard)/freight-forwarding/create-booking/[documentType]/page.tsx' 'src/app/(dashboard)/freight-forwarding/settings/page.tsx' 'src/modules/freight-forwarding/actions.ts' 'src/modules/freight-forwarding/service.ts' 'src/modules/freight-forwarding/components/freight-forwarding-booking-page.tsx' 'src/modules/freight-forwarding/components/freight-forwarding-create-booking-client.tsx' 'src/modules/freight-forwarding/components/freight-forwarding-workspace.tsx' 'src/modules/freight-forwarding/components/freight-forwarding-workspace-client.tsx' 'src/modules/freight-forwarding/components/index.ts' 'src/styles/modules/freight-forwarding.css'`:
+  passed, aside from normal Windows line-ending warnings in this worktree.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  new dedicated create-booking route is source-verified and lint-verified
+  rather than manually browser-verified in Light, Night, and Violet themes;
+- the current create-booking page now creates fully populated draft
+  transactions, but it does not yet add new field-level validation beyond the
+  existing form-control constraints already present in the shared Freight
+  Forwarding booking form.
+
+## 2026-08-05 Freight Forwarding data cleanup route
+
+Added a dedicated Freight Forwarding settings sub-route for data management and
+an admin-only delete-all action for Freight Forwarding records.
+
+Delivered:
+
+- added `src/app/(dashboard)/freight-forwarding/settings/data/page.tsx` as a
+  `Data management` workspace under Freight Forwarding settings, with live
+  transaction, booking-group, and MBL/HBL split counts;
+- added
+  `src/app/(dashboard)/freight-forwarding/settings/data/delete-freight-forwarding-data-action.tsx`
+  for the client-side destructive action flow with a required confirmation
+  phrase of `DELETE ALL FREIGHT DATA`;
+- added `deleteAllFreightForwardingDataAction` in
+  `src/modules/freight-forwarding/actions.ts` so the purge deletes all
+  `FREIGHT_BOOKING` transactions for the current organisation plus their
+  linked `crmApprovalLog` records, then revalidates the Freight Forwarding
+  workspace, register, settings, and booking routes;
+- updated `src/app/(dashboard)/freight-forwarding/settings/page.tsx` so the
+  main Freight Forwarding settings page now links to the new `Data` route;
+- updated `src/lib/route-labels.ts` and regenerated
+  `docs/ui-route-audit.md`, `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` so the new route is
+  reflected in the route inventory.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/freight-forwarding/actions.ts' 'src/app/(dashboard)/freight-forwarding/settings/page.tsx' 'src/app/(dashboard)/freight-forwarding/settings/data/page.tsx' 'src/app/(dashboard)/freight-forwarding/settings/data/delete-freight-forwarding-data-action.tsx' 'src/lib/route-labels.ts'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the migration matrix with the new
+  `/freight-forwarding/settings/data` route;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/modules/freight-forwarding/actions.ts' 'src/app/(dashboard)/freight-forwarding/settings/page.tsx' 'src/app/(dashboard)/freight-forwarding/settings/data/page.tsx' 'src/app/(dashboard)/freight-forwarding/settings/data/delete-freight-forwarding-data-action.tsx' 'src/lib/route-labels.ts'`:
+  passed, aside from normal Windows line-ending warnings in this worktree.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  new Freight Forwarding data route is source-verified and lint-verified
+  rather than browser-verified across Light, Night, and Violet themes;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`
+  still fails on pre-existing repo compile errors outside this page batch,
+  including:
+  `src/modules/crm/components/masters/crm-masters-workspace.tsx` dialog-size
+  `"xl"` issues,
+  `src/modules/freight-forwarding/components/freight-forwarding-booking-page.tsx`
+  `ContainerRow` resolution,
+  and existing `freight-forwarding-workspace-client.tsx` symbol and button
+  variant errors;
+- the delete-all action is intentionally restricted to users who satisfy
+  `admin.org.manage`, so non-admin Freight Forwarding users can review the
+  counts on the page but cannot run the destructive purge.
+
+## 2026-08-05 Module settings route expansion
+
+Added first-class settings routes for modules that previously exposed
+operational workspaces without a dedicated settings destination.
+
+Delivered:
+
+- added `src/app/(dashboard)/attendance/settings/page.tsx` with an Attendance
+  settings workspace that links into attendance controls for overtime,
+  leave-management, biometric sync, and month-end reporting;
+- added `src/app/(dashboard)/ams/settings/page.tsx` and
+  `src/app/(dashboard)/lms/settings/page.tsx` so the Performance/Learning
+  workspace now includes dedicated settings overviews for appraisal governance
+  and learning-program administration;
+- added `src/app/(dashboard)/crm/settings/page.tsx` and
+  `src/app/(dashboard)/freight-forwarding/settings/page.tsx` so CRM and
+  Freight Forwarding now expose settings workspaces tied to their existing
+  operational control surfaces;
+- updated `src/lib/navigation.ts`, `src/lib/route-labels.ts`,
+  `src/modules/people/components/people-workspace.tsx`,
+  `src/modules/performance/components/performance-workspace.tsx`, and
+  `src/modules/crm/components/workspace/crm-workspace.tsx` so the new routes
+  appear as native module destinations with the correct header metadata and
+  sidebar labels;
+- regenerated `docs/ui-route-audit.md`,
+  `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the route inventory
+  changed.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/attendance/settings/page.tsx' 'src/app/(dashboard)/ams/settings/page.tsx' 'src/app/(dashboard)/lms/settings/page.tsx' 'src/app/(dashboard)/crm/settings/page.tsx' 'src/app/(dashboard)/freight-forwarding/settings/page.tsx' 'src/lib/navigation.ts' 'src/lib/route-labels.ts' 'src/modules/people/components/people-workspace.tsx' 'src/modules/performance/components/performance-workspace.tsx' 'src/modules/crm/components/workspace/crm-workspace.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the migration matrix with the new settings routes;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/app/(dashboard)/attendance/settings/page.tsx' 'src/app/(dashboard)/ams/settings/page.tsx' 'src/app/(dashboard)/lms/settings/page.tsx' 'src/app/(dashboard)/crm/settings/page.tsx' 'src/app/(dashboard)/freight-forwarding/settings/page.tsx' 'src/lib/navigation.ts' 'src/lib/route-labels.ts' 'src/modules/people/components/people-workspace.tsx' 'src/modules/performance/components/performance-workspace.tsx' 'src/modules/crm/components/workspace/crm-workspace.tsx'`:
+  passed, aside from normal Windows line-ending warnings in this worktree.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  new settings routes are source-verified and lint-verified rather than
+  browser-verified across Light, Night, and Violet themes;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`
+  still fails on the repo's existing
+  `src/modules/crm/components/masters/crm-masters-workspace.tsx` errors where
+  `"xl"` is not assignable to `WorkspaceDialogSize`; those failures predate
+  this batch and were left unchanged here;
+- the regenerated static audit still classifies the new AMS, LMS, CRM, and
+  Freight Forwarding settings routes as non-compliant heuristically, so those
+  routes still need manual runtime review and any follow-up component-audit
+  reconciliation if the team wants the static classification fully aligned.
+
+## 2026-08-05 Freight Forwarding transaction detail spacing regression
+
+Adjusted the embedded Freight Forwarding transaction detail surface so it keeps
+the intended panel padding without oversizing the shared form controls.
+
+Delivered:
+
+- updated `src/styles/modules/freight-forwarding.css` so
+  `.ff-booking-content-embedded` uses a roomier embedded-only wrapper padding;
+- removed the embedded detail override that was increasing
+  `.mnx-field-control` and `.mnx-field-textarea` padding beyond the canonical
+  Monolith field height;
+- added embedded-only panel-body padding selectors for the Freight Forwarding
+  detail surface so section content sits correctly inside each panel while the
+  standalone `/freight-forwarding/create-booking` route is unchanged.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/styles/modules/freight-forwarding.css'`:
+  passed.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  updated Freight Forwarding detail spacing is source-verified and still needs
+  manual browser verification in Light, Night, and Violet themes.
+
+## 2026-08-05 Freight Forwarding transaction field padding
+
+Increased the internal padding of the form controls on the embedded Freight
+Forwarding transaction details page so the detail editor fields read more
+comfortably.
+
+Delivered:
+
+- updated `src/styles/modules/freight-forwarding.css` so the embedded
+  transaction-detail variant applies larger padding to
+  `.mnx-field-control` and `.mnx-field-textarea`;
+- kept the padding override scoped to `.ff-booking-page-embedded` so the
+  standalone create-booking route is unchanged.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/styles/modules/freight-forwarding.css' 'docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md' 'docs/ui-migration-handoff.md'`:
+  passed, aside from normal Windows line-ending warnings in this worktree.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  updated field padding is source-verified and still needs manual browser
+  verification in Light, Night, and Violet themes.
+
+## 2026-08-05 Freight Forwarding transaction detail design-system polish
+
+Adjusted the embedded Freight Forwarding transaction detail editor so it reads
+more like a Monolith detail surface and less like the full create-booking page.
+
+Delivered:
+
+- updated `src/modules/freight-forwarding/components/freight-forwarding-booking-page.tsx`
+  so the embedded transaction-detail variant now applies dedicated wrapper
+  classes instead of sharing the exact same presentation hooks as the
+  standalone create-booking page;
+- updated `src/styles/modules/freight-forwarding.css` so the embedded detail
+  variant gets extra padding around the details content and lighter-weight
+  section, panel, and field-label typography.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/freight-forwarding/components/freight-forwarding-booking-page.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/styles/modules/freight-forwarding.css'`:
+  returns the repo's existing "File ignored because no matching configuration
+  was supplied" warning, so the stylesheet is not directly linted by the
+  current ESLint setup;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/modules/freight-forwarding/components/freight-forwarding-booking-page.tsx' 'src/styles/modules/freight-forwarding.css' 'docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md' 'docs/ui-migration-handoff.md'`:
+  passed, aside from normal Windows line-ending warnings in this worktree.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  updated transaction details page is source-verified and still needs manual
+  browser verification in Light, Night, and Violet themes.
+
+## 2026-08-05 Freight Forwarding dual-detail switch
+
+Added an in-page switch on the dedicated Freight Forwarding transaction detail
+screens so bookings created with both MBL and HBL can move between the linked
+detail views without going back to the register.
+
+Delivered:
+
+- updated `src/modules/freight-forwarding/components/freight-forwarding-transaction-detail-client.tsx`
+  so the shared detail shell now resolves the current booking group and shows
+  `MBL Details` and `HBL Details` actions only when the booking mode is
+  `BOTH` and both linked transactions exist;
+- kept MBL-only and HBL-only transactions unchanged, so one-sided bookings do
+  not render the new detail switch.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/freight-forwarding/components/freight-forwarding-transaction-detail-client.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/modules/freight-forwarding/components/freight-forwarding-transaction-detail-client.tsx' 'docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md' 'docs/ui-migration-handoff.md'`:
+  passed, aside from normal Windows line-ending warnings in this worktree.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  new switch is source-verified and will need manual browser verification in
+  Light, Night, and Violet themes.
+
+## 2026-08-05 Freight Forwarding workspace data-table alignment
+
+Aligned the Freight Forwarding workspace booking registers to the production
+operational data-table system so the Home, MBL, and HBL lists now use the same
+Monolith table language as other operational workspaces.
+
+Delivered:
+
+- updated
+  `src/modules/freight-forwarding/components/freight-forwarding-workspace-client.tsx`
+  so Workspace Home now renders booking groups with
+  `OperationalDataTable`, `OperationalTable`, `OperationalPrimaryCell`,
+  `OperationalStatus`, and `OperationalLinkedRow` instead of a custom stacked
+  button list;
+- updated the same client so the MBL and HBL registry tabs now use the same
+  operational table primitives for transaction number, customer, booking link,
+  status, and last-updated metadata;
+- removed the Freight Forwarding module CSS that only supported the older
+  custom booking-list/table presentation and kept the create-booking dialog on
+  a narrowly-scoped module-owned style hook.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/freight-forwarding/components/freight-forwarding-workspace-client.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/modules/freight-forwarding/components/freight-forwarding-workspace-client.tsx' 'src/styles/modules/freight-forwarding.css'`:
+  passed.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  updated Freight Forwarding tables are source-verified and lint-verified
+  rather than browser-verified across Light, Night, and Violet themes;
+- this pass changes the booking-register presentation only and does not alter
+  Freight Forwarding business logic, booking creation flow, or transaction
+  detail routing.
+
+## 2026-08-05 Freight Forwarding dedicated transaction detail pages
+
+Moved Freight Forwarding transaction editing out of the MBL/HBL register pages
+so the list views stay operational and the transaction form opens on its own
+page.
+
+Delivered:
+
+- updated `src/modules/freight-forwarding/components/freight-forwarding-workspace-client.tsx`
+  so the MBL and HBL sidebar tabs behave as transaction registers and open a
+  dedicated route when a row is selected;
+- added
+  `src/modules/freight-forwarding/components/freight-forwarding-transaction-detail-client.tsx`
+  as the shared transaction detail shell for viewing, saving, connecting, and
+  disconnecting MBL/HBL records;
+- added `src/app/(dashboard)/freight-forwarding/mbl/[transactionId]/page.tsx`
+  and `src/app/(dashboard)/freight-forwarding/hbl/[transactionId]/page.tsx` so
+  each transaction now has a dedicated view/update page;
+- updated the freight forwarding route pages so the list screens only load the
+  data needed for the register and no longer mount the booking editor inline at
+  the bottom.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/freight-forwarding/components/freight-forwarding-workspace-client.tsx' 'src/modules/freight-forwarding/components/freight-forwarding-transaction-detail-client.tsx' 'src/modules/freight-forwarding/components/index.ts' 'src/app/(dashboard)/freight-forwarding/page.tsx' 'src/app/(dashboard)/freight-forwarding/mbl/page.tsx' 'src/app/(dashboard)/freight-forwarding/hbl/page.tsx' 'src/app/(dashboard)/freight-forwarding/mbl/[transactionId]/page.tsx' 'src/app/(dashboard)/freight-forwarding/hbl/[transactionId]/page.tsx'`:
+  passed;
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  new Freight Forwarding detail-route flow is source-verified and lint-verified
+  rather than browser-verified in Light, Night, and Violet themes;
+- the separate request to restyle the Freight Forwarding booking registers to
+  more closely match the CHA jobs table is not included in this specific pass.
+
+## 2026-08-05 CRM Masters upload workflow expansion
+
+Expanded the CRM Masters workspace from static placeholder tabs into a working
+client-side master-register workflow for the non-item master tabs.
+
+Delivered:
+
+- rewrote `src/modules/crm/components/masters/crm-masters-workspace.tsx` so
+  Agent, Charge, Port, State, Terminal, and Vessel masters now share one
+  structured master-register flow instead of separate placeholder panels;
+- added workbook parsing with `xlsx`, first-sheet ingestion, source-header
+  discovery, and an explicit field-mapping dialog before import proceeds;
+- added a live import-progress dialog with animated progress, rolling
+  success/failed/skipped counts, row-level remarks, and a completion summary;
+- persisted the latest client-side import run per master tab so users can still
+  review counts and logs after closing the modal;
+- added `Add Entry` for every structured master tab, with a single-entry dialog
+  generated from the active master headings;
+- kept `Item Master` on the existing dedicated item register while the other
+  master tabs now use the new shared import/export/add-entry workflow;
+- updated `src/styles/modules/crm.css` with dedicated Masters workflow styles
+  for mapping, progress, result cards, logs, and single-entry form layouts.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/crm/components/masters/crm-masters-workspace.tsx'`:
+  passed;
+- targeted `git diff --check` for
+  `src/modules/crm/components/masters/crm-masters-workspace.tsx` and
+  `src/styles/modules/crm.css`:
+  passed, aside from the normal Windows line-ending warnings in this worktree.
+
+Known limits:
+
+- this pass is fully client-side: imported records, logs, and single-entry
+  additions live in browser state and are not yet persisted through a CRM API or
+  database-backed master-data service;
+- workbook parsing currently uses the first sheet only and assumes header-driven
+  tabular data;
+- there is no authenticated browser runtime attached in this Codex session, so
+  the new import dialogs and progress animation are source-verified and
+  lint-verified rather than browser-verified in Light, Night, and Violet themes.
+
+## 2026-08-05 CRM quotation manager-customer approval workflow and destination conversion
+
+Redesigned the CRM quotation detail experience and replaced the older generic
+quote approval path with an explicit manager approval stage, customer decision
+capture, and downstream booking/job conversion tracking.
+
+Delivered:
+
+- updated `src/modules/crm/approval-workflow.ts` and
+  `src/modules/crm/approval-actions.ts` so CRM quotations now move through:
+  `DRAFT` -> `PENDING_MANAGER_APPROVAL` -> `PENDING_CUSTOMER_APPROVAL` ->
+  `CUSTOMER_APPROVED` -> `BOOKING_CREATED`, while both manager rejection and
+  customer rejection return the record to `DRAFT` with structured remarks,
+  actor, and timestamp metadata stored in the quotation snapshot;
+- updated `src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx`,
+  `src/modules/crm/components/ApprovalActionBar.tsx`, and
+  `src/modules/crm/components/quotes/QuoteDetailsPage.tsx` so the quotation
+  detail page now shows clearer workflow sections for manager approval details,
+  customer approval details, pending actions, notifications, audit summary, and
+  booking/job conversion status, with only valid actions exposed for the
+  current quotation state;
+- updated quote status typing and filter data in
+  `src/modules/crm/components/quotes/lib/types.ts`,
+  `src/modules/crm/components/quotes/lib/quote-list-data.ts`, and
+  `src/modules/crm/components/quotes/QuotesIndexPage.tsx` so the CRM quotation
+  list now understands the new manager/customer approval states and booking
+  conversion state instead of only the older generic labels;
+- wired `Create Booking` for customer-approved quotations so Customs Clearance
+  conversions create a real CHA job through the existing CHA service with
+  generated CHA job numbers, while Freight Forwarding conversions create a
+  persisted freight booking placeholder record inside the quotation snapshot;
+- updated `src/app/(dashboard)/freight-forwarding/page.tsx` and
+  `src/modules/freight-forwarding/components/freight-forwarding-workspace.tsx`
+  so the Freight Forwarding module now lists those testing-phase converted
+  booking placeholders and exposes a visible `Process Booking` action that is
+  intentionally disabled until the dedicated Freight Forwarding booking form is
+  implemented.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/crm/approval-workflow.ts' 'src/modules/crm/approval-actions.ts' 'src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx' 'src/modules/crm/components/ApprovalActionBar.tsx' 'src/modules/crm/components/quotes/QuoteDetailsPage.tsx' 'src/modules/crm/components/quotes/QuotesIndexPage.tsx' 'src/modules/crm/components/quotes/lib/types.ts' 'src/modules/crm/components/quotes/lib/quote-list-data.ts' 'src/modules/freight-forwarding/components/freight-forwarding-workspace.tsx' 'src/app/(dashboard)/freight-forwarding/page.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/modules/crm/approval-workflow.ts' 'src/modules/crm/approval-actions.ts' 'src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx' 'src/modules/crm/components/ApprovalActionBar.tsx' 'src/modules/crm/components/quotes/QuoteDetailsPage.tsx' 'src/modules/crm/components/quotes/QuotesIndexPage.tsx' 'src/modules/crm/components/quotes/lib/types.ts' 'src/modules/crm/components/quotes/lib/quote-list-data.ts' 'src/modules/freight-forwarding/components/freight-forwarding-workspace.tsx' 'src/app/(dashboard)/freight-forwarding/page.tsx'`:
+  passed aside from the normal Windows CRLF warnings in this worktree.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  redesigned quotation detail route and the Freight Forwarding starter list are
+  source-verified, lint-verified, and type-verified rather than manually
+  browser-verified in Light, Night, and Violet themes;
+- Freight Forwarding still does not have its final booking form or persisted
+  operational booking model yet, so `Process Booking` is intentionally a
+  visible disabled placeholder while the testing-phase booking list is derived
+  from approved quotation conversion metadata;
+- the older generic quote status values such as `PENDING_APPROVAL`,
+  `APPROVED`, `SENT`, `CUSTOMER_VIEWED`, `ACCEPTED`, and `INVOICED` are still
+  preserved in legacy helper paths for backward compatibility, but the updated
+  quotation detail and index views normalize them into the new manager/customer
+  workflow states.
+
+## 2026-08-05 Freight forwarding booking workspace
+
+Added a real Freight Forwarding booking route at
+`/freight-forwarding/create-booking`, wired the existing `Create Booking`
+workspace action to that route, and built the booking screen around canonical
+Monolith workspace panels and form controls instead of a route-local visual
+one-off.
+
+Delivered:
+
+- added `src/app/(dashboard)/freight-forwarding/create-booking/page.tsx` and
+  `src/modules/freight-forwarding/components/freight-forwarding-booking-page.tsx`
+  so the Freight Forwarding module now opens a booking worksheet that follows
+  the provided PDF structure for shipment details, liner details, voyage
+  details, party details, agent details, cargo/container details, attachments,
+  and notes;
+- added MBL and HBL side tabs in the booking workspace so users can switch the
+  active bill-of-lading workflow while keeping the rest of the booking sheet in
+  the same operational context;
+- added `src/modules/freight-forwarding/booking-reference.ts` to centralize
+  dropdown content built from existing in-repo references plus verified public
+  shipping references for Incoterms, common container types, and freight-term
+  labels;
+- added `src/styles/modules/freight-forwarding.css` and imported it from
+  `src/app/globals.css` so the new freight-forwarding layout has a dedicated
+  module style owner instead of relying on compatibility CSS.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/freight-forwarding/booking-reference.ts' 'src/modules/freight-forwarding/components/freight-forwarding-booking-page.tsx' 'src/modules/freight-forwarding/components/freight-forwarding-workspace.tsx' 'src/app/(dashboard)/freight-forwarding/create-booking/page.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/modules/freight-forwarding/booking-reference.ts' 'src/modules/freight-forwarding/components/freight-forwarding-booking-page.tsx' 'src/modules/freight-forwarding/components/freight-forwarding-workspace.tsx' 'src/modules/freight-forwarding/components/index.ts' 'src/app/(dashboard)/freight-forwarding/create-booking/page.tsx' 'src/styles/modules/freight-forwarding.css' 'src/app/globals.css'`:
+  passed aside from normal Windows CRLF warnings;
+- full repo TypeScript verification could not be used as the success criterion
+  for this batch because it is currently blocked by pre-existing CRM compile
+  issues unrelated to the Freight Forwarding module, including missing
+  `@/modules/crm/components/ApprovalActionBar` imports and existing
+  `approval-workflow.ts` errors.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  new booking route is source-verified and lint-verified rather than
+  browser-verified across Light, Night, and Violet themes;
+- the `Create` action on the booking page is still intentionally non-persistent,
+  because this pass focused on the route, layout, and field coverage requested
+  from the PDF and did not introduce a new booking database workflow.
+
+## 2026-08-05 CRM freight/customs split-rate quotation workflow
+
+Split the CRM service-enquiry pricing flow so freight forwarding and customs
+clearance rates are now managed as department-owned rate sets, and wired the
+CRM quote flow to create versioned quotations from those rate sets instead of
+overwriting the last quote in place.
+
+Delivered:
+
+- added `src/modules/crm/rate-workflow.ts` as a shared workflow helper for
+  freight-only, customs-only, combined, and newly-added-only quote modes,
+  including department submission tracking and quote-version lineage metadata;
+- added
+  `src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx`
+  and replaced the duplicated inline worksheets in
+  `src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx` and
+  `src/app/(dashboard)/crm/leads/[id]/lead-detail-wrapper.tsx` so the active
+  pricing UI now exposes only:
+  `Ocean Freight`, `CFS Charges`, `VGM Charges`,
+  `Customs Clearance Charges`, `DO Charges`, and `BL Charges`;
+- updated the freight-forwarding and customs-clearance queue detail routes to
+  pass department context into the shared enquiry detail client, so each queue
+  can restrict rate entry to its own department while still showing pending and
+  recreate-quotation states;
+- updated `saveEnquiryRatesAction` in `src/modules/crm/actions.ts` so each
+  department saves only its own rates, the merged enquiry snapshot is kept for
+  compatibility, service-enquiry pricing snapshots are department-specific, and
+  lead timeline events now identify which department updated rates;
+- updated `src/app/(dashboard)/crm/quotes/new/page.tsx`,
+  `src/modules/crm/components/quotes/NewQuotePage.tsx`, and
+  `saveQuoteAction` so linked CRM quotes can be created in
+  freight-only/customs-only/combined/newly-added-only modes and are now saved as
+  `V1`, `V2`, `V3`, etc. using the existing CRM quote lineage fields
+  `sourceQuotationId`, `sourceQuotationVersion`, `sourceQuotationNumber`, and
+  `sourceQuotationSnapshot`;
+- updated the CRM quote list and quote detail data loaders to show the latest
+  visible version per quote family while also surfacing version history and root
+  quote number information on the quote detail page.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/crm/rate-workflow.ts' 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' 'src/app/(dashboard)/crm/quotes/new/page.tsx' 'src/modules/crm/components/quotes/NewQuotePage.tsx' 'src/app/(dashboard)/crm/quotes/page.tsx' 'src/modules/crm/components/quotes/lib/types.ts'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/modules/crm/rate-workflow.ts' 'src/modules/crm/components/service-enquiries/service-rate-workflow-panel.tsx' 'src/modules/crm/actions.ts' 'src/modules/crm/service.ts' 'src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx' 'src/app/(dashboard)/crm/leads/[id]/lead-detail-wrapper.tsx' 'src/app/(dashboard)/crm/freight-forwarding/[serviceEnquiryId]/page.tsx' 'src/app/(dashboard)/crm/customs-clearance/[serviceEnquiryId]/page.tsx' 'src/app/(dashboard)/crm/quotes/new/page.tsx' 'src/modules/crm/components/quotes/NewQuotePage.tsx' 'src/app/(dashboard)/crm/quotes/page.tsx' 'src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx' 'src/modules/crm/components/quotes/QuoteDetailsPage.tsx' 'src/modules/crm/components/quotes/lib/types.ts'`:
+  passed aside from the normal worktree CRLF warnings on Windows.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the new
+  split-rate tabs, recreate-quotation path, and version-history surfaces are
+  source-verified and command-verified rather than browser-verified in Light,
+  Night, and Violet themes;
+- targeted ESLint still fails on several older CRM detail files such as
+  `src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx`,
+  `src/app/(dashboard)/crm/leads/[id]/lead-detail-wrapper.tsx`, and
+  `src/app/(dashboard)/crm/quotes/[quoteId]/page.tsx` because those files carry
+  pre-existing `@typescript-eslint/no-explicit-any` debt unrelated to this pass;
+- this pass intentionally used the existing CRM quote lineage fields rather than
+  adding a new database table, so full audit visibility is stored across version
+  records plus `sourceQuotationSnapshot` metadata instead of a separate bespoke
+  quotation-version entity.
+
+## 2026-08-05 CRM quote form design-system alignment
+
+Aligned the shared CRM quote creation and edit experience used by
+`/crm/quotes/new` and `/crm/quotes/[quoteId]/edit` so the page now composes the
+approved CRM workspace panels and shared Monolith actions instead of relying on
+its older standalone quote-form chrome.
+
+Delivered:
+
+- updated `src/modules/crm/components/quotes/NewQuotePage.tsx` to remove the
+  duplicate local route header, add a CRM workspace intro section, and wrap the
+  form flow in shared `CrmSection`, `CrmPanel`, `CrmStatus`, and shared
+  button-link actions;
+- updated `src/modules/crm/components/quotes/CustomerSection.tsx`,
+  `QuoteMetaSection.tsx`, and `ShippingDetailsSection.tsx` so each block now
+  uses the canonical `WorkspacePanelHeader` treatment rather than raw section
+  headings;
+- updated `src/modules/crm/components/quotes/LineItemsTable.tsx`,
+  `NotesAndTermsSection.tsx`, and `FixedActionBar.tsx` so the pricing table,
+  customer-notes/totals area, and output actions follow shared Monolith panel
+  headers and button variants more closely;
+- relabeled the metadata `Reference#` field to `Enquiry Number` while
+  preserving the existing field binding and quote-save behavior.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/crm/components/quotes/NewQuotePage.tsx' 'src/modules/crm/components/quotes/CustomerSection.tsx' 'src/modules/crm/components/quotes/QuoteMetaSection.tsx' 'src/modules/crm/components/quotes/ShippingDetailsSection.tsx' 'src/modules/crm/components/quotes/LineItemsTable.tsx' 'src/modules/crm/components/quotes/NotesAndTermsSection.tsx' 'src/modules/crm/components/quotes/FixedActionBar.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; git diff --check -- 'src/modules/crm/components/quotes/NewQuotePage.tsx' 'src/modules/crm/components/quotes/CustomerSection.tsx' 'src/modules/crm/components/quotes/QuoteMetaSection.tsx' 'src/modules/crm/components/quotes/ShippingDetailsSection.tsx' 'src/modules/crm/components/quotes/LineItemsTable.tsx' 'src/modules/crm/components/quotes/NotesAndTermsSection.tsx' 'src/modules/crm/components/quotes/FixedActionBar.tsx'`:
+  passed aside from the normal worktree CRLF warnings;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed `docs/ui-route-audit.md` plus
+  `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed `docs/ui-component-and-style-ownership-audit.md`;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the pre-existing repository-wide code-organization guard that
+  reports existing implementation files under `src/components/monolith`;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  still fails on the existing unregistered shared export
+  `src/components/ui/button.tsx#ButtonLink`.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so this
+  pass is source-verified and command-verified rather than browser-verified in
+  Light, Night, and Violet themes across desktop, tablet, and mobile;
+- this pass keeps the underlying CRM quote field structure, save flow, and
+  approval behavior intact, so deeper route-local control implementations such
+  as the custom quote combobox and item autocomplete remain for a later shared
+  component extraction pass if needed.
+
+## 2026-08-05 CRM Masters sidebar workspace addition
+
+Added a new `Masters` entry to the shared CRM sidebar so users can open a
+dedicated master-data workspace from the module navigation.
+
+Delivered:
+
+- updated `src/lib/navigation.ts` so the CRM section now exposes `/crm/masters`
+  as a shared sidebar item using the authoritative navigation model;
+- updated `src/modules/crm/components/workspace/crm-workspace.tsx` so
+  `/crm/masters` renders first-class CRM route metadata instead of the generic
+  fallback header copy;
+- added `src/app/(dashboard)/crm/masters/page.tsx` and
+  `src/modules/crm/components/masters/crm-masters-workspace.tsx` so the new
+  sidebar entry now opens a dedicated CRM workspace with the master tabs,
+  including a migrated `Item Master` tab alongside Agent Master, Charge
+  Master, Port Master, State Master, Terminal Master, and Vessel Master;
+- updated `src/app/(dashboard)/crm/items/page.tsx` to redirect the old
+  standalone Items landing page into `/crm/masters?tab=item-master`, so the
+  legacy entry point now resolves into the Masters workspace instead of keeping
+  a separate top-level register;
+- updated `src/lib/navigation.ts` so CRM no longer shows a separate sidebar
+  `Items` entry once that register is represented under `Masters` as
+  `Item Master`;
+- updated `src/modules/crm/components/records/crm-workspace-page.tsx` so the
+  catch-all CRM workspace page presents a specific `Masters` badge, summary,
+  and description when that sidebar item is opened;
+- added a regression assertion in `src/lib/navigation.test.ts` so the CRM
+  sidebar model keeps the `Masters` workspace discoverable.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx vitest run src/lib/navigation.test.ts --reporter verbose`:
+  blocked by the repository's guarded test bootstrap because
+  `.env.staging.local` is not present in this session;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/lib/navigation.ts' 'src/lib/navigation.test.ts' 'src/modules/crm/components/workspace/crm-workspace.tsx' 'src/modules/crm/components/records/crm-workspace-page.tsx' 'src/app/(dashboard)/crm/masters/page.tsx' 'src/modules/crm/components/masters/crm-masters-workspace.tsx' 'src/modules/crm/components/workspace/crm-workspace.test.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed `docs/ui-route-audit.md` plus
+  `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed `docs/ui-component-and-style-ownership-audit.md`;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  still fails on pre-existing unrelated CRM errors in
+  `src/app/(dashboard)/crm/enquiries/[id]/enquiry-detail-client.tsx`,
+  `src/app/(dashboard)/crm/leads/[id]/lead-detail-wrapper.tsx`, and
+  `src/modules/crm/actions.ts`.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so this
+  navigation update is source-verified and lint-verified rather than
+  browser-verified in Light, Night, and Violet themes;
+- the new `Masters` tabs currently provide the dedicated CRM workspace shell and
+  tab switching only for the newly added master areas; `Item Master` is the
+  only tab in this pass that embeds an existing working register.
+
+## 2026-08-05 CRM service-enquiry queue design-system alignment
+
+Aligned the shared CRM service-enquiry queue surface used by
+`/crm/freight-forwarding` and `/crm/customs-clearance` so the queue now uses
+the approved operational table/header/button/input system instead of a
+standalone CRM panel and raw table markup.
+
+Delivered:
+
+- updated `src/modules/crm/components/service-enquiries/service-enquiry-queue.tsx`
+  to collapse the separate heading, search card, and list card into one shared
+  `OperationalDataTable` composition;
+- replaced the route-local search field and table shell with
+  `OperationalDataTableHeader`, shared `Input`, shared button actions,
+  `OperationalVisibleRecords`, `OperationalTable*` cells, and
+  `OperationalStatus`;
+- made each queue row use the shared `OperationalLinkedRow` contract while
+  preserving the explicit `Open` action button for direct navigation.
+
+Verification on Wednesday, August 5, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/crm/components/service-enquiries/service-enquiry-queue.tsx' 'src/app/(dashboard)/crm/freight-forwarding/page.tsx' 'src/app/(dashboard)/crm/customs-clearance/page.tsx'`:
+  passed.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so this
+  pass is source-verified and lint-verified rather than browser-verified in
+  Light, Night, and Violet themes;
+- the visible-records chip currently reflects the filtered queue length because
+  the page does not yet provide a separate unfiltered total count for these
+  service queues.
 
 ## 2026-08-05 CRM enquiries and leads table action-column removal
 

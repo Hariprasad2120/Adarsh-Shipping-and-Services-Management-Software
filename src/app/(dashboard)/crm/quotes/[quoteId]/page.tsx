@@ -11,6 +11,23 @@ import type {
   QuoteRecord,
 } from "@/modules/crm/components/quotes/lib/types";
 import { getStateCodeForLocation } from "@/modules/crm/components/quotes/lib/gst-states";
+import type { QuoteWorkflowContext } from "@/modules/crm/components/quotes/lib/types";
+import {
+  mapQuoteApprovalStatusToListStatus,
+} from "@/modules/crm/approval-workflow";
+
+function getQuoteRootId(record: {
+  id: string;
+  sourceQuotationId?: string | null;
+}) {
+  return record.sourceQuotationId || record.id;
+}
+
+function getQuoteVersion(record: {
+  sourceQuotationVersion?: number | null;
+}) {
+  return record.sourceQuotationVersion || 1;
+}
 
 export default async function CrmQuoteDetailsPage({
   params,
@@ -32,12 +49,23 @@ export default async function CrmQuoteDetailsPage({
     orderBy: { createdAt: "desc" },
   });
 
-  const allQuotes: QuoteRecord[] = dbQuotes.map((q) => {
-    const status = (q.approvalStatus || q.status || "draft").toLowerCase().replace("_", "-") as Exclude<QuoteListStatus, "all">;
+  const latestQuotes = dbQuotes.reduce<typeof dbQuotes>((latest, quote) => {
+    const rootId = getQuoteRootId(quote);
+    const current = latest.find((item) => getQuoteRootId(item) === rootId);
+    if (!current || getQuoteVersion(quote) > getQuoteVersion(current)) {
+      return [...latest.filter((item) => getQuoteRootId(item) !== rootId), quote];
+    }
+    return latest;
+  }, []);
+
+  const allQuotes: QuoteRecord[] = latestQuotes.map((q) => {
+    const status = mapQuoteApprovalStatusToListStatus(
+      q.approvalStatus || q.status || "draft",
+    ) as Exclude<QuoteListStatus, "all">;
     return {
       id: q.id,
       date: q.date.toISOString().split("T")[0],
-      location: (q as any).location || "Chennai",
+      location: q.location || "Chennai",
       quoteNumber: q.invoiceNumber,
       customerName: q.account?.name || "Cash Customer",
       status,
@@ -63,25 +91,69 @@ export default async function CrmQuoteDetailsPage({
 
   if (!dbQuote) notFound();
 
-  const q = dbQuote as any;
+  const managerOptions = await db.user.findMany({
+    where: {
+      orgId,
+      active: true,
+      OR: [
+        { isPlatformAdmin: true },
+        {
+          roles: {
+            some: {
+              role: {
+                name: {
+                  in: ["Admin", "Manager"],
+                },
+              },
+            },
+          },
+        },
+      ],
+    },
+    orderBy: [{ isPlatformAdmin: "desc" }, { name: "asc" }],
+    select: { id: true, name: true },
+  });
+
+  const rootQuoteId = dbQuote.sourceQuotationId || dbQuote.id;
+  const versionHistoryRows = await db.crmInvoice.findMany({
+    where: {
+      orgId,
+      type: "QUOTE",
+      OR: [{ id: rootQuoteId }, { sourceQuotationId: rootQuoteId }],
+    },
+    select: {
+      id: true,
+      invoiceNumber: true,
+      sourceQuotationVersion: true,
+      approvalStatus: true,
+      status: true,
+      createdAt: true,
+      createdById: true,
+      owner: { select: { name: true } },
+    },
+    orderBy: [{ sourceQuotationVersion: "asc" }, { createdAt: "asc" }],
+  });
+
   const quote: QuoteDetailRecord & { approvalLogs?: ApprovalLogEntry[]; reworkNote?: string | null; slaDeadline?: string | null } = {
     id: dbQuote.id,
     date: dbQuote.date.toISOString().split("T")[0],
-    location: q.location || "Chennai",
+    location: dbQuote.location || "Chennai",
     quoteNumber: dbQuote.invoiceNumber,
-    referenceNumber: q.referenceNumber || dbQuote.invoiceNumber,
+    referenceNumber: dbQuote.referenceNumber || dbQuote.invoiceNumber,
     customerName: dbQuote.account?.name || "Cash Customer",
-    status: (dbQuote.approvalStatus || dbQuote.status || "draft").toLowerCase().replace(/_/g, "-") as Exclude<QuoteListStatus, "all">,
+    status: mapQuoteApprovalStatusToListStatus(
+      dbQuote.approvalStatus || dbQuote.status || "draft",
+    ) as Exclude<QuoteListStatus, "all">,
     amount: dbQuote.total,
     creationDate: dbQuote.createdAt.toISOString().split("T")[0],
     salesperson: dbQuote.owner?.name || "Admin User",
-    placeOfSupply: (dbQuote as any).placeOfSupply || "33",
+    placeOfSupply: dbQuote.placeOfSupply || "33",
     pdfTemplate: "Spreadsheet Template",
     customerInitial: (dbQuote.account?.name || "C").charAt(0).toUpperCase(),
     billingAddress: dbQuote.account?.billingAddress || "",
     shippingAddress: dbQuote.account?.shippingAddress || "",
     notes: dbQuote.manualNotes || "",
-    terms: q.terms || "",
+    terms: dbQuote.terms || "",
     bankDetailsId: dbQuote.bankDetails || "",
     items: dbQuote.items.map((item) => ({
       id: item.id,
@@ -89,17 +161,17 @@ export default async function CrmQuoteDetailsPage({
       description: item.productName,
       hsnSac: MOCK_ITEMS.find((catalogItem) => catalogItem.name === item.productName)?.hsnSac || "",
       quantity: item.qty,
-      unit: (item as any).unit || "PCS",
+      unit: item.unit || "PCS",
       price: item.rate,
-      tax: (item as any).taxLabel || `GST ${item.taxPercent}%`,
-      tds: (item as any).tds || "None",
+      tax: item.taxLabel || `GST ${item.taxPercent}%`,
+      tds: item.tds || "None",
       amount: item.amount,
-      currency: (item as any).currency || "INR",
-      exchangeRate: (item as any).exchangeRate || 1,
+      currency: item.currency || "INR",
+      exchangeRate: item.exchangeRate || 1,
     })),
     taxes: (() => {
       const supplierStateCode = getStateCodeForLocation(dbQuote.location || "Chennai");
-      const isSameState = supplierStateCode && supplierStateCode === (dbQuote as any).placeOfSupply;
+      const isSameState = supplierStateCode && supplierStateCode === dbQuote.placeOfSupply;
       if (isSameState) {
         return [
           { label: "CGST", amount: dbQuote.tax / 2 },
@@ -111,21 +183,37 @@ export default async function CrmQuoteDetailsPage({
       ];
     })(),
     discount: dbQuote.discount,
-    discountType: q.discountType || "percentage",
+    discountType: dbQuote.discountType || "percentage",
     adjustment: 0,
     roundOff: 0,
     subtotal: dbQuote.total - dbQuote.tax,
     total: dbQuote.total,
-    portOfLoading: q.portOfLoading || "",
-    portOfDischarge: q.portOfDischarge || "",
-    incoterm: q.incoterm || "",
-    containerType: q.containerType || "",
-    numberOfContainers: q.numberOfContainers || 0,
-    commodity: q.commodity || "",
-    weight: q.weight || "",
+    portOfLoading: dbQuote.portOfLoading || "",
+    portOfLoadingCountry: dbQuote.portOfLoadingCountry || "",
+    portOfDischarge: dbQuote.portOfDischarge || "",
+    portOfDestinationCountry: dbQuote.portOfDestinationCountry || "",
+    incoterm: dbQuote.incoterm || "",
+    containerType: dbQuote.containerType || "",
+    numberOfContainers: dbQuote.numberOfContainers || 0,
+    commodity: dbQuote.commodity || "",
+    weight: dbQuote.weight || "",
     approvalLogs: dbQuote.approvalLogs,
     reworkNote: dbQuote.reworkNote,
     slaDeadline: dbQuote.slaDeadline ? dbQuote.slaDeadline.toISOString() : null,
+    versionNumber: dbQuote.sourceQuotationVersion || 1,
+    rootQuoteNumber: dbQuote.sourceQuotationNumber || dbQuote.invoiceNumber,
+    workflowContext: (dbQuote.sourceQuotationSnapshot as QuoteWorkflowContext | null) || null,
+    managerOptions,
+    versionHistory: versionHistoryRows.map((entry) => ({
+      id: entry.id,
+      quoteNumber: entry.invoiceNumber,
+      versionNumber: entry.sourceQuotationVersion || 1,
+      status: mapQuoteApprovalStatusToListStatus(
+        entry.approvalStatus || entry.status || "draft",
+      ) as Exclude<QuoteListStatus, "all">,
+      createdAt: entry.createdAt.toISOString(),
+      createdBy: entry.owner?.name || null,
+    })),
   };
 
   const [canSubmit, canApprove, canSend, canManage, canAdminRestore] =

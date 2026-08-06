@@ -56,6 +56,7 @@ export default async function CrmCustomsClearanceDetailPage({
       {...detailData}
       backHref="/crm/customs-clearance"
       backLabel="Back to Customs Clearance"
+      serviceType="CUSTOMS_CLEARANCE"
     />
   );
 }

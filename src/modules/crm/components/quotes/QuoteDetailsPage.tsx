@@ -1,26 +1,41 @@
 "use client";
 
-import { CrmButton, CrmInput, CrmTable } from "@/modules/crm/components/workspace/crm-workspace";
+import {
+  CrmButton,
+  CrmDialog,
+  CrmInput,
+  CrmPanel,
+  CrmSection,
+  CrmSelect,
+  CrmStatus,
+  CrmTable,
+} from "@/modules/crm/components/workspace/crm-workspace";
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   ArrowLeft,
+  BellRing,
+  BriefcaseBusiness,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
-  Copy,
   FileOutput,
   FileText,
   Mail,
   MoreHorizontal,
+  Loader2,
   Pencil,
   Plus,
   Search,
   Send,
+  ShieldAlert,
+  ShipWheel,
   Share2,
   Trash2,
-  ShieldAlert,
+  UserCheck,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { quoteDetails } from "@/modules/crm/components/quotes/lib/quote-details-data";
@@ -31,12 +46,17 @@ import { ApprovalActionBar, ApprovalLogList, type ApprovalCaps, type ApprovalLog
 import type { ApprovalStatus } from "@/modules/crm/approval-workflow";
 import { toast } from "sonner";
 import { deleteInvoiceAction } from "@/modules/crm/actions";
+import { actionSubmitForApproval } from "@/modules/crm/approval-actions";
 import { getStateCodeForLocation } from "@/modules/crm/components/quotes/lib/gst-states";
 
 // Map mock QuoteListStatus (lowercase-hyphenated) → ApprovalStatus (UPPER_SNAKE)
 function toApprovalStatus(s: Exclude<QuoteListStatus, "all">): ApprovalStatus {
   const map: Record<string, ApprovalStatus> = {
     draft: "DRAFT",
+    "pending-manager-approval": "PENDING_MANAGER_APPROVAL",
+    "pending-customer-approval": "PENDING_CUSTOMER_APPROVAL",
+    "customer-approved": "CUSTOMER_APPROVED",
+    "booking-created": "BOOKING_CREATED",
     "pending-approval": "PENDING_APPROVAL",
     approved: "APPROVED",
     sent: "SENT",
@@ -51,6 +71,14 @@ function toApprovalStatus(s: Exclude<QuoteListStatus, "all">): ApprovalStatus {
 
 const statusTone: Record<Exclude<QuoteListStatus, "all">, string> = {
   draft: "bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)]",
+  "pending-manager-approval":
+    "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
+  "pending-customer-approval":
+    "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent)]",
+  "customer-approved":
+    "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]",
+  "booking-created":
+    "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]",
   "pending-approval": "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
   approved: "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent-text)]",
   sent: "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent-text)]",
@@ -79,6 +107,106 @@ function formatAmount(value: number) {
     currency: "INR",
     minimumFractionDigits: 2,
   }).format(value);
+}
+
+function formatOptionalValue(value?: string | number | null) {
+  if (value === null || value === undefined) return "-";
+  if (typeof value === "number") {
+    return value > 0 ? String(value) : "-";
+  }
+  const trimmed = value.trim();
+  return trimmed ? trimmed : "-";
+}
+
+function formatDateTime(value?: string | null) {
+  if (!value) return "-";
+  return new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function departmentLabel(value: "FREIGHT_FORWARDING" | "CUSTOMS_CLEARANCE") {
+  return value === "FREIGHT_FORWARDING"
+    ? "Freight Forwarding"
+    : "Customs Clearance";
+}
+
+type DepartmentView = "FREIGHT_FORWARDING" | "CUSTOMS_CLEARANCE";
+
+const DEPARTMENT_ITEM_KEYWORDS: Record<DepartmentView, string[]> = {
+  FREIGHT_FORWARDING: [
+    "ocean freight",
+    "freight",
+    "cfs",
+    "vgm",
+    "container pickup",
+    "insurance",
+  ],
+  CUSTOMS_CLEARANCE: [
+    "customs clearance",
+    "clearance",
+    "do charges",
+    "bl charges",
+    "documentation",
+  ],
+};
+
+function classifyItemDepartment(name: string, description?: string | null) {
+  const haystack = `${name} ${description || ""}`.toLowerCase();
+  if (
+    DEPARTMENT_ITEM_KEYWORDS.FREIGHT_FORWARDING.some((keyword) =>
+      haystack.includes(keyword),
+    )
+  ) {
+    return "FREIGHT_FORWARDING" as const;
+  }
+  if (
+    DEPARTMENT_ITEM_KEYWORDS.CUSTOMS_CLEARANCE.some((keyword) =>
+      haystack.includes(keyword),
+    )
+  ) {
+    return "CUSTOMS_CLEARANCE" as const;
+  }
+  return null;
+}
+
+function buildDepartmentQuoteView(
+  quote: QuoteDetailRecord,
+  department: DepartmentView,
+) {
+  const items = quote.items.filter(
+    (item) => classifyItemDepartment(item.name, item.description) === department,
+  );
+  const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+  const taxRatio = quote.subtotal > 0 ? subtotal / quote.subtotal : 0;
+  const taxes = quote.taxes.map((tax, index) => {
+    const proportionalAmount = Number((tax.amount * taxRatio).toFixed(2));
+    const isLast = index === quote.taxes.length - 1;
+    const previous = quote.taxes
+      .slice(0, index)
+      .reduce((sum, row) => sum + Number((row.amount * taxRatio).toFixed(2)), 0);
+
+    return {
+      ...tax,
+      amount: isLast
+        ? Number((quote.total - quote.subtotal).toFixed(2)) * taxRatio - previous
+        : proportionalAmount,
+    };
+  });
+  const taxTotal = taxes.reduce((sum, tax) => sum + tax.amount, 0);
+  const total = subtotal + taxTotal;
+
+  return {
+    ...quote,
+    items,
+    subtotal,
+    taxes,
+    total,
+    discount: 0,
+    adjustment: 0,
+    roundOff: 0,
+  };
 }
 
 function matchesSearch(record: QuoteRecord, query: string) {
@@ -114,6 +242,28 @@ export function QuoteDetailsPage({
     canAdminRestore: false,
   };
   const effectiveCaps = caps ?? defaultCaps;
+  const approvalFlow = quote.workflowContext?.approvalFlow ?? null;
+  const conversion = quote.workflowContext?.conversion ?? null;
+  const pendingActions = (() => {
+    switch (quote.status) {
+      case "draft":
+        return approvalFlow?.lastRejectedStage === "CUSTOMER"
+          ? ["Edit the quotation", "Resubmit for manager approval", "Collect fresh customer approval after manager approval"]
+          : approvalFlow?.lastRejectedStage === "MANAGER"
+            ? ["Edit the quotation", "Resubmit for manager approval"]
+            : ["Edit the quotation", "Submit for manager approval"];
+      case "pending-manager-approval":
+        return ["Await manager decision"];
+      case "pending-customer-approval":
+        return ["Record customer approval or rejection on behalf of the customer"];
+      case "customer-approved":
+        return ["Create booking", "Route Freight Forwarding and CHA records"];
+      case "booking-created":
+        return ["Continue in Freight Forwarding", "Continue in CHA"];
+      default:
+        return [];
+    }
+  })();
   const [search, setSearch] = useState("");
   const [activeView, setActiveView] = useState<QuoteListStatus>("all");
   const [activeTab, setActiveTab] = useState<"details" | "activity">("details");
@@ -121,8 +271,31 @@ export function QuoteDetailsPage({
   const [displayCurrency, setDisplayCurrency] = useState<"INR" | "foreign">(
     "INR",
   );
+  const [activeDepartmentView, setActiveDepartmentView] =
+    useState<DepartmentView>("FREIGHT_FORWARDING");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const [selectedManagerId, setSelectedManagerId] = useState(
+    approvalFlow?.selectedManagerId ?? quote.managerOptions?.[0]?.id ?? "",
+  );
+  const [isSubmittingForApproval, startSubmitTransition] = useTransition();
+  const canSubmitForApproval =
+    quote.status === "draft" && effectiveCaps.canSubmit;
+  const filterRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (!filterRef.current?.contains(event.target as Node)) {
+        setFilterOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, []);
 
   const handleDelete = async () => {
     if (confirm("Are you sure you want to delete this draft quote?")) {
@@ -144,6 +317,20 @@ export function QuoteDetailsPage({
     }
   };
 
+  const handleSubmitForApproval = () => {
+    startSubmitTransition(async () => {
+      try {
+        await actionSubmitForApproval(quote.id, undefined, selectedManagerId);
+        toast.success("Quotation submitted for manager approval.");
+        setSubmitDialogOpen(false);
+        window.location.reload();
+      } catch (err) {
+        const error = err as Error;
+        toast.error(error.message || "Failed to submit quotation for approval.");
+      }
+    });
+  };
+
   const listData = allQuotes || quoteDetails;
   const filteredQuotes = useMemo(() => {
     return listData.filter((record) => {
@@ -155,70 +342,175 @@ export function QuoteDetailsPage({
 
   const activeViewLabel =
     quoteViews.find((view) => view.id === activeView)?.label ?? "All";
+  const notifications = approvalFlow?.notifications ?? [];
+  const includedDepartments = quote.workflowContext?.includedDepartments ?? [];
+  const pendingDepartments = quote.workflowContext?.pendingDepartments ?? [];
+  const inferredDepartments = Array.from(
+    new Set(
+      quote.items
+        .map((item) => classifyItemDepartment(item.name, item.description))
+        .filter((value): value is DepartmentView => value !== null),
+    ),
+  );
+  const availableDepartments = includedDepartments.length
+    ? includedDepartments
+    : inferredDepartments;
+  const departmentViewStates: Record<
+    DepartmentView,
+    "available" | "pending" | "unavailable"
+  > = {
+    FREIGHT_FORWARDING: availableDepartments.includes("FREIGHT_FORWARDING")
+      ? "available"
+      : pendingDepartments.includes("FREIGHT_FORWARDING")
+        ? "pending"
+        : "unavailable",
+    CUSTOMS_CLEARANCE: availableDepartments.includes("CUSTOMS_CLEARANCE")
+      ? "available"
+      : pendingDepartments.includes("CUSTOMS_CLEARANCE")
+        ? "pending"
+        : "unavailable",
+  };
+  const resolvedDepartmentView =
+    departmentViewStates[activeDepartmentView] !== "unavailable"
+      ? activeDepartmentView
+      : departmentViewStates.FREIGHT_FORWARDING !== "unavailable"
+        ? "FREIGHT_FORWARDING"
+        : "CUSTOMS_CLEARANCE";
+  const selectedDepartmentState = departmentViewStates[resolvedDepartmentView];
+  const selectedDepartmentQuote =
+    selectedDepartmentState === "available"
+      ? buildDepartmentQuoteView(quote, resolvedDepartmentView)
+      : null;
 
   return (
-    <div className="min-h-screen bg-[var(--mnx-surface)] text-[var(--mnx-text-strong)]">
-      <div className="flex min-h-screen flex-col xl:flex-row">
-        <aside className="flex w-full shrink-0 flex-col border-b border-[var(--mnx-border)] bg-mono-card xl:w-[360px] xl:border-b-0 xl:border-r">
+    <div className="flex min-w-0 flex-col gap-6 text-[var(--mnx-text-strong)]">
+      <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(280px,340px)_minmax(0,1fr)]">
+        <aside
+          className={cn(
+            "sticky top-0 flex w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)] bg-mono-card transition-all mnx-shadow-panel",
+            isSidebarCollapsed ? "xl:w-[132px]" : "xl:w-full",
+          )}
+        >
           <div className="border-b border-[var(--mnx-border)] px-4 py-4">
-            <div className="flex items-center justify-between gap-3">
-              <CrmButton
-                type="button"
-                className="inline-flex items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-mono-card px-4 py-2 text-sm font-semibold text-[var(--mnx-text-strong)]"
-              >
-                <span>{activeViewLabel} Quotes</span>
-                <ChevronDown className="size-4 text-[var(--mnx-text-muted)]" />
-              </CrmButton>
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/crm/quotes/new"
-                  className="inline-flex size-10 items-center justify-center rounded-xl bg-[var(--mnx-accent)] text-mono-text transition-colors hover:bg-[var(--mnx-accent)] "
-                  aria-label="Create quote"
-                >
-                  <Plus className="size-4" />
-                </Link>
-                <CrmButton
-                  type="button"
-                  className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)]"
-                  aria-label="More actions"
-                >
-                  <MoreHorizontal className="size-4" />
-                </CrmButton>
+            {!isSidebarCollapsed ? (
+              <div ref={filterRef} className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <CrmButton
+                    type="button"
+                    onClick={() => setFilterOpen((current) => !current)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-mono-card px-4 py-2 text-sm font-semibold text-[var(--mnx-text-strong)]"
+                  >
+                    <span>{activeViewLabel} Quotes</span>
+                    <ChevronDown
+                      className={cn(
+                        "size-4 text-[var(--mnx-text-muted)] transition-transform",
+                        filterOpen ? "rotate-180" : "",
+                      )}
+                    />
+                  </CrmButton>
+                  <div className="flex items-center gap-2">
+                    <CrmButton
+                      type="button"
+                      onClick={() => {
+                        setFilterOpen(false);
+                        setIsSidebarCollapsed(true);
+                      }}
+                      className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)]"
+                      aria-label="Collapse quote sidebar"
+                      title="Collapse quote sidebar"
+                    >
+                      <ChevronLeft className="size-4" />
+                    </CrmButton>
+                    <Link
+                      href="/crm/quotes/new"
+                      className="inline-flex size-10 items-center justify-center rounded-xl bg-[var(--mnx-accent)] text-mono-text transition-colors hover:bg-[var(--mnx-accent)]/90"
+                      aria-label="Create quote"
+                    >
+                      <Plus className="size-4" />
+                    </Link>
+                    <CrmButton
+                      type="button"
+                      className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)]"
+                      aria-label="More actions"
+                    >
+                      <MoreHorizontal className="size-4" />
+                    </CrmButton>
+                  </div>
+                </div>
+
+                {filterOpen ? (
+                  <div className="flex flex-wrap gap-2">
+                    {quoteViews.map((view) => (
+                      <CrmButton
+                        key={view.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveView(view.id);
+                          setFilterOpen(false);
+                        }}
+                        className={cn(
+                          "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                          activeView === view.id
+                            ? "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]"
+                            : "bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)] hover:bg-[var(--mnx-border)]",
+                        )}
+                      >
+                        {view.label}
+                      </CrmButton>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-3 py-1">
+                <div className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-4 py-3 text-center text-sm font-semibold text-[var(--mnx-text-strong)]">
+                  Quotes
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <CrmButton
+                    type="button"
+                    onClick={() => setIsSidebarCollapsed(false)}
+                    className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)]"
+                    aria-label="Expand quote sidebar"
+                    title="Expand quote sidebar"
+                  >
+                    <ChevronRight className="size-4" />
+                  </CrmButton>
+                  <Link
+                    href="/crm/quotes/new"
+                    className="inline-flex size-10 items-center justify-center rounded-xl bg-[var(--mnx-accent)] text-mono-text transition-colors hover:bg-[var(--mnx-accent)]/90"
+                    aria-label="Create quote"
+                  >
+                    <Plus className="size-4" />
+                  </Link>
+                  <CrmButton
+                    type="button"
+                    className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)]"
+                    aria-label="More actions"
+                  >
+                    <MoreHorizontal className="size-4" />
+                  </CrmButton>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {!isSidebarCollapsed ? (
+            <div className="border-b border-[var(--mnx-border)] px-4 py-4">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-[var(--mnx-text-muted)]" />
+                <CrmInput
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search quotes"
+                  className="h-11 w-full rounded-xl border border-[var(--mnx-border)] bg-mono-card pl-10 pr-3 text-sm text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/20"
+                />
               </div>
             </div>
+          ) : null}
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              {quoteViews.map((view) => (
-                <CrmButton
-                  key={view.id}
-                  type="button"
-                  onClick={() => setActiveView(view.id)}
-                  className={cn(
-                    "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                    activeView === view.id
-                      ? "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]"
-                      : "bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)] hover:bg-[var(--mnx-border)]",
-                  )}
-                >
-                  {view.label}
-                </CrmButton>
-              ))}
-            </div>
-          </div>
-
-          <div className="border-b border-[var(--mnx-border)] px-4 py-4">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-[var(--mnx-text-muted)]" />
-              <CrmInput
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search quotes"
-                className="h-11 w-full rounded-xl border border-[var(--mnx-border)] bg-mono-card pl-10 pr-3 text-sm text-[var(--mnx-text-strong)] outline-none focus:border-[var(--mnx-accent)] focus:ring-2 focus:ring-[var(--mnx-accent)]/20"
-              />
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto">
+          {!isSidebarCollapsed ? (
+            <div className="flex-1 overflow-y-auto">
             {filteredQuotes.map((record) => {
               const active = record.id === quote.id;
               return (
@@ -272,27 +564,39 @@ export function QuoteDetailsPage({
                 </Link>
               );
             })}
-          </div>
+            </div>
+          ) : (
+            <div className="flex flex-1 items-start justify-center px-3 py-4 xl:py-6">
+              <div className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">
+                List
+              </div>
+            </div>
+          )}
         </aside>
 
-        <main className="min-w-0 flex-1">
-          <div className="border-b border-[var(--mnx-border)] bg-mono-card">
-            <div className="border-b border-[var(--mnx-text-muted)] px-4 py-4 sm:px-6">
+        <div className="min-w-0 space-y-6">
+          <CrmPanel
+            className={cn(
+              "relative overflow-visible border border-[var(--mnx-border)] bg-mono-card",
+              actionsOpen ? "z-20" : "",
+            )}
+          >
+            <div className="border-b border-[var(--mnx-border)] px-4 py-5 sm:px-6">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div className="flex items-start gap-3">
                   <Link
                     href="/crm/quotes"
-                    className="mt-1 inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)]"
+                    className="mt-1 inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)] transition-colors hover:bg-[var(--mnx-border)]/35"
                     aria-label="Back to quote list"
                   >
                     <ArrowLeft className="size-4" />
                   </Link>
                   <div>
-                    <p className="text-sm text-[var(--mnx-text-muted)]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">
                       Location: {quote.location}
                     </p>
-                    <div className="mt-1 flex flex-wrap items-center gap-3">
-                      <h1 className="text-[2rem] font-semibold tracking-[-0.03em] text-[var(--mnx-text-strong)]">
+                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                      <h1 className="text-[clamp(1.8rem,3vw,2.5rem)] font-semibold tracking-[-0.03em] text-[var(--mnx-text-strong)]">
                         {quote.quoteNumber}
                       </h1>
                       <span
@@ -306,18 +610,20 @@ export function QuoteDetailsPage({
                     </div>
                   </div>
                 </div>
-                <p className="text-sm text-[var(--mnx-text-muted)]">
+                <p className="text-sm font-medium text-[var(--mnx-text-muted)] lg:text-right">
                   Total {formatAmount(quote.total)} for {quote.customerName}
                 </p>
               </div>
             </div>
 
-            <div className="px-4 py-3 sm:px-6">
+            <div
+              className={cn(
+                "px-4 py-4 sm:px-6",
+                actionsOpen ? "pb-28" : "",
+              )}
+            >
               <div className="flex flex-wrap items-center gap-2 text-[var(--mnx-text-muted)]">
-                {quote.status === "draft" ||
-                quote.status === "rework" ||
-                (quote.status === "pending-approval" &&
-                  effectiveCaps.canApprove) ? (
+                {quote.status === "draft" ? (
                   <Link
                     href={`/crm/quotes/${quote.id}/edit`}
                     className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--mnx-border)] bg-mono-card px-3.5 text-sm font-medium text-[var(--mnx-text-muted)] shadow-sm hover:bg-[var(--mnx-surface)]"
@@ -335,6 +641,23 @@ export function QuoteDetailsPage({
                     <span>Edit</span>
                   </CrmButton>
                 )}
+                <CrmButton
+                  type="button"
+                  onClick={() => {
+                    if (!canSubmitForApproval) return;
+                    setSubmitDialogOpen(true);
+                  }}
+                  disabled={!canSubmitForApproval}
+                  className={cn(
+                    "inline-flex h-10 items-center gap-2 rounded-xl px-3.5 text-sm font-medium shadow-sm",
+                    canSubmitForApproval
+                      ? "bg-[var(--mnx-accent)] text-mono-text hover:bg-[var(--mnx-accent)]/90"
+                      : "cursor-not-allowed border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)] opacity-50",
+                  )}
+                >
+                  <Send className="size-4" />
+                  <span>Submit For Approval</span>
+                </CrmButton>
                 <ToolbarButton icon={Mail} label="Mails" dropdown />
                 <ToolbarButton icon={Share2} label="Share" />
                 <ToolbarButton icon={FileOutput} label="PDF/Print" dropdown />
@@ -350,12 +673,6 @@ export function QuoteDetailsPage({
                   </CrmButton>
                   {actionsOpen ? (
                     <div className="absolute right-0 top-12 z-30 w-60 overflow-hidden rounded-2xl border border-[var(--mnx-border)] bg-mono-card mnx-shadow-panel">
-                      <ActionMenuButton
-                        icon={Send}
-                        label="Mark As Sent"
-                        active
-                      />
-                      <ActionMenuButton icon={Copy} label="Clone" />
                       {quote.status === "draft" && (
                         <ActionMenuButton
                           icon={Trash2}
@@ -372,7 +689,7 @@ export function QuoteDetailsPage({
                           <span className="flex size-6 items-center justify-center rounded-full border border-[var(--mnx-border)] text-[var(--mnx-text-muted)]">
                             <ChevronRight className="size-3" />
                           </span>
-                          Quote Preferences
+                          Workflow preferences
                         </CrmButton>
                       </div>
                     </div>
@@ -380,59 +697,371 @@ export function QuoteDetailsPage({
                 </div>
               </div>
             </div>
-          </div>
+          </CrmPanel>
 
-          <div className="p-4 sm:p-6">
-            <div className="grid gap-6">
-              {/* Approval action bar */}
-              <section className=" border border-[var(--mnx-border)] bg-mono-card px-5 py-4 mnx-shadow-panel">
-                <p
-                  className="text-xs font-semibold uppercase tracking-widest mb-3"
-                  style={{ color: "var(--color-on-surface-variant)" }}
-                >
-                  Workflow
+          {submitDialogOpen ? (
+            <CrmDialog
+              open
+              onClose={() => setSubmitDialogOpen(false)}
+              title="Submit For Manager Approval"
+              size="compact"
+              footer={
+                <div className="flex justify-end gap-3">
+                  <CrmButton
+                    onClick={() => setSubmitDialogOpen(false)}
+                    variant="secondary"
+                  >
+                    Cancel
+                  </CrmButton>
+                  <CrmButton
+                    onClick={handleSubmitForApproval}
+                    disabled={isSubmittingForApproval || !selectedManagerId}
+                  >
+                    {isSubmittingForApproval ? (
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                    ) : null}
+                    Submit
+                  </CrmButton>
+                </div>
+              }
+            >
+              <div className="space-y-4">
+                <label className="block space-y-1">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-[var(--mnx-text-muted)]">
+                    Approving manager
+                  </span>
+                  <CrmSelect
+                    value={selectedManagerId}
+                    onChange={(event) => setSelectedManagerId(event.target.value)}
+                    className="h-11 w-full rounded-xl"
+                  >
+                    <option value="">Select manager</option>
+                    {quote.managerOptions?.map((manager) => (
+                      <option key={manager.id} value={manager.id}>
+                        {manager.name}
+                      </option>
+                    ))}
+                  </CrmSelect>
+                </label>
+                <p className="text-sm text-[var(--mnx-text-muted)]">
+                  The selected manager will receive the approval request and must
+                  complete the review before customer approval can be recorded.
                 </p>
-                <ApprovalActionBar
-                  invoiceId={quote.id}
-                  entityType="QUOTE"
-                  approvalStatus={toApprovalStatus(quote.status)}
-                  caps={effectiveCaps}
-                  reworkNote={null}
+              </div>
+            </CrmDialog>
+          ) : null}
+
+          <div className="space-y-6">
+            <div className="grid gap-6">
+              {quote.versionNumber ? (
+                <CrmSection
+                  title="Versioning"
+                  description={
+                    <>
+                      Base quotation{" "}
+                      <span className="font-semibold text-[var(--mnx-text-strong)]">
+                        {quote.rootQuoteNumber || quote.quoteNumber}
+                      </span>{" "}
+                      is currently on{" "}
+                      <span className="font-semibold text-[var(--mnx-text-strong)]">
+                        V{quote.versionNumber}
+                      </span>
+                      .
+                    </>
+                  }
+                  actions={
+                    <CrmStatus variant="accent">V{quote.versionNumber}</CrmStatus>
+                  }
+                >
+                  <div className="space-y-4">
+                    {quote.workflowContext?.pendingDepartments?.length ? (
+                      <CrmPanel className="border-[var(--mnx-warning)]/35 bg-[var(--mnx-warning-bg)]/35 p-4">
+                        <p className="text-sm text-[var(--mnx-warning)]">
+                          Pending department rates:{" "}
+                          {quote.workflowContext.pendingDepartments
+                            .map((item) =>
+                              item === "FREIGHT_FORWARDING"
+                                ? "Freight Forwarding"
+                                : "Customs Clearance",
+                            )
+                            .join(", ")}
+                        </p>
+                      </CrmPanel>
+                    ) : null}
+
+                    {quote.versionHistory?.length ? (
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {quote.versionHistory.map((entry) => (
+                          <Link
+                            key={entry.id}
+                            href={`/crm/quotes/${entry.id}`}
+                            className={cn(
+                              "rounded-xl border border-[var(--mnx-border)] px-4 py-3 text-sm transition-colors",
+                              entry.id === quote.id
+                                ? "bg-[var(--mnx-accent)]/8"
+                                : "bg-[var(--mnx-surface)] hover:bg-[var(--mnx-surface)]/70",
+                            )}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="font-semibold text-[var(--mnx-text-strong)]">
+                                {entry.quoteNumber}
+                              </span>
+                              <CrmStatus
+                                variant={
+                                  entry.id === quote.id ? "accent" : "neutral"
+                                }
+                              >
+                                {formatStatus(entry.status)}
+                              </CrmStatus>
+                            </div>
+                            <div className="mt-1 text-xs text-[var(--mnx-text-muted)]">
+                              {formatDate(entry.createdAt)}
+                              {entry.createdBy ? ` · ${entry.createdBy}` : ""}
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </CrmSection>
+              ) : null}
+
+              <CrmSection
+                title="Workflow"
+                description="Review approval ownership, timing, and downstream operational conversion status."
+              >
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <DetailPair
+                      label="Approval status"
+                      value={formatStatus(quote.status)}
+                    />
+                    <DetailPair
+                      label="Selected manager"
+                      value={approvalFlow?.selectedManagerName || "-"}
+                    />
+                    <DetailPair
+                      label="Manager updated"
+                      value={formatDateTime(approvalFlow?.managerDecisionAt)}
+                    />
+                    <DetailPair
+                      label="Customer updated"
+                      value={formatDateTime(approvalFlow?.customerDecisionAt)}
+                    />
+                  </div>
+                  <ApprovalActionBar
+                    invoiceId={quote.id}
+                    entityType="QUOTE"
+                    approvalStatus={toApprovalStatus(quote.status)}
+                    caps={effectiveCaps}
+                    reworkNote={quote.reworkNote}
+                    managerOptions={quote.managerOptions}
+                    workflowContext={quote.workflowContext}
+                  />
+                </div>
+              </CrmSection>
+
+              <div className="grid gap-6 xl:grid-cols-2">
+                <InfoPanel
+                  title="Manager Approval Details"
+                  icon={UserCheck}
+                  rows={[
+                    ["Approving manager", approvalFlow?.selectedManagerName || "-"],
+                    ["Submission", formatDateTime(approvalFlow?.submittedAt)],
+                    [
+                      "Decision",
+                      approvalFlow?.managerStatus
+                        ? approvalFlow.managerStatus
+                        : "Not recorded",
+                    ],
+                    [
+                      "Remarks",
+                      approvalFlow?.managerRemarks || quote.reworkNote || "-",
+                    ],
+                  ]}
+                />
+                <InfoPanel
+                  title="Customer Approval Details"
+                  icon={Users}
+                  rows={[
+                    [
+                      "Decision",
+                      approvalFlow?.customerStatus
+                        ? approvalFlow.customerStatus
+                        : quote.status === "pending-customer-approval"
+                          ? "Pending"
+                          : "Not recorded",
+                    ],
+                    [
+                      "Recorded by",
+                      approvalFlow?.customerDecisionByName || "-",
+                    ],
+                    [
+                      "Decision date",
+                      formatDateTime(approvalFlow?.customerDecisionAt),
+                    ],
+                    [
+                      "Remarks",
+                      approvalFlow?.customerRemarks || "-",
+                    ],
+                  ]}
+                />
+                <InfoPanel
+                  title="Pending Actions"
+                  icon={BriefcaseBusiness}
+                  rows={pendingActions.map((item, index) => [
+                    `Action ${index + 1}`,
+                    item,
+                  ])}
+                />
+                <InfoPanel
+                  title="Notifications"
+                  icon={BellRing}
+                  rows={(notifications.length ? notifications : ["No pending notifications"]).map(
+                    (item, index) => [`Notice ${index + 1}`, item],
+                  )}
+                />
+              </div>
+
+              <section className="grid gap-6 xl:grid-cols-2">
+                <InfoPanel
+                  title="Booking And Job Conversion Status"
+                  icon={ShipWheel}
+                  rows={[
+                    [
+                      "Included services",
+                      quote.workflowContext?.includedDepartments?.length
+                        ? quote.workflowContext.includedDepartments
+                            .map(departmentLabel)
+                            .join(", ")
+                        : "Not available",
+                    ],
+                    [
+                      "Freight booking",
+                      conversion?.freightBookingNumber
+                        ? `${conversion.freightBookingNumber} (${conversion.freightStatus || "Pending"})`
+                        : "Not created",
+                    ],
+                    [
+                      "CHA job",
+                      conversion?.chaJobNumber
+                        ? `${conversion.chaJobNumber} (${conversion.chaStatus || "Created"})`
+                        : "Not created",
+                    ],
+                    ["Created", formatDateTime(conversion?.createdAt)],
+                  ]}
+                />
+                <InfoPanel
+                  title="Audit Trail Summary"
+                  icon={FileText}
+                  rows={[
+                    [
+                      "Created",
+                      formatDate(quote.creationDate),
+                    ],
+                    [
+                      "Approval steps",
+                      String(approvalFlow?.auditTrail?.length || quote.approvalLogs?.length || 0),
+                    ],
+                    [
+                      "Quotation version",
+                      quote.versionNumber ? `V${quote.versionNumber}` : "V1",
+                    ],
+                    [
+                      "Latest actor",
+                      quote.approvalLogs?.[0]?.actor.name || "-",
+                    ],
+                  ]}
                 />
               </section>
 
-              <section className=" overflow-hidden border border-[var(--mnx-border)] bg-mono-card mnx-shadow-panel">
+              <CrmSection
+                title={activeTab === "details" ? "Quote Details" : "Activity Logs"}
+                description={
+                  activeTab === "details"
+                    ? "Switch between department views, currency context, and printable output."
+                    : "Review the quote approval and activity trail."
+                }
+                actions={
+                  <div className="flex flex-wrap items-center gap-2">
+                    <CrmButton
+                      type="button"
+                      variant={activeTab === "details" ? "accent" : "secondary"}
+                      size="compact"
+                      onClick={() => setActiveTab("details")}
+                    >
+                      Quote Details
+                    </CrmButton>
+                    <CrmButton
+                      type="button"
+                      variant={activeTab === "activity" ? "accent" : "secondary"}
+                      size="compact"
+                      onClick={() => setActiveTab("activity")}
+                    >
+                      Activity Logs
+                    </CrmButton>
+                  </div>
+                }
+              >
+              <section className="overflow-hidden border border-[var(--mnx-border)] bg-mono-card mnx-shadow-panel">
                 <div className="border-b border-[var(--mnx-border)] px-5 pt-4">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex items-center gap-8">
-                      <CrmButton
-                        type="button"
-                        onClick={() => setActiveTab("details")}
-                        className={cn(
-                          "border-b-[3px] pb-4 text-base font-semibold transition-colors",
-                          activeTab === "details"
-                            ? "border-[var(--mnx-accent)] text-[var(--mnx-text-strong)]"
-                            : "border-transparent text-[var(--mnx-text-muted)]",
-                        )}
-                      >
-                        Quote Details
-                      </CrmButton>
-                      <CrmButton
-                        type="button"
-                        onClick={() => setActiveTab("activity")}
-                        className={cn(
-                          "border-b-[3px] pb-4 text-base font-medium transition-colors",
-                          activeTab === "activity"
-                            ? "border-[var(--mnx-accent)] text-[var(--mnx-text-strong)]"
-                            : "border-transparent text-[var(--mnx-text-muted)]",
-                        )}
-                      >
-                        Activity Logs
-                      </CrmButton>
-                    </div>
-
                     {activeTab === "details" ? (
                       <div className="mb-3 flex flex-wrap items-center gap-3">
+                        <div className="inline-flex items-center rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-1">
+                          {(
+                            [
+                              "FREIGHT_FORWARDING",
+                              "CUSTOMS_CLEARANCE",
+                            ] as const
+                          ).map((department) => {
+                            const state = departmentViewStates[department];
+                            const isActive = resolvedDepartmentView === department;
+
+                            return (
+                              <CrmButton
+                                key={department}
+                                type="button"
+                                onClick={() =>
+                                  state !== "unavailable"
+                                    ? setActiveDepartmentView(department)
+                                    : undefined
+                                }
+                                disabled={state === "unavailable"}
+                                className={cn(
+                                  "rounded-lg px-4 py-2 text-left transition-colors",
+                                  isActive
+                                    ? "bg-mono-card shadow-sm"
+                                    : "text-[var(--mnx-text-muted)]",
+                                  state === "unavailable" &&
+                                    "cursor-not-allowed opacity-45",
+                                )}
+                              >
+                                <div className="text-sm font-semibold">
+                                  {department === "FREIGHT_FORWARDING"
+                                    ? "Freight Quote"
+                                    : "Clearance Quote"}
+                                </div>
+                                <div
+                                  className={cn(
+                                    "text-[11px] uppercase tracking-[0.12em]",
+                                    state === "pending"
+                                      ? "text-[var(--mnx-warning)]"
+                                      : state === "available"
+                                        ? "text-[var(--mnx-success)]"
+                                        : "text-[var(--mnx-text-muted)]",
+                                  )}
+                                >
+                                  {state === "pending"
+                                    ? "Yet to receive"
+                                    : state === "available"
+                                      ? "Available"
+                                      : "Not available"}
+                                </div>
+                              </CrmButton>
+                            );
+                          })}
+                        </div>
                         <div className="inline-flex items-center rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-1">
                           <CrmButton
                             type="button"
@@ -579,6 +1208,69 @@ export function QuoteDetailsPage({
                         </div>
                       </section>
 
+                      <section className="rounded-2xl border border-[var(--mnx-border)] bg-mono-card p-5">
+                        <div className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">
+                          Logistics Details
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                          <DetailPair
+                            label="Port of Loading"
+                            value={formatOptionalValue(quote.portOfLoading)}
+                          />
+                          <DetailPair
+                            label="Loading Country"
+                            value={formatOptionalValue(quote.portOfLoadingCountry)}
+                          />
+                          <DetailPair
+                            label="Port of Discharge"
+                            value={formatOptionalValue(quote.portOfDischarge)}
+                          />
+                          <DetailPair
+                            label="Destination Country"
+                            value={formatOptionalValue(quote.portOfDestinationCountry)}
+                          />
+                          <DetailPair
+                            label="Incoterm"
+                            value={formatOptionalValue(quote.incoterm)}
+                          />
+                          <DetailPair
+                            label="Container Type"
+                            value={formatOptionalValue(quote.containerType)}
+                          />
+                          <DetailPair
+                            label="No. of Containers"
+                            value={formatOptionalValue(quote.numberOfContainers)}
+                          />
+                          <DetailPair
+                            label="Commodity"
+                            value={formatOptionalValue(quote.commodity)}
+                          />
+                          <DetailPair
+                            label="Weight"
+                            value={formatOptionalValue(quote.weight)}
+                          />
+                        </div>
+                      </section>
+
+                      {selectedDepartmentState !== "available" ||
+                      !selectedDepartmentQuote ? (
+                        <section className="rounded-2xl border border-[var(--mnx-border)] bg-mono-card p-8 text-center">
+                          <p className="text-lg font-semibold text-[var(--mnx-text-strong)]">
+                            {resolvedDepartmentView === "FREIGHT_FORWARDING"
+                              ? selectedDepartmentState === "pending"
+                                ? "Freight quote yet to receive"
+                                : "Freight quote not available"
+                              : selectedDepartmentState === "pending"
+                                ? "Clearance quote yet to receive"
+                                : "Clearance quote not available"}
+                          </p>
+                          <p className="mt-2 text-sm text-[var(--mnx-text-muted)]">
+                            {selectedDepartmentState === "pending"
+                              ? "This department is part of the shipment, but the quotation details are still pending from the team."
+                              : "This shipment does not include that department quotation."}
+                          </p>
+                        </section>
+                      ) : (
                       <section className="rounded-2xl border border-[var(--mnx-border)] bg-mono-card">
                         <div className="flex items-center justify-between border-b border-[var(--mnx-border)] px-5 py-4">
                           <div className="flex items-center gap-3">
@@ -586,12 +1278,14 @@ export function QuoteDetailsPage({
                               Items
                             </h2>
                             <span className="rounded-full bg-[var(--mnx-accent)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--mnx-accent)]">
-                              {quote.items.length}
+                              {selectedDepartmentQuote.items.length}
                             </span>
                           </div>
                           <div className="inline-flex items-center gap-2 rounded-full bg-[var(--mnx-surface)] px-3 py-1.5 text-xs font-medium text-[var(--mnx-text-muted)]">
                             <FileText className="size-4" />
-                            Details View
+                            {resolvedDepartmentView === "FREIGHT_FORWARDING"
+                              ? "Freight Details View"
+                              : "Clearance Details View"}
                           </div>
                         </div>
 
@@ -608,7 +1302,7 @@ export function QuoteDetailsPage({
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-[var(--mnx-border)] text-sm">
-                              {quote.items.map((item, index) => {
+                              {selectedDepartmentQuote.items.map((item, index) => {
                                 const showForeign =
                                   displayCurrency === "foreign" &&
                                   item.currency &&
@@ -687,10 +1381,10 @@ export function QuoteDetailsPage({
                           <div className="ml-auto w-full max-w-[360px] space-y-3 text-sm">
                             <SummaryRow
                               label="Sub Total"
-                              value={formatAmount(quote.subtotal)}
+                              value={formatAmount(selectedDepartmentQuote.subtotal)}
                               strong
                             />
-                            {quote.taxes.map((tax) => (
+                            {selectedDepartmentQuote.taxes.map((tax) => (
                               <SummaryRow
                                 key={tax.label}
                                 label={tax.label}
@@ -699,23 +1393,24 @@ export function QuoteDetailsPage({
                             ))}
                             <SummaryRow
                               label="Discount"
-                              value={formatAmount(quote.discount)}
+                              value={formatAmount(selectedDepartmentQuote.discount)}
                             />
                             <SummaryRow
                               label="Adjustment"
-                              value={String(quote.adjustment)}
+                              value={String(selectedDepartmentQuote.adjustment)}
                             />
                             <SummaryRow
                               label="Round Off"
-                              value={formatAmount(quote.roundOff)}
+                              value={formatAmount(selectedDepartmentQuote.roundOff)}
                             />
                             <div className="mt-3 flex items-center justify-between border-t border-[var(--mnx-border)] pt-3 text-base font-semibold text-[var(--mnx-text-strong)]">
                               <span>Total</span>
-                              <span>{formatAmount(quote.total)}</span>
+                              <span>{formatAmount(selectedDepartmentQuote.total)}</span>
                             </div>
                           </div>
                         </div>
                       </section>
+                      )}
 
                       <section className="rounded-2xl border border-[var(--mnx-border)] bg-mono-card p-5">
                         <div className="grid gap-6 xl:grid-cols-2">
@@ -803,11 +1498,29 @@ export function QuoteDetailsPage({
                         })()}
                       </section>
                     </div>
-                  ) : (
+                  ) : selectedDepartmentState === "available" &&
+                    selectedDepartmentQuote ? (
                     <QuotePdfPreview
-                      quote={quote}
+                      quote={selectedDepartmentQuote}
                       displayCurrency={displayCurrency}
                     />
+                  ) : (
+                    <div className="rounded-2xl border border-[var(--mnx-border)] bg-mono-card p-8 text-center">
+                      <p className="text-lg font-semibold text-[var(--mnx-text-strong)]">
+                        {resolvedDepartmentView === "FREIGHT_FORWARDING"
+                          ? selectedDepartmentState === "pending"
+                            ? "Freight PDF yet to receive"
+                            : "Freight PDF not available"
+                          : selectedDepartmentState === "pending"
+                            ? "Clearance PDF yet to receive"
+                            : "Clearance PDF not available"}
+                      </p>
+                      <p className="mt-2 text-sm text-[var(--mnx-text-muted)]">
+                        {selectedDepartmentState === "pending"
+                          ? "The department quotation has not been submitted yet."
+                          : "This shipment does not have a quotation for the selected department."}
+                      </p>
+                    </div>
                   )
                 ) : (
                   <div className="p-6 bg-mono-card rounded-2xl border border-[var(--mnx-border)]">
@@ -815,9 +1528,10 @@ export function QuoteDetailsPage({
                   </div>
                 )}
               </section>
+              </CrmSection>
             </div>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );
@@ -875,6 +1589,45 @@ function ActionMenuButton({
       <Icon className="size-4" />
       {label}
     </CrmButton>
+  );
+}
+
+function InfoPanel({
+  title,
+  icon: Icon,
+  rows,
+}: {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  rows: Array<[string, string]>;
+}) {
+  const safeRows = rows.length ? rows : [["Status", "No details available"]];
+  return (
+    <CrmPanel className="p-5">
+      <div className="mb-4 flex items-center gap-2">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]">
+          <Icon className="size-4" />
+        </span>
+        <h2 className="text-base font-semibold text-[var(--mnx-text-strong)]">
+          {title}
+        </h2>
+      </div>
+      <div className="space-y-3">
+        {safeRows.map(([label, value]) => (
+          <div
+            key={`${title}-${label}`}
+            className="flex flex-col gap-1 rounded-xl bg-[var(--mnx-surface)] px-4 py-3"
+          >
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
+              {label}
+            </span>
+            <span className="text-sm text-[var(--mnx-text-strong)]">
+              {value}
+            </span>
+          </div>
+        ))}
+      </div>
+    </CrmPanel>
   );
 }
 
@@ -1339,6 +2092,34 @@ const watermarkConfig: Record<
     to: "var(--mnx-text-muted)",
     shadow: "var(--mnx-accent-soft)",
     text: "var(--mnx-text-muted)",
+  },
+  "pending-manager-approval": {
+    from: "var(--mnx-warning)",
+    via: "var(--mnx-warning)",
+    to: "var(--mnx-warning)",
+    shadow: "var(--mnx-warning-bg)",
+    text: "var(--mnx-warning-bg)",
+  },
+  "pending-customer-approval": {
+    from: "var(--mnx-accent)",
+    via: "var(--mnx-accent)",
+    to: "var(--mnx-accent)",
+    shadow: "var(--mnx-accent-soft)",
+    text: "var(--mnx-text-muted)",
+  },
+  "customer-approved": {
+    from: "var(--mnx-success)",
+    via: "var(--mnx-success)",
+    to: "var(--mnx-success)",
+    shadow: "var(--mnx-success-bg)",
+    text: "var(--mnx-success-bg)",
+  },
+  "booking-created": {
+    from: "var(--mnx-success)",
+    via: "var(--mnx-success)",
+    to: "var(--mnx-success)",
+    shadow: "var(--mnx-success-bg)",
+    text: "var(--mnx-success-bg)",
   },
   "pending-approval": {
     from: "var(--mnx-warning)",

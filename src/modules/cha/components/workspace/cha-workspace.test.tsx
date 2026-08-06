@@ -13,6 +13,8 @@ import {
 describe("Expense and CHA production components", () => {
   it("maps exact and dynamic Expense and CHA routes", () => {
     expect(getChaRouteMeta("/cha").title).toBe("CHA command centre");
+    expect(getChaRouteMeta("/cha/jobs/new").title).toBe("New CHA job");
+    expect(getChaRouteMeta("/cha/process").title).toBe("Process");
     expect(getChaRouteMeta("/cha/jobs/job-1").title).toBe("Job operations");
     expect(getChaRouteMeta("/cha/customers/customer-1/edit").title).toBe(
       "Edit customer",

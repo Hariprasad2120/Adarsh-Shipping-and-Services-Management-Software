@@ -1,6 +1,7 @@
 "use client";
 
 import { CrmButton, CrmInput, CrmTextarea } from "@/modules/crm/components/workspace/crm-workspace";
+import { WorkspacePanelHeader } from "@/components/layout/workspace";
 
 import { NativeSelect } from "@/components/ui/native-select";
 import { useEffect, useRef, useState } from "react";
@@ -43,16 +44,12 @@ type NotesAndTermsSectionProps = {
 };
 
 export function NotesAndTermsSection({ form, files, onFilesChange, discountAmount, cgst, sgst, igst }: NotesAndTermsSectionProps) {
-  const [templates, setTemplates] = useState<NoteTemplate[]>([]);
+  const [templates, setTemplates] = useState<NoteTemplate[]>(() => loadTemplates());
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState("");
   const pickerRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setTemplates(loadTemplates());
-  }, []);
 
   useEffect(() => {
     function handlePointerDown(e: MouseEvent) {
@@ -97,7 +94,12 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
 
   return (
     <>
-      <section className="border-b border-[var(--mnx-border)] px-5 py-5">
+      <div className="p-5">
+        <WorkspacePanelHeader
+          eyebrow="Customer communication"
+          title="Notes, totals, and bank details"
+          description="Prepare customer-facing notes, review totals, and choose the bank account shown on the document."
+        />
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           {/* Customer Notes with Templates */}
           <div className="space-y-2">
@@ -211,10 +213,9 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
             <TotalsPanel form={form} discountAmount={discountAmount} cgst={cgst} sgst={sgst} igst={igst} />
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Bank Details for Quote */}
-      <section className="border-b border-[var(--mnx-border)] px-5 py-5">
+      <div className="border-t border-[var(--mnx-border)] p-5">
         <div className="flex items-center gap-2 mb-3">
           <CreditCard size={14} className="text-[var(--mnx-accent)]" />
           <h3 className="text-[12px] font-semibold text-[var(--mnx-text-strong)] uppercase tracking-wide">
@@ -263,9 +264,9 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
             </div>
           )}
         </div>
-      </section>
+      </div>
 
-      <section className="bg-[var(--mnx-surface)] px-5 py-5">
+      <div className="border-t border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-5">
         <div className="grid gap-6 lg:grid-cols-2">
           <div>
             <label className="mb-1 block text-[12px] font-medium text-[var(--mnx-text-strong)]">Terms &amp; Conditions</label>
@@ -281,7 +282,7 @@ export function NotesAndTermsSection({ form, files, onFilesChange, discountAmoun
             <FileUploadBox files={files} onFilesChange={onFilesChange} />
           </div>
         </div>
-      </section>
+      </div>
     </>
   );
 }

@@ -248,6 +248,7 @@ const MODULE_DEFINITIONS: readonly ModuleDefinition[] = [
     secondaryLabel: "pending milestones",
     tertiaryLabel: "ready screens",
     actions: [
+      { label: "Create booking", href: "/freight-forwarding/create-booking" },
       { label: "Open workspace", href: "/freight-forwarding" },
     ],
     read: async () => ({

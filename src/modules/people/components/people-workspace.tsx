@@ -359,6 +359,13 @@ const exactRouteMeta: Record<string, PeopleRouteMeta> = {
       "Review employee presence totals for a selected payroll month.",
     icon: FileText,
   },
+  "/attendance/settings": {
+    eyebrow: "Attendance configuration",
+    title: "Attendance settings",
+    description:
+      "Review attendance policy controls, processing workspaces, and integration touchpoints.",
+    icon: Settings2,
+  },
   "/attendance/timesheets": {
     eyebrow: "Workforce time",
     title: "Timesheets",

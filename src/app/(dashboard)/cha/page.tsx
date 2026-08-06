@@ -390,7 +390,6 @@ export default async function ChaDashboard({ searchParams }: ChaDashboardProps) 
               <>
                 <ChaDashboardSearchAction value={assignedSearch} />
                 <DashboardCreateJob
-                  currentUserId={session.user.id}
                   canCreateJob={canCreateJob}
                 />
                 <ChaDashboardFilterAction

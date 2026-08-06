@@ -2,10 +2,33 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NewQuotePage } from "@/modules/crm/components/quotes/NewQuotePage";
+import type { QuoteFormValues } from "@/modules/crm/components/quotes/lib/types";
+import { getQuoteEnquiryNumber } from "@/modules/crm/service-enquiry-reference";
+import {
+  buildQuoteLineItemsFromWorkflow,
+  getBaseQuoteNumber,
+  getRateWorkflowSnapshot,
+  type CrmQuoteWorkflowMode,
+} from "@/modules/crm/rate-workflow";
+import type { QuoteWorkflowContext } from "@/modules/crm/components/quotes/lib/types";
 
 interface SearchParams {
   leadId?: string;
+  mode?: CrmQuoteWorkflowMode;
+  department?: "FREIGHT_FORWARDING" | "CUSTOMS_CLEARANCE";
 }
+
+type QuoteSeedLineItem = {
+  id: string;
+  description: string;
+  hsnSac: string;
+  unit: string;
+  quantity: number;
+  rate: number;
+  tax: string;
+  tds: string;
+  amount: number;
+};
 
 export default async function NewCrmQuotePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const session = await getSession();
@@ -15,6 +38,7 @@ export default async function NewCrmQuotePage({ searchParams }: { searchParams: 
 
   const awaitedParams = await searchParams;
   const leadId = awaitedParams.leadId;
+  const mode = awaitedParams.mode || "combined";
 
   const [dbUsers, dbAccounts] = await Promise.all([
     db.user.findMany({
@@ -43,11 +67,30 @@ export default async function NewCrmQuotePage({ searchParams }: { searchParams: 
     gstin: a.gstin ?? undefined,
   }));
 
-  let initialData: any = undefined;
+  let initialData: QuoteFormValues | undefined = undefined;
+  let workflowContext: QuoteWorkflowContext | undefined = undefined;
 
   if (leadId) {
     const lead = await db.crmLead.findFirst({
       where: { id: leadId, orgId },
+      select: {
+        id: true,
+        ownerId: true,
+        company: true,
+        email: true,
+        phone: true,
+        address: true,
+        convertedAccountId: true,
+        enquiryRef: true,
+        enquiryDetails: true,
+        serviceEnquiries: {
+          select: {
+            serviceType: true,
+            enquiryRef: true,
+            departmentRef: true,
+          },
+        },
+      },
     });
 
     if (lead) {
@@ -95,56 +138,38 @@ export default async function NewCrmQuotePage({ searchParams }: { searchParams: 
       }
 
       // 2. Parse enquiry & rates details
-      const enquiry = (lead.enquiryDetails as any) || {};
-      const rates = enquiry.rates || {};
+      const enquiry =
+        lead.enquiryDetails && typeof lead.enquiryDetails === "object"
+          ? (lead.enquiryDetails as Record<string, unknown>)
+          : {};
+      const portOfLoading = typeof enquiry.pol === "string" ? enquiry.pol : typeof enquiry.aol === "string" ? enquiry.aol : "";
+      const portOfDischarge = typeof enquiry.pod === "string" ? enquiry.pod : typeof enquiry.aod === "string" ? enquiry.aod : "";
+      const incoterm = typeof enquiry.incoterm === "string" ? enquiry.incoterm : "";
+      const containerType = typeof enquiry.containerType === "string" ? enquiry.containerType : "20FT";
+      const containerCount =
+        typeof enquiry.containerCount === "string" || typeof enquiry.containerCount === "number"
+          ? Number.parseInt(String(enquiry.containerCount), 10) || 1
+          : 1;
+      const commodity = typeof enquiry.commodity === "string" ? enquiry.commodity : "";
+      const weight = typeof enquiry.weight === "string" ? enquiry.weight : "";
+      const rateBuild = buildQuoteLineItemsFromWorkflow({
+        enquiryDetails: enquiry,
+        mode,
+      });
+      const workflow = getRateWorkflowSnapshot(enquiry);
       const isSea = enquiry.type === "Sea";
       const isLcl = isSea && enquiry.seaLclFcl === "LCL";
       
-      const quantityVal = isSea
-        ? (isLcl ? (parseFloat(enquiry.cbm) || 1) : (parseInt(enquiry.containerCount) || 1))
-        : (parseFloat(enquiry.weight) || 1);
-
-      const unitVal = isSea
-        ? (isLcl ? "CBM" : "Container")
-        : "KG";
-
-      const lineItems: any[] = [];
-      const addLineItem = (desc: string, rateVal: number, hsn: string, u: string, q: number) => {
-        if (!rateVal) return;
-        lineItems.push({
-          id: `line_${Math.random().toString(36).slice(2, 10)}`,
-          description: desc,
-          hsnSac: hsn,
-          unit: u,
-          quantity: q,
-          rate: rateVal,
-          tax: "GST 18%",
-          tds: "None",
-          amount: q * rateVal
-        });
-      };
-
-      if (isSea) {
-        addLineItem("Ocean Freight Charges", rates.oceanFreight, "996719", unitVal, quantityVal);
-        addLineItem("CFS Handling Charges", rates.cfsCharges, "996712", "Shipment", 1);
-        addLineItem("CHA Custom Clearance Charges", rates.customsClearance, "996712", "Shipment", 1);
-        addLineItem("Documentation & BL Fees", rates.blCharges, "996712", "Shipment", 1);
-        addLineItem("VGM Verification Fee", rates.vgmCharges, "996712", "Shipment", 1);
-        addLineItem("LCL De-stuffing & Handling", rates.lclCharges, "996712", "Shipment", 1);
-        addLineItem("Delivery Order Issuance Charges", rates.doCharges, "996712", "Shipment", 1);
-        addLineItem("CFS Customs Examination Fee", rates.cfsCustoms, "996712", "Shipment", 1);
-      } else {
-        addLineItem("Air Freight Charges", rates.airFreight, "996719", "KG", quantityVal);
-        addLineItem("Airport Terminal Handling", rates.handlingCharges, "996712", "Shipment", 1);
-        addLineItem("CHA Airport Custom Clearance", rates.customsClearance, "996712", "Shipment", 1);
-        addLineItem("AWB Issuance Documentation Fee", rates.awbCharges, "996712", "Shipment", 1);
-        addLineItem("Local Delivery Charges", rates.deliveryCharges, "996712", "Shipment", 1);
-      }
+      const stableQuoteSeed = (lead.enquiryRef || lead.id).replace(/[^A-Za-z0-9]/g, "").slice(-10);
+      const lineItems: QuoteSeedLineItem[] = rateBuild.items.map((item, index) => ({
+        id: `line_${stableQuoteSeed}_${index + 1}`,
+        ...item,
+      }));
 
       // If no rates mapped, add one empty line item as default values expect it
       if (lineItems.length === 0) {
         lineItems.push({
-          id: `line_${Math.random().toString(36).slice(2, 10)}`,
+          id: `line_${stableQuoteSeed}_1`,
           description: "Sea Freight Charges",
           hsnSac: "996719",
           unit: "Container",
@@ -158,28 +183,44 @@ export default async function NewCrmQuotePage({ searchParams }: { searchParams: 
 
       // Calculate totals
       const subtotalVal = lineItems.reduce((sum, item) => sum + item.amount, 0);
+      const enquiryNumber = getQuoteEnquiryNumber(lead);
+      const baseQuoteNumber =
+        workflow.quoteBaseNumber || `QT-${stableQuoteSeed || "20260001"}`;
+      const today = new Date();
+      const expiry = new Date(today);
+      expiry.setDate(expiry.getDate() + 30);
+
+      workflowContext = {
+        mode,
+        includedDepartments: rateBuild.includedDepartments,
+        pendingDepartments: rateBuild.pendingDepartments,
+        latestQuoteId: workflow.latestQuoteId,
+        latestQuoteVersion: workflow.latestQuoteVersion,
+        quoteBaseNumber: baseQuoteNumber,
+        recreateRequired: mode === "newly-added-only",
+      };
 
       initialData = {
         customerId,
         location: "Chennai",
         placeOfSupply: "33",
-        quoteNumber: `QT-2026-${Math.floor(Math.random() * 900 + 100)}`,
-        referenceNumber: lead.enquiryRef || "",
-        quoteDate: new Date().toISOString().slice(0, 10),
-        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10), // 30 days expiry
+        quoteNumber: getBaseQuoteNumber(baseQuoteNumber),
+        referenceNumber: enquiryNumber,
+        quoteDate: today.toISOString().slice(0, 10),
+        expiryDate: expiry.toISOString().slice(0, 10),
         salesperson: lead.ownerId || session.user.id,
         projectId: "",
-        portOfLoading: enquiry.pol || enquiry.aol || "",
+        portOfLoading,
         portOfLoadingCountry: "India", // Default, editable
-        portOfDischarge: enquiry.pod || enquiry.aod || "",
+        portOfDischarge,
         portOfDestinationCountry: "", // Default, editable
-        incoterm: enquiry.incoterm || "",
-        containerType: isSea ? (isLcl ? "LCL" : (enquiry.containerType || "20FT")) : "Air Cargo",
-        numberOfContainers: isSea ? (parseInt(enquiry.containerCount) || 1) : 1,
-        commodity: enquiry.commodity || "",
-        weight: enquiry.weight || "",
+        incoterm,
+        containerType: isSea ? (isLcl ? "LCL" : containerType) : "Air Cargo",
+        numberOfContainers: isSea ? containerCount : 1,
+        commodity,
+        weight,
         lineItems,
-        customerNotes: `Pre-populated from Enquiry Ref ${lead.enquiryRef || "N/A"}.`,
+        customerNotes: `Pre-populated from Enquiry ${enquiryNumber || "N/A"} using ${mode.replace(/-/g, " ")} rates.`,
         terms: "Standard payment terms apply.",
         bankDetailsId: "",
         discountType: "percentage",
@@ -198,6 +239,7 @@ export default async function NewCrmQuotePage({ searchParams }: { searchParams: 
       accounts={accounts}
       initialData={initialData}
       linkedLeadId={leadId}
+      workflowContext={workflowContext}
     />
   );
 }

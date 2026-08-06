@@ -1,5 +1,5 @@
-import { ItemsListPage } from "@/modules/items/components/ItemsListPage";
+import { redirect } from "next/navigation";
 
 export default function CrmItemsPage() {
-  return <ItemsListPage basePath="/crm/items" />;
+  redirect("/crm/masters?tab=item-master");
 }

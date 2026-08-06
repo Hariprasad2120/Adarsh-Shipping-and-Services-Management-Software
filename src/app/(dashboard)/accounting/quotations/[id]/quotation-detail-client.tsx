@@ -10,8 +10,8 @@ import {
   acceptQuotationAction,
   approveQuotationAction,
   cancelQuotationAction,
-  convertQuotationToSalesOrderAction,
   convertQuotationToInvoiceAction,
+  convertQuotationToSalesOrderAction,
   declineQuotationAction,
   duplicateQuotationAction,
   returnQuotationForRevisionAction,
@@ -25,6 +25,7 @@ import {
 } from "@/modules/accounting/operational-helpers";
 import {
   AccountingAction,
+  AccountingActionLink,
   AccountingAlert,
   AccountingDetail,
   AccountingDetailList,
@@ -35,9 +36,8 @@ import {
   AccountingMetric,
   AccountingMetrics,
   AccountingMoney,
-  AccountingActionLink,
-  AccountingSelect,
   AccountingSection,
+  AccountingSelect,
   AccountingStatus,
   AccountingTable,
 } from "@/components/monolith/accounting-workspace";
@@ -54,7 +54,9 @@ function formatDateTime(value: string | null | undefined) {
 
 export function QuotationDetailClient({
   caps,
+  embedded = false,
   quotation,
+  workspaceHrefBase = "/accounting/quotations",
 }: {
   caps: {
     canEdit: boolean;
@@ -67,17 +69,21 @@ export function QuotationDetailClient({
     canConvertToSalesOrder: boolean;
     canCreate: boolean;
   };
+  embedded?: boolean;
   quotation: any;
+  workspaceHrefBase?: string;
 }) {
   type QuotationLine = any;
 
   const router = useRouter();
   const [isBusy, setIsBusy] = useState<string | null>(null);
-  const [deliveryMode, setDeliveryMode] = useState<"EMAIL" | "PORTAL" | "MANUAL">("EMAIL");
+  const [deliveryMode, setDeliveryMode] = useState<"EMAIL" | "PORTAL" | "MANUAL">(
+    "EMAIL",
+  );
   const [quantitiesByLineId, setQuantitiesByLineId] = useState<Record<string, string>>(
     () =>
       Object.fromEntries(
-      quotation.items.map((line: QuotationLine) => [
+        quotation.items.map((line: QuotationLine) => [
           line.id,
           subtractDecimalStrings(line.qty, line.convertedQuantity),
         ]),
@@ -108,7 +114,11 @@ export function QuotationDetailClient({
       const result = await duplicateQuotationAction(quotation.id);
       if (!result.ok) throw new Error(result.error || "Quotation could not be duplicated");
       toast.success("Quotation duplicated");
-      router.push(`/accounting/quotations/${result.data.id}`);
+      router.push(
+        embedded
+          ? `${workspaceHrefBase}?quote=${result.data.id}`
+          : `/accounting/quotations/${result.data.id}`,
+      );
     });
   }
 
@@ -202,16 +212,22 @@ export function QuotationDetailClient({
     });
   }
 
-  async function convertQuotation() {
-    const requestedLines = Object.fromEntries(
+  function buildRequestedLines() {
+    return Object.fromEntries(
       remainingTotals
         .map((line: QuotationLine) => [line.id, quantitiesByLineId[line.id] ?? "0"] as const)
-        .filter(([, value]: readonly [string, string]) => compareDecimalStrings(String(value || "0"), "0") > 0),
+        .filter(
+          ([, value]: readonly [string, string]) =>
+            compareDecimalStrings(String(value || "0"), "0") > 0,
+        ),
     );
+  }
+
+  async function convertQuotation() {
     await runAction("convert", async () => {
       const result = await convertQuotationToInvoiceAction(quotation.id, {
         expectedVersion: quotation.rowVersion,
-        quantitiesByLineId: requestedLines,
+        quantitiesByLineId: buildRequestedLines(),
       });
       if (!result.ok) throw new Error(result.error || "Quotation could not be converted");
       toast.success("Draft sales invoice created");
@@ -220,15 +236,10 @@ export function QuotationDetailClient({
   }
 
   async function convertQuotationToSalesOrder() {
-    const requestedLines = Object.fromEntries(
-      remainingTotals
-        .map((line: QuotationLine) => [line.id, quantitiesByLineId[line.id] ?? "0"] as const)
-        .filter(([, value]: readonly [string, string]) => compareDecimalStrings(String(value || "0"), "0") > 0),
-    );
     await runAction("convert-sales-order", async () => {
       const result = await convertQuotationToSalesOrderAction(quotation.id, {
         expectedVersion: quotation.rowVersion,
-        quantitiesByLineId: requestedLines,
+        quantitiesByLineId: buildRequestedLines(),
       });
       if (!result.ok) {
         throw new Error(result.error || "Quotation could not be converted to a sales order");
@@ -239,9 +250,7 @@ export function QuotationDetailClient({
   }
 
   const canSubmit =
-    caps.canSubmit &&
-    quotation.status === "DRAFT" &&
-    quotation.approvalRequired;
+    caps.canSubmit && quotation.status === "DRAFT" && quotation.approvalRequired;
   const canApprove = caps.canApprove && quotation.status === "PENDING_APPROVAL";
   const canSend =
     caps.canSend &&
@@ -250,8 +259,7 @@ export function QuotationDetailClient({
   const canAccept = caps.canDecide && quotation.status === "SENT";
   const canDecline = caps.canDecide && quotation.status === "SENT";
   const canCancel =
-    caps.canCancel &&
-    ["DRAFT", "PENDING_APPROVAL", "SENT"].includes(quotation.status);
+    caps.canCancel && ["DRAFT", "PENDING_APPROVAL", "SENT"].includes(quotation.status);
   const canConvert =
     caps.canConvert &&
     ["ACCEPTED", "PARTIALLY_CONVERTED"].includes(quotation.status) &&
@@ -266,13 +274,17 @@ export function QuotationDetailClient({
     );
 
   return (
-    <>
+    <div className={embedded ? "mnx-accounting-quotation-detail-stack" : undefined}>
       <AccountingSection
         eyebrow="Quotation control"
-        title="Commercial lifecycle"
-        description="Review server-authoritative totals, approval state, dispatch status, customer decision, and conversion readiness."
+        title={embedded ? "Commercial controls" : "Commercial lifecycle"}
+        description={
+          embedded
+            ? "Use the important actions here to keep the quotation moving without leaving the register."
+            : "Review server-authoritative totals, approval state, dispatch status, customer decision, and conversion readiness."
+        }
         actions={
-          <div className="mnx-accounting-inline-actions">
+          <div className="mnx-accounting-inline-actions mnx-accounting-quotation-actions">
             <AccountingStatus status={quotation.status} />
             {quotation.sendStatus ? <AccountingStatus status={quotation.sendStatus} /> : null}
             {caps.canCreate ? (
@@ -281,25 +293,37 @@ export function QuotationDetailClient({
                 onClick={() => void duplicateQuotation()}
                 variant="secondary"
               >
-                {isBusy === "duplicate" ? <Loader2 className="animate-spin" size={16} /> : null}
+                {isBusy === "duplicate" ? (
+                  <Loader2 className="animate-spin" size={16} />
+                ) : null}
                 Duplicate
               </AccountingAction>
             ) : null}
             {caps.canEdit && quotation.status === "DRAFT" ? (
-              <AccountingDraftEditLink href={`/accounting/quotations?edit=${quotation.id}`}>
+              <AccountingDraftEditLink
+                href={`${workspaceHrefBase}?edit=${quotation.id}&quote=${quotation.id}`}
+              >
                 Edit draft
               </AccountingDraftEditLink>
             ) : null}
             {canSubmit ? (
-              <AccountingAction disabled={isBusy === "submit"} onClick={() => void submitForApproval()}>
+              <AccountingAction
+                disabled={isBusy === "submit"}
+                onClick={() => void submitForApproval()}
+              >
                 {isBusy === "submit" ? <Loader2 className="animate-spin" size={16} /> : null}
                 Submit
               </AccountingAction>
             ) : null}
             {canApprove ? (
               <>
-                <AccountingAction disabled={isBusy === "approve"} onClick={() => void approveQuotation()}>
-                  {isBusy === "approve" ? <Loader2 className="animate-spin" size={16} /> : null}
+                <AccountingAction
+                  disabled={isBusy === "approve"}
+                  onClick={() => void approveQuotation()}
+                >
+                  {isBusy === "approve" ? (
+                    <Loader2 className="animate-spin" size={16} />
+                  ) : null}
                   Approve
                 </AccountingAction>
                 <AccountingAction
@@ -307,7 +331,9 @@ export function QuotationDetailClient({
                   onClick={() => void returnForRevision()}
                   variant="secondary"
                 >
-                  {isBusy === "return" ? <Loader2 className="animate-spin" size={16} /> : null}
+                  {isBusy === "return" ? (
+                    <Loader2 className="animate-spin" size={16} />
+                  ) : null}
                   Return
                 </AccountingAction>
               </>
@@ -367,19 +393,24 @@ export function QuotationDetailClient({
             This quotation requires approval before it can be sent.
           </AccountingAlert>
         ) : null}
-        <AccountingDetailList>
-          <AccountingDetail label="Customer" value={quotation.customer?.name || "—"} />
-          <AccountingDetail label="Reference" value={quotation.referenceNumber || "—"} />
-          <AccountingDetail label="Posting date" value={formatDate(quotation.postingDate)} />
-          <AccountingDetail label="Valid until" value={formatDate(quotation.validUntil)} />
-          <AccountingDetail label="Terms" value={quotation.terms || "—"} />
-          <AccountingDetail label="Currency" value={quotation.currencyCode} />
-          <AccountingDetail label="Exchange rate" value={quotation.exchangeRate || "—"} />
-          <AccountingDetail label="Subject" value={quotation.subject || "—"} />
-          <AccountingDetail label="Remarks" value={quotation.remarks || "—"} />
-          <AccountingDetail label="Row version" value={quotation.rowVersion} />
-          <AccountingDetail label="Source invoice" value={quotation.sourceQuotationNumber || "—"} />
-        </AccountingDetailList>
+        <div className="mnx-accounting-quotation-overview-grid">
+          <AccountingDetailList className="mnx-accounting-quotation-overview-card">
+            <AccountingDetail label="Customer" value={quotation.customer?.name || "—"} />
+            <AccountingDetail label="Reference" value={quotation.referenceNumber || "—"} />
+            <AccountingDetail label="Posting date" value={formatDate(quotation.postingDate)} />
+            <AccountingDetail label="Valid until" value={formatDate(quotation.validUntil)} />
+            <AccountingDetail label="Terms" value={quotation.terms || "—"} />
+            <AccountingDetail label="Currency" value={quotation.currencyCode} />
+          </AccountingDetailList>
+          <AccountingDetailList className="mnx-accounting-quotation-overview-card">
+            <AccountingDetail label="Exchange rate" value={quotation.exchangeRate || "—"} />
+            <AccountingDetail label="Subject" value={quotation.subject || "—"} />
+            <AccountingDetail label="Remarks" value={quotation.remarks || "—"} />
+            <AccountingDetail label="Row version" value={quotation.rowVersion} />
+            <AccountingDetail label="Source quotation" value={quotation.sourceQuotationNumber || "—"} />
+            <AccountingDetail label="Customer contact" value={quotation.customerContact?.name || "—"} />
+          </AccountingDetailList>
+        </div>
       </AccountingSection>
 
       <AccountingMetrics>
@@ -403,8 +434,8 @@ export function QuotationDetailClient({
 
       <AccountingSection
         eyebrow="Quoted lines"
-        title="Server-calculated items"
-        description="Snapshot line values, taxes, conversion progress, and remaining quantities."
+        title="Quoted items"
+        description="Review line values, remaining quantity, and choose what should move into invoicing or a sales order."
       >
         <AccountingTable>
           <thead>
@@ -421,40 +452,57 @@ export function QuotationDetailClient({
             </tr>
           </thead>
           <tbody>
-            {remainingTotals.length ? remainingTotals.map((line: QuotationLine) => (
-              <tr key={line.id}>
-                <td>
-                  <strong>{line.itemName}</strong>
-                  <span className="mnx-table-subtext">
-                    {line.descriptionSnapshot || line.hsnSac || "No description"}
-                  </span>
-                </td>
-                <td className="mnx-accounting-amount">{line.qty}</td>
-                <td className="mnx-accounting-amount">{line.convertedQuantity}</td>
-                <td className="mnx-accounting-amount">{line.remainingQuantity}</td>
-                <td><AccountingMoney amount={line.rate} currencyCode={quotation.currencyCode} /></td>
-                <td><AccountingMoney amount={line.taxableAmount} currencyCode={quotation.currencyCode} /></td>
-                <td><AccountingMoney amount={line.taxAmount} currencyCode={quotation.currencyCode} /></td>
-                <td><AccountingMoney amount={line.lineTotal} currencyCode={quotation.currencyCode} /></td>
-                <td>
-                  <AccountingField label={`Convert ${line.itemName}`}>
-                    <AccountingInput
-                      disabled={!canConvert}
-                      min="0"
-                      step="0.000001"
-                      type="number"
-                      value={quantitiesByLineId[line.id] ?? "0"}
-                      onChange={(event) =>
-                        setQuantitiesByLineId((current) => ({
-                          ...current,
-                          [line.id]: event.target.value,
-                        }))
-                      }
+            {remainingTotals.length ? (
+              remainingTotals.map((line: QuotationLine) => (
+                <tr key={line.id}>
+                  <td>
+                    <strong>{line.itemName}</strong>
+                    <span className="mnx-table-subtext">
+                      {line.descriptionSnapshot || line.hsnSac || "No description"}
+                    </span>
+                  </td>
+                  <td className="mnx-accounting-amount">{line.qty}</td>
+                  <td className="mnx-accounting-amount">{line.convertedQuantity}</td>
+                  <td className="mnx-accounting-amount">{line.remainingQuantity}</td>
+                  <td>
+                    <AccountingMoney amount={line.rate} currencyCode={quotation.currencyCode} />
+                  </td>
+                  <td>
+                    <AccountingMoney
+                      amount={line.taxableAmount}
+                      currencyCode={quotation.currencyCode}
                     />
-                  </AccountingField>
-                </td>
-              </tr>
-            )) : <AccountingEmptyTableRow colSpan={9}>No quotation lines were captured.</AccountingEmptyTableRow>}
+                  </td>
+                  <td>
+                    <AccountingMoney amount={line.taxAmount} currencyCode={quotation.currencyCode} />
+                  </td>
+                  <td>
+                    <AccountingMoney amount={line.lineTotal} currencyCode={quotation.currencyCode} />
+                  </td>
+                  <td>
+                    <AccountingField label={`Convert ${line.itemName}`}>
+                      <AccountingInput
+                        disabled={!canConvert && !canConvertToSalesOrder}
+                        min="0"
+                        step="0.000001"
+                        type="number"
+                        value={quantitiesByLineId[line.id] ?? "0"}
+                        onChange={(event) =>
+                          setQuantitiesByLineId((current) => ({
+                            ...current,
+                            [line.id]: event.target.value,
+                          }))
+                        }
+                      />
+                    </AccountingField>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <AccountingEmptyTableRow colSpan={9}>
+                No quotation lines were captured.
+              </AccountingEmptyTableRow>
+            )}
           </tbody>
         </AccountingTable>
         {canConvert || canConvertToSalesOrder ? (
@@ -471,7 +519,9 @@ export function QuotationDetailClient({
                 onClick={() => void convertQuotationToSalesOrder()}
                 variant="secondary"
               >
-                {isBusy === "convert-sales-order" ? <Loader2 className="animate-spin" size={16} /> : null}
+                {isBusy === "convert-sales-order" ? (
+                  <Loader2 className="animate-spin" size={16} />
+                ) : null}
                 Convert selected quantity to sales order
               </AccountingAction>
             ) : null}
@@ -492,7 +542,11 @@ export function QuotationDetailClient({
       <AccountingSection
         eyebrow="Lifecycle evidence"
         title="Dispatch, approval, and customer outcome"
-        description="This timeline captures the current commercial state without relying on client-side calculation."
+        description={
+          embedded
+            ? "Approval, dispatch, and customer response stay visible in one compact control surface."
+            : "This timeline captures the current commercial state without relying on client-side calculation."
+        }
       >
         <AccountingDetailList>
           <AccountingDetail label="Approval required" value={quotation.approvalRequired ? "Yes" : "No"} />
@@ -521,7 +575,11 @@ export function QuotationDetailClient({
       <AccountingSection
         eyebrow="Audit"
         title="Activity history"
-        description="Immutable audit events recorded for this quotation."
+        description={
+          embedded
+            ? "Immutable history captured for the selected quotation."
+            : "Immutable audit events recorded for this quotation."
+        }
       >
         <AccountingTable>
           <thead>
@@ -534,18 +592,24 @@ export function QuotationDetailClient({
             </tr>
           </thead>
           <tbody>
-            {quotation.audit.length ? quotation.audit.map((entry: any) => (
-              <tr key={entry.id}>
-                <td>{formatDateTime(entry.timestamp)}</td>
-                <td>{entry.action.replaceAll("_", " ")}</td>
-                <td>{entry.userId}</td>
-                <td>{entry.beforeValues ? JSON.stringify(entry.beforeValues) : "—"}</td>
-                <td>{entry.afterValues ? JSON.stringify(entry.afterValues) : "—"}</td>
-              </tr>
-            )) : <AccountingEmptyTableRow colSpan={5}>No audit history is available yet.</AccountingEmptyTableRow>}
+            {quotation.audit.length ? (
+              quotation.audit.map((entry: any) => (
+                <tr key={entry.id}>
+                  <td>{formatDateTime(entry.timestamp)}</td>
+                  <td>{entry.action.replaceAll("_", " ")}</td>
+                  <td>{entry.userId}</td>
+                  <td>{entry.beforeValues ? JSON.stringify(entry.beforeValues) : "—"}</td>
+                  <td>{entry.afterValues ? JSON.stringify(entry.afterValues) : "—"}</td>
+                </tr>
+              ))
+            ) : (
+              <AccountingEmptyTableRow colSpan={5}>
+                No audit history is available yet.
+              </AccountingEmptyTableRow>
+            )}
           </tbody>
         </AccountingTable>
       </AccountingSection>
-    </>
+    </div>
   );
 }

@@ -1,14 +1,25 @@
 "use client";
 
 import { Search } from "lucide-react";
-import { ButtonLink } from "@/components/ui/button";
 import {
+  OperationalDataTable,
+  OperationalDataTableFooter,
+  OperationalDataTableHeader,
+  OperationalDataTableWrap,
+  OperationalPrimaryCell,
+  OperationalStatus,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+  OperationalVisibleRecords,
+} from "@/components/data-display/operational-data-table";
+import { OperationalLinkedRow } from "@/components/data-display/operational-linked-row";
+import { ButtonLink } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  CrmActionLink,
   CrmButton,
-  CrmEmptyState,
-  CrmInput,
-  CrmPanel,
-  CrmSection,
-  CrmTable,
 } from "@/modules/crm/components/workspace/crm-workspace";
 
 export type ServiceEnquiryQueueItem = {
@@ -42,7 +53,27 @@ function readSnapshotValue(
     if (typeof value === "string" && value.trim()) return value;
     if (typeof value === "number") return String(value);
   }
-  return "—";
+  return "Pending";
+}
+
+function formatLabel(value: string) {
+  return value
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function getStatusTone(status: string): "danger" | "info" | "neutral" | "success" | "warning" {
+  if (status.includes("PENDING")) return "warning";
+  if (status.includes("PROGRESS")) return "info";
+  if (status.includes("COMPLETED") || status.includes("QUALIFIED")) return "success";
+  if (status.includes("CANCELLED") || status.includes("REJECTED")) return "danger";
+  return "neutral";
+}
+
+function getCustomerName(item: ServiceEnquiryQueueItem) {
+  const name = [item.lead.firstName, item.lead.lastName].filter(Boolean).join(" ").trim();
+  return name || item.lead.company || "Unnamed customer";
 }
 
 export function ServiceEnquiryQueue({
@@ -57,96 +88,131 @@ export function ServiceEnquiryQueue({
   basePath: "/crm/freight-forwarding" | "/crm/customs-clearance";
 }) {
   return (
-    <div className="space-y-6">
-      <CrmSection
+    <OperationalDataTable>
+      <OperationalDataTableHeader
+        eyebrow="Demand intake"
         title={`${serviceLabel} queue`}
-        description={`Qualified CRM work items routed into the ${serviceLabel.toLowerCase()} workflow.`}
+        actions={
+          <>
+            <form method="GET" className="contents">
+              <label className="mnx-search-field">
+                <Search aria-hidden="true" />
+                <Input
+                  aria-label={`Search ${serviceLabel.toLowerCase()} enquiries`}
+                  type="search"
+                  name="search"
+                  defaultValue={search}
+                  placeholder={`Search ${serviceLabel.toLowerCase()} enquiries`}
+                />
+              </label>
+              <CrmButton type="submit">Apply</CrmButton>
+            </form>
+            <OperationalVisibleRecords visible={items.length} total={items.length} />
+          </>
+        }
       >
-        <form method="GET" className="flex gap-3">
-          <div className="relative max-w-md flex-1">
-            <Search className="absolute left-3 top-2.5 size-4 text-mono-muted" />
-            <CrmInput
-              type="text"
-              name="search"
-              defaultValue={search}
-              placeholder={`Search ${serviceLabel.toLowerCase()} enquiries`}
-              className="w-full pl-9"
-            />
-          </div>
-          <CrmButton type="submit">Apply</CrmButton>
-        </form>
-      </CrmSection>
+        <p>
+          Qualified CRM work items routed into the {serviceLabel.toLowerCase()} workflow.
+        </p>
+      </OperationalDataTableHeader>
 
-      <CrmPanel>
-        {items.length === 0 ? (
-          <CrmEmptyState
-            title={`No ${serviceLabel.toLowerCase()} enquiries`}
-            description={`Qualified records routed into ${serviceLabel.toLowerCase()} will appear here.`}
-          />
-        ) : (
-          <div className="overflow-x-auto">
-            <CrmTable>
-              <thead>
-                <tr>
-                  <th className="px-4 py-3 text-left">Reference</th>
-                  <th className="px-4 py-3 text-left">Customer</th>
-                  <th className="px-4 py-3 text-left">Mode</th>
-                  <th className="px-4 py-3 text-left">Direction</th>
-                  <th className="px-4 py-3 text-left">Route</th>
-                  <th className="px-4 py-3 text-left">Commodity</th>
-                  <th className="px-4 py-3 text-left">Assignment</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                  <th className="px-4 py-3 text-right">Open</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => {
-                  const snapshot = item.sourceSnapshot;
-                  const mode =
-                    serviceLabel === "Freight Forwarding"
-                      ? readSnapshotValue(snapshot, "type")
-                      : readSnapshotValue(snapshot, "type");
-                  const direction =
-                    serviceLabel === "Freight Forwarding"
-                      ? readSnapshotValue(snapshot, "seaType")
-                      : readSnapshotValue(snapshot, "seaType");
-                  const route =
-                    serviceLabel === "Freight Forwarding"
-                      ? `${readSnapshotValue(snapshot, "pol", "aol")} → ${readSnapshotValue(snapshot, "pod", "aod")}`
-                      : `${readSnapshotValue(snapshot, "pol", "aol")} → ${readSnapshotValue(snapshot, "pod", "aod")}`;
+      {items.length === 0 ? (
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <tbody>
+              <OperationalTableEmpty colSpan={9}>
+                <div className="flex flex-col items-center justify-center gap-4 p-14 text-center">
+                  <div className="space-y-2">
+                    <p className="text-sm mnx-text-primary">
+                      No {serviceLabel.toLowerCase()} enquiries found
+                    </p>
+                    <p className="mx-auto max-w-sm text-xs mnx-text-muted">
+                      Qualified records routed into {serviceLabel.toLowerCase()} will appear
+                      here.
+                    </p>
+                  </div>
+                  <CrmActionLink href="/crm/enquiries" primary>
+                    Review CRM enquiries
+                  </CrmActionLink>
+                </div>
+              </OperationalTableEmpty>
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
+      ) : (
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Reference</OperationalTableHead>
+                <OperationalTableHead>Customer</OperationalTableHead>
+                <OperationalTableHead>Mode</OperationalTableHead>
+                <OperationalTableHead>Direction</OperationalTableHead>
+                <OperationalTableHead>Route</OperationalTableHead>
+                <OperationalTableHead>Commodity</OperationalTableHead>
+                <OperationalTableHead>Assignment</OperationalTableHead>
+                <OperationalTableHead>Status</OperationalTableHead>
+                <OperationalTableHead className="text-right">Open</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => {
+                const snapshot = item.sourceSnapshot;
+                const mode = readSnapshotValue(snapshot, "type");
+                const direction = readSnapshotValue(snapshot, "seaType");
+                const origin = readSnapshotValue(snapshot, "pol", "aol");
+                const destination = readSnapshotValue(snapshot, "pod", "aod");
+                const customerName = getCustomerName(item);
 
-                  return (
-                    <tr key={item.id}>
-                      <td className="px-4 py-3 font-medium">
-                        {item.enquiryRef || "Pending reference"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="font-medium">
-                          {[item.lead.firstName, item.lead.lastName].filter(Boolean).join(" ")}
-                        </div>
-                        <div className="text-xs text-mono-muted">{item.lead.company}</div>
-                      </td>
-                      <td className="px-4 py-3">{mode}</td>
-                      <td className="px-4 py-3">{direction}</td>
-                      <td className="px-4 py-3">{route}</td>
-                      <td className="px-4 py-3">{readSnapshotValue(snapshot, "commodity")}</td>
-                      <td className="px-4 py-3">
-                        {item.assignedTo?.name || "Assignment pending"}
-                      </td>
-                      <td className="px-4 py-3">{item.status.replaceAll("_", " ")}</td>
-                      <td className="px-4 py-3 text-right">
-                        <ButtonLink href={`${basePath}/${item.id}`} variant="inverse">
-                          Open
-                        </ButtonLink>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </CrmTable>
-          </div>
-        )}
-      </CrmPanel>
-    </div>
+                return (
+                  <OperationalLinkedRow
+                    key={item.id}
+                    href={`${basePath}/${item.id}`}
+                    ariaLabel={`Open ${serviceLabel.toLowerCase()} enquiry ${item.enquiryRef || item.id}`}
+                  >
+                    <OperationalPrimaryCell
+                      primary={item.enquiryRef || "Pending reference"}
+                      secondary={new Date(item.updatedAt).toLocaleDateString("en-GB")}
+                    />
+                    <OperationalPrimaryCell
+                      primary={customerName}
+                      secondary={item.lead.company || "Direct account"}
+                    />
+                    <OperationalTableCell>{mode}</OperationalTableCell>
+                    <OperationalTableCell>{direction}</OperationalTableCell>
+                    <OperationalTableCell>{`${origin} -> ${destination}`}</OperationalTableCell>
+                    <OperationalTableCell>
+                      {readSnapshotValue(snapshot, "commodity")}
+                    </OperationalTableCell>
+                    <OperationalTableCell>
+                      {item.assignedTo?.name || "Assignment pending"}
+                    </OperationalTableCell>
+                    <OperationalTableCell>
+                      <OperationalStatus tone={getStatusTone(item.status)}>
+                        {formatLabel(item.status)}
+                      </OperationalStatus>
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-right">
+                      <ButtonLink
+                        href={`${basePath}/${item.id}`}
+                        variant="inverse"
+                        size="sm"
+                        data-row-interactive="true"
+                      >
+                        Open
+                      </ButtonLink>
+                    </OperationalTableCell>
+                  </OperationalLinkedRow>
+                );
+              })}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
+      )}
+
+      <OperationalDataTableFooter
+        summary={`${items.length} ${items.length === 1 ? "record" : "records"} in this queue`}
+      />
+    </OperationalDataTable>
   );
 }

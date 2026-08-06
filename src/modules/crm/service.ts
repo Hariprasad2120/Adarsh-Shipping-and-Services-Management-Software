@@ -222,6 +222,20 @@ export async function getLead(orgId: string, id: string) {
     include: {
       owner: { select: { id: true, name: true, email: true } },
       crmExternalLead: true,
+      serviceEnquiries: {
+        select: {
+          id: true,
+          serviceType: true,
+          status: true,
+          departmentRef: true,
+          enquiryRef: true,
+          assignedToId: true,
+          assignedManagerId: true,
+          pricingSnapshot: true,
+          updatedAt: true,
+        },
+        orderBy: [{ createdAt: "asc" }],
+      },
     },
   });
 

@@ -279,6 +279,13 @@ const exactRouteMeta: Record<string, CrmRouteMeta> = {
       "Maintain reusable customer tariffs, freight lanes, service bundles, and negotiated rate schedules.",
     icon: BookOpen,
   },
+  "/crm/masters": {
+    eyebrow: "Master data",
+    title: "Masters",
+    description:
+      "Manage shared CRM master records that support commercial, relationship, and service workflows.",
+    icon: Settings2,
+  },
   "/crm/products": {
     eyebrow: "Commercial catalogue",
     title: "Products and services",
@@ -334,6 +341,13 @@ const exactRouteMeta: Record<string, CrmRouteMeta> = {
     description:
       "Coordinate recurring logistics services and managed offerings attached to customer accounts.",
     icon: Headphones,
+  },
+  "/crm/settings": {
+    eyebrow: "Commercial configuration",
+    title: "CRM settings",
+    description:
+      "Review master-data controls, source configuration, pricing foundations, and service governance.",
+    icon: Settings2,
   },
   "/crm/social": {
     eyebrow: "Relationship communication",

@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import {
   Button,
+  ButtonLink,
+  DocumentDropzoneField,
   DropdownSelect,
   Input,
   MonolithAction,
@@ -146,6 +148,28 @@ export const sharedCatalogue: CatalogueEntry[] = [
     accessibility: "Native buttons retain focus, disabled, and accessible-name behavior.",
   },
   {
+    id: "button-link",
+    component: "ButtonLink",
+    displayName: "Button link",
+    category: "Actions & links",
+    scope: "shared",
+    description: "Canonical link action that matches the shared button system without route-local link styling.",
+    status: "stable",
+    source: "src/components/ui/button.tsx",
+    render: () => (
+      <div className="mnx-catalogue-inline">
+        <ButtonLink href="#catalogue-operational-table">Primary link</ButtonLink>
+        <ButtonLink href="#catalogue-operational-table" variant="accent">Accent link</ButtonLink>
+        <ButtonLink href="#catalogue-operational-table" variant="inverse">Secondary link</ButtonLink>
+        <ButtonLink href="#catalogue-operational-table" variant="outline">Outline link</ButtonLink>
+      </div>
+    ),
+    themes,
+    states: ["primary", "accent", "secondary", "outline"],
+    interactive: true,
+    accessibility: "Rendered as links with keyboard navigation and shared button semantics.",
+  },
+  {
     id: "workspace-fields",
     component: "WorkspaceField",
     displayName: "Fields and controls",
@@ -187,6 +211,32 @@ export const sharedCatalogue: CatalogueEntry[] = [
     states: ["required", "selected", "checked", "textarea"],
     interactive: true,
     accessibility: "Every control has a programmatic label and native keyboard support.",
+  },
+  {
+    id: "document-dropzone-field",
+    component: "DocumentDropzoneField",
+    displayName: "Document dropzone",
+    category: "Forms & inputs",
+    scope: "shared",
+    description: "Large-format operational document upload surface with drag-and-drop and browse support.",
+    status: "stable",
+    source: "src/components/forms/file-upload/document-dropzone-field.tsx",
+    render: () => (
+      <DocumentDropzoneField
+        id="catalogue-document-dropzone"
+        selectedFile={{
+          name: "shipment-instructions.pdf",
+          sizeBytes: 1_840_000,
+          statusLabel: "Selected",
+        }}
+        onInputChange={() => undefined}
+        onClear={() => undefined}
+      />
+    ),
+    themes,
+    states: ["default", "drag target", "selected file"],
+    interactive: true,
+    accessibility: "The full drop surface is label-backed so keyboard and pointer users can open the native file picker.",
   },
   {
     id: "workspace-panel",

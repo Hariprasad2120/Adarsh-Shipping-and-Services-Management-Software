@@ -99,6 +99,14 @@ const CRM_WORKSPACE_DETAILS: Record<string, WorkspaceDetails> = {
     icon: BookOpen,
     summary: "Reusable commercial pricing schedules.",
   },
+  masters: {
+    title: "Masters",
+    description:
+      "Central registry for CRM master data used across customer, sales, and service workflows.",
+    badge: "Master data",
+    icon: BookOpen,
+    summary: "Shared CRM master records and reference workspaces.",
+  },
   quotes: {
     description:
       "Quotation workspace for preparing controlled proposals and customer estimates.",

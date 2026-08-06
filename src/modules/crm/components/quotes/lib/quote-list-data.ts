@@ -3,13 +3,10 @@ import type { QuoteListStatus, QuoteRecord } from "./types";
 export const quoteViews: Array<{ id: QuoteListStatus; label: string; favorite?: boolean }> = [
   { id: "all", label: "All", favorite: true },
   { id: "draft", label: "Draft" },
-  { id: "pending-approval", label: "Pending Approval" },
-  { id: "approved", label: "Approved" },
-  { id: "sent", label: "Sent" },
-  { id: "customer-viewed", label: "Customer Viewed" },
-  { id: "accepted", label: "Accepted" },
-  { id: "invoiced", label: "Invoiced" },
-  { id: "declined", label: "Declined" },
+  { id: "pending-manager-approval", label: "Pending Manager Approval" },
+  { id: "pending-customer-approval", label: "Pending Customer Approval" },
+  { id: "customer-approved", label: "Customer Approved" },
+  { id: "booking-created", label: "Booking Created" },
 ];
 
 export const quoteRecords: QuoteRecord[] = [
@@ -28,7 +25,7 @@ export const quoteRecords: QuoteRecord[] = [
     location: "Chennai",
     quoteNumber: "CHN-EST-100",
     customerName: "Brilliant Printers Pvt. Ltd.",
-    status: "pending-approval",
+    status: "pending-manager-approval",
     amount: 28320,
   },
   {
@@ -37,7 +34,7 @@ export const quoteRecords: QuoteRecord[] = [
     location: "Chennai",
     quoteNumber: "CHN-EST-099",
     customerName: "Pratap Singh",
-    status: "approved",
+    status: "pending-customer-approval",
     amount: 656097,
   },
   {
@@ -55,7 +52,7 @@ export const quoteRecords: QuoteRecord[] = [
     location: "Mumbai",
     quoteNumber: "MUM-EST-097",
     customerName: "Bazinga Media Pvt. Ltd.",
-    status: "sent",
+    status: "pending-customer-approval",
     amount: 237249,
   },
   {
@@ -64,7 +61,7 @@ export const quoteRecords: QuoteRecord[] = [
     location: "Delhi",
     quoteNumber: "DEL-EST-096",
     customerName: "PUREVIDA PROJECTS",
-    status: "customer-viewed",
+    status: "pending-customer-approval",
     amount: 369442,
   },
   {
@@ -73,7 +70,7 @@ export const quoteRecords: QuoteRecord[] = [
     location: "Chennai",
     quoteNumber: "CHN-EST-095",
     customerName: "Inch Trading & Sourcing Co.",
-    status: "accepted",
+    status: "customer-approved",
     amount: 101930,
   },
   {
@@ -82,7 +79,7 @@ export const quoteRecords: QuoteRecord[] = [
     location: "Kolkata",
     quoteNumber: "KOL-EST-094",
     customerName: "Hi Tech Engineers (India)",
-    status: "invoiced",
+    status: "booking-created",
     amount: 13238,
   },
   {
@@ -91,7 +88,7 @@ export const quoteRecords: QuoteRecord[] = [
     location: "Chennai",
     quoteNumber: "CHN-EST-093",
     customerName: "Gable Top Packaging Private Limited",
-    status: "declined",
+    status: "draft",
     amount: 16053,
   },
   {
@@ -109,7 +106,7 @@ export const quoteRecords: QuoteRecord[] = [
     location: "Chennai",
     quoteNumber: "CHN-EST-091",
     customerName: "Suresh Meganathan",
-    status: "pending-approval",
+    status: "pending-manager-approval",
     amount: 312405,
   },
   {
@@ -118,7 +115,7 @@ export const quoteRecords: QuoteRecord[] = [
     location: "Chennai",
     quoteNumber: "CHN-EST-090",
     customerName: "Blush Beauty",
-    status: "sent",
+    status: "pending-customer-approval",
     amount: 68600,
   },
 ];

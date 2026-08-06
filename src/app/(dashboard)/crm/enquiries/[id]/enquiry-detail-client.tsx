@@ -20,7 +20,6 @@ import {
   assignLeadOwnerAction,
   updateLeadStatusAction,
   updatePerishableDetailsAction,
-  saveEnquiryRatesAction,
   simulateInboundEmailAction,
   updateLeadAction,
   getCallAttemptsAction,
@@ -28,6 +27,7 @@ import {
 import { NotesPanel } from "@/modules/crm/components/records/notes-panel";
 import { ActivitiesPanel } from "@/modules/crm/components/records/activities-panel";
 import { TimelinePanel } from "@/modules/crm/components/records/timeline-panel";
+import { ServiceRateWorkflowPanel } from "@/modules/crm/components/service-enquiries/service-rate-workflow-panel";
 import {
   ArrowLeft,
   Clock,
@@ -50,6 +50,7 @@ interface EnquiryDetailClientProps {
   isManager: boolean;
   backHref?: string;
   backLabel?: string;
+  serviceType?: "FREIGHT_FORWARDING" | "CUSTOMS_CLEARANCE";
 }
 
 export function EnquiryDetailClient({
@@ -63,6 +64,7 @@ export function EnquiryDetailClient({
   isManager,
   backHref = "/crm/enquiries",
   backLabel = "Back to Enquiries",
+  serviceType,
 }: EnquiryDetailClientProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -180,6 +182,11 @@ export function EnquiryDetailClient({
   // Manual Paste parsing states
   const [pasteText, setPasteText] = useState("");
   const [isParsingPaste, setIsParsingPaste] = useState(false);
+  const quoteHref = serviceType
+    ? `/crm/quotes/new?leadId=${lead.id}&mode=${
+        serviceType === "FREIGHT_FORWARDING" ? "freight-only" : "customs-only"
+      }&department=${serviceType}`
+    : `/crm/quotes/new?leadId=${lead.id}&mode=combined`;
 
   // Handle Mark as Follow-up status update
   const handleMarkAsFollowUp = async (e: React.FormEvent) => {
@@ -384,7 +391,7 @@ export function EnquiryDetailClient({
           <span>{backLabel}</span>
         </CrmActionLink>
 
-        <CrmActionLink href={`/crm/quotes/new?leadId=${lead.id}`} primary>
+        <CrmActionLink href={quoteHref} primary>
           <RefreshCcw className="size-4" />
           <span>Convert as Quote</span>
         </CrmActionLink>
@@ -1019,7 +1026,7 @@ export function EnquiryDetailClient({
             description="Capture the current working estimate for this enquiry before conversion."
             actions={<CrmStatus variant="accent">Worksheet calculator</CrmStatus>}
           >
-            <LocalRatesWorksheet lead={lead} />
+            <ServiceRateWorkflowPanel lead={lead} serviceType={serviceType} />
           </CrmSection>
 
           {false && (
@@ -1637,367 +1644,5 @@ export function EnquiryDetailClient({
         </div>
       </div>
     </div>
-  );
-}
-
-// Internal rates sheet client rendering with manual saves
-function LocalRatesWorksheet({ lead }: { lead: any }) {
-  const router = useRouter();
-  const isSea = lead.enquiryDetails.type === "Sea";
-  const isImportLcl =
-    isSea &&
-    lead.enquiryDetails.seaType === "Import" &&
-    lead.enquiryDetails.seaLclFcl === "LCL";
-  const volume = parseFloat(lead.enquiryDetails.cbm) || 0;
-
-  const calculatedLclRate = volume < 3 ? 300 : 150;
-  const calculatedLclAmount = volume * calculatedLclRate;
-
-  const [lclDoOption, setLclDoOption] = useState<"750" | "500">("750");
-  const calculatedDoAmount = volume < 3 ? 1000 : parseInt(lclDoOption);
-
-  const initialRates = lead.enquiryDetails.rates || {};
-
-  // Form states
-  const [oceanFreight, setOceanFreight] = useState(
-    initialRates.oceanFreight ?? 0,
-  );
-  const [cfsCharges, setCfsCharges] = useState(initialRates.cfsCharges ?? 0);
-  const [customsClearance, setCustomsClearance] = useState(
-    initialRates.customsClearance ?? 0,
-  );
-  const [blCharges, setBlCharges] = useState(initialRates.blCharges ?? 0);
-  const [vgmCharges, setVgmCharges] = useState(initialRates.vgmCharges ?? 0);
-  const [lclCharges, setLclCharges] = useState(
-    initialRates.lclCharges ?? (isImportLcl ? calculatedLclAmount : 0),
-  );
-  const [doCharges, setDoCharges] = useState(
-    initialRates.doCharges ?? (isImportLcl ? calculatedDoAmount : 0),
-  );
-  const [cfsCustoms, setCfsCustoms] = useState(initialRates.cfsCustoms ?? 0);
-
-  // Air states
-  const [airFreight, setAirFreight] = useState(initialRates.airFreight ?? 0);
-  const [handlingCharges, setHandlingCharges] = useState(
-    initialRates.handlingCharges ?? 0,
-  );
-  const [awbCharges, setAwbCharges] = useState(initialRates.awbCharges ?? 0);
-  const [deliveryCharges, setDeliveryCharges] = useState(
-    initialRates.deliveryCharges ?? 0,
-  );
-
-  const [isSaving, setIsSaving] = useState(false);
-
-  // Sync DO/LCL if volume or option changes and it hasn't been custom saved yet
-  useEffect(() => {
-    if (isImportLcl && !initialRates.doCharges) {
-      setDoCharges(volume < 3 ? 1000 : parseInt(lclDoOption));
-    }
-  }, [lclDoOption, isImportLcl, volume, initialRates.doCharges]);
-
-  useEffect(() => {
-    if (isImportLcl && !initialRates.lclCharges) {
-      setLclCharges(calculatedLclAmount);
-    }
-  }, [calculatedLclAmount, isImportLcl, initialRates.lclCharges]);
-
-  // Sync state values when database gets updated in background (e.g. from simulated email replies)
-  useEffect(() => {
-    if (initialRates) {
-      setOceanFreight(initialRates.oceanFreight ?? 0);
-      setCfsCharges(initialRates.cfsCharges ?? 0);
-      setCustomsClearance(initialRates.customsClearance ?? 0);
-      setBlCharges(initialRates.blCharges ?? 0);
-      setVgmCharges(initialRates.vgmCharges ?? 0);
-      setLclCharges(
-        initialRates.lclCharges ?? (isImportLcl ? calculatedLclAmount : 0),
-      );
-      setDoCharges(
-        initialRates.doCharges ?? (isImportLcl ? calculatedDoAmount : 0),
-      );
-      setCfsCustoms(initialRates.cfsCustoms ?? 0);
-      setAirFreight(initialRates.airFreight ?? 0);
-      setHandlingCharges(initialRates.handlingCharges ?? 0);
-      setAwbCharges(initialRates.awbCharges ?? 0);
-      setDeliveryCharges(initialRates.deliveryCharges ?? 0);
-    }
-  }, [lead.enquiryDetails]);
-
-  const handleSaveRates = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-
-    let ratesData: any = {};
-    if (isSea) {
-      ratesData = {
-        oceanFreight: parseFloat(oceanFreight as any) || 0,
-        cfsCharges: parseFloat(cfsCharges as any) || 0,
-        customsClearance: parseFloat(customsClearance as any) || 0,
-        blCharges: parseFloat(blCharges as any) || 0,
-        vgmCharges: parseFloat(vgmCharges as any) || 0,
-        lclCharges: parseFloat(lclCharges as any) || 0,
-        doCharges: parseFloat(doCharges as any) || 0,
-        cfsCustoms: parseFloat(cfsCustoms as any) || 0,
-      };
-    } else {
-      ratesData = {
-        airFreight: parseFloat(airFreight as any) || 0,
-        handlingCharges: parseFloat(handlingCharges as any) || 0,
-        customsClearance: parseFloat(customsClearance as any) || 0,
-        awbCharges: parseFloat(awbCharges as any) || 0,
-        deliveryCharges: parseFloat(deliveryCharges as any) || 0,
-      };
-    }
-
-    const res = await saveEnquiryRatesAction(lead.id, ratesData);
-    setIsSaving(false);
-
-    if (res.ok) {
-      toast.success("Rates worksheet saved successfully!");
-      router.refresh();
-    } else {
-      toast.error(res.error || "Failed to save rates");
-    }
-  };
-
-  const calculateTotal = () => {
-    if (isSea) {
-      return (
-        parseFloat((oceanFreight as any) || 0) +
-        parseFloat((cfsCharges as any) || 0) +
-        parseFloat((customsClearance as any) || 0) +
-        parseFloat((blCharges as any) || 0) +
-        parseFloat((vgmCharges as any) || 0) +
-        parseFloat((lclCharges as any) || 0) +
-        parseFloat((doCharges as any) || 0) +
-        parseFloat((cfsCustoms as any) || 0)
-      );
-    } else {
-      return (
-        parseFloat((airFreight as any) || 0) +
-        parseFloat((handlingCharges as any) || 0) +
-        parseFloat((customsClearance as any) || 0) +
-        parseFloat((awbCharges as any) || 0) +
-        parseFloat((deliveryCharges as any) || 0)
-      );
-    }
-  };
-
-  return (
-    <form onSubmit={handleSaveRates} className="space-y-4">
-      {isSea ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-3">
-            <div>
-              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
-                Ocean Freight (INR)
-              </label>
-              <CrmInput
-                type="number"
-                value={oceanFreight}
-                onChange={(e) => setOceanFreight(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
-                CFS Charges (INR)
-              </label>
-              <CrmInput
-                type="number"
-                value={cfsCharges}
-                onChange={(e) => setCfsCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
-                Custom Clearance Charges (INR)
-              </label>
-              <CrmInput
-                type="number"
-                value={customsClearance}
-                onChange={(e) => setCustomsClearance(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
-                BL Charges (INR)
-              </label>
-              <CrmInput
-                type="number"
-                value={blCharges}
-                onChange={(e) => setBlCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div>
-              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
-                VGM Charges (INR)
-              </label>
-              <CrmInput
-                type="number"
-                value={vgmCharges}
-                onChange={(e) => setVgmCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide">
-                  LCL Charges (INR)
-                </label>
-                {isImportLcl && (
-                  <span className="text-[9px] text-[var(--mnx-accent)] font-medium font-sans">
-                    Calculated: {volume} CBM × {calculatedLclRate}/CBM
-                  </span>
-                )}
-              </div>
-              <CrmInput
-                type="number"
-                value={lclCharges}
-                onChange={(e) => setLclCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide">
-                  DO Charges (INR)
-                </label>
-                {isImportLcl && volume >= 3 && (
-                  <div className="flex gap-2">
-                    <label className="inline-flex items-center text-[9px] text-mono-muted cursor-pointer">
-                      <CrmInput
-                        type="radio"
-                        name="do_option_local"
-                        value="750"
-                        checked={lclDoOption === "750"}
-                        onChange={() => setLclDoOption("750")}
-                        className="mr-1 size-3 bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border-[var(--mnx-border)]"
-                      />
-                      750
-                    </label>
-                    <label className="inline-flex items-center text-[9px] text-mono-muted cursor-pointer">
-                      <CrmInput
-                        type="radio"
-                        name="do_option_local"
-                        value="500"
-                        checked={lclDoOption === "500"}
-                        onChange={() => setLclDoOption("500")}
-                        className="mr-1 size-3 bg-[var(--mnx-surface)] text-[var(--mnx-accent)] border-[var(--mnx-border)]"
-                      />
-                      500
-                    </label>
-                  </div>
-                )}
-              </div>
-              <CrmInput
-                type="number"
-                value={doCharges}
-                onChange={(e) => setDoCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
-                CFS Customs (INR)
-              </label>
-              <CrmInput
-                type="number"
-                value={cfsCustoms}
-                onChange={(e) => setCfsCustoms(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-3">
-            <div>
-              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
-                Air Freight (INR)
-              </label>
-              <CrmInput
-                type="number"
-                value={airFreight}
-                onChange={(e) => setAirFreight(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
-                Handling Charges (INR)
-              </label>
-              <CrmInput
-                type="number"
-                value={handlingCharges}
-                onChange={(e) => setHandlingCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
-                Custom Clearance Charges (INR)
-              </label>
-              <CrmInput
-                type="number"
-                value={customsClearance}
-                onChange={(e) => setCustomsClearance(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div>
-              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
-                AWB Charges (INR)
-              </label>
-              <CrmInput
-                type="number"
-                value={awbCharges}
-                onChange={(e) => setAwbCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-normal text-mono-muted uppercase tracking-wide mb-1">
-                Delivery Charges (INR)
-              </label>
-              <CrmInput
-                type="number"
-                value={deliveryCharges}
-                onChange={(e) => setDeliveryCharges(e.target.value as any)}
-                className="w-full px-3 py-1.5 bg-[var(--mnx-surface)] border border-[var(--mnx-border)] rounded-lg text-xs text-mono-text focus:outline-none focus:border-[var(--mnx-accent)]"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Summary & Save Action */}
-      <div className="flex items-center justify-between pt-3 border-t border-[var(--mnx-border)]/30">
-        <div className="text-sm font-normal text-mono-text">
-          Total Estimated Rates:{" "}
-          <span className="text-[var(--mnx-accent)] font-normal mnx-numeric">
-            ₹{calculateTotal().toLocaleString("en-IN")}
-          </span>
-        </div>
-        <CrmButton
-          type="submit"
-          disabled={isSaving}
-          variant="primary"
-          size="compact"
-        >
-          {isSaving ? "Saving Worksheet..." : "Save Worksheet Rates"}
-        </CrmButton>
-      </div>
-    </form>
   );
 }

@@ -47,6 +47,20 @@ describe("module visibility helpers", () => {
     expect(withLabsItems).toContain("/cha/labs/import-job-creation");
   });
 
+  it("keeps the CRM Masters workspace in the shared sidebar model", () => {
+    const caps = {
+      "crm.access": true,
+    };
+
+    const crmItems =
+      getVisibleSections(caps, ["crm"]).find((section) => section.id === "crm")?.items ?? [];
+
+    expect(crmItems.some((item) => item.href === "/crm/masters" && item.label === "Masters")).toBe(
+      true,
+    );
+    expect(crmItems.some((item) => item.href === "/crm/items")).toBe(false);
+  });
+
   it("keeps top-level accounting configuration workspaces discoverable", () => {
     const caps = {
       "accounting.settings.manage": true,

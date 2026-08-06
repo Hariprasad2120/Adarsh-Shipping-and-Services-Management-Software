@@ -1,12 +1,28 @@
+import { randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
 import { requirePermission } from "@/lib/rbac";
 import { notify, getUsersWithPermission } from "@/modules/notifications/service";
+import * as chaService from "@/modules/cha/service";
+import {
+  createInitialFreightBookingPayload,
+  type FreightBookingFormData,
+  type FreightContainerRow,
+} from "@/modules/freight-forwarding/booking-shared";
+import type {
+  QuoteApprovalFlowState,
+  QuoteConversionState,
+  QuoteWorkflowContext,
+} from "@/modules/crm/components/quotes/lib/types";
 
 // ─── Status type unions ───────────────────────────────────────────────────────
 
 export type QuoteApprovalStatus =
   | "DRAFT"
+  | "PENDING_MANAGER_APPROVAL"
+  | "PENDING_CUSTOMER_APPROVAL"
+  | "CUSTOMER_APPROVED"
+  | "BOOKING_CREATED"
   | "PENDING_APPROVAL"
   | "APPROVED"
   | "REWORK"
@@ -36,6 +52,11 @@ export type ApprovalStatus =
   | InvoiceApprovalStatus;
 
 export type CrmEntityType = "QUOTE" | "SALES_ORDER" | "INVOICE";
+
+type QuoteSnapshot = QuoteWorkflowContext & {
+  approvalFlow?: QuoteApprovalFlowState | null;
+  conversion?: QuoteConversionState | null;
+};
 
 // ─── Permission keys ──────────────────────────────────────────────────────────
 
@@ -77,6 +98,396 @@ export function calcSoSlaDeadline(approvedAt: Date): Date {
   return addBusinessDays(approvedAt, 30);
 }
 
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function readQuoteSnapshot(snapshot: unknown): QuoteSnapshot {
+  if (!isObjectRecord(snapshot)) {
+    return {
+      mode: "combined",
+      includedDepartments: [],
+      pendingDepartments: [],
+    };
+  }
+
+  return {
+    mode:
+      snapshot.mode === "freight-only" ||
+      snapshot.mode === "customs-only" ||
+      snapshot.mode === "combined" ||
+      snapshot.mode === "newly-added-only"
+        ? snapshot.mode
+        : "combined",
+    includedDepartments: Array.isArray(snapshot.includedDepartments)
+      ? (snapshot.includedDepartments.filter(
+          (item): item is "FREIGHT_FORWARDING" | "CUSTOMS_CLEARANCE" =>
+            item === "FREIGHT_FORWARDING" || item === "CUSTOMS_CLEARANCE",
+        ) as QuoteWorkflowContext["includedDepartments"])
+      : [],
+    pendingDepartments: Array.isArray(snapshot.pendingDepartments)
+      ? (snapshot.pendingDepartments.filter(
+          (item): item is "FREIGHT_FORWARDING" | "CUSTOMS_CLEARANCE" =>
+            item === "FREIGHT_FORWARDING" || item === "CUSTOMS_CLEARANCE",
+        ) as QuoteWorkflowContext["pendingDepartments"])
+      : [],
+    latestQuoteId:
+      typeof snapshot.latestQuoteId === "string" ? snapshot.latestQuoteId : null,
+    latestQuoteVersion:
+      typeof snapshot.latestQuoteVersion === "number"
+        ? snapshot.latestQuoteVersion
+        : null,
+    quoteBaseNumber:
+      typeof snapshot.quoteBaseNumber === "string"
+        ? snapshot.quoteBaseNumber
+        : null,
+    recreateRequired: snapshot.recreateRequired === true,
+    approvalFlow: isObjectRecord(snapshot.approvalFlow)
+      ? (snapshot.approvalFlow as QuoteApprovalFlowState)
+      : null,
+    conversion: isObjectRecord(snapshot.conversion)
+      ? (snapshot.conversion as QuoteConversionState)
+      : null,
+  };
+}
+
+function withQuoteSnapshot(
+  invoice: { sourceQuotationSnapshot: unknown },
+  mutate: (snapshot: QuoteSnapshot) => QuoteSnapshot,
+) {
+  return mutate(readQuoteSnapshot(invoice.sourceQuotationSnapshot));
+}
+
+export function normalizeQuoteApprovalStatus(status: string | null | undefined) {
+  switch ((status || "DRAFT").toUpperCase()) {
+    case "PENDING_APPROVAL":
+      return "PENDING_MANAGER_APPROVAL" as const;
+    case "APPROVED":
+    case "SENT":
+    case "CUSTOMER_VIEWED":
+      return "PENDING_CUSTOMER_APPROVAL" as const;
+    case "ACCEPTED":
+      return "CUSTOMER_APPROVED" as const;
+    case "INVOICED":
+      return "BOOKING_CREATED" as const;
+    case "REWORK":
+    case "DECLINED":
+      return "DRAFT" as const;
+    case "PENDING_MANAGER_APPROVAL":
+    case "PENDING_CUSTOMER_APPROVAL":
+    case "CUSTOMER_APPROVED":
+    case "BOOKING_CREATED":
+    case "DRAFT":
+      return status!.toUpperCase() as
+        | "DRAFT"
+        | "PENDING_MANAGER_APPROVAL"
+        | "PENDING_CUSTOMER_APPROVAL"
+        | "CUSTOMER_APPROVED"
+        | "BOOKING_CREATED";
+    default:
+      return "DRAFT" as const;
+  }
+}
+
+export function mapQuoteApprovalStatusToListStatus(
+  status: string | null | undefined,
+) {
+  switch (normalizeQuoteApprovalStatus(status)) {
+    case "PENDING_MANAGER_APPROVAL":
+      return "pending-manager-approval" as const;
+    case "PENDING_CUSTOMER_APPROVAL":
+      return "pending-customer-approval" as const;
+    case "CUSTOMER_APPROVED":
+      return "customer-approved" as const;
+    case "BOOKING_CREATED":
+      return "booking-created" as const;
+    case "DRAFT":
+    default:
+      return "draft" as const;
+  }
+}
+
+async function getUserName(userId: string | null | undefined) {
+  if (!userId) return null;
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { name: true },
+  });
+  return user?.name ?? null;
+}
+
+async function buildQuoteNotificationMessage(managerId: string, quoteNumber: string) {
+  const managerName = await getUserName(managerId);
+  return managerName
+    ? `Awaiting manager approval from ${managerName}.`
+    : `Awaiting manager approval for ${quoteNumber}.`;
+}
+
+function appendApprovalAudit(
+  approvalFlow: QuoteApprovalFlowState | null | undefined,
+  entry: NonNullable<QuoteApprovalFlowState["auditTrail"]>[number],
+): QuoteApprovalFlowState {
+  return {
+    ...(approvalFlow ?? {}),
+    auditTrail: [...(approvalFlow?.auditTrail ?? []), entry],
+  };
+}
+
+function buildFreightBookingNumberBase(invoiceNumber: string, createdAt: Date) {
+  const compactDate = createdAt.toISOString().slice(0, 10).replace(/-/g, "");
+  const normalizedQuote = invoiceNumber.replace(/[^A-Z0-9]/gi, "").slice(-8);
+  return `FFB-${compactDate}-${normalizedQuote}`;
+}
+
+async function buildUniqueFreightBookingNumber(params: {
+  invoiceNumber: string;
+  createdAt: Date;
+}) {
+  const baseNumber = buildFreightBookingNumberBase(
+    params.invoiceNumber,
+    params.createdAt,
+  );
+
+  const existingBase = await db.crmInvoice.findUnique({
+    where: { invoiceNumber: baseNumber },
+    select: { id: true },
+  });
+
+  if (!existingBase) {
+    return baseNumber;
+  }
+
+  for (let attempt = 1; attempt < 1000; attempt += 1) {
+    const candidate = `${baseNumber}-${String(attempt).padStart(2, "0")}`;
+    const existingCandidate = await db.crmInvoice.findUnique({
+      where: { invoiceNumber: candidate },
+      select: { id: true },
+    });
+
+    if (!existingCandidate) {
+      return candidate;
+    }
+  }
+
+  throw new Error(
+    `Unable to generate a unique freight booking number for quotation ${params.invoiceNumber}.`,
+  );
+}
+
+async function createFreightBookingFromQuote(params: {
+  actorId: string;
+  actorName: string | null;
+  invoice: Awaited<ReturnType<typeof loadInvoice>>;
+  now: Date;
+  orgId: string;
+}) {
+  const { actorId, actorName, invoice, now, orgId } = params;
+  const payload = createInitialFreightBookingPayload(null);
+  const transactionNumber = await buildUniqueFreightBookingNumber({
+    invoiceNumber: invoice.invoiceNumber,
+    createdAt: now,
+  });
+  const account = invoice.accountId
+    ? await db.crmAccount.findUnique({
+        where: { id: invoice.accountId },
+        select: { name: true },
+      })
+    : null;
+  const quoteReference = invoice.referenceNumber || invoice.invoiceNumber;
+  const freightAuditNote = `Freight booking draft created from CRM quotation ${invoice.invoiceNumber}.`;
+  const formData = {
+    ...payload.formData,
+    attachmentName: invoice.invoiceNumber,
+    bookingPartyId: invoice.accountId ?? "",
+    comments: freightAuditNote,
+    consignee: account?.name ?? "",
+    cargoDescription: invoice.commodity ?? "",
+    finalDestination:
+      invoice.portOfDestinationCountry ||
+      invoice.portOfDischarge ||
+      invoice.location ||
+      "",
+    handledById: invoice.ownerId ?? actorId,
+    internalNotes: `Continue freight processing from quotation ${invoice.invoiceNumber}.`,
+    jobNumber: quoteReference,
+    notifyParty: account?.name ?? "",
+    origin: invoice.location || "",
+    portOfDischarge: invoice.portOfDischarge || "",
+    portOfLoad: invoice.portOfLoading || "",
+    salespersonId: invoice.ownerId ?? actorId,
+    shipper: account?.name ?? "",
+    term: invoice.incoterm || payload.formData.term,
+  };
+
+  const freightForwardingSnapshot = {
+    transactionType: "HBL" as const,
+    bookingGroupId: null,
+    bookingMode: null,
+    linkedTransactionIds: [],
+    formData,
+    equipmentTypes: payload.equipmentTypes,
+    containers: payload.containers,
+    auditTrail: [
+      {
+        action: "CREATED",
+        actorId,
+        actorName: actorName || "User",
+        at: now.toISOString(),
+        note: freightAuditNote,
+      },
+    ],
+  };
+
+  const freightBooking = await db.crmInvoice.create({
+    data: {
+      orgId,
+      ownerId: invoice.ownerId ?? actorId,
+      createdById: actorId,
+      updatedById: actorId,
+      invoiceNumber: transactionNumber,
+      type: "FREIGHT_BOOKING",
+      date: now,
+      status: "DRAFT",
+      approvalStatus: "DRAFT",
+      accountId: invoice.accountId ?? null,
+      contactId: invoice.contactId ?? null,
+      location: invoice.location ?? null,
+      portOfLoading: invoice.portOfLoading ?? null,
+      portOfDischarge: invoice.portOfDischarge ?? null,
+      portOfDestinationCountry: invoice.portOfDestinationCountry ?? null,
+      incoterm: invoice.incoterm ?? null,
+      commodity: invoice.commodity ?? null,
+      weight: invoice.weight ?? null,
+      sourceQuotationSnapshot: {
+        freightForwarding: freightForwardingSnapshot,
+      },
+    },
+    select: {
+      id: true,
+      invoiceNumber: true,
+    },
+  });
+
+  await db.crmApprovalLog.create({
+    data: {
+      orgId,
+      invoiceId: freightBooking.id,
+      actorId,
+      fromStatus: "FREIGHT_BOOKING",
+      toStatus: "FREIGHT_BOOKING",
+      note: freightAuditNote,
+    },
+  });
+
+  return {
+    bookingGroupId: null,
+    transactionId: freightBooking.id,
+    transactionNumber: freightBooking.invoiceNumber,
+    transactionType: freightForwardingSnapshot.transactionType,
+  };
+}
+
+type QuoteFreightProcessInput = {
+  mode: "MBL_ONLY" | "HBL_ONLY" | "BOTH";
+  mbl?: {
+    containers: FreightContainerRow[];
+    equipmentTypes: string[];
+    formData: FreightBookingFormData;
+  };
+  hbl?: {
+    containers: FreightContainerRow[];
+    equipmentTypes: string[];
+    formData: FreightBookingFormData;
+  };
+};
+
+async function createFreightProcessTransaction(params: {
+  actorId: string;
+  actorName: string | null;
+  bookingGroupId: string;
+  bookingMode: "MBL_ONLY" | "HBL_ONLY" | "BOTH";
+  containers?: FreightContainerRow[];
+  equipmentTypes?: string[];
+  formData?: FreightBookingFormData;
+  linkedTransactionIds: string[];
+  orgId: string;
+  transactionType: "MBL" | "HBL";
+}) {
+  const now = await getNow();
+  const payload = createInitialFreightBookingPayload(params.transactionType);
+  const formData = params.formData || payload.formData;
+  const equipmentTypes =
+    params.equipmentTypes && params.equipmentTypes.length > 0
+      ? params.equipmentTypes
+      : payload.equipmentTypes;
+  const containers =
+    params.containers && params.containers.length > 0
+      ? params.containers
+      : payload.containers;
+  const transactionNumber = `${params.transactionType}-${now
+    .toISOString()
+    .slice(0, 10)
+    .replace(/-/g, "")}-${randomUUID().slice(0, 6).toUpperCase()}`;
+  const auditNote = `Freight ${params.transactionType} transaction created from quotation process handoff.`;
+
+  const record = await db.crmInvoice.create({
+    data: {
+      orgId: params.orgId,
+      ownerId: formData.salespersonId || params.actorId,
+      createdById: params.actorId,
+      updatedById: params.actorId,
+      invoiceNumber: transactionNumber,
+      type: "FREIGHT_BOOKING",
+      date: now,
+      status: "DRAFT",
+      approvalStatus: "DRAFT",
+      accountId: formData.bookingPartyId || null,
+      location: formData.origin || null,
+      portOfLoading: formData.portOfLoad || null,
+      portOfDischarge: formData.portOfDischarge || null,
+      portOfDestinationCountry: formData.finalDestination || null,
+      incoterm: formData.term || null,
+      sourceQuotationSnapshot: {
+        freightForwarding: {
+          transactionType: params.transactionType,
+          bookingGroupId: params.bookingGroupId,
+          bookingMode: params.bookingMode,
+          linkedTransactionIds: params.linkedTransactionIds,
+          formData,
+          equipmentTypes,
+          containers,
+          auditTrail: [
+            {
+              action: "CREATED",
+              actorId: params.actorId,
+              actorName: params.actorName || "User",
+              at: now.toISOString(),
+              note: auditNote,
+            },
+          ],
+        },
+      },
+    },
+    select: {
+      id: true,
+      invoiceNumber: true,
+    },
+  });
+
+  await db.crmApprovalLog.create({
+    data: {
+      orgId: params.orgId,
+      invoiceId: record.id,
+      actorId: params.actorId,
+      fromStatus: "FREIGHT_BOOKING",
+      toStatus: "FREIGHT_BOOKING",
+      note: auditNote,
+    },
+  });
+
+  return record;
+}
+
 // ─── Audit log helper ─────────────────────────────────────────────────────────
 
 async function logTransition(params: {
@@ -100,22 +511,199 @@ async function loadInvoice(id: string, orgId: string) {
   return inv;
 }
 
+async function resolveQuoteManager(
+  orgId: string,
+  selectedManagerId: string | null | undefined,
+) {
+  if (!selectedManagerId) return null;
+  return db.user.findFirst({
+    where: { id: selectedManagerId, orgId },
+    select: { id: true, name: true },
+  });
+}
+
+async function createChaJobFromQuote(params: {
+  actorId: string;
+  orgId: string;
+  invoice: Awaited<ReturnType<typeof loadInvoice>>;
+  managerId: string | null | undefined;
+}) {
+  const { actorId, orgId, invoice, managerId } = params;
+
+  if (!invoice.accountId) {
+    throw new Error("Customer must be linked before creating a CHA job.");
+  }
+
+  const [branch, jobType, shipmentType] = await Promise.all([
+    db.branch.findFirst({
+      where: { orgId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    db.chaJobType.findFirst({
+      where: { orgId, isActive: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    db.chaShipmentType.findFirst({
+      where: { orgId, isActive: true },
+      orderBy: { name: "asc" },
+      select: { id: true },
+    }),
+  ]);
+
+  if (!branch) {
+    throw new Error(
+      "No branch is configured for CHA conversion. Please configure a branch first.",
+    );
+  }
+  if (!jobType) {
+    throw new Error(
+      "No active CHA job type is configured for conversion. Please configure CHA job types first.",
+    );
+  }
+  if (!managerId) {
+    throw new Error(
+      "Select a manager before converting this quotation into a CHA job.",
+    );
+  }
+
+  const customer = invoice.accountId
+    ? await db.crmAccount.findUnique({
+        where: { id: invoice.accountId },
+        select: { name: true },
+      })
+    : null;
+
+  const job = await chaService.createJob(actorId, orgId, {
+    title: `${customer?.name ?? "Customer"} - ${invoice.invoiceNumber}`,
+    customerId: invoice.accountId,
+    customerRef: invoice.referenceNumber || invoice.invoiceNumber,
+    jobTypeId: jobType.id,
+    shipmentTypeId: shipmentType?.id,
+    branchId: branch.id,
+    priority: "MEDIUM",
+    remarks:
+      "Created from approved quotation conversion. Continue processing from the CHA workspace.",
+    primaryOwnerId: invoice.ownerId,
+    assignedManagerId: managerId,
+    assignments: [],
+  });
+
+  return job;
+}
+
 // Submit for approval (owner/creator action)
 export async function submitForApproval(params: {
   invoiceId: string;
   orgId: string;
   actorId: string;
   note?: string;
+  managerId?: string;
 }) {
-  const { invoiceId, orgId, actorId, note } = params;
+  const { invoiceId, orgId, actorId, note, managerId } = params;
   const inv = await loadInvoice(invoiceId, orgId);
 
   const perm = APPROVAL_PERMISSIONS[inv.type as CrmEntityType]?.submit;
   if (!perm) throw new Error("Unknown entity type");
   await requirePermission(actorId, perm);
 
-  if (inv.approvalStatus !== "DRAFT" && inv.approvalStatus !== "REWORK") {
-    throw new Error(`Cannot submit from status: ${inv.approvalStatus}`);
+  if (inv.type === "QUOTE") {
+    const normalizedStatus = normalizeQuoteApprovalStatus(inv.approvalStatus);
+    if (normalizedStatus !== "DRAFT") {
+      throw new Error(`Cannot submit from status: ${inv.approvalStatus}`);
+    }
+
+    if (!managerId) {
+      throw new Error("Select the approving manager before submitting.");
+    }
+
+    const selectedManager = await resolveQuoteManager(orgId, managerId);
+    if (!selectedManager) {
+      throw new Error("The selected approving manager could not be found.");
+    }
+
+    const actorName = await getUserName(actorId);
+    const now = await getNow();
+    const notificationMessage = await buildQuoteNotificationMessage(
+      selectedManager.id,
+      inv.invoiceNumber,
+    );
+    const sourceQuotationSnapshot = withQuoteSnapshot(inv, (snapshot) => {
+      const approvalFlow = appendApprovalAudit(snapshot.approvalFlow, {
+        stage: "MANAGER",
+        decision: "SUBMITTED",
+        remarks: note ?? null,
+        actedAt: now.toISOString(),
+        actedById: actorId,
+        actedByName: actorName,
+      });
+
+      return {
+        ...snapshot,
+        approvalFlow: {
+          ...approvalFlow,
+          selectedManagerId: selectedManager.id,
+          selectedManagerName: selectedManager.name,
+          submittedAt: now.toISOString(),
+          submittedById: actorId,
+          submittedByName: actorName,
+          managerStatus: "PENDING",
+          managerDecisionAt: null,
+          managerDecisionById: null,
+          managerDecisionByName: null,
+          managerRemarks: null,
+          customerStatus: null,
+          customerDecisionAt: null,
+          customerDecisionById: null,
+          customerDecisionByName: null,
+          customerRemarks: null,
+          lastRejectedStage: null,
+          rejectionReturnedToDraftAt: null,
+          notifications: [notificationMessage],
+        },
+      };
+    });
+
+    await db.crmInvoice.update({
+      where: { id: invoiceId },
+      data: {
+        approvalStatus: "PENDING_MANAGER_APPROVAL",
+        submittedAt: now,
+        approvedAt: null,
+        approvedById: null,
+        approvalNote: null,
+        reworkNote: null,
+        sourceQuotationSnapshot,
+        updatedById: actorId,
+      },
+    });
+
+    await logTransition({
+      orgId,
+      invoiceId,
+      actorId,
+      fromStatus: inv.approvalStatus,
+      toStatus: "PENDING_MANAGER_APPROVAL",
+      note: note
+        ? `Manager: ${selectedManager.name}. ${note}`
+        : `Manager: ${selectedManager.name}`,
+    });
+
+    await notify({
+      userId: selectedManager.id,
+      orgId,
+      kind: "APPROVAL_REQUESTED",
+      title: `Quotation ${inv.invoiceNumber} awaiting your approval`,
+      body:
+        note ||
+        `Review quotation ${inv.invoiceNumber} and record your approval decision.`,
+      link: `/crm/quotes/${invoiceId}`,
+      priority: "important",
+      requiresAck: false,
+      variant: "warning",
+    });
+    return;
   }
 
   const now = await getNow();
@@ -174,8 +762,81 @@ export async function approveDocument(params: {
   if (!perm) throw new Error("Unknown entity type");
   await requirePermission(actorId, perm);
 
-  if (inv.approvalStatus !== "PENDING_APPROVAL") {
-    throw new Error(`Cannot approve from status: ${inv.approvalStatus}`);
+  if (inv.type === "QUOTE") {
+    const normalizedStatus = normalizeQuoteApprovalStatus(inv.approvalStatus);
+    if (normalizedStatus !== "PENDING_MANAGER_APPROVAL") {
+      throw new Error(`Cannot approve from status: ${inv.approvalStatus}`);
+    }
+
+    const snapshot = readQuoteSnapshot(inv.sourceQuotationSnapshot);
+    const selectedManagerId = snapshot.approvalFlow?.selectedManagerId;
+    if (selectedManagerId && selectedManagerId !== actorId) {
+      throw new Error("Only the selected approving manager can approve this quotation.");
+    }
+
+    const now = await getNow();
+    const actorName = await getUserName(actorId);
+    const sourceQuotationSnapshot = withQuoteSnapshot(inv, (current) => {
+      const approvalFlow = appendApprovalAudit(current.approvalFlow, {
+        stage: "MANAGER",
+        decision: "APPROVED",
+        remarks: note ?? null,
+        actedAt: now.toISOString(),
+        actedById: actorId,
+        actedByName: actorName,
+      });
+
+      return {
+        ...current,
+        approvalFlow: {
+          ...approvalFlow,
+          managerStatus: "APPROVED",
+          managerDecisionAt: now.toISOString(),
+          managerDecisionById: actorId,
+          managerDecisionByName: actorName,
+          managerRemarks: note ?? null,
+          customerStatus: "PENDING",
+          notifications: [
+            "Customer approval is now pending. Authorised users can record the decision on behalf of the customer during testing.",
+          ],
+        },
+      };
+    });
+
+    await db.crmInvoice.update({
+      where: { id: invoiceId },
+      data: {
+        approvalStatus: "PENDING_CUSTOMER_APPROVAL",
+        approvedAt: now,
+        approvedById: actorId,
+        approvalNote: note ?? null,
+        sourceQuotationSnapshot,
+        updatedById: actorId,
+      },
+    });
+
+    await logTransition({
+      orgId,
+      invoiceId,
+      actorId,
+      fromStatus: inv.approvalStatus,
+      toStatus: "PENDING_CUSTOMER_APPROVAL",
+      note,
+    });
+
+    await notify({
+      userId: inv.ownerId,
+      orgId,
+      kind: "APPROVAL_APPROVED",
+      title: `Quotation ${inv.invoiceNumber} approved by manager`,
+      body:
+        note ||
+        "Manager approval is complete. Customer approval can now be recorded.",
+      link: `/crm/quotes/${invoiceId}`,
+      priority: "normal",
+      variant: "success",
+    });
+    return;
   }
 
   const now = await getNow();
@@ -232,8 +893,82 @@ export async function requestRework(params: {
   if (!perm) throw new Error("Unknown entity type");
   await requirePermission(actorId, perm);
 
-  if (inv.approvalStatus !== "PENDING_APPROVAL") {
-    throw new Error(`Cannot request rework from status: ${inv.approvalStatus}`);
+  if (inv.type === "QUOTE") {
+    const normalizedStatus = normalizeQuoteApprovalStatus(inv.approvalStatus);
+    if (normalizedStatus !== "PENDING_MANAGER_APPROVAL") {
+      throw new Error(`Cannot request rework from status: ${inv.approvalStatus}`);
+    }
+
+    const snapshot = readQuoteSnapshot(inv.sourceQuotationSnapshot);
+    const selectedManagerId = snapshot.approvalFlow?.selectedManagerId;
+    if (selectedManagerId && selectedManagerId !== actorId) {
+      throw new Error("Only the selected approving manager can reject this quotation.");
+    }
+
+    const now = await getNow();
+    const actorName = await getUserName(actorId);
+    const sourceQuotationSnapshot = withQuoteSnapshot(inv, (current) => {
+      const approvalFlow = appendApprovalAudit(current.approvalFlow, {
+        stage: "MANAGER",
+        decision: "REJECTED",
+        remarks: note,
+        actedAt: now.toISOString(),
+        actedById: actorId,
+        actedByName: actorName,
+      });
+
+      return {
+        ...current,
+        approvalFlow: {
+          ...approvalFlow,
+          managerStatus: "REJECTED",
+          managerDecisionAt: now.toISOString(),
+          managerDecisionById: actorId,
+          managerDecisionByName: actorName,
+          managerRemarks: note,
+          customerStatus: null,
+          lastRejectedStage: "MANAGER",
+          rejectionReturnedToDraftAt: now.toISOString(),
+          notifications: [
+            "Manager rejected the quotation. Update the draft and resubmit for approval.",
+          ],
+        },
+      };
+    });
+
+    await db.crmInvoice.update({
+      where: { id: invoiceId },
+      data: {
+        approvalStatus: "DRAFT",
+        reworkNote: note,
+        approvalNote: note,
+        submittedAt: null,
+        sourceQuotationSnapshot,
+        updatedById: actorId,
+      },
+    });
+
+    await logTransition({
+      orgId,
+      invoiceId,
+      actorId,
+      fromStatus: inv.approvalStatus,
+      toStatus: "DRAFT",
+      note: `Manager rejected: ${note}`,
+    });
+
+    await notify({
+      userId: inv.ownerId,
+      orgId,
+      kind: "APPROVAL_REWORK",
+      title: `Quotation ${inv.invoiceNumber} rejected by manager`,
+      body: note,
+      link: `/crm/quotes/${invoiceId}`,
+      priority: "important",
+      requiresAck: true,
+      variant: "warning",
+    });
+    return;
   }
 
   await db.crmInvoice.update({
@@ -374,6 +1109,442 @@ export async function declineDocument(params: {
       variant: "destructive",
     });
   }
+}
+
+export async function recordCustomerDecision(params: {
+  invoiceId: string;
+  orgId: string;
+  actorId: string;
+  decision: "APPROVED" | "REJECTED";
+  note?: string;
+  actedAt?: string;
+}) {
+  const { invoiceId, orgId, actorId, decision, note, actedAt } = params;
+  const inv = await loadInvoice(invoiceId, orgId);
+
+  if (inv.type !== "QUOTE") {
+    throw new Error("Customer decisions are supported only for quotations.");
+  }
+
+  await requirePermission(actorId, APPROVAL_PERMISSIONS.QUOTE.manage);
+
+  const normalizedStatus = normalizeQuoteApprovalStatus(inv.approvalStatus);
+  if (normalizedStatus !== "PENDING_CUSTOMER_APPROVAL") {
+    throw new Error(`Cannot record a customer decision from status: ${inv.approvalStatus}`);
+  }
+
+  const actorName = await getUserName(actorId);
+  const decisionDate = actedAt ? new Date(actedAt) : await getNow();
+  const decisionTimestamp = decisionDate.toISOString();
+  const customerNote = note?.trim() || null;
+  const targetStatus = decision === "APPROVED" ? "CUSTOMER_APPROVED" : "DRAFT";
+
+  const sourceQuotationSnapshot = withQuoteSnapshot(inv, (current) => {
+    const approvalFlow = appendApprovalAudit(current.approvalFlow, {
+      stage: "CUSTOMER",
+      decision,
+      remarks: customerNote,
+      actedAt: decisionTimestamp,
+      actedById: actorId,
+      actedByName: actorName,
+    });
+
+    return {
+      ...current,
+      approvalFlow: {
+        ...approvalFlow,
+        customerStatus: decision,
+        customerDecisionAt: decisionTimestamp,
+        customerDecisionById: actorId,
+        customerDecisionByName: actorName,
+        customerRemarks: customerNote,
+        lastRejectedStage: decision === "REJECTED" ? "CUSTOMER" : null,
+        rejectionReturnedToDraftAt:
+          decision === "REJECTED" ? decisionTimestamp : null,
+        notifications:
+          decision === "APPROVED"
+            ? [
+                "Customer approval is complete. Create booking to continue into Freight Forwarding and CHA operations.",
+              ]
+            : [
+                "Customer rejected the quotation. Update the draft and send it through manager and customer approval again.",
+              ],
+      },
+    };
+  });
+
+  await db.crmInvoice.update({
+    where: { id: invoiceId },
+    data: {
+      approvalStatus: targetStatus,
+      reworkNote:
+        decision === "REJECTED"
+          ? customerNote || "Customer rejected the quotation."
+          : null,
+      sourceQuotationSnapshot,
+      updatedById: actorId,
+    },
+  });
+
+  await logTransition({
+    orgId,
+    invoiceId,
+    actorId,
+    fromStatus: inv.approvalStatus,
+    toStatus: targetStatus,
+    note: customerNote ?? `Customer ${decision.toLowerCase()} via authorised user`,
+  });
+
+  await notify({
+    userId: inv.ownerId,
+    orgId,
+    kind: decision === "APPROVED" ? "APPROVAL_APPROVED" : "QUOTE_REWORK",
+    title:
+      decision === "APPROVED"
+        ? `Customer approved quotation ${inv.invoiceNumber}`
+        : `Customer rejected quotation ${inv.invoiceNumber}`,
+    body:
+      customerNote ||
+      (decision === "APPROVED"
+        ? "Customer approval has been recorded."
+        : "Customer rejection has been recorded and the quotation has returned to draft."),
+    link: `/crm/quotes/${invoiceId}`,
+    priority: "important",
+    requiresAck: decision === "REJECTED",
+    variant: decision === "APPROVED" ? "success" : "warning",
+  });
+}
+
+export async function createQuoteBooking(params: {
+  invoiceId: string;
+  orgId: string;
+  actorId: string;
+}) {
+  const { invoiceId, orgId, actorId } = params;
+  const inv = await loadInvoice(invoiceId, orgId);
+
+  if (inv.type !== "QUOTE") {
+    throw new Error("Only quotations can be converted into bookings.");
+  }
+
+  await requirePermission(actorId, APPROVAL_PERMISSIONS.QUOTE.manage);
+
+  const normalizedStatus = normalizeQuoteApprovalStatus(inv.approvalStatus);
+  if (normalizedStatus !== "CUSTOMER_APPROVED" && normalizedStatus !== "BOOKING_CREATED") {
+    throw new Error("Customer approval is required before creating bookings.");
+  }
+
+  const actorName = await getUserName(actorId);
+  const now = await getNow();
+  const existingSnapshot = readQuoteSnapshot(inv.sourceQuotationSnapshot);
+  const departmentsToCreate = Array.from(
+    new Set([
+      ...existingSnapshot.includedDepartments,
+      ...existingSnapshot.pendingDepartments,
+    ]),
+  );
+  const resolvedDepartments =
+    departmentsToCreate.length > 0
+      ? departmentsToCreate
+      : ["FREIGHT_FORWARDING", "CUSTOMS_CLEARANCE"];
+
+  const nextConversion: QuoteConversionState = {
+    ...(existingSnapshot.conversion ?? {}),
+    createdAt: existingSnapshot.conversion?.createdAt ?? now.toISOString(),
+    createdById: existingSnapshot.conversion?.createdById ?? actorId,
+    createdByName: existingSnapshot.conversion?.createdByName ?? actorName,
+    linkedLeadId: inv.crmLeadId ?? existingSnapshot.conversion?.linkedLeadId ?? null,
+  };
+
+  if (
+    resolvedDepartments.includes("CUSTOMS_CLEARANCE") &&
+    !nextConversion.chaJobId
+  ) {
+    nextConversion.chaJobId = null;
+    nextConversion.chaJobNumber = null;
+    nextConversion.chaStatus = "PROCESSING_PENDING";
+  }
+
+  if (
+    resolvedDepartments.includes("FREIGHT_FORWARDING") &&
+    !nextConversion.freightTransactionId
+  ) {
+    nextConversion.freightBookingNumber = null;
+    nextConversion.freightTransactionId = null;
+    nextConversion.freightBookingGroupId = null;
+    nextConversion.freightTransactionType = null;
+    nextConversion.freightStatus = "PROCESSING_PENDING";
+  }
+
+  const sourceQuotationSnapshot = withQuoteSnapshot(inv, (current) => {
+    const approvalFlow = appendApprovalAudit(current.approvalFlow, {
+      stage: "BOOKING",
+      decision: "PROCESSING_PENDING",
+      remarks: [
+        nextConversion.chaStatus === "PROCESSING_PENDING"
+          ? "CHA queued for processing"
+          : null,
+        nextConversion.freightStatus === "PROCESSING_PENDING"
+          ? "Freight queued for processing"
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" | "),
+      actedAt: now.toISOString(),
+      actedById: actorId,
+      actedByName: actorName,
+    });
+
+    return {
+      ...current,
+      approvalFlow: {
+        ...approvalFlow,
+        notifications: [
+          "Operational handoff is queued. Teams can continue from the dedicated Freight Forwarding and CHA process pages.",
+        ],
+      },
+      conversion: nextConversion,
+    };
+  });
+
+  await db.crmInvoice.update({
+    where: { id: invoiceId },
+    data: {
+      approvalStatus: "BOOKING_CREATED",
+      sourceQuotationSnapshot,
+      updatedById: actorId,
+    },
+  });
+
+  await logTransition({
+    orgId,
+    invoiceId,
+    actorId,
+    fromStatus: inv.approvalStatus,
+    toStatus: "BOOKING_CREATED",
+    note: [
+      nextConversion.chaStatus === "PROCESSING_PENDING"
+        ? "CHA queued for processing"
+        : null,
+      nextConversion.freightStatus === "PROCESSING_PENDING"
+        ? "Freight queued for processing"
+        : null,
+    ]
+      .filter(Boolean)
+      .join(" | "),
+  });
+
+  await notify({
+    userId: inv.ownerId,
+    orgId,
+    kind: "APPROVAL_APPROVED",
+    title: `Operational booking created from quotation ${inv.invoiceNumber}`,
+    body: [
+      nextConversion.chaJobNumber
+        ? `CHA job ${nextConversion.chaJobNumber}`
+        : null,
+      nextConversion.freightBookingNumber
+        ? `Freight booking ${nextConversion.freightBookingNumber}`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+    link: `/crm/quotes/${invoiceId}`,
+    priority: "normal",
+    variant: "success",
+  });
+
+  return nextConversion;
+}
+
+export async function completeQuoteFreightProcess(params: {
+  actorId: string;
+  invoiceId: string;
+  orgId: string;
+  input: QuoteFreightProcessInput;
+}) {
+  const { actorId, invoiceId, orgId, input } = params;
+  const inv = await loadInvoice(invoiceId, orgId);
+
+  if (inv.type !== "QUOTE") {
+    throw new Error("Only quotations can complete freight processing.");
+  }
+
+  await requirePermission(actorId, APPROVAL_PERMISSIONS.QUOTE.manage);
+
+  const existingSnapshot = readQuoteSnapshot(inv.sourceQuotationSnapshot);
+  if (existingSnapshot.conversion?.freightStatus !== "PROCESSING_PENDING") {
+    throw new Error("This quotation is not waiting in the freight process queue.");
+  }
+
+  const actorName = await getUserName(actorId);
+  const bookingGroupId = randomUUID();
+  let mblTransaction: { id: string; invoiceNumber: string } | null = null;
+  let hblTransaction: { id: string; invoiceNumber: string } | null = null;
+
+  if (input.mode === "MBL_ONLY" || input.mode === "BOTH") {
+    if (!input.mbl) {
+      throw new Error("MBL transaction details are required.");
+    }
+    mblTransaction = await createFreightProcessTransaction({
+      actorId,
+      actorName,
+      bookingGroupId,
+      bookingMode: input.mode,
+      containers: input.mbl.containers,
+      equipmentTypes: input.mbl.equipmentTypes,
+      formData: input.mbl.formData,
+      linkedTransactionIds: [],
+      orgId,
+      transactionType: "MBL",
+    });
+  }
+
+  if (input.mode === "HBL_ONLY" || input.mode === "BOTH") {
+    if (!input.hbl) {
+      throw new Error("HBL transaction details are required.");
+    }
+    hblTransaction = await createFreightProcessTransaction({
+      actorId,
+      actorName,
+      bookingGroupId,
+      bookingMode: input.mode,
+      containers: input.hbl.containers,
+      equipmentTypes: input.hbl.equipmentTypes,
+      formData: input.hbl.formData,
+      linkedTransactionIds: [],
+      orgId,
+      transactionType: "HBL",
+    });
+  }
+
+  const linkedIds = [mblTransaction?.id, hblTransaction?.id].filter(
+    (value): value is string => Boolean(value),
+  );
+
+  if (linkedIds.length > 1) {
+    for (const linkedId of linkedIds) {
+      const record = await db.crmInvoice.findUnique({
+        where: { id: linkedId },
+        select: { sourceQuotationSnapshot: true },
+      });
+      if (!record) continue;
+      const snapshot =
+        record.sourceQuotationSnapshot &&
+        typeof record.sourceQuotationSnapshot === "object" &&
+        !Array.isArray(record.sourceQuotationSnapshot)
+          ? (record.sourceQuotationSnapshot as Record<string, unknown>)
+          : {};
+      const freightForwarding =
+        snapshot.freightForwarding &&
+        typeof snapshot.freightForwarding === "object" &&
+        !Array.isArray(snapshot.freightForwarding)
+          ? (snapshot.freightForwarding as Record<string, unknown>)
+          : {};
+      await db.crmInvoice.update({
+        where: { id: linkedId },
+        data: {
+          sourceQuotationSnapshot: {
+            ...snapshot,
+            freightForwarding: {
+              ...freightForwarding,
+              linkedTransactionIds: linkedIds.filter((id) => id !== linkedId),
+            },
+          },
+          updatedById: actorId,
+        },
+      });
+    }
+  }
+
+  const primaryTransaction =
+    input.mode === "MBL_ONLY" ? mblTransaction : hblTransaction || mblTransaction;
+  const nextConversion: QuoteConversionState = {
+    ...(existingSnapshot.conversion ?? {}),
+    freightBookingGroupId: bookingGroupId,
+    freightBookingNumber: primaryTransaction?.invoiceNumber ?? null,
+    freightTransactionId: primaryTransaction?.id ?? null,
+    freightTransactionType: input.mode === "MBL_ONLY" ? "MBL" : "HBL",
+    freightStatus: "CREATED",
+  };
+
+  await db.crmInvoice.update({
+    where: { id: invoiceId },
+    data: {
+      sourceQuotationSnapshot: withQuoteSnapshot(inv, (current) => ({
+        ...current,
+        conversion: nextConversion,
+      })),
+      updatedById: actorId,
+    },
+  });
+
+  await logTransition({
+    orgId,
+    invoiceId,
+    actorId,
+    fromStatus: "BOOKING_CREATED",
+    toStatus: "BOOKING_CREATED",
+    note: `Freight process completed with ${input.mode.replaceAll("_", " ")} transaction creation.`,
+  });
+
+  return {
+    bookingGroupId,
+    hblTransactionId: hblTransaction?.id ?? null,
+    mblTransactionId: mblTransaction?.id ?? null,
+    mode: input.mode,
+  };
+}
+
+export async function completeQuoteChaProcess(params: {
+  actorId: string;
+  chaJobId: string;
+  chaJobNumber: string;
+  invoiceId: string;
+  orgId: string;
+}) {
+  const { actorId, chaJobId, chaJobNumber, invoiceId, orgId } = params;
+  const inv = await loadInvoice(invoiceId, orgId);
+
+  if (inv.type !== "QUOTE") {
+    throw new Error("Only quotations can complete CHA processing.");
+  }
+
+  await requirePermission(actorId, APPROVAL_PERMISSIONS.QUOTE.manage);
+
+  const existingSnapshot = readQuoteSnapshot(inv.sourceQuotationSnapshot);
+  if (existingSnapshot.conversion?.chaStatus !== "PROCESSING_PENDING") {
+    throw new Error("This quotation is not waiting in the CHA process queue.");
+  }
+
+  const nextConversion: QuoteConversionState = {
+    ...(existingSnapshot.conversion ?? {}),
+    chaJobId,
+    chaJobNumber,
+    chaStatus: "CREATED",
+  };
+
+  await db.crmInvoice.update({
+    where: { id: invoiceId },
+    data: {
+      sourceQuotationSnapshot: withQuoteSnapshot(inv, (current) => ({
+        ...current,
+        conversion: nextConversion,
+      })),
+      updatedById: actorId,
+    },
+  });
+
+  await logTransition({
+    orgId,
+    invoiceId,
+    actorId,
+    fromStatus: "BOOKING_CREATED",
+    toStatus: "BOOKING_CREATED",
+    note: `CHA process completed with job ${chaJobNumber}.`,
+  });
+
+  return nextConversion;
 }
 
 // Send to customer (quote only, after APPROVED)
@@ -854,7 +2025,13 @@ export async function adminRestoreToDraft(params: {
 
 export async function getPendingApprovals(orgId: string) {
   return db.crmInvoice.findMany({
-    where: { orgId, approvalStatus: "PENDING_APPROVAL" },
+    where: {
+      orgId,
+      OR: [
+        { type: "QUOTE", approvalStatus: { in: ["PENDING_APPROVAL", "PENDING_MANAGER_APPROVAL"] } },
+        { type: { in: ["INVOICE", "SALES_ORDER"] }, approvalStatus: "PENDING_APPROVAL" },
+      ],
+    },
     orderBy: { submittedAt: "asc" },
     select: {
       id: true,
@@ -881,18 +2058,32 @@ export async function getApprovalLogs(invoiceId: string) {
 
 export async function getApprovalMetrics(orgId: string) {
   const [pending, approvedThisMonth, declinedThisMonth, avgApprovalTime] = await Promise.all([
-    db.crmInvoice.count({ where: { orgId, approvalStatus: "PENDING_APPROVAL" } }),
     db.crmInvoice.count({
       where: {
         orgId,
-        approvalStatus: "APPROVED",
+        OR: [
+          { type: "QUOTE", approvalStatus: { in: ["PENDING_APPROVAL", "PENDING_MANAGER_APPROVAL"] } },
+          { type: { in: ["INVOICE", "SALES_ORDER"] }, approvalStatus: "PENDING_APPROVAL" },
+        ],
+      },
+    }),
+    db.crmInvoice.count({
+      where: {
+        orgId,
+        OR: [
+          { type: "QUOTE", approvalStatus: "CUSTOMER_APPROVED" },
+          { type: { in: ["INVOICE", "SALES_ORDER"] }, approvalStatus: "APPROVED" },
+        ],
         approvedAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
       },
     }),
     db.crmInvoice.count({
       where: {
         orgId,
-        approvalStatus: "DECLINED",
+        OR: [
+          { type: "QUOTE", reworkNote: { not: null } },
+          { type: { in: ["INVOICE", "SALES_ORDER"] }, approvalStatus: "DECLINED" },
+        ],
         updatedAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
       },
     }),
@@ -900,7 +2091,10 @@ export async function getApprovalMetrics(orgId: string) {
     db.crmInvoice.findMany({
       where: {
         orgId,
-        approvalStatus: "APPROVED",
+        OR: [
+          { type: "QUOTE", approvalStatus: "PENDING_CUSTOMER_APPROVAL" },
+          { type: { in: ["INVOICE", "SALES_ORDER"] }, approvalStatus: "APPROVED" },
+        ],
         approvedAt: { not: null },
         submittedAt: { not: null },
         updatedAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },

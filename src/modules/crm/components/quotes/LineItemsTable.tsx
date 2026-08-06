@@ -1,6 +1,7 @@
 "use client";
 
 import { CrmButton, CrmInput, CrmTable } from "@/modules/crm/components/workspace/crm-workspace";
+import { WorkspacePanelHeader } from "@/components/layout/workspace";
 
 import { NativeSelect } from "@/components/ui/native-select";
 import Image from "next/image";
@@ -369,7 +370,34 @@ export function LineItemsTable({ form }: LineItemsTableProps) {
   };
 
   return (
-    <section className="border-b border-[var(--mnx-border)] px-5 py-5">
+    <div className="p-5">
+      <WorkspacePanelHeader
+        eyebrow="Commercial lines"
+        title="Line items and pricing"
+        description="Build the quote using itemized services, tax selection, currency, and quantity details."
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Button
+              className="h-9"
+              variant="default"
+              size="sm"
+              onClick={() => append(createEmptyLineItem())}
+            >
+              <Plus className="mr-1 size-4" />
+              Add line
+            </Button>
+            <Button
+              className="h-9"
+              variant="outline"
+              size="sm"
+              onClick={() => append(createEmptyLineItem())}
+            >
+              <Plus className="mr-1 size-4" />
+              Bulk add
+            </Button>
+          </div>
+        }
+      />
       <div className="overflow-x-auto border border-[var(--mnx-border)]">
         <CrmTable className="min-w-[1280px] w-full bg-mono-card">
           <thead className="bg-[var(--mnx-surface)] text-left text-[11px] uppercase tracking-[0.08em] text-[var(--mnx-text-muted)] whitespace-nowrap">
@@ -421,23 +449,6 @@ export function LineItemsTable({ form }: LineItemsTableProps) {
           </tbody>
         </CrmTable>
       </div>
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Button
-          className="h-9 bg-[var(--mnx-accent)] px-3 text-[12px] text-mono-text hover:bg-[var(--mnx-accent)]"
-          onClick={() => append(createEmptyLineItem())}
-        >
-          <Plus className="mr-1 size-4" />
-          Add New Row
-        </Button>
-        <Button
-          className="h-9 bg-[var(--mnx-accent)] px-3 text-[12px] text-mono-text hover:bg-[var(--mnx-accent)]"
-          onClick={() => append(createEmptyLineItem())}
-        >
-          <Plus className="mr-1 size-4" />
-          Add Items in Bulk
-        </Button>
-      </div>
-    </section>
+    </div>
   );
 }

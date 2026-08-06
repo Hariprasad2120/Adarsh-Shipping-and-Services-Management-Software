@@ -364,6 +364,187 @@ button.mnx-accounting-record-card {
   gap: var(--mn-space-2);
 }
 
+.mnx-accounting-quotation-shell {
+  display: grid;
+  grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+  gap: var(--mn-space-5);
+  align-items: start;
+}
+
+.mnx-accounting-quotation-list-panel,
+.mnx-accounting-quotation-detail-panel {
+  min-width: 0;
+}
+
+.mnx-accounting-quotation-list {
+  display: grid;
+  gap: var(--mn-space-3);
+}
+
+.mnx-accounting-quotation-list-item {
+  display: grid;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-md);
+  color: var(--mnx-text);
+  background: var(--mnx-surface-gradient);
+  text-decoration: none;
+  transition:
+    border-color var(--mn-motion-fast),
+    box-shadow var(--mn-motion-fast),
+    background var(--mn-motion-fast);
+}
+
+.mnx-accounting-quotation-list-item:hover,
+.mnx-accounting-quotation-list-item:focus-visible,
+.mnx-accounting-quotation-list-item.is-selected {
+  border-color: color-mix(in srgb, var(--mnx-accent) 42%, var(--mnx-border));
+  box-shadow: var(--mnx-shadow-soft);
+}
+
+.mnx-accounting-quotation-list-item.is-selected {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--mnx-accent) 10%, var(--mnx-surface)) 0%,
+      var(--mnx-surface-gradient) 100%
+    );
+}
+
+.mnx-accounting-quotation-list-item-top,
+.mnx-accounting-quotation-list-item-footer,
+.mnx-accounting-quotation-list-item-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-accounting-quotation-list-item-top strong,
+.mnx-accounting-quotation-list-item-top span,
+.mnx-accounting-quotation-list-item-footer span,
+.mnx-accounting-quotation-list-item-meta span {
+  display: block;
+}
+
+.mnx-accounting-quotation-list-item-top strong {
+  color: var(--mnx-text-strong);
+}
+
+.mnx-accounting-quotation-list-item-top span,
+.mnx-accounting-quotation-list-item-footer span,
+.mnx-accounting-quotation-list-item-meta span {
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+}
+
+.mnx-accounting-quotation-list-item-meta {
+  align-items: flex-start;
+}
+
+.mnx-accounting-quotation-list-item-footer {
+  align-items: flex-end;
+}
+
+.mnx-accounting-quotation-detail-stack {
+  display: grid;
+  gap: var(--mn-space-5);
+}
+
+.mnx-accounting-quotation-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mn-space-4);
+}
+
+.mnx-accounting-quotation-overview-card {
+  min-width: 0;
+}
+
+.mnx-accounting-quotation-actions .mnx-field {
+  min-width: 11rem;
+}
+
+.mnx-accounting-quotation-search {
+  position: relative;
+}
+
+.mnx-accounting-quotation-search svg {
+  position: absolute;
+  top: 50%;
+  left: 0.9rem;
+  width: 1rem;
+  height: 1rem;
+  color: var(--mnx-text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.mnx-accounting-quotation-search .mnx-field-control {
+  padding-left: 2.5rem;
+}
+
+.mnx-accounting-quotation-hero-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mn-space-4);
+  width: 100%;
+}
+
+.mnx-accounting-quotation-hero-title strong,
+.mnx-accounting-quotation-hero-total strong {
+  display: block;
+  color: var(--mnx-text-strong);
+}
+
+.mnx-accounting-quotation-hero-title span,
+.mnx-accounting-quotation-hero-total span {
+  display: block;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+}
+
+.mnx-accounting-quotation-hero-total {
+  text-align: right;
+}
+
+.mnx-accounting-quotation-glance {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--mn-space-3);
+}
+
+.mnx-accounting-quotation-glance > div {
+  padding: var(--mn-space-3);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mnx-radius-sm);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-accounting-quotation-glance span,
+.mnx-accounting-quotation-empty span {
+  display: block;
+  color: var(--mnx-text-muted);
+  font-size: var(--mn-type-label-size);
+}
+
+.mnx-accounting-quotation-glance strong,
+.mnx-accounting-quotation-empty strong {
+  display: block;
+  color: var(--mnx-text-strong);
+}
+
+.mnx-accounting-quotation-empty {
+  display: grid;
+  gap: var(--mn-space-2);
+  padding: var(--mn-space-4);
+  border: 1px dashed var(--mnx-border);
+  border-radius: var(--mnx-radius-md);
+  background: var(--mnx-surface-soft);
+}
+
 .mnx-accounting-dialog .mnx-accounting-form {
   gap: var(--mn-space-4);
 }
@@ -377,6 +558,15 @@ button.mnx-accounting-record-card {
 }
 
 @media (max-width: 64rem) {
+  .mnx-accounting-quotation-shell,
+  .mnx-accounting-quotation-overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mnx-accounting-quotation-glance {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mnx-accounting-report-grid {
     grid-template-columns: 1fr;
   }
@@ -397,6 +587,22 @@ button.mnx-accounting-record-card {
 
   .mnx-accounting-page-header::after {
     display: none;
+  }
+
+  .mnx-accounting-quotation-list-item-top,
+  .mnx-accounting-quotation-list-item-footer,
+  .mnx-accounting-quotation-list-item-meta,
+  .mnx-accounting-quotation-hero-title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .mnx-accounting-quotation-hero-total {
+    text-align: left;
+  }
+
+  .mnx-accounting-quotation-glance {
+    grid-template-columns: 1fr;
   }
 
   .mnx-accounting-section-content {

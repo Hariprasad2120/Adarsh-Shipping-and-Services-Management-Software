@@ -1,15 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import dynamic from "next/dynamic";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, Briefcase, CheckCircle2, Filter, MoreHorizontal, Plane, Plus, Search, Ship, Users } from "lucide-react";
-import { CreateJobPermissionGuard } from "@/modules/cha/components/create-job-permission-guard";
-
-const CreateJobDialog = dynamic(
-  () => import("@/modules/cha/components/create-job-dialog").then((module) => module.CreateJobDialog),
-  { ssr: false },
-);
+import { ArrowLeft, ArrowRight, Briefcase, CheckCircle2, Filter, Plane, Plus, Search, Ship, Users } from "lucide-react";
 import { ClickableRow } from "@/components/navigation/clickable-row";
 import {
   OperationalDataTable,
@@ -36,7 +29,6 @@ import { JobFilingQueryWarningIndicator } from "@/modules/cha/components/warning
 import { ChaDueDateWarningsIndicator } from "@/modules/cha/components/warnings/cha-due-date-warnings-indicator";
 import type { DueDateWarningViewModel } from "@/modules/cha/components/warnings/cha-due-date-warning-indicator";
 import { formatChaBadgeLabel } from "@/lib/cha-badges";
-import { toast } from "sonner";
 import {
   ChaMetricCard,
   ChaMetrics,
@@ -116,11 +108,7 @@ interface JobsClientProps {
       isActive: boolean;
     }[];
   };
-  initialCreateOptions: JobsClientProps["options"] | null;
-  showCreateNew: boolean;
-  showCreatePermissionDenied: boolean;
   canCreateJob: boolean;
-  currentUserId: string;
 }
 
 function formatJobDate(value: string) {
@@ -167,11 +155,7 @@ export function JobsClient({
   completedJobsData,
   filters,
   options,
-  initialCreateOptions,
-  showCreateNew,
-  showCreatePermissionDenied,
   canCreateJob,
-  currentUserId,
 }: JobsClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -183,40 +167,8 @@ export function JobsClient({
   const [branchId, setBranchId] = useState<string[]>(filters.branchId || []);
   const [jobTypeId, setJobTypeId] = useState<string[]>(filters.jobTypeId || []);
   const [assignedToMe, setAssignedToMe] = useState(filters.assignedToMe || false);
-  const [isModalOpen, setIsModalOpen] = useState(showCreateNew && canCreateJob);
-  const [createOptions, setCreateOptions] =
-    useState<JobsClientProps["options"] | null>(initialCreateOptions);
-  const [createOptionsLoading, setCreateOptionsLoading] = useState(false);
-  const createOptionsRequestRef = useRef(false);
   const [openFilterTable, setOpenFilterTable] = useState<"active" | "completed" | null>(null);
   const [activeFilterType, setActiveFilterType] = useState<FilterPanelKey | "">("stage");
-
-  const loadCreateOptions = useCallback(async () => {
-    if (createOptions || createOptionsRequestRef.current) return;
-    createOptionsRequestRef.current = true;
-    await Promise.resolve();
-    setCreateOptionsLoading(true);
-    try {
-      const response = await fetch("/api/cha/jobs/create-options", {
-        cache: "no-store",
-      });
-      if (!response.ok) throw new Error("Unable to load create-job options.");
-      setCreateOptions((await response.json()) as JobsClientProps["options"]);
-    } catch (error) {
-      setIsModalOpen(false);
-      toast.error(
-        error instanceof Error ? error.message : "Unable to load create-job options.",
-      );
-    } finally {
-      createOptionsRequestRef.current = false;
-      setCreateOptionsLoading(false);
-    }
-  }, [createOptions]);
-
-  useEffect(() => {
-    if (!isModalOpen || !canCreateJob) return;
-    queueMicrotask(() => void loadCreateOptions());
-  }, [canCreateJob, isModalOpen, loadCreateOptions]);
 
   const activeFilterCount = [
     Boolean(search),
@@ -539,11 +491,7 @@ export function JobsClient({
           <Button
             type="button"
             size="sm"
-            disabled={createOptionsLoading}
-            onClick={() => {
-              setIsModalOpen(true);
-              void loadCreateOptions();
-            }}
+            onClick={() => router.push("/cha/jobs/new")}
           >
             <Plus className="size-4" /> New Job
           </Button>
@@ -620,7 +568,7 @@ export function JobsClient({
                   <OperationalTableHead>Mode</OperationalTableHead>
                   <OperationalTableHead>Current Stage</OperationalTableHead>
                   <OperationalTableHead>Status</OperationalTableHead>
-                  <OperationalTableHead />
+                  <OperationalTableHead>Process</OperationalTableHead>
                 </tr>
               </thead>
               <tbody>
@@ -679,8 +627,15 @@ export function JobsClient({
                           </OperationalStatus>
                         </OperationalTableCell>
                         <OperationalTableCell>
-                          <OperationalRowAction>
-                            <MoreHorizontal size={16} aria-hidden="true" />
+                          <OperationalRowAction
+                            aria-label={`Process ${job.jobNumber}`}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              router.push(`/cha/jobs/${job.id}`);
+                            }}
+                          >
+                            Process
                           </OperationalRowAction>
                         </OperationalTableCell>
                       </ClickableRow>
@@ -761,16 +716,6 @@ export function JobsClient({
         emptyText: "Try clearing filters to see older filed work.",
         tableKey: "completed",
       })}
-
-      {canCreateJob && createOptions ? (
-        <CreateJobDialog
-          open={isModalOpen}
-          onOpenChange={setIsModalOpen}
-          options={createOptions}
-          currentUserId={currentUserId}
-        />
-      ) : null}
-      <CreateJobPermissionGuard open={showCreatePermissionDenied} fallbackHref="/cha/jobs" />
     </div>
   );
 }

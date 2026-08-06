@@ -1,6 +1,7 @@
 "use client";
 
 import { CrmInput } from "@/modules/crm/components/workspace/crm-workspace";
+import { WorkspacePanelHeader } from "@/components/layout/workspace";
 
 import { NativeSelect } from "@/components/ui/native-select";
 import type { UseFormReturn } from "react-hook-form";
@@ -35,8 +36,12 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
   const errors = form.formState.errors;
 
   return (
-    <section className="mnx-crm-form-section border-b border-[var(--mnx-border)] px-5 py-5">
-      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-mono-muted">Logistics / Shipping Details</h2>
+    <div className="mnx-crm-form-section p-5">
+      <WorkspacePanelHeader
+        eyebrow="Shipment context"
+        title="Logistics and shipping details"
+        description="Capture routing, Incoterms, cargo profile, and container planning for the proposal."
+      />
       <div className="grid gap-4 md:grid-cols-2">
         {fields.slice(0, 4).map((field) => (
           <div key={field.name}>
@@ -92,6 +97,6 @@ export function ShippingDetailsSection({ form, incoterms, containerTypes }: Ship
           </div>
         ))}
       </div>
-    </section>
+    </div>
   );
 }

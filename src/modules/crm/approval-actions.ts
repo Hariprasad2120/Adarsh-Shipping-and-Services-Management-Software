@@ -12,6 +12,10 @@ import {
   acceptQuote,
   markInvoiced,
   adminRestoreToDraft,
+  recordCustomerDecision,
+  createQuoteBooking,
+  completeQuoteFreightProcess,
+  completeQuoteChaProcess,
   getPendingApprovals,
   getApprovalLogs,
   getApprovalMetrics,
@@ -25,9 +29,13 @@ async function getActorOrgId() {
   return { actorId: session.user.id, orgId: session.user.orgId ?? "" };
 }
 
-export async function actionSubmitForApproval(invoiceId: string, note?: string) {
+export async function actionSubmitForApproval(
+  invoiceId: string,
+  note?: string,
+  managerId?: string,
+) {
   const { actorId, orgId } = await getActorOrgId();
-  await submitForApproval({ invoiceId, orgId, actorId, note });
+  await submitForApproval({ invoiceId, orgId, actorId, note, managerId });
 }
 
 export async function actionApproveDocument(invoiceId: string, note?: string) {
@@ -63,6 +71,44 @@ export async function actionAcceptQuote(invoiceId: string) {
 export async function actionMarkInvoiced(invoiceId: string) {
   const { actorId, orgId } = await getActorOrgId();
   await markInvoiced({ invoiceId, orgId, actorId });
+}
+
+export async function actionRecordCustomerDecision(
+  invoiceId: string,
+  decision: "APPROVED" | "REJECTED",
+  note?: string,
+  actedAt?: string,
+) {
+  const { actorId, orgId } = await getActorOrgId();
+  await recordCustomerDecision({ invoiceId, orgId, actorId, decision, note, actedAt });
+}
+
+export async function actionCreateQuoteBooking(invoiceId: string) {
+  const { actorId, orgId } = await getActorOrgId();
+  return createQuoteBooking({ invoiceId, orgId, actorId });
+}
+
+export async function actionCompleteQuoteFreightProcess(
+  invoiceId: string,
+  input: Parameters<typeof completeQuoteFreightProcess>[0]["input"],
+) {
+  const { actorId, orgId } = await getActorOrgId();
+  return completeQuoteFreightProcess({ invoiceId, orgId, actorId, input });
+}
+
+export async function actionCompleteQuoteChaProcess(
+  invoiceId: string,
+  chaJobId: string,
+  chaJobNumber: string,
+) {
+  const { actorId, orgId } = await getActorOrgId();
+  return completeQuoteChaProcess({
+    actorId,
+    chaJobId,
+    chaJobNumber,
+    invoiceId,
+    orgId,
+  });
 }
 
 export async function actionAdminRestoreToDraft(invoiceId: string, note?: string) {

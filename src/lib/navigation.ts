@@ -304,6 +304,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         permission: "attendance.reports.view",
         matchPaths: ["/attendance/reports"],
       },
+      {
+        href: "/attendance/settings",
+        label: "Settings",
+        icon: Settings,
+        permission: "attendance.punch.manage",
+        matchPaths: ["/attendance/settings"],
+      },
     ],
   },
   {
@@ -395,6 +402,17 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         permission: "ams.cycle.manage",
         matchPaths: ["/ams/assets"],
       },
+      {
+        href: "/ams/settings",
+        label: "Settings",
+        icon: Settings,
+        permission: [
+          "ams.appraisal.assign_reviewers",
+          "ams.cycle.manage",
+          "ams.criteria.manage",
+        ],
+        matchPaths: ["/ams/settings"],
+      },
     ],
   },
   {
@@ -433,6 +451,12 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         label: "Reports",
         icon: Report,
         matchPaths: ["/lms/reports"],
+      },
+      {
+        href: "/lms/settings",
+        label: "Settings",
+        icon: Settings,
+        matchPaths: ["/lms/settings"],
       },
     ],
   },
@@ -543,13 +567,6 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         matchPaths: ["/crm/calls"],
       },
       {
-        href: "/crm/items",
-        label: "Items",
-        icon: Folder,
-        permission: "crm.access",
-        matchPaths: ["/crm/items"],
-      },
-      {
         href: "/crm/products",
         label: "Products & Services",
         icon: Folder,
@@ -562,6 +579,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         icon: Folder,
         permission: "crm.access",
         matchPaths: ["/crm/price-books"],
+      },
+      {
+        href: "/crm/masters",
+        label: "Masters",
+        icon: Settings,
+        permission: "crm.access",
+        matchPaths: ["/crm/masters"],
       },
       {
         href: "/crm/quotes",
@@ -661,6 +685,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         permission: "crm.leadSource.read",
         matchPaths: ["/crm/lead-sources"],
       },
+      {
+        href: "/crm/settings",
+        label: "Settings",
+        icon: Settings,
+        permission: "crm.access",
+        matchPaths: ["/crm/settings"],
+      },
     ],
   },
   {
@@ -675,6 +706,36 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         label: "Workspace Home",
         icon: Dashboard,
         matchPaths: ["/freight-forwarding"],
+      },
+      {
+        href: "/freight-forwarding/create-booking",
+        label: "Create Booking",
+        icon: DocumentAdd,
+        matchPaths: ["/freight-forwarding/create-booking"],
+      },
+      {
+        href: "/freight-forwarding/process",
+        label: "Process",
+        icon: Task,
+        matchPaths: ["/freight-forwarding/process"],
+      },
+      {
+        href: "/freight-forwarding/mbl",
+        label: "MBL",
+        icon: Task,
+        matchPaths: ["/freight-forwarding/mbl"],
+      },
+      {
+        href: "/freight-forwarding/hbl",
+        label: "HBL",
+        icon: Task,
+        matchPaths: ["/freight-forwarding/hbl"],
+      },
+      {
+        href: "/freight-forwarding/settings",
+        label: "Settings",
+        icon: Settings,
+        matchPaths: ["/freight-forwarding/settings"],
       },
     ],
   },
@@ -709,6 +770,13 @@ export const NAV_SECTIONS: PrimaryNavSection[] = [
         icon: Task,
         permission: "cha.job.read",
         matchPaths: ["/cha/jobs"],
+      },
+      {
+        href: "/cha/process",
+        label: "Process",
+        icon: Task,
+        permission: "cha.job.read",
+        matchPaths: ["/cha/process"],
       },
       {
         href: "/cha/approvals",

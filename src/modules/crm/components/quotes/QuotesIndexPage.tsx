@@ -19,6 +19,14 @@ import type { QuoteListStatus, QuoteRecord } from "@/modules/crm/components/quot
 
 const statusTone: Record<Exclude<QuoteListStatus, "all">, string> = {
   draft: "bg-[var(--mnx-surface)] text-[var(--mnx-text-muted)]",
+  "pending-manager-approval":
+    "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
+  "pending-customer-approval":
+    "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent)]",
+  "customer-approved":
+    "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]",
+  "booking-created":
+    "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]",
   "pending-approval": "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
   approved: "bg-[var(--mnx-accent)]/10 text-[var(--mnx-accent)]",
   sent: "bg-[var(--mnx-accent-soft)] text-[var(--mnx-accent-text)]",
@@ -68,15 +76,10 @@ export function QuotesIndexPage({
   initialQuotes: QuoteRecord[];
 }) {
   const router = useRouter();
-  const [quotes, setQuotes] = useState<QuoteRecord[]>(initialQuotes);
   const [activeView, setActiveView] = useState<QuoteListStatus>("all");
   const [search, setSearch] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    setQuotes(initialQuotes);
-  }, [initialQuotes]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -90,12 +93,12 @@ export function QuotesIndexPage({
   }, []);
 
   const filteredRecords = useMemo(() => {
-    return quotes.filter((record) => {
+    return initialQuotes.filter((record) => {
       const matchesView =
         activeView === "all" ? true : record.status === activeView;
       return matchesView && matchesSearch(record, search);
     });
-  }, [activeView, search, quotes]);
+  }, [activeView, search, initialQuotes]);
 
   const activeViewLabel =
     quoteViews.find((view) => view.id === activeView)?.label ?? "All";
@@ -134,8 +137,8 @@ export function QuotesIndexPage({
                       {quoteViews.map((view) => {
                         const count =
                           view.id === "all"
-                            ? quotes.length
-                            : quotes.filter(
+                            ? initialQuotes.length
+                            : initialQuotes.filter(
                                 (record) => record.status === view.id,
                               ).length;
 

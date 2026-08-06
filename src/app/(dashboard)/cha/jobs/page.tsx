@@ -64,9 +64,11 @@ export default async function ChaJobsPage({
   const assignedToMe = params.assignedToMe === "true";
   const activePage = typeof params.activePage === "string" ? parseInt(params.activePage, 10) : 1;
   const completedPage = typeof params.completedPage === "string" ? parseInt(params.completedPage, 10) : 1;
-  const requestedCreateNew = params.new === "true";
   const canCreateJob = await can(session.user.id, "cha.job.create");
-  const showCreateNew = requestedCreateNew && canCreateJob;
+
+  if (params.new === "true") {
+    redirect(canCreateJob ? "/cha/jobs/new" : "/cha/jobs");
+  }
 
   // All queries are independent — run in parallel
   const [activeJobsData, completedJobsData, filterOptions] = await Promise.all([
@@ -198,11 +200,7 @@ export default async function ChaJobsPage({
         teamGroups: [],
         branchNumberingRules: [],
       }}
-      initialCreateOptions={null}
-      showCreateNew={showCreateNew}
-      showCreatePermissionDenied={requestedCreateNew && !canCreateJob}
       canCreateJob={canCreateJob}
-      currentUserId={session.user.id}
     />
   );
 }

@@ -13,6 +13,15 @@ const RBAC_PERMISSIONS_TAG = "rbac:user-permissions";
 // granular operational capabilities. Keep those older grants usable so
 // long-lived roles can continue working across the migrated module.
 const PERMISSION_COMPATIBILITY: Record<string, readonly string[]> = {
+  "crm.quote.submit": ["crm.invoice.manage"],
+  "crm.quote.approve": ["crm.invoice.manage"],
+  "crm.quote.send": ["crm.invoice.manage"],
+  "crm.quote.manage": ["crm.invoice.manage"],
+  "crm.invoice.submit": ["crm.invoice.manage"],
+  "crm.invoice.approve": ["crm.invoice.manage"],
+  "crm.sales_order.submit": ["crm.invoice.manage"],
+  "crm.sales_order.approve": ["crm.invoice.manage"],
+  "crm.sales_order.manage": ["crm.invoice.manage"],
   "accounting.dashboard.view": ["accounting.read"],
   "accounting.account.read": ["accounting.read"],
   "accounting.account.create": ["accounting.create"],

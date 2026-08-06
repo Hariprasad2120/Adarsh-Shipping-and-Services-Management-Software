@@ -11,6 +11,7 @@ export * from "@/components/layout/workspace-dialog";
 export * from "@/components/feedback/workspace-states";
 export * from "@/components/forms/filter-menu";
 export * from "@/components/forms/file-upload/file-upload-field";
+export * from "@/components/forms/file-upload/document-dropzone-field";
 export * from "@/components/feedback/warning-indicator-popover";
 export * from "@/components/data-display/operational-data-table";
 export * from "@/components/navigation/clickable-row";

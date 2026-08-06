@@ -9,6 +9,7 @@ import {
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { getQuotation } from "@/modules/accounting/service";
 import { QuotationDetailClient } from "./quotation-detail-client";
+import { serializeQuotationForPresentation } from "../quotation-presentation";
 
 interface QuotationDetailPageProps {
   params: Promise<{ id: string }>;
@@ -29,53 +30,14 @@ export default async function QuotationDetailPage({
       "accounting.quotation.decide",
       "accounting.quotation.cancel",
       "accounting.quotation.convert_invoice",
+      "accounting.quotation.create",
       "crm.invoice.manage",
     ],
   );
 
   const quotation = (await getQuotation(orgId, id)) as any;
   if (!quotation) notFound();
-
-  const serializedQuotation = {
-    ...quotation,
-    postingDate: quotation.postingDate.toISOString(),
-    validUntil: quotation.validUntil.toISOString(),
-    exchangeRate: quotation.exchangeRate?.toString() ?? null,
-    subTotal: quotation.subTotal.toString(),
-    grossSubtotal: quotation.grossSubtotal.toString(),
-    discountAmount: quotation.discountAmount.toString(),
-    taxableSubtotal: quotation.taxableSubtotal.toString(),
-    taxAmount: quotation.taxAmount.toString(),
-    additionalCharges: quotation.additionalCharges.toString(),
-    roundingAdjustment: quotation.roundingAdjustment.toString(),
-    grandTotal: quotation.grandTotal.toString(),
-    createdAt: quotation.createdAt.toISOString(),
-    updatedAt: quotation.updatedAt.toISOString(),
-    submittedAt: quotation.submittedAt?.toISOString() ?? null,
-    approvedAt: quotation.approvedAt?.toISOString() ?? null,
-    returnedAt: quotation.returnedAt?.toISOString() ?? null,
-    sentAt: quotation.sentAt?.toISOString() ?? null,
-    acceptedAt: quotation.acceptedAt?.toISOString() ?? null,
-    declinedAt: quotation.declinedAt?.toISOString() ?? null,
-    cancelledAt: quotation.cancelledAt?.toISOString() ?? null,
-    items: quotation.items.map((line: any) => ({
-      ...line,
-      qty: line.qty.toString(),
-      rate: line.rate.toString(),
-      discount: line.discount.toString(),
-      discountValue: line.discountValue?.toString() ?? null,
-      taxRate: line.taxRate.toString(),
-      taxableAmount: line.taxableAmount.toString(),
-      taxAmount: line.taxAmount.toString(),
-      amount: line.amount.toString(),
-      lineTotal: line.lineTotal.toString(),
-      convertedQuantity: line.convertedQuantity.toString(),
-    })),
-    audit: quotation.audit.map((entry: any) => ({
-      ...entry,
-      timestamp: entry.timestamp.toISOString(),
-    })),
-  };
+  const serializedQuotation = serializeQuotationForPresentation(quotation);
 
   const quotationCaps = {
     canEdit: Boolean(caps["accounting.quotation.edit"]),

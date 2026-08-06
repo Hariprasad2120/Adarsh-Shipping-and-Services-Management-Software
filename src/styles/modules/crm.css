@@ -206,6 +206,278 @@
   color: var(--mnx-text-muted);
 }
 
+.mnx-crm-masters-panel {
+  padding: var(--mn-space-5);
+}
+
+.mnx-crm-masters-embedded-workspace {
+  min-width: 0;
+}
+
+.mnx-crm-masters-panel-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mn-space-4);
+}
+
+.mnx-crm-masters-panel-copy-block {
+  display: grid;
+  gap: var(--mn-space-3);
+}
+
+.mnx-crm-masters-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mn-space-2);
+}
+
+.mnx-crm-masters-panel-copy-stack {
+  display: grid;
+  gap: var(--mn-space-2);
+}
+
+.mnx-crm-masters-panel-copy-stack p {
+  max-width: 44rem;
+  color: var(--mnx-text-muted);
+}
+
+.mnx-crm-masters-dialog-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--mn-space-2);
+}
+
+.mnx-crm-masters-focus-grid {
+  display: grid;
+  gap: var(--mn-space-3);
+  margin-top: var(--mn-space-6);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mnx-crm-masters-focus-card {
+  padding: var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-control);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-crm-masters-focus-card strong {
+  display: block;
+  color: var(--mnx-text-strong);
+}
+
+.mnx-crm-masters-table-wrap {
+  margin-top: var(--mn-space-6);
+  overflow-x: auto;
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mnx-surface);
+}
+
+.mnx-crm-masters-table {
+  min-width: max-content;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.mnx-crm-masters-header-cell {
+  min-width: 9rem;
+  padding: var(--mn-space-4) var(--mn-space-3);
+  vertical-align: top;
+  border-bottom: 1px solid var(--mnx-border);
+  color: var(--mnx-text-strong);
+  font-size: var(--mn-font-size-xs);
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: left;
+  white-space: normal;
+}
+
+.mnx-crm-masters-header-cell span {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.mnx-crm-masters-table-wrap .mnx-crm-table td {
+  white-space: nowrap;
+}
+
+.mnx-crm-masters-data-cell {
+  padding: var(--mn-space-3);
+  border-top: 1px solid color-mix(in srgb, var(--mnx-border) 68%, transparent);
+  color: var(--mnx-text);
+  font-size: var(--mn-font-size-sm);
+}
+
+.mnx-crm-masters-upload-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mn-space-3);
+  margin-bottom: var(--mn-space-5);
+}
+
+.mnx-crm-masters-upload-meta > div,
+.mnx-crm-masters-result-card {
+  display: grid;
+  gap: var(--mn-space-1);
+  padding: var(--mn-space-4);
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-control);
+  background: var(--mnx-surface-soft);
+}
+
+.mnx-crm-masters-upload-meta strong,
+.mnx-crm-masters-result-card strong,
+.mnx-crm-masters-import-summary-header h4 {
+  color: var(--mnx-text-strong);
+}
+
+.mnx-crm-masters-upload-meta span,
+.mnx-crm-masters-import-summary-header p,
+.mnx-crm-masters-result-card span {
+  color: var(--mnx-text-muted);
+}
+
+.mnx-crm-masters-mapping-grid,
+.mnx-crm-masters-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mn-space-4);
+}
+
+.mnx-crm-masters-progress-shell {
+  display: grid;
+  gap: var(--mn-space-3);
+  margin-bottom: var(--mn-space-5);
+}
+
+.mnx-crm-masters-progress-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-crm-masters-progress-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mn-space-2);
+  color: var(--mnx-text-strong);
+}
+
+.mnx-crm-masters-spinner {
+  animation: spin 1s linear infinite;
+}
+
+.mnx-crm-masters-progress-bar {
+  overflow: hidden;
+  height: 0.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mnx-border) 56%, white);
+}
+
+.mnx-crm-masters-progress-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--mnx-accent), color-mix(in srgb, var(--mnx-accent) 68%, white));
+  transition: width var(--mn-motion-fast);
+}
+
+.mnx-crm-masters-result-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mn-space-3);
+  margin-bottom: var(--mn-space-5);
+}
+
+.mnx-crm-masters-result-card strong {
+  font-size: var(--mn-font-size-xl);
+}
+
+.mnx-crm-masters-result-card.is-success {
+  border-color: color-mix(in srgb, var(--mnx-success) 40%, var(--mnx-border));
+}
+
+.mnx-crm-masters-result-card.is-warning {
+  border-color: color-mix(in srgb, var(--mnx-warning) 40%, var(--mnx-border));
+}
+
+.mnx-crm-masters-result-card.is-danger {
+  border-color: color-mix(in srgb, var(--mnx-danger) 40%, var(--mnx-border));
+}
+
+.mnx-crm-masters-import-summary {
+  display: grid;
+  gap: var(--mn-space-4);
+  margin-top: var(--mn-space-6);
+}
+
+.mnx-crm-masters-import-summary-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+}
+
+.mnx-crm-masters-log-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--mnx-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mnx-surface);
+}
+
+.mnx-crm-masters-log-table {
+  min-width: 42rem;
+}
+
+.mnx-crm-masters-log-table th,
+.mnx-crm-masters-log-table td {
+  padding: var(--mn-space-3);
+  text-align: left;
+  border-top: 1px solid color-mix(in srgb, var(--mnx-border) 68%, transparent);
+  white-space: normal;
+}
+
+.mnx-crm-masters-log-table thead th {
+  border-top: 0;
+  color: var(--mnx-text-strong);
+}
+
+.mnx-crm-masters-log-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 5.5rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  font-size: var(--mn-font-size-xs);
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.mnx-crm-masters-log-badge.is-success {
+  color: var(--mnx-success);
+  background: var(--mnx-success-bg);
+}
+
+.mnx-crm-masters-log-badge.is-skipped {
+  color: var(--mnx-warning);
+  background: var(--mnx-warning-bg);
+}
+
+.mnx-crm-masters-log-badge.is-failed {
+  color: var(--mnx-danger);
+  background: var(--mnx-danger-bg);
+}
+
 .mnx-crm-dialog {
   color: var(--mnx-text);
 }
@@ -226,6 +498,21 @@
 
   .mnx-crm-toolbar {
     align-items: stretch;
+  }
+
+  .mnx-crm-masters-focus-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mnx-crm-masters-panel-copy {
+    align-items: stretch;
+  }
+
+  .mnx-crm-masters-upload-meta,
+  .mnx-crm-masters-result-grid,
+  .mnx-crm-masters-mapping-grid,
+  .mnx-crm-masters-entry-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -265,6 +552,34 @@
 
   .mnx-crm-tabs > * {
     scroll-snap-align: start;
+  }
+
+  .mnx-crm-masters-panel {
+    padding: var(--mn-space-4);
+  }
+
+  .mnx-crm-masters-action-row {
+    width: 100%;
+  }
+
+  .mnx-crm-masters-action-row > * {
+    width: 100%;
+  }
+
+  .mnx-crm-masters-focus-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mnx-crm-masters-dialog-footer,
+  .mnx-crm-masters-progress-copy {
+    justify-content: stretch;
+  }
+
+  .mnx-crm-masters-upload-meta,
+  .mnx-crm-masters-result-grid,
+  .mnx-crm-masters-mapping-grid,
+  .mnx-crm-masters-entry-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

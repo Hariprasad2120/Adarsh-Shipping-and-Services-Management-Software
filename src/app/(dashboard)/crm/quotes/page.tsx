@@ -10,6 +10,14 @@ import type {
 } from "@/modules/crm/components/quotes/lib/types";
 import { CrmConfigurationState } from "@/modules/crm/components/workspace/crm-workspace";
 
+function getQuoteRootId(record: { id: string; sourceQuotationId?: string | null }) {
+  return record.sourceQuotationId || record.id;
+}
+
+function getQuoteVersion(record: { sourceQuotationVersion?: number | null }) {
+  return record.sourceQuotationVersion || 1;
+}
+
 export const metadata = { title: "Quotations — CRM" };
 
 function getSeedSlaDeadline(dbStatus: string): Date | null {
@@ -76,8 +84,17 @@ export default async function CrmQuotesPage() {
     }
   }
 
-  // Map database entries to QuoteRecord shape for frontend compatibility
-  const initialQuotes: QuoteRecord[] = dbQuotes.map((q) => {
+  // Map database entries to the latest visible version per quote family.
+  const latestQuotes = dbQuotes.reduce<typeof dbQuotes>((latest, quote) => {
+    const rootId = getQuoteRootId(quote);
+    const current = latest.find((item) => getQuoteRootId(item) === rootId);
+    if (!current || getQuoteVersion(quote) > getQuoteVersion(current)) {
+      return [...latest.filter((item) => getQuoteRootId(item) !== rootId), quote];
+    }
+    return latest;
+  }, []);
+
+  const initialQuotes: QuoteRecord[] = latestQuotes.map((q) => {
     const status = (q.approvalStatus || q.status || "draft").toLowerCase().replace("_", "-") as Exclude<QuoteListStatus, "all">;
     return {
       id: q.id,

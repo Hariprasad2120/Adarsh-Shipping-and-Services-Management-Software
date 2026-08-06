@@ -18,6 +18,7 @@ import {
 describe("CRM production components", () => {
   it("maps exact and dynamic CRM routes", () => {
     expect(getCrmRouteMeta("/crm/dashboard").title).toBe("CRM command centre");
+    expect(getCrmRouteMeta("/crm/masters").title).toBe("Masters");
     expect(getCrmRouteMeta("/crm/leads/lead-1").title).toBe("Lead detail");
     expect(getCrmRouteMeta("/crm/incentives").title).toBe("Incentives");
     expect(getCrmRouteMeta("/crm/customers/account-1/edit").title).toBe(

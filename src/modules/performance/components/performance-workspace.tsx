@@ -141,6 +141,13 @@ const exactRouteMeta: Record<string, PerformanceRouteMeta> = {
       "Maintain the grade and score bands used by controlled appraisal hike calculations.",
     icon: Layers3,
   },
+  "/ams/settings": {
+    eyebrow: "Performance configuration",
+    title: "AMS settings",
+    description:
+      "Review appraisal-governance controls, scoring structures, and supporting configuration workspaces.",
+    icon: Sparkles,
+  },
   "/lms": {
     eyebrow: "Learning operations",
     title: "Learning command centre",
@@ -175,6 +182,13 @@ const exactRouteMeta: Record<string, PerformanceRouteMeta> = {
     description:
       "Review enrolment, progress, and completion signals from the learning catalogue.",
     icon: BarChart3,
+  },
+  "/lms/settings": {
+    eyebrow: "Learning configuration",
+    title: "LMS settings",
+    description:
+      "Review course-governance, assignment administration, and completion-monitoring workspaces.",
+    icon: Sparkles,
   },
 };
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { CrmButton } from "@/modules/crm/components/workspace/crm-workspace";
+import { WorkspacePanelHeader } from "@/components/layout/workspace";
 
 import { NativeSelect } from "@/components/ui/native-select";
 import type { UseFormReturn } from "react-hook-form";
@@ -23,8 +24,12 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
   const errors = form.formState.errors;
 
   return (
-    <section className="mnx-crm-form-section border-b border-[var(--mnx-border)] px-5 py-5">
-      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-mono-muted">Customer and Location</h2>
+    <div className="mnx-crm-form-section p-5">
+      <WorkspacePanelHeader
+        eyebrow="Quote setup"
+        title="Customer and location"
+        description="Select the customer, confirm tax jurisdiction, and anchor the operational location."
+      />
       <div className="space-y-0">
         <FormRow label="Customer Name" required error={errors.customerId?.message}>
           <div className="flex gap-2">
@@ -95,7 +100,7 @@ export function CustomerSection({ form, customers, locations, sourceOfSupply, se
           </NativeSelect>
         </FormRow>
       </div>
-    </section>
+    </div>
   );
 }
 

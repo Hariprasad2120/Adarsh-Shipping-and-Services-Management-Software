@@ -246,6 +246,18 @@ interface CreateJobDialogProps {
   };
   currentUserId: string;
   onCreated?: () => void;
+  onCreatedJob?: (job: { id: string; jobNumber: string }) => Promise<void> | void;
+  initialValues?: {
+    title?: string;
+    customerId?: string;
+    customerRef?: string;
+    primaryOwnerId?: string;
+    assignedManagerId?: string;
+    remarks?: string;
+    estimatedClosureDate?: string;
+  };
+  variant?: "dialog" | "page";
+  fallbackHref?: string;
 }
 
 export function CreateJobDialog({
@@ -254,6 +266,10 @@ export function CreateJobDialog({
   options,
   currentUserId,
   onCreated,
+  onCreatedJob,
+  initialValues,
+  variant = "dialog",
+  fallbackHref = "/cha/jobs",
 }: CreateJobDialogProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -344,7 +360,7 @@ export function CreateJobDialog({
   }, []);
 
   useEffect(() => {
-    if (!open) {
+    if (!open || variant !== "dialog") {
       draftRestoredRef.current = false;
       createdCustomerAppliedRef.current = false;
       if (successRedirectTimerRef.current) {
@@ -384,7 +400,36 @@ export function CreateJobDialog({
         mainShell.style.overscrollBehavior = previousMainShellOverscroll || "";
       }
     };
-  }, [open]);
+  }, [open, variant]);
+
+  useEffect(() => {
+    if (!open || variant !== "page" || !initialValues) return;
+
+    const ownerId = initialValues.primaryOwnerId || currentUserId;
+    const owner = (options.managers || []).find((entry) => entry.id === ownerId);
+    const manager = initialValues.assignedManagerId
+      ? (options.managers || []).find(
+          (entry) => entry.id === initialValues.assignedManagerId,
+        )
+      : null;
+    const customer = initialValues.customerId
+      ? options.customers.find((entry) => entry.id === initialValues.customerId)
+      : null;
+
+    setNewTitle(initialValues.title || "");
+    setNewCustomerId(initialValues.customerId || "");
+    setNewCustomerRef(initialValues.customerRef || "");
+    setNewOwnerId(ownerId);
+    setOwnerSearch(owner ? `${owner.name} (${owner.email})` : "");
+    setNewManagerId(initialValues.assignedManagerId || "");
+    setManagerSearch(manager ? `${manager.name} (${manager.email})` : "");
+    setNewRemarks(initialValues.remarks || "");
+    setEstimatedClosureDate(initialValues.estimatedClosureDate || "");
+    setCustomerSearch(customer?.name || "");
+    setSelectedCustomerName(customer?.name || "");
+    setAssignments([{ userId: ownerId, responsibility: "OPERATIONS" }]);
+    draftRestoredRef.current = true;
+  }, [open, variant, initialValues, currentUserId, options.customers, options.managers]);
 
   useEffect(() => {
     if (!open || createdCustomerAppliedRef.current) return;
@@ -790,6 +835,15 @@ export function CreateJobDialog({
     setAssignments([{ userId: currentUserId, responsibility: "OPERATIONS" }]);
   };
 
+  const dismissCreateSurface = () => {
+    if (variant === "dialog") {
+      onOpenChange(false);
+      return;
+    }
+
+    router.push(fallbackHref);
+  };
+
   const finishCreateFlow = (openCreatedJob?: boolean) => {
     if (successRedirectTimerRef.current) {
       clearTimeout(successRedirectTimerRef.current);
@@ -798,7 +852,9 @@ export function CreateJobDialog({
 
     const createdJobId = createdJobSummary?.id;
     resetFormFields();
-    onOpenChange(false);
+    if (variant === "dialog") {
+      onOpenChange(false);
+    }
 
     if (openCreatedJob && createdJobId) {
       router.push(`/cha/jobs/${createdJobId}`);
@@ -884,6 +940,16 @@ export function CreateJobDialog({
       });
 
       if (res.ok) {
+        if (variant === "page") {
+          await onCreatedJob?.({
+            id: res.data.id,
+            jobNumber: res.data.jobNumber,
+          });
+          toast.success(`Job ${res.data.jobNumber} created successfully.`);
+          router.push(`/cha/jobs/${res.data.id}`);
+          return;
+        }
+
         const shipmentTypeName =
           shipmentTypesList.find(
             (shipmentType) => shipmentType.id === newShipmentTypeId,
@@ -1072,18 +1138,14 @@ export function CreateJobDialog({
 
   if (!open) return null;
 
-  return (
-    <>
-      <ChaDialogLayer
-        open={open}
-        onClose={() => onOpenChange(false)}
-        size="workspace"
-        labelledBy="create-job-title"
-      >
-        <form
-          onSubmit={handleCreateJob}
-          className="mnx-dialog mnx-cha-create-dialog h-full"
-        >
+  const formContent = (
+    <form
+      onSubmit={handleCreateJob}
+      className={cn(
+        "mnx-dialog mnx-cha-create-dialog",
+        variant === "dialog" ? "h-full" : "min-h-0",
+      )}
+    >
           <header>
             <div>
               <p className="mnx-label">New customs job</p>
@@ -1105,12 +1167,16 @@ export function CreateJobDialog({
                 Demo fill
               </Button>
               <Button
-                onClick={() => onOpenChange(false)}
+                onClick={dismissCreateSurface}
                 variant="outline"
                 mode="icon"
                 size="sm"
                 type="button"
-                aria-label="Close job creation dialog"
+                aria-label={
+                  variant === "page"
+                    ? "Return to the CHA jobs register"
+                    : "Close job creation dialog"
+                }
               >
                 <X size={17} />
               </Button>
@@ -1834,7 +1900,7 @@ export function CreateJobDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={dismissCreateSurface}
             >
               Cancel
             </Button>
@@ -1843,16 +1909,33 @@ export function CreateJobDialog({
             </Button>
           </footer>
         </form>
-      </ChaDialogLayer>
+  );
 
-      <CreateJobSuccessOverlay
-        open={showSuccessAnimation}
-        summary={createdJobSummary}
-        onOpenJob={() => finishCreateFlow(true)}
-        onCreateAnother={() => finishCreateFlow(false)}
-        onAutoFinish={() => finishCreateFlow(false)}
-        reducedMotion={!!reducedMotion}
-      />
+  return (
+    <>
+      {variant === "dialog" ? (
+        <ChaDialogLayer
+          open={open}
+          onClose={dismissCreateSurface}
+          size="workspace"
+          labelledBy="create-job-title"
+        >
+          {formContent}
+        </ChaDialogLayer>
+      ) : (
+        formContent
+      )}
+
+      {variant === "dialog" ? (
+        <CreateJobSuccessOverlay
+          open={showSuccessAnimation}
+          summary={createdJobSummary}
+          onOpenJob={() => finishCreateFlow(true)}
+          onCreateAnother={() => finishCreateFlow(false)}
+          onAutoFinish={() => finishCreateFlow(false)}
+          reducedMotion={!!reducedMotion}
+        />
+      ) : null}
     </>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { CrmButton } from "@/modules/crm/components/workspace/crm-workspace";
+import { WorkspacePanelHeader } from "@/components/layout/workspace";
 
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,25 +29,33 @@ export function FixedActionBar({
   onTemplateChange,
 }: FixedActionBarProps) {
   return (
-    <div className="border-t border-[var(--mnx-border)] bg-mono-card px-6 py-4">
+    <div className="p-5">
+      <WorkspacePanelHeader
+        eyebrow="Output"
+        title="Save and deliver"
+        description="Choose how to store this quote and which PDF template to use for the generated document."
+      />
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-2">
           <Button
-            className="h-9 bg-[var(--mnx-accent)] px-4 text-[12px] hover:bg-[var(--mnx-accent)]"
+            className="h-9"
+            size="sm"
             onClick={onSaveDraft}
           >
             Save as Draft
           </Button>
           <Button
             variant="outline"
-            className="h-9 border-[var(--mnx-border)] px-4 text-[12px]"
+            className="h-9"
+            size="sm"
             onClick={onSaveSend}
           >
             Save and Send
           </Button>
           <Button
-            variant="outline"
-            className="h-9 border-[var(--mnx-danger-bg)] px-4 text-[12px] text-[var(--mnx-danger)] hover:bg-[var(--mnx-danger-bg)]"
+            variant="destructive"
+            className="h-9"
+            size="sm"
             onClick={onCancel}
           >
             Cancel

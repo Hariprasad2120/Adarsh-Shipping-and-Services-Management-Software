@@ -1,14 +1,18 @@
 "use client";
 
-import { CrmButton } from "@/modules/crm/components/workspace/crm-workspace";
+import {
+  CrmButton,
+  CrmPanel,
+  CrmSection,
+  CrmStatus,
+} from "@/modules/crm/components/workspace/crm-workspace";
 
 import { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import Link from "next/link";
-import { ArrowLeft, Wand2 } from "lucide-react";
+import { Wand2 } from "lucide-react";
 import { CustomerSection } from "@/modules/crm/components/quotes/CustomerSection";
 import { QuoteMetaSection } from "@/modules/crm/components/quotes/QuoteMetaSection";
 import { ShippingDetailsSection } from "@/modules/crm/components/quotes/ShippingDetailsSection";
@@ -18,30 +22,16 @@ import { FixedActionBar } from "@/modules/crm/components/quotes/FixedActionBar";
 import { ConfirmDialog } from "@/modules/crm/components/quotes/ConfirmDialog";
 import {defaultQuoteValues,incoterms,locations,pdfTemplates,projects,salespersons,sourceOfSupplyByLocation,containerTypes,} from "@/modules/crm/components/quotes/lib/mock-data";
 import { calculateFinalTotal, calculateLineItemAmount } from "@/modules/crm/components/quotes/lib/quote-calculations";
-import type { QuoteFormValues, QuoteStatus, QuoteTemplateOption, ComboboxOption, CustomerOption } from "@/modules/crm/components/quotes/lib/types";
+import type {
+  QuoteFormValues,
+  QuoteStatus,
+  QuoteTemplateOption,
+  ComboboxOption,
+  CustomerOption,
+  QuoteWorkflowContext,
+} from "@/modules/crm/components/quotes/lib/types";
 import { quoteFormSchema } from "@/modules/crm/components/quotes/lib/validation";
-
-function buildQuotePayload(values: QuoteFormValues, status: QuoteStatus, attachments: File[]) {
-  return {
-    ...values,
-    status,
-    attachments: attachments.map((file) => ({
-      name: file.name,
-      size: file.size,
-      type: file.type,
-    })),
-  };
-}
-
-async function saveQuoteDraft(payload: ReturnType<typeof buildQuotePayload>) {
-  console.log("saveQuoteDraft", payload);
-  return payload;
-}
-
-async function saveQuoteAndSend(payload: ReturnType<typeof buildQuotePayload>) {
-  console.log("saveQuoteAndSend", payload);
-  return payload;
-}
+import { ButtonLink } from "@/components/ui/button";
 
 import { useRouter } from "next/navigation";
 import { saveQuoteAction } from "@/modules/crm/actions";
@@ -52,15 +42,17 @@ export function NewQuotePage({
   salespersons: propSalespersons,
   accounts: propAccounts,
   linkedLeadId,
+  workflowContext,
 }: {
   initialData?: QuoteFormValues;
   quoteId?: string;
   salespersons?: ComboboxOption[];
   accounts?: CustomerOption[];
   linkedLeadId?: string;
+  workflowContext?: QuoteWorkflowContext;
 }) {
   const effectiveSalespersons = propSalespersons || salespersons;
-  const effectiveAccounts = propAccounts ?? [];
+  const effectiveAccounts = useMemo(() => propAccounts ?? [], [propAccounts]);
   const router = useRouter();
   const form = useForm<QuoteFormValues, unknown, QuoteFormValues>({
     resolver: zodResolver(quoteFormSchema) as Resolver<QuoteFormValues>,
@@ -236,7 +228,13 @@ export function NewQuotePage({
     const values = form.getValues();
 
     try {
-      const res = await saveQuoteAction(quoteId, values, isSubmit, linkedLeadId);
+      const res = await saveQuoteAction(
+        quoteId,
+        values,
+        isSubmit,
+        linkedLeadId,
+        workflowContext,
+      );
       if (res.ok) {
         toast.success(isSubmit ? "Quote submitted for approval." : "Quote saved as draft.");
         if (res.data?.id) {
@@ -256,91 +254,179 @@ export function NewQuotePage({
 
 
   return (
-    <div className="min-h-screen bg-[var(--mnx-surface)] text-[var(--mnx-text-strong)]">
-      <div className="mx-auto flex min-h-screen max-w-[1400px] flex-col">
-        <main className="flex-1 overflow-y-auto pb-8">
-          <div className="bg-mono-card">
-            <div className="border-b border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-6 py-4 flex items-center gap-4">
-              <Link
-                href="/crm/quotes"
-                className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--mnx-border)] bg-mono-card text-[var(--mnx-text-muted)] shadow-sm hover:bg-mono-soft transition-colors"
-                aria-label="Back to quotes"
+    <>
+      <div className="space-y-6 pb-8 text-[var(--mnx-text-strong)]">
+      <CrmSection
+        title={initialData ? "Edit quote workspace" : "Prepare quote workspace"}
+        description={
+          initialData
+            ? "Review the commercial context, adjust line items, and keep the approval trail intact."
+            : "Build a customer proposal with operational, pricing, tax, and delivery context."
+        }
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <ButtonLink href="/crm/quotes" variant="inverse" size="sm">
+              Back to quotes
+            </ButtonLink>
+            {!initialData ? (
+              <CrmButton
+                type="button"
+                onClick={fillDemo}
+                variant="outline"
+                size="compact"
+                className="inline-flex items-center gap-1.5"
               >
-                <ArrowLeft className="size-4" />
-              </Link>
-              <div className="flex-1">
-                <h1 className="text-xl font-bold tracking-tight text-[var(--mnx-text-strong)] uppercase font-sans">
-                  {initialData ? "Edit Quote" : "New Quote"}
-                </h1>
-                <p className="text-xs text-[var(--mnx-text-muted)]">
-                  {initialData ? "Modify existing quote details" : "Create a new quotation for a customer"}
-                </p>
-              </div>
-              {!initialData && (
-                <CrmButton
-                  type="button"
-                  onClick={fillDemo}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-[var(--mnx-accent)] bg-[var(--mnx-accent-soft)] px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide text-[var(--mnx-accent)] transition-colors hover:bg-[var(--mnx-accent-soft)]"
-                >
-                  <Wand2 className="size-3.5" />
-                  Demo Fill
-                </CrmButton>
-              )}
-            </div>
-            <CustomerSection
-              form={form}
-              customers={effectiveAccounts}
-              locations={locations}
-              sourceOfSupply={sourceOfSupplyByLocation[location as keyof typeof sourceOfSupplyByLocation] ?? "Tamil Nadu"}
-              selectedCustomer={selectedCustomer}
-            />
-            <QuoteMetaSection
-              form={form}
-              salespersons={effectiveSalespersons}
-              projectOptions={projectOptions}
-              hasCustomer={!!selectedCustomer}
-            />
-            <ShippingDetailsSection form={form} incoterms={incoterms} containerTypes={containerTypes} />
-            <LineItemsTable form={form} />
-            <NotesAndTermsSection
-              form={form}
-              files={files}
-              onFilesChange={setFiles}
-              discountAmount={calculations.discountAmount}
-              cgst={calculations.cgst}
-              sgst={calculations.sgst}
-              igst={calculations.igst}
-            />
-            <FixedActionBar
-              onSaveDraft={() => handlePersist("draft")}
-              onSaveSend={async () => {
-                const isValid = await form.trigger();
-                if (!isValid) {
-                  toast.error("Please correct the highlighted fields before sending.");
-                  return;
-                }
-                setSendDialogOpen(true);
-              }}
-              onCancel={() => {
-                if (form.formState.isDirty || files.length) {
-                  setCancelDialogOpen(true);
-                  return;
-                }
-                window.history.back();
-              }}
-              template={template}
-              templateOptions={pdfTemplates}
-              templateMenuOpen={templateMenuOpen}
-              onToggleTemplateMenu={() => setTemplateMenuOpen((current) => !current)}
-              onTemplateChange={(nextTemplate) => {
-                setTemplate(nextTemplate);
-                setTemplateMenuOpen(false);
-              }}
-            />
+                <Wand2 className="size-3.5" />
+                Demo fill
+              </CrmButton>
+            ) : null}
           </div>
-        </main>
-      </div>
+        }
+      >
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="space-y-2 rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-4">
+            <CrmStatus variant="success">
+              {initialData ? "Editing existing quote" : "New draft quote"}
+            </CrmStatus>
+            <div className="text-sm font-semibold text-[var(--mnx-text-strong)]">
+              {form.getValues("quoteNumber") || "Quote number pending"}
+            </div>
+            <p className="text-sm text-[var(--mnx-text-muted)]">
+              Customer-facing document control and approval-ready pricing stay in the shared CRM workflow.
+            </p>
+            {workflowContext?.latestQuoteVersion ? (
+              <p className="text-xs text-[var(--mnx-text-muted)]">
+                Next saved revision will continue from V{workflowContext.latestQuoteVersion}.
+              </p>
+            ) : null}
+          </div>
+          <div className="space-y-2 rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-4">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
+              Selected customer
+            </div>
+            <div className="text-sm font-semibold text-[var(--mnx-text-strong)]">
+              {selectedCustomer?.label || "Choose a customer"}
+            </div>
+            <p className="text-sm text-[var(--mnx-text-muted)]">
+              Billing, tax jurisdiction, and project options will adapt once the customer is set.
+            </p>
+          </div>
+          <div className="space-y-2 rounded-[var(--mn-radius-panel)] border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-4">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mnx-text-muted)]">
+              Workflow context
+            </div>
+            <div className="text-sm font-semibold text-[var(--mnx-text-strong)]">
+              {linkedLeadId ? "Linked to CRM enquiry flow" : "Standalone commercial draft"}
+            </div>
+            <p className="text-sm text-[var(--mnx-text-muted)]">
+              {linkedLeadId
+                ? "This quote remains connected to the originating lead so follow-up and conversion stay traceable."
+                : "Use this mode to prepare a proposal directly from the quotes workspace."}
+            </p>
+            {workflowContext ? (
+              <p className="text-xs text-[var(--mnx-text-muted)]">
+                Mode: {workflowContext.mode.replace(/-/g, " ")}. Included departments:{" "}
+                {workflowContext.includedDepartments.length
+                  ? workflowContext.includedDepartments
+                      .map((item) =>
+                        item === "FREIGHT_FORWARDING"
+                          ? "Freight Forwarding"
+                          : "Customs Clearance",
+                      )
+                      .join(", ")
+                  : "none"}.
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </CrmSection>
 
+      {workflowContext?.pendingDepartments?.length ? (
+        <CrmPanel className="border-[var(--mnx-warning)]/30 bg-[var(--mnx-warning-bg)]/25 p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <CrmStatus variant="warning">Pending department rates</CrmStatus>
+            <p className="text-sm text-[var(--mnx-text-muted)]">
+              {workflowContext.pendingDepartments
+                .map((item) =>
+                  item === "FREIGHT_FORWARDING"
+                    ? "Freight Forwarding"
+                    : "Customs Clearance",
+                )
+                .join(" and ")}{" "}
+              rates are still pending. You can still save or submit this partial quotation.
+            </p>
+          </div>
+        </CrmPanel>
+      ) : null}
+
+      <CrmPanel>
+        <CustomerSection
+          form={form}
+          customers={effectiveAccounts}
+          locations={locations}
+          sourceOfSupply={sourceOfSupplyByLocation[location as keyof typeof sourceOfSupplyByLocation] ?? "Tamil Nadu"}
+          selectedCustomer={selectedCustomer}
+        />
+      </CrmPanel>
+
+      <CrmPanel>
+        <QuoteMetaSection
+          form={form}
+          salespersons={effectiveSalespersons}
+          projectOptions={projectOptions}
+          hasCustomer={!!selectedCustomer}
+        />
+      </CrmPanel>
+
+      <CrmPanel>
+        <ShippingDetailsSection form={form} incoterms={incoterms} containerTypes={containerTypes} />
+      </CrmPanel>
+
+      <CrmPanel>
+        <LineItemsTable form={form} />
+      </CrmPanel>
+
+      <CrmPanel>
+        <NotesAndTermsSection
+          form={form}
+          files={files}
+          onFilesChange={setFiles}
+          discountAmount={calculations.discountAmount}
+          cgst={calculations.cgst}
+          sgst={calculations.sgst}
+          igst={calculations.igst}
+        />
+      </CrmPanel>
+
+      <CrmPanel>
+        <FixedActionBar
+          onSaveDraft={() => handlePersist("draft")}
+          onSaveSend={async () => {
+            const isValid = await form.trigger();
+            if (!isValid) {
+              toast.error("Please correct the highlighted fields before sending.");
+              return;
+            }
+            setSendDialogOpen(true);
+          }}
+          onCancel={() => {
+            if (form.formState.isDirty || files.length) {
+              setCancelDialogOpen(true);
+              return;
+            }
+            window.history.back();
+          }}
+          template={template}
+          templateOptions={pdfTemplates}
+          templateMenuOpen={templateMenuOpen}
+          onToggleTemplateMenu={() => setTemplateMenuOpen((current) => !current)}
+          onTemplateChange={(nextTemplate) => {
+            setTemplate(nextTemplate);
+            setTemplateMenuOpen(false);
+          }}
+        />
+      </CrmPanel>
+      </div>
       <ConfirmDialog
         open={sendDialogOpen}
         title="Send Quote"
@@ -361,6 +447,6 @@ export function NewQuotePage({
           window.history.back();
         }}
       />
-    </div>
+    </>
   );
 }

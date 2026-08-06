@@ -10,6 +10,17 @@ import { syncCustomerPortalUsersForCrmCustomer } from "@/modules/customer-portal
 import * as driveClient from "@/lib/google-drive-client";
 import { fetchGstPortalDetails } from "./gst-portal";
 import { routeQualifiedEnquiry } from "./services/service-enquiry-routing.service";
+import { getQuoteEnquiryNumber } from "./service-enquiry-reference";
+import {
+  createRatesSignature,
+  diffDepartmentRates,
+  getRateWorkflowSnapshot,
+  getVersionedQuoteNumber,
+  mergeDepartmentRates,
+  normalizeDepartmentRates,
+  type CrmRateDepartment,
+} from "./rate-workflow";
+import type { QuoteWorkflowContext } from "./components/quotes/lib/types";
 
 type ActionResponse = { ok: true; data?: any } | { ok: false; error: string };
 
@@ -38,6 +49,19 @@ type CustomerContactPayload = {
 type OpeningBalancePayload = {
   branch: string;
   amount: string;
+};
+
+type QuoteLinkedLead = {
+  id: string;
+  enquiryRef: string | null;
+  enquiryDetails: unknown;
+  serviceEnquiries: Array<{
+    serviceType: CrmRateDepartment;
+    enquiryRef: string | null;
+    departmentRef: string | null;
+    assignedToId?: string | null;
+    assignedManagerId?: string | null;
+  }>;
 };
 
 function parseCustomerAddressDetails(
@@ -143,6 +167,10 @@ function parseOpeningBalances(formData: FormData) {
   }
 
   return balances;
+}
+
+function formatWorkflowMode(mode: QuoteWorkflowContext["mode"]) {
+  return mode.replace(/-/g, " ");
 }
 
 function parseAccountRemarks(rawRemarks: string | null | undefined) {
@@ -1081,7 +1109,8 @@ export async function updateLeadStatusAction(
 
 export async function saveEnquiryRatesAction(
   leadId: string,
-  ratesData: any
+  department: CrmRateDepartment,
+  ratesData: any,
 ): Promise<ActionResponse> {
   try {
     const session = await auth();
@@ -1098,9 +1127,50 @@ export async function saveEnquiryRatesAction(
     if (!lead) return { ok: false, error: "Lead not found" };
 
     const currentEnquiry = (lead.enquiryDetails as any) || {};
+    const workflow = getRateWorkflowSnapshot(currentEnquiry);
+    const normalizedDepartmentRates = normalizeDepartmentRates(
+      department,
+      ratesData,
+    );
+    const nextFreightRates: Record<string, number> =
+      department === "FREIGHT_FORWARDING"
+        ? (normalizedDepartmentRates as Record<string, number>)
+        : (workflow.freightRates as Record<string, number>);
+    const nextCustomsRates: Record<string, number> =
+      department === "CUSTOMS_CLEARANCE"
+        ? (normalizedDepartmentRates as Record<string, number>)
+        : (workflow.customsRates as Record<string, number>);
+    const mergedRates = mergeDepartmentRates({
+      ...workflow,
+      freightRates: nextFreightRates,
+      customsRates: nextCustomsRates,
+    });
+    const nowIso = new Date().toISOString();
     const updatedEnquiry = {
       ...currentEnquiry,
-      rates: ratesData,
+      rates: mergedRates,
+      rateWorkflow: {
+        ...(currentEnquiry.rateWorkflow || {}),
+        freightRates: nextFreightRates,
+        customsRates: nextCustomsRates,
+        freightSubmittedAt:
+          department === "FREIGHT_FORWARDING" ? nowIso : workflow.freightSubmittedAt,
+        customsSubmittedAt:
+          department === "CUSTOMS_CLEARANCE" ? nowIso : workflow.customsSubmittedAt,
+        freightSubmittedById:
+          department === "FREIGHT_FORWARDING"
+            ? session.user.id
+            : workflow.freightSubmittedById,
+        customsSubmittedById:
+          department === "CUSTOMS_CLEARANCE"
+            ? session.user.id
+            : workflow.customsSubmittedById,
+        latestQuoteId: workflow.latestQuoteId,
+        latestQuoteVersion: workflow.latestQuoteVersion,
+        quoteBaseNumber: workflow.quoteBaseNumber,
+        lastQuotedFreightSignature: workflow.lastQuotedFreightSignature,
+        lastQuotedCustomsSignature: workflow.lastQuotedCustomsSignature,
+      },
     };
 
     const updatedLead = await db.crmLead.update({
@@ -1111,14 +1181,19 @@ export async function saveEnquiryRatesAction(
     });
 
     await db.crmServiceEnquiry.updateMany({
-      where: { orgId, leadId },
+      where: { orgId, leadId, serviceType: department },
       data: {
         pricingSnapshot: {
-          rates: ratesData,
-          updatedAt: new Date().toISOString(),
+          department,
+          rates: normalizedDepartmentRates,
+          mergedRates,
+          updatedAt: nowIso,
           updatedById: session.user.id,
+          signature: createRatesSignature(
+            normalizedDepartmentRates as Record<string, number>,
+          ),
         } as any,
-        status: "PRICING_IN_PROGRESS",
+        status: "RATES_RECEIVED",
         updatedById: session.user.id,
       },
     });
@@ -1127,7 +1202,14 @@ export async function saveEnquiryRatesAction(
       relatedToType: "LEAD",
       relatedToId: leadId,
       eventType: "RATES_UPDATED",
-      description: `Rates worksheet updated for enquiry`,
+      description:
+        department === "FREIGHT_FORWARDING"
+          ? "Freight forwarding rates updated for enquiry."
+          : "Customs clearance rates updated for enquiry.",
+      details: {
+        department,
+        rates: normalizedDepartmentRates,
+      } as any,
       createdById: session.user.id,
     });
 
@@ -2912,7 +2994,8 @@ export async function saveQuoteAction(
   quoteId: string | undefined,
   values: any,
   isSubmit: boolean,
-  linkedLeadId?: string
+  linkedLeadId?: string,
+  workflowContext?: QuoteWorkflowContext,
 ): Promise<ActionResponse> {
   try {
     const session = await auth();
@@ -2969,35 +3052,135 @@ export async function saveQuoteAction(
 
     let matchedLeadId = linkedLeadId?.trim() || null;
     let resolvedReferenceNumber = referenceNumber?.trim() || null;
+    let matchedLead: QuoteLinkedLead | null = null;
 
     if (matchedLeadId) {
       const linkedLead = await db.crmLead.findFirst({
         where: { id: matchedLeadId, orgId },
-        select: { id: true, enquiryRef: true },
+        select: {
+          id: true,
+          enquiryRef: true,
+          enquiryDetails: true,
+          serviceEnquiries: {
+            select: {
+              serviceType: true,
+              enquiryRef: true,
+              departmentRef: true,
+              assignedToId: true,
+              assignedManagerId: true,
+            },
+          },
+        },
       });
       if (!linkedLead) {
         matchedLeadId = null;
-      } else if (!resolvedReferenceNumber && linkedLead.enquiryRef) {
-        resolvedReferenceNumber = linkedLead.enquiryRef;
+      } else if (!resolvedReferenceNumber) {
+        matchedLead = linkedLead as unknown as QuoteLinkedLead;
+        resolvedReferenceNumber = getQuoteEnquiryNumber(linkedLead);
+      } else {
+        matchedLead = linkedLead as unknown as QuoteLinkedLead;
       }
     }
 
     if (!matchedLeadId && customerId && customerId.trim()) {
-      const matchedLead = await db.crmLead.findFirst({
+      const customerMatchedLead = await db.crmLead.findFirst({
         where: { orgId, convertedAccountId: customerId.trim() },
-        select: { id: true, enquiryRef: true },
+        select: {
+          id: true,
+          enquiryRef: true,
+          enquiryDetails: true,
+          serviceEnquiries: {
+            select: {
+              serviceType: true,
+              enquiryRef: true,
+              departmentRef: true,
+              assignedToId: true,
+              assignedManagerId: true,
+            },
+          },
+        },
       });
-      if (matchedLead) {
-        matchedLeadId = matchedLead.id;
-        if (!resolvedReferenceNumber && matchedLead.enquiryRef) {
-          resolvedReferenceNumber = matchedLead.enquiryRef;
+      if (customerMatchedLead) {
+        matchedLead = customerMatchedLead as unknown as QuoteLinkedLead;
+        matchedLeadId = customerMatchedLead.id;
+        if (!resolvedReferenceNumber) {
+          resolvedReferenceNumber = getQuoteEnquiryNumber(customerMatchedLead);
         }
       }
     }
 
+    const workflow =
+      matchedLead?.enquiryDetails
+        ? getRateWorkflowSnapshot(matchedLead.enquiryDetails)
+        : null;
+    const includedDepartments =
+      workflowContext?.includedDepartments && workflowContext.includedDepartments.length > 0
+        ? workflowContext.includedDepartments
+        : (["FREIGHT_FORWARDING", "CUSTOMS_CLEARANCE"] as CrmRateDepartment[]);
+    const rootQuoteId =
+      workflowContext?.latestQuoteId || workflow?.latestQuoteId || quoteId || null;
+
+    let baseQuoteNumber =
+      workflowContext?.quoteBaseNumber ||
+      workflow?.quoteBaseNumber ||
+      quoteNumber;
+    let previousVersion = workflowContext?.latestQuoteVersion || workflow?.latestQuoteVersion || 0;
+    let previousRatesByDepartment: Record<CrmRateDepartment, Record<string, number>> = {
+      FREIGHT_FORWARDING: {},
+      CUSTOMS_CLEARANCE: {},
+    };
+
+    if (rootQuoteId) {
+      const versionFamily = await db.crmInvoice.findMany({
+        where: {
+          orgId,
+          type: "QUOTE",
+          OR: [{ id: rootQuoteId }, { sourceQuotationId: rootQuoteId }],
+        },
+        select: {
+          id: true,
+          invoiceNumber: true,
+          sourceQuotationVersion: true,
+          sourceQuotationNumber: true,
+          sourceQuotationSnapshot: true,
+        },
+        orderBy: [{ createdAt: "desc" }],
+      });
+
+      const latestExistingVersion = versionFamily.reduce((maxVersion, item) => {
+        return Math.max(maxVersion, item.sourceQuotationVersion || 1);
+      }, 0);
+
+      previousVersion = Math.max(previousVersion, latestExistingVersion);
+      const latestQuote = versionFamily.find(
+        (item) => (item.sourceQuotationVersion || 1) === previousVersion,
+      );
+      if (latestQuote?.sourceQuotationNumber) {
+        baseQuoteNumber = latestQuote.sourceQuotationNumber;
+      }
+      const previousSnapshot = (latestQuote?.sourceQuotationSnapshot || {}) as Record<
+        string,
+        unknown
+      >;
+      const previousDeptRates = previousSnapshot.departmentRates as
+        | Record<string, Record<string, number>>
+        | undefined;
+      if (previousDeptRates) {
+        previousRatesByDepartment = {
+          FREIGHT_FORWARDING:
+            previousDeptRates.FREIGHT_FORWARDING || previousRatesByDepartment.FREIGHT_FORWARDING,
+          CUSTOMS_CLEARANCE:
+            previousDeptRates.CUSTOMS_CLEARANCE || previousRatesByDepartment.CUSTOMS_CLEARANCE,
+        };
+      }
+    }
+
+    const versionNumber = previousVersion + 1;
+    const versionedQuoteNumber = getVersionedQuoteNumber(baseQuoteNumber, versionNumber);
+
     const data: any = {
       orgId,
-      invoiceNumber: quoteNumber,
+      invoiceNumber: versionedQuoteNumber,
       type: "QUOTE",
       date: quoteDate ? new Date(quoteDate) : now,
       dueDate: expiryDate ? new Date(expiryDate) : null,
@@ -3027,62 +3210,70 @@ export async function saveQuoteAction(
       numberOfContainers: numberOfContainers ? parseInt(numberOfContainers) : null,
       commodity: commodity || null,
       weight: weight || null,
+      sourceQuotationId: rootQuoteId,
+      sourceQuotationVersion: versionNumber,
+      sourceQuotationNumber: baseQuoteNumber,
     };
 
-    let savedQuote;
-    if (quoteId) {
-      // Edit
-      savedQuote = await db.crmInvoice.update({
-        where: { id: quoteId },
-        data: {
-          ...data,
-          updatedById: session.user.id,
-          createdById: undefined,
-        },
-      });
+    const currentDepartmentRates: Record<CrmRateDepartment, Record<string, number>> = {
+      FREIGHT_FORWARDING: workflow?.freightRates
+        ? (workflow.freightRates as Record<string, number>)
+        : {},
+      CUSTOMS_CLEARANCE: workflow?.customsRates
+        ? (workflow.customsRates as Record<string, number>)
+        : {},
+    };
+    const rateDiff = {
+      FREIGHT_FORWARDING: diffDepartmentRates(
+        previousRatesByDepartment.FREIGHT_FORWARDING,
+        currentDepartmentRates.FREIGHT_FORWARDING,
+      ),
+      CUSTOMS_CLEARANCE: diffDepartmentRates(
+        previousRatesByDepartment.CUSTOMS_CLEARANCE,
+        currentDepartmentRates.CUSTOMS_CLEARANCE,
+      ),
+    };
 
-      // delete and recreate items
-      await db.crmInvoiceItem.deleteMany({
-        where: { invoiceId: quoteId },
-      });
+    data.sourceQuotationSnapshot = {
+      mode: workflowContext?.mode || "combined",
+      versionNumber,
+      baseQuoteNumber,
+      includedDepartments,
+      pendingDepartments: workflowContext?.pendingDepartments || [],
+      departmentRates: currentDepartmentRates,
+      rateDiff,
+      sourceQuoteId: quoteId || null,
+      leadId: matchedLeadId,
+      serviceRefs:
+        matchedLead?.serviceEnquiries?.map((item) => ({
+          serviceType: item.serviceType,
+          enquiryRef: item.enquiryRef,
+          departmentRef: item.departmentRef,
+        })) || [],
+      createdAt: now.toISOString(),
+      createdById: session.user.id,
+    } as any;
 
-      await db.crmInvoiceItem.createMany({
-        data: parsedItems.map((item: any) => ({
-          invoiceId: quoteId,
-          productName: item.description || "Line Item",
-          qty: parseFloat(item.quantity) || 1,
-          rate: parseFloat(item.rate) || 0,
-          taxPercent: parseFloat(String(item.tax ?? "18").match(/[\d.]+/)?.[0] ?? "18") || 18,
-          taxLabel: item.tax || null,
-          unit: item.unit || null,
-          tds: item.tds || null,
-          amount: parseFloat(item.amount) || 0,
-          currency: item.currency || "INR",
-          exchangeRate: parseFloat(item.exchangeRate) || 1,
-        })),
-      });
-    } else {
-      // Create
-      savedQuote = await db.crmInvoice.create({
-        data: {
-          ...data,
-          items: {
-            create: parsedItems.map((item: any) => ({
-              productName: item.description || "Line Item",
-              qty: parseFloat(item.quantity) || 1,
-              rate: parseFloat(item.rate) || 0,
-              taxPercent: parseFloat(String(item.tax ?? "18").match(/[\d.]+/)?.[0] ?? "18") || 18,
-              taxLabel: item.tax || null,
-              unit: item.unit || null,
-              tds: item.tds || null,
-              amount: parseFloat(item.amount) || 0,
-              currency: item.currency || "INR",
-              exchangeRate: parseFloat(item.exchangeRate) || 1,
-            })),
-          },
+    const savedQuote = await db.crmInvoice.create({
+      data: {
+        ...data,
+        items: {
+          create: parsedItems.map((item: any) => ({
+            productName: item.description || "Line Item",
+            qty: parseFloat(item.quantity) || 1,
+            rate: parseFloat(item.rate) || 0,
+            taxPercent:
+              parseFloat(String(item.tax ?? "18").match(/[\d.]+/)?.[0] ?? "18") || 18,
+            taxLabel: item.tax || null,
+            unit: item.unit || null,
+            tds: item.tds || null,
+            amount: parseFloat(item.amount) || 0,
+            currency: item.currency || "INR",
+            exchangeRate: parseFloat(item.exchangeRate) || 1,
+          })),
         },
-      });
-    }
+      },
+    });
 
     if (isSubmit) {
       const { submitForApproval } = require("./approval-workflow");
@@ -3094,8 +3285,103 @@ export async function saveQuoteAction(
       });
     }
 
+    if (matchedLeadId && matchedLead) {
+      const freightSignature = createRatesSignature(currentDepartmentRates.FREIGHT_FORWARDING);
+      const customsSignature = createRatesSignature(currentDepartmentRates.CUSTOMS_CLEARANCE);
+      const currentEnquiry = (matchedLead.enquiryDetails as any) || {};
+      await db.crmLead.update({
+        where: { id: matchedLeadId },
+        data: {
+          enquiryDetails: {
+            ...currentEnquiry,
+            rateWorkflow: {
+              ...(currentEnquiry.rateWorkflow || {}),
+              latestQuoteId: savedQuote.id,
+              latestQuoteVersion: versionNumber,
+              quoteBaseNumber: baseQuoteNumber,
+              lastQuotedFreightSignature: includedDepartments.includes("FREIGHT_FORWARDING")
+                ? freightSignature
+                : workflow?.lastQuotedFreightSignature,
+              lastQuotedCustomsSignature: includedDepartments.includes("CUSTOMS_CLEARANCE")
+                ? customsSignature
+                : workflow?.lastQuotedCustomsSignature,
+            },
+          } as any,
+        },
+      });
+
+      await db.crmServiceEnquiry.updateMany({
+        where: {
+          orgId,
+          leadId: matchedLeadId,
+          serviceType: { in: includedDepartments },
+        },
+        data: {
+          status: isSubmit ? "QUOTED" : "QUOTE_DRAFT",
+          updatedById: session.user.id,
+        },
+      });
+
+      await crmService.addTimelineEvent(orgId, {
+        relatedToType: "LEAD",
+        relatedToId: matchedLeadId,
+        eventType: "QUOTE_VERSION_CREATED",
+        description: `Quotation ${versionedQuoteNumber} created from ${formatWorkflowMode(
+          workflowContext?.mode || "combined",
+        )}.`,
+        details: {
+          quoteId: savedQuote.id,
+          baseQuoteNumber,
+          versionNumber,
+          includedDepartments,
+          pendingDepartments: workflowContext?.pendingDepartments || [],
+          sharedAt: isSubmit ? now.toISOString() : null,
+        } as any,
+        createdById: session.user.id,
+      });
+
+      const changedAfterQuote =
+        workflowContext?.mode === "newly-added-only" ||
+        Object.values(rateDiff).some(
+          (entry) =>
+            entry.added.length > 0 || entry.removed.length > 0 || entry.modified.length > 0,
+        );
+      if (changedAfterQuote) {
+        const recipients = new Set<string>();
+        matchedLead.serviceEnquiries.forEach((item) => {
+          if (item.assignedToId) recipients.add(item.assignedToId);
+          if (item.assignedManagerId) recipients.add(item.assignedManagerId);
+        });
+        recipients.add(session.user.id);
+        for (const userId of recipients) {
+          await db.notification.create({
+            data: {
+              orgId,
+              userId,
+              kind: "CRM_QUOTE_VERSION_CREATED",
+              title: `Quotation ${versionedQuoteNumber} is available`,
+              body: `A new quote version was created for ${resolvedReferenceNumber || baseQuoteNumber}.`,
+              link: `/crm/quotes/${savedQuote.id}`,
+              payload: {
+                leadId: matchedLeadId,
+                quoteId: savedQuote.id,
+                versionNumber,
+                includedDepartments,
+              } as any,
+              source: "crm.quote-versioning",
+              priority: "normal",
+            },
+          });
+        }
+      }
+    }
+
     revalidatePath("/crm/quotes");
     revalidatePath(`/crm/quotes/${savedQuote.id}`);
+    if (matchedLeadId) {
+      revalidatePath(`/crm/enquiries/${matchedLeadId}`);
+      revalidatePath(`/crm/leads/${matchedLeadId}`);
+    }
     return { ok: true, data: { id: savedQuote.id } };
   } catch (err: any) {
     return { ok: false, error: err.message || "Failed to save quote" };
@@ -3375,7 +3661,7 @@ function parseRatesFromEmail(bodyText: string) {
     return null;
   };
 
-  // Sea rates
+  // Current testing-phase rates
   const oceanFreight = findRate(["ocean freight", "ocean", "freight"]);
   if (oceanFreight !== null) rates.oceanFreight = oceanFreight;
   
@@ -3390,28 +3676,9 @@ function parseRatesFromEmail(bodyText: string) {
   
   const vgmCharges = findRate(["vgm charges", "vgm"]);
   if (vgmCharges !== null) rates.vgmCharges = vgmCharges;
-  
-  const lclCharges = findRate(["lcl charges", "lcl"]);
-  if (lclCharges !== null) rates.lclCharges = lclCharges;
-  
+
   const doCharges = findRate(["do charges", "do", "delivery order"]);
   if (doCharges !== null) rates.doCharges = doCharges;
-  
-  const cfsCustoms = findRate(["cfs customs", "cfs-customs"]);
-  if (cfsCustoms !== null) rates.cfsCustoms = cfsCustoms;
-
-  // Air rates
-  const airFreight = findRate(["air freight", "air"]);
-  if (airFreight !== null) rates.airFreight = airFreight;
-
-  const handlingCharges = findRate(["handling charges", "handling"]);
-  if (handlingCharges !== null) rates.handlingCharges = handlingCharges;
-
-  const awbCharges = findRate(["awb charges", "awb"]);
-  if (awbCharges !== null) rates.awbCharges = awbCharges;
-
-  const deliveryCharges = findRate(["delivery charges", "delivery"]);
-  if (deliveryCharges !== null) rates.deliveryCharges = deliveryCharges;
 
   return rates;
 }

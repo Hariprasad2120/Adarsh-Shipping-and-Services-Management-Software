@@ -1,9 +1,9 @@
 "use client";
 
-import { FileCheck2, Loader2, Plus, Send, Trash2 } from "lucide-react";
+import { FileCheck2, Loader2, Plus, Search, Send, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   convertQuotationToInvoiceAction,
@@ -34,6 +34,7 @@ import {
 } from "@/modules/accounting/components/accounting-workspace";
 import { fetchAccountingItems } from "@/lib/items/accounting-item-client";
 import type { ItemListItem } from "@/lib/items/types";
+import { QuotationDetailClient } from "./[id]/quotation-detail-client";
 
 interface Quotation {
   id: string;
@@ -105,6 +106,10 @@ const defaultQuotationValidity = (() => {
   date.setDate(date.getDate() + 30);
   return date.toISOString().slice(0, 10);
 })();
+
+function formatDateLabel(value: Date | string) {
+  return new Date(value).toLocaleDateString("en-IN");
+}
 
 function LineEditor({
   catalogueItems,
@@ -178,6 +183,10 @@ export function QuotationsClient({
   invoices,
   initialEditDraft,
   paymentTerms,
+  activeTab,
+  selectedQuotationId,
+  selectedQuotation,
+  quotationCaps,
 }: {
   initialQuotations: Quotation[];
   initialNotes: CustomerNote[];
@@ -185,17 +194,32 @@ export function QuotationsClient({
   invoices: Invoice[];
   initialEditDraft: EditableQuotationDraft | null;
   paymentTerms: PaymentTerm[];
+  activeTab: "quotations" | "notes";
+  selectedQuotationId: string | null;
+  selectedQuotation: Record<string, unknown> | null;
+  quotationCaps: {
+    canEdit: boolean;
+    canSubmit: boolean;
+    canApprove: boolean;
+    canSend: boolean;
+    canDecide: boolean;
+    canCancel: boolean;
+    canConvert: boolean;
+    canConvertToSalesOrder: boolean;
+    canCreate: boolean;
+  };
 }) {
   const router = useRouter();
   const availablePaymentTerms = paymentTerms.length
     ? paymentTerms
     : DEFAULT_PAYMENT_TERMS;
-  const [tab, setTab] = useState<"quotations" | "notes">("quotations");
   const [quotations, setQuotations] = useState(initialQuotations);
   const [notes, setNotes] = useState(initialNotes);
   const [quotationOpen, setQuotationOpen] = useState(Boolean(initialEditDraft));
   const [noteOpen, setNoteOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [quotationCustomer, setQuotationCustomer] = useState(
     initialEditDraft?.customerId ?? "",
   );
@@ -362,18 +386,37 @@ export function QuotationsClient({
 
   const openQuotationValue = quotations.filter((record) => record.status !== "CONVERTED").reduce((sum, record) => sum + record.grandTotal, 0);
   const draftNotes = notes.filter((record) => record.status === "DRAFT").length;
+  const filteredQuotations = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    return quotations.filter((record) => {
+      const matchesSearch =
+        !normalizedSearch ||
+        record.quotationNumber.toLowerCase().includes(normalizedSearch) ||
+        record.customerName.toLowerCase().includes(normalizedSearch) ||
+        (record.remarks || "").toLowerCase().includes(normalizedSearch);
+      const matchesStatus =
+        statusFilter === "ALL" || record.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [quotations, searchTerm, statusFilter]);
+  const quotationStatusOptions = Array.from(
+    new Set(quotations.map((record) => record.status)),
+  );
+  const selectedQuotationSummary =
+    quotations.find((record) => record.id === selectedQuotationId) || null;
 
   return (
     <>
       <AccountingRoutePageHeader
+        description="Manage quotations in a cleaner register-first workspace, while keeping note creation, approval, dispatch, and conversion connected to the live accounting flow."
         actions={<AccountingAction type="button" onClick={() => {
-          if (tab === "quotations") {
+          if (activeTab === "quotations") {
             resetQuotationDraftForm();
             setQuotationOpen(true);
             return;
           }
           setNoteOpen(true);
-        }}><Plus aria-hidden="true" /> {tab === "quotations" ? "New quotation" : "New note"}</AccountingAction>}
+        }}><Plus aria-hidden="true" /> {activeTab === "quotations" ? "New quotation" : "New note"}</AccountingAction>}
       />
       <AccountingMetrics>
         <AccountingMetric label="Quotations" value={quotations.length} detail="Prepared customer offers" />
@@ -382,51 +425,183 @@ export function QuotationsClient({
         <AccountingMetric label="Draft notes" value={draftNotes} detail="Awaiting ledger posting" />
       </AccountingMetrics>
       <AccountingToolbar>
-        <AccountingAction type="button" variant={tab === "quotations" ? "primary" : "secondary"} onClick={() => setTab("quotations")}>Quotations ({quotations.length})</AccountingAction>
-        <AccountingAction type="button" variant={tab === "notes" ? "primary" : "secondary"} onClick={() => setTab("notes")}>Credit / debit notes ({notes.length})</AccountingAction>
+        <div>
+          <Link
+            className={`mnx-button ${activeTab === "quotations" ? "mnx-button-primary" : "mnx-button-secondary"}`}
+            href={selectedQuotationId ? `/accounting/quotations?quote=${selectedQuotationId}` : "/accounting/quotations"}
+          >
+            Quotations ({quotations.length})
+          </Link>
+          <Link
+            className={`mnx-button ${activeTab === "notes" ? "mnx-button-primary" : "mnx-button-secondary"}`}
+            href="/accounting/quotations?tab=notes"
+          >
+            Credit / debit notes ({notes.length})
+          </Link>
+        </div>
+        {activeTab === "quotations" ? (
+          <div>
+            <AccountingField label="Search quotations">
+              <div className="mnx-accounting-quotation-search">
+                <Search aria-hidden="true" />
+                <AccountingInput
+                  aria-label="Search quotations"
+                  placeholder="Search by quote, customer, or remarks"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                />
+              </div>
+            </AccountingField>
+            <AccountingField label="Status">
+              <AccountingSelect
+                aria-label="Filter quotations by status"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
+                <option value="ALL">All statuses</option>
+                {quotationStatusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </AccountingSelect>
+            </AccountingField>
+          </div>
+        ) : null}
       </AccountingToolbar>
-      {tab === "quotations" ? (
-        <AccountingSection eyebrow="Commercial pipeline" title="Pre-sales quotations" description="Track customer pricing through validity and invoice conversion.">
-          <AccountingTable>
-            <thead><tr><th>Quotation</th><th>Customer</th><th>Posting date</th><th>Valid until</th><th>Taxable</th><th>GST</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
-            <tbody>{quotations.length ? quotations.map((record) => (
-              <tr key={record.id}>
-                <td>
-                  <strong>
-                    <Link href={`/accounting/quotations/${record.id}`}>
-                      {record.quotationNumber}
-                    </Link>
-                  </strong>
-                  <span className="mnx-table-subtext">
-                    {record.remarks || record.sendStatus || "No remarks"}
-                  </span>
-                </td>
-                <td>{record.customerName}</td>
-                <td>{new Date(record.postingDate).toLocaleDateString("en-IN")}</td>
-                <td>{new Date(record.validUntil).toLocaleDateString("en-IN")}</td>
-                <td className="mnx-accounting-amount">{money(record.taxableAmount)}</td>
-                <td className="mnx-accounting-amount">{money(record.taxAmount)}</td>
-                <td className="mnx-accounting-amount">{money(record.grandTotal)}</td>
-                <td><AccountingStatus status={record.status} /></td>
-                <td className="mnx-accounting-inline-actions">
-                  <Link className="mnx-button mnx-button-secondary" href={`/accounting/quotations/${record.id}`}>
-                    Open
+      {activeTab === "quotations" ? (
+        <section className="mnx-accounting-quotation-shell" aria-label="Quotation workspace">
+          <AccountingSection
+            className="mnx-accounting-quotation-list-panel"
+            eyebrow="Register"
+            title="All quotations"
+            description={`${filteredQuotations.length} quotation${filteredQuotations.length === 1 ? "" : "s"} visible in the current filter.`}
+          >
+            <div className="mnx-accounting-quotation-list" role="list">
+              {filteredQuotations.length ? filteredQuotations.map((record) => {
+                const isSelected = record.id === selectedQuotationId;
+                return (
+                  <Link
+                    key={record.id}
+                    className={`mnx-accounting-quotation-list-item${isSelected ? " is-selected" : ""}`}
+                    href={`/accounting/quotations?quote=${record.id}`}
+                  >
+                    <div className="mnx-accounting-quotation-list-item-top">
+                      <div>
+                        <strong>{record.customerName}</strong>
+                        <span>{record.quotationNumber}</span>
+                      </div>
+                      <span className="mnx-accounting-amount">{money(record.grandTotal)}</span>
+                    </div>
+                    <div className="mnx-accounting-quotation-list-item-meta">
+                      <span>{formatDateLabel(record.postingDate)}</span>
+                      <span>Valid until {formatDateLabel(record.validUntil)}</span>
+                    </div>
+                    <div className="mnx-accounting-quotation-list-item-footer">
+                      <AccountingStatus status={record.status} />
+                      <span>{record.remarks || record.sendStatus || "Ready for next action"}</span>
+                    </div>
                   </Link>
-                  {record.status === "DRAFT" ? (
-                    <AccountingDraftEditLink href={`/accounting/quotations?edit=${record.id}`} className="mnx-button-compact">
-                      Edit draft
-                    </AccountingDraftEditLink>
-                  ) : null}
-                  {["ACCEPTED", "PARTIALLY_CONVERTED"].includes(record.status) ? (
-                    <AccountingAction type="button" size="compact" onClick={() => void convert(record.id)}>
-                      <FileCheck2 aria-hidden="true" /> Convert
-                    </AccountingAction>
-                  ) : null}
-                </td>
-              </tr>
-            )) : <AccountingEmptyTableRow colSpan={9}>No quotations have been prepared.</AccountingEmptyTableRow>}</tbody>
-          </AccountingTable>
-        </AccountingSection>
+                );
+              }) : (
+                <div className="mnx-accounting-quotation-empty">
+                  <strong>No quotations match the current filters.</strong>
+                  <span>Try a different status or search term, or create a new quotation.</span>
+                </div>
+              )}
+            </div>
+          </AccountingSection>
+
+          <div className="mnx-accounting-quotation-detail-panel">
+            {selectedQuotation && selectedQuotationSummary ? (
+              <>
+                <AccountingSection
+                  eyebrow="Selected quotation"
+                  title={
+                    <div className="mnx-accounting-quotation-hero-title">
+                      <div>
+                        <strong>{selectedQuotationSummary.quotationNumber}</strong>
+                        <span>{selectedQuotationSummary.customerName}</span>
+                      </div>
+                      <div className="mnx-accounting-quotation-hero-total">
+                        <span>Total</span>
+                        <strong>{money(selectedQuotationSummary.grandTotal)}</strong>
+                      </div>
+                    </div>
+                  }
+                  description="Important commercial controls stay in view, and every action still uses the existing accounting workflow."
+                  actions={
+                    <div className="mnx-accounting-inline-actions">
+                      <AccountingStatus status={selectedQuotationSummary.status} />
+                      {selectedQuotationSummary.sendStatus ? (
+                        <AccountingStatus status={selectedQuotationSummary.sendStatus} />
+                      ) : null}
+                      <Link
+                        className="mnx-button mnx-button-secondary"
+                        href={`/accounting/quotations/${selectedQuotationSummary.id}`}
+                      >
+                        Full page
+                      </Link>
+                      {selectedQuotationSummary.status === "DRAFT" ? (
+                        <AccountingDraftEditLink
+                          href={`/accounting/quotations?edit=${selectedQuotationSummary.id}&quote=${selectedQuotationSummary.id}`}
+                          className="mnx-button-compact"
+                        >
+                          Edit draft
+                        </AccountingDraftEditLink>
+                      ) : null}
+                      {["ACCEPTED", "PARTIALLY_CONVERTED"].includes(selectedQuotationSummary.status) ? (
+                        <AccountingAction
+                          type="button"
+                          size="compact"
+                          onClick={() => void convert(selectedQuotationSummary.id)}
+                        >
+                          <FileCheck2 aria-hidden="true" /> Quick convert
+                        </AccountingAction>
+                      ) : null}
+                    </div>
+                  }
+                >
+                  <div className="mnx-accounting-quotation-glance">
+                    <div>
+                      <span>Posting date</span>
+                      <strong>{formatDateLabel(selectedQuotationSummary.postingDate)}</strong>
+                    </div>
+                    <div>
+                      <span>Valid until</span>
+                      <strong>{formatDateLabel(selectedQuotationSummary.validUntil)}</strong>
+                    </div>
+                    <div>
+                      <span>Taxable value</span>
+                      <strong>{money(selectedQuotationSummary.taxableAmount)}</strong>
+                    </div>
+                    <div>
+                      <span>GST</span>
+                      <strong>{money(selectedQuotationSummary.taxAmount)}</strong>
+                    </div>
+                  </div>
+                </AccountingSection>
+                <QuotationDetailClient
+                  caps={quotationCaps}
+                  quotation={selectedQuotation}
+                  embedded
+                  workspaceHrefBase="/accounting/quotations"
+                />
+              </>
+            ) : (
+              <AccountingSection
+                eyebrow="Quotation detail"
+                title="Select a quotation"
+                description="Choose a quotation from the register to review totals, approval status, dispatch, and conversion options."
+              >
+                <div className="mnx-accounting-quotation-empty">
+                  <strong>No quotation is currently selected.</strong>
+                  <span>Pick one from the list on the left to open its commercial detail view.</span>
+                </div>
+              </AccountingSection>
+            )}
+          </div>
+        </section>
       ) : (
         <AccountingSection eyebrow="Customer adjustments" title="Credit and debit notes" description="Review commercial adjustments and control when they post to the ledger.">
           <AccountingTable>

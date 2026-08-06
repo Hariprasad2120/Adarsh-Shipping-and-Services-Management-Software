@@ -1,6 +1,7 @@
 "use client";
 
 import { CrmButton, CrmInput } from "@/modules/crm/components/workspace/crm-workspace";
+import { WorkspacePanelHeader } from "@/components/layout/workspace";
 
 import type { UseFormReturn } from "react-hook-form";
 import { Controller } from "react-hook-form";
@@ -21,8 +22,12 @@ export function QuoteMetaSection({ form, salespersons, projectOptions, hasCustom
   const errors = form.formState.errors;
 
   return (
-    <section className="mnx-crm-form-section border-b border-[var(--mnx-border)] px-5 py-5">
-      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-mono-muted">Quote Metadata</h2>
+    <div className="mnx-crm-form-section p-5">
+      <WorkspacePanelHeader
+        eyebrow="Document identity"
+        title="Quote metadata"
+        description="Define numbering, dates, ownership, and the related customer project."
+      />
       <div className="space-y-0">
         <FormRow label="Quote#" required error={errors.quoteNumber?.message}>
           <div className="flex gap-2">
@@ -41,9 +46,10 @@ export function QuoteMetaSection({ form, salespersons, projectOptions, hasCustom
           </div>
         </FormRow>
 
-        <FormRow label="Reference#" error={errors.referenceNumber?.message}>
+        <FormRow label="Enquiry Number" error={errors.referenceNumber?.message}>
           <CrmInput
             className="h-9 w-full rounded-xl border bg-mono-card px-3 text-[13px] text-[var(--mnx-text-strong)] outline-none"
+            placeholder="Enter enquiry number"
             {...form.register("referenceNumber")}
           />
         </FormRow>
@@ -89,6 +95,6 @@ export function QuoteMetaSection({ form, salespersons, projectOptions, hasCustom
           />
         </FormRow>
       </div>
-    </section>
+    </div>
   );
 }

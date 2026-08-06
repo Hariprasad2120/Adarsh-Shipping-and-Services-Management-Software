@@ -56,6 +56,7 @@ export default async function CrmFreightForwardingDetailPage({
       {...detailData}
       backHref="/crm/freight-forwarding"
       backLabel="Back to Freight Forwarding"
+      serviceType="FREIGHT_FORWARDING"
     />
   );
 }
