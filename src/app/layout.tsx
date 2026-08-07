@@ -34,19 +34,39 @@ export default function RootLayout({
               try {
                 var root = document.documentElement;
                 var savedTheme = localStorage.getItem('theme');
+                var savedAccent = localStorage.getItem('themeAccent');
                 var resolvedTheme =
-                  savedTheme === 'night' || savedTheme === 'violet' || savedTheme === 'light'
+                  savedTheme === 'light' || savedTheme === 'dark'
                     ? savedTheme
-                    : 'night';
+                    : savedTheme === 'night' || savedTheme === 'violet'
+                      ? 'dark'
+                      : 'light';
+                var resolvedAccent =
+                  savedAccent === 'blue' ||
+                  savedAccent === 'green' ||
+                  savedAccent === 'amber' ||
+                  savedAccent === 'violet'
+                    ? savedAccent
+                    : savedTheme === 'violet'
+                      ? 'violet'
+                      : 'blue';
+                var legacyThemeClass =
+                  resolvedTheme === 'light'
+                    ? 'theme-light'
+                    : resolvedAccent === 'violet'
+                      ? 'theme-violet'
+                      : 'theme-night';
+                root.dataset.theme = resolvedTheme;
+                root.dataset.accent = resolvedAccent;
                 root.classList.remove('dark', 'light', 'night', 'violet', 'theme-light', 'theme-night', 'theme-violet');
-                root.classList.add(resolvedTheme, 'theme-' + resolvedTheme);
+                root.classList.add(resolvedTheme, legacyThemeClass);
                 root.style.colorScheme = resolvedTheme === 'light' ? 'light' : 'dark';
               } catch (_) {}
             `,
           }}
         />
       </head>
-      <body className="mnx-root min-h-full flex flex-col">
+      <body className="frappe-ui mnx-root min-h-full flex flex-col">
         {children}
         <ScrollNavigator />
         <Toaster

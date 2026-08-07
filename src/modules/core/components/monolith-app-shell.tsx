@@ -40,7 +40,8 @@ const MonaChat = dynamic(
   { ssr: false },
 );
 
-export type MonolithTheme = "night" | "violet" | "light";
+export type MonolithTheme = "light" | "dark";
+export type MonolithAccent = "blue" | "green" | "amber" | "violet";
 
 export interface MonolithAppShellProps {
   children: React.ReactNode;
@@ -58,12 +59,23 @@ export const monolithThemes: {
   label: string;
   icon: typeof Sun;
 }[] = [
-  { id: "night", label: "Night", icon: Moon },
-  { id: "violet", label: "Violet", icon: Sparkles },
   { id: "light", label: "Light", icon: Sun },
+  { id: "dark", label: "Dark", icon: Moon },
+];
+
+export const monolithAccentThemes: {
+  id: MonolithAccent;
+  label: string;
+}[] = [
+  { id: "blue", label: "Blue" },
+  { id: "green", label: "Green" },
+  { id: "amber", label: "Amber" },
+  { id: "violet", label: "Violet" },
 ];
 
 const MonolithThemeContext = createContext<{
+  accent: MonolithAccent;
+  selectAccent: (accent: MonolithAccent) => void;
   selectTheme: (theme: MonolithTheme) => void;
   theme: MonolithTheme;
 } | null>(null);
@@ -104,12 +116,62 @@ export function MonolithThemePicker({
   );
 }
 
-function resolveTheme(): MonolithTheme {
-  if (typeof window === "undefined") return "night";
+function MonolithAccentPicker({
+  ariaLabel = "Dashboard accent theme",
+}: {
+  ariaLabel?: string;
+}) {
+  const themeContext = useContext(MonolithThemeContext);
+  if (!themeContext) return null;
+
+  return (
+    <div className="mnx-accent-picker" role="group" aria-label={ariaLabel}>
+      {monolithAccentThemes.map((item) => (
+        <button
+          type="button"
+          key={item.id}
+          className={themeContext.accent === item.id ? "is-active" : ""}
+          onClick={() => themeContext.selectAccent(item.id)}
+          aria-pressed={themeContext.accent === item.id}
+          title={`${item.label} accent`}
+        >
+          <span className={`mnx-accent-swatch is-${item.id}`} aria-hidden="true" />
+          <span>{item.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function resolveThemeState(): {
+  accent: MonolithAccent;
+  theme: MonolithTheme;
+} {
+  if (typeof window === "undefined") {
+    return { accent: "blue", theme: "light" };
+  }
+
   const saved = window.localStorage.getItem("theme");
-  return saved === "night" || saved === "violet" || saved === "light"
-    ? saved
-    : "night";
+  const savedAccent = window.localStorage.getItem("themeAccent");
+
+  const theme: MonolithTheme =
+    saved === "light" || saved === "dark"
+      ? saved
+      : saved === "night" || saved === "violet"
+        ? "dark"
+        : "light";
+
+  const accent: MonolithAccent =
+    savedAccent === "blue" ||
+    savedAccent === "green" ||
+    savedAccent === "amber" ||
+    savedAccent === "violet"
+      ? savedAccent
+      : saved === "violet"
+        ? "violet"
+        : "blue";
+
+  return { accent, theme };
 }
 
 export function MonolithThemeProvider({
@@ -119,7 +181,8 @@ export function MonolithThemeProvider({
   children: React.ReactNode;
   dashboardShell?: boolean;
 }) {
-  const [theme, setTheme] = useState<MonolithTheme>("night");
+  const [theme, setTheme] = useState<MonolithTheme>("light");
+  const [accent, setAccent] = useState<MonolithAccent>("blue");
   const [themeLoaded, setThemeLoaded] = useState(false);
   const documentStateRef = useRef<{
     colorScheme: string;
@@ -130,7 +193,9 @@ export function MonolithThemeProvider({
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
-      setTheme(resolveTheme());
+      const resolvedState = resolveThemeState();
+      setTheme(resolvedState.theme);
+      setAccent(resolvedState.accent);
       setThemeLoaded(true);
     });
     return () => window.cancelAnimationFrame(frameId);
@@ -139,8 +204,9 @@ export function MonolithThemeProvider({
   useEffect(() => {
     if (!themeLoaded) return;
     window.localStorage.setItem("theme", theme);
+    window.localStorage.setItem("themeAccent", accent);
     window.dispatchEvent(new Event("themechange"));
-  }, [theme, themeLoaded]);
+  }, [accent, theme, themeLoaded]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -199,6 +265,8 @@ export function MonolithThemeProvider({
       delete root.dataset.dashboardShell;
     }
     root.dataset.dashboardTheme = theme;
+    root.dataset.theme = theme;
+    root.dataset.accent = accent;
     root.classList.remove(
       "theme-light",
       "theme-night",
@@ -208,12 +276,26 @@ export function MonolithThemeProvider({
       "violet",
       "dark",
     );
-    root.classList.add(`theme-${theme}`, theme);
+    root.classList.add(
+      theme,
+      theme === "light"
+        ? "theme-light"
+        : accent === "violet"
+          ? "theme-violet"
+          : "theme-night",
+    );
     root.style.colorScheme = theme === "light" ? "light" : "dark";
-  }, [dashboardShell, theme]);
+  }, [accent, dashboardShell, theme]);
 
   return (
-    <MonolithThemeContext.Provider value={{ selectTheme: setTheme, theme }}>
+    <MonolithThemeContext.Provider
+      value={{
+        accent,
+        selectAccent: setAccent,
+        selectTheme: setTheme,
+        theme,
+      }}
+    >
       {children}
     </MonolithThemeContext.Provider>
   );
@@ -551,6 +633,7 @@ function MonolithAppShellBody({
             </Link>
 
             <MonolithThemePicker />
+            <MonolithAccentPicker />
 
             <div className="mnx-profile-menu" ref={profileRef}>
               <button

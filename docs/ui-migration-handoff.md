@@ -1,6 +1,77 @@
 # Monolith UI migration handoff
 
-Last updated: 2026-08-06
+Last updated: 2026-08-07
+
+## 2026-08-07 Frappe-inspired shared theme foundation
+
+Rebased the shared Monolith presentation layer onto a Frappe-inspired token
+system so the product now trends toward the quieter Frappe UI / Espresso feel
+ without changing route structure, business logic, or data flow.
+
+Delivered:
+
+- added `frappe_docker/design/frappe-ui-design-system.css` as the new shared
+  source-of-truth token file for light/dark theme surfaces, restrained accent
+  palettes (`blue`, `green`, `amber`, `violet`), semantic status colors,
+  compact spacing, radii, typography, focus rings, and elevation;
+- rewrote `src/styles/monolith-tokens.css` to map the existing `--mn-*`
+  semantic contract onto the new `--frappe-*` variables instead of keeping the
+  older decorative Monolith palette and gradients;
+- updated `src/app/globals.css` and `src/app/layout.tsx` so the Frappe token
+  file is imported globally, the app root is wrapped with the `frappe-ui`
+  class, and the initial document script now normalizes legacy persisted
+  `light` / `night` / `violet` theme values into the new
+  `data-theme="light|dark"` and `data-accent="blue|green|amber|violet"`
+  document attributes;
+- updated `src/modules/core/components/monolith-app-shell.tsx` so the
+  authenticated shell theme provider now persists the normalized light/dark
+  theme plus accent choice, while preserving compatibility with older saved
+  theme values;
+- refreshed the canonical shared shell and primitive styling in
+  `src/styles/monolith-system.css` so navigation, topbar, buttons, inputs,
+  selects, cards, page headers, tables, dialogs, floating menus, and the
+  command palette now use denser spacing, softer radii, quieter surfaces, and
+  accent-driven active states instead of the previous glossy/high-motion look;
+- removed repeated hardcoded dropdown spacing/radius utility values in
+  `src/components/ui/dropdown-menu.tsx` by routing the menu chrome through
+  shared Monolith/Frappe-aware CSS hooks instead;
+- updated the customer portal theme control usage in
+  `src/modules/customer-portal/components/client-actions.tsx` so it now uses
+  the normalized `light` / `dark` theme options rather than the older
+  `night` / `violet` theme identifiers;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` for this styling batch.
+
+Verification on Friday, August 7, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route inventory;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint ...` over the
+  touched UI files passed for code-bearing files; CSS files were reported as
+  ignored by the current ESLint configuration rather than failing lint.
+
+Known limits:
+
+- `npm run architecture:check` still fails on the long-standing repository
+  baseline that `src/components/monolith` contains many non-barrel production
+  files; this pass did not introduce that ownership condition;
+- `npm run build` is currently blocked by an already-running `next build`
+  process in the environment, so this batch is type-verified and
+  design-system-verified but not freshly build-verified in this session;
+- no authenticated browser runtime is attached in this Codex session, so the
+  new Frappe-style light/dark/accent presentation is source-verified and
+  static-check-verified rather than manually browser-checked across desktop,
+  tablet, and mobile;
+- substantial legacy styling still exists in module-specific stylesheets and
+  `src/styles/legacy-compatibility.css`, even though the shared shell and
+  canonical primitives now inherit the new Frappe-oriented foundation.
 
 ## 2026-08-06 CRM to Freight/CHA process handoff flow
 

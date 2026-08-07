@@ -14,6 +14,7 @@ import { X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SESSION_COOKIE_NAME } from "@/lib/session-config";
 
 type ToastVariant =
   | "secondary"
@@ -113,6 +114,13 @@ function markRemoteToastsShown(notificationIds: string[]) {
   } catch {
     // sessionStorage unavailable
   }
+}
+
+function hasSessionCookie() {
+  if (typeof document === "undefined") return false;
+  return document.cookie.split("; ").some((cookie) =>
+    cookie.startsWith(`${SESSION_COOKIE_NAME}=`),
+  );
 }
 
 function getNotificationCardTone(variant: ToastVariant | undefined) {
@@ -224,6 +232,11 @@ export function NotificationProvider({
   const refreshRemoteToasts = useCallback(async () => {
     if (typeof document !== "undefined" && document.hidden) return true;
     if (refreshInFlightRef.current) return true;
+    if (!hasSessionCookie()) {
+      setRemoteToasts([]);
+      failureCountRef.current = 0;
+      return false;
+    }
 
     refreshInFlightRef.current = true;
     const controller = new AbortController();
@@ -239,6 +252,11 @@ export function NotificationProvider({
       if (res.status === 304) {
         failureCountRef.current = 0;
         return true;
+      }
+      if (res.status === 401) {
+        setRemoteToasts([]);
+        failureCountRef.current = 5;
+        return false;
       }
       if (!res.ok) {
         failureCountRef.current += 1;
@@ -288,7 +306,7 @@ export function NotificationProvider({
 
     const schedule = (delay: number) => {
       clearTimer();
-      if (!active || document.hidden) return;
+      if (!active || document.hidden || !hasSessionCookie()) return;
       timer = window.setTimeout(async () => {
         await refreshRemoteToasts();
         const backoff = Math.min(

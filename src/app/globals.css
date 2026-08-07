@@ -1,4 +1,5 @@
 @import "tailwindcss" source("..");
+@import "../../frappe_docker/design/frappe-ui-design-system.css";
 @import "../styles/monolith-tokens.css";
 @import "../styles/monolith-system.css";
 @import "../styles/modules/communication-admin.css";

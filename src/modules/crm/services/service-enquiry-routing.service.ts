@@ -1,5 +1,6 @@
 import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
+import { timeBlock } from "@/lib/performance";
 
 type LegacyServiceScope =
   | "BOTH_FREIGHT_AND_CLEARANCE"
@@ -449,24 +450,26 @@ export async function getServiceEnquiryDetail(params: {
   serviceEnquiryId: string;
   serviceType: "FREIGHT_FORWARDING" | "CUSTOMS_CLEARANCE";
 }) {
-  return db.crmServiceEnquiry.findFirst({
-    where: {
-      id: params.serviceEnquiryId,
-      orgId: params.orgId,
-      serviceType: params.serviceType,
-    },
-    include: {
-      lead: {
-        include: {
-          owner: { select: { id: true, name: true, email: true } },
-        },
+  return timeBlock("crm:getServiceEnquiryDetail", () =>
+    db.crmServiceEnquiry.findFirst({
+      where: {
+        id: params.serviceEnquiryId,
+        orgId: params.orgId,
+        serviceType: params.serviceType,
       },
-      assignedTo: { select: { id: true, name: true, email: true } },
-      assignedManager: { select: { id: true, name: true, email: true } },
-      customer: { select: { id: true, name: true, email: true, phone: true } },
-      quotation: { select: { id: true, quotationNumber: true, status: true } },
-      chaJob: { select: { id: true, jobNumber: true, stage: true, status: true } },
-    },
-  });
+      include: {
+        lead: {
+          include: {
+            owner: { select: { id: true, name: true, email: true } },
+          },
+        },
+        assignedTo: { select: { id: true, name: true, email: true } },
+        assignedManager: { select: { id: true, name: true, email: true } },
+        customer: { select: { id: true, name: true, email: true, phone: true } },
+        quotation: { select: { id: true, quotationNumber: true, status: true } },
+        chaJob: { select: { id: true, jobNumber: true, stage: true, status: true } },
+      },
+    }),
+  );
 }
 

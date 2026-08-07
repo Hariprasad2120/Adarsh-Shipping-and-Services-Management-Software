@@ -16,6 +16,7 @@ import {
 import {
   createSession,
   extractRequestMeta,
+  invalidateValidatedSessionCache,
   logSecurityEvent,
   validateSession,
 } from "@/lib/session-service";
@@ -345,6 +346,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         "token" in message ? (message.token as TokenPayload | undefined) : undefined;
       if (token?.sessionNonce) {
         try {
+          invalidateValidatedSessionCache(token.sessionNonce);
           await db.userSession.updateMany({
             where: { token: token.sessionNonce, status: "ACTIVE" },
             data: {

@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { getSession } from "@/lib/auth";
+import { timeBlock } from "@/lib/performance";
 import { loadCaps } from "@/lib/rbac";
 import {
   getFreshEnabledFeatureIds,
@@ -16,7 +17,7 @@ import {
  * immediate on the next request.
  */
 export const getDashboardContext = cache(async () => {
-  const session = await getSession();
+  const session = await timeBlock("dashboard:getSession", () => getSession());
   if (!session?.user) return null;
 
   const orgId = session.user.orgId;
@@ -31,9 +32,9 @@ export const getDashboardContext = cache(async () => {
   }
 
   const [caps, enabledModuleIds, enabledFeatureIds] = await Promise.all([
-    loadCaps(session.user.id),
-    getFreshEnabledModuleIds(orgId),
-    getFreshEnabledFeatureIds(orgId),
+    timeBlock("dashboard:loadCaps", () => loadCaps(session.user.id)),
+    timeBlock("dashboard:getEnabledModuleIds", () => getFreshEnabledModuleIds(orgId)),
+    timeBlock("dashboard:getEnabledFeatureIds", () => getFreshEnabledFeatureIds(orgId)),
   ]);
 
   return { session, orgId, caps, enabledModuleIds, enabledFeatureIds };

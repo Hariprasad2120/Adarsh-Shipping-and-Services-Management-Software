@@ -5,11 +5,14 @@
  * In normal runtime we only emit slow-request warnings.
  */
 
+import { recordMeasuredBlock } from "@/lib/request-performance";
+
 const verbosePerfLogging = process.env.PERF_VERBOSE === "true";
 const defaultSlowThresholdMs = Number(process.env.PERF_SLOW_THRESHOLD_MS ?? "1000");
 
 function logPerf(label: string, elapsedMs: number, slowThresholdMs: number) {
   const rounded = Number(elapsedMs.toFixed(1));
+  recordMeasuredBlock(label, rounded);
   if (rounded >= slowThresholdMs) {
     console.warn(JSON.stringify({ type: "perf", severity: "slow", label, elapsedMs: rounded }));
     return;

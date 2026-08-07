@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
+import { timeBlock } from "@/lib/performance";
 
 // Helper to check standard ownership permissions if required, 
 // but primarily we perform org-scoped queries.
@@ -217,49 +218,53 @@ export async function listEnquiries(orgId: string, filters?: { search?: string; 
 }
 
 export async function getLead(orgId: string, id: string) {
-  const lead = await db.crmLead.findFirst({
-    where: { id, orgId },
-    include: {
-      owner: { select: { id: true, name: true, email: true } },
-      crmExternalLead: true,
-      serviceEnquiries: {
-        select: {
-          id: true,
-          serviceType: true,
-          status: true,
-          departmentRef: true,
-          enquiryRef: true,
-          assignedToId: true,
-          assignedManagerId: true,
-          pricingSnapshot: true,
-          updatedAt: true,
+  const lead = await timeBlock("crm:getLead", () =>
+    db.crmLead.findFirst({
+      where: { id, orgId },
+      include: {
+        owner: { select: { id: true, name: true, email: true } },
+        crmExternalLead: true,
+        serviceEnquiries: {
+          select: {
+            id: true,
+            serviceType: true,
+            status: true,
+            departmentRef: true,
+            enquiryRef: true,
+            assignedToId: true,
+            assignedManagerId: true,
+            pricingSnapshot: true,
+            updatedAt: true,
+          },
+          orderBy: [{ createdAt: "asc" }],
         },
-        orderBy: [{ createdAt: "asc" }],
       },
-    },
-  });
+    }),
+  );
 
   if (!lead) {
     return null;
   }
 
-  const createdBy = await db.user.findFirst({
-    where: { id: lead.createdById, orgId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      designation: true,
-      employeeNumber: true,
-      personalPhone: true,
-      org: {
-        select: {
-          id: true,
-          name: true,
+  const createdBy = await timeBlock("crm:getLeadCreatedBy", () =>
+    db.user.findFirst({
+      where: { id: lead.createdById, orgId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        designation: true,
+        employeeNumber: true,
+        personalPhone: true,
+        org: {
+          select: {
+            id: true,
+            name: true,
+          },
         },
       },
-    },
-  });
+    }),
+  );
 
   return {
     ...lead,

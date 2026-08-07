@@ -1,346 +1,194 @@
 /*
- * Monolith production foundations.
+ * Monolith semantic token aliases.
  *
- * Components consume semantic tokens from this file. Theme selectors own
- * palette decisions; component styles must not redefine theme colors.
+ * The Frappe design token file is the source of truth. This layer preserves
+ * the existing Monolith token contract while redirecting it to Frappe-inspired
+ * theme variables.
  */
 
 :root,
-html.theme-light {
-  color-scheme: light;
+html.theme-light,
+html.theme-night,
+html.theme-violet,
+html[data-theme="light"],
+html[data-theme="dark"] {
+  --mn-font-sans: var(--frappe-font-family);
+  --mn-font-mono: var(--frappe-font-family-mono);
+  --mn-font-display: var(--frappe-font-family);
 
-  /* Typography */
-  --mn-font-sans: var(--font-geist-sans);
-  --mn-font-mono: var(--font-geist-sans);
-  --mn-font-display: var(--font-geist-sans);
-  --mn-type-display-size: clamp(2.75rem, 5vw, 4rem);
-  --mn-type-display-line: 1.05;
-  --mn-type-display-tracking: -0.04em;
-  --mn-type-display-weight: 360;
-  --mn-type-heading-size: 2rem;
-  --mn-type-heading-line: 1.08;
+  --mn-type-display-size: clamp(2rem, 3.2vw, 2.75rem);
+  --mn-type-display-line: 1.08;
+  --mn-type-display-tracking: -0.035em;
+  --mn-type-display-weight: var(--frappe-font-weight-semibold);
+  --mn-type-heading-size: var(--frappe-font-size-2xl);
+  --mn-type-heading-line: 1.15;
   --mn-type-heading-tracking: -0.03em;
-  --mn-type-heading-weight: 430;
-  --mn-type-section-heading-size-desktop: clamp(2rem, 3.15vw, 2.75rem);
-  --mn-type-section-heading-size-tablet: clamp(2rem, 4.5vw, 2.5rem);
-  --mn-type-section-heading-size-mobile: 2rem;
-  --mn-type-title-size: 1.25rem;
-  --mn-type-title-line: 1.25;
-  --mn-type-title-tracking: -0.02em;
-  --mn-type-body-size: 0.9375rem;
-  --mn-type-body-line: 1.5;
-  --mn-type-label-size: 0.6875rem;
+  --mn-type-heading-weight: var(--frappe-font-weight-semibold);
+  --mn-type-section-heading-size-desktop: clamp(1.5rem, 2vw, 1.875rem);
+  --mn-type-section-heading-size-tablet: 1.5rem;
+  --mn-type-section-heading-size-mobile: 1.375rem;
+  --mn-type-title-size: var(--frappe-font-size-lg);
+  --mn-type-title-line: var(--frappe-line-height-tight);
+  --mn-type-title-tracking: -0.015em;
+  --mn-type-body-size: var(--frappe-font-size-base);
+  --mn-type-body-line: var(--frappe-line-height-base);
+  --mn-type-label-size: var(--frappe-font-size-2xs);
   --mn-type-label-line: 1.2;
-  --mn-type-label-tracking: 0.12em;
-  --mn-type-label-weight: 760;
-  --mn-type-control-size: 0.75rem;
-  --mn-type-helper-size: 0.625rem;
-  --mn-type-numeric-size: 2rem;
+  --mn-type-label-tracking: 0.08em;
+  --mn-type-label-weight: var(--frappe-font-weight-bold);
+  --mn-type-control-size: var(--frappe-font-size-sm);
+  --mn-type-helper-size: var(--frappe-font-size-xs);
+  --mn-type-numeric-size: clamp(1.5rem, 2vw, 2rem);
   --mn-type-numeric-line: 1;
-  --mn-type-numeric-tracking: -0.05em;
-  --mn-type-numeric-weight: 440;
+  --mn-type-numeric-tracking: -0.04em;
+  --mn-type-numeric-weight: var(--frappe-font-weight-semibold);
 
-  /* Shape, spacing, motion */
-  --mn-space-1: 0.25rem;
-  --mn-space-2: 0.5rem;
-  --mn-space-3: 0.75rem;
-  --mn-space-4: 1rem;
-  --mn-space-5: 1.25rem;
-  --mn-space-6: 1.5rem;
+  --mn-space-1: var(--frappe-space-1);
+  --mn-space-2: var(--frappe-space-2);
+  --mn-space-3: var(--frappe-space-3);
+  --mn-space-4: var(--frappe-space-4);
+  --mn-space-5: var(--frappe-space-5);
+  --mn-space-6: var(--frappe-space-6);
   --mn-space-7: 1.75rem;
-  --mn-space-8: 2rem;
+  --mn-space-8: var(--frappe-space-8);
   --mn-space-10: 2.5rem;
-  --mn-heading-top-space: 0.875rem;
-  --mn-heading-bottom-space: 0.625rem;
-  --mn-heading-index-title-gap: 1.0625rem;
-  --mn-heading-title-description-gap: 2.125rem;
-  --mn-heading-to-panel-gap: 1rem;
-  --mn-layout-workspace-stack-gap: 1.5rem;
-  --mn-layout-workspace-stack-gap-mobile: 1rem;
+  --mn-heading-top-space: var(--frappe-space-2);
+  --mn-heading-bottom-space: var(--frappe-space-2);
+  --mn-heading-index-title-gap: var(--frappe-space-3);
+  --mn-heading-title-description-gap: var(--frappe-space-4);
+  --mn-heading-to-panel-gap: var(--frappe-space-3);
+  --mn-layout-workspace-stack-gap: var(--frappe-space-5);
+  --mn-layout-workspace-stack-gap-mobile: var(--frappe-space-4);
   --mn-layout-page-max: 75rem;
   --mn-layout-workspace-max: 75rem;
-  --mn-layout-page-gutter: clamp(2rem, 3.3vw, 3.125rem);
-  --mn-layout-page-gutter-tablet: 1.75rem;
-  --mn-layout-page-gutter-mobile: 1rem;
-  --mn-layout-page-bottom: 5rem;
-  --mn-layout-page-bottom-mobile: 3.5rem;
-  --mn-radius-control: 0.6875rem;
-  --mn-radius-panel: 1.125rem;
-  --mn-radius-feature: 1.625rem;
-  --mn-motion-fast: 160ms;
-  --mn-motion-panel: 640ms;
-  --mn-ease-standard: cubic-bezier(0.12, 0.86, 0.18, 1);
-  --mn-filter-glass: blur(22px) saturate(1.36);
-  --mn-filter-glass-compact: blur(16px) saturate(1.28);
+  --mn-layout-page-gutter: clamp(1.25rem, 2vw, 2rem);
+  --mn-layout-page-gutter-tablet: 1.25rem;
+  --mn-layout-page-gutter-mobile: 0.875rem;
+  --mn-layout-page-bottom: 3rem;
+  --mn-layout-page-bottom-mobile: 2rem;
+  --mn-radius-control: var(--frappe-radius-sm);
+  --mn-radius-panel: var(--frappe-radius-lg);
+  --mn-radius-feature: var(--frappe-radius-xl);
+  --mn-motion-fast: var(--frappe-transition-fast);
+  --mn-motion-panel: 220ms;
+  --mn-ease-standard: ease;
+  --mn-filter-glass: blur(14px);
+  --mn-filter-glass-compact: blur(10px);
 
-  /* Light theme */
-  --mn-color-canvas: #eff0eb;
-  --mn-color-surface: #fffef9;
-  --mn-color-surface-soft: #eeefe8;
-  --mn-color-surface-muted: #dedfd8;
-  --mn-color-text: #11120e;
-  --mn-color-text-strong: #050505;
-  --mn-color-text-muted: #73746d;
-  --mn-color-border: rgba(17, 18, 14, 0.1);
-  --mn-color-glass-surface: rgba(255, 254, 249, 0.84);
-  --mn-color-glass-surface-strong: rgba(255, 254, 249, 0.92);
-  --mn-color-glass-surface-soft: rgba(244, 244, 236, 0.86);
-  --mn-color-glass-fallback: #fffef9;
-  --mn-color-glass-border: rgba(17, 18, 14, 0.16);
-  --mn-color-overlay: rgba(34, 30, 18, 0.42);
-  --mn-color-primary: #11120e;
-  --mn-color-on-primary: #ffffff;
-  --mn-color-accent: #f9d972;
-  --mn-color-accent-soft: #fce8a8;
-  --mn-color-accent-text: #8b640c;
-  --mn-color-on-accent: #11120e;
-  --mn-color-success-surface: #e6f3ea;
-  --mn-color-success: #148a46;
-  --mn-color-warning-surface: #fff1c7;
-  --mn-color-warning: #c87300;
-  --mn-color-danger-surface: #fceceb;
-  --mn-color-danger: #e02b21;
-  --mn-color-info-surface: #dfeef4;
-  --mn-color-info: #1479b8;
-  --mn-shadow-panel: 0 18px 44px rgba(26, 27, 22, 0.08);
-  --mn-shadow-floating:
-    0 30px 90px rgba(26, 27, 22, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.82);
-  --mn-shadow-accent:
-    0 16px 36px rgba(249, 217, 114, 0.34), 0 5px 14px rgba(149, 109, 16, 0.14);
-  --mn-shadow-accent-soft: 0 10px 24px rgba(249, 217, 114, 0.24);
-  --mn-gradient-canvas:
-    radial-gradient(
-      ellipse at 92% -4%,
-      rgba(249, 217, 114, 0.62) 0%,
-      rgba(249, 217, 114, 0.24) 25%,
-      transparent 48%
-    ),
-    radial-gradient(
-      ellipse at -8% 102%,
-      rgba(249, 217, 114, 0.3) 0%,
-      transparent 42%
-    ),
-    linear-gradient(145deg, #f8f8f4 0%, #eff0eb 55%, #eceee8 100%);
+  --mn-color-canvas: var(--frappe-bg);
+  --mn-color-surface: var(--frappe-surface);
+  --mn-color-surface-soft: var(--frappe-bg-subtle);
+  --mn-color-surface-muted: color-mix(
+    in srgb,
+    var(--frappe-bg-subtle) 82%,
+    var(--frappe-border)
+  );
+  --mn-color-text: var(--frappe-text);
+  --mn-color-text-strong: var(--frappe-text);
+  --mn-color-text-muted: var(--frappe-text-muted);
+  --mn-color-border: var(--frappe-border);
+  --mn-color-glass-surface: color-mix(
+    in srgb,
+    var(--frappe-surface-raised) 82%,
+    transparent
+  );
+  --mn-color-glass-surface-strong: color-mix(
+    in srgb,
+    var(--frappe-surface-raised) 92%,
+    transparent
+  );
+  --mn-color-glass-surface-soft: color-mix(
+    in srgb,
+    var(--frappe-bg-subtle) 88%,
+    transparent
+  );
+  --mn-color-glass-fallback: var(--frappe-surface-raised);
+  --mn-color-glass-border: var(--frappe-border-strong);
+  --mn-color-overlay: var(--frappe-overlay);
+  --mn-color-primary: var(--frappe-primary);
+  --mn-color-on-primary: var(--frappe-primary-foreground);
+  --mn-color-accent: var(--frappe-primary);
+  --mn-color-accent-soft: var(--frappe-primary-soft);
+  --mn-color-accent-text: var(--frappe-primary-strong);
+  --mn-color-on-accent: var(--frappe-primary-foreground);
+  --mn-color-success-surface: var(--frappe-success-bg);
+  --mn-color-success: var(--frappe-success);
+  --mn-color-warning-surface: var(--frappe-warning-bg);
+  --mn-color-warning: var(--frappe-warning);
+  --mn-color-danger-surface: var(--frappe-danger-bg);
+  --mn-color-danger: var(--frappe-danger);
+  --mn-color-info-surface: var(--frappe-info-bg);
+  --mn-color-info: var(--frappe-info);
+
+  --mn-shadow-panel: var(--frappe-shadow-base);
+  --mn-shadow-floating: var(--frappe-shadow-md);
+  --mn-shadow-accent: var(--frappe-shadow-md);
+  --mn-shadow-accent-soft: var(--frappe-shadow-sm);
+
+  --mn-gradient-canvas: linear-gradient(
+    180deg,
+    var(--frappe-bg) 0%,
+    var(--frappe-bg-subtle) 100%
+  );
   --mn-gradient-surface: linear-gradient(
-    145deg,
-    #fffef9 0%,
-    #faf9f2 58%,
-    #f4f4ec 100%
+    180deg,
+    var(--frappe-surface) 0%,
+    var(--frappe-surface) 100%
   );
   --mn-gradient-surface-strong: linear-gradient(
-    145deg,
-    #ffffff 0%,
-    #f7f6ee 100%
+    180deg,
+    var(--frappe-surface-raised) 0%,
+    var(--frappe-surface-raised) 100%
   );
-  --mn-gradient-control: linear-gradient(145deg, #f7f8f3 0%, #eceee8 100%);
+  --mn-gradient-control: linear-gradient(
+    180deg,
+    var(--frappe-surface) 0%,
+    var(--frappe-surface-hover) 100%
+  );
   --mn-gradient-navigation: linear-gradient(
     180deg,
-    rgba(255, 254, 249, 0.97) 0%,
-    rgba(247, 247, 242, 0.94) 100%
+    var(--frappe-surface) 0%,
+    var(--frappe-bg) 100%
   );
   --mn-gradient-accent: linear-gradient(
-    135deg,
-    #fde9a3 0%,
-    #f9d972 50%,
-    #f4cc52 100%
-  );
-  --mn-gradient-highlight: linear-gradient(135deg, #fff5cf 0%, #f9d972 100%);
-  --mn-gradient-primary: linear-gradient(
     180deg,
-    #2e2f29 0%,
-    #11120e 52%,
-    #050505 100%
-  );
-  --mn-gradient-hero:
-    radial-gradient(
-      circle at 83% 16%,
-      rgba(249, 217, 114, 0.5),
-      transparent 34%
-    ),
-    linear-gradient(125deg, #f7f8f4 0 48%, #fff2aa 100%);
-  --mn-gradient-glass: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.34),
-    rgba(244, 244, 236, 0.12)
-  );
-  --mn-gradient-task: linear-gradient(145deg, #34352f 0%, #20211d 100%);
-}
-
-html.theme-night {
-  color-scheme: dark;
-  --mn-color-canvas: #000000;
-  --mn-color-surface: #090909;
-  --mn-color-surface-soft: #151515;
-  --mn-color-surface-muted: #292929;
-  --mn-color-text: #f7f7f7;
-  --mn-color-text-strong: #ffffff;
-  --mn-color-text-muted: #a3a3a3;
-  --mn-color-border: rgba(255, 255, 255, 0.13);
-  --mn-color-glass-surface: rgba(14, 14, 14, 0.84);
-  --mn-color-glass-surface-strong: rgba(8, 8, 8, 0.92);
-  --mn-color-glass-surface-soft: rgba(24, 24, 24, 0.88);
-  --mn-color-glass-fallback: #0b0b0b;
-  --mn-color-glass-border: rgba(255, 255, 255, 0.18);
-  --mn-color-overlay: rgba(0, 0, 0, 0.72);
-  --mn-color-primary: #f9d972;
-  --mn-color-on-primary: #11120e;
-  --mn-color-accent-text: #f9d972;
-  --mn-shadow-panel: 0 18px 44px rgba(0, 0, 0, 0.5);
-  --mn-shadow-floating:
-    0 34px 96px rgba(0, 0, 0, 0.72), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  --mn-shadow-accent:
-    0 0 0 1px rgba(249, 217, 114, 0.18), 0 17px 40px rgba(249, 217, 114, 0.3);
-  --mn-shadow-accent-soft:
-    0 0 0 1px rgba(249, 217, 114, 0.12), 0 11px 28px rgba(249, 217, 114, 0.2);
-  --mn-gradient-canvas:
-    radial-gradient(
-      ellipse at 92% -5%,
-      rgba(249, 217, 114, 0.24) 0%,
-      rgba(249, 217, 114, 0.08) 28%,
-      transparent 50%
-    ),
-    radial-gradient(
-      ellipse at -10% 105%,
-      rgba(249, 217, 114, 0.11) 0%,
-      transparent 42%
-    ),
-    linear-gradient(150deg, #000000 0%, #030303 56%, #000000 100%);
-  --mn-gradient-surface: linear-gradient(
-    145deg,
-    #111111 0%,
-    #080808 54%,
-    #030303 100%
-  );
-  --mn-gradient-surface-strong: linear-gradient(
-    145deg,
-    #181818 0%,
-    #090909 62%,
-    #020202 100%
-  );
-  --mn-gradient-control: linear-gradient(145deg, #020202 0%, #0d0d0d 100%);
-  --mn-gradient-navigation: linear-gradient(
-    180deg,
-    rgba(5, 5, 5, 0.98) 0%,
-    rgba(0, 0, 0, 0.95) 100%
-  );
-  --mn-gradient-accent: linear-gradient(
-    135deg,
-    #ffe99b 0%,
-    #f9d972 52%,
-    #efc952 100%
-  );
-  --mn-gradient-highlight: linear-gradient(135deg, #fff0b8 0%, #f9d972 100%);
-  --mn-gradient-primary: linear-gradient(
-    135deg,
-    #ffe99b 0%,
-    #f9d972 52%,
-    #efc952 100%
-  );
-  --mn-gradient-hero:
-    radial-gradient(
-      circle at 82% 26%,
-      rgba(249, 217, 114, 0.16),
-      transparent 30%
-    ),
-    linear-gradient(125deg, #020202 0 48%, #0d0d0d 100%);
-  --mn-gradient-glass: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.07),
-    rgba(255, 255, 255, 0.015)
-  );
-  --mn-gradient-task: linear-gradient(145deg, #171717 0%, #080808 100%);
-}
-
-html.theme-violet {
-  color-scheme: dark;
-  --mn-color-canvas: #000000;
-  --mn-color-surface: #090909;
-  --mn-color-surface-soft: #151515;
-  --mn-color-surface-muted: #292929;
-  --mn-color-text: #f8f7ff;
-  --mn-color-text-strong: #ffffff;
-  --mn-color-text-muted: #9493a2;
-  --mn-color-border: rgba(255, 255, 255, 0.13);
-  --mn-color-glass-surface: rgba(21, 17, 32, 0.86);
-  --mn-color-glass-surface-strong: rgba(12, 9, 20, 0.93);
-  --mn-color-glass-surface-soft: rgba(34, 27, 50, 0.9);
-  --mn-color-glass-fallback: #120f1c;
-  --mn-color-glass-border: rgba(181, 170, 245, 0.24);
-  --mn-color-overlay: rgba(8, 4, 16, 0.74);
-  --mn-color-primary: #b5aaf5;
-  --mn-color-on-primary: #050505;
-  --mn-color-accent: #b5aaf5;
-  --mn-color-accent-soft: #cbbde1;
-  --mn-color-accent-text: #cbbde1;
-  --mn-color-on-accent: #050505;
-  --mn-shadow-panel: 0 18px 44px rgba(0, 0, 0, 0.5);
-  --mn-shadow-floating:
-    0 34px 96px rgba(5, 2, 10, 0.74), 0 0 0 1px rgba(181, 170, 245, 0.08),
-    inset 0 1px 0 rgba(203, 189, 225, 0.13);
-  --mn-shadow-accent:
-    0 0 0 1px rgba(181, 170, 245, 0.2), 0 17px 42px rgba(137, 116, 185, 0.4);
-  --mn-shadow-accent-soft:
-    0 0 0 1px rgba(181, 170, 245, 0.14), 0 11px 30px rgba(137, 116, 185, 0.28);
-  --mn-gradient-canvas:
-    radial-gradient(
-      ellipse at 92% -5%,
-      rgba(181, 170, 245, 0.24) 0%,
-      rgba(181, 170, 245, 0.08) 28%,
-      transparent 50%
-    ),
-    radial-gradient(
-      ellipse at -10% 105%,
-      rgba(181, 170, 245, 0.11) 0%,
-      transparent 42%
-    ),
-    linear-gradient(150deg, #000000 0%, #030303 56%, #000000 100%);
-  --mn-gradient-surface: linear-gradient(
-    145deg,
-    #111111 0%,
-    #080808 54%,
-    #030303 100%
-  );
-  --mn-gradient-surface-strong: linear-gradient(
-    145deg,
-    #181818 0%,
-    #090909 62%,
-    #020202 100%
-  );
-  --mn-gradient-control: linear-gradient(145deg, #020202 0%, #0d0d0d 100%);
-  --mn-gradient-navigation: linear-gradient(
-    180deg,
-    rgba(5, 5, 5, 0.98) 0%,
-    rgba(0, 0, 0, 0.95) 100%
-  );
-  --mn-gradient-accent: linear-gradient(
-    135deg,
-    #cbbde1 0%,
-    #b5aaf5 48%,
-    #8974b9 100%
+    var(--frappe-primary) 0%,
+    var(--frappe-primary-hover) 100%
   );
   --mn-gradient-highlight: linear-gradient(
-    135deg,
-    #ddd4f5 0%,
-    #cbbde1 46%,
-    #b5aaf5 100%
+    180deg,
+    var(--frappe-primary-soft) 0%,
+    var(--frappe-primary-soft-hover) 100%
   );
   --mn-gradient-primary: linear-gradient(
-    135deg,
-    #cbbde1 0%,
-    #b5aaf5 48%,
-    #8974b9 100%
+    180deg,
+    var(--frappe-primary) 0%,
+    var(--frappe-primary-hover) 100%
   );
-  --mn-gradient-hero:
-    radial-gradient(
-      circle at 82% 26%,
-      rgba(181, 170, 245, 0.16),
-      transparent 30%
-    ),
-    linear-gradient(125deg, #020202 0 48%, #0d0d0d 100%);
+  --mn-gradient-hero: linear-gradient(
+    180deg,
+    var(--frappe-surface) 0%,
+    var(--frappe-bg-subtle) 100%
+  );
   --mn-gradient-glass: linear-gradient(
-    145deg,
-    rgba(181, 170, 245, 0.13),
-    rgba(181, 170, 245, 0.025)
+    180deg,
+    color-mix(in srgb, var(--frappe-surface-raised) 96%, transparent) 0%,
+    color-mix(in srgb, var(--frappe-surface-raised) 88%, transparent) 100%
   );
-  --mn-gradient-task: linear-gradient(145deg, #171717 0%, #080808 100%);
+  --mn-gradient-task: linear-gradient(
+    180deg,
+    var(--frappe-surface-raised) 0%,
+    var(--frappe-surface) 100%
+  );
+}
+
+html.theme-light,
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+html.theme-night,
+html.theme-violet,
+html[data-theme="dark"] {
+  color-scheme: dark;
 }

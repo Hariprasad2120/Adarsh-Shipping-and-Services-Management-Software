@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getNow } from "@/lib/clock";
+import { timeBlock } from "@/lib/performance";
 import { getNotificationPolicy } from "@/modules/notifications/policy";
 import type * as Prisma from "@/generated/prisma/internal/prismaNamespace";
 import type { TodoTaskDelegate, TodoTaskModel } from "@/generated/prisma/models/TodoTask";
@@ -262,22 +263,24 @@ export async function listTodoTasks(userId: string, filter: TodoFilter = "ALL") 
 
 export async function listUpcomingTodoAlerts(userId: string, limit = 20) {
   const now = await getNow();
-  return todoTaskDb.findMany({
-    where: {
-      userId,
-      status: "PENDING",
-      reminderEnabled: true,
-      alertAt: { not: null, gte: now },
-      alertTriggeredAt: null,
-    },
-    orderBy: { alertAt: "asc" },
-    take: limit,
-    select: {
-      id: true,
-      title: true,
-      alertAt: true,
-    },
-  });
+  return timeBlock("todo:listUpcomingTodoAlerts", () =>
+    todoTaskDb.findMany({
+      where: {
+        userId,
+        status: "PENDING",
+        reminderEnabled: true,
+        alertAt: { not: null, gte: now },
+        alertTriggeredAt: null,
+      },
+      orderBy: { alertAt: "asc" },
+      take: limit,
+      select: {
+        id: true,
+        title: true,
+        alertAt: true,
+      },
+    }),
+  );
 }
 
 export async function createTodoTask(user: { id: string; orgId?: string | null }, input: unknown) {

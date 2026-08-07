@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { timeBlock } from "@/lib/performance";
 import {
   getAttachments,
   getLead,
@@ -12,21 +13,25 @@ export async function loadEnquiryDetailPageData(params: {
   userId: string;
   leadId: string;
 }) {
-  const lead = await getLead(params.orgId, params.leadId);
+  const [lead, users, userRoles] = await Promise.all([
+    getLead(params.orgId, params.leadId),
+    timeBlock("crm:loadEnquiryDetailUsers", () =>
+      db.user.findMany({
+        where: { orgId: params.orgId, active: true },
+        select: { id: true, name: true, email: true },
+        orderBy: { name: "asc" },
+      }),
+    ),
+    timeBlock("crm:loadEnquiryDetailRoles", () =>
+      db.userRole.findMany({
+        where: { userId: params.userId },
+        include: { role: true },
+      }),
+    ),
+  ]);
   if (!lead) {
     return null;
   }
-
-  const users = await db.user.findMany({
-    where: { orgId: params.orgId, active: true },
-    select: { id: true, name: true, email: true },
-    orderBy: { name: "asc" },
-  });
-
-  const userRoles = await db.userRole.findMany({
-    where: { userId: params.userId },
-    include: { role: true },
-  });
 
   const isManager = userRoles.some((ur) => {
     const roleName = ur.role.name.toLowerCase();
@@ -46,40 +51,44 @@ export async function loadEnquiryDetailPageData(params: {
         relatedToId: params.leadId,
       }),
       getTimelineEvents(params.orgId, "LEAD", params.leadId),
-      db.crmWorkTimeLog.findMany({
-        where: {
-          orgId: params.orgId,
-          OR: [
-            { leadId: params.leadId },
-            lead.convertedAccountId
-              ? { accountId: lead.convertedAccountId }
-              : undefined,
-          ].filter(Boolean) as Array<{ leadId?: string; accountId?: string }>,
-        },
-        include: { user: { select: { name: true } } },
-        orderBy: { loggedAt: "desc" },
-      }),
-      db.crmCallAttempt.findMany({
-        where: {
-          orgId: params.orgId,
-          leadId: params.leadId,
-        },
-        include: {
-          salesperson: { select: { id: true, name: true, email: true } },
-          recordings: {
-            include: {
-              transcript: true,
-              reviews: {
-                include: {
-                  reviewer: { select: { id: true, name: true } },
+      timeBlock("crm:loadEnquiryDetailWorkTime", () =>
+        db.crmWorkTimeLog.findMany({
+          where: {
+            orgId: params.orgId,
+            OR: [
+              { leadId: params.leadId },
+              lead.convertedAccountId
+                ? { accountId: lead.convertedAccountId }
+                : undefined,
+            ].filter(Boolean) as Array<{ leadId?: string; accountId?: string }>,
+          },
+          include: { user: { select: { name: true } } },
+          orderBy: { loggedAt: "desc" },
+        }),
+      ),
+      timeBlock("crm:loadEnquiryDetailCalls", () =>
+        db.crmCallAttempt.findMany({
+          where: {
+            orgId: params.orgId,
+            leadId: params.leadId,
+          },
+          include: {
+            salesperson: { select: { id: true, name: true, email: true } },
+            recordings: {
+              include: {
+                transcript: true,
+                reviews: {
+                  include: {
+                    reviewer: { select: { id: true, name: true } },
+                  },
+                  orderBy: { createdAt: "desc" },
                 },
-                orderBy: { createdAt: "desc" },
               },
             },
           },
-        },
-        orderBy: { callStartedAt: "desc" },
-      }),
+          orderBy: { callStartedAt: "desc" },
+        }),
+      ),
     ]);
 
   return {

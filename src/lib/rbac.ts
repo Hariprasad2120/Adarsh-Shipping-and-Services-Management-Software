@@ -162,6 +162,11 @@ type AccountingDepartmentAccessContext = {
   roleNames: string[];
 };
 
+type PermissionBundle = {
+  keys: string[];
+  departmentContext: AccountingDepartmentAccessContext;
+};
+
 function normalizeDepartmentIdentifier(value: string | null | undefined) {
   return (value ?? "").toLowerCase().replace(/[^a-z]/g, "");
 }
@@ -211,19 +216,48 @@ export function getDepartmentScopedPermissionKeys(
 // Process-level in-memory cache — shared across all concurrent requests in the same
 // Node process. Eliminates thundering herd when unstable_cache TTL expires and multiple
 // simultaneous requests (page + API routes) all miss the cross-request cache at once.
-const permMemCache = new Map<string, { keys: string[]; expiresAt: number }>();
+const permMemCache = new Map<string, { bundle: PermissionBundle; expiresAt: number }>();
 const PERM_MEM_TTL = 5 * 60 * 1000; // 5 minutes, matches unstable_cache revalidate
 
-async function loadPermissionKeysFromDb(userId: string): Promise<string[]> {
-  const rows = await db.$queryRaw<{ key: string }[]>`
-    SELECT DISTINCT p."key"
-    FROM "UserRole" ur
-    INNER JOIN "RolePermission" rp ON rp."roleId" = ur."roleId"
-    INNER JOIN "Permission" p ON p."id" = rp."permissionId"
-    WHERE ur."userId" = ${userId}
-  `;
+async function loadPermissionBundleFromDb(userId: string): Promise<PermissionBundle> {
+  const [rows, user] = await Promise.all([
+    db.$queryRaw<{ key: string }[]>`
+      SELECT DISTINCT p."key"
+      FROM "UserRole" ur
+      INNER JOIN "RolePermission" rp ON rp."roleId" = ur."roleId"
+      INNER JOIN "Permission" p ON p."id" = rp."permissionId"
+      WHERE ur."userId" = ${userId}
+    `,
+    db.user.findUnique({
+      where: { id: userId },
+      select: {
+        department: {
+          select: {
+            code: true,
+            name: true,
+          },
+        },
+        roles: {
+          select: {
+            role: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+  ]);
 
-  return rows.map((row) => row.key);
+  return {
+    keys: rows.map((row) => row.key),
+    departmentContext: {
+      departmentCode: user?.department?.code ?? null,
+      departmentName: user?.department?.name ?? null,
+      roleNames: user?.roles.map((assignment) => assignment.role.name) ?? [],
+    },
+  };
 }
 
 export class ForbiddenError extends Error {
@@ -241,67 +275,40 @@ export function apiError(error: unknown) {
   return NextResponse.json({ ok: false, error: { code: "INTERNAL_ERROR", message: msg } }, { status: 500 });
 }
 
-const loadCachedPermissionKeys = unstable_cache(
-  loadPermissionKeysFromDb,
-  ["rbac:user-permission-keys"],
+const loadCachedPermissionBundle = unstable_cache(
+  loadPermissionBundleFromDb,
+  ["rbac:user-permission-bundle"],
   {
     tags: [RBAC_PERMISSIONS_TAG],
     revalidate: 300,
   },
 );
 
-async function loadPermissionKeys(userId: string): Promise<string[]> {
+async function loadPermissionBundle(userId: string): Promise<PermissionBundle> {
   const now = Date.now();
   const hit = permMemCache.get(userId);
-  if (hit && hit.expiresAt > now) return hit.keys;
+  if (hit && hit.expiresAt > now) return hit.bundle;
 
-  let keys: string[];
+  let bundle: PermissionBundle;
   try {
-    keys = await loadCachedPermissionKeys(userId);
+    bundle = await loadCachedPermissionBundle(userId);
   } catch (error) {
     if (error instanceof Error && error.message.includes("incrementalCache missing")) {
-      keys = await loadPermissionKeysFromDb(userId);
+      bundle = await loadPermissionBundleFromDb(userId);
     } else {
       throw error;
     }
   }
 
-  permMemCache.set(userId, { keys, expiresAt: now + PERM_MEM_TTL });
-  return keys;
+  permMemCache.set(userId, { bundle, expiresAt: now + PERM_MEM_TTL });
+  return bundle;
 }
 
-async function loadDepartmentScopedPermissionKeys(userId: string, existingKeys: Iterable<string>) {
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: {
-      department: {
-        select: {
-          code: true,
-          name: true,
-        },
-      },
-      roles: {
-        select: {
-          role: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  if (!user) return new Set<string>();
-
-  return getDepartmentScopedPermissionKeys(
-    {
-      departmentCode: user.department?.code ?? null,
-      departmentName: user.department?.name ?? null,
-      roleNames: user.roles.map((assignment) => assignment.role.name),
-    },
-    existingKeys,
-  );
+function loadDepartmentScopedPermissionKeys(
+  departmentContext: AccountingDepartmentAccessContext,
+  existingKeys: Iterable<string>,
+) {
+  return getDepartmentScopedPermissionKeys(departmentContext, existingKeys);
 }
 
 export function expandPermissionKeys(keys: Iterable<string>): Set<string> {
@@ -336,9 +343,9 @@ export function invalidateRbacCache() {
 // Load all permission keys for a user (in-memory cache → unstable_cache → DB)
 export const loadUserPermissions = cache(async (userId: string): Promise<Set<string>> => {
   return timeBlock(`rbac:loadUserPermissions`, async () => {
-    const keys = await loadPermissionKeys(userId);
+    const { keys, departmentContext } = await loadPermissionBundle(userId);
     const departmentScopedKeys = await loadDepartmentScopedPermissionKeys(
-      userId,
+      departmentContext,
       keys,
     );
     return expandPermissionKeys([...keys, ...departmentScopedKeys]);

@@ -379,7 +379,7 @@ function PortalShellClientBody({
 
           <div className="mnx-customer-portal-topbar-actions">
             <MonolithThemePicker
-              allowedThemes={["light", "night", "violet"]}
+              allowedThemes={["light", "dark"]}
               ariaLabel="Customer portal theme"
             />
             <Link

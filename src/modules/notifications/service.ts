@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { getNow } from "@/lib/clock";
+import { timeBlock } from "@/lib/performance";
 import type { Prisma } from "@/generated/prisma/client";
 import { finalizeChecklistMainCustomerEmail } from "@/modules/cha/checklist-email-automation";
 import { getNotificationPolicy, type NotificationAppearance, type NotificationPriority, type NotificationSource, type NotificationVariant } from "./policy";
@@ -253,18 +254,20 @@ export async function triggerCrmLeadReminders(userId: string) {
 }
 
 export async function listActiveUserNotifications(userId: string) {
-  const notifications = await db.notification.findMany({
-    where: {
-      userId,
-      dismissedAt: null,
-      OR: [
-        { priority: "important", acknowledgedAt: null },
-        { priority: "normal" },
-      ],
-    },
-    orderBy: { createdAt: "desc" },
-    take: 25,
-  });
+  const notifications = await timeBlock("notifications:listActiveUserNotifications", () =>
+    db.notification.findMany({
+      where: {
+        userId,
+        dismissedAt: null,
+        OR: [
+          { priority: "important", acknowledgedAt: null },
+          { priority: "normal" },
+        ],
+      },
+      orderBy: { createdAt: "desc" },
+      take: 25,
+    }),
+  );
 
   const grouped = new Map<string, (typeof notifications)>();
   for (const notification of notifications) {
@@ -312,36 +315,41 @@ export async function listActiveUserNotifications(userId: string) {
 }
 
 export async function markNotificationsPresented(userId: string, notificationIds: string[]) {
-  if (notificationIds.length === 0) return;
+  const uniqueNotificationIds = [...new Set(notificationIds.filter((id) => typeof id === "string" && id.length > 0))];
+  if (uniqueNotificationIds.length === 0) return;
 
   const now = await getNow();
 
-  const notifications = await db.notification.findMany({
-    where: {
-      id: { in: notificationIds },
-      userId,
-      presentedAt: null,
-    },
-    select: { id: true, orgId: true },
-  });
+  const notifications = await timeBlock("notifications:loadPresentedCandidates", () =>
+    db.notification.findMany({
+      where: {
+        id: { in: uniqueNotificationIds },
+        userId,
+        presentedAt: null,
+      },
+      select: { id: true, orgId: true },
+    }),
+  );
 
   if (notifications.length === 0) return;
   const idsToUpdate = notifications.map((n) => n.id);
 
-  await Promise.all([
-    db.notification.updateMany({
-      where: { id: { in: idsToUpdate } },
-      data: { presentedAt: now },
-    }),
-    ...notifications.map((n) =>
-      recordNotificationActivity({
-        notificationId: n.id,
-        orgId: n.orgId ?? undefined,
-        actorId: userId,
-        event: "DISPLAYED",
-      })
-    ),
-  ]);
+  await timeBlock("notifications:markPresented", () =>
+    Promise.all([
+      db.notification.updateMany({
+        where: { id: { in: idsToUpdate } },
+        data: { presentedAt: now },
+      }),
+      db.notificationActivity.createMany({
+        data: notifications.map((notification) => ({
+          notificationId: notification.id,
+          orgId: notification.orgId ?? null,
+          actorId: userId,
+          event: "DISPLAYED",
+        })),
+      }),
+    ]),
+  );
 }
 
 export async function triggerAllDueCrmLeadReminders() {

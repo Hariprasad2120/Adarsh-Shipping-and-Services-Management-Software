@@ -17,6 +17,25 @@ import {
  * validates against the DB via validateSession().
  */
 
+const validatedSessionCache = new Map<
+  string,
+  { expiresAt: number; result: ValidateResult }
+>();
+const VALIDATED_SESSION_CACHE_TTL_MS = 5_000;
+
+function getValidatedSessionCacheKey(token: string, isAdmin: boolean) {
+  return `${isAdmin ? "admin" : "user"}:${token}`;
+}
+
+export function invalidateValidatedSessionCache(token?: string) {
+  if (!token) {
+    validatedSessionCache.clear();
+    return;
+  }
+  validatedSessionCache.delete(getValidatedSessionCacheKey(token, false));
+  validatedSessionCache.delete(getValidatedSessionCacheKey(token, true));
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const secret = () =>
@@ -171,6 +190,7 @@ export async function createSession(input: {
       expiresAt: new Date(now.getTime() + lifetimeMs),
     },
   });
+  invalidateValidatedSessionCache(token);
   return token;
 }
 
@@ -195,6 +215,11 @@ export async function validateSession(
   opts: { isAdmin?: boolean } = {}
 ): Promise<ValidateResult> {
   if (!token) return { valid: false, reason: "NOT_FOUND" };
+  const cacheKey = getValidatedSessionCacheKey(token, opts.isAdmin === true);
+  const cached = validatedSessionCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.result;
+  }
 
   try {
     const session = await db.userSession.findUnique({
@@ -264,7 +289,12 @@ export async function validateSession(
         .catch(() => {});
     }
 
-    return { valid: true };
+    const result = { valid: true } as const;
+    validatedSessionCache.set(cacheKey, {
+      expiresAt: now + VALIDATED_SESSION_CACHE_TTL_MS,
+      result,
+    });
+    return result;
   } catch (e) {
     // DB error — fail open for availability on transient issues, but log loudly.
     console.error("[session] Validation DB error:", e);
@@ -274,6 +304,7 @@ export async function validateSession(
 
 async function expireSession(token: string, reason: string) {
   try {
+    invalidateValidatedSessionCache(token);
     await db.userSession.update({
       where: { token },
       data: {
@@ -311,6 +342,7 @@ export async function revokeSessionById(input: {
       revokeReason: input.reason,
     },
   });
+  invalidateValidatedSessionCache(session.token);
 
   await logSecurityEvent({
     event: input.byAdmin ? "SESSION_REVOKED_BY_ADMIN" : "SESSION_REVOKED_BY_USER",
@@ -348,6 +380,7 @@ export async function revokeAllSessionsForUser(input: {
       revokeReason: input.reason,
     },
   });
+  invalidateValidatedSessionCache();
 
   await logSecurityEvent({
     event: "ALL_SESSIONS_REVOKED",

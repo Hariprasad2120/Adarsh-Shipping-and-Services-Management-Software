@@ -1,12 +1,17 @@
 import { createHash } from "node:crypto";
 import { getSessionOrUnauth } from "@/lib/api-helpers";
 import { tracePerformance } from "@/lib/performance";
+import {
+  attachRequestPerformanceHeaders,
+  withRequestPerformance,
+} from "@/lib/request-performance";
 import { listActiveUserNotifications } from "@/modules/notifications/service";
 import { listUpcomingTodoAlerts } from "@/modules/todo/service";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  return tracePerformance("route:GET /api/runtime/updates", async () => {
+  return withRequestPerformance("GET /api/runtime/updates", () =>
+    tracePerformance("route:GET /api/runtime/updates", async () => {
     const { session, error } = await getSessionOrUnauth();
     if (error) return error;
 
@@ -33,5 +38,6 @@ export async function GET(request: Request) {
         "Content-Type": "application/json; charset=utf-8",
       },
     });
-  });
+    }).then((response) => attachRequestPerformanceHeaders(response as NextResponse)),
+  );
 }

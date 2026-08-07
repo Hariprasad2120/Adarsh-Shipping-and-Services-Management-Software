@@ -4,6 +4,7 @@ const PRISMA_CLIENT_SCHEMA_VERSION = "2026-08-04-crm-service-enquiry-routing";
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool, type PoolClient, type PoolConfig } from "pg";
+import { recordDatabaseQuery } from "@/lib/request-performance";
 
 type PoolMetrics = {
   poolSize: number;
@@ -119,6 +120,7 @@ function createPrismaClient() {
   client.$on("query", (event) => {
     poolMetrics.queryCount += 1;
     poolMetrics.databaseQueryMs += event.duration;
+    recordDatabaseQuery(event);
     if (process.env.PRISMA_QUERY_LOGS === "true") {
       console.log(JSON.stringify({
         type: "database-query",
