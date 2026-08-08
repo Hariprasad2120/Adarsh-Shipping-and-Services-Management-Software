@@ -565,21 +565,38 @@ function MonolithAppShellBody({
           <kbd>⌘M</kbd>
         </button>
 
-        <footer className="mnx-sidebar-user">
-          <span>{initials(userName)}</span>
-          <div>
-            <b>{userName}</b>
-            <small>Operations workspace</small>
-          </div>
+        <div className="mnx-profile-menu mnx-sidebar-profile-menu" ref={profileRef}>
           <button
             type="button"
-            onClick={() => performLogout()}
-            aria-label="Log out"
-            title="Log out"
+            className="mnx-sidebar-user"
+            aria-label="Open profile menu"
+            aria-expanded={profileOpen}
+            aria-haspopup="menu"
+            onClick={() => setProfileOpen((current) => !current)}
           >
-            <LogOut size={14} strokeWidth={2} />
+            <span>{initials(userName)}</span>
+            <div>
+              <b>{userName}</b>
+              <small>Operations workspace</small>
+            </div>
+            <ChevronDown
+              size={14}
+              strokeWidth={2}
+              className={`mnx-sidebar-user-chevron ${profileOpen ? "is-open" : ""}`}
+              aria-hidden="true"
+            />
           </button>
-        </footer>
+          {profileOpen ? (
+            <MonolithProfilePopover
+              caps={caps}
+              isPlatformAdmin={isPlatformAdmin}
+              onNavigate={() => setProfileOpen(false)}
+              userEmail={userEmail}
+              userId={userId}
+              userName={userName}
+            />
+          ) : null}
+        </div>
       </aside>
 
       {mobileOpen ? (
@@ -635,80 +652,6 @@ function MonolithAppShellBody({
             <MonolithThemePicker />
             <MonolithAccentPicker />
 
-            <div className="mnx-profile-menu" ref={profileRef}>
-              <button
-                type="button"
-                className="mnx-topbar-avatar"
-                aria-label="Open profile menu"
-                aria-expanded={profileOpen}
-                aria-haspopup="menu"
-                onClick={() => setProfileOpen((current) => !current)}
-              >
-                {initials(userName)}
-              </button>
-              {profileOpen ? (
-                <section className="mnx-profile-popover" role="menu">
-                  <header>
-                    <span>{initials(userName)}</span>
-                    <div>
-                      <MonolithProfileLabel />
-                      <b>{userName}</b>
-                      <small>{userEmail}</small>
-                    </div>
-                  </header>
-                  <div className="mnx-profile-context">
-                    <span>
-                      <UserRound size={14} />
-                    </span>
-                    <div>
-                      <b>
-                        {isPlatformAdmin
-                          ? "Platform administrator"
-                          : "Workspace member"}
-                      </b>
-                      <small>Adarsh Shipping &amp; Services</small>
-                    </div>
-                  </div>
-                  <nav>
-                    {caps["hrms.employee.read"] ? (
-                      <Link
-                        href={`/hrms/employees/${userId}`}
-                        role="menuitem"
-                        onClick={() => setProfileOpen(false)}
-                      >
-                        <UserRound size={16} />
-                        <span>
-                          <b>My employee profile</b>
-                          <small>Complete personal and KYC details</small>
-                        </span>
-                      </Link>
-                    ) : null}
-                    <Link
-                      href="/account/security"
-                      role="menuitem"
-                      onClick={() => setProfileOpen(false)}
-                    >
-                      <ShieldCheck size={16} />
-                      <span>
-                        <b>Security &amp; sessions</b>
-                        <small>Review signed-in devices</small>
-                      </span>
-                    </Link>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => performLogout()}
-                    >
-                      <LogOut size={16} />
-                      <span>
-                        <b>Sign out</b>
-                        <small>End this workspace session</small>
-                      </span>
-                    </button>
-                  </nav>
-                </section>
-              ) : null}
-            </div>
           </div>
         </header>
 
@@ -775,4 +718,74 @@ function MonolithAppShellBody({
 
 function MonolithProfileLabel() {
   return <em>USER PROFILE</em>;
+}
+
+function MonolithProfilePopover({
+  caps,
+  isPlatformAdmin,
+  onNavigate,
+  userEmail,
+  userId,
+  userName,
+}: {
+  caps: Caps;
+  isPlatformAdmin: boolean;
+  onNavigate: () => void;
+  userEmail: string;
+  userId: string;
+  userName: string;
+}) {
+  return (
+    <section className="mnx-profile-popover" role="menu">
+      <header>
+        <span>{initials(userName)}</span>
+        <div>
+          <MonolithProfileLabel />
+          <b>{userName}</b>
+          <small>{userEmail}</small>
+        </div>
+      </header>
+      <div className="mnx-profile-context">
+        <span>
+          <UserRound size={14} />
+        </span>
+        <div>
+          <b>{isPlatformAdmin ? "Platform administrator" : "Workspace member"}</b>
+          <small>Adarsh Shipping &amp; Services</small>
+        </div>
+      </div>
+      <nav>
+        {caps["hrms.employee.read"] ? (
+          <Link href={`/hrms/employees/${userId}`} role="menuitem" onClick={onNavigate}>
+            <UserRound size={16} />
+            <span>
+              <b>My employee profile</b>
+              <small>Complete personal and KYC details</small>
+            </span>
+          </Link>
+        ) : null}
+        <Link href="/account/security" role="menuitem" onClick={onNavigate}>
+          <ShieldCheck size={16} />
+          <span>
+            <b>Security &amp; sessions</b>
+            <small>Review signed-in devices</small>
+          </span>
+        </Link>
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => {
+            onNavigate();
+            performLogout();
+          }}
+        >
+          <LogOut size={16} />
+          <span>
+            <b>Sign out</b>
+            <small>End this workspace session</small>
+          </span>
+        </button>
+      </nav>
+    </section>
+  );
 }

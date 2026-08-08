@@ -34,8 +34,9 @@ export default async function AccountingPaymentsPage({
     }),
   ]);
   return (
-    <>
+    <div className="mnx-accounting-payments-route">
       <AccountingRoutePageHeader
+        className="mnx-accounting-payments-header"
         actions={
           caps["accounting.payment.create"] ? (
             <AccountingActionLink
@@ -48,26 +49,30 @@ export default async function AccountingPaymentsPage({
           ) : undefined
         }
       />
-      <AccountingSection
-        eyebrow="Compatibility drafts"
-        title="Draft payments"
-        description="Saved payment vouchers stay editable here until you submit them for independent approval."
-      >
-        <LegacyAccountingDraftRegister
-          data={drafts}
-          detailPath="/accounting/payment-entries"
-        />
-      </AccountingSection>
-      <AccountingSection
-        eyebrow="Canonical register"
-        title="Receipts and payments"
-        description="Accounting posting, allocation, and reversal state. External bank execution is deliberately not inferred."
-      >
-        <CanonicalPaymentRegister
-          basePath="/accounting/payments"
-          data={payments}
-        />
-      </AccountingSection>
-    </>
+      <div className="mnx-accounting-payments-body">
+        <AccountingSection
+          className="mnx-accounting-payments-section mnx-accounting-payments-section-drafts"
+          eyebrow="Compatibility drafts"
+          title="Draft payments"
+          description="Saved payment vouchers stay editable here until you submit them for independent approval."
+        >
+          <LegacyAccountingDraftRegister
+            data={drafts}
+            detailPath="/accounting/payment-entries"
+          />
+        </AccountingSection>
+        <AccountingSection
+          className="mnx-accounting-payments-section mnx-accounting-payments-section-canonical"
+          eyebrow="Canonical register"
+          title="Receipts and payments"
+          description="Accounting posting, allocation, and reversal state. External bank execution is deliberately not inferred."
+        >
+          <CanonicalPaymentRegister
+            basePath="/accounting/payments"
+            data={payments}
+          />
+        </AccountingSection>
+      </div>
+    </div>
   );
 }

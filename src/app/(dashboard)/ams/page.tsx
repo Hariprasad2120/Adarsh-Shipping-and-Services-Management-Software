@@ -6,6 +6,12 @@ import {
   PerformanceSummary,
   PerformanceSummaryGrid,
 } from "@/modules/performance/components/performance-workspace";
+import {
+  DashboardInsightCard,
+  DashboardInsightGrid,
+  DashboardMiniBarChart,
+  DashboardSegmentList,
+} from "@/components/data-display/dashboard-insights";
 import { getSession } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { db } from "@/lib/db";
@@ -166,6 +172,10 @@ export default async function AMSPage() {
                 ? "Set up and maintain the appraisal cycles for your organisation."
                 : "Maintain the criteria structure used across appraisal phases.",
     })) ?? [];
+  const dueMetric = Number(statContext.stats[0]?.value ?? 0);
+  const openSelfAssessments = Number(statContext.stats[1]?.value ?? 0);
+  const assignedReviews = Number(statContext.stats[2]?.value ?? 0);
+  const personalLoad = Number(statContext.stats[3]?.value ?? 0);
 
   return (
     <>
@@ -189,9 +199,50 @@ export default async function AMSPage() {
 
       <PerformanceSection>
         <PerformanceSectionHeader
+          eyebrow="Performance control"
+          title="Appraisal dashboard"
+          description={`${statContext.description} The landing page now leads with workload visibility, not just route access.`}
+        />
+        <DashboardInsightGrid>
+          <DashboardInsightCard
+            eyebrow="Load shape"
+            title="Active appraisal work"
+            detail="This chart makes the current cycle pressure readable in one glance."
+            chart={(
+              <DashboardMiniBarChart
+                items={[
+                  { label: "Due now", value: dueMetric, tone: "warning" },
+                  { label: "Self reviews open", value: openSelfAssessments, tone: "accent" },
+                  { label: "Assigned reviews", value: assignedReviews, tone: "info" },
+                  { label: "My total load", value: personalLoad, tone: "success" },
+                ]}
+              />
+            )}
+            footer={<span>{canSeeAdminOverview ? "Admin-capable view combines organisation and personal work." : "Employee view stays focused on your own appraisal commitments."}</span>}
+          />
+          <DashboardInsightCard
+            eyebrow="Work split"
+            title="Where effort is concentrated"
+            detail="A segmented view clarifies whether the month is being driven by due dates, self assessments, or reviewer workload."
+            chart={(
+              <DashboardSegmentList
+                items={[
+                  { label: "Due this month", value: dueMetric, tone: "warning" },
+                  { label: "Open self assessments", value: openSelfAssessments, tone: "accent" },
+                  { label: "Reviewer tasks", value: assignedReviews, tone: "info" },
+                ]}
+              />
+            )}
+            footer={<span>Use this page to decide whether to push cycles, chase reviewers, or complete personal work first.</span>}
+          />
+        </DashboardInsightGrid>
+      </PerformanceSection>
+
+      <PerformanceSection>
+        <PerformanceSectionHeader
           eyebrow="Workspace overview"
-          title="Performance activity"
-          description={statContext.description}
+          title="Action lanes"
+          description="All AMS tools remain available, but they now sit below the dashboard summary instead of replacing it."
         />
         <PerformanceGrid className="p-5">
           {quickLinks.map((item) => {

@@ -127,6 +127,7 @@ function ModuleGraphic({ visual }: { visual: ModuleVisual }) {
 
 export function ModuleCommandCenter({ snapshot }: ModuleCommandCenterProps) {
   const availableCount = snapshot.modules.filter((module) => module.available).length;
+  const spotlightModules = snapshot.modules.slice(0, 3);
 
   return (
     <section className="mnx-module-command-section" aria-label="Module command center">
@@ -142,6 +143,18 @@ export function ModuleCommandCenter({ snapshot }: ModuleCommandCenterProps) {
         </div>
       </header>
 
+      {spotlightModules.length > 0 ? (
+        <div className="mnx-module-command-spotlight" aria-label="Highlighted modules">
+          {spotlightModules.map((module) => (
+            <article key={`spotlight-${module.id}`}>
+              <span>{module.eyebrow}</span>
+              <strong>{module.title}</strong>
+              <p>{module.primaryMetric.label}: {module.primaryMetric.value}</p>
+            </article>
+          ))}
+        </div>
+      ) : null}
+
       <div className="mnx-module-command">
         {snapshot.modules.length > 0 ? (
           <div className="mnx-module-grid">
@@ -151,6 +164,7 @@ export function ModuleCommandCenter({ snapshot }: ModuleCommandCenterProps) {
               return (
                 <Link
                   className="mnx-module-card"
+                  data-available={module.available ? "true" : "false"}
                   data-layout={layout}
                   data-visual={visual}
                   href={module.href}
@@ -166,6 +180,11 @@ export function ModuleCommandCenter({ snapshot }: ModuleCommandCenterProps) {
                     </header>
 
                     <p className="mnx-module-description">{module.description}</p>
+
+                    <div className="mnx-module-card-meta">
+                      <span>{module.available ? "Live workspace" : "Counts unavailable"}</span>
+                      <span>Updated {formatSnapshotTime(snapshot.generatedAt)}</span>
+                    </div>
 
                     <div className="mnx-module-primary-stat">
                       <strong>{String(module.primaryMetric.value).padStart(2, "0")}</strong>
@@ -194,11 +213,13 @@ export function ModuleCommandCenter({ snapshot }: ModuleCommandCenterProps) {
                       <span className="mnx-module-open-link">
                         Open module <ArrowUpRight size={14} />
                       </span>
-                      {module.actions.slice(1, 2).map((action) => (
-                        <span className="mnx-module-secondary-link" key={action.href}>
-                          {action.label}
-                        </span>
-                      ))}
+                      <div className="mnx-module-secondary-links">
+                        {module.actions.slice(1, 3).map((action) => (
+                          <span className="mnx-module-secondary-link" key={action.href}>
+                            {action.label}
+                          </span>
+                        ))}
+                      </div>
                     </footer>
                   </div>
                 </Link>

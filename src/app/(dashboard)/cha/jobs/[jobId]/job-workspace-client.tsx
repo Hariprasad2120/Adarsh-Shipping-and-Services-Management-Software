@@ -1403,6 +1403,7 @@ export function JobWorkspaceClient({
   const [documentSearchQuery, setDocumentSearchQuery] = useState("");
   const [documentsFilterMode, setDocumentsFilterMode] = useState<"ALL" | "PENDING" | "UPLOADED" | "DECLARED_EXEMPTION" | "MARKED_NA">("ALL");
   const [selectedDocumentRequirementId, setSelectedDocumentRequirementId] = useState<string | null>(null);
+  const [activeDocumentCategory, setActiveDocumentCategory] = useState<string | null>(null);
   const [isDocumentDrawerOpen, setIsDocumentDrawerOpen] = useState(true);
   const [documentDrawerTab, setDocumentDrawerTab] = useState<"preview" | "details">("preview");
 
@@ -1489,16 +1490,6 @@ export function JobWorkspaceClient({
     [filteredWorkflowDocuments],
   );
 
-  const selectedWorkflowDocumentRequirement = useMemo(() => {
-    const matchingRequirement = filteredWorkflowDocuments.find((req: WorkflowDocumentRequirement) => req.id === selectedDocumentRequirementId);
-    if (matchingRequirement) return matchingRequirement;
-    return uploadedWorkflowDocuments[0] ?? topRequirementCards[0] ?? filteredWorkflowDocuments[0] ?? null;
-  }, [filteredWorkflowDocuments, selectedDocumentRequirementId, topRequirementCards, uploadedWorkflowDocuments]);
-
-  const selectedWorkflowDocumentVersion = useMemo(() => {
-    if (!selectedWorkflowDocumentRequirement) return null;
-    return selectedWorkflowDocumentRequirement.versions.find((version: WorkflowDocumentVersion) => version.isCurrent) || selectedWorkflowDocumentRequirement.versions[0] || null;
-  }, [selectedWorkflowDocumentRequirement]);
   const getRequirementCategoryName = (requirement: WorkflowDocumentRequirement) =>
     requirement.requirementItem?.category?.name || requirement.category || "General Documents";
   const getRequirementCategorySortOrder = (requirement: WorkflowDocumentRequirement) => {
@@ -1523,9 +1514,9 @@ export function JobWorkspaceClient({
 
     return left.name.localeCompare(right.name);
   }, []);
-  const groupedPendingWorkflowDocuments = useMemo(() => {
+  const documentCategoryGroups = useMemo(() => {
     const grouped = new Map<string, WorkflowDocumentRequirement[]>();
-    for (const requirement of topRequirementCards) {
+    for (const requirement of filteredWorkflowDocuments) {
       const categoryName = getRequirementCategoryName(requirement);
       if (!grouped.has(categoryName)) {
         grouped.set(categoryName, []);
@@ -1543,11 +1534,68 @@ export function JobWorkspaceClient({
         if (left.sortOrder !== right.sortOrder) return left.sortOrder - right.sortOrder;
         return left.categoryName.localeCompare(right.categoryName);
       });
-  }, [sortWorkflowRequirements, topRequirementCards]);
-  const sortedUploadedWorkflowDocuments = useMemo(
-    () => [...uploadedWorkflowDocuments].sort(sortWorkflowRequirements),
-    [sortWorkflowRequirements, uploadedWorkflowDocuments],
+  }, [filteredWorkflowDocuments, sortWorkflowRequirements]);
+  const activeDocumentCategoryName = useMemo(() => {
+    if (!documentCategoryGroups.length) return null;
+    if (activeDocumentCategory && documentCategoryGroups.some((group) => group.categoryName === activeDocumentCategory)) {
+      return activeDocumentCategory;
+    }
+    return documentCategoryGroups[0]?.categoryName ?? null;
+  }, [activeDocumentCategory, documentCategoryGroups]);
+  const activeDocumentCategoryGroup = useMemo(
+    () => documentCategoryGroups.find((group) => group.categoryName === activeDocumentCategoryName) ?? null,
+    [activeDocumentCategoryName, documentCategoryGroups],
   );
+  const activeDocumentCategoryRequirements = activeDocumentCategoryGroup?.requirements ?? [];
+  const selectedWorkflowDocumentRequirement = useMemo(() => {
+    const matchingRequirement = activeDocumentCategoryRequirements.find((req: WorkflowDocumentRequirement) => req.id === selectedDocumentRequirementId);
+    if (matchingRequirement) return matchingRequirement;
+    return activeDocumentCategoryRequirements[0] ?? uploadedWorkflowDocuments[0] ?? topRequirementCards[0] ?? filteredWorkflowDocuments[0] ?? null;
+  }, [activeDocumentCategoryRequirements, filteredWorkflowDocuments, selectedDocumentRequirementId, topRequirementCards, uploadedWorkflowDocuments]);
+  const selectedWorkflowDocumentVersion = useMemo(() => {
+    if (!selectedWorkflowDocumentRequirement) return null;
+    return selectedWorkflowDocumentRequirement.versions.find((version: WorkflowDocumentVersion) => version.isCurrent) || selectedWorkflowDocumentRequirement.versions[0] || null;
+  }, [selectedWorkflowDocumentRequirement]);
+  const selectWorkflowDocumentRequirement = useCallback(
+    (
+      requirementId: string,
+      options?: {
+        openDrawer?: boolean;
+        tab?: "preview" | "details";
+      },
+    ) => {
+      const requirement = filteredWorkflowDocuments.find((entry: WorkflowDocumentRequirement) => entry.id === requirementId);
+      if (requirement) {
+        setActiveDocumentCategory(getRequirementCategoryName(requirement));
+        setSelectedDocumentRequirementId(requirement.id);
+      }
+      if (options?.tab) {
+        setDocumentDrawerTab(options.tab);
+      }
+      if (options?.openDrawer ?? true) {
+        setIsDocumentDrawerOpen(true);
+      }
+    },
+    [filteredWorkflowDocuments],
+  );
+
+  useEffect(() => {
+    if (activeDocumentCategoryName !== activeDocumentCategory) {
+      setActiveDocumentCategory(activeDocumentCategoryName);
+    }
+  }, [activeDocumentCategory, activeDocumentCategoryName]);
+
+  useEffect(() => {
+    if (!selectedWorkflowDocumentRequirement) {
+      if (selectedDocumentRequirementId !== null) {
+        setSelectedDocumentRequirementId(null);
+      }
+      return;
+    }
+    if (selectedWorkflowDocumentRequirement.id !== selectedDocumentRequirementId) {
+      setSelectedDocumentRequirementId(selectedWorkflowDocumentRequirement.id);
+    }
+  }, [selectedDocumentRequirementId, selectedWorkflowDocumentRequirement]);
 
 
   // Document Collection Form State
@@ -5718,6 +5766,7 @@ export function JobWorkspaceClient({
       value: job.customer?.name || "Not assigned",
       secondary: job.customer?.branchName || null,
       icon: <Building2 size={16} />,
+      featured: true,
     },
     {
       label: "Owner",
@@ -5866,9 +5915,9 @@ export function JobWorkspaceClient({
             }}
           >
             <div className="absolute inset-0 hidden dark:block" style={{ background: "linear-gradient(90deg, color-mix(in srgb, var(--mnx-surface) 72%, transparent) 0%, color-mix(in srgb, var(--mnx-surface) 72%, transparent) 48%, color-mix(in srgb, var(--mnx-surface) 72%, transparent) 74%, color-mix(in srgb, var(--mnx-surface) 72%, transparent) 100%)" }} />
-            <div className="relative space-y-5 px-5 py-5">
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                <div className="min-w-0 space-y-2">
+            <div className="mnx-cha-job-hero relative px-5 py-5">
+              <div className="mnx-cha-job-hero-header">
+                <div className="mnx-cha-job-hero-identity">
                   <div className="flex flex-wrap items-center gap-2">
                     {topJobBadges.map((badge) => (
                       <Badge key={`${badge.label}-${badge.variant}`} variant={badge.variant} className="uppercase">
@@ -5876,57 +5925,58 @@ export function JobWorkspaceClient({
                       </Badge>
                     ))}
                   </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h1 className="mnx-heading-1 mnx-numeric mnx-text-primary">{job.jobNumber}</h1>
+                  <div className="mnx-cha-job-hero-title-row">
+                    <h1 className="mnx-cha-job-hero-title mnx-heading-1 mnx-numeric mnx-text-primary">{job.jobNumber}</h1>
                     <Button
                       type="button"
                       onClick={async () => {
                         await navigator.clipboard.writeText(job.jobNumber);
                         toast.success("Job number copied.");
                       }}
-                      className="mnx-plain rounded-full border mnx-border p-2 mnx-text-muted transition mnx-hover-accent mnx-hover-accent"
+                      className="mnx-cha-job-copy-button mnx-plain"
                       aria-label="Copy job number"
                     >
                       <Copy size={14} />
                     </Button>
                   </div>
-                  <p className="text-sm mnx-text-muted">{job.title}</p>
+                  <p className="mnx-cha-job-hero-subtitle text-sm mnx-text-muted">{job.title}</p>
                 </div>
 
-                <div className="flex items-center gap-2 self-start">
+                <div className="mnx-cha-job-hero-actions">
                   {canDeleteJob ? (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0 mnx-border-danger mnx-bg-soft mnx-text-danger mnx-hover-danger mnx-hover-accent mnx-hover-danger mnx-bg-surface mnx-text-danger [&_svg]:!stroke-red-500"
-                        disabled={loading !== null || Boolean(activeDeletionRequest)}
-                        onClick={() => setDeleteModalMode("delete")}
-                      >
-                        <Trash2 className="mr-1.5 size-3.5" />
-                        Delete Job
-                      </Button>
-                    </>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 mnx-border-danger mnx-bg-soft mnx-text-danger mnx-hover-danger mnx-hover-accent mnx-hover-danger mnx-bg-surface mnx-text-danger [&_svg]:!stroke-red-500"
+                      disabled={loading !== null || Boolean(activeDeletionRequest)}
+                      onClick={() => setDeleteModalMode("delete")}
+                    >
+                      <Trash2 className="mr-1.5 size-3.5" />
+                      Delete Job
+                    </Button>
                   ) : null}
                 </div>
               </div>
 
-              <div className="w-full rounded-xl border mnx-border mnx-bg-soft mnx-shadow-panel backdrop-blur-xl mnx-border mnx-bg-accent-soft">
-                <div className="flex flex-col xl:flex-row w-full divide-y xl:divide-y-0 xl:divide-x mnx-border-accent mnx-border">
+              <div className="mnx-cha-job-meta-board">
+                <div className="mnx-cha-job-meta-grid">
                   {overviewMetaItems.map((item) => (
                     <div
                       key={item.label}
-                      className="flex min-h-[104px] items-start gap-3 px-4 py-4 flex-auto min-w-[140px]"
+                      className={cn(
+                        "mnx-cha-job-meta-card",
+                        item.featured && "mnx-cha-job-meta-card-featured",
+                      )}
                     >
-                      <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl mnx-bg-accent-soft mnx-text-accent mnx-shadow-panel">
+                      <span className="mnx-cha-job-meta-icon">
                         {item.icon}
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="mnx-label">{item.label}</p>
-                        <p className="mt-1 break-words text-sm font-medium mnx-text-primary">{item.value}</p>
+                        <p className="mnx-cha-job-meta-value">{item.value}</p>
                         {item.secondary ? (
-                          <p 
-                            className="mt-1 break-all text-xs leading-normal mnx-text-muted"
+                          <p
+                            className="mnx-cha-job-meta-secondary"
                             title={item.secondary}
                           >
                             {item.secondary}
@@ -5936,7 +5986,7 @@ export function JobWorkspaceClient({
                           <Button
                             type="button"
                             onClick={() => setIsEditingManager(true)}
-                            className="mt-2 rounded-full border mnx-border-accent mnx-bg-soft px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] mnx-text-accent transition-colors mnx-hover-accent mnx-hover-accent mnx-bg-accent-soft mnx-text-accent"
+                            className="mnx-cha-job-meta-action"
                           >
                             Change
                           </Button>
@@ -6513,111 +6563,243 @@ export function JobWorkspaceClient({
                           </Button>
                         </div>
 
-                        <div className="grid gap-4 xl:grid-cols-2">
-                          {sortedUploadedWorkflowDocuments.length > 0 ? (
-                            sortedUploadedWorkflowDocuments.map((req: any) => {
-                              const currentVersion = req.versions.find((version: WorkflowDocumentVersion) => version.isCurrent) || req.versions[0];
-                              if (!currentVersion) return null;
-                              const customerSubmission = req.customerSubmission ?? null;
-                              const usesCustomerSubmission = Boolean(req.usesCustomerSubmission && customerSubmission);
-                              const canAcceptCustomerSubmission =
-                                usesCustomerSubmission &&
-                                ["UPLOADED", "UNDER_REVIEW", "CLARIFICATION_REQUIRED", "REUPLOAD_REQUIRED"].includes(customerSubmission.status);
+                        {filteredWorkflowDocuments.length > 0 ? (
+                          <div className="mnx-cha-document-flow space-y-4">
+                            <div className="mnx-cha-document-category-tabs" role="tablist" aria-label="Document categories">
+                              {documentCategoryGroups.map((group) => {
+                                const uploadedCount = group.requirements.filter((requirement) => {
+                                  const currentVersion = requirement.versions.find((version: WorkflowDocumentVersion) => version.isCurrent) || requirement.versions[0];
+                                  return !!currentVersion && !["REUPLOAD_REQUIRED", "CLARIFICATION_REQUIRED", "REJECTED"].includes(requirement.status);
+                                }).length;
+                                const pendingCount = group.requirements.length - uploadedCount;
+                                const isActive = group.categoryName === activeDocumentCategoryName;
 
-                              return (
-                                <div
-                                  key={req.id}
-                                  ref={(element) => {
-                                    documentRequirementCardRefs.current[req.id] = element;
-                                  }}
-                                  className={cn("h-full", highlightedDocumentReqId === req.id ? "animate-doc-missing-blink" : "")}
-                                >
-                                  <UploadedWorkflowDocumentCard
-                                    requirement={req}
-                                    version={currentVersion}
-                                    loadingKey={loading}
-                                    currentUserId={currentUserId}
-                                    canDelete={Boolean(canDeleteDoc || canManageSettings || currentUserId === job.primaryOwnerId)}
-                                    selected={selectedDocumentRequirementId === req.id}
-                                    onSelect={(requirementId) => {
-                                      setSelectedDocumentRequirementId(requirementId);
-                                      setIsDocumentDrawerOpen(true);
+                                return (
+                                  <Button
+                                    key={group.categoryName}
+                                    type="button"
+                                    variant="outline"
+                                    role="tab"
+                                    aria-selected={isActive}
+                                    className={cn(
+                                      "mnx-cha-document-category-tab",
+                                      isActive && "mnx-cha-document-category-tab-active",
+                                    )}
+                                    onClick={() => {
+                                      setActiveDocumentCategory(group.categoryName);
+                                      setSelectedDocumentRequirementId(group.requirements[0]?.id ?? null);
                                       setDocumentDrawerTab("preview");
-                                    }}
-                                    onPreview={(requirementId) => {
-                                      setSelectedDocumentRequirementId(requirementId);
                                       setIsDocumentDrawerOpen(true);
-                                      setDocumentDrawerTab("preview");
                                     }}
-                                    onDelete={(requirementId, versionId, fileName) =>
-                                      setDeleteDocModal({
-                                        reqId: requirementId,
-                                        versionId,
-                                        fileName,
-                                      })
-                                    }
-                                    onDeclareExemption={(requirementId) => {
-                                      setSelectedDocumentRequirementId(requirementId);
-                                      setIsDocumentDrawerOpen(false);
-                                      setActiveDocReqId(requirementId);
-                                      const currentRequirement = documentRequirements.find((entry: any) => entry.id === requirementId);
-                                      setExceptionReason(
-                                        currentRequirement?.exception?.reason === "N/A"
-                                          ? ""
-                                          : currentRequirement?.exception?.reason || "",
-                                      );
-                                    }}
-                                    onMarkNa={handleMarkNotAvailable}
-                                    onUpload={setUploadDocumentModalReqId}
-                                    uploadButtonLabel={usesCustomerSubmission ? "Upload CHA Copy" : undefined}
-                                    helperContent={
-                                      usesCustomerSubmission ? (
-                                        <div className="space-y-2">
-                                          <div className="flex flex-wrap items-center gap-2">
-                                            <Badge variant="secondary">CUSTOMER PORTAL</Badge>
-                                            {customerSubmission.portalUser?.name ? (
-                                              <span className="text-xs mnx-text-muted">
-                                                Uploaded by {customerSubmission.portalUser.name}
-                                              </span>
-                                            ) : null}
-                                          </div>
-                                          <p className="text-sm font-semibold mnx-text-primary">
-                                            Customer-uploaded file awaiting CHA decision
-                                          </p>
-                                          <p className="text-xs mnx-text-muted">
-                                            Accept this file to save it as the submitted CHA document, or upload the CHA copy yourself if you need to replace it.
-                                          </p>
-                                          {customerSubmission.reviewerComment ? (
-                                            <p className="text-xs mnx-text-warning">{customerSubmission.reviewerComment}</p>
-                                          ) : null}
-                                        </div>
-                                      ) : null
-                                    }
-                                    footerActions={
-                                      canAcceptCustomerSubmission ? (
-                                        <Button
-                                          type="button"
-                                          size="sm"
-                                          className="gap-2"
-                                          disabled={loading !== null}
-                                          onClick={() => handleAcceptCustomerDocument(req.id)}
-                                        >
-                                          <CheckCircle2 size={14} />
-                                          {loading === `customer-accept-${req.id}` ? "Accepting..." : "Accept Customer Upload"}
-                                        </Button>
-                                      ) : null
-                                    }
-                                  />
-                                </div>
-                              );
-                            })
-                          ) : (
-                            <div className="xl:col-span-2 flex items-center justify-center gap-3 rounded-xl border border-dashed mnx-border mnx-bg-surface p-8 text-center text-sm mnx-text-muted mnx-shadow-panel">
-                              <Search size={18} className="shrink-0 mnx-text-accent" />
-                              <span>No uploaded documents match the current search and filter state yet.</span>
+                                  >
+                                    <span className="mnx-cha-document-category-tab-copy">
+                                      <span className="mnx-cha-document-category-tab-title">{group.categoryName}</span>
+                                      <span className="mnx-cha-document-category-tab-meta">
+                                        {group.requirements.length} item{group.requirements.length === 1 ? "" : "s"} • {pendingCount} pending
+                                      </span>
+                                    </span>
+                                    <span className="mnx-cha-document-category-tab-badges">
+                                      <span className="mnx-cha-document-category-count">{uploadedCount} up</span>
+                                      <span className="mnx-cha-document-category-count mnx-cha-document-category-count-pending">{pendingCount} due</span>
+                                    </span>
+                                  </Button>
+                                );
+                              })}
                             </div>
-                          )}
-                        </div>
+
+                            {activeDocumentCategoryGroup && selectedWorkflowDocumentRequirement ? (
+                              <div className="mnx-cha-document-workspace">
+                                <section className="mnx-cha-document-stage-panel mnx-bg-surface mnx-border p-5">
+                                  <div className="mnx-cha-document-stage-panel-header">
+                                    <div className="grid grid-cols-[4px_minmax(0,1fr)] items-start gap-3">
+                                      <span className="mt-0.5 h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
+                                      <div className="min-w-0 space-y-1">
+                                        <p className="mnx-heading-3 mnx-text-primary">{activeDocumentCategoryGroup.categoryName}</p>
+                                        <p className="text-sm mnx-text-muted">
+                                          Move through each requirement in this category one by one. The selected document stays in focus while upload and preview remain on the right.
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="mnx-cha-document-stage-summary">
+                                      <span className="mnx-cha-document-stage-summary-chip">
+                                        {activeDocumentCategoryRequirements.length} requirement{activeDocumentCategoryRequirements.length === 1 ? "" : "s"}
+                                      </span>
+                                      <span className="mnx-cha-document-stage-summary-chip">
+                                        {activeDocumentCategoryRequirements.filter((requirement) => requirement.status === "UPLOADED" || requirement.status === "ACCEPTED").length} uploaded
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="mnx-cha-document-requirement-tabs" role="tablist" aria-label={`${activeDocumentCategoryGroup.categoryName} requirements`}>
+                                    {activeDocumentCategoryRequirements.map((requirement) => {
+                                      const isSelected = selectedWorkflowDocumentRequirement.id === requirement.id;
+                                      const isUploaded = requirement.status === "UPLOADED" || requirement.status === "ACCEPTED";
+                                      const isException = requirement.status === "NOT_AVAILABLE" || Boolean(requirement.exception);
+
+                                      return (
+                                        <Button
+                                          key={requirement.id}
+                                          type="button"
+                                          variant="outline"
+                                          role="tab"
+                                          aria-selected={isSelected}
+                                          className={cn(
+                                            "mnx-cha-document-requirement-tab",
+                                            isSelected && "mnx-cha-document-requirement-tab-active",
+                                          )}
+                                          onClick={() => selectWorkflowDocumentRequirement(requirement.id, { openDrawer: true, tab: "preview" })}
+                                        >
+                                          <span className="mnx-cha-document-requirement-tab-copy">
+                                            <span className="mnx-cha-document-requirement-tab-title">{requirement.name}</span>
+                                            <span className="mnx-cha-document-requirement-tab-meta">
+                                              {requirement.isMandatory ? "Mandatory" : "Optional"} • {isUploaded ? "Uploaded" : isException ? "Exception" : "Pending"}
+                                            </span>
+                                          </span>
+                                          <span
+                                            className={cn(
+                                              "mnx-cha-document-requirement-dot",
+                                              isUploaded
+                                                ? "mnx-cha-document-requirement-dot-success"
+                                                : isException
+                                                  ? "mnx-cha-document-requirement-dot-warning"
+                                                  : "mnx-cha-document-requirement-dot-muted",
+                                            )}
+                                            aria-hidden="true"
+                                          />
+                                        </Button>
+                                      );
+                                    })}
+                                  </div>
+
+                                  <div
+                                    ref={(element) => {
+                                      documentRequirementCardRefs.current[selectedWorkflowDocumentRequirement.id] = element;
+                                    }}
+                                    className={cn(
+                                      "mt-4",
+                                      highlightedDocumentReqId === selectedWorkflowDocumentRequirement.id && "animate-doc-missing-blink",
+                                    )}
+                                  >
+                                    {(() => {
+                                      const selectedRequirement = selectedWorkflowDocumentRequirement as WorkflowDocumentRequirement & {
+                                        customerSubmission?: any;
+                                        usesCustomerSubmission?: boolean;
+                                      };
+                                      const currentVersion = selectedRequirement.versions.find((version: WorkflowDocumentVersion) => version.isCurrent) || selectedRequirement.versions[0];
+
+                                      if (currentVersion && !["REUPLOAD_REQUIRED", "CLARIFICATION_REQUIRED", "REJECTED"].includes(selectedRequirement.status)) {
+                                        const customerSubmission = selectedRequirement.customerSubmission ?? null;
+                                        const usesCustomerSubmission = Boolean(selectedRequirement.usesCustomerSubmission && customerSubmission);
+                                        const canAcceptCustomerSubmission =
+                                          usesCustomerSubmission &&
+                                          ["UPLOADED", "UNDER_REVIEW", "CLARIFICATION_REQUIRED", "REUPLOAD_REQUIRED"].includes(customerSubmission.status);
+
+                                        return (
+                                          <UploadedWorkflowDocumentCard
+                                            requirement={selectedRequirement}
+                                            version={currentVersion}
+                                            loadingKey={loading}
+                                            currentUserId={currentUserId}
+                                            canDelete={Boolean(canDeleteDoc || canManageSettings || currentUserId === job.primaryOwnerId)}
+                                            selected
+                                            onSelect={(requirementId) => selectWorkflowDocumentRequirement(requirementId, { openDrawer: true, tab: "preview" })}
+                                            onPreview={(requirementId) => selectWorkflowDocumentRequirement(requirementId, { openDrawer: true, tab: "preview" })}
+                                            onDelete={(requirementId, versionId, fileName) =>
+                                              setDeleteDocModal({
+                                                reqId: requirementId,
+                                                versionId,
+                                                fileName,
+                                              })
+                                            }
+                                            onDeclareExemption={(requirementId) => {
+                                              setSelectedDocumentRequirementId(requirementId);
+                                              setIsDocumentDrawerOpen(false);
+                                              setActiveDocReqId(requirementId);
+                                              const currentRequirement = documentRequirements.find((entry: any) => entry.id === requirementId);
+                                              setExceptionReason(
+                                                currentRequirement?.exception?.reason === "N/A"
+                                                  ? ""
+                                                  : currentRequirement?.exception?.reason || "",
+                                              );
+                                            }}
+                                            onMarkNa={handleMarkNotAvailable}
+                                            onUpload={setUploadDocumentModalReqId}
+                                            uploadButtonLabel={usesCustomerSubmission ? "Upload CHA Copy" : undefined}
+                                            helperContent={
+                                              usesCustomerSubmission ? (
+                                                <div className="space-y-2">
+                                                  <div className="flex flex-wrap items-center gap-2">
+                                                    <Badge variant="secondary">CUSTOMER PORTAL</Badge>
+                                                    {customerSubmission.portalUser?.name ? (
+                                                      <span className="text-xs mnx-text-muted">
+                                                        Uploaded by {customerSubmission.portalUser.name}
+                                                      </span>
+                                                    ) : null}
+                                                  </div>
+                                                  <p className="text-sm font-semibold mnx-text-primary">
+                                                    Customer-uploaded file awaiting CHA decision
+                                                  </p>
+                                                  <p className="text-xs mnx-text-muted">
+                                                    Accept this file to save it as the submitted CHA document, or upload the CHA copy yourself if you need to replace it.
+                                                  </p>
+                                                  {customerSubmission.reviewerComment ? (
+                                                    <p className="text-xs mnx-text-warning">{customerSubmission.reviewerComment}</p>
+                                                  ) : null}
+                                                </div>
+                                              ) : null
+                                            }
+                                            footerActions={
+                                              canAcceptCustomerSubmission ? (
+                                                <Button
+                                                  type="button"
+                                                  size="sm"
+                                                  className="gap-2"
+                                                  disabled={loading !== null}
+                                                  onClick={() => handleAcceptCustomerDocument(selectedRequirement.id)}
+                                                >
+                                                  <CheckCircle2 size={14} />
+                                                  {loading === `customer-accept-${selectedRequirement.id}` ? "Accepting..." : "Accept Customer Upload"}
+                                                </Button>
+                                              ) : null
+                                            }
+                                          />
+                                        );
+                                      }
+
+                                      return (
+                                        <RequirementDocumentCard
+                                          requirement={selectedRequirement}
+                                          loadingKey={loading}
+                                          selected
+                                          onSelect={(requirementId) => selectWorkflowDocumentRequirement(requirementId, { openDrawer: true, tab: "preview" })}
+                                          onUndo={handleRemoveException}
+                                          onUpload={setUploadDocumentModalReqId}
+                                          onDeclareExemption={(requirementId) => {
+                                            setSelectedDocumentRequirementId(requirementId);
+                                            setIsDocumentDrawerOpen(false);
+                                            setActiveDocReqId(requirementId);
+                                            const currentRequirement = documentRequirements.find((entry: any) => entry.id === requirementId);
+                                            setExceptionReason(
+                                              currentRequirement?.exception?.reason === "N/A"
+                                                ? ""
+                                                : currentRequirement?.exception?.reason || "",
+                                            );
+                                          }}
+                                          onMarkNa={handleMarkNotAvailable}
+                                        />
+                                      );
+                                    })()}
+                                  </div>
+                                </section>
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center gap-3 rounded-xl border border-dashed mnx-border mnx-bg-surface p-8 text-center text-sm mnx-text-muted mnx-shadow-panel">
+                            <Search size={18} className="shrink-0 mnx-text-accent" />
+                            <span>No document requirements match the current search and filter state.</span>
+                          </div>
+                        )}
 
                         {section49Requirement ? (
                           <div className="rounded-[24px] border mnx-border mnx-bg-surface p-5 mnx-shadow-panel">
@@ -6810,64 +6992,6 @@ export function JobWorkspaceClient({
                             </div>
                           </div>
                         ) : null}
-
-                        <div className="space-y-4">
-                          {groupedPendingWorkflowDocuments.length > 0 ? (
-                            groupedPendingWorkflowDocuments.map((group) => (
-                              <section key={group.categoryName} className="space-y-4">
-                                <div className="grid grid-cols-[4px_minmax(0,1fr)] items-start gap-3">
-                                  <span className="mt-0.5 h-7 w-1 rounded-sm mnx-bg-accent-soft" aria-hidden="true" />
-                                  <div className="min-w-0 space-y-1">
-                                    <p className="mnx-heading-3 mnx-text-primary">{group.categoryName}</p>
-                                    <p className="text-sm mnx-text-muted">
-                                      {group.requirements.length} requirement{group.requirements.length === 1 ? "" : "s"} pending action in this category.
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="grid gap-4 xl:grid-cols-2">
-                                  {group.requirements.map((req: WorkflowDocumentRequirement) => (
-                                    <div
-                                      key={req.id}
-                                      ref={(element) => {
-                                        documentRequirementCardRefs.current[req.id] = element;
-                                      }}
-                                      className={highlightedDocumentReqId === req.id ? "animate-doc-missing-blink" : ""}
-                                    >
-                                      <RequirementDocumentCard
-                                        requirement={req}
-                                        loadingKey={loading}
-                                        selected={selectedDocumentRequirementId === req.id}
-                                        onSelect={(requirementId) => {
-                                          setSelectedDocumentRequirementId(requirementId);
-                                          setIsDocumentDrawerOpen(true);
-                                          setDocumentDrawerTab("preview");
-                                        }}
-                                        onUndo={handleRemoveException}
-                                        onUpload={setUploadDocumentModalReqId}
-                                        onDeclareExemption={(requirementId) => {
-                                          setSelectedDocumentRequirementId(requirementId);
-                                          setIsDocumentDrawerOpen(false);
-                                          setActiveDocReqId(requirementId);
-                                          const currentRequirement = documentRequirements.find((entry: any) => entry.id === requirementId);
-                                          setExceptionReason(
-                                            currentRequirement?.exception?.reason === "N/A"
-                                              ? ""
-                                              : currentRequirement?.exception?.reason || "",
-                                          );
-                                        }}
-                                        onMarkNa={handleMarkNotAvailable}
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                              </section>
-                            ))
-                          ) : (
-                            <div className="rounded-[24px] border mnx-border mnx-bg-surface p-8 text-center text-sm mnx-text-muted mnx-shadow-panel">
-                              No pending or exception-based requirements match the current filter.
-                            </div>
-                          )}
-                        </div>
 
                         {job.stage === "DOCUMENT_COLLECTION" && (
                           <div className="flex flex-col gap-3 border-t mnx-border pt-4 sm:items-end">

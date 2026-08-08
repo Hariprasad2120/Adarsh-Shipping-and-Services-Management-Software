@@ -1,11 +1,13 @@
-import React from "react";
-import { getSession } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { TravelView } from "@/modules/hrms/components/travel-view";
+import { renderExpenseWorkspacePage } from "@/modules/expense/server/expense-workspace-page";
 
-export default async function TravelPage() {
-  const session = await getSession();
-  if (!session) redirect("/login");
-
-  return <TravelView />;
+export default async function TravelPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return renderExpenseWorkspacePage({
+    basePath: "/hrms/travel",
+    enforceChaAccess: false,
+    searchParams,
+  });
 }

@@ -308,15 +308,15 @@ function SectionTable({
               <DataTablePrimaryLinkCell
                 href={`/hrms/employees/${user.id}`}
                 className="px-0 py-0"
-                linkClassName="min-w-0 gap-3 py-3.5"
+                linkClassName="flex min-w-0 items-center gap-3 px-5 py-3.5 no-underline hover:no-underline"
               >
-                <div className="relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--mnx-accent)]/15 text-xs font-medium text-[var(--mnx-accent-text)]">
+                <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-[var(--frappe-radius-md)] border border-[var(--frappe-border)] bg-[var(--frappe-bg-subtle)] text-xs font-semibold text-[var(--frappe-text-muted)]">
                   {user.photo ? (
                     <Image
                       alt=""
                       className="object-cover"
                       fill
-                      sizes="44px"
+                      sizes="48px"
                       src={user.photo}
                       unoptimized
                     />
@@ -325,7 +325,7 @@ function SectionTable({
                   )}
                 </div>
 
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-mono-text">
                     <span className="mnx-numeric text-mono-muted">
                       {employeeNumberFor(user)}

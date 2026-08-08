@@ -4,11 +4,11 @@ import { cn } from "@/lib/utils";
 export type BadgeVariant = "default" | "secondary" | "success" | "warning" | "destructive";
 
 const variants: Record<BadgeVariant, string> = {
-  default: "info-badge",
-  secondary: "neutral",
-  success: "success-badge",
-  warning: "warning-badge",
-  destructive: "danger-badge",
+  default: "mnx-badge mnx-badge-accent",
+  secondary: "mnx-badge mnx-badge-neutral",
+  success: "mnx-badge mnx-badge-success",
+  warning: "mnx-badge mnx-badge-warning",
+  destructive: "mnx-badge mnx-badge-danger",
 };
 
 export function Badge({
@@ -16,5 +16,5 @@ export function Badge({
   className,
   ...props
 }: React.HTMLAttributes<HTMLSpanElement> & { variant?: BadgeVariant }) {
-  return <span className={cn("badge", variants[variant], className)} {...props} />;
+  return <span className={cn(variants[variant], className)} {...props} />;
 }

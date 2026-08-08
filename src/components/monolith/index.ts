@@ -14,6 +14,7 @@ export * from "@/components/forms/file-upload/file-upload-field";
 export * from "@/components/forms/file-upload/document-dropzone-field";
 export * from "@/components/feedback/warning-indicator-popover";
 export * from "@/components/data-display/operational-data-table";
+export * from "@/components/data-display/dashboard-insights";
 export * from "@/components/navigation/clickable-row";
 export * from "@/modules/admin/components/admin-workspace";
 export * from "@/modules/accounting/components/accounting-workspace";

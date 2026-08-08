@@ -557,6 +557,61 @@ button.mnx-accounting-record-card {
   text-wrap: pretty;
 }
 
+.mnx-accounting-page[data-workspace-surface="single"] {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-content {
+  gap: 0;
+}
+
+.mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-content > * + * {
+  border-top: 1px solid var(--mnx-border);
+}
+
+.mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-breadcrumbs,
+.mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-page-header,
+.mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-section,
+.mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-panel,
+.mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-toolbar {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-breadcrumbs {
+  padding: var(--mn-space-4) var(--mn-space-5) 0;
+}
+
+.mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-breadcrumbs ol {
+  padding: 0;
+}
+
+.mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-page-header {
+  padding: var(--mn-space-4) var(--mn-space-5) var(--mn-space-5);
+}
+
+.mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-page-header::after {
+  display: none;
+}
+
+.mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-section-header,
+.mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-toolbar {
+  padding-inline: var(--mn-space-5);
+  background: transparent;
+}
+
+.mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-section-content {
+  padding-inline: 0;
+}
+
 @media (max-width: 64rem) {
   .mnx-accounting-quotation-shell,
   .mnx-accounting-quotation-overview-grid {
@@ -581,6 +636,13 @@ button.mnx-accounting-record-card {
 }
 
 @media (max-width: 42rem) {
+  .mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-breadcrumbs,
+  .mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-page-header,
+  .mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-section-header,
+  .mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-toolbar {
+    padding-inline: var(--mn-space-4);
+  }
+
   .mnx-accounting-page-header {
     padding: var(--mn-space-5);
   }
@@ -653,5 +715,139 @@ button.mnx-accounting-record-card {
   .mnx-accounting-panel {
     break-inside: avoid;
     box-shadow: none;
+  }
+}
+
+/* Payments page experiment: single full-width workspace surface */
+.mnx-accounting-page.mnx-accounting-page-flat,
+.mnx-accounting-page:has(.mnx-accounting-payments-route) {
+  width: 100%;
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mnx-accounting-page.mnx-accounting-page-flat .mnx-accounting-content,
+.mnx-accounting-page:has(.mnx-accounting-payments-route) .mnx-accounting-content {
+  width: 100%;
+  max-width: none;
+}
+
+.mnx-accounting-payments-route {
+  width: 100%;
+  min-width: 0;
+}
+
+.mnx-accounting-payments-header {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mnx-accounting-payments-route .mnx-accounting-breadcrumbs {
+  padding: var(--mn-space-4) var(--mn-space-5) 0;
+}
+
+.mnx-accounting-payments-route .mnx-accounting-breadcrumbs ol {
+  padding: 0;
+}
+
+.mnx-accounting-payments-route .mnx-accounting-page-header {
+  padding: var(--mn-space-4) var(--mn-space-5) var(--mn-space-5);
+}
+
+.mnx-accounting-payments-body {
+  display: grid;
+  min-width: 0;
+}
+
+.mnx-accounting-payments-body > * + * {
+  border-top: 1px solid var(--mnx-border);
+}
+
+.mnx-accounting-payments-section {
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mnx-accounting-payments-section .mnx-accounting-section-header {
+  padding: var(--mn-space-4) var(--mn-space-5);
+  border-bottom: 1px solid var(--mnx-border);
+  background: transparent;
+}
+
+.mnx-accounting-payments-section .mnx-accounting-section-content {
+  padding: 0;
+}
+
+.mnx-accounting-payments-route .mnx-accounting-table {
+  width: 100%;
+  min-width: 0;
+}
+
+.mnx-accounting-payments-route .mnx-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.mnx-accounting-payments-route .mnx-accounting-table thead th {
+  top: 0;
+  background: var(--mnx-bg-subtle);
+}
+
+.mnx-accounting-payments-route .mnx-accounting-table :is(th, td):first-child {
+  padding-left: var(--mn-space-5);
+}
+
+.mnx-accounting-payments-route .mnx-accounting-table :is(th, td):last-child {
+  padding-right: var(--mn-space-5);
+}
+
+.mnx-accounting-payments-route .mnx-accounting-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mn-space-3);
+  padding: var(--mn-space-4) var(--mn-space-5);
+  border-top: 1px solid var(--mnx-border);
+  background: transparent;
+}
+
+.mnx-accounting-payments-route .mnx-accounting-pagination > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mn-space-2);
+}
+
+@media (max-width: 47.5rem) {
+  .mnx-accounting-page.mnx-accounting-page-flat,
+  .mnx-accounting-page:has(.mnx-accounting-payments-route) {
+    border-radius: 0;
+  }
+
+  .mnx-accounting-payments-route .mnx-accounting-breadcrumbs,
+  .mnx-accounting-payments-route .mnx-accounting-page-header,
+  .mnx-accounting-payments-section .mnx-accounting-section-header,
+  .mnx-accounting-payments-route .mnx-accounting-pagination {
+    padding-inline: var(--mn-space-4);
+  }
+
+  .mnx-accounting-payments-route .mnx-accounting-table :is(th, td):first-child {
+    padding-left: var(--mn-space-4);
+  }
+
+  .mnx-accounting-payments-route .mnx-accounting-table :is(th, td):last-child {
+    padding-right: var(--mn-space-4);
+  }
+
+  .mnx-accounting-payments-route .mnx-accounting-pagination {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

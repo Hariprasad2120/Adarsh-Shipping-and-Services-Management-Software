@@ -3,8 +3,7 @@ import { Lock } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { WorkspaceState } from "@/components/monolith";
-import DesignSystemClient from "./design-system-client";
-import "./design-system-catalogue.css";
+import "./design-system.css";
 
 export default async function AdminDesignSystemPage() {
   const session = await getSession();
@@ -23,5 +22,5 @@ export default async function AdminDesignSystemPage() {
     );
   }
 
-  return <DesignSystemClient />;
+  return null;
 }

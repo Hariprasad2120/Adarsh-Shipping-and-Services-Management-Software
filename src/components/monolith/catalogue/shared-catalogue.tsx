@@ -3,6 +3,7 @@
 import {
   ArrowRight,
   Check,
+  CircleDot,
   Info,
   ListFilter,
   MoreHorizontal,
@@ -14,6 +15,10 @@ import {
 import {
   Button,
   ButtonLink,
+  DashboardInsightCard,
+  DashboardInsightGrid,
+  DashboardMiniBarChart,
+  DashboardSegmentList,
   DocumentDropzoneField,
   DropdownSelect,
   Input,
@@ -318,6 +323,52 @@ export const sharedCatalogue: CatalogueEntry[] = [
     states: ["static", "actionable"],
     interactive: true,
     accessibility: "Actionable metrics are links with an accessible name.",
+  },
+  {
+    id: "dashboard-insights",
+    component: "DashboardInsightCard",
+    displayName: "Dashboard insights",
+    category: "Cards & panels",
+    scope: "shared",
+    description: "Compact visual insight cards used to turn module home routes into real dashboards.",
+    status: "stable",
+    source: "src/components/data-display/dashboard-insights.tsx",
+    render: () => (
+      <DashboardInsightGrid>
+        <DashboardInsightCard
+          eyebrow="Operational split"
+          title="Attention queues"
+          detail="Charts stay lightweight and theme-safe while keeping dashboard pages purposeful."
+          chart={(
+            <DashboardMiniBarChart
+              items={[
+                { label: "Pending", value: 12, tone: "warning" },
+                { label: "In review", value: 7, tone: "accent" },
+                { label: "Completed", value: 19, tone: "success" },
+              ]}
+            />
+          )}
+        />
+        <DashboardInsightCard
+          eyebrow="Mix"
+          title="Workload distribution"
+          chart={(
+            <DashboardSegmentList
+              items={[
+                { label: "Cases", value: 5, tone: "info" },
+                { label: "Tasks", value: 9, tone: "accent" },
+                { label: "Approvals", value: 4, tone: "warning" },
+              ]}
+            />
+          )}
+          footer={<span className="inline-flex items-center gap-2"><CircleDot size={14} />Shared dashboard visual layer</span>}
+        />
+      </DashboardInsightGrid>
+    ),
+    themes,
+    states: ["bar chart", "segment summary", "footer note"],
+    interactive: false,
+    accessibility: "All chart values are duplicated as visible text, so no insight depends on color alone.",
   },
   {
     id: "workspace-badges",

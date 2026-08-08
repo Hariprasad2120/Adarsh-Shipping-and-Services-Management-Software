@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   TrendingUp,
+  Sparkles,
 } from "lucide-react";
 
 type Punch = {
@@ -107,7 +108,7 @@ const getPercent = (timeIso: string | null) =>
 export function PunchCard({
   punches,
   otRecords,
-  today: _todayIso,
+  today: initialNowIso,
   canManage,
   employees,
   selectedEmployeeId,
@@ -121,7 +122,10 @@ export function PunchCard({
   // Real-time client clock.
   // IMPORTANT: do not drive this from `todayIso` because in many pages that prop is only
   // a date string, which starts the clock at 00:00 and makes the live line appear wrong.
-  const [nowState, setNowState] = useState<Date>(() => new Date());
+  const [nowState, setNowState] = useState<Date>(() => {
+    const initialDate = new Date(initialNowIso);
+    return Number.isNaN(initialDate.getTime()) ? new Date() : initialDate;
+  });
 
   useEffect(() => {
     const tick = () => setNowState(new Date());
@@ -342,6 +346,13 @@ export function PunchCard({
     return { dayPunch, dayOt, dayMeta };
   }, [selectedDateStr, punches, otRecords, daysInMonth]);
 
+  const selectedDayOtMinutes = useMemo(() => {
+    if (!selectedDayMetrics.dayOt || selectedDayMetrics.dayOt.otHours <= 0) {
+      return 0;
+    }
+    return Math.round(selectedDayMetrics.dayOt.otHours * 60);
+  }, [selectedDayMetrics.dayOt]);
+
   const lastProperOutTime = useMemo(() => {
     if (timelineSessions.length > 0) {
       for (let i = timelineSessions.length - 1; i >= 0; i--) {
@@ -530,11 +541,9 @@ export function PunchCard({
             </div>
           )}
 
-          {/* Header row. Track sits inside a calc(100% - 65px) container.
-              This leaves a 65px safety margin on the right of the column for float OT labels. */}
-          <div className="shrink-0 grid grid-cols-[85px_1fr_65px_95px] items-center gap-4 border-b border-mono-border/30 bg-mono-soft px-6 py-4 text-[10px] font-medium tracking-[0.08em] text-mono-muted select-none">
+          <div className="shrink-0 grid grid-cols-[88px_minmax(0,1fr)_72px_112px] items-center gap-4 border-b border-mono-border/30 bg-mono-soft px-6 py-4 text-[10px] font-medium tracking-[0.08em] text-mono-muted select-none">
             <div>Day</div>
-            <div className="relative flex w-[calc(100%-65px)] justify-between px-2 text-[8px] tracking-[0.06em] text-mono-muted overflow-visible">
+            <div className="relative flex justify-between px-2 text-[8px] tracking-[0.06em] text-mono-muted overflow-visible">
               <span>9:30 AM</span>
               <span>10:30 AM</span>
               <span>11:30 AM</span>
@@ -621,7 +630,7 @@ export function PunchCard({
                 visualBar = (
                   <div
                     ref={isCurrentDay ? currentDayTrackRef : undefined}
-                    className="relative w-[calc(100%-65px)] h-6 flex items-center overflow-visible"
+                    className="relative flex h-6 w-full items-center overflow-visible"
                   >
                     {/* Center axis line */}
                     <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-outline-variant/30" />
@@ -694,12 +703,6 @@ export function PunchCard({
                         {lastOut && (
                           <span className="absolute right-0 top-1/2 h-1.5 w-1.5 translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--mnx-warning)] bg-mono-card shadow-sm" />
                         )}
-                        <span className="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 whitespace-nowrap text-[9px] font-medium text-[var(--mnx-warning)]">
-                          {day.ot
-                            ? `${Math.round(day.ot.otHours * 60)} Mins`
-                            : "0 Mins"}{" "}
-                          OT
-                        </span>
                       </div>
                     )}
 
@@ -724,7 +727,7 @@ export function PunchCard({
                   visualBar = (
                     <div
                       ref={isCurrentDay ? currentDayTrackRef : undefined}
-                      className="relative flex h-6 w-[calc(100%-65px)] items-center justify-center rounded-full border border-secondary/10 bg-secondary/5 select-none overflow-visible"
+                      className="relative flex h-6 w-full items-center justify-center rounded-full border border-secondary/10 bg-secondary/5 select-none overflow-visible"
                     >
                       <span className="text-[9px] font-medium tracking-[0.08em] text-secondary/70">
                         Saturday
@@ -736,7 +739,7 @@ export function PunchCard({
                   visualBar = (
                     <div
                       ref={isCurrentDay ? currentDayTrackRef : undefined}
-                      className="relative flex h-6 w-[calc(100%-65px)] items-center justify-center rounded-full border border-dashed border-mono-border/80 bg-mono-soft select-none overflow-visible"
+                      className="relative flex h-6 w-full items-center justify-center rounded-full border border-dashed border-mono-border/80 bg-mono-soft select-none overflow-visible"
                     >
                       <span className="text-[9px] font-medium tracking-[0.08em] text-mono-muted">
                         Sunday
@@ -750,7 +753,7 @@ export function PunchCard({
                 visualBar = (
                   <div
                     ref={isCurrentDay ? currentDayTrackRef : undefined}
-                    className="relative w-[calc(100%-65px)] h-6 flex items-center select-none overflow-visible"
+                    className="relative flex h-6 w-full items-center select-none overflow-visible"
                   >
                     <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[var(--mnx-danger-bg)]/20" />
                     {nowLine}
@@ -764,7 +767,7 @@ export function PunchCard({
                   ref={isCurrentDay ? todayRowRef : undefined}
                   onClick={() => setSelectedDateStr(day.dateStr)}
                   className={cn(
-                    "grid cursor-pointer grid-cols-[85px_1fr_65px_95px] items-center gap-4 border-l-2 px-6 py-3 transition select-none",
+                    "grid cursor-pointer grid-cols-[88px_minmax(0,1fr)_72px_112px] items-center gap-4 border-l-2 px-6 py-3 transition select-none",
                     isSelected
                       ? "border-l-primary bg-mono-accent/8"
                       : "border-l-transparent hover:bg-mono-soft/80",
@@ -806,7 +809,7 @@ export function PunchCard({
 
                   {/* Hours column */}
                   <div className="text-right">
-                    <p className="font-mono text-xs font-medium text-mono-text">
+                    <p className="whitespace-nowrap font-mono text-xs font-medium tabular-nums text-mono-text">
                       {hoursWorked > 0
                         ? formatHoursAndMins(hoursWorked)
                         : "0 Mins"}
@@ -831,13 +834,17 @@ export function PunchCard({
           <div className="space-y-1 border-b border-mono-border/30 p-5 pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center justify-center rounded-xl bg-mono-soft p-1.5 text-mono-muted">
+                <span className="inline-flex items-center justify-center text-[var(--mnx-accent)]">
                   <Calendar className="size-4" />
                 </span>
                 <h3 className="text-sm font-medium tracking-[0.04em] text-mono-text">
                   {selectedDateFormatted}
                 </h3>
               </div>
+              <span className="inline-flex items-center gap-1 text-[9px] font-medium uppercase tracking-[0.12em] text-mono-muted">
+                <Sparkles className="size-3.5 text-[var(--mnx-accent)]" />
+                Day pulse
+              </span>
             </div>
             <p className="mt-1 text-[10px] font-medium tracking-[0.06em] text-mono-muted">
               General [9:30 AM - 5:30 PM]
@@ -847,34 +854,66 @@ export function PunchCard({
           {/* Sidebar Body */}
           <div className="flex-1 space-y-6 overflow-y-auto p-5">
             {/* Status Badge */}
-            <div className="flex items-center justify-between rounded-2xl border border-mono-border/35 bg-mono-soft p-3">
-              <span className="text-[10px] font-medium tracking-[0.08em] text-mono-muted">
-                Attendance Status
-              </span>
-              {selectedDayMetrics.dayPunch?.inAt ? (
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full border border-[var(--mnx-accent)]/20 bg-[var(--mnx-accent)]/10 px-3 py-1 text-xs font-medium text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)] ${!selectedDayMetrics.dayPunch?.outAt && selectedDateStr === todayStr ? "animate-pulse" : ""}`}
-                >
-                  {!selectedDayMetrics.dayPunch?.outAt &&
-                  selectedDateStr === todayStr ? (
-                    <span className="relative flex size-2 shrink-0">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--mnx-accent)] opacity-75" />
-                      <span className="relative inline-flex rounded-full size-2 bg-[var(--mnx-accent)]" />
-                    </span>
-                  ) : (
-                    <CheckCircle className="size-3.5" />
-                  )}
-                  Present
+            <div className="space-y-3 rounded-2xl border border-mono-border/35 bg-mono-soft/70 p-3.5">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[10px] font-medium tracking-[0.08em] text-mono-muted">
+                  Attendance Status
                 </span>
-              ) : selectedDayMetrics.dayMeta?.isWeekend ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-mono-border/50 bg-mono-card px-3 py-1 text-xs font-medium text-mono-muted">
-                  Weekend
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 rounded-full border border-[var(--mnx-danger)]/20 bg-[var(--mnx-danger-bg)]/10 px-3 py-1 text-xs font-medium text-[var(--mnx-danger)] text-[var(--mnx-danger)]">
-                  Absent
-                </span>
-              )}
+                {selectedDayMetrics.dayPunch?.inAt ? (
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full border border-[var(--mnx-accent)]/20 bg-[var(--mnx-accent)]/10 px-3 py-1 text-xs font-medium text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)] ${!selectedDayMetrics.dayPunch?.outAt && selectedDateStr === todayStr ? "animate-pulse" : ""}`}
+                  >
+                    {!selectedDayMetrics.dayPunch?.outAt &&
+                    selectedDateStr === todayStr ? (
+                      <span className="relative flex size-2 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--mnx-accent)] opacity-75" />
+                        <span className="relative inline-flex rounded-full size-2 bg-[var(--mnx-accent)]" />
+                      </span>
+                    ) : (
+                      <CheckCircle className="size-3.5" />
+                    )}
+                    Present
+                  </span>
+                ) : selectedDayMetrics.dayMeta?.isWeekend ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-mono-border/50 bg-mono-card px-3 py-1 text-xs font-medium text-mono-muted">
+                    Weekend
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[var(--mnx-danger)]/20 bg-[var(--mnx-danger-bg)]/10 px-3 py-1 text-xs font-medium text-[var(--mnx-danger)]">
+                    Absent
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-3 divide-x divide-mono-border/25 overflow-hidden rounded-xl border border-mono-border/20 bg-mono-card/70">
+                <div className="px-3 py-2">
+                  <p className="text-[8px] font-medium uppercase tracking-[0.12em] text-mono-muted">
+                    First In
+                  </p>
+                  <p className="mt-1 whitespace-nowrap font-mono text-[11px] font-medium tabular-nums text-mono-text">
+                    {timelineSessions.length > 0
+                      ? fmt(timelineSessions[0]!.in)
+                      : "—"}
+                  </p>
+                </div>
+                <div className="px-3 py-2">
+                  <p className="text-[8px] font-medium uppercase tracking-[0.12em] text-mono-muted">
+                    Last Out
+                  </p>
+                  <p className="mt-1 whitespace-nowrap font-mono text-[11px] font-medium tabular-nums text-mono-text">
+                    {lastProperOutTime ? fmt(lastProperOutTime) : "—"}
+                  </p>
+                </div>
+                <div className="px-3 py-2">
+                  <p className="text-[8px] font-medium uppercase tracking-[0.12em] text-mono-muted">
+                    Worked
+                  </p>
+                  <p className="mt-1 whitespace-nowrap font-mono text-[11px] font-medium tabular-nums text-mono-text">
+                    {totalWorkedSelectedDay > 0
+                      ? formatHoursAndMins(totalWorkedSelectedDay)
+                      : "—"}
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Paired Sessions List */}
@@ -920,9 +959,7 @@ export function PunchCard({
                           {/* Check In */}
                           <div className="space-y-1">
                             <div className="flex items-center gap-1.5 text-[var(--mnx-accent)] dark:text-[var(--mnx-accent)]">
-                              <span className="inline-flex items-center justify-center rounded-lg bg-[var(--mnx-accent)]/10 p-1">
-                                <ArrowRight className="size-3.5 -rotate-45 shrink-0" />
-                              </span>
+                              <ArrowRight className="size-3.5 -rotate-45 shrink-0" />
                               <span className="text-[9px] font-medium tracking-[0.08em]">
                                 IN
                               </span>
@@ -943,9 +980,7 @@ export function PunchCard({
                           {/* Check Out */}
                           <div className="space-y-1 border-l border-mono-border/30 pl-4">
                             <div className="flex items-center gap-1.5 text-[var(--mnx-warning)]">
-                              <span className="inline-flex items-center justify-center rounded-lg bg-[var(--mnx-warning-bg)]/10 p-1">
-                                <ArrowRight className="size-3.5 rotate-45 shrink-0" />
-                              </span>
+                              <ArrowRight className="size-3.5 rotate-45 shrink-0" />
                               <span className="text-[9px] font-medium tracking-[0.08em]">
                                 OUT
                               </span>
@@ -991,27 +1026,33 @@ export function PunchCard({
 
             {/* Overtime Section Card */}
             <div className="space-y-3.5 rounded-2xl border border-[var(--mnx-warning)]/20 bg-[var(--mnx-warning-bg)]/4 p-4 select-none">
-              <div className="flex items-center gap-2 text-xs font-medium tracking-[0.08em] text-[var(--mnx-warning)]">
-                <TrendingUp className="size-4 shrink-0 text-[var(--mnx-warning)]" />
-                <span>OVERTIME</span>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-xs font-medium tracking-[0.08em] text-[var(--mnx-warning)]">
+                  <TrendingUp className="size-4 shrink-0 text-[var(--mnx-warning)]" />
+                  <span>OVERTIME</span>
+                </div>
+                {selectedDayOtMinutes > 0 ? (
+                  <span className="inline-flex items-center rounded-full border border-[var(--mnx-warning)]/20 bg-[var(--mnx-warning-bg)]/12 px-2.5 py-1 font-mono text-[10px] font-medium text-[var(--mnx-warning)]">
+                    +{selectedDayOtMinutes} min
+                  </span>
+                ) : null}
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-1">
                   <p className="text-[9px] font-medium tracking-[0.08em] text-mono-muted">
                     OT Hours
                   </p>
-                  <p className="mt-1 font-mono text-sm font-medium text-[var(--mnx-warning)]">
-                    {selectedDayMetrics.dayOt &&
-                    selectedDayMetrics.dayOt.otHours > 0
-                      ? `${Math.round(selectedDayMetrics.dayOt.otHours * 60)} Mins`
+                  <p className="font-mono text-sm font-medium text-[var(--mnx-warning)]">
+                    {selectedDayOtMinutes > 0
+                      ? `${selectedDayOtMinutes} Mins`
                       : "0 Mins"}
                   </p>
                 </div>
-                <div>
+                <div className="space-y-1">
                   <p className="text-[9px] font-medium tracking-[0.08em] text-mono-muted">
                     OT Amount
                   </p>
-                  <p className="mt-1 font-mono text-sm font-medium text-[var(--mnx-warning)]">
+                  <p className="font-mono text-sm font-medium text-[var(--mnx-warning)]">
                     ₹
                     {selectedDayMetrics.dayOt &&
                     selectedDayMetrics.dayOt.otHours > 0

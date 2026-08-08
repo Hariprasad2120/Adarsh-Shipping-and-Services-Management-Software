@@ -6,6 +6,19 @@ import {
   PeopleControlTextarea as MnxTextarea,
   PeopleControlTable as MnxTable,
 } from "@/modules/people/components/people-controls";
+import {
+  PeopleSection,
+  PeopleSectionHeader,
+  PeopleSummary,
+  PeopleSummaryGrid,
+} from "@/modules/people/components/people-workspace";
+import {
+  DashboardInsightCard,
+  DashboardInsightGrid,
+  DashboardMiniBarChart,
+  DashboardSegmentList,
+  DashboardTrend,
+} from "@/components/data-display/dashboard-insights";
 
 import { NativeSelect } from "@/components/ui/native-select";
 import { DateInput } from "@/components/ui/date-input";
@@ -106,6 +119,16 @@ type WorkingCalendarState = {
   minOvertimeMinutes: number;
   workingDays: string;
   breaks: Array<{ start: string; end: string }>;
+};
+
+type ImportMappings = {
+  employeeNumber?: string;
+  employeeName?: string;
+  officialEmail?: string;
+  attendanceDate: string;
+  checkIn?: string;
+  checkOut?: string;
+  totalHours?: string;
 };
 
 interface AdminData {
@@ -277,8 +300,8 @@ function getMinuteSalary(
 export function OtClient({
   initialEntries,
   canApprove,
-  canRequest,
-  currentUserId,
+  canRequest: _canRequest,
+  currentUserId: _currentUserId,
   monthStr,
   adminData,
 }: OtClientProps) {
@@ -386,7 +409,9 @@ export function OtClient({
   );
 
   // Adjustment Modal states
-  const [adjustingRecord, setAdjustingRecord] = useState<any | null>(null);
+  const [adjustingRecord, setAdjustingRecord] = useState<
+    AdminData["otRecords"][number] | null
+  >(null);
   const [adjustedMins, setAdjustedMins] = useState(0);
   const [adjustedEarlyMins, setAdjustedEarlyMins] = useState(0);
   const [adjustedCompOff, setAdjustedCompOff] = useState(0);
@@ -400,9 +425,9 @@ export function OtClient({
 
   // CSV Import States
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
-  const [csvRows, setCsvRows] = useState<any[]>([]);
+  const [csvRows, setCsvRows] = useState<Array<Record<string, string>>>([]);
   const [csvFileName, setCsvFileName] = useState("");
-  const [importMappings, setImportMappings] = useState<Record<string, string>>({
+  const [importMappings, setImportMappings] = useState<ImportMappings>({
     employeeNumber: "",
     employeeName: "",
     officialEmail: "",
@@ -428,7 +453,7 @@ export function OtClient({
     setCsvHeaders(headers);
     setCsvRows(rows);
 
-    const autoMap: Record<string, string> = {
+    const autoMap: ImportMappings = {
       employeeNumber: "",
       employeeName: "",
       officialEmail: "",
@@ -1078,6 +1103,120 @@ export function OtClient({
         )
     : [];
 
+  const approvedRecords = otRecords.filter(
+    (record) => record.approvalStatus === "APPROVED",
+  );
+  const pendingRecords = otRecords.filter(
+    (record) =>
+      record.approvalStatus === "PENDING" ||
+      record.approvalStatus === "PENDING_MANAGER",
+  );
+  const rejectedRecords = otRecords.filter(
+    (record) => record.approvalStatus === "REJECTED",
+  );
+  const fallbackRecords = otRecords.filter((record) => record.usedOrgFallback);
+  const holidayShiftRecords = approvedRecords.filter((record) =>
+    ["HOLIDAY", "WEEK_OFF"].includes(record.dayType),
+  );
+  const otHoursPerEmployee = approvedRecords.length
+    ? stats.totalOtHours / approvedRecords.length
+    : 0;
+  const avgOtAmountPerEmployee = payrollRows.length
+    ? stats.totalOtAmount / payrollRows.length
+    : 0;
+
+  const weeklyOtTrend = Array.from({ length: 5 }, (_, index) => {
+    const weekNumber = index + 1;
+    const value = approvedRecords.reduce((sum, record) => {
+      const day = new Date(record.date).getDate();
+      return Math.ceil(day / 7) === weekNumber ? sum + record.otHours : sum;
+    }, 0);
+
+    return {
+      label: `W${weekNumber}`,
+      value: Number(value.toFixed(1)),
+    };
+  });
+
+  const otDecisionItems = [
+    { label: "Approved", value: approvedRecords.length, tone: "success" as const },
+    { label: "Pending", value: pendingRecords.length, tone: "warning" as const },
+    { label: "Rejected", value: rejectedRecords.length, tone: "danger" as const },
+  ];
+
+  const otDayTypeItems = [
+    {
+      label: "Workday OT",
+      value: otRecords.filter((record) => record.dayType === "WORKDAY").length,
+      tone: "accent" as const,
+    },
+    {
+      label: "Weekly off OT",
+      value: otRecords.filter((record) => record.dayType === "WEEK_OFF").length,
+      tone: "warning" as const,
+    },
+    {
+      label: "Holiday OT",
+      value: otRecords.filter((record) => record.dayType === "HOLIDAY").length,
+      tone: "info" as const,
+    },
+  ];
+
+  const topPayoutItems = payrollRows
+    .slice()
+    .sort((left, right) => right.totalOtAmount - left.totalOtAmount)
+    .slice(0, 5)
+    .map((row) => ({
+      label: row.employeeName,
+      value: Number(row.totalOtAmount.toFixed(0)),
+      tone: "success" as const,
+    }));
+
+  const processingHealthItems = [
+    {
+      label: "Pending review",
+      value: pendingRecords.length,
+      tone: "warning" as const,
+    },
+    {
+      label: "Org fallback shifts",
+      value: fallbackRecords.length,
+      tone: "info" as const,
+    },
+    {
+      label: "Holiday / weekly off approvals",
+      value: holidayShiftRecords.length,
+      tone: "accent" as const,
+    },
+  ];
+
+  const engineFlow = [
+    {
+      step: "01",
+      title: "Punch Sync",
+      description:
+        "Biometric and imported punches are normalised first so every record starts from a single attendance source of truth.",
+    },
+    {
+      step: "02",
+      title: "Day Type Check",
+      description:
+        "The selected date is resolved against the holiday list, weekly-off rules, and active shift or organisation fallback schedule.",
+    },
+    {
+      step: "03",
+      title: "Grace Evaluation",
+      description:
+        "Worked minutes, grace windows, and early-leaving differences are compared before OT or comp-off eligibility is calculated.",
+    },
+    {
+      step: "04",
+      title: "Payroll Rate Output",
+      description:
+        "Approved OT amounts, comp-off credits, and LOP impact are grouped employee-wise for payroll export and audit review.",
+    },
+  ];
+
   const handleExportCsv = () => {
     const headers = [
       "Employee ID",
@@ -1370,90 +1509,115 @@ export function OtClient({
       {/* Overview Tab */}
       {activeTab === "overview" && (
         <div className="space-y-8 animate-in fade-in duration-300">
-          {/* Dashboard Metrics Grid */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <PeopleSummaryGrid>
             {overviewCards.map((item) => {
               const Icon = item.icon;
 
               return (
-                <Card
+                <PeopleSummary
                   key={item.label}
-                  className={cn(
-                    "mnx-content-wide group relative overflow-hidden border bg-mono-card p-0 shadow-ambient",
-                    item.cardClassName,
-                  )}
-                >
-                  <div className={cn("absolute inset-0", item.glowClassName)} />
-                  <div
-                    className={cn(
-                      "absolute -right-10 -top-10 h-28 w-28 rounded-full blur-2xl transition duration-300 group-hover:scale-110",
-                      item.orbClassName,
-                    )}
-                  />
-
-                  <CardContent className="relative flex min-h-[190px] flex-col justify-between p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-3">
-                        <span
-                          className={cn(
-                            "inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
-                            item.badgeClassName,
-                          )}
-                        >
-                          {item.badge}
-                        </span>
-                        <p className="max-w-[18ch] text-xs font-semibold uppercase tracking-[0.18em] text-mono-muted">
-                          {item.label}
-                        </p>
-                      </div>
-
-                      <span
-                        className={cn(
-                          "inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-[var(--mn-radius-panel)] border transition duration-300 group-hover:scale-105",
-                          item.iconClassName,
-                        )}
-                      >
-                        <Icon className="size-7" />
+                  label={item.label}
+                  value={
+                    item.unit ? (
+                      <span>
+                        {item.value} <span className="text-sm">{item.unit}</span>
                       </span>
-                    </div>
-
-                    <div>
-                      <div className="flex flex-wrap items-end gap-2">
-                        <h3 className="mnx-numeric text-[2.35rem] font-semibold leading-none tracking-[-0.05em] text-mono-text">
-                          {item.value}
-                        </h3>
-                        {item.unit ? (
-                          <span className="pb-1 text-sm font-semibold uppercase tracking-[0.14em] text-mono-muted">
-                            {item.unit}
-                          </span>
-                        ) : null}
-                      </div>
-                      <p className="mt-3 max-w-[28ch] text-sm leading-5 text-mono-muted">
-                        {item.helper}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                    ) : (
+                      item.value
+                    )
+                  }
+                  detail={item.helper}
+                  icon={<Icon className="size-4" />}
+                />
               );
             })}
-          </div>
+          </PeopleSummaryGrid>
 
-          {/* Quick trigger panel */}
-          <div className="grid gap-6 lg:grid-cols-3">
-            <Card className="mnx-panel mnx-accent-edge mnx-content-wide border border-mono-border/40 bg-mono-card shadow-sm lg:col-span-2">
-              <CardHeader className="border-b border-mono-border/30 pb-3">
-                <CardTitle className="mnx-title-3 text-mono-accent">
-                  Recalculate Batch Engine
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          <PeopleSection>
+            <PeopleSectionHeader
+              eyebrow="Month intelligence"
+              title="OT cockpit"
+              description="The overview now keeps approval pressure, payout distribution, day-type mix, and workload trends visible before you move into the detailed OT sheets."
+            />
+            <DashboardInsightGrid>
+              <DashboardInsightCard
+                eyebrow="Approval mix"
+                title="Decision queue health"
+                detail="Track how much of the month is already approved versus still waiting on manager review or correction."
+                chart={<DashboardSegmentList items={otDecisionItems} />}
+                footer={
+                  <span>
+                    {stats.pendingCount > 0
+                      ? `${stats.pendingCount} records still need a manager decision before payroll can close cleanly.`
+                      : "No records are currently waiting on the monthly approval queue."}
+                  </span>
+                }
+              />
+              <DashboardInsightCard
+                eyebrow="Weekly rhythm"
+                title="Approved OT hours by week"
+                detail="This shows where the month carried the most approved overtime load so you can spot spikes quickly."
+                chart={<DashboardTrend items={weeklyOtTrend} />}
+                footer={
+                  <span>
+                    Average approved OT per record is{" "}
+                    {otHoursPerEmployee.toFixed(2)} hours for the selected month.
+                  </span>
+                }
+              />
+              <DashboardInsightCard
+                eyebrow="Shift context"
+                title="Day-type distribution"
+                detail="See whether overtime is coming from regular workdays, weekly offs, or declared holidays."
+                chart={<DashboardMiniBarChart items={otDayTypeItems} />}
+                footer={
+                  <span>
+                    {holidayShiftRecords.length} approved records generated
+                    comp-off or holiday-related OT outcomes.
+                  </span>
+                }
+              />
+              <DashboardInsightCard
+                eyebrow="Payroll pressure"
+                title="Top employee OT payouts"
+                detail="The highest payroll impact rows are surfaced here before you export the final sheet."
+                chart={
+                  <DashboardMiniBarChart
+                    items={
+                      topPayoutItems.length
+                        ? topPayoutItems
+                        : [
+                            {
+                              label: "No payout data",
+                              value: 0,
+                              tone: "neutral",
+                            },
+                          ]
+                    }
+                  />
+                }
+                footer={
+                  <span>
+                    Average approved payout per exportable employee is ₹
+                    {avgOtAmountPerEmployee.toFixed(2)} this month.
+                  </span>
+                }
+              />
+            </DashboardInsightGrid>
+          </PeopleSection>
+
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(18rem,0.8fr)]">
+            <PeopleSection>
+              <PeopleSectionHeader
+                eyebrow="Batch operations"
+                title="Recalculate batch engine"
+                description="Re-run the monthly OT engine after shift, grace, holiday, or punch changes so summaries and payroll sheets stay aligned."
+              />
+              <div className="space-y-4">
                 <p className="text-sm leading-6 text-mono-muted">
-                  Punches imported from biometric devices are processed
-                  automatically in real-time. If you change global parameters
-                  (shift timings, grace bounds, or comp-off brackets), you can
-                  recompute the entire month&apos;s variables for active
-                  employees here.
+                  Punches imported from biometric devices are processed automatically in real-time. Use the batch engine when attendance rules or imported punch sets change and you need to recompute the month&apos;s OT, comp-off, and LOP outcomes for active employees.
                 </p>
+                <DashboardSegmentList items={processingHealthItems} />
                 <div className="flex flex-wrap items-center gap-3">
                   <Button
                     onClick={handleProcessMonth}
@@ -1463,9 +1627,7 @@ export function OtClient({
                     <RefreshCw
                       className={`size-4 ${isPending ? "animate-spin" : ""}`}
                     />
-                    {isPending
-                      ? "Calculating..."
-                      : "Recompute Month OT Records"}
+                    {isPending ? "Calculating..." : "Recompute Month OT Records"}
                   </Button>
                   <Button
                     onClick={handleClearMonthRecords}
@@ -1476,30 +1638,28 @@ export function OtClient({
                     <Trash className="size-4" />
                     Clear Month OT & Punches
                   </Button>
-                  {stats.pendingCount > 0 && (
-                    <span className="flex items-center gap-1 text-xs font-semibold text-[var(--mnx-warning)]">
-                      <AlertCircle className="size-3.5" />
-                      {stats.pendingCount} records require manager decision.
-                    </span>
-                  )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </PeopleSection>
 
-            <Card className="mnx-panel mnx-accent-edge mnx-content-wide border border-mono-border/40 bg-mono-card shadow-sm">
-              <CardHeader className="border-b border-mono-border/30 pb-3">
-                <CardTitle className="mnx-title-3 text-mono-accent">
-                  Payroll Export Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-1 flex-col justify-end gap-4">
-                <div>
-                  <h4 className="mnx-numeric text-[2rem] font-semibold leading-none text-mono-text">
-                    {payrollRows.length} Employees
-                  </h4>
-                  <p className="mt-1.5 text-sm text-mono-muted">
-                    Consolidated summaries ready for accounting
-                  </p>
+            <PeopleSection>
+              <PeopleSectionHeader
+                eyebrow="Payroll export"
+                title="Export readiness"
+                description="These are the rows that will flow into the payroll-facing OT and comp-off summary."
+              />
+              <div className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                  <PeopleSummary
+                    label="Employees ready"
+                    value={payrollRows.length}
+                    detail="Employees with approved OT, comp-off credit, or LOP impact in this month."
+                  />
+                  <PeopleSummary
+                    label="Approved OT value"
+                    value={`₹${stats.totalOtAmount.toFixed(1)}`}
+                    detail="Current approved payout amount before CSV export."
+                  />
                 </div>
                 <Button
                   onClick={() => setActiveTab("payroll")}
@@ -1509,62 +1669,27 @@ export function OtClient({
                   Go to Export Sheets
                   <ArrowRight className="size-4" />
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </PeopleSection>
           </div>
 
-          {/* Core Calculation Engine Visual Flow Diagram */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-mono-muted">
-              Core Calculation Engine Flow
-            </h3>
-            <div className="grid gap-4 md:grid-cols-4">
-              {[
-                {
-                  step: "01",
-                  title: "Punch Sync",
-                  desc: "Devices pull & upload biometric punches to database, computing raw workingHours.",
-                },
-                {
-                  step: "02",
-                  title: "Day Type Check",
-                  desc: "Resolves date against calendar rules (only 1st and 3rd Saturdays are working off-days).",
-                },
-                {
-                  step: "03",
-                  title: "Grace Evaluation",
-                  desc: "Computes early departures or OT starts strictly after standardHours + graceMinutes.",
-                },
-                {
-                  step: "04",
-                  title: "CTC Rate Calculation",
-                  desc: "Calculates hourly rate dynamically from annual CTC or falls back to standard base.",
-                },
-              ].map((flow, i) => (
-                <div
-                  key={i}
-                  className="mnx-panel mnx-accent-edge relative flex flex-col justify-between space-y-3 rounded-[var(--mn-radius-panel)] border border-mono-border/30 bg-mono-card p-5 shadow-ambient"
-                >
-                  <div className="space-y-1">
-                    <span className="inline-flex rounded-full bg-[var(--mnx-accent)]/10 px-2 py-0.5 text-[11px] font-semibold tracking-[0.14em] text-[var(--mnx-accent-text)]">
-                      {flow.step}
-                    </span>
-                    <h4 className="mnx-title-3 pt-1 text-mono-accent">
-                      {flow.title}
-                    </h4>
-                    <p className="text-sm leading-6 text-mono-muted">
-                      {flow.desc}
-                    </p>
-                  </div>
-                  {i < 3 && (
-                    <div className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 text-outline-variant md:block">
-                      <ArrowRight className="size-5" />
-                    </div>
-                  )}
-                </div>
+          <PeopleSection>
+            <PeopleSectionHeader
+              eyebrow="Calculation model"
+              title="Core OT engine flow"
+              description="The four-step month engine below explains how punches become approved OT, comp-off credits, and payroll-ready values."
+            />
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {engineFlow.map((flow) => (
+                <DashboardInsightCard
+                  key={flow.step}
+                  eyebrow={`Step ${flow.step}`}
+                  title={flow.title}
+                  detail={flow.description}
+                />
               ))}
             </div>
-          </div>
+          </PeopleSection>
         </div>
       )}
 
@@ -3363,7 +3488,7 @@ export function OtClient({
                           startTransition(async () => {
                             const res = await importAttendanceDataAction(
                               csvRows,
-                              importMappings as any,
+                              importMappings,
                             );
                             if (!res.ok) {
                               toast.error(res.error || "Import failed");

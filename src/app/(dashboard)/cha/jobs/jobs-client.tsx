@@ -167,7 +167,7 @@ export function JobsClient({
   const [branchId, setBranchId] = useState<string[]>(filters.branchId || []);
   const [jobTypeId, setJobTypeId] = useState<string[]>(filters.jobTypeId || []);
   const [assignedToMe, setAssignedToMe] = useState(filters.assignedToMe || false);
-  const [openFilterTable, setOpenFilterTable] = useState<"active" | "completed" | null>(null);
+  const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   const [activeFilterType, setActiveFilterType] = useState<FilterPanelKey | "">("stage");
 
   const activeFilterCount = [
@@ -251,7 +251,7 @@ export function JobsClient({
   const applyFilters = () => {
     const params = buildParams();
     router.push(`/cha/jobs?${params.toString()}`);
-    setOpenFilterTable(null);
+    setFilterPanelOpen(false);
   };
 
   const buildJobsHref = (
@@ -450,59 +450,9 @@ export function JobsClient({
     },
   ];
 
-  const renderTableControls = (tableKey: "active" | "completed") => (
-    <form
-      className="mnx-cha-jobs-toolbar"
-      role="search"
-      onSubmit={(event) => {
-        event.preventDefault();
-        applyFilters();
-      }}
-    >
-      <label className="mnx-search-field">
-        <Search size={16} aria-hidden="true" />
-        <WorkspaceInput
-          aria-label="Search jobs"
-          type="search"
-          placeholder="Search customers, job numbers..."
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      </label>
-
-      <div className="mnx-cha-jobs-toolbar-actions">
-        <FilterMenu
-          open={openFilterTable === tableKey}
-          onOpenChange={(open) => setOpenFilterTable(open ? tableKey : null)}
-          activeCount={activeFilterCount}
-          title="Filters"
-          ariaLabel="Open filters"
-          contentClassName="w-[min(320px,calc(100vw-1rem))]"
-        >
-          <CategorizedFilterMenuPanel
-            activeCategoryKey={activeFilterType}
-            onActiveCategoryChange={(value) => setActiveFilterType(value as FilterPanelKey | "")}
-            sections={filterSections}
-            title="Filters"
-            headerActionLabel="Save view"
-          />
-        </FilterMenu>
-        {canCreateJob ? (
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => router.push("/cha/jobs/new")}
-          >
-            <Plus className="size-4" /> New Job
-          </Button>
-        ) : null}
-      </div>
-    </form>
-  );
-
   const renderActivePills = () =>
     activePills.length > 0 ? (
-      <div className="mnx-cha-jobs-table-controls">
+      <div className="mnx-cha-jobs-active-links">
         <FilterActiveLinks
           links={activePills.map((pill) => ({
             key: `${pill.key}-${pill.value ?? pill.label}`,
@@ -536,7 +486,7 @@ export function JobsClient({
       <section className="mnx-cha-section-block py-1">
         <WorkspaceSectionHeading
           className="mnx-cha-outside-heading"
-          index={isActiveSection ? "02" : "03"}
+          index={isActiveSection ? "03" : "04"}
           title={title}
           description={description}
         />
@@ -545,17 +495,13 @@ export function JobsClient({
             eyebrow="Shipment register"
             title={title}
             actions={
-              <>
-                {renderTableControls(tableKey)}
-                <ChaVisibleRecords
-                  visible={data.items.length}
-                  total={data.total}
-                  tone={isActiveSection ? "blue" : "green"}
-                />
-              </>
+              <ChaVisibleRecords
+                visible={data.items.length}
+                total={data.total}
+                tone={isActiveSection ? "blue" : "green"}
+              />
             }
           />
-          {renderActivePills()}
           <OperationalDataTableWrap>
             <OperationalTable>
               <thead>
@@ -698,6 +644,93 @@ export function JobsClient({
           />
         ))}
       </ChaMetrics>
+
+      <section className="mnx-cha-section-block">
+        <WorkspaceSectionHeading
+          className="mnx-cha-outside-heading"
+          index="02"
+          title="Queue Command Desk"
+          description="Search once, tune filters once, and keep both active and completed job lanes aligned."
+        />
+        <div className="mnx-cha-jobs-command">
+          <div className="mnx-cha-jobs-command-copy">
+            <span className="mnx-label">Shared Queue Controls</span>
+            <h3 className="mnx-heading-2">A tighter register for faster handoffs</h3>
+            <p>
+              The controls below apply across the full jobs workspace, so you can refine the register
+              without repeating the same search and filter flow in every table.
+            </p>
+          </div>
+
+          <form
+            className="mnx-cha-jobs-command-bar"
+            role="search"
+            onSubmit={(event) => {
+              event.preventDefault();
+              applyFilters();
+            }}
+          >
+            <label className="mnx-search-field">
+              <Search size={16} aria-hidden="true" />
+              <WorkspaceInput
+                aria-label="Search jobs"
+                type="search"
+                placeholder="Search customers, job numbers, branches..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </label>
+
+            <div className="mnx-cha-jobs-command-actions">
+              <FilterMenu
+                open={filterPanelOpen}
+                onOpenChange={setFilterPanelOpen}
+                activeCount={activeFilterCount}
+                title="Filters"
+                ariaLabel="Open filters"
+                contentClassName="w-[min(320px,calc(100vw-1rem))]"
+              >
+                <CategorizedFilterMenuPanel
+                  activeCategoryKey={activeFilterType}
+                  onActiveCategoryChange={(value) => setActiveFilterType(value as FilterPanelKey | "")}
+                  sections={filterSections}
+                  title="Filters"
+                  headerActionLabel="Save view"
+                />
+              </FilterMenu>
+              {canCreateJob ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => router.push("/cha/jobs/new")}
+                >
+                  <Plus className="size-4" /> New Job
+                </Button>
+              ) : null}
+            </div>
+          </form>
+
+          <div className="mnx-cha-jobs-command-meta" aria-label="Current queue view">
+            <article>
+              <span>Active filters</span>
+              <strong>{String(activeFilterCount).padStart(2, "0")}</strong>
+              <p>{activeFilterCount === 0 ? "All jobs are currently visible." : "Live filters are shaping both tables."}</p>
+            </article>
+            <article>
+              <span>Assignment view</span>
+              <strong>{assignedViewLabel}</strong>
+              <p>{assignedViewNote}</p>
+            </article>
+            <article>
+              <span>Register scope</span>
+              <strong>{String(options.branches.length).padStart(2, "0")}</strong>
+              <p>Branch registers available in this workspace filter set.</p>
+            </article>
+          </div>
+
+          {renderActivePills()}
+        </div>
+      </section>
 
       {renderTable({
         title: "Active Jobs",

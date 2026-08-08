@@ -107,6 +107,7 @@ export function HrmsPortalClient({
   const [organization, setOrganization] = useState<OrganizationPayload | null>(null);
   const organizationRequestRef = useRef(false);
   const teamRequestRef = useRef(false);
+  const activeTabMeta = tabs.find((tab) => tab.id === activeTab) ?? tabs[0];
 
   useEffect(() => {
     if (activeTab !== "team" || reportees || teamRequestRef.current) return;
@@ -216,6 +217,12 @@ export function HrmsPortalClient({
           );
         })}
       </nav>
+
+      <section className="mnx-dashboard-tab-intro" aria-label="Active dashboard workspace">
+        <span>{activeTabMeta.label}</span>
+        <strong>{activeTabMeta.detail}</strong>
+        <p>Switch between personal execution, team visibility, and organization-wide context without leaving the dashboard.</p>
+      </section>
 
       <div className="mnx-dashboard-tab-content">
         {activeTab === "myspace" ? (

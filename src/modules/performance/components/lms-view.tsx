@@ -11,6 +11,12 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
+  DashboardInsightCard,
+  DashboardInsightGrid,
+  DashboardMiniBarChart,
+  DashboardSegmentList,
+} from "@/components/data-display/dashboard-insights";
+import {
   PerformanceCard,
   PerformanceControlButton,
   PerformanceControlInput,
@@ -133,6 +139,14 @@ export function LmsView() {
       enrollment?.status === "COMPLETED" || (enrollment?.progress ?? 0) >= 100
     );
   }).length;
+  const categoryCounts = Array.from(
+    courses.reduce((map, course) => {
+      map.set(course.category, (map.get(course.category) ?? 0) + 1);
+      return map;
+    }, new Map<string, number>()),
+  )
+    .slice(0, 4)
+    .map(([label, value]) => ({ label, value, tone: "info" as const }));
 
   return (
     <>
@@ -165,10 +179,34 @@ export function LmsView() {
 
       <PerformanceSection>
         <PerformanceSectionHeader
-          eyebrow="Learning catalogue"
-          title="Cargo and logistics training"
-          description="Enrol in available courses and keep progress current as you complete each learning unit."
+          eyebrow="Learning control"
+          title="Learning dashboard"
+          description="The LMS home page now opens with learning demand, completion posture, and catalogue mix before dropping into the full course library."
         />
+        <DashboardInsightGrid className="p-5 pt-0">
+          <DashboardInsightCard
+            eyebrow="Study mix"
+            title="Learning pipeline"
+            detail="A direct read on how many courses are still waiting for enrolment versus active completion."
+            chart={(
+              <DashboardSegmentList
+                items={[
+                  { label: "Available", value: Math.max(0, courses.length - enrolledCount), tone: "neutral" },
+                  { label: "In progress", value: Math.max(0, enrolledCount - completedCount), tone: "accent" },
+                  { label: "Completed", value: completedCount, tone: "success" },
+                ]}
+              />
+            )}
+            footer={<span>{enrolledCount} courses are already part of your learning plan.</span>}
+          />
+          <DashboardInsightCard
+            eyebrow="Catalogue shape"
+            title="Course categories"
+            detail="This helps learners see whether the current catalogue is concentrated in operations, compliance, or cross-functional topics."
+            chart={<DashboardMiniBarChart items={categoryCounts} />}
+            footer={<span>Category balance matters because this dashboard now behaves like a planning surface, not only a list of cards.</span>}
+          />
+        </DashboardInsightGrid>
         {courses.length === 0 ? (
           <WorkspaceEmptyState
             title="No courses are available"

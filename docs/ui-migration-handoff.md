@@ -2,6 +2,375 @@
 
 Last updated: 2026-08-07
 
+## 2026-08-08 Admin design system blank reset
+
+Reset `/admin/design-system` to a blank starting point so new design system
+content can be added incrementally from scratch.
+
+Delivered:
+
+- replaced the existing catalogue render in
+  `src/app/(dashboard)/admin/design-system/page.tsx` with an empty authorized
+  route response while preserving the existing login and RBAC gate;
+- deleted the old route-local catalogue implementation file
+  `src/app/(dashboard)/admin/design-system/design-system-client.tsx`;
+- deleted the old route-local stylesheet
+  `src/app/(dashboard)/admin/design-system/design-system-catalogue.css`.
+
+Verification on Saturday, August 8, 2026:
+
+- source-verified that the route no longer imports or renders the previous
+  catalogue UI;
+- authenticated browser runtime is not attached in this Codex session, so the
+  blank state is source-verified rather than manually browser-checked.
+
+## 2026-08-08 Admin design system staging stylesheet
+
+Added a dedicated blank stylesheet for `/admin/design-system` so new page-level
+design-system work can be styled there first before approved patterns are
+promoted into shared owners.
+
+Delivered:
+
+- created `src/app/(dashboard)/admin/design-system/design-system.css` as the
+  new blank staging stylesheet for that route;
+- updated `src/app/(dashboard)/admin/design-system/page.tsx` to import the new
+  stylesheet while keeping the route otherwise blank.
+
+Verification on Saturday, August 8, 2026:
+
+- source-verified that the admin design system route now imports the new blank
+  stylesheet and still renders no page content.
+
+## 2026-08-08 CHA global CSS ownership cleanup
+
+Removed CHA-only selectors from the shared Monolith stylesheet so the global
+layer no longer carries CHA page styling for unrelated routes.
+
+Delivered:
+
+- moved the remaining live CHA-only heading/layout selectors from
+  `src/styles/monolith-system.css` into the module owner
+  `src/styles/modules/cha-expense.css`;
+- removed the duplicated shared/global `mnx-cha-*` selector block from
+  `src/styles/monolith-system.css`, leaving generic shared operations styling
+  in the shared layer and CHA page styling in the CHA module stylesheet;
+- preserved the active CHA workspace classes used by
+  `src/modules/cha/components/workspace/cha-workspace.tsx`,
+  `src/modules/cha/components/workspace/cha-operations-shared.tsx`, and the
+  CHA job/detail routes while dropping older unused global-only CHA selectors.
+
+Verification on Saturday, August 8, 2026:
+
+- source ownership verified with targeted selector search before and after the
+  change;
+- authenticated browser runtime is not attached in this Codex session, so this
+  cleanup is source-verified rather than manually browser-checked.
+
+## 2026-08-07 CHA document stage tab-flow refinement
+
+Refined the `/cha/jobs/[jobId]` document-collection workspace so operators move
+through document categories and requirements one by one instead of scanning
+large repeated cards.
+
+Delivered:
+
+- updated `src/app/(dashboard)/cha/jobs/[jobId]/job-workspace-client.tsx` so
+  the document stage now uses visible category tabs, compact requirement tabs
+  inside the active category, and one focused requirement panel at a time;
+- preserved the existing upload, preview, delete, exemption, N/A, customer
+  submission acceptance, and quick-upload flows while moving them into the new
+  category-first navigation model;
+- updated `src/styles/modules/cha-expense.css` with module-owned category-tab,
+  requirement-tab, and compact count styling so document groups are easier to
+  identify and spacing stays tighter.
+
+Verification on Friday, August 7, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/cha/jobs/[jobId]/job-workspace-client.tsx' 'src/styles/modules/cha-expense.css'`:
+  still reports the long-standing baseline `@typescript-eslint/no-explicit-any`
+  issues already present in `job-workspace-client.tsx`; this refinement did not
+  introduce a new focused lint failure.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  new tab-flow document workspace is source-verified and type-verified rather
+  than manually browser-checked in Light, Night, and Violet themes;
+- this pass intentionally changes the document-stage presentation only and does
+  not alter route classification, server actions, or workflow rules.
+
+## 2026-08-07 CHA new-job popup restoration
+
+Restored the shared popup treatment for CHA job creation so the dedicated
+`/cha/jobs/new` route now presents the existing create-job modal instead of the
+full-page variant.
+
+Delivered:
+
+- updated `src/app/(dashboard)/cha/jobs/new/new-job-client.tsx` so the route
+  no longer wraps the form in an extra page header/back action shell;
+- switched the route wrapper back to `CreateJobDialog` with `variant="dialog"`
+  so the page uses the same popup design language already established for CHA
+  create flows;
+- preserved the existing close/back behavior by continuing to push the caller
+  back to the provided `backHref` when the popup closes.
+
+Verification on Friday, August 7, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/cha/jobs/new/new-job-client.tsx' 'src/app/(dashboard)/cha/jobs/new/page.tsx' 'src/app/(dashboard)/cha/process/[quoteId]/cha-process-job-client.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  popup restoration is source-verified and static-check-verified rather than
+  manually browser-checked in Light, Night, and Violet themes.
+
+## 2026-08-07 CHA workspace rhythm and dashboard interaction refresh
+
+Reworked the CHA jobs workspace and the protected `/dashboard` command surfaces
+so they feel less cramped, more aligned, and more interactive without changing
+route structure, business logic, or permissions.
+
+Delivered:
+
+- updated `src/app/(dashboard)/cha/jobs/jobs-client.tsx` so CHA Jobs now uses a
+  single shared `Queue command desk` for search, filters, and new-job actions
+  instead of repeating crowded controls inside both active and completed table
+  headers;
+- updated `src/styles/modules/cha-expense.css` so the CHA module now gets a
+  stronger connected metrics strip, cleaner command-panel spacing, better table
+  panel rhythm, and more responsive control stacking across the workspace;
+- updated `src/app/(dashboard)/dashboard/_components/dashboard-overview.tsx`
+  so the main dashboard now opens with a `Today's command brief` spotlight,
+  quick-launch links, and a live signal stack instead of going straight from
+  module cards into flatter legacy panels;
+- updated `src/app/(dashboard)/dashboard/_components/module-command-center.tsx`
+  so module cards now surface a highlighted top row, clearer live-state meta,
+  and richer secondary action context;
+- updated `src/app/(dashboard)/dashboard/portal-client.tsx` so the dashboard
+  tab switcher now includes a visible active-workspace intro band to make the
+  personal, team, and organization surfaces feel more guided;
+- updated `src/styles/monolith-system.css` with the shared dashboard spotlight,
+  launch-link, module-spotlight, and tab-intro styling needed for the new
+  interaction model;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the UI batch.
+
+Verification on Friday, August 7, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/cha/jobs/jobs-client.tsx' 'src/app/(dashboard)/dashboard/portal-client.tsx' 'src/app/(dashboard)/dashboard/_components/dashboard-overview.tsx' 'src/app/(dashboard)/dashboard/_components/module-command-center.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route inventory;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  CHA and dashboard presentation refresh is source-verified and static-check
+  verified rather than manually checked in Light, Night, and Violet themes;
+- this pass intentionally focused on the CHA workspace rhythm and the protected
+  `/dashboard` composition layer, so other CHA routes inherit the spacing and
+  panel improvements from shared module styling but were not each manually
+  restaged route-by-route in this session;
+- unrelated existing worktree changes were preserved and left untouched.
+
+## 2026-08-07 CHA job hero card alignment refinement
+
+Refined the `/cha/jobs/[jobId]` top summary card so the job identity and
+metadata align more clearly across desktop and smaller screens without changing
+workflow logic, permissions, or server behavior.
+
+Delivered:
+
+- updated `src/app/(dashboard)/cha/jobs/[jobId]/job-workspace-client.tsx` so
+  the hero now uses a dedicated identity/action header and a structured
+  metadata board instead of one stretched horizontal strip;
+- promoted the customer block into a featured summary card and aligned the
+  remaining owner, manager, date, type, and reference blocks into a responsive
+  grid for better reading rhythm and less crowding;
+- added module-owned CHA styles in `src/styles/modules/cha-expense.css` for the
+  new hero header, copy action, responsive meta grid, and balanced card spacing
+  using existing Monolith/Frappe tokens.
+
+Verification on Friday, August 7, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/cha/jobs/[jobId]/job-workspace-client.tsx'`:
+  still fails on pre-existing baseline issues in that long-lived file,
+  including older `@typescript-eslint/no-explicit-any` violations unrelated to
+  this card refinement;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  still fails on the current repository baseline because
+  `src/app/(dashboard)/cha/jobs/jobs-client.tsx` references
+  `setOpenFilterTable`, which is unrelated to this hero-card change.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  refined CHA job card is source-verified rather than manually browser-checked
+  in Light, Night, and Violet themes;
+- this pass intentionally stays within the existing CHA job workspace route and
+  does not change surrounding workflow panels or the route migration
+  classification.
+
+## 2026-08-07 attendance punch detail refinement
+
+Refined the `/attendance/punch` day-detail experience so the monthly punch view
+stays aligned under dense attendance and overtime data without changing route
+logic, permissions, or the Monolith/Frappe visual system.
+
+Delivered:
+
+- updated `src/app/(dashboard)/attendance/punch/punch-card.tsx` so the
+  timeline grid now uses a wider hours column and a full-width track, which
+  prevents overtime visuals from colliding with worked-hours text in crowded
+  rows;
+- removed the floating inline overtime text from the timeline bar and kept OT
+  minutes readable through the dedicated OT column and the right-side overtime
+  summary, eliminating the overlap seen in the attendance month view;
+- softened the right-side day-detail header and session markers by removing the
+  extra card-like icon chips while preserving the same token family, spacing,
+  and attendance status language;
+- added a compact `Day pulse` summary strip in the right-side detail area so
+  first-in, last-out, and worked time surface immediately in a cleaner,
+  design-system-consistent way.
+
+Verification on Friday, August 7, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/attendance/punch/punch-card.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  attendance punch refinements are source-verified and static-check-verified
+  rather than manually browser-checked in Light, Night, and Violet themes;
+- the route inventory and migration status classification were not changed by
+  this focused presentation fix, so the existing audit documents remain current.
+
+## 2026-08-07 module dashboard rework batch
+
+Reworked the module home dashboards so they behave more like operational
+command centres and less like shortcut menus, while preserving the underlying
+navigation, permissions, and route structure.
+
+Delivered:
+
+- added `src/components/data-display/dashboard-insights.tsx` as a lightweight
+  shared dashboard visual layer for compact insight cards, bar charts, trend
+  bars, and segmented workload summaries using existing Monolith tokens;
+- registered the new shared dashboard insight component in
+  `src/components/monolith/index.ts` and
+  `src/components/monolith/catalogue/shared-catalogue.tsx`;
+- added shared production styling for the dashboard insight layer in
+  `src/styles/monolith-system.css`;
+- reworked `src/app/(dashboard)/hrms/page.tsx` so HRMS now opens with workforce
+  coverage and people-service attention signals before showing route links;
+- reworked `src/app/(dashboard)/attendance/page.tsx` so Attendance now starts
+  with monthly punch rhythm, leave outcomes, and approval/reporting pressure;
+- reworked `src/app/(dashboard)/ams/page.tsx` so AMS now leads with appraisal
+  workload visuals before the action-lane cards;
+- reworked `src/modules/performance/components/lms-view.tsx` so LMS now opens
+  with learning pipeline and category mix insights before the full catalogue;
+- reworked `src/modules/freight-forwarding/components/freight-forwarding-workspace-client.tsx`
+  so Freight Forwarding home and registries now surface booking completeness
+  and processing posture before the tables;
+- reworked `src/app/(dashboard)/hrms/recruit/page.tsx` so Recruit now behaves
+  like a real employer/career dashboard using live hiring and private jobseeker
+  counts instead of only workspace cards;
+- reworked `src/app/(dashboard)/admin/page.tsx` so Admin now opens with
+  governance and policy signals before the administration link grid;
+- added a lighter dashboard-focused hierarchy improvement to
+  `src/app/(dashboard)/accounting/page.tsx`;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the dashboard batch.
+
+Verification on Friday, August 7, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint ...` over the
+  touched dashboard/component files: passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route inventory;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the long-standing baseline that `src/components/monolith`
+  contains legacy non-barrel production files; this dashboard batch did not
+  introduce that condition.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  dashboard rework is source-verified and static-check-verified rather than
+  manually browser-verified across Light, Night, and Violet themes;
+- some module home routes such as `CHA`, `Communication`, and `CRM` already had
+  stronger operational dashboards and were therefore only lightly touched or
+  left structurally intact in this batch;
+- the repository still contains unrelated user/worktree changes outside this
+  dashboard pass and they were intentionally preserved.
+
+## 2026-08-07 Shared button theme normalization
+
+Normalized the shared Monolith button system so action buttons stay visually
+consistent across light/dark theme changes and accent swaps without changing
+page logic or route structure.
+
+Delivered:
+
+- updated `src/styles/monolith-system.css` so the shared `.mnx-button`
+  foundation now uses Frappe token-driven surface, border, foreground, and
+  disabled states instead of older mixed gradient/shadow assumptions;
+- rebuilt the shared button variants
+  (`.mnx-button-primary`, `.mnx-button-accent`, `.mnx-button-secondary`,
+  `.mnx-button-outline`, `.mnx-button-ghost`, `.mnx-button-destructive`) to
+  use quieter Frappe-style primary, soft, neutral, outline, and semantic
+  danger treatments with correct hover/active parity in both light and dark
+  themes;
+- aligned shared filter-pill buttons (`.mnx-filter-button`, `.filter-button`)
+  with the same token system so toolbar actions such as filter/export controls
+  no longer drift into mismatched backgrounds or unreadable counter pills;
+- normalized shared icon action buttons
+  (`.mnx-icon-button`, `.mnx-icon-button-dark`, `.mnx-icon-button-danger`) so
+  compact controls now share the same theme-safe contrast model as the main
+  button family.
+
+Verification on Friday, August 7, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  passed.
+
+Known limits:
+
+- this batch intentionally fixed the shared production button contract first,
+  which improves the majority of Monolith actions immediately, but some
+  route-local raw `button` and `Link` implementations with direct utility color
+  classes still remain in non-compliant routes and should be migrated to the
+  canonical button primitives in follow-up work;
+- no authenticated browser runtime is attached in this Codex session, so the
+  updated button states are source-verified and static-check-verified rather
+  than manually checked across every route family.
+
 ## 2026-08-07 Frappe-inspired shared theme foundation
 
 Rebased the shared Monolith presentation layer onto a Frappe-inspired token

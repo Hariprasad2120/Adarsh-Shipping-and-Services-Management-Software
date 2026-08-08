@@ -8,6 +8,12 @@ import { listUsersForDashboard } from "@/modules/core/user/service";
 import { db } from "@/lib/db";
 import { Users, Building2, Network, BarChart3 } from "lucide-react";
 import {
+  DashboardInsightCard,
+  DashboardInsightGrid,
+  DashboardMiniBarChart,
+  DashboardSegmentList,
+} from "@/components/data-display/dashboard-insights";
+import {
   PeopleActionLink,
   PeopleLinkCard,
   PeopleLinkGrid,
@@ -41,6 +47,15 @@ export default async function HrmsDashboardPage() {
     listUsersForDashboard(orgId, { active: true, take: 8 }),
     getRoles(orgId),
     db.user.count({ where: { orgId, active: true } }),
+  ]);
+  const [pendingLeaveRequests, openCases, pendingTasks] = await Promise.all([
+    db.leaveRequest.count({
+      where: { user: { orgId }, status: "pending" },
+    }),
+    db.hRCase.count({
+      where: { orgId, status: { in: ["OPEN", "ASSIGNED", "IN_PROGRESS"] } },
+    }),
+    db.hrmsTask.count({ where: { orgId, status: "PENDING" } }),
   ]);
   const hrmsSection = getVisibleSectionById(caps, "hrms");
   const recruitSection = isRecruitEnabled()
@@ -125,21 +140,60 @@ export default async function HrmsDashboardPage() {
 
       <PeopleSection>
         <PeopleSectionHeader
-          eyebrow="Navigation"
-          title="People operations"
-          description="Open a workspace available through your current role."
+          eyebrow="Operational pulse"
+          title="People operations dashboard"
+          description="Workforce scale, open service load, and the next people-management queues are surfaced here first so HRMS starts as a command centre instead of a shortcut board."
+        />
+        <DashboardInsightGrid>
+          <DashboardInsightCard
+            eyebrow="Coverage"
+            title="Workforce footprint"
+            detail="A quick read on how much organisation structure HRMS is actively supporting."
+            chart={(
+              <DashboardMiniBarChart
+                items={[
+                  { label: "Employees", value: totalActiveCount, tone: "info" },
+                  { label: "Departments", value: org?.departments.length ?? 0, tone: "accent" },
+                  { label: "Branches", value: org?.branches.length ?? 0, tone: "success" },
+                  { label: "Roles", value: roles.length, tone: "warning" },
+                ]}
+              />
+            )}
+            footer={<span>{totalActiveCount} active people currently mapped into the organisation structure.</span>}
+          />
+          <DashboardInsightCard
+            eyebrow="Attention queue"
+            title="Where HRMS needs action"
+            detail="The home route now highlights the people-service workload instead of only linking to destinations."
+            chart={(
+              <DashboardSegmentList
+                items={[
+                  { label: "Pending tasks", value: pendingTasks, tone: "accent" },
+                  { label: "Open cases", value: openCases, tone: "warning" },
+                  { label: "Leave requests", value: pendingLeaveRequests, tone: "info" },
+                ]}
+              />
+            )}
+            footer={<span>Open tasks and employee service cases are the strongest current demand signals.</span>}
+          />
+        </DashboardInsightGrid>
+      </PeopleSection>
+
+      <PeopleSection>
+        <PeopleSectionHeader
+          eyebrow="Action lanes"
+          title="Workspace navigation"
+          description="Every feature remains available, but navigation now sits after the operational overview."
         />
         <PeopleLinkGrid>
-          {quickActions.map((action) => {
-            return (
-              <PeopleLinkCard
-                key={action.href}
-                href={action.href}
-                title={action.label}
-                description={action.description}
-              />
-            );
-          })}
+          {quickActions.map((action) => (
+            <PeopleLinkCard
+              key={action.href}
+              href={action.href}
+              title={action.label}
+              description={action.description}
+            />
+          ))}
         </PeopleLinkGrid>
       </PeopleSection>
 

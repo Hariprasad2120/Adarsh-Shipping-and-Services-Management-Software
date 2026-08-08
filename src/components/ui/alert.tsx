@@ -4,16 +4,16 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const alertVariants = cva("alert", {
+const alertVariants = cva("mnx-workspace-alert", {
   variants: {
     variant: {
       secondary: "",
-      primary: "info-alert",
-      destructive: "error-alert",
-      success: "success-alert",
-      info: "info-alert",
+      primary: "mnx-workspace-alert-info",
+      destructive: "mnx-workspace-alert-danger",
+      success: "mnx-workspace-alert-success",
+      info: "mnx-workspace-alert-info",
       mono: "",
-      warning: "warning-alert",
+      warning: "mnx-workspace-alert-warning",
     },
     appearance: {
       solid: "",

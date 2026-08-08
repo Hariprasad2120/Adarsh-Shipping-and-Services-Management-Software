@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   BadgeIndianRupee,
@@ -138,6 +139,7 @@ type User = {
   id: string;
   name: string;
   email: string;
+  photo: string | null;
   employeeNumber: number | null;
   firstName: string | null;
   lastName: string | null;
@@ -226,6 +228,7 @@ type FormState = {
   firstName: string;
   lastName: string;
   email: string;
+  photo: string;
   nickname: string;
   fatherName: string;
   businessUnit: string;
@@ -319,6 +322,16 @@ function apiErrorMessage(result: unknown, fallback: string) {
     if (typeof message === "string") return message;
   }
   return fallback;
+}
+
+function initialsFor(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return (
+    parts
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("") || "?"
+  );
 }
 
 function formatCurrency(value: number | null | undefined) {
@@ -418,6 +431,7 @@ function initialForm(user: User): FormState {
       rawEmployee?.["Last Name"] ??
       user.name.split(" ").slice(1).join(" "),
     email: user.email,
+    photo: user.photo ?? "",
     nickname: profile.nickname ?? "",
     fatherName:
       profile.fatherName ?? meta?.personalDetails?.fatherName ?? "",
@@ -643,6 +657,7 @@ export function EmployeeProfile({
           firstName: form.firstName,
           lastName: form.lastName,
           email: form.email,
+          photo: form.photo,
           designation: form.designation,
           branchId: form.branchId || null,
           departmentId: form.departmentId || null,
@@ -710,6 +725,7 @@ export function EmployeeProfile({
         } : {
           firstName: form.firstName,
           lastName: form.lastName,
+          photo: form.photo,
           dob: form.dob,
           gender: form.gender,
           personalPhone: form.personalPhone,
@@ -847,17 +863,17 @@ export function EmployeeProfile({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="mnx-employee-profile">
       {canEdit ? (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mnx-employee-profile-toolbar">
           {!canEditAll ? (
-            <p className="text-sm text-mono-muted">
+            <p className="mnx-employee-profile-help">
               Self-service editing covers personal, contact, identity,
               education, experience, and dependant details. HR controls work,
               payroll, bank, joining, and organisation fields.
             </p>
           ) : <span />}
-          <div className="flex justify-end gap-2">
+          <div className="mnx-employee-profile-actions">
           {editing ? (
             <>
               <MnxAction variant="primary" onClick={saveProfile} disabled={saving}>
@@ -881,13 +897,13 @@ export function EmployeeProfile({
       ) : null}
 
       {!user.active && latestInvitation ? (
-        <section className="mnx-panel mnx-accent-edge flex flex-col gap-4 border border-mono-border/40 bg-mono-card p-5 shadow-ambient sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--mnx-info-bg)] text-[var(--mnx-info)]">
+        <section className="mnx-employee-profile-alert">
+          <div className="mnx-employee-profile-alert-copy">
+            <span className="mnx-employee-profile-alert-icon">
               <MailCheck className="size-5" aria-hidden="true" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold text-mono-text">
+              <h2 className="mnx-employee-profile-alert-title">
                 Employee invitation{" "}
                 {latestInvitation.deliveryStatus === "FAILED"
                   ? "delivery failed"
@@ -896,7 +912,7 @@ export function EmployeeProfile({
                     ? "expired"
                     : "pending"}
               </h2>
-              <p className="mt-1 text-xs leading-relaxed text-mono-muted">
+              <p className="mnx-employee-profile-alert-description">
                 Login stays disabled until the employee accepts the secure link
                 and creates a password.
                 {latestInvitation.deliveryError
@@ -918,9 +934,66 @@ export function EmployeeProfile({
         </section>
       ) : null}
 
-      <div className="space-y-4">
+      <div className="mnx-employee-profile-sections">
         <InfoCard icon={<CircleUserRound />} title="Basic Information">
           <ValueGrid>
+            <div className="mnx-employee-profile-field is-span">
+              <div className="mnx-employee-profile-label">Profile photo</div>
+              <div className="mnx-employee-profile-avatar-field">
+                <div
+                  className="mnx-employee-profile-avatar-preview"
+                  aria-label={
+                    form.photo
+                      ? `${form.firstName || user.name} profile photo preview`
+                      : `${form.firstName || user.name} initials avatar`
+                  }
+                >
+                  {form.photo ? (
+                    <Image
+                      alt=""
+                      className="object-cover"
+                      fill
+                      sizes="72px"
+                      src={form.photo}
+                      unoptimized
+                    />
+                  ) : (
+                    <span>{initialsFor(form.firstName || user.name)}</span>
+                  )}
+                </div>
+                <div className="mnx-employee-profile-avatar-copy">
+                  {editing ? (
+                    <>
+                      <Input
+                        type="url"
+                        value={form.photo}
+                        onChange={(event) => set("photo", event.target.value)}
+                        placeholder="Paste employee photo URL"
+                      />
+                      <p className="mnx-employee-profile-avatar-help">
+                        Add a direct image link to show the employee photo
+                        across profile, lists, and approvals.
+                      </p>
+                    </>
+                  ) : (
+                    <div className="mnx-employee-profile-value">
+                      {form.photo
+                        ? "Employee photo added"
+                        : "No profile photo"}
+                    </div>
+                  )}
+                </div>
+                {editing && form.photo ? (
+                  <MnxAction
+                    type="button"
+                    variant="secondary"
+                    onClick={() => set("photo", "")}
+                  >
+                    Remove photo
+                  </MnxAction>
+                ) : null}
+              </div>
+            </div>
             <ValueField label="Employee ID" editing={hrEditing} value={form.employeeNumber}>
               <Input type="number" min="1" value={form.employeeNumber} onChange={(event) => set("employeeNumber", event.target.value)} />
             </ValueField>
@@ -1206,7 +1279,7 @@ export function EmployeeProfile({
         </InfoCard>
       ))}
 
-      <div className="space-y-4">
+      <div className="mnx-employee-profile-sections">
         <InfoCard icon={<Building2 />} title="System Fields">
           <ValueGrid>
             <ValueField label="Added By" value={user.employeeProfile?.createdById ? actorNames.get(user.employeeProfile.createdById) : "Imported / System"} />
@@ -1253,9 +1326,9 @@ export function EmployeeProfile({
 
 function InfoCard({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
-    <section className="mnx-panel mnx-accent-edge mnx-content-wide border border-mono-border/40 bg-mono-card p-5 shadow-ambient">
-      <div className="mb-4 flex items-center gap-3 text-mono-text">
-        <span className="[&>svg]:size-5">{icon}</span>
+    <section className="mnx-employee-profile-section">
+      <div className="mnx-employee-profile-section-header">
+        <span className="mnx-employee-profile-section-icon [&>svg]:size-5">{icon}</span>
         <h2 className="mnx-title-3">{title}</h2>
       </div>
       {children}
@@ -1265,7 +1338,7 @@ function InfoCard({ icon, title, children }: { icon: ReactNode; title: string; c
 
 function ValueGrid({ children }: { children: ReactNode }) {
   return (
-    <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="mnx-employee-profile-grid">
       {children}
     </div>
   );
@@ -1273,9 +1346,9 @@ function ValueGrid({ children }: { children: ReactNode }) {
 
 function ValueField({ label, value, editing = false, children, span = false }: { label: string; value: unknown; editing?: boolean; children?: ReactNode; span?: boolean }) {
   return (
-    <div className={span ? "md:col-span-2" : undefined}>
-      <div className="mb-1 text-xs font-medium text-mono-muted">{label}</div>
-      {editing && children ? children : <div className="min-h-6 whitespace-pre-wrap text-sm text-mono-text">{display(value)}</div>}
+    <div className={span ? "mnx-employee-profile-field is-span" : "mnx-employee-profile-field"}>
+      <div className="mnx-employee-profile-label">{label}</div>
+      {editing && children ? children : <div className="mnx-employee-profile-value">{display(value)}</div>}
     </div>
   );
 }
@@ -1318,7 +1391,7 @@ function TextSelect({ value, onChange, options, placeholder, labels = {} }: { va
 function RepeatableSection<T extends RepeatableRow>({ icon, title, editing, columns, emptyMessage, rows, onAdd, onRemove, renderRow }: { icon: ReactNode; title: string; editing: boolean; columns: string[]; emptyMessage: string; rows: T[]; onAdd: () => void; onRemove: (id: string) => void; renderRow: (row: T) => ReactNode }) {
   return (
     <InfoCard icon={icon} title={title}>
-      <div className="overflow-x-auto">
+      <div className="mnx-employee-profile-table-wrap">
         <PeopleControlTable>
           <thead><tr>{columns.map((column) => <th key={column}>{column}</th>)}{editing ? <th aria-label="Actions" /> : null}</tr></thead>
           <tbody>
@@ -1328,7 +1401,7 @@ function RepeatableSection<T extends RepeatableRow>({ icon, title, editing, colu
           </tbody>
         </PeopleControlTable>
       </div>
-      {editing ? <MnxAction className="mt-4" onClick={onAdd}><Plus className="size-4" /> Add row</MnxAction> : null}
+      {editing ? <MnxAction className="mnx-employee-profile-add-row" onClick={onAdd}><Plus className="size-4" /> Add row</MnxAction> : null}
     </InfoCard>
   );
 }

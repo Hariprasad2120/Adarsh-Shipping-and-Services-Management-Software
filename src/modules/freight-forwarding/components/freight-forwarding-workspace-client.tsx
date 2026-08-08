@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Boxes, FileStack, Link2 } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import {
+  DashboardInsightCard,
+  DashboardInsightGrid,
+  DashboardMiniBarChart,
+  DashboardSegmentList,
+} from "@/components/data-display/dashboard-insights";
+import {
   OperationalDataTable,
   OperationalDataTableFooter,
   OperationalDataTableWrap,
@@ -117,6 +123,18 @@ export function FreightForwardingWorkspaceClient({
     hbl: transactions.filter((transaction) => transaction.transactionType === "HBL").length,
     mbl: transactions.filter((transaction) => transaction.transactionType === "MBL").length,
   };
+  const linkedGroups = bookingGroups.filter(
+    (group) => group.mblTransaction && group.hblTransaction,
+  ).length;
+  const mblOnlyGroups = bookingGroups.filter(
+    (group) => group.mblTransaction && !group.hblTransaction,
+  ).length;
+  const hblOnlyGroups = bookingGroups.filter(
+    (group) => !group.mblTransaction && group.hblTransaction,
+  ).length;
+  const draftTransactions = transactions.filter(
+    (transaction) => transaction.status === "DRAFT",
+  ).length;
 
   return (
     <WorkspacePage>
@@ -166,8 +184,41 @@ export function FreightForwardingWorkspaceClient({
           <WorkspaceSectionHeading
             index="01"
             title="Workspace Home"
-            description="Create bookings here, then continue editing the same transaction from Workspace Home or the MBL/HBL sidebar tabs."
+            description="The forwarding dashboard now shows booking health and processing posture first, then drops into the registries below."
           />
+          <DashboardInsightGrid>
+            <DashboardInsightCard
+              eyebrow="Booking mix"
+              title="Transaction coverage"
+              detail="A quick read on how much of the forwarding workload is linked versus one-sided."
+              chart={(
+                <DashboardMiniBarChart
+                  items={[
+                    { label: "Booking groups", value: metrics.homeGroups, tone: "info" },
+                    { label: "MBL records", value: metrics.mbl, tone: "accent" },
+                    { label: "HBL records", value: metrics.hbl, tone: "success" },
+                    { label: "Drafts", value: draftTransactions, tone: "warning" },
+                  ]}
+                />
+              )}
+              footer={<span>Use this to spot whether activity is stacking up in one leg of the shipment flow.</span>}
+            />
+            <DashboardInsightCard
+              eyebrow="Operational split"
+              title="Group completeness"
+              detail="Forwarding home now clarifies how many booking sets are fully linked and how many still need the other side created."
+              chart={(
+                <DashboardSegmentList
+                  items={[
+                    { label: "Linked MBL + HBL", value: linkedGroups, tone: "success" },
+                    { label: "MBL only", value: mblOnlyGroups, tone: "accent" },
+                    { label: "HBL only", value: hblOnlyGroups, tone: "info" },
+                  ]}
+                />
+              )}
+              footer={<span>Single-sided groups are the best signal for where the team should continue processing next.</span>}
+            />
+          </DashboardInsightGrid>
           <WorkspacePanel>
             <WorkspacePanelHeader
               eyebrow="Booking registry"
@@ -331,8 +382,24 @@ export function FreightForwardingWorkspaceClient({
           <WorkspaceSectionHeading
             index="01"
             title={`${section} registry`}
-            description={`Only ${section} transactions appear here. Edits update the same transaction record used by Workspace Home.`}
+            description={`Only ${section} transactions appear here. The dashboard summary above keeps the registry purposeful instead of acting like a plain shortcut tab.`}
           />
+          <DashboardInsightGrid>
+            <DashboardInsightCard
+              eyebrow="Registry focus"
+              title={`${section} processing posture`}
+              detail={`See the current ${section} volume before you open a specific record.`}
+              chart={(
+                <DashboardMiniBarChart
+                  items={[
+                    { label: `${section} transactions`, value: filteredTransactions.length, tone: "info" },
+                    { label: "Draft", value: filteredTransactions.filter((row) => row.status === "DRAFT").length, tone: "warning" },
+                    { label: "Linked", value: filteredTransactions.filter((row) => row.bookingGroupId).length, tone: "success" },
+                  ]}
+                />
+              )}
+            />
+          </DashboardInsightGrid>
           <WorkspacePanel>
             <WorkspacePanelHeader
               eyebrow="Transaction list"

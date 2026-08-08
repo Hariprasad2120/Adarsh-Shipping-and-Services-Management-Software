@@ -531,9 +531,16 @@ export function AccountingWorkspaceFrame({
 }: {
   children: ReactNode;
 }) {
+  const pathname = usePathname();
+  const isFlatPaymentsPage = normalizePathname(pathname) === "/accounting/payments";
+
   return (
     <WorkspacePage
-      className="mnx-accounting-page"
+      className={cn(
+        "mnx-accounting-page",
+        isFlatPaymentsPage ? "mnx-accounting-page-flat" : null,
+      )}
+      data-workspace-surface="single"
       data-accounting-workspace="true"
     >
       <div className="mnx-accounting-content">{children}</div>

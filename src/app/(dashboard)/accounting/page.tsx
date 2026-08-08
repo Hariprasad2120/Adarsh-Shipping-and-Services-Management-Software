@@ -9,6 +9,12 @@ import {
   AccountingTable,
 } from "@/modules/accounting/components/accounting-workspace";
 import {
+  DashboardInsightCard,
+  DashboardInsightGrid,
+  DashboardMiniBarChart,
+  DashboardSegmentList,
+} from "@/components/data-display/dashboard-insights";
+import {
   AccountingWorkflowCards,
   type AccountingWorkflowCardItem,
 } from "@/components/monolith/accounting-workflow-cards";
@@ -178,6 +184,45 @@ export default async function AccountingDashboardPage() {
           />
         )}
       </AccountingMetrics>
+
+      <AccountingSection
+        eyebrow="Operational lens"
+        title="Accounting dashboard focus"
+        description="The command centre now adds compact visual readouts so the home route feels like a control surface before it becomes a navigation catalogue."
+      >
+        <DashboardInsightGrid>
+          <DashboardInsightCard
+            eyebrow="Queue health"
+            title="Primary workload split"
+            detail="A compact split of the most important accounting queues."
+            chart={(
+              <DashboardMiniBarChart
+                items={[
+                  { label: "Drafts", value: dashboard.metrics.drafts, tone: "warning" },
+                  { label: "Approvals", value: dashboard.metrics.pendingApprovals, tone: "accent" },
+                  { label: "Unapplied", value: dashboard.metrics.unappliedPayments, tone: "info" },
+                  { label: "Outbox review", value: dashboard.metrics.outboxReview, tone: "danger" },
+                ]}
+              />
+            )}
+          />
+          <DashboardInsightCard
+            eyebrow="Phase 9 control"
+            title="Late-phase readiness"
+            detail="Newer statutory and integration layers stay visible without making the page feel like a wall of cards."
+            chart={(
+              <DashboardSegmentList
+                items={[
+                  { label: "FX profiles", value: foreignCurrencyProfiles, tone: "info" },
+                  { label: "Open filing periods", value: taxSettlementWorkspace.metrics.openFilingPeriods, tone: "warning" },
+                  { label: "Export profiles", value: activeExportProfiles, tone: "accent" },
+                  { label: "Source mappings", value: activeSourceMappings, tone: "success" },
+                ]}
+              />
+            )}
+          />
+        </DashboardInsightGrid>
+      </AccountingSection>
 
       <AccountingSection
         eyebrow="Phase 9 controls"

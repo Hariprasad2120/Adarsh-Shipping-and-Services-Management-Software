@@ -14,6 +14,7 @@ export function WorkspacePage({
   return (
     <MonolithPage
       className={cn("mnx-workspace-page", className)}
+      data-workspace-surface="single"
       {...props}
     />
   );

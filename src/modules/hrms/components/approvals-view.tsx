@@ -1,13 +1,24 @@
 "use client";
 
+import Image from "next/image";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  BriefcaseBusiness,
+  Calendar,
+  CheckCircle2,
+  ClipboardList,
+  Clock3,
+  Loader2,
+  RefreshCw,
+  Timer,
+  XCircle,
+} from "lucide-react";
+import { toast } from "sonner";
 import {
   PeopleControlButton as MnxAction,
   PeopleControlInput as MnxInput,
+  PeopleNotice,
 } from "@/modules/people/components";
-
-import React, { useCallback, useEffect, useState } from "react";
-import { Calendar, CheckCircle2, Loader2, XCircle } from "lucide-react";
-import { toast } from "sonner";
 
 interface ApprovalsViewProps {
   isAdmin: boolean;
@@ -32,6 +43,18 @@ type RegularizationApproval = {
   id: string;
   date: string;
   reason: string;
+  remarks?: string | null;
+  user: ApprovalEmployee;
+};
+
+type OtApproval = {
+  id: string;
+  date: string;
+  dayType: string;
+  hoursWorked: number;
+  otHours: number;
+  calculationRemarks: string | null;
+  rejectionRemarks: string | null;
   user: ApprovalEmployee;
 };
 
@@ -39,6 +62,16 @@ type TravelApproval = {
   id: string;
   destination: string;
   purpose: string;
+  fromDate?: string | null;
+  toDate?: string | null;
+  user: ApprovalEmployee;
+};
+
+type TimesheetApproval = {
+  id: string;
+  startDate: string;
+  endDate: string;
+  createdAt: string;
   user: ApprovalEmployee;
 };
 
@@ -58,11 +91,196 @@ type WorkReportApproval = {
 type ApprovalInbox = {
   leaves: LeaveApproval[];
   regularizations: RegularizationApproval[];
-  ots: unknown[];
+  ots: OtApproval[];
   travels: TravelApproval[];
-  timesheets: unknown[];
+  timesheets: TimesheetApproval[];
   workreports: WorkReportApproval[];
 };
+
+type ApprovalType =
+  | "LEAVE"
+  | "REGULARIZATION"
+  | "OT"
+  | "TRAVEL"
+  | "TIMESHEET"
+  | "WORKREPORT";
+
+function initialsFor(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return (
+    parts
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("") || "?"
+  );
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "—"
+    : date.toLocaleDateString("en-IN");
+}
+
+function formatDateRange(
+  start: string | null | undefined,
+  end: string | null | undefined,
+) {
+  const from = formatDate(start);
+  const to = formatDate(end);
+  return from === "—" && to === "—" ? "—" : `${from} - ${to}`;
+}
+
+function displayEmployeeNumber(value: number | null) {
+  return value ? `Employee #${value}` : "Employee #—";
+}
+
+function renderAvatar(user: ApprovalEmployee) {
+  return (
+    <div className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-[var(--frappe-radius-md)] border border-[var(--mnx-border)] bg-[var(--mnx-bg-subtle)] text-xs font-semibold text-[var(--mnx-text-muted)]">
+      {user.photo ? (
+        <Image
+          alt=""
+          className="object-cover"
+          fill
+          sizes="40px"
+          src={user.photo}
+          unoptimized
+        />
+      ) : (
+        initialsFor(user.name)
+      )}
+    </div>
+  );
+}
+
+function SummaryTile({
+  label,
+  value,
+}: {
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="border border-[var(--mnx-border)] bg-[var(--mnx-surface)] px-4 py-4">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">
+        {label}
+      </div>
+      <div className="mt-2 text-2xl font-semibold text-[var(--mnx-text)]">
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function ApprovalSection({
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="px-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">
+        {title} ({count})
+      </div>
+      <div className="border border-[var(--mnx-border)] bg-[var(--mnx-surface)]">
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function ApprovalRow({
+  user,
+  title,
+  description,
+  meta,
+  requestId,
+  type,
+  remarks,
+  actingId,
+  onRemarkChange,
+  onDecision,
+}: {
+  user: ApprovalEmployee;
+  title: React.ReactNode;
+  description?: React.ReactNode;
+  meta: React.ReactNode;
+  requestId: string;
+  type: ApprovalType;
+  remarks: string;
+  actingId: string | null;
+  onRemarkChange: (id: string, text: string) => void;
+  onDecision: (
+    requestId: string,
+    type: ApprovalType,
+    decision: "APPROVED" | "REJECTED",
+  ) => Promise<void>;
+}) {
+  const isBusy = actingId === requestId;
+
+  return (
+    <div className="border-b border-[var(--mnx-border)] px-4 py-4 last:border-b-0 hover:bg-[var(--mnx-bg-subtle)]">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          {renderAvatar(user)}
+          <div className="min-w-0 flex-1 space-y-2">
+            <div>
+              <div className="text-sm font-medium text-[var(--mnx-text)]">
+                {title}
+              </div>
+              <div className="mt-1 text-xs text-[var(--mnx-text-muted)]">
+                {displayEmployeeNumber(user.employeeNumber)}
+              </div>
+            </div>
+            <div className="text-sm text-[var(--mnx-text-muted)]">{meta}</div>
+            {description ? (
+              <div className="text-sm leading-normal text-[var(--mnx-text-muted)]">
+                {description}
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="flex w-full max-w-md flex-col gap-3 lg:w-[22rem]">
+          <MnxInput
+            type="text"
+            placeholder="Add review comments..."
+            value={remarks}
+            onChange={(event) =>
+              onRemarkChange(requestId, event.target.value)
+            }
+          />
+          <div className="flex flex-wrap justify-end gap-2">
+            <MnxAction
+              type="button"
+              variant="destructive"
+              disabled={isBusy}
+              onClick={() => void onDecision(requestId, type, "REJECTED")}
+            >
+              <XCircle className="size-4" />
+              Reject
+            </MnxAction>
+            <MnxAction
+              type="button"
+              variant="primary"
+              disabled={isBusy}
+              onClick={() => void onDecision(requestId, type, "APPROVED")}
+            >
+              <CheckCircle2 className="size-4" />
+              {isBusy ? "Saving..." : "Approve"}
+            </MnxAction>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
   const [data, setData] = useState<ApprovalInbox | null>(null);
@@ -77,6 +295,8 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
       const json = await res.json();
       if (json.ok) {
         setData(json.data as ApprovalInbox);
+      } else {
+        toast.error("Failed to load pending approvals");
       }
     } catch {
       toast.error("Failed to load pending approvals");
@@ -92,45 +312,71 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
     return () => window.clearTimeout(timer);
   }, [fetchApprovals]);
 
-  const handleDecision = async (
-    requestId: string,
-    type: string,
-    decision: "APPROVED" | "REJECTED",
-  ) => {
-    setActingId(requestId);
-    const comment = remarks[requestId] || "";
-    try {
-      const res = await fetch("/api/hrms/approvals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          requestId,
-          type,
-          decision,
-          remarks: comment,
-        }),
-      });
-      const json = await res.json();
-      if (json.ok) {
-        toast.success(`Request ${decision.toLowerCase()} successfully!`);
-        fetchApprovals();
-      } else {
-        toast.error("Approval action failed");
-      }
-    } catch {
-      toast.error("Error submitting approval decision");
-    } finally {
-      setActingId(null);
-    }
-  };
+  const handleDecision = useCallback(
+    async (
+      requestId: string,
+      type: ApprovalType,
+      decision: "APPROVED" | "REJECTED",
+    ) => {
+      setActingId(requestId);
+      try {
+        const res = await fetch("/api/hrms/approvals", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            requestId,
+            type,
+            decision,
+            remarks: remarks[requestId] || "",
+          }),
+        });
+        const json = await res.json();
+        if (!json.ok) {
+          throw new Error("Approval action failed");
+        }
 
-  const handleRemarkChange = (id: string, text: string) => {
+        toast.success(
+          decision === "APPROVED"
+            ? "Approval recorded."
+            : "Request rejected.",
+        );
+        setRemarks((current) => ({ ...current, [requestId]: "" }));
+        await fetchApprovals();
+      } catch {
+        toast.error("Error submitting approval decision");
+      } finally {
+        setActingId(null);
+      }
+    },
+    [fetchApprovals, remarks],
+  );
+
+  const handleRemarkChange = useCallback((id: string, text: string) => {
     setRemarks((prev) => ({ ...prev, [id]: text }));
-  };
+  }, []);
+
+  const totals = useMemo(() => {
+    return {
+      leaves: data?.leaves.length ?? 0,
+      regularizations: data?.regularizations.length ?? 0,
+      ots: data?.ots.length ?? 0,
+      travels: data?.travels.length ?? 0,
+      timesheets: data?.timesheets.length ?? 0,
+      workreports: data?.workreports.length ?? 0,
+    };
+  }, [data]);
+
+  const totalPending =
+    totals.leaves +
+    totals.regularizations +
+    totals.ots +
+    totals.travels +
+    totals.timesheets +
+    totals.workreports;
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3 text-[var(--mnx-muted)]">
+      <div className="flex flex-col items-center justify-center gap-3 py-20 text-[var(--mnx-text-muted)]">
         <Loader2 className="size-8 animate-spin text-[var(--mnx-accent)]" />
         <p className="text-xs font-semibold tracking-wider">
           Syncing pending approvals inbox...
@@ -139,374 +385,287 @@ export function ApprovalsView({ isAdmin }: ApprovalsViewProps) {
     );
   }
 
-  const hasRequests =
-    data &&
-    (data.leaves.length > 0 ||
-      data.regularizations.length > 0 ||
-      data.ots.length > 0 ||
-      data.travels.length > 0 ||
-      data.timesheets.length > 0 ||
-      data.workreports.length > 0);
+  if (!data || totalPending === 0) {
+    return (
+      <PeopleNotice
+        eyebrow="Approvals inbox"
+        title="No pending approvals"
+        description={
+          isAdmin
+            ? "There are no employee, attendance, travel, or work-report requests waiting for approval right now."
+            : "Your team approval queue is clear. New requests will appear here when they are routed to you."
+        }
+        icon={<CheckCircle2 className="size-5" aria-hidden="true" />}
+        action={
+          <MnxAction type="button" variant="secondary" onClick={() => void fetchApprovals()}>
+            <RefreshCw className="size-4" />
+            Refresh inbox
+          </MnxAction>
+        }
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Banner */}
-      <div className="relative rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/85 p-6 overflow-hidden shadow-2xl backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--mnx-accent)]/5 rounded-full blur-3xl" />
-        <div className="flex items-center gap-4">
-          <div className="size-12 rounded-2xl bg-[var(--mnx-accent)]/10 border border-[var(--mnx-accent)]/35 flex items-center justify-center text-[var(--mnx-accent)] shadow-sm">
-            <CheckCircle2 className="size-6 animate-pulse" />
+      <div className="border-b border-[var(--mnx-border)] pb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex size-12 items-center justify-center rounded-[var(--frappe-radius-md)] border border-[var(--mnx-border)] bg-[var(--mnx-bg-subtle)] text-[var(--mnx-accent)]">
+              <CheckCircle2 className="size-5" />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-[var(--mnx-text)]">
+                Approvals Central Inbox
+              </h1>
+              <p className="mt-1 text-sm text-[var(--mnx-text-muted)]">
+                {isAdmin
+                  ? "Review organisation-wide employee, attendance, travel, and reporting requests."
+                  : "Review and action your team’s pending employee, attendance, travel, and reporting requests."}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-black text-[var(--mnx-muted)] uppercase tracking-widest">
-              APPROVALS CENTRAL INBOX
-            </h1>
-            <p className="text-xs text-[var(--mnx-muted)] font-bold mt-0.5 uppercase tracking-wider">
-              {isAdmin
-                ? "Global Administrator Approvals Control Desk"
-                : "Team Manager Review and Approval inbox"}
-            </p>
-          </div>
+          <MnxAction
+            type="button"
+            variant="secondary"
+            onClick={() => void fetchApprovals()}
+          >
+            <RefreshCw className="size-4" />
+            Refresh inbox
+          </MnxAction>
         </div>
       </div>
 
-      {!hasRequests ? (
-        <div className="text-center py-20 text-xs text-[var(--mnx-text)] font-bold border border-dashed border-[var(--mnx-border)] rounded-3xl">
-          Inbox empty. No pending requests requiring approval.
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Leaves approvals list */}
-          {data.leaves.length > 0 && (
-            <div className="space-y-3">
-              <div className="text-[10px] font-black text-[var(--mnx-muted)] uppercase tracking-widest px-1">
-                Pending Leaves ({data.leaves.length})
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {data.leaves.map((req) => (
-                  <div
-                    key={req.id}
-                    className="rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/40 p-5 space-y-4 transition hover:border-[var(--mnx-border)] flex flex-col justify-between backdrop-blur-sm"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-full bg-[var(--mnx-accent)]/10 flex items-center justify-center font-bold text-xs text-[var(--mnx-accent)]">
-                          {req.user.name[0]}
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-black text-[var(--mnx-muted)]">
-                            {req.user.name}
-                          </h4>
-                          <p className="text-[8.5px] font-bold text-[var(--mnx-muted)] uppercase mt-0.5 font-mono">
-                            Employee #{req.user.employeeNumber || "—"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="space-y-1 text-xs text-[var(--mnx-muted)]">
-                        <p className="font-bold text-[var(--mnx-muted)]">
-                          Leave type:{" "}
-                          <span className="text-[var(--mnx-muted)] uppercase">
-                            {req.leaveType.name}
-                          </span>
-                        </p>
-                        <p className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--mnx-muted)] font-mono mt-1">
-                          <Calendar className="size-3.5" />
-                          <span>
-                            {new Date(req.fromDate).toLocaleDateString()} -{" "}
-                            {new Date(req.toDate).toLocaleDateString()}
-                          </span>
-                        </p>
-                      </div>
-                      {req.notes && (
-                        <p className="text-[10.5px] font-bold text-[var(--mnx-muted)] leading-normal italic">
-                          “{req.notes}”
-                        </p>
-                      )}
-                    </div>
+      <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+        <SummaryTile label="Total pending" value={totalPending} />
+        <SummaryTile label="Leaves" value={totals.leaves} />
+        <SummaryTile label="Regularizations" value={totals.regularizations} />
+        <SummaryTile label="Overtime" value={totals.ots} />
+        <SummaryTile label="Travel" value={totals.travels} />
+        <SummaryTile label="Work reports" value={totals.workreports + totals.timesheets} />
+      </div>
 
-                    <div className="pt-4 mt-4 border-t border-[var(--mnx-border)] space-y-3">
-                      <MnxInput
-                        type="text"
-                        placeholder="Add review comments..."
-                        value={remarks[req.id] || ""}
-                        onChange={(e) =>
-                          handleRemarkChange(req.id, e.target.value)
-                        }
-                        className="w-full px-3 py-1.5 text-[10.5px] bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
-                      />
-                      <div className="flex justify-end gap-2.5">
-                        <MnxAction
-                          type="button"
-                          disabled={actingId === req.id}
-                          onClick={() =>
-                            handleDecision(req.id, "LEAVE", "REJECTED")
-                          }
-                          className="inline-flex items-center justify-center gap-1.5 bg-[var(--mnx-danger-bg)]/10 hover:bg-[var(--mnx-danger-bg)]/20 border border-[var(--mnx-danger)]/30 rounded-xl px-3 py-1.5 text-[10px] font-black text-[var(--mnx-danger)] cursor-pointer transition-all"
-                        >
-                          <XCircle className="size-3.5" /> Reject
-                        </MnxAction>
-                        <MnxAction
-                          type="button"
-                          disabled={actingId === req.id}
-                          onClick={() =>
-                            handleDecision(req.id, "LEAVE", "APPROVED")
-                          }
-                          className="inline-flex items-center justify-center gap-1.5 bg-[var(--mnx-success-bg)]/10 hover:bg-[var(--mnx-success-bg)]/20 border border-[var(--mnx-success)]/30 rounded-xl px-3 py-1.5 text-[10px] font-black text-[var(--mnx-success)] cursor-pointer transition-all"
-                        >
-                          <CheckCircle2 className="size-3.5" /> Approve
-                        </MnxAction>
-                      </div>
-                    </div>
+      <div className="space-y-6">
+        {data.leaves.length > 0 ? (
+          <ApprovalSection title="Pending Leaves" count={data.leaves.length}>
+            {data.leaves.map((request) => (
+              <ApprovalRow
+                key={request.id}
+                user={request.user}
+                requestId={request.id}
+                type="LEAVE"
+                remarks={remarks[request.id] || ""}
+                actingId={actingId}
+                onRemarkChange={handleRemarkChange}
+                onDecision={handleDecision}
+                title={
+                  <>
+                    {request.user.name}
+                    <span className="ml-2 text-xs font-medium uppercase text-[var(--mnx-text-soft)]">
+                      {request.leaveType.name}
+                    </span>
+                  </>
+                }
+                meta={
+                  <div className="flex flex-wrap items-center gap-4">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="size-3.5 text-[var(--mnx-text-soft)]" />
+                      {formatDateRange(request.fromDate, request.toDate)}
+                    </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                }
+                description={request.notes ? <>Reason: {request.notes}</> : undefined}
+              />
+            ))}
+          </ApprovalSection>
+        ) : null}
 
-          {/* Regularizations approvals list */}
-          {data.regularizations.length > 0 && (
-            <div className="space-y-3">
-              <div className="text-[10px] font-black text-[var(--mnx-muted)] uppercase tracking-widest px-1">
-                Pending Regularizations ({data.regularizations.length})
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {data.regularizations.map((req) => (
-                  <div
-                    key={req.id}
-                    className="rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/40 p-5 space-y-4 transition hover:border-[var(--mnx-border)] flex flex-col justify-between backdrop-blur-sm"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-full bg-[var(--mnx-accent)]/10 flex items-center justify-center font-bold text-xs text-[var(--mnx-accent)]">
-                          {req.user.name[0]}
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-black text-[var(--mnx-muted)]">
-                            {req.user.name}
-                          </h4>
-                          <p className="text-[8.5px] font-bold text-[var(--mnx-muted)] uppercase mt-0.5 font-mono">
-                            Employee #{req.user.employeeNumber || "—"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="space-y-1 text-xs text-[var(--mnx-muted)]">
-                        <p className="font-bold text-[var(--mnx-muted)]">
-                          Adjust Date:{" "}
-                          <span className="text-[var(--mnx-muted)] font-mono">
-                            {new Date(req.date).toLocaleDateString()}
-                          </span>
-                        </p>
-                        <p className="text-[10.5px] font-bold text-[var(--mnx-muted)] mt-1 leading-normal italic">
-                          Reason: “{req.reason}”
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 mt-4 border-t border-[var(--mnx-border)] space-y-3">
-                      <MnxInput
-                        type="text"
-                        placeholder="Add review comments..."
-                        value={remarks[req.id] || ""}
-                        onChange={(e) =>
-                          handleRemarkChange(req.id, e.target.value)
-                        }
-                        className="w-full px-3 py-1.5 text-[10.5px] bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
-                      />
-                      <div className="flex justify-end gap-2.5">
-                        <MnxAction
-                          type="button"
-                          disabled={actingId === req.id}
-                          onClick={() =>
-                            handleDecision(req.id, "REGULARIZATION", "REJECTED")
-                          }
-                          className="inline-flex items-center justify-center gap-1.5 bg-[var(--mnx-danger-bg)]/10 hover:bg-[var(--mnx-danger-bg)]/20 border border-[var(--mnx-danger)]/30 rounded-xl px-3 py-1.5 text-[10px] font-black text-[var(--mnx-danger)] cursor-pointer transition-all"
-                        >
-                          <XCircle className="size-3.5" /> Reject
-                        </MnxAction>
-                        <MnxAction
-                          type="button"
-                          disabled={actingId === req.id}
-                          onClick={() =>
-                            handleDecision(req.id, "REGULARIZATION", "APPROVED")
-                          }
-                          className="inline-flex items-center justify-center gap-1.5 bg-[var(--mnx-success-bg)]/10 hover:bg-[var(--mnx-success-bg)]/20 border border-[var(--mnx-success)]/30 rounded-xl px-3 py-1.5 text-[10px] font-black text-[var(--mnx-success)] cursor-pointer transition-all"
-                        >
-                          <CheckCircle2 className="size-3.5" /> Approve
-                        </MnxAction>
-                      </div>
-                    </div>
+        {data.regularizations.length > 0 ? (
+          <ApprovalSection
+            title="Pending Regularizations"
+            count={data.regularizations.length}
+          >
+            {data.regularizations.map((request) => (
+              <ApprovalRow
+                key={request.id}
+                user={request.user}
+                requestId={request.id}
+                type="REGULARIZATION"
+                remarks={remarks[request.id] || ""}
+                actingId={actingId}
+                onRemarkChange={handleRemarkChange}
+                onDecision={handleDecision}
+                title={request.user.name}
+                meta={
+                  <div className="flex flex-wrap items-center gap-4">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="size-3.5 text-[var(--mnx-text-soft)]" />
+                      Adjust date: {formatDate(request.date)}
+                    </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                }
+                description={<>Reason: {request.reason}</>}
+              />
+            ))}
+          </ApprovalSection>
+        ) : null}
 
-          {/* Travel approvals list */}
-          {data.travels.length > 0 && (
-            <div className="space-y-3">
-              <div className="text-[10px] font-black text-[var(--mnx-muted)] uppercase tracking-widest px-1">
-                Pending Trips ({data.travels.length})
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {data.travels.map((req) => (
-                  <div
-                    key={req.id}
-                    className="rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/40 p-5 space-y-4 transition hover:border-[var(--mnx-border)] flex flex-col justify-between backdrop-blur-sm"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-full bg-[var(--mnx-accent)]/10 flex items-center justify-center font-bold text-xs text-[var(--mnx-accent)]">
-                          {req.user.name[0]}
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-black text-[var(--mnx-muted)]">
-                            {req.user.name}
-                          </h4>
-                          <p className="text-[8.5px] font-bold text-[var(--mnx-muted)] uppercase mt-0.5 font-mono">
-                            Employee #{req.user.employeeNumber || "—"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="space-y-1 text-xs text-[var(--mnx-muted)]">
-                        <p className="font-bold text-[var(--mnx-muted)]">
-                          To Destination:{" "}
-                          <span className="text-[var(--mnx-accent)] uppercase font-bold">
-                            {req.destination}
-                          </span>
-                        </p>
-                        <p className="text-[10.5px] font-bold text-[var(--mnx-muted)] mt-1 leading-normal italic">
-                          Trip details: “{req.purpose}”
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 mt-4 border-t border-[var(--mnx-border)] flex justify-end gap-2.5">
-                      <MnxAction
-                        type="button"
-                        disabled={actingId === req.id}
-                        onClick={() =>
-                          handleDecision(req.id, "TRAVEL", "REJECTED")
-                        }
-                        className="inline-flex items-center justify-center gap-1.5 bg-[var(--mnx-danger-bg)]/10 hover:bg-[var(--mnx-danger-bg)]/20 border border-[var(--mnx-danger)]/30 rounded-xl px-3 py-1.5 text-[10px] font-black text-[var(--mnx-danger)] cursor-pointer transition-all"
-                      >
-                        <XCircle className="size-3.5" /> Reject
-                      </MnxAction>
-                      <MnxAction
-                        type="button"
-                        disabled={actingId === req.id}
-                        onClick={() =>
-                          handleDecision(req.id, "TRAVEL", "APPROVED")
-                        }
-                        className="inline-flex items-center justify-center gap-1.5 bg-[var(--mnx-success-bg)]/10 hover:bg-[var(--mnx-success-bg)]/20 border border-[var(--mnx-success)]/30 rounded-xl px-3 py-1.5 text-[10px] font-black text-[var(--mnx-success)] cursor-pointer transition-all"
-                      >
-                        <CheckCircle2 className="size-3.5" /> Approve
-                      </MnxAction>
-                    </div>
+        {data.ots.length > 0 ? (
+          <ApprovalSection title="Pending Overtime" count={data.ots.length}>
+            {data.ots.map((request) => (
+              <ApprovalRow
+                key={request.id}
+                user={request.user}
+                requestId={request.id}
+                type="OT"
+                remarks={remarks[request.id] || ""}
+                actingId={actingId}
+                onRemarkChange={handleRemarkChange}
+                onDecision={handleDecision}
+                title={request.user.name}
+                meta={
+                  <div className="flex flex-wrap items-center gap-4">
+                    <span className="flex items-center gap-1">
+                      <Timer className="size-3.5 text-[var(--mnx-text-soft)]" />
+                      {request.otHours.toFixed(2)} OT hrs
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock3 className="size-3.5 text-[var(--mnx-text-soft)]" />
+                      {request.hoursWorked.toFixed(2)} worked hrs
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="size-3.5 text-[var(--mnx-text-soft)]" />
+                      {formatDate(request.date)}
+                    </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                }
+                description={
+                  request.calculationRemarks ? (
+                    <>Calculation note: {request.calculationRemarks}</>
+                  ) : (
+                    <>Day type: {request.dayType.replace(/_/g, " ")}</>
+                  )
+                }
+              />
+            ))}
+          </ApprovalSection>
+        ) : null}
 
-          {data.workreports.length > 0 && (
-            <div className="space-y-3">
-              <div className="px-1 text-[10px] font-black uppercase tracking-widest text-[var(--mnx-muted)]">
-                Pending work reports ({data.workreports.length})
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {data.workreports.map((approval) => {
-                  const report = approval.report;
-                  const itemCount = Array.isArray(report.items)
-                    ? report.items.length
-                    : 1;
-                  return (
-                    <div
-                      key={approval.id}
-                      className="flex flex-col justify-between space-y-4 rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/40 p-5 backdrop-blur-sm transition hover:border-[var(--mnx-border)]"
-                    >
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <div className="flex size-8 items-center justify-center rounded-full bg-[var(--mnx-accent)]/10 text-xs font-bold text-[var(--mnx-accent)]">
-                            {report.user.name[0]}
-                          </div>
-                          <div>
-                            <h4 className="text-xs font-black text-[var(--mnx-muted)]">
-                              {report.user.name}
-                            </h4>
-                            <p className="mt-0.5 font-mono text-[8.5px] font-bold uppercase text-[var(--mnx-muted)]">
-                              Employee #{report.user.employeeNumber || "—"} ·
-                              Level {approval.level}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="space-y-1 text-xs text-[var(--mnx-muted)]">
-                          <p className="font-bold">
-                            Report date:{" "}
-                            <span className="font-mono text-[var(--mnx-text)]">
-                              {new Date(report.date).toLocaleDateString(
-                                "en-IN",
-                              )}
-                            </span>
-                          </p>
-                          <p className="text-[10.5px] font-bold leading-normal">
-                            {itemCount} work line
-                            {itemCount === 1 ? "" : "s"} · {report.workedOn}
-                          </p>
-                          <p className="line-clamp-2 text-[10.5px] leading-normal text-[var(--mnx-muted)]">
-                            {report.description}
-                          </p>
-                        </div>
-                      </div>
+        {data.travels.length > 0 ? (
+          <ApprovalSection title="Pending Trips" count={data.travels.length}>
+            {data.travels.map((request) => (
+              <ApprovalRow
+                key={request.id}
+                user={request.user}
+                requestId={request.id}
+                type="TRAVEL"
+                remarks={remarks[request.id] || ""}
+                actingId={actingId}
+                onRemarkChange={handleRemarkChange}
+                onDecision={handleDecision}
+                title={request.user.name}
+                meta={
+                  <div className="flex flex-wrap items-center gap-4">
+                    <span className="flex items-center gap-1">
+                      <BriefcaseBusiness className="size-3.5 text-[var(--mnx-text-soft)]" />
+                      Destination: {request.destination}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="size-3.5 text-[var(--mnx-text-soft)]" />
+                      {formatDateRange(request.fromDate, request.toDate)}
+                    </span>
+                  </div>
+                }
+                description={<>Purpose: {request.purpose}</>}
+              />
+            ))}
+          </ApprovalSection>
+        ) : null}
 
-                      <div className="mt-4 space-y-3 border-t border-[var(--mnx-border)] pt-4">
-                        <MnxInput
-                          type="text"
-                          placeholder="Add review comments..."
-                          value={remarks[report.id] || ""}
-                          onChange={(event) =>
-                            handleRemarkChange(report.id, event.target.value)
-                          }
-                          className="w-full rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-soft)]/60 px-3 py-1.5 text-[10.5px] text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
-                        />
-                        <div className="flex justify-end gap-2.5">
-                          <MnxAction
-                            type="button"
-                            disabled={actingId === report.id}
-                            onClick={() =>
-                              handleDecision(
-                                report.id,
-                                "WORKREPORT",
-                                "REJECTED",
-                              )
-                            }
-                            className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[var(--mnx-danger)]/30 bg-[var(--mnx-danger-bg)]/10 px-3 py-1.5 text-[10px] font-black text-[var(--mnx-danger)] transition-all hover:bg-[var(--mnx-danger-bg)]/20"
-                          >
-                            <XCircle className="size-3.5" /> Reject
-                          </MnxAction>
-                          <MnxAction
-                            type="button"
-                            disabled={actingId === report.id}
-                            onClick={() =>
-                              handleDecision(
-                                report.id,
-                                "WORKREPORT",
-                                "APPROVED",
-                              )
-                            }
-                            className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[var(--mnx-success)]/30 bg-[var(--mnx-success-bg)]/10 px-3 py-1.5 text-[10px] font-black text-[var(--mnx-success)] transition-all hover:bg-[var(--mnx-success-bg)]/20"
-                          >
-                            <CheckCircle2 className="size-3.5" /> Approve
-                          </MnxAction>
-                        </div>
-                      </div>
+        {data.timesheets.length > 0 ? (
+          <ApprovalSection title="Pending Timesheets" count={data.timesheets.length}>
+            {data.timesheets.map((request) => (
+              <ApprovalRow
+                key={request.id}
+                user={request.user}
+                requestId={request.id}
+                type="TIMESHEET"
+                remarks={remarks[request.id] || ""}
+                actingId={actingId}
+                onRemarkChange={handleRemarkChange}
+                onDecision={handleDecision}
+                title={request.user.name}
+                meta={
+                  <div className="flex flex-wrap items-center gap-4">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="size-3.5 text-[var(--mnx-text-soft)]" />
+                      Week: {formatDateRange(request.startDate, request.endDate)}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <ClipboardList className="size-3.5 text-[var(--mnx-text-soft)]" />
+                      Submitted: {formatDate(request.createdAt)}
+                    </span>
+                  </div>
+                }
+              />
+            ))}
+          </ApprovalSection>
+        ) : null}
+
+        {data.workreports.length > 0 ? (
+          <ApprovalSection
+            title="Pending Work Reports"
+            count={data.workreports.length}
+          >
+            {data.workreports.map((approval) => {
+              const report = approval.report;
+              const itemCount = Array.isArray(report.items)
+                ? report.items.length
+                : 1;
+              const requestId = report.id;
+
+              return (
+                <ApprovalRow
+                  key={approval.id}
+                  user={report.user}
+                  requestId={requestId}
+                  type="WORKREPORT"
+                  remarks={remarks[requestId] || ""}
+                  actingId={actingId}
+                  onRemarkChange={handleRemarkChange}
+                  onDecision={handleDecision}
+                  title={
+                    <>
+                      {report.user.name}
+                      <span className="ml-2 text-xs font-medium uppercase text-[var(--mnx-text-soft)]">
+                        Level {approval.level}
+                      </span>
+                    </>
+                  }
+                  meta={
+                    <div className="flex flex-wrap items-center gap-4">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="size-3.5 text-[var(--mnx-text-soft)]" />
+                        {formatDate(report.date)}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <ClipboardList className="size-3.5 text-[var(--mnx-text-soft)]" />
+                        {itemCount} work line{itemCount === 1 ? "" : "s"}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+                  }
+                  description={
+                    <>
+                      Worked on: {report.workedOn}
+                      {report.description ? ` — ${report.description}` : ""}
+                    </>
+                  }
+                />
+              );
+            })}
+          </ApprovalSection>
+        ) : null}
+      </div>
     </div>
   );
 }

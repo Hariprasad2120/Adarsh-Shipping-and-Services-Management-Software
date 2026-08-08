@@ -17,6 +17,12 @@ import { AdminChaTestingAction } from "./admin-cha-testing-action";
 import { db } from "@/lib/db";
 import { AdminPanel, AdminPanelHeader, AdminPermissionState } from "@/modules/admin/components/admin-workspace";
 import { WorkspaceMetric, WorkspaceSectionHeading } from "@/components/layout/workspace";
+import {
+  DashboardInsightCard,
+  DashboardInsightGrid,
+  DashboardMiniBarChart,
+  DashboardSegmentList,
+} from "@/components/data-display/dashboard-insights";
 
 export default async function AdminPage() {
   const session = await getSession();
@@ -53,6 +59,7 @@ export default async function AdminPage() {
     process.env.NODE_ENV !== "production" &&
     canApproveDeleteChaJobs &&
     isAdminActor;
+  const adminRoutes = section?.items.filter((item) => item.href !== "/admin") ?? [];
 
   return (
     <>
@@ -85,40 +92,71 @@ export default async function AdminPage() {
 
       <WorkspaceSectionHeading
         index="01"
-        title="Administration areas"
-        description="Open a permission-filtered control surface without leaving the organisation administration workspace."
+        title="Administration dashboard"
+        description="The admin home route now highlights organisation control load before listing the destination workspaces."
       />
 
+      <DashboardInsightGrid>
+        <DashboardInsightCard
+          eyebrow="Governance footprint"
+          title="Organisation coverage"
+          detail="A quick view of how much organisational structure and policy surface the admin module is controlling."
+          chart={(
+            <DashboardMiniBarChart
+              items={[
+                { label: "Branches", value: org?.branches.length ?? 0, tone: "info" },
+                { label: "Departments", value: org?.departments.length ?? 0, tone: "accent" },
+                { label: "Roles", value: roles.length, tone: "success" },
+                { label: "Admin routes", value: adminRoutes.length, tone: "warning" },
+              ]}
+            />
+          )}
+        />
+        <DashboardInsightCard
+          eyebrow="Policy signals"
+          title="Current control posture"
+          detail="The admin home page should explain what is governed here, not only show a collection of links."
+          chart={(
+            <DashboardSegmentList
+              items={[
+                { label: "Role controls", value: roles.length, tone: "info" },
+                { label: "People structure", value: (org?.branches.length ?? 0) + (org?.departments.length ?? 0), tone: "accent" },
+                { label: "Reviewer SLA days", value: settings.availabilityDeadlineDays, tone: "warning" },
+              ]}
+            />
+          )}
+          footer={<span>Reviewer availability is currently expected within {settings.availabilityDeadlineDays} day{settings.availabilityDeadlineDays === 1 ? "" : "s"}.</span>}
+        />
+      </DashboardInsightGrid>
+
       <div className="mnx-admin-link-grid">
-        {section?.items
-          .filter((item) => item.href !== "/admin")
-          .map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="mnx-admin-link-card"
-              >
-                <span className="mnx-admin-link-icon">
-                  <Icon aria-hidden="true" />
-                </span>
-                <span>
-                  <strong>{item.label}</strong>
-                  <small>
-                    {item.href === "/admin/roles"
-                      ? "Manage roles and explicit permissions."
-                      : item.href === "/admin/settings"
-                        ? "Control appraisal configuration."
-                        : item.href === "/admin/notifications"
-                          ? "Inspect notification delivery and retries."
-                          : "Open this controlled administration tool."}
-                  </small>
-                </span>
-                <ArrowRight aria-hidden="true" />
-              </Link>
-            );
-          })}
+        {adminRoutes.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="mnx-admin-link-card"
+            >
+              <span className="mnx-admin-link-icon">
+                <Icon aria-hidden="true" />
+              </span>
+              <span>
+                <strong>{item.label}</strong>
+                <small>
+                  {item.href === "/admin/roles"
+                    ? "Manage roles and explicit permissions."
+                    : item.href === "/admin/settings"
+                      ? "Control appraisal configuration."
+                      : item.href === "/admin/notifications"
+                        ? "Inspect notification delivery and retries."
+                        : "Open this controlled administration tool."}
+                </small>
+              </span>
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          );
+        })}
       </div>
 
       {canDeleteAllJobsForTesting ? (

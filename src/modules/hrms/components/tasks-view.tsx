@@ -13,11 +13,9 @@ import {
   CheckSquare,
   Square,
   Plus,
-  Save,
   Loader2,
   Calendar,
   User,
-  Trash,
   CheckCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -138,19 +136,17 @@ export function TasksView() {
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="relative rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/85 p-6 overflow-hidden shadow-2xl backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--mnx-accent)]/5 rounded-full blur-3xl" />
+      <div className="border-b border-[var(--mnx-border)] pb-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="size-12 rounded-2xl bg-[var(--mnx-accent)]/10 border border-[var(--mnx-accent)]/35 flex items-center justify-center text-[var(--mnx-accent)] shadow-sm">
-              <CheckSquare className="size-6 animate-pulse" />
+            <div className="flex size-12 items-center justify-center rounded-[var(--frappe-radius-md)] border border-[var(--mnx-border)] bg-[var(--mnx-bg-subtle)] text-[var(--mnx-accent)]">
+              <CheckSquare className="size-5" />
             </div>
             <div>
-              <h1 className="text-lg font-black text-[var(--mnx-muted)] uppercase tracking-widest">
+              <h1 className="text-lg font-semibold text-[var(--mnx-text)]">
                 TASK CHECKLISTS
               </h1>
-              <p className="text-xs text-[var(--mnx-muted)] font-bold mt-0.5 uppercase tracking-wider">
+              <p className="mt-1 text-sm text-[var(--mnx-text-muted)]">
                 Assign work checklist tasks and coordinate delivery schedules
               </p>
             </div>
@@ -159,7 +155,7 @@ export function TasksView() {
           <MnxAction
             type="button"
             onClick={() => setShowForm(!showForm)}
-            className="inline-flex items-center justify-center gap-2 bg-[var(--mnx-accent)]/15 hover:bg-[var(--mnx-accent)]/25 border border-[var(--mnx-accent)]/35 rounded-2xl px-4 py-2 text-xs font-black text-[var(--mnx-accent)] cursor-pointer transition-all uppercase tracking-wider"
+            variant={showForm ? "secondary" : "primary"}
           >
             <Plus className="size-4" />
             <span>Create Task</span>
@@ -171,13 +167,13 @@ export function TasksView() {
       {showForm && (
         <form
           onSubmit={handleCreateTask}
-          className="rounded-3xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/80 p-5 space-y-4 shadow-xl max-w-xl"
+          className="max-w-3xl space-y-4 border border-[var(--mnx-border)] bg-[var(--mnx-surface)] p-5"
         >
-          <h3 className="text-xs font-black text-[var(--mnx-muted)] uppercase tracking-widest">
+          <h3 className="text-sm font-semibold text-[var(--mnx-text)]">
             Create Checklist Task
           </h3>
           <div className="space-y-1">
-            <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+            <label className="text-xs font-medium text-[var(--mnx-text-muted)]">
               Task Title
             </label>
             <MnxInput
@@ -186,11 +182,10 @@ export function TasksView() {
               onChange={(e) => setTitle(e.target.value)}
               required
               placeholder="e.g. Verify custom clearing clearance sheet"
-              className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+            <label className="text-xs font-medium text-[var(--mnx-text-muted)]">
               Task Description
             </label>
             <MnxTextarea
@@ -198,18 +193,18 @@ export function TasksView() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Provide context and notes regarding checklist requirements."
-              className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)] resize-none"
+              className="resize-none"
             />
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
-              <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+              <label className="text-xs font-medium text-[var(--mnx-text-muted)]">
                 Assignee
               </label>
               <NativeSelect
                 value={assigneeId}
                 onChange={(e) => setAssigneeId(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
+                className="w-full"
               >
                 {colleagues.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -219,24 +214,24 @@ export function TasksView() {
               </NativeSelect>
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+              <label className="text-xs font-medium text-[var(--mnx-text-muted)]">
                 Due Date
               </label>
               <DateInput
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 required
-                className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
+                className="w-full"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-black text-[var(--mnx-muted)] uppercase tracking-wider">
+              <label className="text-xs font-medium text-[var(--mnx-text-muted)]">
                 Priority
               </label>
               <NativeSelect
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as any)}
-                className="w-full px-3 py-2 text-xs bg-[var(--mnx-soft)]/60 border border-[var(--mnx-border)] rounded-xl text-[var(--mnx-muted)] outline-none focus:border-[var(--mnx-accent)]"
+                className="w-full"
               >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -248,14 +243,14 @@ export function TasksView() {
             <MnxAction
               type="button"
               onClick={() => setShowForm(false)}
-              className="px-4 py-2 border border-[var(--mnx-border)] rounded-xl text-xs font-bold text-[var(--mnx-muted)] bg-transparent hover:bg-[var(--mnx-soft)] cursor-pointer"
+              variant="secondary"
             >
               Cancel
             </MnxAction>
             <MnxAction
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 bg-gradient-to-r from-[var(--mnx-success)] to-[var(--mnx-accent)] border-0 rounded-xl text-xs font-black text-[var(--mnx-text)] cursor-pointer transition-all disabled:opacity-50"
+              variant="primary"
             >
               {submitting ? "Saving..." : "Create Task"}
             </MnxAction>
@@ -267,47 +262,48 @@ export function TasksView() {
       <div className="grid gap-6 md:grid-cols-2">
         {/* Pending tasks */}
         <div className="space-y-3">
-          <div className="text-[10px] font-black text-[var(--mnx-muted)] uppercase tracking-widest px-1">
+          <div className="px-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">
             Pending Tasks ({pendingTasks.length})
           </div>
           {pendingTasks.length === 0 ? (
-            <div className="text-center py-10 text-xs text-[var(--mnx-text)] font-bold border border-dashed border-[var(--mnx-border)] rounded-3xl">
+            <div className="border border-dashed border-[var(--mnx-border)] px-4 py-10 text-center text-sm text-[var(--mnx-text-muted)]">
               All tasks cleared!
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="border border-[var(--mnx-border)] bg-[var(--mnx-surface)]">
               {pendingTasks.map((t) => (
                 <div
                   key={t.id}
-                  className="rounded-2xl border border-[var(--mnx-border)] bg-[var(--mnx-surface)]/40 p-4 flex items-start gap-3 transition hover:border-[var(--mnx-border)] backdrop-blur-sm"
+                  className="flex items-start gap-3 border-b border-[var(--mnx-border)] px-4 py-4 transition-colors last:border-b-0 hover:bg-[var(--mnx-bg-subtle)]"
                 >
                   <MnxAction
                     type="button"
                     onClick={() => handleToggleTask(t.id, t.status)}
-                    className="mt-0.5 text-[var(--mnx-accent)] hover:scale-105 transition bg-transparent border-0 cursor-pointer p-0"
+                    variant="secondary"
+                    className="mt-0.5 h-auto min-h-0 border-0 px-0 py-0 text-[var(--mnx-accent)] hover:bg-transparent"
                   >
                     <Square className="size-4.5" />
                   </MnxAction>
 
                   <div className="flex-1 space-y-2 min-w-0">
                     <div>
-                      <p className="text-xs font-black text-[var(--mnx-muted)] uppercase tracking-wide leading-tight truncate">
+                      <p className="truncate text-sm font-medium leading-tight text-[var(--mnx-text)]">
                         {t.title}
                       </p>
                       {t.description && (
-                        <p className="text-[10.5px] font-bold text-[var(--mnx-muted)] mt-1 leading-normal line-clamp-2">
+                        <p className="mt-1 line-clamp-2 text-sm leading-normal text-[var(--mnx-text-muted)]">
                           {t.description}
                         </p>
                       )}
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[var(--mnx-border)] text-[9px] font-bold text-[var(--mnx-muted)] font-mono">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--mnx-border)] pt-2 text-xs text-[var(--mnx-text-muted)]">
                       <span className="flex items-center gap-1">
-                        <User className="size-3 text-[var(--mnx-muted)]" />
+                        <User className="size-3 text-[var(--mnx-text-soft)]" />
                         <span>Assignee: {t.assignee.name}</span>
                       </span>
                       <span className="flex items-center gap-1">
-                        <Calendar className="size-3 text-[var(--mnx-muted)]" />
+                        <Calendar className="size-3 text-[var(--mnx-text-soft)]" />
                         <span>
                           Due: {new Date(t.dueDate).toLocaleDateString()}
                         </span>
@@ -322,33 +318,34 @@ export function TasksView() {
 
         {/* Completed tasks */}
         <div className="space-y-3">
-          <div className="text-[10px] font-black text-[var(--mnx-muted)] uppercase tracking-widest px-1">
+          <div className="px-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--mnx-text-muted)]">
             Completed Tasks ({completedTasks.length})
           </div>
           {completedTasks.length === 0 ? (
-            <div className="text-center py-10 text-xs text-[var(--mnx-text)] font-bold border border-dashed border-[var(--mnx-border)] rounded-3xl">
+            <div className="border border-dashed border-[var(--mnx-border)] px-4 py-10 text-center text-sm text-[var(--mnx-text-muted)]">
               No completed tasks found in log.
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="border border-[var(--mnx-border)] bg-[var(--mnx-surface)]">
               {completedTasks.map((t) => (
                 <div
                   key={t.id}
-                  className="rounded-2xl border border-[var(--mnx-success)]/20 bg-[var(--mnx-surface)]/20 p-4 flex items-start gap-3 backdrop-blur-sm opacity-60"
+                  className="flex items-start gap-3 border-b border-[var(--mnx-border)] px-4 py-4 opacity-75 transition-colors last:border-b-0 hover:bg-[var(--mnx-bg-subtle)]"
                 >
                   <MnxAction
                     type="button"
                     onClick={() => handleToggleTask(t.id, t.status)}
-                    className="mt-0.5 text-[var(--mnx-success)] hover:scale-105 transition bg-transparent border-0 cursor-pointer p-0"
+                    variant="secondary"
+                    className="mt-0.5 h-auto min-h-0 border-0 px-0 py-0 text-[var(--mnx-success)] hover:bg-transparent"
                   >
                     <CheckCircle className="size-4.5" />
                   </MnxAction>
 
                   <div className="flex-1 space-y-1 min-w-0">
-                    <p className="text-xs font-black text-[var(--mnx-muted)] uppercase tracking-wide leading-tight line-through truncate">
+                    <p className="truncate text-sm font-medium leading-tight text-[var(--mnx-text-muted)] line-through">
                       {t.title}
                     </p>
-                    <p className="text-[8px] font-bold text-[var(--mnx-text)] uppercase tracking-wider font-mono">
+                    <p className="text-xs text-[var(--mnx-text-muted)]">
                       Assigned to: {t.assignee.name}
                     </p>
                   </div>

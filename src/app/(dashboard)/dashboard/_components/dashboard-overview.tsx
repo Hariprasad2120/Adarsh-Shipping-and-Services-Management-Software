@@ -76,6 +76,15 @@ export function DashboardOverview({
     schedule[schedule.length - 1].key,
     { day: "2-digit", month: "short" },
   )}`;
+  const commandLinks = moduleSnapshot.modules
+    .flatMap((module) =>
+      module.actions.slice(0, 1).map((action) => ({
+        href: action.href,
+        label: action.label,
+        moduleTitle: module.title,
+      })),
+    )
+    .slice(0, 5);
 
   const metrics = [
     {
@@ -102,8 +111,107 @@ export function DashboardOverview({
       <WorkspaceSectionHeading
         index="04"
         title="Your day at a glance"
-        description="Company signals, assigned work, and the next date on your calendar."
+        description="Company signals, assigned work, weekly rhythm, and the fastest route into active work."
       />
+
+      <section className="mnx-dashboard-spotlight">
+        <MonolithSurface className="mnx-dashboard-spotlight-hero">
+          <header className="mnx-panel-heading">
+            <div>
+              <MonolithSpecLabel>FOCUS MODE</MonolithSpecLabel>
+              <h2>Today&apos;s command brief</h2>
+            </div>
+            <span className="mnx-user-email">{sessionUser.email}</span>
+          </header>
+
+          <p className="mnx-feed-intro">
+            Welcome back, {profile.name || sessionUser.name}. Your workspace is now organized around
+            the next action, the latest company movement, and the quickest launch paths into your live modules.
+          </p>
+
+          <div className="mnx-dashboard-spotlight-status">
+            <span>{profile.attendanceStatus.replaceAll("_", " ").toLowerCase()}</span>
+            <span>{data.recentTasks.length} active tasks</span>
+            <span>{data.announcements.length} company updates</span>
+          </div>
+
+          <div className="mnx-dashboard-spotlight-grid">
+            <article className="mnx-dashboard-spotlight-card">
+              <span>Primary focus</span>
+              <strong>{nextTask?.title || "Your queue is clear"}</strong>
+              <p>{nextTask ? `Due ${formatDate(nextTask.dueDate)}` : "No task is currently demanding attention."}</p>
+            </article>
+            <article className="mnx-dashboard-spotlight-card">
+              <span>Calendar watch</span>
+              <strong>{nextHoliday?.name || "No holiday scheduled"}</strong>
+              <p>
+                {nextHoliday
+                  ? formatDate(nextHoliday.date, { weekday: "long", day: "2-digit", month: "long" })
+                  : "Your next company calendar update will appear here."}
+              </p>
+            </article>
+            <article className="mnx-dashboard-spotlight-card">
+              <span>Weekly rhythm</span>
+              <strong>{scheduleRange}</strong>
+              <p>Use this week&apos;s operating rhythm to plan attendance, handoffs, and follow-ups.</p>
+            </article>
+          </div>
+        </MonolithSurface>
+
+        <div className="mnx-dashboard-spotlight-stack">
+          <MonolithSurface className="mnx-dashboard-spotlight-panel">
+            <header className="mnx-panel-heading">
+              <div>
+                <MonolithSpecLabel>QUICK LAUNCH</MonolithSpecLabel>
+                <h2>Open workspaces faster</h2>
+              </div>
+            </header>
+            <div className="mnx-dashboard-launch-list">
+              {commandLinks.map((link) => (
+                <Link className="mnx-dashboard-launch-link" href={link.href} key={`${link.moduleTitle}-${link.href}`}>
+                  <span>
+                    <b>{link.label}</b>
+                    <small>{link.moduleTitle}</small>
+                  </span>
+                  <ArrowUpRight size={14} />
+                </Link>
+              ))}
+            </div>
+          </MonolithSurface>
+
+          <MonolithSurface className="mnx-dashboard-spotlight-panel">
+            <header className="mnx-panel-heading">
+              <div>
+                <MonolithSpecLabel>LIVE SIGNAL</MonolithSpecLabel>
+                <h2>What changed most recently</h2>
+              </div>
+            </header>
+            <div className="mnx-dashboard-signal-stack">
+              <article>
+                <BellRing size={16} />
+                <div>
+                  <b>{nextAnnouncement?.title || "No new announcement"}</b>
+                  <p>{nextAnnouncement ? `Published ${formatDate(nextAnnouncement.createdAt)}` : "Broadcast updates will surface here."}</p>
+                </div>
+              </article>
+              <article>
+                <ClipboardCheck size={16} />
+                <div>
+                  <b>{nextTask ? `${nextTask.priority} priority task` : "Task board is calm"}</b>
+                  <p>{nextTask ? nextTask.title : "No pending work is blocking your lane."}</p>
+                </div>
+              </article>
+              <article>
+                <CalendarDays size={16} />
+                <div>
+                  <b>{nextHoliday?.holidayType || "No date marker"}</b>
+                  <p>{nextHoliday ? nextHoliday.name : "The company calendar has no upcoming item yet."}</p>
+                </div>
+              </article>
+            </div>
+          </MonolithSurface>
+        </div>
+      </section>
 
       <section className="mnx-dashboard-metrics" aria-label="Workspace metrics">
         {metrics.map((metric) => (

@@ -1,8 +1,26 @@
-import Link from "next/link";
-import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
 import { loadCaps } from "@/lib/rbac";
-import { Search, UserAvatar, Analytics, Settings } from "@carbon/icons-react";
+import {
+  PeopleLinkCard,
+  PeopleLinkGrid,
+  PeopleSection,
+  PeopleSectionHeader,
+  PeopleSummary,
+  PeopleSummaryGrid,
+} from "@/modules/people/components/people-workspace";
+import {
+  DashboardInsightCard,
+  DashboardInsightGrid,
+  DashboardMiniBarChart,
+  DashboardSegmentList,
+} from "@/components/data-display/dashboard-insights";
+import {
+  getEmployerDashboardCounts,
+} from "@/modules/recruit/employer-service";
+import {
+  getJobSeekerDashboardCounts,
+} from "@/modules/recruit/jobseeker-service";
 
 export default async function RecruitLandingPage() {
   const session = await getSession();
@@ -11,122 +29,163 @@ export default async function RecruitLandingPage() {
   const caps = await loadCaps(session.user.id);
   const canEmployer = !!caps["recruit.view"];
   const canJobSeeker = !!caps["recruit.jobseeker.use"];
+  const employerCounts =
+    canEmployer && session.user.orgId
+      ? await getEmployerDashboardCounts(session.user.orgId)
+      : null;
+  const jobSeekerCounts = canJobSeeker
+    ? await getJobSeekerDashboardCounts(session.user.id)
+    : null;
 
   const workspaces = [
-    {
-      key: "employer",
-      title: "Employer Workspace",
-      description:
-        "Post jobs, track candidates, manage applications, run screenings, schedule interviews, issue offers, and automate hiring workflows.",
-      href: "/hrms/recruit/employer",
-      icon: Analytics,
-      accent: "var(--mnx-accent)",
-      accentBg: "bg-[var(--mnx-accent)]/10",
-      accentText: "text-[var(--mnx-accent)]",
-      accentBorder: "border-[var(--mnx-accent)]/20",
-      enabled: canEmployer,
-      links: [
-        { label: "Job Openings", href: "/hrms/recruit/employer/jobs" },
-        { label: "Candidates", href: "/hrms/recruit/employer/candidates" },
-        { label: "Applications", href: "/hrms/recruit/employer/applications" },
-      ],
-    },
-    {
-      key: "jobseeker",
-      title: "Career Workspace",
-      description:
-        "Private career profile, job search, resume optimiser, cover letter builder, application tracker, alerts, and AI interview prep. Completely private from your employer.",
-      href: "/hrms/recruit/career",
-      icon: UserAvatar,
-      accent: "var(--mnx-info)",
-      accentBg: "bg-[var(--mnx-info)]/10",
-      accentText: "text-[var(--mnx-info)]",
-      accentBorder: "border-[var(--mnx-info)]/20",
-      enabled: canJobSeeker,
-      links: [
-        { label: "Job Search", href: "/hrms/recruit/career/jobs" },
-        { label: "My Applications", href: "/hrms/recruit/career/applications" },
-        { label: "My Resumes", href: "/hrms/recruit/career/resumes" },
-      ],
-    },
-  ].filter((w) => w.enabled);
+    canEmployer
+      ? {
+          href: "/hrms/recruit/employer",
+          title: "Employer workspace",
+          description:
+            "Monitor openings, applications, offers, and hiring automation from one operating surface.",
+        }
+      : null,
+    canJobSeeker
+      ? {
+          href: "/hrms/recruit/career",
+          title: "Career workspace",
+          description:
+            "Keep private applications, saved jobs, alerts, and resume tailoring separate from employer hiring data.",
+        }
+      : null,
+  ].filter((item): item is NonNullable<typeof item> => Boolean(item));
+
+  const totalOpenings =
+    (employerCounts?.openRequisitions ?? 0) +
+    (employerCounts?.activeOpenings ?? 0);
+  const totalApplications = employerCounts
+    ? Object.values(employerCounts.applicationsByStage).reduce(
+        (sum, value) => sum + value,
+        0,
+      )
+    : jobSeekerCounts
+      ? Object.values(jobSeekerCounts.applicationsByStatus).reduce(
+          (sum, value) => sum + value,
+          0,
+        )
+      : 0;
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="space-y-1">
-        <h1 className="mnx-title-1 text-mono-text">Recruit</h1>
-        <p className="text-sm text-mono-muted">
-          Hiring and career management — two private workspaces, zero
-          cross-contamination.
-        </p>
-      </div>
+    <>
+      <PeopleSummaryGrid>
+        <PeopleSummary
+          label="Visible workspaces"
+          value={workspaces.length}
+          detail="Recruit areas enabled for your role"
+        />
+        <PeopleSummary
+          label="Open opportunities"
+          value={totalOpenings}
+          detail="Roles currently ready for applications or publishing"
+        />
+        <PeopleSummary
+          label="Tracked applications"
+          value={totalApplications}
+          detail="Hiring or private application records visible from your access level"
+        />
+      </PeopleSummaryGrid>
 
-      {workspaces.length === 0 && (
-        <div className="rounded-xl border border-mono-border bg-mono-card p-8 text-center text-mono-muted">
-          No Recruit workspaces available. Contact your administrator.
-        </div>
-      )}
+      <PeopleSection>
+        <PeopleSectionHeader
+          eyebrow="Talent control"
+          title="Recruitment dashboard"
+          description="The landing page now starts with hiring or career signals, then keeps the workspace links underneath."
+        />
+        <DashboardInsightGrid>
+          {employerCounts ? (
+            <DashboardInsightCard
+              eyebrow="Hiring demand"
+              title="Employer pipeline"
+              detail="Openings, candidate inflow, and approvals make this feel like a real hiring dashboard instead of a pair of entry cards."
+              chart={(
+                <DashboardMiniBarChart
+                  items={[
+                    { label: "Draft requisitions", value: employerCounts.openRequisitions, tone: "warning" },
+                    { label: "Published openings", value: employerCounts.activeOpenings, tone: "success" },
+                    { label: "New candidates", value: employerCounts.newCandidates, tone: "info" },
+                    { label: "Offer approvals", value: employerCounts.offersAwaitingApproval, tone: "accent" },
+                  ]}
+                />
+              )}
+              footer={<span>{employerCounts.automationFailures} automation failures currently need a hiring-ops follow-up.</span>}
+            />
+          ) : null}
+          {jobSeekerCounts ? (
+            <DashboardInsightCard
+              eyebrow="Private career flow"
+              title="Career activity"
+              detail="Saved jobs, new matches, and active alerts create a useful personal dashboard without exposing employer-only data."
+              chart={(
+                <DashboardSegmentList
+                  items={[
+                    { label: "New matching jobs", value: jobSeekerCounts.newMatchingJobs, tone: "info" },
+                    { label: "Saved jobs", value: jobSeekerCounts.savedJobs, tone: "accent" },
+                    { label: "Active alerts", value: jobSeekerCounts.activeAlerts, tone: "success" },
+                    { label: "Tailored resumes", value: jobSeekerCounts.recentTailoredResumes, tone: "warning" },
+                  ]}
+                />
+              )}
+              footer={<span>The career side remains private and operationally separate from the employer dashboard.</span>}
+            />
+          ) : null}
+          {employerCounts ? (
+            <DashboardInsightCard
+              eyebrow="Application load"
+              title="Stage distribution"
+              detail="A compact split helps hiring teams see whether the backlog is building in screening, interviews, or offer stages."
+              chart={(
+                <DashboardSegmentList
+                  items={Object.entries(employerCounts.applicationsByStage)
+                    .slice(0, 5)
+                    .map(([label, value], index) => ({
+                      label: label.replaceAll("_", " "),
+                      value,
+                      tone: (["neutral", "info", "accent", "warning", "success"] as const)[index] ?? "neutral",
+                    }))}
+              />
+            )}
+            />
+          ) : null}
+        </DashboardInsightGrid>
+      </PeopleSection>
 
-      {/* Workspace Cards */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {workspaces.map((ws) => {
-          const Icon = ws.icon;
-          return (
-            <Link
-              key={ws.key}
-              href={ws.href}
-              className={`group flex flex-col gap-5 rounded-2xl border bg-mono-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${ws.accentBorder}`}
-            >
-              <div className="flex items-start gap-4">
-                <div
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${ws.accentBg}`}
-                >
-                  <Icon size={22} className={ws.accentText} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-base font-semibold text-mono-text">
-                    {ws.title}
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-mono-muted">
-                    {ws.description}
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {ws.links.map((l) => (
-                  <span
-                    key={l.href}
-                    className={`rounded-lg px-3 py-1 text-xs font-medium ${ws.accentBg} ${ws.accentText}`}
-                  >
-                    {l.label}
-                  </span>
-                ))}
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* Admin links */}
-      {!!caps["recruit.settings.manage"] && (
-        <div className="flex gap-3">
-          <Link
-            href="/hrms/recruit/settings"
-            className="inline-flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-4 py-2 text-sm text-mono-muted transition hover:text-mono-text"
-          >
-            <Settings size={16} />
-            Recruit Settings
-          </Link>
-          <Link
-            href="/hrms/recruit/audit"
-            className="inline-flex items-center gap-2 rounded-xl border border-mono-border bg-mono-card px-4 py-2 text-sm text-mono-muted transition hover:text-mono-text"
-          >
-            <Search size={16} />
-            Audit Log
-          </Link>
-        </div>
-      )}
-    </div>
+      <PeopleSection>
+        <PeopleSectionHeader
+          eyebrow="Action lanes"
+          title="Recruit workspaces"
+          description="Both employer and private career experiences stay available, but they now sit below the dashboard summary."
+        />
+        <PeopleLinkGrid>
+          {workspaces.map((workspace) => (
+            <PeopleLinkCard
+              key={workspace.href}
+              href={workspace.href}
+              title={workspace.title}
+              description={workspace.description}
+            />
+          ))}
+          {caps["recruit.settings.manage"] ? (
+            <PeopleLinkCard
+              href="/hrms/recruit/settings"
+              title="Recruit settings"
+              description="Control privacy, workflow, and hiring configuration."
+            />
+          ) : null}
+          {caps["recruit.settings.manage"] ? (
+            <PeopleLinkCard
+              href="/hrms/recruit/audit"
+              title="Recruit audit"
+              description="Review timeline events and integrity checks across hiring activity."
+            />
+          ) : null}
+        </PeopleLinkGrid>
+      </PeopleSection>
+    </>
   );
 }
