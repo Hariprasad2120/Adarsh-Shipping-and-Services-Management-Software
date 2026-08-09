@@ -85,7 +85,7 @@ describe("module-aware main dashboard", () => {
     expect(moduleCards).toContain("data-visual={visual}");
   });
 
-  it("renders the protected dashboard through shared foundation primitives", () => {
+  it("renders the protected dashboard through shared production components", () => {
     const portalSource = readSource(
       "src/app/(dashboard)/dashboard/portal-client.tsx",
     );
@@ -105,9 +105,9 @@ describe("module-aware main dashboard", () => {
 
     expect(portalSource).toContain("<MonolithPage>");
     expect(portalSource).not.toContain('<div className="mnx-dashboard-page">');
-    expect(attendanceSource).toContain("<MonolithAction");
-    expect(attendanceSource).toContain("<MonolithBadge");
-    expect(overviewSource).toContain("<MonolithSurface");
+    expect(attendanceSource).toContain("<Button");
+    expect(attendanceSource).toContain("<Badge");
+    expect(overviewSource).toContain("<Card");
     expect(overviewSource).toContain('].join("-")');
     expect(overviewSource).not.toContain("key: date.toISOString()");
     expect(teamSource).toContain("<WorkspaceSectionHeading");
@@ -115,7 +115,7 @@ describe("module-aware main dashboard", () => {
       'className="mnx-dashboard-metrics mnx-team-metrics"',
     );
     expect(teamSource).not.toContain("mnx-summary-stat");
-    expect(teamSource).toContain("<MonolithIconAction");
+    expect(teamSource).toContain("<Button");
     expect(organizationSource).toContain("<WorkspaceSectionHeading");
     expect(organizationSource).toContain(
       'className="mnx-dashboard-metrics mnx-org-metrics"',

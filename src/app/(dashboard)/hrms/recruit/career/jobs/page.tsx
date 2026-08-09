@@ -8,14 +8,13 @@ import {
 import { useState, useEffect, useCallback } from "react";
 import { Search, Bookmark, Close } from "@carbon/icons-react";
 import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-  DataTableEmpty,
-} from "@/modules/people/components/people-data-table";
+  OperationalDataTable,
+  OperationalDataTableWrap,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 
 type Listing = {
   id: string;
@@ -105,89 +104,90 @@ export default function JobSearchPage() {
         />
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
-        <DataTable>
-          <DataTableHeader>
-            <tr>
-              <DataTableHead>Job</DataTableHead>
-              <DataTableHead>Company</DataTableHead>
-              <DataTableHead>Location</DataTableHead>
-              <DataTableHead>Type</DataTableHead>
-              <DataTableHead>Source</DataTableHead>
-              <DataTableHead>Actions</DataTableHead>
-            </tr>
-          </DataTableHeader>
-          <DataTableBody>
-            {loading ? (
-              <DataTableEmpty colSpan={6} message="Loading..." />
-            ) : listings.length === 0 ? (
-              <DataTableEmpty
-                colSpan={6}
-                message="No jobs found. Update your career profile to get matched."
-              />
-            ) : (
-              listings.map((l) => (
-                <DataTableRow key={l.id}>
-                  <DataTableCell>
-                    {l.canonicalUrl ? (
-                      <a
-                        href={l.canonicalUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium text-mono-text hover:text-[var(--mnx-info)]"
-                      >
-                        {l.title}
-                      </a>
-                    ) : (
-                      <span className="font-medium text-mono-text">
-                        {l.title}
-                      </span>
-                    )}
-                    {l.salaryMin && (
-                      <p className="mnx-numeric mnx-dashboard-spec-label mt-0.5">
-                        {l.salaryMin.toLocaleString()} –{" "}
-                        {l.salaryMax?.toLocaleString() ?? "?"}
-                      </p>
-                    )}
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {l.company}
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {l.location ?? "—"}
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {l.workplaceType ?? l.employmentType ?? "—"}
-                  </DataTableCell>
-                  <DataTableCell className="mnx-dashboard-spec-label">
-                    {l.source}
-                  </DataTableCell>
-                  <DataTableCell>
-                    <div className="flex items-center gap-2">
-                      <MnxAction
-                        onClick={() => save(l.id)}
-                        disabled={!!actionPending || !!l.savedAt}
-                        title={l.savedAt ? "Saved" : "Save job"}
-                        className={`rounded-lg p-1.5 transition ${l.savedAt ? "text-[var(--mnx-info)]" : "text-mono-muted hover:text-[var(--mnx-info)]"}`}
-                      >
-                        <Bookmark size={16} />
-                      </MnxAction>
-                      <MnxAction
-                        onClick={() => dismiss(l.id)}
-                        disabled={!!actionPending}
-                        title="Dismiss"
-                        className="rounded-lg p-1.5 text-mono-muted transition hover:text-[var(--mnx-warning)]"
-                      >
-                        <Close size={16} />
-                      </MnxAction>
-                    </div>
-                  </DataTableCell>
-                </DataTableRow>
-              ))
-            )}
-          </DataTableBody>
-        </DataTable>
-      </div>
+      <OperationalDataTable>
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Job</OperationalTableHead>
+                <OperationalTableHead>Company</OperationalTableHead>
+                <OperationalTableHead>Location</OperationalTableHead>
+                <OperationalTableHead>Type</OperationalTableHead>
+                <OperationalTableHead>Source</OperationalTableHead>
+                <OperationalTableHead>Actions</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <OperationalTableEmpty colSpan={6}>Loading...</OperationalTableEmpty>
+              ) : listings.length === 0 ? (
+                <OperationalTableEmpty colSpan={6}>
+                  No jobs found. Update your career profile to get matched.
+                </OperationalTableEmpty>
+              ) : (
+                listings.map((l) => (
+                  <tr key={l.id}>
+                    <OperationalTableCell>
+                      {l.canonicalUrl ? (
+                        <a
+                          href={l.canonicalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-mono-text hover:text-[var(--mnx-info)]"
+                        >
+                          {l.title}
+                        </a>
+                      ) : (
+                        <span className="font-medium text-mono-text">
+                          {l.title}
+                        </span>
+                      )}
+                      {l.salaryMin && (
+                        <p className="mnx-numeric mnx-dashboard-spec-label mt-0.5">
+                          {l.salaryMin.toLocaleString()} –{" "}
+                          {l.salaryMax?.toLocaleString() ?? "?"}
+                        </p>
+                      )}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {l.company}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {l.location ?? "—"}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {l.workplaceType ?? l.employmentType ?? "—"}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="mnx-dashboard-spec-label">
+                      {l.source}
+                    </OperationalTableCell>
+                    <OperationalTableCell>
+                      <div className="flex items-center gap-2">
+                        <MnxAction
+                          onClick={() => save(l.id)}
+                          disabled={!!actionPending || !!l.savedAt}
+                          title={l.savedAt ? "Saved" : "Save job"}
+                          className={`rounded-lg p-1.5 transition ${l.savedAt ? "text-[var(--mnx-info)]" : "text-mono-muted hover:text-[var(--mnx-info)]"}`}
+                        >
+                          <Bookmark size={16} />
+                        </MnxAction>
+                        <MnxAction
+                          onClick={() => dismiss(l.id)}
+                          disabled={!!actionPending}
+                          title="Dismiss"
+                          className="rounded-lg p-1.5 text-mono-muted transition hover:text-[var(--mnx-warning)]"
+                        >
+                          <Close size={16} />
+                        </MnxAction>
+                      </div>
+                    </OperationalTableCell>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
+      </OperationalDataTable>
     </div>
   );
 }

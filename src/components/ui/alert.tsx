@@ -15,29 +15,9 @@ const alertVariants = cva("mnx-workspace-alert", {
       mono: "",
       warning: "mnx-workspace-alert-warning",
     },
-    appearance: {
-      solid: "",
-      outline: "",
-      light: "",
-      stroke: "",
-    },
-    size: {
-      lg: "",
-      md: "",
-      sm: "",
-    },
-    icon: {
-      primary: "",
-      destructive: "",
-      success: "",
-      info: "",
-      warning: "",
-    },
   },
   defaultVariants: {
     variant: "secondary",
-    appearance: "light",
-    size: "md",
   },
 });
 
@@ -46,11 +26,11 @@ interface AlertProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<
   onClose?: () => void;
 }
 
-interface AlertIconProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof alertVariants> {}
+interface AlertIconProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-function Alert({ className, variant, size, icon, appearance, close = false, onClose, children, ...props }: AlertProps) {
+function Alert({ className, variant, close = false, onClose, children, ...props }: AlertProps) {
   return (
-    <div data-slot="alert" role="alert" className={cn(alertVariants({ variant, size, icon, appearance }), className)} {...props}>
+    <div data-slot="alert" role="alert" className={cn(alertVariants({ variant }), className)} {...props}>
       {children}
       {close ? (
         <Button size="sm" variant="inverse" mode="icon" onClick={onClose} aria-label="Dismiss" data-slot="alert-close">

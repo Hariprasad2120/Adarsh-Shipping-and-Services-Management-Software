@@ -7,14 +7,13 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Search } from "@carbon/icons-react";
 import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-  DataTableEmpty,
-} from "@/modules/people/components/people-data-table";
+  OperationalDataTable,
+  OperationalDataTableWrap,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 import { RECRUIT_APP_STAGES } from "@/modules/recruit/types";
 
 type Application = {
@@ -119,69 +118,73 @@ export default function ApplicationsPage() {
         </NativeSelect>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
-        <DataTable>
-          <DataTableHeader>
-            <tr>
-              <DataTableHead>Candidate</DataTableHead>
-              <DataTableHead>Role</DataTableHead>
-              <DataTableHead>Ref #</DataTableHead>
-              <DataTableHead>Stage</DataTableHead>
-              <DataTableHead>Applied</DataTableHead>
-              <DataTableHead>Updated</DataTableHead>
-            </tr>
-          </DataTableHeader>
-          <DataTableBody>
-            {loading ? (
-              <DataTableEmpty colSpan={6} message="Loading..." />
-            ) : applications.length === 0 ? (
-              <DataTableEmpty colSpan={6} message="No applications yet." />
-            ) : (
-              applications.map((app) => (
-                <DataTableRow key={app.id}>
-                  <DataTableCell>
-                    <Link
-                      href={`/hrms/recruit/employer/applications/${app.id}`}
-                      className="font-medium text-mono-text hover:text-[var(--mnx-accent)]"
-                    >
-                      {app.candidate?.fullName ?? "—"}
-                    </Link>
-                    {app.candidate?.email && (
-                      <p className="mnx-dashboard-spec-label mt-0.5">
-                        {app.candidate.email}
-                      </p>
-                    )}
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {app.jobOpening?.title ?? "—"}
-                    {app.jobOpening?.requisitionNumber && (
-                      <p className="mnx-dashboard-spec-label mt-0.5">
-                        {app.jobOpening.requisitionNumber}
-                      </p>
-                    )}
-                  </DataTableCell>
-                  <DataTableCell className="mnx-dashboard-spec-label">
-                    {app.applicationNumber}
-                  </DataTableCell>
-                  <DataTableCell>
-                    <span
-                      className={`inline-flex rounded-lg border px-2 py-0.5 text-xs font-medium ${STAGE_COLORS[app.stage] ?? ""}`}
-                    >
-                      {app.stage.replace(/_/g, " ")}
-                    </span>
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {new Date(app.createdAt).toLocaleDateString()}
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {new Date(app.updatedAt).toLocaleDateString()}
-                  </DataTableCell>
-                </DataTableRow>
-              ))
-            )}
-          </DataTableBody>
-        </DataTable>
-      </div>
+      <OperationalDataTable>
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Candidate</OperationalTableHead>
+                <OperationalTableHead>Role</OperationalTableHead>
+                <OperationalTableHead>Ref #</OperationalTableHead>
+                <OperationalTableHead>Stage</OperationalTableHead>
+                <OperationalTableHead>Applied</OperationalTableHead>
+                <OperationalTableHead>Updated</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <OperationalTableEmpty colSpan={6}>Loading...</OperationalTableEmpty>
+              ) : applications.length === 0 ? (
+                <OperationalTableEmpty colSpan={6}>
+                  No applications yet.
+                </OperationalTableEmpty>
+              ) : (
+                applications.map((app) => (
+                  <tr key={app.id}>
+                    <OperationalTableCell>
+                      <Link
+                        href={`/hrms/recruit/employer/applications/${app.id}`}
+                        className="font-medium text-mono-text hover:text-[var(--mnx-accent)]"
+                      >
+                        {app.candidate?.fullName ?? "—"}
+                      </Link>
+                      {app.candidate?.email && (
+                        <p className="mnx-dashboard-spec-label mt-0.5">
+                          {app.candidate.email}
+                        </p>
+                      )}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {app.jobOpening?.title ?? "—"}
+                      {app.jobOpening?.requisitionNumber && (
+                        <p className="mnx-dashboard-spec-label mt-0.5">
+                          {app.jobOpening.requisitionNumber}
+                        </p>
+                      )}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="mnx-dashboard-spec-label">
+                      {app.applicationNumber}
+                    </OperationalTableCell>
+                    <OperationalTableCell>
+                      <span
+                        className={`inline-flex rounded-lg border px-2 py-0.5 text-xs font-medium ${STAGE_COLORS[app.stage] ?? ""}`}
+                      >
+                        {app.stage.replace(/_/g, " ")}
+                      </span>
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {new Date(app.createdAt).toLocaleDateString()}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {new Date(app.updatedAt).toLocaleDateString()}
+                    </OperationalTableCell>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
+      </OperationalDataTable>
     </div>
   );
 }

@@ -1,68 +1,18 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import React, { ComponentProps } from "react";
-import { DataTableRow } from "@/components/data-display/data-table";
+import type { ComponentProps } from "react";
+import { OperationalLinkedRow } from "@/components/data-display/operational-linked-row";
 
-type ClickableRowProps = ComponentProps<typeof DataTableRow> & {
-  href: string;
+type ClickableRowProps = Omit<ComponentProps<typeof OperationalLinkedRow>, "ariaLabel"> & {
+  ariaLabel?: string;
 };
 
-export function ClickableRow({
-  href,
-  children,
-  className,
-  ...props
-}: ClickableRowProps) {
-  const router = useRouter();
-
-  const handleNavigate = (e: React.MouseEvent<HTMLTableRowElement>) => {
-    const target = e.target as HTMLElement;
-    // Don't trigger navigation if clicking an interactive element
-    if (
-      target.closest("button") ||
-      target.closest("a") ||
-      target.closest("input") ||
-      target.closest("select") ||
-      target.closest("textarea") ||
-      target.closest('[role="button"]') ||
-      target.closest('[role="menuitem"]')
-    ) {
-      return;
-    }
-    router.push(href);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTableRowElement>) => {
-    const target = e.target as HTMLElement;
-    // Don't trigger navigation if typing inside an interactive element
-    if (
-      target.closest("button") ||
-      target.closest("a") ||
-      target.closest("input") ||
-      target.closest("select") ||
-      target.closest("textarea") ||
-      target.closest('[role="button"]') ||
-      target.closest('[role="menuitem"]')
-    ) {
-      return;
-    }
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      router.push(href);
-    }
-  };
-
+export function ClickableRow({ href, ariaLabel, ...props }: ClickableRowProps) {
   return (
-    <DataTableRow
+    <OperationalLinkedRow
+      href={href}
+      ariaLabel={ariaLabel ?? `Open ${href}`}
       {...props}
-      tabIndex={0}
-      role="link"
-      onClick={handleNavigate}
-      onKeyDown={handleKeyDown}
-      className={`mnx-row-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mnx-accent)] focus-visible:ring-inset ${className || ""}`}
-    >
-      {children}
-    </DataTableRow>
+    />
   );
 }

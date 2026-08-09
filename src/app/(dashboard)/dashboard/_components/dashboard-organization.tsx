@@ -15,10 +15,8 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
-import {
-  MonolithEmptyState,
-  MonolithSurface,
-} from "@/components/ui/foundation";
+import { MonolithEmptyState } from "@/components/ui/foundation";
+import { Card } from "@/components/ui/card";
 import { WorkspaceSectionHeading } from "@/components/layout/workspace";
 import type { DashboardWidgetsData } from "@/modules/hrms/types";
 
@@ -188,7 +186,7 @@ export function DashboardOrganization({
         description="Company signals, policy references, structures, and colleague records."
       />
 
-      <MonolithSurface className="mnx-organization-workspace">
+      <Card className="mnx-organization-workspace">
         <header className="mnx-organization-toolbar">
           <nav className="mnx-organization-tabs" aria-label="Organization views">
             {organizationTabs.map((tab) => {
@@ -397,7 +395,7 @@ export function DashboardOrganization({
           />
         ) : null}
         </div>
-      </MonolithSurface>
+      </Card>
     </section>
   );
 }

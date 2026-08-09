@@ -2,17 +2,14 @@ import { PerformanceTableRow } from "@/modules/performance/components/performanc
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { redirect } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 import {
-  Badge,
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-  DataTablePrimaryLinkCell,
-  DataTableRow,
-} from "@/modules/people/components/workspace-data-table";
+  OperationalDataTableWrap,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 import { getSession } from "@/lib/auth";
 import { getNow } from "@/lib/clock";
 import { requirePermission } from "@/lib/rbac";
@@ -153,38 +150,38 @@ export default async function AppraisalsPage({
           )}
         </div>
 
-        <DataTable>
-          <DataTableHeader>
-            <PerformanceTableRow>
-              {[
-                "Employee",
-                "Designation",
-                "Department",
-                "Type",
-                "Due Date",
-                "",
-              ].map((header) => (
-                <DataTableHead key={header}>{header}</DataTableHead>
-              ))}
-            </PerformanceTableRow>
-          </DataTableHeader>
-          <DataTableBody>
-            {dueThisMonthRowsSafe.length === 0 ? (
-              <DataTableEmpty
-                colSpan={6}
-                message="No appraisals due this month."
-                className="py-6 text-sm"
-              />
-            ) : (
-              dueThisMonthRowsSafe.map((row) => (
-                <DueThisMonthRow
-                  key={`${row.employeeId}-${row.kind}-${row.dueDate}`}
-                  row={row}
-                />
-              ))
-            )}
-          </DataTableBody>
-        </DataTable>
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <PerformanceTableRow>
+                {[
+                  "Employee",
+                  "Designation",
+                  "Department",
+                  "Type",
+                  "Due Date",
+                  "",
+                ].map((header) => (
+                  <OperationalTableHead key={header}>{header}</OperationalTableHead>
+                ))}
+              </PerformanceTableRow>
+            </thead>
+            <tbody>
+              {dueThisMonthRowsSafe.length === 0 ? (
+                <OperationalTableEmpty colSpan={6} className="py-6 text-sm">
+                  No appraisals due this month.
+                </OperationalTableEmpty>
+              ) : (
+                dueThisMonthRowsSafe.map((row) => (
+                  <DueThisMonthRow
+                    key={`${row.employeeId}-${row.kind}-${row.dueDate}`}
+                    row={row}
+                  />
+                ))
+              )}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
       </section>
 
       <section className="space-y-3">
@@ -213,64 +210,70 @@ export default async function AppraisalsPage({
           </div>
         ) : null}
 
-        <DataTable>
-          <DataTableHeader>
-            <PerformanceTableRow>
-              {["Employee", "Cycle", "Stage", "Due Date", ""].map((header) => (
-                <DataTableHead key={header}>{header}</DataTableHead>
-              ))}
-            </PerformanceTableRow>
-          </DataTableHeader>
-          <DataTableBody>
-            {appraisals.length === 0 ? (
-              <DataTableEmpty colSpan={5} message="No appraisals found." />
-            ) : (
-              (appraisals as Appraisals).map((appraisal) => (
-                <DataTableRow key={appraisal.id}>
-                  <DataTablePrimaryLinkCell
-                    href={
-                      appraisal.stage === "DUE_NOTIFIED"
-                        ? `/ams/appraisals/assign/${appraisal.employee.id}`
-                        : `/ams/appraisals/${appraisal.id}`
-                    }
-                    className="font-medium text-mono-text"
-                  >
-                    <span>{appraisal.employee.name}</span>
-                  </DataTablePrimaryLinkCell>
-                  <DataTableCell className="text-mono-muted">
-                    {appraisal.cycle.name}
-                  </DataTableCell>
-                  <DataTableCell>
-                    <Badge
-                      className={
-                        STAGE_COLOR[appraisal.stage] ??
-                        "bg-mono-soft text-mono-muted"
-                      }
-                    >
-                      {appraisal.stage.replace(/_/g, " ")}
-                    </Badge>
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {dueDateFormatter.format(new Date(appraisal.dueDate))}
-                  </DataTableCell>
-                  <DataTableCell className="text-right">
-                    <Link
-                      href={
-                        appraisal.stage === "DUE_NOTIFIED"
-                          ? `/ams/appraisals/assign/${appraisal.employee.id}`
-                          : `/ams/appraisals/${appraisal.id}`
-                      }
-                      aria-label={`${appraisal.stage === "DUE_NOTIFIED" ? "Assign reviewers for" : "Manage"} ${appraisal.employee.name}`}
-                      className="inline-flex text-outline-variant transition-colors hover:text-mono-accent"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Link>
-                  </DataTableCell>
-                </DataTableRow>
-              ))
-            )}
-          </DataTableBody>
-        </DataTable>
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <PerformanceTableRow>
+                {["Employee", "Cycle", "Stage", "Due Date", ""].map((header) => (
+                  <OperationalTableHead key={header}>{header}</OperationalTableHead>
+                ))}
+              </PerformanceTableRow>
+            </thead>
+            <tbody>
+              {appraisals.length === 0 ? (
+                <OperationalTableEmpty colSpan={5}>
+                  No appraisals found.
+                </OperationalTableEmpty>
+              ) : (
+                (appraisals as Appraisals).map((appraisal) => (
+                  <tr key={appraisal.id}>
+                    <OperationalTableCell className="px-0 py-0">
+                      <Link
+                        href={
+                          appraisal.stage === "DUE_NOTIFIED"
+                            ? `/ams/appraisals/assign/${appraisal.employee.id}`
+                            : `/ams/appraisals/${appraisal.id}`
+                        }
+                        className="block px-5 py-3.5 font-medium text-mono-text"
+                      >
+                        <span>{appraisal.employee.name}</span>
+                      </Link>
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {appraisal.cycle.name}
+                    </OperationalTableCell>
+                    <OperationalTableCell>
+                      <Badge
+                        className={
+                          STAGE_COLOR[appraisal.stage] ??
+                          "bg-mono-soft text-mono-muted"
+                        }
+                      >
+                        {appraisal.stage.replace(/_/g, " ")}
+                      </Badge>
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {dueDateFormatter.format(new Date(appraisal.dueDate))}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-right">
+                      <Link
+                        href={
+                          appraisal.stage === "DUE_NOTIFIED"
+                            ? `/ams/appraisals/assign/${appraisal.employee.id}`
+                            : `/ams/appraisals/${appraisal.id}`
+                        }
+                        aria-label={`${appraisal.stage === "DUE_NOTIFIED" ? "Assign reviewers for" : "Manage"} ${appraisal.employee.name}`}
+                        className="inline-flex text-outline-variant transition-colors hover:text-mono-accent"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Link>
+                    </OperationalTableCell>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
       </section>
 
       <section className="space-y-3">
@@ -297,42 +300,40 @@ export default async function AppraisalsPage({
           <EligibleAppraisalFilterMenu />
         </div>
 
-        <DataTable>
-          <DataTableHeader>
-            <PerformanceTableRow>
-              {[
-                "Employee",
-                "Designation",
-                "Department",
-                "Type",
-                "Due Date",
-                "",
-              ].map((header) => (
-                <DataTableHead key={header}>{header}</DataTableHead>
-              ))}
-            </PerformanceTableRow>
-          </DataTableHeader>
-          <DataTableBody>
-            {eligibleRowsToShow.length === 0 ? (
-              <DataTableEmpty
-                colSpan={6}
-                message={
-                  isDueFilterApplied
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <PerformanceTableRow>
+                {[
+                  "Employee",
+                  "Designation",
+                  "Department",
+                  "Type",
+                  "Due Date",
+                  "",
+                ].map((header) => (
+                  <OperationalTableHead key={header}>{header}</OperationalTableHead>
+                ))}
+              </PerformanceTableRow>
+            </thead>
+            <tbody>
+              {eligibleRowsToShow.length === 0 ? (
+                <OperationalTableEmpty colSpan={6} className="py-6 text-sm">
+                  {isDueFilterApplied
                     ? `No employees are eligible for appraisal in ${MONTH_NAMES[month]} ${year}.`
-                    : "No active employees found."
-                }
-                className="py-6 text-sm"
-              />
-            ) : (
-              eligibleRowsToShow.map((row) => (
-                <DueThisMonthRow
-                  key={`${row.employeeId}-${row.dueDate ?? "all"}`}
-                  row={row}
-                />
-              ))
-            )}
-          </DataTableBody>
-        </DataTable>
+                    : "No active employees found."}
+                </OperationalTableEmpty>
+              ) : (
+                eligibleRowsToShow.map((row) => (
+                  <DueThisMonthRow
+                    key={`${row.employeeId}-${row.dueDate ?? "all"}`}
+                    row={row}
+                  />
+                ))
+              )}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
       </section>
     </div>
   );

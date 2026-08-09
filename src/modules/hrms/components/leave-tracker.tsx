@@ -1,6 +1,7 @@
 "use client";
 
 import { NativeSelect } from "@/components/ui/native-select";
+import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
 import { Calendar, Search, Plus, Download, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import { toast } from "sonner";
@@ -186,13 +187,13 @@ export function LeaveTracker({ onFetchHolidays }: LeaveTrackerProps) {
                       <span className="text-xs font-semibold text-slate-700">{day.date}</span>
                       <span className="text-[10.5px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md font-bold">{day.duration}</span>
                     </div>
-                    <button
-                      type="button"
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => handleApplyLeave(day.date)}
-                      className="text-[10.5px] font-bold text-[#F9D972] border border-[#F9D972]/20 bg-[#F9D972]/5 hover:bg-[#F9D972]/10 px-3 py-1 rounded-lg transition-colors cursor-pointer"
                     >
                       Apply Leave
-                    </button>
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -276,13 +277,10 @@ export function LeaveTracker({ onFetchHolidays }: LeaveTrackerProps) {
                 </div>
 
                 {/* Add Holidays option */}
-                <button
-                  type="button"
-                  className="bg-[#F9D972] hover:bg-[#00b0a3] text-white text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition-colors cursor-pointer ml-auto sm:ml-0"
-                >
+                <Button size="sm" className="ml-auto sm:ml-0">
                   <Plus className="size-3.5" />
                   Add Holidays
-                </button>
+                </Button>
               </div>
             </div>
 

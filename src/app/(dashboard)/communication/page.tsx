@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { listThreads } from "@/lib/google-gmail-client";
 import { listUpcomingEvents } from "@/lib/google-calendar-client";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
   AlertCircle,
   ArrowRight,
@@ -19,6 +20,14 @@ import { WorkspaceAlert, WorkspaceMetric, WorkspaceSectionHeading } from "@/comp
 
 type Thread = Awaited<ReturnType<typeof listThreads>>["threads"][number];
 type Meeting = Awaited<ReturnType<typeof listUpcomingEvents>>[number];
+type CommunicationSummaryCard = {
+  actionLabel?: string;
+  detail: string;
+  href?: string;
+  icon: ReactNode;
+  label: string;
+  value: ReactNode;
+};
 
 function calendarMoment(value: { dateTime: string }) {
   return (
@@ -93,6 +102,38 @@ export default async function CommunicationDashboard() {
     },
   });
   const parsedError = parseGoogleApiError(errorState ?? "");
+  const summaryCards: readonly CommunicationSummaryCard[] = [
+    {
+      href: "/communication/mail",
+      actionLabel: "Open mailbox",
+      icon: <Mail aria-hidden="true" />,
+      label: "Unread mail",
+      value: threads.filter((thread) => thread.isUnread).length,
+      detail: "Within the latest synced threads",
+    },
+    {
+      href: "/communication/job-spaces",
+      actionLabel: "Open job spaces",
+      icon: <MessageSquare aria-hidden="true" />,
+      label: "Job channels",
+      value: activeSpacesCount,
+      detail: "Provisioned active spaces",
+    },
+    {
+      href: "/communication/meetings",
+      actionLabel: "Open meetings",
+      icon: <Calendar aria-hidden="true" />,
+      label: "Upcoming meetings",
+      value: meetings.length,
+      detail: "Within the next synced events",
+    },
+    {
+      icon: <CheckCircle2 aria-hidden="true" />,
+      label: "Workspace health",
+      value: errorState ? "Attention" : "Healthy",
+      detail: "Connected API status",
+    },
+  ] as const;
 
   return (
     <>
@@ -134,39 +175,20 @@ export default async function CommunicationDashboard() {
       ) : null}
 
       <section className="mnx-workspace-metrics" aria-label="Communication summary">
-        <WorkspaceMetric
-          href="/communication/mail"
-          actionLabel="Open mailbox"
-          actionIcon={<ArrowRight aria-hidden="true" />}
-          icon={<Mail aria-hidden="true" />}
-          label="Unread mail"
-          value={threads.filter((thread) => thread.isUnread).length}
-          detail="Within the latest synced threads"
-        />
-        <WorkspaceMetric
-          href="/communication/job-spaces"
-          actionLabel="Open job spaces"
-          actionIcon={<ArrowRight aria-hidden="true" />}
-          icon={<MessageSquare aria-hidden="true" />}
-          label="Job channels"
-          value={activeSpacesCount}
-          detail="Provisioned active spaces"
-        />
-        <WorkspaceMetric
-          href="/communication/meetings"
-          actionLabel="Open meetings"
-          actionIcon={<ArrowRight aria-hidden="true" />}
-          icon={<Calendar aria-hidden="true" />}
-          label="Upcoming meetings"
-          value={meetings.length}
-          detail="Within the next synced events"
-        />
-        <WorkspaceMetric
-          icon={<CheckCircle2 aria-hidden="true" />}
-          label="Workspace health"
-          value={errorState ? "Attention" : "Healthy"}
-          detail="Connected API status"
-        />
+        {summaryCards.map((card) => {
+          return (
+            <WorkspaceMetric
+              key={card.label}
+              href={card.href}
+              actionLabel={card.actionLabel}
+              actionIcon={card.href ? <ArrowRight aria-hidden="true" /> : undefined}
+              icon={card.icon}
+              label={card.label}
+              value={card.value}
+              detail={card.detail}
+            />
+          );
+        })}
       </section>
 
       <WorkspaceSectionHeading

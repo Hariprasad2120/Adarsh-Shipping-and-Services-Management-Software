@@ -1,11 +1,13 @@
-import Link from "next/link";
 import { ArrowRight, Bell, CheckSquare, Clock } from "lucide-react";
 import {
+  CustomerPortalPanel,
   CustomerPortalPage,
   CustomerPortalPageHeader,
+  CustomerPortalSectionHeading,
 } from "@/components/monolith/customer-portal-workspace";
+import { WorkspaceEmptyState } from "@/components/feedback/workspace-states";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { getCustomerPortalApprovalQueue } from "@/modules/customer-portal/shipments";
 import { listPortalNotifications } from "@/modules/customer-portal/service";
@@ -53,23 +55,27 @@ export default async function CustomerPortalNotificationsPage() {
         actions={unreadCount > 0 ? <PortalMarkAllReadButton /> : undefined}
       />
 
+      <CustomerPortalSectionHeading
+        index="01"
+        title="Activity feed"
+        description="Portal alerts, checklist approvals, and customer-facing workflow notices in one queue."
+      />
+
       {notificationRows.length === 0 ? (
-        <div className="rounded-xl border border-mono-border/40 bg-mono-card p-12 text-center">
-          <Bell className="mx-auto size-10 text-mono-accent opacity-50" />
-          <h3 className="mnx-portal-title-3 mt-4 text-mono-text">
-            No Notifications
-          </h3>
-          <p className="mx-auto mt-2 max-w-sm text-xs text-mono-muted">
-            There are no customer portal notifications for your account right
-            now.
-          </p>
-        </div>
+        <CustomerPortalPanel className="mnx-customer-portal-empty">
+          <div className="mnx-panel-state">
+            <WorkspaceEmptyState
+              title="No notifications"
+              description="There are no customer portal notifications for this account right now."
+            />
+          </div>
+        </CustomerPortalPanel>
       ) : (
         <div className="space-y-3">
           {notificationRows.map((notification) => (
-            <div
+            <CustomerPortalPanel
               key={notification.id}
-              className="mnx-portal-panel flex flex-col gap-4 rounded-xl border border-mono-border/60 bg-mono-card p-5 shadow-sm sm:flex-row sm:items-start sm:justify-between"
+              className="mnx-portal-panel flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between"
             >
               <div className="flex min-w-0 gap-3">
                 <span className="mnx-portal-leading-icon shrink-0">
@@ -112,18 +118,17 @@ export default async function CustomerPortalNotificationsPage() {
                 </div>
               </div>
               {notification.link ? (
-                <Link href={notification.link} className="shrink-0">
-                  <Button
-                    size="sm"
-                    variant={notification.isActionable ? "default" : "outline"}
-                    className="gap-2"
-                  >
-                    <span>{notification.isActionable ? "Review" : "Open"}</span>
-                    <ArrowRight size={14} />
-                  </Button>
-                </Link>
+                <ButtonLink
+                  href={notification.link}
+                  size="sm"
+                  variant={notification.isActionable ? "default" : "outline"}
+                  className="shrink-0 gap-2"
+                >
+                  <span>{notification.isActionable ? "Review" : "Open"}</span>
+                  <ArrowRight size={14} />
+                </ButtonLink>
               ) : null}
-            </div>
+            </CustomerPortalPanel>
           ))}
         </div>
       )}

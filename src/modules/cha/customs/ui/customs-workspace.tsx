@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NativeSelect } from "@/components/ui/native-select";
 import type { ChaCustomsFeatureFlags } from "../feature-flags";
 import type { ChaCustomsRouteMetadata } from "../routes";
 
@@ -268,17 +269,17 @@ export function CustomsPagination({
       <span>{from}-{to} of {totalCount}</span>
       <label>
         Rows per page
-        <select value={pageSize} onChange={(event) => onPageSizeChange?.(Number(event.target.value))}>
+        <NativeSelect value={pageSize} onChange={(event) => onPageSizeChange?.(Number(event.target.value))}>
           {[10, 25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
-        </select>
+        </NativeSelect>
       </label>
       <div>
-        <button type="button" onClick={() => onPageChange?.(page - 1)} disabled={page <= 1} aria-label="Previous page">
+        <ChaAction className="mnx-icon-button" onClick={() => onPageChange?.(page - 1)} disabled={page <= 1} aria-label="Previous page">
           <ChevronLeft size={16} aria-hidden="true" />
-        </button>
-        <button type="button" onClick={() => onPageChange?.(page + 1)} disabled={page >= totalPages} aria-label="Next page">
+        </ChaAction>
+        <ChaAction className="mnx-icon-button" onClick={() => onPageChange?.(page + 1)} disabled={page >= totalPages} aria-label="Next page">
           <ChevronRight size={16} aria-hidden="true" />
-        </button>
+        </ChaAction>
       </div>
     </footer>
   );
@@ -298,9 +299,9 @@ export function CustomsRowActionMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="mnx-icon-button" type="button" aria-label="Open row actions">
+        <ChaAction className="mnx-icon-button" aria-label="Open row actions">
           <MoreHorizontal size={16} aria-hidden="true" />
-        </button>
+        </ChaAction>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Row actions</DropdownMenuLabel>

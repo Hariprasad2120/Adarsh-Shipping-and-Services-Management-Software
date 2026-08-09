@@ -1,11 +1,7 @@
 "use client";
 
-import {
-  Badge,
-  DataTableCell,
-  DataTablePrimaryLinkCell,
-  DataTableRow,
-} from "@/modules/people/components/workspace-data-table";
+import { Badge } from "@/components/ui/badge";
+import { OperationalTableCell } from "@/components/data-display/operational-data-table";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
@@ -30,20 +26,22 @@ export function DueThisMonthRow({ row }: { row: DueRow }) {
     : "-";
 
   return (
-    <DataTableRow>
-      <DataTablePrimaryLinkCell
-        href={href}
-        className="font-medium text-mono-muted"
-      >
-        <span>{row.employeeName}</span>
-      </DataTablePrimaryLinkCell>
-      <DataTableCell className="text-xs text-mono-muted">
+    <tr>
+      <OperationalTableCell className="px-0 py-0">
+        <Link
+          href={href}
+          className="block px-5 py-3.5 font-medium text-mono-muted"
+        >
+          <span>{row.employeeName}</span>
+        </Link>
+      </OperationalTableCell>
+      <OperationalTableCell className="text-xs text-mono-muted">
         {row.designation ?? "-"}
-      </DataTableCell>
-      <DataTableCell className="text-xs text-mono-muted">
+      </OperationalTableCell>
+      <OperationalTableCell className="text-xs text-mono-muted">
         {row.department ?? "-"}
-      </DataTableCell>
-      <DataTableCell>
+      </OperationalTableCell>
+      <OperationalTableCell>
         {row.kind ? (
           <Badge
             className={
@@ -57,11 +55,11 @@ export function DueThisMonthRow({ row }: { row: DueRow }) {
         ) : (
           <span className="text-xs text-mono-muted">-</span>
         )}
-      </DataTableCell>
-      <DataTableCell className="text-xs text-mono-muted">
+      </OperationalTableCell>
+      <OperationalTableCell className="text-xs text-mono-muted">
         {dueDateLabel}
-      </DataTableCell>
-      <DataTableCell className="text-right">
+      </OperationalTableCell>
+      <OperationalTableCell className="text-right">
         <Link
           href={href}
           aria-label={`${row.appraisalId ? "Open" : "Start appraisal for"} ${row.employeeName}`}
@@ -69,7 +67,7 @@ export function DueThisMonthRow({ row }: { row: DueRow }) {
         >
           <ChevronRight className="h-4 w-4" />
         </Link>
-      </DataTableCell>
-    </DataTableRow>
+      </OperationalTableCell>
+    </tr>
   );
 }

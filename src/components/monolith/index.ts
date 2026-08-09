@@ -38,37 +38,6 @@ export * from "./accounting-workflow-cards";
 export * from "./customer-portal-workspace";
 export * from "./vendor-master-create-form";
 export {
-  type ColumnDef as PeopleColumnDef,
-  AvatarCell as PeopleAvatarCell,
-  Badge as PeopleStatusBadge,
-  DataTable as PeopleDataTable,
-  DataTableBody as PeopleDataTableBody,
-  DataTableCell as PeopleDataTableCell,
-  DataTableEmpty as PeopleDataTableEmpty,
-  DataTableFooter as PeopleDataTableFooter,
-  DataTableHead as PeopleDataTableHead,
-  DataTableHeader as PeopleDataTableHeader,
-  DataTablePrimaryLinkCell as PeopleDataTablePrimaryLinkCell,
-  DataTableRow as PeopleDataTableRow,
-  DataTableToolbar as PeopleDataTableToolbar,
-  MetaText as PeopleMetaText,
-} from "@/modules/people/components/people-data-table";
-export {
-  AvatarCell as DataTableAvatarCell,
-  Badge as DataTableStatusBadge,
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableFooter,
-  DataTableHead,
-  DataTableHeader,
-  DataTablePrimaryLinkCell,
-  DataTableRow,
-  DataTableToolbar,
-  MetaText as DataTableMetaText,
-} from "@/components/data-display/data-table";
-export {
   MonolithThemePicker,
   MonolithThemeProvider,
   monolithThemes,

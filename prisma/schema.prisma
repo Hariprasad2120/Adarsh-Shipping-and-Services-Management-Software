@@ -45,6 +45,7 @@ model Organisation {
   biometricSyncLogs     BiometricSyncLog[]
   workingCalendar       WorkingCalendar?
   otSettings            OtSettings?
+  themeSettings         OrganisationThemeSettings?
   attendancePunchEvents AttendancePunchEvent[]
   shifts                Shift[]
 
@@ -1298,6 +1299,17 @@ model SystemSetting {
   updatedAt DateTime @updatedAt
 }
 
+model OrganisationThemeSettings {
+  id              String   @id @default("global")
+  orgId           String   @unique
+  lightPalette    Json?
+  darkPalette     Json?
+  updatedAt       DateTime @updatedAt
+  updatedByUserId String?
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
 model IncrementSlab {
   id          String @id @default(cuid())
   label       String
@@ -2147,6 +2159,7 @@ model CrmInvoice {
   updatedById String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  rowVersion  Int      @default(1)
 
   items        CrmInvoiceItem[]
   approvalLogs CrmApprovalLog[]
@@ -2196,6 +2209,7 @@ model CrmInvoiceItem {
   exchangeRate            Float    @default(1.0)
   sourceQuotationItemId   String?
   sourceQuotationQuantity Decimal? @db.Decimal(20, 6)
+  quantityInvoiced        Decimal  @default(0.0) @db.Decimal(20, 6)
 
   @@index([invoiceId])
   @@index([sourceQuotationItemId])
@@ -5420,6 +5434,7 @@ model SalesInvoice {
   terms         String?
   salespersonId String?
   salesperson   User?   @relation("SalesInvoiceSalesperson", fields: [salespersonId], references: [id], onDelete: SetNull)
+  rowVersion    Int     @default(1)
 
   @@unique([orgId, invoiceNumber])
   @@index([orgId])

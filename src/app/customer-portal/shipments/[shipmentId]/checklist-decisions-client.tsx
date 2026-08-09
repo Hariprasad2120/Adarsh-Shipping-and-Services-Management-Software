@@ -6,14 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-  DataTableToolbar,
-} from "@/components/data-display/data-table";
+  OperationalDataTable,
+  OperationalDataTableHeader,
+  OperationalDataTableWrap,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 import type { getCustomerPortalShipmentDetailData } from "@/modules/customer-portal/shipments";
 
 type ChecklistItem = NonNullable<
@@ -89,145 +89,133 @@ export function ChecklistDecisionsClient({
   };
 
   return (
-    <DataTable className="border border-mono-border/45">
-      <DataTableToolbar className="bg-mono-card">
-        <div className="flex items-center gap-3">
-          <span className="mnx-portal-leading-icon">
-            <svg
-              viewBox="0 0 24 24"
-              className="size-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-            >
-              <path d="M9 12l2 2 4-4" />
-              <path d="M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3c1.86 0 3.58.57 5 1.54" />
-            </svg>
-          </span>
-          <div>
-            <h2 className="mnx-portal-title-2 text-mono-text">
-              Checklist Decisions
-            </h2>
-            <p className="text-xs text-mono-muted">
-              Download the visible checklist file and approve or reject it once
-              your account is ready to respond.
-            </p>
-          </div>
-        </div>
-      </DataTableToolbar>
+    <>
+    <OperationalDataTable>
+      <OperationalDataTableHeader eyebrow="Customer decisions" title="Checklist Decisions">
+        <p>
+          Download the visible checklist file and approve or reject it once
+          your account is ready to respond.
+        </p>
+      </OperationalDataTableHeader>
       {error ? (
-        <tbody>
-          <tr>
-            <DataTableCell
-              colSpan={5}
-              className="px-5 py-8 text-center text-mono-muted"
-            >
-              {error}
-            </DataTableCell>
-          </tr>
-        </tbody>
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <tbody>
+              <tr>
+                <OperationalTableCell
+                  colSpan={5}
+                  className="text-center text-mono-muted"
+                >
+                  {error}
+                </OperationalTableCell>
+              </tr>
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
       ) : (
-        <>
-          <DataTableHeader>
-            <tr>
-              <DataTableHead>Checklist</DataTableHead>
-              <DataTableHead>Version</DataTableHead>
-              <DataTableHead>Portal Status</DataTableHead>
-              <DataTableHead>Visible At</DataTableHead>
-              <DataTableHead>Customer Action</DataTableHead>
-            </tr>
-          </DataTableHeader>
-          <DataTableBody>
-            {checklists.length === 0 ? (
-              <DataTableEmpty
-                colSpan={5}
-                message="No customer-visible checklist decisions are available yet."
-              />
-            ) : (
-              checklists.map((item) => {
-                const isSubmitting = isPending && activeChecklistId === item.id;
-                return (
-                  <tr key={item.id}>
-                    <DataTableCell className="font-medium">
-                      {item.checklistLabel}
-                    </DataTableCell>
-                    <DataTableCell className="text-mono-muted">
-                      {item.isDownloadable && item.downloadHref ? (
-                        <a
-                          href={item.downloadHref}
-                          className="inline-flex flex-col gap-1 mnx-portal-accent-text hover:underline"
-                        >
-                          <span>{item.versionLabel || "Checklist File"}</span>
-                          {item.fileName ? (
-                            <span className="text-xs text-mono-muted no-underline">
-                              {item.fileName}
-                            </span>
-                          ) : null}
-                        </a>
-                      ) : (
-                        item.versionLabel || "—"
-                      )}
-                    </DataTableCell>
-                    <DataTableCell>
-                      <Badge
-                        variant={item.canRespond ? "warning" : "secondary"}
-                      >
-                        {item.approvalStatus}
-                      </Badge>
-                    </DataTableCell>
-                    <DataTableCell className="text-mono-muted">
-                      {item.visibleAt ? formatDateTime(item.visibleAt) : "—"}
-                    </DataTableCell>
-                    <DataTableCell>
-                      <div className="space-y-2">
-                        {item.canRespond ? (
-                          <>
-                            <Button
-                              size="sm"
-                              disabled={isSubmitting}
-                              onClick={() => {
-                                setRowError((current) => ({
-                                  ...current,
-                                  [item.id]: null,
-                                }));
-                                setReviewChecklistId(item.id);
-                              }}
-                            >
-                              Review And Decide
-                            </Button>
-                          </>
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Checklist</OperationalTableHead>
+                <OperationalTableHead>Version</OperationalTableHead>
+                <OperationalTableHead>Portal Status</OperationalTableHead>
+                <OperationalTableHead>Visible At</OperationalTableHead>
+                <OperationalTableHead>Customer Action</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              {checklists.length === 0 ? (
+                <OperationalTableEmpty colSpan={5}>
+                  No customer-visible checklist decisions are available yet.
+                </OperationalTableEmpty>
+              ) : (
+                checklists.map((item) => {
+                  const isSubmitting = isPending && activeChecklistId === item.id;
+                  return (
+                    <tr key={item.id}>
+                      <OperationalTableCell className="font-medium">
+                        {item.checklistLabel}
+                      </OperationalTableCell>
+                      <OperationalTableCell className="text-mono-muted">
+                        {item.isDownloadable && item.downloadHref ? (
+                          <a
+                            href={item.downloadHref}
+                            className="inline-flex flex-col gap-1 mnx-portal-accent-text hover:underline"
+                          >
+                            <span>{item.versionLabel || "Checklist File"}</span>
+                            {item.fileName ? (
+                              <span className="text-xs text-mono-muted no-underline">
+                                {item.fileName}
+                              </span>
+                            ) : null}
+                          </a>
                         ) : (
-                          <div className="space-y-1">
-                            <Badge
-                              variant={
-                                item.responseDecision === "REJECTED"
-                                  ? "destructive"
-                                  : "success"
-                              }
-                            >
-                              {item.responseDecision || item.responseState}
-                            </Badge>
-                            <div className="text-xs text-mono-muted">
-                              {item.responseDecision
-                                ? "This customer account has already responded."
-                                : item.responseState}
-                            </div>
-                          </div>
+                          item.versionLabel || "—"
                         )}
-                        {rowError[item.id] ? (
-                          <div className="text-xs mnx-portal-warning-text">
-                            {rowError[item.id]}
-                          </div>
-                        ) : null}
-                      </div>
-                    </DataTableCell>
-                  </tr>
-                );
-              })
-            )}
-          </DataTableBody>
-        </>
+                      </OperationalTableCell>
+                      <OperationalTableCell>
+                        <Badge
+                          variant={item.canRespond ? "warning" : "secondary"}
+                        >
+                          {item.approvalStatus}
+                        </Badge>
+                      </OperationalTableCell>
+                      <OperationalTableCell className="text-mono-muted">
+                        {item.visibleAt ? formatDateTime(item.visibleAt) : "—"}
+                      </OperationalTableCell>
+                      <OperationalTableCell>
+                        <div className="space-y-2">
+                          {item.canRespond ? (
+                            <>
+                              <Button
+                                size="sm"
+                                disabled={isSubmitting}
+                                onClick={() => {
+                                  setRowError((current) => ({
+                                    ...current,
+                                    [item.id]: null,
+                                  }));
+                                  setReviewChecklistId(item.id);
+                                }}
+                              >
+                                Review And Decide
+                              </Button>
+                            </>
+                          ) : (
+                            <div className="space-y-1">
+                              <Badge
+                                variant={
+                                  item.responseDecision === "REJECTED"
+                                    ? "destructive"
+                                    : "success"
+                                }
+                              >
+                                {item.responseDecision || item.responseState}
+                              </Badge>
+                              <div className="text-xs text-mono-muted">
+                                {item.responseDecision
+                                  ? "This customer account has already responded."
+                                  : item.responseState}
+                              </div>
+                            </div>
+                          )}
+                          {rowError[item.id] ? (
+                            <div className="text-xs mnx-portal-warning-text">
+                              {rowError[item.id]}
+                            </div>
+                          ) : null}
+                        </div>
+                      </OperationalTableCell>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
       )}
+    </OperationalDataTable>
       <Modal
         open={Boolean(reviewChecklist)}
         onClose={() => {
@@ -374,7 +362,7 @@ export function ChecklistDecisionsClient({
           </div>
         ) : null}
       </Modal>
-    </DataTable>
+    </>
   );
 }
 

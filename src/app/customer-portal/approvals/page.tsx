@@ -1,12 +1,14 @@
-import Link from "next/link";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { getCustomerPortalApprovalQueue } from "@/modules/customer-portal/shipments";
 import {
+  CustomerPortalPanel,
   CustomerPortalPage,
   CustomerPortalPageHeader,
+  CustomerPortalSectionHeading,
 } from "@/components/monolith/customer-portal-workspace";
+import { WorkspaceEmptyState } from "@/components/feedback/workspace-states";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { CheckSquare, ArrowRight } from "lucide-react";
 
 export default async function CustomerPortalApprovalsPage() {
@@ -22,23 +24,27 @@ export default async function CustomerPortalApprovalsPage() {
         icon={<CheckSquare size={22} />}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <CustomerPortalSectionHeading
+        index="01"
+        title="Approval queue"
+        description="Checklist confirmations assigned to this customer contact."
+      />
+
+      <div className="mnx-customer-portal-record-grid">
         {pendingApprovals.length === 0 ? (
-          <div className="col-span-2 rounded-xl border border-mono-border/40 bg-mono-card p-12 text-center space-y-3">
-            <CheckSquare className="size-10 mnx-portal-accent-text mx-auto opacity-50" />
-            <h3 className="mnx-portal-title-3 text-mono-text">
-              No Pending Approvals
-            </h3>
-            <p className="text-xs text-mono-muted max-w-sm mx-auto">
-              You are all caught up! There are no draft checklists awaiting your
-              confirmation right now.
-            </p>
-          </div>
+          <CustomerPortalPanel className="mnx-customer-portal-empty md:col-span-2">
+            <div className="mnx-panel-state">
+              <WorkspaceEmptyState
+                title="No pending approvals"
+                description="You are all caught up. Draft checklists awaiting your confirmation will appear here."
+              />
+            </div>
+          </CustomerPortalPanel>
         ) : (
           pendingApprovals.map((approval) => (
-            <div
+            <CustomerPortalPanel
               key={approval.id}
-              className="mnx-portal-panel mnx-portal-panel-warning flex flex-col justify-between rounded-xl border border-mono-border/60 bg-mono-card p-5 shadow-sm relative overflow-hidden"
+              className="mnx-portal-panel mnx-portal-panel-warning flex flex-col justify-between p-5"
             >
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
@@ -63,14 +69,12 @@ export default async function CustomerPortalApprovalsPage() {
               </div>
 
               <div className="border-t border-mono-border/20 mt-4 pt-4 flex justify-end">
-                <Link href={approval.href}>
-                  <Button size="sm" className="gap-2">
-                    <span>Review And Approve</span>
-                    <ArrowRight size={14} />
-                  </Button>
-                </Link>
+                <ButtonLink href={approval.href} size="sm" className="gap-2">
+                  <span>Review And Approve</span>
+                  <ArrowRight size={14} />
+                </ButtonLink>
               </div>
-            </div>
+            </CustomerPortalPanel>
           ))
         )}
       </div>

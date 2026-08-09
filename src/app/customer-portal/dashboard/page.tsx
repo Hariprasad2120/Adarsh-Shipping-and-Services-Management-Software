@@ -22,14 +22,14 @@ import {
 } from "@/components/monolith/customer-portal-workspace";
 import { WorkspaceMetric } from "@/components/layout/workspace";
 import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-  DataTableToolbar,
-} from "@/components/data-display/data-table";
+  OperationalDataTable,
+  OperationalDataTableHeader,
+  OperationalDataTableWrap,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { getCustomerPortalDashboardData } from "@/modules/customer-portal/dashboard";
 
@@ -171,81 +171,87 @@ function ActionRequiredTable({
   const error = data.sectionErrors.actionRequired;
 
   return (
-    <DataTable className="border border-mono-border/45">
-      <DataTableToolbar className="bg-mono-card">
-        <div className="flex items-center gap-3">
-          <span className="mnx-portal-leading-icon mnx-portal-warning-surface">
-            <TriangleAlert size={16} />
-          </span>
-          <div>
-            <h2 className="mnx-portal-title-2 text-mono-text">
-              Action Required
-            </h2>
-          </div>
-        </div>
-        <Link href="/customer-portal/shipments">
-          <Button variant="outline" size="sm">
-            Open Shipments
-          </Button>
-        </Link>
-      </DataTableToolbar>
+    <OperationalDataTable>
+      <OperationalDataTableHeader
+        eyebrow="Needs attention"
+        title="Action Required"
+        actions={
+          <Link href="/customer-portal/shipments">
+            <Button variant="outline" size="sm">
+              Open Shipments
+            </Button>
+          </Link>
+        }
+      />
       {error ? (
-        <SectionErrorRow colSpan={4} message={error} />
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Section Status</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              <OperationalTableEmpty colSpan={4}>{error}</OperationalTableEmpty>
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
       ) : (
-        <>
-          <DataTableHeader>
-            <tr>
-              <DataTableHead>Shipment</DataTableHead>
-              <DataTableHead>Task</DataTableHead>
-              <DataTableHead>Status</DataTableHead>
-              <DataTableHead>Updated</DataTableHead>
-            </tr>
-          </DataTableHeader>
-          <DataTableBody>
-            {data.actionRequired.length === 0 ? (
-              <DataTableEmpty
-                colSpan={4}
-                message="No customer action is pending right now."
-              />
-            ) : (
-              data.actionRequired.map((item) => (
-                <tr key={item.id}>
-                  <DataTableCell className="font-medium">
-                    <Link
-                      href={item.href}
-                      className="mnx-portal-accent-text transition-colors "
-                    >
-                      {item.jobNumber}
-                    </Link>
-                  </DataTableCell>
-                  <DataTableCell>
-                    <div className="font-medium text-mono-text">
-                      {item.title}
-                    </div>
-                    <div className="mt-1 text-xs text-mono-muted">
-                      {truncate(item.detail, 52)}
-                    </div>
-                  </DataTableCell>
-                  <DataTableCell>
-                    <Badge
-                      variant={badgeVariantForStatus(
-                        item.status,
-                        item.tone === "warning",
-                      )}
-                    >
-                      {item.status}
-                    </Badge>
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    <div>{formatDateTime(item.updatedAt)}</div>
-                  </DataTableCell>
-                </tr>
-              ))
-            )}
-          </DataTableBody>
-        </>
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Shipment</OperationalTableHead>
+                <OperationalTableHead>Task</OperationalTableHead>
+                <OperationalTableHead>Status</OperationalTableHead>
+                <OperationalTableHead>Updated</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              {data.actionRequired.length === 0 ? (
+                <OperationalTableEmpty colSpan={4}>
+                  No customer action is pending right now.
+                </OperationalTableEmpty>
+              ) : (
+                data.actionRequired.map((item) => (
+                  <tr key={item.id}>
+                    <OperationalTableCell className="font-medium">
+                      <Link
+                        href={item.href}
+                        className="mnx-portal-accent-text transition-colors "
+                      >
+                        {item.jobNumber}
+                      </Link>
+                    </OperationalTableCell>
+                    <OperationalTableCell>
+                      <div className="font-medium text-mono-text">
+                        {item.title}
+                      </div>
+                      <div className="mt-1 text-xs text-mono-muted">
+                        {truncate(item.detail, 52)}
+                      </div>
+                    </OperationalTableCell>
+                    <OperationalTableCell>
+                      <Badge
+                        variant={badgeVariantForStatus(
+                          item.status,
+                          item.tone === "warning",
+                        )}
+                      >
+                        {item.status}
+                      </Badge>
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      <div>{formatDateTime(item.updatedAt)}</div>
+                    </OperationalTableCell>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
       )}
-    </DataTable>
+    </OperationalDataTable>
   );
 }
 
@@ -313,101 +319,101 @@ function OutstandingQueriesTable({
   const error = data.sectionErrors.outstandingQueries;
 
   return (
-    <DataTable className="border border-mono-border/45">
-      <DataTableToolbar className="bg-mono-card">
-        <div className="flex items-center gap-3">
-          <span className="mnx-portal-leading-icon">
-            <MessagesSquare size={16} />
-          </span>
-          <div>
-            <h2 className="mnx-portal-title-2 text-mono-text">
-              Outstanding Queries
-            </h2>
-            <p className="text-xs text-mono-muted">
-              Open threads and customer-response deadlines across your jobs.
-            </p>
-          </div>
-        </div>
-      </DataTableToolbar>
+    <OperationalDataTable>
+      <OperationalDataTableHeader eyebrow="Query threads" title="Outstanding Queries">
+        <p>Open threads and customer-response deadlines across your jobs.</p>
+      </OperationalDataTableHeader>
       {error ? (
-        <SectionErrorRow colSpan={4} message={error} />
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Section Status</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              <OperationalTableEmpty colSpan={4}>{error}</OperationalTableEmpty>
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
       ) : (
-        <>
-          <DataTableHeader>
-            <tr>
-              <DataTableHead>Shipment</DataTableHead>
-              <DataTableHead>Query</DataTableHead>
-              <DataTableHead>Status</DataTableHead>
-              <DataTableHead>Last Activity</DataTableHead>
-            </tr>
-          </DataTableHeader>
-          <DataTableBody>
-            {data.outstandingQueries.length === 0 ? (
-              <DataTableEmpty
-                colSpan={4}
-                message="No open customer query threads are pending."
-              />
-            ) : (
-              data.outstandingQueries.map((query) => (
-                <tr key={query.id}>
-                  <DataTableCell className="font-medium">
-                    <Link
-                      href={query.href}
-                      className="mnx-portal-accent-text transition-colors "
-                    >
-                      {query.jobNumber}
-                    </Link>
-                    <div className="mt-1 text-xs text-mono-muted">
-                      {query.jobTitle}
-                    </div>
-                  </DataTableCell>
-                  <DataTableCell>
-                    <div className="font-medium text-mono-text">
-                      {query.title}
-                    </div>
-                    <div className="mt-1 text-xs text-mono-muted">
-                      {query.detail}
-                    </div>
-                    {query.lastMessagePreview ? (
-                      <div className="mt-1 text-xs text-mono-muted">
-                        Latest: {truncate(query.lastMessagePreview, 88)}
-                      </div>
-                    ) : null}
-                  </DataTableCell>
-                  <DataTableCell>
-                    <div className="flex flex-col gap-2">
-                      <Badge
-                        variant={badgeVariantForStatus(
-                          query.status,
-                          query.requiresCustomerAction,
-                        )}
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Shipment</OperationalTableHead>
+                <OperationalTableHead>Query</OperationalTableHead>
+                <OperationalTableHead>Status</OperationalTableHead>
+                <OperationalTableHead>Last Activity</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              {data.outstandingQueries.length === 0 ? (
+                <OperationalTableEmpty colSpan={4}>
+                  No open customer query threads are pending.
+                </OperationalTableEmpty>
+              ) : (
+                data.outstandingQueries.map((query) => (
+                  <tr key={query.id}>
+                    <OperationalTableCell className="font-medium">
+                      <Link
+                        href={query.href}
+                        className="mnx-portal-accent-text transition-colors "
                       >
-                        {query.status}
-                      </Badge>
-                      <span className="text-[11px] uppercase tracking-[0.16em] text-mono-muted">
-                        {query.priority} • {query.stageLabel}
-                      </span>
-                      {query.requiredResponseBy ? (
-                        <span className="text-xs text-mono-muted">
-                          Due {formatDate(query.requiredResponseBy)}
-                        </span>
+                        {query.jobNumber}
+                      </Link>
+                      <div className="mt-1 text-xs text-mono-muted">
+                        {query.jobTitle}
+                      </div>
+                    </OperationalTableCell>
+                    <OperationalTableCell>
+                      <div className="font-medium text-mono-text">
+                        {query.title}
+                      </div>
+                      <div className="mt-1 text-xs text-mono-muted">
+                        {query.detail}
+                      </div>
+                      {query.lastMessagePreview ? (
+                        <div className="mt-1 text-xs text-mono-muted">
+                          Latest: {truncate(query.lastMessagePreview, 88)}
+                        </div>
                       ) : null}
-                    </div>
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {query.lastMessageAt
-                      ? formatDateTime(query.lastMessageAt)
-                      : query.requiredResponseBy
-                        ? `Due ${formatDate(query.requiredResponseBy)}`
-                        : "—"}
-                  </DataTableCell>
-                </tr>
-              ))
-            )}
-          </DataTableBody>
-        </>
+                    </OperationalTableCell>
+                    <OperationalTableCell>
+                      <div className="flex flex-col gap-2">
+                        <Badge
+                          variant={badgeVariantForStatus(
+                            query.status,
+                            query.requiresCustomerAction,
+                          )}
+                        >
+                          {query.status}
+                        </Badge>
+                        <span className="text-[11px] uppercase tracking-[0.16em] text-mono-muted">
+                          {query.priority} • {query.stageLabel}
+                        </span>
+                        {query.requiredResponseBy ? (
+                          <span className="text-xs text-mono-muted">
+                            Due {formatDate(query.requiredResponseBy)}
+                          </span>
+                        ) : null}
+                      </div>
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {query.lastMessageAt
+                        ? formatDateTime(query.lastMessageAt)
+                        : query.requiredResponseBy
+                          ? `Due ${formatDate(query.requiredResponseBy)}`
+                          : "—"}
+                    </OperationalTableCell>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
       )}
-    </DataTable>
+    </OperationalDataTable>
   );
 }
 
@@ -472,56 +478,57 @@ function DocumentStatusCard({
               />
             </div>
 
-            <DataTable className="border border-mono-border/35 shadow-none">
-              <DataTableHeader>
-                <tr>
-                  <DataTableHead>Shipment</DataTableHead>
-                  <DataTableHead>Requirement</DataTableHead>
-                  <DataTableHead>Status</DataTableHead>
-                </tr>
-              </DataTableHeader>
-              <DataTableBody>
-                {data.documentStatus.recentItems.length === 0 ? (
-                  <DataTableEmpty
-                    colSpan={3}
-                    message="No additional customer documents have been shared yet."
-                  />
-                ) : (
-                  data.documentStatus.recentItems.map((item) => (
-                    <tr key={item.id}>
-                      <DataTableCell className="font-medium">
-                        <Link
-                          href={item.href}
-                          className="mnx-portal-accent-text transition-colors "
-                        >
-                          {item.jobNumber}
-                        </Link>
-                        <div className="mt-1 text-xs text-mono-muted">
-                          {formatDateTime(item.updatedAt)}
-                        </div>
-                      </DataTableCell>
-                      <DataTableCell>
-                        <div className="font-medium text-mono-text">
-                          {item.requirementName}
-                        </div>
-                        {item.reviewerComment ? (
+            <OperationalDataTableWrap>
+              <OperationalTable>
+                <thead>
+                  <tr>
+                    <OperationalTableHead>Shipment</OperationalTableHead>
+                    <OperationalTableHead>Requirement</OperationalTableHead>
+                    <OperationalTableHead>Status</OperationalTableHead>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.documentStatus.recentItems.length === 0 ? (
+                    <OperationalTableEmpty colSpan={3}>
+                      No additional customer documents have been shared yet.
+                    </OperationalTableEmpty>
+                  ) : (
+                    data.documentStatus.recentItems.map((item) => (
+                      <tr key={item.id}>
+                        <OperationalTableCell className="font-medium">
+                          <Link
+                            href={item.href}
+                            className="mnx-portal-accent-text transition-colors "
+                          >
+                            {item.jobNumber}
+                          </Link>
                           <div className="mt-1 text-xs text-mono-muted">
-                            {truncate(item.reviewerComment, 88)}
+                            {formatDateTime(item.updatedAt)}
                           </div>
-                        ) : null}
-                      </DataTableCell>
-                      <DataTableCell>
-                        <Badge
-                          variant={badgeVariantForStatus(item.status, true)}
-                        >
-                          {item.status}
-                        </Badge>
-                      </DataTableCell>
-                    </tr>
-                  ))
-                )}
-              </DataTableBody>
-            </DataTable>
+                        </OperationalTableCell>
+                        <OperationalTableCell>
+                          <div className="font-medium text-mono-text">
+                            {item.requirementName}
+                          </div>
+                          {item.reviewerComment ? (
+                            <div className="mt-1 text-xs text-mono-muted">
+                              {truncate(item.reviewerComment, 88)}
+                            </div>
+                          ) : null}
+                        </OperationalTableCell>
+                        <OperationalTableCell>
+                          <Badge
+                            variant={badgeVariantForStatus(item.status, true)}
+                          >
+                            {item.status}
+                          </Badge>
+                        </OperationalTableCell>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </OperationalTable>
+            </OperationalDataTableWrap>
           </>
         )}
       </CardContent>
@@ -749,27 +756,6 @@ function SectionFallback({ message }: { message: string }) {
     <div className="rounded-xl border border-dashed border-mono-border/60 bg-mono-soft/20 px-4 py-6 text-sm text-mono-muted">
       {message}
     </div>
-  );
-}
-
-function SectionErrorRow({
-  colSpan,
-  message,
-}: {
-  colSpan: number;
-  message: string;
-}) {
-  return (
-    <>
-      <DataTableHeader>
-        <tr>
-          <DataTableHead>Section Status</DataTableHead>
-        </tr>
-      </DataTableHeader>
-      <DataTableBody>
-        <DataTableEmpty colSpan={colSpan} message={message} />
-      </DataTableBody>
-    </>
   );
 }
 

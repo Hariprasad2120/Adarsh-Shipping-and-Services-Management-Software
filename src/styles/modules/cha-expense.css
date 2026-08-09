@@ -1724,9 +1724,9 @@
 }
 
 .mnx-hover-accent:hover {
-  border-color: color-mix(in srgb, var(--mnx-accent) 58%, var(--mnx-border));
+  border-color: var(--mnx-highlight-border);
   color: var(--mnx-accent-text);
-  background: color-mix(in srgb, var(--mnx-accent) 13%, var(--mnx-surface));
+  background: var(--mnx-highlight-surface);
 }
 
 .mnx-hover-success:hover {

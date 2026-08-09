@@ -8,12 +8,10 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  MonolithBadge,
-  MonolithEmptyState,
-  MonolithIconAction,
-  MonolithSurface,
-} from "@/components/ui/foundation";
+import { MonolithEmptyState } from "@/components/ui/foundation";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { WorkspaceSectionHeading } from "@/components/layout/workspace";
 import type { ReporteeSummary } from "./dashboard-types";
 
@@ -106,7 +104,7 @@ export function DashboardTeam({ reportees }: DashboardTeamProps) {
         description="Live attendance context for the people who report to you."
       />
 
-      <MonolithSurface className="mnx-table-card">
+      <Card className="mnx-table-card">
         <header className="mnx-table-toolbar mnx-table-toolbar-search">
           <div className="mnx-filter-row" role="group" aria-label="Filter reportees by attendance">
             {filters.map((item) => (
@@ -180,15 +178,16 @@ export function DashboardTeam({ reportees }: DashboardTeamProps) {
                         <span className="mnx-muted-value"><TimerOff size={13} />Unassigned</span>
                       )}
                     </td>
-                    <td><MonolithBadge className={status.className}><i />{status.label}</MonolithBadge></td>
+                    <td><Badge className={status.className}><i />{status.label}</Badge></td>
                     <td>
-                      <MonolithIconAction
+                      <Button
+                        mode="icon"
                         onClick={() => copyEmail(reportee)}
                         aria-label={`Copy ${reportee.name}'s email`}
                         title="Copy email"
                       >
                         {copiedId === reportee.id ? <Check size={15} /> : <Copy size={15} />}
-                      </MonolithIconAction>
+                      </Button>
                     </td>
                   </tr>
                 );
@@ -209,7 +208,7 @@ export function DashboardTeam({ reportees }: DashboardTeamProps) {
           <span>Showing {filteredReportees.length} of {reportees.length} reportees</span>
           <span>Attendance syncs after every punch action</span>
         </footer>
-      </MonolithSurface>
+      </Card>
     </section>
   );
 }

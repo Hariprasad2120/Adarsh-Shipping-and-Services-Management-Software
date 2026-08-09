@@ -38,6 +38,7 @@ const PERMISSIONS = [
   { key: "admin.users.manage", label: "Manage all users", group: "Admin" },
   { key: "admin.roles.manage", label: "Manage roles & permissions", group: "Admin" },
   { key: "admin.modules.manage", label: "Enable/disable modules", group: "Admin" },
+  { key: "system.dev_console.access", label: "Access developer diagnostics console", group: "Admin" },
 
   // HRMS
   { key: "hrms.employee.read", label: "View employee list & profiles", group: "HRMS" },

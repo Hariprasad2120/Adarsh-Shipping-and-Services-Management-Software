@@ -1,11 +1,13 @@
-import Link from "next/link";
 import { FileText } from "lucide-react";
 import {
+  CustomerPortalPanel,
   CustomerPortalPage,
   CustomerPortalPageHeader,
+  CustomerPortalSectionHeading,
 } from "@/components/monolith/customer-portal-workspace";
-import { Badge } from "@/components/monolith/badge";
-import { Button } from "@/components/monolith/button";
+import { WorkspaceEmptyState } from "@/components/feedback/workspace-states";
+import { Badge } from "@/components/ui/badge";
+import { ButtonLink } from "@/components/ui/button";
 import { requirePortalSession } from "@/modules/customer-portal/auth";
 import { listPortalAccountingQuotations } from "@/modules/customer-portal/accounting-quotations";
 import { formatAccountingMoney } from "@/modules/accounting/operational-helpers";
@@ -26,23 +28,27 @@ export default async function CustomerPortalQuotationsPage() {
         icon={<FileText size={22} />}
       />
 
+      <CustomerPortalSectionHeading
+        index="01"
+        title="Published quotations"
+        description="Customer-visible quotations released through the Monolith commercial workflow."
+      />
+
       {quotations.length === 0 ? (
-        <div className="rounded-xl border border-mono-border/40 bg-mono-card p-12 text-center">
-          <FileText className="mx-auto size-10 text-mono-accent opacity-50" />
-          <h3 className="mnx-portal-title-3 mt-4 text-mono-text">
-            No Quotations Published
-          </h3>
-          <p className="mx-auto mt-2 max-w-sm text-xs text-mono-muted">
-            Quotations shared through the Monolith commercial workflow will
-            appear here.
-          </p>
-        </div>
+        <CustomerPortalPanel className="mnx-customer-portal-empty">
+          <div className="mnx-panel-state">
+            <WorkspaceEmptyState
+              title="No quotations published"
+              description="Quotations shared through the Monolith commercial workflow will appear here."
+            />
+          </div>
+        </CustomerPortalPanel>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="mnx-customer-portal-record-grid">
           {quotations.map((quotation) => (
-            <div
+            <CustomerPortalPanel
               key={quotation.id}
-              className="mnx-portal-panel flex flex-col justify-between rounded-xl border border-mono-border/60 bg-mono-card p-5 shadow-sm"
+              className="mnx-portal-panel flex flex-col justify-between p-5"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
@@ -68,11 +74,11 @@ export default async function CustomerPortalQuotationsPage() {
                 </p>
               </div>
               <div className="mt-4 flex justify-end border-t border-mono-border/20 pt-4">
-                <Link href={`/customer-portal/quotations/${quotation.id}`}>
-                  <Button size="sm">Open quotation</Button>
-                </Link>
+                <ButtonLink href={`/customer-portal/quotations/${quotation.id}`} size="sm">
+                  Open quotation
+                </ButtonLink>
               </div>
-            </div>
+            </CustomerPortalPanel>
           ))}
         </div>
       )}

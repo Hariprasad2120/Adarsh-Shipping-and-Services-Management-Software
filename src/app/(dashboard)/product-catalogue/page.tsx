@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { ButtonLink } from "@/components/ui/button";
 import { WorkspaceAction, WorkspaceBadge, WorkspaceField, WorkspaceInput, WorkspaceMetric, WorkspacePage, WorkspacePageHeader, WorkspacePanel, WorkspacePanelHeader, WorkspaceSelect } from "@/components/layout/workspace";
 import { WorkspaceEmptyState } from "@/components/feedback/workspace-states";
 import {
@@ -110,6 +111,7 @@ export default function ProductCataloguePage() {
   return (
     <WorkspacePage className="mnx-catalogue-page">
       <WorkspacePageHeader
+        className="mnx-catalogue-page-header"
         eyebrow="Enterprise system manual"
         title="Product Catalogue"
         icon={<BookOpen size={21} aria-hidden="true" />}
@@ -125,7 +127,7 @@ export default function ProductCataloguePage() {
         }
       />
 
-      <WorkspacePanel className="mnx-no-print">
+      <WorkspacePanel className="mnx-catalogue-index-panel mnx-no-print">
         <WorkspacePanelHeader
           eyebrow="Catalogue index"
           title="Find a module"
@@ -192,8 +194,8 @@ export default function ProductCataloguePage() {
         )}
       </WorkspacePanel>
 
-      <section className="mnx-catalogue-intro">
-        <div>
+      <WorkspacePanel className="mnx-catalogue-intro">
+        <div className="mnx-catalogue-intro-copy">
           <WorkspaceBadge variant="accent">{productOverview.tagline}</WorkspaceBadge>
           <h2>{productOverview.name}</h2>
           <p>{productOverview.description}</p>
@@ -201,13 +203,13 @@ export default function ProductCataloguePage() {
             <b>Business outcome</b>
             {productOverview.keyBusinessValue}
           </blockquote>
-          <div className="mnx-toolbar-actions mnx-no-print">
-            <a className="mnx-button mnx-button-primary" href="#catalogue-workflow">
+          <div className="mnx-catalogue-intro-actions mnx-no-print">
+            <ButtonLink href="#catalogue-workflow">
               Explore workflows <ArrowRight size={14} aria-hidden="true" />
-            </a>
-            <a className="mnx-button mnx-button-secondary" href="#catalogue-benefits">
+            </ButtonLink>
+            <ButtonLink href="#catalogue-benefits" variant="inverse">
               Review outcomes
-            </a>
+            </ButtonLink>
           </div>
         </div>
         <div className="mnx-catalogue-engine" aria-hidden="true">
@@ -219,9 +221,9 @@ export default function ProductCataloguePage() {
             </b>
           ))}
         </div>
-      </section>
+      </WorkspacePanel>
 
-      <section className="mnx-workspace-metrics">
+      <section className="mnx-workspace-metrics mnx-catalogue-capability-grid">
         {productOverview.highlightCards.map((card, index) => (
           <WorkspaceMetric
             key={card.title}
@@ -239,7 +241,7 @@ export default function ProductCataloguePage() {
       </section>
 
       <section className="mnx-catalogue-split">
-        <WorkspacePanel>
+        <WorkspacePanel className="mnx-catalogue-audit-panel">
           <WorkspacePanelHeader
             eyebrow="Operational friction"
             title="Problems the platform removes"
@@ -254,7 +256,7 @@ export default function ProductCataloguePage() {
             ))}
           </div>
         </WorkspacePanel>
-        <WorkspacePanel>
+        <WorkspacePanel className="mnx-catalogue-audit-panel">
           <WorkspacePanelHeader
             eyebrow="Platform response"
             title="Monolith resolutions"
@@ -522,7 +524,7 @@ export default function ProductCataloguePage() {
         </div>
       </WorkspacePanel>
 
-      <section id="catalogue-benefits" className="mnx-catalogue-benefits">
+      <WorkspacePanel id="catalogue-benefits" className="mnx-catalogue-benefits">
         <header>
           <span>Economic outcomes</span>
           <h2>Operational value delivered</h2>
@@ -537,13 +539,13 @@ export default function ProductCataloguePage() {
             </article>
           ))}
         </div>
-      </section>
+      </WorkspacePanel>
 
-      <section className="mnx-catalogue-cta mnx-no-print">
+      <WorkspacePanel className="mnx-catalogue-cta mnx-no-print">
         <WorkspaceBadge variant="accent">One engine · Total control</WorkspaceBadge>
         <h2>{ctaContent.title}</h2>
         <p>{ctaContent.text}</p>
-        <div>
+        <div className="mnx-catalogue-cta-actions">
           <WorkspaceAction onClick={() => router.push("/crm/leads/new")}>
             {ctaContent.primaryCta}
             <ArrowRight size={14} aria-hidden="true" />
@@ -555,7 +557,7 @@ export default function ProductCataloguePage() {
             {ctaContent.secondaryCta}
           </a>
         </div>
-      </section>
+      </WorkspacePanel>
     </WorkspacePage>
   );
 }

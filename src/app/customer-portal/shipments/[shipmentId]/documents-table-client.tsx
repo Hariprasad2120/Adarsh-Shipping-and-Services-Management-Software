@@ -2,15 +2,14 @@
 
 import { Download } from "lucide-react";
 import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-  DataTableToolbar,
-} from "@/components/data-display/data-table";
+  OperationalDataTable,
+  OperationalDataTableHeader,
+  OperationalDataTableWrap,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 import { Badge } from "@/components/ui/badge";
 import { getChaDocumentStatusBadgeVariant } from "@/lib/cha-badges";
 import type { CustomerPortalShipmentDetailData } from "@/modules/customer-portal/shipments";
@@ -30,69 +29,67 @@ export function DocumentsTableClient({
   );
 
   return (
-    <DataTable
-      className="border border-mono-border/45"
-      tableClassName="[&_td]:!px-5 [&_td]:!py-4"
-    >
-      <DataTableToolbar className="bg-mono-card">
-        <div className="flex items-center gap-3">
-          <span className="mnx-portal-leading-icon">
-            <Download size={16} />
-          </span>
-          <div>
-            <h2 className="mnx-portal-title-2 text-mono-text">
-              Document Status
-            </h2>
-            <p className="text-xs text-mono-muted">
-              Requirement-level status with the latest active customer
-              submission.
-            </p>
-          </div>
-        </div>
-      </DataTableToolbar>
+    <OperationalDataTable>
+      <OperationalDataTableHeader eyebrow="Requirement tracking" title="Document Status">
+        <p>Requirement-level status with the latest active customer submission.</p>
+      </OperationalDataTableHeader>
       {error ? (
-        <SectionErrorRow colSpan={DOCUMENT_TABLE_COL_SPAN} message={error} />
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Section Status</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              <OperationalTableEmpty colSpan={DOCUMENT_TABLE_COL_SPAN}>
+                {error}
+              </OperationalTableEmpty>
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
       ) : (
-        <>
-          <DataTableHeader>
-            <tr>
-              <DataTableHead>Requirement</DataTableHead>
-              <DataTableHead>Requirement Status</DataTableHead>
-              <DataTableHead>Latest Submission</DataTableHead>
-              <DataTableHead>Reviewer Note</DataTableHead>
-            </tr>
-          </DataTableHeader>
-          <DataTableBody>
-            {documents.length === 0 ? (
-              <DataTableEmpty
-                colSpan={DOCUMENT_TABLE_COL_SPAN}
-                message="No document requirements are available for this shipment yet."
-              />
-            ) : (
-              <>
-                {!hasDownloadableDocuments ? (
-                  <DataTableRow className="hover:bg-transparent">
-                    <DataTableCell
-                      colSpan={DOCUMENT_TABLE_COL_SPAN}
-                      className="!px-5 !py-4 text-xs text-mono-muted"
-                    >
-                      No shipment documents have been shared for download in the
-                      portal yet.
-                    </DataTableCell>
-                  </DataTableRow>
-                ) : null}
-                {documents.map((document) => (
-                  <DocumentRow
-                    key={document.requirementId}
-                    document={document}
-                  />
-                ))}
-              </>
-            )}
-          </DataTableBody>
-        </>
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Requirement</OperationalTableHead>
+                <OperationalTableHead>Requirement Status</OperationalTableHead>
+                <OperationalTableHead>Latest Submission</OperationalTableHead>
+                <OperationalTableHead>Reviewer Note</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              {documents.length === 0 ? (
+                <OperationalTableEmpty colSpan={DOCUMENT_TABLE_COL_SPAN}>
+                  No document requirements are available for this shipment yet.
+                </OperationalTableEmpty>
+              ) : (
+                <>
+                  {!hasDownloadableDocuments ? (
+                    <tr className="hover:bg-transparent">
+                      <OperationalTableCell
+                        colSpan={DOCUMENT_TABLE_COL_SPAN}
+                        className="text-xs text-mono-muted"
+                      >
+                        No shipment documents have been shared for download in the
+                        portal yet.
+                      </OperationalTableCell>
+                    </tr>
+                  ) : null}
+                  {documents.map((document) => (
+                    <DocumentRow
+                      key={document.requirementId}
+                      document={document}
+                    />
+                  ))}
+                </>
+              )}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
       )}
-    </DataTable>
+    </OperationalDataTable>
   );
 }
 
@@ -128,10 +125,10 @@ function DocumentRow({ document }: { document: ShipmentDocument }) {
           : undefined
       }
     >
-      <DataTableCell className="font-medium">
+      <OperationalTableCell className="font-medium">
         {document.requirementName}
-      </DataTableCell>
-      <DataTableCell>
+      </OperationalTableCell>
+      <OperationalTableCell>
         <Badge
           variant={getChaDocumentStatusBadgeVariant(
             document.requirementStatus.replaceAll(" ", "_"),
@@ -139,8 +136,8 @@ function DocumentRow({ document }: { document: ShipmentDocument }) {
         >
           {document.requirementStatus}
         </Badge>
-      </DataTableCell>
-      <DataTableCell className="text-mono-muted">
+      </OperationalTableCell>
+      <OperationalTableCell className="text-mono-muted">
         {document.latestSubmissionStatus ? (
           <div className="flex min-w-0 items-center gap-2 text-sm text-mono-text">
             {document.latestFileName ? (
@@ -164,32 +161,11 @@ function DocumentRow({ document }: { document: ShipmentDocument }) {
         ) : (
           "No file shared yet"
         )}
-      </DataTableCell>
-      <DataTableCell className="text-mono-muted">
+      </OperationalTableCell>
+      <OperationalTableCell className="text-mono-muted">
         {document.reviewerComment || "—"}
-      </DataTableCell>
+      </OperationalTableCell>
     </tr>
-  );
-}
-
-function SectionErrorRow({
-  colSpan,
-  message,
-}: {
-  colSpan: number;
-  message: string;
-}) {
-  return (
-    <>
-      <DataTableHeader>
-        <tr>
-          <DataTableHead>Section Status</DataTableHead>
-        </tr>
-      </DataTableHeader>
-      <DataTableBody>
-        <DataTableEmpty colSpan={colSpan} message={message} />
-      </DataTableBody>
-    </>
   );
 }
 

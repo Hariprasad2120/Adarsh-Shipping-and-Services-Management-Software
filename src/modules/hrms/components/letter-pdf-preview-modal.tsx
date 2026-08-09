@@ -3,7 +3,8 @@
 import { Loader2, X } from "lucide-react";
 import { WorkspaceDialogLayer } from "@/components/layout/workspace-dialog";
 import { WorkspaceBadge } from "@/components/layout/workspace";
-import { MonolithIconAction, MonolithSpecLabel } from "@/components/ui/foundation";
+import { MonolithSpecLabel } from "@/components/ui/foundation";
+import { Button } from "@/components/ui/button";
 
 type LetterPdfPreviewModalProps = {
   open: boolean;
@@ -83,9 +84,9 @@ export function LetterPdfPreviewModal({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <MonolithIconAction onClick={onClose} aria-label="Close preview">
+            <Button mode="icon" onClick={onClose} aria-label="Close preview">
               <X className="size-5" />
-            </MonolithIconAction>
+            </Button>
           </div>
         </header>
 

@@ -25,7 +25,6 @@ import {
 } from "@/components/monolith";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MonolithAction } from "@/components/ui/foundation";
 
 type InvitationDetails = {
   employeeName: string;

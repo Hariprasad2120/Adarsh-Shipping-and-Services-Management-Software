@@ -7,14 +7,13 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Add, Search } from "@carbon/icons-react";
 import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-  DataTableEmpty,
-} from "@/modules/people/components/people-data-table";
+  OperationalDataTable,
+  OperationalDataTableWrap,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 
 type JobOpening = {
   id: string;
@@ -110,65 +109,66 @@ export default function EmployerJobsPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
-        <DataTable>
-          <DataTableHeader>
-            <tr>
-              <DataTableHead>Job / Req #</DataTableHead>
-              <DataTableHead>Department</DataTableHead>
-              <DataTableHead>Location</DataTableHead>
-              <DataTableHead>Status</DataTableHead>
-              <DataTableHead>Applications</DataTableHead>
-              <DataTableHead>Posted</DataTableHead>
-            </tr>
-          </DataTableHeader>
-          <DataTableBody>
-            {loading ? (
-              <DataTableEmpty colSpan={6} message="Loading..." />
-            ) : jobs.length === 0 ? (
-              <DataTableEmpty
-                colSpan={6}
-                message="No job openings found. Post your first role."
-              />
-            ) : (
-              jobs.map((job) => (
-                <DataTableRow key={job.id}>
-                  <DataTableCell>
-                    <Link
-                      href={`/hrms/recruit/employer/jobs/${job.id}`}
-                      className="font-medium text-mono-text hover:text-[var(--mnx-accent)]"
-                    >
-                      {job.title}
-                    </Link>
-                    <p className="mnx-dashboard-spec-label mt-0.5">
-                      {job.requisitionNumber}
-                    </p>
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {job.department ?? "—"}
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {job.location ?? "—"}
-                  </DataTableCell>
-                  <DataTableCell>
-                    <span
-                      className={`inline-flex rounded-lg border px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[job.status] ?? ""}`}
-                    >
-                      {job.status}
-                    </span>
-                  </DataTableCell>
-                  <DataTableCell className="mnx-numeric text-mono-muted">
-                    {job.applicationCount ?? 0}
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {new Date(job.createdAt).toLocaleDateString()}
-                  </DataTableCell>
-                </DataTableRow>
-              ))
-            )}
-          </DataTableBody>
-        </DataTable>
-      </div>
+      <OperationalDataTable>
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Job / Req #</OperationalTableHead>
+                <OperationalTableHead>Department</OperationalTableHead>
+                <OperationalTableHead>Location</OperationalTableHead>
+                <OperationalTableHead>Status</OperationalTableHead>
+                <OperationalTableHead>Applications</OperationalTableHead>
+                <OperationalTableHead>Posted</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <OperationalTableEmpty colSpan={6}>Loading...</OperationalTableEmpty>
+              ) : jobs.length === 0 ? (
+                <OperationalTableEmpty colSpan={6}>
+                  No job openings found. Post your first role.
+                </OperationalTableEmpty>
+              ) : (
+                jobs.map((job) => (
+                  <tr key={job.id}>
+                    <OperationalTableCell>
+                      <Link
+                        href={`/hrms/recruit/employer/jobs/${job.id}`}
+                        className="font-medium text-mono-text hover:text-[var(--mnx-accent)]"
+                      >
+                        {job.title}
+                      </Link>
+                      <p className="mnx-dashboard-spec-label mt-0.5">
+                        {job.requisitionNumber}
+                      </p>
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {job.department ?? "—"}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {job.location ?? "—"}
+                    </OperationalTableCell>
+                    <OperationalTableCell>
+                      <span
+                        className={`inline-flex rounded-lg border px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[job.status] ?? ""}`}
+                      >
+                        {job.status}
+                      </span>
+                    </OperationalTableCell>
+                    <OperationalTableCell className="mnx-numeric text-mono-muted">
+                      {job.applicationCount ?? 0}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {new Date(job.createdAt).toLocaleDateString()}
+                    </OperationalTableCell>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
+      </OperationalDataTable>
     </div>
   );
 }

@@ -109,8 +109,8 @@ export default async function AccountingDashboardPage() {
         description="Every Accounting route currently available to your role is listed here for direct access."
       >
         <div className="space-y-6">
-          {groupedWorkflows.map((group) => (
-            <section className="space-y-4" key={group.label ?? "core"}>
+          {groupedWorkflows.map((group, index) => (
+            <section className="space-y-4" key={`${group.label ?? "core"}-${index}`}>
               <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--mnx-text-muted)]">
                 {sectionTitle(group.label)}
               </h3>

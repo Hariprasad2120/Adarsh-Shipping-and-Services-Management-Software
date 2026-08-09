@@ -4,7 +4,6 @@ import {
   PeopleControlButton as MnxAction,
   PeopleControlInput as MnxInput,
   PeopleControlTextarea as MnxTextarea,
-  PeopleControlTable as MnxTable,
 } from "@/modules/people/components/people-controls";
 import {
   PeopleSection,
@@ -35,14 +34,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { WorkspaceDialog } from "@/components/layout/workspace-dialog";
 import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-} from "@/modules/people/components/people-data-table";
+  OperationalDataTableWrap,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 import {
   Plus,
   Check,
@@ -1316,7 +1313,7 @@ export function OtClient({
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <MnxTable className="w-full text-sm">
+                  <OperationalTable className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-mono-border bg-mono-soft/40 dark:bg-mono-soft/50 text-left">
                         <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider text-mono-muted/60">
@@ -1368,7 +1365,7 @@ export function OtClient({
                         </tr>
                       ))}
                     </tbody>
-                  </MnxTable>
+                  </OperationalTable>
                 </div>
               )}
             </CardContent>
@@ -1821,10 +1818,11 @@ export function OtClient({
             </div>
           )}
 
-          <DataTable className="overflow-hidden border-mono-border/60 shadow-sm">
-            <DataTableHeader>
-              <DataTableRow className="hover:bg-transparent">
-                <DataTableHead className="w-12">
+          <OperationalDataTableWrap className="overflow-hidden border-mono-border/60 shadow-sm">
+          <OperationalTable>
+            <thead>
+              <tr className="hover:bg-transparent">
+                <OperationalTableHead className="w-12">
                   <MnxInput
                     type="checkbox"
                     checked={allSelectableChecked}
@@ -1843,24 +1841,22 @@ export function OtClient({
                     className="h-4 w-4 rounded border-mono-border text-[var(--mnx-accent)] focus:ring-[var(--mnx-accent)]"
                     aria-label="Select all visible records"
                   />
-                </DataTableHead>
-                <DataTableHead>Employee / Date</DataTableHead>
-                <DataTableHead>Shift Used</DataTableHead>
-                <DataTableHead>First / Last Punch</DataTableHead>
-                <DataTableHead className="text-right">Worked</DataTableHead>
-                <DataTableHead className="text-right">Expected</DataTableHead>
-                <DataTableHead className="text-right">OT</DataTableHead>
-                <DataTableHead>Status</DataTableHead>
-                <DataTableHead className="w-14 text-right">View</DataTableHead>
-              </DataTableRow>
-            </DataTableHeader>
-            <DataTableBody>
+                </OperationalTableHead>
+                <OperationalTableHead>Employee / Date</OperationalTableHead>
+                <OperationalTableHead>Shift Used</OperationalTableHead>
+                <OperationalTableHead>First / Last Punch</OperationalTableHead>
+                <OperationalTableHead className="text-right">Worked</OperationalTableHead>
+                <OperationalTableHead className="text-right">Expected</OperationalTableHead>
+                <OperationalTableHead className="text-right">OT</OperationalTableHead>
+                <OperationalTableHead>Status</OperationalTableHead>
+                <OperationalTableHead className="w-14 text-right">View</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
               {filteredRecords.length === 0 ? (
-                <DataTableEmpty
-                  colSpan={9}
-                  message="No matching overtime records found."
-                  className="py-16 text-sm font-medium"
-                />
+                <OperationalTableEmpty colSpan={9} className="py-16 text-sm font-medium">
+                  No matching overtime records found.
+                </OperationalTableEmpty>
               ) : (
                 filteredRecords.map((rec) => {
                   const isExpanded = !!expandedUsers[rec.id];
@@ -1871,11 +1867,11 @@ export function OtClient({
 
                   return (
                     <Fragment key={rec.id}>
-                      <DataTableRow
+                      <tr
                         className="cursor-pointer border-l-2 border-l-transparent hover:border-l-[var(--mnx-accent)]/60"
                         onClick={() => toggleUserExpand(rec.id)}
                       >
-                        <DataTableCell className="w-12">
+                        <OperationalTableCell className="w-12">
                           {canSelect ? (
                             <MnxInput
                               type="checkbox"
@@ -1890,8 +1886,8 @@ export function OtClient({
                           ) : (
                             <div className="w-4" />
                           )}
-                        </DataTableCell>
-                        <DataTableCell>
+                        </OperationalTableCell>
+                        <OperationalTableCell>
                           <div className="flex min-w-0 items-center gap-3">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--mnx-accent)]/12 text-xs font-semibold text-[var(--mnx-accent-text)]">
                               {getInitials(rec.user.name)}
@@ -1913,8 +1909,8 @@ export function OtClient({
                               </p>
                             </div>
                           </div>
-                        </DataTableCell>
-                        <DataTableCell className="text-mono-muted">
+                        </OperationalTableCell>
+                        <OperationalTableCell className="text-mono-muted">
                           <div className="space-y-1">
                             <p className="text-sm font-medium text-mono-text">
                               {rec.shift?.name || "Organisation Working Hours"}
@@ -1925,8 +1921,8 @@ export function OtClient({
                                 : `${workingCalendar.workStart} - ${workingCalendar.workEnd}`}
                             </p>
                           </div>
-                        </DataTableCell>
-                        <DataTableCell className="text-mono-muted">
+                        </OperationalTableCell>
+                        <OperationalTableCell className="text-mono-muted">
                           <div className="space-y-1 text-xs">
                             <div>
                               In:{" "}
@@ -1955,16 +1951,16 @@ export function OtClient({
                               </span>
                             </div>
                           </div>
-                        </DataTableCell>
-                        <DataTableCell className="text-right">
+                        </OperationalTableCell>
+                        <OperationalTableCell className="text-right">
                           <div className="mnx-numeric font-medium text-mono-text">
                             {(rec.workedMinutes / 60).toFixed(2)}h
                           </div>
                           <div className="text-xs text-mono-muted">
                             {rec.totalPunchCount} punches
                           </div>
-                        </DataTableCell>
-                        <DataTableCell className="text-right">
+                        </OperationalTableCell>
+                        <OperationalTableCell className="text-right">
                           <div className="mnx-numeric font-medium text-mono-text">
                             {(rec.expectedMinutes / 60).toFixed(2)}h
                           </div>
@@ -1973,16 +1969,16 @@ export function OtClient({
                               ? "Org fallback"
                               : "Assigned shift"}
                           </div>
-                        </DataTableCell>
-                        <DataTableCell className="text-right">
+                        </OperationalTableCell>
+                        <OperationalTableCell className="text-right">
                           <div className="mnx-numeric font-semibold text-mono-text">
                             {rec.otHours.toFixed(2)}h
                           </div>
                           <div className="text-xs text-[var(--mnx-success)]">
                             ₹{rec.otAmount.toFixed(0)}
                           </div>
-                        </DataTableCell>
-                        <DataTableCell>
+                        </OperationalTableCell>
+                        <OperationalTableCell>
                           <span
                             className={cn(
                               "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
@@ -1995,19 +1991,19 @@ export function OtClient({
                           >
                             {rec.calculationStatus.replace(/_/g, " ")}
                           </span>
-                        </DataTableCell>
-                        <DataTableCell className="text-right">
+                        </OperationalTableCell>
+                        <OperationalTableCell className="text-right">
                           {isExpanded ? (
                             <ChevronDown className="ml-auto size-4 text-mono-muted" />
                           ) : (
                             <ChevronRight className="ml-auto size-4 text-mono-muted" />
                           )}
-                        </DataTableCell>
-                      </DataTableRow>
+                        </OperationalTableCell>
+                      </tr>
 
                       {isExpanded ? (
-                        <DataTableRow className="hover:bg-transparent">
-                          <DataTableCell
+                        <tr className="hover:bg-transparent">
+                          <OperationalTableCell
                             colSpan={9}
                             className="bg-mono-soft/40 px-4 py-4"
                           >
@@ -2189,15 +2185,16 @@ export function OtClient({
                                 )}
                               </div>
                             </div>
-                          </DataTableCell>
-                        </DataTableRow>
+                          </OperationalTableCell>
+                        </tr>
                       ) : null}
                     </Fragment>
                   );
                 })
               )}
-            </DataTableBody>
-          </DataTable>
+            </tbody>
+          </OperationalTable>
+          </OperationalDataTableWrap>
         </div>
       )}
 
@@ -2218,7 +2215,7 @@ export function OtClient({
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <MnxTable className="w-full text-sm">
+                    <OperationalTable className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-mono-border bg-mono-soft/20 bg-[var(--mnx-soft)]/10 text-left text-xs text-mono-muted/60 font-bold uppercase">
                           <th className="p-3.5">Date</th>
@@ -2273,7 +2270,7 @@ export function OtClient({
                           </tr>
                         ))}
                       </tbody>
-                    </MnxTable>
+                    </OperationalTable>
                   </div>
                 )}
               </CardContent>
@@ -2375,7 +2372,7 @@ export function OtClient({
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <MnxTable className="w-full text-sm">
+                    <OperationalTable className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-mono-border bg-mono-soft/20 bg-[var(--mnx-soft)]/10 text-left text-xs text-mono-muted/60 font-bold uppercase">
                           <th className="p-3.5">Employee</th>
@@ -2425,7 +2422,7 @@ export function OtClient({
                           </tr>
                         ))}
                       </tbody>
-                    </MnxTable>
+                    </OperationalTable>
                   </div>
                 )}
               </CardContent>
@@ -2535,7 +2532,7 @@ export function OtClient({
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <MnxTable className="w-full text-sm">
+                  <OperationalTable className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-mono-border bg-mono-soft/20 bg-[var(--mnx-soft)]/10 text-left text-xs text-mono-muted/60 font-bold uppercase">
                         <th className="p-3.5">Employee ID</th>
@@ -2582,7 +2579,7 @@ export function OtClient({
                         </tr>
                       ))}
                     </tbody>
-                  </MnxTable>
+                  </OperationalTable>
                 </div>
               )}
             </CardContent>
@@ -2956,7 +2953,7 @@ export function OtClient({
 
                 <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card">
                   <div className="overflow-x-auto">
-                    <MnxTable className="mnx-workspace-table">
+                    <OperationalTable className="mnx-workspace-table">
                       <thead>
                         <tr>
                           <th>Name</th>
@@ -2990,7 +2987,7 @@ export function OtClient({
                           </tr>
                         ))}
                       </tbody>
-                    </MnxTable>
+                    </OperationalTable>
                   </div>
                 </div>
               </CardContent>
@@ -3053,7 +3050,7 @@ export function OtClient({
 
                 <div className="mt-4 overflow-hidden rounded-xl border border-mono-border bg-mono-card">
                   <div className="overflow-x-auto">
-                    <MnxTable className="mnx-workspace-table">
+                    <OperationalTable className="mnx-workspace-table">
                       <thead>
                         <tr>
                           <th>Employee</th>
@@ -3082,7 +3079,7 @@ export function OtClient({
                           );
                         })}
                       </tbody>
-                    </MnxTable>
+                    </OperationalTable>
                   </div>
                 </div>
               </CardContent>
@@ -3174,31 +3171,32 @@ export function OtClient({
                     No compensation slabs defined.
                   </div>
                 ) : (
-                  <DataTable className="rounded-none border-0 shadow-none">
-                    <DataTableHeader>
-                      <DataTableRow className="hover:bg-transparent">
-                        <DataTableHead>Minimum Worked Hours</DataTableHead>
-                        <DataTableHead className="text-right">
+                  <OperationalDataTableWrap>
+                  <OperationalTable className="rounded-none border-0 shadow-none">
+                    <thead>
+                      <tr className="hover:bg-transparent">
+                        <OperationalTableHead>Minimum Worked Hours</OperationalTableHead>
+                        <OperationalTableHead className="text-right">
                           Comp-Off Days
-                        </DataTableHead>
-                        <DataTableHead className="text-right">
+                        </OperationalTableHead>
+                        <OperationalTableHead className="text-right">
                           Action
-                        </DataTableHead>
-                      </DataTableRow>
-                    </DataTableHeader>
-                    <DataTableBody>
+                        </OperationalTableHead>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {slabs.map((slab, index) => (
-                        <DataTableRow key={index}>
-                          <DataTableCell>
+                        <tr key={index}>
+                          <OperationalTableCell>
                             If employee works &gt;={" "}
                             <span className="font-semibold">
                               {slab.minHours} hours
                             </span>
-                          </DataTableCell>
-                          <DataTableCell className="text-right font-semibold text-[var(--mnx-accent)]">
+                          </OperationalTableCell>
+                          <OperationalTableCell className="text-right font-semibold text-[var(--mnx-accent)]">
                             {slab.compOffDays} days
-                          </DataTableCell>
-                          <DataTableCell className="text-right">
+                          </OperationalTableCell>
+                          <OperationalTableCell className="text-right">
                             <Button
                               size="sm"
                               onClick={() => handleRemoveSlab(index)}
@@ -3206,11 +3204,12 @@ export function OtClient({
                             >
                               <Trash className="size-3.5" />
                             </Button>
-                          </DataTableCell>
-                        </DataTableRow>
+                          </OperationalTableCell>
+                        </tr>
                       ))}
-                    </DataTableBody>
-                  </DataTable>
+                    </tbody>
+                  </OperationalTable>
+                  </OperationalDataTableWrap>
                 )}
                 <div className="flex items-center gap-3 border-t border-mono-border/60 bg-mono-soft/40 p-4">
                   <div className="flex flex-1 gap-2">

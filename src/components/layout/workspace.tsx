@@ -157,8 +157,10 @@ export function WorkspaceMetric({
           </span>
         ) : null}
       </div>
-      <strong>{value}</strong>
-      {detail ? <p>{detail}</p> : null}
+      <div className="mnx-workspace-metric-body">
+        <strong className="mnx-workspace-metric-value">{value}</strong>
+        {detail ? <p className="mnx-workspace-metric-detail">{detail}</p> : null}
+      </div>
     </>
   );
 

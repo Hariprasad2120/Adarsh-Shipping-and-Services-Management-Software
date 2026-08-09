@@ -61,6 +61,41 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  {
+    // Advisory only (warn, not error) — this codebase has legitimate raw-element
+    // usages (custom nav rails, tab strips, mnx-plain triggers) that intentionally
+    // bypass the shared component layer. Use eslint-disable-next-line with a reason
+    // for those. This rule exists to surface NEW unmanaged UI as it's written, not
+    // to block builds (no CI runs lint in this repo today).
+    files: ["src/app/**/*.{ts,tsx}", "src/modules/**/*.{ts,tsx}"],
+    ignores: ["src/components/dev-console/**"],
+    rules: {
+      "no-restricted-syntax": [
+        "warn",
+        {
+          selector: "JSXOpeningElement[name.name='button']",
+          message:
+            "Use <Button> from @/components/ui/button instead of a raw <button>, unless this is an intentional custom widget (add eslint-disable-next-line with a reason).",
+        },
+        {
+          selector: "JSXOpeningElement[name.name='input']",
+          message:
+            "Use <Input> from @/components/ui/input instead of a raw <input>, unless this is an intentional custom widget (add eslint-disable-next-line with a reason).",
+        },
+        {
+          selector: "JSXOpeningElement[name.name='select']",
+          message:
+            "Use <NativeSelect>/<DropdownSelect> from @/components/ui instead of a raw <select>, unless this is an intentional custom widget (add eslint-disable-next-line with a reason).",
+        },
+        {
+          selector:
+            "JSXAttribute[name.name='style'] Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+          message:
+            "Avoid hardcoded hex colors in inline styles — use a var(--frappe-*)/var(--mn-*) design token instead.",
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

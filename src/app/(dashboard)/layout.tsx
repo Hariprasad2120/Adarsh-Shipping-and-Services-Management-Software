@@ -6,6 +6,8 @@ import {
   getManagedFeatureIdForPath,
   getManagedModuleSectionIdForPath,
 } from "@/modules/core/organisation/module-config";
+import { getOrganisationThemeSettings } from "@/modules/core/organisation/theme-settings";
+import { buildPaletteOverrideCss } from "@/modules/core/organisation/theme-palette-schema";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { DashboardShellSwitcher } from "./_components/dashboard-shell-switcher";
@@ -42,8 +44,19 @@ export default async function DashboardLayout({
     redirect("/cha");
   }
 
+  const { lightPalette, darkPalette } = await getOrganisationThemeSettings(
+    context.orgId,
+  );
+  const paletteOverrideCss = buildPaletteOverrideCss(lightPalette, darkPalette);
+
   return (
     <CapsProvider value={caps}>
+      {paletteOverrideCss ? (
+        <style
+          id="org-theme-palette-overrides"
+          dangerouslySetInnerHTML={{ __html: paletteOverrideCss }}
+        />
+      ) : null}
       <NotificationProvider>
         <SessionSync />
         <DashboardShellSwitcher

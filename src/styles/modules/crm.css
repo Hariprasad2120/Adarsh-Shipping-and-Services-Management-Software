@@ -15,7 +15,11 @@
   --mnx-text-muted: var(--mn-color-text-muted);
   --mnx-border: var(--mn-color-border);
   --mnx-accent: var(--mn-color-accent);
-  --mnx-accent-soft: var(--mn-color-accent-soft);
+  --mnx-accent-soft: color-mix(
+    in srgb,
+    var(--mn-color-accent) 12%,
+    var(--mn-color-surface)
+  );
   --mnx-accent-text: var(--mn-color-accent-text);
   --mnx-success-bg: var(--mn-color-success-surface);
   --mnx-success: var(--mn-color-success);

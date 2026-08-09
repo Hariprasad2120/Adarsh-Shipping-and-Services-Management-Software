@@ -70,6 +70,8 @@ describe("Monolith workspace states", () => {
     expect(metric).toContain('href="#reuse"');
     expect(metric).toContain('aria-label="Open reuse section"');
     expect(metric).toContain("mnx-workspace-metric-action");
+    expect(metric).toContain("mnx-workspace-metric-body");
+    expect(metric).toContain("mnx-workspace-metric-value");
   });
 
   it("renders the numbered section heading contract", () => {

@@ -4,6 +4,7 @@ import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import { WorkspaceAction, WorkspaceTable } from "@/components/monolith";
+import { Input } from "@/components/ui/input";
 import { createEmptyInvoiceCharges, importChargeLabels } from "../../domain/import-job.defaults";
 import { demoImportCalculationEngine, formatDecimal } from "../../domain/import-job-calculations";
 import { importInvoiceRecordSchema } from "../../domain/import-job.schemas";
@@ -141,11 +142,11 @@ export function InvoiceTab() {
             {values.charges.map((charge, index) => (
               <tr key={charge.key}>
                 <td>{importChargeLabels[charge.key]}</td>
-                <td><input checked={charge.apply} disabled={isLocked} type="checkbox" onChange={(event) => form.setValue(`charges.${index}.apply`, event.currentTarget.checked, { shouldDirty: true })} /></td>
-                <td><input className="mnx-field-control" disabled={isLocked} value={charge.currency} onChange={(event) => form.setValue(`charges.${index}.currency`, event.currentTarget.value, { shouldDirty: true })} /></td>
-                <td><input className="mnx-field-control" disabled={isLocked} value={charge.exchangeRate} onChange={(event) => form.setValue(`charges.${index}.exchangeRate`, event.currentTarget.value, { shouldDirty: true })} /></td>
-                <td><input className="mnx-field-control" disabled={isLocked} value={charge.rate} onChange={(event) => form.setValue(`charges.${index}.rate`, event.currentTarget.value, { shouldDirty: true })} /></td>
-                <td><input className="mnx-field-control" disabled={isLocked} value={charge.amount} onChange={(event) => form.setValue(`charges.${index}.amount`, event.currentTarget.value, { shouldDirty: true })} /></td>
+                <td><Input checked={charge.apply} disabled={isLocked} type="checkbox" onChange={(event) => form.setValue(`charges.${index}.apply`, event.currentTarget.checked, { shouldDirty: true })} /></td>
+                <td><Input disabled={isLocked} value={charge.currency} onChange={(event) => form.setValue(`charges.${index}.currency`, event.currentTarget.value, { shouldDirty: true })} /></td>
+                <td><Input disabled={isLocked} value={charge.exchangeRate} onChange={(event) => form.setValue(`charges.${index}.exchangeRate`, event.currentTarget.value, { shouldDirty: true })} /></td>
+                <td><Input disabled={isLocked} value={charge.rate} onChange={(event) => form.setValue(`charges.${index}.rate`, event.currentTarget.value, { shouldDirty: true })} /></td>
+                <td><Input disabled={isLocked} value={charge.amount} onChange={(event) => form.setValue(`charges.${index}.amount`, event.currentTarget.value, { shouldDirty: true })} /></td>
                 <td>{formatDecimal(charge.apply ? Number(charge.amount || 0) * Number(charge.exchangeRate || 0) : 0)}</td>
               </tr>
             ))}

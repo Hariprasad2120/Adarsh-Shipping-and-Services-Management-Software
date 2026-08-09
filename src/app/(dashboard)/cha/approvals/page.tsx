@@ -1,16 +1,46 @@
-import { ChaTable } from "@/modules/cha/components/workspace/cha-workspace";
 import { getSession } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { can } from "@/lib/rbac";
-import { listManagerChecklistApprovals, listManagerJobDeletionRequests } from "@/modules/cha/service";
-import Link from "next/link";
-import { CheckSquare, ArrowRight, Trash2, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { redirect } from "next/navigation";
 import {
-  ChaPageHeader,
-  ChaSectionShell,
-} from "@/modules/cha/components/workspace/cha-operations-shared";
+  ArrowRight,
+  CheckCircle2,
+  CheckSquare,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react";
+import { ButtonLink } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  WorkspaceMetric,
+  WorkspacePage,
+  WorkspacePageHeader,
+  WorkspacePanel,
+  WorkspaceSectionHeading,
+} from "@/components/layout/workspace";
+import { WorkspaceEmptyState } from "@/components/feedback/workspace-states";
+import { ChaTable } from "@/modules/cha/components/workspace/cha-workspace";
+import {
+  listManagerChecklistApprovals,
+  listManagerJobDeletionRequests,
+} from "@/modules/cha/service";
+
+function QueueBadge({
+  count,
+  emptyLabel,
+  activeLabel,
+  variant,
+}: {
+  count: number;
+  emptyLabel: string;
+  activeLabel: string;
+  variant: "secondary" | "warning";
+}) {
+  return (
+    <Badge variant={count > 0 ? variant : "secondary"}>
+      {count > 0 ? `${count} ${activeLabel}` : emptyLabel}
+    </Badge>
+  );
+}
 
 export default async function ChaApprovalsPage() {
   const session = await getSession();
@@ -33,29 +63,63 @@ export default async function ChaApprovalsPage() {
     : [];
 
   return (
-    <div className="space-y-8">
-      {/* Page Header */}
-      <ChaPageHeader
-        eyebrow={null}
+    <WorkspacePage className="mx-auto w-full max-w-[100rem]">
+      <WorkspacePageHeader
+        eyebrow="Controlled decisions"
         title="Checklist Approvals"
-        description="Audit, check, and sign off on pending job checklist audits and job deletion reviews."
+        description="Review checklist submissions and job deletion requests from one decision queue with clearer operational context."
         icon={<CheckCircle2 size={20} />}
       />
 
-      {/* Checklist Queue */}
-      <ChaSectionShell
-        index="01"
-        title="Pending Approvals"
-        description="Pending job checklist audits assigned to you for review and approval."
-        count={approvals.length}
-        accent="blue"
-      >
-        <div className="overflow-hidden rounded-b-[20px]">
+      <section className="mnx-workspace-metrics">
+        <WorkspaceMetric
+          label="Checklist audits"
+          value={approvals.length}
+          detail="Assigned checklist submissions awaiting your review."
+          icon={<CheckSquare size={18} />}
+        />
+        <WorkspaceMetric
+          label="Deletion requests"
+          value={deletionRequests.length}
+          detail="Destructive job removal requests requiring direct manager approval."
+          icon={<Trash2 size={18} />}
+        />
+        <WorkspaceMetric
+          label="Approval scope"
+          value={canDeleteApprove ? "Full" : "Checklist"}
+          detail={
+            canDeleteApprove
+              ? "You can approve checklist audits and CHA job deletion reviews."
+              : "Your queue is limited to checklist audit sign-off."
+          }
+          icon={<ShieldCheck size={18} />}
+        />
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-2">
+        <WorkspacePanel className="overflow-hidden">
+          <div className="border-b mnx-border px-5 py-5">
+            <WorkspaceSectionHeading
+              index="01"
+              title="Pending Approvals"
+              description="Checklist audits routed to you for review, verification, and approval."
+              badge={
+                <QueueBadge
+                  count={approvals.length}
+                  emptyLabel="Queue clear"
+                  activeLabel="awaiting review"
+                  variant="warning"
+                />
+              }
+            />
+          </div>
+
           {approvals.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-12 text-center mnx-text-muted">
-              <CheckSquare size={48} className="mnx-text-muted mb-3" />
-              <p className="text-sm font-semibold">Your review approvals queue is clear!</p>
-              <p className="text-xs mt-1">Pending job checklist audits assigned to you will appear here.</p>
+            <div className="mnx-panel-state">
+              <WorkspaceEmptyState
+                title="No checklist approvals are waiting"
+                description="When a job checklist audit is submitted to your approval queue, it will appear here with the linked job and reviewer context."
+              />
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -75,10 +139,10 @@ export default async function ChaApprovalsPage() {
                     const job = app.checklistImport.job;
                     return (
                       <tr key={app.id} className="mnx-hover-accent transition-colors">
-                        <td className="px-6 py-4 font-semibold mnx-text-accent mnx-text-info">
+                        <td className="px-6 py-4 font-semibold mnx-text-accent">
                           {job.jobNumber}
                         </td>
-                        <td className="px-6 py-4 font-medium max-w-xs truncate mnx-text-primary">
+                        <td className="px-6 py-4 max-w-xs truncate font-medium mnx-text-primary">
                           {job.title}
                         </td>
                         <td className="px-6 py-4 mnx-text-muted">{job.customer.name}</td>
@@ -86,18 +150,23 @@ export default async function ChaApprovalsPage() {
                           {app.checklistImport.uploadedBy?.name || "System"}
                         </td>
                         <td className="px-6 py-4 mnx-numeric mnx-text-muted">
-                          {new Date(app.checklistImport.uploadedAt).toLocaleDateString("en-IN", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })}
+                          {new Date(app.checklistImport.uploadedAt).toLocaleDateString(
+                            "en-IN",
+                            {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            },
+                          )}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <Link href={`/cha/jobs/${job.id}`}>
-                            <Button className="flex items-center gap-1 mnx-bg-accent mnx-text-muted mnx-hover-accent px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all shadow-sm">
-                              Audit & Review <ArrowRight size={12} />
-                            </Button>
-                          </Link>
+                          <ButtonLink
+                            href={`/cha/jobs/${job.id}`}
+                            size="sm"
+                            className="inline-flex items-center gap-1"
+                          >
+                            Audit & Review <ArrowRight size={12} />
+                          </ButtonLink>
                         </td>
                       </tr>
                     );
@@ -106,23 +175,31 @@ export default async function ChaApprovalsPage() {
               </ChaTable>
             </div>
           )}
-        </div>
-      </ChaSectionShell>
+        </WorkspacePanel>
 
-      {/* Deletion Queue */}
-      <ChaSectionShell
-        index="02"
-        title="Job Deletion Requests"
-        description="Direct manager review queue for destructive CHA job deletion requests."
-        count={deletionRequests.length}
-        accent="orange"
-      >
-        <div className="overflow-hidden rounded-b-[20px]">
+        <WorkspacePanel className="overflow-hidden">
+          <div className="border-b mnx-border px-5 py-5">
+            <WorkspaceSectionHeading
+              index="02"
+              title="Job Deletion Requests"
+              description="High-risk CHA deletion approvals assigned to you as the controlling manager."
+              badge={
+                <QueueBadge
+                  count={deletionRequests.length}
+                  emptyLabel="No requests"
+                  activeLabel="pending deletion reviews"
+                  variant="warning"
+                />
+              }
+            />
+          </div>
+
           {deletionRequests.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-12 text-center mnx-text-muted">
-              <Trash2 size={48} className="mnx-text-muted mb-3" />
-              <p className="text-sm font-semibold">No pending CHA deletion requests.</p>
-              <p className="text-xs mt-1">Deletion approvals assigned to you will appear here.</p>
+            <div className="mnx-panel-state">
+              <WorkspaceEmptyState
+                title="No job deletion requests are waiting"
+                description="If a destructive CHA job deletion request is routed to you, it will appear here with the requester, customer, and job reference."
+              />
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -149,16 +226,19 @@ export default async function ChaApprovalsPage() {
                         {new Date(request.requestedAt).toLocaleString("en-IN")}
                       </td>
                       <td className="px-6 py-4">
-                        <Badge className="mnx-bg-warning mnx-text-warning border mnx-border-warning uppercase text-[9px] font-bold">
-                          {request.status}
+                        <Badge variant="warning" className="uppercase">
+                          {request.status.replaceAll("_", " ")}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <Link href={`/cha/jobs/${request.jobId}`}>
-                          <Button className="flex items-center gap-1 mnx-bg-accent mnx-text-muted mnx-hover-accent px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all shadow-sm">
-                            Review Request <ArrowRight size={12} />
-                          </Button>
-                        </Link>
+                        <ButtonLink
+                          href={`/cha/jobs/${request.jobId}`}
+                          size="sm"
+                          variant="outline"
+                          className="inline-flex items-center gap-1"
+                        >
+                          Review Request <ArrowRight size={12} />
+                        </ButtonLink>
                       </td>
                     </tr>
                   ))}
@@ -166,8 +246,8 @@ export default async function ChaApprovalsPage() {
               </ChaTable>
             </div>
           )}
-        </div>
-      </ChaSectionShell>
-    </div>
+        </WorkspacePanel>
+      </section>
+    </WorkspacePage>
   );
 }

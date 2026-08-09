@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import {
+  AccountingAction,
   AccountingActionLink,
   AccountingAlert,
   AccountingField,
@@ -722,9 +723,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="profile-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               Save organisation profile
-            </button>
+            </AccountingAction>
           </div>
         </form>
       </AccountingSection>
@@ -784,9 +785,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="fiscal-year-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingFiscalYear ? "Update fiscal year" : "Create fiscal year"}
-            </button>
+            </AccountingAction>
             {editingFiscalYear ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear fiscal-year editor
@@ -912,9 +913,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="period-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingPeriod ? "Update period" : "Create period"}
-            </button>
+            </AccountingAction>
             {editingPeriod ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear period editor
@@ -997,9 +998,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="lock-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               Submit lock / reopen request
-            </button>
+            </AccountingAction>
           </div>
         </form>
 
@@ -1043,17 +1044,17 @@ export default async function AccountingConfigurationAdminPage({
                     {request.status === "PENDING" ? (
                       <div className="mnx-accounting-form-actions">
                         <form action={approvePeriodLock.bind(null, request.id, request.rowVersion)}>
-                          <button className="mnx-button mnx-button-secondary" type="submit">
+                          <AccountingAction type="submit" variant="secondary">
                             Approve
-                          </button>
+                          </AccountingAction>
                         </form>
                         <form action={rejectPeriodLock.bind(null, request.id, request.rowVersion)} className="mnx-accounting-form">
                           <AccountingField label="Reject reason" htmlFor={`reject-${request.id}`}>
                             <AccountingTextarea id={`reject-${request.id}`} name="reason" rows={2} />
                           </AccountingField>
-                          <button className="mnx-button mnx-button-destructive" type="submit">
+                          <AccountingAction type="submit" variant="destructive">
                             Reject
-                          </button>
+                          </AccountingAction>
                         </form>
                       </div>
                     ) : (
@@ -1154,9 +1155,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="entity-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingEntity ? "Update legal entity" : "Create legal entity"}
-            </button>
+            </AccountingAction>
             {editingEntity ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear entity editor
@@ -1337,11 +1338,11 @@ export default async function AccountingConfigurationAdminPage({
             />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingRegistration
                 ? "Update registration"
                 : "Create registration"}
-            </button>
+            </AccountingAction>
             {editingRegistration ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear registration editor
@@ -1470,9 +1471,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="currency-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingCurrency ? "Update currency" : "Create currency"}
-            </button>
+            </AccountingAction>
             {editingCurrency ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear currency editor
@@ -1589,9 +1590,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="dimension-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingDefinition ? "Update dimension" : "Create dimension"}
-            </button>
+            </AccountingAction>
             {editingDefinition ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear dimension editor
@@ -1757,11 +1758,11 @@ export default async function AccountingConfigurationAdminPage({
             />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingDimensionValue
                 ? "Update dimension value"
                 : "Create dimension value"}
-            </button>
+            </AccountingAction>
             {editingDimensionValue ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear value editor
@@ -1925,11 +1926,11 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="scope-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingCounterpartyScope
                 ? "Update counterparty scope"
                 : "Create counterparty scope"}
-            </button>
+            </AccountingAction>
             {editingCounterpartyScope ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear counterparty-scope editor
@@ -2137,11 +2138,11 @@ export default async function AccountingConfigurationAdminPage({
             />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingAccountControl
                 ? "Update account control"
                 : "Create account control"}
-            </button>
+            </AccountingAction>
             {editingAccountControl ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear account-control editor
@@ -2326,11 +2327,11 @@ export default async function AccountingConfigurationAdminPage({
             />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingApprovalPolicy
                 ? "Update approval policy"
                 : "Create approval policy"}
-            </button>
+            </AccountingAction>
             {editingApprovalPolicy ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear approval-policy editor
@@ -2496,11 +2497,11 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="document-policy-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingDocumentPolicy
                 ? "Update document policy"
                 : "Create document policy"}
-            </button>
+            </AccountingAction>
             {editingDocumentPolicy ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear document-policy editor
@@ -2697,9 +2698,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="tax-profile-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingTaxProfile ? "Update tax profile" : "Create tax profile"}
-            </button>
+            </AccountingAction>
             {editingTaxProfile ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear tax-profile editor
@@ -2987,9 +2988,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="tax-rule-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingTaxRule ? "Update tax rule" : "Create tax rule"}
-            </button>
+            </AccountingAction>
             {editingTaxRule ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear tax-rule editor
@@ -3204,11 +3205,11 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="statutory-profile-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingStatutoryReturnProfile
                 ? "Update statutory return profile"
                 : "Create statutory return profile"}
-            </button>
+            </AccountingAction>
             {editingStatutoryReturnProfile ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear statutory return editor
@@ -3407,11 +3408,11 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="statutory-period-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingStatutoryFilingPeriod
                 ? "Update filing period"
                 : "Create filing period"}
-            </button>
+            </AccountingAction>
             {editingStatutoryFilingPeriod ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear filing-period editor
@@ -3640,9 +3641,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="bank-account-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingBankAccount ? "Update bank account" : "Create bank account"}
-            </button>
+            </AccountingAction>
             {editingBankAccount ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear bank-account editor
@@ -3839,9 +3840,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="statement-import-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingBankStatementImport ? "Update import" : "Create import"}
-            </button>
+            </AccountingAction>
             {editingBankStatementImport ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear import editor
@@ -4045,9 +4046,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="reconciliation-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingReconciliationSession ? "Update session" : "Create session"}
-            </button>
+            </AccountingAction>
             {editingReconciliationSession ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear reconciliation editor
@@ -4207,9 +4208,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="bank-match-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingBankMatch ? "Update match" : "Create match"}
-            </button>
+            </AccountingAction>
             {editingBankMatch ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear match editor
@@ -4417,9 +4418,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="recurring-template-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingRecurringTemplate ? "Update template" : "Create template"}
-            </button>
+            </AccountingAction>
             {editingRecurringTemplate ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear template editor
@@ -4575,9 +4576,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="recurring-schedule-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingRecurringSchedule ? "Update schedule" : "Create schedule"}
-            </button>
+            </AccountingAction>
             {editingRecurringSchedule ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear schedule editor
@@ -4722,9 +4723,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="recurring-run-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingRecurringRun ? "Update run" : "Create run"}
-            </button>
+            </AccountingAction>
             {editingRecurringRun ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear run editor
@@ -4897,9 +4898,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="financial-asset-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingFinancialAsset ? "Update financial asset" : "Create financial asset"}
-            </button>
+            </AccountingAction>
             {editingFinancialAsset ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear financial-asset editor
@@ -5145,9 +5146,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="asset-book-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingAssetBook ? "Update asset book" : "Create asset book"}
-            </button>
+            </AccountingAction>
             {editingAssetBook ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear asset-book editor
@@ -5327,9 +5328,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="depreciation-run-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingDepreciationRun ? "Update depreciation run" : "Create depreciation run"}
-            </button>
+            </AccountingAction>
             {editingDepreciationRun ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear depreciation-run editor
@@ -5496,9 +5497,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="partner-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingPartner ? "Update partner" : "Create partner"}
-            </button>
+            </AccountingAction>
             {editingPartner ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear partner editor
@@ -5712,9 +5713,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="partner-term-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingPartnerTerm ? "Update partner term" : "Create partner term"}
-            </button>
+            </AccountingAction>
             {editingPartnerTerm ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear partner-term editor
@@ -5899,9 +5900,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="appropriation-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingAppropriation ? "Update appropriation" : "Create appropriation"}
-            </button>
+            </AccountingAction>
             {editingAppropriation ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear appropriation editor
@@ -6101,9 +6102,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="budget-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingBudget ? "Update budget" : "Create budget"}
-            </button>
+            </AccountingAction>
             {editingBudget ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear budget editor
@@ -6302,9 +6303,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="budget-line-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingBudgetLine ? "Update budget line" : "Create budget line"}
-            </button>
+            </AccountingAction>
             {editingBudgetLine ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear budget-line editor
@@ -6510,9 +6511,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="customer-profile-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingCustomerProfile ? "Update customer profile" : "Create customer profile"}
-            </button>
+            </AccountingAction>
             {editingCustomerProfile ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear customer-profile editor
@@ -6723,9 +6724,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="vendor-profile-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingVendorProfile ? "Update vendor profile" : "Create vendor profile"}
-            </button>
+            </AccountingAction>
             {editingVendorProfile ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear vendor-profile editor
@@ -6833,7 +6834,7 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="payment-term-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">{editingPaymentTerm ? "Update payment term" : "Create payment term"}</button>
+            <AccountingAction type="submit">{editingPaymentTerm ? "Update payment term" : "Create payment term"}</AccountingAction>
             {editingPaymentTerm ? <AccountingActionLink href="/accounting/configuration/admin">Clear payment-term editor</AccountingActionLink> : null}
           </div>
         </form>
@@ -6899,7 +6900,7 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="payment-method-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">{editingPaymentMethod ? "Update payment method" : "Create payment method"}</button>
+            <AccountingAction type="submit">{editingPaymentMethod ? "Update payment method" : "Create payment method"}</AccountingAction>
             {editingPaymentMethod ? <AccountingActionLink href="/accounting/configuration/admin">Clear payment-method editor</AccountingActionLink> : null}
           </div>
         </form>
@@ -6967,7 +6968,7 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="price-list-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">{editingPriceList ? "Update price list" : "Create price list"}</button>
+            <AccountingAction type="submit">{editingPriceList ? "Update price list" : "Create price list"}</AccountingAction>
             {editingPriceList ? <AccountingActionLink href="/accounting/configuration/admin">Clear price-list editor</AccountingActionLink> : null}
           </div>
         </form>
@@ -7024,7 +7025,7 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="uom-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">{editingUnitOfMeasure ? "Update unit" : "Create unit"}</button>
+            <AccountingAction type="submit">{editingUnitOfMeasure ? "Update unit" : "Create unit"}</AccountingAction>
             {editingUnitOfMeasure ? <AccountingActionLink href="/accounting/configuration/admin">Clear unit editor</AccountingActionLink> : null}
           </div>
         </form>
@@ -7078,7 +7079,7 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="reporting-tag-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">{editingReportingTag ? "Update tag" : "Create tag"}</button>
+            <AccountingAction type="submit">{editingReportingTag ? "Update tag" : "Create tag"}</AccountingAction>
             {editingReportingTag ? <AccountingActionLink href="/accounting/configuration/admin">Clear reporting-tag editor</AccountingActionLink> : null}
           </div>
         </form>
@@ -7197,9 +7198,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="series-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingSeries ? "Update number series" : "Create number series"}
-            </button>
+            </AccountingAction>
             {editingSeries ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear series editor
@@ -7325,9 +7326,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="rate-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingRate ? "Update draft" : "Create draft"}
-            </button>
+            </AccountingAction>
             {editingRate ? (
               <AccountingActionLink href="/accounting/configuration/admin">
                 Clear FX editor
@@ -7339,17 +7340,17 @@ export default async function AccountingConfigurationAdminPage({
         {editingRate?.status === "DRAFT" ? (
           <div className="mnx-accounting-form-actions">
             <form action={approveRate}>
-              <button className="mnx-button mnx-button-secondary" type="submit">
+              <AccountingAction type="submit" variant="secondary">
                 Approve FX evidence
-              </button>
+              </AccountingAction>
             </form>
             <form action={rejectRate} className="mnx-accounting-form">
               <AccountingField label="Rejection reason" htmlFor="rate-reject-reason">
                 <AccountingTextarea id="rate-reject-reason" name="reason" rows={3} />
               </AccountingField>
-              <button className="mnx-button mnx-button-destructive" type="submit">
+              <AccountingAction type="submit" variant="destructive">
                 Reject FX evidence
-              </button>
+              </AccountingAction>
             </form>
           </div>
         ) : null}
@@ -7447,9 +7448,9 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="source-map-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <AccountingAction type="submit">
               {editingSourceMappingProfile ? "Update mapping" : "Create mapping"}
-            </button>
+            </AccountingAction>
             {editingSourceMappingProfile ? (
               <AccountingActionLink href="/accounting/configuration/admin">Clear mapping editor</AccountingActionLink>
             ) : null}
@@ -7591,7 +7592,7 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="period-close-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">{editingPeriodCloseRun ? "Update close run" : "Create close run"}</button>
+            <AccountingAction type="submit">{editingPeriodCloseRun ? "Update close run" : "Create close run"}</AccountingAction>
             {editingPeriodCloseRun ? <AccountingActionLink href="/accounting/configuration/admin">Clear period-close editor</AccountingActionLink> : null}
           </div>
         </form>
@@ -7668,7 +7669,7 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="report-profile-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">{editingReportExportProfile ? "Update export profile" : "Create export profile"}</button>
+            <AccountingAction type="submit">{editingReportExportProfile ? "Update export profile" : "Create export profile"}</AccountingAction>
             {editingReportExportProfile ? <AccountingActionLink href="/accounting/configuration/admin">Clear export-profile editor</AccountingActionLink> : null}
           </div>
         </form>
@@ -7748,7 +7749,7 @@ export default async function AccountingConfigurationAdminPage({
             <AccountingTextarea id="portal-profile-reason" name="reason" rows={3} />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-primary" type="submit">{editingPortalPublicationProfile ? "Update portal profile" : "Create portal profile"}</button>
+            <AccountingAction type="submit">{editingPortalPublicationProfile ? "Update portal profile" : "Create portal profile"}</AccountingAction>
             {editingPortalPublicationProfile ? <AccountingActionLink href="/accounting/configuration/admin">Clear portal-profile editor</AccountingActionLink> : null}
           </div>
         </form>

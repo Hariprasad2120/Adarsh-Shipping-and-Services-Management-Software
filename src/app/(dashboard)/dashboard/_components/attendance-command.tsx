@@ -13,11 +13,9 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  MonolithAction,
-  MonolithBadge,
-  MonolithSpecLabel,
-} from "@/components/ui/foundation";
+import { MonolithSpecLabel } from "@/components/ui/foundation";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { UserProfile } from "@/modules/hrms/types";
 import type { PunchAction } from "./dashboard-types";
 
@@ -29,12 +27,12 @@ interface AttendanceCommandProps {
 
 const attendanceCopy: Record<
   UserProfile["attendanceStatus"],
-  { label: string; detail: string; tone: "neutral" | "success" | "warning" }
+  { label: string; detail: string; tone: "secondary" | "success" | "warning" }
 > = {
   YET_TO_CHECK_IN: {
     label: "Ready to begin",
     detail: "Check in to start your workday and sync your activity.",
-    tone: "neutral",
+    tone: "secondary",
   },
   CHECKED_IN: {
     label: "On the clock",
@@ -233,10 +231,10 @@ export function AttendanceCommand({
               <MonolithSpecLabel>LIVE ATTENDANCE</MonolithSpecLabel>
               <h2>{status.label}</h2>
             </div>
-            <MonolithBadge tone={status.tone}>
+            <Badge variant={status.tone}>
               <i />
               {profile.attendanceStatus.replaceAll("_", " ")}
-            </MonolithBadge>
+            </Badge>
           </header>
 
           <div className="mnx-attendance-clock">
@@ -267,48 +265,45 @@ export function AttendanceCommand({
 
           <div className="mnx-attendance-actions">
             {profile.attendanceStatus === "YET_TO_CHECK_IN" ? (
-              <MonolithAction
-                variant="primary"
+              <Button
                 className="mnx-button-wide"
                 disabled={loading}
                 onClick={() => handlePunch("CHECK_IN")}
               >
                 <span>{loading ? "Updating…" : "Check in"}</span>
                 {loading ? <span className="mnx-button-spinner" /> : <Play size={16} fill="currentColor" />}
-              </MonolithAction>
+              </Button>
             ) : null}
 
             {profile.attendanceStatus === "CHECKED_IN" ? (
               <>
-                <MonolithAction
-                  variant="secondary"
+                <Button
+                  variant="inverse"
                   disabled={loading}
                   onClick={() => handlePunch("START_BREAK")}
                 >
                   <Coffee size={16} />
                   Start break
-                </MonolithAction>
-                <MonolithAction
-                  variant="primary"
+                </Button>
+                <Button
                   disabled={loading}
                   onClick={() => handlePunch("CHECK_OUT")}
                 >
                   Check out
                   <LogOut size={16} />
-                </MonolithAction>
+                </Button>
               </>
             ) : null}
 
             {profile.attendanceStatus === "ON_BREAK" ? (
-              <MonolithAction
-                variant="primary"
+              <Button
                 className="mnx-button-wide"
                 disabled={loading}
                 onClick={() => handlePunch("RESUME_WORK")}
               >
                 <span>{loading ? "Updating…" : "Resume work"}</span>
                 {loading ? <span className="mnx-button-spinner" /> : <ArrowRight size={17} />}
-              </MonolithAction>
+              </Button>
             ) : null}
 
             {profile.attendanceStatus === "CHECKED_OUT" ? (

@@ -18,14 +18,14 @@ import {
 } from "@/components/monolith/customer-portal-workspace";
 import { WorkspaceMetric } from "@/components/layout/workspace";
 import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-  DataTableToolbar,
-} from "@/components/data-display/data-table";
+  OperationalDataTable,
+  OperationalDataTableHeader,
+  OperationalDataTableWrap,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 import {
   getChaJobStatusBadgeVariant,
   getChaPriorityBadgeVariant,
@@ -245,113 +245,112 @@ function QueriesTable({
   const error = data.sectionErrors.queries;
 
   return (
-    <DataTable className="border border-mono-border/45">
-      <DataTableToolbar className="bg-mono-card">
-        <div className="flex items-center gap-3">
-          <span className="mnx-portal-leading-icon">
-            <MessagesSquare size={16} />
-          </span>
-          <div>
-            <h2 className="mnx-portal-title-2 text-mono-text">
-              Outstanding Queries
-            </h2>
-            <p className="text-xs text-mono-muted">
-              Open customer-visible threads and the latest visible message
-              activity.
-            </p>
-          </div>
-        </div>
-      </DataTableToolbar>
+    <OperationalDataTable>
+      <OperationalDataTableHeader eyebrow="Query threads" title="Outstanding Queries">
+        <p>Open customer-visible threads and the latest visible message activity.</p>
+      </OperationalDataTableHeader>
       {error ? (
-        <SectionErrorRow colSpan={5} message={error} />
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Section Status</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              <OperationalTableEmpty colSpan={5}>{error}</OperationalTableEmpty>
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
       ) : (
-        <>
-          <DataTableHeader>
-            <tr>
-              <DataTableHead>Query</DataTableHead>
-              <DataTableHead>Priority</DataTableHead>
-              <DataTableHead>Status</DataTableHead>
-              <DataTableHead>Due Date</DataTableHead>
-              <DataTableHead>Latest Visible Messages</DataTableHead>
-            </tr>
-          </DataTableHeader>
-          <DataTableBody>
-            {data.queries.length === 0 ? (
-              <DataTableEmpty
-                colSpan={5}
-                message="No customer-visible open queries are pending for this shipment."
-              />
-            ) : (
-              data.queries.map((query) => (
-                <tr key={query.id}>
-                  <DataTableCell>
-                    <div className="font-medium text-mono-text">
-                      {query.title}
-                    </div>
-                    <div className="mt-1 text-xs text-mono-muted">
-                      {query.detail}
-                    </div>
-                  </DataTableCell>
-                  <DataTableCell>
-                    <Badge
-                      variant={
-                        query.priority === "URGENT" || query.priority === "HIGH"
-                          ? "destructive"
-                          : "warning"
-                      }
-                    >
-                      {query.priority}
-                    </Badge>
-                  </DataTableCell>
-                  <DataTableCell>
-                    <div className="space-y-2">
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Query</OperationalTableHead>
+                <OperationalTableHead>Priority</OperationalTableHead>
+                <OperationalTableHead>Status</OperationalTableHead>
+                <OperationalTableHead>Due Date</OperationalTableHead>
+                <OperationalTableHead>Latest Visible Messages</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              {data.queries.length === 0 ? (
+                <OperationalTableEmpty colSpan={5}>
+                  No customer-visible open queries are pending for this shipment.
+                </OperationalTableEmpty>
+              ) : (
+                data.queries.map((query) => (
+                  <tr key={query.id}>
+                    <OperationalTableCell>
+                      <div className="font-medium text-mono-text">
+                        {query.title}
+                      </div>
+                      <div className="mt-1 text-xs text-mono-muted">
+                        {query.detail}
+                      </div>
+                    </OperationalTableCell>
+                    <OperationalTableCell>
                       <Badge
                         variant={
-                          query.requiresCustomerAction ? "warning" : "secondary"
+                          query.priority === "URGENT" || query.priority === "HIGH"
+                            ? "destructive"
+                            : "warning"
                         }
                       >
-                        {query.status}
+                        {query.priority}
                       </Badge>
-                      {query.requiresCustomerAction ? (
-                        <div className="text-xs mnx-portal-warning-text">
-                          Customer response required
-                        </div>
-                      ) : null}
-                    </div>
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {query.requiredResponseBy
-                      ? formatDate(query.requiredResponseBy)
-                      : "—"}
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {query.recentMessages.length === 0 ? (
-                      "No customer-visible messages yet"
-                    ) : (
+                    </OperationalTableCell>
+                    <OperationalTableCell>
                       <div className="space-y-2">
-                        {query.recentMessages.map((message, index) => (
-                          <div
-                            key={`${query.id}-${index}`}
-                            className="rounded-lg border border-mono-border/40 bg-mono-soft/30 px-3 py-2"
-                          >
-                            <div className="text-xs">
-                              {truncate(message.body, 120)}
-                            </div>
-                            <div className="mt-1 text-[11px] uppercase tracking-[0.16em]">
-                              {formatDateTime(message.createdAt)}
-                            </div>
+                        <Badge
+                          variant={
+                            query.requiresCustomerAction ? "warning" : "secondary"
+                          }
+                        >
+                          {query.status}
+                        </Badge>
+                        {query.requiresCustomerAction ? (
+                          <div className="text-xs mnx-portal-warning-text">
+                            Customer response required
                           </div>
-                        ))}
+                        ) : null}
                       </div>
-                    )}
-                  </DataTableCell>
-                </tr>
-              ))
-            )}
-          </DataTableBody>
-        </>
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {query.requiredResponseBy
+                        ? formatDate(query.requiredResponseBy)
+                        : "—"}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {query.recentMessages.length === 0 ? (
+                        "No customer-visible messages yet"
+                      ) : (
+                        <div className="space-y-2">
+                          {query.recentMessages.map((message, index) => (
+                            <div
+                              key={`${query.id}-${index}`}
+                              className="rounded-lg border border-mono-border/40 bg-mono-soft/30 px-3 py-2"
+                            >
+                              <div className="text-xs">
+                                {truncate(message.body, 120)}
+                              </div>
+                              <div className="mt-1 text-[11px] uppercase tracking-[0.16em]">
+                                {formatDateTime(message.createdAt)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </OperationalTableCell>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
       )}
-    </DataTable>
+    </OperationalDataTable>
   );
 }
 
@@ -449,27 +448,6 @@ function SectionFallback({ message }: { message: string }) {
     <div className="rounded-xl border border-dashed border-mono-border/60 bg-mono-soft/20 px-4 py-6 text-sm text-mono-muted">
       {message}
     </div>
-  );
-}
-
-function SectionErrorRow({
-  colSpan,
-  message,
-}: {
-  colSpan: number;
-  message: string;
-}) {
-  return (
-    <>
-      <DataTableHeader>
-        <tr>
-          <DataTableHead>Section Status</DataTableHead>
-        </tr>
-      </DataTableHeader>
-      <DataTableBody>
-        <DataTableEmpty colSpan={colSpan} message={message} />
-      </DataTableBody>
-    </>
   );
 }
 

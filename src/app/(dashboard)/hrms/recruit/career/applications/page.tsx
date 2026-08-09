@@ -9,14 +9,13 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useEffect, useCallback } from "react";
 import { Add, Search } from "@carbon/icons-react";
 import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-  DataTableEmpty,
-} from "@/modules/people/components/people-data-table";
+  OperationalDataTable,
+  OperationalDataTableWrap,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 
 type JsApp = {
   id: string;
@@ -221,61 +220,62 @@ export default function CareerApplicationsPage() {
         </NativeSelect>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
-        <DataTable>
-          <DataTableHeader>
-            <tr>
-              <DataTableHead>Job</DataTableHead>
-              <DataTableHead>Company</DataTableHead>
-              <DataTableHead>Status</DataTableHead>
-              <DataTableHead>Source</DataTableHead>
-              <DataTableHead>Applied</DataTableHead>
-              <DataTableHead>Last Activity</DataTableHead>
-            </tr>
-          </DataTableHeader>
-          <DataTableBody>
-            {loading ? (
-              <DataTableEmpty colSpan={6} message="Loading..." />
-            ) : apps.length === 0 ? (
-              <DataTableEmpty
-                colSpan={6}
-                message="No applications logged yet."
-              />
-            ) : (
-              apps.map((app) => (
-                <DataTableRow key={app.id}>
-                  <DataTableCell>
-                    <span className="font-medium text-mono-text">
-                      {app.jobTitle}
-                    </span>
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {app.company}
-                  </DataTableCell>
-                  <DataTableCell>
-                    <span
-                      className={`inline-flex rounded-lg border px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[app.privateStatus] ?? ""}`}
-                    >
-                      {app.privateStatus}
-                    </span>
-                  </DataTableCell>
-                  <DataTableCell className="mnx-dashboard-spec-label">
-                    {app.source ?? "—"}
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {new Date(app.appliedAt).toLocaleDateString()}
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {app.lastActivityAt
-                      ? new Date(app.lastActivityAt).toLocaleDateString()
-                      : "—"}
-                  </DataTableCell>
-                </DataTableRow>
-              ))
-            )}
-          </DataTableBody>
-        </DataTable>
-      </div>
+      <OperationalDataTable>
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Job</OperationalTableHead>
+                <OperationalTableHead>Company</OperationalTableHead>
+                <OperationalTableHead>Status</OperationalTableHead>
+                <OperationalTableHead>Source</OperationalTableHead>
+                <OperationalTableHead>Applied</OperationalTableHead>
+                <OperationalTableHead>Last Activity</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <OperationalTableEmpty colSpan={6}>Loading...</OperationalTableEmpty>
+              ) : apps.length === 0 ? (
+                <OperationalTableEmpty colSpan={6}>
+                  No applications logged yet.
+                </OperationalTableEmpty>
+              ) : (
+                apps.map((app) => (
+                  <tr key={app.id}>
+                    <OperationalTableCell>
+                      <span className="font-medium text-mono-text">
+                        {app.jobTitle}
+                      </span>
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {app.company}
+                    </OperationalTableCell>
+                    <OperationalTableCell>
+                      <span
+                        className={`inline-flex rounded-lg border px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[app.privateStatus] ?? ""}`}
+                      >
+                        {app.privateStatus}
+                      </span>
+                    </OperationalTableCell>
+                    <OperationalTableCell className="mnx-dashboard-spec-label">
+                      {app.source ?? "—"}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {new Date(app.appliedAt).toLocaleDateString()}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {app.lastActivityAt
+                        ? new Date(app.lastActivityAt).toLocaleDateString()
+                        : "—"}
+                    </OperationalTableCell>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
+      </OperationalDataTable>
     </div>
   );
 }

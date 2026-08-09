@@ -34,9 +34,15 @@ import {
 } from "@/lib/navigation";
 import { getPathLabel, segmentToLabel } from "@/lib/route-labels";
 import { MonaProvider, useMonaChat } from "@/modules/mona/components";
+import { DevConsoleErrorBoundary } from "@/components/dev-console/dev-console-error-boundary";
 
 const MonaChat = dynamic(
   () => import("@/modules/mona/components").then((module) => module.MonaChat),
+  { ssr: false },
+);
+
+const DevConsole = dynamic(
+  () => import("@/components/dev-console/dev-console").then((module) => module.DevConsole),
   { ssr: false },
 );
 
@@ -318,6 +324,12 @@ export function MonolithAppShell(props: MonolithAppShellProps) {
         <MonolithAppShellBody {...props} />
       </MonolithThemeProvider>
       <MonaChat />
+      {props.caps["system.dev_console.access"] ? (
+        <DevConsole
+          userEmail={props.userEmail}
+          userRole={props.isPlatformAdmin ? "Platform admin" : undefined}
+        />
+      ) : null}
     </MonaProvider>
   );
 }
@@ -554,7 +566,8 @@ function MonolithAppShellBody({
           })}
         </nav>
 
-        <button type="button" className="mnx-mona-card" onClick={toggleChat}>
+        <div className="mnx-sidebar-footer">
+          <button type="button" className="mnx-mona-card" onClick={toggleChat}>
           <span>
             <Sparkles size={14} strokeWidth={2} />
           </span>
@@ -563,9 +576,9 @@ function MonolithAppShellBody({
             <small>Open your workspace assistant</small>
           </span>
           <kbd>⌘M</kbd>
-        </button>
+          </button>
 
-        <div className="mnx-profile-menu mnx-sidebar-profile-menu" ref={profileRef}>
+          <div className="mnx-profile-menu mnx-sidebar-profile-menu" ref={profileRef}>
           <button
             type="button"
             className="mnx-sidebar-user"
@@ -596,6 +609,7 @@ function MonolithAppShellBody({
               userName={userName}
             />
           ) : null}
+          </div>
         </div>
       </aside>
 
@@ -655,7 +669,13 @@ function MonolithAppShellBody({
           </div>
         </header>
 
-        <main className="mnx-dashboard-main">{children}</main>
+        <main className="mnx-dashboard-main">
+          {caps["system.dev_console.access"] ? (
+            <DevConsoleErrorBoundary>{children}</DevConsoleErrorBoundary>
+          ) : (
+            children
+          )}
+        </main>
       </div>
 
       {searchOpen ? (

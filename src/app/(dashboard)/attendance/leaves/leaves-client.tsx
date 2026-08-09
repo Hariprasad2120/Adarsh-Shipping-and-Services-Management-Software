@@ -9,16 +9,15 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DemoFillButton } from "@/components/forms/development/demo-fill-button";
 import {
-  Badge,
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-  DataTableToolbar,
-} from "@/modules/people/components/people-data-table";
+  OperationalDataTable,
+  OperationalDataTableHeader,
+  OperationalDataTableWrap,
+  OperationalStatus,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
 import { getLeaveDemoValues } from "@/lib/demo-fill";
@@ -37,11 +36,14 @@ type LeaveRequest = {
   approver: { name: string } | null;
 };
 
-const STATUS_COLOR: Record<string, string> = {
-  pending: "bg-[var(--mnx-warning-bg)] text-[var(--mnx-warning)]",
-  approved: "bg-[var(--mnx-success-bg)] text-[var(--mnx-success)]",
-  rejected: "bg-[var(--mnx-danger-bg)] text-[var(--mnx-danger)]",
-  cancelled: "bg-mono-soft text-mono-muted",
+const STATUS_TONE: Record<
+  string,
+  "success" | "warning" | "danger" | "neutral"
+> = {
+  pending: "warning",
+  approved: "success",
+  rejected: "danger",
+  cancelled: "neutral",
 };
 
 export function LeavesClient({
@@ -133,22 +135,25 @@ export function LeavesClient({
         ))}
       </div>
 
-      <div className="space-y-0 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]">
-        <DataTableToolbar>
-          <h2 className="mnx-title-2 text-[var(--mnx-text)]">My Requests</h2>
-          <div className="flex gap-2">
-            <DemoFillButton
-              disabled={loading || leaveTypes.length === 0}
-              onClick={fillDemoData}
-            />
-            <MnxAction
-              onClick={() => setShowForm(!showForm)}
-              className="rounded-lg bg-[var(--mnx-info-bg)] px-3 py-1.5 text-sm text-[var(--mnx-text)] hover:bg-[var(--mnx-info-bg)]"
-            >
-              + Request Leave
-            </MnxAction>
-          </div>
-        </DataTableToolbar>
+      <OperationalDataTable>
+        <OperationalDataTableHeader
+          eyebrow="Leave requests"
+          title="My Requests"
+          actions={
+            <div className="flex gap-2">
+              <DemoFillButton
+                disabled={loading || leaveTypes.length === 0}
+                onClick={fillDemoData}
+              />
+              <MnxAction
+                onClick={() => setShowForm(!showForm)}
+                className="rounded-lg bg-[var(--mnx-info-bg)] px-3 py-1.5 text-sm text-[var(--mnx-text)] hover:bg-[var(--mnx-info-bg)]"
+              >
+                + Request Leave
+              </MnxAction>
+            </div>
+          }
+        />
 
         {showForm && (
           <form
@@ -237,96 +242,99 @@ export function LeavesClient({
           </form>
         )}
 
-        <DataTable className="rounded-none border-0">
-          <DataTableHeader>
-            <tr>
-              {["Type", "From", "To", "Half Day", "Status", "Note"].map((h) => (
-                <DataTableHead key={h}>{h}</DataTableHead>
-              ))}
-            </tr>
-          </DataTableHeader>
-          <DataTableBody>
-            {myRequests.length === 0 ? (
-              <DataTableEmpty
-                colSpan={6}
-                message="No requests."
-                className="py-6"
-              />
-            ) : (
-              myRequests.map((r) => (
-                <DataTableRow key={r.id}>
-                  <DataTableCell>{r.leaveType.name}</DataTableCell>
-                  <DataTableCell>{fmtDate(r.fromDate)}</DataTableCell>
-                  <DataTableCell>{fmtDate(r.toDate)}</DataTableCell>
-                  <DataTableCell>{r.halfDay ? "Yes" : "No"}</DataTableCell>
-                  <DataTableCell>
-                    <Badge className={STATUS_COLOR[r.status]}>{r.status}</Badge>
-                  </DataTableCell>
-                  <DataTableCell className="text-[var(--mnx-muted)]">
-                    {r.notes ?? "-"}
-                  </DataTableCell>
-                </DataTableRow>
-              ))
-            )}
-          </DataTableBody>
-        </DataTable>
-      </div>
-
-      {canApprove && pendingApprovals.length > 0 && (
-        <div className="space-y-0 rounded-xl border border-[var(--mnx-border)] bg-[var(--mnx-card)]">
-          <DataTableToolbar className="justify-start">
-            <h2 className="mnx-title-2 text-[var(--mnx-text)]">
-              Pending Approvals
-            </h2>
-          </DataTableToolbar>
-          <DataTable className="rounded-none border-0">
-            <DataTableHeader>
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
               <tr>
-                {["Employee", "Type", "From", "To", "Days", ""].map((h) => (
-                  <DataTableHead key={h}>{h}</DataTableHead>
+                {["Type", "From", "To", "Half Day", "Status", "Note"].map((h) => (
+                  <OperationalTableHead key={h}>{h}</OperationalTableHead>
                 ))}
               </tr>
-            </DataTableHeader>
-            <DataTableBody>
-              {pendingApprovals.map((r) => {
-                const days =
-                  Math.ceil(
-                    (new Date(r.toDate).getTime() -
-                      new Date(r.fromDate).getTime()) /
-                      86400000,
-                  ) + 1;
+            </thead>
+            <tbody>
+              {myRequests.length === 0 ? (
+                <OperationalTableEmpty colSpan={6}>
+                  No requests.
+                </OperationalTableEmpty>
+              ) : (
+                myRequests.map((r) => (
+                  <tr key={r.id}>
+                    <OperationalTableCell>{r.leaveType.name}</OperationalTableCell>
+                    <OperationalTableCell>{fmtDate(r.fromDate)}</OperationalTableCell>
+                    <OperationalTableCell>{fmtDate(r.toDate)}</OperationalTableCell>
+                    <OperationalTableCell>{r.halfDay ? "Yes" : "No"}</OperationalTableCell>
+                    <OperationalTableCell>
+                      <OperationalStatus tone={STATUS_TONE[r.status] ?? "neutral"}>
+                        {r.status}
+                      </OperationalStatus>
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-[var(--mnx-muted)]">
+                      {r.notes ?? "-"}
+                    </OperationalTableCell>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
+      </OperationalDataTable>
 
-                return (
-                  <DataTableRow key={r.id}>
-                    <DataTableCell className="font-medium text-[var(--mnx-text)]">
-                      {r.user.name}
-                    </DataTableCell>
-                    <DataTableCell>{r.leaveType.name}</DataTableCell>
-                    <DataTableCell>{fmtDate(r.fromDate)}</DataTableCell>
-                    <DataTableCell>{fmtDate(r.toDate)}</DataTableCell>
-                    <DataTableCell>{r.halfDay ? "0.5" : days}</DataTableCell>
-                    <DataTableCell>
-                      <div className="flex gap-2">
-                        <MnxAction
-                          onClick={() => decide(r.id, "approved")}
-                          className="rounded bg-[var(--mnx-success-bg)] px-2 py-1 text-xs text-[var(--mnx-text)] hover:bg-[var(--mnx-success-bg)]"
-                        >
-                          Approve
-                        </MnxAction>
-                        <MnxAction
-                          onClick={() => decide(r.id, "rejected")}
-                          className="rounded bg-[var(--mnx-danger-bg)] px-2 py-1 text-xs text-[var(--mnx-text)] hover:bg-[var(--mnx-danger-bg)]"
-                        >
-                          Reject
-                        </MnxAction>
-                      </div>
-                    </DataTableCell>
-                  </DataTableRow>
-                );
-              })}
-            </DataTableBody>
-          </DataTable>
-        </div>
+      {canApprove && pendingApprovals.length > 0 && (
+        <OperationalDataTable>
+          <OperationalDataTableHeader
+            eyebrow="Manager review"
+            title="Pending Approvals"
+          />
+          <OperationalDataTableWrap>
+            <OperationalTable>
+              <thead>
+                <tr>
+                  {["Employee", "Type", "From", "To", "Days", ""].map((h) => (
+                    <OperationalTableHead key={h}>{h}</OperationalTableHead>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {pendingApprovals.map((r) => {
+                  const days =
+                    Math.ceil(
+                      (new Date(r.toDate).getTime() -
+                        new Date(r.fromDate).getTime()) /
+                        86400000,
+                    ) + 1;
+
+                  return (
+                    <tr key={r.id}>
+                      <OperationalTableCell className="font-medium text-[var(--mnx-text)]">
+                        {r.user.name}
+                      </OperationalTableCell>
+                      <OperationalTableCell>{r.leaveType.name}</OperationalTableCell>
+                      <OperationalTableCell>{fmtDate(r.fromDate)}</OperationalTableCell>
+                      <OperationalTableCell>{fmtDate(r.toDate)}</OperationalTableCell>
+                      <OperationalTableCell>{r.halfDay ? "0.5" : days}</OperationalTableCell>
+                      <OperationalTableCell>
+                        <div className="flex gap-2">
+                          <MnxAction
+                            onClick={() => decide(r.id, "approved")}
+                            className="rounded bg-[var(--mnx-success-bg)] px-2 py-1 text-xs text-[var(--mnx-text)] hover:bg-[var(--mnx-success-bg)]"
+                          >
+                            Approve
+                          </MnxAction>
+                          <MnxAction
+                            onClick={() => decide(r.id, "rejected")}
+                            className="rounded bg-[var(--mnx-danger-bg)] px-2 py-1 text-xs text-[var(--mnx-text)] hover:bg-[var(--mnx-danger-bg)]"
+                          >
+                            Reject
+                          </MnxAction>
+                        </div>
+                      </OperationalTableCell>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </OperationalTable>
+          </OperationalDataTableWrap>
+        </OperationalDataTable>
       )}
     </div>
   );

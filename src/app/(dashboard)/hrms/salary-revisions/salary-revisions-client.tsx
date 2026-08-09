@@ -13,17 +13,14 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
-  Badge,
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-  DataTablePrimaryLinkCell,
-  DataTableRow,
-} from "@/modules/people/components/people-data-table";
+  OperationalDataTableWrap,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 import { Input } from "@/components/ui/input";
 import type {
   SalaryRevisionStats,
@@ -237,41 +234,41 @@ export function SalaryRevisionsClient({
           />
         </div>
 
-        <DataTable className="w-full overflow-visible rounded-none border-0 border-t border-mono-border/30 bg-transparent shadow-none">
-          <DataTableHeader>
+        <OperationalDataTableWrap>
+        <OperationalTable className="w-full overflow-visible rounded-none border-0 border-t border-mono-border/30 bg-transparent shadow-none">
+          <thead>
             <tr>
-              <DataTableHead className="px-5 py-3 text-left">
+              <OperationalTableHead className="px-5 py-3 text-left">
                 EMP ID
-              </DataTableHead>
-              <DataTableHead className="px-5 py-3 text-left">
+              </OperationalTableHead>
+              <OperationalTableHead className="px-5 py-3 text-left">
                 NAME
-              </DataTableHead>
-              <DataTableHead className="px-5 py-3 text-left">
+              </OperationalTableHead>
+              <OperationalTableHead className="px-5 py-3 text-left">
                 DEPARTMENT
-              </DataTableHead>
-              <DataTableHead className="px-5 py-3 text-left">
+              </OperationalTableHead>
+              <OperationalTableHead className="px-5 py-3 text-left">
                 EFFECTIVE
-              </DataTableHead>
-              <DataTableHead className="px-5 py-3 text-left">
+              </OperationalTableHead>
+              <OperationalTableHead className="px-5 py-3 text-left">
                 REVISED CTC
-              </DataTableHead>
-              <DataTableHead className="px-5 py-3 text-left">
+              </OperationalTableHead>
+              <OperationalTableHead className="px-5 py-3 text-left">
                 REV %
-              </DataTableHead>
-              <DataTableHead className="px-5 py-3 text-left">
+              </OperationalTableHead>
+              <OperationalTableHead className="px-5 py-3 text-left">
                 STATUS
-              </DataTableHead>
-              <DataTableHead className="px-5 py-3 text-right">
+              </OperationalTableHead>
+              <OperationalTableHead className="px-5 py-3 text-right">
                 ACTION
-              </DataTableHead>
+              </OperationalTableHead>
             </tr>
-          </DataTableHeader>
-          <DataTableBody>
+          </thead>
+          <tbody>
             {filteredSummaries.length === 0 ? (
-              <DataTableEmpty
-                colSpan={8}
-                message="No salary revisions match the current filters."
-              />
+              <OperationalTableEmpty colSpan={8}>
+                No salary revisions match the current filters.
+              </OperationalTableEmpty>
             ) : (
               filteredSummaries.map((summary) => {
                 const latest = summary.latestRevision;
@@ -281,12 +278,12 @@ export function SalaryRevisionsClient({
 
                 return (
                   <Fragment key={summary.userId}>
-                    <DataTableRow key={summary.userId}>
-                      <DataTableCell className="px-5 py-4 font-medium text-mono-text">
+                    <tr>
+                      <OperationalTableCell className="px-5 py-4 font-medium text-mono-text">
                         {summary.employeeNumber}
-                      </DataTableCell>
+                      </OperationalTableCell>
                       {hasHistory ? (
-                        <DataTableCell className="px-5 py-4">
+                        <OperationalTableCell className="px-5 py-4">
                           <MnxAction
                             type="button"
                             onClick={() =>
@@ -307,43 +304,44 @@ export function SalaryRevisionsClient({
                               </p>
                             </div>
                           </MnxAction>
-                        </DataTableCell>
+                        </OperationalTableCell>
                       ) : (
-                        <DataTablePrimaryLinkCell
-                          href={`/hrms/employees/${summary.userId}`}
-                          className="px-0 py-0"
-                          linkClassName="block min-w-0 py-4"
-                        >
-                          <div className="space-y-0.5">
-                            <p className="font-medium text-mono-text">
-                              {summary.employeeName}
-                            </p>
-                            <p className="text-xs text-mono-muted">
-                              {summary.designation ?? "-"}
-                            </p>
-                          </div>
-                        </DataTablePrimaryLinkCell>
+                        <OperationalTableCell className="px-0 py-0">
+                          <Link
+                            href={`/hrms/employees/${summary.userId}`}
+                            className="block min-w-0 py-4"
+                          >
+                            <div className="space-y-0.5">
+                              <p className="font-medium text-mono-text">
+                                {summary.employeeName}
+                              </p>
+                              <p className="text-xs text-mono-muted">
+                                {summary.designation ?? "-"}
+                              </p>
+                            </div>
+                          </Link>
+                        </OperationalTableCell>
                       )}
-                      <DataTableCell className="px-5 py-4 text-mono-muted">
+                      <OperationalTableCell className="px-5 py-4 text-mono-muted">
                         {summary.departmentName ?? "-"}
-                      </DataTableCell>
-                      <DataTableCell className="px-5 py-4 text-mono-muted">
+                      </OperationalTableCell>
+                      <OperationalTableCell className="px-5 py-4 text-mono-muted">
                         {latest?.effectiveLabel ?? "-"}
-                      </DataTableCell>
-                      <DataTableCell className="mnx-numeric px-5 py-4 font-semibold text-mono-text">
+                      </OperationalTableCell>
+                      <OperationalTableCell className="mnx-numeric px-5 py-4 font-semibold text-mono-text">
                         {formatINR(latest?.revisedCtcAnnual ?? null)}
-                      </DataTableCell>
-                      <DataTableCell className="mnx-numeric px-5 py-4 font-medium text-[var(--mnx-success)]">
+                      </OperationalTableCell>
+                      <OperationalTableCell className="mnx-numeric px-5 py-4 font-medium text-[var(--mnx-success)]">
                         {formatPercent(latest?.revisionPercent ?? null)}
-                      </DataTableCell>
-                      <DataTableCell className="px-5 py-4">
+                      </OperationalTableCell>
+                      <OperationalTableCell className="px-5 py-4">
                         <Badge
                           className={`border ${statusBadgeClass(latest?.status ?? "UNKNOWN")}`}
                         >
                           {latest?.statusLabel ?? "Unknown"}
                         </Badge>
-                      </DataTableCell>
-                      <DataTableCell className="px-5 py-4 text-right">
+                      </OperationalTableCell>
+                      <OperationalTableCell className="px-5 py-4 text-right">
                         {hasHistory ? (
                           <MnxAction
                             type="button"
@@ -376,8 +374,8 @@ export function SalaryRevisionsClient({
                             <ChevronRight className="size-4" />
                           </Link>
                         )}
-                      </DataTableCell>
-                    </DataTableRow>
+                      </OperationalTableCell>
+                    </tr>
                     {isExpanded && hasHistory ? (
                       <tr className="bg-mono-soft/40">
                         <td colSpan={8} className="px-5 py-4">
@@ -452,8 +450,9 @@ export function SalaryRevisionsClient({
                 );
               })
             )}
-          </DataTableBody>
-        </DataTable>
+          </tbody>
+        </OperationalTable>
+        </OperationalDataTableWrap>
       </div>
     </div>
   );

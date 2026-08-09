@@ -330,8 +330,8 @@
 .mnx-admin-role-option.is-selected,
 .mnx-admin-tabs .is-selected {
   color: var(--mnx-accent-text);
-  border-color: color-mix(in srgb, var(--mnx-accent) 36%, var(--mnx-border));
-  background: var(--mnx-accent-soft);
+  border-color: var(--mnx-highlight-border);
+  background: var(--mnx-highlight-surface);
 }
 
 .mnx-admin-role-option small {

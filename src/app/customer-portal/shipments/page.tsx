@@ -21,14 +21,14 @@ import {
 } from "@/components/monolith/customer-portal-workspace";
 import { WorkspaceMetric } from "@/components/layout/workspace";
 import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-  DataTableToolbar,
-} from "@/components/data-display/data-table";
+  OperationalDataTable,
+  OperationalDataTableHeader,
+  OperationalDataTableWrap,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 import {
   getChaJobStatusBadgeVariant,
   getChaPriorityBadgeVariant,
@@ -209,118 +209,119 @@ export default async function CustomerPortalShipmentsPage({
         </CardContent>
       </Card>
 
-      <DataTable className="border border-mono-border/45">
-        <DataTableToolbar className="bg-mono-card">
-          <div className="flex items-center gap-3">
-            <span className="mnx-portal-leading-icon">
-              <FolderKanban size={16} />
-            </span>
-            <div>
-              <h2 className="mnx-portal-title-2 text-mono-text">Shipments</h2>
-              <p className="text-xs text-mono-muted">
-                Read-only view of customer-scoped CHA jobs and follow-up
-                indicators.
-              </p>
-            </div>
-          </div>
-        </DataTableToolbar>
+      <OperationalDataTable>
+        <OperationalDataTableHeader eyebrow="Read-only view" title="Shipments">
+          <p>Customer-scoped CHA jobs and follow-up indicators.</p>
+        </OperationalDataTableHeader>
         {data.sectionErrors.shipments ? (
-          <SectionErrorRow colSpan={8} message={data.sectionErrors.shipments} />
+          <OperationalDataTableWrap>
+            <OperationalTable>
+              <thead>
+                <tr>
+                  <OperationalTableHead>Section Status</OperationalTableHead>
+                </tr>
+              </thead>
+              <tbody>
+                <OperationalTableEmpty colSpan={8}>
+                  {data.sectionErrors.shipments}
+                </OperationalTableEmpty>
+              </tbody>
+            </OperationalTable>
+          </OperationalDataTableWrap>
         ) : (
-          <>
-            <DataTableHeader>
-              <tr>
-                <DataTableHead>Shipment</DataTableHead>
-                <DataTableHead>Customer Ref</DataTableHead>
-                <DataTableHead>Current Stage</DataTableHead>
-                <DataTableHead>Status</DataTableHead>
-                <DataTableHead>Priority</DataTableHead>
-                <DataTableHead>Attention</DataTableHead>
-                <DataTableHead>Last Updated</DataTableHead>
-                <DataTableHead>Target / ETA</DataTableHead>
-              </tr>
-            </DataTableHeader>
-            <DataTableBody>
-              {data.shipments.length === 0 ? (
-                <DataTableEmpty
-                  colSpan={8}
-                  message={
-                    data.summary.totalShipments === 0
+          <OperationalDataTableWrap>
+            <OperationalTable>
+              <thead>
+                <tr>
+                  <OperationalTableHead>Shipment</OperationalTableHead>
+                  <OperationalTableHead>Customer Ref</OperationalTableHead>
+                  <OperationalTableHead>Current Stage</OperationalTableHead>
+                  <OperationalTableHead>Status</OperationalTableHead>
+                  <OperationalTableHead>Priority</OperationalTableHead>
+                  <OperationalTableHead>Attention</OperationalTableHead>
+                  <OperationalTableHead>Last Updated</OperationalTableHead>
+                  <OperationalTableHead>Target / ETA</OperationalTableHead>
+                </tr>
+              </thead>
+              <tbody>
+                {data.shipments.length === 0 ? (
+                  <OperationalTableEmpty colSpan={8}>
+                    {data.summary.totalShipments === 0
                       ? "No CHA shipments are linked to this customer account yet."
-                      : "No shipments match the current filters."
-                  }
-                />
-              ) : (
-                data.shipments.map((shipment) => (
-                  <tr key={shipment.id}>
-                    <DataTableCell className="font-medium">
-                      <Link
-                        href={shipment.href}
-                        className="mnx-portal-accent-text transition-colors "
-                      >
-                        {shipment.jobNumber}
-                      </Link>
-                      <div className="mt-1 text-xs text-mono-muted">
-                        {shipment.title}
-                      </div>
-                    </DataTableCell>
-                    <DataTableCell className="text-mono-muted">
-                      {shipment.customerRef || "—"}
-                    </DataTableCell>
-                    <DataTableCell>
-                      <Badge
-                        variant={getChaStageBadgeVariant(shipment.stageKey)}
-                      >
-                        {shipment.stageLabel}
-                      </Badge>
-                    </DataTableCell>
-                    <DataTableCell>
-                      <Badge
-                        variant={getChaJobStatusBadgeVariant(shipment.status)}
-                      >
-                        {shipment.status.replaceAll("_", " ")}
-                      </Badge>
-                    </DataTableCell>
-                    <DataTableCell>
-                      <Badge
-                        variant={getChaPriorityBadgeVariant(shipment.priority)}
-                      >
-                        {shipment.priority.replaceAll("_", " ")}
-                      </Badge>
-                    </DataTableCell>
-                    <DataTableCell>
-                      {shipment.hasCustomerAction ? (
-                        <div className="space-y-2">
-                          <Badge variant="warning">Needs Follow-Up</Badge>
-                          <div className="text-xs text-mono-muted">
-                            {buildAttentionSummary(shipment)}
+                      : "No shipments match the current filters."}
+                  </OperationalTableEmpty>
+                ) : (
+                  data.shipments.map((shipment) => (
+                    <tr key={shipment.id}>
+                      <OperationalTableCell className="font-medium">
+                        <Link
+                          href={shipment.href}
+                          className="mnx-portal-accent-text transition-colors "
+                        >
+                          {shipment.jobNumber}
+                        </Link>
+                        <div className="mt-1 text-xs text-mono-muted">
+                          {shipment.title}
+                        </div>
+                      </OperationalTableCell>
+                      <OperationalTableCell className="text-mono-muted">
+                        {shipment.customerRef || "—"}
+                      </OperationalTableCell>
+                      <OperationalTableCell>
+                        <Badge
+                          variant={getChaStageBadgeVariant(shipment.stageKey)}
+                        >
+                          {shipment.stageLabel}
+                        </Badge>
+                      </OperationalTableCell>
+                      <OperationalTableCell>
+                        <Badge
+                          variant={getChaJobStatusBadgeVariant(shipment.status)}
+                        >
+                          {shipment.status.replaceAll("_", " ")}
+                        </Badge>
+                      </OperationalTableCell>
+                      <OperationalTableCell>
+                        <Badge
+                          variant={getChaPriorityBadgeVariant(shipment.priority)}
+                        >
+                          {shipment.priority.replaceAll("_", " ")}
+                        </Badge>
+                      </OperationalTableCell>
+                      <OperationalTableCell>
+                        {shipment.hasCustomerAction ? (
+                          <div className="space-y-2">
+                            <Badge variant="warning">Needs Follow-Up</Badge>
+                            <div className="text-xs text-mono-muted">
+                              {buildAttentionSummary(shipment)}
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <Badge variant="success">Up To Date</Badge>
-                      )}
-                    </DataTableCell>
-                    <DataTableCell className="text-mono-muted">
-                      <div>{formatDateTime(shipment.updatedAt)}</div>
-                      {shipment.recentUpdateAt ? (
-                        <div className="mt-1 text-xs">
-                          Visible update{" "}
-                          {formatDateTime(shipment.recentUpdateAt)}
-                        </div>
-                      ) : null}
-                    </DataTableCell>
-                    <DataTableCell className="text-mono-muted">
-                      {shipment.estimatedClosureDate
-                        ? formatDate(shipment.estimatedClosureDate)
-                        : "—"}
-                    </DataTableCell>
-                  </tr>
-                ))
-              )}
-            </DataTableBody>
-          </>
+                        ) : (
+                          <Badge variant="success">Up To Date</Badge>
+                        )}
+                      </OperationalTableCell>
+                      <OperationalTableCell className="text-mono-muted">
+                        <div>{formatDateTime(shipment.updatedAt)}</div>
+                        {shipment.recentUpdateAt ? (
+                          <div className="mt-1 text-xs">
+                            Visible update{" "}
+                            {formatDateTime(shipment.recentUpdateAt)}
+                          </div>
+                        ) : null}
+                      </OperationalTableCell>
+                      <OperationalTableCell className="text-mono-muted">
+                        {shipment.estimatedClosureDate
+                          ? formatDate(shipment.estimatedClosureDate)
+                          : "—"}
+                      </OperationalTableCell>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </OperationalTable>
+          </OperationalDataTableWrap>
         )}
-      </DataTable>
+      </OperationalDataTable>
     </CustomerPortalPage>
   );
 }
@@ -374,27 +375,6 @@ function StatCard({
         tone === "warning" && value > 0 ? "mnx-portal-panel-warning" : undefined
       }
     />
-  );
-}
-
-function SectionErrorRow({
-  colSpan,
-  message,
-}: {
-  colSpan: number;
-  message: string;
-}) {
-  return (
-    <>
-      <DataTableHeader>
-        <tr>
-          <DataTableHead>Section Status</DataTableHead>
-        </tr>
-      </DataTableHeader>
-      <DataTableBody>
-        <DataTableEmpty colSpan={colSpan} message={message} />
-      </DataTableBody>
-    </>
   );
 }
 

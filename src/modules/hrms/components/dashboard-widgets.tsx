@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Megaphone, Calendar, CheckSquare, Gift, Users, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface DashboardWidgetsProps {
   widgetsConfig: Array<{ key: string; title: string; visible: boolean; order: number; width: "sm" | "md" | "lg" | "full" }>;
@@ -162,13 +163,9 @@ export function DashboardWidgets({
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
               {widget.title}
             </h3>
-            <button
-              type="button"
-              onClick={() => onToggleWidget(widget.key)}
-              className="text-[10.5px] font-semibold text-[#F9D972] hover:text-[#00b0a3] bg-slate-50 hover:bg-slate-100 px-2 py-0.5 rounded border border-slate-200 cursor-pointer"
-            >
+            <Button size="sm" variant="outline" onClick={() => onToggleWidget(widget.key)}>
               Hide
-            </button>
+            </Button>
           </div>
           <div className="flex-1 overflow-y-auto">
             {renderWidgetContent(widget.key)}

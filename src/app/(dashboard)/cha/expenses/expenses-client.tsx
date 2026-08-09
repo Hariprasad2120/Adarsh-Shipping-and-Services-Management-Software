@@ -1926,24 +1926,30 @@ export function ExpensesClient({
                 return (
                   <div
                     key={req.id}
-                    className="cha-expense-row border-t mnx-border first:border-t-0"
+                    className={`cha-expense-row mnx-expense-queue-record${isExpanded ? " is-highlighted" : ""} border-t mnx-border first:border-t-0`}
                     data-urgent={isUrgent ? "true" : "false"}
                   >
-                    <div className="grid w-full gap-3 bg-transparent px-5 py-4 md:grid-cols-[minmax(320px,1.8fr)_44px_minmax(170px,0.8fr)_minmax(130px,0.7fr)_minmax(220px,0.9fr)] md:items-center">
-                      <Button
+                    <div className="mnx-expense-queue-summary grid w-full gap-3 bg-transparent px-5 py-4 md:grid-cols-[minmax(320px,1.8fr)_44px_minmax(170px,0.8fr)_minmax(130px,0.7fr)_minmax(220px,0.9fr)] md:items-center">
+                      <button
                         type="button"
                         onClick={() =>
                           setExpandedExpenseId(isExpanded ? null : req.id)
                         }
-                        className="mnx-plain flex min-w-0 items-start gap-3 text-left"
+                        className="mnx-plain mnx-expense-queue-trigger flex w-full min-w-0 items-start gap-3 text-left"
                       >
-                        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl border mnx-border mnx-bg-surface mnx-text-muted">
+                        <span
+                          className={`mnx-expense-queue-toggle mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl border ${
+                            isExpanded
+                              ? "mnx-border-accent mnx-text-accent-contrast"
+                              : "mnx-border mnx-bg-surface mnx-text-muted"
+                          }`}
+                        >
                           <ChevronDown
                             size={16}
                             className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}
                           />
                         </span>
-                        <span className="min-w-0">
+                        <span className="mnx-expense-queue-primary min-w-0">
                           <span className="flex min-w-0 items-center gap-3">
                             {req.jobId && req.job ? (
                               <Link
@@ -1966,7 +1972,7 @@ export function ExpensesClient({
                             • Requested by {req.requestedBy?.name}
                           </span>
                         </span>
-                      </Button>
+                      </button>
 
                       <div className="flex items-center justify-start">
                         {isUrgent ? (
@@ -2108,7 +2114,7 @@ export function ExpensesClient({
                     </div>
 
                     {isExpanded ? (
-                      <div className="border-t mnx-border mnx-bg-surface p-4">
+                      <div className="mnx-expense-queue-detail border-t mnx-border mnx-bg-surface p-4">
                         <div className="grid w-full gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)] xl:items-start">
                           <div className="min-w-0 space-y-4">
                             <section className="space-y-3">

@@ -94,8 +94,17 @@ export function CustomerPortalAuth({
 }) {
   return (
     <PublicMonolithShell className="mnx-customer-portal-auth">
-      <PublicStage>
-        <PublicBrand subtitle="Customer operations portal" />
+      <PublicStage className="mnx-customer-portal-auth-stage">
+        <section className="mnx-customer-portal-auth-intro">
+          <PublicBrand
+            className="mnx-customer-portal-auth-brand"
+            subtitle="Customer operations portal"
+          />
+          <div className="mnx-customer-portal-auth-copy">
+            <p>Track shipments, review documents, and approve customer-safe updates.</p>
+            <span>Built for external customer access with the same Monolith control surface.</span>
+          </div>
+        </section>
         <PublicPanel>
           <PublicHeader
             eyebrow={eyebrow}

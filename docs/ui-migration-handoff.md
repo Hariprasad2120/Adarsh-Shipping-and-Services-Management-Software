@@ -2,6 +2,90 @@
 
 Last updated: 2026-08-07
 
+## 2026-08-09 Product catalogue design-system cleanup
+
+Refined `/product-catalogue` so the route follows the Monolith panel, card,
+and spacing rhythm more closely instead of relying on mostly unstyled route
+layout flow.
+
+Delivered:
+
+- updated `src/app/(dashboard)/product-catalogue/page.tsx` to use the shared
+  `ButtonLink` contract for the internal catalogue jump actions, promoted the
+  intro/benefits/CTA sections into `WorkspacePanel` surfaces, and added route
+  class hooks for the page header, index panel, capability grid, and CTA
+  actions;
+- added the missing production styling for the catalogue route in
+  `src/styles/monolith-system.css`, covering the catalogue hero header,
+  filter/index layout, module selection cards, intro panel, capability cards,
+  workflow/manual layout, dossier/interactions grids, benefits cards, CTA
+  panel, and mobile responsive behavior;
+- preserved the existing catalogue data, workflow switching logic, filters,
+  print action, and CTA navigation behavior while tightening alignment and
+  reducing excess whitespace.
+
+Verification on Sunday, August 9, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/product-catalogue/page.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  refreshed product catalogue route is source-verified and static-check
+  verified rather than manually browser-checked in Light, Night, and Violet
+  themes;
+- this pass improves the route’s production presentation and spacing, but it
+  does not regenerate the repository-wide audit documents or reclassify the
+  route-family status matrix in this session.
+
+## 2026-08-09 Shared workspace metric card standardization
+
+Standardized the shared Monolith summary metric presentation so routes using
+`WorkspaceMetric` now render the same card treatment across admin, customer
+portal, CHA/CRM wrappers, freight forwarding, todo, root, and other workspace
+surfaces.
+
+Delivered:
+
+- updated `src/components/layout/workspace.tsx` so `WorkspaceMetric` now uses a
+  stable header/body anatomy with explicit metric value and detail wrappers for
+  consistent alignment across numeric and text values;
+- updated `src/styles/monolith-system.css` so `.mnx-workspace-metrics` now
+  renders as a responsive grid of individual design-system cards instead of the
+  older connected strip, with shared icon chips, header dividers, spacing, and
+  actionable hover/focus treatment;
+- removed the communication-only summary-card fork and switched
+  `src/app/(dashboard)/communication/page.tsx` back to the shared
+  `WorkspaceMetric` primitive so Communication now inherits the same canonical
+  metric design as the rest of Monolith;
+- extended `src/components/layout/workspace.test.tsx` to cover the updated
+  shared metric anatomy.
+
+Verification on Sunday, August 9, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/components/layout/workspace.tsx' 'src/components/layout/workspace.test.tsx' 'src/app/(dashboard)/communication/page.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  still fails because `design-system-catalogue.css` is currently missing, which
+  is unrelated to this shared metric change;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx vitest run 'src/components/layout/workspace.test.tsx' --reporter verbose`:
+  is blocked by the repository guard that requires `.env.staging.local` before
+  Vitest startup in this environment.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  shared metric card rollout is source-verified and static-check-verified
+  rather than manually checked across Light, Night, and Violet themes;
+- this pass standardizes routes already built on `WorkspaceMetric`; it does not
+  migrate unrelated non-compliant pages that still use different route-local
+  summary implementations.
+
 ## 2026-08-08 Admin design system blank reset
 
 Reset `/admin/design-system` to a blank starting point so new design system
@@ -6318,3 +6402,112 @@ Known limits:
   categorized filter-panel pattern;
 - this pass standardizes the compact active-filter summary treatment and does
   not change saved-view persistence behavior.
+
+## 2026-08-09 CHA approvals workspace clarification handoff
+
+The `/cha/approvals` route has been re-composed so the page reads like a real
+decision workspace instead of two loosely spaced empty regions.
+
+Delivered:
+
+- `src/app/(dashboard)/cha/approvals/page.tsx` now uses shared
+  `WorkspacePage`, `WorkspacePageHeader`, `WorkspaceMetric`, `WorkspacePanel`,
+  `WorkspaceSectionHeading`, and `WorkspaceEmptyState` primitives;
+- the route now shows a compact summary metric strip for checklist audits,
+  deletion requests, and approval scope before the queue panels;
+- both approval queues now live inside panelized surfaces with clearer section
+  headings, badge counts, canonical empty states, and canonical `ButtonLink`
+  actions instead of route-local button skins.
+
+Verification on Sunday, August 9, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/app/(dashboard)/cha/approvals/page.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  passed.
+
+Known limits:
+
+- manual browser verification is still pending in this Codex session;
+- `docs/ui-route-audit.md` and `docs/ui-component-and-style-ownership-audit.md`
+  have not yet been regenerated for this route after the composition change, so
+  the migration status remains conservatively `PARTIAL` for now.
+
+## 2026-08-09 Shared highlight standardization handoff
+
+The cross-route accent highlight treatment has been normalized to a lighter,
+shared reference so selected rows, hover rows, and accent-soft surfaces stop
+shifting between darker and lighter variants across modules.
+
+Delivered:
+
+- `src/styles/monolith-system.css` now defines shared highlight variables:
+  `--mnx-highlight-surface`, `--mnx-highlight-surface-soft`, and
+  `--mnx-highlight-border`;
+- shared utility treatments such as `mnx-bg-accent-soft` and
+  `mnx-hover-accent` now use that same light highlight surface;
+- shared selected-state patterns now use the same standard highlight tone,
+  including Todo rows, Expenses queue rows, admin selected tabs/roles, and
+  accounting account-structure rows;
+- module overrides that previously kept darker/local accent highlight behavior
+  were aligned in:
+  `src/styles/modules/cha-expense.css`,
+  `src/styles/modules/communication-admin.css`,
+  `src/styles/modules/accounting.css`,
+  and `src/styles/modules/crm.css`.
+
+Verification on Sunday, August 9, 2026:
+
+- no TypeScript-impacting code changed in this batch; focused verification was
+  limited to stylesheet diff review and selector coverage inspection.
+
+Known limits:
+
+- this standardization fixes routes that inherit shared Monolith highlight
+  utilities or the patched selected-state selectors, but a full runtime sweep of
+  every route is still pending;
+- any remaining page that uses route-local arbitrary color classes instead of
+  shared highlight utilities may still need a targeted follow-up pass.
+
+## 2026-08-09 Customer portal design-system uplift handoff
+
+The customer portal now inherits the updated Monolith page-header and card
+language instead of staying on the older portal-local surface treatment.
+
+Delivered:
+
+- `src/styles/monolith-system.css` now upgrades customer portal page headers,
+  portal panels, portal interactive cards, portal title/icon treatments, and
+  portal card-header/card-content spacing so dashboard/list/detail portal
+  surfaces align with the current Monolith card system;
+- `src/components/monolith/customer-portal-workspace.tsx` now uses a balanced
+  auth-stage intro + panel composition for customer portal auth screens instead
+  of leaving the old empty left column;
+- `src/app/customer-portal/approvals/page.tsx`,
+  `src/app/customer-portal/notifications/page.tsx`, and
+  `src/app/customer-portal/quotations/page.tsx` now use shared customer portal
+  panels and canonical workspace empty states instead of route-local legacy card
+  shells;
+- the customer portal dashboard, shipments list, shipment detail, quotations
+  detail, and KYC workspace continue to use some route-local business
+  composition, but now inherit the refreshed shared portal header/card styles.
+
+Verification on Sunday, August 9, 2026:
+
+- `NODE_OPTIONS=--max-old-space-size=8192 npx eslint 'src/app/customer-portal/approvals/page.tsx' 'src/app/customer-portal/notifications/page.tsx' 'src/app/customer-portal/quotations/page.tsx' 'src/components/monolith/customer-portal-workspace.tsx'`:
+  passed;
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`:
+  failed due to an existing generated Next dev typing issue:
+  `.next/dev/types/validator.ts` reports that
+  `.next/dev/types/routes.d.ts` is not a module.
+
+Known limits:
+
+- manual browser verification across the full customer portal route family is
+  still pending in this Codex session;
+- the dashboard and shipment detail workspaces still intentionally preserve
+  some route-local business composition, even though they now inherit the
+  refreshed shared portal surface treatment;
+- `docs/ui-route-audit.md` and
+  `docs/ui-component-and-style-ownership-audit.md` have not yet been
+  regenerated after this customer portal batch.

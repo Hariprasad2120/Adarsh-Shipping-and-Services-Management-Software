@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Search, Plus, Bell, HelpCircle, User } from "lucide-react";
 import { ModuleKey } from "@/modules/hrms/types";
+import { Input } from "@/components/ui/input";
 
 interface HrmsTopNavProps {
   activeModule: ModuleKey;
@@ -107,7 +108,7 @@ export function HrmsTopNav({
         {/* Search */}
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-          <input
+          <Input
             type="text"
             placeholder="Search employee..."
             value={searchValue}

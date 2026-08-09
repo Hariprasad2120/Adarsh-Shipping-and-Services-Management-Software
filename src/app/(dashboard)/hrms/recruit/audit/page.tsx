@@ -9,14 +9,13 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { useState, useEffect, useCallback } from "react";
 import { Search } from "@carbon/icons-react";
 import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-  DataTableEmpty,
-} from "@/modules/people/components/people-data-table";
+  OperationalDataTable,
+  OperationalDataTableWrap,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 
 type AuditEvent = {
   id: string;
@@ -108,76 +107,82 @@ export default function RecruitAuditPage() {
         </NativeSelect>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
-        <DataTable>
-          <DataTableHeader>
-            <tr>
-              <DataTableHead>Action</DataTableHead>
-              <DataTableHead>Entity</DataTableHead>
-              <DataTableHead>Actor</DataTableHead>
-              <DataTableHead>Source</DataTableHead>
-              <DataTableHead>IP</DataTableHead>
-              <DataTableHead>Timestamp</DataTableHead>
-            </tr>
-          </DataTableHeader>
-          <DataTableBody>
-            {loading && events.length === 0 ? (
-              <DataTableEmpty colSpan={6} message="Loading audit log..." />
-            ) : filtered.length === 0 ? (
-              <DataTableEmpty colSpan={6} message="No audit events found." />
-            ) : (
-              filtered.map((e) => (
-                <DataTableRow key={e.id}>
-                  <DataTableCell>
-                    <span className="rounded-lg bg-mono-soft px-2 py-0.5 text-xs font-mono text-mono-muted">
-                      {e.action}
-                    </span>
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    <span className="mnx-dashboard-spec-label">
-                      {e.entityType}
-                    </span>
-                    {e.entityId && (
-                      <p className="text-xs text-outline mt-0.5 font-mono">
-                        {e.entityId.slice(0, 8)}…
-                      </p>
-                    )}
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {e.actor ? (
-                      <>
-                        <span className="font-medium text-mono-text">
-                          {e.actor.name}
-                        </span>
-                        {e.actor.email && (
-                          <p className="mnx-dashboard-spec-label mt-0.5">
-                            {e.actor.email}
-                          </p>
-                        )}
-                      </>
-                    ) : e.actorId ? (
-                      <span className="font-mono text-xs">
-                        {e.actorId.slice(0, 8)}…
+      <OperationalDataTable>
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Action</OperationalTableHead>
+                <OperationalTableHead>Entity</OperationalTableHead>
+                <OperationalTableHead>Actor</OperationalTableHead>
+                <OperationalTableHead>Source</OperationalTableHead>
+                <OperationalTableHead>IP</OperationalTableHead>
+                <OperationalTableHead>Timestamp</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              {loading && events.length === 0 ? (
+                <OperationalTableEmpty colSpan={6}>
+                  Loading audit log...
+                </OperationalTableEmpty>
+              ) : filtered.length === 0 ? (
+                <OperationalTableEmpty colSpan={6}>
+                  No audit events found.
+                </OperationalTableEmpty>
+              ) : (
+                filtered.map((e) => (
+                  <tr key={e.id}>
+                    <OperationalTableCell>
+                      <span className="rounded-lg bg-mono-soft px-2 py-0.5 text-xs font-mono text-mono-muted">
+                        {e.action}
                       </span>
-                    ) : (
-                      "—"
-                    )}
-                  </DataTableCell>
-                  <DataTableCell className="mnx-dashboard-spec-label">
-                    {e.source ?? "—"}
-                  </DataTableCell>
-                  <DataTableCell className="mnx-dashboard-spec-label font-mono">
-                    {e.ipAddress ?? "—"}
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {new Date(e.createdAt).toLocaleString()}
-                  </DataTableCell>
-                </DataTableRow>
-              ))
-            )}
-          </DataTableBody>
-        </DataTable>
-      </div>
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      <span className="mnx-dashboard-spec-label">
+                        {e.entityType}
+                      </span>
+                      {e.entityId && (
+                        <p className="text-xs text-outline mt-0.5 font-mono">
+                          {e.entityId.slice(0, 8)}…
+                        </p>
+                      )}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {e.actor ? (
+                        <>
+                          <span className="font-medium text-mono-text">
+                            {e.actor.name}
+                          </span>
+                          {e.actor.email && (
+                            <p className="mnx-dashboard-spec-label mt-0.5">
+                              {e.actor.email}
+                            </p>
+                          )}
+                        </>
+                      ) : e.actorId ? (
+                        <span className="font-mono text-xs">
+                          {e.actorId.slice(0, 8)}…
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="mnx-dashboard-spec-label">
+                      {e.source ?? "—"}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="mnx-dashboard-spec-label font-mono">
+                      {e.ipAddress ?? "—"}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {new Date(e.createdAt).toLocaleString()}
+                    </OperationalTableCell>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
+      </OperationalDataTable>
 
       {hasMore && (
         <div className="text-center">

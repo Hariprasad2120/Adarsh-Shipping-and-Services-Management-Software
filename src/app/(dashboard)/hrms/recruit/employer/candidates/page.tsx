@@ -6,14 +6,13 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Add, Search } from "@carbon/icons-react";
 import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-  DataTableEmpty,
-} from "@/modules/people/components/people-data-table";
+  OperationalDataTable,
+  OperationalDataTableWrap,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 
 type Candidate = {
   id: string;
@@ -79,65 +78,66 @@ export default function CandidatesPage() {
         />
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-mono-border bg-mono-card shadow-sm">
-        <DataTable>
-          <DataTableHeader>
-            <tr>
-              <DataTableHead>Candidate</DataTableHead>
-              <DataTableHead>Ref #</DataTableHead>
-              <DataTableHead>Current Role</DataTableHead>
-              <DataTableHead>Phone</DataTableHead>
-              <DataTableHead>Added</DataTableHead>
-            </tr>
-          </DataTableHeader>
-          <DataTableBody>
-            {loading ? (
-              <DataTableEmpty colSpan={5} message="Loading..." />
-            ) : candidates.length === 0 ? (
-              <DataTableEmpty
-                colSpan={5}
-                message="No candidates yet. Add your first candidate."
-              />
-            ) : (
-              candidates.map((c) => (
-                <DataTableRow key={c.id}>
-                  <DataTableCell>
-                    <Link
-                      href={`/hrms/recruit/employer/candidates/${c.id}`}
-                      className="font-medium text-mono-text hover:text-[var(--mnx-accent)]"
-                    >
-                      {c.fullName}
-                    </Link>
-                    {c.email && (
-                      <p className="mnx-dashboard-spec-label mt-0.5">
-                        {c.email}
-                      </p>
-                    )}
-                  </DataTableCell>
-                  <DataTableCell className="mnx-dashboard-spec-label">
-                    {c.candidateNumber}
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {c.currentTitle ?? "—"}
-                    {c.currentCompany && (
-                      <span className="text-outline">
-                        {" "}
-                        · {c.currentCompany}
-                      </span>
-                    )}
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {c.phone ?? "—"}
-                  </DataTableCell>
-                  <DataTableCell className="text-mono-muted">
-                    {new Date(c.createdAt).toLocaleDateString()}
-                  </DataTableCell>
-                </DataTableRow>
-              ))
-            )}
-          </DataTableBody>
-        </DataTable>
-      </div>
+      <OperationalDataTable>
+        <OperationalDataTableWrap>
+          <OperationalTable>
+            <thead>
+              <tr>
+                <OperationalTableHead>Candidate</OperationalTableHead>
+                <OperationalTableHead>Ref #</OperationalTableHead>
+                <OperationalTableHead>Current Role</OperationalTableHead>
+                <OperationalTableHead>Phone</OperationalTableHead>
+                <OperationalTableHead>Added</OperationalTableHead>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <OperationalTableEmpty colSpan={5}>Loading...</OperationalTableEmpty>
+              ) : candidates.length === 0 ? (
+                <OperationalTableEmpty colSpan={5}>
+                  No candidates yet. Add your first candidate.
+                </OperationalTableEmpty>
+              ) : (
+                candidates.map((c) => (
+                  <tr key={c.id}>
+                    <OperationalTableCell>
+                      <Link
+                        href={`/hrms/recruit/employer/candidates/${c.id}`}
+                        className="font-medium text-mono-text hover:text-[var(--mnx-accent)]"
+                      >
+                        {c.fullName}
+                      </Link>
+                      {c.email && (
+                        <p className="mnx-dashboard-spec-label mt-0.5">
+                          {c.email}
+                        </p>
+                      )}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="mnx-dashboard-spec-label">
+                      {c.candidateNumber}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {c.currentTitle ?? "—"}
+                      {c.currentCompany && (
+                        <span className="text-outline">
+                          {" "}
+                          · {c.currentCompany}
+                        </span>
+                      )}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {c.phone ?? "—"}
+                    </OperationalTableCell>
+                    <OperationalTableCell className="text-mono-muted">
+                      {new Date(c.createdAt).toLocaleDateString()}
+                    </OperationalTableCell>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </OperationalTable>
+        </OperationalDataTableWrap>
+      </OperationalDataTable>
     </div>
   );
 }

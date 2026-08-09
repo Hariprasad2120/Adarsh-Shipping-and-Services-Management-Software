@@ -1,10 +1,12 @@
-import { PeopleControlTable as MnxTable } from "@/modules/people/components/people-controls";
 import Image from "next/image";
+import Link from "next/link";
 import { toDisplayTitleCase } from "@/lib/text-case";
+import { Badge } from "@/components/ui/badge";
 import {
-  Badge,
-  DataTablePrimaryLinkCell,
-} from "@/modules/people/components/people-data-table";
+  OperationalDataTableWrap,
+  OperationalTable,
+  OperationalTableCell,
+} from "@/components/data-display/operational-data-table";
 import {
   Card,
   CardContent,
@@ -264,7 +266,8 @@ function SectionTable({
   users: User[];
 }) {
   return (
-    <MnxTable className="w-full min-w-[1280px] table-fixed text-sm">
+    <OperationalDataTableWrap>
+      <OperationalTable className="w-full min-w-[1280px] table-fixed text-sm">
         <colgroup>
           <col className="w-[22%]" />
           <col className="w-[10%]" />
@@ -305,40 +308,41 @@ function SectionTable({
               key={user.id}
               className="group transition-colors hover:bg-mono-soft/80"
             >
-              <DataTablePrimaryLinkCell
-                href={`/hrms/employees/${user.id}`}
-                className="px-0 py-0"
-                linkClassName="flex min-w-0 items-center gap-3 px-5 py-3.5 no-underline hover:no-underline"
-              >
-                <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-[var(--frappe-radius-md)] border border-[var(--frappe-border)] bg-[var(--frappe-bg-subtle)] text-xs font-semibold text-[var(--frappe-text-muted)]">
-                  {user.photo ? (
-                    <Image
-                      alt=""
-                      className="object-cover"
-                      fill
-                      sizes="48px"
-                      src={user.photo}
-                      unoptimized
-                    />
-                  ) : (
-                    initialsFor(user.name)
-                  )}
-                </div>
+              <OperationalTableCell className="px-0 py-0">
+                <Link
+                  href={`/hrms/employees/${user.id}`}
+                  className="flex min-w-0 items-center gap-3 px-5 py-3.5 no-underline hover:no-underline"
+                >
+                  <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-[var(--frappe-radius-md)] border border-[var(--frappe-border)] bg-[var(--frappe-bg-subtle)] text-xs font-semibold text-[var(--frappe-text-muted)]">
+                    {user.photo ? (
+                      <Image
+                        alt=""
+                        className="object-cover"
+                        fill
+                        sizes="48px"
+                        src={user.photo}
+                        unoptimized
+                      />
+                    ) : (
+                      initialsFor(user.name)
+                    )}
+                  </div>
 
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-mono-text">
-                    <span className="mnx-numeric text-mono-muted">
-                      {employeeNumberFor(user)}
-                    </span>
-                    <span aria-hidden="true"> · </span>
-                    {toDisplayTitleCase(user.name)}
-                  </p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-mono-text">
+                      <span className="mnx-numeric text-mono-muted">
+                        {employeeNumberFor(user)}
+                      </span>
+                      <span aria-hidden="true"> · </span>
+                      {toDisplayTitleCase(user.name)}
+                    </p>
 
-                  <p className="mt-1 truncate text-xs text-mono-muted">
-                    {user.email}
-                  </p>
-                </div>
-              </DataTablePrimaryLinkCell>
+                    <p className="mt-1 truncate text-xs text-mono-muted">
+                      {user.email}
+                    </p>
+                  </div>
+                </Link>
+              </OperationalTableCell>
 
               <td className="mnx-numeric px-5 py-3 text-sm text-mono-muted">
                 {formatDate(user.employmentRecord?.joinDate)}
@@ -414,7 +418,8 @@ function SectionTable({
             );
           })}
         </tbody>
-      </MnxTable>
+      </OperationalTable>
+    </OperationalDataTableWrap>
   );
 }
 

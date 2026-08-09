@@ -399,17 +399,12 @@ button.mnx-accounting-record-card {
 .mnx-accounting-quotation-list-item:hover,
 .mnx-accounting-quotation-list-item:focus-visible,
 .mnx-accounting-quotation-list-item.is-selected {
-  border-color: color-mix(in srgb, var(--mnx-accent) 42%, var(--mnx-border));
-  box-shadow: var(--mnx-shadow-soft);
+  border-color: var(--mnx-highlight-border);
+  box-shadow: none;
 }
 
 .mnx-accounting-quotation-list-item.is-selected {
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--mnx-accent) 10%, var(--mnx-surface)) 0%,
-      var(--mnx-surface-gradient) 100%
-    );
+  background: var(--mnx-highlight-surface);
 }
 
 .mnx-accounting-quotation-list-item-top,

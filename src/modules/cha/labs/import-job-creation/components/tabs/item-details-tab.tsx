@@ -4,6 +4,7 @@ import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import { WorkspaceAction, WorkspaceAlert, WorkspaceSelect, WorkspaceTable } from "@/components/monolith";
+import { Input } from "@/components/ui/input";
 import { createEmptyDutyRows, importDutyLabels } from "../../domain/import-job.defaults";
 import { demoImportCalculationEngine, formatDecimal } from "../../domain/import-job-calculations";
 import { importItemRecordSchema } from "../../domain/import-job.schemas";
@@ -188,13 +189,13 @@ export function ItemDetailsTab() {
             {values.duties.map((duty, index) => (
               <tr key={duty.key}>
                 <td>{importDutyLabels[duty.key]}</td>
-                <td><input className="mnx-field-control" disabled={isLocked} value={duty.notification} onChange={(event) => form.setValue(`duties.${index}.notification`, event.currentTarget.value, { shouldDirty: true })} /></td>
-                <td><input className="mnx-field-control" disabled={isLocked} value={duty.serialNo} onChange={(event) => form.setValue(`duties.${index}.serialNo`, event.currentTarget.value, { shouldDirty: true })} /></td>
-                <td><input className="mnx-field-control" disabled={isLocked} value={duty.rate} onChange={(event) => form.setValue(`duties.${index}.rate`, event.currentTarget.value, { shouldDirty: true })} /></td>
-                <td><input className="mnx-field-control" disabled={isLocked} value={duty.amount} onChange={(event) => form.setValue(`duties.${index}.amount`, event.currentTarget.value, { shouldDirty: true })} /></td>
-                <td><input className="mnx-field-control" disabled={isLocked} value={duty.uom} onChange={(event) => form.setValue(`duties.${index}.uom`, event.currentTarget.value, { shouldDirty: true })} /></td>
-                <td><input className="mnx-field-control" disabled={isLocked} value={duty.flag} onChange={(event) => form.setValue(`duties.${index}.flag`, event.currentTarget.value, { shouldDirty: true })} /></td>
-                <td><input checked={duty.manualOverride} disabled={isLocked} type="checkbox" onChange={(event) => form.setValue(`duties.${index}.manualOverride`, event.currentTarget.checked, { shouldDirty: true })} /></td>
+                <td><Input disabled={isLocked} value={duty.notification} onChange={(event) => form.setValue(`duties.${index}.notification`, event.currentTarget.value, { shouldDirty: true })} /></td>
+                <td><Input disabled={isLocked} value={duty.serialNo} onChange={(event) => form.setValue(`duties.${index}.serialNo`, event.currentTarget.value, { shouldDirty: true })} /></td>
+                <td><Input disabled={isLocked} value={duty.rate} onChange={(event) => form.setValue(`duties.${index}.rate`, event.currentTarget.value, { shouldDirty: true })} /></td>
+                <td><Input disabled={isLocked} value={duty.amount} onChange={(event) => form.setValue(`duties.${index}.amount`, event.currentTarget.value, { shouldDirty: true })} /></td>
+                <td><Input disabled={isLocked} value={duty.uom} onChange={(event) => form.setValue(`duties.${index}.uom`, event.currentTarget.value, { shouldDirty: true })} /></td>
+                <td><Input disabled={isLocked} value={duty.flag} onChange={(event) => form.setValue(`duties.${index}.flag`, event.currentTarget.value, { shouldDirty: true })} /></td>
+                <td><Input checked={duty.manualOverride} disabled={isLocked} type="checkbox" onChange={(event) => form.setValue(`duties.${index}.manualOverride`, event.currentTarget.checked, { shouldDirty: true })} /></td>
                 <td>{formatDecimal(calculated.duties[index]?.dutyAmount ?? 0)}</td>
               </tr>
             ))}

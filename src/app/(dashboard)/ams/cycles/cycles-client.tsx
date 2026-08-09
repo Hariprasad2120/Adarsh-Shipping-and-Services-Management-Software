@@ -6,17 +6,16 @@ import {
 } from "@/modules/performance/components/performance-workspace";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import {
-  Badge,
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableEmpty,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-  DataTableToolbar,
-} from "@/modules/people/components/workspace-data-table";
+  OperationalDataTable,
+  OperationalDataTableHeader,
+  OperationalDataTableWrap,
+  OperationalTable,
+  OperationalTableCell,
+  OperationalTableEmpty,
+  OperationalTableHead,
+} from "@/components/data-display/operational-data-table";
 
 type Cycle = {
   id: string;
@@ -69,71 +68,80 @@ export function CyclesClient({
   }
 
   return (
-    <DataTable>
-      <DataTableToolbar>
-        <p className="font-semibold text-mono-text">All Cycles</p>
-        <PerformanceControlButton
-          onClick={createCycle}
-          disabled={loading}
-          className="rounded-lg bg-mono-accent/10 px-3 py-1.5 text-sm text-mono-text hover:bg-mono-accent/10 disabled:opacity-50"
-        >
-          + New Cycle
-        </PerformanceControlButton>
-      </DataTableToolbar>
+    <OperationalDataTable>
+      <OperationalDataTableHeader
+        eyebrow="Performance cycles"
+        title="All Cycles"
+        actions={
+          <PerformanceControlButton
+            onClick={createCycle}
+            disabled={loading}
+            className="rounded-lg bg-mono-accent/10 px-3 py-1.5 text-sm text-mono-text hover:bg-mono-accent/10 disabled:opacity-50"
+          >
+            + New Cycle
+          </PerformanceControlButton>
+        }
+      />
 
-      <DataTableHeader>
-        <PerformanceTableRow>
-          {["Name", "Year", "Status", "Appraisals", ""].map((h) => (
-            <DataTableHead key={h}>{h}</DataTableHead>
-          ))}
-        </PerformanceTableRow>
-      </DataTableHeader>
-      <DataTableBody>
-        {cycles.length === 0 ? (
-          <DataTableEmpty colSpan={5} message="No cycles yet." />
-        ) : (
-          cycles.map((c) => (
-            <DataTableRow key={c.id}>
-              <DataTableCell className="font-medium text-mono-text">
-                {c.name}
-              </DataTableCell>
-              <DataTableCell className="text-mono-muted">
-                {c.year}
-              </DataTableCell>
-              <DataTableCell>
-                <Badge
-                  className={
-                    STATUS_COLOR[c.status] ?? "bg-mono-soft text-mono-muted"
-                  }
-                >
-                  {c.status}
-                </Badge>
-              </DataTableCell>
-              <DataTableCell className="text-mono-muted">
-                {c._count.appraisals}
-              </DataTableCell>
-              <DataTableCell className="text-right">
-                {c.status === "DRAFT" && (
-                  <PerformanceControlButton
-                    onClick={() => updateStatus(c.id, "activate")}
-                    className="text-xs text-[var(--mnx-success)] hover:underline"
-                  >
-                    Activate
-                  </PerformanceControlButton>
-                )}
-                {c.status === "ACTIVE" && (
-                  <PerformanceControlButton
-                    onClick={() => updateStatus(c.id, "close")}
-                    className="text-xs text-[var(--mnx-danger)] hover:underline"
-                  >
-                    Close
-                  </PerformanceControlButton>
-                )}
-              </DataTableCell>
-            </DataTableRow>
-          ))
-        )}
-      </DataTableBody>
-    </DataTable>
+      <OperationalDataTableWrap>
+        <OperationalTable>
+          <thead>
+            <PerformanceTableRow>
+              {["Name", "Year", "Status", "Appraisals", ""].map((h) => (
+                <OperationalTableHead key={h}>{h}</OperationalTableHead>
+              ))}
+            </PerformanceTableRow>
+          </thead>
+          <tbody>
+            {cycles.length === 0 ? (
+              <OperationalTableEmpty colSpan={5}>
+                No cycles yet.
+              </OperationalTableEmpty>
+            ) : (
+              cycles.map((c) => (
+                <tr key={c.id}>
+                  <OperationalTableCell className="font-medium text-mono-text">
+                    {c.name}
+                  </OperationalTableCell>
+                  <OperationalTableCell className="text-mono-muted">
+                    {c.year}
+                  </OperationalTableCell>
+                  <OperationalTableCell>
+                    <Badge
+                      className={
+                        STATUS_COLOR[c.status] ?? "bg-mono-soft text-mono-muted"
+                      }
+                    >
+                      {c.status}
+                    </Badge>
+                  </OperationalTableCell>
+                  <OperationalTableCell className="text-mono-muted">
+                    {c._count.appraisals}
+                  </OperationalTableCell>
+                  <OperationalTableCell className="text-right">
+                    {c.status === "DRAFT" && (
+                      <PerformanceControlButton
+                        onClick={() => updateStatus(c.id, "activate")}
+                        className="text-xs text-[var(--mnx-success)] hover:underline"
+                      >
+                        Activate
+                      </PerformanceControlButton>
+                    )}
+                    {c.status === "ACTIVE" && (
+                      <PerformanceControlButton
+                        onClick={() => updateStatus(c.id, "close")}
+                        className="text-xs text-[var(--mnx-danger)] hover:underline"
+                      >
+                        Close
+                      </PerformanceControlButton>
+                    )}
+                  </OperationalTableCell>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </OperationalTable>
+      </OperationalDataTableWrap>
+    </OperationalDataTable>
   );
 }

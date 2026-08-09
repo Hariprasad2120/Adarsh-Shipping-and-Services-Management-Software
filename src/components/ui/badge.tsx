@@ -1,20 +1,32 @@
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-export type BadgeVariant = "default" | "secondary" | "success" | "warning" | "destructive";
+export const badgeVariants = cva("mnx-badge", {
+  variants: {
+    variant: {
+      default: "mnx-badge-accent",
+      secondary: "mnx-badge-neutral",
+      success: "mnx-badge-success",
+      warning: "mnx-badge-warning",
+      destructive: "mnx-badge-danger",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
 
-const variants: Record<BadgeVariant, string> = {
-  default: "mnx-badge mnx-badge-accent",
-  secondary: "mnx-badge mnx-badge-neutral",
-  success: "mnx-badge mnx-badge-success",
-  warning: "mnx-badge mnx-badge-warning",
-  destructive: "mnx-badge mnx-badge-danger",
-};
+export type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
 
-export function Badge({
-  variant = "default",
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLSpanElement> & { variant?: BadgeVariant }) {
-  return <span className={cn(variants[variant], className)} {...props} />;
-}
+export interface BadgeProps
+  extends React.HTMLAttributes<HTMLSpanElement>,
+    VariantProps<typeof badgeVariants> {}
+
+export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
+  ({ variant, className, ...props }, ref) => (
+    <span ref={ref} className={cn(badgeVariants({ variant }), className)} {...props} />
+  ),
+);
+
+Badge.displayName = "Badge";

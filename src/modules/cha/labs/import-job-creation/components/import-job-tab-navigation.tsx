@@ -1,6 +1,8 @@
 "use client";
 
 import type { ImportJobTabId, TabCompletionState } from "../domain/import-job.types";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export const importJobTabs: { id: ImportJobTabId; label: string }[] = [
   { id: "be-main-details", label: "BE Main Details" },
@@ -35,19 +37,17 @@ export function ImportJobTabNavigation({
     <div className="sticky top-0 z-10 -mx-2 overflow-x-auto border-y py-2 backdrop-blur">
       <div className="flex min-w-max gap-2 px-2" role="tablist" aria-label="Import job creation sections">
         {importJobTabs.map((tab) => (
-          <button
+          <Button
             key={tab.id}
             aria-selected={activeTab === tab.id}
-            className={`mnx-button mnx-button-compact ${
-              activeTab === tab.id ? "mnx-button-primary" : "mnx-button-outline"
-            }`}
+            size="sm"
+            variant={activeTab === tab.id ? "default" : "outline"}
             role="tab"
-            type="button"
             onClick={() => onChange(tab.id)}
           >
             {tab.label}
-            <span className="mnx-badge mnx-badge-neutral">{stateLabel[states[tab.id]]}</span>
-          </button>
+            <Badge variant="secondary">{stateLabel[states[tab.id]]}</Badge>
+          </Button>
         ))}
       </div>
     </div>

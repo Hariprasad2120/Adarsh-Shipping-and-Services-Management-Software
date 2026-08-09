@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Fingerprint } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface AttendanceCalendarProps {
   onFetchCalendar: (year: number, month: number) => Promise<any[]>;
@@ -76,23 +77,15 @@ export function AttendanceCalendar({ onFetchCalendar }: AttendanceCalendarProps)
         </h3>
 
         <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
-          <button
-            type="button"
-            onClick={handlePrevMonth}
-            className="p-1 hover:bg-white hover:shadow-sm rounded-lg transition-all text-slate-500 hover:text-slate-800 cursor-pointer"
-          >
+          <Button mode="icon" size="sm" variant="outline" onClick={handlePrevMonth}>
             <ChevronLeft className="size-4" />
-          </button>
+          </Button>
           <span className="text-xs font-bold text-slate-700 min-w-28 text-center">
             {monthNames[month]} {year}
           </span>
-          <button
-            type="button"
-            onClick={handleNextMonth}
-            className="p-1 hover:bg-white hover:shadow-sm rounded-lg transition-all text-slate-500 hover:text-slate-800 cursor-pointer"
-          >
+          <Button mode="icon" size="sm" variant="outline" onClick={handleNextMonth}>
             <ChevronRight className="size-4" />
-          </button>
+          </Button>
         </div>
       </div>
 
