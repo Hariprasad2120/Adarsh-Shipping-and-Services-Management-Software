@@ -150,8 +150,10 @@ export function NotificationsClient({
                         </WorkspaceBadge>
                       ) : null}
                     </div>
-                    <h2>{notification.title}</h2>
-                    {notification.body ? <p>{notification.body}</p> : null}
+                    <p className="mnx-notification-title">{notification.title}</p>
+                    {notification.body ? (
+                      <p className="mnx-notification-body">{notification.body}</p>
+                    ) : null}
                     <div className="mnx-record-meta">
                       <span>
                         <Clock3 size={12} aria-hidden="true" />

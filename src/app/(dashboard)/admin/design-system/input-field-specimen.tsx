@@ -98,7 +98,6 @@ export function InputFieldSpecimen() {
             <Label htmlFor="ds-dropdown-gender">Gender</Label>
             <DropdownSelect
               id="ds-dropdown-gender"
-              defaultOpen
               searchable
               createLabel="Create a new Gender"
               options={genderOptions.map((option) => ({ ...option }))}
@@ -124,7 +123,6 @@ export function InputFieldSpecimen() {
             <Label htmlFor="ds-input-calendar">Start Date</Label>
             <DateInput
               id="ds-input-calendar"
-              defaultOpen
               value={calendarDate}
               onChange={(event) => setCalendarDate(event.target.value)}
             />
@@ -143,6 +141,7 @@ export function InputFieldSpecimen() {
 
         <div className="ds-input-checkboxes">
           <NeonCheckbox
+            className="ds-input-checkbox"
             checked={checkboxes.disabled}
             label="Disabled"
             onChange={(event) =>
@@ -153,6 +152,7 @@ export function InputFieldSpecimen() {
             }
           />
           <NeonCheckbox
+            className="ds-input-checkbox"
             checked={checkboxes.unsubscribed}
             label="Unsubscribed"
             onChange={(event) =>
@@ -163,6 +163,7 @@ export function InputFieldSpecimen() {
             }
           />
           <NeonCheckbox
+            className="ds-input-checkbox"
             checked={checkboxes.blogSubscriber}
             label="Blog Subscriber"
             onChange={(event) =>
@@ -173,6 +174,7 @@ export function InputFieldSpecimen() {
             }
           />
           <NeonCheckbox
+            className="ds-input-checkbox"
             checked
             indeterminate
             label="Partially subscribed"

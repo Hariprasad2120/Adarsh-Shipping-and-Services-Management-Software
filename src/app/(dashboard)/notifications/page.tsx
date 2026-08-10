@@ -1,5 +1,14 @@
 import { Bell, Filter } from "lucide-react";
-import { WorkspaceAction, WorkspaceField, WorkspaceInput, WorkspacePage, WorkspacePageHeader, WorkspacePanel, WorkspaceSelect } from "@/components/layout/workspace";
+import {
+  WorkspaceAction,
+  WorkspaceField,
+  WorkspaceInput,
+  WorkspacePage,
+  WorkspacePageHeader,
+  WorkspacePanel,
+  WorkspaceSectionHeading,
+  WorkspaceSelect,
+} from "@/components/layout/workspace";
 import { getSession } from "@/lib/auth";
 import { getNotificationPolicy } from "@/modules/notifications/policy";
 import { listUserNotifications } from "@/modules/notifications/service";
@@ -63,10 +72,12 @@ export default async function NotificationsPage({
       <WorkspacePanel>
         <form className="mnx-notification-filters">
           <div className="mnx-toolbar">
-            <div className="mnx-toolbar-copy">
-              <h2>Filter notification history</h2>
-              <p>Use one or more fields to narrow your personal notification stream.</p>
-            </div>
+            <WorkspaceSectionHeading
+              className="mnx-toolbar-heading"
+              index="01"
+              title="Filter notification history"
+              description="Use one or more fields to narrow your personal notification stream."
+            />
             <WorkspaceAction type="submit" size="compact">
               <Filter size={14} aria-hidden="true" />
               Apply filters

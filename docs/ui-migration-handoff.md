@@ -2,6 +2,63 @@
 
 Last updated: 2026-08-07
 
+## 2026-08-10 Shared sidebar style-ownership and audit-report batch
+
+Moved the authenticated sidebar/app-shell presentation out of component-local
+inline global CSS and into the shared Monolith production stylesheet, then
+added the missing audit backlog documents requested by the Monolith migration
+brief.
+
+Delivered:
+
+- removed the inline `<style jsx global>` production rules from
+  `src/components/navigation/monolith-reference-sidebar.tsx` so the shared
+  sidebar no longer owns its visual system inside the component file;
+- moved the authenticated shell, topbar, shared sidebar, profile popover, and
+  sidebar flyout styling into `src/styles/monolith-system.css`, aligning the
+  active production navigation slice with the required shared style owner;
+- created `docs/MISSING_DESIGN_SYSTEM_ELEMENTS.md` with a current backlog of
+  missing or incomplete design-system patterns, including advanced upload
+  workflows, multi-select controls, editable/reorderable line-item tables,
+  workflow canvas UI, sortable lists, and customer-portal decision panels;
+- created `docs/DESIGN_SYSTEM_MIGRATION_STATUS.md` as the requested summary
+  layer over the existing route audit matrix, including current coverage,
+  design-system inventory, coverage mapping, and violation snapshot;
+- regenerated `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the batch.
+
+Verification on Monday, August 10, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/components/navigation/monolith-reference-sidebar.tsx' 'src/styles/monolith-system.css'`:
+  completed with the existing baseline warning that the global CSS file is
+  ignored by the current ESLint configuration, and no sidebar TypeScript lint
+  errors;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route inventory;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the existing `src/components/monolith` boundary violations
+  unrelated to this sidebar ownership batch;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  still fails on the existing missing `design-system-catalogue.css` boundary
+  baseline after design-system coverage passes.
+
+Known limits:
+
+- manual browser verification is still pending in this Codex session, so Light,
+  Night, Violet, desktop, tablet, and mobile runtime confirmation remains
+  outstanding;
+- `docs/MISSING_DESIGN_SYSTEM_ELEMENTS.md` is a current evidence-based backlog,
+  not a claim that every specialized UI pattern in the repository has already
+  been exhaustively normalized into one final taxonomy;
+- the broader repository still has 35 partial and 59 non-compliant route states
+  recorded in the refreshed route audit, so this batch does not claim complete
+  application migration.
+
 ## 2026-08-10 Sidebar viewport-height shell fix
 
 Corrected the authenticated shell height model so the shared sidebar now fills
