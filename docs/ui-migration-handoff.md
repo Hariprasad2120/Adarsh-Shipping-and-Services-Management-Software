@@ -2,6 +2,265 @@
 
 Last updated: 2026-08-07
 
+## 2026-08-10 Sidebar viewport-height shell fix
+
+Corrected the authenticated shell height model so the shared sidebar now fills
+the visible viewport from top to bottom without relying on page-length growth,
+sticky `100vh` calculations, or route-local spacing hacks.
+
+Delivered:
+
+- updated `src/components/navigation/monolith-reference-sidebar.tsx` so the
+  authenticated app shell owns the viewport with `height: 100dvh`,
+  `overflow: hidden`, and a fixed internal flex layout instead of mixing a
+  `min-height` shell with a separately sticky `100vh` sidebar;
+- changed the main frame and main content area to use `min-height: 0` plus
+  `overflow-y: auto`, making the page content the intentional scroll container
+  while keeping the sidebar at viewport height on long routes;
+- changed the sidebar shell from a sticky viewport-sized element to a shell
+  child that stretches to its parent height, so the visible sidebar surface and
+  footer now follow the app shell height directly;
+- removed the sidebar component's duplicate global `html, body` reset so the
+  document height foundation stays centralized in shared globals;
+- updated `src/styles/monolith-tokens.css` to reinforce the full-height
+  document foundation with `html, body { height: 100%; min-height: 100%; }`
+  and a matching shared root minimum-height chain.
+
+Verification on Monday, August 10, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/components/navigation/monolith-reference-sidebar.tsx' 'src/styles/monolith-tokens.css'`:
+  completed with the existing baseline warning that the CSS file is ignored by
+  the current ESLint configuration, and no sidebar TypeScript lint errors;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  required DevTools computed-height confirmation and multi-viewport visual
+  verification are still pending;
+- this pass fixes the shell height architecture in source, but it does not yet
+  add an automated browser assertion for `window.innerHeight - sidebarRect.bottom`.
+
+## 2026-08-10 Canonical input, dropdown, calendar, and checkbox rebuild
+
+Rebuilt the shared Monolith form-control foundation so the canonical input,
+dropdown/combobox, date picker/calendar, and checkbox components no longer rely
+on catalogue-only styling and now render from shared production ownership.
+
+Delivered:
+
+- added `src/app/globals.css`, `src/styles/monolith-tokens.css`, and
+  `src/styles/monolith-system.css` so the rebuilt field controls have shared
+  tokenized production styling outside the admin design-system route;
+- updated `src/app/layout.tsx` to import the new shared global styles;
+- rebuilt `src/components/ui/label.tsx` with a required-marker contract;
+- added a new canonical `src/components/ui/calendar.tsx` month grid with
+  shared header/nav/footer structure, outside-month treatment, and Today action;
+- rebuilt `src/components/ui/date-input.tsx` as a custom floating date picker
+  using shared dropdown overlay infrastructure instead of the native browser
+  date popup;
+- rebuilt `src/components/ui/dropdown-select.tsx` from scratch with shared
+  field geometry, floating option panel, optional search, keyboard navigation,
+  and optional create action support;
+- rebuilt `src/components/ui/combobox-input.tsx` from scratch as a searchable
+  combobox field with shared option rows and create action support;
+- rebuilt `src/components/ui/neon-checkbox.tsx` from scratch with a crisp SVG
+  checkmark, indeterminate support, and shared checkbox styling;
+- exported the new calendar owner through `src/components/ui/index.ts`;
+- replaced the `/admin/design-system` field specimen in
+  `src/app/(dashboard)/admin/design-system/input-field-specimen.tsx` so the
+  route now demonstrates the rebuilt canonical input, dropdown/combobox, date
+  picker, and checkbox components directly;
+- updated `src/app/(dashboard)/admin/design-system/page.tsx` copy and
+  `src/app/(dashboard)/admin/design-system/design-system.css` layout hooks for
+  the new control sections;
+- refreshed `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the batch.
+
+Verification on Monday, August 10, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/layout.tsx' 'src/components/ui/label.tsx' 'src/components/ui/calendar.tsx' 'src/components/ui/date-input.tsx' 'src/components/ui/dropdown-select.tsx' 'src/components/ui/combobox-input.tsx' 'src/components/ui/neon-checkbox.tsx' 'src/components/ui/index.ts' 'src/app/(dashboard)/admin/design-system/input-field-specimen.tsx' 'src/app/(dashboard)/admin/design-system/page.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route inventory;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run architecture:check`:
+  still fails on the existing repository-level `src/components/monolith`
+  boundary issue unrelated to this control rebuild;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  still fails on the existing missing `design-system-catalogue.css` catalogue
+  boundary baseline.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  required screenshot comparison, computed-style audit, and live Light/Night/
+  Violet overlay verification are still pending;
+- the broader repository still has the pre-existing architecture/design-system
+  verification failures noted above, so this batch does not claim a fully clean
+  global UI migration baseline;
+- catalogue CSS still contains older non-control route styling debt outside the
+  rebuilt field specimen sections, and that cleanup was not completed in this
+  pass.
+
+## 2026-08-10 Admin design-system input field additions
+
+Added a new shared searchable combobox field plus three real field specimens on
+`/admin/design-system` so the catalogue now covers plain text entry, searchable
+selection, and native selection using production controls instead of route-local
+ reimplementations.
+
+Delivered:
+
+- added `src/components/ui/combobox-input.tsx` as a shared neutral searchable
+  field control with keyboard navigation, filtering, selection, hidden form
+  value support, and theme-safe shared surface styling;
+- exported the new control through `src/components/ui/index.ts` so it is part
+  of the canonical shared UI surface and available through the Monolith barrel;
+- added `src/app/(dashboard)/admin/design-system/input-field-specimen.tsx`
+  using canonical `Input`, `ComboboxInput`, `DateInput`, `NativeSelect`, and `Label`
+  components for the new design-system page inputs section;
+- extended that same specimen to include canonical `NeonCheckbox` examples for
+  checked and unchecked checkbox field states matching the requested input
+  examples;
+- updated `src/app/(dashboard)/admin/design-system/page.tsx` and
+  `src/app/(dashboard)/admin/design-system/design-system.css` to register and
+  lay out the new field specimens without moving production styling ownership
+  into catalogue CSS;
+- added `src/app/(dashboard)/admin/design-system/data-table-specimen.tsx`
+  to demonstrate an ERP-style register table using shared table primitives,
+  shared buttons, shared inputs, shared checkbox controls, and shared badges;
+- refreshed `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the batch.
+
+Verification on Monday, August 10, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/components/ui/combobox-input.tsx' 'src/components/ui/index.ts' 'src/app/(dashboard)/admin/design-system/input-field-specimen.tsx' 'src/app/(dashboard)/admin/design-system/page.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route inventory;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed the ownership audit;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run design-system:verify`:
+  still fails on the existing branch-level catalogue boundary issue because
+  `design-system-catalogue.css` is currently missing.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  new field specimens are source-verified and static-check-verified rather than
+  manually checked in Light, Night, and Violet themes;
+- this batch adds the shared searchable field control and catalogue specimens,
+  but it does not yet migrate existing module-local combobox implementations to
+  the new shared owner.
+
+## 2026-08-10 Sidebar navigation unification follow-up
+
+Followed up on the shared authenticated sidebar so the rail rows and the
+organization flyout rows now use the same row-content primitive, the same
+geometry, and the same trailing-meta layout instead of diverging between the
+sidebar and the dropdown wrappers.
+
+Delivered:
+
+- updated `src/components/navigation/monolith-reference-sidebar.tsx` so both
+  the rail and the flyout render shared `SidebarRow` content with the same icon
+  slot, label copy block, and optional trailing meta for shortcuts/chevrons;
+- removed the flyout-only shortcut node path and replaced submenu chevrons plus
+  shortcut labels with the same shared row meta slot used by the rail;
+- rewrote the sidebar/flyout styling block to remove the private
+  `--mnx-sidebar-*` token namespace, use direct Design System token fallbacks,
+  add real flyout panel padding, keep row highlights inside the panel, and
+  align sidebar/flyout row height, padding, typography, icon size, and radius;
+- constrained the sidebar shell to `100dvh` and made only the navigation region
+  scroll internally so the footer stays anchored to the viewport;
+- updated `src/components/ui/dropdown-menu.tsx` to allow sidebar flyout
+  subtriggers to suppress the wrapper chevron and render the same trailing meta
+  layout as other navigation rows;
+- refreshed `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the navigation batch.
+
+Verification on Monday, August 10, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/components/navigation/monolith-reference-sidebar.tsx' 'src/components/ui/dropdown-menu.tsx'`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route inventory;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed the ownership audit.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  required live computed-style comparison and overlay behavior verification for
+  sidebar/flyout states are still pending;
+- the broader branch still contains the in-progress shared-style deletion/rebuild
+  work, so this pass keeps the navigation styling self-contained inside the
+  shared sidebar component rather than migrating it into a restored global
+  stylesheet owner in the same batch.
+
+## 2026-08-10 Sidebar reference recreation handoff
+
+Rebuilt the shared authenticated sidebar around the supplied ERPNext-style
+reference video while keeping Monolith's real route registry and permission
+filters as the navigation source of truth.
+
+Delivered:
+
+- added the shared production sidebar component
+  `src/components/navigation/monolith-reference-sidebar.tsx` with:
+  compact expanded and collapsed rails, persisted collapse preference,
+  organization switcher dropdown, workspace flyout menus, display submenu,
+  bottom-anchored footer/profile area, and route-aware active state driven by
+  `src/lib/navigation.ts`;
+- rewired `src/modules/core/components/monolith-app-shell.tsx` to use the new
+  shared sidebar component instead of the older inline accordion sidebar while
+  keeping the existing command search, notifications route, theme controls, and
+  Mona integration;
+- passed organization name through
+  `src/app/(dashboard)/layout.tsx` and
+  `src/app/(dashboard)/_components/dashboard-shell-switcher.tsx` so the sidebar
+  header uses real organization/workspace context rather than hard-coded
+  reference text;
+- restored the design-system sidebar specimen in
+  `src/app/(dashboard)/admin/design-system/sidebar-layout-specimen.tsx` and
+  registered it on the `/admin/design-system` page so the catalogue exercises
+  the same shared sidebar component.
+
+Verification on Monday, August 10, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/modules/core/components/monolith-app-shell.tsx' 'src/components/navigation/monolith-reference-sidebar.tsx' 'src/app/(dashboard)/admin/design-system/sidebar-layout-specimen.tsx' 'src/app/(dashboard)/admin/design-system/page.tsx' 'src/app/(dashboard)/_components/dashboard-shell-switcher.tsx' 'src/app/(dashboard)/layout.tsx'`:
+  completed with existing custom-widget warnings for intentional raw shell
+  buttons/inputs, but no errors.
+
+Known limits:
+
+- this pass used extracted video frames from
+  `C:\Users\venka\Videos\Captures\User - Brave 2026-08-10 15-11-20.mp4` as the
+  visual reference, but no authenticated browser runtime was attached in this
+  Codex session for live overlay comparison against the Monolith app;
+- the current branch already has the older shared global stylesheet layer
+  deleted (`src/styles/monolith-system.css`, `src/styles/monolith-tokens.css`,
+  `src/app/globals.css`), so the sidebar styles were embedded with the shared
+  sidebar component rather than restored into the removed stylesheet files in
+  this batch;
+- repository-wide audit documents were not regenerated in this pass because the
+  branch is in the middle of a broader shared-style rework and currently differs
+  substantially from the last generated audit baseline.
+
 ## 2026-08-09 Dashboard final authority cleanup
 
 Rebuilt the protected `/dashboard` route’s final visual authority so the page

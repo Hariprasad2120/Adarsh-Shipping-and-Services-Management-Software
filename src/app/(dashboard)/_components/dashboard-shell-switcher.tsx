@@ -9,6 +9,7 @@ export function DashboardShellSwitcher({
   enabledFeatureIds,
   enabledModuleIds,
   isPlatformAdmin,
+  orgName,
   userId,
   userEmail,
   userName,
@@ -18,6 +19,7 @@ export function DashboardShellSwitcher({
   enabledFeatureIds: string[];
   enabledModuleIds: string[];
   isPlatformAdmin: boolean;
+  orgName: string;
   userId: string;
   userEmail: string;
   userName: string;
@@ -28,6 +30,7 @@ export function DashboardShellSwitcher({
       enabledFeatureIds={enabledFeatureIds}
       enabledModuleIds={enabledModuleIds}
       isPlatformAdmin={isPlatformAdmin}
+      orgName={orgName}
       userId={userId}
       userEmail={userEmail}
       userName={userName}

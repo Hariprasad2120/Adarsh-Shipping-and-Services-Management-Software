@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Toaster } from "sonner";
-import { ScrollNavigator } from "@/components/navigation/scroll-navigator";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -68,7 +67,6 @@ export default function RootLayout({
       </head>
       <body className="frappe-ui mnx-root min-h-full flex flex-col">
         {children}
-        <ScrollNavigator />
         <Toaster
           position="top-center"
           richColors

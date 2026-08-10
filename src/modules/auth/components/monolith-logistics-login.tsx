@@ -9,10 +9,13 @@ import {
   DEFAULT_CALLBACK_URL,
   SUCCESS_TRANSITION_MS,
 } from "@/modules/auth/components/login-scene.config";
-import styles from "@/modules/auth/components/animated-login.module.css";
 
 type Mood = "idle" | "happy" | "charging" | "shy" | "error";
 type SubmitState = "idle" | "loading" | "success";
+
+const styles = new Proxy({} as Record<string, string>, {
+  get: () => "",
+});
 
 const CREDENTIAL_QUERY_PARAMETERS = [
   "email",

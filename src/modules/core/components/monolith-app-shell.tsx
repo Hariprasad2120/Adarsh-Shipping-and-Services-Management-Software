@@ -3,36 +3,12 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Bell,
-  ChevronDown,
-  Command,
-  LogOut,
-  Menu,
-  Moon,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  Sun,
-  UserRound,
-  X,
-} from "lucide-react";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Bell, Moon, Sparkles, Sun } from "lucide-react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Caps } from "@/lib/rbac";
-import { performLogout } from "@/lib/logout";
-import {
-  getActiveItemHref,
-  getVisibleSections,
-  matchesPath,
-} from "@/lib/navigation";
+import { getVisibleSections } from "@/lib/navigation";
 import { getPathLabel, segmentToLabel } from "@/lib/route-labels";
+import { MonolithReferenceSidebar } from "@/components/navigation/monolith-reference-sidebar";
 import { MonaProvider, useMonaChat } from "@/modules/mona/components";
 import { DevConsoleErrorBoundary } from "@/components/dev-console/dev-console-error-boundary";
 
@@ -55,6 +31,7 @@ export interface MonolithAppShellProps {
   enabledFeatureIds: string[];
   enabledModuleIds: string[];
   isPlatformAdmin: boolean;
+  orgName: string;
   userId: string;
   userEmail: string;
   userName: string;
@@ -113,7 +90,6 @@ const ACCENT_HUE_STOPS: Record<
   },
 };
 
-/** Writes accent colors as inline styles on <html> so they always win the cascade, regardless of [data-accent] selector specificity fights elsewhere. */
 function applyAccentInlineStyles(root: HTMLElement, accent: MonolithAccent) {
   const stops = ACCENT_HUE_STOPS[accent];
   root.style.setProperty("--frappe-primary", stops.primary);
@@ -162,33 +138,6 @@ export function MonolithThemePicker({
           </button>
         );
       })}
-    </div>
-  );
-}
-
-function MonolithAccentPicker({
-  ariaLabel = "Dashboard accent theme",
-}: {
-  ariaLabel?: string;
-}) {
-  const themeContext = useContext(MonolithThemeContext);
-  if (!themeContext) return null;
-
-  return (
-    <div className="mnx-accent-picker" role="group" aria-label={ariaLabel}>
-      {monolithAccentThemes.map((item) => (
-        <button
-          type="button"
-          key={item.id}
-          className={themeContext.accent === item.id ? "is-active" : ""}
-          onClick={() => themeContext.selectAccent(item.id)}
-          aria-pressed={themeContext.accent === item.id}
-          title={`${item.label} accent`}
-        >
-          <span className={`mnx-accent-swatch is-${item.id}`} aria-hidden="true" />
-          <span>{item.label}</span>
-        </button>
-      ))}
     </div>
   );
 }
@@ -352,16 +301,6 @@ export function MonolithThemeProvider({
   );
 }
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
-
 export function MonolithAppShell(props: MonolithAppShellProps) {
   return (
     <MonaProvider>
@@ -385,6 +324,7 @@ function MonolithAppShellBody({
   enabledFeatureIds,
   enabledModuleIds,
   isPlatformAdmin,
+  orgName,
   userId,
   userEmail,
   userName,
@@ -398,286 +338,66 @@ function MonolithAppShellBody({
   if (!themeContext) {
     throw new Error("MonolithAppShellBody requires MonolithThemeProvider.");
   }
-  const { theme } = themeContext;
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [expandedSections, setExpandedSections] = useState<
-    Record<string, boolean>
-  >({});
-  const searchRef = useRef<HTMLInputElement | null>(null);
-  const profileRef = useRef<HTMLDivElement | null>(null);
+
+  const { accent, selectAccent, selectTheme, theme } = themeContext;
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const visibleSections = useMemo(
     () => getVisibleSections(caps, enabledModuleIds, enabledFeatureIds),
     [caps, enabledFeatureIds, enabledModuleIds],
   );
 
-  const filteredSections = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return visibleSections.slice(0, 6);
-    return visibleSections
-      .filter(
-        (section) =>
-          section.label.toLowerCase().includes(normalizedQuery) ||
-          section.items.some((item) =>
-            item.label.toLowerCase().includes(normalizedQuery),
-          ),
-      )
-      .slice(0, 8);
-  }, [query, visibleSections]);
-
   useEffect(() => {
     function handleKeyboard(event: KeyboardEvent) {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setSearchOpen(true);
-        window.requestAnimationFrame(() => searchRef.current?.focus());
-      }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "m") {
         event.preventDefault();
         toggleChat();
       }
-      if (event.key === "Escape") {
-        setProfileOpen(false);
-        setSearchOpen(false);
-        setMobileOpen(false);
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "b") {
+        event.preventDefault();
+        setSidebarCollapsed((current) => !current);
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "j") {
+        event.preventDefault();
+        selectTheme(theme === "light" ? "dark" : "light");
       }
     }
 
     window.addEventListener("keydown", handleKeyboard);
     return () => window.removeEventListener("keydown", handleKeyboard);
-  }, [toggleChat]);
+  }, [selectTheme, theme, toggleChat]);
 
   useEffect(() => {
-    function handlePointerDown(event: MouseEvent) {
-      if (
-        profileRef.current &&
-        !profileRef.current.contains(event.target as Node)
-      ) {
-        setProfileOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
+    const frameId = window.requestAnimationFrame(() => {
+      setSidebarCollapsed(window.localStorage.getItem("monolith.sidebar.collapsed") === "true");
+    });
+    return () => window.cancelAnimationFrame(frameId);
   }, []);
 
   useEffect(() => {
-    const activeSection = visibleSections.find(
-      (section) =>
-        section.items.length > 0 &&
-        matchesPath(pathname, section.href, section.matchPaths),
-    );
-    if (!activeSection) return;
-
-    const frameId = window.requestAnimationFrame(() => {
-      setExpandedSections((current) =>
-        current[activeSection.id]
-          ? current
-          : { ...current, [activeSection.id]: true },
-      );
-    });
-
-    return () => window.cancelAnimationFrame(frameId);
-  }, [pathname, visibleSections]);
+    window.localStorage.setItem("monolith.sidebar.collapsed", String(sidebarCollapsed));
+  }, [sidebarCollapsed]);
 
   return (
     <div className="mnx-dashboard-shell" data-theme={theme}>
-      <aside
-        className={`mnx-sidebar ${mobileOpen ? "is-open" : ""}`}
-        aria-label="Primary navigation"
-      >
-        <div className="mnx-sidebar-brand">
-          <Link href="/dashboard" aria-label="Monolith dashboard">
-            <span className="mnx-brand-mark">
-              <i />
-              <i />
-            </span>
-            <span>
-              <b>MONOLITH</b>
-              <small>Adarsh Shipping & Services</small>
-            </span>
-          </Link>
-          <button
-            type="button"
-            className="mnx-sidebar-close"
-            onClick={() => setMobileOpen(false)}
-            aria-label="Close navigation"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <nav className="mnx-sidebar-nav">
-          <p>WORKSPACES</p>
-          {visibleSections.map((section) => {
-            const Icon = section.icon;
-            const isActive = matchesPath(
-              pathname,
-              section.href,
-              section.matchPaths,
-            );
-            const hasItems = section.items.length > 0;
-            const isExpanded = hasItems && !!expandedSections[section.id];
-            const activeItemHref = getActiveItemHref(pathname, section.items);
-
-            if (!hasItems) {
-              return (
-                <Link
-                  href={section.href}
-                  key={section.id}
-                  className={`mnx-sidebar-entry ${isActive ? "is-active" : ""}`}
-                  aria-current={isActive ? "page" : undefined}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  <span>
-                    <Icon size={15} strokeWidth={1.9} />
-                  </span>
-                  <b>{section.label}</b>
-                </Link>
-              );
-            }
-
-            return (
-              <div
-                key={section.id}
-                className={`mnx-sidebar-section ${isExpanded ? "is-expanded" : ""}`}
-              >
-                <button
-                  type="button"
-                  className={`mnx-sidebar-entry ${isActive ? "is-active" : ""}`}
-                  aria-expanded={isExpanded}
-                  aria-controls={`mnx-sidebar-items-${section.id}`}
-                  onClick={() =>
-                    setExpandedSections((current) => ({
-                      ...current,
-                      [section.id]: !current[section.id],
-                    }))
-                  }
-                >
-                  <span>
-                    <Icon size={15} strokeWidth={1.9} />
-                  </span>
-                  <b>{section.label}</b>
-                  <ChevronDown
-                    size={11}
-                    className="mnx-sidebar-chevron"
-                    aria-hidden="true"
-                  />
-                </button>
-
-                <div
-                  id={`mnx-sidebar-items-${section.id}`}
-                  className="mnx-sidebar-subnav"
-                  role="group"
-                  aria-label={`${section.label} navigation`}
-                  hidden={!isExpanded}
-                >
-                  {section.items.map((item, index) => {
-                    const ItemIcon = item.icon;
-                    const isItemActive = activeItemHref === item.href;
-                    const previousSectionLabel =
-                      index > 0 ? section.items[index - 1]?.sectionLabel : undefined;
-                    const showSectionLabel =
-                      !!item.sectionLabel &&
-                      item.sectionLabel !== previousSectionLabel;
-
-                    return (
-                      <div className="mnx-sidebar-subnav-item" key={item.href}>
-                        {showSectionLabel ? (
-                          <p className="mnx-sidebar-subnav-heading">
-                            {item.sectionLabel}
-                          </p>
-                        ) : null}
-                        <Link
-                          href={item.href}
-                          className={isItemActive ? "is-active" : ""}
-                          aria-current={isItemActive ? "page" : undefined}
-                          title={item.label}
-                          onClick={() => setMobileOpen(false)}
-                        >
-                          <span>
-                            <ItemIcon size={13} strokeWidth={1.9} />
-                          </span>
-                          <b>{item.label}</b>
-                        </Link>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </nav>
-
-        <div className="mnx-sidebar-footer">
-          <button type="button" className="mnx-mona-card" onClick={toggleChat}>
-          <span>
-            <Sparkles size={14} strokeWidth={2} />
-          </span>
-          <span>
-            <b>Ask Mona</b>
-            <small>Open your workspace assistant</small>
-          </span>
-          <kbd>⌘M</kbd>
-          </button>
-
-          <div className="mnx-profile-menu mnx-sidebar-profile-menu" ref={profileRef}>
-          <button
-            type="button"
-            className="mnx-sidebar-user"
-            aria-label="Open profile menu"
-            aria-expanded={profileOpen}
-            aria-haspopup="menu"
-            onClick={() => setProfileOpen((current) => !current)}
-          >
-            <span>{initials(userName)}</span>
-            <div>
-              <b>{userName}</b>
-              <small>Operations workspace</small>
-            </div>
-            <ChevronDown
-              size={14}
-              strokeWidth={2}
-              className={`mnx-sidebar-user-chevron ${profileOpen ? "is-open" : ""}`}
-              aria-hidden="true"
-            />
-          </button>
-          {profileOpen ? (
-            <MonolithProfilePopover
-              caps={caps}
-              isPlatformAdmin={isPlatformAdmin}
-              onNavigate={() => setProfileOpen(false)}
-              userEmail={userEmail}
-              userId={userId}
-              userName={userName}
-            />
-          ) : null}
-          </div>
-        </div>
-      </aside>
-
-      {mobileOpen ? (
-        <button
-          type="button"
-          className="mnx-sidebar-backdrop"
-          onClick={() => setMobileOpen(false)}
-          aria-label="Close navigation"
-        />
-      ) : null}
+      <MonolithReferenceSidebar
+        caps={caps}
+        currentTheme={theme}
+        isCollapsed={sidebarCollapsed}
+        isPlatformAdmin={isPlatformAdmin}
+        onToggleAccent={() => selectAccent(accent === "blue" ? "violet" : "blue")}
+        onToggleSidebar={() => setSidebarCollapsed((current) => !current)}
+        onToggleTheme={() => selectTheme(theme === "light" ? "dark" : "light")}
+        orgName={orgName}
+        pathname={pathname}
+        userEmail={userEmail}
+        userId={userId}
+        userName={userName}
+        visibleSections={visibleSections}
+      />
 
       <div className="mnx-dashboard-frame">
         <header className="mnx-topbar">
           <div className="mnx-topbar-context">
-            <button
-              type="button"
-              className="mnx-mobile-menu"
-              onClick={() => setMobileOpen(true)}
-              aria-label="Open navigation"
-            >
-              <Menu size={19} />
-            </button>
             <div>
               <span>Monolith</span>
               <i>/</i>
@@ -686,31 +406,13 @@ function MonolithAppShellBody({
           </div>
 
           <div className="mnx-topbar-actions">
-            <button
-              type="button"
-              className="mnx-global-search"
-              onClick={() => {
-                setSearchOpen(true);
-                window.requestAnimationFrame(() => searchRef.current?.focus());
-              }}
-            >
-              <Search size={15} />
-              <span>Search workspaces…</span>
-              <kbd>⌘ K</kbd>
-            </button>
-
-            <Link
-              className="mnx-topbar-icon"
-              href="/notifications"
-              aria-label="Notifications"
-            >
+            <Link className="mnx-topbar-icon" href="/notifications" aria-label="Notifications">
               <Bell size={17} />
-              <i />
             </Link>
 
-            <MonolithThemePicker />
-            <MonolithAccentPicker />
-
+            <button type="button" className="mnx-topbar-icon" onClick={toggleChat} aria-label="Ask Mona">
+              <Sparkles size={16} />
+            </button>
           </div>
         </header>
 
@@ -722,135 +424,6 @@ function MonolithAppShellBody({
           )}
         </main>
       </div>
-
-      {searchOpen ? (
-        <div
-          className="mnx-command-layer"
-          role="presentation"
-          onMouseDown={() => setSearchOpen(false)}
-        >
-          <section
-            className="mnx-command-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Search workspaces"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <label>
-              <Search size={18} />
-              <input
-                ref={searchRef}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search workspaces and modules"
-              />
-              <button
-                type="button"
-                onClick={() => setSearchOpen(false)}
-                aria-label="Close search"
-              >
-                <X size={16} />
-              </button>
-            </label>
-            <p>QUICK NAVIGATION</p>
-            <div>
-              {filteredSections.map((section) => {
-                const Icon = section.icon;
-                return (
-                  <Link
-                    href={section.href}
-                    key={section.id}
-                    onClick={() => setSearchOpen(false)}
-                  >
-                    <span>
-                      <Icon size={17} />
-                    </span>
-                    <span>
-                      <b>{section.label}</b>
-                      <small>{section.items.length} linked pages</small>
-                    </span>
-                    <Command size={14} />
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        </div>
-      ) : null}
     </div>
-  );
-}
-
-function MonolithProfileLabel() {
-  return <em>USER PROFILE</em>;
-}
-
-function MonolithProfilePopover({
-  caps,
-  isPlatformAdmin,
-  onNavigate,
-  userEmail,
-  userId,
-  userName,
-}: {
-  caps: Caps;
-  isPlatformAdmin: boolean;
-  onNavigate: () => void;
-  userEmail: string;
-  userId: string;
-  userName: string;
-}) {
-  return (
-    <section className="mnx-profile-popover" role="menu">
-      <header>
-        <span>{initials(userName)}</span>
-        <div>
-          <MonolithProfileLabel />
-          <b>{userName}</b>
-          <small>{userEmail}</small>
-        </div>
-      </header>
-      <div className="mnx-profile-context">
-        <span>
-          <UserRound size={14} />
-        </span>
-        <div>
-          <b>{isPlatformAdmin ? "Platform administrator" : "Workspace member"}</b>
-          <small>Adarsh Shipping &amp; Services</small>
-        </div>
-      </div>
-      <nav>
-        {caps["hrms.employee.read"] ? (
-          <Link href={`/hrms/employees/${userId}`} role="menuitem" onClick={onNavigate}>
-            <UserRound size={16} />
-            <span>
-              <b>My employee profile</b>
-              <small>Complete personal and KYC details</small>
-            </span>
-          </Link>
-        ) : null}
-        <Link href="/account/security" role="menuitem" onClick={onNavigate}>
-          <ShieldCheck size={16} />
-          <span>
-            <b>Security &amp; sessions</b>
-            <small>Review signed-in devices</small>
-          </span>
-        </Link>
-        <button
-          type="button"
-          role="menuitem"
-          onClick={() => {
-            onNavigate();
-            performLogout();
-          }}
-        >
-          <LogOut size={16} />
-          <span>
-            <b>Sign out</b>
-            <small>End this workspace session</small>
-          </span>
-        </button>
-      </nav>
-    </section>
   );
 }

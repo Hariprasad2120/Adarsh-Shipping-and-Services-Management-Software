@@ -10,6 +10,7 @@ import { getOrganisationThemeSettings } from "@/modules/core/organisation/theme-
 import { buildPaletteOverrideCss } from "@/modules/core/organisation/theme-palette-schema";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getOrg } from "@/modules/core/organisation/service";
 import { DashboardShellSwitcher } from "./_components/dashboard-shell-switcher";
 
 function normalizePathname(pathname: string | null) {
@@ -47,6 +48,7 @@ export default async function DashboardLayout({
   const { lightPalette, darkPalette } = await getOrganisationThemeSettings(
     context.orgId,
   );
+  const org = await getOrg(context.orgId);
   const paletteOverrideCss = buildPaletteOverrideCss(lightPalette, darkPalette);
 
   return (
@@ -63,6 +65,7 @@ export default async function DashboardLayout({
           caps={caps}
           enabledFeatureIds={enabledFeatureIds}
           isPlatformAdmin={session.user.isPlatformAdmin}
+          orgName={org?.name ?? "Organization"}
           userEmail={session.user.email}
           userName={session.user.name}
           userId={session.user.id}

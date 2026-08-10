@@ -1,14 +1,2 @@
-@import "tailwindcss" source("..");
-@import "../../frappe_docker/design/frappe-ui-design-system.css";
 @import "../styles/monolith-tokens.css";
 @import "../styles/monolith-system.css";
-@import "../styles/modules/communication-admin.css";
-@import "../styles/modules/cha-expense.css";
-@import "../styles/modules/accounting.css";
-@import "../styles/modules/freight-forwarding.css";
-@import "../styles/modules/people.css";
-@import "../styles/modules/performance.css";
-@import "../styles/modules/crm.css";
-@import "../styles/legacy-compatibility.css";
-
-@variant dark (&:where(.dark, .dark *));

@@ -9,7 +9,6 @@ import { installDevConsoleConsoleInterceptor } from "./dev-console-console-inter
 import { installDevConsoleActionTracker } from "./dev-console-action-tracker";
 import { DevIcon } from "./dev-icon";
 import { DevPanel } from "./dev-panel";
-import "./dev-console.css";
 
 const OPEN_KEY = "devConsole.open";
 

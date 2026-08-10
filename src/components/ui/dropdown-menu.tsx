@@ -28,7 +28,7 @@ const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "mnx-floating-surface mnx-floating-menu mnx-floating-menu-content min-w-44 overflow-hidden",
+        "mnx-floating-surface mnx-floating-menu mnx-floating-menu-content z-50 min-w-44 overflow-hidden",
         className,
       )}
       {...props}
@@ -94,16 +94,17 @@ DropdownMenuRadioItem.displayName = DropdownMenuPrimitive.RadioItem.displayName;
 const DropdownMenuSubTrigger = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubTrigger> & {
+    hideChevron?: boolean;
     inset?: boolean;
   }
->(({ className, inset, children, ...props }, ref) => (
+>(({ className, hideChevron = false, inset, children, ...props }, ref) => (
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(menuItemClass, inset && "pl-8", className)}
     {...props}
   >
     {children}
-    <ChevronRightIcon className="ml-auto h-4 w-4" />
+    {hideChevron ? null : <ChevronRightIcon className="ml-auto h-4 w-4" />}
   </DropdownMenuPrimitive.SubTrigger>
 ));
 DropdownMenuSubTrigger.displayName =
@@ -116,7 +117,7 @@ const DropdownMenuSubContent = React.forwardRef<
   <DropdownMenuPrimitive.SubContent
     ref={ref}
     className={cn(
-      "mnx-floating-surface mnx-floating-menu min-w-44 overflow-hidden rounded-2xl p-1.5",
+      "mnx-floating-surface mnx-floating-menu z-50 min-w-44 overflow-hidden rounded-2xl p-1.5",
       className,
     )}
     {...props}
