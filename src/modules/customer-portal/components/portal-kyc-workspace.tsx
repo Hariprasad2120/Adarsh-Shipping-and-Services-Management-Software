@@ -461,18 +461,14 @@ export function PortalKycWorkspace({
               { key: "uploaded", label: "Uploaded" },
               { key: "exceptions", label: "N/A / Exempt" },
             ].map((item) => (
-              <button
+              <Button
                 key={item.key}
                 type="button"
+                variant={filterMode === item.key ? "default" : "outline"}
                 onClick={() => setFilterMode(item.key as FilterMode)}
-                className={
-                  filterMode === item.key
-                    ? "mnx-button mnx-button-primary"
-                    : "mnx-button mnx-button-outline"
-                }
               >
                 {item.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>

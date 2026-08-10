@@ -70,15 +70,19 @@
 .mnx-dev-tabs {
   display: flex;
   gap: var(--frappe-space-1);
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .mnx-dev-tabs button {
+  flex: 0 0 auto;
   padding: var(--frappe-space-1) var(--frappe-space-3);
   border: none;
   border-radius: var(--frappe-radius-md);
   background: transparent;
   color: var(--frappe-text-muted);
   font-size: var(--frappe-font-size-sm);
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -244,6 +248,35 @@
   font-size: var(--frappe-font-size-xs);
   overflow-x: auto;
   white-space: pre-wrap;
+}
+
+.mnx-dev-reveal-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--frappe-space-2);
+  color: var(--frappe-text);
+  font-size: var(--frappe-font-size-sm);
+  cursor: pointer;
+}
+
+.mnx-dev-hidden-revealed {
+  outline: 2px dashed var(--frappe-red-500) !important;
+  outline-offset: 2px !important;
+  background: color-mix(in srgb, var(--frappe-red-500) 12%, transparent) !important;
+}
+
+.mnx-dev-hidden-flash {
+  animation: mnx-dev-hidden-flash 1.5s ease-out !important;
+}
+
+@keyframes mnx-dev-hidden-flash {
+  0%, 100% {
+    outline-color: var(--frappe-red-500);
+  }
+  25%, 75% {
+    outline-color: var(--frappe-amber-500, orange);
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--frappe-amber-500, orange) 30%, transparent) !important;
+  }
 }
 
 .mnx-dev-crash-fallback {

@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { MonolithSpecLabel } from "@/components/ui/foundation";
@@ -24,6 +25,13 @@ interface AttendanceCommandProps {
   loading: boolean;
   onPunchAction: (action: PunchAction) => Promise<void>;
 }
+
+type DashboardActionItem = {
+  module: string;
+  task: string;
+  meta: string;
+  signal: string;
+};
 
 const attendanceCopy: Record<
   UserProfile["attendanceStatus"],
@@ -115,9 +123,11 @@ export function AttendanceCommand({
   onPunchAction,
 }: AttendanceCommandProps) {
   const [celebrating, setCelebrating] = useState(false);
+  const [actionBursting, setActionBursting] = useState(false);
+  const [lastPunchAction, setLastPunchAction] = useState<PunchAction | null>(null);
   const status = attendanceCopy[profile.attendanceStatus];
   const pending = profile.pendingCounts ?? { tasks: 0, leaves: 0, cases: 0 };
-  const actionItems = [
+  const actionItems: DashboardActionItem[] = [
     {
       module: "To-Do",
       task:
@@ -125,6 +135,7 @@ export function AttendanceCommand({
           ? `Review ${pending.tasks} pending task${pending.tasks === 1 ? "" : "s"}`
           : "Scan the priority task queue",
       meta: "Focus queue",
+      signal: pending.tasks > 0 ? `${pending.tasks} live` : "Queue ready",
     },
     {
       module: "Attendance",
@@ -133,6 +144,7 @@ export function AttendanceCommand({
           ? "Confirm tomorrow's attendance plan"
           : "Keep your attendance status current",
       meta: status.label,
+      signal: profile.attendanceStatus.replaceAll("_", " "),
     },
     {
       module: "HRMS",
@@ -141,6 +153,7 @@ export function AttendanceCommand({
           ? `Clear ${pending.leaves} leave request${pending.leaves === 1 ? "" : "s"}`
           : "Check team leave movement",
       meta: "People operations",
+      signal: pending.leaves > 0 ? `${pending.leaves} pending` : "Lane clear",
     },
     {
       module: "Helpdesk",
@@ -149,13 +162,20 @@ export function AttendanceCommand({
           ? `Respond to ${pending.cases} open HR case${pending.cases === 1 ? "" : "s"}`
           : "Review open support signals",
       meta: "Service desk",
+      signal: pending.cases > 0 ? `${pending.cases} active` : "Watching",
     },
     {
       module: "Product Catalogue",
       task: "Validate module updates before the next handoff",
       meta: "Workspace sync",
+      signal: "Monitoring",
     },
   ];
+  const tickerViewportStyle = {
+    "--mnx-action-item-height": "112px",
+    "--mnx-action-item-count": actionItems.length,
+    "--mnx-action-stream-duration": `${actionItems.length * 3.6}s`,
+  } as CSSProperties;
 
   useEffect(() => {
     if (!celebrating) return;
@@ -163,9 +183,17 @@ export function AttendanceCommand({
     return () => window.clearTimeout(timeoutId);
   }, [celebrating]);
 
+  useEffect(() => {
+    if (!actionBursting) return;
+    const timeoutId = window.setTimeout(() => setActionBursting(false), 980);
+    return () => window.clearTimeout(timeoutId);
+  }, [actionBursting]);
+
   async function handlePunch(action: PunchAction) {
     try {
       await onPunchAction(action);
+      setLastPunchAction(action);
+      setActionBursting(true);
       setCelebrating(true);
       toast.success("Attendance updated successfully.");
     } catch (error) {
@@ -210,12 +238,18 @@ export function AttendanceCommand({
           </div>
 
           <div className="mnx-dashboard-action-window" aria-label="Actions needing attention">
-            <p>Action stream</p>
-            <div className="mnx-dashboard-action-viewport">
+            <div className="mnx-dashboard-action-header">
+              <p>Action stream</p>
+              <span>Live updates</span>
+            </div>
+            <div className="mnx-dashboard-action-viewport" style={tickerViewportStyle} tabIndex={0}>
               <ul>
                 {[...actionItems, ...actionItems].map((item, index) => (
-                  <li key={`${item.module}-${index}`} aria-hidden={index >= actionItems.length}>
-                    <span>{item.module}</span>
+                  <li key={`${item.module}-${item.task}-${index}`} aria-hidden={index >= actionItems.length}>
+                    <div className="mnx-dashboard-action-row">
+                      <span>{item.module}</span>
+                      <b>{item.signal}</b>
+                    </div>
                     <strong>{item.task}</strong>
                     <small>{item.meta}</small>
                   </li>
@@ -263,10 +297,22 @@ export function AttendanceCommand({
 
           <p className="mnx-attendance-detail">{status.detail}</p>
 
-          <div className="mnx-attendance-actions">
+          <div className={`mnx-attendance-actions${actionBursting ? " is-bursting" : ""}`}>
+            {actionBursting ? (
+              <div className="mnx-attendance-action-burst" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
+            ) : null}
             {profile.attendanceStatus === "YET_TO_CHECK_IN" ? (
               <Button
-                className="mnx-button-wide"
+                className={`mnx-button-wide mnx-attendance-action-button${
+                  actionBursting && lastPunchAction === "CHECK_IN" ? " is-bursting" : ""
+                }`}
                 disabled={loading}
                 onClick={() => handlePunch("CHECK_IN")}
               >
@@ -278,6 +324,9 @@ export function AttendanceCommand({
             {profile.attendanceStatus === "CHECKED_IN" ? (
               <>
                 <Button
+                  className={`mnx-attendance-action-button${
+                    actionBursting && lastPunchAction === "START_BREAK" ? " is-bursting" : ""
+                  }`}
                   variant="inverse"
                   disabled={loading}
                   onClick={() => handlePunch("START_BREAK")}
@@ -286,6 +335,9 @@ export function AttendanceCommand({
                   Start break
                 </Button>
                 <Button
+                  className={`mnx-attendance-action-button mnx-attendance-action-button-primary${
+                    actionBursting && lastPunchAction === "CHECK_OUT" ? " is-bursting" : ""
+                  }`}
                   disabled={loading}
                   onClick={() => handlePunch("CHECK_OUT")}
                 >
@@ -297,7 +349,9 @@ export function AttendanceCommand({
 
             {profile.attendanceStatus === "ON_BREAK" ? (
               <Button
-                className="mnx-button-wide"
+                className={`mnx-button-wide mnx-attendance-action-button${
+                  actionBursting && lastPunchAction === "RESUME_WORK" ? " is-bursting" : ""
+                }`}
                 disabled={loading}
                 onClick={() => handlePunch("RESUME_WORK")}
               >

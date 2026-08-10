@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { DateInput } from "@/components/ui/date-input";
+import { Button } from "@/components/ui/button";
 import { AccountingNoteReasonSelect } from "@/components/monolith/accounting-note-reason-select";
 import { AccountingOptionalInvoiceLink } from "@/components/monolith/accounting-optional-invoice-link";
 import {
@@ -650,9 +651,9 @@ export function AccountingInvoiceForm({
                 <p className="text-[var(--mnx-text)] whitespace-pre-wrap">
                   {selectedParty.billingAddress || "No billing address configured"}
                 </p>
-                <button type="button" className="text-xs text-blue-500 font-semibold hover:underline mt-1">
+                <Button type="button" variant="outline" size="sm" className="mt-1">
                   New Address
-                </button>
+                </Button>
               </div>
 
               <div>
@@ -662,9 +663,9 @@ export function AccountingInvoiceForm({
                 <p className="text-[var(--mnx-text)] whitespace-pre-wrap">
                   {selectedParty.shippingAddress || "No shipping address configured"}
                 </p>
-                <div className="flex gap-3 text-xs text-blue-500 font-semibold mt-1">
-                  <button type="button" className="hover:underline">New Address</button>
-                  <button type="button" className="hover:underline">+ Dropshipping Address</button>
+                <div className="flex gap-3 mt-1">
+                  <Button type="button" variant="outline" size="sm">New Address</Button>
+                  <Button type="button" variant="outline" size="sm">+ Dropshipping Address</Button>
                 </div>
               </div>
 
@@ -919,13 +920,15 @@ export function AccountingInvoiceForm({
                           </option>
                         ))}
                       </AccountingSelect>
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={handleAddUnit}
-                        className="text-[10px] text-blue-500 hover:underline text-left font-semibold whitespace-nowrap"
+                        className="whitespace-nowrap"
                       >
                         + Create unit
-                      </button>
+                      </Button>
                     </div>
                   </td>
                   <td className="p-3 min-w-[100px] whitespace-nowrap">
@@ -1052,14 +1055,15 @@ export function AccountingInvoiceForm({
                 Attach File(s) to Invoice
               </h4>
               <div className="flex items-center gap-3">
-                <button
+                <Button
                   type="button"
-                  className="flex items-center gap-2 px-4 py-2 border border-[var(--mnx-border)] hover:bg-[var(--mnx-surface-hover)] rounded text-xs font-bold transition"
+                  variant="outline"
+                  size="sm"
                   onClick={() => toast.info("File upload will be triggered on invoice save")}
                 >
                   <Upload size={14} />
                   Upload File
-                </button>
+                </Button>
                 <span className="text-[10px] text-[var(--mnx-text-muted)]">
                   You can upload a maximum of 10 files, 10MB each
                 </span>

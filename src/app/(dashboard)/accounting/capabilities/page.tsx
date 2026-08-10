@@ -15,6 +15,7 @@ import {
 } from "@/modules/accounting/capability-policy-actions";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { getAccountingConfigurationOverview } from "@/modules/accounting/operational-queries";
+import { Button } from "@/components/ui/button";
 import {
   AccountingActionLink,
   AccountingAlert,
@@ -199,9 +200,9 @@ export default async function AccountingCapabilityPoliciesPage({
             </AccountingField>
           </div>
           <div className="mnx-accounting-form-actions">
-            <button className="mnx-button mnx-button-secondary" type="submit">
+            <Button variant="inverse" type="submit">
               Apply filters
-            </button>
+            </Button>
             <AccountingActionLink href="/accounting/capabilities">
               Clear filters
             </AccountingActionLink>
@@ -293,13 +294,12 @@ export default async function AccountingCapabilityPoliciesPage({
             />
           </AccountingField>
           <div className="mnx-accounting-form-actions">
-            <button
-              className="mnx-button mnx-button-primary"
+            <Button
               type="submit"
               disabled={Boolean(editor && editor.status !== "DRAFT")}
             >
               {editor ? "Save draft" : "Create draft"}
-            </button>
+            </Button>
           </div>
         </form>
 
@@ -314,17 +314,17 @@ export default async function AccountingCapabilityPoliciesPage({
 
         {editor?.status === "DRAFT" ? (
           <form action={submitSelectedPolicy}>
-            <button className="mnx-button mnx-button-secondary" type="submit">
+            <Button variant="inverse" type="submit">
               Submit for approval
-            </button>
+            </Button>
           </form>
         ) : null}
 
         {editor?.status === "APPROVED" ? (
           <form action={supersedeSelectedPolicy}>
-            <button className="mnx-button mnx-button-secondary" type="submit">
+            <Button variant="inverse" type="submit">
               Supersede with new draft
-            </button>
+            </Button>
           </form>
         ) : null}
       </AccountingSection>
@@ -337,17 +337,17 @@ export default async function AccountingCapabilityPoliciesPage({
         >
           <div className="mnx-accounting-form-actions">
             <form action={approveSelectedPolicy}>
-              <button className="mnx-button mnx-button-primary" type="submit">
+              <Button type="submit">
                 Approve policy
-              </button>
+              </Button>
             </form>
             <form action={rejectSelectedPolicy} className="mnx-accounting-form">
               <AccountingField label="Rejection reason" htmlFor="reject-reason">
                 <AccountingTextarea id="reject-reason" name="reason" rows={3} />
               </AccountingField>
-              <button className="mnx-button mnx-button-destructive" type="submit">
+              <Button variant="destructive" type="submit">
                 Reject policy
-              </button>
+              </Button>
             </form>
           </div>
         </AccountingSection>
@@ -363,9 +363,9 @@ export default async function AccountingCapabilityPoliciesPage({
             <AccountingField label="Revocation reason" htmlFor="revoke-reason">
               <AccountingTextarea id="revoke-reason" name="reason" rows={3} />
             </AccountingField>
-            <button className="mnx-button mnx-button-destructive" type="submit">
+            <Button variant="destructive" type="submit">
               Revoke policy
-            </button>
+            </Button>
           </form>
         </AccountingSection>
       ) : null}

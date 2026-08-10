@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import {
   OperationalDataTable,
@@ -244,11 +244,9 @@ export function ChecklistDecisionsClient({
                   </p>
                 </div>
                 {reviewChecklist.downloadHref ? (
-                  <a href={reviewChecklist.downloadHref} className="shrink-0">
-                    <Button variant="outline" size="sm">
-                      Download File
-                    </Button>
-                  </a>
+                  <ButtonLink href={reviewChecklist.downloadHref} variant="outline" size="sm" className="shrink-0">
+                    Download File
+                  </ButtonLink>
                 ) : null}
               </div>
               <div className="overflow-hidden rounded-xl border border-mono-border/35 bg-mono-soft/20">
@@ -393,15 +391,14 @@ function FilePreview({ checklist }: { checklist: ChecklistItem }) {
       <div className="flex h-[65vh] flex-col items-center justify-center gap-3 px-6 text-center text-sm text-mono-muted">
         <p>This file type cannot be previewed in the browser.</p>
         {checklist.downloadHref ? (
-          <a href={checklist.downloadHref}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-10 min-w-40 justify-center px-4"
-            >
-              Download File
-            </Button>
-          </a>
+          <ButtonLink
+            href={checklist.downloadHref}
+            variant="outline"
+            size="sm"
+            className="h-10 min-w-40 justify-center px-4"
+          >
+            Download File
+          </ButtonLink>
         ) : null}
       </div>
     </object>

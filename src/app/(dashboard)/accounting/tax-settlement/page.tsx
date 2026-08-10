@@ -15,6 +15,7 @@ import {
 } from "@/components/monolith/accounting-workspace";
 import { requireAccountingRouteAccess } from "@/modules/accounting/operational-auth";
 import { getAccountingTaxSettlementWorkspace } from "@/modules/accounting/phase9-workspaces";
+import { Button } from "@/components/ui/button";
 import {
   transitionAccountingPeriodCloseRun,
   transitionAccountingStatutoryFilingPeriod,
@@ -338,9 +339,9 @@ export default async function AccountingTaxSettlementPage() {
                           name="expectedVersion"
                           value={period.rowVersion}
                         />
-                        <button className="mnx-button mnx-button-secondary" type="submit">
+                        <Button variant="inverse" type="submit">
                           Mark ready
-                        </button>
+                        </Button>
                       </form>
                     ) : null}
                     {period.status === "READY" ? (
@@ -357,9 +358,9 @@ export default async function AccountingTaxSettlementPage() {
                           placeholder="Acknowledgement ref"
                           required
                         />
-                        <button className="mnx-button mnx-button-primary" type="submit">
+                        <Button type="submit">
                           Mark filed
-                        </button>
+                        </Button>
                       </form>
                     ) : null}
                     {period.status === "READY" ? (
@@ -370,9 +371,9 @@ export default async function AccountingTaxSettlementPage() {
                           name="expectedVersion"
                           value={period.rowVersion}
                         />
-                        <button className="mnx-button mnx-button-secondary" type="submit">
+                        <Button variant="inverse" type="submit">
                           Reopen review
-                        </button>
+                        </Button>
                       </form>
                     ) : null}
                   </td>
@@ -418,9 +419,9 @@ export default async function AccountingTaxSettlementPage() {
                           name="expectedVersion"
                           value={run.rowVersion}
                         />
-                        <button className="mnx-button mnx-button-secondary" type="submit">
+                        <Button variant="inverse" type="submit">
                           Mark ready
-                        </button>
+                        </Button>
                       </form>
                     ) : null}
                     {run.status === "READY" ? (
@@ -431,9 +432,9 @@ export default async function AccountingTaxSettlementPage() {
                           name="expectedVersion"
                           value={run.rowVersion}
                         />
-                        <button className="mnx-button mnx-button-primary" type="submit">
+                        <Button type="submit">
                           Close period
-                        </button>
+                        </Button>
                       </form>
                     ) : null}
                     {run.status === "READY" ? (
@@ -444,9 +445,9 @@ export default async function AccountingTaxSettlementPage() {
                           name="expectedVersion"
                           value={run.rowVersion}
                         />
-                        <button className="mnx-button mnx-button-secondary" type="submit">
+                        <Button variant="inverse" type="submit">
                           Return to open
-                        </button>
+                        </Button>
                       </form>
                     ) : null}
                     {run.status === "CLOSED" ? (
@@ -457,9 +458,9 @@ export default async function AccountingTaxSettlementPage() {
                           name="expectedVersion"
                           value={run.rowVersion}
                         />
-                        <button className="mnx-button mnx-button-secondary" type="submit">
+                        <Button variant="inverse" type="submit">
                           Reopen period
-                        </button>
+                        </Button>
                       </form>
                     ) : null}
                   </td>

@@ -204,10 +204,10 @@ export default function ProductCataloguePage() {
             {productOverview.keyBusinessValue}
           </blockquote>
           <div className="mnx-catalogue-intro-actions mnx-no-print">
-            <ButtonLink href="#catalogue-workflow">
+            <ButtonLink href="#catalogue-workflow" variant="default">
               Explore workflows <ArrowRight size={14} aria-hidden="true" />
             </ButtonLink>
-            <ButtonLink href="#catalogue-benefits" variant="inverse">
+            <ButtonLink href="#catalogue-benefits" variant="outline">
               Review outcomes
             </ButtonLink>
           </div>
@@ -546,16 +546,16 @@ export default function ProductCataloguePage() {
         <h2>{ctaContent.title}</h2>
         <p>{ctaContent.text}</p>
         <div className="mnx-catalogue-cta-actions">
-          <WorkspaceAction onClick={() => router.push("/crm/leads/new")}>
+          <WorkspaceAction variant="primary" onClick={() => router.push("/crm/leads/new")}>
             {ctaContent.primaryCta}
             <ArrowRight size={14} aria-hidden="true" />
           </WorkspaceAction>
-          <a
-            className="mnx-button mnx-button-secondary"
+          <ButtonLink
             href="mailto:solutions@monolithengine.internal"
+            variant="outline"
           >
             {ctaContent.secondaryCta}
-          </a>
+          </ButtonLink>
         </div>
       </WorkspacePanel>
     </WorkspacePage>

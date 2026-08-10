@@ -192,7 +192,7 @@ export function HrmsPortalClient({
   }
 
   return (
-    <MonolithPage>
+    <MonolithPage className="mnx-dashboard-page-shell">
       <AttendanceCommand
         profile={profile}
         loading={attendanceLoading}

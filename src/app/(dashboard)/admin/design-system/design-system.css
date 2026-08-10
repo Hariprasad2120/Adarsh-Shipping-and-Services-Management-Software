@@ -77,6 +77,69 @@ html.theme-violet .ds-page {
   gap: var(--frappe-space-4);
 }
 
+.ds-button-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--frappe-space-5);
+}
+
+.ds-button-row {
+  display: grid;
+  gap: var(--frappe-space-2);
+  justify-items: start;
+}
+
+.ds-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--frappe-space-3);
+}
+
+.ds-alert-stack {
+  display: grid;
+  gap: var(--frappe-space-3);
+  max-width: 32rem;
+}
+
+.ds-highlight-demo {
+  display: grid;
+  gap: var(--frappe-space-2);
+  max-width: 24rem;
+}
+
+.ds-highlight-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--frappe-space-3);
+  padding: var(--frappe-space-3) var(--frappe-space-4);
+  border: 1px solid var(--frappe-border);
+  border-radius: var(--frappe-radius-md);
+}
+
+.ds-highlight-row.is-highlighted {
+  background: var(--mnx-highlight-surface);
+}
+
+.ds-card-variant-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--frappe-space-5);
+}
+
+.ds-card-swatch {
+  display: grid;
+  gap: var(--frappe-space-2);
+}
+
+.ds-card-swatch > :first-child {
+  min-height: 96px;
+  padding: var(--frappe-space-3);
+  border: 1px dashed var(--frappe-border);
+  border-radius: var(--frappe-radius-md);
+  overflow: hidden;
+}
+
 .ds-card-sample {
   display: grid;
   gap: 0.35rem;

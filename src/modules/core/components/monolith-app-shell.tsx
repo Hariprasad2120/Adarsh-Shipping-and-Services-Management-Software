@@ -79,6 +79,50 @@ export const monolithAccentThemes: {
   { id: "violet", label: "Violet" },
 ];
 
+const ACCENT_HUE_STOPS: Record<
+  MonolithAccent,
+  { primary: string; hover: string; active: string; softLight: string; softBorderLight: string }
+> = {
+  blue: {
+    primary: "var(--frappe-blue-500)",
+    hover: "var(--frappe-blue-600)",
+    active: "var(--frappe-blue-700)",
+    softLight: "var(--frappe-blue-50)",
+    softBorderLight: "var(--frappe-blue-200)",
+  },
+  green: {
+    primary: "var(--frappe-green-500)",
+    hover: "var(--frappe-green-600)",
+    active: "var(--frappe-green-700)",
+    softLight: "var(--frappe-green-50)",
+    softBorderLight: "var(--frappe-green-200)",
+  },
+  amber: {
+    primary: "var(--frappe-amber-500)",
+    hover: "var(--frappe-amber-600)",
+    active: "var(--frappe-amber-700)",
+    softLight: "var(--frappe-amber-50)",
+    softBorderLight: "var(--frappe-amber-200)",
+  },
+  violet: {
+    primary: "var(--frappe-violet-500)",
+    hover: "var(--frappe-violet-600)",
+    active: "var(--frappe-violet-700)",
+    softLight: "var(--frappe-violet-50)",
+    softBorderLight: "var(--frappe-violet-200)",
+  },
+};
+
+/** Writes accent colors as inline styles on <html> so they always win the cascade, regardless of [data-accent] selector specificity fights elsewhere. */
+function applyAccentInlineStyles(root: HTMLElement, accent: MonolithAccent) {
+  const stops = ACCENT_HUE_STOPS[accent];
+  root.style.setProperty("--frappe-primary", stops.primary);
+  root.style.setProperty("--frappe-primary-hover", stops.hover);
+  root.style.setProperty("--frappe-primary-active", stops.active);
+  root.style.setProperty("--frappe-primary-soft", stops.softLight);
+  root.style.setProperty("--frappe-primary-soft-border", stops.softBorderLight);
+}
+
 const MonolithThemeContext = createContext<{
   accent: MonolithAccent;
   selectAccent: (accent: MonolithAccent) => void;
@@ -273,6 +317,7 @@ export function MonolithThemeProvider({
     root.dataset.dashboardTheme = theme;
     root.dataset.theme = theme;
     root.dataset.accent = accent;
+    applyAccentInlineStyles(root, accent);
     root.classList.remove(
       "theme-light",
       "theme-night",

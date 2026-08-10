@@ -600,11 +600,16 @@ button.mnx-accounting-record-card {
 .mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-section-header,
 .mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-toolbar {
   padding-inline: var(--mn-space-5);
+  padding-block: var(--mn-space-4);
   background: transparent;
 }
 
 .mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-section-content {
   padding-inline: 0;
+}
+
+.mnx-accounting-page[data-workspace-surface="single"] .mnx-accounting-section-content:not(:has(> .mnx-table-wrap)) {
+  padding-inline: var(--mn-space-5);
 }
 
 @media (max-width: 64rem) {

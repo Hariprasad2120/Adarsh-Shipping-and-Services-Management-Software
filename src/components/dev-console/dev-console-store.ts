@@ -65,6 +65,23 @@ export type DevConsoleA11yEntry = {
   timestamp: number;
 };
 
+export type DevConsoleHiddenReason =
+  | "display-none"
+  | "visibility-hidden"
+  | "zero-opacity"
+  | "zero-size"
+  | "offscreen"
+  | "aria-hidden-but-focusable"
+  | "clipped";
+
+export type DevConsoleHiddenEntry = {
+  id: string;
+  reason: DevConsoleHiddenReason;
+  description: string;
+  route: string;
+  timestamp: number;
+};
+
 type Listener = () => void;
 
 function makeId() {
@@ -82,6 +99,7 @@ class DevConsoleStore {
   private logs: DevConsoleLogEntry[] = [];
   private violations: DevConsoleViolationEntry[] = [];
   private a11yIssues: DevConsoleA11yEntry[] = [];
+  private hiddenElements: DevConsoleHiddenEntry[] = [];
   private listeners = new Set<Listener>();
 
   subscribe(listener: Listener): () => void {
@@ -113,6 +131,10 @@ class DevConsoleStore {
 
   getA11yIssues(): DevConsoleA11yEntry[] {
     return this.a11yIssues;
+  }
+
+  getHiddenElements(): DevConsoleHiddenEntry[] {
+    return this.hiddenElements;
   }
 
   recordError(input: {
@@ -189,6 +211,23 @@ class DevConsoleStore {
 
   clearA11yIssues() {
     this.a11yIssues = [];
+    this.notify();
+  }
+
+  setHiddenElements(entries: Array<Omit<DevConsoleHiddenEntry, "id" | "route" | "timestamp">>) {
+    const route = typeof window === "undefined" ? "" : window.location.pathname;
+    const timestamp = Date.now();
+    this.hiddenElements = entries.map((entry) => ({
+      ...entry,
+      id: makeId(),
+      route,
+      timestamp,
+    }));
+    this.notify();
+  }
+
+  clearHiddenElements() {
+    this.hiddenElements = [];
     this.notify();
   }
 

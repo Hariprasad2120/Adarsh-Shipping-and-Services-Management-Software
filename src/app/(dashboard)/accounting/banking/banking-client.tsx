@@ -494,13 +494,14 @@ export function BankingClient({
                       <AccountingStatus status={row.isActive ? "ACTIVE" : "INACTIVE"} />
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button
+                          <AccountingAction
                             aria-label={`Open actions for ${row.name}`}
-                            className="mnx-button mnx-button-secondary"
+                            variant="secondary"
+                            className="mnx-icon-button"
                             type="button"
                           >
                             <EllipsisVertical aria-hidden="true" size={16} />
-                          </button>
+                          </AccountingAction>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           {canManageBankAccounts ? (

@@ -2,6 +2,120 @@
 
 Last updated: 2026-08-07
 
+## 2026-08-09 Dashboard final authority cleanup
+
+Rebuilt the protected `/dashboard` route’s final visual authority so the page
+fully uses the available workspace width and no longer gets partially broken by
+older duplicated dashboard rules later in the shared stylesheet.
+
+Delivered:
+
+- kept the protected dashboard on the route-specific
+  `mnx-dashboard-page-shell` hook in
+  `src/app/(dashboard)/dashboard/portal-client.tsx`;
+- added a final end-of-file authoritative dashboard block in
+  `src/styles/monolith-system.css` under the route-specific
+  `.mnx-dashboard-page-shell` selector family so the protected dashboard now
+  wins on page width, hero layout, spotlight composition, metrics layout,
+  lower grid spans, panel padding, and mobile reflow;
+- converted the action stream treatment into a denser, card-like live bulletin
+  viewport with clear item hierarchy, explicit current/next slide states, and a
+  cleaner vertical ticker presentation that is no longer visually vague or
+  overridden back to an expanded list;
+- refreshed `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the dashboard batch.
+
+Verification on Sunday, August 9, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route inventory;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed the ownership audit.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so this
+  final dashboard authority cleanup is source-verified and static-check-verified
+  rather than manually browser-checked in Light, Night, and Violet themes;
+- this pass intentionally establishes a route-specific final override layer for
+  the protected dashboard rather than refactoring every earlier legacy dashboard
+  selector out of the shared stylesheet in the same batch.
+
+## 2026-08-09 Dashboard full-width composition follow-up
+
+Expanded the protected `/dashboard` composition so the wider canvas is used by
+the spotlight and lower content bands instead of only the hero.
+
+Delivered:
+
+- updated `src/app/(dashboard)/dashboard/portal-client.tsx` so the protected
+  dashboard route now opts into a dashboard-specific width hook through
+  `mnx-dashboard-page-shell`;
+- updated `src/styles/monolith-system.css` so the protected dashboard can use a
+  wider centered canvas, the hero columns allocate more space to the main
+  workspace narrative, the spotlight band expands proportionally, and the lower
+  dashboard cards now use a 12-column layout with balanced panel spans;
+- slightly increased the highlighted module-strip spacing so the wider layout
+  still feels deliberate rather than sparse.
+
+Verification on Sunday, August 9, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so this
+  full-width dashboard follow-up is source-verified and type-verified rather
+  than manually browser-checked in Light, Night, and Violet themes;
+- this pass rebalances the dashboard composition only and does not change team
+  or organization route logic.
+
+## 2026-08-09 Dashboard action-stream ticker refinement
+
+Refined the protected `/dashboard` hero so the action stream now behaves like a
+true live-updates ticker and the dashboard entry experience reads closer to the
+current Monolith card and motion language.
+
+Delivered:
+
+- updated `src/app/(dashboard)/dashboard/_components/attendance-command.tsx`
+  so the hero action stream now carries per-item live-status chips, a dedicated
+  live-updates header, and ticker timing driven by the number of active items
+  instead of the older flat duplicated list treatment;
+- updated `src/styles/monolith-system.css` so the dashboard action stream now
+  renders as a bordered card-like viewport with one update advancing at a time,
+  hover/focus pause behavior, stronger item hierarchy, and mobile-safe stacked
+  metadata while still respecting reduced-motion handling;
+- refreshed `docs/UI_DESIGN_SYSTEM_MIGRATION_STATUS.md`,
+  `docs/ui-route-audit.md`, and
+  `docs/ui-component-and-style-ownership-audit.md` after the dashboard UI
+  batch so the repository audit artifacts remain current for this session.
+
+Verification on Sunday, August 9, 2026:
+
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx eslint 'src/app/(dashboard)/dashboard/_components/attendance-command.tsx' 'src/styles/monolith-system.css'`:
+  completed with only the existing configuration warning that the global CSS
+  file is ignored because no ESLint configuration matches it;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; npx tsc --noEmit --pretty false`:
+  passed;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/audit-ui-routes.mjs`:
+  passed and refreshed the route inventory;
+- `$env:NODE_OPTIONS='--max-old-space-size=8192'; node scripts/generate-ui-component-style-audit.mjs`:
+  passed and refreshed the ownership audit.
+
+Known limits:
+
+- no authenticated browser runtime is attached in this Codex session, so the
+  dashboard ticker refinement is source-verified and static-check-verified
+  rather than manually browser-checked in Light, Night, and Violet themes;
+- this pass focused on the protected dashboard hero action stream and shared
+  dashboard styling ownership, and it does not rework unrelated team or
+  organization dashboard panels.
+
 ## 2026-08-09 Product catalogue design-system cleanup
 
 Refined `/product-catalogue` so the route follows the Monolith panel, card,

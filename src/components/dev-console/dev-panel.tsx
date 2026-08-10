@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import {
@@ -11,11 +11,14 @@ import {
   type DevConsoleLogKind,
   type DevConsoleViolationEntry,
   type DevConsoleA11yEntry,
+  type DevConsoleHiddenEntry,
 } from "./dev-console-store";
 import { scanForViolations } from "./dev-console-violation-scanner";
 import { scanForA11yIssues } from "./dev-console-a11y-scanner";
+import { scanForHiddenElements, type HiddenMatch } from "./dev-console-hidden-scanner";
+import { revealHiddenElements, restoreHiddenElements } from "./dev-console-hidden-reveal";
 
-type Tab = "overview" | "errors" | "network" | "logs" | "violations" | "a11y";
+type Tab = "overview" | "errors" | "network" | "logs" | "violations" | "a11y" | "hidden";
 
 function useDevConsoleErrors(): DevConsoleErrorEntry[] {
   return useSyncExternalStore(
@@ -53,6 +56,14 @@ function useDevConsoleA11yIssues(): DevConsoleA11yEntry[] {
   return useSyncExternalStore(
     (listener) => devConsoleStore.subscribe(listener),
     () => devConsoleStore.getA11yIssues(),
+    () => [],
+  );
+}
+
+function useDevConsoleHiddenElements(): DevConsoleHiddenEntry[] {
+  return useSyncExternalStore(
+    (listener) => devConsoleStore.subscribe(listener),
+    () => devConsoleStore.getHiddenElements(),
     () => [],
   );
 }
@@ -321,6 +332,133 @@ function A11yTab() {
   );
 }
 
+const HIDDEN_REASON_LABEL: Record<DevConsoleHiddenEntry["reason"], string> = {
+  "display-none": "display: none",
+  "visibility-hidden": "visibility: hidden",
+  "zero-opacity": "opacity: 0",
+  "zero-size": "Zero size",
+  offscreen: "Off-screen",
+  "aria-hidden-but-focusable": "aria-hidden + focusable",
+  clipped: "Clipped",
+};
+
+function runHiddenScan(): HiddenMatch[] {
+  const matches = scanForHiddenElements();
+  devConsoleStore.setHiddenElements(matches.map((match) => match.draft));
+  return matches;
+}
+
+function HiddenElementsTab() {
+  const entries = useDevConsoleHiddenElements();
+  const pathname = usePathname();
+  const [reasonFilter, setReasonFilter] = useState<DevConsoleHiddenEntry["reason"] | "all">("all");
+  const [revealing, setRevealing] = useState(false);
+  const elementByIdRef = useRef<Map<string, HTMLElement>>(new Map());
+
+  function scan() {
+    const matches = runHiddenScan();
+    const nextEntries = devConsoleStore.getHiddenElements();
+    const map = new Map<string, HTMLElement>();
+    matches.forEach((match, index) => {
+      const entry = nextEntries[index];
+      if (entry) map.set(entry.id, match.element);
+    });
+    elementByIdRef.current = map;
+    return matches;
+  }
+
+  useEffect(() => {
+    scan();
+    if (revealing) revealHiddenElements(Array.from(elementByIdRef.current.values()));
+    return () => {
+      restoreHiddenElements();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- rescan on route change only
+  }, [pathname]);
+
+  const counts = entries.reduce<Record<string, number>>((acc, entry) => {
+    acc[entry.reason] = (acc[entry.reason] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const filtered = reasonFilter === "all" ? entries : entries.filter((entry) => entry.reason === reasonFilter);
+
+  function rescan() {
+    scan();
+    if (revealing) revealHiddenElements(Array.from(elementByIdRef.current.values()));
+  }
+
+  function toggleRevealing(next: boolean) {
+    setRevealing(next);
+    if (next) revealHiddenElements(Array.from(elementByIdRef.current.values()));
+    else restoreHiddenElements();
+  }
+
+  function jumpToElement(entryId: string) {
+    const element = elementByIdRef.current.get(entryId);
+    if (!element) return;
+    if (!revealing) toggleRevealing(true);
+    element.scrollIntoView({ behavior: "smooth", block: "center" });
+    element.classList.add("mnx-dev-hidden-flash");
+    window.setTimeout(() => element.classList.remove("mnx-dev-hidden-flash"), 1500);
+  }
+
+  return (
+    <div className="mnx-dev-list">
+      <div className="mnx-dev-list-actions has-filters">
+        <label className="mnx-dev-reveal-toggle">
+          <input
+            type="checkbox"
+            checked={revealing}
+            onChange={(event) => toggleRevealing(event.target.checked)}
+          />
+          Show hidden elements on page
+        </label>
+        <button type="button" onClick={rescan}>
+          Rescan
+        </button>
+      </div>
+      <div className="mnx-dev-list-actions has-filters">
+        <div className="mnx-dev-filter-group" role="group" aria-label="Filter hidden elements">
+          <button
+            type="button"
+            className={reasonFilter === "all" ? "is-active" : ""}
+            onClick={() => setReasonFilter("all")}
+          >
+            All ({entries.length})
+          </button>
+          {Object.entries(counts).map(([reason, count]) => (
+            <button
+              key={reason}
+              type="button"
+              className={reasonFilter === reason ? "is-active" : ""}
+              onClick={() => setReasonFilter(reason as DevConsoleHiddenEntry["reason"])}
+            >
+              {HIDDEN_REASON_LABEL[reason as DevConsoleHiddenEntry["reason"]]} ({count})
+            </button>
+          ))}
+        </div>
+      </div>
+      {filtered.length === 0 ? (
+        <p className="mnx-dev-empty">No hidden elements found on this page.</p>
+      ) : (
+        filtered.map((entry) => (
+          <div
+            key={entry.id}
+            className="mnx-dev-list-item is-warning"
+            onClick={() => jumpToElement(entry.id)}
+          >
+            <div className="mnx-dev-list-item-head">
+              <span className="mnx-dev-tag">{HIDDEN_REASON_LABEL[entry.reason]}</span>
+            </div>
+            <p>{entry.description}</p>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
 export function DevPanel({
   onClose,
   userEmail,
@@ -351,7 +489,7 @@ export function DevPanel({
     <div className="mnx-dev-panel" role="dialog" aria-label="Developer console">
       <header className="mnx-dev-panel-header">
         <div className="mnx-dev-tabs" role="tablist">
-          {(["overview", "errors", "network", "logs", "violations", "a11y"] as const).map((value) => (
+          {(["overview", "errors", "network", "logs", "violations", "a11y", "hidden"] as const).map((value) => (
             <button
               key={value}
               type="button"
@@ -375,6 +513,7 @@ export function DevPanel({
         {tab === "logs" ? <LogsTab /> : null}
         {tab === "violations" ? <ViolationsTab /> : null}
         {tab === "a11y" ? <A11yTab /> : null}
+        {tab === "hidden" ? <HiddenElementsTab /> : null}
       </div>
     </div>,
     document.body,

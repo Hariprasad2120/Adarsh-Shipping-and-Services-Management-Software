@@ -18,6 +18,7 @@ import {
   deleteAccountingWorkspaceModule,
 } from "@/modules/accounting/customization";
 import { getAccountingCustomizationWorkspace } from "@/modules/accounting/phase9-workspaces";
+import { Button } from "@/components/ui/button";
 
 function checkboxValue(formData: FormData, key: string) {
   return formData.get(key) === "on";
@@ -189,9 +190,9 @@ export default async function AccountingCustomizationPage() {
               <input name="required" type="checkbox" />
               Required
             </label>
-            <button className="mnx-button mnx-button-primary" type="submit">
+            <Button type="submit">
               Add custom field
-            </button>
+            </Button>
           </div>
         </form>
         <AccountingTable>
@@ -216,9 +217,9 @@ export default async function AccountingCustomizationPage() {
                 <td>
                   <form action={deleteFieldAction}>
                     <input name="id" type="hidden" value={field.id} />
-                    <button className="mnx-button mnx-button-secondary" type="submit">
+                    <Button variant="inverse" type="submit">
                       Delete
-                    </button>
+                    </Button>
                   </form>
                 </td>
               </tr>
@@ -245,7 +246,7 @@ export default async function AccountingCustomizationPage() {
             <label className="mnx-field mnx-accounting-field-span"><span>Conditions JSON</span><textarea name="conditionsJson" rows={4} /></label>
             <label className="mnx-field mnx-accounting-field-span"><span>Configuration JSON</span><textarea name="configurationJson" rows={4} /></label>
             <label className="mnx-inline-flex items-center gap-2"><input defaultChecked name="active" type="checkbox" />Active</label>
-            <button className="mnx-button mnx-button-primary" type="submit">Add automation rule</button>
+            <Button type="submit">Add automation rule</Button>
           </div>
         </form>
         <AccountingTable>
@@ -270,7 +271,7 @@ export default async function AccountingCustomizationPage() {
                 <td>
                   <form action={deleteAutomationAction}>
                     <input name="id" type="hidden" value={rule.id} />
-                    <button className="mnx-button mnx-button-secondary" type="submit">Delete</button>
+                    <Button variant="inverse" type="submit">Delete</Button>
                   </form>
                 </td>
               </tr>
@@ -296,7 +297,7 @@ export default async function AccountingCustomizationPage() {
             <label className="mnx-field mnx-accounting-field-span"><span>Description</span><input name="description" /></label>
             <label className="mnx-field mnx-accounting-field-span"><span>Configuration JSON</span><textarea name="configurationJson" rows={4} /></label>
             <label className="mnx-inline-flex items-center gap-2"><input defaultChecked name="active" type="checkbox" />Active</label>
-            <button className="mnx-button mnx-button-primary" type="submit">Add workspace module</button>
+            <Button type="submit">Add workspace module</Button>
           </div>
         </form>
         <AccountingTable>
@@ -319,7 +320,7 @@ export default async function AccountingCustomizationPage() {
                 <td>
                   <form action={deleteModuleAction}>
                     <input name="id" type="hidden" value={module.id} />
-                    <button className="mnx-button mnx-button-secondary" type="submit">Delete</button>
+                    <Button variant="inverse" type="submit">Delete</Button>
                   </form>
                 </td>
               </tr>

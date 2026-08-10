@@ -152,6 +152,7 @@
   --frappe-link: var(--frappe-blue-700);
 
   --frappe-primary: var(--frappe-blue-500);
+  --frappe-primary-foreground: #ffffff;
   --frappe-primary-hover: var(--frappe-blue-600);
   --frappe-primary-active: var(--frappe-blue-700);
   --frappe-primary-soft: var(--frappe-blue-50);
@@ -290,6 +291,7 @@
   --frappe-link: var(--frappe-blue-500);
 
   --frappe-primary: var(--frappe-blue-500);
+  --frappe-primary-foreground: #ffffff;
   --frappe-primary-hover: var(--frappe-blue-400);
   --frappe-primary-active: var(--frappe-blue-300);
   --frappe-primary-soft: #0f233d;
